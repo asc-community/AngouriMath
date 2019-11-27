@@ -82,7 +82,10 @@ namespace MathSharp
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity((r1 as NumberEntity).Value - (r2 as NumberEntity).Value);
             else
-                return r1 - r2;
+                if (r1 != r2)
+                    return r1 - r2;
+                else
+                    return 0;
         }
     }
     public static partial class Mulf

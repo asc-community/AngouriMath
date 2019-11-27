@@ -9,9 +9,8 @@ namespace MathSharp
         static void Main(string[] args)
         {
             var x = MathS.Var("x");
-            var expr = MathS.Log(MathS.Ln(x), x);
-            var res = expr.Derive(x);
-            Console.WriteLine(res.Simplify());
+            var exp = MathS.Ln(5) * x - MathS.Ln(5) * x;
+            Console.WriteLine(exp.Simplify());
         }
     }
 }

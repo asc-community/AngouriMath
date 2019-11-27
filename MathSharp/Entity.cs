@@ -43,6 +43,20 @@ namespace MathSharp
         public static implicit operator Entity(int num) => new NumberEntity(num);
         public static implicit operator Entity(double num) => new NumberEntity(num);
 
+        public static bool operator ==(Entity a, Entity b)
+        {
+            if (a.GetType() != b.GetType())
+                return false;
+            if (a.Name != b.Name)
+                return false;
+            if (a.children.Count() != b.children.Count())
+                return false;
+            for (int i = 0; i < a.children.Count; i++)
+                if (!(a.children[i] == b.children[i]))
+                    return false;
+            return true;
+        }
+        public static bool operator !=(Entity a, Entity b) => !(a == b);
     }
     public class NumberEntity : Entity
     {
@@ -65,6 +79,9 @@ namespace MathSharp
             return this.Name.ToString();
         }
     }
+
+    
+
     public class OperatorEntity : Entity
     {
         public OperatorEntity(string name) : base(name) { }
