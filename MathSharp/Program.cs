@@ -9,7 +9,7 @@ namespace MathSharp
         static void Main(string[] args)
         {
             var x = MathS.Var("x");
-            var exp = MathS.Ln(5) * x - MathS.Ln(5) * x;
+            var exp = x ^ 0;
             Console.WriteLine(exp.Simplify());
         }
     }
