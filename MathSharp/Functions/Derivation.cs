@@ -9,7 +9,15 @@ namespace MathSharp
     {
         public Entity Derive(VariableEntity x)
         {
-
+            if(IsLeaf)
+            {
+                if (this is VariableEntity && this.Name == x.Name)
+                    return new NumberEntity(1);
+                else
+                    return new NumberEntity(0);
+            }
+            //else
+                
         }
     }
 }
