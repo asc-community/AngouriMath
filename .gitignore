@@ -4,3 +4,5 @@
 
 /.vs
 /MathSharp/obj
+/MathSharp/.vs/MathSharp/v16
+/MathSharp/bin/Debug/netcoreapp3.0

@@ -12,12 +12,8 @@ using System.Threading.Tasks;
 
 namespace MathSharp
 {
-    using Table = Dictionary<string, Func<List<Entity>, Entity>>;
-
     public static partial class Sumf
     {
-        static Sumf() => MathFunctions.funcTable["Sumf"] = Eval;
- 
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("Sumf");
@@ -29,8 +25,6 @@ namespace MathSharp
 
     public static partial class Minusf
     {
-        static Minusf() => MathFunctions.funcTable["Minusf"] = Eval;
-
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("Minusf");
@@ -42,8 +36,6 @@ namespace MathSharp
 
     public static partial class Mulf
     {
-        static Mulf() => MathFunctions.funcTable["Mulf"] = Eval;
-
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("Mulf");
@@ -55,8 +47,6 @@ namespace MathSharp
 
     public static partial class Divf
     {
-        static Divf() => MathFunctions.funcTable["Divf"] = Eval;
-
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("Divf");
@@ -67,8 +57,6 @@ namespace MathSharp
     }
     public static partial class Powf
     {
-        static Powf() => MathFunctions.funcTable["Powf"] = Eval;
-
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("Powf");
@@ -80,8 +68,6 @@ namespace MathSharp
 
     public static partial class Sinf
     {
-        static Sinf() => MathFunctions.funcTable["Sinf"] = Eval;
-
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("Sinf");
@@ -92,8 +78,6 @@ namespace MathSharp
 
     public static partial class Cosf
     {
-        static Cosf() => MathFunctions.funcTable["Cosf"] = Eval;
-
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("Cosf");
@@ -102,16 +86,20 @@ namespace MathSharp
         }
     }
 
-    public static class MathFunctions
+    public static partial class Logf
     {
-        internal static Table funcTable = new Table();
-
-        public static Entity Invoke(string typeName, List<Entity> args)
+        public static Entity Hang(Entity a, Entity n)
         {
-            return funcTable[typeName](args);
+            var res = new FunctionEntity("Logf");
+            res.children.Add(a);
+            res.children.Add(n);
+            return res;
         }
+    }
 
-        public static void Assert(int a, int b)
+    public static partial class MathFunctions
+    {
+        public static void AssertArgs(int a, int b)
         {
             if (a != b)
                 throw new MathSException("Invalid amount of arguments");

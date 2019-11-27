@@ -16,13 +16,6 @@ namespace MathSharp
             Name = name;
         }
         public List<Entity> children;
-        public static Entity operator +(Entity a, Entity b) => Sumf.Hang(a, b);
-        public static Entity operator -(Entity a, Entity b) => Minusf.Hang(a, b);
-        public static Entity operator *(Entity a, Entity b) => Mulf.Hang(a, b);
-        public static Entity operator /(Entity a, Entity b) => Divf.Hang(a, b);
-        public static Entity operator ^(Entity a, Entity b) => Powf.Hang(a, b);
-        public Entity Sin() => Sinf.Hang(this);
-        public Entity Cos() => Cosf.Hang(this);
 
         public Entity Copy()
         {
@@ -77,7 +70,7 @@ namespace MathSharp
         public OperatorEntity(string name) : base(name) { }
         public override string ToString()
         {
-            MathFunctions.Assert(children.Count, 2);
+            MathFunctions.AssertArgs(children.Count, 2);
             string op = "?";
             switch(Name)
             {
