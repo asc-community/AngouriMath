@@ -49,7 +49,6 @@ var expr = x.Pow(y) + MathS.Sqrt(x + y / 4) * (6 / x);
 Console.WriteLine(expr.Latexise());
 >>> {x}^{y}+\sqrt{x+\frac{y}{4}}*\frac{6}{x}
 ```
-<a href="https://www.codecogs.com/eqnedit.php?latex={x}^{y}&plus;\sqrt{x&plus;\frac{y}{4}}*\frac{6}{x}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?{x}^{y}&plus;\sqrt{x&plus;\frac{y}{4}}*\frac{6}{x}" title="{x}^{y}+\sqrt{x+\frac{y}{4}}*\frac{6}{x}" /></a>
 
 #### Play with complex numbers
 ```cs
