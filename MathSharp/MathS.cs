@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MathSharp.Core;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -17,7 +18,7 @@ namespace MathSharp
         public delegate Entity OneArg(Entity a);
         public delegate Entity TwoArg(Entity a, Entity n);
         public delegate VariableEntity VarFunc(string v);
-        public delegate NumberEntity NumFunc(double v);
+        public delegate NumberEntity NumFunc(Number v);
 
         public static OneArg Sin = Sinf.Hang;
         public static OneArg Cos = Cosf.Hang;

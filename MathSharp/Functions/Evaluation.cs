@@ -1,4 +1,5 @@
-﻿using System;
+﻿using MathSharp.Core;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -26,6 +27,7 @@ namespace MathSharp
             else
                 return MathFunctions.InvokeEval(Name, children);
         }
+        public Entity Eval() => Simplify();
     }
 
     // Adding invoke table for eval
@@ -78,7 +80,6 @@ namespace MathSharp
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].Simplify();
             var r2 = args[1].Simplify();
-            args = new List<Entity>() { r1, r2 };
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity((r1 as NumberEntity).Value - (r2 as NumberEntity).Value);
             else
@@ -116,7 +117,6 @@ namespace MathSharp
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].Simplify();
             var r2 = args[1].Simplify();
-            args = new List<Entity>() { r1, r2 };
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity((r1 as NumberEntity).Value / (r2 as NumberEntity).Value);
             else
@@ -135,9 +135,8 @@ namespace MathSharp
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].Simplify();
             var r2 = args[1].Simplify();
-            args = new List<Entity>() { r1, r2 };
             if (r1 is NumberEntity && r2 is NumberEntity)
-                return new NumberEntity(Math.Pow((r1 as NumberEntity).Value, (r2 as NumberEntity).Value));
+                return new NumberEntity(Number.Pow((r1 as NumberEntity).Value, (r2 as NumberEntity).Value));
             else
                 if (r1 == 0 || r1 == 1)
                     return r1;
@@ -156,7 +155,7 @@ namespace MathSharp
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].Simplify();
             if (r is NumberEntity)
-                return new NumberEntity(Math.Sin((r as NumberEntity).Value));
+                return new NumberEntity(Number.Sin((r as NumberEntity).Value));
             else
                 return r.Sin();
         }
@@ -168,7 +167,7 @@ namespace MathSharp
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].Simplify();
             if (r is NumberEntity)
-                return new NumberEntity(Math.Cos((r as NumberEntity).Value));
+                return new NumberEntity(Number.Cos((r as NumberEntity).Value));
             else
                 return r.Cos();
         }
@@ -183,7 +182,7 @@ namespace MathSharp
             var n = args[1].Simplify();
             args = new List<Entity>() { r, n };
             if (r is NumberEntity && n is NumberEntity)
-                return new NumberEntity(Math.Log((r as NumberEntity).Value, (n as NumberEntity).Value));
+                return new NumberEntity(Number.Log((r as NumberEntity).Value, (n as NumberEntity).Value));
             else
                 if (r == n)
                     return 1;
