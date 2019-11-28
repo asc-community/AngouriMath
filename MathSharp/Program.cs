@@ -9,9 +9,10 @@ namespace MathSharp
         static void Main(string[] args)
         {
             var x = MathS.Var("x");
-            var y = MathS.Var("y");
-            var expr = x.Pow(y) + MathS.Sqrt(x + y / 4) * (6 / x);
-            Console.WriteLine(expr.Latexise());
+            var expr = MathS.Tan(x);
+            var der = expr.Derive(x);
+            Console.WriteLine(der);
+            Console.WriteLine(der.Simplify());
         }
     }
 }

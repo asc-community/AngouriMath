@@ -87,7 +87,7 @@ namespace MathSharp
                 else if (r2 == 0)
                     return r1;
                 else
-                    return 0;
+                    return r1 - r2;
         }
     }
     public static partial class Mulf
