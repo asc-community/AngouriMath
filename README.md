@@ -51,4 +51,13 @@ Console.WriteLine(expr.Latexise());
 ```
 <a href="https://www.codecogs.com/eqnedit.php?latex={x}^{y}&plus;\sqrt{x&plus;\frac{y}{4}}*\frac{6}{x}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?{x}^{y}&plus;\sqrt{x&plus;\frac{y}{4}}*\frac{6}{x}" title="{x}^{y}+\sqrt{x+\frac{y}{4}}*\frac{6}{x}" /></a>
 
+#### Play with complex numbers
+```cs
+var expr = MathS.Pow(MathS.e, MathS.pi * MathS.i);
+Console.WriteLine(expr);
+Console.WriteLine(expr.Eval());
+>>> 2,718281828459045 ^ 3,141592653589793i
+>>> -1
+```
+
 Other features like plot are coming soon...
