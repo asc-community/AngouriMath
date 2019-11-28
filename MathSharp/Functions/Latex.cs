@@ -69,7 +69,7 @@ namespace MathSharp
         public static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            return "sin(" + args[0].Latexise(args[0].Priority < Const.PRIOR_FUNC) + ")";
+            return "sin(" + args[0].Latexise() + ")";
         }
     }
     public static partial class Cosf

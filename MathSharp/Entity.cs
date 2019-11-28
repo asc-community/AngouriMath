@@ -62,10 +62,6 @@ namespace MathSharp
     {
         public NumberEntity(string name) : base(name) => Priority = Const.PRIOR_NUM;
         public NumberEntity(double value) : base(value.ToString()) { }
-        public override string ToString()
-        {
-            return this.Name.ToString();
-        }
         public double Value { get => Convert.ToDouble(Name); set => Name = value.ToString(); }
         public static implicit operator NumberEntity(int num) => new NumberEntity(num);
         public static implicit operator NumberEntity(double num) => new NumberEntity(num);
@@ -73,11 +69,6 @@ namespace MathSharp
     public class VariableEntity : Entity
     {
         public VariableEntity(string name) : base(name) => Priority = Const.PRIOR_VAR;
-
-        public override string ToString()
-        {
-            return this.Name.ToString();
-        }
     }
 
     
@@ -87,28 +78,9 @@ namespace MathSharp
         public OperatorEntity(string name, int priority) : base(name) {
             Priority = priority;
         }
-        public override string ToString()
-        {
-            MathFunctions.AssertArgs(children.Count, 2);
-            string op = "?";
-            switch(Name)
-            {
-                case "Sumf": op = "+"; break;
-                case "Minusf": op = "-"; break;
-                case "Mulf": op = "*"; break;
-                case "Divf": op = "/"; break;
-                case "Powf": op = "^"; break;
-            }
-
-            return "(" + children[0].ToString() + " " + op + " " + children[1].ToString() + ")";
-        }
     }
     public class FunctionEntity : Entity
     {
         public FunctionEntity(string name) : base(name) => Priority = Const.PRIOR_FUNC;
-        public override string ToString()
-        {
-            return Name.Substring(0, Name.Length - 1).ToLower() + "(" + string.Join(",", children) + ")";
-        }
     }
 }
