@@ -21,7 +21,7 @@ namespace MathSharp
         {
             Entity res;
             if (this is NumberEntity)
-                res = new NumberEntity(Name);
+                res = new NumberEntity((this as NumberEntity).Value);
             else if (this is VariableEntity)
                 res = new VariableEntity(Name);
             else if (this is OperatorEntity)
@@ -60,9 +60,12 @@ namespace MathSharp
     }
     public class NumberEntity : Entity
     {
-        public NumberEntity(string name) : base(name) => Priority = Const.PRIOR_NUM;
-        public NumberEntity(double value) : base(value.ToString()) { }
-        public double Value { get => Convert.ToDouble(Name); set => Name = value.ToString(); }
+        public NumberEntity(double value) : base(value.ToString()) {
+            Priority = Const.PRIOR_NUM;
+            Value = value;
+        }
+        public double Value { get; internal set; }
+        public string Name { get => Value.ToString(); }
         public static implicit operator NumberEntity(int num) => new NumberEntity(num);
         public static implicit operator NumberEntity(double num) => new NumberEntity(num);
     }
