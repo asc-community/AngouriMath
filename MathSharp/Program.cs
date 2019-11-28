@@ -1,4 +1,5 @@
 ﻿using MathSharp.Core;
+using MathSharp.Core.FromString;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
