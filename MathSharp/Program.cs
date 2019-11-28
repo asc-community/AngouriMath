@@ -10,8 +10,8 @@ namespace MathSharp
         {
             var x = MathS.Var("x");
             var y = MathS.Var("y");
-            var exp = (x + 3).Pow(y);
-            Console.WriteLine(exp.Latexise());
+            var expr = x.Pow(y) + MathS.Sqrt(x + y / 4) * (6 / x);
+            Console.WriteLine(expr.Latexise());
         }
     }
 }
