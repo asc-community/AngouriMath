@@ -4,8 +4,11 @@ using System.Collections.Generic;
 using System.Text;
 
 /*
- * MathS.Sin() - sine of an expression
- * MathS.Cos() - cosine of an expression
+ * MathS.Sin(x) - sine of an expression
+ * MathS.Cos(x) - cosine of an expression
+ * MathS.Log(a, n) - logarithm of a and base n
+ * MathS.Pow(a, n) - a ^ n
+ * MathS.Sqr, MathS.Sqrt
  * 
  * MathS.Var() - creating an instance of variable
  * MathS.Num() - creating an instance of number (but in most cases you can use actual numbers, for example `Var("x") + 4` is ok)
