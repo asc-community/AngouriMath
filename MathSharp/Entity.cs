@@ -25,7 +25,7 @@ namespace MathSharp
             else if (this is VariableEntity)
                 res = new VariableEntity(Name);
             else if (this is OperatorEntity)
-                res = new OperatorEntity(Name);
+                res = new OperatorEntity(Name, Priority);
             else if (this is FunctionEntity)
                 res = new FunctionEntity(Name);
             else
@@ -60,7 +60,7 @@ namespace MathSharp
     }
     public class NumberEntity : Entity
     {
-        public NumberEntity(string name) : base(name) { }
+        public NumberEntity(string name) : base(name) => Priority = Const.PRIOR_NUM;
         public NumberEntity(double value) : base(value.ToString()) { }
         public override string ToString()
         {
@@ -72,7 +72,7 @@ namespace MathSharp
     }
     public class VariableEntity : Entity
     {
-        public VariableEntity(string name) : base(name) { }
+        public VariableEntity(string name) : base(name) => Priority = Const.PRIOR_VAR;
 
         public override string ToString()
         {
@@ -84,7 +84,9 @@ namespace MathSharp
 
     public class OperatorEntity : Entity
     {
-        public OperatorEntity(string name) : base(name) { }
+        public OperatorEntity(string name, int priority) : base(name) {
+            Priority = priority;
+        }
         public override string ToString()
         {
             MathFunctions.AssertArgs(children.Count, 2);
@@ -103,10 +105,10 @@ namespace MathSharp
     }
     public class FunctionEntity : Entity
     {
-        public FunctionEntity(string name) : base(name) { }
+        public FunctionEntity(string name) : base(name) => Priority = Const.PRIOR_FUNC;
         public override string ToString()
         {
-            return Name.Substring(0, Name.Length - 1) + "(" + string.Join(",", children) + ")";
+            return Name.Substring(0, Name.Length - 1).ToLower() + "(" + string.Join(",", children) + ")";
         }
     }
 }

@@ -22,6 +22,9 @@ namespace MathSharp
         public static OneArg Sin = Sinf.Hang;
         public static OneArg Cos = Cosf.Hang;
         public static TwoArg Log = Logf.Hang;
+        public static TwoArg Pow = Powf.Hang;
+        public static OneArg Sqrt = a => Powf.Hang(a, 0.5);
+        public static OneArg Sqr = a => Powf.Hang(a, 2);
         public static OneArg Ln => v => Logf.Hang(v, e);
         public static VarFunc Var = v => new VariableEntity(v);
         public static NumFunc Num = v => new NumberEntity(v);

@@ -120,9 +120,9 @@ namespace MathSharp
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity((r1 as NumberEntity).Value / (r2 as NumberEntity).Value);
             else
-                if (r1 is NumberEntity && (r1 as NumberEntity).Value == 0)
+                if (r1 == 0)
                     return 0;
-                else if (r2 is NumberEntity && (r2 as NumberEntity).Value == 1)
+                else if (r2 == 1)
                     return r1;
                 else
                     return r1 / r2;
@@ -139,14 +139,14 @@ namespace MathSharp
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity(Math.Pow((r1 as NumberEntity).Value, (r2 as NumberEntity).Value));
             else
-                if (r1 is NumberEntity && ((r1 as NumberEntity).Value == 0 || (r1 as NumberEntity).Value == 1))
+                if (r1 == 0 || r1 == 1)
                     return r1;
-                else if (r2 is NumberEntity && (r2 as NumberEntity).Value == 1)
+                else if (r2 == 1)
                     return r1;
-                else if (r2 is NumberEntity && (r2 as NumberEntity).Value == 0)
+                else if (r2 == 0)
                     return 1;
                 else
-                    return r1 ^ r2;
+                    return r1.Pow(r2);
         }
     }
     public static partial class Sinf

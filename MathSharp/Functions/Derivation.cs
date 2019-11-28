@@ -77,7 +77,7 @@ namespace MathSharp
             MathFunctions.AssertArgs(args.Count, 2);
             var a = args[0];
             var b = args[1];
-            return (a.Derive(variable) * b - b.Derive(variable) * a) / (b ^ 2);
+            return (a.Derive(variable) * b - b.Derive(variable) * a) / (b.Pow(2));
         }
     }
     public static partial class Powf
@@ -93,15 +93,15 @@ namespace MathSharp
             if (b is NumberEntity)
             {
                 var cons = MathS.Num((b as NumberEntity).Value - 1);
-                var res = b * (a ^ cons);
+                var res = b * (a.Pow(cons));
                 return res;
             }
             else if(a is NumberEntity)
             {
-                return (a ^ b) * MathS.Ln(a) * b.Derive(variable);
+                return a.Pow(b) * MathS.Ln(a) * b.Derive(variable);
             }
             else
-                return (a ^ b) * (a.Derive(variable) * b / a + MathS.Ln(a) * b.Derive(variable));
+                return a.Pow(b) * (a.Derive(variable) * b / a + MathS.Ln(a) * b.Derive(variable));
         }
     }
     public static partial class Sinf
@@ -132,7 +132,7 @@ namespace MathSharp
             MathFunctions.AssertArgs(args.Count, 2);
             var a = args[0];
             var b = args[1];
-            return (a.Derive(variable) / a * MathS.Ln(b) - MathS.Ln(a) * b.Derive(variable) / b) / (MathS.Ln(b) ^ 2);
+            return (a.Derive(variable) / a * MathS.Ln(b) - MathS.Ln(a) * b.Derive(variable) / b) / (MathS.Ln(b).Pow(2));
         }
     }
 }

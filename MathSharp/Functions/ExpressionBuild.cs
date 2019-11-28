@@ -16,7 +16,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity b)
         {
-            var res = new OperatorEntity("Sumf");
+            var res = new OperatorEntity("Sumf", Const.PRIOR_SUM);
             res.children.Add(a);
             res.children.Add(b);
             return res;
@@ -27,7 +27,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity b)
         {
-            var res = new OperatorEntity("Minusf");
+            var res = new OperatorEntity("Minusf", Const.PRIOR_MINUS);
             res.children.Add(a);
             res.children.Add(b);
             return res;
@@ -38,7 +38,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity b)
         {
-            var res = new OperatorEntity("Mulf");
+            var res = new OperatorEntity("Mulf", Const.PRIOR_MUL);
             res.children.Add(a);
             res.children.Add(b);
             return res;
@@ -49,7 +49,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity b)
         {
-            var res = new OperatorEntity("Divf");
+            var res = new OperatorEntity("Divf", Const.PRIOR_DIV);
             res.children.Add(a);
             res.children.Add(b);
             return res;
@@ -59,7 +59,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity b)
         {
-            var res = new OperatorEntity("Powf");
+            var res = new OperatorEntity("Powf", Const.PRIOR_POW);
             res.children.Add(a);
             res.children.Add(b);
             return res;

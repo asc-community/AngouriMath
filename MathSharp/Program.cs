@@ -9,8 +9,9 @@ namespace MathSharp
         static void Main(string[] args)
         {
             var x = MathS.Var("x");
-            var exp = x ^ 0;
-            Console.WriteLine(exp.Simplify());
+            var y = MathS.Var("y");
+            var exp = (x + 3).Pow(y);
+            Console.WriteLine(exp.Latexise());
         }
     }
 }
