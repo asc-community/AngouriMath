@@ -30,7 +30,10 @@ namespace MathSharp.Core
         {
             this.value = num;
         }
-
+        public Number Copy()
+        {
+            return new Number(value);
+        }
         public override string ToString()
         {
             string a = Re.ToString();
@@ -49,10 +52,20 @@ namespace MathSharp.Core
         public static Number operator -(Number a, Number b) => new Number(a.value - b.value);
         public static Number operator *(Number a, Number b) => new Number(a.value * b.value);
         public static Number operator /(Number a, Number b) => new Number(a.value / b.value);
+        public static bool operator ==(Number a, Number b)
+        {
+            if ( ((object)a) == null && ((object)b) == null )
+                return true;
+            if (((object)a) == null || ((object)b) == null)
+                return false;
+            return Number.IsDoubleZero(Number.Abs(a - b));
+        }
+        public static bool operator !=(Number a, Number b) => !(a == b);
         public static Number Pow(Number a, Number b) => new Number(Complex.Pow(a.value, b.value));
         public static Number Log(Number a, Number b) => new Number(Complex.Log(a.value, b.Re));
         public static Number Sin(Number a) => new Number(Complex.Sin(a.value));
         public static Number Cos(Number a) => new Number(Complex.Cos(a.value));
+        public static double Abs(Number a) => Complex.Abs(a.value);
         public static bool IsDoubleZero(double a)
         {
             return Math.Abs(a) < 0.0000000000001;

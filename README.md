@@ -60,4 +60,13 @@ Console.WriteLine(expr.Eval());
 >>> -1
 ```
 
+#### Solve eqations
+```cs
+var x = MathS.Var("x");
+var equation = (x - 1) * (x - 2) * (MathS.Sqr(x) + 1);
+foreach (var re in equation.SolveNt(x))
+    Console.Write(re.ToString() + "  ");
+>>> 1  2  1i
+```
+
 Other features like plot are coming soon...
