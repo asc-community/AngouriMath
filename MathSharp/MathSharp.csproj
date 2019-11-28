@@ -14,7 +14,8 @@
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageTags>Math, csharp</PackageTags>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
+    <PackageIconUrl>https://raw.githubusercontent.com/Angourisoft/MathS/master/icon.png</PackageIconUrl>
   </PropertyGroup>
 
   <ItemGroup>
