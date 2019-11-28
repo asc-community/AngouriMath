@@ -60,7 +60,14 @@ namespace MathSharp.Core
                 return false;
             return Number.IsDoubleZero(Number.Abs(a - b));
         }
-        public static bool operator !=(Number a, Number b) => !(a == b);
+        public static bool operator !=(Number a, Number b)
+        {
+            if (a == null && b == null)
+                return false;
+            if (b == null)
+                return !double.IsNaN(a.Re) && !double.IsNaN(a.Im);
+            return !(a == b);
+        }
         public static Number Pow(Number a, Number b) => new Number(Complex.Pow(a.value, b.value));
         public static Number Log(Number a, Number b) => new Number(Complex.Log(a.value, b.Re));
         public static Number Sin(Number a) => new Number(Complex.Sin(a.value));
