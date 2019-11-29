@@ -37,7 +37,9 @@ namespace MathSharp
         {
             Entity res = Copy();
             foreach (var child in children)
+            {
                 res.children.Add(child.DeepCopy());
+            }
             return res;
         }
         

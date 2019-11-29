@@ -12,7 +12,7 @@ namespace MathSharp.Core.FromString
                 base.Add(a);
         }
     }
-    public class Token
+    public partial class Token
     {
         public Token(char s)
         {
@@ -22,17 +22,15 @@ namespace MathSharp.Core.FromString
         {
             Value = "";
         }
-        public static readonly string goodCharsForNumbers = "1234567890i.";
-        public static readonly string goodCharsForVars = "qwertyuiopasdfghjklzxcvbnm";
-        public static readonly string goodCharsForOperators = "+-*/^,";
         public enum TokenType
         {
             VARIABLE,
             NUMBER,
             FUNCTION,
-            SYMBOL
+            SYMBOL,
+            BRACE
         }
-        public enum BracketType
+        public enum BraceType
         {
             PARENTHESIS_OPEN, 
             PARENTHESIS_CLOSE,
@@ -40,50 +38,89 @@ namespace MathSharp.Core.FromString
             BRACKET_CLOSE,
             NONE
         }
+        public TokenType type;
         public string Value { get; set; }
         public Entity Attribute { get; set; }
-        public static BracketType GetBracketType(char s)
+        public static BraceType GetBracketType(char s)
         {
             switch(s)
             {
                 case '(':
-                    return BracketType.PARENTHESIS_OPEN;
+                    return BraceType.PARENTHESIS_OPEN;
                 case ')':
-                    return BracketType.PARENTHESIS_CLOSE;
+                    return BraceType.PARENTHESIS_CLOSE;
                 case '[':
-                    return BracketType.BRACKET_OPEN;
+                    return BraceType.BRACKET_OPEN;
                 case ']':
-                    return BracketType.PARENTHESIS_CLOSE;
+                    return BraceType.PARENTHESIS_CLOSE;
                 default:
-                    return BracketType.NONE;
+                    return BraceType.NONE;
             }
         }
         public static bool IsNumber(string s) //TODO WITH REGEXP
         {
             foreach (var c in s)
-                if (!goodCharsForNumbers.Contains(c))
+                if (!SyntaxInfo.goodCharsForNumbers.Contains(c))
                     return false;
             return true;
         }
         public static bool IsVariable(string s) //TODO WITH REGEXP
         {
             foreach (var c in s)
-                if (!goodCharsForVars.Contains(c))
+                if (!SyntaxInfo.goodCharsForVars.Contains(c))
                     return false;
             return true;
         }
         public static bool IsOperator(char s) //TODO WITH REGEXP
         {
-            return goodCharsForOperators.Contains(s);
+            return SyntaxInfo.goodCharsForOperators.Contains(s);
         }
         public override string ToString()
         {
-            return "{" + Value.ToString() + "}";
+            return "{" + Value.ToString() + " | " + this.type.ToString() + "}";
+        }
+        public void Seal()
+        {
+            if (IsNumber(this.Value))
+                type = TokenType.NUMBER;
+            else if (IsVariable(this.Value))
+            {
+                if (SyntaxInfo.goodStringsForFunctions.ContainsKey(this.Value))
+                    type = TokenType.FUNCTION;
+                else
+                    type = TokenType.VARIABLE;
+            }
+            else if (GetBracketType(this.Value[0]) != BraceType.NONE)
+                type = TokenType.BRACE;
+            else
+                type = TokenType.SYMBOL;
         }
     }
     public class Lexer
     {
-        public TokenList tokens;
+        private TokenList tokens;
+        private int index = 0;
+        public void Seal()
+        {
+            foreach (var token in tokens)
+                token.Seal();
+        }
+        public bool EOF()
+        {
+            return index >= tokens.Count;
+        }
+        public void Next()
+        {
+            index++;
+        }
+        public void Prev()
+        {
+            index = Math.Max(index - 1, 0);
+        }
+        public Token Current()
+        {
+            return tokens[index];
+        }
         public Lexer(string src)
         {
             tokens = new TokenList();
@@ -106,7 +143,7 @@ namespace MathSharp.Core.FromString
                     last.Value += symbol;
                 else
                 {
-                    if (Token.GetBracketType(symbol) != Token.BracketType.NONE)
+                    if (Token.GetBracketType(symbol) != Token.BraceType.NONE)
                     {
                         tokens.Add(last);
                         tokens.Add(new Token(symbol));
@@ -115,6 +152,7 @@ namespace MathSharp.Core.FromString
                 }
             }
             tokens.Add(last);
+            Seal();
         }
     }
 }

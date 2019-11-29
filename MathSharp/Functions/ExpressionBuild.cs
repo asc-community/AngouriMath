@@ -102,7 +102,9 @@ namespace MathSharp
         public static void AssertArgs(int a, int b)
         {
             if (a != b)
+            {
                 throw new MathSException("Invalid amount of arguments");
+            }
         }
     }
 }

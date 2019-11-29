@@ -38,7 +38,9 @@ namespace MathSharp.Core
         {
             string a = Re.ToString();
             if (Number.IsDoubleZero(Im))
+            {
                 return a;
+            }
             string b = Math.Abs(Im).ToString();
             if (!Number.IsDoubleZero(Re))
                 return a + (Im < 0 ? " - " : " + ") + b + "i";

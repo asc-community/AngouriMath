@@ -94,9 +94,13 @@ namespace MathSharp
         {
             MathFunctions.AssertArgs(args.Count, 2);
             if (args[1] == 0.5)
+            {
                 return "sqrt(" + args[0].Stringize() + ")";
+            }
             else
+            {
                 return args[0].Stringize(args[0].Priority < Const.PRIOR_POW) + " ^ " + args[1].Stringize(args[1].Priority < Const.PRIOR_POW);
+            }
         }
     }
 }
