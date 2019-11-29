@@ -47,6 +47,15 @@ namespace MathSharp.Core
             else
                 return b + "i";
         }
+        public static Number Parse(string s)
+        {
+            if (s[s.Length - 1] == 'i')
+            {
+                return new Number(0, Convert.ToDouble(s.Substring(0, s.Length - 1)));
+            }
+            else
+                return Convert.ToDouble(s);
+        }
 
         public static implicit operator Number(int num) => new Number(num);
         public static implicit operator Number(double num) => new Number(num);

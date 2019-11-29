@@ -16,7 +16,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity b)
         {
-            var res = new OperatorEntity("Sumf", Const.PRIOR_SUM);
+            var res = new OperatorEntity("sumf", Const.PRIOR_SUM);
             res.children.Add(a);
             res.children.Add(b);
             return res;
@@ -27,7 +27,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity b)
         {
-            var res = new OperatorEntity("Minusf", Const.PRIOR_MINUS);
+            var res = new OperatorEntity("minusf", Const.PRIOR_MINUS);
             res.children.Add(a);
             res.children.Add(b);
             return res;
@@ -38,7 +38,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity b)
         {
-            var res = new OperatorEntity("Mulf", Const.PRIOR_MUL);
+            var res = new OperatorEntity("mulf", Const.PRIOR_MUL);
             res.children.Add(a);
             res.children.Add(b);
             return res;
@@ -49,7 +49,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity b)
         {
-            var res = new OperatorEntity("Divf", Const.PRIOR_DIV);
+            var res = new OperatorEntity("divf", Const.PRIOR_DIV);
             res.children.Add(a);
             res.children.Add(b);
             return res;
@@ -59,7 +59,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity b)
         {
-            var res = new OperatorEntity("Powf", Const.PRIOR_POW);
+            var res = new OperatorEntity("powf", Const.PRIOR_POW);
             res.children.Add(a);
             res.children.Add(b);
             return res;
@@ -70,7 +70,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a)
         {
-            var res = new FunctionEntity("Sinf");
+            var res = new FunctionEntity("sinf");
             res.children.Add(a);
             return res;
         }
@@ -80,7 +80,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a)
         {
-            var res = new FunctionEntity("Cosf");
+            var res = new FunctionEntity("cosf");
             res.children.Add(a);
             return res;
         }
@@ -90,7 +90,7 @@ namespace MathSharp
     {
         public static Entity Hang(Entity a, Entity n)
         {
-            var res = new FunctionEntity("Logf");
+            var res = new FunctionEntity("logf");
             res.children.Add(a);
             res.children.Add(n);
             return res;

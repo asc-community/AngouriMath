@@ -17,11 +17,11 @@ namespace MathSharp.Core.FromString
         };
         public static readonly Dictionary<char, string> operatorNames = new Dictionary<char, string>
         {
-            { '+', "Sumf" },
-            { '-', "Minusf" },
-            { '*', "Mulf" },
-            { '/', "Divf" },
-            { '^', "Powf" }
+            { '+', "sumf" },
+            { '-', "minusf" },
+            { '*', "mulf" },
+            { '/', "divf" },
+            { '^', "powf" }
         };
         public static readonly Dictionary<char, int> operatorPriorities = new Dictionary<char, int>
         {

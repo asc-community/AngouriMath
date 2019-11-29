@@ -7,80 +7,80 @@ namespace MathSharp
     public static partial class Sumf
     {
         static Sumf() {
-            MathFunctions.evalTable["Sumf"] = Simplify;
-            MathFunctions.deriveTable["Sumf"] = Derive;
-            MathFunctions.latexTable["Sumf"] = Latex;
-            MathFunctions.stringTable["Sumf"] = Stringize;
+            MathFunctions.evalTable["sumf"] = Simplify;
+            MathFunctions.deriveTable["sumf"] = Derive;
+            MathFunctions.latexTable["sumf"] = Latex;
+            MathFunctions.stringTable["sumf"] = Stringize;
         }
     }
     public static partial class Minusf
     {
         static Minusf()
         {
-            MathFunctions.evalTable["Minusf"] = Simplify;
-            MathFunctions.deriveTable["Minusf"] = Derive;
-            MathFunctions.latexTable["Minusf"] = Latex;
-            MathFunctions.stringTable["Minusf"] = Stringize;
+            MathFunctions.evalTable["minusf"] = Simplify;
+            MathFunctions.deriveTable["minusf"] = Derive;
+            MathFunctions.latexTable["minusf"] = Latex;
+            MathFunctions.stringTable["minusf"] = Stringize;
         }
     }
     public static partial class Mulf
     {
         static Mulf()
         {
-            MathFunctions.evalTable["Mulf"] = Simplify;
-            MathFunctions.deriveTable["Mulf"] = Derive;
-            MathFunctions.latexTable["Mulf"] = Latex;
-            MathFunctions.stringTable["Mulf"] = Stringize;
+            MathFunctions.evalTable["mulf"] = Simplify;
+            MathFunctions.deriveTable["mulf"] = Derive;
+            MathFunctions.latexTable["mulf"] = Latex;
+            MathFunctions.stringTable["mulf"] = Stringize;
         }
     }
     public static partial class Divf
     {
         static Divf()
         {
-            MathFunctions.evalTable["Divf"] = Simplify;
-            MathFunctions.deriveTable["Divf"] = Derive;
-            MathFunctions.latexTable["Divf"] = Latex;
-            MathFunctions.stringTable["Divf"] = Stringize;
+            MathFunctions.evalTable["divf"] = Simplify;
+            MathFunctions.deriveTable["divf"] = Derive;
+            MathFunctions.latexTable["divf"] = Latex;
+            MathFunctions.stringTable["divf"] = Stringize;
         }
     }
     public static partial class Powf
     {
         static Powf()
         {
-            MathFunctions.evalTable["Powf"] = Simplify;
-            MathFunctions.deriveTable["Powf"] = Derive;
-            MathFunctions.latexTable["Powf"] = Latex;
-            MathFunctions.stringTable["Powf"] = Stringize;
+            MathFunctions.evalTable["powf"] = Simplify;
+            MathFunctions.deriveTable["powf"] = Derive;
+            MathFunctions.latexTable["powf"] = Latex;
+            MathFunctions.stringTable["powf"] = Stringize;
         }
     }
     public static partial class Sinf
     {
         static Sinf()
         {
-            MathFunctions.evalTable["Sinf"] = Simplify;
-            MathFunctions.deriveTable["Sinf"] = Derive;
-            MathFunctions.latexTable["Sinf"] = Latex;
-            MathFunctions.stringTable["Sinf"] = Stringize;
+            MathFunctions.evalTable["sinf"] = Simplify;
+            MathFunctions.deriveTable["sinf"] = Derive;
+            MathFunctions.latexTable["sinf"] = Latex;
+            MathFunctions.stringTable["sinf"] = Stringize;
         }
     }
     public static partial class Cosf
     {
         static Cosf()
         {
-            MathFunctions.evalTable["Cosf"] = Simplify;
-            MathFunctions.deriveTable["Cosf"] = Derive;
-            MathFunctions.latexTable["Cosf"] = Latex;
-            MathFunctions.stringTable["Cosf"] = Stringize;
+            MathFunctions.evalTable["cosf"] = Simplify;
+            MathFunctions.deriveTable["cosf"] = Derive;
+            MathFunctions.latexTable["cosf"] = Latex;
+            MathFunctions.stringTable["cosf"] = Stringize;
         }
     }
     public static partial class Logf
     {
         static Logf()
         {
-            MathFunctions.evalTable["Logf"] = Eval;
-            MathFunctions.deriveTable["Logf"] = Derive;
-            MathFunctions.latexTable["Logf"] = Latex;
-            MathFunctions.stringTable["Logf"] = Stringize;
+            MathFunctions.evalTable["logf"] = Eval;
+            MathFunctions.deriveTable["logf"] = Derive;
+            MathFunctions.latexTable["logf"] = Latex;
+            MathFunctions.stringTable["logf"] = Stringize;
         }
     }
 

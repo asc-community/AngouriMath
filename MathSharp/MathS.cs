@@ -1,4 +1,5 @@
 ﻿using MathSharp.Core;
+using MathSharp.Core.FromString;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -40,5 +41,11 @@ namespace MathSharp
         public static Number e = 2.718281828459045235;
         public static Number i = new Number(0, 1);
         public static Number pi = 3.141592653589793;
+        
+        public static Entity FromString(string expr)
+        {
+            var lexer = new Lexer(expr);
+            return Parser.Parse(lexer);
+        }
     }
 }
