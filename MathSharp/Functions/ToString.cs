@@ -12,7 +12,11 @@ namespace MathSharp
         {
             return Stringize();
         }
-        public string Stringize(bool parenthesesRequired = false)
+        public string Stringize()
+        {
+            return Stringize(false);
+        }
+        public string Stringize(bool parenthesesRequired)
         {
             if (IsLeaf)
                 return this.Name;
@@ -23,7 +27,7 @@ namespace MathSharp
 
     public static partial class MathFunctions
     {
-        internal static StringTable stringTable = new StringTable();
+        internal static readonly StringTable stringTable = new StringTable();
 
         public static string InvokeStringize(string typeName, List<Entity> args)
         {

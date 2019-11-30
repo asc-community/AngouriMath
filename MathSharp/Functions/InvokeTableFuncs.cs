@@ -6,6 +6,7 @@ namespace MathSharp
 {
     public static partial class Sumf
     {
+        public static void Wakeup() { }
         static Sumf() {
             MathFunctions.evalTable["sumf"] = Simplify;
             MathFunctions.deriveTable["sumf"] = Derive;
@@ -15,6 +16,7 @@ namespace MathSharp
     }
     public static partial class Minusf
     {
+        public static void Wakeup() { }
         static Minusf()
         {
             MathFunctions.evalTable["minusf"] = Simplify;
@@ -25,6 +27,7 @@ namespace MathSharp
     }
     public static partial class Mulf
     {
+        public static void Wakeup() { }
         static Mulf()
         {
             MathFunctions.evalTable["mulf"] = Simplify;
@@ -35,6 +38,7 @@ namespace MathSharp
     }
     public static partial class Divf
     {
+        public static void Wakeup() { }
         static Divf()
         {
             MathFunctions.evalTable["divf"] = Simplify;
@@ -45,6 +49,7 @@ namespace MathSharp
     }
     public static partial class Powf
     {
+        public static void Wakeup() { }
         static Powf()
         {
             MathFunctions.evalTable["powf"] = Simplify;
@@ -55,6 +60,7 @@ namespace MathSharp
     }
     public static partial class Sinf
     {
+        public static void Wakeup() { }
         static Sinf()
         {
             MathFunctions.evalTable["sinf"] = Simplify;
@@ -65,6 +71,7 @@ namespace MathSharp
     }
     public static partial class Cosf
     {
+        public static void Wakeup() { }
         static Cosf()
         {
             MathFunctions.evalTable["cosf"] = Simplify;
@@ -75,6 +82,7 @@ namespace MathSharp
     }
     public static partial class Logf
     {
+        public static void Wakeup() { }
         static Logf()
         {
             MathFunctions.evalTable["logf"] = Eval;

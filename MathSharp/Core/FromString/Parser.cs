@@ -123,9 +123,10 @@ namespace MathSharp.Core.FromString
             }
             return HangLinearExpression(linearExpression);
         }
-        private static List<Entity> FindOperator(List<Entity> expr, string op, bool reversed = false)
+        private static void FindOperator(List<Entity> expr, string op, bool reversed = false)
         {
-            for(int i = 1; i < expr.Count - 1; i++)
+            int i = 1;
+            while(i < expr.Count - 1)
             {
                 var id = reversed ? expr.Count - i - 1 : i;
                 if(expr[id].IsLeaf && expr[id] is OperatorEntity && op.Contains(expr[id].Name))
@@ -136,8 +137,8 @@ namespace MathSharp.Core.FromString
                     expr.RemoveAt(id - 1);
                     i--;
                 }
+                i++;
             }
-            return expr;
         }
         private static Entity HangLinearExpression(List<Entity> expr)
         {
