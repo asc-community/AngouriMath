@@ -25,7 +25,7 @@ namespace UnitTests
         [TestMethod]
         public void TestDP()
         {
-            Assert.IsTrue(MathS.FromString("-1").Eval() == -1);
+            Assert.IsTrue(MathS.FromString("-23").Eval() == -23);
         }
         [TestMethod]
         public void TestDM()

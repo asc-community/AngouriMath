@@ -10,7 +10,10 @@ namespace MathSharp.Core.FromString
         public void Add(Token a)
         {
             if (!string.IsNullOrEmpty(a.Value))
+            {
+                a.Seal();
                 base.Add(a);
+            }
         }
     }
     public partial class Token
@@ -88,8 +91,11 @@ namespace MathSharp.Core.FromString
         {
             return "{" + Value + " | " + this.Type.ToString() + "}";
         }
-        public void Seal()
+        public TokenType GetCurrentType()
         {
+            TokenType Type;
+            if (this.Value == "")
+                return TokenType.NONE;
             if (IsNumber(this.Value))
                 Type = TokenType.NUMBER;
             else if (IsVariable(this.Value))
@@ -115,6 +121,15 @@ namespace MathSharp.Core.FromString
             {
                 Type = TokenType.SYMBOL;
             }
+            return Type;
+        }
+        public void Seal()
+        {
+            Type = GetCurrentType();
+        }
+        public static bool IsFinishedType(TokenType type)
+        {
+            return (type == Token.TokenType.PARENTHESIS_CLOSE || type == Token.TokenType.NUMBER || type == Token.TokenType.VARIABLE);
         }
     }
     public class Lexer
@@ -161,7 +176,9 @@ namespace MathSharp.Core.FromString
         {
             tokens = new TokenList();
             var last = new Token();
-            for(int i = 0; i < src.Length; i++)
+            Func<Token.TokenType> GetLastType = () => 
+            (last.GetCurrentType() != Token.TokenType.NONE) ? last.GetCurrentType() : (tokens.Count > 0 ? tokens[tokens.Count - 1].GetCurrentType() : Token.TokenType.NONE);
+            for (int i = 0; i < src.Length; i++)
             {
                 var symbol = src[i];
                 if (symbol == ' ')
@@ -170,7 +187,7 @@ namespace MathSharp.Core.FromString
                     last = new Token();
                     continue;
                 }
-                if(Token.IsOperator(symbol.ToString()) && (i == src.Length - 1 || symbol != '-' || !SyntaxInfo.goodCharsForNumbers.Contains(src[i + 1])))
+                if (Token.IsOperator(symbol.ToString()) && (Token.IsFinishedType(GetLastType()) || symbol != '-'))
                 {
                     tokens.Add(last);
                     tokens.Add(new Token(symbol));

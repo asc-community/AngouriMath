@@ -57,5 +57,10 @@ namespace UnitTests
         {
             Assert.IsTrue(MathS.FromString("i^2").Eval() == -1);
         }
+        [TestMethod]
+        public void Test11()
+        {
+            Assert.IsTrue(MathS.FromString("x^2-1").Substitute(MathS.Var("x"), 2).Eval() == 3);
+        }
     }
 }
