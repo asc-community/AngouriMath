@@ -161,22 +161,23 @@ namespace MathSharp.Core.FromString
         {
             tokens = new TokenList();
             var last = new Token();
-            foreach(var symbol in src)
+            for(int i = 0; i < src.Length; i++)
             {
+                var symbol = src[i];
                 if (symbol == ' ')
                 {
                     tokens.Add(last);
                     last = new Token();
                     continue;
                 }
-                if(Token.IsOperator(symbol.ToString()))
+                if(Token.IsOperator(symbol.ToString()) && (i == src.Length - 1 || symbol != '-' || !SyntaxInfo.goodCharsForNumbers.Contains(src[i + 1])))
                 {
                     tokens.Add(last);
                     tokens.Add(new Token(symbol));
                     last = new Token();
                     continue;
                 }
-                if (Token.IsNumber(last.Value + symbol) || Token.IsVariable(last.Value + symbol))
+                if (Token.IsNumber(last.Value + symbol) || Token.IsVariable(last.Value + symbol) || symbol == '-')
                 {
                     last.Value += symbol;
                 }

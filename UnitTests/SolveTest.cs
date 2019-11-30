@@ -27,5 +27,13 @@ namespace UnitTests
             Assert.IsTrue(roots[0] == MathS.i);
             Assert.IsTrue(roots[1] == new Number(0, -1));
         }
+        [TestMethod]
+        public void Test3()
+        {
+            var x = MathS.Var("x");
+            var eq = MathS.Num(1);
+            var roots = eq.SolveNt(x);
+            Assert.IsTrue(roots.Count == 0);
+        }
     }
 }
