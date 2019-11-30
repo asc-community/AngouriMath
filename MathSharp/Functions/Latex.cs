@@ -19,7 +19,7 @@ namespace MathSharp
 
     public static partial class MathFunctions
     {
-        internal static LatexTable latexTable = new LatexTable();
+        internal static readonly LatexTable latexTable = new LatexTable();
 
         public static string InvokeLatex(string typeName, List<Entity> args)
         {

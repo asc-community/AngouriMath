@@ -16,7 +16,7 @@ namespace MathSharp
             children = new List<Entity>();
             Name = name;
         }
-        public List<Entity> children;
+        public List<Entity> children { get; internal set; }
 
         public Entity Copy()
         {

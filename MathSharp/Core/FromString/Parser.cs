@@ -8,10 +8,9 @@ namespace MathSharp.Core.FromString
     using TokenType = Token.TokenType;
     public partial class Token
     {
-        private Entity root;
         public List<Entity> children = new List<Entity>();
     }
-    internal class SymbolProcessor
+    internal static class SymbolProcessor
     {
         public static bool IsOperator(char s)
         {
@@ -26,7 +25,7 @@ namespace MathSharp.Core.FromString
     }
     internal class BraceProcessor
     {
-        private List<BraceType> braces = new List<BraceType>();
+        private readonly List<BraceType> braces = new List<BraceType>();
         public static readonly List<BraceType> parentheses = new List<BraceType>
         { 
             BraceType.PARENTHESIS_OPEN,
@@ -90,7 +89,6 @@ namespace MathSharp.Core.FromString
         public static Entity Parse(Lexer lexer)
         {
             var linearExpression = new List<Entity>();
-            var current = lexer.Current;
             while (!lexer.EOF())
             {
                 linearExpression.Add(ParseAsVariable(lexer));
@@ -144,8 +142,8 @@ namespace MathSharp.Core.FromString
         private static Entity HangLinearExpression(List<Entity> expr)
         {
             FindOperator(expr, "powf", reversed: true);
-            FindOperator(expr, "mulfdivf", reversed: false);
-            FindOperator(expr, "sumfminusf", reversed: false);
+            FindOperator(expr, "mulfdivf");
+            FindOperator(expr, "sumfminusf");
             if (expr.Count != 1)
             {
                 throw new ParseException("Tree is ambigious");

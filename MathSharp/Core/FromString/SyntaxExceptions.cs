@@ -6,7 +6,7 @@ namespace MathSharp.Core.FromString
 {
     public abstract class SyntaxException : Exception
     {
-        public SyntaxException(string msg) : base(msg) { }
+        protected SyntaxException(string msg) : base(msg) { }
     }
     public class ParseException : SyntaxException
     {
