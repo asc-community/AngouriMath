@@ -8,7 +8,8 @@ namespace MathSharp
 
     public abstract partial class Entity
     {
-        public string Latexise(bool parenthesesRequired = false)
+        public string Latexise() => Latexise(false);
+        public string Latexise(bool parenthesesRequired)
         {
             if (IsLeaf)
                 return this.ToString();

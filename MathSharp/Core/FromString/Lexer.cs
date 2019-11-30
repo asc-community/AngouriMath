@@ -51,7 +51,7 @@ namespace MathSharp.Core.FromString
             BRACKET_CLOSE,
             NONE
         }
-        public TokenType Type;
+        public TokenType Type { get; internal set; }
         public string Value { get; set; }
         public Entity Attribute { get; set; }
         public static BraceType GetBraceType(char s)
@@ -120,7 +120,7 @@ namespace MathSharp.Core.FromString
     public class Lexer
     {
         private readonly TokenList tokens;
-        private int index = 0;
+        private int index;
         public void Seal()
         {
             foreach (var token in tokens)

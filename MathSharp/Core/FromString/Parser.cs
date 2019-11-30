@@ -8,7 +8,7 @@ namespace MathSharp.Core.FromString
     using TokenType = Token.TokenType;
     public partial class Token
     {
-        public List<Entity> children = new List<Entity>();
+        public List<Entity> children { get; } = new List<Entity>();
     }
     internal static class SymbolProcessor
     {

@@ -63,7 +63,7 @@ namespace MathSharp
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].Simplify();
             var r2 = args[1].Simplify();
-            args = new List<Entity>() { r1, r2 };
+            args = new List<Entity> { r1, r2 };
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity((r1 as NumberEntity).Value + (r2 as NumberEntity).Value);
             else
