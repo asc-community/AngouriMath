@@ -45,6 +45,7 @@ namespace MathSharp
             var b = args[1];
             return a.Derive(variable) + b.Derive(variable);
         }
+        public static void Wakeup() { }
     }
     public static partial class Minusf
     {
@@ -56,6 +57,7 @@ namespace MathSharp
             var b = args[1];
             return a.Derive(variable) - b.Derive(variable);
         }
+        public static void Wakeup() { }
     }
     public static partial class Mulf
     {
@@ -67,6 +69,7 @@ namespace MathSharp
             var b = args[1];
             return a.Derive(variable) * b + b.Derive(variable) * a;
         }
+        public static void Wakeup() { }
     }
 
     public static partial class Divf
@@ -79,6 +82,7 @@ namespace MathSharp
             var b = args[1];
             return (a.Derive(variable) * b - b.Derive(variable) * a) / (b.Pow(2));
         }
+        public static void Wakeup() { }
     }
     public static partial class Powf
     {
@@ -103,6 +107,7 @@ namespace MathSharp
             else
                 return a.Pow(b) * (a.Derive(variable) * b / a + MathS.Ln(a) * b.Derive(variable));
         }
+        public static void Wakeup() { }
     }
     public static partial class Sinf
     {
@@ -113,6 +118,7 @@ namespace MathSharp
             var a = args[0];
             return a.Cos() * a.Derive(variable);
         }
+        public static void Wakeup() { }
     }
     public static partial class Cosf
     {
@@ -123,6 +129,7 @@ namespace MathSharp
             var a = args[0];
             return -1 * a.Sin() * a.Derive(variable);
         }
+        public static void Wakeup() { }
     }
     public static partial class Logf
     {
@@ -134,5 +141,6 @@ namespace MathSharp
             var b = args[1];
             return (a.Derive(variable) / a * MathS.Ln(b) - MathS.Ln(a) * b.Derive(variable) / b) / (MathS.Ln(b).Pow(2));
         }
+        public static void Wakeup() { }
     }
 }

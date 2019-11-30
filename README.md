@@ -1,6 +1,14 @@
 # Math#
 Open-source Math engine for ASC
 
+#### Use as a simple calculator!
+```cs
+var inp = "1 + 2 * log(9, 3)";
+var expr = MathS.FromString(inp);
+Console.WriteLine(expr.Eval());
+>>> 5
+```
+
 #### Build an expression
 ```cs
 var x = MathS.Var("x");
@@ -68,4 +76,3 @@ foreach (var re in equation.SolveNt(x))
 >>> 1  2  1i
 ```
 
-Other features like plot are coming soon...

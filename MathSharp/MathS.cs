@@ -3,6 +3,8 @@ using MathSharp.Core.FromString;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Globalization;
+
 
 /*
  * MathS.Sin(x) - sine of an expression
@@ -41,11 +43,28 @@ namespace MathSharp
         public static Number e = 2.718281828459045235;
         public static Number i = new Number(0, 1);
         public static Number pi = 3.141592653589793;
-        
+        private static void InitOps()
+        {
+            // TODO
+            Sumf.Wakeup();
+            Minusf.Wakeup();
+            Mulf.Wakeup();
+            Divf.Wakeup();
+            Sinf.Wakeup();
+            Cosf.Wakeup();
+            Powf.Wakeup();
+            Logf.Wakeup();
+        }
         public static Entity FromString(string expr)
         {
+            InitOps();
             var lexer = new Lexer(expr);
             return Parser.Parse(lexer);
+        }
+        static MathS()
+        {
+            NumberFormatInfo nfi = new NumberFormatInfo();
+            nfi.NumberDecimalSeparator = ".";
         }
     }
 }

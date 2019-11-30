@@ -86,18 +86,23 @@ namespace MathSharp.Core.FromString
         public static Entity Parse(Lexer lexer)
         {
             var linearExpression = new List<Entity>();
-            var current = lexer.Current();
+            var current = lexer.Current;
             while (!lexer.EOF())
             {
                 linearExpression.Add(ParseAsVariable(lexer));
                 lexer.Next();
-                if (!lexer.EOF() && !Token.IsOperator(lexer.Current().Value))
+                if (lexer.EOF())
+                    break;
+                if ((lexer.Current.Type == TokenType.PARENTHESIS_CLOSE) || (SymbolProcessor.IsDelimiter(lexer.Current.Value)))
+                    break;
+                if (!lexer.EOF() && !Token.IsOperator(lexer.Current.Value))
                     throw new ParseException("Expected operator");
                 if (!lexer.EOF())
                 {
-                    linearExpression.Add(new OperatorEntity(SyntaxInfo.operatorNames[lexer.Current().Value[0]], SyntaxInfo.operatorPriorities[lexer.Current().Value[0]]));
+                    linearExpression.Add(new OperatorEntity(SyntaxInfo.operatorNames[lexer.Current.Value[0]], SyntaxInfo.operatorPriorities[lexer.Current.Value[0]]));
                     lexer.Next();
                 }
+
             }
             if (linearExpression.Count == 0)
                 throw new ParseException("Empty expression");
@@ -134,7 +139,7 @@ namespace MathSharp.Core.FromString
         private static Entity ParseAsVariable(Lexer lexer)
         {
             Entity e = null;
-            var current = lexer.Current();
+            var current = lexer.Current;
             if (current.Type == TokenType.PARENTHESIS_OPEN)
             {
                 e = ParseParenthesisExpression(lexer); // out of scope
@@ -150,6 +155,7 @@ namespace MathSharp.Core.FromString
             else if (current.Type == TokenType.FUNCTION)
             {
                 e = ParseFunctionExpression(lexer);
+                lexer.Prev();
             }
             else
             {
@@ -159,12 +165,12 @@ namespace MathSharp.Core.FromString
         }
         private static Entity ParseFunctionExpression(Lexer lexer)
         {
-            if (lexer.Current().Type != TokenType.FUNCTION)
+            if (lexer.Current.Type != TokenType.FUNCTION)
                 throw new ParseException("function expected");
 
-            var f = new FunctionEntity(lexer.Current().Value + "f");
+            var f = new FunctionEntity(lexer.Current.Value + "f");
             lexer.Next(); // `func` -> `(`
-            if (lexer.Current().Type == TokenType.PARENTHESIS_OPEN)
+            if (lexer.Current.Type != TokenType.PARENTHESIS_OPEN)
                 throw new ParseException("`(` expected after function name");
 
             f.children = ParseFunctionArguments(lexer);
@@ -174,22 +180,22 @@ namespace MathSharp.Core.FromString
         {
             var args = new List<Entity>();
 
-            if (lexer.Current().Type == TokenType.PARENTHESIS_OPEN)
+            if (lexer.Current.Type != TokenType.PARENTHESIS_OPEN)
                 throw new ParseException("`(` expected after function name");
             lexer.Next(); // `(` -> args ...
 
-            if (lexer.Current().Type == TokenType.PARENTHESIS_CLOSE)
+            if (lexer.Current.Type == TokenType.PARENTHESIS_CLOSE)
                 return args; // 0 arguments
 
             while (!lexer.EOF())
             {
                 args.Add(Parse(lexer));
-                if (lexer.Current().Type == TokenType.PARENTHESIS_CLOSE)
+                if (lexer.Current.Type == TokenType.PARENTHESIS_CLOSE)
                 {
                     lexer.Next(); // `)` -> ...
                     return args;
                 }
-                if (!SymbolProcessor.IsDelimiter(lexer.Current().Value))
+                if (!SymbolProcessor.IsDelimiter(lexer.Current.Value))
                     throw new ParseException("`,` expected between function arguments");
                 lexer.Next(); // `,` -> args ...
             }
@@ -197,13 +203,13 @@ namespace MathSharp.Core.FromString
         }
         private static Entity ParseParenthesisExpression(Lexer lexer)
         {
-            if (lexer.Current().Type == TokenType.PARENTHESIS_OPEN)
+            if (lexer.Current.Type != TokenType.PARENTHESIS_OPEN)
                 throw new ParseException("`(` expected");
             lexer.Next(); // `(` -> ...
 
             Entity e = Parse(lexer);
 
-            if (lexer.Current().Type == TokenType.PARENTHESIS_CLOSE)
+            if (lexer.Current.Type != TokenType.PARENTHESIS_CLOSE)
                 throw new ParseException("`)` expected");
 
             return e;

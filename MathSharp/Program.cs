@@ -12,8 +12,7 @@ namespace MathSharp
     {
         static void Main(string[] args)
         {
-            //var expr = MathS.FromString("a + b");
-            //Console.WriteLine(expr);
+
         }
     }
 }

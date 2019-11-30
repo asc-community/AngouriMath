@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Numerics;
 using System.Text;
 
@@ -47,14 +48,18 @@ namespace MathSharp.Core
             else
                 return b + "i";
         }
+        public static double ToDouble(string s)
+        {
+            return double.Parse(s, CultureInfo.InvariantCulture);
+        }
         public static Number Parse(string s)
         {
             if (s[s.Length - 1] == 'i')
             {
-                return new Number(0, Convert.ToDouble(s.Substring(0, s.Length - 1)));
+                return new Number(0, ToDouble(s.Substring(0, s.Length - 1)));
             }
             else
-                return Convert.ToDouble(s);
+                return ToDouble(s);
         }
 
         public static implicit operator Number(int num) => new Number(num);

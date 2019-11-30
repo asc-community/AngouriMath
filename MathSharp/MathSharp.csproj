@@ -14,9 +14,10 @@
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageTags>Math, csharp</PackageTags>
-    <Version>1.0.2</Version>
+    <Version>1.0.3</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/Angourisoft/MathS/master/icon.png</PackageIconUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Description>Enables to work with formulas built in the code or from string.</Description>
   </PropertyGroup>
 
   <ItemGroup>

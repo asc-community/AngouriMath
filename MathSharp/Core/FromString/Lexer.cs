@@ -25,10 +25,12 @@ namespace MathSharp.Core.FromString
         public Token(char s)
         {
             Value = s.ToString();
+            Type = TokenType.NONE;
         }
         public Token()
         {
             Value = "";
+            Type = TokenType.NONE;
         }
         public enum TokenType
         {
@@ -38,7 +40,8 @@ namespace MathSharp.Core.FromString
             SYMBOL,
             PARENTHESIS_OPEN,
             PARENTHESIS_CLOSE,
-            BRACE
+            BRACE,
+            NONE
         }
         public enum BraceType
         {
@@ -67,7 +70,7 @@ namespace MathSharp.Core.FromString
                     return BraceType.NONE;
             }
         }
-        public static Regex numberRegexp = new Regex(@"^-?(\d+(\.\d+)?)?i?$");
+        public static Regex numberRegexp = new Regex(@"^-?(\d+(\.(\d+)?)?)?i?$");
         public static Regex variableRegexp = new Regex(@"^[a-zA-Z]+$");
         public static bool IsNumber(string s)
         {
@@ -121,13 +124,20 @@ namespace MathSharp.Core.FromString
         {
             index++;
         }
+        public Token GlanceNext()
+        {
+            if (index >= tokens.Count)
+                return new Token('?');
+            else
+                return tokens[index + 1];
+        }
         public void Prev()
         {
             index = Math.Max(index - 1, 0);
         }
-        public Token Current()
+        public Token Current
         {
-            return tokens[index];
+            get => tokens[index];
         }
         public void ToBegin()
         {
@@ -147,6 +157,7 @@ namespace MathSharp.Core.FromString
                 }
                 if(Token.IsOperator(symbol.ToString()))
                 {
+                    tokens.Add(last);
                     tokens.Add(new Token(symbol));
                     last = new Token();
                     continue;
