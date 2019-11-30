@@ -15,7 +15,7 @@ namespace UnitTests
             var roots = eq.SolveNt(x);
             Assert.IsTrue(roots.Count == 2);
             var s = roots[0] + roots[1];
-            Assert.IsTrue(s.Eval() == 3);
+            Assert.IsTrue(s == 3);
         }
         [TestMethod]
         public void Test2()

@@ -120,4 +120,24 @@ namespace MathSharp.Core
             return Math.Abs(a) < 0.0000000000001;
         }
     }
+
+    public class NumberSet : List<Number>
+    {
+        internal NumberSet()
+        {
+
+        }
+        internal void Include(Number num)
+        {
+            var alreadyExists = false;
+            foreach (var elem in this)
+                if (elem == num)
+                {
+                    alreadyExists = true;
+                    break;
+                }
+            if (!alreadyExists)
+                this.Add(num);
+        }
+    }
 }

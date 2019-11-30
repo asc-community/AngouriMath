@@ -18,8 +18,8 @@ namespace MathSharp
         {
             Number prev = value;
             Func<NumberEntity, Number> f = value => this.Substitute(x, value).Eval().GetValue();
-            var dthis = this.Derive(x).Simplify();
-            Func<NumberEntity, Number> df = value => dthis.Substitute(x, value).Eval().GetValue();
+            Func<NumberEntity, Number> df = value => Derivative.Substitute(x, value).Eval().GetValue();
+            int minCheckIters = (int)Math.Sqrt(precision);
             for (int i = 0; i < precision; i++)
             {
                 if(i == precision - 1)
@@ -32,15 +32,18 @@ namespace MathSharp
                 {
                     throw new MathSException("Two or more variables in SolveNt is forbidden");
                 }
+                if (i > minCheckIters && prev == value)
+                    return value;
             }
             if (Number.Abs(prev - value) > 0.01)
                 return null;
             else
                 return value;
         }
-        public List<NumberEntity> SolveNt(VariableEntity v, Number from = null, Number to = null, Number stepCount = null, int precision = 30)
+        private Entity Derivative { set; get; }
+        public NumberSet SolveNt(VariableEntity v, Number from = null, Number to = null, Number stepCount = null, int precision = 30)
         {
-            var res = new List<NumberEntity>();
+            var res = new NumberSet();
             if (from == null)
                 from = new Number(-10, -10);
             if (to == null)
@@ -49,15 +52,16 @@ namespace MathSharp
             int yStep;
             if (stepCount == null)
             {
-                xStep = 10;
-                yStep = 10;
+                xStep = 5;
+                yStep = 3;
             }
             else
             {
                 xStep = (int)stepCount.Re;
                 yStep = (int)stepCount.Im;
             }
-            for(int x = 0; x < xStep; x++)
+            Derivative = this.Derive(v).Simplify();
+            for (int x = 0; x < xStep; x++)
                 for (int y = 0; y < yStep; y++)
                 {
                     double xShare = ((double)x) / xStep;
@@ -66,17 +70,7 @@ namespace MathSharp
                                            from.Im * yShare + to.Im * (1 - yShare));
                     var root = NewtonIter(v, value, precision);
                     if (root != null)     // TODO
-                    {
-                        var alreadyExists = false;
-                        foreach (var r in res)
-                            if (r == root)
-                            {
-                                alreadyExists = true;
-                                break;
-                            }
-                        if(!alreadyExists)
-                            res.Add(root);
-                    }
+                        res.Include(root);
                         
                 }
             return res;
