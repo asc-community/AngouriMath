@@ -12,7 +12,7 @@ namespace MathSharp
     {
         static void Main(string[] args)
         {
-
+            
         }
     }
 }
