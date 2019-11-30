@@ -70,8 +70,8 @@ namespace MathSharp.Core.FromString
                     return BraceType.NONE;
             }
         }
-        public static Regex numberRegexp = new Regex(@"^-?(\d+(\.(\d+)?)?)?i?$");
-        public static Regex variableRegexp = new Regex(@"^[a-zA-Z]+$");
+        public static readonly Regex numberRegexp = new Regex(@"^-?(\d+(\.(\d+)?)?)?i?$");
+        public static readonly Regex variableRegexp = new Regex(@"^[a-zA-Z]+$");
         public static bool IsNumber(string s)
         {
             return numberRegexp.IsMatch(s);
@@ -86,7 +86,7 @@ namespace MathSharp.Core.FromString
         }
         public override string ToString()
         {
-            return "{" + Value.ToString() + " | " + this.Type.ToString() + "}";
+            return "{" + Value + " | " + this.Type.ToString() + "}";
         }
         public void Seal()
         {
@@ -95,21 +95,31 @@ namespace MathSharp.Core.FromString
             else if (IsVariable(this.Value))
             {
                 if (SyntaxInfo.goodStringsForFunctions.ContainsKey(this.Value))
+                {
                     Type = TokenType.FUNCTION;
+                }
                 else
+                {
                     Type = TokenType.VARIABLE;
+                }
             }
             else if (this.Value.Length == 1 && BraceProcessor.parentheses.Contains(Token.GetBraceType(Value[0])))
+            {
                 Type = Token.GetBraceType(Value[0]) == BraceType.PARENTHESIS_OPEN ? TokenType.PARENTHESIS_OPEN : TokenType.PARENTHESIS_CLOSE;
+            }
             else if (GetBraceType(this.Value[0]) != BraceType.NONE)
+            {
                 Type = TokenType.BRACE;
+            }
             else
+            {
                 Type = TokenType.SYMBOL;
+            }
         }
     }
     public class Lexer
     {
-        private TokenList tokens;
+        private readonly TokenList tokens;
         private int index = 0;
         public void Seal()
         {

@@ -33,7 +33,7 @@ namespace MathSharp
     // Adding invoke table for eval
     public static partial class MathFunctions
     {
-        internal static EvalTable evalTable = new EvalTable();
+        internal static readonly EvalTable evalTable = new EvalTable();
 
         public static Entity InvokeEval(string typeName, List<Entity> args)
         {

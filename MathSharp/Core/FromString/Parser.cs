@@ -8,7 +8,7 @@ namespace MathSharp.Core.FromString
     using TokenType = Token.TokenType;
     public partial class Token
     {
-        public Entity root;
+        private Entity root;
         public List<Entity> children = new List<Entity>();
     }
     internal class SymbolProcessor
@@ -218,7 +218,9 @@ namespace MathSharp.Core.FromString
                     return args;
                 }
                 if (!SymbolProcessor.IsDelimiter(lexer.Current.Value))
+                {
                     throw new ParseException("`,` expected between function arguments");
+                }
                 lexer.Next(); // `,` -> args ...
             }
             throw new ParseException("EOF reached");

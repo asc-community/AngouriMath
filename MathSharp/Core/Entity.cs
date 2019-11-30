@@ -11,7 +11,7 @@ namespace MathSharp
     {
         public string Name { get; set; }
         public bool IsLeaf { get => children.Count == 0; }
-        public Entity(string name)
+        protected Entity(string name)
         {
             children = new List<Entity>();
             Name = name;
@@ -51,13 +51,17 @@ namespace MathSharp
         {
             if (a.GetType() != b.GetType())
                 return false;
-            if (a.Name != b.Name)
+            if (a is NumberEntity && b is NumberEntity)
+                return (a as NumberEntity).GetValue() == (b as NumberEntity).GetValue();
+            if ((a.Name != b.Name) || (a.children.Count() != b.children.Count()))
+            {
                 return false;
-            if (a.children.Count() != b.children.Count())
-                return false;
+            }
             for (int i = 0; i < a.children.Count; i++)
+            {
                 if (!(a.children[i] == b.children[i]))
                     return false;
+            }
             return true;
         }
         public static bool operator !=(Entity a, Entity b) => !(a == b);

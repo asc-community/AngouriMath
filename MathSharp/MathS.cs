@@ -26,23 +26,23 @@ namespace MathSharp
         public delegate VariableEntity VarFunc(string v);
         public delegate NumberEntity NumFunc(Number v);
 
-        public static OneArg Sin = Sinf.Hang;
-        public static OneArg Cos = Cosf.Hang;
-        public static TwoArg Log = Logf.Hang;
-        public static TwoArg Pow = Powf.Hang;
-        public static OneArg Sqrt = a => Powf.Hang(a, 0.5);
-        public static OneArg Sqr = a => Powf.Hang(a, 2);
-        public static OneArg Tan = a => MathS.Sin(a) / MathS.Cos(a);
-        public static OneArg Cotan = a => 1 / Tan(a);
-        public static OneArg Sec = a => 1 / Cos(a);
-        public static OneArg Cosec = a => 1 / Sin(a);
+        public static readonly OneArg Sin = Sinf.Hang;
+        public static readonly OneArg Cos = Cosf.Hang;
+        public static readonly TwoArg Log = Logf.Hang;
+        public static readonly TwoArg Pow = Powf.Hang;
+        public static readonly OneArg Sqrt = a => Powf.Hang(a, 0.5);
+        public static readonly OneArg Sqr = a => Powf.Hang(a, 2);
+        public static readonly OneArg Tan = a => MathS.Sin(a) / MathS.Cos(a);
+        public static readonly OneArg Cotan = a => 1 / Tan(a);
+        public static readonly OneArg Sec = a => 1 / Cos(a);
+        public static readonly OneArg Cosec = a => 1 / Sin(a);
         public static OneArg Ln => v => Logf.Hang(v, e);
-        public static VarFunc Var = v => new VariableEntity(v);
-        public static VarFunc Symbol = v => new VariableEntity(v);
-        public static NumFunc Num = v => new NumberEntity(v);
-        public static Number e = 2.718281828459045235;
-        public static Number i = new Number(0, 1);
-        public static Number pi = 3.141592653589793;
+        public static readonly VarFunc Var = v => new VariableEntity(v);
+        public static readonly VarFunc Symbol = v => new VariableEntity(v);
+        public static readonly NumFunc Num = v => new NumberEntity(v);
+        public static readonly Number e = 2.718281828459045235;
+        public static readonly Number i = new Number(0, 1);
+        public static readonly Number pi = 3.141592653589793;
         private static void InitOps()
         {
             // TODO

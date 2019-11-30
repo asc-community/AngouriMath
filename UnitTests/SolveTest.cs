@@ -23,8 +23,9 @@ namespace UnitTests
             var x = MathS.Var("x");
             var eq = MathS.Sqr(x) + 1;
             var roots = eq.SolveNt(x);
-            Assert.IsTrue(roots.Count == 1);
-            Assert.IsTrue(roots[0].Eval() == MathS.i);
+            Assert.IsTrue(roots.Count == 2);
+            Assert.IsTrue(roots[0] == MathS.i);
+            Assert.IsTrue(roots[1] == new Number(0, -1));
         }
     }
 }

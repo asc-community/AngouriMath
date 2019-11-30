@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -8,16 +8,17 @@
     <Copyright>Angourisoft</Copyright>
     <PackageProjectUrl>asc-community.org</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Angourisoft/MathS</RepositoryUrl>
-    <AssemblyVersion>0.0.1.0</AssemblyVersion>
-    <FileVersion>0.0.1.0</FileVersion>
+    <AssemblyVersion>0.0.5.0</AssemblyVersion>
+    <FileVersion>0.0.5.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-    <PackageTags>Math, csharp</PackageTags>
-    <Version>1.0.3</Version>
+    <PackageTags>Math, csharp, derivation, latex, calculator</PackageTags>
+    <Version>1.0.5</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/Angourisoft/MathS/master/icon.png</PackageIconUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Description>Enables to work with formulas built in the code or from string.</Description>
+    <Description>Enables to work with formulas built in the code or from string. Computing, derivating, latex rendering.</Description>
+    <PackageReleaseNotes>Dependencies removed</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

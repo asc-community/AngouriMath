@@ -22,7 +22,12 @@ namespace MathSharp.Core
             }
         }
         internal Complex value;
-        public Number(double Re, double Im = 0)
+        public Number(double Re)
+        {
+            this.Re = Re;
+            this.Im = 0;
+        }
+        public Number(double Re, double Im)
         {
             this.Re = Re;
             this.Im = Im;
@@ -37,16 +42,27 @@ namespace MathSharp.Core
         }
         public override string ToString()
         {
+            string res;
             string a = Re.ToString();
             if (Number.IsDoubleZero(Im))
             {
-                return a;
+                res = a;
             }
-            string b = Math.Abs(Im).ToString();
-            if (!Number.IsDoubleZero(Re))
-                return a + (Im < 0 ? " - " : " + ") + b + "i";
             else
-                return b + "i";
+            {
+                string b = Math.Abs(Im).ToString();
+                if (!Number.IsDoubleZero(Re))
+                    res = a + (Im < 0 ? " - " : " + ") + b + "i";
+                else if (Im == -1)
+                    res = "-i";
+                else if (Im == 1)
+                    res = "i";
+                else if (Im == 0)
+                    res = "0";
+                else
+                    res = (Im < 0 ? "-" : "") + b + "i";
+            }
+            return res.Replace(",", ".");
         }
         public static double ToDouble(string s)
         {
@@ -54,14 +70,22 @@ namespace MathSharp.Core
         }
         public static Number Parse(string s)
         {
-            if (s.Length == 1 && s == "i")
+            if (s == "-i")
+            {
+                return new Number(0, -1);
+            }
+            if (s == "i")
+            {
                 return new Number(0, 1);
+            }
             if (s[s.Length - 1] == 'i')
             {
                 return new Number(0, ToDouble(s.Substring(0, s.Length - 1)));
             }
             else
+            {
                 return ToDouble(s);
+            }
         }
 
         public static implicit operator Number(int num) => new Number(num);
