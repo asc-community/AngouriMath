@@ -54,6 +54,8 @@ namespace MathSharp.Core
         }
         public static Number Parse(string s)
         {
+            if (s.Length == 1 && s == "i")
+                return new Number(0, 1);
             if (s[s.Length - 1] == 'i')
             {
                 return new Number(0, ToDouble(s.Substring(0, s.Length - 1)));

@@ -46,7 +46,16 @@ namespace UnitTests
         public void Test8()
         {
             Assert.IsTrue(MathS.FromString("cos(sin(0))").Eval() == 1);
-
+        }
+        [TestMethod]
+        public void Test9()
+        {
+            Assert.IsTrue(MathS.FromString("2i + 2 * 2 - 1i").Eval() == new Number(4, 1));
+        }
+        [TestMethod]
+        public void Test10()
+        {
+            Assert.IsTrue(MathS.FromString("i^2").Eval() == -1);
         }
     }
 }

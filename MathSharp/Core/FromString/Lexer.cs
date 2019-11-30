@@ -127,9 +127,13 @@ namespace MathSharp.Core.FromString
         public Token GlanceNext()
         {
             if (index >= tokens.Count)
+            {
                 return new Token('?');
+            }
             else
+            {
                 return tokens[index + 1];
+            }
         }
         public void Prev()
         {
@@ -163,7 +167,9 @@ namespace MathSharp.Core.FromString
                     continue;
                 }
                 if (Token.IsNumber(last.Value + symbol) || Token.IsVariable(last.Value + symbol))
+                {
                     last.Value += symbol;
+                }
                 else
                 {
                     if (Token.GetBraceType(symbol) != Token.BraceType.NONE)

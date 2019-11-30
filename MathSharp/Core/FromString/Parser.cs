@@ -74,11 +74,15 @@ namespace MathSharp.Core.FromString
                         // otherwise is unreacheable.
                     }
                     else
+                    {
                         throw new ParseException("Brace error");
+                    }
                 }
             }
             else
+            {
                 braces.Add(symbol);
+            }
         }
     }
     public static class Parser
@@ -92,11 +96,17 @@ namespace MathSharp.Core.FromString
                 linearExpression.Add(ParseAsVariable(lexer));
                 lexer.Next();
                 if (lexer.EOF())
+                {
                     break;
+                }
                 if ((lexer.Current.Type == TokenType.PARENTHESIS_CLOSE) || (SymbolProcessor.IsDelimiter(lexer.Current.Value)))
-                    break;
+                { 
+                    break; 
+                }
                 if (!lexer.EOF() && !Token.IsOperator(lexer.Current.Value))
+                {
                     throw new ParseException("Expected operator");
+                }
                 if (!lexer.EOF())
                 {
                     linearExpression.Add(new OperatorEntity(SyntaxInfo.operatorNames[lexer.Current.Value[0]], SyntaxInfo.operatorPriorities[lexer.Current.Value[0]]));
@@ -105,10 +115,14 @@ namespace MathSharp.Core.FromString
 
             }
             if (linearExpression.Count == 0)
+            {
                 throw new ParseException("Empty expression");
-            if (linearExpression[linearExpression.Count - 1] is OperatorEntity && 
+            }
+            if (linearExpression[linearExpression.Count - 1] is OperatorEntity &&
                 linearExpression[linearExpression.Count - 1].IsLeaf) //check case `2 + 3 - `
+            {
                 throw new ParseException("Expected expression not to end with operator");
+            }
             return HangLinearExpression(linearExpression);
         }
         private static List<Entity> FindOperator(List<Entity> expr, string op, bool reversed = false)
@@ -133,7 +147,9 @@ namespace MathSharp.Core.FromString
             FindOperator(expr, "mulfdivf", reversed: false);
             FindOperator(expr, "sumfminusf", reversed: false);
             if (expr.Count != 1)
+            {
                 throw new ParseException("Tree is ambigious");
+            }
             return expr[0];
         }
         private static Entity ParseAsVariable(Lexer lexer)
@@ -166,12 +182,16 @@ namespace MathSharp.Core.FromString
         private static Entity ParseFunctionExpression(Lexer lexer)
         {
             if (lexer.Current.Type != TokenType.FUNCTION)
+            {
                 throw new ParseException("function expected");
+            }
 
             var f = new FunctionEntity(lexer.Current.Value + "f");
             lexer.Next(); // `func` -> `(`
             if (lexer.Current.Type != TokenType.PARENTHESIS_OPEN)
+            {
                 throw new ParseException("`(` expected after function name");
+            }
 
             f.children = ParseFunctionArguments(lexer);
             return f;
@@ -181,7 +201,9 @@ namespace MathSharp.Core.FromString
             var args = new List<Entity>();
 
             if (lexer.Current.Type != TokenType.PARENTHESIS_OPEN)
+            {
                 throw new ParseException("`(` expected after function name");
+            }
             lexer.Next(); // `(` -> args ...
 
             if (lexer.Current.Type == TokenType.PARENTHESIS_CLOSE)
