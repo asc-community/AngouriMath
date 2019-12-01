@@ -79,3 +79,31 @@ foreach (var re in equation.SolveNt(x))
     Console.Write(re.ToString() + "  ");
 >>> 1  2  1i
 ```
+
+### Full documentation
+
+#### Function list
+MathS.Sin(x)
+MathS.Cos(x)
+MathS.Log(num, base), 
+MathS.Pow(base, power)
+MathS.Sqrt(x) = MathS.Pow(x, 0.5)
+MathS.Sqr(x) = MathS.Pow(x, 2)
+MathS.Tan(x) = MathS.Sin(x) / MathS.Cos(x)
+MathS.Cotan(x) = 1 / MathS.Tan(x)
+MathS.Sec(x) = 1 / MathS.Cos(x)
+MathS.Cosec(x) = 1 / MathS.Sin(x)
+MathS.B(x) = x * MathS.Sin(x)
+MathS.B(x) = x * MathS.Cos(x)
+
+MathS.FromString(str) - returns Entity
+
+#### Entity methods
+expr.Derive(x) - derivation for variable x
+expr.Eval() - evaluation & simplification
+expr.Latexise() - render to latex
+expr.SolveNt(expr, from, to, stepCount, precision) - find roots assuming we are solving equation expr=0.
+The algorithm iterates on [from.Re; to.Re] for real part and on [from.Im; to.Im] for imaginary part.
+The higher stepCount is, the more roots the function can find
+Precision - if you get similar roots that you think are equal, you can increase this argument.
+You can also decrease MathS.EQUALITY_THRESHOLD which is responsible for comparing Numbers.

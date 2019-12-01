@@ -36,6 +36,8 @@ namespace MathSharp
         public static readonly OneArg Cotan = a => 1 / Tan(a);
         public static readonly OneArg Sec = a => 1 / Cos(a);
         public static readonly OneArg Cosec = a => 1 / Sin(a);
+        public static readonly OneArg B = a => a * Sin(a);
+        public static readonly OneArg TB = a => a * Cos(a);
         public static OneArg Ln => v => Logf.Hang(v, e);
         public static readonly VarFunc Var = v => new VariableEntity(v);
         public static readonly VarFunc Symbol = v => new VariableEntity(v);
@@ -60,7 +62,8 @@ namespace MathSharp
         {
             InitOps();
             var lexer = new Lexer(expr);
-            return Parser.Parse(lexer);
+            var res = Parser.Parse(lexer);
+            return SynonimFunctions.Synonimize(res);
         }
         static MathS()
         {

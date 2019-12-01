@@ -14,11 +14,11 @@
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageTags>Math, csharp, derivation, latex, calculator</PackageTags>
-    <Version>1.0.8</Version>
+    <Version>1.0.9</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/Angourisoft/MathS/master/icon.png</PackageIconUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>Enables to work with formulas built in the code or from string. Computing, derivating, latex rendering.</Description>
-    <PackageReleaseNotes>Bugs fixed &amp; performance improved</PackageReleaseNotes>
+    <PackageReleaseNotes>New functions added</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

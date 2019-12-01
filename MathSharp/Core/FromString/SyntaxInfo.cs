@@ -13,7 +13,15 @@ namespace MathSharp.Core.FromString
             { "sin", 1 },
             { "cos", 1 },
             { "log", 2 },
-            { "sqrt", 1 }
+            { "sqrt", 1 },
+            { "sqr", 1 },
+            { "ln", 1 },
+            { "tan", 1 },
+            { "cotan", 1 },
+            { "b", 1 },
+            { "tb", 1 },
+            { "sec", 1 },
+            { "cosec", 1 },
         };
         public static readonly Dictionary<char, string> operatorNames = new Dictionary<char, string>
         {
