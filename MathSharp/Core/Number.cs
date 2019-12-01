@@ -117,7 +117,7 @@ namespace MathSharp.Core
         public static double Abs(Number a) => Complex.Abs(a.value);
         public static bool IsDoubleZero(double a)
         {
-            return Math.Abs(a) < 0.0000000000001;
+            return Math.Abs(a) < MathS.EQUALITY_THRESHOLD;
         }
     }
 

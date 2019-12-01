@@ -35,5 +35,15 @@ namespace UnitTests
             var roots = eq.SolveNt(x);
             Assert.IsTrue(roots.Count == 0);
         }
+        [TestMethod]
+        public void Test4()
+        {
+            var x = MathS.Var("x");
+            var eq = x.Pow(2) + 2 * x + 1;
+            MathS.EQUALITY_THRESHOLD = 1.0e-6;
+            var roots = eq.SolveNt(x, precision: 100);
+            MathS.EQUALITY_THRESHOLD = 1.0e-11;
+            Assert.IsTrue(roots.Count == 1);
+        }
     }
 }
