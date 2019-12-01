@@ -94,7 +94,7 @@ foreach (var re in equation.SolveNt(x))
 <br>MathS.Sec(x) = 1 / MathS.Cos(x)
 <br>MathS.Cosec(x) = 1 / MathS.Sin(x)
 <br>MathS.B(x) = x * MathS.Sin(x)
-<br>MathS.B(x) = x * MathS.Cos(x)
+<br>MathS.TB(x) = x * MathS.Cos(x)
 
 <br>MathS.FromString(str) - returns Entity
 
