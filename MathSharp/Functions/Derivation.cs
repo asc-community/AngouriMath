@@ -94,7 +94,7 @@ namespace MathSharp
             if (b is NumberEntity)
             {
                 var cons = MathS.Num((b as NumberEntity).Value - 1);
-                var res = b * (a.Pow(cons));
+                var res = b * (a.Pow(cons)) * a.Derive(variable);
                 return res;
             }
             else if(a is NumberEntity)

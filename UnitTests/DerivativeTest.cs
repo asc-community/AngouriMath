@@ -44,5 +44,12 @@ namespace UnitTests
             var func = MathS.Pow(x, 4);
             Assert.IsTrue(func.Derive(x).Simplify() == 4 * MathS.Pow(x, 3));
         }
+        [TestMethod]
+        public void TestCusfunc()
+        {
+            var x = MathS.Var("x");
+            var func = MathS.Sin(x).Pow(2);
+            Assert.IsTrue(func.Derive(x).Simplify() == 2 * MathS.Sin(x) * MathS.Cos(x));
+        }
     }
 }

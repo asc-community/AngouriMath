@@ -12,8 +12,8 @@ namespace MathSharp
         {
             { "sqrtf", args => MathS.Pow(args[0], 0.5) },
             { "sqrf", args => MathS.Pow(args[0], 2) },
-            { "tanf", args => MathS.Sin(args[0]) / MathS.Cos(args[0]) },
-            { "cotanf", args => MathS.Cos(args[0]) / MathS.Sin(args[0]) },
+            { "tanf", args => MathS.Tan(args[0]) },
+            { "cotanf", args => MathS.Cotan(args[0]) },
             { "bf", args => args[0] * MathS.Sin(args[0]) },
             { "tbf", args => args[0] * MathS.Cos(args[0]) },
             { "lnf", args => MathS.Log(args[0], MathS.e) },
