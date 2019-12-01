@@ -69,7 +69,7 @@ namespace MathSharp
                     var value = new Number(from.Re * xShare + to.Re * (1 - xShare),
                                            from.Im * yShare + to.Im * (1 - yShare));
                     var root = NewtonIter(v, value, precision);
-                    if (root != null)     // TODO
+                    if (root != null)
                         res.Include(root);
                         
                 }

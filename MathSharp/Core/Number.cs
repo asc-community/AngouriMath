@@ -93,7 +93,7 @@ namespace MathSharp.Core
         public static Number operator +(Number a, Number b) => new Number(a.value + b.value);
         public static Number operator -(Number a, Number b) => new Number(a.value - b.value);
         public static Number operator *(Number a, Number b) => new Number(a.value * b.value);
-        public static Number operator /(Number a, Number b) => new Number(a.value / b.value);
+        public static Number operator /(Number a, Number b) => new Number(a.value / b.value);        
         public static bool operator ==(Number a, Number b)
         {
             if ( ((object)a) == null && ((object)b) == null )

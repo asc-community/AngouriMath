@@ -10,3 +10,5 @@
 /UnitTests/obj
 /MathSharp/.vs/MathSharp/DesignTimeBuild
 /MathSharp/bin/Debug
+/MathSharp/bin/Release
+/UnitTests/bin/Release/netcoreapp3.0
