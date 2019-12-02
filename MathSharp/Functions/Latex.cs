@@ -12,7 +12,7 @@ namespace MathSharp
         public string Latexise(bool parenthesesRequired)
         {
             if (IsLeaf)
-                return this.ToString();
+                return this is NumberEntity ? this.GetValue().ToString() : this.ToString();
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, children), parenthesesRequired);
         }
