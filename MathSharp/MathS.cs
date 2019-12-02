@@ -40,7 +40,7 @@ namespace MathSharp
         public static readonly Number e = 2.718281828459045235;
         public static readonly Number i = new Number(0, 1);
         public static readonly Number pi = 3.141592653589793;
-        public static double EQUALITY_THRESHOLD = 1.0e-11;
+        public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-11;
         public static Entity FromString(string expr)
         {
             var lexer = new Lexer(expr);

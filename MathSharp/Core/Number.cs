@@ -43,14 +43,14 @@ namespace MathSharp.Core
         public override string ToString()
         {
             string res;
-            string a = Re.ToString();
+            string a = Re.ToString(CultureInfo.InvariantCulture);
             if (Number.IsDoubleZero(Im))
             {
                 res = a;
             }
             else
             {
-                string b = Math.Abs(Im).ToString();
+                string b = Math.Abs(Im).ToString(CultureInfo.InvariantCulture);
                 if (!Number.IsDoubleZero(Re))
                     res = a + (Im < 0 ? " - " : " + ") + b + "i";
                 else if (Im == -1)

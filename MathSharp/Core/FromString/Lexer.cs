@@ -93,35 +93,35 @@ namespace MathSharp.Core.FromString
         }
         public TokenType GetCurrentType()
         {
-            TokenType Type;
+            TokenType type;
             if (this.Value == "")
                 return TokenType.NONE;
             if (IsNumber(this.Value))
-                Type = TokenType.NUMBER;
+                type = TokenType.NUMBER;
             else if (IsVariable(this.Value))
             {
                 if (SyntaxInfo.goodStringsForFunctions.ContainsKey(this.Value))
                 {
-                    Type = TokenType.FUNCTION;
+                    type = TokenType.FUNCTION;
                 }
                 else
                 {
-                    Type = TokenType.VARIABLE;
+                    type = TokenType.VARIABLE;
                 }
             }
             else if (this.Value.Length == 1 && BraceProcessor.parentheses.Contains(Token.GetBraceType(Value[0])))
             {
-                Type = Token.GetBraceType(Value[0]) == BraceType.PARENTHESIS_OPEN ? TokenType.PARENTHESIS_OPEN : TokenType.PARENTHESIS_CLOSE;
+                type = Token.GetBraceType(Value[0]) == BraceType.PARENTHESIS_OPEN ? TokenType.PARENTHESIS_OPEN : TokenType.PARENTHESIS_CLOSE;
             }
             else if (GetBraceType(this.Value[0]) != BraceType.NONE)
             {
-                Type = TokenType.BRACE;
+                type = TokenType.BRACE;
             }
             else
             {
-                Type = TokenType.SYMBOL;
+                type = TokenType.SYMBOL;
             }
-            return Type;
+            return type;
         }
         public void Seal()
         {
