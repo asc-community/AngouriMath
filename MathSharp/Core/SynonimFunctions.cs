@@ -22,16 +22,14 @@ namespace MathSharp
         };
         public static Entity Synonimize(Entity tree)
         {
+            for (int i = 0; i < tree.children.Count; i++)
+            {
+                tree.children[i] = Synonimize(tree.children[i]);
+            }
             if (SynFunctions.ContainsKey(tree.Name))
                 return SynFunctions[tree.Name](tree.children);
             else
-            {
-                for (int i = 0; i < tree.children.Count; i++)
-                {
-                    tree.children[i] = Synonimize(tree.children[i]);
-                }
                 return tree;
-            }
         }
     }
 }

@@ -25,5 +25,19 @@ namespace UnitTests
                 MathS.Cotan(x);
             Assert.IsTrue(expr == expected);
         }
+        [TestMethod]
+        public void TestInner()
+        {
+            var expr = MathS.FromString("sqrt(x + sqrt(x))");
+            var expected = MathS.Sqrt(x + MathS.Sqrt(x));
+            Assert.IsTrue(expr == expected);
+        }
+        [TestMethod]
+        public void TestInnerComplex()
+        {
+            var expr = MathS.FromString("cotan(x + tan(x))");
+            var expected = MathS.Cotan(x + MathS.Tan(x));
+            Assert.IsTrue(expr == expected);
+        }
     }
 }
