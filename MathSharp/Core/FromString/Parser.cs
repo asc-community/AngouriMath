@@ -14,13 +14,11 @@ namespace MathSharp.Core.FromString
     {
         public static bool IsOperator(char s)
         {
-            // TODO
             return SyntaxInfo.operatorNames.ContainsKey(s);
         }
         public static bool IsDelimiter(string s)
         {
-            // TODO
-            return s == ",";
+            return s == Const.ARGUMENT_DELIMITER;
         }
     }
     internal class BraceProcessor

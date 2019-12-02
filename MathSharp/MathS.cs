@@ -19,13 +19,8 @@ using System.Globalization;
 
 namespace MathSharp
 {
-    public class MathS
+    public static partial class MathS
     {
-        public delegate Entity OneArg(Entity a);
-        public delegate Entity TwoArg(Entity a, Entity n);
-        public delegate VariableEntity VarFunc(string v);
-        public delegate NumberEntity NumFunc(Number v);
-
         public static readonly OneArg Sin = Sinf.Hang;
         public static readonly OneArg Cos = Cosf.Hang;
         public static readonly TwoArg Log = Logf.Hang;
@@ -46,29 +41,11 @@ namespace MathSharp
         public static readonly Number i = new Number(0, 1);
         public static readonly Number pi = 3.141592653589793;
         public static double EQUALITY_THRESHOLD = 1.0e-11;
-        private static void InitOps()
-        {
-            // TODO
-            Sumf.Wakeup();
-            Minusf.Wakeup();
-            Mulf.Wakeup();
-            Divf.Wakeup();
-            Sinf.Wakeup();
-            Cosf.Wakeup();
-            Powf.Wakeup();
-            Logf.Wakeup();
-        }
         public static Entity FromString(string expr)
         {
-            InitOps();
             var lexer = new Lexer(expr);
             var res = Parser.Parse(lexer);
             return SynonimFunctions.Synonimize(res);
-        }
-        static MathS()
-        {
-            NumberFormatInfo nfi = new NumberFormatInfo();
-            nfi.NumberDecimalSeparator = ".";
         }
     }
 }

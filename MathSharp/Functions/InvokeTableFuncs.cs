@@ -1,9 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Globalization;
+using MathSharp.Core;
 
 namespace MathSharp
 {
+    public static partial class MathS
+    {
+        public delegate Entity OneArg(Entity a);
+        public delegate Entity TwoArg(Entity a, Entity n);
+        public delegate VariableEntity VarFunc(string v);
+        public delegate NumberEntity NumFunc(Number v);
+        static MathS()
+        {
+            NumberFormatInfo nfi = new NumberFormatInfo();
+            nfi.NumberDecimalSeparator = ".";
+            Sumf.Wakeup();
+            Minusf.Wakeup();
+            Mulf.Wakeup();
+            Divf.Wakeup();
+            Powf.Wakeup();
+            Sinf.Wakeup();
+            Cosf.Wakeup();
+            Logf.Wakeup();
+        }
+    }
     public static partial class Sumf
     {
         public static void Wakeup() { }

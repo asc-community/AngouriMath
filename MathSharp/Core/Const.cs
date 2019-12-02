@@ -14,5 +14,6 @@ namespace MathSharp
         public static readonly int PRIOR_FUNC = 8;
         public static readonly int PRIOR_VAR = 10;
         public static readonly int PRIOR_NUM = 2;
+        public static readonly string ARGUMENT_DELIMITER = ",";
     }
 }

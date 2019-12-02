@@ -32,7 +32,6 @@ namespace MathSharp
         }
     }
 
-    // TODO
     public static partial class Sumf
     {
         public static string Latex(List<Entity> args)
