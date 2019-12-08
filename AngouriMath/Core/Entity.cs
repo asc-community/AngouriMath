@@ -1,11 +1,11 @@
-﻿using MathSharp.Core;
+﻿using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MathSharp
+namespace AngouriMath
 {
     public abstract partial class Entity
     {

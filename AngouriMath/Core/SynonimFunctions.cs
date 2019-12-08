@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MathSharp
+namespace AngouriMath
 {
     using FuncTable = Dictionary<string, Func<List<Entity>, Entity>>;
     using SynTable = Dictionary<string, string>;

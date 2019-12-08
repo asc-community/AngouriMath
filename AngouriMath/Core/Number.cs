@@ -4,7 +4,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Text;
 
-namespace MathSharp.Core
+namespace AngouriMath.Core
 {
     public class Number
     {
@@ -109,6 +109,10 @@ namespace MathSharp.Core
             if (b == null)
                 return !double.IsNaN(a.Re) && !double.IsNaN(a.Im);
             return !(a == b);
+        }
+        public bool IsComplex()
+        {
+            return !Number.IsDoubleZero(Im);
         }
         public static Number Pow(Number a, Number b) => new Number(Complex.Pow(a.value, b.value));
         public static Number Log(Number a, Number b) => new Number(Complex.Log(a.value, b.Re));

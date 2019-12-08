@@ -1,6 +1,6 @@
-﻿using MathSharp;
-using MathSharp.Core;
-using MathSharp.Core.FromString;
+﻿using AngouriMath;
+using AngouriMath.Core;
+using AngouriMath.Core.FromString;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests

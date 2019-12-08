@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <Authors>Angourisoft</Authors>
+    <Company>Angourisoft</Company>
+    <Copyright>Angourisoft</Copyright>
+    <PackageProjectUrl>asc-community.org</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/Angourisoft/MathS</RepositoryUrl>
+    <AssemblyVersion>0.0.11.0</AssemblyVersion>
+    <FileVersion>0.0.11.0</FileVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression></PackageLicenseExpression>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <PackageTags>Math, csharp, derivation, latex, calculator, parse</PackageTags>
+    <Version>1.0.11</Version>
+    <PackageIconUrl>https://raw.githubusercontent.com/Angourisoft/MathS/master/icon.png</PackageIconUrl>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Description>Enables to work with formulas built in the code or from string. Computing, derivating, latex rendering.</Description>
+    <PackageReleaseNotes>Bug related to recurrent calls of synonimical functions (for example, sqrt(sqrt(x))) fixed</PackageReleaseNotes>
+    <PackageId>AngouriMath</PackageId>
+    <Product>AngouriMath</Product>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
+
+</Project>

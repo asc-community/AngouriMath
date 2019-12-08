@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace MathSharp.Core.FromString
+namespace AngouriMath.Core.FromString
 {
     public class TokenList : List<Token>
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MathSharp.Core.FromString
+namespace AngouriMath.Core.FromString
 {
     public static class SyntaxInfo
     {

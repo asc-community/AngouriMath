@@ -1,5 +1,5 @@
-﻿using MathSharp;
-using MathSharp.Core;
+﻿using AngouriMath;
+using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests

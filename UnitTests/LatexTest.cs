@@ -1,5 +1,5 @@
-﻿using MathSharp;
-using MathSharp.Core;
+﻿using AngouriMath;
+using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests
@@ -31,7 +31,7 @@ namespace UnitTests
         [TestMethod]
         public void TestM1()
         {
-            Assert.AreEqual(MathS.Num(-1).Latexise(), "-1");
+            Assert.AreEqual(MathS.Num(-1).ToString(), "-1");
         }
         [TestMethod]
         public void TestMi()

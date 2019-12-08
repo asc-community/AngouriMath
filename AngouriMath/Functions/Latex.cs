@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace MathSharp
+namespace AngouriMath
 {
     using LatexTable = Dictionary<string, Func<List<Entity>, string>>;
 

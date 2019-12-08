@@ -1,5 +1,5 @@
-﻿using MathSharp;
-using MathSharp.Core;
+﻿using AngouriMath;
+using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests
@@ -35,13 +35,13 @@ namespace UnitTests
         public void Test5()
         {
             Assert.IsTrue(MathS.Num(1).ToString() == "1");
-            Assert.IsTrue(MathS.Num(-1).ToString() == "(-1)");
+            Assert.IsTrue(MathS.Num(-1).ToString() == "-1");
         }
         [TestMethod]
         public void Test6()
         {
-            Assert.IsTrue(MathS.Num(MathS.i).ToString() == "i");
-            Assert.IsTrue(MathS.Num(-1 * MathS.i).Eval().ToString() == "(-i)");
+            Assert.IsTrue(MathS.i.ToString() == "i");
+            Assert.IsTrue((-1 * MathS.i).ToString() == "-i");
         }
     }
 }

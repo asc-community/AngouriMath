@@ -1,5 +1,5 @@
-﻿using MathSharp;
-using MathSharp.Core;
+﻿using AngouriMath;
+using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests
@@ -31,7 +31,7 @@ namespace UnitTests
         public void Test3()
         {
             var x = MathS.Var("x");
-            var eq = MathS.Num(1);
+            var eq = new NumberEntity(1);
             var roots = eq.SolveNt(x);
             Assert.IsTrue(roots.Count == 0);
         }

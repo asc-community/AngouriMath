@@ -12,3 +12,6 @@
 /MathSharp/bin/Debug
 /MathSharp/bin/Release
 /UnitTests/bin/Release/netcoreapp3.0
+/AngouriMath/.vs
+/AngouriMath/bin
+/AngouriMath/obj
