@@ -2,8 +2,8 @@
 
 Nuget: https://www.nuget.org/packages/MathSharp
 
-### Math#
-Open-source Math engine for ASC
+### AngouriMath
+AngouriMath is an open-source library that enables to work with non-linear multi-variable expressions. Its functionality includes derivation, variable substitution, equation solving, and some more.
 
 #### Use as a simple calculator
 ```cs
