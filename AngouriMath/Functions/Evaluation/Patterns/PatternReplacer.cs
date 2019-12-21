@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AngouriMath.Core;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -32,9 +33,11 @@ namespace AngouriMath
                 //throw new InvalidOperationException("You need an instance of Pattern to call Match()");
                 return this == tree;
             if (PatternType == PatType.COMMON)
-                return true;
+                return (this as Pattern).EqFits(tree) != null;
             if (!PatternMatches(this, tree))
                 return false;
+            if (PatternType == PatType.FUNCTION && PatternNumber != -1)
+                return (this as Pattern).EqFits(tree) != null;
             if (Children.Count != tree.Children.Count)
                 return false;
             for (int i = 0; i < Children.Count; i++)
@@ -49,7 +52,7 @@ namespace AngouriMath
             foreach(var child in Children)
             {
                 var res = child.FindSubtree(pattern);
-                if (!(res == null))
+                if (res != null)
                     return res;
             }
             return null;
@@ -125,12 +128,19 @@ namespace AngouriMath
                 return this;
             if (keys.ContainsKey(PatternNumber))
                 return keys[PatternNumber];
+            if (PatternType == PatType.NUMBER)
+                return new NumberEntity(Number.Parse(Name));
+            if (PatternType == PatType.VARIABLE)
+                return new VariableEntity(Name);
             var newChildren = new List<Entity>();
             foreach (var child in Children)
                 newChildren.Add((child as Pattern).BuildTree(keys));
-            Entity res;
             if (PatternType == PatType.FUNCTION)
-                res = new FunctionEntity(Name);
+            {
+                var res = new FunctionEntity(Name);
+                res.Children = newChildren;
+                return res;
+            }
             else if (PatternType == PatType.OPERATOR)
                 switch (Name)
                 {
@@ -142,8 +152,10 @@ namespace AngouriMath
                     case "logf": return MathS.Log(newChildren[0], newChildren[1]);
                     case "sinf": return MathS.Sin(newChildren[0]);
                     case "cosf": return MathS.Cos(newChildren[0]);
+                    default: return null;
                 }
-            return null;
+            else
+                return null;
         }
     }
 
@@ -199,7 +211,7 @@ namespace AngouriMath
         internal static Entity Replace(Entity source)
         {
             var res = source.DeepCopy();
-            foreach (var pair in Patterns.patterns)
+            foreach (var pair in Patterns.rules)
                 while (res.FindSubtree(pair.Key) != null)
                     res = ReplaceOne(res, pair.Key, pair.Value);
             return res;

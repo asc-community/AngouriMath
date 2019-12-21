@@ -49,7 +49,7 @@ namespace UnitTests
         {
             var x = MathS.Var("x");
             var func = MathS.Sin(x).Pow(2);
-            Assert.IsTrue(func.Derive(x).Simplify() == 2 * MathS.Sin(x) * MathS.Cos(x));
+            Assert.IsTrue(func.Derive(x).Simplify() == MathS.Sin(2 * x));
         }
     }
 }

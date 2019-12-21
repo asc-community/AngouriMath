@@ -59,15 +59,45 @@ namespace UnitTests
         {
             var x = MathS.Var("x");
             var expr = MathS.Pow(x * 4, 3);
-            Assert.IsTrue(expr.Simplify() == 81 * MathS.Pow(x, 4));
+            Assert.IsTrue(expr.Simplify() == 64 * MathS.Pow(x, 3));
         }
         [TestMethod]
         public void TestPatt2()
         {
             var x = MathS.Var("x");
             var y = MathS.Var("y");
-            var expr = (MathS.Sqr(MathS.Sin(x + 2 * y)) + MathS.Sqr(MathS.Cos(x + 2 * y))) / (2 * MathS.Cos(x - y) * MathS.Sin(x - y) + 1);
-            Assert.IsTrue(expr.Simplify() == 81 * MathS.Pow(x, 4));
+            var expr = (MathS.Sqr(MathS.Sin(x + 2 * y)) + MathS.Sqr(MathS.Cos(x + 2 * y))) / (2 * MathS.Sin(x - y) * MathS.Cos(x - y) + 1);
+            Assert.IsTrue(expr.Simplify() == 1 / (MathS.Sin(2 * (x - y)) + 1));
+        }
+        [TestMethod]
+        public void TestPatt3()
+        {
+            var x = MathS.Var("x");
+            var y = MathS.Var("y");
+            var expr = (x - y) * (x + y);
+            Assert.IsTrue(expr.Simplify() == MathS.Sqr(x) - MathS.Sqr(y));
+        }
+        [TestMethod]
+        public void TestPatt4()
+        {
+            var x = MathS.Var("x");
+            var y = MathS.Var("y");
+            var expr = (x - y) * (x + y) / (x * x - y * y);
+            Assert.IsTrue(expr.Simplify() == 1);
+        }
+        [TestMethod]
+        public void TestPatt5()
+        {
+            var x = MathS.Var("x");
+            var expr = (x + 3) * (3 / (x + 3));
+            Assert.IsTrue(expr.Simplify() == 3);
+        }
+        [TestMethod]
+        public void TestPatt6()
+        {
+            var x = MathS.Var("x");
+            var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
+            Assert.IsTrue(expr.Simplify() == 3);
         }
     }
 }

@@ -14,11 +14,8 @@ namespace AngouriMath
         {
             var x = MathS.Var("x");
             var y = MathS.Var("y");
-            var expr = (MathS.Sqr(MathS.Sin(x + 2 * y)) + MathS.Sqr(MathS.Cos(x + 2 * y))) / (MathS.Sin(x - y) * MathS.Cos(x - y) + 1);
-            Console.WriteLine(expr);
-            Console.WriteLine();
+            var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
             Console.WriteLine(expr.Simplify());
-            
         }
     }
 }
