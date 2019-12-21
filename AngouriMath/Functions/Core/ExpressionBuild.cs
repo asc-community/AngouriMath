@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 /*
- * The main file for building an expression tree of Math#
+ * The main file for building an expression tree of AngouriMath
  * Here we define function Hang for each math function which replaces a node A with a node C and its children A and B
  * However, nothing interesting for users
  */

@@ -20,7 +20,9 @@ namespace AngouriMath
     {
         public Entity Simplify()
         {
-            return PatternReplacer.Replace(this).InnerSimplify();
+            var stage1 = this.InnerSimplify();
+            var stage2 = PatternReplacer.Replace(stage1);
+            return stage2.InnerSimplify();
         }
         public Entity InnerSimplify()
         {

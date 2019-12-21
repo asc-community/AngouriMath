@@ -19,7 +19,12 @@ namespace AngouriMath
         public string Stringize(bool parenthesesRequired)
         {
             if (IsLeaf)
-                return this.Name.Length == 0 || this.Name[0] != '-' ? this.Name : "(" + this.Name + ")";
+            {
+                if (!(this is Pattern))
+                    return this.Name.Length == 0 || this.Name[0] != '-' ? this.Name : "(" + this.Name + ")";
+                else
+                    return "{ " + PatternNumber + " : " + PatternType + " }";
+            }
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeStringize(Name, Children), parenthesesRequired);
         }

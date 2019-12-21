@@ -16,22 +16,22 @@ namespace AngouriMath
             OPERATOR
         }
         internal int PatternNumber { get; set; }
-        internal PatType Type { get; set; }
+        internal PatType PatternType { get; set; }
         internal static bool PatternMatches(Entity pattern, Entity tree)
         {
-            if (!( pattern.Type == PatType.NUMBER && tree is NumberEntity ||
-                   pattern.Type == PatType.FUNCTION && tree is FunctionEntity ||
-                   pattern.Type == PatType.OPERATOR && tree is OperatorEntity ||
-                   pattern.Type == PatType.VARIABLE && tree is VariableEntity))
+            if (!( pattern.PatternType == PatType.NUMBER && tree is NumberEntity ||
+                   pattern.PatternType == PatType.FUNCTION && tree is FunctionEntity ||
+                   pattern.PatternType == PatType.OPERATOR && tree is OperatorEntity ||
+                   pattern.PatternType == PatType.VARIABLE && tree is VariableEntity))
                 return false;
             return pattern.Name == "" || pattern.Name == tree.Name;
         }
         public bool Match(Entity tree)
         {
-            if (this.Type == PatType.NONE)
+            if (this.PatternType == PatType.NONE)
                 //throw new InvalidOperationException("You need an instance of Pattern to call Match()");
                 return this == tree;
-            if (Type == PatType.COMMON)
+            if (PatternType == PatType.COMMON)
                 return true;
             if (!PatternMatches(this, tree))
                 return false;
@@ -129,9 +129,9 @@ namespace AngouriMath
             foreach (var child in Children)
                 newChildren.Add((child as Pattern).BuildTree(keys));
             Entity res;
-            if (Type == PatType.FUNCTION)
+            if (PatternType == PatType.FUNCTION)
                 res = new FunctionEntity(Name);
-            else if (Type == PatType.OPERATOR)
+            else if (PatternType == PatType.OPERATOR)
                 switch (Name)
                 {
                     case "sumf": return newChildren[0] + newChildren[1];
@@ -152,7 +152,7 @@ namespace AngouriMath
     {
         public Pattern(int num, PatType type, string name="") : base(name) {
             PatternNumber = num;
-            Type = type;
+            PatternType = type;
         }
         internal Dictionary<int, Entity> EqFits(Entity tree)
         {
