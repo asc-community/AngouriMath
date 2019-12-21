@@ -10,13 +10,13 @@ namespace AngouriMath
     public abstract partial class Entity
     {
         public string Name { get; set; }
-        public bool IsLeaf { get => children.Count == 0; }
+        public bool IsLeaf { get => Children.Count == 0; }
         protected Entity(string name)
         {
-            children = new List<Entity>();
+            Children = new List<Entity>();
             Name = name;
         }
-        public List<Entity> children { get; internal set; }
+        public List<Entity> Children { get; internal set; }
 
         public Entity Copy()
         {
@@ -36,9 +36,9 @@ namespace AngouriMath
         public Entity DeepCopy()
         {
             Entity res = Copy();
-            foreach (var child in children)
+            foreach (var child in Children)
             {
-                res.children.Add(child.DeepCopy());
+                res.Children.Add(child.DeepCopy());
             }
             return res;
         }
@@ -49,17 +49,23 @@ namespace AngouriMath
 
         public static bool operator ==(Entity a, Entity b)
         {
+            var obj1 = (object)a;
+            var obj2 = (object)b;
+            if (obj1 == null && obj2 == null)
+                return true;
+            if (obj1 == null || obj2 == null)
+                return false;
             if (a.GetType() != b.GetType())
                 return false;
             if (a is NumberEntity && b is NumberEntity)
                 return (a as NumberEntity).GetValue() == (b as NumberEntity).GetValue();
-            if ((a.Name != b.Name) || (a.children.Count() != b.children.Count()))
+            if ((a.Name != b.Name) || (a.Children.Count() != b.Children.Count()))
             {
                 return false;
             }
-            for (int i = 0; i < a.children.Count; i++)
+            for (int i = 0; i < a.Children.Count; i++)
             {
-                if (!(a.children[i] == b.children[i]))
+                if (!(a.Children[i] == b.Children[i]))
                     return false;
             }
             return true;
@@ -81,9 +87,6 @@ namespace AngouriMath
     {
         public VariableEntity(string name) : base(name) => Priority = Const.PRIOR_VAR;
     }
-
-    
-
     public class OperatorEntity : Entity
     {
         public OperatorEntity(string name, int priority) : base(name) {

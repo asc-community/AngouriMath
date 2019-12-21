@@ -71,7 +71,6 @@ namespace AngouriMath
                     var root = NewtonIter(v, value, precision);
                     if (root != null)
                         res.Include(root);
-                        
                 }
             return res;
         }

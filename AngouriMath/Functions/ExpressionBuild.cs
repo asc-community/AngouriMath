@@ -17,8 +17,8 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("sumf", Const.PRIOR_SUM);
-            res.children.Add(a);
-            res.children.Add(b);
+            res.Children.Add(a);
+            res.Children.Add(b);
             return res;
         }
     }
@@ -28,8 +28,8 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("minusf", Const.PRIOR_MINUS);
-            res.children.Add(a);
-            res.children.Add(b);
+            res.Children.Add(a);
+            res.Children.Add(b);
             return res;
         }
     }
@@ -39,19 +39,18 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("mulf", Const.PRIOR_MUL);
-            res.children.Add(a);
-            res.children.Add(b);
+            res.Children.Add(a);
+            res.Children.Add(b);
             return res;
         }
     }
-
     public static partial class Divf
     {
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("divf", Const.PRIOR_DIV);
-            res.children.Add(a);
-            res.children.Add(b);
+            res.Children.Add(a);
+            res.Children.Add(b);
             return res;
         }
     }
@@ -60,8 +59,8 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("powf", Const.PRIOR_POW);
-            res.children.Add(a);
-            res.children.Add(b);
+            res.Children.Add(a);
+            res.Children.Add(b);
             return res;
         }
     }
@@ -71,7 +70,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("sinf");
-            res.children.Add(a);
+            res.Children.Add(a);
             return res;
         }
     }
@@ -81,7 +80,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("cosf");
-            res.children.Add(a);
+            res.Children.Add(a);
             return res;
         }
     }
@@ -91,8 +90,8 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity n)
         {
             var res = new FunctionEntity("logf");
-            res.children.Add(a);
-            res.children.Add(n);
+            res.Children.Add(a);
+            res.Children.Add(n);
             return res;
         }
     }

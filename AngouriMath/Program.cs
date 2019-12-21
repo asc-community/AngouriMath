@@ -12,7 +12,10 @@ namespace AngouriMath
     {
         static void Main(string[] args)
         {
-            var a = MathS.Sqr(MathS.i);
+            var x = MathS.Var("x");
+            var expr = (x + 1) / ((x + 2) / (x + 3)) + (MathS.Sqr(MathS.Cos(x + 3)) + MathS.Sqr(MathS.Sin(x + 3)));
+            Console.WriteLine(expr);
+            Console.WriteLine(expr.Simplify());
         }
     }
 }

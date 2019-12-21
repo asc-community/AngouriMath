@@ -19,7 +19,7 @@ namespace AngouriMath
                     return new NumberEntity(0);
             }
             else
-                return MathFunctions.InvokeDerive(Name, children, x);
+                return MathFunctions.InvokeDerive(Name, Children, x);
         }
     }
 

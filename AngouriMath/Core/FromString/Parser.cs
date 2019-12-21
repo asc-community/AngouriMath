@@ -129,8 +129,8 @@ namespace AngouriMath.Core.FromString
                 var id = reversed ? expr.Count - i - 1 : i;
                 if(expr[id].IsLeaf && expr[id] is OperatorEntity && op.Contains(expr[id].Name))
                 {
-                    expr[id].children.Add(expr[id - 1]);
-                    expr[id].children.Add(expr[id + 1]);
+                    expr[id].Children.Add(expr[id - 1]);
+                    expr[id].Children.Add(expr[id + 1]);
                     expr.RemoveAt(id + 1);
                     expr.RemoveAt(id - 1);
                     i--;
@@ -190,7 +190,7 @@ namespace AngouriMath.Core.FromString
                 throw new ParseException("`(` expected after function name");
             }
 
-            f.children = ParseFunctionArguments(lexer);
+            f.Children = ParseFunctionArguments(lexer);
             return f;
         }
         private static List<Entity> ParseFunctionArguments(Lexer lexer)

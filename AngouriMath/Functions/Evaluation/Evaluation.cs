@@ -20,12 +20,16 @@ namespace AngouriMath
     {
         public Entity Simplify()
         {
+            return PatternReplacer.Replace(this).InnerSimplify();
+        }
+        public Entity InnerSimplify()
+        {
             if (IsLeaf)
             {
                 return this;
             }
             else
-                return MathFunctions.InvokeEval(Name, children);
+                return MathFunctions.InvokeEval(Name, Children);
         }
         public Entity Eval() => Simplify();
     }
@@ -61,8 +65,8 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].Simplify();
-            var r2 = args[1].Simplify();
+            var r1 = args[0].InnerSimplify();
+            var r2 = args[1].InnerSimplify();
             args = new List<Entity> { r1, r2 };
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity((r1 as NumberEntity).Value + (r2 as NumberEntity).Value);
@@ -78,8 +82,8 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].Simplify();
-            var r2 = args[1].Simplify();
+            var r1 = args[0].InnerSimplify();
+            var r2 = args[1].InnerSimplify();
             if (r1 is NumberEntity && r2 is NumberEntity)
             {
                 return new NumberEntity((r1 as NumberEntity).Value - (r2 as NumberEntity).Value);
@@ -103,8 +107,8 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].Simplify();
-            var r2 = args[1].Simplify();
+            var r1 = args[0].InnerSimplify();
+            var r2 = args[1].InnerSimplify();
             args = new List<Entity> { r1, r2 };
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity((r1 as NumberEntity).Value * (r2 as NumberEntity).Value);
@@ -122,8 +126,8 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].Simplify();
-            var r2 = args[1].Simplify();
+            var r1 = args[0].InnerSimplify();
+            var r2 = args[1].InnerSimplify();
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity((r1 as NumberEntity).Value / (r2 as NumberEntity).Value);
             else
@@ -140,8 +144,8 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].Simplify();
-            var r2 = args[1].Simplify();
+            var r1 = args[0].InnerSimplify();
+            var r2 = args[1].InnerSimplify();
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity(Number.Pow((r1 as NumberEntity).Value, (r2 as NumberEntity).Value));
             else
@@ -160,7 +164,7 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].Simplify();
+            var r = args[0].InnerSimplify();
             if (r is NumberEntity)
                 return new NumberEntity(Number.Sin((r as NumberEntity).Value));
             else
@@ -172,7 +176,7 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].Simplify();
+            var r = args[0].InnerSimplify();
             if (r is NumberEntity)
                 return new NumberEntity(Number.Cos((r as NumberEntity).Value));
             else
@@ -185,8 +189,8 @@ namespace AngouriMath
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r = args[0].Simplify();
-            var n = args[1].Simplify();
+            var r = args[0].InnerSimplify();
+            var n = args[1].InnerSimplify();
             args = new List<Entity> { r, n };
             if (r is NumberEntity && n is NumberEntity)
                 return new NumberEntity(Number.Log((r as NumberEntity).Value, (n as NumberEntity).Value));

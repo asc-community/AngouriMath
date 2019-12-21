@@ -22,12 +22,12 @@ namespace AngouriMath
         };
         public static Entity Synonimize(Entity tree)
         {
-            for (int i = 0; i < tree.children.Count; i++)
+            for (int i = 0; i < tree.Children.Count; i++)
             {
-                tree.children[i] = Synonimize(tree.children[i]);
+                tree.Children[i] = Synonimize(tree.Children[i]);
             }
             if (SynFunctions.ContainsKey(tree.Name))
-                return SynFunctions[tree.Name](tree.children);
+                return SynFunctions[tree.Name](tree.Children);
             else
                 return tree;
         }
