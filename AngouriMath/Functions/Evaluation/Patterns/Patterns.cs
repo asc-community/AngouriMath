@@ -8,18 +8,18 @@ namespace AngouriMath
     using PatType = Entity.PatType;
     internal class Patterns
     {
-        static Pattern any1 = new Pattern(0, PatType.COMMON);
-        static Pattern any2 = new Pattern(1, PatType.COMMON);
-        static Pattern any3 = new Pattern(2, PatType.COMMON);
-        static Pattern const1 = new Pattern(3, PatType.NUMBER);
-        static Pattern const2 = new Pattern(4, PatType.NUMBER);
-        static Pattern const3 = new Pattern(5, PatType.NUMBER);
-        static Pattern var1 = new Pattern(6, PatType.VARIABLE);
-        static Pattern var2 = new Pattern(7, PatType.VARIABLE);
-        static Pattern var3 = new Pattern(8, PatType.VARIABLE);
-        static Pattern func1 = new Pattern(9, PatType.FUNCTION);
-        static Pattern func2 = new Pattern(10, PatType.FUNCTION);
-        static Pattern func3 = new Pattern(11, PatType.FUNCTION);
+        static readonly Pattern any1 = new Pattern(0, PatType.COMMON);
+        static readonly Pattern any2 = new Pattern(1, PatType.COMMON);
+        static readonly Pattern any3 = new Pattern(2, PatType.COMMON);
+        static readonly Pattern const1 = new Pattern(3, PatType.NUMBER);
+        static readonly Pattern const2 = new Pattern(4, PatType.NUMBER);
+        static readonly Pattern const3 = new Pattern(5, PatType.NUMBER);
+        static readonly Pattern var1 = new Pattern(6, PatType.VARIABLE);
+        static readonly Pattern var2 = new Pattern(7, PatType.VARIABLE);
+        static readonly Pattern var3 = new Pattern(8, PatType.VARIABLE);
+        static readonly Pattern func1 = new Pattern(9, PatType.FUNCTION);
+        static readonly Pattern func2 = new Pattern(10, PatType.FUNCTION);
+        static readonly Pattern func3 = new Pattern(11, PatType.FUNCTION);
         private static int InternNumber = 10000;
         static Pattern Num(double a) => new Pattern(++InternNumber, PatType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
         internal static readonly Dictionary<Pattern, Entity> rules = new Dictionary<Pattern, Entity> {

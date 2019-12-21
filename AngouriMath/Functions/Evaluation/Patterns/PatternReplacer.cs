@@ -30,7 +30,6 @@ namespace AngouriMath
         public bool Match(Entity tree)
         {
             if (this.PatternType == PatType.NONE)
-                //throw new InvalidOperationException("You need an instance of Pattern to call Match()");
                 return this == tree;
             if (PatternType == PatType.COMMON)
                 return (this as Pattern).EqFits(tree) != null;

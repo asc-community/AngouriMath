@@ -9,7 +9,6 @@ namespace UnitTests
     public class SynonimFunctionTest
     {
         private readonly Entity x = MathS.Var("x");
-        private readonly Entity y = MathS.Var("y");
         [TestMethod]
         public void TestSqrt()
         {
