@@ -13,9 +13,11 @@ namespace AngouriMath
         static void Main(string[] args)
         {
             var x = MathS.Var("x");
-            var expr = 2 / (x / 3) + (MathS.Sqr(MathS.Cos(x + 3)) + MathS.Sqr(MathS.Sin(x + 3)));
-            Console.WriteLine(expr);
-            Console.WriteLine(expr.Simplify());
+            var expr1 = MathS.Sqr(MathS.Cos(x + 2)) + MathS.Sqr(MathS.Cos(x + 3));
+            var expr2 = MathS.Pow(MathS.e, MathS.Log(x + 3, MathS.e));
+            Console.WriteLine(expr1.Simplify());
+            Console.WriteLine(expr2);
+            Console.WriteLine(expr2.Simplify());
         }
     }
 }
