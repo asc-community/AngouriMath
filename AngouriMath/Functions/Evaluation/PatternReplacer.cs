@@ -121,10 +121,10 @@ namespace AngouriMath
         }
         internal Entity BuildTree(Dictionary<int, Entity> keys)
         {
-            if (keys.ContainsKey(PatternNumber))
-                return keys[PatternNumber];
             if (!(this is Pattern))
                 return this;
+            if (keys.ContainsKey(PatternNumber))
+                return keys[PatternNumber];
             var newChildren = new List<Entity>();
             foreach (var child in Children)
                 newChildren.Add((child as Pattern).BuildTree(keys));
