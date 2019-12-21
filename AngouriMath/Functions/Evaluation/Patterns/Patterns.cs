@@ -22,7 +22,7 @@ namespace AngouriMath
         static Pattern func3 = new Pattern(11, PatType.FUNCTION);
         private static int InternNumber = 10000;
         static Pattern Num(double a) => new Pattern(++InternNumber, PatType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
-        internal static Dictionary<Pattern, Entity> rules = new Dictionary<Pattern, Entity> {
+        internal static readonly Dictionary<Pattern, Entity> rules = new Dictionary<Pattern, Entity> {
             // (a * f(x)) * g(x) = a * (f(x) * g(x))
             { (const1 * func1) * func2, (func1 * func2) * const1 },
 

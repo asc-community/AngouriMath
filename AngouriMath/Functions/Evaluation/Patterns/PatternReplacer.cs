@@ -188,7 +188,7 @@ namespace AngouriMath
         public static Pattern operator /(Entity a, Pattern b) => Divf.PHang(a, b);
     }
 
-    public class PatternReplacer
+    public static class PatternReplacer
     {
         internal static Entity ReplaceOne(Entity source, Pattern oldPattern, Entity newPattern)
         {
