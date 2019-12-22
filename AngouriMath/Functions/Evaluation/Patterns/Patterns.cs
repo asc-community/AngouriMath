@@ -7,7 +7,7 @@ namespace AngouriMath
 {
     using PatType = Entity.PatType;
     class RuleList : Dictionary<Pattern, Entity> { }
-    internal class Patterns
+    internal static class Patterns
     {
         static readonly Pattern any1 = new Pattern(100, PatType.COMMON);
         static readonly Pattern any2 = new Pattern(101, PatType.COMMON);
@@ -15,13 +15,9 @@ namespace AngouriMath
         static readonly Pattern any4 = new Pattern(103, PatType.COMMON);
         static readonly Pattern const1 = new Pattern(200, PatType.NUMBER);
         static readonly Pattern const2 = new Pattern(201, PatType.NUMBER);
-        static readonly Pattern const3 = new Pattern(202, PatType.NUMBER);
         static readonly Pattern var1 = new Pattern(300, PatType.VARIABLE);
-        static readonly Pattern var2 = new Pattern(301, PatType.VARIABLE);
-        static readonly Pattern var3 = new Pattern(302, PatType.VARIABLE);
         static readonly Pattern func1 = new Pattern(400, PatType.FUNCTION);
         static readonly Pattern func2 = new Pattern(401, PatType.FUNCTION);
-        static readonly Pattern func3 = new Pattern(402, PatType.FUNCTION);
         private static int InternNumber = 10000;
         static Pattern Num(double a) => new Pattern(++InternNumber, PatType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
         internal static readonly RuleList CommonRules = new RuleList {
