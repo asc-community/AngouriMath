@@ -4,12 +4,12 @@ using System.Text;
 
 namespace AngouriMath.Core.FromString
 {
-    public static class SyntaxInfo
+    internal static class SyntaxInfo
     {
-        public static readonly string goodCharsForNumbers = "1234567890i.";
-        public static readonly string goodCharsForVars = "qwertyuiopasdfghjklzxcvbnm";
-        public static readonly string goodCharsForOperators = "+-*/^,";
-        public static readonly Dictionary<string, int> goodStringsForFunctions = new Dictionary<string, int> {
+        internal static readonly string goodCharsForNumbers = "1234567890i.";
+        internal static readonly string goodCharsForVars = "qwertyuiopasdfghjklzxcvbnm";
+        internal static readonly string goodCharsForOperators = "+-*/^,";
+        internal static readonly Dictionary<string, int> goodStringsForFunctions = new Dictionary<string, int> {
             { "sin", 1 },
             { "cos", 1 },
             { "log", 2 },
@@ -23,7 +23,7 @@ namespace AngouriMath.Core.FromString
             { "sec", 1 },
             { "cosec", 1 },
         };
-        public static readonly Dictionary<char, string> operatorNames = new Dictionary<char, string>
+        internal static readonly Dictionary<char, string> operatorNames = new Dictionary<char, string>
         {
             { '+', "sumf" },
             { '-', "minusf" },
@@ -31,7 +31,7 @@ namespace AngouriMath.Core.FromString
             { '/', "divf" },
             { '^', "powf" }
         };
-        public static readonly Dictionary<char, int> operatorPriorities = new Dictionary<char, int>
+        internal static readonly Dictionary<char, int> operatorPriorities = new Dictionary<char, int>
         {
             { '+', Const.PRIOR_SUM },
             { '-', Const.PRIOR_MINUS },

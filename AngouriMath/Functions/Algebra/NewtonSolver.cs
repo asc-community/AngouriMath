@@ -7,6 +7,10 @@ namespace AngouriMath
 {
     public abstract partial class Entity
     {
+        /// <summary>
+        /// To get Number from NumberEntity (in case of need a concrete number)
+        /// </summary>
+        /// <returns></returns>
         public Number GetValue()
         {
             if (this is NumberEntity)
@@ -41,6 +45,29 @@ namespace AngouriMath
                 return value;
         }
         private Entity Derivative { set; get; }
+
+        /// <summary>
+        /// Searches for numerical solutions via Newton's method https://en.wikipedia.org/wiki/Newton%27s_method
+        /// </summary>
+        /// <param name="v">
+        /// Variable to solve over
+        /// </param>
+        /// <param name="from">
+        /// Re(from) - down bound of search in real numbers, Im(from) - that in imaginary. 
+        /// For example, from: new Number(-10, -10)
+        /// </param>
+        /// <param name="to">
+        /// Re(to) - up bound of search in real numbers, Im(to) - that in imaginary.
+        /// For exmaple, to: new Number(10, 10)
+        /// </param>
+        /// <param name="stepCount">
+        /// Re(stepCount) - number of steps over real numbers, Im(stepCount) - number of steps over imaginary numbers.
+        /// For example, stepCount: new Number(10, 10)
+        /// </param>
+        /// <param name="precision">
+        /// If you get very similar roots that you think are equal, increase precision (but it will slower the algorithm)
+        /// </param>
+        /// <returns></returns>
         public NumberSet SolveNt(VariableEntity v, Number from = null, Number to = null, Number stepCount = null, int precision = 30)
         {
             var res = new NumberSet();

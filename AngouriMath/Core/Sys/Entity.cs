@@ -7,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace AngouriMath
 {
+    /// <summary>
+    /// The main class in AngouriMath
+    /// Every node, expression, or number is an Entity
+    /// However, you cannot create an instance of this class
+    /// </summary>
     public abstract partial class Entity
     {
         public string Name { get; set; }
@@ -18,6 +23,10 @@ namespace AngouriMath
         }
         public List<Entity> Children { get; internal set; }
 
+        /// <summary>
+        /// Use this to copy one node (unsafe copy!)
+        /// </summary>
+        /// <returns></returns>
         public Entity Copy()
         {
             Entity res;
@@ -33,6 +42,11 @@ namespace AngouriMath
                 throw new MathSException("Unknown entity");
             return res;
         }
+
+        /// <summary>
+        /// Use this to copy an entity. Recommended to use if you need a safe copy
+        /// </summary>
+        /// <returns></returns>
         public Entity DeepCopy()
         {
             Entity res = Copy();

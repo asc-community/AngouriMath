@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace AngouriMath.Core.FromString
 {
-    public class TokenList : List<Token>
+    internal class TokenList : List<Token>
     {
         public void Add(Token a)
         {
@@ -16,26 +16,26 @@ namespace AngouriMath.Core.FromString
             }
         }
     }
-    public partial class Token
+    internal partial class Token
     {
-        public Token Copy()
+        internal Token Copy()
         {
             var res = new Token();
             res.Value = Value;
             res.Type = Type;
             return res;
         }
-        public Token(char s)
+        internal Token(char s)
         {
             Value = s.ToString();
             Type = TokenType.NONE;
         }
-        public Token()
+        internal Token()
         {
             Value = "";
             Type = TokenType.NONE;
         }
-        public enum TokenType
+        internal enum TokenType
         {
             VARIABLE,
             NUMBER,
@@ -46,7 +46,7 @@ namespace AngouriMath.Core.FromString
             BRACE,
             NONE
         }
-        public enum BraceType
+        internal enum BraceType
         {
             PARENTHESIS_OPEN, 
             PARENTHESIS_CLOSE,
@@ -54,10 +54,10 @@ namespace AngouriMath.Core.FromString
             BRACKET_CLOSE,
             NONE
         }
-        public TokenType Type { get; internal set; }
-        public string Value { get; set; }
-        public Entity Attribute { get; set; }
-        public static BraceType GetBraceType(char s)
+        internal TokenType Type { get; private set; }
+        internal string Value { get; set; }
+        internal Entity Attribute { get; private set; }
+        internal static BraceType GetBraceType(char s)
         {
             switch(s)
             {
@@ -73,25 +73,30 @@ namespace AngouriMath.Core.FromString
                     return BraceType.NONE;
             }
         }
-        public static readonly Regex numberRegexp = new Regex(@"^-?(\d+(\.(\d+)?)?)?i?$");
-        public static readonly Regex variableRegexp = new Regex(@"^[a-zA-Z]+$");
-        public static bool IsNumber(string s)
+        internal static readonly Regex numberRegexp = new Regex(@"^-?(\d+(\.(\d+)?)?)?i?$");
+        internal static readonly Regex variableRegexp = new Regex(@"^[a-zA-Z]+$");
+        internal static bool IsNumber(string s)
         {
             return numberRegexp.IsMatch(s);
         }
-        public static bool IsVariable(string s)
+        internal static bool IsVariable(string s)
         {
             return variableRegexp.IsMatch(s);
         }
-        public static bool IsOperator(string s) //TOOD
+        internal static bool IsOperator(string s) //TOOD
         {
             return SyntaxInfo.goodCharsForOperators.Contains(s);
         }
+
+        /// <summary>
+        /// View a token with this meethod
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return "{" + Value + " | " + this.Type.ToString() + "}";
         }
-        public TokenType GetCurrentType()
+        internal TokenType GetCurrentType()
         {
             TokenType type;
             if (this.Value == "")
@@ -123,33 +128,33 @@ namespace AngouriMath.Core.FromString
             }
             return type;
         }
-        public void Seal()
+        internal void Seal()
         {
             Type = GetCurrentType();
         }
-        public static bool IsFinishedType(TokenType type)
+        internal static bool IsFinishedType(TokenType type)
         {
             return (type == Token.TokenType.PARENTHESIS_CLOSE || type == Token.TokenType.NUMBER || type == Token.TokenType.VARIABLE);
         }
     }
-    public class Lexer
+    internal class Lexer
     {
         private readonly TokenList tokens;
         private int index;
-        public void Seal()
+        internal void Seal()
         {
             foreach (var token in tokens)
                 token.Seal();
         }
-        public bool EOF()
+        internal bool EOF()
         {
             return index >= tokens.Count;
         }
-        public void Next()
+        internal void Next()
         {
             index++;
         }
-        public Token GlanceNext()
+        internal Token GlanceNext()
         {
             if (index >= tokens.Count)
             {
@@ -160,19 +165,19 @@ namespace AngouriMath.Core.FromString
                 return tokens[index + 1];
             }
         }
-        public void Prev()
+        internal void Prev()
         {
             index = Math.Max(index - 1, 0);
         }
-        public Token Current
+        internal Token Current
         {
             get => tokens[index];
         }
-        public void ToBegin()
+        internal void ToBegin()
         {
             index = 0;
         }
-        public Lexer(string src)
+        internal Lexer(string src)
         {
             tokens = new TokenList();
             var last = new Token();

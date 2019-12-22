@@ -3,13 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-/*
- * Adding evaluation of expression
- * var n1 = MathS.Num(3);
- * var n2 = MathS.Num(4);
- * var c = n1 + n2;
- * Console.WriteLine(c.Eval());
- */
 
 namespace AngouriMath
 {
@@ -18,11 +11,55 @@ namespace AngouriMath
     // Adding function Eval to Entity
     public abstract partial class Entity
     {
+        /// <summary>
+        /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
+        /// </summary>
+        /// <returns>
+        /// An expanded Entity
+        /// </returns>
         public Entity Expand() => Expand(2);
+
+
+        /// <summary>
+        /// Collapses an equation trying to eliminate as many power-uses as possible ( e. g. x * 3 + x * y = x * (3 + y) )
+        /// </summary>
+        /// <returns></returns>
         public Entity Collapse() => Collapse(2);
+
+
+        /// <summary>
+        /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
+        /// </summary>
+        /// <param name="level">
+        /// The number of iterations (increase this argument in case if some parentheses remain)
+        /// </param>
+        /// <returns>
+        /// An expanded Entity
+        /// </returns>
         public Entity Expand(int level) => level <= 1 ? PatternReplacer.Replace(Patterns.ExpandRules, this) : PatternReplacer.Replace(Patterns.ExpandRules, this).Expand(level - 1);
+
+        /// <summary>
+        /// Collapses an equation trying to eliminate as many power-uses as possible ( e. g. x * 3 + x * y = x * (3 + y) )
+        /// </summary>
+        /// <param name="level">
+        /// The number of iterations (increase this argument if some collapse operations are still available)
+        /// </param>
+        /// <returns></returns>
         public Entity Collapse(int level) => level <= 1 ? PatternReplacer.Replace(Patterns.CollapseRules, this) : PatternReplacer.Replace(Patterns.CollapseRules, this).Expand(level - 1);
+
+        /// <summary>
+        /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
+        /// </summary>
+        /// <returns></returns>
         public Entity Simplify() => Simplify(2);
+
+        /// <summary>
+        /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
+        /// </summary>
+        /// <param name="level">
+        /// Increase this argument if you think the equation should be simplified better
+        /// </param>
+        /// <returns></returns>
         public Entity Simplify(int level)
         {
             var stage1 = this.InnerSimplify();
@@ -40,7 +77,12 @@ namespace AngouriMath
             else
                 return MathFunctions.InvokeEval(Name, Children);
         }
-        public Entity Eval() => Simplify();
+
+        /// <summary>
+        /// Simplification synonim. Recommended to use in case of computing a concrete number
+        /// </summary>
+        /// <returns></returns>
+        public Entity Eval() => Simplify(1);
     }
 
     // Adding invoke table for eval

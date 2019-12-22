@@ -2,18 +2,20 @@
 using System.Collections.Generic;
 using System.Text;
 
-/*
- * Adding substitution of a variable into an expression
- * var x = MathS.Var("x");
- * var n = MathS.Num(3);
- * var c = x ^ n;
- * Console.WriteLine(c.Substitute(x, MathS.Num(5)));
- */
-
 namespace AngouriMath
 {
     public abstract partial class Entity
     {
+        /// <summary>
+        /// Substitute a variable with an expression
+        /// </summary>
+        /// <param name="x">
+        /// A variable to substitute
+        /// </param>
+        /// <param name="value">
+        /// The value we replace variable with
+        /// </param>
+        /// <returns></returns>
         public Entity Substitute(VariableEntity x, Entity value)
         {
             var res = DeepCopy();

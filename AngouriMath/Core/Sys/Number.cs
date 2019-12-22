@@ -8,12 +8,21 @@ namespace AngouriMath.Core
 {
     public class Number
     {
+        /// <summary>
+        /// To get real value of the number
+        /// For example, new Number(3, 5).Re is 3
+        /// </summary>
         public double Re { 
             get => value.Real; 
             set {
                 this.value = new Complex(value, Im);
             } 
         }
+
+        /// <summary>
+        /// To get imaginary value of the number
+        /// For example, new Number(3, 5).Im is 5
+        /// </summary>
         public double Im
         {
             get => value.Imaginary; 
@@ -22,11 +31,22 @@ namespace AngouriMath.Core
             }
         }
         internal Complex value;
+
+        /// <summary>
+        /// Initialize a real number
+        /// </summary>
+        /// <param name="Re"></param>
         public Number(double Re)
         {
             this.Re = Re;
             this.Im = 0;
         }
+
+        /// <summary>
+        /// Initialize a complex number 
+        /// </summary>
+        /// <param name="Re"></param>
+        /// <param name="Im"></param>
         public Number(double Re, double Im)
         {
             this.Re = Re;
@@ -68,6 +88,12 @@ namespace AngouriMath.Core
         {
             return double.Parse(s, CultureInfo.InvariantCulture);
         }
+
+        /// <summary>
+        /// To get a number from a string
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
         public static Number Parse(string s)
         {
             if (s == "-i")
@@ -110,6 +136,11 @@ namespace AngouriMath.Core
                 return !double.IsNaN(a.Re) && !double.IsNaN(a.Im);
             return !(a == b);
         }
+
+        /// <summary>
+        /// Check whether a number is complex or real
+        /// </summary>
+        /// <returns></returns>
         public bool IsComplex()
         {
             return !Number.IsDoubleZero(Im);
@@ -125,6 +156,9 @@ namespace AngouriMath.Core
         }
     }
 
+    /// <summary>
+    /// A set of Numbers
+    /// </summary>
     public class NumberSet : List<Number>
     {
         internal NumberSet()

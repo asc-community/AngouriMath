@@ -9,6 +9,13 @@ namespace AngouriMath
     // Adding function Derive to Entity
     public abstract partial class Entity
     {
+        /// <summary>
+        /// Derivation over a variable (without simplification)
+        /// </summary>
+        /// <param name="x">
+        /// The variable to derive over
+        /// </param>
+        /// <returns></returns>
         public Entity Derive(VariableEntity x)
         {
             if (IsLeaf)

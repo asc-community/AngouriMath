@@ -8,6 +8,10 @@ namespace AngouriMath
 
     public abstract partial class Entity
     {
+        /// <summary>
+        /// An expression into a string
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return Stringize();

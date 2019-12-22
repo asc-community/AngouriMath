@@ -6,19 +6,11 @@ using System.Text;
 using System.Globalization;
 
 
-/*
- * MathS.Sin(x) - sine of an expression
- * MathS.Cos(x) - cosine of an expression
- * MathS.Log(a, n) - logarithm of a and base n
- * MathS.Pow(a, n) - a ^ n
- * MathS.Sqr, MathS.Sqrt
- * 
- * MathS.Var() - creating an instance of variable
- * MathS.Num() - creating an instance of number (but in most cases you can use actual numbers, for example `Var("x") + 4` is ok)
- */
-
 namespace AngouriMath
 {
+    /// <summary>
+    /// Use functions from this class
+    /// </summary>
     public static partial class MathS
     {
         public static readonly OneArg Sin = Sinf.Hang;
@@ -41,6 +33,12 @@ namespace AngouriMath
         public static readonly Number i = new Number(0, 1);
         public static readonly Number pi = 3.141592653589793;
         public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-11;
+
+        /// <summary>
+        /// Convert an expression from a string
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
         public static Entity FromString(string expr)
         {
             var lexer = new Lexer(expr);

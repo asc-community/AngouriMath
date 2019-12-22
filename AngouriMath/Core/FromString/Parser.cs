@@ -6,7 +6,7 @@ namespace AngouriMath.Core.FromString
 {
     using BraceType = Token.BraceType;
     using TokenType = Token.TokenType;
-    public partial class Token
+    internal partial class Token
     {
         public List<Entity> children { get; } = new List<Entity>();
     }
@@ -29,26 +29,26 @@ namespace AngouriMath.Core.FromString
             BraceType.PARENTHESIS_OPEN,
             BraceType.PARENTHESIS_CLOSE
         };
-        public static readonly List<BraceType> brackets = new List<BraceType>
+        internal static readonly List<BraceType> brackets = new List<BraceType>
         {
             BraceType.BRACKET_OPEN,
             BraceType.BRACKET_CLOSE
         };
-        public static bool IsOpen(BraceType s)
+        internal static bool IsOpen(BraceType s)
         {
             return s == BraceType.BRACKET_OPEN || s == BraceType.PARENTHESIS_OPEN;
         }
-        public static bool SameType(BraceType a, BraceType b)
+        internal static bool SameType(BraceType a, BraceType b)
         {
             // TODO: Make more universal
             return parentheses.Contains(a) && parentheses.Contains(b) ||
                    brackets.Contains(a) && brackets.Contains(b);
         }
-        public bool IsFinished()
+        internal bool IsFinished()
         {
             return braces.Count == 0;
         }
-        public void Add(BraceType symbol)
+        internal void Add(BraceType symbol)
         {
             if (symbol == BraceType.NONE)
             {
@@ -82,9 +82,9 @@ namespace AngouriMath.Core.FromString
             }
         }
     }
-    public static class Parser
+    internal static class Parser
     {
-        public static Entity Parse(Lexer lexer)
+        internal static Entity Parse(Lexer lexer)
         {
             var linearExpression = new List<Entity>();
             while (!lexer.EOF())

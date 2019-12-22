@@ -8,6 +8,10 @@ namespace AngouriMath
 
     public abstract partial class Entity
     {
+        /// <summary>
+        /// Returns the expression in format of latex (for example, a / b -> \frac{a}{b})
+        /// </summary>
+        /// <returns></returns>
         public string Latexise() => Latexise(false);
         public string Latexise(bool parenthesesRequired)
         {
@@ -22,11 +26,11 @@ namespace AngouriMath
     {
         internal static readonly LatexTable latexTable = new LatexTable();
 
-        public static string InvokeLatex(string typeName, List<Entity> args)
+        internal static string InvokeLatex(string typeName, List<Entity> args)
         {
             return latexTable[typeName](args);
         }
-        public static string ParenthesesOnNeed(string s, bool need)
+        internal static string ParenthesesOnNeed(string s, bool need)
         {
             return need ? "(" + s + ")" : s;
         }
@@ -34,7 +38,7 @@ namespace AngouriMath
 
     public static partial class Sumf
     {
-        public static string Latex(List<Entity> args)
+        internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
             return args[0].Latexise(args[0].Priority < Const.PRIOR_SUM) + "+" + args[1].Latexise(args[0].Priority < Const.PRIOR_SUM);
@@ -42,7 +46,7 @@ namespace AngouriMath
     }
     public static partial class Minusf
     {
-        public static string Latex(List<Entity> args)
+        internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
             return args[0].Latexise(args[0].Priority < Const.PRIOR_MINUS) + "-" + args[1].Latexise(args[0].Priority < Const.PRIOR_MINUS);
@@ -50,7 +54,7 @@ namespace AngouriMath
     }
     public static partial class Mulf
     {
-        public static string Latex(List<Entity> args)
+        internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
             return args[0].Latexise(args[0].Priority < Const.PRIOR_MUL) + "*" + args[1].Latexise(args[1].Priority < Const.PRIOR_MUL);
@@ -58,7 +62,7 @@ namespace AngouriMath
     }
     public static partial class Divf
     {
-        public static string Latex(List<Entity> args)
+        internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
             return @"\frac{" + args[0].Latexise() + "}{" + args[1].Latexise() + "}";
@@ -66,7 +70,7 @@ namespace AngouriMath
     }
     public static partial class Sinf
     {
-        public static string Latex(List<Entity> args)
+        internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
             return "sin(" + args[0].Latexise() + ")";
@@ -74,7 +78,7 @@ namespace AngouriMath
     }
     public static partial class Cosf
     {
-        public static string Latex(List<Entity> args)
+        internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
             return "cos(" + args[0].Latexise() + ")";
@@ -82,7 +86,7 @@ namespace AngouriMath
     }
     public static partial class Logf
     {
-        public static string Latex(List<Entity> args)
+        internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
             return "log_{" + args[1].Latexise() + "}(" + args[0].Latexise() + ")";
@@ -90,7 +94,7 @@ namespace AngouriMath
     }
     public static partial class Powf
     {
-        public static string Latex(List<Entity> args)
+        internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
             if (args[1] == 0.5)
