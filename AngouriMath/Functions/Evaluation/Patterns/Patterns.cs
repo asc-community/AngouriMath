@@ -96,6 +96,9 @@ namespace AngouriMath
 
             // (a * x) * b
             { (const1 * var1) * const2, (const1 * const2) * var1 },
+            { const2 * (const1 * var1), (const1 * const2) * var1 },
+            { (const1 * func1) * const2, (const1 * const2) * func1 },
+            { const2 * (const1 * func1), (const1 * const2) * func1 },
 
             // (x + a) + b
             { (var1 + const1) + const2, var1 + (const1 + const2) },
@@ -157,7 +160,7 @@ namespace AngouriMath
         internal static readonly RuleList CollapseRules = new RuleList
         {
             // {1}2 - {2}2
-            { Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)), (any1 - any2) * (any1 - any2) }
+            { Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)), (any1 - any2) * (any1 + any2) }
         };
     }
 }

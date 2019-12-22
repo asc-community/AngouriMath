@@ -97,7 +97,7 @@ namespace UnitTests
         {
             var x = MathS.Var("x");
             var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
-            Assert.IsTrue(expr.Simplify() == 3);
+            Assert.IsTrue(expr.Simplify() == x + 1);
         }
     }
 }
