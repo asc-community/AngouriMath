@@ -16,11 +16,11 @@ namespace AngouriMath
         {
             return Stringize();
         }
-        public string Stringize()
+        internal string Stringize()
         {
             return Stringize(false);
         }
-        public string Stringize(bool parenthesesRequired)
+        internal string Stringize(bool parenthesesRequired)
         {
             if (IsLeaf)
             {

@@ -1,0 +1,36 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v3.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v3.0": {
+      "Samples/1.0.0": {
+        "dependencies": {
+          "AngouriMath": "1.0.13.5-Beta"
+        },
+        "runtime": {
+          "Samples.dll": {}
+        }
+      },
+      "AngouriMath/1.0.13.5-Beta": {
+        "runtime": {
+          "AngouriMath.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "Samples/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "AngouriMath/1.0.13.5-Beta": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

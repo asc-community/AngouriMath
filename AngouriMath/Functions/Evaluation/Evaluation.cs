@@ -68,7 +68,7 @@ namespace AngouriMath
                 res = PatternReplacer.Replace(Patterns.CommonRules, res).InnerSimplify();
             return res;
         }
-        public Entity InnerSimplify()
+        internal Entity InnerSimplify()
         {
             if (IsLeaf)
             {

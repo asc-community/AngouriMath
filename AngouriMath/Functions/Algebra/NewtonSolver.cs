@@ -21,8 +21,8 @@ namespace AngouriMath
         private Number NewtonIter(VariableEntity x, Number value, int precision)
         {
             Number prev = value;
-            Func<NumberEntity, Number> f = value => this.Substitute(x, value).Eval().GetValue();
-            Func<NumberEntity, Number> df = value => Derivative.Substitute(x, value).Eval().GetValue();
+            Func<NumberEntity, Number> f = subValue => this.Substitute(x, subValue).Eval().GetValue();
+            Func<NumberEntity, Number> df = subValue => Derivative.Substitute(x, subValue).Eval().GetValue();
             int minCheckIters = (int)Math.Sqrt(precision);
             for (int i = 0; i < precision; i++)
             {
