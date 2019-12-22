@@ -207,10 +207,10 @@ namespace AngouriMath
                 return src;
             }
         }
-        internal static Entity Replace(Entity source)
+        internal static Entity Replace(RuleList rules, Entity source)
         {
             var res = source.DeepCopy();
-            foreach (var pair in Patterns.rules)
+            foreach (var pair in rules)
                 while (res.FindSubtree(pair.Key) != null)
                     res = ReplaceOne(res, pair.Key, pair.Value);
             return res;

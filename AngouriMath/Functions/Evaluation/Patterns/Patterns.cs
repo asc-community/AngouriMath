@@ -6,23 +6,25 @@ using System.Text;
 namespace AngouriMath
 {
     using PatType = Entity.PatType;
+    class RuleList : Dictionary<Pattern, Entity> { }
     internal class Patterns
     {
-        static readonly Pattern any1 = new Pattern(0, PatType.COMMON);
-        static readonly Pattern any2 = new Pattern(1, PatType.COMMON);
-        static readonly Pattern any3 = new Pattern(2, PatType.COMMON);
-        static readonly Pattern const1 = new Pattern(3, PatType.NUMBER);
-        static readonly Pattern const2 = new Pattern(4, PatType.NUMBER);
-        static readonly Pattern const3 = new Pattern(5, PatType.NUMBER);
-        static readonly Pattern var1 = new Pattern(6, PatType.VARIABLE);
-        static readonly Pattern var2 = new Pattern(7, PatType.VARIABLE);
-        static readonly Pattern var3 = new Pattern(8, PatType.VARIABLE);
-        static readonly Pattern func1 = new Pattern(9, PatType.FUNCTION);
-        static readonly Pattern func2 = new Pattern(10, PatType.FUNCTION);
-        static readonly Pattern func3 = new Pattern(11, PatType.FUNCTION);
+        static readonly Pattern any1 = new Pattern(100, PatType.COMMON);
+        static readonly Pattern any2 = new Pattern(101, PatType.COMMON);
+        static readonly Pattern any3 = new Pattern(102, PatType.COMMON);
+        static readonly Pattern any4 = new Pattern(103, PatType.COMMON);
+        static readonly Pattern const1 = new Pattern(200, PatType.NUMBER);
+        static readonly Pattern const2 = new Pattern(201, PatType.NUMBER);
+        static readonly Pattern const3 = new Pattern(202, PatType.NUMBER);
+        static readonly Pattern var1 = new Pattern(300, PatType.VARIABLE);
+        static readonly Pattern var2 = new Pattern(301, PatType.VARIABLE);
+        static readonly Pattern var3 = new Pattern(302, PatType.VARIABLE);
+        static readonly Pattern func1 = new Pattern(400, PatType.FUNCTION);
+        static readonly Pattern func2 = new Pattern(401, PatType.FUNCTION);
+        static readonly Pattern func3 = new Pattern(402, PatType.FUNCTION);
         private static int InternNumber = 10000;
         static Pattern Num(double a) => new Pattern(++InternNumber, PatType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
-        internal static readonly Dictionary<Pattern, Entity> rules = new Dictionary<Pattern, Entity> {
+        internal static readonly RuleList CommonRules = new RuleList {
             // (a * f(x)) * g(x) = a * (f(x) * g(x))
             { (const1 * func1) * func2, (func1 * func2) * const1 },
 
@@ -68,6 +70,9 @@ namespace AngouriMath
 
             // {1} * {2} + {1} * {3} = {1} * ({2} + {3})
             { any1 * any2 + any1 * any3, any1 * (any2 + any3) },
+            { any1 * any2 + any3 * any1, any1 * (any2 + any3) },
+            { any2 * any1 + any3 * any1, any1 * (any2 + any3) },
+            { any2 * any1 + any1 * any3, any1 * (any2 + any3) },
 
             // {1} * {2} - {1} * {3} = {1} * ({2} - {3})
             { any1 * any2 - any1 * any3, any1 * (any2 - any3) },
@@ -123,6 +128,40 @@ namespace AngouriMath
             { (any1 * any2) / (any3 * any2), any1 / any3 },
             { (any2 * any1) / (any2 * any3), any1 / any3 },
             { (any2 * any1) / (any3 * any2), any1 / any3 },
+
+            // ({1} - {2}) / ({2} - {1})
+            { (any1 - any2) / (any2 - any1), -1 },
+        };
+
+        internal static readonly RuleList ExpandRules = new RuleList
+        {
+            // (any1 + any2)2
+            { Powf.PHang(any1 + any2, Num(2)), Powf.PHang(any1, Num(2)) + Num(2) * any1 * any2 + Powf.PHang(any2, Num(2)) },
+
+            // (any1 - any2)2
+            { Powf.PHang(any1 + any2, Num(2)), Powf.PHang(any1, Num(2)) - Num(2) * any1 * any2 + Powf.PHang(any2, Num(2)) },
+
+            // ({1} - {2}) ({1} + {2}) = x2 - {}2
+            { (any1 - any2) * (any1 + any2), Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)) },
+            { (any1 + any2) * (any1 - any2), Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)) },
+
+            // ({1} + {2}) * ({3} + {4}) = {1}{3} + {1}{4} + {2}{3} + {2}{4}
+            { (any1 + any2) * (any3 + any4), any1 * any3 + any1 * any4 + any2 * any3 + any2 * any4 },
+            { (any1 - any2) * (any3 + any4), any1 * any3 + any1 * any4 - any2 * any3 - any2 * any4 },
+            { (any1 + any2) * (any3 - any4), any1 * any3 - any1 * any4 + any2 * any3 - any2 * any4 },
+            { (any1 - any2) * (any3 - any4), any1 * any3 - any1 * any4 - any2 * any3 + any2 * any4 },
+            
+            // {1} * ({2} + {3})
+            { any1 * (any2 + any3), any1 * any2 + any1 * any3 },
+            { any1 * (any2 - any3), any1 * any2 - any1 * any3 },
+            { (any2 + any3) * any1, any1 * any2 + any1 * any3 },
+            { (any2 - any3) * any1, any1 * any2 - any1 * any3 },
+        };
+
+        internal static readonly RuleList CollapseRules = new RuleList
+        {
+            // {1}2 - {2}2
+            { Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)), (any1 - any2) * (any1 - any2) }
         };
     }
 }

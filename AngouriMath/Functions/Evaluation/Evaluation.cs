@@ -18,13 +18,17 @@ namespace AngouriMath
     // Adding function Eval to Entity
     public abstract partial class Entity
     {
+        public Entity Expand() => Expand(2);
+        public Entity Collapse() => Collapse(2);
+        public Entity Expand(int level) => level <= 1 ? PatternReplacer.Replace(Patterns.ExpandRules, this) : PatternReplacer.Replace(Patterns.ExpandRules, this).Expand(level - 1);
+        public Entity Collapse(int level) => level <= 1 ? PatternReplacer.Replace(Patterns.CollapseRules, this) : PatternReplacer.Replace(Patterns.CollapseRules, this).Expand(level - 1);
         public Entity Simplify() => Simplify(2);
         public Entity Simplify(int level)
         {
             var stage1 = this.InnerSimplify();
             Entity res = stage1;
             for (int i = 0; i < level; i++)
-                res = PatternReplacer.Replace(res).InnerSimplify();
+                res = PatternReplacer.Replace(Patterns.CommonRules, res).InnerSimplify();
             return res;
         }
         public Entity InnerSimplify()
