@@ -7,9 +7,10 @@ namespace Samples
     {
         static void Main(string[] args)
         {
-            var x = MathS.Var("x");
-            var expr = x;
-            Console.WriteLine(Math.Abs(expr.DefiniteIntegral(expr, x, 0, 1).Re));
+            //var Expr = MathS.FromString("(x^2 - 4)/(x + 2)");
+            //Console.WriteLine(Expr.Collapse());
+            var expr = MathS.FromString("x * y * x * x");
+            Console.WriteLine(expr.Simplify(4).ToString());
         }
     }
 }

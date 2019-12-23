@@ -69,6 +69,11 @@ namespace AngouriMath
             { any1 * any2 + any3 * any1, any1 * (any2 + any3) },
             { any2 * any1 + any3 * any1, any1 * (any2 + any3) },
             { any2 * any1 + any1 * any3, any1 * (any2 + any3) },
+            { any1 + any1 * any2, any1 * (Num(1) + any2) },
+            { any1 + any2 * any1, any1 * (Num(1) + any2) },
+            { any1 * any2 + any1, any1 * (Num(1) + any2) },
+            { any2 * any1 + any1, any1 * (Num(1) + any2) },
+            { any1 + any1, Num(2) * any1 },              
 
             // {1} * {2} - {1} * {3} = {1} * ({2} - {3})
             { any1 * any2 - any1 * any3, any1 * (any2 - any3) },
@@ -106,8 +111,21 @@ namespace AngouriMath
             // b + (x + a)
             { const2 + (var1 + const1), var1 + (const1 + const2) },
 
+            // x * a * x
+            { any1 * (any1 * any2), (any1 * any1) * any2 },
+            { any1 * (any2 * any1), (any1 * any1) * any2 },
+            { (any1 * any2) * any1, (any1 * any1) * any2 },
+            { (any2 * any1) * any1, (any1 * any1) * any2 },
+            { Powf.PHang(any1, any3) * (any1 * any2), (Powf.PHang(any1, any3 + Num(1))) * any2 },
+            { Powf.PHang(any1, any3) * (any2 * any1), (Powf.PHang(any1, any3 + Num(1))) * any2 },
+            { (any1 * any2) * Powf.PHang(any1, any3), (Powf.PHang(any1, any3 + Num(1))) * any2 },
+            { (any2 * any1) * Powf.PHang(any1, any3), (Powf.PHang(any1, any3 + Num(1))) * any2 },
+            
+            // {1} ^ n * {2} ^ n = ({1} * {2}) ^ n
+            { Powf.PHang(any1, any3) * Powf.PHang(any2, any3), Powf.PHang(any1 * any2, any3) },
+            
             // (a * x) ^ c = a^c * x^c
-            { Powf.PHang(const1 * var1, const2), Powf.PHang(const1, const2) * Powf.PHang(var1, const2) },
+            { Powf.PHang(const1 * any1, const2), Powf.PHang(const1, const2) * Powf.PHang(any1, const2) },
 
             // sin({}) * cos({}) = 1/2 * sin(2{})
             { Sinf.PHang(any1) * Cosf.PHang(any1), Num(1.0/2) * Sinf.PHang(Num(2) * any1) },
@@ -130,6 +148,13 @@ namespace AngouriMath
 
             // ({1} - {2}) / ({2} - {1})
             { (any1 - any2) / (any2 - any1), -1 },
+
+            // ({1} + {2}) / ({2} + {1})
+            { (any1 + any2) / (any2 + any1), 1 },
+
+            // a / (b * {1})
+            { const1 / (const2 * any1), (const1 / const2) / any1 },
+            { const1 / (any1 * const2), (const1 / const2) / any1 },
         };
 
         internal static readonly RuleList ExpandRules = new RuleList
@@ -160,7 +185,9 @@ namespace AngouriMath
         internal static readonly RuleList CollapseRules = new RuleList
         {
             // {1}2 - {2}2
-            { Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)), (any1 - any2) * (any1 + any2) }
+            { Powf.PHang(any1, const1) - Powf.PHang(any2, const2), 
+                (Powf.PHang(any1, const1 / Num(2)) - Powf.PHang(any2, const2 / Num(2))) *
+                (Powf.PHang(any1, const1 / Num(2)) + Powf.PHang(any2, const2 / Num(2))) }
         };
     }
 }

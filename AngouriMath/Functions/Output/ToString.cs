@@ -44,7 +44,6 @@ namespace AngouriMath
         }
     }
     
-    // TODO
     public static partial class Sumf
     {
         public static string Stringize(List<Entity> args)
@@ -74,7 +73,7 @@ namespace AngouriMath
         public static string Stringize(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(args[1].Priority < Const.PRIOR_DIV);
+            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(true);
         }
     }
     public static partial class Sinf
