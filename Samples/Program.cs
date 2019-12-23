@@ -7,9 +7,9 @@ namespace Samples
     {
         static void Main(string[] args)
         {
-            var expr = MathS.FromString("phi");
-            var phi = MathS.Var("phi");
-            Console.WriteLine(expr.Substitute(phi, 3).Eval());
+            var x = MathS.Var("x");
+            var expr = x;
+            Console.WriteLine(Math.Abs(expr.DefiniteIntegral(expr, x, 0, 1).Re));
         }
     }
 }
