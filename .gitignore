@@ -3,17 +3,11 @@
 ################################################################################
 
 /.vs
-/MathSharp/obj
-/MathSharp/.vs/MathSharp/v16
-/MathSharp/bin/Debug/netcoreapp3.0
-/UnitTests/bin/Debug/netcoreapp3.0
 /UnitTests/obj
-/MathSharp/.vs/MathSharp/DesignTimeBuild
-/MathSharp/bin/Debug
-/MathSharp/bin/Release
-/UnitTests/bin/Release/netcoreapp3.0
+/UnitTests/bin
 /AngouriMath/.vs
 /AngouriMath/bin
 /AngouriMath/obj
-/Samples/bin/Debug/netcoreapp3.0
+/Samples/bin
 /Samples/obj
+/Samples/.vs
