@@ -19,6 +19,8 @@ namespace AngouriMath
         public Entity Substitute(VariableEntity x, Entity value)
         {
             var res = DeepCopy();
+            if (res == x)
+                return value;
             for (int i = 0; i < Children.Count; i++)
                 if (Children[i] is VariableEntity && (Children[i] as VariableEntity).Name == x.Name)
                     res.Children[i] = value;
