@@ -30,7 +30,7 @@ namespace AngouriMath
                 {
                     value = value - f.Substitute(value) / df.Substitute(value);
                 }
-                catch(MathSException e)
+                catch(MathSException)
                 {
                     throw new MathSException("Two or more variables in SolveNt is forbidden");
                 }

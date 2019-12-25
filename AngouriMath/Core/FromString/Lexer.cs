@@ -7,7 +7,7 @@ namespace AngouriMath.Core.FromString
 {
     internal class TokenList : List<Token>
     {
-        public void Add(Token a)
+        public new void Add(Token a)
         {
             if (!string.IsNullOrEmpty(a.Value))
             {

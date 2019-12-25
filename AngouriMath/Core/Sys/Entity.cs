@@ -12,7 +12,11 @@ namespace AngouriMath
     /// Every node, expression, or number is an Entity
     /// However, you cannot create an instance of this class
     /// </summary>
+    #pragma warning disable CS0660
+    #pragma warning disable CS0661
     public abstract partial class Entity
+    #pragma warning restore CS0661
+    #pragma warning restore CS0660
     {
         public string Name { get; set; }
         public bool IsLeaf { get => Children.Count == 0; }
@@ -93,7 +97,7 @@ namespace AngouriMath
             Value = value;
         }
         public Number Value { get; internal set; }
-        public string Name { get => Value.ToString(); }
+        public new string Name { get => Value.ToString(); }
         public static implicit operator NumberEntity(int num) => new NumberEntity(num);
         public static implicit operator NumberEntity(Number num) => new NumberEntity(num);
     }
