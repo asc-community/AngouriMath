@@ -177,5 +177,9 @@ namespace AngouriMath.Core
             if (!alreadyExists)
                 this.Add(num);
         }
+        public override string ToString()
+        {
+            return "[" + string.Join(", ", this) + "]";
+        }
     }
 }

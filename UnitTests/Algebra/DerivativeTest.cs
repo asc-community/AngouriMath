@@ -12,7 +12,7 @@ namespace UnitTests
         {
             var x = MathS.Var("x");
             var func = MathS.Sqr(x) + 2 * x + 1;
-            Assert.IsTrue(func.Derive(x).Simplify() == 2 * x + 2);
+            Assert.IsTrue(func.Derive(x).Simplify() == 2 * (x + 1));
         }
         [TestMethod]
         public void TestSin()

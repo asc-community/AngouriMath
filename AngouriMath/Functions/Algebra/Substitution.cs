@@ -27,11 +27,11 @@ namespace AngouriMath
                 res = DeepCopy();
             if (res == x)
                 return value;
-            for (int i = 0; i < Children.Count; i++)
-                if (Children[i] is VariableEntity && (Children[i] as VariableEntity).Name == x.Name)
+            for (int i = 0; i < res.Children.Count; i++)
+                if (res.Children[i] is VariableEntity && (res.Children[i] as VariableEntity).Name == x.Name)
                     res.Children[i] = value;
                 else
-                    res.Children[i] = Children[i].Substitute(x, value, true);
+                    res.Children[i] = res.Children[i].Substitute(x, value, true);
             return res;
         }
     }
