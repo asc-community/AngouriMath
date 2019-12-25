@@ -18,7 +18,7 @@ namespace AngouriMath
             else
                 throw new MathSException("Cannot get number from expression");
         }
-        private Number NewtonIter(FastExpression f, FastExpression df, VariableEntity x, Number value, int precision)
+        private Number NewtonIter(FastExpression f, FastExpression df, Number value, int precision)
         {
             Number prev = value;
             int minCheckIters = (int)Math.Sqrt(precision);
@@ -93,7 +93,7 @@ namespace AngouriMath
                     double yShare = ((double)y) / yStep;
                     var value = new Number(from.Re * xShare + to.Re * (1 - xShare),
                                            from.Im * yShare + to.Im * (1 - yShare));
-                    var root = NewtonIter(f, df, v, value, precision);
+                    var root = NewtonIter(f, df, value, precision);
                     if (root != null)
                         res.Include(root);
                 }
