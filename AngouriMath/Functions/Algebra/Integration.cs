@@ -10,9 +10,6 @@ namespace AngouriMath
         /// <summary>
         /// Returns a value of a definite integral of a function. Only works for one-variable functions
         /// </summary>
-        /// <param name="func">
-        /// Function with only one variable
-        /// </param>
         /// <param name="x">
         /// Variable to integrate over
         /// </param>
@@ -23,17 +20,14 @@ namespace AngouriMath
         /// The up bound for integrating
         /// </param>
         /// <returns></returns>
-        public Number DefiniteIntegral(Entity func, VariableEntity x, Number from, Number to)
+        public Number DefiniteIntegral(VariableEntity x, Number from, Number to)
         {
-            return Integration.Integrate(func, x, from, to, 100);
+            return Integration.Integrate(this, x, from, to, 100);
         }
 
         /// <summary>
         /// Returns a value of a definite integral of a function. Only works for one-variable functions
         /// </summary>
-        /// <param name="func">
-        /// Function with only one variable
-        /// </param>
         /// <param name="x">
         /// Variable to integrate over
         /// </param>
@@ -47,9 +41,9 @@ namespace AngouriMath
         /// Accuracy (initially, amount of iterations)
         /// </param>
         /// <returns></returns>
-        public Number DefiniteIntegral(Entity func, VariableEntity x, Number from, Number to, int stepCount)
+        public Number DefiniteIntegral(VariableEntity x, Number from, Number to, int stepCount)
         {
-            return Integration.Integrate(func, x, from, to, stepCount);
+            return Integration.Integrate(this, x, from, to, stepCount);
         }
     }
     public static class Integration
@@ -61,11 +55,12 @@ namespace AngouriMath
             double ReTo = to.Re;
             double ImTo = to.Im;
             var res = new Number(0, 0);
+            var cfunc = func.Compile(x.Name);
             for(int i = 0; i <= stepCount; i++)
             {
                 var share = ((double)i) / stepCount;
                 var tmp = new Number(ReFrom * share + ReTo * (1 - share), ImFrom * share + ImTo * (1 - share));
-                res += func.Substitute(x, tmp).Eval().GetValue();
+                res += cfunc.Eval(tmp);
             }
             return res / (stepCount + 1) * (to - from);
         }
