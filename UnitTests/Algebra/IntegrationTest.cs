@@ -13,21 +13,21 @@ namespace UnitTests
         {
             var x = MathS.Var("x");
             var expr = x;
-            Assert.IsTrue(Math.Abs(expr.DefiniteIntegral(expr, x, 0, 1).Re - 1.0/2) < 0.1);
+            Assert.IsTrue(Math.Abs(expr.DefiniteIntegral(x, 0, 1).Re - 1.0/2) < 0.1);
         }
         [TestMethod]
         public void Test2()
         {
             var x = MathS.Var("x");
             var expr = MathS.Sin(x);
-            Assert.IsTrue(expr.DefiniteIntegral(expr, x, -1, 1) == 0);
+            Assert.IsTrue(expr.DefiniteIntegral(x, -1, 1) == 0);
         }
         [TestMethod]
         public void Test3()
         {
             var x = MathS.Var("x");
             var expr = MathS.Sin(x);
-            Assert.IsTrue(expr.DefiniteIntegral(expr, x, 0, 3).Re > 1.5);
+            Assert.IsTrue(expr.DefiniteIntegral(x, 0, 3).Re > 1.5);
         }
     }
 }

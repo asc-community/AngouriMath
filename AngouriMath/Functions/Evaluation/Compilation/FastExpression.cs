@@ -37,7 +37,7 @@ namespace AngouriMath
     public class FastExpression
     {
         //private Dictionary<string, Number> variables = new Dictionary<string, Number>();
-        private Stack stack;
+        private Stack<Number> stack;
         private InstructionSet instructions;
         private int varCount;
         internal FastExpression(InstructionSet instructions, int varCount)
@@ -45,7 +45,7 @@ namespace AngouriMath
             //foreach (var varName in variables)
             //    this.variables[varName] = 0;
             this.varCount = varCount;
-            stack = new Stack(instructions.Count);
+            stack = new Stack<Number>(instructions.Count);
             this.instructions = instructions;
         }
         public Number Eval(params Number[] variables)
@@ -67,9 +67,9 @@ namespace AngouriMath
                         break;
                 }
             }
-            if (stack.Depth != 1)
+            if (stack.Count != 1)
                 throw new Exception("Stack error");
-            var res = stack.Last;
+            var res = stack.Peek();
             stack.Clear();
             return res;
         }

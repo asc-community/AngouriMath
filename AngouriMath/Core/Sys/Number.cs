@@ -6,7 +6,11 @@ using System.Text;
 
 namespace AngouriMath.Core
 {
+    #pragma warning disable CS0660
+    #pragma warning disable CS0661
     public class Number
+    #pragma warning restore CS0660
+    #pragma warning restore CS0661
     {
         /// <summary>
         /// To get real value of the number

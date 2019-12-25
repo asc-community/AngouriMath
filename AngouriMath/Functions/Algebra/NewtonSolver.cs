@@ -32,7 +32,7 @@ namespace AngouriMath
                 {
                     value = value - f(value) / df(value);
                 }
-                catch(MathSException e)
+                catch(MathSException)
                 {
                     throw new MathSException("Two or more variables in SolveNt is forbidden");
                 }
