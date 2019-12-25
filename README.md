@@ -86,11 +86,20 @@ Only definite integral over single variable is supported yet :(
 ```cs
 var x = MathS.Var("x");
 var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
-Console.WriteLine(expr.DefiniteIntegral(expr, x, -3, 3));
+Console.WriteLine(expr.DefiniteIntegral(x, -3, 3));
 var expr2 = MathS.Sin(x);
-Console.WriteLine(expr2.DefiniteIntegral(expr2, x, 0, MathS.pi));
+Console.WriteLine(expr2.DefiniteIntegral(x, 0, MathS.pi));
 >>> 5.56669223384056 + 0.0889406793629381i
 >>> 1.98003515236381
+```
+
+#### Compile functions
+Compiled functions work 15x faster
+```cs
+var x = MathS.Var("x");
+var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
+var func = expr.Compile(x);
+Console.WriteLine(func.Substitute(3));
 ```
 
 ### Full documentation
