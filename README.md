@@ -72,12 +72,25 @@ Console.WriteLine(expr.Eval());
 ```
 
 #### Solve eqations
+Only numerical solutions with Newton's method is supported yet :(
 ```cs
 var x = MathS.Var("x");
 var equation = (x - 1) * (x - 2) * (MathS.Sqr(x) + 1);
 foreach (var re in equation.SolveNt(x))
     Console.Write(re.ToString() + "  ");
 >>> 1  2  1i
+```
+
+#### Integrate
+Only definite integral over single variable is supported yet :(
+```cs
+var x = MathS.Var("x");
+var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
+Console.WriteLine(expr.DefiniteIntegral(expr, x, -3, 3));
+var expr2 = MathS.Sin(x);
+Console.WriteLine(expr2.DefiniteIntegral(expr2, x, 0, MathS.pi));
+>>> 5.56669223384056 + 0.0889406793629381i
+>>> 1.98003515236381
 ```
 
 ### Full documentation
