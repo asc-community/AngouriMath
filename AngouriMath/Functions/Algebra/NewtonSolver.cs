@@ -18,11 +18,9 @@ namespace AngouriMath
             else
                 throw new MathSException("Cannot get number from expression");
         }
-        private Number NewtonIter(VariableEntity x, Number value, int precision)
+        private Number NewtonIter(FastExpression f, FastExpression df, VariableEntity x, Number value, int precision)
         {
             Number prev = value;
-            Func<NumberEntity, Number> f = subValue => this.Substitute(x, subValue).Eval().GetValue();
-            Func<NumberEntity, Number> df = subValue => Derivative.Substitute(x, subValue).Eval().GetValue();
             int minCheckIters = (int)Math.Sqrt(precision);
             for (int i = 0; i < precision; i++)
             {
@@ -30,7 +28,7 @@ namespace AngouriMath
                     prev = value.Copy();
                 try
                 {
-                    value = value - f(value) / df(value);
+                    value = value - f.Substitute(value) / df.Substitute(value);
                 }
                 catch(MathSException)
                 {
@@ -44,7 +42,6 @@ namespace AngouriMath
             else
                 return value;
         }
-        private Entity Derivative { set; get; }
 
         /// <summary>
         /// Searches for numerical solutions via Newton's method https://en.wikipedia.org/wiki/Newton%27s_method
@@ -87,7 +84,8 @@ namespace AngouriMath
                 xStep = (int)stepCount.Re;
                 yStep = (int)stepCount.Im;
             }
-            Derivative = this.Derive(v).Simplify();
+            var df = this.Derive(v).Simplify().Compile(v);
+            var f = this.Simplify().Compile(v);
             for (int x = 0; x < xStep; x++)
                 for (int y = 0; y < yStep; y++)
                 {
@@ -95,7 +93,7 @@ namespace AngouriMath
                     double yShare = ((double)y) / yStep;
                     var value = new Number(from.Re * xShare + to.Re * (1 - xShare),
                                            from.Im * yShare + to.Im * (1 - yShare));
-                    var root = NewtonIter(v, value, precision);
+                    var root = NewtonIter(f, df, v, value, precision);
                     if (root != null)
                         res.Include(root);
                 }

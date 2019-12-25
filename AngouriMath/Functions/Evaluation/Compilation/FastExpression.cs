@@ -7,6 +7,32 @@ namespace AngouriMath
 {
     public abstract partial class Entity
     {
+        /// <summary>
+        /// Compile function so you can evaluate numerical value 15x faster,
+        /// than subsitution
+        /// </summary>
+        /// <param name="variables">
+        /// List string names of variables in the same order
+        /// as you will list them when evaluating
+        /// </param>
+        /// <returns></returns>
+        public FastExpression Compile(params VariableEntity[] variables)
+        {
+            var strings = new List<string>();
+            foreach (var varEnt in variables)
+                strings.Add(varEnt.Name);
+            return Compile(strings.ToArray());
+        }
+
+        /// <summary>
+        /// Compile function so you can evaluate numerical value 15x faster,
+        /// than subsitution
+        /// </summary>
+        /// <param name="variables">
+        /// List string names of variables in the same order
+        /// as you will list them when evaluating
+        /// </param>
+        /// <returns></returns>
         public FastExpression Compile(params string[] variables)
         {
             var instructions = new InstructionSet();
@@ -36,19 +62,34 @@ namespace AngouriMath
     }
     public class FastExpression
     {
-        //private Dictionary<string, Number> variables = new Dictionary<string, Number>();
         private Stack<Number> stack;
         private InstructionSet instructions;
         private int varCount;
         internal FastExpression(InstructionSet instructions, int varCount)
         {
-            //foreach (var varName in variables)
-            //    this.variables[varName] = 0;
             this.varCount = varCount;
             stack = new Stack<Number>(instructions.Count);
             this.instructions = instructions;
         }
-        public Number Eval(params Number[] variables)
+
+        /// <summary>
+        /// Calls the compiled function (synonim to Substitute)
+        /// </summary>
+        /// <param name="variables">
+        /// List arguments in the same order in which you compiled the function
+        /// </param>
+        /// <returns></returns>
+        public Number Call(params Number[] variables)
+            => Substitute(variables);
+
+        /// <summary>
+        /// Calls the compiled function (synonim to Call)
+        /// </summary>
+        /// <param name="variables">
+        /// List arguments in the same order in which you compiled the function
+        /// </param>
+        /// <returns></returns>
+        public Number Substitute(params Number[] variables)
         {
             if (variables.Length != varCount)
                 throw new Exception("Wrong amount of parameters");

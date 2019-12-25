@@ -60,7 +60,7 @@ namespace AngouriMath
             {
                 var share = ((double)i) / stepCount;
                 var tmp = new Number(ReFrom * share + ReTo * (1 - share), ImFrom * share + ImTo * (1 - share));
-                res += cfunc.Eval(tmp);
+                res += cfunc.Substitute(tmp);
             }
             return res / (stepCount + 1) * (to - from);
         }
