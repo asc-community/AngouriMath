@@ -7,8 +7,8 @@ namespace UnitTests
     [TestClass]
     public class CompilationTest
     {
-        public static VariableEntity x = MathS.Var("x");
-        public static VariableEntity y = MathS.Var("y");
+        private readonly static VariableEntity x = MathS.Var("x");
+        private readonly static VariableEntity y = MathS.Var("y");
         [TestMethod]
         public void Test1()
         {

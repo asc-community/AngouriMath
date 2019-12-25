@@ -7,7 +7,7 @@ namespace AngouriMath
 {
     internal static class CompiledMathFunctions
     {
-        internal static Dictionary<string, int> func2Num = new Dictionary<string, int>
+        internal static readonly Dictionary<string, int> func2Num = new Dictionary<string, int>
         {
             { "sumf", 0 },
             { "minusf", 1 },
@@ -20,7 +20,7 @@ namespace AngouriMath
         };
 
         internal delegate void CompiledFunction(Stack<Number> stack);
-        internal static CompiledFunction[] functions =
+        internal static readonly CompiledFunction[] functions =
             new CompiledFunction[]
             {
                 Sumf,
@@ -33,7 +33,7 @@ namespace AngouriMath
                 Logf
             };
 
-        internal static Number[] buffer = new Number[10];
+        internal static readonly Number[] buffer = new Number[10];
 
         internal static void Sumf(Stack<Number> stack)
         {

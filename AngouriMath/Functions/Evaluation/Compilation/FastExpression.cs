@@ -1,4 +1,5 @@
 ﻿using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -57,14 +58,14 @@ namespace AngouriMath
             else if (this is VariableEntity)
                 instructions.AddInstruction(varNamespace[Name]);
             else
-                throw new Exception("Unknown entity");
+                throw new SysException("Unknown entity");
         }
     }
     public class FastExpression
     {
-        private Stack<Number> stack;
-        private InstructionSet instructions;
-        private int varCount;
+        private readonly Stack<Number> stack;
+        private readonly InstructionSet instructions;
+        private readonly int varCount;
         internal FastExpression(InstructionSet instructions, int varCount)
         {
             this.varCount = varCount;
@@ -92,7 +93,7 @@ namespace AngouriMath
         public Number Substitute(params Number[] variables)
         {
             if (variables.Length != varCount)
-                throw new Exception("Wrong amount of parameters");
+                throw new SysException("Wrong amount of parameters");
             foreach(var instruction in instructions)
             {
                 switch(instruction.Type)
@@ -109,7 +110,7 @@ namespace AngouriMath
                 }
             }
             if (stack.Count != 1)
-                throw new Exception("Stack error");
+                throw new SysException("Stack error");
             var res = stack.Peek();
             stack.Clear();
             return res;

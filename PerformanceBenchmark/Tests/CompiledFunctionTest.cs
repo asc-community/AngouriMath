@@ -7,7 +7,7 @@ namespace PerformanceBenchmark.Tests
 {
     public class CompiledFunctionTest : CommonTest
     {
-        private List<FastExpression> exprs = new List<FastExpression> {
+        private readonly List<FastExpression> exprs = new List<FastExpression> {
             x.Compile(x),
             (MathS.Cos(x) * MathS.Sin(x)).Compile(x),
             (MathS.Sqr(MathS.Sin(x + 2 * x)) + MathS.Sqr(MathS.Cos(x + 2 * x))).Compile(x),
