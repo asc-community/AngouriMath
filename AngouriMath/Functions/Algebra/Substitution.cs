@@ -17,15 +17,21 @@ namespace AngouriMath
         /// </param>
         /// <returns></returns>
         public Entity Substitute(VariableEntity x, Entity value)
+            => Substitute(x, value, false);
+        public Entity Substitute(VariableEntity x, Entity value, bool inPlace)
         {
-            var res = DeepCopy();
+            Entity res;
+            if (inPlace)
+                res = this;
+            else
+                res = DeepCopy();
             if (res == x)
                 return value;
             for (int i = 0; i < Children.Count; i++)
                 if (Children[i] is VariableEntity && (Children[i] as VariableEntity).Name == x.Name)
                     res.Children[i] = value;
                 else
-                    res.Children[i] = Children[i].Substitute(x, value);
+                    res.Children[i] = Children[i].Substitute(x, value, true);
             return res;
         }
     }
