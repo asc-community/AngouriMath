@@ -19,7 +19,7 @@ namespace AngouriMath
             { "logf", 7 },
         };
 
-        internal delegate void CompiledFunction(Stack stack);
+        internal delegate void CompiledFunction(Stack<Number> stack);
         internal static CompiledFunction[] functions =
             new CompiledFunction[]
             {
@@ -35,45 +35,51 @@ namespace AngouriMath
 
         internal static Number[] buffer = new Number[10];
 
-        internal static void Sumf(Stack stack)
+        internal static void Sumf(Stack<Number> stack)
         {
-            stack.Pop(2, buffer);
-            stack.Push(buffer[0] + buffer[1]);
+            Number n1 = stack.Pop();
+            Number n2 = stack.Pop();
+            stack.Push(n1 + n2);
         }
-        internal static void Minusf(Stack stack)
+        internal static void Minusf(Stack<Number> stack)
         {
-            stack.Pop(2, buffer);
-            stack.Push(buffer[0] - buffer[1]);
+            Number n1 = stack.Pop();
+            Number n2 = stack.Pop();
+            stack.Push(n1 - n2);
         }
-        internal static void Mulf(Stack stack)
+        internal static void Mulf(Stack<Number> stack)
         {
-            stack.Pop(2, buffer);
-            stack.Push(buffer[0] * buffer[1]);
+            Number n1 = stack.Pop();
+            Number n2 = stack.Pop();
+            stack.Push(n1 * n2);
         }
-        internal static void Divf(Stack stack)
+        internal static void Divf(Stack<Number> stack)
         {
-            stack.Pop(2, buffer);
-            stack.Push(buffer[0] / buffer[1]);
+            Number n1 = stack.Pop();
+            Number n2 = stack.Pop();
+            stack.Push(n1 / n2);
         }
-        internal static void Powf(Stack stack)
+        internal static void Powf(Stack<Number> stack)
         {
-            stack.Pop(2, buffer);
-            stack.Push(Number.Pow(buffer[0], buffer[1]));
+            Number n1 = stack.Pop();
+            Number n2 = stack.Pop();
+            stack.Push(Number.Pow(n1, n2));
         }
-        internal static void Sinf(Stack stack)
+        internal static void Sinf(Stack<Number> stack)
         {
-            stack.Pop(1, buffer);
-            stack.Push(Number.Sin(buffer[0]));
+            Number n = stack.Pop();
+            stack.Push(Number.Sin(n));
         }
-        internal static void Cosf(Stack stack)
+        internal static void Cosf(Stack<Number> stack)
         {
-            stack.Pop(1, buffer);
-            stack.Push(Number.Cos(buffer[0]));
+            Number n = stack.Pop();
+            stack.Push(Number.Cos(n));
         }
-        internal static void Logf(Stack stack)
+        internal static void Logf(Stack<Number> stack)
         {
-            stack.Pop(2, buffer);
-            stack.Push(Number.Log(buffer[0], buffer[1]));
+            Number n1 = stack.Pop();
+            Number n2 = stack.Pop();
+            stack.Push(Number.Log(n1, n2));
         }
     }
 }
