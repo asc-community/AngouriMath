@@ -8,12 +8,12 @@ namespace PerformanceBenchmark.Tests
 {
     public abstract class CommonTest
     {
-        protected List<Func<Entity>> tests;
+        protected List<Func<object>> tests;
         protected static readonly VariableEntity x = MathS.Var("x");
         protected static readonly VariableEntity y = MathS.Var("y");
         protected static readonly VariableEntity z = MathS.Var("z");
-        private static int IterCount { get; } = 1000;
-        private double Watch(Func<Entity> func)
+        protected static int IterCount { get; set; } = 1000;
+        private double Watch(Func<object> func)
         {
             var stopWatch = new Stopwatch();
             stopWatch.Start();
@@ -28,7 +28,7 @@ namespace PerformanceBenchmark.Tests
             foreach (var test in tests)
             {
                 var time = Watch(test);
-                sb.Append(test().ToString() + " : " + (time * 1000).ToString() + " microseconds");
+                sb.Append(": " + (time * 1000).ToString() + " microseconds");
                 sb.Append("\n");
             }
             return sb.ToString();

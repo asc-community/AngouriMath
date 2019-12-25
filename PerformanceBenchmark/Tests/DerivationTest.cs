@@ -9,7 +9,8 @@ namespace PerformanceBenchmark.Tests
     {
         public DerivationTest()
         {
-            tests = new List<Func<Entity>> {
+            IterCount = 2000;
+            tests = new List<Func<object>> {
                 () => x.Derive(x),
                 () => (MathS.Cos(x) * MathS.Sin(x)).Derive(x),
                 () => (MathS.Sqr(MathS.Sin(x + 2 * y)) + MathS.Sqr(MathS.Cos(x + 2 * y))).Derive(x),

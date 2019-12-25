@@ -9,7 +9,8 @@ namespace PerformanceBenchmark.Tests
     {
         public SimplificationTest()
         {
-            tests = new List<Func<Entity>> { 
+            IterCount = 300;
+            tests = new List<Func<object>> { 
                 () => (x * MathS.Sin(x)).Simplify(),
                 () => (MathS.Cos(x) * MathS.Sin(x)).Simplify(),
                 () => (MathS.Sqr(MathS.Sin(x + 2 * y)) + MathS.Sqr(MathS.Cos(x + 2 * y))).Simplify(),
