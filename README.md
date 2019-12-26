@@ -110,7 +110,7 @@ MathS.Sin(x)
 
 MathS.Cos(x)
 
-MathS.Log(num, base), 
+MathS.Log(num, base)
 
 MathS.Pow(base, power)
 
@@ -135,13 +135,44 @@ MathS.FromString(str) - returns Entity
 
 #### Entity methods
 
-expr.Derive(x) - derivation for variable x
+##### Derivation
+expr.Derive(x) - derivation for variable x.
+```cs
+var x = MathS.Var("x");
+var expr = MathS.Sqr(x);
+Console.WriteLine(expr.Derive(x)); // 2 * x
+```
+How it works? We have some rules for derivation which are applied to each node, for example (a + b)' = a' + b'. So, we replace each node according to the appropriate rule.
 
-expr.Eval() - evaluation & simplification
+##### Evaluation & Simplification
+expr.Simplify(level) simplifies an expression. Level is number of iterations (relevant for long expressions).
 
-expr.Latexise() - render to latex
+expr.Eval() = expr.Simplify(1) - recommended to use to evaluation substituted expression.
 
-expr.SolveNt(expr, from, to, stepCount, precision) - find roots assuming we are solving equation expr=0.
+expr.Simplify() = expr.Simplify(2) - use to simplify expressions, a * x + x = (a + 1) * x
+```cs
+var x = MathS.Var("x");
+var expr = 3 * x + x;
+Console.WriteLine(expr.Simplify()); // 4 * x
+```
+How it works? Thanks to the pattern system, now we are able to find subtrees that we know how to simplify. The full list of used patterns presents in file Patterns.cs.
+
+##### Expansion & Collapse
+expr.Expand(level=2) - expands the expression trying to remove all the braces (for example, a * (1 + x) = a * x + a * 1). level - number of iterations.
+
+expr.Collapse(level=2) - collapses the expression trying to remove all the powers (for example, x^2 - y^2 = (x - y) * (x + y) ).
+
+##### To string
+```expr.ToString()``` - string presentation of an expression.
+
+```expr.Latexise()``` - neat output in LaTeX format.
+
+How it works? For each node we encounter, we use the appropriate latex syntax.
+
+##### Solving equations
+By this time, only Newton's method over one variable is available.
+
+expr.SolveNt(from, to, stepCount, precision) - find roots assuming we are solving equation expr=0.
 
 The algorithm iterates on [from.Re; to.Re] for real part and on [from.Im; to.Im] for imaginary part.
 
