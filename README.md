@@ -2,8 +2,10 @@
 
 Nuget: https://www.nuget.org/packages/AngouriMath
 
-### AngouriMath
-AngouriMath is an open-source library that enables to work with non-linear multi-variable expressions. Its functionality includes derivation, variable substitution, equation solving, and some more.
+## AngouriMath
+AngouriMath is an open-source library that enables to work with non-linear multi-variable expressions. Its functionality includes derivation, variable substitution, equation solving, definite integration, formula-to-latex formatting, and some more.
+
+### Examples
 
 #### Use as a simple calculator
 ```cs
@@ -102,11 +104,11 @@ var func = expr.Compile(x);
 Console.WriteLine(func.Substitute(3));
 ```
 
-### Full documentation
+## Full documentation
 
-#### Entity methods
+### Entity methods
 
-##### Derivation
+#### Derivation
 expr.Derive(x) - derivation for variable x.
 ```cs
 var x = MathS.Var("x");
@@ -115,7 +117,7 @@ Console.WriteLine(expr.Derive(x)); // 2 * x
 ```
 How it works? We have some rules for derivation which are applied to each node, for example (a + b)' = a' + b'. So, we replace each node according to the appropriate rule.
 
-##### Evaluation & Simplification
+#### Evaluation & Simplification
 expr.Simplify(level) simplifies an expression. Level is number of iterations (relevant for long expressions).
 
 expr.Eval() = expr.Simplify(1) - recommended to use to evaluation substituted expression.
@@ -128,19 +130,19 @@ Console.WriteLine(expr.Simplify()); // 4 * x
 ```
 How it works? Thanks to the pattern system, now we are able to find subtrees that we know how to simplify. The full list of used patterns presents in file Patterns.cs.
 
-##### Expansion & Collapse
+#### Expansion & Collapse
 expr.Expand(level=2) - expands the expression trying to remove all the braces (for example, a * (1 + x) = a * x + a * 1). level - number of iterations.
 
 expr.Collapse(level=2) - collapses the expression trying to remove all the powers (for example, x^2 - y^2 = (x - y) * (x + y) ).
 
-##### To string
+#### To string
 ```expr.ToString()``` - string presentation of an expression.
 
 ```expr.Latexise()``` - neat output in LaTeX format.
 
 How it works? For each node we encounter, we use the appropriate latex syntax.
 
-##### Solving equations
+#### Solving equations
 By this time, only Newton's method over one variable is available.
 
 expr.SolveNt(from, to, stepCount, precision) - find roots assuming we are solving equation expr=0.
