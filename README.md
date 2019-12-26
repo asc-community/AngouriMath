@@ -104,35 +104,6 @@ Console.WriteLine(func.Substitute(3));
 
 ### Full documentation
 
-#### Function list
-
-MathS.Sin(x)
-
-MathS.Cos(x)
-
-MathS.Log(num, base)
-
-MathS.Pow(base, power)
-
-MathS.Sqrt(x) = MathS.Pow(x, 0.5)
-
-MathS.Sqr(x) = MathS.Pow(x, 2)
-
-MathS.Tan(x) = MathS.Sin(x) / MathS.Cos(x)
-
-MathS.Cotan(x) = 1 / MathS.Tan(x)
-
-MathS.Sec(x) = 1 / MathS.Cos(x)
-
-MathS.Cosec(x) = 1 / MathS.Sin(x)
-
-MathS.B(x) = x * MathS.Sin(x)
-
-MathS.TB(x) = x * MathS.Cos(x)
-
-
-MathS.FromString(str) - returns Entity
-
 #### Entity methods
 
 ##### Derivation
@@ -181,3 +152,32 @@ The higher stepCount is, the more roots the function can find
 Precision - if you get similar roots that you think are equal, you can increase this argument.
 
 You can also decrease MathS.EQUALITY_THRESHOLD which is responsible for comparing Numbers.
+
+#### Function list
+
+MathS.Sin(x)
+
+MathS.Cos(x)
+
+MathS.Log(num, base)
+
+MathS.Pow(base, power)
+
+MathS.Sqrt(x) = MathS.Pow(x, 0.5)
+
+MathS.Sqr(x) = MathS.Pow(x, 2)
+
+MathS.Tan(x) = MathS.Sin(x) / MathS.Cos(x)
+
+MathS.Cotan(x) = 1 / MathS.Tan(x)
+
+MathS.Sec(x) = 1 / MathS.Cos(x)
+
+MathS.Cosec(x) = 1 / MathS.Sin(x)
+
+MathS.B(x) = x * MathS.Sin(x)
+
+MathS.TB(x) = x * MathS.Cos(x)
+
+
+MathS.FromString(str) - returns Entity
