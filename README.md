@@ -118,11 +118,11 @@ Console.WriteLine(expr.Derive(x)); // 2 * x
 How it works? We have some rules for derivation which are applied to each node, for example (a + b)' = a' + b'. So, we replace each node according to the appropriate rule.
 
 #### Evaluation & Simplification
-expr.Simplify(level) simplifies an expression. Level is number of iterations (relevant for long expressions).
+```expr.Simplify(level)``` simplifies an expression. Level is number of iterations (relevant for long expressions).
 
-expr.Eval() = expr.Simplify(1) - recommended to use to evaluation substituted expression.
+```expr.Eval() = expr.Simplify(1)``` - recommended to use to evaluation substituted expression.
 
-expr.Simplify() = expr.Simplify(2) - use to simplify expressions, a * x + x = (a + 1) * x
+```expr.Simplify() = expr.Simplify(2)``` - use to simplify expressions, a * x + x = (a + 1) * x
 ```cs
 var x = MathS.Var("x");
 var expr = 3 * x + x;
@@ -131,9 +131,9 @@ Console.WriteLine(expr.Simplify()); // 4 * x
 How it works? Thanks to the pattern system, now we are able to find subtrees that we know how to simplify. The full list of used patterns presents in file Patterns.cs.
 
 #### Expansion & Collapse
-expr.Expand(level=2) - expands the expression trying to remove all the braces (for example, a * (1 + x) = a * x + a * 1). level - number of iterations.
+```expr.Expand(level=2)``` - expands the expression trying to remove all the braces (for example, a * (1 + x) = a * x + a * 1). level - number of iterations.
 
-expr.Collapse(level=2) - collapses the expression trying to remove all the powers (for example, x^2 - y^2 = (x - y) * (x + y) ).
+```expr.Collapse(level=2)``` - collapses the expression trying to remove all the powers (for example, x^2 - y^2 = (x - y) * (x + y) ).
 
 #### To string
 ```expr.ToString()``` - string presentation of an expression.
@@ -154,6 +154,21 @@ The higher stepCount is, the more roots the function can find
 Precision - if you get similar roots that you think are equal, you can increase this argument.
 
 You can also decrease MathS.EQUALITY_THRESHOLD which is responsible for comparing Numbers.
+
+#### Integration
+By this time, only definite integration over one variable is available.
+
+```expr.DefiniteIntegral(x, from, to)``` - numerically counts integral from ```from``` to ```to```. Note that you can specify the two parameters in Complex numbers.
+
+#### Compilation
+```expr.Compile(a, b, c...)``` the arguments are arguments of the target function. You should list all the used variables in the order you will then call.
+```fe.Call(a, b, c...)``` the arguments are Numbers in the order of variables. Retunrs Number.
+```
+var x = MathS.Var("x");
+var expr = MathS.Sqr(x) + 2 * x;
+var func = expr.Compile(x);
+Console.WriteLine(func.Call(3));
+```
 
 #### Function list
 
