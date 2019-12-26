@@ -18,7 +18,7 @@ namespace PerformanceBenchmark.Tests
         };
         public CompiledFunctionTest()
         {
-            IterCount = 20000;
+            IterCount = 100000;
             tests = new List<Func<object>>();
             foreach (var expr in exprs)
                 tests.Add(() => expr.Call(3));

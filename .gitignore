@@ -13,3 +13,7 @@
 /Samples/.vs
 /PerformanceBenchmark/bin
 /PerformanceBenchmark/obj
+/Tests/PerformanceBenchmark/bin
+/Tests/PerformanceBenchmark/obj
+/Tests/UnitTests/bin
+/Tests/UnitTests/obj

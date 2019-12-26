@@ -9,7 +9,7 @@ namespace PerformanceBenchmark.Tests
     {
         public SubsTest()
         {
-            IterCount = 1000;
+            IterCount = 10000;
             tests = new List<Func<object>> {
                 () => (x * MathS.Sin(x)).Substitute(x, 3).Eval(),
                 () => (MathS.Cos(x) * MathS.Sin(x)).Substitute(x, 3).Eval(),

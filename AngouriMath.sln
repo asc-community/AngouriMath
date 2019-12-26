@@ -3,13 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29503.13
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath", "AngouriMath.csproj", "{66EA979F-7E3F-4C30-839E-F2E34E4D024B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath", "AngouriMath\AngouriMath.csproj", "{66EA979F-7E3F-4C30-839E-F2E34E4D024B}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "..\UnitTests\UnitTests.csproj", "{E01C001E-5CC0-42A8-99B6-43C7A409AB34}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "Tests\UnitTests\UnitTests.csproj", "{E01C001E-5CC0-42A8-99B6-43C7A409AB34}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Samples", "..\Samples\Samples.csproj", "{23AA3D9F-77DA-4439-8F18-31B37F427492}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Samples", "Samples\Samples.csproj", "{23AA3D9F-77DA-4439-8F18-31B37F427492}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceBenchmark", "..\PerformanceBenchmark\PerformanceBenchmark.csproj", "{587644B2-EBB3-432E-82B6-860F5586BB04}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PerformanceBenchmark", "Tests\PerformanceBenchmark\PerformanceBenchmark.csproj", "{587644B2-EBB3-432E-82B6-860F5586BB04}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{D15528F2-AB50-46E2-9DB1-821B278C4931}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{50DD3C1E-42AD-498E-9BE7-1604058CF1D8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -36,6 +40,11 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{E01C001E-5CC0-42A8-99B6-43C7A409AB34} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
+		{23AA3D9F-77DA-4439-8F18-31B37F427492} = {D15528F2-AB50-46E2-9DB1-821B278C4931}
+		{587644B2-EBB3-432E-82B6-860F5586BB04} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1CD9B3-4EAB-4B8C-BDC1-03280EB31298}
