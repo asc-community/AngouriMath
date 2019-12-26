@@ -94,8 +94,10 @@ namespace AngouriMath
         {
             if (variables.Length != varCount)
                 throw new SysException("Wrong amount of parameters");
-            foreach(var instruction in instructions)
+            Instruction instruction;
+            for(int i = 0; i < instructions.Count; i++)
             {
+                instruction = instructions[i];
                 switch (instruction.Type)
                 {
                     case Instruction.InstructionType.PUSHCONST:
@@ -111,8 +113,7 @@ namespace AngouriMath
             }
             if (stack.Count != 1)
                 throw new SysException("Stack error");
-            var res = stack.Pop();
-            return res;
+            return stack.Pop();
         }
     }
 }

@@ -17,7 +17,7 @@ namespace AngouriMath.Core
         /// For example, new Number(3, 5).Re is 3
         /// </summary>
         public double Re { 
-            get => value.Real; 
+            get => IsNull ? double.NaN : value.Real; 
             set {
                 this.value = new Complex(value, Im);
             } 
@@ -29,12 +29,17 @@ namespace AngouriMath.Core
         /// </summary>
         public double Im
         {
-            get => value.Imaginary; 
+            get => IsNull ? double.NaN : value.Imaginary;
             set {
                 this.value = new Complex(Re, value);
             }
         }
         internal Complex value;
+        public bool IsNull { get; }
+        public Number(bool isNull)
+        {
+            IsNull = isNull;
+        }
 
         /// <summary>
         /// Initialize a real number
@@ -42,8 +47,8 @@ namespace AngouriMath.Core
         /// <param name="Re"></param>
         public Number(double Re)
         {
-            this.Re = Re;
-            this.Im = 0;
+            IsNull = false;
+            this.value = new Complex(Re, 0);
         }
 
         /// <summary>
@@ -51,18 +56,19 @@ namespace AngouriMath.Core
         /// </summary>
         /// <param name="Re"></param>
         /// <param name="Im"></param>
-        public Number(double Re, double Im)
+        public Number(double re, double im)
         {
-            this.Re = Re;
-            this.Im = Im;
+            IsNull = false;
+            this.value = new Complex(re, im);
         }
         public Number(Complex num)
         {
+            IsNull = false;
             this.value = num;
         }
         public Number Copy()
         {
-            return new Number(value);
+            return IsNull ? Number.Null : new Number(value);
         }
         public override string ToString()
         {
@@ -140,6 +146,7 @@ namespace AngouriMath.Core
                 return !double.IsNaN(a.Re) && !double.IsNaN(a.Im);
             return !(a == b);
         }
+        public static readonly Number Null = new Number(true);
 
         /// <summary>
         /// Check whether a number is complex or real

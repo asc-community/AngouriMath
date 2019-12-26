@@ -2,6 +2,7 @@
 using AngouriMath;
 using AngouriMath.Core;
 using System.Diagnostics;
+using System.Numerics;
 
 namespace Samples
 {
@@ -82,17 +83,18 @@ namespace Samples
             //Sample1();
             var x = MathS.Var("x");
 
-            var func = (x + MathS.Sqrt(x)).Compile(x);
-            Console.WriteLine(func.Substitute(4));
-            return;
-            var expr = x * x + (x - 3 * (2 * x));
+            var func = MathS.Sin(x).Compile(x);
             //var func = expr.Compile(x);
             var watch = new Stopwatch();
+            int iters = 100000000;
             watch.Start();
-            for (int i = 0; i < 10000000; i++)
+            for (int i = 0; i < iters; i++)
                 func.Call(3);
+                //Complex.Sin(3);
+                //new Complex(3, 0);
+                //new Number(3, 0);
             watch.Stop();
-            Console.WriteLine(watch.ElapsedMilliseconds);
+            Console.WriteLine(((double)watch.ElapsedMilliseconds) / iters * 1000000);
         }
     }
 }

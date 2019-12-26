@@ -38,10 +38,15 @@ namespace AngouriMath
                     return value;
             }
             if (Number.Abs(prev - value) > 0.01)
-                return null;
+                return Number.Null;
             else
                 return value;
         }
+
+        public NumberSet SolveNt(VariableEntity v, int precision = 30)
+            => SolveNt(v, new Number(-10, -10), new Number(10, 10), new Number(10, 10), precision: precision);
+        public NumberSet SolveNt(VariableEntity v, Number from, Number to, int precision = 30)
+            => SolveNt(v, from, to, new Number(10, 10),  precision: precision);
 
         /// <summary>
         /// Searches for numerical solutions via Newton's method https://en.wikipedia.org/wiki/Newton%27s_method
@@ -65,25 +70,15 @@ namespace AngouriMath
         /// If you get very similar roots that you think are equal, increase precision (but it will slower the algorithm)
         /// </param>
         /// <returns></returns>
-        public NumberSet SolveNt(VariableEntity v, Number from = null, Number to = null, Number stepCount = null, int precision = 30)
+        public NumberSet SolveNt(VariableEntity v, Number from, Number to, Number stepCount, int precision = 30)
         {
             var res = new NumberSet();
             if (from == null)
                 from = new Number(-10, -10);
             if (to == null)
                 to = new Number(10, 10);
-            int xStep;
-            int yStep;
-            if (stepCount == null)
-            {
-                xStep = 5;
-                yStep = 3;
-            }
-            else
-            {
-                xStep = (int)stepCount.Re;
-                yStep = (int)stepCount.Im;
-            }
+            int xStep = (int)stepCount.Re;
+            int yStep = (int)stepCount.Im;
             var df = this.Derive(v).Simplify().Compile(v);
             var f = this.Simplify().Compile(v);
             for (int x = 0; x < xStep; x++)
@@ -94,7 +89,7 @@ namespace AngouriMath
                     var value = new Number(from.Re * xShare + to.Re * (1 - xShare),
                                            from.Im * yShare + to.Im * (1 - yShare));
                     var root = NewtonIter(f, df, value, precision);
-                    if (root != null)
+                    if (!root.IsNull)
                         res.Include(root);
                 }
             return res;
