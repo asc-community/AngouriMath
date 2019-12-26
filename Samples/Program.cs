@@ -80,21 +80,7 @@ namespace Samples
         }
         static void Main(string[] args)
         {
-            //Sample1();
-            var x = MathS.Var("x");
-
-            var func = MathS.Sin(x).Compile(x);
-            //var func = expr.Compile(x);
-            var watch = new Stopwatch();
-            int iters = 100000000;
-            watch.Start();
-            for (int i = 0; i < iters; i++)
-                func.Call(3);
-                //Complex.Sin(3);
-                //new Complex(3, 0);
-                //new Number(3, 0);
-            watch.Stop();
-            Console.WriteLine(((double)watch.ElapsedMilliseconds) / iters * 1000000);
+            Sample1();
         }
     }
 }

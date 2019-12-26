@@ -111,8 +111,6 @@ namespace AngouriMath
                         break;
                 }
             }
-            if (stack.Count != 1)
-                throw new SysException("Stack error");
             return stack.Pop();
         }
     }
