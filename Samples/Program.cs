@@ -79,7 +79,20 @@ namespace Samples
         }
         static void Main(string[] args)
         {
-            Sample1();
+            //Sample1();
+            var x = MathS.Var("x");
+
+            var func = (x + MathS.Sqrt(x)).Compile(x);
+            Console.WriteLine(func.Substitute(4));
+            return;
+            var expr = x * x + (x - 3 * (2 * x));
+            //var func = expr.Compile(x);
+            var watch = new Stopwatch();
+            watch.Start();
+            for (int i = 0; i < 10000000; i++)
+                func.Call(3);
+            watch.Stop();
+            Console.WriteLine(watch.ElapsedMilliseconds);
         }
     }
 }

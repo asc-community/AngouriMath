@@ -123,7 +123,7 @@ namespace AngouriMath.Core
         public static Number operator +(Number a, Number b) => new Number(a.value + b.value);
         public static Number operator -(Number a, Number b) => new Number(a.value - b.value);
         public static Number operator *(Number a, Number b) => new Number(a.value * b.value);
-        public static Number operator /(Number a, Number b) => new Number(a.value / b.value);        
+        public static Number operator /(Number a, Number b) => new Number(a.value / b.value);
         public static bool operator ==(Number a, Number b)
         {
             if ( ((object)a) == null && ((object)b) == null )
@@ -158,6 +158,16 @@ namespace AngouriMath.Core
         {
             return Math.Abs(a) < MathS.EQUALITY_THRESHOLD;
         }
+
+        internal void _add(Number a) => this.value += a.value;
+        internal void _sub(Number a) => this.value -= a.value;
+        internal void _mul(Number a) => this.value *= a.value;
+        internal void _div(Number a) => this.value /= a.value;
+        internal void _pow(Number a) => this.value = Complex.Pow(this.value, a.value);
+        internal void _log(Number a) => this.value = Complex.Log(this.value, a.Re);
+        internal void _sin() => this.value = Complex.Sin(this.value);
+        internal void _cos() => this.value = Complex.Cos(this.value);
+
     }
 
     /// <summary>
