@@ -18,9 +18,11 @@ namespace AngouriMath
         internal int VarCount;
         internal int FuncNumber;
         internal int VarNumber;
+        internal string FuncName;
         internal Number Value;
         internal Instruction(string funcName, int varCount)
         {
+            FuncName = funcName;
             FuncNumber = CompiledMathFunctions.func2Num[funcName];
             VarCount = varCount;
             Type = InstructionType.CALL;
@@ -34,6 +36,17 @@ namespace AngouriMath
         {
             Value = value;
             Type = InstructionType.PUSHCONST;
+        }
+
+        public override string ToString()
+        {
+            string b = Type.ToString() + " ";
+            if (Type == InstructionType.CALL)
+                return b + FuncName;
+            else if (Type == InstructionType.PUSHCONST)
+                return b + Value.ToString();
+            else
+                return b + VarNumber.ToString();
         }
     }
     internal class InstructionSet : List<Instruction>

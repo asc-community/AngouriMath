@@ -113,5 +113,13 @@ namespace AngouriMath
             }
             return stack.Pop();
         }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            foreach (var instruction in instructions)
+                sb.Append(instruction.ToString()).Append("\n");
+            return sb.ToString();
+        }
     }
 }
