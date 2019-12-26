@@ -17,3 +17,8 @@
 /Tests/PerformanceBenchmark/obj
 /Tests/UnitTests/bin
 /Tests/UnitTests/obj
+/packages
+/Samples/GraphicExample/GraphicExample/bin/Release
+/Samples/GraphicExample/GraphicExample/obj/Release
+/Samples/Samples/bin
+/Samples/Samples/obj
