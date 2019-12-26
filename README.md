@@ -162,6 +162,7 @@ By this time, only definite integration over one variable is available.
 
 #### Compilation
 ```expr.Compile(a, b, c...)``` the arguments are arguments of the target function. You should list all the used variables in the order you will then call.
+
 ```fe.Call(a, b, c...)``` the arguments are Numbers in the order of variables. Retunrs Number.
 ```
 var x = MathS.Var("x");
@@ -169,6 +170,14 @@ var expr = MathS.Sqr(x) + 2 * x;
 var func = expr.Compile(x);
 Console.WriteLine(func.Call(3));
 ```
+Performane improved a lot. Testing on i7-7700HQ and expr=MathS.Sin(x) we get the following report:
+| Function  | Time per iteration |
+| ------------- | ------------- |
+| Substitute(x, 3).Eval() from 1.0.13  | 12000 ns |
+| Substitute(x, 3).Eval() from 1.0.15 | 2500 ns  |
+| Call(3) from 1.0.15 | 70 ns  |
+| Complex.Sin(3) | 24 ns |
+So, for most cases using compilation will save you enough time even though Complex.Sin is still faster.
 
 #### Function list
 
