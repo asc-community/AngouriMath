@@ -171,12 +171,12 @@ var func = expr.Compile(x);
 Console.WriteLine(func.Call(3));
 ```
 Performane improved a lot. Testing on i7-7700HQ and expr=MathS.Sin(x) we get the following report:
-| Function  | Time per iteration |
-| ------------- | ------------- |
-| Substitute(x, 3).Eval() from 1.0.13  | 12000 ns |
-| Substitute(x, 3).Eval() from 1.0.15 | 2500 ns  |
-| Call(3) from 1.0.15 | 70 ns  |
-| Complex.Sin(3) | 24 ns |
+| Function                             | Time per iteration              |
+| ------------------------------------ | ------------------------------- |
+| Substitute(x, 3).Eval() from 1.0.13  | 12000 ns                        |
+| Substitute(x, 3).Eval() from 1.0.15  | 2500 ns                         |
+| Call(3) from 1.0.15                  | 70 ns                           |
+| Complex.Sin(3)                       | 24 ns                           |
 So, for most cases using compilation will save you enough time even though Complex.Sin is still faster.
 
 #### Function list
