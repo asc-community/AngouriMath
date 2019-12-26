@@ -17,9 +17,9 @@ namespace GraphicExample
         {
             InitializeComponent();
         }
-        static FastExpression niceFunc1;
-        static FastExpression niceFunc2;
-        static double t = 120;
+        FastExpression niceFunc1;
+        FastExpression niceFunc2;
+        double t = 120;
         private void MainFormLoad(object sender, EventArgs e)
         {
             var A = MathS.Var("A");
@@ -29,10 +29,10 @@ namespace GraphicExample
             niceFunc1 = expr1.Compile(A, B);
             niceFunc2 = expr2.Compile(A, B);
         }
-        static List<double> X1 = new List<double>();
-        static List<double> Y1 = new List<double>();
-        static List<double> X2 = new List<double>();
-        static List<double> Y2 = new List<double>();
+        List<double> X1 = new List<double>();
+        List<double> Y1 = new List<double>();
+        List<double> X2 = new List<double>();
+        List<double> Y2 = new List<double>();
         private void EveryFrame(object sender, EventArgs e)
         {
             X1.Clear(); Y1.Clear();
