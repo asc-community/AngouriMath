@@ -10,16 +10,24 @@ namespace DotnetBenchmark
     public class CompiledFunc
     {
         private readonly VariableEntity x;
-        private readonly FastExpression func;
+        private readonly FastExpression sinFunc;
+        private readonly FastExpression sqrtFunc;
+        private readonly FastExpression mulFunc;
 
         public CompiledFunc()
         {
             x = MathS.Var("x");
-            func = MathS.Sin(x).Compile(x);
+            sinFunc = MathS.Sin(x).Compile(x);
+            sqrtFunc = MathS.Sqrt(x).Compile(x);
+            mulFunc = ((MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x))).Compile(x);
         }
 
         [Benchmark]
-        public Number Call3() => func.Call(3);
+        public Number SinFunc() => sinFunc.Call(3);
+        [Benchmark]
+        public Number SqrtFunc() => sqrtFunc.Call(3);
+        [Benchmark]
+        public Number MulFunc() => mulFunc.Call(3);
     }
 
     public class Program
