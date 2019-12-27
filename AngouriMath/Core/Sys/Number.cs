@@ -8,7 +8,7 @@ namespace AngouriMath.Core
 {
     #pragma warning disable CS0660
     #pragma warning disable CS0661
-    public class Number
+    public struct Number
     #pragma warning restore CS0660
     #pragma warning restore CS0661
     {

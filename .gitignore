@@ -24,3 +24,5 @@
 /Samples/Samples/obj
 /Samples/GraphicExample/GraphicExample/bin/Debug
 /Samples/GraphicExample/GraphicExample/obj/Debug
+/Tests/DotnetBenchmark/bin/Release/netcoreapp3.1
+/Tests/DotnetBenchmark/obj
