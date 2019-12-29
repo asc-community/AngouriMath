@@ -176,8 +176,15 @@ Performane improved a lot. Testing on i7-7700HQ and expr=MathS.Sin(x) we get the
 | ------------------------------------ | ------------------------------- |
 | Substitute(x, 3).Eval() from 1.0.13  | 12000 ns                        |
 | Substitute(x, 3).Eval() from 1.0.15  | 2500 ns                         |
-| Call(3) from 1.0.15                  | 70 ns                           |
-| Complex.Sin(3)                       | 24 ns                           |
+| Call(3) from 1.0.15                  | 67 ns                           |
+| Complex.Sin(3)                       | 27 ns                           |
+
+If we take expr=(MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x)), we get the following performance
+
+| Method             | Time per iteration |
+|--------------------|-------------------:|
+| AM Compiled        | 410.767 ns         |
+| In-code expression | 211.472 ns         |
 
 So, for most cases using compilation will save you enough time even though Complex.Sin is still faster.
 

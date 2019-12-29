@@ -32,6 +32,7 @@ namespace AngouriMath.Core
             get => IsNull ? double.NaN : value.Imaginary;
             set {
                 this.value = new Complex(Re, value);
+                __isReal = this.value.Imaginary == 0;
             }
         }
         internal Complex value;
@@ -39,6 +40,7 @@ namespace AngouriMath.Core
         public Number(bool isNull)
         {
             IsNull = isNull;
+            __isReal = false;
         }
 
         /// <summary>
@@ -49,6 +51,7 @@ namespace AngouriMath.Core
         {
             IsNull = false;
             this.value = new Complex(Re, 0);
+            __isReal = true;
         }
 
         /// <summary>
@@ -59,11 +62,13 @@ namespace AngouriMath.Core
         public Number(double re, double im)
         {
             IsNull = false;
+            __isReal = im == 0;
             this.value = new Complex(re, im);
         }
         public Number(Complex num)
         {
             IsNull = false;
+            __isReal = num.Imaginary == 0;
             this.value = num;
         }
         public Number Copy()
@@ -123,7 +128,7 @@ namespace AngouriMath.Core
                 return ToDouble(s);
             }
         }
-
+        internal bool __isReal;
         public static implicit operator Number(int num) => new Number(num);
         public static implicit operator Number(double num) => new Number(num);
         public static Number operator +(Number a, Number b) => new Number(a.value + b.value);
@@ -156,10 +161,15 @@ namespace AngouriMath.Core
         {
             return !Number.IsDoubleZero(Im);
         }
-        public static Number Pow(Number a, Number b) => new Number(Complex.Pow(a.value, b.value));
-        public static Number Log(Number a, Number b) => new Number(Complex.Log(a.value, b.Re));
-        public static Number Sin(Number a) => new Number(Complex.Sin(a.value));
-        public static Number Cos(Number a) => new Number(Complex.Cos(a.value));
+        public static Number Pow(Number a, Number b) => 
+            (a.__isReal && b.__isReal) ? 
+                Math.Pow(a.value.Real, b.value.Real) : 
+                new Number(b.value == 0.5 ? Complex.Sqrt(a.value) : Complex.Pow(a.value, b.value));
+        public static Number Log(Number a, Number b) => (a.__isReal && b.__isReal) ?
+                                                            Math.Log(a.value.Real, b.value.Real) :
+                                                            new Number(Complex.Log(a.value, b.Re));
+        public static Number Sin(Number a) => a.__isReal ? new Number(Math.Sin(a.value.Real)) : new Number(Complex.Sin(a.value));
+        public static Number Cos(Number a) => a.__isReal ? new Number(Math.Cos(a.value.Real)) : new Number(Complex.Cos(a.value));
         public static double Abs(Number a) => Complex.Abs(a.value);
         public static bool IsDoubleZero(double a)
         {

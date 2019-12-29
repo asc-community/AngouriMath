@@ -86,12 +86,12 @@ namespace Samples
             var func = expr.Compile(x);
             //var func = expr.Compile(x);
             var watch = new Stopwatch();
-            int iters = 100000;
+            int iters = 100000000;
             watch.Start();
             for (int i = 0; i < iters; i++)
                 //expr.SolveNt(x);
-                expr.Substitute(x, 3).Eval();
-                //func.Call(3);
+                //expr.Substitute(x, 3).Eval();
+                func.Call(3);
                 //Complex.Sin(3);
                 //new Complex(3, 0);
                 //new Number(3, 0);
