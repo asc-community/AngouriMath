@@ -36,7 +36,8 @@ namespace AngouriMath.Core
             }
         }
         internal Complex value;
-        public bool IsNull { get; }
+        private bool isNull;
+        public bool IsNull { get => isNull || (double.IsNaN(value.Imaginary)) || (double.IsNaN(value.Real)); set => isNull = value; }
         public Number(bool isNull)
         {
             IsNull = isNull;
@@ -180,13 +181,8 @@ namespace AngouriMath.Core
         {
             return !Number.IsDoubleZero(Im);
         }
-        public static Number Pow(Number a, Number b) => 
-            (a.__isReal && b.__isReal) ? 
-                Math.Pow(a.value.Real, b.value.Real) : 
-                new Number(b.value == 0.5 ? Complex.Sqrt(a.value) : Complex.Pow(a.value, b.value));
-        public static Number Log(Number a, Number b) => (a.__isReal && b.__isReal) ?
-                                                            Math.Log(a.value.Real, b.value.Real) :
-                                                            new Number(Complex.Log(a.value, b.Re));
+        public static Number Pow(Number a, Number b) => new Number(b.value == 0.5 ? Complex.Sqrt(a.value) : Complex.Pow(a.value, b.value));
+        public static Number Log(Number a, Number b) => new Number(Complex.Log(a.value, b.Re));
         public static Number Sin(Number a) => a.__isReal ? new Number(Math.Sin(a.value.Real)) : new Number(Complex.Sin(a.value));
         public static Number Cos(Number a) => a.__isReal ? new Number(Math.Cos(a.value.Real)) : new Number(Complex.Cos(a.value));
         public static double Abs(Number a) => Complex.Abs(a.value);

@@ -36,12 +36,12 @@ namespace UnitTests
         [TestMethod]
         public void TestMi()
         {
-            Assert.AreEqual(MathS.Sqrt(-1).Eval().Latexise(), "i");
+            Assert.AreEqual("i", MathS.Sqrt(-1).Eval().Latexise());
         }
         [TestMethod]
         public void TestMMi()
         {
-            Assert.AreEqual((-MathS.Sqrt(-1)).Eval().Latexise(), "-i");
+            Assert.AreEqual("-i", (-MathS.Sqrt(-1)).Eval().Latexise());
         }
     }
 }

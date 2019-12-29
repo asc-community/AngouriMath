@@ -45,8 +45,16 @@ namespace AngouriMath.Core.FromLinq
                         children.Add(InnerParse(arg));
                     var methodInfo = method.Method;
                     var name = methodInfo.Name.ToLower() + "f";
-                    if (SynonimFunctions.SynFunctions.ContainsKey(name))
+                    if (name == "powf") // The only operator that acts as function
+                    {
+                        var op = new OperatorEntity(name, Const.PRIOR_POW);
+                        op.Children = children;
+                        return op;
+                    }
+                    else if (SynonimFunctions.SynFunctions.ContainsKey(name))
+                    {
                         return SynonimFunctions.SynFunctions[name](children);
+                    }
                     else
                     {
                         var func = new FunctionEntity(name);

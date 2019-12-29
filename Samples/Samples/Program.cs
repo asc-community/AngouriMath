@@ -83,9 +83,7 @@ namespace Samples
         }
         static void Main(string[] args)
         {
-            Expression<Func<double, double>> lambda = num => Math.Sqrt(2) * Math.Sin(num);
-            var expr = MathS.FromLinq(lambda);
-            Console.WriteLine(expr.Substitute("num", 3).Eval());
+            Sample1();
         }
     }
 }
