@@ -100,6 +100,7 @@ namespace AngouriMath
         public new string Name { get => Value.ToString(); }
         public static implicit operator NumberEntity(int num) => new NumberEntity(num);
         public static implicit operator NumberEntity(Number num) => new NumberEntity(num);
+
     }
     public class VariableEntity : Entity
     {

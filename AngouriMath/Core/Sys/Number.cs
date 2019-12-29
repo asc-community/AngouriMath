@@ -8,7 +8,7 @@ namespace AngouriMath.Core
 {
     #pragma warning disable CS0660
     #pragma warning disable CS0661
-    public struct Number
+    public class Number
     #pragma warning restore CS0660
     #pragma warning restore CS0661
     {
@@ -41,6 +41,23 @@ namespace AngouriMath.Core
         {
             IsNull = isNull;
             __isReal = false;
+        }
+
+        public Number(object value)
+        {
+            if (value is Number)
+            {
+                var num = value as Number;
+                IsNull = num.IsNull;
+                __isReal = num.Im == 0;
+                this.value = num.value;
+            }
+            else if (value is double || value is int)
+            {
+                var num = (double)value;
+                IsNull = double.IsNaN(num);
+                this.Re = num;
+            }
         }
 
         /// <summary>
@@ -131,6 +148,8 @@ namespace AngouriMath.Core
         internal bool __isReal;
         public static implicit operator Number(int num) => new Number(num);
         public static implicit operator Number(double num) => new Number(num);
+        //public static explicit operator Number(double num) => new Number(num);
+        public static implicit operator Number(Complex num) => new Number(num);
         public static Number operator +(Number a, Number b) => new Number(a.value + b.value);
         public static Number operator -(Number a, Number b) => new Number(a.value - b.value);
         public static Number operator *(Number a, Number b) => new Number(a.value * b.value);

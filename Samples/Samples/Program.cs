@@ -3,11 +3,14 @@ using AngouriMath;
 using AngouriMath.Core;
 using System.Diagnostics;
 using System.Numerics;
+using System.Linq.Expressions;
 
 namespace Samples
 {
     class Program
     {
+        public static object MathExpressionGenerator { get; private set; }
+
         static void Sample1()
         {
             var inp = "1 + 2 * log(9, 3)";
@@ -80,24 +83,9 @@ namespace Samples
         }
         static void Main(string[] args)
         {
-            //Sample1();
-            var x = MathS.Var("x");
-            var expr = MathS.Sin(x);
-            var func = expr.Compile(x);
-            //var func = expr.Compile(x);
-            var watch = new Stopwatch();
-            int iters = 100000000;
-            watch.Start();
-            for (int i = 0; i < iters; i++)
-                //expr.SolveNt(x);
-                //expr.Substitute(x, 3).Eval();
-                func.Call(3);
-                //Complex.Sin(3);
-                //new Complex(3, 0);
-                //new Number(3, 0);
-                //Math.Sin(Math.Cos(a));
-            watch.Stop();
-            Console.WriteLine(((double)watch.ElapsedMilliseconds) / iters * 1000000);
+            Expression<Func<double, double>> lambda = num => Math.Sqrt(2) * Math.Sin(num);
+            var expr = MathS.FromLinq(lambda);
+            Console.WriteLine(expr);
         }
     }
 }

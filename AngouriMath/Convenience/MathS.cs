@@ -4,7 +4,8 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
-
+using System.Linq.Expressions;
+using AngouriMath.Core.FromLinq;
 
 namespace AngouriMath
 {
@@ -35,7 +36,7 @@ namespace AngouriMath
         public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-11;
 
         /// <summary>
-        /// Convert an expression from a string
+        /// Converts an expression from a string
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
@@ -44,6 +45,17 @@ namespace AngouriMath
             var lexer = new Lexer(expr);
             var res = Parser.Parse(lexer);
             return SynonimFunctions.Synonimize(res);
+        }
+
+        /// <summary>
+        /// Converts an exprssion from linq expression
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        public static Entity FromLinq(Expression expr)
+        {
+            var parser = new LinqParser(expr);
+            return parser.Parse();
         }
     }
 }
