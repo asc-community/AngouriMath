@@ -82,7 +82,7 @@ namespace AngouriMath
         /// Simplification synonim. Recommended to use in case of computing a concrete number
         /// </summary>
         /// <returns></returns>
-        public Entity Eval() => Simplify(1);
+        public Entity Eval() => Simplify(0);
     }
 
     // Adding invoke table for eval

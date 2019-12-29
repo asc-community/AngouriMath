@@ -10,6 +10,19 @@ namespace AngouriMath
         /// Substitute a variable with an expression
         /// </summary>
         /// <param name="x">
+        /// A name of variable to substitute
+        /// </param>
+        /// <param name="value">
+        /// The value we replace variable with
+        /// </param>
+        /// <returns></returns>
+        public Entity Substitute(string x, Entity value)
+            => Substitute(MathS.Var(x), value, false);
+
+        /// <summary>
+        /// Substitute a variable with an expression
+        /// </summary>
+        /// <param name="x">
         /// A variable to substitute
         /// </param>
         /// <param name="value">

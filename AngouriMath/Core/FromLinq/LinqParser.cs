@@ -44,9 +44,15 @@ namespace AngouriMath.Core.FromLinq
                     foreach (var arg in method.Arguments)
                         children.Add(InnerParse(arg));
                     var methodInfo = method.Method;
-                    var func = new FunctionEntity(methodInfo.Name.ToLower() + "f");
-                    func.Children = children;
-                    return func;
+                    var name = methodInfo.Name.ToLower() + "f";
+                    if (SynonimFunctions.SynFunctions.ContainsKey(name))
+                        return SynonimFunctions.SynFunctions[name](children);
+                    else
+                    {
+                        var func = new FunctionEntity(name);
+                        func.Children = children;
+                        return func;
+                    }
                 default:
                     throw new Exception("Parse error");
             }
