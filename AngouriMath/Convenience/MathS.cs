@@ -20,12 +20,16 @@ namespace AngouriMath
         public static readonly TwoArg Pow = Powf.Hang;
         public static readonly OneArg Sqrt = a => Powf.Hang(a, 0.5);
         public static readonly OneArg Sqr = a => Powf.Hang(a, 2);
-        public static readonly OneArg Tan = a => MathS.Sin(a) / MathS.Cos(a);
-        public static readonly OneArg Cotan = a => 1 / Tan(a);
+        public static readonly OneArg Tan = Tanf.Hang;
+        public static readonly OneArg Cotan = Cotanf.Hang;
         public static readonly OneArg Sec = a => 1 / Cos(a);
         public static readonly OneArg Cosec = a => 1 / Sin(a);
         public static readonly OneArg B = a => a * Sin(a);
         public static readonly OneArg TB = a => a * Cos(a);
+        public static readonly OneArg Arcsin = Arcsinf.Hang;
+        public static readonly OneArg Arccos = Arccosf.Hang;
+        public static readonly OneArg Arctan = Arctanf.Hang;
+        public static readonly OneArg Arccotan = Arccotanf.Hang;
         public static OneArg Ln => v => Logf.Hang(v, e);
         public static readonly VarFunc Var = v => new VariableEntity(v);
         public static readonly VarFunc Symbol = v => new VariableEntity(v);

@@ -155,6 +155,12 @@ namespace AngouriMath
             // a / (b * {1})
             { const1 / (const2 * any1), (const1 / const2) / any1 },
             { const1 / (any1 * const2), (const1 / const2) / any1 },
+
+            // arc1({}) + arc2({}) = pi/2
+            { Arcsinf.PHang(any1) + Arccosf.PHang(any1), MathS.pi / 2 },
+            { Arccosf.PHang(any1) + Arcsinf.PHang(any1), MathS.pi / 2 },
+            { Arctanf.PHang(any1) + Arccotanf.PHang(any1), MathS.pi / 2 },
+            { Arccotanf.PHang(any1) + Arctanf.PHang(any1), MathS.pi / 2 },
         };
 
         internal static readonly RuleList ExpandRules = new RuleList

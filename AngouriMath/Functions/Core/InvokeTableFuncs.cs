@@ -6,6 +6,9 @@ using AngouriMath.Core;
 
 namespace AngouriMath
 {
+    /// <summary>
+    /// If I need to add a function or operator, I first do it here.
+    /// </summary>
     public static partial class MathS
     {
         public delegate Entity OneArg(Entity a);
@@ -102,6 +105,28 @@ namespace AngouriMath
             MathFunctions.stringTable["cosf"] = Stringize;
         }
     }
+    public static partial class Tanf
+    {
+        public static void Wakeup() { }
+        static Tanf()
+        {
+            MathFunctions.evalTable["tanf"] = Simplify;
+            MathFunctions.deriveTable["tanf"] = Derive;
+            MathFunctions.latexTable["tanf"] = Latex;
+            MathFunctions.stringTable["tanf"] = Stringize;
+        }
+    }
+    public static partial class Cotanf
+    {
+        public static void Wakeup() { }
+        static Cotanf()
+        {
+            MathFunctions.evalTable["cotanf"] = Simplify;
+            MathFunctions.deriveTable["cotanf"] = Derive;
+            MathFunctions.latexTable["cotanf"] = Latex;
+            MathFunctions.stringTable["cotanf"] = Stringize;
+        }
+    }
     public static partial class Logf
     {
         public static void Wakeup() { }
@@ -111,6 +136,50 @@ namespace AngouriMath
             MathFunctions.deriveTable["logf"] = Derive;
             MathFunctions.latexTable["logf"] = Latex;
             MathFunctions.stringTable["logf"] = Stringize;
+        }
+    }
+    public static partial class Arcsinf
+    {
+        public static void Wakeup() { }
+        static Arcsinf()
+        {
+            MathFunctions.evalTable["arcsinf"] = Eval;
+            MathFunctions.deriveTable["arcsinf"] = Derive;
+            MathFunctions.latexTable["arcsinf"] = Latex;
+            MathFunctions.stringTable["arcsinf"] = Stringize;
+        }
+    }
+    public static partial class Arccosf
+    {
+        public static void Wakeup() { }
+        static Arccosf()
+        {
+            MathFunctions.evalTable["arccosf"] = Eval;
+            MathFunctions.deriveTable["arccosf"] = Derive;
+            MathFunctions.latexTable["arccosf"] = Latex;
+            MathFunctions.stringTable["arccosf"] = Stringize;
+        }
+    }
+    public static partial class Arctanf
+    {
+        public static void Wakeup() { }
+        static Arctanf()
+        {
+            MathFunctions.evalTable["arctanf"] = Eval;
+            MathFunctions.deriveTable["arctanf"] = Derive;
+            MathFunctions.latexTable["arctanf"] = Latex;
+            MathFunctions.stringTable["arctanf"] = Stringize;
+        }
+    }
+    public static partial class Arccotanf
+    {
+        public static void Wakeup() { }
+        static Arccotanf()
+        {
+            MathFunctions.evalTable["arccotanf"] = Eval;
+            MathFunctions.deriveTable["arccotanf"] = Derive;
+            MathFunctions.latexTable["arccotanf"] = Latex;
+            MathFunctions.stringTable["arccotanf"] = Stringize;
         }
     }
 
@@ -126,6 +195,12 @@ namespace AngouriMath
         public Entity Pow(Entity n) => Powf.Hang(this, n);
         public Entity Sin() => Sinf.Hang(this);
         public Entity Cos() => Cosf.Hang(this);
+        public Entity Tan() => Tanf.Hang(this);
+        public Entity Cotan() => Cotanf.Hang(this);
+        public Entity Arcsin() => Arcsinf.Hang(this);
+        public Entity Arccos() => Arccosf.Hang(this);
+        public Entity Arctan() => Arctanf.Hang(this);
+        public Entity Arccotan() => Arccotanf.Hang(this);
         public Entity Log(Entity n) => Logf.Hang(this, n);
         public bool IsLowerThan(Entity a)
         {

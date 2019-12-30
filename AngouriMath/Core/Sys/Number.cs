@@ -185,6 +185,12 @@ namespace AngouriMath.Core
         public static Number Log(Number a, Number b) => new Number(Complex.Log(a.value, b.Re));
         public static Number Sin(Number a) => a.__isReal ? new Number(Math.Sin(a.value.Real)) : new Number(Complex.Sin(a.value));
         public static Number Cos(Number a) => a.__isReal ? new Number(Math.Cos(a.value.Real)) : new Number(Complex.Cos(a.value));
+        public static Number Tan(Number a) => a.__isReal ? new Number(Math.Tan(a.value.Real)) : new Number(Complex.Tan(a.value));
+        public static Number Cotan(Number a) => a.__isReal ? new Number(1 / Math.Tan(a.value.Real)) : new Number(1 / Complex.Tan(a.value));
+        public static Number Arcsin(Number a) => a.__isReal ? new Number(Math.Asin(a.value.Real)) : new Number(Complex.Asin(a.value));
+        public static Number Arccos(Number a) => a.__isReal ? new Number(Math.Acos(a.value.Real)) : new Number(Complex.Acos(a.value));
+        public static Number Arctan(Number a) => a.__isReal ? new Number(Math.Atan(a.value.Real)) : new Number(Complex.Atan(a.value));
+        public static Number Arccotan(Number a) => a.__isReal ? new Number(Math.Atan(1 / a.value.Real)) : new Number(Complex.Atan(1 / a.value)); // Right?
         public static double Abs(Number a) => Complex.Abs(a.value);
         public static bool IsDoubleZero(double a)
         {

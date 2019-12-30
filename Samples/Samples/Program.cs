@@ -83,7 +83,9 @@ namespace Samples
         }
         static void Main(string[] args)
         {
-            Sample1();
+            var x = MathS.Var("x");
+            var expr = MathS.Arcsin(2 * x);
+            Console.WriteLine(expr.Derive(x).Simplify());
         }
     }
 }

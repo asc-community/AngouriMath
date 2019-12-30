@@ -73,7 +73,7 @@ namespace AngouriMath
         public static string Stringize(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(true);
+            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(args[1] is OperatorEntity && args[1].Priority <= Const.PRIOR_DIV);
         }
     }
     public static partial class Sinf
@@ -90,6 +90,22 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             return "cos(" + args[0].Stringize() + ")";
+        }
+    }
+    public static partial class Tanf
+    {
+        public static string Stringize(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "tan(" + args[0].Stringize() + ")";
+        }
+    }
+    public static partial class Cotanf
+    {
+        public static string Stringize(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "cotan(" + args[0].Stringize() + ")";
         }
     }
     public static partial class Logf
@@ -113,6 +129,38 @@ namespace AngouriMath
             {
                 return args[0].Stringize(args[0].Priority < Const.PRIOR_POW) + " ^ " + args[1].Stringize(args[1].Priority < Const.PRIOR_POW);
             }
+        }
+    }
+    public static partial class Arcsinf
+    {
+        public static string Stringize(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "arcsin(" + args[0].Stringize() + ")";
+        }
+    }
+    public static partial class Arccosf
+    {
+        public static string Stringize(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "arccos(" + args[0].Stringize() + ")";
+        }
+    }
+    public static partial class Arctanf
+    {
+        public static string Stringize(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "arctan(" + args[0].Stringize() + ")";
+        }
+    }
+    public static partial class Arccotanf
+    {
+        public static string Stringize(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "arccotan(" + args[0].Stringize() + ")";
         }
     }
 }

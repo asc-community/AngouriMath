@@ -234,6 +234,30 @@ namespace AngouriMath
                 return r.Cos();
         }
     }
+    public static partial class Tanf
+    {
+        public static Entity Simplify(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var r = args[0].InnerSimplify();
+            if (r is NumberEntity)
+                return new NumberEntity(Number.Tan((r as NumberEntity).Value));
+            else
+                return r.Tan();
+        }
+    }
+    public static partial class Cotanf
+    {
+        public static Entity Simplify(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var r = args[0].InnerSimplify();
+            if (r is NumberEntity)
+                return new NumberEntity(Number.Cotan((r as NumberEntity).Value));
+            else
+                return r.Cotan();
+        }
+    }
 
     public static partial class Logf
     {
@@ -258,6 +282,55 @@ namespace AngouriMath
                 {
                     return r.Log(args[1]);
                 }
+        }
+    }
+    
+    public static partial class Arcsinf
+    {
+        public static Entity Eval(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var arg = args[0];
+            if (arg is NumberEntity)
+                return new NumberEntity(Number.Arcsin((arg as NumberEntity).Value));
+            else
+                return Arcsinf.Hang(arg);
+        }
+    }
+    public static partial class Arccosf
+    {
+        public static Entity Eval(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var arg = args[0];
+            if (arg is NumberEntity)
+                return new NumberEntity(Number.Arccos((arg as NumberEntity).Value));
+            else
+                return Arccosf.Hang(arg);
+        }
+    }
+    public static partial class Arctanf
+    {
+        public static Entity Eval(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var arg = args[0];
+            if (arg is NumberEntity)
+                return new NumberEntity(Number.Arctan((arg as NumberEntity).Value));
+            else
+                return Arctanf.Hang(arg);
+        }
+    }
+    public static partial class Arccotanf
+    {
+        public static Entity Eval(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var arg = args[0];
+            if (arg is NumberEntity)
+                return new NumberEntity(Number.Arccotan((arg as NumberEntity).Value));
+            else
+                return Arccotanf.Hang(arg);
         }
     }
 }

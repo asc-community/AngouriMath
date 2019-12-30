@@ -84,6 +84,22 @@ namespace AngouriMath
             return "cos(" + args[0].Latexise() + ")";
         }
     }
+    public static partial class Tanf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "tan(" + args[0].Latexise() + ")";
+        }
+    }
+    public static partial class Cotanf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "cotan(" + args[0].Latexise() + ")";
+        }
+    }
     public static partial class Logf
     {
         internal static string Latex(List<Entity> args)
@@ -105,6 +121,38 @@ namespace AngouriMath
             {
                 return "{" + args[0].Latexise() + "}^{" + args[1].Latexise() + "}";
             }
+        }
+    }
+    public static partial class Arcsinf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "arcsin(" + args[0].Latexise() + ")";
+        }
+    }
+    public static partial class Arccosf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "arccos(" + args[0].Latexise() + ")";
+        }
+    }
+    public static partial class Arctanf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "arctan(" + args[0].Latexise() + ")";
+        }
+    }
+    public static partial class Arccotanf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return "arccotan(" + args[0].Latexise() + ")";
         }
     }
 }

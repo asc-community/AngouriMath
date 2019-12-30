@@ -132,6 +132,26 @@ namespace AngouriMath
             return -1 * a.Sin() * a.Derive(variable);
         }
     }
+    public static partial class Tanf
+    {
+        // tan(a) = 1 / cos(a) ^ 2
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var a = args[0];
+            return 1 / a.Cos().Pow(2) * a.Derive(variable);
+        }
+    }
+    public static partial class Cotanf
+    {
+        // tan(a) = -1 / sin(a) ^ 2
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var a = args[0];
+            return -1 / a.Sin().Pow(2) * a.Derive(variable);
+        }
+    }
     public static partial class Logf
     {
         // log(a, b) = (ln(a) / ln(b))' = (ln(a)' * ln(b) - ln(a) * ln(b)') / ln(b)^2 = (a' / a * ln(b) - ln(a) * b' / b) / ln(b)^2
@@ -141,6 +161,46 @@ namespace AngouriMath
             var a = args[0];
             var b = args[1];
             return (a.Derive(variable) / a * MathS.Ln(b) - MathS.Ln(a) * b.Derive(variable) / b) / (MathS.Ln(b).Pow(2));
+        }
+    }
+    public static partial class Arcsinf
+    {
+        // arcsin(x)' = 1 / sqrt(1 - x^2)
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var a = args[0];
+            return 1 / MathS.Sqrt(1 - MathS.Sqr(a)) * a.Derive(variable);
+        }
+    }
+    public static partial class Arccosf
+    {
+        // arccos(x)' = -1 / sqrt(1 - x^2)
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var a = args[0];
+            return -1 / MathS.Sqrt(1 - MathS.Sqr(a)) * a.Derive(variable);
+        }
+    }
+    public static partial class Arctanf
+    {
+        // arctan(x)' = 1 / (1 + x^2)
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var a = args[0];
+            return 1 / (1 + MathS.Sqr(a)) * a.Derive(variable);
+        }
+    }
+    public static partial class Arccotanf
+    {
+        // arccotan(x)' = -1 / (1 + x^2)
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var a = args[0];
+            return -1 / (1 + MathS.Sqr(a)) * a.Derive(variable);
         }
     }
 }

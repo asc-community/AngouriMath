@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq.Expressions;
 using System.Numerics;
 using System.Security.Cryptography;
 using AngouriMath;
@@ -14,6 +15,7 @@ namespace DotnetBenchmark
         private readonly FastExpression sinFunc;
         private readonly FastExpression sqrtFunc;
         private readonly FastExpression multiFunc;
+        private readonly Func<Complex, Complex> linqSin;
 
         public CompiledFunc()
         {
@@ -21,6 +23,8 @@ namespace DotnetBenchmark
             sinFunc = MathS.Sin(x).Compile(x);
             sqrtFunc = MathS.Sqrt(x).Compile(x);
             multiFunc = ((MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x))).Compile(x);
+            Expression<Func<Complex, Complex>> expr = (x) => Complex.Sin(x);
+            linqSin = expr.Compile();
         }
 
         [Benchmark]
@@ -35,6 +39,8 @@ namespace DotnetBenchmark
         public Complex ComplexSqrt() => Complex.Sqrt(3);
         [Benchmark]
         public Complex ComplexMulti() => (Complex.Log(3, 3) + Complex.Pow(3, 2)) * Complex.Sin(3 + 1 / Complex.Sin(3));
+        [Benchmark]
+        public Complex LinqSin() => linqSin(3);
     }
 
     public class Program
