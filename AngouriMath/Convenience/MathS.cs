@@ -173,12 +173,20 @@ namespace AngouriMath
         public static readonly VarFunc Symbol = v => new VariableEntity(v);
 
         /// <summary>
-        /// Creates an instance of Number (not NumberEntity!)
+        /// Creates a complex instance of Number (not NumberEntity!)
         /// </summary>
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
         public static Number Num(double a, double b) => new Number(a, b);
+
+        /// <summary>
+        /// Creates a real instance of Number (not NumberEntity!)
+        /// </summary>
+        /// <param name="a"></param>
+        /// <returns></returns>
+        public static Number Num(double a) => new Number(a);
+
         public static readonly Number e = 2.718281828459045235;
         public static readonly Number i = new Number(0, 1);
         public static readonly Number pi = 3.141592653589793;

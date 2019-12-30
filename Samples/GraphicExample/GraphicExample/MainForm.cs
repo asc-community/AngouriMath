@@ -29,10 +29,10 @@ namespace GraphicExample
             niceFunc1 = expr1.Compile(A, B);
             niceFunc2 = expr2.Compile(A, B);
         }
-        List<double> X1 = new List<double>();
-        List<double> Y1 = new List<double>();
-        List<double> X2 = new List<double>();
-        List<double> Y2 = new List<double>();
+        readonly List<double> X1 = new List<double>();
+        readonly List<double> Y1 = new List<double>();
+        readonly List<double> X2 = new List<double>();
+        readonly List<double> Y2 = new List<double>();
         private void EveryFrame(object sender, EventArgs e)
         {
             X1.Clear(); Y1.Clear();

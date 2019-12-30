@@ -89,7 +89,7 @@ namespace Samples
         }
         static void Main(string[] args)
         {
-            
+            Sample1();
         }
     }
 }

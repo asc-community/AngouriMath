@@ -44,7 +44,7 @@ namespace AngouriMath
             if (Type == InstructionType.CALL)
                 return b + FuncName;
             else if (Type == InstructionType.PUSHCONST)
-                return b + Value.ToString();
+                return b + Value;
             else
                 return b + VarNumber.ToString();
         }

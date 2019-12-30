@@ -7,7 +7,7 @@ namespace AngouriMath.Core.FromLinq
 {
     internal class LinqParser
     {
-        private Expression src;
+        private readonly Expression src;
         internal LinqParser(Expression linq)
         {
             src = linq;

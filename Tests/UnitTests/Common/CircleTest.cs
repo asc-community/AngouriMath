@@ -7,7 +7,7 @@ namespace UnitTests
     [TestClass]
     public class CircleTest
     {
-        public static VariableEntity x = MathS.Var("x");
+        public readonly static VariableEntity x = MathS.Var("x");
         [TestMethod]
         public void Test1()
         {
