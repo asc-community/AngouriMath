@@ -290,7 +290,7 @@ namespace AngouriMath
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0];
+            var arg = args[0].InnerSimplify();
             if (arg is NumberEntity)
                 return new NumberEntity(Number.Arcsin((arg as NumberEntity).Value));
             else
@@ -302,7 +302,7 @@ namespace AngouriMath
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0];
+            var arg = args[0].InnerSimplify();
             if (arg is NumberEntity)
                 return new NumberEntity(Number.Arccos((arg as NumberEntity).Value));
             else
@@ -314,7 +314,7 @@ namespace AngouriMath
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0];
+            var arg = args[0].InnerSimplify();
             if (arg is NumberEntity)
                 return new NumberEntity(Number.Arctan((arg as NumberEntity).Value));
             else
@@ -326,7 +326,7 @@ namespace AngouriMath
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0];
+            var arg = args[0].InnerSimplify();
             if (arg is NumberEntity)
                 return new NumberEntity(Number.Arccotan((arg as NumberEntity).Value));
             else

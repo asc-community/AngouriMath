@@ -8,6 +8,14 @@ namespace AngouriMath
 {
     /// <summary>
     /// If I need to add a function or operator, I first do it here.
+    /// Next,
+    /// .Hang
+    /// .PHang
+    /// .ToString
+    /// .Latex
+    /// .Derive
+    /// .Simplify
+    /// To compilation
     /// </summary>
     public static partial class MathS
     {

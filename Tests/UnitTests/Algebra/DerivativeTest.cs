@@ -7,24 +7,22 @@ namespace UnitTests
     [TestClass]
     public class DerivativeTest
     {
+        static VariableEntity x = MathS.Var("x");
         [TestMethod]
         public void Test1()
         {
-            var x = MathS.Var("x");
             var func = MathS.Sqr(x) + 2 * x + 1;
             Assert.IsTrue(func.Derive(x).Simplify() == 2 * (x + 1));
         }
         [TestMethod]
         public void TestSin()
         {
-            var x = MathS.Var("x");
             var func = MathS.Sin(x);
             Assert.IsTrue(func.Derive(x).Simplify() == MathS.Cos(x));
         }
         [TestMethod]
         public void TestCosCustom()
         {
-            var x = MathS.Var("x");
             var func = MathS.Cos(MathS.Pow(x, 3));
             var expected = -MathS.Sin(MathS.Pow(x, 3)) * (3 * MathS.Sqr(x));
             var actual = func.Derive(x).Simplify();
@@ -33,23 +31,62 @@ namespace UnitTests
         [TestMethod]
         public void TestPow()
         {
-            var x = MathS.Var("x");
             var func = MathS.Pow(MathS.e, x);
             Assert.IsTrue(func.Derive(x).Simplify() == func);
         }
         [TestMethod]
         public void TestPoly()
         {
-            var x = MathS.Var("x");
             var func = MathS.Pow(x, 4);
             Assert.IsTrue(func.Derive(x).Simplify() == 4 * MathS.Pow(x, 3));
         }
         [TestMethod]
         public void TestCusfunc()
         {
-            var x = MathS.Var("x");
             var func = MathS.Sin(x).Pow(2);
             Assert.IsTrue(func.Derive(x).Simplify() == MathS.Sin(2 * x));
+        }
+        [TestMethod]
+        public void TestTan()
+        {
+            var func = MathS.Tan(2 * x);
+            Assert.IsTrue(func.Derive(x).Simplify() == 1 / MathS.Sqr(MathS.Cos(2 * x)) * 2);
+        }
+        [TestMethod]
+        public void TestCoTan()
+        {
+            var func = MathS.Cotan(2 * x);
+            Assert.IsTrue(func.Derive(x).Simplify() == -1 / MathS.Sqr(MathS.Sin(2 * x)) * 2);
+        }
+        [TestMethod]
+        public void TestArc1()
+        {
+            var func = MathS.Arcsin(x);
+            Assert.IsTrue(func.Derive(x).Simplify() == 1 / MathS.Sqrt(1 - MathS.Sqr(x)));
+        }
+        [TestMethod]
+        public void TestArc2()
+        {
+            var func = MathS.Arcsin(2 * x);
+            Assert.IsTrue(func.Derive(x).Simplify() == 1 / MathS.Sqrt(1 - 4 * MathS.Sqr(x)) * 2);
+        }
+        [TestMethod]
+        public void TestArc3()
+        {
+            var func = MathS.Arccos(2 * x);
+            Assert.IsTrue(func.Derive(x).Simplify() == -1 / MathS.Sqrt(1 - 4 * MathS.Sqr(x)) * 2);
+        }
+        [TestMethod]
+        public void TestArc4()
+        {
+            var func = MathS.Arctan(2 * x);
+            Assert.IsTrue(func.Derive(x).Simplify() == 1 / (1 + 4 * MathS.Sqr(x)) * 2);
+        }
+        [TestMethod]
+        public void TestArc5()
+        {
+            var func = MathS.Arccotan(2 * x);
+            Assert.IsTrue(func.Derive(x).Simplify() == -1 / (1 + 4 * MathS.Sqr(x)) * 2);
         }
     }
 }

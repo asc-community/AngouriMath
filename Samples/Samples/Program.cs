@@ -81,11 +81,15 @@ namespace Samples
             var func = expr.Compile(x);
             Console.WriteLine(func.Substitute(3));
         }
-        static void Main(string[] args)
+        static void Sample11()
         {
             var x = MathS.Var("x");
-            var expr = MathS.Arcsin(2 * x);
-            Console.WriteLine(expr.Derive(x).Simplify());
+            var expr = (MathS.Arcsin(6 * x) + MathS.Arccos(6 * x)) - (MathS.Arctan(x) + MathS.Arccotan(x));
+            Console.WriteLine(expr.Simplify());
+        }
+        static void Main(string[] args)
+        {
+            Sample11();
         }
     }
 }

@@ -7,6 +7,7 @@ namespace UnitTests
     [TestClass]
     public class CircleTest
     {
+        public static VariableEntity x = MathS.Var("x");
         [TestMethod]
         public void Test1()
         {
@@ -28,7 +29,6 @@ namespace UnitTests
         [TestMethod]
         public void Test4()
         {
-            var x = MathS.Var("x");
             MathS.FromString((MathS.Sin(x) / MathS.Cos(x)).Derive(x).ToString());
         }
         [TestMethod]
@@ -42,6 +42,16 @@ namespace UnitTests
         {
             Assert.IsTrue(MathS.i.ToString() == "i");
             Assert.IsTrue((-1 * MathS.i).ToString() == "-i");
+        }
+        [TestMethod]
+        public void Test7()
+        {
+            Assert.IsTrue(MathS.Sin(MathS.Arcsin(x * 3)).Simplify() == 3 * x);
+        }
+        [TestMethod]
+        public void Test8()
+        {
+            Assert.IsTrue(MathS.Arccotan(MathS.Cotan(x * 3)).Simplify() == 3 * x);
         }
     }
 }

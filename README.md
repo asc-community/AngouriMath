@@ -190,29 +190,8 @@ So, for most cases using compilation will save you enough time even though Compl
 
 #### Function list
 
-MathS.Sin(x)
-
-MathS.Cos(x)
-
-MathS.Log(num, base)
-
-MathS.Pow(base, power)
-
-MathS.Sqrt(x) = MathS.Pow(x, 0.5)
-
-MathS.Sqr(x) = MathS.Pow(x, 2)
-
-MathS.Tan(x) = MathS.Sin(x) / MathS.Cos(x)
-
-MathS.Cotan(x) = 1 / MathS.Tan(x)
-
-MathS.Sec(x) = 1 / MathS.Cos(x)
-
-MathS.Cosec(x) = 1 / MathS.Sin(x)
-
-MathS.B(x) = x * MathS.Sin(x)
-
-MathS.TB(x) = x * MathS.Cos(x)
-
+MathS.
+Log(num, base), Pow(base, power), Sqrt(x), Sqr(x), Sin(x), Cos(x), Tan(x), Cotan(x), 
+Sec(x), Cosec(x), Arcsin(x), Arccos(x), Arctan(x), Arccotan(x), B(x), TB(x)
 
 MathS.FromString(str) - returns Entity

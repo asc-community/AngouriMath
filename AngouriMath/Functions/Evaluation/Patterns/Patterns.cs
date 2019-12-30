@@ -161,6 +161,18 @@ namespace AngouriMath
             { Arccosf.PHang(any1) + Arcsinf.PHang(any1), MathS.pi / 2 },
             { Arctanf.PHang(any1) + Arccotanf.PHang(any1), MathS.pi / 2 },
             { Arccotanf.PHang(any1) + Arctanf.PHang(any1), MathS.pi / 2 },
+
+            // arcfunc(func(x)) = x
+            { Arcsinf.PHang(Sinf.PHang(any1)), any1 },
+            { Arccosf.PHang(Cosf.PHang(any1)), any1 },
+            { Arctanf.PHang(Tanf.PHang(any1)), any1 },
+            { Arccotanf.PHang(Cotanf.PHang(any1)), any1 },
+
+            // func(arcfunc(x)) = x
+            { Sinf.PHang(Arcsinf.PHang(any1)), any1 },
+            { Cosf.PHang(Arccosf.PHang(any1)), any1 },
+            { Tanf.PHang(Arctanf.PHang(any1)), any1 },
+            { Cotanf.PHang(Arccotanf.PHang(any1)), any1 },
         };
 
         internal static readonly RuleList ExpandRules = new RuleList

@@ -16,7 +16,13 @@ namespace AngouriMath
             { "powf", 4 },
             { "sinf", 5 },
             { "cosf", 6 },
-            { "logf", 7 },
+            { "tanf", 7 },
+            { "cotanf", 8 },
+            { "logf", 9 },
+            { "arcsinf", 10 },
+            { "arccosf", 11 },
+            { "arctanf", 12 },
+            { "arccotanf", 13 },
         };
 
         internal delegate void CompiledFunction(Stack<Number> stack);
@@ -30,7 +36,13 @@ namespace AngouriMath
                 Powf,
                 Sinf,
                 Cosf,
-                Logf
+                Tanf,
+                Cotanf,
+                Logf,
+                Arcsinf,
+                Arccosf,
+                Arctanf,
+                Arccotanf
             };
 
         internal static readonly Number[] buffer = new Number[10];
@@ -75,11 +87,41 @@ namespace AngouriMath
             Number n = stack.Pop();
             stack.Push(Number.Cos(n));
         }
+        internal static void Tanf(Stack<Number> stack)
+        {
+            Number n = stack.Pop();
+            stack.Push(Number.Tan(n));
+        }
+        internal static void Cotanf(Stack<Number> stack)
+        {
+            Number n = stack.Pop();
+            stack.Push(Number.Cotan(n));
+        }
         internal static void Logf(Stack<Number> stack)
         {
             Number n1 = stack.Pop();
             Number n2 = stack.Pop();
             stack.Push(Number.Log(n1, n2));
+        }
+        internal static void Arcsinf(Stack<Number> stack)
+        {
+            Number n = stack.Pop();
+            stack.Push(Number.Arcsin(n));
+        }
+        internal static void Arccosf(Stack<Number> stack)
+        {
+            Number n = stack.Pop();
+            stack.Push(Number.Arccos(n));
+        }
+        internal static void Arctanf(Stack<Number> stack)
+        {
+            Number n = stack.Pop();
+            stack.Push(Number.Arctan(n));
+        }
+        internal static void Arccotanf(Stack<Number> stack)
+        {
+            Number n = stack.Pop();
+            stack.Push(Number.Arccotan(n));
         }
     }
 }
