@@ -65,7 +65,7 @@ namespace AngouriMath
             var stage1 = this.InnerSimplify();
             Entity res = stage1;
             for (int i = 0; i < level; i++)
-                res = PatternReplacer.Replace(Patterns.CommonRules, res).InnerSimplify();
+                res = PatternReplacer.Replace(Patterns.CommonRules, res.Sort()).InnerSimplify();
             return res;
         }
         internal Entity InnerSimplify()

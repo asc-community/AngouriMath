@@ -4,6 +4,7 @@ using AngouriMath.Core;
 using System.Diagnostics;
 using System.Numerics;
 using System.Linq.Expressions;
+using AngouriMath.Core.TreeAnalysis;
 
 namespace Samples
 {
@@ -89,7 +90,11 @@ namespace Samples
         }
         static void Main(string[] args)
         {
-            Sample1();
+            var x = MathS.Var("x");
+            var y = MathS.Var("y");
+            var expr = x + 2 * x - y + x + 2 * y - (y + x);
+            Console.WriteLine(expr);
+            Console.WriteLine(expr.Simplify());
         }
     }
 }

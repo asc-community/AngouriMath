@@ -149,10 +149,18 @@ namespace AngouriMath
                     case "minusf": return newChildren[0] - newChildren[1];
                     case "mulf": return newChildren[0] * newChildren[1];
                     case "divf": return newChildren[0] / newChildren[1];
+                    
                     case "powf": return MathS.Pow(newChildren[0], newChildren[1]);
                     case "logf": return MathS.Log(newChildren[0], newChildren[1]);
                     case "sinf": return MathS.Sin(newChildren[0]);
                     case "cosf": return MathS.Cos(newChildren[0]);
+                    case "tanf": return MathS.Tan(newChildren[0]);
+                    case "cotanf": return MathS.Cotan(newChildren[0]);
+                    case "arcsinf": return MathS.Arcsin(newChildren[0]);
+                    case "arccosf": return MathS.Arccos(newChildren[0]);
+                    case "arctanf": return MathS.Arctan(newChildren[0]);
+                    case "arccotanf": return MathS.Arccotan(newChildren[0]);
+                    
                     default: return null;
                 }
             else

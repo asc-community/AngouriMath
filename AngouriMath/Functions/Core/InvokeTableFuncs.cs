@@ -16,6 +16,8 @@ namespace AngouriMath
     /// .Derive
     /// .Simplify
     /// To compilation
+    /// To From String Syntax Info goodStrings
+    /// To Pattern Replacer
     /// </summary>
     public static partial class MathS
     {
