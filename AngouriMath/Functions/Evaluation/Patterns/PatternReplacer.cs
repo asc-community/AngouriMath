@@ -136,8 +136,10 @@ namespace AngouriMath
                 newChildren.Add((child as Pattern).BuildTree(keys));
             if (PatternType == PatType.FUNCTION)
             {
-                var res = new FunctionEntity(Name);
-                res.Children = newChildren;
+                var res = new FunctionEntity(Name)
+                {
+                    Children = newChildren
+                };
                 return res;
             }
             else if (PatternType == PatType.OPERATOR)

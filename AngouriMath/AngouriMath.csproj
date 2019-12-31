@@ -18,7 +18,7 @@
     <PackageIconUrl>https://raw.githubusercontent.com/Angourisoft/MathS/master/icon.png</PackageIconUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>Enables to work with formulas built in the code or from a string. Computing, derivating, latex rendering, fast functions, and many more.</Description>
-    <PackageReleaseNotes>New functions added (arc-*), bugs fixed, tests added</PackageReleaseNotes>
+    <PackageReleaseNotes>New functions added (arc-*), bugs fixed, tests added, compilation speed up, linq support added, and some more</PackageReleaseNotes>
     <PackageId>AngouriMath</PackageId>
     <Product>AngouriMath</Product>
     <ApplicationIcon />

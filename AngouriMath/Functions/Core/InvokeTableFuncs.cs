@@ -25,8 +25,10 @@ namespace AngouriMath
         public delegate Number NumFunc(double a, double b = 0);
         static MathS()
         {
-            NumberFormatInfo nfi = new NumberFormatInfo();
-            nfi.NumberDecimalSeparator = ".";
+            NumberFormatInfo nfi = new NumberFormatInfo
+            {
+                NumberDecimalSeparator = "."
+            };
             Sumf.Wakeup();
             Minusf.Wakeup();
             Mulf.Wakeup();

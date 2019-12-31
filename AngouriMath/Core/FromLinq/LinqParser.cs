@@ -57,8 +57,10 @@ namespace AngouriMath.Core.FromLinq
                     }
                     else
                     {
-                        var func = new FunctionEntity(name);
-                        func.Children = children;
+                        var func = new FunctionEntity(name)
+                        {
+                            Children = children
+                        };
                         return func;
                     }
                 default:
