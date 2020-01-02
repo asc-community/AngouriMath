@@ -195,3 +195,5 @@ Log(num, base), Pow(base, power), Sqrt(x), Sqr(x), Sin(x), Cos(x), Tan(x), Cotan
 Sec(x), Cosec(x), Arcsin(x), Arccos(x), Arctan(x), Arccotan(x), B(x), TB(x)
 
 MathS.FromString(str) - returns Entity
+
+MathS.FromLinq(expr) - returns Entity
