@@ -7,6 +7,7 @@ using System.Text;
 namespace AngouriMath
 {
     using EvalTable = Dictionary<string, Func<List<Entity>, Entity>>;
+    using SortLevel = Core.TreeAnalysis.TreeAnalyzer.SortLevel;
 
     // Adding function Eval to Entity
     public abstract partial class Entity
@@ -51,7 +52,7 @@ namespace AngouriMath
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
         /// </summary>
         /// <returns></returns>
-        public Entity Simplify() => Simplify(2);
+        public Entity Simplify() => Simplify(3);
 
         /// <summary>
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
@@ -66,8 +67,12 @@ namespace AngouriMath
             Entity res = stage1;
             for (int i = 0; i < level; i++)
             {
-                if (i % 2 == 0)
-                    res = res.Sort();
+                switch (i)
+                {
+                    case 0: res = res.Sort(SortLevel.HIGH_LEVEL); break;
+                    case 2: res = res.Sort(SortLevel.MIDDLE_LEVEL); break;
+                    case 4: res = res.Sort(SortLevel.LOW_LEVEL); break;
+                }
                 res = PatternReplacer.Replace(Patterns.CommonRules, res).InnerSimplify();
             }
             return res;

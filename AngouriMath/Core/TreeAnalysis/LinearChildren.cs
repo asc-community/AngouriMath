@@ -9,29 +9,21 @@ namespace AngouriMath.Core.TreeAnalysis
         internal static List<Entity> LinearChildren(Entity tree,
                                              string funcName /*e. g. "sumf" */,
                                              string badFuncName /* e. g. "minusf" */,
-                                             string badFuncSuppressorName, /* e. g. "mulf" if we need to convert -3 into -1 * 3*/
-                                             int funcSupPrior)
+                                             Func<Entity, OperatorEntity> supCreator)
         {
             var res = new List<Entity>();
             if (tree.Name == funcName || tree.Name == badFuncName)
             {
-                res.AddRange(LinearChildren(tree.Children[0], funcName, badFuncName, badFuncSuppressorName, funcSupPrior));
+                res.AddRange(LinearChildren(tree.Children[0], funcName, badFuncName, supCreator));
                 if (tree.Name == funcName)
-                    res.AddRange(LinearChildren(tree.Children[1], funcName, badFuncName, badFuncSuppressorName, funcSupPrior));
+                    res.AddRange(LinearChildren(tree.Children[1], funcName, badFuncName, supCreator));
                 else
                 {
                     // Here we need to inverse
-                    var badRes = LinearChildren(tree.Children[1], funcName, badFuncName, badFuncSuppressorName, funcSupPrior);
+                    var badRes = LinearChildren(tree.Children[1], funcName, badFuncName, supCreator);
                     var goodRes = new List<Entity>();
                     foreach (var child in badRes)
-                        goodRes.Add(new OperatorEntity(badFuncSuppressorName, funcSupPrior)
-                        {
-                            Children = new List<Entity>
-                                {
-                                    -1,
-                                    child,
-                                }
-                        });
+                        goodRes.Add(supCreator(child));
                     res.AddRange(goodRes);
                 }
             }
@@ -39,7 +31,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 res.Add(tree);
             return res;
         }
-        public static void Sort(List<Entity> children) => children.Sort((a, b) => a.Hash().CompareTo(b.Hash()));
+        internal static void Sort(List<Entity> children, SortLevel level) => children.Sort((a, b) => a.Hash(level).CompareTo(b.Hash(level)));
         
     }
 }

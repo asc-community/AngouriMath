@@ -74,7 +74,7 @@ namespace UnitTests
         {
             var y = MathS.Var("y");
             var expr = (x - y) * (x + y) / (x * x - y * y);
-            Assert.IsTrue(expr.Simplify() == 1);
+            Assert.IsTrue(expr.Simplify(3) == 1);
         }
         [TestMethod]
         public void TestPatt5()
@@ -86,7 +86,7 @@ namespace UnitTests
         public void TestPatt6()
         {
             var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
-            Assert.IsTrue(expr.Simplify() == x + 1);
+            Assert.IsTrue(expr.Simplify(6) == x + 1);
         }
         [TestMethod]
         public void TestPatt7()
@@ -110,7 +110,24 @@ namespace UnitTests
         public void TestPatt10()
         {
             var expr = MathS.Arcsin(x * 3) + MathS.Arccos(x * 1);
-            Assert.IsTrue(expr.Simplify() == MathS.Arcsin(3 * x) + MathS.Arccos(x));
+            Assert.IsTrue(expr.Simplify() == MathS.Arccos(x) + MathS.Arcsin(3 * x));
+        }
+        [TestMethod]
+        public void TestPatt11()
+        {
+            var expr = ((3 + x) + 4) + x;
+            Assert.IsTrue(expr.Simplify() == 7 + 2 * x);
+        }
+        [TestMethod]
+        public void TestPatt12()
+        {
+            var x = MathS.Var("x");
+            var y = MathS.Var("y");
+            var a = MathS.Var("a");
+            var b = MathS.Var("b");
+            var c = MathS.Var("c");
+            var expr = (x * y * a * b * c) / (c * b * a * x * x);
+            Assert.IsTrue(expr.Simplify(4) == 1 / x * y);
         }
     }
 }

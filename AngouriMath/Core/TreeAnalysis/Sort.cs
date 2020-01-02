@@ -6,36 +6,51 @@ using System.Text;
 
 namespace AngouriMath
 {
+    using SortLevel = TreeAnalyzer.SortLevel;
     public abstract partial class Entity
     {
-        internal string Hash()
+        internal string Hash(SortLevel level)
         {
             if (this is FunctionEntity)
-                return this.Name + "_" + string.Join("_", from child in Children select child.Hash());
+                return this.Name + "_" + string.Join("_", from child in Children select child.Hash(level));
             else if (this is NumberEntity)
-                return ""; // Constants do not influence sorting
+                return level == SortLevel.HIGH_LEVEL ? "" : this.Name + " "; // Constants do not influence sorting
             else if (this is VariableEntity)
                 return "v_" + Name;
             else
-                return string.Join("_", from child in Children where child.Hash() != "" select child.Hash()); // Operators only influence through children
+                return (level == SortLevel.LOW_LEVEL ? this.Name + "_" : "") + string.Join("_", from child in Children where child.Hash(level) != "" select child.Hash(level)); // Operators only influence through children
 
         }
-        public Entity Sort()
+        internal Entity Sort(SortLevel level)
         {
             foreach (var child in Children)
-                child.Sort();
+                child.Sort(level);
             if (Name != "sumf" && Name != "mulf" && Name != "minusf" && Name != "divf")
                 return DeepCopy();
             var isSum = this.Name == "sumf" || this.Name == "minusf";
+            Func<Entity, OperatorEntity> funcIfSum = child => 
+            new OperatorEntity("mulf", Const.PRIOR_MUL) {
+                Children = new List<Entity> {
+                    -1,
+                    child
+                }
+            };
+            Func<Entity, OperatorEntity> funcIfMul = child =>
+            new OperatorEntity("powf", Const.PRIOR_POW)
+            {
+                Children = new List<Entity> {
+                    child,
+                    -1
+                }
+            };
             var linChildren = TreeAnalyzer.LinearChildren(this, 
                                                           isSum ? "sumf" : "mulf", 
                                                           isSum ? "minusf" : "divf",
-                                                          isSum ?  "mulf" : "powf",
-                                                          isSum ? Const.PRIOR_MUL : Const.PRIOR_POW);
-            var groups = TreeAnalyzer.GroupByHash(linChildren);
+                                                          isSum ? funcIfSum : funcIfMul);
+            var groups = TreeAnalyzer.GroupByHash(linChildren, level);
             var grouppedChildren = new List<Entity>();
-            foreach (var pair in groups)
-                grouppedChildren.Add(TreeAnalyzer.MultiHang(pair.Value, 
+            foreach (var list in groups)
+                grouppedChildren.Add(TreeAnalyzer.MultiHang(list, 
                     isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL));
             return TreeAnalyzer.MultiHang(grouppedChildren, isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL);
         }
@@ -46,16 +61,27 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
-        internal static Dictionary<string, List<Entity>> GroupByHash(List<Entity> entities)
+        internal enum SortLevel
         {
-            var res = new Dictionary<string, List<Entity>>();
+            HIGH_LEVEL, // Variables, functions. Doesn't pay attention to constants or ops
+            MIDDLE_LEVEL, // Contants are now countable
+            LOW_LEVEL, // De facto full hash
+        }
+        internal static List<List<Entity>> GroupByHash(List<Entity> entities, SortLevel level)
+        {
+            var dict = new Dictionary<string, List<Entity>>();
             foreach (var ent in entities)
             {
-                var hash = ent.Hash();
-                if (!res.ContainsKey(hash))
-                    res[hash] = new List<Entity>();
-                res[hash].Add(ent);
+                var hash = ent.Hash(level);
+                if (!dict.ContainsKey(hash))
+                    dict[hash] = new List<Entity>();
+                dict[hash].Add(ent);
             }
+            var res = new List<List<Entity>>();
+            var keys = dict.Keys.ToList();
+            keys.Sort();
+            foreach (var key in keys)
+                res.Add(dict[key]);
             return res;
         }
 

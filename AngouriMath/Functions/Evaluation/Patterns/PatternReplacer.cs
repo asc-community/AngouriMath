@@ -1,4 +1,5 @@
 ﻿using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -109,8 +110,12 @@ namespace AngouriMath
                 if (pattern.Children.Count != Children.Count)
                     return false;
                 for (int i = 0; i < Children.Count; i++)
+                {
+                    if (!(pattern.Children[i] is Pattern))
+                        throw new SysException("Numbers in pattern should look like Num(3)");
                     if (!Children[i].PatternMakeMatch((pattern.Children[i] as Pattern), matchings))
                         return false;
+                }
             }
             else
             {
@@ -133,7 +138,9 @@ namespace AngouriMath
                 return new VariableEntity(Name);
             var newChildren = new List<Entity>();
             foreach (var child in Children)
-                newChildren.Add((child as Pattern).BuildTree(keys));
+            {
+                newChildren.Add(child.BuildTree(keys));
+            }
             if (PatternType == PatType.FUNCTION)
             {
                 var res = new FunctionEntity(Name)
@@ -205,8 +212,17 @@ namespace AngouriMath
             var sub = src.FindSubtree(oldPattern);
             if (sub == null)
                 return src;
-            var nodeList = oldPattern.EqFits(sub);
+            Dictionary<int, Entity> nodeList;
+            try
+            {
+                nodeList = oldPattern.EqFits(sub);
+            }
+            catch (SysException error)
+            {
+                throw new SysException("Error `" + error.Message + "` in pattern " + oldPattern.ToString());
+            }
             var newNode = newPattern.BuildTree(nodeList);
+            
             if (oldPattern.Match(source))
                 return newNode;
             else
@@ -216,7 +232,7 @@ namespace AngouriMath
                 parent.Children[number] = newNode;
                 return src;
             }
-        }
+            }
         internal static Entity Replace(RuleList rules, Entity source)
         {
             var res = source.DeepCopy();
