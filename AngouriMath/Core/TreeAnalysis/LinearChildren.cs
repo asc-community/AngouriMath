@@ -4,9 +4,9 @@ using System.Text;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
-    public static class TreeAnalyzer
+    internal static partial class TreeAnalyzer
     {
-        public static List<Entity> LinearChildren(Entity tree,
+        internal static List<Entity> LinearChildren(Entity tree,
                                              string funcName /*e. g. "sumf" */,
                                              string badFuncName /* e. g. "minusf" */,
                                              string badFuncSuppressorName, /* e. g. "mulf" if we need to convert -3 into -1 * 3*/

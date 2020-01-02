@@ -32,31 +32,40 @@ namespace AngouriMath
                                                           isSum ? "minusf" : "divf",
                                                           isSum ?  "mulf" : "powf",
                                                           isSum ? Const.PRIOR_MUL : Const.PRIOR_POW);
-            TreeAnalyzer.Sort(linChildren);
-            Entity res = new OperatorEntity(Name, isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL);
-            res.Children.Add(linChildren[0]);
-            if (linChildren.Count != 2)
+            var groups = TreeAnalyzer.GroupByHash(linChildren);
+            var grouppedChildren = new List<Entity>();
+            foreach (var pair in groups)
+                grouppedChildren.Add(TreeAnalyzer.MultiHang(pair.Value, 
+                    isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL));
+            return TreeAnalyzer.MultiHang(grouppedChildren, isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL);
+        }
+    }
+}
+
+namespace AngouriMath.Core.TreeAnalysis
+{
+    internal static partial class TreeAnalyzer
+    {
+        internal static Dictionary<string, List<Entity>> GroupByHash(List<Entity> entities)
+        {
+            var res = new Dictionary<string, List<Entity>>();
+            foreach (var ent in entities)
             {
-                res.Children.Add(new OperatorEntity(Name, isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL));
-                var currParent = res;
-                for (int i = 1; i < linChildren.Count - 1; i++)
-                {
-                    if (i == linChildren.Count - 2) // de facto if child needs to be added
-                    {
-                        currParent.Children[1].Children.Add(linChildren[i]);
-                        currParent.Children[1].Children.Add(linChildren[i + 1]);
-                        break; // Unnecessary though
-                    }
-                    else   // if an operator needs to be added
-                    {
-                        currParent.Children[1].Children.Add(linChildren[i]);
-                        currParent.Children[1].Children.Add(new OperatorEntity(Name, isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL));
-                        currParent = currParent.Children[1];
-                    }
-                }
+                var hash = ent.Hash();
+                if (!res.ContainsKey(hash))
+                    res[hash] = new List<Entity>();
+                res[hash].Add(ent);
             }
-            else
-                res.Children.Add(linChildren[1]);
+            return res;
+        }
+
+        internal static Entity MultiHang(List<Entity> children, string opName, int opPrior)
+        {
+            if (children.Count == 1)
+                return children[0];
+            Entity res = new OperatorEntity(opName, opPrior);
+            res.Children.Add(children[0]);
+            res.Children.Add(MultiHang(children.GetRange(1, children.Count - 1), opName, opPrior));
             return res;
         }
     }

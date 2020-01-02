@@ -173,6 +173,15 @@ namespace AngouriMath
             { Cosf.PHang(Arccosf.PHang(any1)), any1 },
             { Tanf.PHang(Arctanf.PHang(any1)), any1 },
             { Cotanf.PHang(Arccotanf.PHang(any1)), any1 },
+
+            // a * (b * {}) = (a * b) * {}
+            { const1 * (const2 * any1), (const1 * const2) * any1 },
+
+            { any1 - any1, Num(0) },
+
+            // {1} - {2} * {1}
+            { any1 - any2 * any1, any1 * (Num(1) - any2) },
+            { any1 - any1 * any2, any1 * (Num(1) - any2) },
         };
 
         internal static readonly RuleList ExpandRules = new RuleList
@@ -198,11 +207,6 @@ namespace AngouriMath
             { any1 * (any2 - any3), any1 * any2 - any1 * any3 },
             { (any2 + any3) * any1, any1 * any2 + any1 * any3 },
             { (any2 - any3) * any1, any1 * any2 - any1 * any3 },
-
-            // a * (b * {}) = (a * b) * {}
-            { const1 * (const2 * any1), (const1 * const2) * any1 },
-
-            { any1 - any1, Num(0) }
         };
 
         internal static readonly RuleList CollapseRules = new RuleList

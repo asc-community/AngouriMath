@@ -92,9 +92,11 @@ namespace Samples
         {
             var x = MathS.Var("x");
             var y = MathS.Var("y");
-            var expr = x + 2 * x - y + x + 2 * y - (y + x);
-            Console.WriteLine(expr);
+            var expr = (((x + 3) + 4) + 5) + 6 + x;
+            //var expr = x - (-2) * x;
             Console.WriteLine(expr.Simplify());
+            //var expr = x - (x + y);
+            //Console.WriteLine(expr);
         }
     }
 }

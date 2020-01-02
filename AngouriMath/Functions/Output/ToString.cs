@@ -49,7 +49,7 @@ namespace AngouriMath
         public static string Stringize(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_SUM) + " + " + args[1].Stringize(args[0].Priority < Const.PRIOR_SUM);
+            return args[0].Stringize(args[0].Priority < Const.PRIOR_SUM) + " + " + args[1].Stringize(args[1].Priority < Const.PRIOR_SUM);
         }
     }
     public static partial class Minusf
@@ -57,7 +57,7 @@ namespace AngouriMath
         public static string Stringize(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_MINUS) + " - " + args[1].Stringize(args[0].Priority < Const.PRIOR_MINUS);
+            return args[0].Stringize(args[0].Priority < Const.PRIOR_MINUS) + " - " + args[1].Stringize(args[1].Priority <= Const.PRIOR_MINUS);
         }
     }
     public static partial class Mulf
