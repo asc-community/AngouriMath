@@ -14,11 +14,11 @@
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageTags>Math, csharp, derivation, latex, calculator, parse, simplification, compute</PackageTags>
-    <Version>1.0.16.1-Beta</Version>
+    <Version>1.0.16.2-Beta</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/Angourisoft/MathS/master/icon.png</PackageIconUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>Enables to work with formulas built in the code or from a string. Computing, derivating, latex rendering, fast functions, and many more.</Description>
-    <PackageReleaseNotes>New functions added (arc-*), bugs fixed, tests added, compilation speed up, linq support added, and some more</PackageReleaseNotes>
+    <PackageReleaseNotes>Tree sort added &lt;=&gt; simplification improved</PackageReleaseNotes>
     <PackageId>AngouriMath</PackageId>
     <Product>AngouriMath</Product>
     <ApplicationIcon />
