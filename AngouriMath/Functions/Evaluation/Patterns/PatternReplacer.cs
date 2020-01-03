@@ -28,7 +28,16 @@ namespace AngouriMath
                 return false;
             return pattern.Name == "" || pattern.Name == tree.Name;
         }
-        public bool Match(Entity tree)
+
+        /// <summary>
+        /// Checks if a pattern or pattern tree matches an expression.
+        /// Important to keep all constants inside Num()
+        /// </summary>
+        /// <param name="tree"></param>
+        /// <returns>
+        /// Whether it fits or not
+        /// </returns>
+        internal bool Match(Entity tree)
         {
             if (this.PatternType == PatType.NONE)
                 return this == tree;
@@ -45,6 +54,14 @@ namespace AngouriMath
                     return false;
             return (this as Pattern).EqFits(tree) != null;
         }
+
+        /// <summary>
+        /// Finds the first occurance of a subtree that fits a pattern
+        /// </summary>
+        /// <param name="pattern"></param>
+        /// <returns>
+        /// Entity: first found subtree
+        /// </returns>
         internal Entity FindSubtree(Pattern pattern)
         {
             if (pattern.Match(this) && pattern.EqFits(this) != null)
@@ -57,6 +74,12 @@ namespace AngouriMath
             }
             return null;
         }
+
+        /// <summary>
+        /// Searchs for parent of the only argument
+        /// </summary>
+        /// <param name="kinder"></param>
+        /// <returns></returns>
         internal Entity FindParent(Entity kinder)
         {
             foreach (var child in Children)
@@ -72,6 +95,12 @@ namespace AngouriMath
             }
             return null;
         }
+
+        /// <summary>
+        /// Searches for child's number
+        /// </summary>
+        /// <param name="kinder"></param>
+        /// <returns></returns>
         internal int FindChildrenNumber(Entity kinder)
         {
             for (int i = 0; i < Children.Count; i++)
@@ -87,6 +116,11 @@ namespace AngouriMath
             }
             return -1;
         }
+
+        /// <summary>
+        /// Unfolds the function into list of nodes. De facto not used yet.
+        /// </summary>
+        /// <returns></returns>
         public List<Entity> Unfold()
         {
             var res = new List<Entity>();
@@ -103,6 +137,14 @@ namespace AngouriMath
             }
             return res;
         }
+
+        /// <summary>
+        /// Not only checks but also finds subtrees for each key. It is necessary
+        /// to keep equal subtrees with equal numbers.
+        /// </summary>
+        /// <param name="pattern"></param>
+        /// <param name="matchings"></param>
+        /// <returns></returns>
         internal bool PatternMakeMatch(Pattern pattern, Dictionary<int, Entity> matchings)
         {
             if (pattern.PatternNumber == -1)
@@ -126,6 +168,13 @@ namespace AngouriMath
             }
             return true;
         }
+
+        /// <summary>
+        /// We have pattern and we have keys. That is the function
+        /// to get an expression from the pattern and keys.
+        /// </summary>
+        /// <param name="keys"></param>
+        /// <returns></returns>
         internal Entity BuildTree(Dictionary<int, Entity> keys)
         {
             if (!(this is Pattern))
@@ -175,7 +224,6 @@ namespace AngouriMath
         }
     }
 
-
     internal class Pattern : Entity
     {
         public Pattern(int num, PatType type, string name="") : base(name) {
@@ -204,7 +252,7 @@ namespace AngouriMath
         public static Pattern operator /(Entity a, Pattern b) => Divf.PHang(a, b);
     }
 
-    public static class PatternReplacer
+    internal static class PatternReplacer
     {
         internal static Entity ReplaceOne(Entity source, Pattern oldPattern, Entity newPattern)
         {
@@ -232,7 +280,18 @@ namespace AngouriMath
                 parent.Children[number] = newNode;
                 return src;
             }
-            }
+        }
+
+        /// <summary>
+        /// Replaces an expression with appropriate rules
+        /// </summary>
+        /// <param name="rules">
+        /// List of Pattern
+        /// </param>
+        /// <param name="source">
+        /// Where to replace in/to
+        /// </param>
+        /// <returns></returns>
         internal static Entity Replace(RuleList rules, Entity source)
         {
             var res = source.DeepCopy();
