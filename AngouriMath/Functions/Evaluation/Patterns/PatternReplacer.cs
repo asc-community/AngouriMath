@@ -11,7 +11,7 @@ namespace AngouriMath
         internal enum PatType
         {
             NONE,
-            COMMON, 
+            COMMON,
             NUMBER,
             VARIABLE,
             FUNCTION,
@@ -21,7 +21,7 @@ namespace AngouriMath
         internal PatType PatternType { get; set; }
         internal static bool PatternMatches(Entity pattern, Entity tree)
         {
-            if (!( pattern.PatternType == PatType.NUMBER && tree is NumberEntity ||
+            if (!(pattern.PatternType == PatType.NUMBER && tree is NumberEntity ||
                    pattern.PatternType == PatType.FUNCTION && tree is FunctionEntity ||
                    pattern.PatternType == PatType.OPERATOR && tree is OperatorEntity ||
                    pattern.PatternType == PatType.VARIABLE && tree is VariableEntity))
@@ -66,7 +66,7 @@ namespace AngouriMath
         {
             if (pattern.Match(this) && pattern.EqFits(this) != null)
                 return this;
-            foreach(var child in Children)
+            foreach (var child in Children)
             {
                 var res = child.FindSubtree(pattern);
                 if (res != null)
@@ -127,7 +127,7 @@ namespace AngouriMath
             var queue = new List<Entity>();
             queue.Add(this);
             res.Add(this);
-            while(queue.Count > 0)
+            while (queue.Count > 0)
             {
                 var tmp = new List<Entity>();
                 foreach (var q in queue)
@@ -205,7 +205,7 @@ namespace AngouriMath
                     case "minusf": return newChildren[0] - newChildren[1];
                     case "mulf": return newChildren[0] * newChildren[1];
                     case "divf": return newChildren[0] / newChildren[1];
-                    
+
                     case "powf": return MathS.Pow(newChildren[0], newChildren[1]);
                     case "logf": return MathS.Log(newChildren[0], newChildren[1]);
                     case "sinf": return MathS.Sin(newChildren[0]);
@@ -216,7 +216,7 @@ namespace AngouriMath
                     case "arccosf": return MathS.Arccos(newChildren[0]);
                     case "arctanf": return MathS.Arctan(newChildren[0]);
                     case "arccotanf": return MathS.Arccotan(newChildren[0]);
-                    
+
                     default: return null;
                 }
             else
@@ -226,7 +226,7 @@ namespace AngouriMath
 
     internal class Pattern : Entity
     {
-        public Pattern(int num, PatType type, string name="") : base(name) {
+        public Pattern(int num, PatType type, string name = "") : base(name) {
             PatternNumber = num;
             PatternType = type;
         }
@@ -240,6 +240,7 @@ namespace AngouriMath
         }
         public static Pattern operator +(Pattern a, Pattern b) => Sumf.PHang(a, b);
         public static Pattern operator +(Pattern a, Entity b) => Sumf.PHang(a, b);
+
         public static Pattern operator +(Entity a, Pattern b) => Sumf.PHang(a, b);
         public static Pattern operator -(Pattern a, Pattern b) => Minusf.PHang(a, b);
         public static Pattern operator -(Pattern a, Entity b) => Minusf.PHang(a, b);
@@ -251,8 +252,11 @@ namespace AngouriMath
         public static Pattern operator /(Pattern a, Entity b) => Divf.PHang(a, b);
         public static Pattern operator /(Entity a, Pattern b) => Divf.PHang(a, b);
     }
+}
 
-    internal static class PatternReplacer
+namespace AngouriMath.Core.TreeAnalysis
+{
+    internal static partial class TreeAnalyzer
     {
         internal static Entity ReplaceOne(Entity source, Pattern oldPattern, Entity newPattern)
         {
@@ -283,7 +287,7 @@ namespace AngouriMath
         }
 
         /// <summary>
-        /// Replaces an expression with appropriate rules
+        /// Processes an expression with appropriate rules
         /// </summary>
         /// <param name="rules">
         /// List of Pattern

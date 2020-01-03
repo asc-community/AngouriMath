@@ -1,4 +1,5 @@
 ﻿using AngouriMath.Core;
+using AngouriMath.Core.TreeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -37,7 +38,7 @@ namespace AngouriMath
         /// <returns>
         /// An expanded Entity
         /// </returns>
-        public Entity Expand(int level) => level <= 1 ? PatternReplacer.Replace(Patterns.ExpandRules, this) : PatternReplacer.Replace(Patterns.ExpandRules, this).Expand(level - 1);
+        public Entity Expand(int level) => level <= 1 ? TreeAnalyzer.Replace(Patterns.ExpandRules, this) : TreeAnalyzer.Replace(Patterns.ExpandRules, this).Expand(level - 1);
 
         /// <summary>
         /// Collapses an equation trying to eliminate as many power-uses as possible ( e. g. x * 3 + x * y = x * (3 + y) )
@@ -46,7 +47,7 @@ namespace AngouriMath
         /// The number of iterations (increase this argument if some collapse operations are still available)
         /// </param>
         /// <returns></returns>
-        public Entity Collapse(int level) => level <= 1 ? PatternReplacer.Replace(Patterns.CollapseRules, this) : PatternReplacer.Replace(Patterns.CollapseRules, this).Expand(level - 1);
+        public Entity Collapse(int level) => level <= 1 ? TreeAnalyzer.Replace(Patterns.CollapseRules, this) : TreeAnalyzer.Replace(Patterns.CollapseRules, this).Expand(level - 1);
 
         /// <summary>
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
@@ -73,7 +74,7 @@ namespace AngouriMath
                     case 2: res = res.Sort(SortLevel.MIDDLE_LEVEL); break;
                     case 4: res = res.Sort(SortLevel.LOW_LEVEL); break;
                 }
-                res = PatternReplacer.Replace(Patterns.CommonRules, res).InnerSimplify();
+                res = TreeAnalyzer.Replace(Patterns.CommonRules, res).InnerSimplify();
             }
             return res;
         }

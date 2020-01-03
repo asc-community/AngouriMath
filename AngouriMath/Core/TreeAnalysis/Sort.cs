@@ -21,28 +21,36 @@ namespace AngouriMath
                 return (level == SortLevel.LOW_LEVEL ? this.Name + "_" : "") + string.Join("_", from child in Children where child.Hash(level) != "" select child.Hash(level)); // Operators only influence through children
 
         }
+
         internal Entity Sort(SortLevel level)
         {
+            OperatorEntity FuncIfSum(Entity child)
+            {
+                return new OperatorEntity("mulf", Const.PRIOR_MUL)
+                {
+                    Children = new List<Entity> {
+                    -1,
+                    child
+                    }
+                };
+            }
+            OperatorEntity FuncIfMul(Entity child)
+            {
+                return new OperatorEntity("powf", Const.PRIOR_POW)
+                {
+                    Children = new List<Entity> {
+                    child,
+                    -1
+                    }
+                };
+            }
+            Func<Entity, OperatorEntity> funcIfSum = FuncIfSum;
+            Func<Entity, OperatorEntity> funcIfMul = FuncIfMul;
             foreach (var child in Children)
                 child.Sort(level);
             if (Name != "sumf" && Name != "mulf" && Name != "minusf" && Name != "divf")
                 return DeepCopy();
             var isSum = this.Name == "sumf" || this.Name == "minusf";
-            Func<Entity, OperatorEntity> funcIfSum = child => 
-            new OperatorEntity("mulf", Const.PRIOR_MUL) {
-                Children = new List<Entity> {
-                    -1,
-                    child
-                }
-            };
-            Func<Entity, OperatorEntity> funcIfMul = child =>
-            new OperatorEntity("powf", Const.PRIOR_POW)
-            {
-                Children = new List<Entity> {
-                    child,
-                    -1
-                }
-            };
             var linChildren = TreeAnalyzer.LinearChildren(this, 
                                                           isSum ? "sumf" : "mulf", 
                                                           isSum ? "minusf" : "divf",
