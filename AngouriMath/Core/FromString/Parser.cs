@@ -40,7 +40,6 @@ namespace AngouriMath.Core.FromString
         }
         internal static bool SameType(BraceType a, BraceType b)
         {
-            // TODO: Make more universal
             return parentheses.Contains(a) && parentheses.Contains(b) ||
                    brackets.Contains(a) && brackets.Contains(b);
         }

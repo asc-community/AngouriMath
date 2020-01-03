@@ -92,9 +92,12 @@ namespace Samples
         {
             var x = MathS.Var("x");
             var y = MathS.Var("y");
-            var func = MathS.Tan(2 * x); ;
-            var actual = func.Derive(x).Simplify();
-            Console.WriteLine(actual);
+            var a = MathS.Var("a");
+            var b = MathS.Var("b");
+            var c = MathS.Var("c");
+            var expr = (x * y * a * b * c) / (c * b * a * x * x);
+            Console.WriteLine(expr.Simplify(4));
+            
         }
     }
 }

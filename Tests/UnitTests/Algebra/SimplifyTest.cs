@@ -116,7 +116,7 @@ namespace UnitTests
         public void TestPatt11()
         {
             var expr = ((3 + x) + 4) + x;
-            Assert.IsTrue(expr.Simplify() == 7 + 2 * x);
+            Assert.IsTrue(expr.Simplify() == 2 * x + 7);
         }
         [TestMethod]
         public void TestPatt12()
@@ -127,7 +127,7 @@ namespace UnitTests
             var b = MathS.Var("b");
             var c = MathS.Var("c");
             var expr = (x * y * a * b * c) / (c * b * a * x * x);
-            Assert.IsTrue(expr.Simplify(4) == 1 / x * y);
+            Assert.IsTrue(expr.Simplify(4) == y / x);
         }
     }
 }

@@ -11,7 +11,7 @@ namespace DotnetBenchmark
 {
     public class CompiledFunc
     {
-        private readonly VariableEntity x;
+        private readonly VariableEntity x, y;
         private readonly FastExpression sinFunc;
         private readonly FastExpression sqrtFunc;
         private readonly FastExpression multiFunc;
@@ -20,6 +20,7 @@ namespace DotnetBenchmark
         public CompiledFunc()
         {
             x = MathS.Var("x");
+            y = MathS.Var("y");
             sinFunc = MathS.Sin(x).Compile(x);
             sqrtFunc = MathS.Sqrt(x).Compile(x);
             multiFunc = ((MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x))).Compile(x);
@@ -41,6 +42,10 @@ namespace DotnetBenchmark
         public Complex ComplexMulti() => (Complex.Log(3, 3) + Complex.Pow(3, 2)) * Complex.Sin(3 + 1 / Complex.Sin(3));
         [Benchmark]
         public Complex LinqSin() => linqSin(3);
+        [Benchmark]
+        public Entity HardSimplify() => 
+            ((x + 3) * (y + MathS.Sin(x)) * (MathS.Arccos(x * y) + MathS.Arcsin(x * y)) / MathS.Log(2, y + x) + MathS.Sin(x / y) * MathS.Cos(x / y))
+            .Simplify(6);
     }
 
     public class Program

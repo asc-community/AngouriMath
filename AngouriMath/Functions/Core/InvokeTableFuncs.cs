@@ -18,6 +18,7 @@ namespace AngouriMath
     /// To compilation
     /// To From String Syntax Info goodStrings
     /// To Pattern Replacer
+    /// To static MathS()
     /// </summary>
     public static partial class MathS
     {
@@ -38,7 +39,13 @@ namespace AngouriMath
             Powf.Wakeup();
             Sinf.Wakeup();
             Cosf.Wakeup();
+            Tanf.Wakeup();
+            Cotanf.Wakeup();
             Logf.Wakeup();
+            Arcsinf.Wakeup();
+            Arccosf.Wakeup();
+            Arctanf.Wakeup();
+            Arccotanf.Wakeup();
         }
     }
     public static partial class Sumf

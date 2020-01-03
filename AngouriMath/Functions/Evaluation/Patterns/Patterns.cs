@@ -186,6 +186,12 @@ namespace AngouriMath
 
             // {1} ^ (-1) = 1 / {1}
             { Powf.PHang(any1, Num(-1)), 1 / any1 },
+
+            // -1 * {1} + {2} = {2} - {1}
+            { Num(-1) * any1 + any2, any2 - any1 },
+
+            // a / {} * b
+            { any1 / any2 * any3, any1 * any3 / any2}
         };
 
         internal static readonly RuleList ExpandRules = new RuleList

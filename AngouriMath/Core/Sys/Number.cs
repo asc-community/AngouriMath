@@ -189,7 +189,7 @@ namespace AngouriMath.Core
         public static Number Arcsin(Number a) => a.__isReal ? new Number(Math.Asin(a.value.Real)) : new Number(Complex.Asin(a.value));
         public static Number Arccos(Number a) => a.__isReal ? new Number(Math.Acos(a.value.Real)) : new Number(Complex.Acos(a.value));
         public static Number Arctan(Number a) => a.__isReal ? new Number(Math.Atan(a.value.Real)) : new Number(Complex.Atan(a.value));
-        public static Number Arccotan(Number a) => a.__isReal ? new Number(Math.Atan(1 / a.value.Real)) : new Number(Complex.Atan(1 / a.value)); // Right?
+        public static Number Arccotan(Number a) => a.__isReal ? new Number(Math.Atan(1 / a.value.Real)) : new Number(Complex.Atan(1 / a.value));
         public static double Abs(Number a) => Complex.Abs(a.value);
         public static bool IsDoubleZero(double a)
         {
