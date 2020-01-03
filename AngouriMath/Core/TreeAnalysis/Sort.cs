@@ -46,8 +46,8 @@ namespace AngouriMath
             }
             Func<Entity, OperatorEntity> funcIfSum = FuncIfSum;
             Func<Entity, OperatorEntity> funcIfMul = FuncIfMul;
-            foreach (var child in Children)
-                child.Sort(level);
+            for (int i = 0; i < Children.Count; i++)
+                Children[i] = Children[i].Sort(level);
             if (Name != "sumf" && Name != "mulf" && Name != "minusf" && Name != "divf")
                 return DeepCopy();
             var isSum = this.Name == "sumf" || this.Name == "minusf";

@@ -195,11 +195,28 @@ namespace AngouriMath
         /// <summary>
         /// Converts an expression from a string
         /// </summary>
-        /// <param name="expr"></param>
+        /// <param name="expr">
+        /// String expression, for example, "2 * x + 3 + sqrt(x)"
+        /// </param>
         /// <returns></returns>
-        public static Entity FromString(string expr)
+        public static Entity FromString(string expr) => FromString(expr, true);
+
+        /// <summary>
+        /// Converts an expression from a string
+        /// </summary>
+        /// <param name="expr">
+        /// String expression, for example, "2 * x + 3 + sqrt(x)"
+        /// </param>
+        /// <param name="intelli">
+        /// Bool parameter responsible for neat-syntax parsing, for example
+        /// 2x will be parsed as 2 * x.
+        /// </param>
+        /// <returns></returns>
+        public static Entity FromString(string expr, bool intelli)
         {
             var lexer = new Lexer(expr);
+            if (intelli)
+                lexer.AddOmittedOperators();
             var res = Parser.Parse(lexer);
             return SynonimFunctions.Synonimize(res);
         }

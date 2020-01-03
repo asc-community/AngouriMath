@@ -124,8 +124,7 @@ namespace AngouriMath
         public List<Entity> Unfold()
         {
             var res = new List<Entity>();
-            var queue = new List<Entity>();
-            queue.Add(this);
+            var queue = new List<Entity>() { this };
             res.Add(this);
             while (queue.Count > 0)
             {

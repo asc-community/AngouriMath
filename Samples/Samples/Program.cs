@@ -88,16 +88,23 @@ namespace Samples
             var expr = (MathS.Arcsin(6 * x) + MathS.Arccos(6 * x)) - (MathS.Arctan(x) + MathS.Arccotan(x));
             Console.WriteLine(expr.Simplify());
         }
-        static void Main(string[] args)
+        static void Sample12()
+        {
+            var expr = MathS.FromString("3x3 + 2 2 2 - x(3 0.5)");
+            Console.WriteLine(expr);
+        }
+        static void Sample13()
         {
             var x = MathS.Var("x");
-            var y = MathS.Var("y");
             var a = MathS.Var("a");
             var b = MathS.Var("b");
-            var c = MathS.Var("c");
-            var expr = (x * y * a * b * c) / (c * b * a * x * x);
-            Console.WriteLine(expr.Simplify(4));
-            
+            var expr = MathS.Sqrt(x) / x + a * b + b * a + (b - x) * (x + b) + 
+                MathS.Arcsin(x + a) + MathS.Arccos(a + x);
+            Console.WriteLine(expr.SimplifyIntelli());
+        }
+        static void Main(string[] args)
+        {
+            Sample13();
         }
     }
 }

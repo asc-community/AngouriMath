@@ -73,7 +73,15 @@ namespace AngouriMath
             { any1 + any2 * any1, any1 * (Num(1) + any2) },
             { any1 * any2 + any1, any1 * (Num(1) + any2) },
             { any2 * any1 + any1, any1 * (Num(1) + any2) },
-            { any1 + any1, Num(2) * any1 },              
+            { any1 + any1, Num(2) * any1 },
+
+            // {1} / {2} + {1} * {3} = {1} * (1 / {2} + {3})
+            { any1 / any2 + any1 * any3, any1 * (Num(1) / any2 + any3) },
+            { any1 / any2 + any3 * any1, any1 * (Num(1) / any2 + any3) },
+            { any2 * any1 + any1 / any3, any1 * (any2 + Num(1) / any3) },
+            { any1 * any2 + any1 / any3, any1 * (any2 + Num(1) / any3) },
+            { any1 + any1 / any2, any1 * (Num(1) + Num(1) / any2) },
+            { any1 / any2 + any1, any1 * (Num(1) + Num(1) / any2) },
 
             // {1} * {2} - {1} * {3} = {1} * ({2} - {3})
             { any1 * any2 - any1 * any3, any1 * (any2 - any3) },
@@ -96,6 +104,16 @@ namespace AngouriMath
 
             // ({} ^ {}) ^ {} = {} ^ ({} * {})
             { Powf.PHang(Powf.PHang(any1, any2), any3), Powf.PHang(any1, any2 * any3) },
+
+            // {1} ^ n * {2} ^ n = ({1} * {2}) ^ n
+            { Powf.PHang(any1, any3) * Powf.PHang(any2, any3), Powf.PHang(any1 * any2, any3) },
+            { Powf.PHang(any1, any3) / Powf.PHang(any2, any3), Powf.PHang(any1 / any2, any3) },
+
+            // x / x^n
+            { any1 / Powf.PHang(any1, any2), Powf.PHang(any1, Num(1) - any2) },
+            // x^n / x
+            { Powf.PHang(any1, any2) / any1, Powf.PHang(any1, any2 - Num(1)) },
+            // x^n / x^m
 
             // c ^ log(c, a) = a
             { Powf.PHang(const1, Logf.PHang(any1, const1)), any1 },
@@ -122,9 +140,10 @@ namespace AngouriMath
             { (any1 * any2) * Powf.PHang(any1, any3), (Powf.PHang(any1, any3 + Num(1))) * any2 },
             { (any2 * any1) * Powf.PHang(any1, any3), (Powf.PHang(any1, any3 + Num(1))) * any2 },
             
-            // {1} ^ n * {2} ^ n = ({1} * {2}) ^ n
-            { Powf.PHang(any1, any3) * Powf.PHang(any2, any3), Powf.PHang(any1 * any2, any3) },
-            
+            // -1 * {1} + {2} = {2} - {1}
+            { Num(-1) * any1 + any2, any2 - any1 },
+            { any1 + Num(-1) * any2, any1 - any2 },
+
             // (a * x) ^ c = a^c * x^c
             { Powf.PHang(const1 * any1, const2), Powf.PHang(const1, const2) * Powf.PHang(any1, const2) },
 
@@ -186,9 +205,6 @@ namespace AngouriMath
 
             // {1} ^ (-1) = 1 / {1}
             { Powf.PHang(any1, Num(-1)), 1 / any1 },
-
-            // -1 * {1} + {2} = {2} - {1}
-            { Num(-1) * any1 + any2, any2 - any1 },
 
             // a / {} * b
             { any1 / any2 * any3, any1 * any3 / any2}

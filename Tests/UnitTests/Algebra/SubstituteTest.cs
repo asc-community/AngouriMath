@@ -24,5 +24,12 @@ namespace UnitTests
             var actual = expr.Substitute(x, 3 * y);
             Assert.IsTrue(expected == actual);
         }
+        [TestMethod]
+        public void Test3()
+        {
+            var x = MathS.Var("x");
+            var expr = x;
+            Assert.IsTrue(expr.Substitute(x, 0) == 0);
+        }
     }
 }

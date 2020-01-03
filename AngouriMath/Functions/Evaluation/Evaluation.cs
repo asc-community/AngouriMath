@@ -57,6 +57,14 @@ namespace AngouriMath
 
         /// <summary>
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
+        /// The only difference between SimplifyIntelli and Simplify is number of iterations
+        /// which you can specify on your own.
+        /// </summary>
+        /// <returns></returns>
+        public Entity SimplifyIntelli() => Simplify(6);
+
+        /// <summary>
+        /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
         /// </summary>
         /// <param name="level">
         /// Increase this argument if you think the equation should be simplified better

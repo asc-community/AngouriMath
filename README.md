@@ -73,7 +73,7 @@ Console.WriteLine(expr.Eval());
 >>> -1
 ```
 
-#### Solve eqations
+#### Solve equations
 Only numerical solutions with Newton's method is supported yet :(
 ```cs
 var x = MathS.Var("x");
@@ -102,6 +102,24 @@ var x = MathS.Var("x");
 var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
 var func = expr.Compile(x);
 Console.WriteLine(func.Substitute(3));
+```
+
+#### Simplify
+```cs
+var x = MathS.Var("x");
+var a = MathS.Var("a");
+var b = MathS.Var("b");
+var expr = MathS.Sqrt(x) / x + a * b + b * a + (b - x) * (x + b) + 
+    MathS.Arcsin(x + a) + MathS.Arccos(a + x);
+Console.WriteLine(expr.SimplifyIntelli(6));
+>>> 1.5707963267948966 + 2 * a * b + b ^ 2 + x ^ (-0.5) - x ^ 2
+```
+
+#### Try new syntax
+```cs
+var expr = MathS.FromString("3x3 + 2 2 2 - x(3 0.5)");
+Console.WriteLine(expr);
+>>> 3 * x ^ 3 + 2 ^ 2 ^ 2 - x * sqrt(3)
 ```
 
 ## Full documentation

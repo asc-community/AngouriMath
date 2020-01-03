@@ -7,6 +7,7 @@ namespace UnitTests
     [TestClass]
     public class FromStringTest
     {
+        public static VariableEntity x = MathS.Var("x");
         [TestMethod]
         public void Test1()
         {
@@ -66,6 +67,34 @@ namespace UnitTests
         public void Test12()
         {
             Assert.IsTrue(MathS.FromString("arcsin(x)").Substitute(MathS.Var("x"), 1.0).Eval() == MathS.pi / 2);
+        }
+        [TestMethod]
+        public void Test13()
+        {
+            Assert.IsTrue(MathS.FromString("x2") == MathS.Sqr(x));
+            Assert.IsTrue(MathS.FromString("2x") == 2 * x);
+        }
+        [TestMethod]
+        public void Test14()
+        {
+            Assert.IsTrue(MathS.FromString("3 2").Eval() == 9);
+            
+        }
+        [TestMethod]
+        public void Test15()
+        {
+            Assert.IsTrue(MathS.FromString("x(2 + 3)").Simplify() == 5 * x);
+        }
+        [TestMethod]
+        public void Test16()
+        {
+            var y = MathS.Var("y");
+            Assert.IsTrue(MathS.FromString("x y") == x * y);
+        }
+        [TestMethod]
+        public void Test17()
+        {
+            Assert.IsTrue(MathS.FromString("x sqrt(3)") == x * MathS.Sqrt(3));
         }
     }
 }
