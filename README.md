@@ -231,3 +231,8 @@ Sec(x), Cosec(x), Arcsin(x), Arccos(x), Arctan(x), Arccotan(x), B(x), TB(x)
 MathS.FromString(str) - returns Entity
 
 MathS.FromLinq(expr) - returns Entity
+
+#### How does it work?
+
+You can learn how some methods work here: https://habr.com/ru/post/482228/ (warning: Russian language!)<br>
+Full description is not ready yet.
