@@ -297,11 +297,23 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <returns></returns>
         internal static Entity Replace(RuleList rules, Entity source)
         {
+            // TODO
             var res = source.DeepCopy();
             foreach (var pair in rules)
-                while (res.FindSubtree(pair.Key) != null)
+            {
+                int capacity = MAX_PATTERN_REPLACE_DEPTH;
+                while (capacity > 0 && res.FindSubtree(pair.Key) != null)
+                {
                     res = ReplaceOne(res, pair.Key, pair.Value);
+                    capacity--;
+                }
+            }
             return res;
         }
+
+        /// <summary>
+        /// Maximum pattern-replacing depth
+        /// </summary>
+        private static readonly int MAX_PATTERN_REPLACE_DEPTH = 100;
     }
 }

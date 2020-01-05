@@ -12,7 +12,6 @@ namespace Samples
     class Program
     {
         public static object MathExpressionGenerator { get; private set; }
-
         
         static void Sample1()
         {
@@ -108,10 +107,9 @@ namespace Samples
         }
         static void Main(string[] _)
         {
-            var x = MathS.Var("x");
-            var expr = (MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x));
-            var complexFunc = expr.Compile(x);
-            complexFunc.Call(3);
+            var s = "sqrt(x) / (x * y) + x ^ (-0.5)";
+            var expr = MathS.FromString(s);
+            Console.WriteLine(expr.SimplifyIntelli());
         }
     }
 #pragma warning restore IDE0051
