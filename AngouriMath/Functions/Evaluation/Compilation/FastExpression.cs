@@ -164,23 +164,23 @@ namespace AngouriMath
             for(int i = 0; i < instructions.Count; i++)
             {
                 instruction = instructions[i];
-                switch (instruction.Type)
+                switch(instruction.Type)
                 {
-                    case Instruction.InstructionType.PUSHCONST:
-                        stack.Push(instruction.Value);
-                        break;
                     case Instruction.InstructionType.PUSHVAR:
                         stack.Push(variables[instruction.VarNumber]);
                         break;
-                    case Instruction.InstructionType.TOCACHE:
-                        Cache[instruction.CacheNumber] = stack.Peek();
+                    case Instruction.InstructionType.PUSHCONST:
+                        stack.Push(instruction.Value);
+                        break;
+                    case Instruction.InstructionType.CALL:
+                        CompiledMathFunctions.functions[instruction.FuncNumber](stack);
                         break;
                     case Instruction.InstructionType.PULLCACHE:
                         stack.Push(Cache[instruction.CacheNumber]);
                         break;
                     default:
-                        CompiledMathFunctions.functions[instruction.FuncNumber](stack);
-                        break;
+                        Cache[instruction.CacheNumber] = stack.Peek();
+                        break;                    
                 }
             }
             return stack.Pop();

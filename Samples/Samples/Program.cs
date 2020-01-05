@@ -107,8 +107,7 @@ namespace Samples
             var x = MathS.Var("x");
             var expr = (MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x));
             var complexFunc = expr.Compile(x);
-            Console.WriteLine(complexFunc.ToString());
-            Console.WriteLine(complexFunc.Call(3));
+            complexFunc.Call(3);
         }
     }
 }

@@ -123,6 +123,40 @@ Console.WriteLine(expr);
 >>> 3 * x ^ 3 + 2 ^ 2 ^ 2 - x * sqrt(3)
 ```
 
+### Performance
+Performane improved a lot. Testing on i7-7700HQ and ```expr = MathS.Sin(x)``` we get the following report:
+
+| Function                             | Time per iteration              |
+| ------------------------------------ | ------------------------------- |
+| Substitute(x, 3).Eval() from 1.0.13  | 12000 ns                        |
+| Substitute(x, 3).Eval() from 1.0.15  | 2500 ns                         |
+| Call(3) from 1.0.15                  | 54 ns                           |
+| Complex.Sin(3)                       | 27 ns                           |
+
+If we take ```expr = MathS.Sin(MathS.Sqr(x)) + MathS.Cos(MathS.Sqr(x)) + MathS.Sqr(x) + MathS.Sin(MathS.Sqr(x))```, AM Compiled
+is faster than any other methods:
+
+| Method                   | Time per iteration |
+|------------------------- |-------------------:|
+| AM Compiled              |  310.0 ns          |
+| In-code expression       |  424.2 ns          |
+| LinqCompiled             |  435.9 ns          |
+| Substitute(x, 3).Eval()  | 6777.3 ns          |
+
+It is true since release of 1.0.17.1 Beta, when cache instructions in compiled functions were added.
+
+Finally, if we take ```expr = (MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x))```, 
+we get the following performance
+
+| Method                   | Time per iteration |
+|--------------------------|-------------------:|
+| AM Compiled              |  380.8 ns          |
+| In-code expression       |  211.5 ns          |
+| Substitute(x, 3).Eval()  | 5656.3 ns          |
+
+So, for most cases compilation will save you enough time even though built-in functions are 
+still faster sometimes.
+
 ## Full documentation
 
 ### Entity methods
@@ -189,38 +223,6 @@ var expr = MathS.Sqr(x) + 2 * x;
 var func = expr.Compile(x);
 Console.WriteLine(func.Call(3));
 ```
-Performane improved a lot. Testing on i7-7700HQ and ```expr = MathS.Sin(x)``` we get the following report:
-
-| Function                             | Time per iteration              |
-| ------------------------------------ | ------------------------------- |
-| Substitute(x, 3).Eval() from 1.0.13  | 12000 ns                        |
-| Substitute(x, 3).Eval() from 1.0.15  | 2500 ns                         |
-| Call(3) from 1.0.15                  | 54 ns                           |
-| Complex.Sin(3)                       | 27 ns                           |
-
-If we take ```expr = MathS.Sin(MathS.Sqr(x)) + MathS.Cos(MathS.Sqr(x)) + MathS.Sqr(x) + MathS.Sin(MathS.Sqr(x))```, AM Compiled
-is faster than any other methods:
-
-| Method                   | Time per iteration |
-|------------------------- |-------------------:|
-| AM Compiled              |  310.0 ns          |
-| In-code expression       |  424.2 ns          |
-| LinqCompiled             |  435.9 ns          |
-| Substitute(x, 3).Eval()  | 6777.3 ns          |
-
-It is true since release of 1.0.17.1 Beta, when cache instructions in compiled functions were added.
-
-Finally, if we take ```expr = (MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x))```, 
-we get the following performance
-
-| Method                   | Time per iteration |
-|--------------------------|-------------------:|
-| AM Compiled              |  380.8 ns          |
-| In-code expression       |  211.5 ns          |
-| Substitute(x, 3).Eval()  | 5656.3 ns          |
-
-So, for most cases compilation will save you enough time even though built-in functions are 
-still faster sometimes.
 
 #### Function list
 
