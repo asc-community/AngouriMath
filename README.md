@@ -112,7 +112,7 @@ var a = MathS.Var("a");
 var b = MathS.Var("b");
 var expr = MathS.Sqrt(x) / x + a * b + b * a + (b - x) * (x + b) + 
     MathS.Arcsin(x + a) + MathS.Arccos(a + x);
-Console.WriteLine(expr.SimplifyIntelli(6));
+Console.WriteLine(expr.SimplifyIntelli());
 >>> 1.5707963267948966 + 2 * a * b + b ^ 2 + x ^ (-0.5) - x ^ 2
 ```
 
@@ -182,14 +182,14 @@ By this time, only definite integration over one variable is available.
 #### Compilation
 ```expr.Compile(a, b, c...)``` the arguments are arguments of the target function. You should list all the used variables in the order you will then call.
 
-```fe.Call(a, b, c...)``` the arguments are Numbers in the order of variables. Retunrs Number.
+```fe.Call(a, b, c...)``` the arguments are Numbers in the order of variables. Returns Number.
 ```
 var x = MathS.Var("x");
 var expr = MathS.Sqr(x) + 2 * x;
 var func = expr.Compile(x);
 Console.WriteLine(func.Call(3));
 ```
-Performane improved a lot. Testing on i7-7700HQ and expr=MathS.Sin(x) we get the following report:
+Performane improved a lot. Testing on i7-7700HQ and ```expr = MathS.Sin(x)``` we get the following report:
 
 | Function                             | Time per iteration              |
 | ------------------------------------ | ------------------------------- |
@@ -198,14 +198,29 @@ Performane improved a lot. Testing on i7-7700HQ and expr=MathS.Sin(x) we get the
 | Call(3) from 1.0.15                  | 54 ns                           |
 | Complex.Sin(3)                       | 27 ns                           |
 
-If we take expr=(MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x)), we get the following performance
+If we take ```expr = MathS.Sin(MathS.Sqr(x)) + MathS.Cos(MathS.Sqr(x)) + MathS.Sqr(x) + MathS.Sin(MathS.Sqr(x))```, AM Compiled
+is faster than any other methods:
 
-| Method             | Time per iteration |
-|--------------------|-------------------:|
-| AM Compiled        | 350.767 ns         |
-| In-code expression | 211.472 ns         |
+| Method                   | Time per iteration |
+|------------------------- |-------------------:|
+| AM Compiled              |  310.0 ns          |
+| In-code expression       |  424.2 ns          |
+| LinqCompiled             |  435.9 ns          |
+| Substitute(x, 3).Eval()  | 6777.3 ns          |
 
-So, for most cases using compilation will save you enough time even though Complex.Sin is still faster.
+It is true since release of 1.0.17.1 Beta, when cache instructions in compiled functions were added.
+
+Finally, if we take ```expr = (MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x))```, 
+we get the following performance
+
+| Method                   | Time per iteration |
+|--------------------------|-------------------:|
+| AM Compiled              |  380.8 ns          |
+| In-code expression       |  211.5 ns          |
+| Substitute(x, 3).Eval()  | 5656.3 ns          |
+
+So, for most cases compilation will save you enough time even though built-in functions are 
+still faster sometimes.
 
 #### Function list
 

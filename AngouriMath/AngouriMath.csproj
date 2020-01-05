@@ -8,17 +8,17 @@
     <Copyright>Angourisoft</Copyright>
     <PackageProjectUrl>asc-community.org</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Angourisoft/MathS</RepositoryUrl>
-    <AssemblyVersion>0.0.16.0</AssemblyVersion>
-    <FileVersion>0.0.16.0</FileVersion>
+    <AssemblyVersion>0.0.17.1</AssemblyVersion>
+    <FileVersion>0.0.17.1</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageTags>Math, csharp, derivation, latex, calculator, parse, simplification, compute, symbol, compilation, algebra</PackageTags>
-    <Version>1.0.17-Beta</Version>
+    <Version>1.0.17.1-Beta</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/Angourisoft/MathS/master/icon.png</PackageIconUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>Enables to work with formulas built in the code or from a string. Computing, derivating, latex rendering, fast functions, and many more.</Description>
-    <PackageReleaseNotes>New syntax for FromString &amp; Simplification improved &amp; Bugs fixed</PackageReleaseNotes>
+    <PackageReleaseNotes>Compilation improved (cache added).</PackageReleaseNotes>
     <PackageId>AngouriMath</PackageId>
     <Product>AngouriMath</Product>
     <ApplicationIcon />

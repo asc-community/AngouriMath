@@ -39,5 +39,12 @@ namespace UnitTests
             var func = ((x + y) / (x - 3)).Compile(x, y);
             Assert.IsTrue(func.Substitute(4, 3) == 7.0);
         }
+        [TestMethod]
+        public void Test6()
+        {
+            var expr = (MathS.Sqr(x) + MathS.Sqr(x)) / MathS.Sqr(x) + MathS.Sqrt(x);
+            var func = expr.Compile(x);
+            Assert.IsTrue(func.Call(4) == 4);
+        }
     }
 }

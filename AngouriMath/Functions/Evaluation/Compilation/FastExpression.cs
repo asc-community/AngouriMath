@@ -36,7 +36,6 @@ namespace AngouriMath
         /// <returns></returns>
         public FastExpression Compile(params string[] variables)
         {
-            var instructions = new InstructionSet();
             var varNamespace = new Dictionary<string, int>();
             int id = 0;
             foreach (var varName in variables)
@@ -44,33 +43,100 @@ namespace AngouriMath
                 varNamespace[varName] = id;
                 id++;
             }
-            InnerCompile(instructions, variables, varNamespace);
-            return new FastExpression(instructions, variables.Length);
+            var res = new FastExpression(variables.Length, this);
+            InnerCompile(res, variables, varNamespace);
+            res.Seal(); // Creates stack
+            return res;
         }
-        private void InnerCompile(InstructionSet instructions, string[] variables, Dictionary<string, int> varNamespace)
+    } 
+}
+
+namespace AngouriMath
+{
+    public abstract partial class Entity
+    {
+        /// <summary>
+        /// Returns number of nodes in tree
+        /// </summary>
+        /// <returns></returns>
+        private int Complexity()
         {
+            int res = 0;
+            foreach (var child in Children)
+                res += child.Complexity();
+            return res + 1;
+        }
+
+        /// <summary>
+        /// Obviouosly, returns number of subtrees having exact same hash
+        /// </summary>
+        /// <returns></returns>
+        private int CountOccurances(string hash)
+        {
+            int res = this.ToString() == hash ? 1 : 0;
+            foreach (var child in Children)
+                res += child.CountOccurances(hash);
+            return res;
+        }
+
+        /// <summary>
+        /// Fills fast expression instance with instructions and cache
+        /// </summary>
+        /// <param name="fe"></param>
+        /// <param name="variables"></param>
+        /// <param name="varNamespace"></param>
+        private void InnerCompile(FastExpression fe, string[] variables, Dictionary<string, int> varNamespace)
+        {
+            // Check whether it's better to pull from cache or not
+            string hash = ToString();
+            if (fe.HashToNum.ContainsKey(hash))
+            {
+                fe.instructions.AddPullCacheInstruction(fe.HashToNum[hash]);
+                return;
+            }
+
             for (int i = Children.Count - 1; i >= 0; i--)
-                Children[i].InnerCompile(instructions, variables, varNamespace);
+                Children[i].InnerCompile(fe, variables, varNamespace);
             if (this is OperatorEntity || this is FunctionEntity)
-                instructions.AddInstruction(Name, Children.Count);
+                fe.instructions.AddCallInstruction(Name, Children.Count);
             else if (this is NumberEntity)
-                instructions.AddInstruction(GetValue());
+                fe.instructions.AddPushNumInstruction(GetValue());
             else if (this is VariableEntity)
-                instructions.AddInstruction(varNamespace[Name]);
+                fe.instructions.AddPushVarInstruction(varNamespace[Name]);
             else
                 throw new SysException("Unknown entity");
+
+            // If the function is used more than once AND complex enough, we put it in cache
+            if (fe.RawExpr.CountOccurances(hash) > 1 /*Raw expr is basically the root entity that we're compiling*/
+                && Complexity() > 1 /* we don't check if it is already in cache as in this case it will pull from cache*/)
+            {
+                fe.HashToNum[hash] = fe.HashToNum.Count;
+                fe.instructions.AddPushCacheInstruction(fe.HashToNum[hash]);
+            }
         }
     }
     public class FastExpression
     {
-        private readonly Stack<Number> stack;
-        private readonly InstructionSet instructions;
+        private Stack<Number> stack;
+        internal readonly InstructionSet instructions;
         private readonly int varCount;
-        internal FastExpression(InstructionSet instructions, int varCount)
+
+        internal readonly Dictionary<string, int> HashToNum = new Dictionary<string, int>();
+        private Number[] Cache;
+
+        internal Entity RawExpr { get; }
+
+        internal FastExpression(int varCount, Entity rawExpr)
         {
             this.varCount = varCount;
+            this.instructions = new InstructionSet();
+            RawExpr = rawExpr;
+        }
+
+        internal void Seal()
+        {
             stack = new Stack<Number>(instructions.Count);
-            this.instructions = instructions;
+            Cache = new Number[HashToNum.Count];
         }
 
         /// <summary>
@@ -105,6 +171,12 @@ namespace AngouriMath
                         break;
                     case Instruction.InstructionType.PUSHVAR:
                         stack.Push(variables[instruction.VarNumber]);
+                        break;
+                    case Instruction.InstructionType.TOCACHE:
+                        Cache[instruction.CacheNumber] = stack.Peek();
+                        break;
+                    case Instruction.InstructionType.PULLCACHE:
+                        stack.Push(Cache[instruction.CacheNumber]);
                         break;
                     default:
                         CompiledMathFunctions.functions[instruction.FuncNumber](stack);

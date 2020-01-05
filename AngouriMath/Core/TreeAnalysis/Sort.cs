@@ -14,11 +14,11 @@ namespace AngouriMath
             if (this is FunctionEntity)
                 return this.Name + "_" + string.Join("_", from child in Children select child.Hash(level));
             else if (this is NumberEntity)
-                return level == SortLevel.HIGH_LEVEL ? "" : this.Name + " "; // Constants do not influence sorting
+                return level == SortLevel.HIGH_LEVEL ? "" : this.Name + " ";
             else if (this is VariableEntity)
                 return "v_" + Name;
             else
-                return (level == SortLevel.LOW_LEVEL ? this.Name + "_" : "") + string.Join("_", from child in Children where child.Hash(level) != "" select child.Hash(level)); // Operators only influence through children
+                return (level == SortLevel.LOW_LEVEL ? this.Name + "_" : "") + string.Join("_", from child in Children where child.Hash(level) != "" select child.Hash(level));
 
         }
 
