@@ -8,10 +8,12 @@ using AngouriMath.Core.TreeAnalysis;
 
 namespace Samples
 {
+#pragma warning disable IDE0051
     class Program
     {
         public static object MathExpressionGenerator { get; private set; }
 
+        
         static void Sample1()
         {
             var inp = "1 + 2 * log(9, 3)";
@@ -39,14 +41,16 @@ namespace Samples
             var derivative = func.Derive(x);
             Console.WriteLine(derivative.Simplify());
         }
+#pragma warning disable IDE0039
         static void Sample5()
         {
             var x = MathS.Var("x");
             var expr = (x + 3).Pow(x + 4);
-            Func<NumberEntity, Entity> wow = v => expr.Substitute(x, v).Simplify();
+            Func<NumberEntity, Entity> wow = v => expr.Substitute(x, v).Eval();
             Console.WriteLine(wow(4));
             Console.WriteLine(wow(5));
             Console.WriteLine(wow(6));
+#pragma warning restore IDE0039
         }
         static void Sample6()
         {
@@ -102,7 +106,7 @@ namespace Samples
                 MathS.Arcsin(x + a) + MathS.Arccos(a + x);
             Console.WriteLine(expr.SimplifyIntelli());
         }
-        static void Main(string[] args)
+        static void Main(string[] _)
         {
             var x = MathS.Var("x");
             var expr = (MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x));
@@ -110,4 +114,5 @@ namespace Samples
             complexFunc.Call(3);
         }
     }
+#pragma warning restore IDE0051
 }
