@@ -310,10 +310,5 @@ namespace AngouriMath.Core.TreeAnalysis
             } while (prev != res);
             return res;
         }
-
-        /// <summary>
-        /// Maximum pattern-replacing depth
-        /// </summary>
-        private static readonly int MAX_PATTERN_REPLACE_DEPTH = 100;
     }
 }

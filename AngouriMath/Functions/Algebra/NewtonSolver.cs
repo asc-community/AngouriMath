@@ -28,7 +28,7 @@ namespace AngouriMath
                     prev = value.Copy();
                 try
                 {
-                    value = value - f.Substitute(value) / df.Substitute(value);
+                    value -= f.Substitute(value) / df.Substitute(value);
                 }
                 catch(MathSException)
                 {

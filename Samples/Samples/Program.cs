@@ -108,7 +108,8 @@ namespace Samples
         static void Main(string[] _)
         {
             var expr = MathS.FromString("arcsin(x)");
-            Console.WriteLine(expr.Derive("x").Simplify().Latexise());
+            var func = expr.Compile("x");
+            func.Call(3);
         }
     }
 #pragma warning restore IDE0051
