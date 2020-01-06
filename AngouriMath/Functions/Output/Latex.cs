@@ -119,7 +119,7 @@ namespace AngouriMath
             }
             else
             {
-                return "{" + args[0].Latexise() + "}^{" + args[1].Latexise() + "}";
+                return "{" + args[0].Latexise(args[0].Priority < Const.PRIOR_POW) + "}^{" + args[1].Latexise() + "}";
             }
         }
     }

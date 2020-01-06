@@ -105,6 +105,7 @@ namespace AngouriMath
     public class VariableEntity : Entity
     {
         public VariableEntity(string name) : base(name) => Priority = Const.PRIOR_VAR;
+        public static implicit operator VariableEntity(string name) => new VariableEntity(name);
     }
     public class OperatorEntity : Entity
     {
