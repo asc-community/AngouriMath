@@ -299,15 +299,15 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             // TODO
             var res = source.DeepCopy();
-            foreach (var pair in rules)
+            Entity prev;
+            do
             {
-                int capacity = MAX_PATTERN_REPLACE_DEPTH;
-                while (capacity > 0 && res.FindSubtree(pair.Key) != null)
+                prev = res.DeepCopy();
+                foreach (var pair in rules)
                 {
                     res = ReplaceOne(res, pair.Key, pair.Value);
-                    capacity--;
                 }
-            }
+            } while (prev != res);
             return res;
         }
 

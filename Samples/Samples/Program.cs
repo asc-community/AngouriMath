@@ -107,9 +107,7 @@ namespace Samples
         }
         static void Main(string[] _)
         {
-            var s = "sqrt(x) / (x * y) + x ^ (-0.5)";
-            var expr = MathS.FromString(s);
-            Console.WriteLine(expr.SimplifyIntelli());
+            Sample1();
         }
     }
 #pragma warning restore IDE0051
