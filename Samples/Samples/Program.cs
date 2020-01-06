@@ -109,7 +109,8 @@ namespace Samples
         {
             var expr = MathS.FromString("arcsin(x)");
             var func = expr.Compile("x");
-            func.Call(3);
+            for(int i = 0; i < 100000; i++)
+                func.Call(3);
         }
     }
 #pragma warning restore IDE0051

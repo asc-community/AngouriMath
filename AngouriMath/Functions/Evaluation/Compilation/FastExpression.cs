@@ -168,13 +168,57 @@ namespace AngouriMath
                 switch (instruction.Type)
                 {
                     case Instruction.InstructionType.PUSHVAR:
-                        stack.Push(variables[instruction.VarNumber].value);
+                        stack.Push(variables[instruction.VarNumber]);
                         break;
                     case Instruction.InstructionType.PUSHCONST:
                         stack.Push(instruction.Value);
                         break;
                     case Instruction.InstructionType.CALL:
-                        CompiledMathFunctions.functions[instruction.FuncNumber](stack);
+                        switch(instruction.FuncNumber)
+                        {
+                            case 0:
+                                stack.Push(stack.Pop() + stack.Pop());
+                                break;
+                            case 1:
+                                stack.Push(stack.Pop() - stack.Pop());
+                                break;
+                            case 2:
+                                stack.Push(stack.Pop() * stack.Pop());
+                                break;
+                            case 3:
+                                stack.Push(stack.Pop() / stack.Pop());
+                                break;
+                            case 4:
+                                stack.Push(Complex.Pow(stack.Pop(), stack.Pop()));
+                                break;
+                            case 5:
+                                stack.Push(Complex.Sin(stack.Pop()));
+                                break;
+                            case 6:
+                                stack.Push(Complex.Cos(stack.Pop()));
+                                break;
+                            case 7:
+                                stack.Push(Complex.Tan(stack.Pop()));
+                                break;
+                            case 8:
+                                stack.Push(1 / Complex.Tan(stack.Pop()));
+                                break;
+                            case 9:
+                                stack.Push(Complex.Log(stack.Pop(), stack.Pop().Real));
+                                break;
+                            case 10:
+                                stack.Push(Complex.Asin(stack.Pop()));
+                                break;
+                            case 11:
+                                stack.Push(Complex.Acos(stack.Pop()));
+                                break;
+                            case 12:
+                                stack.Push(Complex.Atan(stack.Pop()));
+                                break;
+                            case 13:
+                                stack.Push(Complex.Atan(1 / stack.Pop()));
+                                break;
+                        }
                         break;
                     case Instruction.InstructionType.PULLCACHE:
                         stack.Push(Cache[instruction.CacheNumber]);
@@ -186,6 +230,7 @@ namespace AngouriMath
             }
             return stack.Pop();
         }
+
         public override string ToString()
         {
             var sb = new StringBuilder();

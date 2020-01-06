@@ -24,11 +24,11 @@ namespace DotnetBenchmark
             linqFunc = expr.Compile();
         }
         [Benchmark]
-        public Number MultiFunc() => multiFunc.Call(3);
+        public void MultiFunc() => multiFunc.Call(3);
         [Benchmark]
-        public Complex LinqSin() => linqFunc(3);
+        public void LinqSin() => linqFunc(3);
         [Benchmark]
-        public Number NotCompiled() => multiFuncNotCompiled.Substitute(x, 3).Eval().GetValue();
+        public void NotCompiled() => multiFuncNotCompiled.Substitute(x, 3).Eval().GetValue();
     }
 
     public class Program
@@ -36,7 +36,7 @@ namespace DotnetBenchmark
         public static void Main(string[] _)
         {
             //BenchmarkRunner.Run<CacheCompiledFuncTest>();
-            BenchmarkRunner.Run<CompiledFuncTest>();
+             BenchmarkRunner.Run<CompiledFuncTest>();
         }
     }
 }

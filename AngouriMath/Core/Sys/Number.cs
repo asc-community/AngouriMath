@@ -40,7 +40,7 @@ namespace AngouriMath.Core
         public bool IsNull { get => isNull || (double.IsNaN(value.Imaginary)) || (double.IsNaN(value.Real)); set => isNull = value; }
         public Number(bool isNull)
         {
-            IsNull = isNull;
+            this.isNull = isNull;
             __isReal = false;
         }
 
