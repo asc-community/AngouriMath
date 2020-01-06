@@ -1,6 +1,7 @@
 ﻿using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace AngouriMath
@@ -25,7 +26,7 @@ namespace AngouriMath
             { "arccotanf", 13 },
         };
 
-        internal delegate void CompiledFunction(Stack<Number> stack);
+        internal delegate void CompiledFunction(Stack<Complex> stack);
         internal static readonly CompiledFunction[] functions =
             new CompiledFunction[]
             {
@@ -45,83 +46,83 @@ namespace AngouriMath
                 Arccotanf
             };
 
-        internal static readonly Number[] buffer = new Number[10];
+        internal static readonly Complex[] buffer = new Complex[10];
 
-        internal static void Sumf(Stack<Number> stack)
+        internal static void Sumf(Stack<Complex> stack)
         {
-            Number n1 = stack.Pop();
-            Number n2 = stack.Pop();
+            Complex n1 = stack.Pop();
+            Complex n2 = stack.Pop();
             stack.Push(n1 + n2);
         }
-        internal static void Minusf(Stack<Number> stack)
+        internal static void Minusf(Stack<Complex> stack)
         {
-            Number n1 = stack.Pop();
-            Number n2 = stack.Pop();
+            Complex n1 = stack.Pop();
+            Complex n2 = stack.Pop();
             stack.Push(n1 - n2);
         }
-        internal static void Mulf(Stack<Number> stack)
+        internal static void Mulf(Stack<Complex> stack)
         {
-            Number n1 = stack.Pop();
-            Number n2 = stack.Pop();
+            Complex n1 = stack.Pop();
+            Complex n2 = stack.Pop();
             stack.Push(n1 * n2);
         }
-        internal static void Divf(Stack<Number> stack)
+        internal static void Divf(Stack<Complex> stack)
         {
-            Number n1 = stack.Pop();
-            Number n2 = stack.Pop();
+            Complex n1 = stack.Pop();
+            Complex n2 = stack.Pop();
             stack.Push(n1 / n2);
         }
-        internal static void Powf(Stack<Number> stack)
+        internal static void Powf(Stack<Complex> stack)
         {
-            Number n1 = stack.Pop();
-            Number n2 = stack.Pop();
-            stack.Push(Number.Pow(n1, n2));
+            Complex n1 = stack.Pop();
+            Complex n2 = stack.Pop();
+            stack.Push(Complex.Pow(n1, n2));
         }
-        internal static void Sinf(Stack<Number> stack)
+        internal static void Sinf(Stack<Complex> stack)
         {
-            Number n = stack.Pop();
-            stack.Push(Number.Sin(n));
+            Complex n = stack.Pop();
+            stack.Push(Complex.Sin(n));
         }
-        internal static void Cosf(Stack<Number> stack)
+        internal static void Cosf(Stack<Complex> stack)
         {
-            Number n = stack.Pop();
-            stack.Push(Number.Cos(n));
+            Complex n = stack.Pop();
+            stack.Push(Complex.Cos(n));
         }
-        internal static void Tanf(Stack<Number> stack)
+        internal static void Tanf(Stack<Complex> stack)
         {
-            Number n = stack.Pop();
-            stack.Push(Number.Tan(n));
+            Complex n = stack.Pop();
+            stack.Push(Complex.Tan(n));
         }
-        internal static void Cotanf(Stack<Number> stack)
+        internal static void Cotanf(Stack<Complex> stack)
         {
-            Number n = stack.Pop();
-            stack.Push(Number.Cotan(n));
+            Complex n = stack.Pop();
+            stack.Push(1 / Complex.Tan(n));
         }
-        internal static void Logf(Stack<Number> stack)
+        internal static void Logf(Stack<Complex> stack)
         {
-            Number n1 = stack.Pop();
-            Number n2 = stack.Pop();
-            stack.Push(Number.Log(n1, n2));
+            Complex n1 = stack.Pop();
+            Complex n2 = stack.Pop();
+            stack.Push(Complex.Log(n1, n2.Real));
         }
-        internal static void Arcsinf(Stack<Number> stack)
+        internal static void Arcsinf(Stack<Complex> stack)
         {
-            Number n = stack.Pop();
-            stack.Push(Number.Arcsin(n));
+            Complex n = stack.Pop();
+            stack.Push(Complex.Asin(n));
         }
-        internal static void Arccosf(Stack<Number> stack)
+        internal static void Arccosf(Stack<Complex> stack)
         {
-            Number n = stack.Pop();
-            stack.Push(Number.Arccos(n));
+            Complex n = stack.Pop();
+            stack.Push(Complex.Acos(n));
         }
-        internal static void Arctanf(Stack<Number> stack)
+        internal static void Arctanf(Stack<Complex> stack)
         {
-            Number n = stack.Pop();
-            stack.Push(Number.Arctan(n));
+            Complex n = stack.Pop();
+            stack.Push(Complex.Atan(n));
         }
-        internal static void Arccotanf(Stack<Number> stack)
+        internal static void Arccotanf(Stack<Complex> stack)
         {
-            Number n = stack.Pop();
-            stack.Push(Number.Arccotan(n));
+            Complex n = stack.Pop();
+            stack.Push(Complex.Atan(1 / n));
         }
     }
 }

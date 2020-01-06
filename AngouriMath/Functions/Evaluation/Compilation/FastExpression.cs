@@ -2,6 +2,7 @@
 using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace AngouriMath
@@ -100,7 +101,7 @@ namespace AngouriMath
             if (this is OperatorEntity || this is FunctionEntity)
                 fe.instructions.AddCallInstruction(Name, Children.Count);
             else if (this is NumberEntity)
-                fe.instructions.AddPushNumInstruction(GetValue());
+                fe.instructions.AddPushNumInstruction(GetValue().value);
             else if (this is VariableEntity)
                 fe.instructions.AddPushVarInstruction(varNamespace[Name]);
             else
@@ -117,12 +118,12 @@ namespace AngouriMath
     }
     public class FastExpression
     {
-        private Stack<Number> stack;
+        private Stack<Complex> stack;
         internal readonly InstructionSet instructions;
         private readonly int varCount;
 
         internal readonly Dictionary<string, int> HashToNum = new Dictionary<string, int>();
-        private Number[] Cache;
+        private Complex[] Cache;
 
         internal Entity RawExpr { get; }
 
@@ -135,8 +136,8 @@ namespace AngouriMath
 
         internal void Seal()
         {
-            stack = new Stack<Number>(instructions.Count);
-            Cache = new Number[HashToNum.Count];
+            stack = new Stack<Complex>(instructions.Count);
+            Cache = new Complex[HashToNum.Count];
         }
 
         /// <summary>
@@ -161,13 +162,13 @@ namespace AngouriMath
             if (variables.Length != varCount)
                 throw new SysException("Wrong amount of parameters");
             Instruction instruction;
-            for(int i = 0; i < instructions.Count; i++)
+            for (int i = 0; i < instructions.Count; i++)
             {
                 instruction = instructions[i];
-                switch(instruction.Type)
+                switch (instruction.Type)
                 {
                     case Instruction.InstructionType.PUSHVAR:
-                        stack.Push(variables[instruction.VarNumber]);
+                        stack.Push(variables[instruction.VarNumber].value);
                         break;
                     case Instruction.InstructionType.PUSHCONST:
                         stack.Push(instruction.Value);
@@ -180,12 +181,11 @@ namespace AngouriMath
                         break;
                     default:
                         Cache[instruction.CacheNumber] = stack.Peek();
-                        break;                    
+                        break;
                 }
             }
             return stack.Pop();
         }
-
         public override string ToString()
         {
             var sb = new StringBuilder();

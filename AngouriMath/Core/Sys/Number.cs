@@ -150,6 +150,7 @@ namespace AngouriMath.Core
         public static implicit operator Number(int num) => new Number(num);
         public static implicit operator Number(double num) => new Number(num);
         public static implicit operator Number(Complex num) => new Number(num);
+        public static implicit operator Complex(Number num) => num.value;
         public static Number operator +(Number a, Number b) => new Number(a.value + b.value);
         public static Number operator -(Number a, Number b) => new Number(a.value - b.value);
         public static Number operator *(Number a, Number b) => new Number(a.value * b.value);

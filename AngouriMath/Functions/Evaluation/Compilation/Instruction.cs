@@ -1,6 +1,7 @@
 ﻿using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using static AngouriMath.CompiledMathFunctions;
 
@@ -21,7 +22,7 @@ namespace AngouriMath
         internal int FuncNumber;
         internal int VarNumber;
         internal string FuncName;
-        internal Number Value;
+        internal Complex Value;
         internal int CacheNumber;
 
         /// <summary>
@@ -59,7 +60,7 @@ namespace AngouriMath
         /// PUSH CONST
         /// </summary>
         /// <param name="value"></param>
-        internal Instruction(Number value)
+        internal Instruction(Complex value)
         {
             Value = value;
             Type = InstructionType.PUSHCONST;
@@ -103,7 +104,7 @@ namespace AngouriMath
             => Add(new Instruction(funcName, varCount));
         internal void AddPushVarInstruction(int varName)
             => Add(new Instruction(varName));
-        internal void AddPushNumInstruction(Number value)
+        internal void AddPushNumInstruction(Complex value)
             => Add(new Instruction(value));
         internal void AddPullCacheInstruction(int cacheLine)
             => Add(new Instruction(cacheLine, true));
