@@ -36,7 +36,8 @@ namespace DotnetBenchmark
         public static void Main(string[] _)
         {
             //BenchmarkRunner.Run<CacheCompiledFuncTest>();
-             BenchmarkRunner.Run<CompiledFuncTest>();
+            //BenchmarkRunner.Run<CompiledFuncTest>();
+            BenchmarkRunner.Run<AlgebraTest>();
         }
     }
 }
