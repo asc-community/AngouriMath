@@ -24,28 +24,8 @@ namespace AngouriMath
 
         internal Entity Sort(SortLevel level)
         {
-            OperatorEntity FuncIfSum(Entity child)
-            {
-                return new OperatorEntity("mulf", Const.PRIOR_MUL)
-                {
-                    Children = new List<Entity> {
-                    -1,
-                    child
-                    }
-                };
-            }
-            OperatorEntity FuncIfMul(Entity child)
-            {
-                return new OperatorEntity("powf", Const.PRIOR_POW)
-                {
-                    Children = new List<Entity> {
-                    child,
-                    -1
-                    }
-                };
-            }
-            Func<Entity, OperatorEntity> funcIfSum = FuncIfSum;
-            Func<Entity, OperatorEntity> funcIfMul = FuncIfMul;
+            Func<Entity, OperatorEntity> funcIfSum = Const.FuncIfSum;
+            Func<Entity, OperatorEntity> funcIfMul = Const.FuncIfMul;
             for (int i = 0; i < Children.Count; i++)
                 Children[i] = Children[i].Sort(level);
             if (Name != "sumf" && Name != "mulf" && Name != "minusf" && Name != "divf")

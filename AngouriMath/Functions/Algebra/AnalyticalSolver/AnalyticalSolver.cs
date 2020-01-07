@@ -1,4 +1,5 @@
-﻿using AngouriMath.Functions.Algebra.AnalyticalSolver;
+﻿using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Functions.Algebra.AnalyticalSolver;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -12,11 +13,11 @@ namespace AngouriMath
         /// </summary>
         /// <param name="x"></param>
         /// <returns></returns>
-        public EntityList Solve(VariableEntity x)
+        public EntitySet Solve(VariableEntity x)
         {
-            var res = new EntityList();
+            var res = new EntitySet();
             AnalyticalSolver.varp.Name = x.Name; // We change it each time we solve equations
-            AnalyticalSolver.Solve(this.Sort(Core.TreeAnalysis.TreeAnalyzer.SortLevel.LOW_LEVEL).SimplifyIntelli().Expand(), x, res);
+            AnalyticalSolver.Solve(this, x, res);
             return res;
         }
     }
@@ -38,6 +39,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <returns></returns>
         public static Entity GetMinimumSubtree(Entity expr, Entity ent)
         {
+            // TODO: this function requires a lot of refactoring
             // If there's only one `x`, we don't have to look for a possibility
             // to make replacement
             if (expr.CountOccurances(ent.ToString()) <= 1)
@@ -54,24 +56,28 @@ namespace AngouriMath.Core.TreeAnalysis
                 then number of mentions of `ent` in expression should be 6*/
             }
 
-            /* in some time we finally get x as its occurances is > 1*/
-            bool IsRelevant(int dep, out Entity sub)
+            bool IsRelevant(Entity sub)
             {
-                return expr.CountOccurances((sub = GetTreeByDepth(expr, ent, dep)).ToString()) >= 2;
+                return expr.CountOccurances(sub.ToString()) >= 2;
             }
 
-            int depth = 1;
+            /* in some time we finally get x as its occurances is > 1*/
+            bool ChangeIsRelevant(int dep, out Entity sub)
+            {
+                return IsRelevant(sub = GetTreeByDepth(expr, ent, dep));
+            }
+
+            int depth = 0;
             Entity subtree;
-            while (!IsRelevant(depth, out subtree) && GoodSub(subtree))
+            while (!ChangeIsRelevant(depth, out subtree) && GoodSub(subtree))
             {
                 depth++;
             }
-            if (GoodSub(subtree))
+            if (GoodSub(subtree) && IsRelevant(subtree))
                 return subtree;
             else
             {
-                IsRelevant(depth - 1, out subtree);
-                return subtree;
+                return ent;
             }
         }
 
@@ -106,7 +112,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
         static readonly Pattern any2 = new Pattern(101, PatType.COMMON);
         static readonly Pattern any3 = new Pattern(102, PatType.COMMON);
         //static readonly Pattern LinearEquation = varp
-        internal static void Solve(Entity expr, VariableEntity x, EntityList dst)
+        internal static void Solve(Entity expr, VariableEntity x, EntitySet dst)
         {
             if (expr is OperatorEntity)
             {
@@ -147,12 +153,22 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 return;
             } else
             {
-                //if (PolynomialSolver.IsPolynomial(expr, subtree, x))
+                Entity actualVar = TreeAnalyzer.GetMinimumSubtree(expr, x).Simplify();
+                var res = PolynomialSolver.SolveAsPolynomial(expr, actualVar);
+                if (res != null)
+                    dst.AddRange(res);
             }
         }
     }
-    public class EntityList : List<Entity>
+    public class EntitySet : List<Entity>
     {
-
+        public override string ToString()
+        {
+            return "[" + string.Join(", ", this) + "]";
+        }
+        public new void Add(Entity ent)
+        {
+            base.Add(ent.Simplify());
+        }
     }
 }

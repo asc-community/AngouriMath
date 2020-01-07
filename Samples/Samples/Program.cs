@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Linq.Expressions;
 using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Functions.Algebra.AnalyticalSolver;
 
 namespace Samples
 {
@@ -114,9 +115,15 @@ namespace Samples
                 func.Call(3);
                 */
             var x = MathS.Var("x");
+            var a = MathS.Var("a");
             //var expr = 3 * x + 3 * x + x + MathS.Sqr(x);
-            var expr = MathS.Sqr(x) + MathS.Sin(MathS.Sqr(x)) * MathS.Sqr(x);
-            Console.WriteLine(TreeAnalyzer.GetMinimumSubtree(expr, x));
+            //var expr = MathS.Sqr(x) + MathS.Sin(MathS.Sqr(x)) * MathS.Sqr(x);
+            //var expr = MathS.Sin(x) + MathS.Sqrt(MathS.Sin(x));
+
+            var expr = (MathS.Sqr(x) + 2 * x + 0.5 * a) * (x - a);
+            Console.WriteLine(expr.Solve(x));
+            
+            //Console.WriteLine(TreeAnalyzer.GetMinimumSubtree(expr, x));
         }
     }
 #pragma warning restore IDE0051

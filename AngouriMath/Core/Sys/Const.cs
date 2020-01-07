@@ -25,5 +25,15 @@ namespace AngouriMath
                     }
             };
         }
+        internal static OperatorEntity FuncIfMul(Entity child)
+        {
+            return new OperatorEntity("powf", Const.PRIOR_POW)
+            {
+                Children = new List<Entity> {
+                    child,
+                    -1
+                    }
+            };
+        }
     }
 }

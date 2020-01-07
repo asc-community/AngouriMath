@@ -9,15 +9,15 @@ namespace AngouriMath
     class RuleList : Dictionary<Pattern, Entity> { }
     internal static class Patterns
     {
-        static readonly Pattern any1 = new Pattern(100, PatType.COMMON);
-        static readonly Pattern any2 = new Pattern(101, PatType.COMMON);
-        static readonly Pattern any3 = new Pattern(102, PatType.COMMON);
-        static readonly Pattern any4 = new Pattern(103, PatType.COMMON);
-        static readonly Pattern const1 = new Pattern(200, PatType.NUMBER);
-        static readonly Pattern const2 = new Pattern(201, PatType.NUMBER);
-        static readonly Pattern var1 = new Pattern(300, PatType.VARIABLE);
-        static readonly Pattern func1 = new Pattern(400, PatType.FUNCTION);
-        static readonly Pattern func2 = new Pattern(401, PatType.FUNCTION);
+        internal static readonly Pattern any1 = new Pattern(100, PatType.COMMON);
+        internal static readonly Pattern any2 = new Pattern(101, PatType.COMMON);
+        internal static readonly Pattern any3 = new Pattern(102, PatType.COMMON);
+        internal static readonly Pattern any4 = new Pattern(103, PatType.COMMON);
+        internal static readonly Pattern const1 = new Pattern(200, PatType.NUMBER);
+        internal static readonly Pattern const2 = new Pattern(201, PatType.NUMBER);
+        internal static readonly Pattern var1 = new Pattern(300, PatType.VARIABLE);
+        internal static readonly Pattern func1 = new Pattern(400, PatType.FUNCTION);
+        internal static readonly Pattern func2 = new Pattern(401, PatType.FUNCTION);
         private static int InternNumber = 10000;
         static Pattern Num(double a) => new Pattern(++InternNumber, PatType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
         internal static readonly RuleList CommonRules = new RuleList {
