@@ -67,7 +67,7 @@ namespace AngouriMath
 
 namespace AngouriMath.Core.TreeAnalysis
 {
-    internal static partial class TreeAnalyzer
+    public static partial class TreeAnalyzer
     {
         internal enum SortLevel
         {

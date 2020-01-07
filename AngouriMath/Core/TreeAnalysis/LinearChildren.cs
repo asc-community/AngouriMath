@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
-    internal static partial class TreeAnalyzer
+    public static partial class TreeAnalyzer
     {
         internal static List<Entity> LinearChildren(Entity tree,
                                              string funcName /*e. g. "sumf" */,

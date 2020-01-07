@@ -255,7 +255,7 @@ namespace AngouriMath
 
 namespace AngouriMath.Core.TreeAnalysis
 {
-    internal static partial class TreeAnalyzer
+    public static partial class TreeAnalyzer
     {
         internal static Entity ReplaceOne(Entity source, Pattern oldPattern, Entity newPattern)
         {

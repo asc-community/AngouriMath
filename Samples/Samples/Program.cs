@@ -107,10 +107,16 @@ namespace Samples
         }
         static void Main(string[] _)
         {
+            /*
             var expr = MathS.FromString("arcsin(x)");
             var func = expr.Compile("x");
             for(int i = 0; i < 100000; i++)
                 func.Call(3);
+                */
+            var x = MathS.Var("x");
+            //var expr = 3 * x + 3 * x + x + MathS.Sqr(x);
+            var expr = MathS.Sqr(x) + MathS.Sin(MathS.Sqr(x)) * MathS.Sqr(x);
+            Console.WriteLine(TreeAnalyzer.GetMinimumSubtree(expr, x));
         }
     }
 #pragma warning restore IDE0051

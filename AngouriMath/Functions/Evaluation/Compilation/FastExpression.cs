@@ -72,7 +72,7 @@ namespace AngouriMath
         /// Obviouosly, returns number of subtrees having exact same hash
         /// </summary>
         /// <returns></returns>
-        private int CountOccurances(string hash)
+        internal int CountOccurances(string hash)
         {
             int res = this.ToString() == hash ? 1 : 0;
             foreach (var child in Children)
