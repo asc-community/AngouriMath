@@ -118,11 +118,15 @@ namespace Samples
             var a = MathS.Var("a");
             //var expr = 3 * x + 3 * x + x + MathS.Sqr(x);
             //var expr = MathS.Sqr(x) + MathS.Sin(MathS.Sqr(x)) * MathS.Sqr(x);
-            //var expr = MathS.Sin(x) + MathS.Sqrt(MathS.Sin(x));
+            // var expr = MathS.Sin(x) + 3;
 
-            var expr = (MathS.Sqr(x) + 2 * x + 0.5 * a) * (x - a);
-            Console.WriteLine(expr.Solve(x));
-            
+            //var expr = (MathS.Sqr(x) + 2 * x + 0.5 * a) * (x - a);
+            var expr = MathS.Sqr(MathS.Sin(x)) + 0.3 * MathS.Sin(x) + 0.1 * a;
+            //Console.WriteLine(TreeAnalyzer.GetMinimumSubtree(expr, x));
+            //var expr = MathS.Sin(2 * x + 3); // = a
+            //var expr = MathS.Sqr()
+            foreach(var child in expr.Solve(x))
+                Console.WriteLine(child);
             //Console.WriteLine(TreeAnalyzer.GetMinimumSubtree(expr, x));
         }
     }

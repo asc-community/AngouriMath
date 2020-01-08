@@ -1,4 +1,5 @@
-﻿using AngouriMath.Core.TreeAnalysis;
+﻿using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolver;
 using System;
 using System.Collections.Generic;
@@ -16,7 +17,6 @@ namespace AngouriMath
         public EntitySet Solve(VariableEntity x)
         {
             var res = new EntitySet();
-            AnalyticalSolver.varp.Name = x.Name; // We change it each time we solve equations
             AnalyticalSolver.Solve(this, x, res);
             return res;
         }
@@ -40,10 +40,13 @@ namespace AngouriMath.Core.TreeAnalysis
         public static Entity GetMinimumSubtree(Entity expr, Entity ent)
         {
             // TODO: this function requires a lot of refactoring
+
+            /*
             // If there's only one `x`, we don't have to look for a possibility
             // to make replacement
             if (expr.CountOccurances(ent.ToString()) <= 1)
                 return ent;
+                */
             
             // The idea is the following:
             // We must get a subtree that has more occurances than 1,
@@ -56,29 +59,34 @@ namespace AngouriMath.Core.TreeAnalysis
                 then number of mentions of `ent` in expression should be 6*/
             }
 
+            /* in some time we finally get x as its occurances is > 1*/
             bool IsRelevant(Entity sub)
             {
                 return expr.CountOccurances(sub.ToString()) >= 2;
             }
 
-            /* in some time we finally get x as its occurances is > 1*/
             bool ChangeIsRelevant(int dep, out Entity sub)
             {
                 return IsRelevant(sub = GetTreeByDepth(expr, ent, dep));
             }
 
-            int depth = 0;
+            int depth = 1;
             Entity subtree;
-            while (!ChangeIsRelevant(depth, out subtree) && GoodSub(subtree))
+            Entity best = null;
+            int ocs = 0;
+            while ((subtree = GetTreeByDepth(expr, ent, depth)) != ent)
             {
                 depth++;
+                int newocs;
+                if (GoodSub(subtree) && (newocs = expr.CountOccurances(subtree.ToString())) > ocs)
+                {
+                    // we're looking for good subs with maximum number of occurances
+                    // in order to minimize number of occurances of x in this sub
+                    ocs = newocs;
+                    best = subtree;
+                }
             }
-            if (GoodSub(subtree) && IsRelevant(subtree))
-                return subtree;
-            else
-            {
-                return ent;
-            }
+            return best == null ? ent : best;
         }
 
         private static Entity GetTreeByDepth(Entity expr, Entity ent, int depth)
@@ -99,6 +107,123 @@ namespace AngouriMath.Core.TreeAnalysis
             }
             return expr;
         }
+
+        /// <summary>
+        /// Func MUST contain exactly ONE occurance of x,
+        /// otherwise it won't work correctly
+        /// </summary>
+        /// <param name="func"></param>
+        /// <param name="value"></param>
+        /// <param name="x"></param>
+        /// <returns></returns>
+        public static Entity ResolveInvertFunction(Entity func, Entity value, VariableEntity x)
+        {
+            if (func == x)
+                return value;
+            if (func is NumberEntity)
+                throw new MathSException("This function must contain x");
+            if (func is VariableEntity)
+                return func;
+            if (func is OperatorEntity)
+                return InvertOperator(func as OperatorEntity, value, x);
+            if (func is FunctionEntity)
+                return InvertFunction(func as FunctionEntity, value, x);
+
+            return value;
+        }
+
+        public static Entity InvertOperator(OperatorEntity func, Entity value, VariableEntity x)
+        {
+            Entity a, un;
+            int arg;
+            if (func.Children[0].FindSubtree(x) != null)
+            {
+                a = func.Children[1];
+                un = func.Children[0];
+                arg = 0;
+            }
+            else
+            {
+                a = func.Children[0];
+                un = func.Children[1];
+                arg = 1;
+            }
+            switch (func.Name)
+            {
+                case "sumf":
+                    // x + a = value => x = value - a
+                    return ResolveInvertFunction(un, value - a, x);
+                case "minusf":
+                    if (arg == 0)
+                        // x - a = value => x = value + a
+                        return ResolveInvertFunction(un, value + a, x);
+                    else
+                        // a - x = value => x = a - value
+                        return ResolveInvertFunction(un, a - value, x);
+                case "mulf":
+                    // x * a = value => x = value / a
+                    return ResolveInvertFunction(un, value / a, x);
+                case "divf":
+                    if (arg == 0)
+                        // x / a = value => x = a * value
+                        return ResolveInvertFunction(un, value * a, x);
+                    else
+                        // a / x = value => x = a / value
+                        return ResolveInvertFunction(un, a / value, x);
+                case "powf":
+                    if (arg == 0)
+                        // x ^ a = value => x = value ^ (1/a)
+                        return ResolveInvertFunction(un, MathS.Pow(value, 1 / a), x);
+                    else
+                        // a ^ x = value => x = log(value, a)
+                        return ResolveInvertFunction(un, MathS.Log(value, a), x);
+                default:
+                    throw new SysException("Unknown operator");
+            }
+        }
+
+        public static Entity InvertFunction(FunctionEntity func, Entity value, VariableEntity x)
+        {
+            Entity a = func.Children[0];
+            Entity b = func.Children.Count == 2 ? func.Children[1] : null;
+            int arg = func.Children.Count == 2 && func.Children[1].FindSubtree(x) != null ? 1 : 0;
+            switch (func.Name)
+            {
+                case "sinf":
+                    // sin(x) = value => x = arcsin(value)
+                    return ResolveInvertFunction(a, MathS.Arcsin(value), x);
+                case "cosf":
+                    // cos(x) = value => x = arccos(value)
+                    return ResolveInvertFunction(a, MathS.Arccos(value), x);
+                case "tanf":
+                    // tan(x) = value => x = arctan(value)
+                    return ResolveInvertFunction(a, MathS.Arctan(value), x);
+                case "cotanf":
+                    // cotan(x) = value => x = arccotan(value)
+                    return ResolveInvertFunction(a, MathS.Arccotan(value), x);
+                case "arcsinf":
+                    // arcsin(x) = value => x = sin(value)
+                    return ResolveInvertFunction(a, MathS.Sin(value), x);
+                case "arccosf":
+                    // arccos(x) = value => x = cos(value)
+                    return ResolveInvertFunction(a, MathS.Cos(value), x);
+                case "arctanf":
+                    // arctan(x) = value => x = tan(value)
+                    return ResolveInvertFunction(a, MathS.Tan(value), x);
+                case "arccotanf":
+                    // arccotan(x) = value => x = cotan(value)
+                    return ResolveInvertFunction(a, MathS.Cotan(value), x);
+                case "logf":
+                    if (arg == 0)
+                        // log(x, a) = value => x = a ^ value
+                        return ResolveInvertFunction(a, MathS.Pow(b, value), x);
+                    else
+                        // log(a, x) = value => a = x ^ value => x = a ^ (1 / value)
+                        return ResolveInvertFunction(a, 1 / MathS.Pow(b, value), x);
+                default:
+                    throw new SysException("Uknown function");
+            }
+        }
     }
 }
 
@@ -107,11 +232,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
     using PatType = Entity.PatType;
     internal static class AnalyticalSolver
     {
-        internal static readonly Pattern varp = new Pattern(300, PatType.VARIABLE);
-        static readonly Pattern any1 = new Pattern(100, PatType.COMMON);
-        static readonly Pattern any2 = new Pattern(101, PatType.COMMON);
-        static readonly Pattern any3 = new Pattern(102, PatType.COMMON);
-        //static readonly Pattern LinearEquation = varp
         internal static void Solve(Entity expr, VariableEntity x, EntitySet dst)
         {
             if (expr is OperatorEntity)
@@ -155,8 +275,20 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             {
                 Entity actualVar = TreeAnalyzer.GetMinimumSubtree(expr, x).Simplify();
                 var res = PolynomialSolver.SolveAsPolynomial(expr, actualVar);
+
                 if (res != null)
-                    dst.AddRange(res);
+                {
+                    if (actualVar != x) // if we found a variable replacement
+                    {
+                        if (actualVar.CountOccurances(x.ToString()) == 1)
+                        {
+                            foreach (var r in res)
+                                dst.Add(TreeAnalyzer.ResolveInvertFunction(actualVar, r, x));
+                        }
+                    }
+                    else
+                        dst.AddRange(res);
+                }
             }
         }
     }
