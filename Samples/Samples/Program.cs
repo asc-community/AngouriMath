@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Linq.Expressions;
 using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Functions.Algebra.AnalyticalSolver;
 
 namespace Samples
 {
@@ -107,10 +108,7 @@ namespace Samples
         }
         static void Main(string[] _)
         {
-            var expr = MathS.FromString("arcsin(x)");
-            var func = expr.Compile("x");
-            for(int i = 0; i < 100000; i++)
-                func.Call(3);
+            
         }
     }
 #pragma warning restore IDE0051

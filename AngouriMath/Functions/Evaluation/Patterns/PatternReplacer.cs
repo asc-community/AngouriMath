@@ -62,13 +62,13 @@ namespace AngouriMath
         /// <returns>
         /// Entity: first found subtree
         /// </returns>
-        internal Entity FindSubtree(Pattern pattern)
+        internal Entity FindPatternSubtree(Pattern pattern)
         {
             if (pattern.Match(this) && pattern.EqFits(this) != null)
                 return this;
             foreach (var child in Children)
             {
-                var res = child.FindSubtree(pattern);
+                var res = child.FindPatternSubtree(pattern);
                 if (res != null)
                     return res;
             }
@@ -255,12 +255,12 @@ namespace AngouriMath
 
 namespace AngouriMath.Core.TreeAnalysis
 {
-    internal static partial class TreeAnalyzer
+    public static partial class TreeAnalyzer
     {
         internal static Entity ReplaceOne(Entity source, Pattern oldPattern, Entity newPattern)
         {
             var src = source.DeepCopy();
-            var sub = src.FindSubtree(oldPattern);
+            var sub = src.FindPatternSubtree(oldPattern);
             if (sub == null)
                 return src;
             Dictionary<int, Entity> nodeList;

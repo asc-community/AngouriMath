@@ -181,6 +181,10 @@ namespace AngouriMath.Core
         {
             return !Number.IsDoubleZero(Im);
         }
+        public bool IsInteger()
+        {
+            return !IsComplex() && (Number.IsDoubleZero(Re - Math.Round(Re)));
+        }
         public static Number Pow(Number a, Number b) => new Number(b.value == 0.5 ? Complex.Sqrt(a.value) : Complex.Pow(a.value, b.value));
         public static Number Log(Number a, Number b) => new Number(Complex.Log(a.value, b.Re));
         public static Number Sin(Number a) => a.__isReal ? new Number(Math.Sin(a.value.Real)) : new Number(Complex.Sin(a.value));

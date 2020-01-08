@@ -294,6 +294,10 @@ namespace AngouriMath.Core.FromString
 
             // )sqrt -> ) * sqrt
             InsertIntoPair(TokenType.PARENTHESIS_CLOSE, TokenType.FUNCTION, multiplyer);
+
+            // )( -> ) * (
+            // )sqrt -> ) * sqrt
+            InsertIntoPair(TokenType.PARENTHESIS_CLOSE, TokenType.PARENTHESIS_OPEN, multiplyer);
         }
     }
 }
