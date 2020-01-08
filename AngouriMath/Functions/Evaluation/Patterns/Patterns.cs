@@ -75,6 +75,15 @@ namespace AngouriMath
             { any2 * any1 + any1, any1 * (Num(1) + any2) },
             { any1 + any1, Num(2) * any1 },
 
+            { any1 * any2 - any1 * any3, any1 * (any2 - any3) },
+            { any1 * any2 - any3 * any1, any1 * (any2 - any3) },
+            { any2 * any1 - any3 * any1, any1 * (any2 - any3) },
+            { any2 * any1 - any1 * any3, any1 * (any2 - any3) },
+            { any1 - any1 * any2, any1 * (Num(1) - any2) },
+            { any1 - any2 * any1, any1 * (Num(1) - any2) },
+            { any1 * any2 - any1, any1 * (any2 - Num(1)) },
+            { any2 * any1 - any1, any1 * (any2 - Num(1)) },
+
             // {1} / {2} + {1} * {3} = {1} * (1 / {2} + {3})
             { any1 / any2 + any1 * any3, any1 * (Num(1) / any2 + any3) },
             { any1 / any2 + any3 * any1, any1 * (Num(1) / any2 + any3) },
@@ -207,7 +216,10 @@ namespace AngouriMath
             { Powf.PHang(any1, Num(-1)), 1 / any1 },
 
             // a / {} * b
-            { any1 / any2 * any3, any1 * any3 / any2}
+            { any1 / any2 * any3, any1 * any3 / any2},
+
+            // a * {1} / b
+            { (const1 * any1) / const2, any1 * (const1 / const2) }
         };
 
         internal static readonly RuleList ExpandRules = new RuleList

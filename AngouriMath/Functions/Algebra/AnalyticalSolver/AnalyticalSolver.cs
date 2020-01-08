@@ -13,7 +13,9 @@ namespace AngouriMath
         /// Attempt to find analytical roots of a custom equation
         /// </summary>
         /// <param name="x"></param>
-        /// <returns></returns>
+        /// <returns>
+        /// Returns EntitySet. Work with it as with a list
+        /// </returns>
         public EntitySet Solve(VariableEntity x)
         {
             var res = new EntitySet();
@@ -59,17 +61,6 @@ namespace AngouriMath.Core.TreeAnalysis
                 then number of mentions of `ent` in expression should be 6*/
             }
 
-            /* in some time we finally get x as its occurances is > 1*/
-            bool IsRelevant(Entity sub)
-            {
-                return expr.CountOccurances(sub.ToString()) >= 2;
-            }
-
-            bool ChangeIsRelevant(int dep, out Entity sub)
-            {
-                return IsRelevant(sub = GetTreeByDepth(expr, ent, dep));
-            }
-
             int depth = 1;
             Entity subtree;
             Entity best = null;
@@ -86,7 +77,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     best = subtree;
                 }
             }
-            return best == null ? ent : best;
+            return best == null || ocs == 1 ? ent : best;
         }
 
         private static Entity GetTreeByDepth(Entity expr, Entity ent, int depth)
@@ -283,7 +274,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                         if (actualVar.CountOccurances(x.ToString()) == 1)
                         {
                             foreach (var r in res)
-                                dst.Add(TreeAnalyzer.ResolveInvertFunction(actualVar, r, x));
+                                dst.Add(TreeAnalyzer.ResolveInvertFunction(actualVar, r, x).SimplifyIntelli());
                         }
                     }
                     else
@@ -294,13 +285,24 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
     }
     public class EntitySet : List<Entity>
     {
+        private HashSet<string> exsts = new HashSet<string>();
         public override string ToString()
         {
             return "[" + string.Join(", ", this) + "]";
         }
         public new void Add(Entity ent)
         {
-            base.Add(ent.Simplify());
+            if (ent == null)
+                return;
+            if (ent is NumberEntity && ent.GetValue().IsNull)
+                return;
+            ent = ent.SimplifyIntelli();
+            var hash = ent.ToString();
+            if (!exsts.Contains(hash))
+            {
+                base.Add(ent);
+                exsts.Add(hash);
+            }
         }
     }
 }

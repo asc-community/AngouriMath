@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using AngouriMath.Core.TreeAnalysis;
 
@@ -36,6 +37,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                     monomialsByPower[pow] = 0;
                 monomialsByPower[pow] += free;
             }
+            foreach (var key in monomialsByPower.Keys.ToList())
+                monomialsByPower[key] = monomialsByPower[key].Simplify();
             var powers = new List<int>(monomialsByPower.Keys);
             if (powers.Count == 0)
                 return null;
@@ -72,8 +75,35 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 res.Add((-b + MathS.Sqrt(D)) / (2 * a));
                 return res;
             }
-            else
-                return null;
+            // Doesn't work for some reasons. TODO
+            /*
+            else if (powers[powers.Count - 1] == 3)
+            {
+                // en: https://en.wikipedia.org/wiki/Cubic_equation
+                // ru: https://ru.wikipedia.org/wiki/%D0%A4%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B0_%D0%9A%D0%B0%D1%80%D0%B4%D0%B0%D0%BD%D0%BE
+
+                var a = GetMonomialByPower(3);
+                var b = GetMonomialByPower(2);
+                var c = GetMonomialByPower(1);
+                var d = GetMonomialByPower(0);
+
+                var p = ((3 * a * c - MathS.Sqr(b)) / (3 * MathS.Sqr(a))).Simplify();
+                var q = ((2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d) / (27 * MathS.Pow(a, 3))).Simplify();
+
+                var Q = (MathS.Pow(p / 3, 3) + MathS.Sqr(q / 2)).Simplify();
+
+                var alpha = (MathS.Pow(-q / 2 + MathS.Sqrt(Q), 1.0 / 3)).Simplify();
+                var beta = (MathS.Pow(-q / 2 - MathS.Sqrt(Q), 1.0 / 3)).Simplify();
+
+                var y1 = (alpha + beta).Simplify();
+                var y2 = (-(alpha + beta) / 2 + MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3)).Simplify();
+                var y3 = (-(alpha + beta) / 2 - MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3)).Simplify();
+                res.Add(y1);
+                res.Add(y2);
+                res.Add(y3);
+                return res;
+            }*/
+            return null;
             // TODO
         }
 
