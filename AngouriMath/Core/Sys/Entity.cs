@@ -64,6 +64,7 @@ namespace AngouriMath
         public static implicit operator Entity(int num) => new NumberEntity(num);
         public static implicit operator Entity(Number num) => new NumberEntity(num);
         public static implicit operator Entity(double num) => new NumberEntity(num);
+        public static implicit operator Entity(string expr) => MathS.FromString(expr);
 
         public static bool operator ==(Entity a, Entity b)
         {

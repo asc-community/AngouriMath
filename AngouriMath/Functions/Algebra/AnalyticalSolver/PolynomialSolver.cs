@@ -58,7 +58,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 // Provided a x ^ n + b x ^ m = 0
                 // a = -b x ^ (m - n)
                 // (- a / b) ^ (1 / (m - n)) = x
-                res.Add(MathS.Pow(-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]], 1 / (powers[1] - powers[0])));
+                res.Add(MathS.Pow(-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]], 1.0 / (powers[1] - powers[0])));
                 return res;
             }
 

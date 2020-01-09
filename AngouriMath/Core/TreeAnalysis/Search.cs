@@ -2,6 +2,56 @@
 using System.Collections.Generic;
 using System.Text;
 
+namespace AngouriMath.Core.TreeAnalysis
+{
+    public class EntitySet : List<Entity>
+    {
+        private HashSet<string> exsts = new HashSet<string>();
+        public override string ToString()
+        {
+            return "[" + string.Join(", ", this) + "]";
+        }
+        public new void Add(Entity ent)
+        {
+            if (ent == null)
+                return;
+            if (ent is NumberEntity && ent.GetValue().IsNull)
+                return;
+            ent = ent.SimplifyIntelli();
+            var hash = ent.ToString();
+            if (!exsts.Contains(hash))
+            {
+                base.Add(ent);
+                exsts.Add(hash);
+            }
+        }
+        public void Merge(IEnumerable<Number> list)
+        {
+            foreach (var l in list)
+                Add(l);
+        }
+        public void Merge(IEnumerable<Entity> list)
+        {
+            foreach (var l in list)
+                Add(l);
+        }
+    }
+    internal static partial class TreeAnalyzer
+    {
+
+
+
+        internal static void GetUniqueVariables(Entity expr, EntitySet dst)
+        {
+            if (expr is VariableEntity)
+                dst.Add(expr);
+            else
+                foreach (var child in expr.Children)
+                    GetUniqueVariables(child, dst);
+        }
+    }
+}
+
 namespace AngouriMath
 {
     public abstract partial class Entity

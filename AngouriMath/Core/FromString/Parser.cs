@@ -160,7 +160,7 @@ namespace AngouriMath.Core.FromString
             {
                 e = new NumberEntity(Number.Parse(current.Value));
             }
-            else if (current.Type == TokenType.VARIABLE)
+            else if (current.Type == TokenType.VARIABLE || current.Type == TokenType.FUNCTION && lexer.GlanceNext().Type != TokenType.PARENTHESIS_OPEN)
             {
                 e = new VariableEntity(current.Value);
             }
