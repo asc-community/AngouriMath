@@ -78,7 +78,7 @@ namespace Samples
             var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
             Console.WriteLine(expr.DefiniteIntegral(x, -3, 3));
             var expr2 = MathS.Sin(x);
-            Console.WriteLine(expr2.DefiniteIntegral(x, 0, MathS.pi));
+            Console.WriteLine(expr2.DefiniteIntegral(x, 0, Math.PI));
         }
         static void Sample10()
         {
@@ -128,7 +128,9 @@ namespace Samples
         }
         static void Main(string[] _)
         {
-            Sample16();
+            Entity expr = "sin(x2)2 + sin(x2) + 3a";
+            var sol = expr.Solve("x");
+            Console.WriteLine(sol);
         }
     }
 #pragma warning restore IDE0051

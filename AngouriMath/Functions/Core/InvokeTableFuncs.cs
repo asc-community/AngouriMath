@@ -20,6 +20,7 @@ namespace AngouriMath
     /// To From String Syntax Info goodStrings
     /// To Pattern Replacer
     /// To static MathS()
+    /// To Analytical Solver
     /// </summary>
     public static partial class MathS
     {

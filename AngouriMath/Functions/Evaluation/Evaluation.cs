@@ -99,10 +99,15 @@ namespace AngouriMath
         }
 
         /// <summary>
-        /// Simplification synonim. Recommended to use in case of computing a concrete number
+        /// Simplification synonim. Recommended to use in case of computing a 
+        /// concrete number.
         /// </summary>
         /// <returns></returns>
-        public Entity Eval() => Simplify(0);
+        public Entity Eval() => 
+            Substitute(MathS.pi, Math.PI)
+            .Substitute(MathS.e, Math.E)
+            .Simplify(0)
+            ;
     }
 
     // Adding invoke table for eval

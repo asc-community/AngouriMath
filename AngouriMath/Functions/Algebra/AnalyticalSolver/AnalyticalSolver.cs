@@ -42,13 +42,6 @@ namespace AngouriMath.Core.TreeAnalysis
         public static Entity GetMinimumSubtree(Entity expr, Entity ent)
         {
             // TODO: this function requires a lot of refactoring
-
-            /*
-            // If there's only one `x`, we don't have to look for a possibility
-            // to make replacement
-            if (expr.CountOccurances(ent.ToString()) <= 1)
-                return ent;
-                */
             
             // The idea is the following:
             // We must get a subtree that has more occurances than 1,
@@ -107,7 +100,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="value"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        public static Entity ResolveInvertFunction(Entity func, Entity value, VariableEntity x)
+        public static Entity FindInvertExpression(Entity func, Entity value, VariableEntity x)
         {
             if (func == x)
                 return value;
@@ -116,14 +109,14 @@ namespace AngouriMath.Core.TreeAnalysis
             if (func is VariableEntity)
                 return func;
             if (func is OperatorEntity)
-                return InvertOperator(func as OperatorEntity, value, x);
+                return InvertOperatorEntity(func as OperatorEntity, value, x);
             if (func is FunctionEntity)
-                return InvertFunction(func as FunctionEntity, value, x);
+                return InvertFunctionEntity(func as FunctionEntity, value, x);
 
             return value;
         }
 
-        public static Entity InvertOperator(OperatorEntity func, Entity value, VariableEntity x)
+        public static Entity InvertOperatorEntity(OperatorEntity func, Entity value, VariableEntity x)
         {
             Entity a, un;
             int arg;
@@ -143,37 +136,37 @@ namespace AngouriMath.Core.TreeAnalysis
             {
                 case "sumf":
                     // x + a = value => x = value - a
-                    return ResolveInvertFunction(un, value - a, x);
+                    return FindInvertExpression(un, value - a, x);
                 case "minusf":
                     if (arg == 0)
                         // x - a = value => x = value + a
-                        return ResolveInvertFunction(un, value + a, x);
+                        return FindInvertExpression(un, value + a, x);
                     else
                         // a - x = value => x = a - value
-                        return ResolveInvertFunction(un, a - value, x);
+                        return FindInvertExpression(un, a - value, x);
                 case "mulf":
                     // x * a = value => x = value / a
-                    return ResolveInvertFunction(un, value / a, x);
+                    return FindInvertExpression(un, value / a, x);
                 case "divf":
                     if (arg == 0)
                         // x / a = value => x = a * value
-                        return ResolveInvertFunction(un, value * a, x);
+                        return FindInvertExpression(un, value * a, x);
                     else
                         // a / x = value => x = a / value
-                        return ResolveInvertFunction(un, a / value, x);
+                        return FindInvertExpression(un, a / value, x);
                 case "powf":
                     if (arg == 0)
                         // x ^ a = value => x = value ^ (1/a)
-                        return ResolveInvertFunction(un, MathS.Pow(value, 1 / a), x);
+                        return FindInvertExpression(un, MathS.Pow(value, 1 / a), x);
                     else
                         // a ^ x = value => x = log(value, a)
-                        return ResolveInvertFunction(un, MathS.Log(value, a), x);
+                        return FindInvertExpression(un, MathS.Log(value, a), x);
                 default:
                     throw new SysException("Unknown operator");
             }
         }
 
-        public static Entity InvertFunction(FunctionEntity func, Entity value, VariableEntity x)
+        public static Entity InvertFunctionEntity(FunctionEntity func, Entity value, VariableEntity x)
         {
             Entity a = func.Children[0];
             Entity b = func.Children.Count == 2 ? func.Children[1] : null;
@@ -182,35 +175,35 @@ namespace AngouriMath.Core.TreeAnalysis
             {
                 case "sinf":
                     // sin(x) = value => x = arcsin(value)
-                    return ResolveInvertFunction(a, MathS.Arcsin(value), x);
+                    return FindInvertExpression(a, MathS.Arcsin(value), x);
                 case "cosf":
                     // cos(x) = value => x = arccos(value)
-                    return ResolveInvertFunction(a, MathS.Arccos(value), x);
+                    return FindInvertExpression(a, MathS.Arccos(value), x);
                 case "tanf":
                     // tan(x) = value => x = arctan(value)
-                    return ResolveInvertFunction(a, MathS.Arctan(value), x);
+                    return FindInvertExpression(a, MathS.Arctan(value), x);
                 case "cotanf":
                     // cotan(x) = value => x = arccotan(value)
-                    return ResolveInvertFunction(a, MathS.Arccotan(value), x);
+                    return FindInvertExpression(a, MathS.Arccotan(value), x);
                 case "arcsinf":
                     // arcsin(x) = value => x = sin(value)
-                    return ResolveInvertFunction(a, MathS.Sin(value), x);
+                    return FindInvertExpression(a, MathS.Sin(value), x);
                 case "arccosf":
                     // arccos(x) = value => x = cos(value)
-                    return ResolveInvertFunction(a, MathS.Cos(value), x);
+                    return FindInvertExpression(a, MathS.Cos(value), x);
                 case "arctanf":
                     // arctan(x) = value => x = tan(value)
-                    return ResolveInvertFunction(a, MathS.Tan(value), x);
+                    return FindInvertExpression(a, MathS.Tan(value), x);
                 case "arccotanf":
                     // arccotan(x) = value => x = cotan(value)
-                    return ResolveInvertFunction(a, MathS.Cotan(value), x);
+                    return FindInvertExpression(a, MathS.Cotan(value), x);
                 case "logf":
                     if (arg == 0)
                         // log(x, a) = value => x = a ^ value
-                        return ResolveInvertFunction(a, MathS.Pow(b, value), x);
+                        return FindInvertExpression(a, MathS.Pow(b, value), x);
                     else
                         // log(a, x) = value => a = x ^ value => x = a ^ (1 / value)
-                        return ResolveInvertFunction(a, 1 / MathS.Pow(b, value), x);
+                        return FindInvertExpression(a, 1 / MathS.Pow(b, value), x);
                 default:
                     throw new SysException("Uknown function");
             }
@@ -236,6 +229,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                     case "divf":
                         Solve(expr.Children[0], x, dst);
                         return;
+                    case "powf":
+                        Solve(expr.Children[0], x, dst);
+                        return;
                 }
             }
             else if (expr is FunctionEntity)
@@ -243,18 +239,34 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 switch (expr.Name)
                 {
                     case "sinf":
-                        // For now, we only consider cases 
-                        // sin(0) = 0, sin(pi) = 0, sin(-pi) = 0
-                        Solve(expr.Children[0], x, dst);
-                        Solve(expr.Children[0] + MathS.pi, x, dst);
-                        Solve(expr.Children[0] - MathS.pi, x, dst);
+                        Solve(expr.Children[0] + "n" * MathS.pi, x, dst);
                         return;
                     case "cosf":
-                        // For now, we only consider cases
-                        // cos(pi/2) = 0. cos(-pi/2) = 0
-                        Solve(expr.Children[0] + MathS.pi / 2, x, dst);
-                        Solve(expr.Children[0] - MathS.pi / 2, x, dst);
+                        Solve(expr.Children[0] + MathS.pi / 2 + "n" * MathS.pi, x, dst);
                         return;
+                    case "tanf":
+                        Solve(expr.Children[0] + "n" * MathS.pi, x, dst);
+                        return;
+                    case "cotanf":
+                        Solve(expr.Children[0] + MathS.pi / 2 + "n" * MathS.pi, x, dst);
+                        return;
+                    case "arcsinf":
+                        Solve(expr.Children[0], x, dst);
+                        return;
+                    case "arccosf":
+                        Solve(expr.Children[0] - 1, x, dst);
+                        return;
+                    case "arctanf":
+                        Solve(expr.Children[0], x, dst);
+                        return;
+                    case "logf":
+                        // x ^ n
+                        if (expr.Children[0].FindSubtree(x) != null && expr.Children[1].FindSubtree(x) == null)
+                        {
+                            Solve(expr.Children[0], x, dst);
+                            return;
+                        }
+                        break;
                 }
             }
             
@@ -274,7 +286,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                         if (actualVar.CountOccurances(x.ToString()) == 1)
                         {
                             foreach (var r in res)
-                                dst.Add(TreeAnalyzer.ResolveInvertFunction(actualVar, r, x).SimplifyIntelli());
+                                dst.Add(TreeAnalyzer.FindInvertExpression(actualVar, r, x).SimplifyIntelli());
                         }
                     }
                     else

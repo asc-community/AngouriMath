@@ -186,9 +186,9 @@ namespace AngouriMath
         /// <returns></returns>
         public static Number Num(double a) => new Number(a);
 
-        public static readonly Number e = 2.718281828459045235;
+        public static readonly VariableEntity e = "e";
         public static readonly Number i = new Number(0, 1);
-        public static readonly Number pi = 3.141592653589793;
+        public static readonly VariableEntity pi = "pi";
         public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-11;
 
         /// <summary>
