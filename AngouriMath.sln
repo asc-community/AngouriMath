@@ -17,7 +17,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{50DD3C1E
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphicExample", "Samples\GraphicExample\GraphicExample\GraphicExample.csproj", "{EE064BFF-CDE6-43E3-8924-D8562BDDDF02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotnetBenchmark", "Tests\DotnetBenchmark\DotnetBenchmark.csproj", "{3F82FF3F-13E3-4106-9FE6-E986549528F2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotnetBenchmark", "Tests\DotnetBenchmark\DotnetBenchmark.csproj", "{3F82FF3F-13E3-4106-9FE6-E986549528F2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AngouriMathPlot", "AngouriMathPlot\AngouriMathPlot.csproj", "{B7D28355-A342-4E6E-AD45-3D47F4A054A5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -49,6 +51,10 @@ Global
 		{3F82FF3F-13E3-4106-9FE6-E986549528F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3F82FF3F-13E3-4106-9FE6-E986549528F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3F82FF3F-13E3-4106-9FE6-E986549528F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B7D28355-A342-4E6E-AD45-3D47F4A054A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B7D28355-A342-4E6E-AD45-3D47F4A054A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B7D28355-A342-4E6E-AD45-3D47F4A054A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B7D28355-A342-4E6E-AD45-3D47F4A054A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -90,6 +90,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\..\AngouriMathPlot\AngouriMathPlot.csproj">
+      <Project>{B7D28355-A342-4E6E-AD45-3D47F4A054A5}</Project>
+      <Name>AngouriMathPlot</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\..\AngouriMath\AngouriMath.csproj">
       <Project>{66EA979F-7E3F-4C30-839E-F2E34E4D024B}</Project>
       <Name>AngouriMath</Name>
