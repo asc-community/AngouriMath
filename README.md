@@ -1,10 +1,14 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1e172cdf699645b59567032dd1ae5cab)](https://www.codacy.com/manual/Angourisoft/MathS?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Angourisoft/MathS&amp;utm_campaign=Badge_Grade)
-![Nuget](https://img.shields.io/nuget/dt/AngouriMath?color=blue&logo=NuGet)
+![Nuget](https://img.shields.io/nuget/dt/AngouriMath?color=blue&label=NuGet%20installs&logoColor=blue)
+![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)
 
-Nuget: https://www.nuget.org/packages/AngouriMath
 
+Nuget: https://www.nuget.org/packages/AngouriMath   ![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/AngouriMath)
 ## AngouriMath
-AngouriMath is an open-source library that enables to work with non-linear multi-variable expressions. Its functionality includes derivation, variable substitution, equation solving, definite integration, formula-to-latex formatting, and some more.
+AngouriMath is an open-source library that enables to work with non-linear 
+multi-variable expressions. Its functionality includes derivation, 
+variable substitution, equation solving, definite integration, formula-to-latex 
+formatting, and some more.
 
 ### Examples
 
@@ -43,24 +47,11 @@ Console.WriteLine(derivative.Simplify());
 >>> 2 * x + -1 * sin(x) / (cos(x) + 3) + 4
 ```
 
-#### Build formulas
-```cs
-var x = MathS.Var("x");
-var expr = (x + 3).Pow(x + 4);
-Func<NumberEntity, Entity> wow = v => expr.Substitute(x, v).Simplify();
-Console.WriteLine(wow(4));
-Console.WriteLine(wow(5));
-Console.WriteLine(wow(6));
->>> 5764801
->>> 134217728
->>> 3486784401
-```
-
 #### Build expressions faster
-```
+```cs
 Entity expr = "sqr(x + y)";
 Console.WriteLine(expr.Expand().Simplify());
-2 * x * y + x ^ 2 + y ^ 2
+>>> 2 * x * y + x ^ 2 + y ^ 2
 ```
 
 #### Simplify
@@ -93,7 +84,7 @@ Console.WriteLine(expr.Eval());
 ```
 
 #### Solve equations analytically
-Under testing right now.
+Under developing & testing right now.
 ```cs
 Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
 foreach (var root in expr.Solve("x"))
@@ -120,7 +111,7 @@ Console.WriteLine(expr2.DefiniteIntegral(x, 0, MathS.pi));
 ```
 
 #### Compile functions
-Compiled functions work 15x faster
+Compiled functions work 15x+ faster
 ```cs
 var x = MathS.Var("x");
 var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
@@ -189,25 +180,34 @@ var x = MathS.Var("x");
 var expr = MathS.Sqr(x);
 Console.WriteLine(expr.Derive(x)); // 2 * x
 ```
-How it works? We have some rules for derivation which are applied to each node, for example (a + b)' = a' + b'. So, we replace each node according to the appropriate rule.
+How it works? We have some rules for derivation which are applied to each node, 
+for example (a + b)' = a' + b'. So, we replace each node according to the 
+appropriate rule.
 
 #### Evaluation & Simplification
-```expr.Simplify(level)``` simplifies an expression. Level is number of iterations (relevant for long expressions).
+```expr.Simplify(level)``` simplifies an expression. Level is number of 
+iterations (relevant for long expressions).
 
-```expr.Eval() = expr.Simplify(1)``` - recommended to use to evaluation substituted expression.
+```expr.Eval() = expr.Simplify(1)``` - recommended to use to evaluation 
+substituted expression.
 
-```expr.Simplify() = expr.Simplify(2)``` - use to simplify expressions, a * x + x = (a + 1) * x
+```expr.Simplify() = expr.Simplify(2)``` - use to simplify expressions, 
+a * x + x = (a + 1) * x
 ```cs
 var x = MathS.Var("x");
 var expr = 3 * x + x;
 Console.WriteLine(expr.Simplify()); // 4 * x
 ```
-How it works? Thanks to the pattern system, now we are able to find subtrees that we know how to simplify. The full list of used patterns presents in file Patterns.cs.
+How it works? Thanks to the pattern system, now we are able to find subtrees that 
+we know how to simplify. The full list of used patterns 
+presents in file Patterns.cs.
 
 #### Expansion & Collapse
-```expr.Expand(level=2)``` - expands the expression trying to remove all the braces (for example, a * (1 + x) = a * x + a * 1). level - number of iterations.
+```expr.Expand(level=2)``` - expands the expression trying to remove all the braces
+(for example, a * (1 + x) = a * x + a * 1). level - number of iterations.
 
-```expr.Collapse(level=2)``` - collapses the expression trying to remove all the powers (for example, x^2 - y^2 = (x - y) * (x + y) ).
+```expr.Collapse(level=2)``` - collapses the expression trying to remove all the
+powers (for example, x^2 - y^2 = (x - y) * (x + y) ).
 
 #### To string
 ```expr.ToString()``` - string presentation of an expression.
@@ -217,17 +217,22 @@ How it works? Thanks to the pattern system, now we are able to find subtrees tha
 How it works? For each node we encounter, we use the appropriate latex syntax.
 
 #### Solving equations
-By this time, only Newton's method over one variable is available.
+By this time, only Newton's method over one variable is available. However, 
+we will soon release version with analytical solver
 
-expr.SolveNt(from, to, stepCount, precision) - find roots assuming we are solving equation expr=0.
+expr.SolveNt(from, to, stepCount, precision) - find roots assuming we are 
+solving equation expr=0.
 
-The algorithm iterates on [from.Re; to.Re] for real part and on [from.Im; to.Im] for imaginary part.
+The algorithm iterates on [from.Re; to.Re] for real part and on [from.Im; to.Im] 
+for imaginary part.
 
 The higher stepCount is, the more roots the function can find
 
-Precision - if you get similar roots that you think are equal, you can increase this argument.
+Precision - if you get similar roots that you think are equal, you can increase 
+this argument.
 
-You can also decrease MathS.EQUALITY_THRESHOLD which is responsible for comparing Numbers.
+You can also decrease MathS.EQUALITY_THRESHOLD which is responsible for comparing 
+Numbers.
 
 #### Integration
 By this time, only definite integration over one variable is available.
@@ -235,9 +240,11 @@ By this time, only definite integration over one variable is available.
 ```expr.DefiniteIntegral(x, from, to)``` - numerically counts integral from ```from``` to ```to```. Note that you can specify the two parameters in Complex numbers.
 
 #### Compilation
-```expr.Compile(a, b, c...)``` the arguments are arguments of the target function. You should list all the used variables in the order you will then call.
+```expr.Compile(a, b, c...)``` the arguments are arguments of the target 
+function. You should list all the used variables in the order you will then call.
 
-```fe.Call(a, b, c...)``` the arguments are Numbers in the order of variables. Returns Number.
+```fe.Call(a, b, c...)``` the arguments are Numbers in the order of variables. 
+Returns Number.
 ```
 var x = MathS.Var("x");
 var expr = MathS.Sqr(x) + 2 * x;
@@ -255,7 +262,33 @@ MathS.FromString(str) - returns Entity
 
 MathS.FromLinq(expr) - returns Entity
 
+#### SymPy syntax
+
+SymPy is a very well-known library, so to make ours more convenient for people
+experienced in SymPy, we made the same syntax. Start functions with SySyn:
+
+```
+SySyn.Symbol(string)
+SySyn.Diff(Entity, x, x...)
+SySyn.Simplify(Entity)
+SySyn.Solve(Entity, VariableEntity)
+SySyn.Expand(Entity)
+SySyn.Evalf(Entity)
+SySyn.Latex(Entity)
+SySyn.Exp(Entity)
+```
+
+More are coming soon...
+
 #### How does it work?
 
 You can learn how some methods work here: https://habr.com/ru/post/482228/ (warning: Russian language!)<br>
 Full description is not ready yet.
+
+#### I know how to improve it
+
+As the library is completely open-source and will be kept open-source, we welcome
+contributors to the project. What you need to do is to clone the repo to your local
+machine, change whatever you want, and send a pull request. If your changes are
+relevant, we will merge it for sure. :)
+
