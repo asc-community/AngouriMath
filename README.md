@@ -8,14 +8,6 @@ AngouriMath is an open-source library that enables to work with non-linear multi
 
 ### Examples
 
-#### Use as a simple calculator
-```cs
-var inp = "1 + 2 * log(9, 3)";
-var expr = MathS.FromString(inp);
-Console.WriteLine(expr.Eval());
->>> 5
-```
-
 #### Build an expression
 ```cs
 var x = MathS.Var("x");
@@ -23,6 +15,14 @@ var y = MathS.Var("y");
 var c = x * y + x / y;
 Console.WriteLine(MathS.Sqr(c));
 >>> (x * y + x / y) ^ 2
+```
+
+#### Use as a simple calculator
+```cs
+var inp = "1 + 2 * log(9, 3)";
+var expr = MathS.FromString(inp);
+Console.WriteLine(expr.Eval());
+>>> 5
 ```
 
 #### Substitute variables
@@ -56,6 +56,24 @@ Console.WriteLine(wow(6));
 >>> 3486784401
 ```
 
+#### Build expressions faster
+```
+Entity expr = "sqr(x + y)";
+Console.WriteLine(expr.Expand().Simplify());
+2 * x * y + x ^ 2 + y ^ 2
+```
+
+#### Simplify
+```cs
+var x = MathS.Var("x");
+var a = MathS.Var("a");
+var b = MathS.Var("b");
+var expr = MathS.Sqrt(x) / x + a * b + b * a + (b - x) * (x + b) + 
+    MathS.Arcsin(x + a) + MathS.Arccos(a + x);
+Console.WriteLine(expr.SimplifyIntelli());
+>>> 1.5707963267948966 + 2 * a * b + b ^ 2 + x ^ (-0.5) - x ^ 2
+```
+
 #### Render latex
 ```cs
 var x = MathS.Var("x");
@@ -74,14 +92,19 @@ Console.WriteLine(expr.Eval());
 >>> -1
 ```
 
-#### Solve equations
-Only numerical solutions with Newton's method is supported yet :(
+#### Solve equations analytically
+Under testing right now.
 ```cs
-var x = MathS.Var("x");
-var equation = (x - 1) * (x - 2) * (MathS.Sqr(x) + 1);
-foreach (var re in equation.SolveNt(x))
-    Console.Write(re.ToString() + "  ");
->>> 1  2  1i
+Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
+foreach (var root in expr.Solve("x"))
+    Console.WriteLine(root);
+>>> arcsin((1 - sqrt(1 + (-4) * a)) / 2)
+>>> arcsin((1 + sqrt(1 + (-4) * a)) / 2)
+>>> b
+>>> 1
+>>> 2
+>>> i
+>>> -i
 ```
 
 #### Integrate
@@ -105,22 +128,20 @@ var func = expr.Compile(x);
 Console.WriteLine(func.Substitute(3));
 ```
 
-#### Simplify
-```cs
-var x = MathS.Var("x");
-var a = MathS.Var("a");
-var b = MathS.Var("b");
-var expr = MathS.Sqrt(x) / x + a * b + b * a + (b - x) * (x + b) + 
-    MathS.Arcsin(x + a) + MathS.Arccos(a + x);
-Console.WriteLine(expr.SimplifyIntelli());
->>> 1.5707963267948966 + 2 * a * b + b ^ 2 + x ^ (-0.5) - x ^ 2
-```
-
 #### Try new syntax
 ```cs
 var expr = MathS.FromString("3x3 + 2 2 2 - x(3 0.5)");
 Console.WriteLine(expr);
 >>> 3 * x ^ 3 + 2 ^ 2 ^ 2 - x * sqrt(3)
+```
+
+#### Try SymPy syntax
+```cs
+var x = SySyn.Symbol("x");
+var expr = SySyn.Exp(x) + x;
+Console.WriteLine(SySyn.Diff(expr));
+Console.WriteLine(SySyn.Diff(expr, x));
+Console.WriteLine(SySyn.Diff(expr, x, x));
 ```
 
 ### Performance

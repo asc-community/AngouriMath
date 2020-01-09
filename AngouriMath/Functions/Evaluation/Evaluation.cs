@@ -73,6 +73,8 @@ namespace AngouriMath
         public Entity Simplify(int level)
         {
             var stage1 = this.InnerSimplify();
+            if (stage1 is NumberEntity)
+                return stage1;
             Entity res = stage1;
             for (int i = 0; i < level; i++)
             {
@@ -154,21 +156,13 @@ namespace AngouriMath
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
             if (r1 is NumberEntity && r2 is NumberEntity)
-            {
                 return new NumberEntity((r1 as NumberEntity).Value - (r2 as NumberEntity).Value);
-            }
             else if (r1 == r2)
-            {
                 return 0;
-            }
             else if (r2 == 0)
-            {
                 return r1;
-            }
             else
-            {
                 return r1 - r2;
-            }
         }
     }
     public static partial class Mulf
@@ -181,13 +175,13 @@ namespace AngouriMath
             args = new List<Entity> { r1, r2 };
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity((r1 as NumberEntity).Value * (r2 as NumberEntity).Value);
+            else if (MathFunctions.IsOneNumber(args, 1))
+                return MathFunctions.GetAnotherEntity(args, 1);
+            else if (MathFunctions.IsOneNumber(args, 0))
+                return 0;
             else
-                if (MathFunctions.IsOneNumber(args, 1))
-                    return MathFunctions.GetAnotherEntity(args, 1);
-                else if (MathFunctions.IsOneNumber(args, 0))
-                    return 0;
-                else
-                    return r1 * r2;
+                return r1 * r2;
+
         }
     }
     public static partial class Divf
@@ -199,13 +193,12 @@ namespace AngouriMath
             var r2 = args[1].InnerSimplify();
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity((r1 as NumberEntity).Value / (r2 as NumberEntity).Value);
+            else if (r1 == 0)
+                return 0;
+            else if (r2 == 1)
+                return r1;
             else
-                if (r1 == 0)
-                    return 0;
-                else if (r2 == 1)
-                    return r1;
-                else
-                    return r1 / r2;
+                return r1 / r2;
         }
     }
     public static partial class Powf
@@ -217,15 +210,14 @@ namespace AngouriMath
             var r2 = args[1].InnerSimplify();
             if (r1 is NumberEntity && r2 is NumberEntity)
                 return new NumberEntity(Number.Pow((r1 as NumberEntity).Value, (r2 as NumberEntity).Value));
+            else if (r1 == 0 || r1 == 1)
+                return r1;
+            else if (r2 == 1)
+                return r1;
+            else if (r2 == 0)
+                return 1;
             else
-                if (r1 == 0 || r1 == 1)
-                    return r1;
-                else if (r2 == 1)
-                    return r1;
-                else if (r2 == 0)
-                    return 1;
-                else
-                    return r1.Pow(r2);
+                return r1.Pow(r2);
         }
     }
     public static partial class Sinf
@@ -287,19 +279,12 @@ namespace AngouriMath
             args = new List<Entity> { r, n };
             if (r is NumberEntity && n is NumberEntity)
                 return new NumberEntity(Number.Log((r as NumberEntity).Value, (n as NumberEntity).Value));
+            else if (r == n)
+                return 1;
+            else if (r == 1)
+                return 0;
             else
-                if (r == n)
-                {
-                    return 1;
-                }
-                else if (r == 1)
-                {
-                    return 0;
-                }
-                else
-                {
-                    return r.Log(args[1]);
-                }
+                return r.Log(args[1]);
         }
     }
     

@@ -31,7 +31,6 @@ namespace AngouriMath.Core.TreeAnalysis
                 res.Add(tree);
             return res;
         }
-        internal static void Sort(List<Entity> children, SortLevel level) => children.Sort((a, b) => a.Hash(level).CompareTo(b.Hash(level)));
-        
+        internal static void Sort(List<Entity> children, SortLevel level) => children.Sort((a, b) => a.Hash(level).CompareTo(b.Hash(level)));        
     }
 }

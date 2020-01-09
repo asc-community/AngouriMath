@@ -170,7 +170,6 @@ namespace AngouriMath
         /// <param name="name"></param>
         /// <returns></returns>
         public static VariableEntity Var(string name) => new VariableEntity(name);
-        public static readonly VarFunc Symbol = v => new VariableEntity(v);
 
         /// <summary>
         /// Creates a complex instance of Number (not NumberEntity!)

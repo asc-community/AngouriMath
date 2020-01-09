@@ -5,6 +5,8 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Linq.Expressions;
 using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Functions.Algebra.AnalyticalSolver;
+using AngouriMath.Convenience;
 
 namespace Samples
 {
@@ -105,12 +107,28 @@ namespace Samples
                 MathS.Arcsin(x + a) + MathS.Arccos(a + x);
             Console.WriteLine(expr.SimplifyIntelli());
         }
+        static void Sample14()
+        {
+            Entity expr = "sqr(x + y)";
+            Console.WriteLine(expr.Expand().Simplify());
+        }
+        static void Sample15()
+        {
+            Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
+            foreach (var root in expr.Solve("x"))
+                Console.WriteLine(root);
+        }
+        static void Sample16()
+        {
+            var x = SySyn.Symbol("x");
+            var expr = SySyn.Exp(x) + x;
+            Console.WriteLine(SySyn.Diff(expr));
+            Console.WriteLine(SySyn.Diff(expr, x));
+            Console.WriteLine(SySyn.Diff(expr, x, x));
+        }
         static void Main(string[] _)
         {
-            var expr = MathS.FromString("arcsin(x)");
-            var func = expr.Compile("x");
-            for(int i = 0; i < 100000; i++)
-                func.Call(3);
+            Sample16();
         }
     }
 #pragma warning restore IDE0051
