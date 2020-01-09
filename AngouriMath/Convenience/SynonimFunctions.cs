@@ -12,8 +12,6 @@ namespace AngouriMath
         {
             { "sqrtf", args => MathS.Pow(args[0], 0.5) },
             { "sqrf", args => MathS.Pow(args[0], 2) },
-            { "bf", args => args[0] * MathS.Sin(args[0]) },
-            { "tbf", args => args[0] * MathS.Cos(args[0]) },
             { "lnf", args => MathS.Log(args[0], MathS.e) },
             { "secf", args => MathS.Sec(args[0]) },
             { "cosecf", args => MathS.Cosec(args[0]) },

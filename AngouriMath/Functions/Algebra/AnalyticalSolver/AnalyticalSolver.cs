@@ -27,7 +27,7 @@ namespace AngouriMath
 
 namespace AngouriMath.Core.TreeAnalysis
 {
-    public static partial class TreeAnalyzer
+    internal static partial class TreeAnalyzer
     {
         /// <summary>
         /// Searches for a subtree containing `ent` and being minimal possible size.
@@ -280,29 +280,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                     else
                         dst.AddRange(res);
                 }
+                else
+                {
+                    EntitySet vars = new EntitySet();
+                    TreeAnalyzer.GetUniqueVariables(expr, vars);
+                    if (vars.Count == 1)
+                        dst.Merge(expr.SolveNt(x));
+                }
+                    
             }
         }
     }
-    public class EntitySet : List<Entity>
-    {
-        private HashSet<string> exsts = new HashSet<string>();
-        public override string ToString()
-        {
-            return "[" + string.Join(", ", this) + "]";
-        }
-        public new void Add(Entity ent)
-        {
-            if (ent == null)
-                return;
-            if (ent is NumberEntity && ent.GetValue().IsNull)
-                return;
-            ent = ent.SimplifyIntelli();
-            var hash = ent.ToString();
-            if (!exsts.Contains(hash))
-            {
-                base.Add(ent);
-                exsts.Add(hash);
-            }
-        }
-    }
+    
 }

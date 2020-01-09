@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
 using AngouriMath.Core;
+using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath
 {
@@ -22,6 +23,8 @@ namespace AngouriMath
     /// </summary>
     public static partial class MathS
     {
+        
+
         public delegate Entity OneArg(Entity a);
         public delegate Entity TwoArg(Entity a, Entity n);
         public delegate VariableEntity VarFunc(string v);

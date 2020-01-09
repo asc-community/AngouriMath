@@ -13,7 +13,7 @@ namespace AngouriMath
         /// </summary>
         /// <returns></returns>
         public string Latexise() => Latexise(false);
-        public string Latexise(bool parenthesesRequired)
+        internal string Latexise(bool parenthesesRequired)
         {
             if (IsLeaf)
                 return this is NumberEntity ? this.GetValue().ToString() : this.ToString();

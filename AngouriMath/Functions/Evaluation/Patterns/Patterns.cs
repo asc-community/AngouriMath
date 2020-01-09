@@ -225,10 +225,9 @@ namespace AngouriMath
         internal static readonly RuleList ExpandRules = new RuleList
         {
             // (any1 + any2)2
-            { Powf.PHang(any1 + any2, Num(2)), Powf.PHang(any1, Num(2)) + Num(2) * any1 * any2 + Powf.PHang(any2, Num(2)) },
-
-            // (any1 - any2)2
-            { Powf.PHang(any1 + any2, Num(2)), Powf.PHang(any1, Num(2)) - Num(2) * any1 * any2 + Powf.PHang(any2, Num(2)) },
+            { Powf.PHang(any1, Num(2)), any1 * any1 },
+            { Powf.PHang(any1, Num(3)), any1 * any1 * any1 },
+            { Powf.PHang(any1, Num(4)), any1 * any1 * any1 * any1 },
 
             // ({1} - {2}) ({1} + {2}) = x2 - {}2
             { (any1 - any2) * (any1 + any2), Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)) },

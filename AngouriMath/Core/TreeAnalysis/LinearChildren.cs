@@ -4,7 +4,7 @@ using System.Text;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
-    public static partial class TreeAnalyzer
+    internal static partial class TreeAnalyzer
     {
         internal static List<Entity> LinearChildren(Entity tree,
                                              string funcName /*e. g. "sumf" */,
@@ -31,7 +31,6 @@ namespace AngouriMath.Core.TreeAnalysis
                 res.Add(tree);
             return res;
         }
-        internal static void Sort(List<Entity> children, SortLevel level) => children.Sort((a, b) => a.Hash(level).CompareTo(b.Hash(level)));
-        
+        internal static void Sort(List<Entity> children, SortLevel level) => children.Sort((a, b) => a.Hash(level).CompareTo(b.Hash(level)));        
     }
 }
