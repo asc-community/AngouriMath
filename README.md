@@ -282,7 +282,10 @@ More are coming soon...
 
 #### How does it work?
 
-You can learn how some methods work here: https://habr.com/ru/post/482228/ (warning: Russian language!)<br>
+You can learn how some methods work here: <br> 
+Part I. https://habr.com/ru/post/482228/  <br>
+Part II. https://habr.com/ru/post/483294/ <br>
+
 Full description is not ready yet.
 
 #### I know how to improve it

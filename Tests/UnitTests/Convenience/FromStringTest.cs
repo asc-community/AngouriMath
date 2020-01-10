@@ -66,7 +66,7 @@ namespace UnitTests
         [TestMethod]
         public void Test12()
         {
-            Assert.IsTrue(MathS.FromString("arcsin(x)").Substitute(MathS.Var("x"), 1.0).Eval() == MathS.pi / 2);
+            Assert.IsTrue(MathS.FromString("arcsin(x)").Substitute(MathS.Var("x"), 1.0).Eval() == (MathS.pi / 2).Eval());
         }
         [TestMethod]
         public void Test13()

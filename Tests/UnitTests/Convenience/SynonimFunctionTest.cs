@@ -18,9 +18,9 @@ namespace UnitTests
         [TestMethod]
         public void TestComplex()
         {
-            var expr = MathS.FromString("ln(x) + sqrt(x) + tan(x) + b(x) + sec(x) + cosec(x) + cotan(x)");
+            var expr = MathS.FromString("ln(x) + sqrt(x) + tan(x) + sec(x) + cosec(x) + cotan(x)");
             var expected = MathS.Ln(x) + MathS.Sqrt(x) +
-                MathS.Tan(x) + MathS.B(x) + MathS.Sec(x) + MathS.Cosec(x) +
+                MathS.Tan(x) + MathS.Sec(x) + MathS.Cosec(x) +
                 MathS.Cotan(x);
             Assert.IsTrue(expr == expected);
         }

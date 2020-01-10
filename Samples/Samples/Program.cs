@@ -126,11 +126,16 @@ namespace Samples
             Console.WriteLine(SySyn.Diff(expr, x));
             Console.WriteLine(SySyn.Diff(expr, x, x));
         }
+
+        static Complex MyFunc(Complex x)
+            => x + 3 * x;
+
         static void Main(string[] _)
         {
-            Entity expr = "sin(x2)2 + sin(x2) + 3a";
-            var sol = expr.Solve("x");
-            Console.WriteLine(sol);
+            var x = MathS.Var("x");
+            var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
+            var func = expr.Compile(x);
+            Console.WriteLine(func.Substitute(3));
         }
     }
 #pragma warning restore IDE0051

@@ -295,7 +295,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 else
                 {
                     EntitySet vars = new EntitySet();
-                    TreeAnalyzer.GetUniqueVariables(expr, vars);
+                    TreeAnalyzer.GetUniqueVariables(expr.Eval() /* otherwise it will count `pi`, `e` as variables */, vars);
                     if (vars.Count == 1)
                         dst.Merge(expr.SolveNt(x));
                 }
