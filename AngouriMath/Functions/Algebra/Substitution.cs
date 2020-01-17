@@ -10,6 +10,19 @@ namespace AngouriMath
         /// Substitute a variable with an expression
         /// </summary>
         /// <param name="x">
+        /// A name of variable to substitute
+        /// </param>
+        /// <param name="value">
+        /// The value we replace variable with
+        /// </param>
+        /// <returns></returns>
+        public Entity Substitute(string x, Entity value)
+            => Substitute(MathS.Var(x), value, false);
+
+        /// <summary>
+        /// Substitute a variable with an expression
+        /// </summary>
+        /// <param name="x">
         /// A variable to substitute
         /// </param>
         /// <param name="value">
@@ -28,10 +41,7 @@ namespace AngouriMath
             if (res == x)
                 return value;
             for (int i = 0; i < res.Children.Count; i++)
-                if (res.Children[i] is VariableEntity && (res.Children[i] as VariableEntity).Name == x.Name)
-                    res.Children[i] = value;
-                else
-                    res.Children[i] = res.Children[i].Substitute(x, value, true);
+                res.Children[i] = res.Children[i].Substitute(x, value, true);
             return res;
         }
     }

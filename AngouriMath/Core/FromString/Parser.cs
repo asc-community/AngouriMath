@@ -40,7 +40,6 @@ namespace AngouriMath.Core.FromString
         }
         internal static bool SameType(BraceType a, BraceType b)
         {
-            // TODO: Make more universal
             return parentheses.Contains(a) && parentheses.Contains(b) ||
                    brackets.Contains(a) && brackets.Contains(b);
         }
@@ -161,7 +160,7 @@ namespace AngouriMath.Core.FromString
             {
                 e = new NumberEntity(Number.Parse(current.Value));
             }
-            else if (current.Type == TokenType.VARIABLE)
+            else if (current.Type == TokenType.VARIABLE || current.Type == TokenType.FUNCTION && lexer.GlanceNext().Type != TokenType.PARENTHESIS_OPEN)
             {
                 e = new VariableEntity(current.Value);
             }

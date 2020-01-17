@@ -55,7 +55,7 @@ namespace AngouriMath
             double ReTo = to.Re;
             double ImTo = to.Im;
             var res = new Number(0, 0);
-            var cfunc = func.Compile(x.Name);
+            var cfunc = func.Compile(x);
             for(int i = 0; i <= stepCount; i++)
             {
                 var share = ((double)i) / stepCount;

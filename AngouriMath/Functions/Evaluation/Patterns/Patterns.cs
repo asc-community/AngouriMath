@@ -9,15 +9,15 @@ namespace AngouriMath
     class RuleList : Dictionary<Pattern, Entity> { }
     internal static class Patterns
     {
-        static readonly Pattern any1 = new Pattern(100, PatType.COMMON);
-        static readonly Pattern any2 = new Pattern(101, PatType.COMMON);
-        static readonly Pattern any3 = new Pattern(102, PatType.COMMON);
-        static readonly Pattern any4 = new Pattern(103, PatType.COMMON);
-        static readonly Pattern const1 = new Pattern(200, PatType.NUMBER);
-        static readonly Pattern const2 = new Pattern(201, PatType.NUMBER);
-        static readonly Pattern var1 = new Pattern(300, PatType.VARIABLE);
-        static readonly Pattern func1 = new Pattern(400, PatType.FUNCTION);
-        static readonly Pattern func2 = new Pattern(401, PatType.FUNCTION);
+        internal static readonly Pattern any1 = new Pattern(100, PatType.COMMON);
+        internal static readonly Pattern any2 = new Pattern(101, PatType.COMMON);
+        internal static readonly Pattern any3 = new Pattern(102, PatType.COMMON);
+        internal static readonly Pattern any4 = new Pattern(103, PatType.COMMON);
+        internal static readonly Pattern const1 = new Pattern(200, PatType.NUMBER);
+        internal static readonly Pattern const2 = new Pattern(201, PatType.NUMBER);
+        internal static readonly Pattern var1 = new Pattern(300, PatType.VARIABLE);
+        internal static readonly Pattern func1 = new Pattern(400, PatType.FUNCTION);
+        internal static readonly Pattern func2 = new Pattern(401, PatType.FUNCTION);
         private static int InternNumber = 10000;
         static Pattern Num(double a) => new Pattern(++InternNumber, PatType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
         internal static readonly RuleList CommonRules = new RuleList {
@@ -73,7 +73,24 @@ namespace AngouriMath
             { any1 + any2 * any1, any1 * (Num(1) + any2) },
             { any1 * any2 + any1, any1 * (Num(1) + any2) },
             { any2 * any1 + any1, any1 * (Num(1) + any2) },
-            { any1 + any1, Num(2) * any1 },              
+            { any1 + any1, Num(2) * any1 },
+
+            { any1 * any2 - any1 * any3, any1 * (any2 - any3) },
+            { any1 * any2 - any3 * any1, any1 * (any2 - any3) },
+            { any2 * any1 - any3 * any1, any1 * (any2 - any3) },
+            { any2 * any1 - any1 * any3, any1 * (any2 - any3) },
+            { any1 - any1 * any2, any1 * (Num(1) - any2) },
+            { any1 - any2 * any1, any1 * (Num(1) - any2) },
+            { any1 * any2 - any1, any1 * (any2 - Num(1)) },
+            { any2 * any1 - any1, any1 * (any2 - Num(1)) },
+
+            // {1} / {2} + {1} * {3} = {1} * (1 / {2} + {3})
+            { any1 / any2 + any1 * any3, any1 * (Num(1) / any2 + any3) },
+            { any1 / any2 + any3 * any1, any1 * (Num(1) / any2 + any3) },
+            { any2 * any1 + any1 / any3, any1 * (any2 + Num(1) / any3) },
+            { any1 * any2 + any1 / any3, any1 * (any2 + Num(1) / any3) },
+            { any1 + any1 / any2, any1 * (Num(1) + Num(1) / any2) },
+            { any1 / any2 + any1, any1 * (Num(1) + Num(1) / any2) },
 
             // {1} * {2} - {1} * {3} = {1} * ({2} - {3})
             { any1 * any2 - any1 * any3, any1 * (any2 - any3) },
@@ -86,6 +103,7 @@ namespace AngouriMath
 
             // {} ^ n * {}
             { Powf.PHang(any1, any2) * any1, Powf.PHang(any1, any2 + Num(1)) },
+            { any1 * Powf.PHang(any1, any2), Powf.PHang(any1, any2 + Num(1)) },
 
             // {} ^ n * {} ^ m = {} ^ (n + m)
             { Powf.PHang(any1, any2) * Powf.PHang(any1, any3), Powf.PHang(any1, any2 + any3) },
@@ -95,6 +113,16 @@ namespace AngouriMath
 
             // ({} ^ {}) ^ {} = {} ^ ({} * {})
             { Powf.PHang(Powf.PHang(any1, any2), any3), Powf.PHang(any1, any2 * any3) },
+
+            // {1} ^ n * {2} ^ n = ({1} * {2}) ^ n
+            { Powf.PHang(any1, any3) * Powf.PHang(any2, any3), Powf.PHang(any1 * any2, any3) },
+            { Powf.PHang(any1, any3) / Powf.PHang(any2, any3), Powf.PHang(any1 / any2, any3) },
+
+            // x / x^n
+            { any1 / Powf.PHang(any1, any2), Powf.PHang(any1, Num(1) - any2) },
+            // x^n / x
+            { Powf.PHang(any1, any2) / any1, Powf.PHang(any1, any2 - Num(1)) },
+            // x^n / x^m
 
             // c ^ log(c, a) = a
             { Powf.PHang(const1, Logf.PHang(any1, const1)), any1 },
@@ -121,9 +149,10 @@ namespace AngouriMath
             { (any1 * any2) * Powf.PHang(any1, any3), (Powf.PHang(any1, any3 + Num(1))) * any2 },
             { (any2 * any1) * Powf.PHang(any1, any3), (Powf.PHang(any1, any3 + Num(1))) * any2 },
             
-            // {1} ^ n * {2} ^ n = ({1} * {2}) ^ n
-            { Powf.PHang(any1, any3) * Powf.PHang(any2, any3), Powf.PHang(any1 * any2, any3) },
-            
+            // -1 * {1} + {2} = {2} - {1}
+            { Num(-1) * any1 + any2, any2 - any1 },
+            { any1 + Num(-1) * any2, any1 - any2 },
+
             // (a * x) ^ c = a^c * x^c
             { Powf.PHang(const1 * any1, const2), Powf.PHang(const1, const2) * Powf.PHang(any1, const2) },
 
@@ -155,15 +184,50 @@ namespace AngouriMath
             // a / (b * {1})
             { const1 / (const2 * any1), (const1 / const2) / any1 },
             { const1 / (any1 * const2), (const1 / const2) / any1 },
+
+            // arc1({}) + arc2({}) = pi/2
+            { Arcsinf.PHang(any1) + Arccosf.PHang(any1), MathS.pi / 2 },
+            { Arccosf.PHang(any1) + Arcsinf.PHang(any1), MathS.pi / 2 },
+            { Arctanf.PHang(any1) + Arccotanf.PHang(any1), MathS.pi / 2 },
+            { Arccotanf.PHang(any1) + Arctanf.PHang(any1), MathS.pi / 2 },
+
+            // arcfunc(func(x)) = x
+            { Arcsinf.PHang(Sinf.PHang(any1)), any1 },
+            { Arccosf.PHang(Cosf.PHang(any1)), any1 },
+            { Arctanf.PHang(Tanf.PHang(any1)), any1 },
+            { Arccotanf.PHang(Cotanf.PHang(any1)), any1 },
+
+            // func(arcfunc(x)) = x
+            { Sinf.PHang(Arcsinf.PHang(any1)), any1 },
+            { Cosf.PHang(Arccosf.PHang(any1)), any1 },
+            { Tanf.PHang(Arctanf.PHang(any1)), any1 },
+            { Cotanf.PHang(Arccotanf.PHang(any1)), any1 },
+
+            // a * (b * {}) = (a * b) * {}
+            { const1 * (const2 * any1), (const1 * const2) * any1 },
+
+            { any1 - any1, Num(0) },
+
+            // {1} - {2} * {1}
+            { any1 - any2 * any1, any1 * (Num(1) - any2) },
+            { any1 - any1 * any2, any1 * (Num(1) - any2) },
+
+            // {1} ^ (-1) = 1 / {1}
+            { Powf.PHang(any1, Num(-1)), 1 / any1 },
+
+            // a / {} * b
+            { any1 / any2 * any3, any1 * any3 / any2},
+
+            // a * {1} / b
+            { (const1 * any1) / const2, any1 * (const1 / const2) }
         };
 
         internal static readonly RuleList ExpandRules = new RuleList
         {
             // (any1 + any2)2
-            { Powf.PHang(any1 + any2, Num(2)), Powf.PHang(any1, Num(2)) + Num(2) * any1 * any2 + Powf.PHang(any2, Num(2)) },
-
-            // (any1 - any2)2
-            { Powf.PHang(any1 + any2, Num(2)), Powf.PHang(any1, Num(2)) - Num(2) * any1 * any2 + Powf.PHang(any2, Num(2)) },
+            { Powf.PHang(any1, Num(2)), any1 * any1 },
+            { Powf.PHang(any1, Num(3)), any1 * any1 * any1 },
+            { Powf.PHang(any1, Num(4)), any1 * any1 * any1 * any1 },
 
             // ({1} - {2}) ({1} + {2}) = x2 - {}2
             { (any1 - any2) * (any1 + any2), Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)) },

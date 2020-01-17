@@ -75,6 +75,63 @@ namespace AngouriMath
             return res;
         }
     }
+    public static partial class Tanf
+    {
+        internal static Pattern PHang(Entity a)
+        {
+            var res = new Pattern(-1, PatType.FUNCTION, "tanf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+
+    public static partial class Cotanf
+    {
+        internal static Pattern PHang(Entity a)
+        {
+            var res = new Pattern(-1, PatType.FUNCTION, "cotanf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+
+    public static partial class Arcsinf
+    {
+        internal static Pattern PHang(Entity a)
+        {
+            var res = new Pattern(-1, PatType.FUNCTION, "arcsinf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+    public static partial class Arccosf
+    {
+        internal static Pattern PHang(Entity a)
+        {
+            var res = new Pattern(-1, PatType.FUNCTION, "arccosf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+    public static partial class Arctanf
+    {
+        internal static Pattern PHang(Entity a)
+        {
+            var res = new Pattern(-1, PatType.FUNCTION, "arctanf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+
+    public static partial class Arccotanf
+    {
+        internal static Pattern PHang(Entity a)
+        {
+            var res = new Pattern(-1, PatType.FUNCTION, "arccotanf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
 
     public static partial class Logf
     {

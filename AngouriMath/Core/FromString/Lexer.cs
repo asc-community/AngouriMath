@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace AngouriMath.Core.FromString
 {
+    using TokenType = Token.TokenType;
     internal class TokenList : List<Token>
     {
         public new void Add(Token a)
@@ -131,6 +132,8 @@ namespace AngouriMath.Core.FromString
         internal void Seal()
         {
             Type = GetCurrentType();
+            if (Value == "-")
+                Type = TokenType.SYMBOL;
         }
         internal static bool IsFinishedType(TokenType type)
         {
@@ -177,6 +180,7 @@ namespace AngouriMath.Core.FromString
         {
             index = 0;
         }
+
         internal Lexer(string src)
         {
             tokens = new TokenList();
@@ -205,17 +209,95 @@ namespace AngouriMath.Core.FromString
                 }
                 else
                 {
+                    // If we encounter a brace, we add the brace
                     if (Token.GetBraceType(symbol) != Token.BraceType.NONE)
                     {
                         tokens.Add(last);
                         tokens.Add(new Token(symbol));
                         last = new Token();
                     }
+                    // Otherwise, we should deal with it as with normal token
+                    else
+                    {
+                        tokens.Add(last);
+                        last = new Token(symbol);
+                    }
                 }
             }
             tokens.Add(last);
             Seal();
             ToBegin();
+        }
+
+        /// <summary>
+        /// Inserts operators in between operands where they are omitted,
+        /// for example, 2x -> 2 * x
+        /// </summary>
+        internal void AddOmittedOperators()
+        {
+            /// <summary>
+            /// Provided two types of tokens, returns position of first token if
+            /// the pair if found, -1 otherwisely.
+            /// </summary>
+            int FindSubPair(TokenType t1, TokenType t2)
+            {
+                for (int i = 0; i < tokens.Count - 1; i++)
+                    if (tokens[i].Type == t1 && tokens[i + 1].Type == t2)
+                        return i;
+                return -1;
+            }
+
+            /// <summary>
+            /// Finds all occurances of [t1, t2] and inserts token in between each of them
+            /// </summary>
+            void InsertIntoPair(TokenType t1, TokenType t2, Token token)
+            {
+                int pos;
+                while ((pos = FindSubPair(t1, t2)) != -1)
+                {
+                    tokens.Insert(pos + 1 /* we need to keep the first one behind*/, token);
+                }
+            }
+
+            var multiplyer = new Token('*'); multiplyer.Seal();
+            var power = new Token('^'); power.Seal();
+
+            // 2x -> 2 * x
+            InsertIntoPair(TokenType.NUMBER, TokenType.VARIABLE, multiplyer);
+
+            // x y -> x * y
+            InsertIntoPair(TokenType.VARIABLE, TokenType.VARIABLE, multiplyer);
+
+            // 2( -> 2 * (
+            InsertIntoPair(TokenType.NUMBER, TokenType.PARENTHESIS_OPEN, multiplyer);
+
+            // )2 -> ) ^ 2
+            InsertIntoPair(TokenType.PARENTHESIS_CLOSE, TokenType.NUMBER, power);
+
+            // x( -> x * (
+            InsertIntoPair(TokenType.VARIABLE, TokenType.PARENTHESIS_OPEN, multiplyer);
+
+            // )x -> ) * x
+            InsertIntoPair(TokenType.PARENTHESIS_CLOSE, TokenType.VARIABLE, multiplyer);
+
+            // x2 -> x ^ 2
+            InsertIntoPair(TokenType.VARIABLE, TokenType.NUMBER, power);
+
+            // 3 2 -> 3 ^ 2
+            InsertIntoPair(TokenType.NUMBER, TokenType.NUMBER, power);
+
+            // 2sqrt -> 2 * sqrt
+            InsertIntoPair(TokenType.NUMBER, TokenType.FUNCTION, multiplyer);
+
+            // x sqrt -> x * sqrt
+            InsertIntoPair(TokenType.VARIABLE, TokenType.FUNCTION, multiplyer);
+
+            // )sqrt -> ) * sqrt
+            InsertIntoPair(TokenType.PARENTHESIS_CLOSE, TokenType.FUNCTION, multiplyer);
+
+            // )( -> ) * (
+            // )sqrt -> ) * sqrt
+            InsertIntoPair(TokenType.PARENTHESIS_CLOSE, TokenType.PARENTHESIS_OPEN, multiplyer);
         }
     }
 }

@@ -17,7 +17,7 @@ namespace AngouriMath.Core
         /// For example, new Number(3, 5).Re is 3
         /// </summary>
         public double Re { 
-            get => value.Real; 
+            get => IsNull ? double.NaN : value.Real; 
             set {
                 this.value = new Complex(value, Im);
             } 
@@ -29,12 +29,37 @@ namespace AngouriMath.Core
         /// </summary>
         public double Im
         {
-            get => value.Imaginary; 
+            get => IsNull ? double.NaN : value.Imaginary;
             set {
                 this.value = new Complex(Re, value);
+                __isReal = this.value.Imaginary == 0;
             }
         }
         internal Complex value;
+        private bool isNull;
+        public bool IsNull { get => isNull || (double.IsNaN(value.Imaginary)) || (double.IsNaN(value.Real)); set => isNull = value; }
+        public Number(bool isNull)
+        {
+            this.isNull = isNull;
+            __isReal = false;
+        }
+
+        public Number(object value)
+        {
+            if (value is Number)
+            {
+                var num = value as Number;
+                IsNull = num.IsNull;
+                __isReal = num.Im == 0;
+                this.value = num.value;
+            }
+            else if (value is double || value is int)
+            {
+                var num = (double)value;
+                IsNull = double.IsNaN(num);
+                this.Re = num;
+            }
+        }
 
         /// <summary>
         /// Initialize a real number
@@ -42,8 +67,9 @@ namespace AngouriMath.Core
         /// <param name="Re"></param>
         public Number(double Re)
         {
-            this.Re = Re;
-            this.Im = 0;
+            IsNull = false;
+            this.value = new Complex(Re, 0);
+            __isReal = true;
         }
 
         /// <summary>
@@ -51,18 +77,21 @@ namespace AngouriMath.Core
         /// </summary>
         /// <param name="Re"></param>
         /// <param name="Im"></param>
-        public Number(double Re, double Im)
+        public Number(double re, double im)
         {
-            this.Re = Re;
-            this.Im = Im;
+            IsNull = false;
+            __isReal = im == 0;
+            this.value = new Complex(re, im);
         }
         public Number(Complex num)
         {
+            IsNull = false;
+            __isReal = num.Imaginary == 0;
             this.value = num;
         }
         public Number Copy()
         {
-            return new Number(value);
+            return IsNull ? Number.Null : new Number(value);
         }
         public override string ToString()
         {
@@ -117,13 +146,15 @@ namespace AngouriMath.Core
                 return ToDouble(s);
             }
         }
-
+        internal bool __isReal;
         public static implicit operator Number(int num) => new Number(num);
         public static implicit operator Number(double num) => new Number(num);
+        public static implicit operator Number(Complex num) => new Number(num);
+        public static implicit operator Complex(Number num) => num.value;
         public static Number operator +(Number a, Number b) => new Number(a.value + b.value);
         public static Number operator -(Number a, Number b) => new Number(a.value - b.value);
         public static Number operator *(Number a, Number b) => new Number(a.value * b.value);
-        public static Number operator /(Number a, Number b) => new Number(a.value / b.value);        
+        public static Number operator /(Number a, Number b) => new Number(a.value / b.value);
         public static bool operator ==(Number a, Number b)
         {
             if ( ((object)a) == null && ((object)b) == null )
@@ -140,6 +171,7 @@ namespace AngouriMath.Core
                 return !double.IsNaN(a.Re) && !double.IsNaN(a.Im);
             return !(a == b);
         }
+        public static readonly Number Null = new Number(true);
 
         /// <summary>
         /// Check whether a number is complex or real
@@ -149,15 +181,35 @@ namespace AngouriMath.Core
         {
             return !Number.IsDoubleZero(Im);
         }
-        public static Number Pow(Number a, Number b) => new Number(Complex.Pow(a.value, b.value));
+        public bool IsInteger()
+        {
+            return !IsComplex() && (Number.IsDoubleZero(Re - Math.Round(Re)));
+        }
+        public static Number Pow(Number a, Number b) => new Number(b.value == 0.5 ? Complex.Sqrt(a.value) : Complex.Pow(a.value, b.value));
         public static Number Log(Number a, Number b) => new Number(Complex.Log(a.value, b.Re));
-        public static Number Sin(Number a) => new Number(Complex.Sin(a.value));
-        public static Number Cos(Number a) => new Number(Complex.Cos(a.value));
+        public static Number Sin(Number a) => a.__isReal ? new Number(Math.Sin(a.value.Real)) : new Number(Complex.Sin(a.value));
+        public static Number Cos(Number a) => a.__isReal ? new Number(Math.Cos(a.value.Real)) : new Number(Complex.Cos(a.value));
+        public static Number Tan(Number a) => a.__isReal ? new Number(Math.Tan(a.value.Real)) : new Number(Complex.Tan(a.value));
+        public static Number Cotan(Number a) => a.__isReal ? new Number(1 / Math.Tan(a.value.Real)) : new Number(1 / Complex.Tan(a.value));
+        public static Number Arcsin(Number a) => a.__isReal ? new Number(Math.Asin(a.value.Real)) : new Number(Complex.Asin(a.value));
+        public static Number Arccos(Number a) => a.__isReal ? new Number(Math.Acos(a.value.Real)) : new Number(Complex.Acos(a.value));
+        public static Number Arctan(Number a) => a.__isReal ? new Number(Math.Atan(a.value.Real)) : new Number(Complex.Atan(a.value));
+        public static Number Arccotan(Number a) => a.__isReal ? new Number(Math.Atan(1 / a.value.Real)) : new Number(Complex.Atan(1 / a.value));
         public static double Abs(Number a) => Complex.Abs(a.value);
         public static bool IsDoubleZero(double a)
         {
             return Math.Abs(a) < MathS.EQUALITY_THRESHOLD;
         }
+
+        internal void _add(Number a) => this.value += a.value;
+        internal void _sub(Number a) => this.value -= a.value;
+        internal void _mul(Number a) => this.value *= a.value;
+        internal void _div(Number a) => this.value /= a.value;
+        internal void _pow(Number a) => this.value = Complex.Pow(this.value, a.value);
+        internal void _log(Number a) => this.value = Complex.Log(this.value, a.Re);
+        internal void _sin() => this.value = Complex.Sin(this.value);
+        internal void _cos() => this.value = Complex.Cos(this.value);
+
     }
 
     /// <summary>

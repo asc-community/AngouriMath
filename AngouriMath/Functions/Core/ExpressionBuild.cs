@@ -85,6 +85,27 @@ namespace AngouriMath
         }
     }
 
+    public static partial class Tanf
+    {
+        public static Entity Hang(Entity a)
+        {
+            var res = new FunctionEntity("tanf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+
+    public static partial class Cotanf
+    {
+        public static Entity Hang(Entity a)
+        {
+            var res = new FunctionEntity("cotanf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+
+
     public static partial class Logf
     {
         public static Entity Hang(Entity a, Entity n)
@@ -92,6 +113,46 @@ namespace AngouriMath
             var res = new FunctionEntity("logf");
             res.Children.Add(a);
             res.Children.Add(n);
+            return res;
+        }
+    }
+
+    public static partial class Arcsinf
+    {
+        public static Entity Hang(Entity a)
+        {
+            var res = new FunctionEntity("arcsinf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+
+    public static partial class Arccosf
+    {
+        public static Entity Hang(Entity a)
+        {
+            var res = new FunctionEntity("arccosf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+
+    public static partial class Arctanf
+    {
+        public static Entity Hang(Entity a)
+        {
+            var res = new FunctionEntity("arctanf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+
+    public static partial class Arccotanf
+    {
+        public static Entity Hang(Entity a)
+        {
+            var res = new FunctionEntity("arccotanf");
+            res.Children.Add(a);
             return res;
         }
     }
