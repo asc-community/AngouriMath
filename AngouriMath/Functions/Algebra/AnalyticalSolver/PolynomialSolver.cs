@@ -26,6 +26,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 return monomialsByPower.ContainsKey(power) ? monomialsByPower[power] : 0;
             }
 
+            // here we fill the dictionary with information about monomials' coefficiants
             foreach (var child in children)
             {
                 Entity free;
@@ -43,9 +44,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             if (powers.Count == 0)
                 return null;
             powers.Sort();
-            if (powers[powers.Count - 1] == 0)
+            if (powers.Last() == 0)
                 return null;
-            if (powers[powers.Count - 1] > 4 && powers.Count > 2)
+            if (powers.Last() > 4 && powers.Count > 2)
                 return null; // So far, we can't solve equations of powers more than 4
             if (powers.Count == 1)
             {

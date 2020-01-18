@@ -132,10 +132,10 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            var x = MathS.Var("x");
-            var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
-            var func = expr.Compile(x);
-            Console.WriteLine(func.Substitute(3));
+            Entity expr = "(x - goose) (x - 2) (x - 3)";
+            expr = expr.Expand();
+            Console.WriteLine(expr.Simplify());
+            Console.WriteLine(expr.Solve("x"));
         }
     }
 #pragma warning restore IDE0051
