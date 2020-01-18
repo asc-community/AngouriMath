@@ -60,6 +60,8 @@ namespace AngouriMath.Core.TreeAnalysis
             int ocs = 0;
             while ((subtree = GetTreeByDepth(expr, ent, depth)) != ent)
             {
+                if (subtree.Children.Count == 0) return subtree;
+
                 depth++;
                 int newocs;
                 if (GoodSub(subtree) && (newocs = expr.CountOccurances(subtree.ToString())) > ocs)
