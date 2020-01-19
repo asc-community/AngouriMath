@@ -90,6 +90,10 @@ namespace AngouriMath
             return true;
         }
         public static bool operator !=(Entity a, Entity b) => !(a == b);
+
+        // TODO create hash for entity
+        internal new string GetHashCode() => ToString();
+
     }
     public class NumberEntity : Entity
     {

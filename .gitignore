@@ -11,6 +11,9 @@
 /Samples/bin
 /Samples/obj
 /Samples/.vs
+/AngouriMathPlot/bin
+/AngouriMathPlot/obj
+/AngouriMathPlot/.vs
 /PerformanceBenchmark/bin
 /PerformanceBenchmark/obj
 /Tests/PerformanceBenchmark/bin
@@ -29,3 +32,4 @@
 /Tests/DotnetBenchmark/bin/Debug/netcoreapp3.1
 /AngouriMathPlot/obj
 /AngouriMathPlot/bin/Debug/netstandard2.0
+*.vsp

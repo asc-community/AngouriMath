@@ -12,7 +12,7 @@ namespace UnitTests
         public void Test1()
         {
             var func = MathS.Sqr(x) + 2 * x + 1;
-            Assert.IsTrue(func.Derive(x).Simplify() == (x + 1) * 2);
+            Assert.IsTrue(func.Derive(x).Simplify() == 2 * (x + 1));
         }
         [TestMethod]
         public void TestSin()
@@ -68,13 +68,13 @@ namespace UnitTests
         public void TestArc2()
         {
             var func = MathS.Arcsin(2 * x);
-            Assert.IsTrue(func.Derive(x).Simplify() == MathS.Pow(1 - 4 * MathS.Sqr(x), -0.5) * 2);
+            Assert.IsTrue(func.Derive(x).Simplify() == 2 * MathS.Pow(1 - 4 * MathS.Sqr(x), -0.5));
         }
         [TestMethod]
         public void TestArc3()
         {
             var func = MathS.Arccos(2 * x);
-            Assert.IsTrue(func.Derive(x).Simplify() == MathS.Pow(1 - 4 * MathS.Sqr(x), -0.5) * (-2));
+            Assert.IsTrue(func.Derive(x).Simplify() == (-2) * MathS.Pow(1 - 4 * MathS.Sqr(x), -0.5));
         }
         [TestMethod]
         public void TestArc4()

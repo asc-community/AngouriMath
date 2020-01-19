@@ -257,12 +257,11 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
-        internal static Entity ReplaceOne(Entity source, Pattern oldPattern, Entity newPattern)
+        internal static void ReplaceOneInPlace(ref Entity source, Pattern oldPattern, Entity newPattern)
         {
-            var src = source.DeepCopy();
-            var sub = src.FindPatternSubtree(oldPattern);
-            if (sub == null)
-                return src;
+            var sub = source.FindPatternSubtree(oldPattern);
+            if (sub == null) return;
+
             Dictionary<int, Entity> nodeList;
             try
             {
@@ -273,15 +272,16 @@ namespace AngouriMath.Core.TreeAnalysis
                 throw new SysException("Error `" + error.Message + "` in pattern " + oldPattern.ToString());
             }
             var newNode = newPattern.BuildTree(nodeList);
-            
+
             if (oldPattern.Match(source))
-                return newNode;
+            {
+                source = newNode;
+            }
             else
             {
-                var parent = src.FindParent(sub);
-                var number = src.FindChildrenNumber(sub);
+                var parent = source.FindParent(sub);
+                var number = source.FindChildrenNumber(sub);
                 parent.Children[number] = newNode;
-                return src;
             }
         }
 
@@ -297,18 +297,32 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <returns></returns>
         internal static Entity Replace(RuleList rules, Entity source)
         {
-            // TODO
+            HashSet<string> replaced = new HashSet<string>();
             var res = source.DeepCopy();
-            Entity prev;
-            do
+            string hash;
+            while (!replaced.Contains(hash = res.GetHashCode()))
             {
-                prev = res.DeepCopy();
+                replaced.Add(hash);
                 foreach (var pair in rules)
                 {
-                    res = ReplaceOne(res, pair.Key, pair.Value);
+                    ReplaceOneInPlace(ref res, pair.Key, pair.Value);
                 }
-            } while (prev != res);
+            }
             return res;
+        }
+
+        internal static void ReplaceInPlace(RuleList rules, ref Entity source)
+        {
+            HashSet<string> replaced = new HashSet<string>();
+            string hash;
+            while (!replaced.Contains(hash = source.GetHashCode()))
+            {
+                replaced.Add(hash);
+                foreach (var pair in rules)
+                {
+                    ReplaceOneInPlace(ref source, pair.Key, pair.Value);
+                }
+            }
         }
     }
 }

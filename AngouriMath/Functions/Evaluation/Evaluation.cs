@@ -53,7 +53,7 @@ namespace AngouriMath
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
         /// </summary>
         /// <returns></returns>
-        public Entity Simplify() => Simplify(3);
+        public Entity Simplify() => Simplify(1);
 
         /// <summary>
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
@@ -61,7 +61,7 @@ namespace AngouriMath
         /// which you can specify on your own.
         /// </summary>
         /// <returns></returns>
-        public Entity SimplifyIntelli() => Simplify(6);
+        public Entity SimplifyIntelli() => Simplify(3);
 
         /// <summary>
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
@@ -81,10 +81,11 @@ namespace AngouriMath
                 switch (i)
                 {
                     case 0: res = res.Sort(SortLevel.HIGH_LEVEL); break;
-                    case 2: res = res.Sort(SortLevel.MIDDLE_LEVEL); break;
-                    case 4: res = res.Sort(SortLevel.LOW_LEVEL); break;
+                    case 1: res = res.Sort(SortLevel.MIDDLE_LEVEL); break;
+                    case 2: res = res.Sort(SortLevel.LOW_LEVEL); break;
                 }
-                res = TreeAnalyzer.Replace(Patterns.CommonRules, res).InnerSimplify();
+                TreeAnalyzer.ReplaceInPlace(Patterns.CommonRules, ref res);
+                res = res.InnerSimplify();
             }
             return res;
         }

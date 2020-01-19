@@ -8,8 +8,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
 {
     internal static class PolynomialSolver
     {
-        internal static EntitySet SolveAsPolynomial(Entity expr,
-                                   Entity subtree /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/)
+        /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/
+        internal static EntitySet SolveAsPolynomial(Entity expr, Entity subtree)
         {
             expr = expr.Expand(); // (x + 1) * x => x^2 + x
             List<Entity> children;
@@ -43,9 +43,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             if (powers.Count == 0)
                 return null;
             powers.Sort();
-            if (powers[powers.Count - 1] == 0)
+            if (powers.Last() == 0)
                 return null;
-            if (powers[powers.Count - 1] > 4 && powers.Count > 2)
+            if (powers.Last() > 4 && powers.Count > 2)
                 return null; // So far, we can't solve equations of powers more than 4
             if (powers.Count == 1)
             {
@@ -65,7 +65,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             // By this moment we know for sure that expr's power is <= 4, that expr is not a monomial,
             // and that it consists of more than 2 monomials
 
-            if (powers[powers.Count - 1] == 2)
+            // TODO fix precision loss 
+            if (powers.Last() == 2)
             {
                 var a = GetMonomialByPower(2);
                 var b = GetMonomialByPower(1);
@@ -75,9 +76,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 res.Add((-b + MathS.Sqrt(D)) / (2 * a));
                 return res;
             }
-            // Doesn't work for some reasons. TODO
-            /*
-            else if (powers[powers.Count - 1] == 3)
+            else if (powers.Last() == 3)
             {
                 // en: https://en.wikipedia.org/wiki/Cubic_equation
                 // ru: https://ru.wikipedia.org/wiki/%D0%A4%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B0_%D0%9A%D0%B0%D1%80%D0%B4%D0%B0%D0%BD%D0%BE
@@ -87,22 +86,22 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 var c = GetMonomialByPower(1);
                 var d = GetMonomialByPower(0);
 
-                var p = ((3 * a * c - MathS.Sqr(b)) / (3 * MathS.Sqr(a))).Simplify();
-                var q = ((2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d) / (27 * MathS.Pow(a, 3))).Simplify();
+                var p = ((3 * a * c - MathS.Sqr(b)) / (3 * MathS.Sqr(a)));
+                var q = ((2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d) / (27 * MathS.Pow(a, 3)));
 
-                var Q = (MathS.Pow(p / 3, 3) + MathS.Sqr(q / 2)).Simplify();
+                var Q = (MathS.Pow(p / 3, 3) + MathS.Sqr(q / 2));
 
-                var alpha = (MathS.Pow(-q / 2 + MathS.Sqrt(Q), 1.0 / 3)).Simplify();
-                var beta = (MathS.Pow(-q / 2 - MathS.Sqrt(Q), 1.0 / 3)).Simplify();
+                var alpha = (MathS.Pow(-q / 2 + MathS.Sqrt(Q), 1.0 / 3.0));
+                var beta = (MathS.Pow(-q / 2 - MathS.Sqrt(Q), 1.0 / 3.0));
 
-                var y1 = (alpha + beta).Simplify();
-                var y2 = (-(alpha + beta) / 2 + MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3)).Simplify();
-                var y3 = (-(alpha + beta) / 2 - MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3)).Simplify();
+                var y1 = alpha + beta;
+                var y2 = (-(alpha + beta) / 2 + MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
+                var y3 = (-(alpha + beta) / 2 - MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
                 res.Add(y1);
                 res.Add(y2);
                 res.Add(y3);
                 return res;
-            }*/
+            }
             return null;
             // TODO
         }
