@@ -107,13 +107,13 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             if (func == x)
                 return new EntitySet(value);
-            if (func.type == Entity.Type.NUMBER)
+            if (func.entType == Entity.EntType.NUMBER)
                 throw new MathSException("This function must contain x");
-            if (func.type == Entity.Type.VARIABLE)
+            if (func.entType == Entity.EntType.VARIABLE)
                 return new EntitySet(func);
-            if (func.type == Entity.Type.OPERATOR)
+            if (func.entType == Entity.EntType.OPERATOR)
                 return InvertOperatorEntity(func as OperatorEntity, value, x);
-            if (func.type == Entity.Type.FUNCTION)
+            if (func.entType == Entity.EntType.FUNCTION)
                 return InvertFunctionEntity(func as FunctionEntity, value, x);
 
             return new EntitySet(value);
@@ -159,8 +159,18 @@ namespace AngouriMath.Core.TreeAnalysis
                         return FindInvertExpression(un, a / value, x);
                 case "powf":
                     if (arg == 0)
+                    {
                         // x ^ a = value => x = value ^ (1/a)
-                        return FindInvertExpression(un, MathS.Pow(value, 1 / a), x);
+                        if (value.entType == Entity.EntType.NUMBER && a.entType == Entity.EntType.NUMBER && (1 / a).GetValue().IsInteger())
+                        {
+                            var res = new EntitySet();
+                            foreach (var root in Number.GetAllRoots(value.GetValue(), (int)((1 / a).GetValue().Re)))
+                                res.AddRange(FindInvertExpression(un, root, x));
+                            return res;
+                        }
+                        else
+                            return FindInvertExpression(un, MathS.Pow(value, 1 / a), x);
+                    }
                     else
                         // a ^ x = value => x = log(value, a)
                         return FindInvertExpression(un, MathS.Log(value, a), x);
@@ -180,7 +190,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
             EntitySet GetNotNullEntites(EntitySet set)
             {
-                return new EntitySet(set.Where(el => el.type != Entity.Type.NUMBER || !el.GetValue().IsNull));
+                return new EntitySet(set.Where(el => el.entType != Entity.EntType.NUMBER || !el.GetValue().IsNull));
             }
 
             switch (func.Name)
@@ -251,7 +261,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
     {
         internal static void Solve(Entity expr, VariableEntity x, EntitySet dst)
         {
-            if (expr.type == Entity.Type.OPERATOR)
+            if (expr.entType == Entity.EntType.OPERATOR)
             {
                 switch (expr.Name)
                 {
@@ -267,7 +277,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                         return;
                 }
             }
-            else if (expr.type == Entity.Type.FUNCTION)
+            else if (expr.entType == Entity.EntType.FUNCTION)
             {
                 switch (expr.Name)
                 {

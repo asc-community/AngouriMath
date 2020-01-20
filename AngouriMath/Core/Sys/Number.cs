@@ -190,6 +190,30 @@ namespace AngouriMath.Core
         public static Number Sin(Number a) => a.__isReal ? new Number(Math.Sin(a.value.Real)) : new Number(Complex.Sin(a.value));
         public static Number Cos(Number a) => a.__isReal ? new Number(Math.Cos(a.value.Real)) : new Number(Complex.Cos(a.value));
         public static Number Tan(Number a) => a.__isReal ? new Number(Math.Tan(a.value.Real)) : new Number(Complex.Tan(a.value));
+
+        /// <summary>
+        /// Finds all roots of a number
+        /// e. g. sqrt(1) = { -1, 1 }
+        /// root(1, 4) = { -i, i, -1, 1 }
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="rootPower"></param>
+        /// <returns></returns>
+        public static NumberSet GetAllRoots(Number value, int rootPower)
+        {
+            var res = new NumberSet();
+            Complex val = value.value;
+            double phi = (Complex.Log(val / Complex.Abs(val)) / MathS.i.value).Real;
+            double newMod = Math.Pow(Complex.Abs(val), 1.0 / rootPower);
+            Complex i = new Complex(0, 1);
+            for (int n = 0; n < rootPower; n++)
+            {
+                double newPow = phi / rootPower + 2 * Math.PI * n / rootPower;
+                res.Add(newMod * Complex.Pow(Math.E, i * newPow));
+            }
+            return res;
+        }
+
         public static Number Cotan(Number a) => a.__isReal ? new Number(1 / Math.Tan(a.value.Real)) : new Number(1 / Complex.Tan(a.value));
         public static Number Arcsin(Number a) => a.__isReal ? new Number(Math.Asin(a.value.Real)) : new Number(Complex.Asin(a.value));
         public static Number Arccos(Number a) => a.__isReal ? new Number(Math.Acos(a.value.Real)) : new Number(Complex.Acos(a.value));

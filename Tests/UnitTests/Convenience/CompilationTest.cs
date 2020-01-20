@@ -46,5 +46,12 @@ namespace UnitTests
             var func = expr.Compile(x);
             Assert.IsTrue(func.Call(4) == 4);
         }
+        [TestMethod]
+        public void Test7()
+        {
+            var expr = MathS.pi + MathS.e + x;
+            var func = expr.Compile(x);
+            Assert.IsTrue(func.Call(3).Re > 7 && func.Call(3).Re < 10);
+        }
     }
 }

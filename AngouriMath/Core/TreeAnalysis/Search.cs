@@ -15,7 +15,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             if (ent == null)
                 return;
-            if (ent.type == Entity.Type.NUMBER && ent.GetValue().IsNull)
+            if (ent.entType == Entity.EntType.NUMBER && ent.GetValue().IsNull)
                 return;
             ent = ent.SimplifyIntelli();
             var hash = ent.ToString();
@@ -53,7 +53,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
         internal static void GetUniqueVariables(Entity expr, EntitySet dst)
         {
-            if (expr.type == Entity.Type.VARIABLE)
+            if (expr.entType == Entity.EntType.VARIABLE)
                 dst.Add(expr);
             else
                 foreach (var child in expr.Children)

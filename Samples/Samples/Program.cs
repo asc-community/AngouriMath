@@ -146,9 +146,12 @@ namespace Samples
         Entity expr = "sin(x)2 + sin(x) - 0.5";
         foreach (var root in expr.Solve("x"))
             Console.WriteLine(root);*/
-            Entity eq = "sin(x + t) + sin(x)";
+            //Entity eq = "sin(x2 + 1)";
             //var eq = MathS.FromString("(t - goose)(t - 2)(t - 3)").Expand();
-            Console.WriteLine(eq.Solve("x"));
+            //Console.WriteLine(eq.Solve("x"));
+            //Console.WriteLine(Number.GetAllRoots(MathS.i, 2));
+            //Entity eq = "x2 + x + 0.3";
+            //Console.WriteLine(eq.Solve("x"));
         }
     }
 #pragma warning restore IDE0051

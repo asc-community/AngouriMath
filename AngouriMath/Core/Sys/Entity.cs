@@ -21,9 +21,9 @@ namespace AngouriMath
         public string Name = string.Empty;
 
         public bool IsLeaf { get => Children.Count == 0; }
-        protected Entity(string name, Type type)
+        protected Entity(string name, EntType type)
         {
-            this.type = type;
+            this.entType = type;
             Children = new List<Entity>();
             Name = name;
         }
@@ -35,15 +35,15 @@ namespace AngouriMath
         /// <returns></returns>
         public Entity Copy()
         {
-            switch (type)
+            switch (entType)
             {
-                case Type.NUMBER:
+                case EntType.NUMBER:
                     return new NumberEntity((this as NumberEntity).Value);
-                case Type.VARIABLE:
+                case EntType.VARIABLE:
                     return new VariableEntity(Name);
-                case Type.OPERATOR:
+                case EntType.OPERATOR:
                     return new OperatorEntity(Name, Priority);
-                case Type.FUNCTION:
+                case EntType.FUNCTION:
                     return new FunctionEntity(Name);
                 default:
                     throw new MathSException("Unknowne entity type");
@@ -82,9 +82,9 @@ namespace AngouriMath
                 else
                     return false;
             }
-            if (a.type != b.type)
+            if (a.entType != b.entType)
                 return false;
-            if (a.type == Type.NUMBER && b.type == Type.NUMBER)
+            if (a.entType == EntType.NUMBER && b.entType == EntType.NUMBER)
                 return (a as NumberEntity).GetValue() == (b as NumberEntity).GetValue();
             if ((a.Name != b.Name) || (a.Children.Count() != b.Children.Count()))
             {
@@ -105,7 +105,7 @@ namespace AngouriMath
     }
     public class NumberEntity : Entity
     {
-        public NumberEntity(Number value) : base(value.ToString(), Type.NUMBER) 
+        public NumberEntity(Number value) : base(value.ToString(), EntType.NUMBER) 
         {
             Priority = Const.PRIOR_NUM;
             Value = value;
@@ -119,17 +119,17 @@ namespace AngouriMath
     }
     public class VariableEntity : Entity
     {
-        public VariableEntity(string name) : base(name, Type.VARIABLE) => Priority = Const.PRIOR_VAR;
+        public VariableEntity(string name) : base(name, EntType.VARIABLE) => Priority = Const.PRIOR_VAR;
         public static implicit operator VariableEntity(string name) => new VariableEntity(name);
     }
     public class OperatorEntity : Entity
     {
-        public OperatorEntity(string name, int priority) : base(name, Type.OPERATOR) {
+        public OperatorEntity(string name, int priority) : base(name, EntType.OPERATOR) {
             Priority = priority;
         }
     }
     public class FunctionEntity : Entity
     {
-        public FunctionEntity(string name) : base(name, Type.FUNCTION) => Priority = Const.PRIOR_FUNC;
+        public FunctionEntity(string name) : base(name, EntType.FUNCTION) => Priority = Const.PRIOR_FUNC;
     }
 }
