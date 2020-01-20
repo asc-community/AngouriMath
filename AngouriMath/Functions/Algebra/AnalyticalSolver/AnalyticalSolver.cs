@@ -106,13 +106,13 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             if (func == x)
                 return value;
-            if (func is NumberEntity)
+            if (func.type == Entity.Type.NUMBER)
                 throw new MathSException("This function must contain x");
-            if (func is VariableEntity)
+            if (func.type == Entity.Type.VARIABLE)
                 return func;
-            if (func is OperatorEntity)
+            if (func.type == Entity.Type.OPERATOR)
                 return InvertOperatorEntity(func as OperatorEntity, value, x);
-            if (func is FunctionEntity)
+            if (func.type == Entity.Type.FUNCTION)
                 return InvertFunctionEntity(func as FunctionEntity, value, x);
 
             return value;
@@ -221,7 +221,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
     {
         internal static void Solve(Entity expr, VariableEntity x, EntitySet dst)
         {
-            if (expr is OperatorEntity)
+            if (expr.type == Entity.Type.OPERATOR)
             {
                 switch (expr.Name)
                 {
@@ -237,7 +237,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                         return;
                 }
             }
-            else if (expr is FunctionEntity)
+            else if (expr.type == Entity.Type.FUNCTION)
             {
                 switch (expr.Name)
                 {

@@ -18,10 +18,12 @@ namespace AngouriMath
     #pragma warning restore CS0661
     #pragma warning restore CS0660
     {
-        public string Name { get; set; }
+        public string Name = string.Empty;
+
         public bool IsLeaf { get => Children.Count == 0; }
-        protected Entity(string name)
+        protected Entity(string name, Type type)
         {
+            this.type = type;
             Children = new List<Entity>();
             Name = name;
         }
@@ -33,18 +35,19 @@ namespace AngouriMath
         /// <returns></returns>
         public Entity Copy()
         {
-            Entity res;
-            if (this is NumberEntity)
-                res = new NumberEntity((this as NumberEntity).Value);
-            else if (this is VariableEntity)
-                res = new VariableEntity(Name);
-            else if (this is OperatorEntity)
-                res = new OperatorEntity(Name, Priority);
-            else if (this is FunctionEntity)
-                res = new FunctionEntity(Name);
-            else
-                throw new MathSException("Unknown entity");
-            return res;
+            switch (type)
+            {
+                case Type.NUMBER:
+                    return new NumberEntity((this as NumberEntity).Value);
+                case Type.VARIABLE:
+                    return new VariableEntity(Name);
+                case Type.OPERATOR:
+                    return new OperatorEntity(Name, Priority);
+                case Type.FUNCTION:
+                    return new FunctionEntity(Name);
+                default:
+                    throw new MathSException("Unknowne entity type");
+            }
         }
 
         /// <summary>
@@ -68,15 +71,20 @@ namespace AngouriMath
 
         public static bool operator ==(Entity a, Entity b)
         {
+            // Entity must be casted to object before comparing for null
+            // Without casting stack overflow occurs as a == null calls same method
             var obj1 = (object)a;
             var obj2 = (object)b;
-            if (obj1 == null && obj2 == null)
-                return true;
             if (obj1 == null || obj2 == null)
+            {
+                if (obj1 == null && obj2 == null)
+                    return true;
+                else
+                    return false;
+            }
+            if (a.type != b.type)
                 return false;
-            if (a.GetType() != b.GetType())
-                return false;
-            if (a is NumberEntity && b is NumberEntity)
+            if (a.type == Type.NUMBER && b.type == Type.NUMBER)
                 return (a as NumberEntity).GetValue() == (b as NumberEntity).GetValue();
             if ((a.Name != b.Name) || (a.Children.Count() != b.Children.Count()))
             {
@@ -90,13 +98,19 @@ namespace AngouriMath
             return true;
         }
         public static bool operator !=(Entity a, Entity b) => !(a == b);
+
+        // TODO create hash for entity
+        internal new string GetHashCode() => ToString();
+
     }
     public class NumberEntity : Entity
     {
-        public NumberEntity(Number value) : base(value.ToString()) {
+        public NumberEntity(Number value) : base(value.ToString(), Type.NUMBER) 
+        {
             Priority = Const.PRIOR_NUM;
             Value = value;
         }
+
         public Number Value { get; internal set; }
         public new string Name { get => Value.ToString(); }
         public static implicit operator NumberEntity(int num) => new NumberEntity(num);
@@ -105,17 +119,17 @@ namespace AngouriMath
     }
     public class VariableEntity : Entity
     {
-        public VariableEntity(string name) : base(name) => Priority = Const.PRIOR_VAR;
+        public VariableEntity(string name) : base(name, Type.VARIABLE) => Priority = Const.PRIOR_VAR;
         public static implicit operator VariableEntity(string name) => new VariableEntity(name);
     }
     public class OperatorEntity : Entity
     {
-        public OperatorEntity(string name, int priority) : base(name) {
+        public OperatorEntity(string name, int priority) : base(name, Type.OPERATOR) {
             Priority = priority;
         }
     }
     public class FunctionEntity : Entity
     {
-        public FunctionEntity(string name) : base(name) => Priority = Const.PRIOR_FUNC;
+        public FunctionEntity(string name) : base(name, Type.FUNCTION) => Priority = Const.PRIOR_FUNC;
     }
 }

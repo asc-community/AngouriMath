@@ -11,14 +11,18 @@ namespace AngouriMath
     {
         internal string Hash(SortLevel level)
         {
-            if (this is FunctionEntity)
+            if (this.type == Entity.Type.FUNCTION)
                 return this.Name + "_" + string.Join("_", from child in Children select child.Hash(level));
-            else if (this is NumberEntity)
+            else if (this.type == Type.NUMBER)
                 return level == SortLevel.HIGH_LEVEL ? "" : this.Name + " ";
-            else if (this is VariableEntity)
+            else if (this.type == Entity.Type.VARIABLE)
                 return "v_" + Name;
             else
-                return (level == SortLevel.LOW_LEVEL ? this.Name + "_" : "") + string.Join("_", from child in Children where child.Hash(level) != "" select child.Hash(level));
+                return (level == SortLevel.LOW_LEVEL ? this.Name + "_" : "") + string.Join("_", 
+                    from child in Children
+                    let hash = child.Hash(level)
+                    where !string.IsNullOrEmpty(hash)
+                    select hash);
 
         }
 
