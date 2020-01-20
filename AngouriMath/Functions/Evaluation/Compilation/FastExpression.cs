@@ -23,7 +23,8 @@ namespace AngouriMath
             var strings = new List<string>();
             foreach (var varEnt in variables)
                 strings.Add(varEnt.Name);
-            return Compile(strings.ToArray());
+            return SubstituteConstants()
+                .Compile(strings.ToArray());
         }
 
         /// <summary>

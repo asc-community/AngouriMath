@@ -3,8 +3,20 @@ using AngouriMath.Core.TreeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
+namespace AngouriMath
+{
 
+    public static partial class MathS
+    {
+        internal static Dictionary<string, Number> ConstantList = new Dictionary<string, Number>
+        {
+            { "pi", Math.PI },
+            { "e", Math.E }
+        };
+    }
+}
 
 namespace AngouriMath
 {
@@ -102,16 +114,21 @@ namespace AngouriMath
             }
         }
 
+        public Entity SubstituteConstants()
+        {
+            Entity curr = this.DeepCopy();  // Instead of copying in substitute, 
+            // we better copy first and then do inPlace substitute
+            foreach (var pair in MathS.ConstantList)
+                curr.Substitute(pair.Key, pair.Value, inPlace: true);
+            return curr;
+        }
+
         /// <summary>
         /// Simplification synonim. Recommended to use in case of computing a 
         /// concrete number.
         /// </summary>
         /// <returns></returns>
-        public Entity Eval() =>  // TODO
-            Substitute(MathS.pi, Math.PI)
-            .Substitute(MathS.e, Math.E)
-            .Simplify(0)
-            ;
+        public Entity Eval() => SubstituteConstants().Simplify(0);
     }
 
     // Adding invoke table for eval
