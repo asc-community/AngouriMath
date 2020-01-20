@@ -24,7 +24,7 @@ namespace AngouriMath
         {
             if (IsLeaf)
             {
-                if (!(this is Pattern))
+                if (!(this.type == Entity.Type.PATTERN))
                     return this.Name.Length == 0 || this.Name[0] != '-' ? this.Name : "(" + this.Name + ")";
                 else
                     return "{ " + PatternNumber + " : " + PatternType + " }";
@@ -73,7 +73,7 @@ namespace AngouriMath
         public static string Stringize(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(args[1] is OperatorEntity && args[1].Priority <= Const.PRIOR_DIV);
+            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(args[1].type == Entity.Type.OPERATOR && args[1].Priority <= Const.PRIOR_DIV);
         }
     }
     public static partial class Sinf

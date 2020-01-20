@@ -16,7 +16,7 @@ namespace AngouriMath
         internal string Latexise(bool parenthesesRequired)
         {
             if (IsLeaf)
-                return this is NumberEntity ? this.GetValue().ToString() : this.ToString();
+                return this.type == Type.NUMBER ? this.GetValue().ToString() : this.ToString();
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired);
         }

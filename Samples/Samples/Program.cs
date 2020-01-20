@@ -132,10 +132,6 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            var x = new VariableEntity("x");
-            var func = MathS.Arcsin(x * 3) + MathS.Arccos(x * 3);
-            Console.WriteLine(func.Simplify());
-
             Entity expr = "(x - goose) (x - 2) (x - 3)";
             expr = expr.Expand();
             Console.WriteLine(expr.Solve("x"));

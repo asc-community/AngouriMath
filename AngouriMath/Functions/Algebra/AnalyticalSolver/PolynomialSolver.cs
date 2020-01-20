@@ -14,7 +14,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             expr = expr.Expand(); // (x + 1) * x => x^2 + x
             List<Entity> children;
             EntitySet res = new EntitySet();
-            if (expr is OperatorEntity && expr.Name == "sumf" || expr.Name == "minusf")
+            if (expr.type == Entity.Type.OPERATOR && expr.Name == "sumf" || expr.Name == "minusf")
                 children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
             else
                 children = new List<Entity> { expr };
@@ -112,12 +112,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             freeMono = 1; // a * b
             power = 0;  // x ^ 3
             foreach(var mp in TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul))
-                if (mp is OperatorEntity && 
+                if (mp.type == Entity.Type.OPERATOR && 
                     mp.Name == "powf" && 
                     mp.Children[0] == aVar)
                 {
                     // x ^ a is bad
-                    if (!(mp.Children[1] is NumberEntity))
+                    if (!(mp.Children[1].type == Entity.Type.NUMBER))
                     {
                         freeMono = null;
                         power = 0;

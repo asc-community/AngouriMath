@@ -13,7 +13,7 @@ namespace AngouriMath
         /// <returns></returns>
         public Number GetValue()
         {
-            if (this is NumberEntity)
+            if (this.type == Type.NUMBER)
                 return (this as NumberEntity).Value;
             else
                 throw new MathSException("Cannot get number from expression");

@@ -113,7 +113,7 @@ namespace AngouriMath.Core.FromString
             {
                 throw new ParseException("Empty expression");
             }
-            if (linearExpression[linearExpression.Count - 1] is OperatorEntity &&
+            if (linearExpression[linearExpression.Count - 1].type == Entity.Type.OPERATOR &&
                 linearExpression[linearExpression.Count - 1].IsLeaf) //check case `2 + 3 - `
             {
                 throw new ParseException("Expected expression not to end with operator");
@@ -126,7 +126,7 @@ namespace AngouriMath.Core.FromString
             while(i < expr.Count - 1)
             {
                 var id = reversed ? expr.Count - i - 1 : i;
-                if(expr[id].IsLeaf && expr[id] is OperatorEntity && op.Contains(expr[id].Name))
+                if(expr[id].IsLeaf && expr[id].type == Entity.Type.OPERATOR && op.Contains(expr[id].Name))
                 {
                     expr[id].Children.Add(expr[id - 1]);
                     expr[id].Children.Add(expr[id + 1]);

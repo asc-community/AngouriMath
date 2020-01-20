@@ -98,11 +98,11 @@ namespace AngouriMath
 
             for (int i = Children.Count - 1; i >= 0; i--)
                 Children[i].InnerCompile(fe, variables, varNamespace);
-            if (this is OperatorEntity || this is FunctionEntity)
+            if (this.type == Entity.Type.OPERATOR || this.type == Entity.Type.FUNCTION)
                 fe.instructions.AddCallInstruction(Name, Children.Count);
-            else if (this is NumberEntity)
+            else if (this.type == Type.NUMBER)
                 fe.instructions.AddPushNumInstruction(GetValue().value);
-            else if (this is VariableEntity)
+            else if (this.type == Entity.Type.VARIABLE)
                 fe.instructions.AddPushVarInstruction(varNamespace[Name]);
             else
                 throw new SysException("Unknown entity");
