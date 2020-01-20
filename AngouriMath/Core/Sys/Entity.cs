@@ -105,10 +105,12 @@ namespace AngouriMath
     }
     public class NumberEntity : Entity
     {
-        public NumberEntity(Number value) : base(value.ToString(), Type.NUMBER) {
+        public NumberEntity(Number value) : base(value.ToString(), Type.NUMBER) 
+        {
             Priority = Const.PRIOR_NUM;
             Value = value;
         }
+
         public Number Value { get; internal set; }
         public new string Name { get => Value.ToString(); }
         public static implicit operator NumberEntity(int num) => new NumberEntity(num);
