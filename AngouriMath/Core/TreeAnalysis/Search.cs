@@ -35,6 +35,16 @@ namespace AngouriMath.Core.TreeAnalysis
             foreach (var l in list)
                 Add(l);
         }
+        public EntitySet(params Entity[] entites)
+        {
+            foreach (var el in entites)
+                Add(el);
+        }
+        public EntitySet(IEnumerable<Entity> list)
+        {
+            foreach (var el in list)
+                Add(el);
+        }
     }
     internal static partial class TreeAnalyzer
     {

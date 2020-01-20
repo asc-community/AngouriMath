@@ -7,10 +7,10 @@ namespace UnitTests
     [TestClass]
     public class SolveTest
     {
+        public static VariableEntity x = "x";
         [TestMethod]
         public void Test1()
         {
-            var x = MathS.Var("x");
             var eq = (x - 1) * (x - 2);
             var roots = eq.SolveNt(x);
             Assert.IsTrue(roots.Count == 2);
@@ -20,7 +20,6 @@ namespace UnitTests
         [TestMethod]
         public void Test2()
         {
-            var x = MathS.Var("x");
             var eq = MathS.Sqr(x) + 1;
             var roots = eq.SolveNt(x);
             Assert.IsTrue(roots.Count == 2);
@@ -30,7 +29,6 @@ namespace UnitTests
         [TestMethod]
         public void Test3()
         {
-            var x = MathS.Var("x");
             var eq = new NumberEntity(1);
             var roots = eq.SolveNt(x);
             Assert.IsTrue(roots.Count == 0);
@@ -38,7 +36,6 @@ namespace UnitTests
         [TestMethod]
         public void Test4()
         {
-            var x = MathS.Var("x");
             var eq = x.Pow(2) + 2 * x + 1;
             MathS.EQUALITY_THRESHOLD = 1.0e-6;
             var roots = eq.SolveNt(x, precision: 100);
@@ -50,7 +47,6 @@ namespace UnitTests
         public void Test5()
         {
             // solve x2 + 2x + 2
-            var x = MathS.Var("x");
             var eq = x.Pow(2) + 2 * x + 2;
             var roots = eq.Solve("x");
             var r1 = MathS.FromString("-1 + 1i").Simplify();
@@ -65,7 +61,6 @@ namespace UnitTests
         public void Test6()
         {
             // solve 2x2 + 4x + 2
-            var x = MathS.Var("x");
             var eq = 2 * x.Pow(2) + 4 * x + 2;
             var roots = eq.Solve("x");
             Assert.IsTrue(roots.Count == 1 && roots[0] == -1, string.Format("roots: {0}, expected: [-1]", roots));
@@ -75,7 +70,6 @@ namespace UnitTests
         public void Test7()
         {
             // solve x2 - 3x + 2
-            var x = MathS.Var("x");
             var eq = x.Pow(2) - 3 * x + 2;
             var roots = eq.Solve("x");
 
@@ -88,7 +82,6 @@ namespace UnitTests
         public void Test8()
         {
             // solve x3 + 3x2 + 3x + 1
-            var x = MathS.Var("x");
             var eq = x.Pow(3) + 3 * x.Pow(2) + 3 * x + 1;
             var roots = eq.Solve("x");
             Assert.IsTrue(roots.Count == 1 && roots[0] == -1, string.Format("roots: {0}, expected: [-1]", roots));
@@ -98,7 +91,6 @@ namespace UnitTests
         public void Test9()
         {
             // solve x3 - 6x2 + 11x - 6
-            var x = MathS.Var("x");
             var eq = x.Pow(3) - 6 * x.Pow(2) + 11 * x - 6;
             var roots = eq.Solve("x");
             Assert.IsTrue(roots.Count == 3 &&
@@ -109,6 +101,11 @@ namespace UnitTests
                  (roots[0] == 3 && roots[1] == 2 && roots[2] == 1) ||
                  (roots[0] == 3 && roots[1] == 1 && roots[2] == 2)),
                 string.Format("roots: {0}, expected: [1, 2, 3]", roots));
+        }
+        [TestMethod]
+        public void Test10()
+        {
+            
         }
     }
 }

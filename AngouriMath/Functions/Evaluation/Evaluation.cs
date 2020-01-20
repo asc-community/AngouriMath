@@ -2,6 +2,7 @@
 using AngouriMath.Core.TreeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 
@@ -92,11 +93,13 @@ namespace AngouriMath
         internal Entity InnerSimplify()
         {
             if (IsLeaf)
-            {
                 return this;
-            }
             else
+            {
+                if (Children.Any(el => el.type == Entity.Type.NUMBER && el.GetValue().IsNull))
+                    return Number.Null;
                 return MathFunctions.InvokeEval(Name, Children);
+            }
         }
 
         /// <summary>

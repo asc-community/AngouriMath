@@ -115,6 +115,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 res.Add(0);
                 return res;
             }
+            else if (powers.Count == 2)
+            {
+                // Provided a x ^ n + b x ^ m = 0
+                // a = -b x ^ (m - n)
+                // (- a / b) ^ (1 / (m - n)) = x
+                res.Add(MathS.Pow(-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]], 1.0 / (powers[1] - powers[0])));
+                return res;
+            }
             // By this moment we know for sure that expr's power is <= 4, that expr is not a monomial,
             // and that it consists of more than 2 monomials
             else if (powers.Last() == 2)

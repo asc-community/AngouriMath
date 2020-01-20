@@ -132,10 +132,26 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity expr = "(x - goose) (x - 2) (x - 3)";
-            expr = expr.Expand();
-            Console.WriteLine(expr.Simplify());
-            Console.WriteLine(expr.Solve("x"));
+            /*
+            Entity expr = "(t - goose)(t + 2momo)(t + sqrt(k))";
+            var sol = expr.Expand().Solve("t")[0];
+            Console.WriteLine(expr
+                .Substitute("t", sol)
+                .Substitute("goose", 3)
+                .Substitute("momo", 4)
+                .Substitute("k", 6)
+                .Eval());
+                */
+            /*
+        Entity expr = "sin(x)2 + sin(x) - 0.5";
+        foreach (var root in expr.Solve("x"))
+            Console.WriteLine(root);*/
+            VariableEntity x = "x";
+            VariableEntity goose = "goose";
+            var eq = MathS.FromString("(t - goose)(t + 2momo)(t + sqrt(k))").Expand();
+            //var eq = MathS.FromString("(t - goose)(t - 2)(t - 3)").Expand();
+            var roots = eq.Solve("t");
+            Console.WriteLine(roots);
         }
     }
 #pragma warning restore IDE0051
