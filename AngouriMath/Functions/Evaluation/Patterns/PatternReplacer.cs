@@ -8,6 +8,16 @@ namespace AngouriMath
 {
     public abstract partial class Entity
     {
+        public readonly Type type;
+
+        public enum Type
+        {
+            NUMBER,
+            FUNCTION,
+            OPERATOR,
+            VARIABLE,
+            PATTERN,
+        }
         internal enum PatType
         {
             NONE,
@@ -21,12 +31,12 @@ namespace AngouriMath
         internal PatType PatternType { get; set; }
         internal static bool PatternMatches(Entity pattern, Entity tree)
         {
-            if (!(pattern.PatternType == PatType.NUMBER && tree is NumberEntity ||
-                   pattern.PatternType == PatType.FUNCTION && tree is FunctionEntity ||
-                   pattern.PatternType == PatType.OPERATOR && tree is OperatorEntity ||
-                   pattern.PatternType == PatType.VARIABLE && tree is VariableEntity))
+            if (!(pattern.PatternType == PatType.NUMBER && tree.type == Type.NUMBER ||
+                   pattern.PatternType == PatType.FUNCTION && tree.type == Type.FUNCTION ||
+                   pattern.PatternType == PatType.OPERATOR && tree.type == Type.OPERATOR ||
+                   pattern.PatternType == PatType.VARIABLE && tree.type == Type.VARIABLE))
                 return false;
-            return pattern.Name == "" || pattern.Name == tree.Name;
+            return string.IsNullOrEmpty(pattern.Name) || pattern.Name == tree.Name;
         }
 
         /// <summary>
@@ -152,7 +162,7 @@ namespace AngouriMath
                     return false;
                 for (int i = 0; i < Children.Count; i++)
                 {
-                    if (!(pattern.Children[i] is Pattern))
+                    if (!(pattern.Children[i].type == Type.PATTERN))
                         throw new SysException("Numbers in pattern should look like Num(3)");
                     if (!Children[i].PatternMakeMatch((pattern.Children[i] as Pattern), matchings))
                         return false;
@@ -176,7 +186,7 @@ namespace AngouriMath
         /// <returns></returns>
         internal Entity BuildTree(Dictionary<int, Entity> keys)
         {
-            if (!(this is Pattern))
+            if (!(this.type == Entity.Type.PATTERN))
                 return this;
             if (keys.ContainsKey(PatternNumber))
                 return keys[PatternNumber];
@@ -225,7 +235,7 @@ namespace AngouriMath
 
     internal class Pattern : Entity
     {
-        public Pattern(int num, PatType type, string name = "") : base(name) {
+        public Pattern(int num, PatType type, string name = "") : base(name, Type.PATTERN) {
             PatternNumber = num;
             PatternType = type;
         }
@@ -257,12 +267,11 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
-        internal static Entity ReplaceOne(Entity source, Pattern oldPattern, Entity newPattern)
+        internal static void ReplaceOneInPlace(ref Entity source, Pattern oldPattern, Entity newPattern)
         {
-            var src = source.DeepCopy();
-            var sub = src.FindPatternSubtree(oldPattern);
-            if (sub == null)
-                return src;
+            var sub = source.FindPatternSubtree(oldPattern);
+            if (sub == null) return;
+
             Dictionary<int, Entity> nodeList;
             try
             {
@@ -273,15 +282,16 @@ namespace AngouriMath.Core.TreeAnalysis
                 throw new SysException("Error `" + error.Message + "` in pattern " + oldPattern.ToString());
             }
             var newNode = newPattern.BuildTree(nodeList);
-            
+
             if (oldPattern.Match(source))
-                return newNode;
+            {
+                source = newNode;
+            }
             else
             {
-                var parent = src.FindParent(sub);
-                var number = src.FindChildrenNumber(sub);
+                var parent = source.FindParent(sub);
+                var number = source.FindChildrenNumber(sub);
                 parent.Children[number] = newNode;
-                return src;
             }
         }
 
@@ -297,18 +307,32 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <returns></returns>
         internal static Entity Replace(RuleList rules, Entity source)
         {
-            // TODO
+            HashSet<string> replaced = new HashSet<string>();
             var res = source.DeepCopy();
-            Entity prev;
-            do
+            string hash;
+            while (!replaced.Contains(hash = res.GetHashCode()))
             {
-                prev = res.DeepCopy();
+                replaced.Add(hash);
                 foreach (var pair in rules)
                 {
-                    res = ReplaceOne(res, pair.Key, pair.Value);
+                    ReplaceOneInPlace(ref res, pair.Key, pair.Value);
                 }
-            } while (prev != res);
+            }
             return res;
+        }
+
+        internal static void ReplaceInPlace(RuleList rules, ref Entity source)
+        {
+            HashSet<string> replaced = new HashSet<string>();
+            string hash;
+            while (!replaced.Contains(hash = source.GetHashCode()))
+            {
+                replaced.Add(hash);
+                foreach (var pair in rules)
+                {
+                    ReplaceOneInPlace(ref source, pair.Key, pair.Value);
+                }
+            }
         }
     }
 }
