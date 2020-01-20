@@ -21,7 +21,8 @@ namespace AngouriMath
         public string Name = string.Empty;
 
         public bool IsLeaf { get => Children.Count == 0; }
-        protected Entity(string name, EntType type)
+        /* changed from protected to internal due to protection level of EntType */
+        internal Entity(string name, EntType type)
         {
             this.entType = type;
             Children = new List<Entity>();

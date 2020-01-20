@@ -7,7 +7,7 @@ namespace UnitTests
     [TestClass]
     public class FromStringTest
     {
-        public static VariableEntity x = MathS.Var("x");
+        public static readonly VariableEntity x = MathS.Var("x");
         [TestMethod]
         public void Test1()
         {

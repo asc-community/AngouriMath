@@ -6,7 +6,7 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     public class EntitySet : List<Entity>
     {
-        private HashSet<string> exsts = new HashSet<string>();
+        private readonly HashSet<string> exsts = new HashSet<string>();
         public override string ToString()
         {
             return "[" + string.Join(", ", this) + "]";
@@ -48,9 +48,6 @@ namespace AngouriMath.Core.TreeAnalysis
     }
     internal static partial class TreeAnalyzer
     {
-
-
-
         internal static void GetUniqueVariables(Entity expr, EntitySet dst)
         {
             if (expr.entType == Entity.EntType.VARIABLE)

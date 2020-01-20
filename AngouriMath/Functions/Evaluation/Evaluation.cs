@@ -10,7 +10,7 @@ namespace AngouriMath
 
     public static partial class MathS
     {
-        internal static Dictionary<string, Number> ConstantList = new Dictionary<string, Number>
+        internal static readonly Dictionary<string, Number> ConstantList = new Dictionary<string, Number>
         {
             { "pi", Math.PI },
             { "e", Math.E }

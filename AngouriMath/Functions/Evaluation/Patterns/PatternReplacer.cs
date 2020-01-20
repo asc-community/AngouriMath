@@ -8,9 +8,9 @@ namespace AngouriMath
 {
     public abstract partial class Entity
     {
-        public readonly EntType entType;
+        internal readonly EntType entType;
 
-        public enum EntType
+        internal enum EntType
         {
             NUMBER,
             FUNCTION,
@@ -161,7 +161,7 @@ namespace AngouriMath
                     return false;
                 for (int i = 0; i < Children.Count; i++)
                 {
-                    if (!(pattern.Children[i].entType == EntType.PATTERN))
+                    if (pattern.Children[i].entType != EntType.PATTERN)
                         throw new SysException("Numbers in pattern should look like Num(3)");
                     if (!Children[i].PatternMakeMatch((pattern.Children[i] as Pattern), matchings))
                         return false;

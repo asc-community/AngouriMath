@@ -9,7 +9,7 @@ namespace AngouriMathPlot
 {
     public class AMPlotter
     {
-        private FormsPlot destination;
+        private readonly FormsPlot destination;
         private List<FastExpression> functions;
         private double[] dataX;
         private double[] dataY;
