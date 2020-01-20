@@ -88,6 +88,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 return monomialsByPower.ContainsKey(power) ? monomialsByPower[power] : 0;
             }
 
+            // here we fill the dictionary with information about monomials' coefficiants
             foreach (var child in children)
             {
                 Entity free;

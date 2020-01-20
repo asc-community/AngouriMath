@@ -173,20 +173,21 @@ namespace AngouriMath.Core.TreeAnalysis
             Entity a = func.Children[0];
             Entity b = func.Children.Count == 2 ? func.Children[1] : null;
             int arg = func.Children.Count == 2 && func.Children[1].FindSubtree(x) != null ? 1 : 0;
+            var n = MathS.Var("n");
             switch (func.Name)
             {
                 case "sinf":
                     // sin(x) = value => x = arcsin(value)
-                    return FindInvertExpression(a, MathS.Arcsin(value), x);
+                    return 2 * n * MathS.pi + FindInvertExpression(a, MathS.Arcsin(value), x);
                 case "cosf":
                     // cos(x) = value => x = arccos(value)
-                    return FindInvertExpression(a, MathS.Arccos(value), x);
+                    return 2 * n * MathS.pi + FindInvertExpression(a, MathS.Arccos(value), x);
                 case "tanf":
                     // tan(x) = value => x = arctan(value)
-                    return FindInvertExpression(a, MathS.Arctan(value), x);
+                    return n * MathS.pi + FindInvertExpression(a, MathS.Arctan(value), x);
                 case "cotanf":
                     // cotan(x) = value => x = arccotan(value)
-                    return FindInvertExpression(a, MathS.Arccotan(value), x);
+                    return n * MathS.pi + FindInvertExpression(a, MathS.Arccotan(value), x);
                 case "arcsinf":
                     // arcsin(x) = value => x = sin(value)
                     return FindInvertExpression(a, MathS.Sin(value), x);

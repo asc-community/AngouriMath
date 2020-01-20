@@ -104,7 +104,7 @@ namespace AngouriMath
         /// concrete number.
         /// </summary>
         /// <returns></returns>
-        public Entity Eval() => 
+        public Entity Eval() =>  // TODO
             Substitute(MathS.pi, Math.PI)
             .Substitute(MathS.e, Math.E)
             .Simplify(0)

@@ -132,10 +132,10 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity eq = "2x2 + 4x + 2";
-            Console.WriteLine(eq.Solve("x"));
-            Entity expr = "(1 - x) / (1 + x) * (x2 - 1)";
+            Entity expr = "(x - goose) (x - 2) (x - 3)";
+            expr = expr.Expand();
             Console.WriteLine(expr.Simplify());
+            Console.WriteLine(expr.Solve("x"));
         }
     }
 #pragma warning restore IDE0051
