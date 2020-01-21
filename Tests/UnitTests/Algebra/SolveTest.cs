@@ -149,7 +149,9 @@ namespace UnitTests
                            (x - rand.Next(0, 10)) *
                            (x - rand.Next(0, 10));
                 var newexpr = expr.Expand();
-                foreach (var root in newexpr.Solve(x))
+                var roots = newexpr.Solve(x);
+                Assert.IsTrue(roots.Count > 0);
+                foreach (var root in roots)
                     AssertRoots(newexpr, x, root);
             }
         }
@@ -183,6 +185,31 @@ namespace UnitTests
             AssertRoots(eq, x, roots[0]);
             AssertRoots(eq, x, roots[1]);
             AssertRoots(eq, x, roots[2]);
+        }
+        [TestMethod]
+        public void TestVars4()
+        {
+            var goose = MathS.Var("goose");
+            var momo = MathS.Var("momo");
+            var quack = MathS.Var("quack");
+            var eq = ((x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)).Expand();
+            var roots = eq.Solve(x);
+            Assert.IsNotNull(roots);
+            Assert.IsTrue(roots.Count == 4);
+            AssertRoots(eq, x, roots[0]);
+            AssertRoots(eq, x, roots[1]);
+            AssertRoots(eq, x, roots[2]);
+            AssertRoots(eq, x, roots[3]);
+        }
+        [TestMethod]
+        public void TestVars2_0()
+        {
+            var goose = MathS.Var("goose");
+            var momo = MathS.Var("momo");
+            var eq = ((x - momo) * (x - goose)).Expand();
+            var roots = eq.Solve(x);
+            AssertRoots(eq, x, roots[0]);
+            AssertRoots(eq, x, roots[1]);
         }
     }
 }

@@ -6,7 +6,6 @@ using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolver
 {
-
     internal static class PolynomialSolver
     {
         // solves ax2 + bx + c
@@ -20,33 +19,58 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
         }
 
         // solves ax3 + bx2 + cx + d
-        private static EntitySet SolveQubic(Entity a, Entity b, Entity c, Entity d)
+        private static EntitySet SolveCubic(Entity a, Entity b, Entity c, Entity d)
         {
             // en: https://en.wikipedia.org/wiki/Cubic_equation
             // ru: https://ru.wikipedia.org/wiki/%D0%A4%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B0_%D0%9A%D0%B0%D1%80%D0%B4%D0%B0%D0%BD%D0%BE
 
+            // TODO (to remove sympy code!)
+
             EntitySet res = new EntitySet();
 
-            var p = ((3 * a * c - MathS.Sqr(b)) / (3 * MathS.Sqr(a)));
-            var q = ((2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d) / (27 * MathS.Pow(a, 3)));
+            if (a.entType == Entity.EntType.NUMBER &&
+                b.entType == Entity.EntType.NUMBER &&
+                c.entType == Entity.EntType.NUMBER &&
+                d.entType == Entity.EntType.NUMBER)
+            {
+                var p = ((3 * a * c - MathS.Sqr(b)) / (3 * MathS.Sqr(a))).Simplify();
+                var q = ((2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d) / (27 * MathS.Pow(a, 3))).Simplify();
 
-            var Q = (MathS.Pow(p / 3, 3) + MathS.Sqr(q / 2));
+                var Q = MathS.Pow(p / 3, 3) + MathS.Sqr(q / 2);
 
-            var alpha = (MathS.Pow(-q / 2 + MathS.Sqrt(Q), 1.0 / 3.0));
-            var beta = (MathS.Pow(-q / 2 - MathS.Sqrt(Q), 1.0 / 3.0));
+                var alpha = (MathS.Pow(-q / 2 + MathS.Sqrt(Q), 1.0 / 3.0));
+                var beta = (MathS.Pow(-q / 2 - MathS.Sqrt(Q), 1.0 / 3.0));
 
-            var y1 = alpha + beta;
-            var y2 = (-(alpha + beta) / 2 + MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
-            var y3 = (-(alpha + beta) / 2 - MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
+                var y1 = alpha + beta;
+                var y2 = (-(alpha + beta) / 2 + MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
+                var y3 = (-(alpha + beta) / 2 - MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
 
-            var x1 = y1 - b / (3 * a);
-            var x2 = y2 - b / (3 * a);
-            var x3 = y3 - b / (3 * a);
+                var x1 = y1 - b / (3 * a);
+                var x2 = y2 - b / (3 * a);
+                var x3 = y3 - b / (3 * a);
 
-            res.Add(x1);
-            res.Add(x2);
-            res.Add(x3);
-            return res;
+                res.Add(x1);
+                res.Add(x2);
+                res.Add(x3);
+
+                return res;
+            }
+            else
+            {
+                // TO REMOVE
+                var coeff = MathS.i * MathS.Sqrt(3) / 2;
+
+                var u1 = new NumberEntity(1);
+                var u2 = -1.0 / 2 + coeff;
+                var u3 = -1.0 / 2 - coeff;
+                var D0 = MathS.Sqr(b) - 3 * a * c;
+                var D1 = 2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d;
+                var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, 1.0 / 3);
+
+                foreach (var uk in new List<Entity> { u1, u2, u3 })
+                    res.Add(-(b + uk * C + D0 / C / uk) / 3 / a);
+                return res;
+            }
         }
 
         // solves hx4 + ax3 + bx2 + cx + d
@@ -63,8 +87,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             d = d / h;
             // find roots of equation y3 - b * y2 + (ac - 4d) * y - (a2 * d + 4bd - c2)
 
-            var roots = SolveQubic(1, b, (a * c - 4 * d), (MathS.Sqr(a) * d + 4 * b * d - MathS.Sqr(c)));
-            //TO DO: peek any root from [roots] to solve equation
+            var roots = SolveCubic(1, b, (a * c - 4 * d), (MathS.Sqr(a) * d + 4 * b * d - MathS.Sqr(c)));
+            //TODO: peek any root from [roots] to solve equation
 
             return res;
         }
@@ -146,7 +170,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 var c = GetMonomialByPower(1);
                 var d = GetMonomialByPower(0);
 
-                return SolveQubic(a, b, c, d);
+                return SolveCubic(a, b, c, d);
             }
             else if (powers.Last() == 4)
             {

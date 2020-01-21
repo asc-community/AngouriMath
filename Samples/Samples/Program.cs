@@ -133,11 +133,12 @@ namespace Samples
         static void Main(string[] _)
         {
             var x = MathS.Var("x");
-            var goose = MathS.Var("goose");
-            var momo = MathS.Var("momo");
-            var eq = ((x - goose) * (x + goose * momo) * (x - momo * 2)).Expand();
-            var roots = eq.Solve(x);
-            Console.WriteLine(roots[0].Substitute(goose, 3).Simplify());
+            var a = MathS.Var("a");
+            var b = MathS.Var("b");
+            var eq = ((x - a) * (x - 1) * (x - 2)).Expand();
+            Console.WriteLine(eq.Substitute(x, eq.Solve(x)[2]).Substitute(a, 3).Eval());
+            //var roots = eq.Solve(x);
+            //Console.WriteLine(roots[0].Substitute(goose, 3).Simplify());
             //var roots = eq.Substitute(goose, 3).Substitute(momo, 3).Solve(x);
             //Console.WriteLine(roots[0]);
             /*
