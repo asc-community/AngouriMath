@@ -114,7 +114,7 @@ namespace Samples
         }
         static void Sample15()
         {
-            Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
+            Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3)x + 2 + 3x2 + (x - 3)x3)";
             foreach (var root in expr.Solve("x"))
                 Console.WriteLine(root);
         }
@@ -132,9 +132,9 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity expr = "x + goose + y + pi * e";
-            foreach (var r in MathS.GetUniqueVariables(expr))
-                Console.WriteLine(r);
+            var x = MathS.Var("x"); var y = MathS.Var("y");
+            var expr = x * y + x;
+            Console.WriteLine(expr.Collapse());
             /*
             Entity expr = "(t - goose)(t + 2momo)(t + sqrt(k))";
             var sol = expr.Expand().Solve("t")[0];

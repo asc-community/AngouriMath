@@ -103,7 +103,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="value"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        public static EntitySet FindInvertExpression(Entity func, Entity value, VariableEntity x)
+        public static EntitySet FindInvertExpression(Entity func, Entity value, Entity x)
         {
             if (func == x)
                 return new EntitySet(value);
@@ -119,7 +119,7 @@ namespace AngouriMath.Core.TreeAnalysis
             return new EntitySet(value);
         }
 
-        public static EntitySet InvertOperatorEntity(OperatorEntity func, Entity value, VariableEntity x)
+        public static EntitySet InvertOperatorEntity(OperatorEntity func, Entity value, Entity x)
         {
             Entity a, un;
             int arg;
@@ -161,10 +161,10 @@ namespace AngouriMath.Core.TreeAnalysis
                     if (arg == 0)
                     {
                         // x ^ a = value => x = value ^ (1/a)
-                        if (value.entType == Entity.EntType.NUMBER && a.entType == Entity.EntType.NUMBER && (1 / a).GetValue().IsInteger())
+                        if (value.entType == Entity.EntType.NUMBER && a.entType == Entity.EntType.NUMBER && a.GetValue().IsInteger())
                         {
                             var res = new EntitySet();
-                            foreach (var root in Number.GetAllRoots(value.GetValue(), (int)((1 / a).GetValue().Re)))
+                            foreach (var root in Number.GetAllRoots(value.GetValue(), (int)(a.GetValue().Re)))
                                 res.AddRange(FindInvertExpression(un, root, x));
                             return res;
                         }
@@ -179,7 +179,7 @@ namespace AngouriMath.Core.TreeAnalysis
             }
         }
 
-        public static EntitySet InvertFunctionEntity(FunctionEntity func, Entity value, VariableEntity x)
+        public static EntitySet InvertFunctionEntity(FunctionEntity func, Entity value, Entity x)
         {
             Entity a = func.Children[0];
             Entity b = func.Children.Count == 2 ? func.Children[1] : null;
@@ -200,32 +200,32 @@ namespace AngouriMath.Core.TreeAnalysis
                     {
                         var inverted = FindInvertExpression(a, MathS.Arcsin(value), x);
                         // sin(x) = value => x = arcsin(value) + 2pi * n
-                        res.AddRange(GetNotNullEntites(inverted).Select(el => el + 2 * pi * n));
+                        res.AddRange(GetNotNullEntites(inverted) + 2 * pi * n);
                         // sin(x) = value => x = pi - arcsin(value) + 2pi * n
-                        res.AddRange(GetNotNullEntites(inverted).Select(el => pi - el + 2 * pi * n));
+                        res.AddRange(pi - GetNotNullEntites(inverted) + 2 * pi * n);
                         return res;
                     }
                 case "cosf":
                     {
                         var inverted = FindInvertExpression(a, MathS.Arccos(value), x);
                         // cos(x) = value => x = arccos(value) + 2pi * n
-                        res.AddRange(GetNotNullEntites(inverted).Select(el => el + 2 * pi * n));
+                        res.AddRange(GetNotNullEntites(inverted) + 2 * pi * n);
                         // cos(x) = value => x = -arccos(value) + 2pi * n
-                        res.AddRange(GetNotNullEntites(inverted).Select(el => -el + 2 * pi * n));
+                        res.AddRange(-1 * GetNotNullEntites(inverted) + 2 * pi * n);
                         return res;
                     }
                 case "tanf":
                     {
                         var inverted = FindInvertExpression(a, MathS.Arctan(value), x);
                         // tan(x) = value => x = arctan(value) + pi * n
-                        res.AddRange(GetNotNullEntites(inverted).Select(el => el + pi * n));
+                        res.AddRange(GetNotNullEntites(inverted) + pi * n);
                         return res;
                     }
                 case "cotanf":
                     {
                         var inverted = FindInvertExpression(a, MathS.Arccotan(value), x);
                         // cotan(x) = value => x = arccotan(value)
-                        res.AddRange(GetNotNullEntites(inverted).Select(el => el + pi * n));
+                        res.AddRange(GetNotNullEntites(inverted) + pi * n);
                         return res;
                     }
                 case "arcsinf":

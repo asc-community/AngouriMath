@@ -9,6 +9,32 @@ namespace UnitTests
     public class SolveTest
     {
         public static VariableEntity x = "x";
+
+        /// <summary>
+        /// Numerically checks if a root fits an equation
+        /// </summary>
+        /// <param name="equation"></param>
+        /// <param name="toSub"></param>
+        /// <param name="varValue"></param>
+        public void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue)
+        {
+            string LimitString(string s)
+            {
+                if (s.Length < 30)
+                    return s;
+                else
+                    return s.Substring(0, 10) + "..." + s.Substring(s.Length - 10, 10);
+            }
+
+            equation = equation.Substitute(toSub, varValue);
+            var allVars = MathS.GetUniqueVariables(equation);
+            string eqNormal = equation.ToString();
+            foreach (var vr in allVars)
+                equation = equation.Substitute(vr.Name, 3 + MathS.i
+                    /* doesn't matter what to sub*/);
+            Assert.IsTrue(Number.Abs(equation.Eval()) < 0.001, "Error is : " + Number.Abs(equation.Eval()).ToString()+ "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
+        }
+
         [TestMethod]
         public void Test1()
         {
@@ -94,14 +120,9 @@ namespace UnitTests
             // solve x3 - 6x2 + 11x - 6
             var eq = x.Pow(3) - 6 * x.Pow(2) + 11 * x - 6;
             var roots = eq.Solve("x");
-            Assert.IsTrue(roots.Count == 3 &&
-                ((roots[0] == 1 && roots[1] == 2 && roots[2] == 3) ||
-                 (roots[0] == 1 && roots[1] == 3 && roots[2] == 2) ||
-                 (roots[0] == 2 && roots[1] == 1 && roots[2] == 3) ||
-                 (roots[0] == 2 && roots[1] == 3 && roots[2] == 1) ||
-                 (roots[0] == 3 && roots[1] == 2 && roots[2] == 1) ||
-                 (roots[0] == 3 && roots[1] == 1 && roots[2] == 2)),
-                string.Format("roots: {0}, expected: [1, 2, 3]", roots));
+            AssertRoots(eq, x, roots[0]);
+            AssertRoots(eq, x, roots[1]);
+            AssertRoots(eq, x, roots[2]);
         }
         [TestMethod]
         public void TestAllNumbers()
@@ -114,24 +135,40 @@ namespace UnitTests
                            (x - rand.Next(0, 10));
                 var newexpr = expr.Expand();
                 foreach (var root in newexpr.Solve(x))
-                {
-                    var num = newexpr.Substitute(x, root).Eval();
-                    Assert.IsTrue(Number.Abs(num) < 0.001, expr.ToString() + "  found root: " + root.ToString());
-                }
+                    AssertRoots(newexpr, x, root);
             }
-        }
-
-        public void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue)
-        {
-
         }
 
         [TestMethod]
         public void TestVars2()
         {
             var goose = MathS.Var("goose");
-            var eq = ((x - goose) * (x - 3) * (x - 4)).Expand();
-            Assert.IsTrue();
+            var eq = ((x - goose) * (x - 3)).Expand();
+            var roots = eq.Solve(x);
+            AssertRoots(eq, x, roots[0]);
+            AssertRoots(eq, x, roots[1]);
+        }
+        [TestMethod]
+        public void TestVars4mp()
+        {
+            var goose = MathS.Var("goose");
+            var eq = ((x - goose) * (x - 3) * (MathS.Sqr(x) - 4));
+            var roots = eq.Solve(x);
+            AssertRoots(eq, x, roots[0]);
+            AssertRoots(eq, x, roots[1]);
+            AssertRoots(eq, x, roots[2]);
+            AssertRoots(eq, x, roots[3]);
+        }
+        [TestMethod]
+        public void TestVars3()
+        {
+            var goose = MathS.Var("goose");
+            var momo = MathS.Var("momo");
+            var eq = ((x - goose) * (x + goose * momo) * (x - momo * 2)).Expand();
+            var roots = eq.Solve(x);
+            AssertRoots(eq, x, roots[0]);
+            AssertRoots(eq, x, roots[1]);
+            AssertRoots(eq, x, roots[2]);
         }
     }
 }

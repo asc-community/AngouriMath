@@ -69,27 +69,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             return res;
         }
 
-
-        /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/
-        internal static EntitySet SolveAsPolynomial(Entity expr, Entity subtree)
+        internal static Dictionary<int, Entity> GatherMonomialInformation(List<Entity> terms, Entity subtree)
         {
-            expr = expr.Expand(); // (x + 1) * x => x^2 + x
-            List<Entity> children;
-            EntitySet res = new EntitySet();
-            if (expr.entType == Entity.EntType.OPERATOR && expr.Name == "sumf" || expr.Name == "minusf")
-                children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
-            else
-                children = new List<Entity> { expr };
-            // Check if all are like {1} * x^n & gather information about them
             var monomialsByPower = new Dictionary<int, Entity>();
-
-            Entity GetMonomialByPower(int power)
-            {
-                return monomialsByPower.ContainsKey(power) ? monomialsByPower[power] : 0;
-            }
-
             // here we fill the dictionary with information about monomials' coefficiants
-            foreach (var child in children)
+            foreach (var child in terms)
             {
                 Entity free;
                 int pow;
@@ -102,6 +86,27 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             }
             foreach (var key in monomialsByPower.Keys.ToList())
                 monomialsByPower[key] = monomialsByPower[key].Simplify();
+            return monomialsByPower;
+        }
+
+        /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/
+        internal static EntitySet SolveAsPolynomial(Entity expr, Entity subtree)
+        {
+            expr = expr.Expand(); // (x + 1) * x => x^2 + x
+            List<Entity> children;
+            EntitySet res = new EntitySet();
+            if (expr.entType == Entity.EntType.OPERATOR && expr.Name == "sumf" || expr.Name == "minusf")
+                children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
+            else
+                children = new List<Entity> { expr };
+            // Check if all are like {1} * x^n & gather information about them
+            var monomialsByPower = GatherMonomialInformation(children, subtree);
+
+            Entity GetMonomialByPower(int power)
+            {
+                return monomialsByPower.ContainsKey(power) ? monomialsByPower[power] : 0;
+            }
+
             var powers = new List<int>(monomialsByPower.Keys);
             if (powers.Count == 0)
                 return null;
@@ -120,7 +125,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 // Provided a x ^ n + b x ^ m = 0
                 // a = -b x ^ (m - n)
                 // (- a / b) ^ (1 / (m - n)) = x
-                res.Add(MathS.Pow(-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]], 1.0 / (powers[1] - powers[0])));
+                // x ^ (m - n) = (-a / b)
+                res.AddRange(TreeAnalyzer.FindInvertExpression(MathS.Pow(subtree, powers[1] - powers[0]), (-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).Simplify(), subtree));
                 return res;
             }
             // By this moment we know for sure that expr's power is <= 4, that expr is not a monomial,
@@ -153,6 +159,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 return SolveQuartic(a, b, c, d, e);
             }
             // TODO maybe throw exception here?
+            // Maybe, who knows...
             else return null;
         }
 

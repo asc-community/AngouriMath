@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace AngouriMath.Core.TreeAnalysis
@@ -45,6 +46,15 @@ namespace AngouriMath.Core.TreeAnalysis
             foreach (var el in list)
                 Add(el);
         }
+        // TODO: needs optimization
+        public static EntitySet operator +(EntitySet set, Entity a) => new EntitySet(set.Select(el => el + a));
+        public static EntitySet operator -(EntitySet set, Entity a) => new EntitySet(set.Select(el => el - a));
+        public static EntitySet operator *(EntitySet set, Entity a) => new EntitySet(set.Select(el => el * a));
+        public static EntitySet operator /(EntitySet set, Entity a) => new EntitySet(set.Select(el => el / a));
+        public static EntitySet operator +(Entity a, EntitySet set) => new EntitySet(set.Select(el => a + el));
+        public static EntitySet operator -(Entity a, EntitySet set) => new EntitySet(set.Select(el => a - el));
+        public static EntitySet operator *(Entity a, EntitySet set) => new EntitySet(set.Select(el => a * el));
+        public static EntitySet operator /(Entity a, EntitySet set) => new EntitySet(set.Select(el => a / el));
     }
     internal static partial class TreeAnalyzer
     {

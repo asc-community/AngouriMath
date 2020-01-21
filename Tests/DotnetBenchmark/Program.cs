@@ -28,7 +28,7 @@ namespace DotnetBenchmark
         [Benchmark]
         public void LinqSin() => linqFunc(3);
         [Benchmark]
-        public void NotCompiled() => multiFuncNotCompiled.Substitute(x, 3).Eval().GetValue();
+        public void NotCompiled() => multiFuncNotCompiled.Substitute(x, 3).Eval();
     }
 
     public class Program
