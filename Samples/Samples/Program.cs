@@ -132,9 +132,14 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            var x = MathS.Var("x"); var y = MathS.Var("y");
-            var expr = x * y + x;
-            Console.WriteLine(expr.Collapse());
+            var x = MathS.Var("x");
+            var goose = MathS.Var("goose");
+            var momo = MathS.Var("momo");
+            var eq = ((x - goose) * (x + goose * momo) * (x - momo * 2)).Expand();
+            var roots = eq.Solve(x);
+            Console.WriteLine(roots[0].Substitute(goose, 3).Simplify());
+            //var roots = eq.Substitute(goose, 3).Substitute(momo, 3).Solve(x);
+            //Console.WriteLine(roots[0]);
             /*
             Entity expr = "(t - goose)(t + 2momo)(t + sqrt(k))";
             var sol = expr.Expand().Solve("t")[0];

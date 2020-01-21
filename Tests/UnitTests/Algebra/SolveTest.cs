@@ -125,7 +125,7 @@ namespace UnitTests
             AssertRoots(eq, x, roots[2]);
         }
         [TestMethod]
-        public void TestAllNumbers()
+        public void TestAllNumbers3()
         {
             var rand = new Random(24 /* seed should be specified due to required determinism*/ );
             for (int i = 0; i < 30; i++)
@@ -138,7 +138,21 @@ namespace UnitTests
                     AssertRoots(newexpr, x, root);
             }
         }
-
+        [TestMethod]
+        public void TestAllNumbers4()
+        {
+            var rand = new Random(24 /* seed should be specified due to required determinism*/ );
+            for (int i = 0; i < 30; i++)
+            {
+                var expr = (x - rand.Next(0, 10)) *
+                           (x - rand.Next(0, 10)) *
+                           (x - rand.Next(0, 10)) *
+                           (x - rand.Next(0, 10));
+                var newexpr = expr.Expand();
+                foreach (var root in newexpr.Solve(x))
+                    AssertRoots(newexpr, x, root);
+            }
+        }
         [TestMethod]
         public void TestVars2()
         {
