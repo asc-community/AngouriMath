@@ -132,8 +132,10 @@ namespace AngouriMath
         /// Simplification synonim. Recommended to use in case of computing a 
         /// concrete number.
         /// </summary>
-        /// <returns></returns>
-        public Entity Eval() => SubstituteConstants().Simplify(0);
+        /// <returns>
+        /// Number since new version
+        /// </returns>
+        public Number Eval() => SubstituteConstants().Simplify(0).GetValue();
     }
 
     // Adding invoke table for eval

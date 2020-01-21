@@ -31,7 +31,7 @@ namespace UnitTests
         [TestMethod]
         public void Test5()
         {
-            Assert.IsTrue(MathS.FromString("3 ^ 3 ^ 3").Eval().GetValue().Re > 10000);
+            Assert.IsTrue(MathS.FromString("3 ^ 3 ^ 3").Eval().Re > 10000);
         }
         [TestMethod]
         public void Test6()

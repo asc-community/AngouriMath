@@ -171,6 +171,18 @@ namespace AngouriMath.Core
                 return !double.IsNaN(a.Re) && !double.IsNaN(a.Im);
             return !(a == b);
         }
+        public static bool operator >(Number a, Number b)
+        {
+            if (a.IsComplex() || b.IsComplex())
+                throw new MathSException("Can't compare complex number with a number");
+            return a.Re > b.Re;
+        }
+        public static bool operator <(Number a, Number b)
+        {
+            if (a.IsComplex() || b.IsComplex())
+                throw new MathSException("Can't compare complex number with a number");
+            return a.Re < b.Re;
+        }
         public static readonly Number Null = new Number(true);
 
         /// <summary>

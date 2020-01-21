@@ -132,6 +132,9 @@ namespace Samples
 
         static void Main(string[] _)
         {
+            Entity expr = "x + goose + y + pi * e";
+            foreach (var r in MathS.GetUniqueVariables(expr))
+                Console.WriteLine(r);
             /*
             Entity expr = "(t - goose)(t + 2momo)(t + sqrt(k))";
             var sol = expr.Expand().Solve("t")[0];

@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 
 namespace UnitTests
 {
@@ -103,9 +104,34 @@ namespace UnitTests
                 string.Format("roots: {0}, expected: [1, 2, 3]", roots));
         }
         [TestMethod]
-        public void Test10()
+        public void TestAllNumbers()
         {
-            
+            var rand = new Random(24 /* seed should be specified due to required determinism*/ );
+            for (int i = 0; i < 30; i++)
+            {
+                var expr = (x - rand.Next(0, 10)) *
+                           (x - rand.Next(0, 10)) *
+                           (x - rand.Next(0, 10));
+                var newexpr = expr.Expand();
+                foreach (var root in newexpr.Solve(x))
+                {
+                    var num = newexpr.Substitute(x, root).Eval();
+                    Assert.IsTrue(Number.Abs(num) < 0.001, expr.ToString() + "  found root: " + root.ToString());
+                }
+            }
+        }
+
+        public void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue)
+        {
+
+        }
+
+        [TestMethod]
+        public void TestVars2()
+        {
+            var goose = MathS.Var("goose");
+            var eq = ((x - goose) * (x - 3) * (x - 4)).Expand();
+            Assert.IsTrue();
         }
     }
 }

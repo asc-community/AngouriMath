@@ -50,9 +50,15 @@ namespace AngouriMath.Core.TreeAnalysis
     {
         internal static void GetUniqueVariables(Entity expr, EntitySet dst)
         {
+            // If it is a variable, we will add it
             if (expr.entType == Entity.EntType.VARIABLE)
-                dst.Add(expr);
+            {
+                // But if it is a constant, we ignore it
+                if (!MathS.ConstantList.ContainsKey(expr.Name))
+                    dst.Add(expr);
+            }
             else
+                // Otherwise, we will try to find unique variables from its children
                 foreach (var child in expr.Children)
                     GetUniqueVariables(child, dst);
         }

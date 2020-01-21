@@ -6,6 +6,7 @@ using System.Text;
 using System.Globalization;
 using System.Linq.Expressions;
 using AngouriMath.Core.FromLinq;
+using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath
 {
@@ -229,6 +230,19 @@ namespace AngouriMath
         {
             var parser = new LinqParser(expr);
             return parser.Parse();
+        }
+
+        /// <summary>
+        /// Returns list of unique variables, for example 
+        /// it extracts `x`, `goose` from (x + 2 * goose) - pi * x
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        public static EntitySet GetUniqueVariables(Entity expr)
+        {
+            var res = new EntitySet();
+            TreeAnalyzer.GetUniqueVariables(expr, res);
+            return res;
         }
     }
 }
