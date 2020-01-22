@@ -139,6 +139,20 @@ namespace UnitTests
             }
         }
         [TestMethod]
+        public void TestAllNumbers3complex()
+        {
+            var rand = new Random(24 /* seed should be specified due to required determinism*/ );
+            for (int i = 0; i < 30; i++)
+            {
+                var expr = (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
+                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
+                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10)));
+                var newexpr = expr.Expand();
+                foreach (var root in newexpr.Solve(x))
+                    AssertRoots(newexpr, x, root);
+            }
+        }
+        [TestMethod]
         public void TestAllNumbers4()
         {
             var rand = new Random(24 /* seed should be specified due to required determinism*/ );
@@ -152,6 +166,21 @@ namespace UnitTests
                 var roots = newexpr.Solve(x);
                 Assert.IsTrue(roots.Count > 0);
                 foreach (var root in roots)
+                    AssertRoots(newexpr, x, root);
+            }
+        }
+        [TestMethod]
+        public void TestAllNumbers4complex()
+        {
+            var rand = new Random(24 /* seed should be specified due to required determinism*/ );
+            for (int i = 0; i < 30; i++)
+            {
+                var expr = (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
+                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
+                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
+                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10)));
+                var newexpr = expr.Expand();
+                foreach (var root in newexpr.Solve(x))
                     AssertRoots(newexpr, x, root);
             }
         }

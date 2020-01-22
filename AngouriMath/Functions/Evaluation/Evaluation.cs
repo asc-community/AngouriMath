@@ -15,6 +15,16 @@ namespace AngouriMath
             { "pi", Math.PI },
             { "e", Math.E }
         };
+        public static bool IsConstant(Entity expr) => (expr.entType == Entity.EntType.VARIABLE && MathS.ConstantList.ContainsKey(expr.Name));
+        public static bool CanBeEvaluated(Entity expr)
+        {
+            if (expr.entType == Entity.EntType.VARIABLE)
+                return IsConstant(expr);
+            for (int i = 0; i < expr.Children.Count; i++)
+                if (!CanBeEvaluated(expr.Children[i]))
+                    return false;
+            return true;
+        }
     }
 }
 

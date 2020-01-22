@@ -18,7 +18,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 return;
             if (ent.entType == Entity.EntType.NUMBER && ent.GetValue().IsNull)
                 return;
-            ent = ent.SimplifyIntelli();
+            ent = ent.Simplify();
             var hash = ent.ToString();
             if (!exsts.Contains(hash))
             {

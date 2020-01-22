@@ -132,35 +132,16 @@ namespace Samples
 
         static void Main(string[] _)
         {
+            var watch = new Stopwatch();
+            watch.Start();
             var x = MathS.Var("x");
-            var a = MathS.Var("a");
-            var b = MathS.Var("b");
-            var eq = ((x - a) * (x - 1) * (x - 2)).Expand();
-            Console.WriteLine(eq.Substitute(x, eq.Solve(x)[2]).Substitute(a, 3).Eval());
-            //var roots = eq.Solve(x);
-            //Console.WriteLine(roots[0].Substitute(goose, 3).Simplify());
-            //var roots = eq.Substitute(goose, 3).Substitute(momo, 3).Solve(x);
-            //Console.WriteLine(roots[0]);
-            /*
-            Entity expr = "(t - goose)(t + 2momo)(t + sqrt(k))";
-            var sol = expr.Expand().Solve("t")[0];
-            Console.WriteLine(expr
-                .Substitute("t", sol)
-                .Substitute("goose", 3)
-                .Substitute("momo", 4)
-                .Substitute("k", 6)
-                .Eval());
-                */
-            /*
-        Entity expr = "sin(x)2 + sin(x) - 0.5";
-        foreach (var root in expr.Solve("x"))
-            Console.WriteLine(root);*/
-            //Entity eq = "sin(x2 + 1)";
-            //var eq = MathS.FromString("(t - goose)(t - 2)(t - 3)").Expand();
-            //Console.WriteLine(eq.Solve("x"));
-            //Console.WriteLine(Number.GetAllRoots(MathS.i, 2));
-            //Entity eq = "x2 + x + 0.3";
-            //Console.WriteLine(eq.Solve("x"));
+            var goose = MathS.Var("goose");
+            var momo = MathS.Var("momo");
+            var quack = MathS.Var("quack");
+            var eq = ((x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)).Expand();
+            var roots = eq.Solve(x);
+            watch.Stop();
+            Console.WriteLine(watch.ElapsedMilliseconds);
         }
     }
 #pragma warning restore IDE0051

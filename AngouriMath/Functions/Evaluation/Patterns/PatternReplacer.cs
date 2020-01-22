@@ -240,6 +240,7 @@ namespace AngouriMath
         }
         internal Dictionary<int, Entity> EqFits(Entity tree)
         {
+            // TODO: optimization
             var res = new Dictionary<int, Entity>();
             if (!tree.PatternMakeMatch(this, res))
                 return null;

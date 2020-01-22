@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using AngouriMath.Convenience;
 using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolver
@@ -61,8 +62,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 var coeff = MathS.i * MathS.Sqrt(3) / 2;
 
                 var u1 = new NumberEntity(1);
-                var u2 = -1.0 / 2 + coeff;
-                var u3 = -1.0 / 2 - coeff;
+                var u2 = SySyn.Rational(-1, 2) + coeff;
+                var u3 = SySyn.Rational(-1, 2) - coeff;
                 var D0 = MathS.Sqr(b) - 3 * a * c;
                 var D1 = 2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d;
                 var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, 1.0 / 3);
@@ -74,23 +75,35 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
         }
 
         // solves hx4 + ax3 + bx2 + cx + d
-        private static EntitySet SolveQuartic(Entity h, Entity a, Entity b, Entity c, Entity d)
+        private static EntitySet SolveQuartic(Entity A, Entity B, Entity C, Entity D, Entity E)
         {
             // en: https://en.wikipedia.org/wiki/Quartic_function
             // ru: https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D1%82%D0%BE%D0%B4_%D0%A4%D0%B5%D1%80%D1%80%D0%B0%D1%80%D0%B8
 
             EntitySet res = new EntitySet();
-            // transform to the form x4 + ax3 + bx2 + cx + d
-            a = a / h;
-            b = b / h;
-            c = c / h;
-            d = d / h;
-            // find roots of equation y3 - b * y2 + (ac - 4d) * y - (a2 * d + 4bd - c2)
 
-            var roots = SolveCubic(1, b, (a * c - 4 * d), (MathS.Sqr(a) * d + 4 * b * d - MathS.Sqr(c)));
-            //TODO: peek any root from [roots] to solve equation
+            var alpha = -3 * MathS.Sqr(B) / (8 * MathS.Sqr(A)) + C / A;
+            var beta = MathS.Pow(B, 3) / (8 * MathS.Pow(A, 3)) - (B * C) / (2 * MathS.Sqr(A)) + D / A;
+            var gamma = -3 * MathS.Pow(B, 4) / (256 * MathS.Pow(A, 4)) + MathS.Sqr(B) * C / (16 * MathS.Pow(A, 3)) - (B * D) / (4 * MathS.Sqr(A)) + E / A;
 
-            return res;
+            var P = -MathS.Sqr(alpha) / 12 - gamma;
+            var Q = -MathS.Pow(alpha, 3) / 108 + alpha * gamma / 3 - MathS.Sqr(beta) / 8;
+            var R = -Q / 2 + MathS.Sqrt(MathS.Sqr(Q) / 4 + MathS.Pow(P, 3) / 27);
+            var U = MathS.Pow(R, 1.0 / 3);
+            if (MathS.CanBeEvaluated(U))
+                U = U.Eval();  // further, we will compare it to 0
+            var y = SySyn.Rational(-5, 6) * alpha + U + (U == 0 ? -MathS.Pow(Q, 1.0 / 3) : -P / (3 * U));
+            var W = MathS.Sqrt(alpha + 2 * y);
+           
+            // Now we need to permutate all four combinations
+            for (int s = -1; s < 1; s += 2)
+                for (int t = -1; t < 1; t += 2)
+                {
+                    var x = -B / (4 * A) + (s * W + t * MathS.Sqrt(-(3 * alpha + 2 * y + s * 2 * beta / W))) / 2;
+                    res.Add(x);
+                }
+
+           return res;
         }
 
         internal static Dictionary<int, Entity> GatherMonomialInformation(List<Entity> terms, Entity subtree)
@@ -101,6 +114,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             {
                 Entity free;
                 int pow;
+                //{(-1) * (-1) * momo * goose * quack * quack * x * x}
                 ParseMonomial(subtree, child, out free, out pow);
                 if (free == null)
                     return null;
@@ -125,6 +139,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 children = new List<Entity> { expr };
             // Check if all are like {1} * x^n & gather information about them
             var monomialsByPower = GatherMonomialInformation(children, subtree);
+
+            if (monomialsByPower == null)
+                return null; // meaning that the given equation is not polynomial
 
             Entity GetMonomialByPower(int power)
             {
@@ -189,7 +206,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
 
         internal static void ParseMonomial(Entity aVar, Entity expr, out Entity freeMono, out int power)
         {
-            expr = expr.Simplify(); // x * x => x ^ 2
             freeMono = 1; // a * b
             power = 0;  // x ^ 3
             foreach(var mp in TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul))
