@@ -128,11 +128,20 @@ namespace Samples
             Console.WriteLine(SySyn.Diff(expr, x, x));
         }
 
+        static void Sample17()
+        {
+            string x = MathS.ToBaseN(-32.25, 4);
+            Console.WriteLine("-32.25(10) = " + x + "(4)");
+            double y = MathS.FromBaseN("AB.3", 16);
+            Console.WriteLine("AB.3(16) = " + y + "(1)");
+        }
+
         static Complex MyFunc(Complex x)
             => x + 3 * x;
 
         static void Main(string[] _)
         {
+            Sample17();
             /*
             var watch = new Stopwatch();
             watch.Start();
@@ -145,7 +154,8 @@ namespace Samples
             watch.Stop();
             Console.WriteLine(watch.ElapsedMilliseconds);
             */
-            Console.WriteLine(SySyn.Evalf(File.ReadAllText("D:/tmp/sdf.expr")));
+            //Console.WriteLine(SySyn.Evalf(File.ReadAllText("D:/tmp/sdf.expr")));
+            Console.WriteLine(MathS.FromBaseN("11011" + "10101" + "01110" + "10101" + "11011", 2));
         }
     }
 #pragma warning restore IDE0051

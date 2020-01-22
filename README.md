@@ -135,6 +135,16 @@ Console.WriteLine(SySyn.Diff(expr, x));
 Console.WriteLine(SySyn.Diff(expr, x, x));
 ```
 
+#### Translate number systems
+```cs
+string x = MathS.ToBaseN(-32.25, 4);
+Console.WriteLine("-32.25(10) = " + x + "(4)");
+double y = MathS.FromBaseN("AB.3", 16);
+Console.WriteLine("AB.3(16) = " + y + "(1)");
+>>> -32.25(10) = -200.1(4)
+>>> AB.3(16) = 171,1875(1)
+```
+
 ### Performance
 Performane improved a lot. Testing on i7-7700HQ and ```expr = MathS.Sin(x)``` we get the following report:
 
