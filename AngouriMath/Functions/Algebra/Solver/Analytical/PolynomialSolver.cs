@@ -43,6 +43,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 var alpha = (MathS.Pow(-q / 2 + MathS.Sqrt(Q), 1.0 / 3.0));
                 var beta = (MathS.Pow(-q / 2 - MathS.Sqrt(Q), 1.0 / 3.0));
 
+                // To find correct beta, you should find such beta that alpha + beta = -p / 3
+                // Such beta always exists
                 if (p.entType == Entity.EntType.NUMBER && 
                     MathS.CanBeEvaluated(alpha) &&
                     MathS.CanBeEvaluated(beta))
@@ -112,11 +114,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             var W = MathS.Sqrt(alpha + 2 * y);
            
             // Now we need to permutate all four combinations
-            for (int s = -1; s < 1; s += 2)
-                for (int t = -1; t < 1; t += 2)
+            for (int s = -1; s <= 1; s += 2)
+                for (int t = -1; t <= 1; t += 2)
                 {
                     var x = -B / (4 * A) + (s * W + t * MathS.Sqrt(-(3 * alpha + 2 * y + s * 2 * beta / W))) / 2;
-                    res.Add(x);
+                    res.Add(x, check: false /* we are sure that there's no such root yet */);
                 }
 
            return res;

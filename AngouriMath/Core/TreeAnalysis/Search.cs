@@ -12,8 +12,14 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             return "[" + string.Join(", ", this) + "]";
         }
-        public new void Add(Entity ent)
+        public new void Add(Entity ent) => Add(ent, true);
+        public void Add(Entity ent, bool check)
         {
+            if (!check)
+            {
+                base.Add(ent);
+                return;
+            }
             if (ent == null)
                 return;
             if (ent.entType == Entity.EntType.NUMBER && ent.GetValue().IsNull)

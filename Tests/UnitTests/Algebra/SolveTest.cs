@@ -246,8 +246,8 @@ namespace UnitTests
             var quack = MathS.Var("quack");
             var eq = ((x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)).Expand();
             var roots = eq.Solve(x);
-            Assert.IsNotNull(roots);
-            Assert.IsTrue(roots.Count == 4);
+            Assert.IsNotNull(roots, "roots is null");
+            Assert.IsTrue(roots.Count == 4, "count of roots is less (" + roots.Count + ") than should be");
             AssertRoots(eq, x, roots[0]);
             AssertRoots(eq, x, roots[1]);
             AssertRoots(eq, x, roots[2]);

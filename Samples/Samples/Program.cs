@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolver;
 using AngouriMath.Convenience;
+using System.IO;
 
 namespace Samples
 {
@@ -132,6 +133,7 @@ namespace Samples
 
         static void Main(string[] _)
         {
+            /*
             var watch = new Stopwatch();
             watch.Start();
             var x = MathS.Var("x");
@@ -142,6 +144,8 @@ namespace Samples
             var roots = eq.Solve(x);
             watch.Stop();
             Console.WriteLine(watch.ElapsedMilliseconds);
+            */
+            Console.WriteLine(SySyn.Evalf(File.ReadAllText("D:/tmp/sdf.expr")));
         }
     }
 #pragma warning restore IDE0051
