@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AngouriMath.Convenience;
+using AngouriMath.Core;
 using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolver
@@ -35,13 +36,28 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 d.entType == Entity.EntType.NUMBER)
             {
                 var p = ((3 * a * c - MathS.Sqr(b)) / (3 * MathS.Sqr(a))).Simplify();
-                var q = ((2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d) / (27 * MathS.Pow(a, 3))).Simplify();
+                var q = ((2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d) / (27 * MathS.Pow(a, 3)));
 
                 var Q = MathS.Pow(p / 3, 3) + MathS.Sqr(q / 2);
 
                 var alpha = (MathS.Pow(-q / 2 + MathS.Sqrt(Q), 1.0 / 3.0));
                 var beta = (MathS.Pow(-q / 2 - MathS.Sqrt(Q), 1.0 / 3.0));
 
+                if (p.entType == Entity.EntType.NUMBER && 
+                    MathS.CanBeEvaluated(alpha) &&
+                    MathS.CanBeEvaluated(beta))
+                {
+                    var beta3 = (-q / 2 - MathS.Sqrt(Q)).Eval();
+                    alpha = alpha.Eval();
+                    beta = beta.Eval();
+                    var p3 = (-p / 3).Eval();
+                    foreach (var root in Number.GetAllRoots(beta3, 3))
+                        if ((root * alpha).Eval() == p3)
+                        {
+                            beta = root;
+                            break;
+                        }
+                }
                 var y1 = alpha + beta;
                 var y2 = (-(alpha + beta) / 2 + MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
                 var y3 = (-(alpha + beta) / 2 - MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));

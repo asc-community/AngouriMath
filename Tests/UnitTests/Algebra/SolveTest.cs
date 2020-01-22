@@ -25,14 +25,21 @@ namespace UnitTests
                 else
                     return s.Substring(0, 10) + "..." + s.Substring(s.Length - 10, 10);
             }
+            string eqNormal = equation.ToString();
+            var err = CheckRoots(equation, toSub, varValue);
+            Assert.IsTrue(err < 0.001, "Error is : " + err + "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
+        }
 
+        public double CheckRoots(Entity equation, VariableEntity toSub, Entity varValue)
+        {
             equation = equation.Substitute(toSub, varValue);
             var allVars = MathS.GetUniqueVariables(equation);
-            string eqNormal = equation.ToString();
+            
             foreach (var vr in allVars)
                 equation = equation.Substitute(vr.Name, 3 + MathS.i
                     /* doesn't matter what to sub*/);
-            Assert.IsTrue(Number.Abs(equation.Eval()) < 0.001, "Error is : " + Number.Abs(equation.Eval()).ToString()+ "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
+
+            return Number.Abs(equation.Eval());
         }
 
         [TestMethod]
@@ -151,6 +158,22 @@ namespace UnitTests
                 foreach (var root in newexpr.Solve(x))
                     AssertRoots(newexpr, x, root);
             }
+        }
+        [TestMethod]
+        public void TestAllNumbers3complexCount()
+        {
+            var rand = new Random(24 /* seed should be specified due to required determinism*/ );
+            int WA = 0;
+            for (int i = 0; i < 30; i++)
+            {
+                var expr = (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
+                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
+                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10)));
+                var newexpr = expr.Expand();
+                foreach (var root in newexpr.Solve(x))
+                    WA += CheckRoots(newexpr, x, root) > 0.001 ? 1 : 0;
+            }
+            Assert.IsTrue(WA == 0, "WA count: " + WA);
         }
         [TestMethod]
         public void TestAllNumbers4()
