@@ -7,6 +7,7 @@ using System.Linq.Expressions;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolver;
 using AngouriMath.Convenience;
+using System.IO;
 
 namespace Samples
 {
@@ -114,7 +115,7 @@ namespace Samples
         }
         static void Sample15()
         {
-            Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
+            Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3)x + 2 + 3x2 + (x - 3)x3)";
             foreach (var root in expr.Solve("x"))
                 Console.WriteLine(root);
         }
@@ -127,15 +128,41 @@ namespace Samples
             Console.WriteLine(SySyn.Diff(expr, x, x));
         }
 
+        static void Sample17()
+        {
+            string x = MathS.ToBaseN(-32.25, 4);
+            Console.WriteLine("-32.25(10) = " + x + "(4)");
+            double y = MathS.FromBaseN("AB.3", 16);
+            Console.WriteLine("AB.3(16) = " + y + "(1)");
+        }
+
         static Complex MyFunc(Complex x)
             => x + 3 * x;
 
         static void Main(string[] _)
         {
-            Entity expr = "(x - goose) (x - 2) (x - 3)";
-            expr = expr.Expand();
-            Console.WriteLine(expr.Simplify());
-            Console.WriteLine(expr.Solve("x"));
+            //Entity expr = "(x - 2)(x - 3)(x - i)";
+            Entity expr = "x2 + 1";
+            var roots = expr.Solve("x");
+            foreach (var root in roots)
+                Console.WriteLine(root);
+            //Console.WriteLine(expr.Substitute("x", roots[1]).Eval());
+            
+            //Sample17();
+            /*
+            var watch = new Stopwatch();
+            watch.Start();
+            var x = MathS.Var("x");
+            var goose = MathS.Var("goose");
+            var momo = MathS.Var("momo");
+            var quack = MathS.Var("quack"); 
+            var eq = ((x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)).Expand();
+            var roots = eq.Solve(x);
+            watch.Stop();
+            Console.WriteLine(watch.ElapsedMilliseconds);
+            */
+            //Console.WriteLine(SySyn.Evalf(File.ReadAllText("D:/tmp/sdf.expr")));
+            //Console.WriteLine(MathS.FromBaseN("11011" + "10101" + "01110" + "10101" + "11011", 2));
         }
     }
 #pragma warning restore IDE0051

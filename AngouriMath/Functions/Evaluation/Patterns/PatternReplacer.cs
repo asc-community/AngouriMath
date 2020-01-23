@@ -8,9 +8,9 @@ namespace AngouriMath
 {
     public abstract partial class Entity
     {
-        public readonly Type type;
+        internal readonly EntType entType;
 
-        public enum Type
+        internal enum EntType
         {
             NUMBER,
             FUNCTION,
@@ -28,13 +28,13 @@ namespace AngouriMath
             OPERATOR
         }
         internal int PatternNumber { get; set; }
-        internal PatType PatternType { get; set; }
+        internal PatType PatternType; // not a getter due to performance requirements
         internal static bool PatternMatches(Entity pattern, Entity tree)
         {
-            if (!(pattern.PatternType == PatType.NUMBER && tree.type == Type.NUMBER ||
-                   pattern.PatternType == PatType.FUNCTION && tree.type == Type.FUNCTION ||
-                   pattern.PatternType == PatType.OPERATOR && tree.type == Type.OPERATOR ||
-                   pattern.PatternType == PatType.VARIABLE && tree.type == Type.VARIABLE))
+            if (!(pattern.PatternType == PatType.NUMBER && tree.entType == EntType.NUMBER ||
+                   pattern.PatternType == PatType.FUNCTION && tree.entType == EntType.FUNCTION ||
+                   pattern.PatternType == PatType.OPERATOR && tree.entType == EntType.OPERATOR ||
+                   pattern.PatternType == PatType.VARIABLE && tree.entType == EntType.VARIABLE))
                 return false;
             return string.IsNullOrEmpty(pattern.Name) || pattern.Name == tree.Name;
         }
@@ -76,12 +76,11 @@ namespace AngouriMath
         {
             if (pattern.Match(this) && pattern.EqFits(this) != null)
                 return this;
-            foreach (var child in Children)
-            {
-                var res = child.FindPatternSubtree(pattern);
-                if (res != null)
+            Entity res;
+            // foreach is slower than raw loop
+            for (int i = 0; i < Children.Count; i++)
+                if ((res = Children[i].FindPatternSubtree(pattern)) != null)
                     return res;
-            }
             return null;
         }
 
@@ -162,7 +161,7 @@ namespace AngouriMath
                     return false;
                 for (int i = 0; i < Children.Count; i++)
                 {
-                    if (!(pattern.Children[i].type == Type.PATTERN))
+                    if (pattern.Children[i].entType != EntType.PATTERN)
                         throw new SysException("Numbers in pattern should look like Num(3)");
                     if (!Children[i].PatternMakeMatch((pattern.Children[i] as Pattern), matchings))
                         return false;
@@ -186,7 +185,7 @@ namespace AngouriMath
         /// <returns></returns>
         internal Entity BuildTree(Dictionary<int, Entity> keys)
         {
-            if (!(this.type == Entity.Type.PATTERN))
+            if (!(this.entType == Entity.EntType.PATTERN))
                 return this;
             if (keys.ContainsKey(PatternNumber))
                 return keys[PatternNumber];
@@ -235,12 +234,13 @@ namespace AngouriMath
 
     internal class Pattern : Entity
     {
-        public Pattern(int num, PatType type, string name = "") : base(name, Type.PATTERN) {
+        public Pattern(int num, PatType type, string name = "") : base(name, EntType.PATTERN) {
             PatternNumber = num;
             PatternType = type;
         }
         internal Dictionary<int, Entity> EqFits(Entity tree)
         {
+            // TODO: optimization
             var res = new Dictionary<int, Entity>();
             if (!tree.PatternMakeMatch(this, res))
                 return null;

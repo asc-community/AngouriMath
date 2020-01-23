@@ -32,6 +32,6 @@ namespace DotnetBenchmark
         [Benchmark]
         public Complex LinqCompiled() => linqComp.Invoke(3);
         [Benchmark]
-        public Number NotCompiled() => notCompiled.Substitute(x, 3).Eval().GetValue();
+        public Number NotCompiled() => notCompiled.Substitute(x, 3).Eval();
     }
 }

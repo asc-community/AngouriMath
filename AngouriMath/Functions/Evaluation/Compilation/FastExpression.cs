@@ -23,7 +23,8 @@ namespace AngouriMath
             var strings = new List<string>();
             foreach (var varEnt in variables)
                 strings.Add(varEnt.Name);
-            return Compile(strings.ToArray());
+            return SubstituteConstants()
+                .Compile(strings.ToArray());
         }
 
         /// <summary>
@@ -98,11 +99,11 @@ namespace AngouriMath
 
             for (int i = Children.Count - 1; i >= 0; i--)
                 Children[i].InnerCompile(fe, variables, varNamespace);
-            if (this.type == Entity.Type.OPERATOR || this.type == Entity.Type.FUNCTION)
+            if (this.entType == Entity.EntType.OPERATOR || this.entType == Entity.EntType.FUNCTION)
                 fe.instructions.AddCallInstruction(Name, Children.Count);
-            else if (this.type == Type.NUMBER)
+            else if (this.entType == EntType.NUMBER)
                 fe.instructions.AddPushNumInstruction(GetValue().value);
-            else if (this.type == Entity.Type.VARIABLE)
+            else if (this.entType == Entity.EntType.VARIABLE)
                 fe.instructions.AddPushVarInstruction(varNamespace[Name]);
             else
                 throw new SysException("Unknown entity");

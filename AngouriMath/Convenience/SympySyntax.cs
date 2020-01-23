@@ -1,4 +1,5 @@
-﻿using AngouriMath.Core.TreeAnalysis;
+﻿using AngouriMath.Core;
+using AngouriMath.Core.TreeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -90,5 +91,17 @@ namespace AngouriMath.Convenience
         /// <param name="power"></param>
         /// <returns></returns>
         public static Entity Exp(Entity power) => MathS.Pow(MathS.e, power);
+
+        /// <summary>
+        /// Creates an instance of fraction
+        /// </summary>
+        /// <param name="a">
+        /// Numerator
+        /// </param>
+        /// <param name="b">
+        /// Denominator
+        /// </param>
+        /// <returns></returns>
+        public static Entity Rational(Number a, Number b) => new NumberEntity(a) / new NumberEntity(b);
     }
 }

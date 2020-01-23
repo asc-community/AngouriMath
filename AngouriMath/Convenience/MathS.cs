@@ -6,6 +6,8 @@ using System.Text;
 using System.Globalization;
 using System.Linq.Expressions;
 using AngouriMath.Core.FromLinq;
+using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Functions.NumberSystem;
 
 namespace AngouriMath
 {
@@ -230,5 +232,34 @@ namespace AngouriMath
             var parser = new LinqParser(expr);
             return parser.Parse();
         }
+
+        /// <summary>
+        /// Returns list of unique variables, for example 
+        /// it extracts `x`, `goose` from (x + 2 * goose) - pi * x
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        public static EntitySet GetUniqueVariables(Entity expr)
+        {
+            var res = new EntitySet();
+            TreeAnalyzer.GetUniqueVariables(expr, res);
+            return res;
+        }
+
+        /// <summary>
+        /// Translates num10 into another number system
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="N"></param>
+        /// <returns></returns>
+        public static string ToBaseN(double num, int N) => NumberSystem.ToBaseN(num, N);
+
+        /// <summary>
+        /// Translates num into 10 number system
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="N"></param>
+        /// <returns></returns>
+        public static double FromBaseN(string num, int N) => NumberSystem.FromBaseN(num, N);
     }
 }
