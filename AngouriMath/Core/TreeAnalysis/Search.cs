@@ -78,6 +78,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 foreach (var child in expr.Children)
                     GetUniqueVariables(child, dst);
         }
+        internal static bool IsZero(Entity e) => MathS.CanBeEvaluated(e) && e.Eval() == 0;
     }
 }
 

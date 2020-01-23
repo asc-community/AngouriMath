@@ -263,5 +263,15 @@ namespace UnitTests
             AssertRoots(eq, x, roots[0]);
             AssertRoots(eq, x, roots[1]);
         }
+        [TestMethod]
+        public void TestReduce()
+        {
+            Entity expr = "3x5 + 5x3";
+            var roots = expr.Solve("x");
+            Assert.IsTrue(roots.Count == 3);
+            AssertRoots(expr, x, roots[0]);
+            AssertRoots(expr, x, roots[1]);
+            AssertRoots(expr, x, roots[2]);
+        }
     }
 }

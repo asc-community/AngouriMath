@@ -10,10 +10,29 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
 {
     internal static class PolynomialSolver
     {
+        // solves ax + b
+        private static EntitySet SolveLinear(Entity a, Entity b)
+        {
+            // ax + b = 0
+            // ax = -b
+            // x = -b / a
+            return new EntitySet(-b / a);
+        }
         // solves ax2 + bx + c
         private static EntitySet SolveQuadratic(Entity a, Entity b, Entity c)
         {
-            EntitySet res = new EntitySet();
+            EntitySet res;
+            if (TreeAnalyzer.IsZero(c))
+            {
+                res = SolveLinear(a, b);
+                res.Add(0);
+                return res;
+            }
+
+            if (TreeAnalyzer.IsZero(a))
+                return SolveLinear(b, c);
+
+            res = new EntitySet();
             var D = MathS.Sqr(b) - 4 * a * c;
             res.Add((-b - MathS.Sqrt(D)) / (2 * a));
             res.Add((-b + MathS.Sqrt(D)) / (2 * a));
@@ -28,7 +47,19 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
 
             // TODO (to remove sympy code!)
 
-            EntitySet res = new EntitySet();
+            EntitySet res;
+
+            if (TreeAnalyzer.IsZero(d))
+            {
+                res = SolveQuadratic(a, b, c);
+                res.Add(0);
+                return res;
+            }
+
+            if (TreeAnalyzer.IsZero(a))
+                return SolveQuadratic(b, c, d);
+
+            res = new EntitySet();
 
             if (a.entType == Entity.EntType.NUMBER &&
                 b.entType == Entity.EntType.NUMBER &&
@@ -93,16 +124,28 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
         }
 
         // solves hx4 + ax3 + bx2 + cx + d
-        private static EntitySet SolveQuartic(Entity A, Entity B, Entity C, Entity D, Entity E)
+        private static EntitySet SolveQuartic(Entity a, Entity b, Entity c, Entity d, Entity e)
         {
             // en: https://en.wikipedia.org/wiki/Quartic_function
             // ru: https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D1%82%D0%BE%D0%B4_%D0%A4%D0%B5%D1%80%D1%80%D0%B0%D1%80%D0%B8
 
-            EntitySet res = new EntitySet();
+            EntitySet res;
 
-            var alpha = -3 * MathS.Sqr(B) / (8 * MathS.Sqr(A)) + C / A;
-            var beta = MathS.Pow(B, 3) / (8 * MathS.Pow(A, 3)) - (B * C) / (2 * MathS.Sqr(A)) + D / A;
-            var gamma = -3 * MathS.Pow(B, 4) / (256 * MathS.Pow(A, 4)) + MathS.Sqr(B) * C / (16 * MathS.Pow(A, 3)) - (B * D) / (4 * MathS.Sqr(A)) + E / A;
+            if (TreeAnalyzer.IsZero(e))
+            {
+                res = SolveCubic(a, b, c, d);
+                res.Add(0);
+                return res;
+            }
+
+            if (TreeAnalyzer.IsZero(a))
+                return SolveCubic(b, c, d, e);
+
+            res = new EntitySet();
+
+            var alpha = -3 * MathS.Sqr(b) / (8 * MathS.Sqr(a)) + c / a;
+            var beta = MathS.Pow(b, 3) / (8 * MathS.Pow(a, 3)) - (b * c) / (2 * MathS.Sqr(a)) + d / a;
+            var gamma = -3 * MathS.Pow(b, 4) / (256 * MathS.Pow(a, 4)) + MathS.Sqr(b) * c / (16 * MathS.Pow(a, 3)) - (b * d) / (4 * MathS.Sqr(a)) + e / a;
 
             var P = -MathS.Sqr(alpha) / 12 - gamma;
             var Q = -MathS.Pow(alpha, 3) / 108 + alpha * gamma / 3 - MathS.Sqr(beta) / 8;
@@ -117,7 +160,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             for (int s = -1; s <= 1; s += 2)
                 for (int t = -1; t <= 1; t += 2)
                 {
-                    var x = -B / (4 * A) + (s * W + t * MathS.Sqrt(-(3 * alpha + 2 * y + s * 2 * beta / W))) / 2;
+                    var x = -b / (4 * a) + (s * W + t * MathS.Sqrt(-(3 * alpha + 2 * y + s * 2 * beta / W))) / 2;
                     res.Add(x, check: false /* we are sure that there's no such root yet */);
                 }
 
@@ -145,6 +188,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             return monomialsByPower;
         }
 
+        internal static bool ReduceCommonPower(ref Dictionary<int, Entity> monomials)
+        {
+            int commonPower = monomials.Keys.Min();
+            if (commonPower < 1)
+                return false;
+            var newDict = new Dictionary<int, Entity>();
+            foreach (var pair in monomials)
+                newDict[pair.Key - commonPower] = pair.Value;
+            monomials = newDict;
+            return true;
+        }
+
         /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/
         internal static EntitySet SolveAsPolynomial(Entity expr, Entity subtree)
         {
@@ -165,13 +220,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             {
                 return monomialsByPower.ContainsKey(power) ? monomialsByPower[power] : 0;
             }
-
+            if (ReduceCommonPower(ref monomialsByPower)) // x5 + x3 + x2 - common power is 2, one root is 0, then x3 + x + 1
+                res.Add(0);
             var powers = new List<int>(monomialsByPower.Keys);
             if (powers.Count == 0)
                 return null;
             powers.Sort();
             if (powers.Last() == 0)
-                return null;
+                return SolveLinear(0, powers[0]);
             if (powers.Last() > 4 && powers.Count > 2)
                 return null; // So far, we can't solve equations of powers more than 4
             if (powers.Count == 1)
@@ -181,11 +237,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             }
             else if (powers.Count == 2)
             {
-                // Provided a x ^ n + b x ^ m = 0
-                // a = -b x ^ (m - n)
-                // (- a / b) ^ (1 / (m - n)) = x
-                // x ^ (m - n) = (-a / b)
-                res.AddRange(TreeAnalyzer.FindInvertExpression(MathS.Pow(subtree, powers[1] - powers[0]), (-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).Simplify(), subtree));
+                // Provided a x ^ n + b = 0
+                // a = -b x ^ n
+                // (- a / b) ^ (1 / n) = x
+                // x ^ n = (-a / b)
+                res.AddRange(TreeAnalyzer.FindInvertExpression(MathS.Pow(subtree, powers[1]), (-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).Simplify(), subtree));
                 return res;
             }
             // By this moment we know for sure that expr's power is <= 4, that expr is not a monomial,
@@ -196,7 +252,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 var b = GetMonomialByPower(1);
                 var c = GetMonomialByPower(0);
 
-                return SolveQuadratic(a, b, c);
+                res.AddRange(SolveQuadratic(a, b, c));
+                return res;
             }
             else if (powers.Last() == 3)
             {
@@ -205,7 +262,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 var c = GetMonomialByPower(1);
                 var d = GetMonomialByPower(0);
 
-                return SolveCubic(a, b, c, d);
+                res.AddRange(SolveCubic(a, b, c, d));
+                return res;
             }
             else if (powers.Last() == 4)
             {
@@ -215,7 +273,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 var d = GetMonomialByPower(1);
                 var e = GetMonomialByPower(0);
 
-                return SolveQuartic(a, b, c, d, e);
+                res.AddRange(SolveQuartic(a, b, c, d, e));
+                return res;
             }
             // TODO maybe throw exception here?
             // Maybe, who knows...

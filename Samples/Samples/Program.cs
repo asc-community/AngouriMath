@@ -141,21 +141,28 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Sample17();
+            //Entity expr = "(x - 2)(x - 3)(x - i)";
+            Entity expr = "x2 + 1";
+            var roots = expr.Solve("x");
+            foreach (var root in roots)
+                Console.WriteLine(root);
+            //Console.WriteLine(expr.Substitute("x", roots[1]).Eval());
+            
+            //Sample17();
             /*
             var watch = new Stopwatch();
             watch.Start();
             var x = MathS.Var("x");
             var goose = MathS.Var("goose");
             var momo = MathS.Var("momo");
-            var quack = MathS.Var("quack");
+            var quack = MathS.Var("quack"); 
             var eq = ((x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)).Expand();
             var roots = eq.Solve(x);
             watch.Stop();
             Console.WriteLine(watch.ElapsedMilliseconds);
             */
             //Console.WriteLine(SySyn.Evalf(File.ReadAllText("D:/tmp/sdf.expr")));
-            Console.WriteLine(MathS.FromBaseN("11011" + "10101" + "01110" + "10101" + "11011", 2));
+            //Console.WriteLine(MathS.FromBaseN("11011" + "10101" + "01110" + "10101" + "11011", 2));
         }
     }
 #pragma warning restore IDE0051
