@@ -10,6 +10,11 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
+        /// <summary>
+        /// That is realized SO badly...
+        /// TODO
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
         internal interface IPrimitive<T>
         {
             void Add(T a);

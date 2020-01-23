@@ -45,10 +45,10 @@ namespace AngouriMath.Core.TreeAnalysis.Division.RationalDiv
 {
     using MonomialInfo = Dictionary<string, Dictionary<double, Entity>>;
     using ReplacementInfo = Dictionary<string, Entity>;
-    public class PolyInfo
+    internal class PolyInfo
     {
-        public MonomialInfo monoInfo = new MonomialInfo();
-        public ReplacementInfo replacementInfo = new ReplacementInfo();
+        internal MonomialInfo monoInfo = new MonomialInfo();
+        internal ReplacementInfo replacementInfo = new ReplacementInfo();
         internal static string NewVarName(string oldName) => oldName + "_r";
         internal static string OldVarName(string newName) => newName.Substring(0, newName.Length - 2);
     }

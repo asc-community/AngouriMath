@@ -121,7 +121,6 @@ namespace UnitTests
         [TestMethod]
         public void TestPatt12()
         {
-            var x = MathS.Var("x");
             var y = MathS.Var("y");
             var a = MathS.Var("a");
             var b = MathS.Var("b");

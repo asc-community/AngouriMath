@@ -18,8 +18,6 @@ namespace AngouriMath
 
     public static partial class MathS
     {
-        public static PolyInfo GatherAllPossiblePolynomials(Entity expr) => TreeAnalyzer.GatherAllPossiblePolynomials(expr);
-
         /// <summary>
         /// https://en.wikipedia.org/wiki/Trigonometric_functions
         /// </summary>
