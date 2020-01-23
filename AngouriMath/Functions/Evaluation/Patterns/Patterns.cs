@@ -272,6 +272,9 @@ namespace AngouriMath
             { any1 - any2 * any1, any1 * (Num(1) - any2) },
             { any1 * any2 - any1, any1 * (any2 - Num(1)) },
             { any2 * any1 - any1, any1 * (any2 - Num(1)) },
+
+            // a ^ b * c ^ b = (a * c) ^ b
+            { Powf.PHang(any1, any2) * Powf.PHang(any3, any2), Powf.PHang(any1 * any3, any2) },
         };
     }
 }

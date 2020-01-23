@@ -142,10 +142,8 @@ namespace Samples
         static void Main(string[] _)
         {
             //Entity expr = "(x - 2)(x - 3)(x - i)";
-            Entity expr = "x2 + 1";
-            var roots = expr.Solve("x");
-            foreach (var root in roots)
-                Console.WriteLine(root);
+            Entity expr = "a*b*a*b*c*a*b*c";
+            Console.WriteLine(expr.Simplify().Collapse());
             //Console.WriteLine(expr.Substitute("x", roots[1]).Eval());
             
             //Sample17();
