@@ -337,13 +337,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             freeMono = 1; // a * b
 
             bool allowFloat = typeof(T) == typeof(double);
-            /*
-            if (allowFloat)
-                (power as TreeAnalyzer.PrimitiveDouble).Assign(0);  // x ^ 3
-            else
-                (power as TreeAnalyzer.PrimitiveInt).Assign(0);
-                */
-            //power.Assign(default(T));
             foreach (var mp in TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul))
                 if (mp.entType == Entity.EntType.OPERATOR && 
                     mp.Name == "powf" && 

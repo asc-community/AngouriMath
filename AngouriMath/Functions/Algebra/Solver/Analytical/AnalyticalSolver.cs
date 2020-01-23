@@ -316,7 +316,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             if (expr == x)
             {
                 dst.Add(0);
-                return;
             } else
             {
                 Entity actualVar = TreeAnalyzer.GetMinimumSubtree(expr.Simplify(), x);

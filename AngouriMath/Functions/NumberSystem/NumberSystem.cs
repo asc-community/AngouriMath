@@ -64,7 +64,6 @@ namespace AngouriMath.Functions.NumberSystem
             num = Math.Abs(num);
             int intPart = (int)Math.Floor(num);
             double floatPart = num - intPart;
-            string res = "";
 
             string rightPart = floatPart != 0 ? "." + FloatToBaseN(floatPart, N) : "";
             string leftPart = sign + IntToBaseN(intPart, N);
