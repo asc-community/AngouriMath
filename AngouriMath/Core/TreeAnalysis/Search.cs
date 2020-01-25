@@ -79,6 +79,21 @@ namespace AngouriMath.Core.TreeAnalysis
                     GetUniqueVariables(child, dst);
         }
         internal static bool IsZero(Entity e) => MathS.CanBeEvaluated(e) && e.Eval() == 0;
+
+        internal static void FindAndReplace(ref Entity originTree, Entity oldSubtree, Entity newSubtree)
+        {
+            if (originTree == oldSubtree)
+            {
+                originTree = newSubtree;
+                return;
+            }
+            for (int i = 0; i < originTree.Children.Count; i++)
+            {
+                var child = originTree.Children[i];
+                FindAndReplace(ref child, oldSubtree, newSubtree);
+                originTree.Children[i] = child;
+            }
+        }
     }
 }
 
@@ -102,22 +117,6 @@ namespace AngouriMath
                         return found;
                 }
             return null;
-        }
-
-        /// <summary>
-        /// Replaces all occurances of oldTree with newTree, e. g.
-        /// (x * 2 + 3 / (x * 2)).FindAndReplace(x * 2, y) => y + 3 / y
-        /// </summary>
-        /// <param name="oldTree"></param>
-        /// <param name="newTree"></param>
-        /// <returns></returns>
-        public Entity FindAndReplace(Entity oldTree, Entity newTree)
-        {
-            if (this == oldTree)
-                return newTree;
-            for (int i = 0; i < Children.Count; i++)
-                Children[i] = Children[i].FindAndReplace(oldTree, newTree);
-            return this;
         }
     }
 }

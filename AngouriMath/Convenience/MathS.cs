@@ -18,6 +18,8 @@ namespace AngouriMath
 
     public static partial class MathS
     {
+        public static Entity QuackQuack(Entity p, Entity q) => TreeAnalyzer.DividePolynoms(p, q);
+
         /// <summary>
         /// https://en.wikipedia.org/wiki/Trigonometric_functions
         /// </summary>
