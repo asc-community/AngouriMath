@@ -24,7 +24,7 @@ namespace AngouriMath
         {
             if (IsLeaf)
             {
-                if (!(this.entType == Entity.EntType.PATTERN))
+                if (this.entType != Entity.EntType.PATTERN)
                     return this.Name.Length == 0 || this.Name[0] != '-' ? this.Name : "(" + this.Name + ")";
                 else
                     return "{ " + PatternNumber + " : " + PatternType + " }";

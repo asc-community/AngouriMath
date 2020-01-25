@@ -8,8 +8,8 @@ namespace AngouriMath.Functions.NumberSystem
     internal static class NumberSystem
     {
         // TODO: add more digits
-        internal static string ALPHABET_TOCHAR = "0123456789ABCDEF";
-        internal static Dictionary<char, int> ALPHABET_FROMCHAR = new Dictionary<char, int> {
+        internal static readonly string ALPHABET_TOCHAR = "0123456789ABCDEF";
+        internal static readonly Dictionary<char, int> ALPHABET_FROMCHAR = new Dictionary<char, int> {
             { '0', 0 },
             { '1', 1 },
             { '2', 2 },
@@ -64,7 +64,6 @@ namespace AngouriMath.Functions.NumberSystem
             num = Math.Abs(num);
             int intPart = (int)Math.Floor(num);
             double floatPart = num - intPart;
-            string res = "";
 
             string rightPart = floatPart != 0 ? "." + FloatToBaseN(floatPart, N) : "";
             string leftPart = sign + IntToBaseN(intPart, N);

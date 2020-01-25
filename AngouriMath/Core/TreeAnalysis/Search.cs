@@ -103,5 +103,21 @@ namespace AngouriMath
                 }
             return null;
         }
+
+        /// <summary>
+        /// Replaces all occurances of oldTree with newTree, e. g.
+        /// (x * 2 + 3 / (x * 2)).FindAndReplace(x * 2, y) => y + 3 / y
+        /// </summary>
+        /// <param name="oldTree"></param>
+        /// <param name="newTree"></param>
+        /// <returns></returns>
+        public Entity FindAndReplace(Entity oldTree, Entity newTree)
+        {
+            if (this == oldTree)
+                return newTree;
+            for (int i = 0; i < Children.Count; i++)
+                Children[i] = Children[i].FindAndReplace(oldTree, newTree);
+            return this;
+        }
     }
 }

@@ -7,6 +7,7 @@ using System.Globalization;
 using System.Linq.Expressions;
 using AngouriMath.Core.FromLinq;
 using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Core.TreeAnalysis.Division.RationalDiv;
 using AngouriMath.Functions.NumberSystem;
 
 namespace AngouriMath

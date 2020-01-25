@@ -6,6 +6,48 @@ using AngouriMath.Convenience;
 using AngouriMath.Core;
 using AngouriMath.Core.TreeAnalysis;
 
+namespace AngouriMath.Core.TreeAnalysis
+{
+    internal static partial class TreeAnalyzer
+    {
+        /// <summary>
+        /// That is realized SO badly...
+        /// TODO
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        internal interface IPrimitive<T>
+        {
+            void Add(T a);
+            void Assign(T val);
+            T GetValue();
+        }
+        internal class PrimitiveDouble : IPrimitive<double>
+        {
+            private double value = 0;
+            public void Add(double a) => value += a;
+            public void Assign(double a) => value = a;
+            public static implicit operator double(PrimitiveDouble obj) => obj.value;
+            internal static IPrimitive<double> Create()
+            {
+                return new PrimitiveDouble();
+            }
+            public double GetValue() => value;
+        }
+        internal class PrimitiveInt : IPrimitive<int>
+        {
+            private int value = 0;
+            public void Add(int a) => value += a;
+            public void Assign(int a) => value = a;
+            public static implicit operator int(PrimitiveInt obj) => obj.value;
+            internal static IPrimitive<int> Create()
+            {
+                return new PrimitiveInt();
+            }
+            public int GetValue() => value;
+        }
+    }
+}
+
 namespace AngouriMath.Functions.Algebra.AnalyticalSolver
 {
     internal static class PolynomialSolver
@@ -38,7 +80,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             res.Add((-b + MathS.Sqrt(D)) / (2 * a));
             return res;
         }
-
+        
         // solves ax3 + bx2 + cx + d
         private static EntitySet SolveCubic(Entity a, Entity b, Entity c, Entity d)
         {
@@ -82,6 +124,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 {
                     var beta3 = (-q / 2 - MathS.Sqrt(Q)).Eval();
                     alpha = alpha.Eval();
+                    
                     beta = beta.Eval();
                     var p3 = (-p / 3).Eval();
                     foreach (var root in Number.GetAllRoots(beta3, 3))
@@ -122,7 +165,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 return res;
             }
         }
-
+        // END
         // solves hx4 + ax3 + bx2 + cx + d
         private static EntitySet SolveQuartic(Entity a, Entity b, Entity c, Entity d, Entity e)
         {
@@ -141,6 +184,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             if (TreeAnalyzer.IsZero(a))
                 return SolveCubic(b, c, d, e);
 
+            
             res = new EntitySet();
 
             var alpha = -3 * MathS.Sqr(b) / (8 * MathS.Sqr(a)) + c / a;
@@ -167,27 +211,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
            return res;
         }
 
-        internal static Dictionary<int, Entity> GatherMonomialInformation(List<Entity> terms, Entity subtree)
-        {
-            var monomialsByPower = new Dictionary<int, Entity>();
-            // here we fill the dictionary with information about monomials' coefficiants
-            foreach (var child in terms)
-            {
-                Entity free;
-                int pow;
-                //{(-1) * (-1) * momo * goose * quack * quack * x * x}
-                ParseMonomial(subtree, child, out free, out pow);
-                if (free == null)
-                    return null;
-                if (!monomialsByPower.ContainsKey(pow))
-                    monomialsByPower[pow] = 0;
-                monomialsByPower[pow] += free;
-            }
-            foreach (var key in monomialsByPower.Keys.ToList())
-                monomialsByPower[key] = monomialsByPower[key].Simplify();
-            return monomialsByPower;
-        }
-
         internal static bool ReduceCommonPower(ref Dictionary<int, Entity> monomials)
         {
             int commonPower = monomials.Keys.Min();
@@ -211,7 +234,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             else
                 children = new List<Entity> { expr };
             // Check if all are like {1} * x^n & gather information about them
-            var monomialsByPower = GatherMonomialInformation(children, subtree);
+            var monomialsByPower = GatherMonomialInformation<int>(children, subtree);
 
             if (monomialsByPower == null)
                 return null; // meaning that the given equation is not polynomial
@@ -280,12 +303,41 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             // Maybe, who knows...
             else return null;
         }
+    
 
-        internal static void ParseMonomial(Entity aVar, Entity expr, out Entity freeMono, out int power)
+        internal static Dictionary<T, Entity> GatherMonomialInformation<T>(List<Entity> terms, Entity subtree)
+        {
+            var monomialsByPower = new Dictionary<T, Entity>();
+            // here we fill the dictionary with information about monomials' coefficiants
+            foreach (var child in terms)
+            {
+                Entity free;
+                object pow;
+                if (typeof(T) == typeof(double))
+                    pow = new TreeAnalyzer.PrimitiveDouble();
+                else
+                    pow = new TreeAnalyzer.PrimitiveInt();
+                //{(-1) * (-1) * momo * goose * quack * quack * x * x}
+                TreeAnalyzer.IPrimitive<T> q = pow as TreeAnalyzer.IPrimitive<T>;
+                ParseMonomial<T>(subtree, child, out free, ref q);
+                if (free == null)
+                    return null;
+                if (!monomialsByPower.ContainsKey(q.GetValue()))
+                    monomialsByPower[q.GetValue()] = 0;
+                monomialsByPower[q.GetValue()] += free;
+            }
+            foreach (var key in monomialsByPower.Keys.ToList())
+                monomialsByPower[key] = monomialsByPower[key].Simplify();
+            return monomialsByPower;
+        }
+
+
+        internal static void ParseMonomial<T>(Entity aVar, Entity expr, out Entity freeMono, ref TreeAnalyzer.IPrimitive<T> power)
         {
             freeMono = 1; // a * b
-            power = 0;  // x ^ 3
-            foreach(var mp in TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul))
+
+            bool allowFloat = typeof(T) == typeof(double);
+            foreach (var mp in TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul))
                 if (mp.entType == Entity.EntType.OPERATOR && 
                     mp.Name == "powf" && 
                     mp.Children[0] == aVar)
@@ -294,23 +346,27 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                     if (!(mp.Children[1].entType == Entity.EntType.NUMBER))
                     {
                         freeMono = null;
-                        power = 0;
                         return;
                     }
 
                     // x ^ 0.3 is bad
-                    if (!mp.Children[1].GetValue().IsInteger())
+                    if (!allowFloat && !mp.Children[1].GetValue().IsInteger())
                     {
                         freeMono = null;
-                        power = 0;
                         return;
                     }
 
-                    power += (int)Math.Round(mp.Children[1].GetValue().Re);
+                    if (allowFloat)
+                        (power as TreeAnalyzer.PrimitiveDouble).Add(mp.Children[1].GetValue().Re);
+                    else
+                        (power as TreeAnalyzer.PrimitiveInt).Add((int)Math.Round(mp.Children[1].GetValue().Re));
                 }
                 else if (mp == aVar)
                 {
-                    power++;
+                    if (allowFloat)
+                        (power as TreeAnalyzer.PrimitiveDouble).Add(1);
+                    else
+                        (power as TreeAnalyzer.PrimitiveInt).Add(1);
                 }
                 else
                 {
@@ -318,7 +374,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                     if (mp.FindSubtree(aVar) != null)
                     {
                         freeMono = null;
-                        power = 0;
+                        if (allowFloat)
+                            (power as TreeAnalyzer.PrimitiveDouble).Assign(0);
+                        else
+                            (power as TreeAnalyzer.PrimitiveInt).Assign(0);
                         return;
                     }
                     freeMono *= mp;

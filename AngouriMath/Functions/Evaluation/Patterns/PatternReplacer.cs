@@ -185,7 +185,7 @@ namespace AngouriMath
         /// <returns></returns>
         internal Entity BuildTree(Dictionary<int, Entity> keys)
         {
-            if (!(this.entType == Entity.EntType.PATTERN))
+            if (this.entType != Entity.EntType.PATTERN)
                 return this;
             if (keys.ContainsKey(PatternNumber))
                 return keys[PatternNumber];

@@ -316,10 +316,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             if (expr == x)
             {
                 dst.Add(0);
-                return;
             } else
             {
-                Entity actualVar = TreeAnalyzer.GetMinimumSubtree(expr, x).Simplify();
+                Entity actualVar = TreeAnalyzer.GetMinimumSubtree(expr.Simplify(), x);
                 var res = PolynomialSolver.SolveAsPolynomial(expr, actualVar);
 
                 if (res != null)
@@ -338,7 +337,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                 else
                 {
                     EntitySet vars = new EntitySet();
-                    TreeAnalyzer.GetUniqueVariables(expr.Eval() /* otherwise it will count `pi`, `e` as variables */, vars);
+                    TreeAnalyzer.GetUniqueVariables(expr.SubstituteConstants() /* otherwise it will count `pi`, `e` as variables */, vars);
                     if (vars.Count == 1)
                         dst.Merge(expr.SolveNt(x));
                 }

@@ -138,16 +138,21 @@ namespace Samples
 
         static Complex MyFunc(Complex x)
             => x + 3 * x;
-
+        
         static void Main(string[] _)
         {
             //Entity expr = "(x - 2)(x - 3)(x - i)";
-            Entity expr = "x2 + 1";
-            var roots = expr.Solve("x");
-            foreach (var root in roots)
-                Console.WriteLine(root);
-            //Console.WriteLine(expr.Substitute("x", roots[1]).Eval());
+            //Entity expr = "(2x + y) / (x + 0.5y)";
+            //Console.WriteLine(expr.Solve("x"));
+            //Console.WriteLine(expr.Simplify());
+
             
+            //*/
+            
+            //foreach (var child in expr.Solve("x"))
+            //    Console.WriteLine(child);
+            //Console.WriteLine(expr.Substitute("x", roots[1]).Eval());
+
             //Sample17();
             /*
             var watch = new Stopwatch();
