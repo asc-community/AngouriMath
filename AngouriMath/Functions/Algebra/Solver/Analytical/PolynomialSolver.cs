@@ -317,7 +317,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                     pow = new TreeAnalyzer.PrimitiveDouble();
                 else
                     pow = new TreeAnalyzer.PrimitiveInt();
-                //{(-1) * (-1) * momo * goose * quack * quack * x * x}
+                
                 TreeAnalyzer.IPrimitive<T> q = pow as TreeAnalyzer.IPrimitive<T>;
                 ParseMonomial<T>(subtree, child, out free, ref q);
                 if (free == null)

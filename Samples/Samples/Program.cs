@@ -144,12 +144,19 @@ namespace Samples
             //Entity e1 = "x^5 + 9 x^4 + 8 x^3 - 33 x^2 + 25 x - 6";
             //Entity e2 = "x ^2 + 3x - 2";
 
+            
             Entity e1 = "(sin(x) * y + 2 * sin(x)^2 * y^2 - 1)*(cos(x)^2 * y - cos(x)^3 * y^3 + 2)";
-            e1 = e1.Expand().SimplifyIntelli();
-            Entity e2 = "(cos(x)^2 * y - cos(x)^3 * y^3 + 2)";
-            Console.WriteLine(">> ({0}) / ({1})", e1, e2);
-            Console.WriteLine();
-            Console.WriteLine(MathS.QuackQuack(e1, e2));
+            e1 = e1.Expand();
+            //Entity e2 = "(cos(x)^2 * y - cos(x)^3 * y^3 + 2)";
+            Entity e2 = "sin(x) * y + 2 * sin(x)^2 * y^2 - 1";
+            //Console.WriteLine(">>> ({0}) / ({1})", e1, e2);
+            //Console.WriteLine();
+            //var res = MathS.QuackQuack(e1, e2);
+            var дегенарат = e1 / e2;
+            Console.WriteLine(дегенарат.SimplifyIntelli());
+            
+            //var e = MathS.FromString("(-2) * cos(x) ^ 3 * sin(x) ^ 2 / ((-1) * cos(x) ^ 3)");
+            //Console.WriteLine((e1 / e2).Simplify());
             //Entity expr = "(x - 2)(x - 3)(x - i)";
             //Entity expr = "(2x + y) / (x + 0.5y)";
             //Console.WriteLine(expr.Solve("x"));

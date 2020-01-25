@@ -8,20 +8,28 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
+        internal static void FindDivisors(ref Entity expr, Func<Entity, Entity, bool> cond)
+        {
+            for (int i = 0; i < expr.Children.Count; i++)
+            {
+                // TODO
+                var temporaryElement = expr.Children[i];
+                FindDivisors(ref temporaryElement, cond);
+                expr.Children[i] = temporaryElement;
+            }
+            if (expr.entType == Entity.EntType.OPERATOR && expr.Name == "divf")
+                if (cond(expr.Children[0], expr.Children[1]))
+                {
+                    expr = DividePolynoms(expr.Children[0].Expand(), expr.Children[1].Expand());
+                    return;
+                }
+        }
+
         internal static Entity DividePolynoms(Entity p, Entity q)
         {
             //  Entity expr = "sqrt(x) * sin(y) + a ^ (-1) * x * 5 - x ^ 3 * sin(y) ^ 0.2 - 2 + a ^ 4";
             // ---> (x^0.6 + 2x^0.3 + 1) / (x^0.3 + 1)
             var replacementInfo = GatherAllPossiblePolynomials(p + q, replaceVars: true).replacementInfo;
-
-            foreach (var pair in replacementInfo)
-            {
-                FindAndReplace(ref p, pair.Value, new VariableEntity(PolyInfo.NewVarName(pair.Key)));
-                FindAndReplace(ref q, pair.Value, new VariableEntity(PolyInfo.NewVarName(pair.Key)));
-            }
-
-            var monoinfoQ = GatherAllPossiblePolynomials(q, replaceVars: false).monoInfo;
-            var monoinfoP = GatherAllPossiblePolynomials(p, replaceVars: false).monoInfo;
 
             var originalP = p;
             var originalQ = q;
@@ -29,6 +37,15 @@ namespace AngouriMath.Core.TreeAnalysis
             // TODO remove extra copy
             p = p.DeepCopy();
             q = q.DeepCopy();
+
+            foreach (var pair in replacementInfo)
+            {
+                FindAndReplace(ref p, pair.Value, new VariableEntity(PolyInfo.NewVarName(pair.Key)));
+                FindAndReplace(ref q, pair.Value, new VariableEntity(PolyInfo.NewVarName(pair.Key)));
+            }
+
+            var monoinfoQ = GatherAllPossiblePolynomials(q.Expand(), replaceVars: false).monoInfo;
+            var monoinfoP = GatherAllPossiblePolynomials(p.Expand(), replaceVars: false).monoInfo;
 
             string polyvar = null;
 
@@ -78,15 +95,16 @@ namespace AngouriMath.Core.TreeAnalysis
                         if (monoinfoP[polyvar][newpow] == 0)
                             monoinfoP[polyvar].Remove(newpow);
                     }
-                    monoinfoP[polyvar][newpow] = monoinfoP[polyvar][newpow].SimplifyIntelli();
+                    //monoinfoP[polyvar][newpow] = monoinfoP[polyvar][newpow].SimplifyIntelli();
                 }
                 if (monoinfoP[polyvar].ContainsKey(maxpowP))
                     monoinfoP[polyvar].Remove(maxpowP);
+                if (monoinfoP[polyvar].Count == 0)
+                    break;
 
-                maxpowQ = monoinfoQ[polyvar].Keys.Max();
                 maxpowP = monoinfoP[polyvar].Keys.Max();
-                maxvalQ = monoinfoQ[polyvar][maxpowQ];
                 maxvalP = monoinfoP[polyvar][maxpowP];
+                
             }
 
             Entity res = new Number(0);

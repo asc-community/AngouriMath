@@ -99,7 +99,8 @@ namespace AngouriMath
             if (stage1.entType == EntType.NUMBER)
                 return stage1;
             Entity res = stage1;
-            for (int i = 0; i < level; i++)
+            var history = new Dictionary<int, Entity>();
+            for (int i = 0; i < Math.Abs(level); i++)
             {
                 switch (i)
                 {
@@ -107,10 +108,39 @@ namespace AngouriMath
                     case 1: res = res.Sort(SortLevel.MIDDLE_LEVEL); break;
                     case 2: res = res.Sort(SortLevel.LOW_LEVEL); break;
                 }
-                TreeAnalyzer.ReplaceInPlace(Patterns.CommonRules, ref res);
+                history[res.Complexity()] = res;
                 res = res.InnerSimplify();
+                history[res.Complexity()] = res.DeepCopy();
+                TreeAnalyzer.ReplaceInPlace(Patterns.CommonRules, ref res);
+                history[res.Complexity()] = res.DeepCopy();
+                TreeAnalyzer.InvertNegativePowers(ref res);
+                TreeAnalyzer.ReplaceInPlace(Patterns.DivisionPreparingRules, ref res);
+                TreeAnalyzer.FindDivisors(ref res, (num, denom) => !MathS.CanBeEvaluated(num) && !MathS.CanBeEvaluated(denom));
+                //if (TreeAnalyzer.ContainsTrigonometric(res))
+                if (true)
+                {
+                    TreeAnalyzer.ReplaceInPlace(Patterns.TrigonometricRules, ref res);
+                    history[res.Complexity()] = res.DeepCopy();
+                }
+                //if (TreeAnalyzer.ContainsPower(res))
+                if (true)
+                {
+                    TreeAnalyzer.ReplaceInPlace(Patterns.PowerRules, ref res);
+                    history[res.Complexity()] = res.DeepCopy();
+                }
+                history[res.Complexity()] = res;
+                res = res.InnerSimplify();
+                history[res.Complexity()] = res.DeepCopy();
             }
-            return res;
+
+            if (level > 0) // if level < 0 we don't check whether expanded version is better
+            {
+                var expanded = res.Expand().Simplify(-level);
+                history[expanded.Complexity()] = expanded;
+                var collapsed = res.Collapse().Simplify(-level);
+                history[collapsed.Complexity()] = collapsed.DeepCopy();
+            }
+            return history[history.Keys.Min()];
         }
         internal Entity InnerSimplify()
         {

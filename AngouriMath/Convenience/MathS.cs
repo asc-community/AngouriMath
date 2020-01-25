@@ -18,6 +18,7 @@ namespace AngouriMath
 
     public static partial class MathS
     {
+        public static Entity QuackQuackQuack(Entity a) => a.Sort(TreeAnalyzer.SortLevel.HIGH_LEVEL);
         public static Entity QuackQuack(Entity p, Entity q) => TreeAnalyzer.DividePolynoms(p, q);
 
         /// <summary>
