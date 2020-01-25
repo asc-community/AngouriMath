@@ -6,7 +6,7 @@ namespace AngouriMath
 {
     using FuncTable = Dictionary<string, Func<List<Entity>, Entity>>;
     using SynTable = Dictionary<string, string>;
-    internal static class SynonimFunctions
+    internal static class SynonymFunctions
     {
         internal static readonly FuncTable SynFunctions = new FuncTable
         {
@@ -16,11 +16,11 @@ namespace AngouriMath
             { "secf", args => MathS.Sec(args[0]) },
             { "cosecf", args => MathS.Cosec(args[0]) },
         };
-        internal static Entity Synonimize(Entity tree)
+        internal static Entity Synonymize(Entity tree)
         {
             for (int i = 0; i < tree.Children.Count; i++)
             {
-                tree.Children[i] = Synonimize(tree.Children[i]);
+                tree.Children[i] = Synonymize(tree.Children[i]);
             }
             if (SynFunctions.ContainsKey(tree.Name))
                 return SynFunctions[tree.Name](tree.Children);

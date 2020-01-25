@@ -51,9 +51,9 @@ namespace AngouriMath.Core.FromLinq
                         op.Children = children;
                         return op;
                     }
-                    else if (SynonimFunctions.SynFunctions.ContainsKey(name))
+                    else if (SynonymFunctions.SynFunctions.ContainsKey(name))
                     {
-                        return SynonimFunctions.SynFunctions[name](children);
+                        return SynonymFunctions.SynFunctions[name](children);
                     }
                     else
                     {

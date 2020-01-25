@@ -141,7 +141,8 @@ namespace Samples
         
         static void Main(string[] _)
         {
-            //Entity expr = "(x - 2)(x - 3)(x - i)";
+            Entity expr = "(-2) * cos(x) * cos(x) * cos(x) * sin(x) * sin(x) / ((-1) * cos(x) ^ 3)";
+            Console.WriteLine(expr.Simplify());
             //Entity expr = "(2x + y) / (x + 0.5y)";
             //Console.WriteLine(expr.Solve("x"));
             //Console.WriteLine(expr.Simplify());

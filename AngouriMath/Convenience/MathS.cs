@@ -220,7 +220,7 @@ namespace AngouriMath
             if (intelli)
                 lexer.AddOmittedOperators();
             var res = Parser.Parse(lexer);
-            return SynonimFunctions.Synonimize(res);
+            return SynonymFunctions.Synonymize(res);
         }
 
         /// <summary>
