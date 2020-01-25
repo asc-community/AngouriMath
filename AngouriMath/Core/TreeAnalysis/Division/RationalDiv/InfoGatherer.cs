@@ -8,20 +8,34 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer 
     {   
-        internal static PolyInfo GatherAllPossiblePolynomials(Entity expr)
+        internal static PolyInfo GatherAllPossiblePolynomials(Entity expr, bool replaceVars)
         {
+            // TODO: refactor
+
+            expr = expr.DeepCopy();
+
             // Init
             var res = new PolyInfo();
             var mentionedVarList = MathS.GetUniqueVariables(expr);
             var newList = new List<string>();
 
-            // Replace all variables we can
-            foreach (var varMentioned in mentionedVarList)
+            if (replaceVars)
             {
-                var replacement = TreeAnalyzer.GetMinimumSubtree(expr, varMentioned);
-                res.replacementInfo[varMentioned.Name] = replacement;
-                expr = expr.FindAndReplace(replacement, new VariableEntity(PolyInfo.NewVarName(varMentioned.Name)));
-                newList.Add(PolyInfo.NewVarName(varMentioned.Name));
+                // Replace all variables we can
+                foreach (var varMentioned in mentionedVarList)
+                {
+                    var replacement = TreeAnalyzer.GetMinimumSubtree(expr, varMentioned);
+                    res.replacementInfo[varMentioned.Name] = replacement;
+                    FindAndReplace(ref expr, replacement, new VariableEntity(PolyInfo.NewVarName(varMentioned.Name)));
+                    newList.Add(PolyInfo.NewVarName(varMentioned.Name));
+                }
+            }
+            else
+            {
+                foreach(var v in mentionedVarList)
+                {
+                    newList.Add(v.Name);
+                }
             }
 
             // Gather info about each var as if this var was the only argument of the polynomial P(x)
