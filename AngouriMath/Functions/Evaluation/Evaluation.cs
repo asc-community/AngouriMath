@@ -93,7 +93,7 @@ namespace AngouriMath
         /// Increase this argument if you think the equation should be simplified better
         /// </param>
         /// <returns></returns>
-        public Entity Simplify(int level) => Alternate(level)[0];
+        public Entity Simplify(int level) => Alternate(level)[0].InnerSimplify();
 
         public EntitySet Alternate(int level)
         {
@@ -112,6 +112,7 @@ namespace AngouriMath
                     case 1: res = res.Sort(SortLevel.MIDDLE_LEVEL); break;
                     case 2: res = res.Sort(SortLevel.LOW_LEVEL); break;
                 }
+                TreeAnalyzer.InvertNegativePowers(ref res);
                 history[res.Complexity()] = res;
                 res = res.InnerSimplify();
                 history[res.Complexity()] = res.DeepCopy();

@@ -50,12 +50,26 @@ namespace AngouriMath.Core.TreeAnalysis
             string polyvar = null;
 
             // TODO use Linq to find polyvar
+            // First attempt to find polynoms
             foreach(var pair in monoinfoQ)
             {
-                if(pair.Value != null && monoinfoP[pair.Key] != null)
+                if(pair.Value != null && monoinfoP.ContainsKey(pair.Key) && monoinfoP[pair.Key] != null)
                 {
                     polyvar = pair.Key;
                     break;
+                }
+            }
+
+            if (polyvar == null)
+            {
+                // Second attempt to find polynoms
+                foreach (var pair in monoinfoQ)
+                {
+                    if (pair.Value != null && (!monoinfoP.ContainsKey(pair.Key) || monoinfoP[pair.Key] != null))
+                    {
+                        polyvar = pair.Key;
+                        break;
+                    }
                 }
             }
 

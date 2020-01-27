@@ -155,7 +155,8 @@ namespace Samples
             var дегенарат = e1 / e2;
             var watch = new Stopwatch();
             watch.Start();
-            Console.WriteLine(дегенарат.SimplifyIntelli());
+            var vv = дегенарат.Simplify(5);
+            Console.WriteLine(vv);
             watch.Stop();
             Console.WriteLine(watch.ElapsedMilliseconds);
             

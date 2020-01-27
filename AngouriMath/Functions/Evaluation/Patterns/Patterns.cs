@@ -23,7 +23,9 @@ namespace AngouriMath
 
         internal static readonly RuleList DivisionPreparingRules = new RuleList
         {
-            { any1 * (Num(1) / any2), any1 / any2 }
+            { any1 * (Num(1) / any2), any1 / any2 },
+            { (const1 * any1) / any2, const1 * (any1 / any2) },
+            { (const1 / any1) * any2, const1 * (any2 / any1) },
         };
 
         internal static readonly RuleList TrigonometricRules = new RuleList
