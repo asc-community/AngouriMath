@@ -21,6 +21,7 @@ namespace AngouriMath
     /// To Pattern Replacer
     /// To static MathS()
     /// To Analytical Solver
+    /// To TreeAnalyzer Optimization
     /// </summary>
     public static partial class MathS
     {

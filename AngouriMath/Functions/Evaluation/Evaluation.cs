@@ -93,13 +93,17 @@ namespace AngouriMath
         /// Increase this argument if you think the equation should be simplified better
         /// </param>
         /// <returns></returns>
-        public Entity Simplify(int level)
+        public Entity Simplify(int level) => Alternate(level)[0];
+
+        public EntitySet Alternate(int level)
         {
+            if (this.entType == EntType.NUMBER || this.entType == EntType.VARIABLE)
+                return new EntitySet(false, this.Copy());
             var stage1 = this.InnerSimplify();
             if (stage1.entType == EntType.NUMBER)
-                return stage1;
+                return new EntitySet(false, stage1);
             Entity res = stage1;
-            var history = new Dictionary<int, Entity>();
+            var history = new SortedDictionary<int, Entity>();
             for (int i = 0; i < Math.Abs(level); i++)
             {
                 switch (i)
@@ -116,14 +120,16 @@ namespace AngouriMath
                 TreeAnalyzer.InvertNegativePowers(ref res);
                 TreeAnalyzer.ReplaceInPlace(Patterns.DivisionPreparingRules, ref res);
                 TreeAnalyzer.FindDivisors(ref res, (num, denom) => !MathS.CanBeEvaluated(num) && !MathS.CanBeEvaluated(denom));
-                //if (TreeAnalyzer.ContainsTrigonometric(res))
-                if (true)
+                res = res.InnerSimplify();
+                if (TreeAnalyzer.Optimization.ContainsTrigonometric(res))
                 {
+                    var res1 = res.DeepCopy();
                     TreeAnalyzer.ReplaceInPlace(Patterns.TrigonometricRules, ref res);
                     history[res.Complexity()] = res.DeepCopy();
+                    TreeAnalyzer.ReplaceInPlace(Patterns.ExpandTrigonometricRules, ref res1);
+                    history[res1.Complexity()] = res1.DeepCopy();
                 }
-                //if (TreeAnalyzer.ContainsPower(res))
-                if (true)
+                if (TreeAnalyzer.Optimization.ContainsPower(res))
                 {
                     TreeAnalyzer.ReplaceInPlace(Patterns.PowerRules, ref res);
                     history[res.Complexity()] = res.DeepCopy();
@@ -131,16 +137,16 @@ namespace AngouriMath
                 history[res.Complexity()] = res;
                 res = res.InnerSimplify();
                 history[res.Complexity()] = res.DeepCopy();
+                res = history[history.Keys.Min()];
             }
-
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
                 var expanded = res.Expand().Simplify(-level);
                 history[expanded.Complexity()] = expanded;
                 var collapsed = res.Collapse().Simplify(-level);
-                history[collapsed.Complexity()] = collapsed.DeepCopy();
+                history[collapsed.Complexity()] = collapsed;
             }
-            return history[history.Keys.Min()];
+            return new EntitySet(history.Values);
         }
         internal Entity InnerSimplify()
         {

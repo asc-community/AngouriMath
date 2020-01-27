@@ -20,7 +20,7 @@ namespace AngouriMath.Core.TreeAnalysis
             if (expr.entType == Entity.EntType.OPERATOR && expr.Name == "divf")
                 if (cond(expr.Children[0], expr.Children[1]))
                 {
-                    expr = DividePolynoms(expr.Children[0].Expand(), expr.Children[1].Expand());
+                    expr = DividePolynoms(expr.Children[0], expr.Children[1]);
                     return;
                 }
         }
@@ -117,7 +117,7 @@ namespace AngouriMath.Core.TreeAnalysis
             {
                 FindAndReplace(ref res, new VariableEntity(PolyInfo.NewVarName(subst.Key)), subst.Value);
             }
-            return res.SimplifyIntelli();
+            return res;
         }
     }
 }

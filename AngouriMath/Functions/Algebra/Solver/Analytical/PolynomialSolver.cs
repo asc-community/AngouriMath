@@ -18,6 +18,7 @@ namespace AngouriMath.Core.TreeAnalysis
         internal interface IPrimitive<T>
         {
             void Add(T a);
+            void AddMp(T a, Number b);
             void Assign(T val);
             T GetValue();
         }
@@ -25,6 +26,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             private double value = 0;
             public void Add(double a) => value += a;
+            public void AddMp(double a, Number b) => Add(a * b.Re);
             public void Assign(double a) => value = a;
             public static implicit operator double(PrimitiveDouble obj) => obj.value;
             internal static IPrimitive<double> Create()
@@ -37,6 +39,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             private int value = 0;
             public void Add(int a) => value += a;
+            public void AddMp(int a, Number b) => Add((int)(a * b.Re));
             public void Assign(int a) => value = a;
             public static implicit operator int(PrimitiveInt obj) => obj.value;
             internal static IPrimitive<int> Create()
@@ -311,6 +314,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
             // here we fill the dictionary with information about monomials' coefficiants
             foreach (var child in terms)
             {
+                // TODO
                 Entity free;
                 object pow;
                 if (typeof(T) == typeof(double))
@@ -326,8 +330,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                     monomialsByPower[q.GetValue()] = 0;
                 monomialsByPower[q.GetValue()] += free;
             }
-            foreach (var key in monomialsByPower.Keys.ToList())
-                monomialsByPower[key] = monomialsByPower[key].Simplify();
+            // TODO: do we need to simplify all values of monomialsByPower?
             return monomialsByPower;
         }
 
@@ -338,12 +341,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
 
             bool allowFloat = typeof(T) == typeof(double);
             foreach (var mp in TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul))
-                if (mp.entType == Entity.EntType.OPERATOR && 
-                    mp.Name == "powf" && 
-                    mp.Children[0] == aVar)
+                if (mp.entType == Entity.EntType.OPERATOR &&
+                    mp.Name == "powf")
                 {
                     // x ^ a is bad
-                    if (!(mp.Children[1].entType == Entity.EntType.NUMBER))
+                    if (!(mp.Children[1].entType != Entity.EntType.NUMBER))
                     {
                         freeMono = null;
                         return;
@@ -356,10 +358,35 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                         return;
                     }
 
-                    if (allowFloat)
-                        (power as TreeAnalyzer.PrimitiveDouble).Add(mp.Children[1].GetValue().Re);
+                    if (mp == aVar)
+                    {
+                        if (allowFloat)
+                            (power as TreeAnalyzer.PrimitiveDouble).Add(mp.Children[1].GetValue().Re);
+                        else
+                            (power as TreeAnalyzer.PrimitiveInt).Add((int)Math.Round(mp.Children[1].GetValue().Re));
+                    }
                     else
-                        (power as TreeAnalyzer.PrimitiveInt).Add((int)Math.Round(mp.Children[1].GetValue().Re));
+                    {
+                        Entity tmpFree;
+                        // TODO
+                        object pow;
+                        if (typeof(T) == typeof(double))
+                            pow = new TreeAnalyzer.PrimitiveDouble();
+                        else
+                            pow = new TreeAnalyzer.PrimitiveInt();
+                        TreeAnalyzer.IPrimitive<T> q = pow as TreeAnalyzer.IPrimitive<T>;
+                        ParseMonomial<T>(aVar, expr, out tmpFree, ref q);
+                        if (tmpFree == null)
+                        {
+                            freeMono = null;
+                            return;
+                        }
+                        else
+                        {
+                            freeMono += MathS.Pow(tmpFree, mp.Children[1]);
+                            power.AddMp(q.GetValue(), mp.Children[1].GetValue());
+                        }
+                    }
                 }
                 else if (mp == aVar)
                 {
@@ -374,15 +401,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                     if (mp.FindSubtree(aVar) != null)
                     {
                         freeMono = null;
-                        if (allowFloat)
-                            (power as TreeAnalyzer.PrimitiveDouble).Assign(0);
-                        else
-                            (power as TreeAnalyzer.PrimitiveInt).Assign(0);
                         return;
                     }
                     freeMono *= mp;
                 }
-            freeMono = freeMono.Simplify();
+            // TODO: do we need to simplify freeMono?
         }
     }
 }

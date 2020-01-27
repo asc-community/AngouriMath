@@ -58,6 +58,13 @@ namespace AngouriMath
             { Powf.PHang(Cosf.PHang(any1), Num(2)) - Powf.PHang(Sinf.PHang(any1), Num(2)), Cosf.PHang(2 * any1) },
         };
 
+        internal static readonly RuleList ExpandTrigonometricRules = new RuleList {
+            { Num(1.0/2) * Sinf.PHang(Num(2) * any1), Sinf.PHang(any1) * Cosf.PHang(any1) },
+            { Num(1.0/2) * Sinf.PHang(Num(2) * any1), Cosf.PHang(any1) * Sinf.PHang(any1) },
+
+            { Cosf.PHang(Num(2) * any1), Powf.PHang(Cosf.PHang(any1), Num(2)) - Powf.PHang(Sinf.PHang(any1), Num(2)) },
+        };
+
         internal static readonly RuleList PowerRules = new RuleList
         {
             // x * {} ^ {} = {} ^ {} * x

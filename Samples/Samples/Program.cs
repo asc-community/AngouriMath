@@ -153,7 +153,11 @@ namespace Samples
             //Console.WriteLine();
             //var res = MathS.QuackQuack(e1, e2);
             var дегенарат = e1 / e2;
+            var watch = new Stopwatch();
+            watch.Start();
             Console.WriteLine(дегенарат.SimplifyIntelli());
+            watch.Stop();
+            Console.WriteLine(watch.ElapsedMilliseconds);
             
             //var e = MathS.FromString("(-2) * cos(x) ^ 3 * sin(x) ^ 2 / ((-1) * cos(x) ^ 3)");
             //Console.WriteLine((e1 / e2).Simplify());
