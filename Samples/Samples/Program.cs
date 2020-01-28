@@ -5,7 +5,7 @@ using System.Diagnostics;
 using System.Numerics;
 using System.Linq.Expressions;
 using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.AnalyticalSolver;
+using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Convenience;
 using System.IO;
 
@@ -106,7 +106,7 @@ namespace Samples
             var b = MathS.Var("b");
             var expr = MathS.Sqrt(x) / x + a * b + b * a + (b - x) * (x + b) + 
                 MathS.Arcsin(x + a) + MathS.Arccos(a + x);
-            Console.WriteLine(expr.SimplifyIntelli());
+            Console.WriteLine(expr.Simplify());
         }
         static void Sample14()
         {
@@ -160,6 +160,7 @@ namespace Samples
             watch.Stop();
             Console.WriteLine(watch.ElapsedMilliseconds);
             */
+            /*
             var x = MathS.Var("x");
             var y = MathS.Var("y");
             var a = MathS.Var("a");
@@ -168,7 +169,10 @@ namespace Samples
             var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
             //var expr = func.Derive(x).Simplify();
             //Console.WriteLine(func.Derive(x).Simplify());
-            Console.WriteLine(expr.Simplify(3));
+            Console.WriteLine(expr.Simplify(3));*/
+            var x = MathS.Var("x");
+            var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
+            Console.WriteLine(expr.Simplify());
             //var e = MathS.FromString("(-2) * cos(x) ^ 3 * sin(x) ^ 2 / ((-1) * cos(x) ^ 3)");
             //Console.WriteLine((e1 / e2).Simplify());
             //Entity expr = "(x - 2)(x - 3)(x - i)";

@@ -60,21 +60,21 @@ namespace UnitTests
         {
             var y = MathS.Var("y");
             var expr = (MathS.Sqr(MathS.Sin(x + 2 * y)) + MathS.Sqr(MathS.Cos(x + 2 * y))) / (2 * MathS.Sin(x - y) * MathS.Cos(x - y) + 1);
-            Assert.IsTrue(expr.SimplifyIntelli() == 1 / (MathS.Sin(2 * (x - y)) + 1));
+            Assert.IsTrue(expr.Simplify() == 1 / (MathS.Sin(2 * (x - y)) + 1));
         }
         [TestMethod]
         public void TestPatt3()
         {
             var y = MathS.Var("y");
             var expr = (x - y) * (x + y);
-            Assert.IsTrue(expr.SimplifyIntelli() == MathS.Sqr(x) - MathS.Sqr(y));
+            Assert.IsTrue(expr.Simplify() == MathS.Sqr(x) - MathS.Sqr(y));
         }
         [TestMethod]
         public void TestPatt4()
         {
             var y = MathS.Var("y");
             var expr = (x - y) * (x + y) / (x * x - y * y);
-            Assert.IsTrue(expr.SimplifyIntelli() == 1);
+            Assert.IsTrue(expr.Simplify() == 1);
         }
         [TestMethod]
         public void TestPatt5()
@@ -86,7 +86,7 @@ namespace UnitTests
         public void TestPatt6()
         {
             var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
-            Assert.IsTrue(expr.Simplify(6) == x + 1);
+            Assert.IsTrue(expr.Simplify() == x + 1);
         }
         [TestMethod]
         public void TestPatt7()

@@ -1,5 +1,6 @@
 ﻿using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Functions.Evaluation.Compilation;
 using System;
 using System.Collections.Generic;
 using System.Numerics;
@@ -18,14 +19,7 @@ namespace AngouriMath
         /// as you will list them when evaluating
         /// </param>
         /// <returns></returns>
-        public FastExpression Compile(params VariableEntity[] variables)
-        {
-            var strings = new List<string>();
-            foreach (var varEnt in variables)
-                strings.Add(varEnt.Name);
-            return SubstituteConstants()
-                .Compile(strings.ToArray());
-        }
+        public FastExpression Compile(params VariableEntity[] variables) => Compiler.Compile(this, variables);
 
         /// <summary>
         /// Compile function so you can evaluate numerical value 15x faster,
@@ -36,20 +30,7 @@ namespace AngouriMath
         /// as you will list them when evaluating
         /// </param>
         /// <returns></returns>
-        public FastExpression Compile(params string[] variables)
-        {
-            var varNamespace = new Dictionary<string, int>();
-            int id = 0;
-            foreach (var varName in variables)
-            {
-                varNamespace[varName] = id;
-                id++;
-            }
-            var res = new FastExpression(variables.Length, this);
-            InnerCompile(res, variables, varNamespace);
-            res.Seal(); // Creates stack
-            return res;
-        }
+        public FastExpression Compile(params string[] variables) => Compiler.Compile(this, variables);
     } 
 }
 
@@ -59,9 +40,10 @@ namespace AngouriMath
     {
         /// <summary>
         /// Returns number of nodes in tree
+        /// TODO: improve measurement of Entity complexity
         /// </summary>
         /// <returns></returns>
-        private int Complexity()
+        public int Complexity()
         {
             int res = 0;
             foreach (var child in Children)
@@ -79,42 +61,6 @@ namespace AngouriMath
             foreach (var child in Children)
                 res += child.CountOccurances(hash);
             return res;
-        }
-
-        /// <summary>
-        /// Fills fast expression instance with instructions and cache
-        /// </summary>
-        /// <param name="fe"></param>
-        /// <param name="variables"></param>
-        /// <param name="varNamespace"></param>
-        private void InnerCompile(FastExpression fe, string[] variables, Dictionary<string, int> varNamespace)
-        {
-            // Check whether it's better to pull from cache or not
-            string hash = ToString();
-            if (fe.HashToNum.ContainsKey(hash))
-            {
-                fe.instructions.AddPullCacheInstruction(fe.HashToNum[hash]);
-                return;
-            }
-
-            for (int i = Children.Count - 1; i >= 0; i--)
-                Children[i].InnerCompile(fe, variables, varNamespace);
-            if (this.entType == Entity.EntType.OPERATOR || this.entType == Entity.EntType.FUNCTION)
-                fe.instructions.AddCallInstruction(Name, Children.Count);
-            else if (this.entType == EntType.NUMBER)
-                fe.instructions.AddPushNumInstruction(GetValue().value);
-            else if (this.entType == Entity.EntType.VARIABLE)
-                fe.instructions.AddPushVarInstruction(varNamespace[Name]);
-            else
-                throw new SysException("Unknown entity");
-
-            // If the function is used more than once AND complex enough, we put it in cache
-            if (fe.RawExpr.CountOccurances(hash) > 1 /*Raw expr is basically the root entity that we're compiling*/
-                && Complexity() > 1 /* we don't check if it is already in cache as in this case it will pull from cache*/)
-            {
-                fe.HashToNum[hash] = fe.HashToNum.Count;
-                fe.instructions.AddPushCacheInstruction(fe.HashToNum[hash]);
-            }
         }
     }
     public class FastExpression

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 using AngouriMath.Core.TreeAnalysis.Division.RationalDiv;
-using AngouriMath.Functions.Algebra.AnalyticalSolver;
+using AngouriMath.Functions.Algebra.AnalyticalSolving;
 
 namespace AngouriMath.Core.TreeAnalysis
 {

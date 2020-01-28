@@ -34,7 +34,7 @@ Console.WriteLine(expr.Eval());
 var x = MathS.Var("x");
 var expr = x * 2 + MathS.Sin(x) / MathS.Sin(MathS.Pow(2, x));
 var subs = expr.Substitute(x, 0.3);
-Console.WriteLine(subs.Simplify());
+Console.WriteLine(subs.Eval());
 >>> 0,9134260185941638
 ```
 
@@ -43,7 +43,7 @@ Console.WriteLine(subs.Simplify());
 var x = MathS.Var("x");
 var func = MathS.Sqr(x) + MathS.Ln(MathS.Cos(x) + 3) + 4 * x;
 var derivative = func.Derive(x);
-Console.WriteLine(derivative.Simplify());
+Console.WriteLine(derivative.Eval());
 >>> 2 * x + -1 * sin(x) / (cos(x) + 3) + 4
 ```
 
@@ -61,7 +61,7 @@ var a = MathS.Var("a");
 var b = MathS.Var("b");
 var expr = MathS.Sqrt(x) / x + a * b + b * a + (b - x) * (x + b) + 
     MathS.Arcsin(x + a) + MathS.Arccos(a + x);
-Console.WriteLine(expr.SimplifyIntelli());
+Console.WriteLine(expr.Simplify());
 >>> 1.5707963267948966 + 2 * a * b + b ^ 2 + x ^ (-0.5) - x ^ 2
 ```
 
@@ -89,13 +89,15 @@ Under developing & testing right now.
 Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
 foreach (var root in expr.Solve("x"))
     Console.WriteLine(root);
->>> arcsin((1 - sqrt(1 + (-4) * a)) / 2)
->>> arcsin((1 + sqrt(1 + (-4) * a)) / 2)
+>>> arcsin((1 - sqrt(1 + (-4) * a)) / 2) - (-2) * n * pi
+>>> 2 * n * pi + pi - arcsin((1 - sqrt(1 + (-4) * a)) / 2)
+>>> arcsin(0.5 * (1 + sqrt(1 + (-4) * a))) - (-2) * n * pi
+>>> 2 * n * pi + pi - arcsin((1 + sqrt(1 + (-4) * a)) / 2)
 >>> b
+>>> -i
+>>> i
 >>> 1
 >>> 2
->>> i
->>> -i
 ```
 
 #### Integrate

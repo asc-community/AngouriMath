@@ -1,6 +1,7 @@
 ﻿using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.AnalyticalSolver;
+using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using AngouriMath.Functions.Algebra.Solver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,12 +18,7 @@ namespace AngouriMath
         /// <returns>
         /// Returns EntitySet. Work with it as with a list
         /// </returns>
-        public EntitySet Solve(VariableEntity x)
-        {
-            var res = new EntitySet();
-            AnalyticalSolver.Solve(this, x, res);
-            return res;
-        }
+        public EntitySet Solve(VariableEntity x) => EquationSolver.Solve(this, x);
     }
 }
 
@@ -254,7 +250,7 @@ namespace AngouriMath.Core.TreeAnalysis
     }
 }
 
-namespace AngouriMath.Functions.Algebra.AnalyticalSolver
+namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     using PatType = Entity.PatType;
     internal static class AnalyticalSolver

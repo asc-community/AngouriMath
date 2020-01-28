@@ -51,7 +51,7 @@ namespace AngouriMath.Core.TreeAnalysis
     }
 }
 
-namespace AngouriMath.Functions.Algebra.AnalyticalSolver
+namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     internal static class PolynomialSolver
     {
@@ -106,10 +106,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
 
             res = new EntitySet();
 
-            if (a.entType == Entity.EntType.NUMBER &&
-                b.entType == Entity.EntType.NUMBER &&
-                c.entType == Entity.EntType.NUMBER &&
-                d.entType == Entity.EntType.NUMBER)
+            if (MathS.CanBeEvaluated(a) &&
+                MathS.CanBeEvaluated(b) &&
+                MathS.CanBeEvaluated(c) &&
+                MathS.CanBeEvaluated(d))
             {
                 var p = ((3 * a * c - MathS.Sqr(b)) / (3 * MathS.Sqr(a))).Simplify();
                 var q = ((2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d) / (27 * MathS.Pow(a, 3)));
@@ -345,7 +345,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                     mp.Name == "powf")
                 {
                     // x ^ a is bad
-                    if (!(mp.Children[1].entType != Entity.EntType.NUMBER))
+                    if (mp.Children[1].entType != Entity.EntType.NUMBER)
                     {
                         freeMono = null;
                         return;
@@ -390,7 +390,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                         {
                             // Can we eval it right here?
                             mp.Children[1] = mp.Children[1].Eval();
-                            freeMono += MathS.Pow(tmpFree, mp.Children[1]);
+                            freeMono *= MathS.Pow(tmpFree, mp.Children[1]);
                             power.AddMp(q.GetValue(), mp.Children[1].GetValue());
                         }
                     }

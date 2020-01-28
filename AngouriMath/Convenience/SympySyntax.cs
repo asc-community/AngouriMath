@@ -39,7 +39,7 @@ namespace AngouriMath.Convenience
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
-        public static Entity Simplify(Entity expr) => expr.SimplifyIntelli();
+        public static Entity Simplify(Entity expr) => expr.Simplify();
 
         /// <summary>
         /// Attempt to find analytical roots of a custom equation

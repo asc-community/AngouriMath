@@ -8,6 +8,8 @@ namespace AngouriMath
 {
     public class EntitySet : List<Entity>
     {
+        public EntitySet Simplify() => Simplify(3);
+        public EntitySet Simplify(int level) => new EntitySet(this.Select(p => p.Simplify(level)));
         private readonly HashSet<string> exsts = new HashSet<string>();
         public override string ToString()
         {

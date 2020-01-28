@@ -1,13 +1,11 @@
 ﻿using AngouriMath.Core;
 using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Functions.Evaluation.Simplification;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
-using System.Text;
 namespace AngouriMath
 {
-
     public static partial class MathS
     {
         internal static readonly Dictionary<string, Number> ConstantList = new Dictionary<string, Number>
@@ -76,15 +74,7 @@ namespace AngouriMath
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
         /// </summary>
         /// <returns></returns>
-        public Entity Simplify() => Simplify(1);
-
-        /// <summary>
-        /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
-        /// The only difference between SimplifyIntelli and Simplify is number of iterations
-        /// which you can specify on your own.
-        /// </summary>
-        /// <returns></returns>
-        public Entity SimplifyIntelli() => Simplify(3);
+        public Entity Simplify() => Simplify(3);
 
         /// <summary>
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
@@ -95,98 +85,7 @@ namespace AngouriMath
         /// <returns></returns>
         public Entity Simplify(int level) => Alternate(level)[0].InnerSimplify();
 
-        public EntitySet Alternate(int level)
-        {
-            if (this.entType == EntType.NUMBER || this.entType == EntType.VARIABLE)
-                return new EntitySet(false, this.Copy());
-            var stage1 = this.InnerSimplify();
-            if (stage1.entType == EntType.NUMBER)
-                return new EntitySet(false, stage1);
-
-            var history = new SortedDictionary<int, Entity>();
-
-            void TryInnerSimplify(ref Entity expr)
-            {
-                TreeAnalyzer.Sort(ref expr, SortLevel.HIGH_LEVEL);
-                expr = expr.InnerSimplify();
-            }
-
-            void IterAddHistory(Entity expr)
-            {
-                Entity refexpr = expr.DeepCopy();
-                TryInnerSimplify(ref refexpr);
-                var n = refexpr.Complexity() > expr.Complexity() ? expr : refexpr;
-                history[n.Complexity()] = n;
-            }
-
-            void AddHistory(Entity expr)
-            {
-                IterAddHistory(expr);
-                Entity _res = expr;
-                TreeAnalyzer.InvertNegativePowers(ref _res);
-                IterAddHistory(_res);
-            }
-
-            Entity res = stage1;
-            
-            for (int i = 0; i < Math.Abs(level); i++)
-            {
-                if (i == 0 || i > 2)
-                    TreeAnalyzer.Sort(ref res, SortLevel.HIGH_LEVEL);
-                else if (i == 1)
-                    TreeAnalyzer.Sort(ref res, SortLevel.MIDDLE_LEVEL);
-                else if (i == 2)
-                    TreeAnalyzer.Sort(ref res, SortLevel.LOW_LEVEL);
-                if (TreeAnalyzer.Optimization.ContainsPower(res))
-                {
-                    TreeAnalyzer.ReplaceInPlace(Patterns.PowerRules, ref res);
-                    AddHistory(res);
-                }
-
-                {
-                    TreeAnalyzer.InvertNegativePowers(ref res);
-                    TreeAnalyzer.InvertNegativeMultipliers(ref res);
-                    TreeAnalyzer.Sort(ref res, SortLevel.HIGH_LEVEL);
-                    AddHistory(res);
-                    TreeAnalyzer.ReplaceInPlace(Patterns.CommonRules, ref res);
-                    AddHistory(res);
-                    TreeAnalyzer.InvertNegativePowers(ref res);
-                }
-
-                {
-                    TreeAnalyzer.InvertNegativePowers(ref res);
-                    TreeAnalyzer.ReplaceInPlace(Patterns.DivisionPreparingRules, ref res);
-                    res = res.InnerSimplify();
-                    TreeAnalyzer.FindDivisors(ref res, (num, denom) => !MathS.CanBeEvaluated(num) && !MathS.CanBeEvaluated(denom));
-                }
-
-                res = res.InnerSimplify();
-                if (TreeAnalyzer.Optimization.ContainsTrigonometric(res))
-                {
-                    var res1 = res.DeepCopy();
-                    TreeAnalyzer.ReplaceInPlace(Patterns.TrigonometricRules, ref res);
-                    AddHistory(res);
-                    TreeAnalyzer.ReplaceInPlace(Patterns.ExpandTrigonometricRules, ref res1);
-                    AddHistory(res1);
-                    res = res.Complexity() > res1.Complexity() ? res1 : res;
-                }
-                if (TreeAnalyzer.Optimization.ContainsPower(res))
-                {
-                    TreeAnalyzer.ReplaceInPlace(Patterns.PowerRules, ref res);
-                    AddHistory(res);
-                }
-                AddHistory(res);
-                res = history[history.Keys.Min()];
-            }
-            if (level > 0) // if level < 0 we don't check whether expanded version is better
-            {
-                var expanded = res.Expand().Simplify(-level);
-                AddHistory(expanded);
-                var collapsed = res.Collapse().Simplify(-level);
-                AddHistory(collapsed);
-            }
-            return new EntitySet(history.Values);
-        }
+        public EntitySet Alternate(int level) => Simplificator.Alternate(this, level);
         internal Entity InnerSimplify()
         {
             if (IsLeaf)
