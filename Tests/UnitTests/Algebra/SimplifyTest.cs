@@ -92,13 +92,13 @@ namespace UnitTests
         public void TestPatt7()
         {
             var expr = MathS.Arcsin(x * 3) + MathS.Arccos(x * 3);
-            Assert.IsTrue(expr.Simplify() == MathS.pi / 2);
+            Assert.IsTrue(expr.Simplify() == 0.5 * MathS.pi);
         }
         [TestMethod]
         public void TestPatt8()
         {
             var expr = MathS.Arccotan(x * 3) + MathS.Arctan(x * 3);
-            Assert.IsTrue(expr.Simplify() == MathS.pi / 2);
+            Assert.IsTrue(expr.Simplify() == 0.5 * MathS.pi);
         }
         [TestMethod]
         public void TestPatt9()

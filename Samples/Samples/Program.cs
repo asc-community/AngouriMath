@@ -171,8 +171,9 @@ namespace Samples
             //Console.WriteLine(func.Derive(x).Simplify());
             Console.WriteLine(expr.Simplify(3));*/
             var x = MathS.Var("x");
-            var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
-            Console.WriteLine(expr.Simplify());
+            
+            var func = MathS.Arcsin(x);
+            Console.WriteLine(func.Derive(x).Simplify());
             //var e = MathS.FromString("(-2) * cos(x) ^ 3 * sin(x) ^ 2 / ((-1) * cos(x) ^ 3)");
             //Console.WriteLine((e1 / e2).Simplify());
             //Entity expr = "(x - 2)(x - 3)(x - i)";

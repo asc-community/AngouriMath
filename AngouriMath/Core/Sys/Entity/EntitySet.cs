@@ -27,7 +27,7 @@ namespace AngouriMath
                 return;
             if (ent.entType == Entity.EntType.NUMBER && ent.GetValue().IsNull)
                 return;
-            ent = MathS.CanBeEvaluated(ent) ? ent.Eval() : ent;
+            ent = MathS.CanBeEvaluated(ent) ? ent.InnerSimplify() : ent;
             var hash = ent.ToString();
             if (!exsts.Contains(hash))
             {

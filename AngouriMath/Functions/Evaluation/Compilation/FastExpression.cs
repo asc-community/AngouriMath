@@ -40,7 +40,8 @@ namespace AngouriMath
     {
         /// <summary>
         /// Returns number of nodes in tree
-        /// TODO: improve measurement of Entity complexity
+        /// TODO: improve measurement of Entity complexity, for example
+        /// (1 / x ^ 2).Complexity() < (x ^ (-0.5)).Complexity()
         /// </summary>
         /// <returns></returns>
         public int Complexity()

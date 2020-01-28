@@ -25,7 +25,8 @@ namespace AngouriMath.Functions.Evaluation.Compilation
                 varNamespace[varName] = id;
                 id++;
             }
-            var res = new FastExpression(variables.Length, func.SubstituteConstants());
+            func = func.SubstituteConstants();
+            var res = new FastExpression(variables.Length, func);
             InnerCompile(func, res, variables, varNamespace);
             res.Seal(); // Creates stack
             return res;

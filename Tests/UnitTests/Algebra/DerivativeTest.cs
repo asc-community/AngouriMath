@@ -62,7 +62,7 @@ namespace UnitTests
         public void TestArc1()
         {
             var func = MathS.Arcsin(x);
-            Assert.IsTrue(func.Derive(x).Simplify() == MathS.Pow(1 + (-1) * MathS.Sqr(x), -0.5));
+            Assert.IsTrue(func.Derive(x).Simplify() == MathS.Pow(1 - MathS.Sqr(x), -0.5));
         }
         [TestMethod]
         public void TestArc2()

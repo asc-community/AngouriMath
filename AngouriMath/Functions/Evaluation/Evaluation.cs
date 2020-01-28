@@ -74,7 +74,7 @@ namespace AngouriMath
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
         /// </summary>
         /// <returns></returns>
-        public Entity Simplify() => Simplify(3);
+        public Entity Simplify() => Simplificator.Simplify(this);
 
         /// <summary>
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
@@ -83,7 +83,7 @@ namespace AngouriMath
         /// Increase this argument if you think the equation should be simplified better
         /// </param>
         /// <returns></returns>
-        public Entity Simplify(int level) => Alternate(level)[0].InnerSimplify();
+        public Entity Simplify(int level) => Simplificator.Simplify(this, level);
 
         public EntitySet Alternate(int level) => Simplificator.Alternate(this, level);
         internal Entity InnerSimplify()
