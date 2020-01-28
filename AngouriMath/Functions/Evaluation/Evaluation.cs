@@ -102,50 +102,88 @@ namespace AngouriMath
             var stage1 = this.InnerSimplify();
             if (stage1.entType == EntType.NUMBER)
                 return new EntitySet(false, stage1);
-            Entity res = stage1;
+
             var history = new SortedDictionary<int, Entity>();
+
+            void TryInnerSimplify(ref Entity expr)
+            {
+                TreeAnalyzer.Sort(ref expr, SortLevel.HIGH_LEVEL);
+                expr = expr.InnerSimplify();
+            }
+
+            void IterAddHistory(Entity expr)
+            {
+                Entity refexpr = expr.DeepCopy();
+                TryInnerSimplify(ref refexpr);
+                var n = refexpr.Complexity() > expr.Complexity() ? expr : refexpr;
+                history[n.Complexity()] = n;
+            }
+
+            void AddHistory(Entity expr)
+            {
+                IterAddHistory(expr);
+                Entity _res = expr;
+                TreeAnalyzer.InvertNegativePowers(ref _res);
+                IterAddHistory(_res);
+            }
+
+            Entity res = stage1;
+            
             for (int i = 0; i < Math.Abs(level); i++)
             {
-                switch (i)
+                if (i == 0 || i > 2)
+                    TreeAnalyzer.Sort(ref res, SortLevel.HIGH_LEVEL);
+                else if (i == 1)
+                    TreeAnalyzer.Sort(ref res, SortLevel.MIDDLE_LEVEL);
+                else if (i == 2)
+                    TreeAnalyzer.Sort(ref res, SortLevel.LOW_LEVEL);
+                if (TreeAnalyzer.Optimization.ContainsPower(res))
                 {
-                    case 0: res = res.Sort(SortLevel.HIGH_LEVEL); break;
-                    case 1: res = res.Sort(SortLevel.MIDDLE_LEVEL); break;
-                    case 2: res = res.Sort(SortLevel.LOW_LEVEL); break;
+                    TreeAnalyzer.ReplaceInPlace(Patterns.PowerRules, ref res);
+                    AddHistory(res);
                 }
-                TreeAnalyzer.InvertNegativePowers(ref res);
-                history[res.Complexity()] = res;
-                res = res.InnerSimplify();
-                history[res.Complexity()] = res.DeepCopy();
-                TreeAnalyzer.ReplaceInPlace(Patterns.CommonRules, ref res);
-                history[res.Complexity()] = res.DeepCopy();
-                TreeAnalyzer.InvertNegativePowers(ref res);
-                TreeAnalyzer.ReplaceInPlace(Patterns.DivisionPreparingRules, ref res);
-                TreeAnalyzer.FindDivisors(ref res, (num, denom) => !MathS.CanBeEvaluated(num) && !MathS.CanBeEvaluated(denom));
+
+                {
+                    TreeAnalyzer.InvertNegativePowers(ref res);
+                    TreeAnalyzer.InvertNegativeMultipliers(ref res);
+                    TreeAnalyzer.Sort(ref res, SortLevel.HIGH_LEVEL);
+                    AddHistory(res);
+                    TreeAnalyzer.ReplaceInPlace(Patterns.CommonRules, ref res);
+                    AddHistory(res);
+                    TreeAnalyzer.InvertNegativePowers(ref res);
+                }
+
+                {
+                    TreeAnalyzer.InvertNegativePowers(ref res);
+                    TreeAnalyzer.ReplaceInPlace(Patterns.DivisionPreparingRules, ref res);
+                    res = res.InnerSimplify();
+                    TreeAnalyzer.FindDivisors(ref res, (num, denom) => !MathS.CanBeEvaluated(num) && !MathS.CanBeEvaluated(denom));
+                }
+
                 res = res.InnerSimplify();
                 if (TreeAnalyzer.Optimization.ContainsTrigonometric(res))
                 {
                     var res1 = res.DeepCopy();
                     TreeAnalyzer.ReplaceInPlace(Patterns.TrigonometricRules, ref res);
-                    history[res.Complexity()] = res.DeepCopy();
+                    AddHistory(res);
                     TreeAnalyzer.ReplaceInPlace(Patterns.ExpandTrigonometricRules, ref res1);
-                    history[res1.Complexity()] = res1.DeepCopy();
+                    AddHistory(res1);
+                    res = res.Complexity() > res1.Complexity() ? res1 : res;
                 }
                 if (TreeAnalyzer.Optimization.ContainsPower(res))
                 {
                     TreeAnalyzer.ReplaceInPlace(Patterns.PowerRules, ref res);
-                    history[res.Complexity()] = res.DeepCopy();
+                    AddHistory(res);
                 }
-                history[res.Complexity()] = res;
-                res = res.InnerSimplify();
-                history[res.Complexity()] = res.DeepCopy();
+                AddHistory(res);
                 res = history[history.Keys.Min()];
             }
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
                 var expanded = res.Expand().Simplify(-level);
-                history[expanded.Complexity()] = expanded;
+                AddHistory(expanded);
                 var collapsed = res.Collapse().Simplify(-level);
-                history[collapsed.Complexity()] = collapsed;
+                AddHistory(collapsed);
             }
             return new EntitySet(history.Values);
         }

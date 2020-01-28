@@ -15,6 +15,7 @@ namespace AngouriMath
         internal static readonly Pattern any4 = new Pattern(103, PatType.COMMON);
         internal static readonly Pattern const1 = new Pattern(200, PatType.NUMBER);
         internal static readonly Pattern const2 = new Pattern(201, PatType.NUMBER);
+        internal static readonly Pattern const3 = new Pattern(202, PatType.NUMBER);
         internal static readonly Pattern var1 = new Pattern(300, PatType.VARIABLE);
         internal static readonly Pattern func1 = new Pattern(400, PatType.FUNCTION);
         internal static readonly Pattern func2 = new Pattern(401, PatType.FUNCTION);
@@ -108,6 +109,16 @@ namespace AngouriMath
 
             // {1} ^ (-1) = 1 / {1}
             { Powf.PHang(any1, Num(-1)), 1 / any1 },
+
+            // (1 / {}) ^ 2 * {}
+            { Powf.PHang(const1 / any1, const2) * any1, Powf.PHang(any1, Num(1) - const2) },
+            { Powf.PHang(const1 / any1, const2) * Powf.PHang(any1, const3), Powf.PHang(any1, const3 - const2) },
+
+            // {1} / {2} / {2}
+            { any1 / any2 / any2, any1 / Powf.PHang(any2, Num(2)) },
+            { any1 / Powf.PHang(any2, any3) / any2, any1 / Powf.PHang(any2, any3 + Num(1)) },
+            { any1 / any2 / Powf.PHang(any2, any3), any1 / Powf.PHang(any2, any3 + Num(1)) },
+            { any1 / Powf.PHang(any2, any4) / Powf.PHang(any2, any3), any1 / Powf.PHang(any2, any3 + any4) },
         };
 
         internal static readonly RuleList CommonRules = new RuleList {

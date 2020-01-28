@@ -25,5 +25,24 @@ namespace AngouriMath.Core.TreeAnalysis
                 }
             }
         }
+
+        internal static Pattern NegativeMultiplyerPattern = Patterns.any1 + Patterns.const1 * Patterns.any2;
+
+        internal static void InvertNegativeMultipliers(ref Entity expr)
+        {
+            if (NegativeMultiplyerPattern.Match(expr) &&
+                !expr.Children[1].Children[0].GetValue().IsComplex() &&
+                expr.Children[1].Children[0].GetValue().Re > 0)
+                expr = expr.Children[0] - (-1 * expr.Children[1].Children[0].GetValue()) * expr.Children[1].Children[1];
+            else
+            {
+                for (int i = 0; i < expr.Children.Count; i++)
+                {
+                    var tmp = expr.Children[i];
+                    InvertNegativePowers(ref tmp);
+                    expr.Children[i] = tmp;
+                }
+            }
+        }
     }
 }

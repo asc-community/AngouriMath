@@ -367,6 +367,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                     }
                     else
                     {
+                        if (!MathS.CanBeEvaluated(mp.Children[1]))
+                        {
+                            freeMono = null;
+                            return;
+                        }
                         Entity tmpFree;
                         // TODO
                         object pow;
@@ -375,7 +380,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                         else
                             pow = new TreeAnalyzer.PrimitiveInt();
                         TreeAnalyzer.IPrimitive<T> q = pow as TreeAnalyzer.IPrimitive<T>;
-                        ParseMonomial<T>(aVar, expr, out tmpFree, ref q);
+                        ParseMonomial<T>(aVar, mp.Children[0], out tmpFree, ref q);
                         if (tmpFree == null)
                         {
                             freeMono = null;
@@ -383,6 +388,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolver
                         }
                         else
                         {
+                            // Can we eval it right here?
+                            mp.Children[1] = mp.Children[1].Eval();
                             freeMono += MathS.Pow(tmpFree, mp.Children[1]);
                             power.AddMp(q.GetValue(), mp.Children[1].GetValue());
                         }

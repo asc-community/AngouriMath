@@ -144,7 +144,7 @@ namespace Samples
             //Entity e1 = "x^5 + 9 x^4 + 8 x^3 - 33 x^2 + 25 x - 6";
             //Entity e2 = "x ^2 + 3x - 2";
 
-            
+            /*
             Entity e1 = "(sin(x) * y + 2 * sin(x)^2 * y^2 - 1)*(cos(x)^2 * y - cos(x)^3 * y^3 + 2)";
             e1 = e1.Expand();
             //Entity e2 = "(cos(x)^2 * y - cos(x)^3 * y^3 + 2)";
@@ -155,11 +155,20 @@ namespace Samples
             var дегенарат = e1 / e2;
             var watch = new Stopwatch();
             watch.Start();
-            var vv = дегенарат.Simplify(5);
+            var vv = дегенарат.Simplify(6);
             Console.WriteLine(vv);
             watch.Stop();
             Console.WriteLine(watch.ElapsedMilliseconds);
-            
+            */
+            var x = MathS.Var("x");
+            var y = MathS.Var("y");
+            var a = MathS.Var("a");
+            var b = MathS.Var("b");
+            var c = MathS.Var("c");
+            var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
+            //var expr = func.Derive(x).Simplify();
+            //Console.WriteLine(func.Derive(x).Simplify());
+            Console.WriteLine(expr.Simplify(3));
             //var e = MathS.FromString("(-2) * cos(x) ^ 3 * sin(x) ^ 2 / ((-1) * cos(x) ^ 3)");
             //Console.WriteLine((e1 / e2).Simplify());
             //Entity expr = "(x - 2)(x - 3)(x - i)";
@@ -167,9 +176,9 @@ namespace Samples
             //Console.WriteLine(expr.Solve("x"));
             //Console.WriteLine(expr.Simplify());
 
-            
+
             //*/
-            
+
             //foreach (var child in expr.Solve("x"))
             //    Console.WriteLine(child);
             //Console.WriteLine(expr.Substitute("x", roots[1]).Eval());

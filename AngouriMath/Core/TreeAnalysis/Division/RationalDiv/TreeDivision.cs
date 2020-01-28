@@ -59,8 +59,8 @@ namespace AngouriMath.Core.TreeAnalysis
                     break;
                 }
             }
-
-            if (polyvar == null)
+            /*
+            if (string.IsNullOrEmpty(polyvar))
             {
                 // Second attempt to find polynoms
                 foreach (var pair in monoinfoQ)
@@ -72,7 +72,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     }
                 }
             }
-
+            */
             // cannot divide, return unchanged
             if (string.IsNullOrEmpty(polyvar)) return originalP / originalQ;
 
@@ -124,7 +124,7 @@ namespace AngouriMath.Core.TreeAnalysis
             Entity res = new Number(0);
             foreach(var pair in result)
             {
-                res += pair.Value * MathS.Pow(new VariableEntity(polyvar), pair.Key);
+                res += pair.Value.Simplify(5) * MathS.Pow(new VariableEntity(polyvar), pair.Key);
             }
             // TODO: we know that variable is the same but with suffux '_r'. This foreach loop can be speeded-up
             foreach (var subst in replacementInfo)

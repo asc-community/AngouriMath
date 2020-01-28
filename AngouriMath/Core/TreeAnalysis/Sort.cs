@@ -25,27 +25,6 @@ namespace AngouriMath
                     select hash);
 
         }
-
-        internal Entity Sort(SortLevel level)
-        {
-            Func<Entity, OperatorEntity> funcIfSum = Const.FuncIfSum;
-            Func<Entity, OperatorEntity> funcIfMul = Const.FuncIfMul;
-            for (int i = 0; i < Children.Count; i++)
-                Children[i] = Children[i].Sort(level);
-            if (Name != "sumf" && Name != "mulf" && Name != "minusf" && Name != "divf")
-                return DeepCopy();
-            var isSum = this.Name == "sumf" || this.Name == "minusf";
-            var linChildren = TreeAnalyzer.LinearChildren(this, 
-                                                          isSum ? "sumf" : "mulf", 
-                                                          isSum ? "minusf" : "divf",
-                                                          isSum ? funcIfSum : funcIfMul);
-            var groups = TreeAnalyzer.GroupByHash(linChildren, level);
-            var grouppedChildren = new List<Entity>();
-            foreach (var list in groups)
-                grouppedChildren.Add(TreeAnalyzer.MultiHang(list, 
-                    isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL));
-            return TreeAnalyzer.MultiHang(grouppedChildren, isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL);
-        }
     }
 }
 
@@ -85,6 +64,31 @@ namespace AngouriMath.Core.TreeAnalysis
             res.Children.Add(children[0]);
             res.Children.Add(MultiHang(children.GetRange(1, children.Count - 1), opName, opPrior));
             return res;
+        }
+
+        internal static void Sort(ref Entity tree, SortLevel level)
+        {
+            Func<Entity, OperatorEntity> funcIfSum = Const.FuncIfSum;
+            Func<Entity, OperatorEntity> funcIfMul = Const.FuncIfMul;
+            for (int i = 0; i < tree.Children.Count; i++)
+            {
+                Entity tmp = tree.Children[i];
+                Sort(ref tmp, level);
+                tree.Children[i] = tmp;
+            }
+            if (tree.Name != "sumf" && tree.Name != "mulf" && tree.Name != "minusf" && tree.Name != "divf")
+                return;
+            var isSum = tree.Name == "sumf" || tree.Name == "minusf";
+            var linChildren = TreeAnalyzer.LinearChildren(tree,
+                                                          isSum ? "sumf" : "mulf",
+                                                          isSum ? "minusf" : "divf",
+                                                          isSum ? funcIfSum : funcIfMul);
+            var groups = TreeAnalyzer.GroupByHash(linChildren, level);
+            var grouppedChildren = new List<Entity>();
+            foreach (var list in groups)
+                grouppedChildren.Add(TreeAnalyzer.MultiHang(list,
+                    isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL));
+            tree = TreeAnalyzer.MultiHang(grouppedChildren, isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL);
         }
     }
 }
