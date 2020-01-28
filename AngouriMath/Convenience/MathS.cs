@@ -18,9 +18,6 @@ namespace AngouriMath
 
     public static partial class MathS
     {
-        public static void QuackQuackQuack(ref Entity a)
-        => TreeAnalyzer.Sort(ref a, TreeAnalyzer.SortLevel.HIGH_LEVEL);
-        public static Entity QuackQuack(Entity p, Entity q) => TreeAnalyzer.DividePolynoms(p, q);
 
         /// <summary>
         /// https://en.wikipedia.org/wiki/Trigonometric_functions
