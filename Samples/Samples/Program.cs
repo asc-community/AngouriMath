@@ -151,7 +151,7 @@ namespace Samples
             Entity e2 = "sin(x) * y + 2 * sin(x)^2 * y^2 - 1";
             //Console.WriteLine(">>> ({0}) / ({1})", e1, e2);
             //Console.WriteLine();
-            //var res = MathS.QuackQuack(e1, e2);
+            var res = MathS.QuackQuack(e1, e2);
             var дегенарат = e1 / e2;
             var watch = new Stopwatch();
             watch.Start();
@@ -165,15 +165,15 @@ namespace Samples
             var y = MathS.Var("y");
             var a = MathS.Var("a");
             var b = MathS.Var("b");
-            var c = MathS.Var("c");
-            var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
+            var c = MathS.Var("c");*/
+            Entity expr = "(x + 1) * (x + 2) * (x + 3) / ((x + 4) * (x + 2))";
+            expr = expr.Simplify();
             //var expr = func.Derive(x).Simplify();
             //Console.WriteLine(func.Derive(x).Simplify());
-            Console.WriteLine(expr.Simplify(3));*/
-            var x = MathS.Var("x");
-            
-            var func = MathS.Arcsin(x);
-            Console.WriteLine(func.Derive(x).Simplify());
+            //Console.WriteLine(expr.Simplify(3));*/
+
+            var func = MathS.FromString("(sin(x)^2 - cos(x)^2) * (sin(x) + cos(x))^(-1)");
+            Console.WriteLine(func.Simplify());
             //var e = MathS.FromString("(-2) * cos(x) ^ 3 * sin(x) ^ 2 / ((-1) * cos(x) ^ 3)");
             //Console.WriteLine((e1 / e2).Simplify());
             //Entity expr = "(x - 2)(x - 3)(x - i)";
