@@ -104,12 +104,14 @@ namespace AngouriMath.Core.TreeAnalysis
                         monoinfoP[polyvar][newpow] = -deltamul * n.Value;
                     }
                     else
-                    {
+                    { 
                         monoinfoP[polyvar][newpow] -= deltamul * n.Value;
-                        if (monoinfoP[polyvar][newpow] == 0)
-                            monoinfoP[polyvar].Remove(newpow);
                     }
-                    //monoinfoP[polyvar][newpow] = monoinfoP[polyvar][newpow].SimplifyIntelli();
+                    /*
+                    monoinfoP[polyvar][newpow] = monoinfoP[polyvar][newpow].SimplifyIntelli();
+                    if(monoinfoP[polyvar][newpow] == 0)
+                        monoinfoP[polyvar].Remove(newpow);
+                    */
                 }
                 if (monoinfoP[polyvar].ContainsKey(maxpowP))
                     monoinfoP[polyvar].Remove(maxpowP);
@@ -118,7 +120,15 @@ namespace AngouriMath.Core.TreeAnalysis
 
                 maxpowP = monoinfoP[polyvar].Keys.Max();
                 maxvalP = monoinfoP[polyvar][maxpowP];
-                
+            }
+
+            // check if all left in P is zero. If something left, division is impossible => return P / Q
+            var Zero = new NumberEntity(0);
+            foreach(var coef in monoinfoP[polyvar])
+            {
+                var simplified = coef.Value.Simplify();
+                if (simplified != Zero)
+                    return originalP / originalQ;
             }
 
             Entity res = new Number(0);
