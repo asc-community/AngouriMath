@@ -314,7 +314,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 dst.Add(0);
             } else
             {
-                Entity actualVar = TreeAnalyzer.GetMinimumSubtree(expr.Simplify(), x);
+                expr = expr.Simplify();
+                Entity actualVar = TreeAnalyzer.GetMinimumSubtree(expr, x);
                 var res = PolynomialSolver.SolveAsPolynomial(expr, actualVar);
 
                 if (res != null)
