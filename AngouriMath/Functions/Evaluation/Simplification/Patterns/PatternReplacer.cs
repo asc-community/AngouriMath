@@ -17,6 +17,7 @@ namespace AngouriMath
             OPERATOR,
             VARIABLE,
             PATTERN,
+            TENSOR
         }
         internal enum PatType
         {

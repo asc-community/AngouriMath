@@ -2,23 +2,23 @@
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <Authors>Angourisoft</Authors>
     <Company>Angourisoft</Company>
     <Copyright>Angourisoft</Copyright>
     <PackageProjectUrl>asc-community.org</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Angourisoft/MathS</RepositoryUrl>
-    <AssemblyVersion>0.0.17.2</AssemblyVersion>
-    <FileVersion>0.0.17.2</FileVersion>
+    <AssemblyVersion>0.0.18.0</AssemblyVersion>
+    <FileVersion>0.0.18.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageTags>Math, csharp, derivation, latex, calculator, parse, simplification, compute, symbol, compilation, algebra</PackageTags>
-    <Version>1.0.17.2-Beta</Version>
+    <Version>1.0.18.0-Alpha</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/Angourisoft/MathS/master/icon.png</PackageIconUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>Enables to work with formulas built in the code or from a string. Computing, derivating, latex rendering, fast functions, and many more.</Description>
-    <PackageReleaseNotes>Infinite loop simplification fixed</PackageReleaseNotes>
+    <PackageReleaseNotes>Solving equations &amp; simplification has improved &amp; tons of bugs fixed &amp; some more features</PackageReleaseNotes>
     <PackageId>AngouriMath</PackageId>
     <Product>AngouriMath</Product>
     <ApplicationIcon />

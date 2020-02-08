@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AngouriMath.Core.TreeAnalysis;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -38,6 +39,9 @@ namespace AngouriMath.Core.TreeAnalysis
                 originTree.Children[i] = child;
             }
         }
+
+        internal static bool ContainsName(Entity expr, string name)
+            => expr.Name == name || expr.Children.Select(p => ContainsName(p, name)).Any();
     }
 }
 
@@ -62,5 +66,14 @@ namespace AngouriMath
                 }
             return null;
         }
+
+        /// <summary>
+        /// Finds out whether "name" is mentioned at least once
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        internal bool ContainsName(string name) => TreeAnalyzer.ContainsName(this, name);
+
+        internal bool IsTensoric() => ContainsName("tensort");
     }
 }

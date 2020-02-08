@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AngouriMath.Core;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -23,12 +24,11 @@ namespace AngouriMath
         internal string Stringize(bool parenthesesRequired)
         {
             if (IsLeaf)
-            {
-                if (this.entType != Entity.EntType.PATTERN)
-                    return this.Name.Length == 0 || this.Name[0] != '-' ? this.Name : "(" + this.Name + ")";
-                else
-                    return "{ " + PatternNumber + " : " + PatternType + " }";
-            }
+                return entType switch { 
+                    EntType.PATTERN => "{ " + PatternNumber + " : " + PatternType + " }",
+                    EntType.TENSOR => (this as Tensor).ToString(),
+                    _ => this.Name.Length == 0 || this.Name[0] != '-' ? this.Name : "(" + this.Name + ")"
+                };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeStringize(Name, Children), parenthesesRequired);
         }

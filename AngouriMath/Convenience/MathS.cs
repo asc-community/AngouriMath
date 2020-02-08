@@ -263,5 +263,43 @@ namespace AngouriMath
         /// <param name="N"></param>
         /// <returns></returns>
         public static double FromBaseN(string num, int N) => NumberSystem.FromBaseN(num, N);
+
+        /// <summary>
+        /// Creates an instance of Tensor: Matrix
+        /// Usage example:
+        /// var t = MathS.Matrix(5, 3,
+        ///        10, 11, 12,
+        ///        20, 21, 22,
+        ///        30, 31, 32,
+        ///        40, 41, 42,
+        ///        50, 51, 52
+        ///        );
+        /// creates matrix 5x3 with the appropriate elements
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        public static Tensor Matrix(int rows, int columns, params Entity[] values)
+        {
+            if (values.Length != rows * columns)
+                throw new MathSException("Axes don't match data");
+            var r = new Tensor(rows, columns);
+            r.Assign(values);
+            return r;
+        }
+
+        /// <summary>
+        /// Creates an instance of vector
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        public static Tensor Vector(params Entity[] p)
+        {
+            var r = new Tensor(p.Length);
+            r.Assign(p);
+            return r;
+        }
+
+        public static Tensor DotProduct(Tensor A, Tensor B) => AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.DotProduct(A, B);
     }
 }

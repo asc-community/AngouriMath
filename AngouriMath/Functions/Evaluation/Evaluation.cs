@@ -16,6 +16,8 @@ namespace AngouriMath
         public static bool IsConstant(Entity expr) => (expr.entType == Entity.EntType.VARIABLE && MathS.ConstantList.ContainsKey(expr.Name));
         public static bool CanBeEvaluated(Entity expr)
         {
+            if (expr.IsTensoric())
+                return false;
             if (expr.entType == Entity.EntType.VARIABLE)
                 return IsConstant(expr);
             for (int i = 0; i < expr.Children.Count; i++)
@@ -120,6 +122,29 @@ namespace AngouriMath
         /// Number since new version
         /// </returns>
         public Number Eval() => SubstituteConstants().Simplify(0).GetValue();
+        
+        /// <summary>
+        /// Collapses the entire expression into a tensor if possible
+        /// ( x y ) + 1 => ( x+1 y+1 )
+        /// 
+        /// ( 1 2 ) + ( 3 4 ) => ( 4 6 ) vectors pointwise
+        /// 
+        ///              (( 3 )
+        /// (( 1 2 3 )) x ( 4 ) => (( 26 )) Matrices dot product
+        ///               ( 5 ))
+        ///               
+        /// ( 1 2 ) x ( 1 3 ) => ( 1 6 ) Vectors pointwise
+        /// </summary>
+        /// <returns></returns>
+        public Tensor EvalTensor()
+        {
+            if (!IsTensoric())
+                throw new MathSException("To eval an expression as a tensor, it should contain at least one tensor (matrix, vector)");
+            if (entType == EntType.TENSOR)
+                return this as Tensor;
+            //if (entType)
+            return null;
+        }
     }
 
     // Adding invoke table for eval

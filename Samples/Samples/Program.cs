@@ -8,6 +8,8 @@ using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Convenience;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Samples
 {
@@ -141,68 +143,7 @@ namespace Samples
         
         static void Main(string[] _)
         {
-            //Entity e1 = "x^5 + 9 x^4 + 8 x^3 - 33 x^2 + 25 x - 6";
-            //Entity e2 = "x ^2 + 3x - 2";
-
-            /*
-            Entity e1 = "(sin(x) * y + 2 * sin(x)^2 * y^2 - 1)*(cos(x)^2 * y - cos(x)^3 * y^3 + 2)";
-            e1 = e1.Expand();
-            //Entity e2 = "(cos(x)^2 * y - cos(x)^3 * y^3 + 2)";
-            Entity e2 = "sin(x) * y + 2 * sin(x)^2 * y^2 - 1";
-            //Console.WriteLine(">>> ({0}) / ({1})", e1, e2);
-            //Console.WriteLine();
-            var res = MathS.QuackQuack(e1, e2);
-            var дегенарат = e1 / e2;
-            var watch = new Stopwatch();
-            watch.Start();
-            var vv = дегенарат.Simplify(6);
-            Console.WriteLine(vv);
-            watch.Stop();
-            Console.WriteLine(watch.ElapsedMilliseconds);
-            */
-            /*
-            var x = MathS.Var("x");
-            var y = MathS.Var("y");
-            var a = MathS.Var("a");
-            var b = MathS.Var("b");
-            var c = MathS.Var("c");*/
-            Entity expr = "(x + 1) * (x + 2) * (x + 3) / ((x + 4) * (x + 2))";
-            expr = expr.Simplify();
-            //var expr = func.Derive(x).Simplify();
-            //Console.WriteLine(func.Derive(x).Simplify());
-            //Console.WriteLine(expr.Simplify(3));*/
-
-            var func = MathS.FromString("(sin(x)^2 - cos(x)^2) * (sin(x) + cos(x))^(-1)");
-            Console.WriteLine(func.Simplify());
-            //var e = MathS.FromString("(-2) * cos(x) ^ 3 * sin(x) ^ 2 / ((-1) * cos(x) ^ 3)");
-            //Console.WriteLine((e1 / e2).Simplify());
-            //Entity expr = "(x - 2)(x - 3)(x - i)";
-            //Entity expr = "(2x + y) / (x + 0.5y)";
-            //Console.WriteLine(expr.Solve("x"));
-            //Console.WriteLine(expr.Simplify());
-
-
-            //*/
-
-            //foreach (var child in expr.Solve("x"))
-            //    Console.WriteLine(child);
-            //Console.WriteLine(expr.Substitute("x", roots[1]).Eval());
-
-            //Sample17();
-            /*
-            var watch = new Stopwatch();
-            watch.Start();
-            var x = MathS.Var("x");
-            var goose = MathS.Var("goose");
-            var momo = MathS.Var("momo");
-            var quack = MathS.Var("quack"); 
-            var eq = ((x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)).Expand();
-            var roots = eq.Solve(x);
-            watch.Stop();
-            Console.WriteLine(watch.ElapsedMilliseconds);
-            */
-            //Console.WriteLine(SySyn.Evalf(File.ReadAllText("D:/tmp/sdf.expr")));
-            //Console.WriteLine(MathS.FromBaseN("11011" + "10101" + "01110" + "10101" + "11011", 2));
+           
         }
     }
 #pragma warning restore IDE0051
