@@ -19,6 +19,7 @@ namespace AngouriMath
     #pragma warning restore CS0660
     {
         protected abstract Entity __copy();
+        protected abstract bool EqualsTo(Entity obj);
         
         public string Name = string.Empty;
 
@@ -72,18 +73,7 @@ namespace AngouriMath
             }
             if (a.entType != b.entType)
                 return false;
-            if (a.entType == EntType.NUMBER && b.entType == EntType.NUMBER)
-                return (a as NumberEntity).GetValue() == (b as NumberEntity).GetValue();
-            if ((a.Name != b.Name) || (a.Children.Count() != b.Children.Count()))
-            {
-                return false;
-            }
-            for (int i = 0; i < a.Children.Count; i++)
-            {
-                if (!(a.Children[i] == b.Children[i]))
-                    return false;
-            }
-            return true;
+            return a.EqualsTo(b);
         }
         public static bool operator !=(Entity a, Entity b) => !(a == b);
 

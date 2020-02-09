@@ -235,6 +235,7 @@ namespace AngouriMath
 
     internal class Pattern : Entity
     {
+
         internal override Entity InnerSimplify()
         {
             // Actually, no need to implement
@@ -260,6 +261,13 @@ namespace AngouriMath
             else
                 return res;
         }
+
+        protected override bool EqualsTo(Entity obj)
+        {
+            // Actually, no need to implement
+            throw new NotImplementedException();
+        }
+
         public static Pattern operator +(Pattern a, Pattern b) => Sumf.PHang(a, b);
         public static Pattern operator +(Pattern a, Entity b) => Sumf.PHang(a, b);
 
