@@ -36,24 +36,7 @@ namespace AngouriMath
         /// Use this to copy one node (unsafe copy!)
         /// </summary>
         /// <returns></returns>
-        public Entity Copy()
-        {
-            switch (entType)
-            {
-                case EntType.NUMBER:
-                    return this.__copy() as NumberEntity;
-                case EntType.VARIABLE:
-                    return this.__copy() as VariableEntity;
-                case EntType.OPERATOR:
-                    return this.__copy() as OperatorEntity;
-                case EntType.FUNCTION:
-                    return this.__copy() as FunctionEntity;
-                case EntType.TENSOR:
-                    return this.__copy() as Tensor;
-                default:
-                    throw new MathSException("Unknown entity type");
-            }
-        }
+        internal Entity Copy() => this.__copy();
 
         /// <summary>
         /// Use this to copy an entity. Recommended to use if you need a safe copy
@@ -108,7 +91,7 @@ namespace AngouriMath
         internal new string GetHashCode() => ToString();
 
     }
-    public class NumberEntity : Entity
+    public partial class NumberEntity : Entity
     {
         public NumberEntity(Number value) : base(value.ToString(), EntType.NUMBER) 
         {
@@ -127,7 +110,7 @@ namespace AngouriMath
         }
 
     }
-    public class VariableEntity : Entity
+    public partial class VariableEntity : Entity
     {
         public VariableEntity(string name) : base(name, EntType.VARIABLE) => Priority = Const.PRIOR_VAR;
         public static implicit operator VariableEntity(string name) => new VariableEntity(name);
@@ -136,7 +119,7 @@ namespace AngouriMath
             return new VariableEntity(Name);
         }
     }
-    public class OperatorEntity : Entity
+    public partial class OperatorEntity : Entity
     {
         public OperatorEntity(string name, int priority) : base(name, EntType.OPERATOR) {
             Priority = priority;
@@ -146,7 +129,7 @@ namespace AngouriMath
             return new OperatorEntity(Name, Priority);
         }
     }
-    public class FunctionEntity : Entity
+    public partial class FunctionEntity : Entity
     {
         public FunctionEntity(string name) : base(name, EntType.FUNCTION) => Priority = Const.PRIOR_FUNC;
         protected override Entity __copy()

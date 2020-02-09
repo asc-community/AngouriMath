@@ -235,6 +235,11 @@ namespace AngouriMath
 
     internal class Pattern : Entity
     {
+        internal override Entity InnerSimplify()
+        {
+            // Actually, no need to implement
+            throw new NotImplementedException();
+        }
         public Pattern(int num, PatType type, string name = "") : base(name, EntType.PATTERN) {
             PatternNumber = num;
             PatternType = type;

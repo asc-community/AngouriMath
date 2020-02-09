@@ -5,7 +5,7 @@ using System.Text;
 
 namespace AngouriMath.Core
 {
-    public class Tensor : Entity
+    public partial class Tensor : Entity
     {
         /// <summary>
         /// List of ints that stand for dimensions
@@ -16,6 +16,8 @@ namespace AngouriMath.Core
         /// Numbere of dimensions. 2 for matrix, 1 for vector
         /// </summary>
         public int Dimensions { get => Shape.Count; }
+
+        private readonly int[] AxesOrder;
 
         /// <summary>
         /// Data in a linear array
@@ -62,6 +64,10 @@ namespace AngouriMath.Core
 
             // The first element of Volumes is the Volume of the entire tensor
             InitData(Volumes[0]);
+
+            AxesOrder = new int[dims.Length];
+            for (int i = 0; i < AxesOrder.Length; i++)
+                AxesOrder[i] = i;
         }
 
         /// <summary>
@@ -73,7 +79,7 @@ namespace AngouriMath.Core
         {
             int id = 0;
             for (int i = 0; i < dims.Length; i++)
-                id += Volumes[i + 1] * dims[i];
+                id += Volumes[i + 1] * dims[AxesOrder[i]];
             return id;
         }
 
@@ -91,15 +97,27 @@ namespace AngouriMath.Core
             }
         }
         
+        private bool CheckBounds(int[] dims)
+        {
+            for (int i = 0; i < dims.Length; i++)
+                if (dims[i] < 0 || dims[i] >= Shape[i])
+                    return false;
+            return true;
+        }
+
         public Entity this[params int[] dims]
         {
             get
             {
+                if (!CheckBounds(dims))
+                    throw new MathSException("Index out of range");
                 var id = GetDataIdByIndexes(dims);
                 return Data[id];
             }
             set
             {
+                if (!CheckBounds(dims))
+                    throw new MathSException("Index out of range");
                 var id = GetDataIdByIndexes(dims);
                 Data[id] = value;
             }
@@ -177,7 +195,12 @@ namespace AngouriMath.Core
             var tmp = Shape[a];
             Shape[a] = Shape[b];
             Shape[b] = tmp;
-            InitVolumes();
+
+            var tmp_a = AxesOrder[a];
+            AxesOrder[a] = AxesOrder[b];
+            AxesOrder[b] = tmp_a;
+
+            //InitVolumes();
         }
 
         /// <summary>
@@ -193,9 +216,15 @@ namespace AngouriMath.Core
 
         protected override Entity __copy()
         {
-            var t = new Tensor(Shape.ToArray());
+            var _shape = new int[Dimensions];
+            for (int i = 0; i < Dimensions; i++)
+                _shape[i] = Shape[AxesOrder[i]];
+            var t = new Tensor(_shape);
+            for (int i = 0; i < Dimensions; i++)
+                t.Shape[i] = Shape[i];
             for (int i = 0; i < Data.Length; i++)
                 t.Data[i] = Data[i].DeepCopy();
+            AxesOrder.CopyTo(t.AxesOrder, 0);
             return t;
         }
     }

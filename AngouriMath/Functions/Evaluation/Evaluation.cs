@@ -90,8 +90,8 @@ namespace AngouriMath
         public Entity Simplify(int level) => Simplificator.Simplify(this, level);
 
         public EntitySet Alternate(int level) => Simplificator.Alternate(this, level);
-        internal Entity InnerSimplify()
-        {
+        internal abstract Entity InnerSimplify();
+        /*{
             if (IsLeaf)
                 return this;
             else
@@ -100,14 +100,14 @@ namespace AngouriMath
                     return Number.Null;
                 return MathFunctions.InvokeEval(Name, Children);
             }
-        }
+        }*/
 
         /// <summary>
         /// Fast substitution of some mathematical constants,
         /// e. g. pi * e + 3 => 3.1415 * 2.718 + 3
         /// </summary>
         /// <returns></returns>
-        public Entity SubstituteConstants()
+public Entity SubstituteConstants()
         {
             Entity curr = this.DeepCopy();  // Instead of copying in substitute, 
             // we better copy first and then do inPlace substitute
