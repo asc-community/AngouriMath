@@ -190,9 +190,18 @@ namespace AngouriMath
         /// <returns></returns>
         public static Number Num(double a) => new Number(a);
 
+        /// <summary>
+        /// List of public constants
+        /// </summary>
         public static readonly VariableEntity e = "e";
         public static readonly Number i = new Number(0, 1);
         public static readonly VariableEntity pi = "pi";
+        
+        /// <summary>
+        /// Sets threshold for comparison
+        /// For example, if you don't need precision higher than 6 digits after .,
+        /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
+        /// </summary>
         public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-11;
 
         /// <summary>
@@ -300,6 +309,20 @@ namespace AngouriMath
             return r;
         }
 
+        /// <summary>
+        /// Returns dot product of two matrices
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <returns></returns>
         public static Tensor DotProduct(Tensor A, Tensor B) => AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.DotProduct(A, B);
+        
+        /// <summary>
+        /// Returns scalar product of two matrices
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <returns></returns>
+        public static Entity ScalarProduct(Tensor A, Tensor B) => AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.ScalarProduct(A, B);
     }
 }

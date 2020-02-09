@@ -8,6 +8,10 @@ namespace AngouriMath
     using SynTable = Dictionary<string, string>;
     internal static class SynonymFunctions
     {
+        /// <summary>
+        /// While parsing, we want to understand functions like "sqrt". After parsing, we replace
+        /// nodes with this name by the appropriate expression
+        /// </summary>
         internal static readonly FuncTable SynFunctions = new FuncTable
         {
             { "sqrtf", args => MathS.Pow(args[0], 0.5) },
@@ -16,6 +20,13 @@ namespace AngouriMath
             { "secf", args => MathS.Sec(args[0]) },
             { "cosecf", args => MathS.Cosec(args[0]) },
         };
+
+        /// <summary>
+        /// Expects a tree with "sqrt" and some other unresolved functions. Returns
+        /// that with all "sqrt" and other replaced
+        /// </summary>
+        /// <param name="tree"></param>
+        /// <returns></returns>
         internal static Entity Synonymize(Entity tree)
         {
             for (int i = 0; i < tree.Children.Count; i++)

@@ -5,6 +5,9 @@ using System.Text;
 
 namespace AngouriMath.Core.FromLinq
 {
+    /// <summary>
+    /// To parse linq lambda expressions into Entity
+    /// </summary>
     internal class LinqParser
     {
         private readonly Expression src;
@@ -12,6 +15,13 @@ namespace AngouriMath.Core.FromLinq
         {
             src = linq;
         }
+
+        /// <summary>
+        /// Parses the function interpreting "Math.Sqr" as sqr
+        /// TODO
+        /// </summary>
+        /// <param name="linq"></param>
+        /// <returns></returns>
         private static Entity InnerParse(Expression linq)
         {
             var unary = linq as UnaryExpression;
@@ -68,8 +78,6 @@ namespace AngouriMath.Core.FromLinq
             }
         }
         internal Entity Parse()
-        {
-            return InnerParse(src);
-        }
+        => InnerParse(src);
     }
 }

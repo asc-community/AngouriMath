@@ -5,7 +5,7 @@ using System.Text;
 
 namespace AngouriMath.Core
 {
-    public partial class Tensor
+    public partial class Tensor : Entity
     {
         protected override bool EqualsTo(Entity obj)
         {

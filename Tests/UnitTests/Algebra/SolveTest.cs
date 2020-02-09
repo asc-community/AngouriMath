@@ -85,10 +85,9 @@ namespace UnitTests
             var roots = eq.Solve("x");
             var r1 = MathS.FromString("-1 + 1i").Simplify();
             var r2 = MathS.FromString("-1 - 1i").Simplify();
-
-            Assert.IsTrue(roots.Count == 2 &&
-                ((roots[0] == r1 && roots[1] == r2) || (roots[0] == r2 && roots[1] == r1)),
-            string.Format("roots: {0}, expected: [-1 - 1i, -1 + 1i]", roots));
+            Assert.IsTrue(roots.Count == 2);
+            AssertRoots(eq, x, roots[0]);
+            AssertRoots(eq, x, roots[1]);
         }
 
         [TestMethod]
@@ -97,7 +96,8 @@ namespace UnitTests
             // solve 2x2 + 4x + 2
             var eq = 2 * x.Pow(2) + 4 * x + 2;
             var roots = eq.Solve("x");
-            Assert.IsTrue(roots.Count == 1 && roots[0] == -1, string.Format("roots: {0}, expected: [-1]", roots));
+            Assert.IsTrue(roots.Count == 1);
+            AssertRoots(eq, x, roots[0]);
         }
 
         [TestMethod]
@@ -106,10 +106,9 @@ namespace UnitTests
             // solve x2 - 3x + 2
             var eq = x.Pow(2) - 3 * x + 2;
             var roots = eq.Solve("x");
-
-            Assert.IsTrue(roots.Count == 2 &&
-                ((roots[0] == 1 && roots[1] == 2) || (roots[0] == 2 && roots[1] == 1)),
-                 string.Format("roots: {0}, expected: [1, 2]", roots));
+            Assert.IsTrue(roots.Count == 2);
+            AssertRoots(eq, x, roots[0]);
+            AssertRoots(eq, x, roots[1]);
         }
 
         [TestMethod]
@@ -118,7 +117,8 @@ namespace UnitTests
             // solve x3 + 3x2 + 3x + 1
             var eq = x.Pow(3) + 3 * x.Pow(2) + 3 * x + 1;
             var roots = eq.Solve("x");
-            Assert.IsTrue(roots.Count == 1 && roots[0] == -1, string.Format("roots: {0}, expected: [-1]", roots));
+            Assert.IsTrue(roots.Count == 1);
+            AssertRoots(eq, x, roots[0]);
         }
 
         [TestMethod]

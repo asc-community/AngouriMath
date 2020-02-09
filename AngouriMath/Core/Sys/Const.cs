@@ -35,5 +35,20 @@ namespace AngouriMath
                     }
             };
         }
+
+
+        /// <summary>
+        /// TODO & DOCTODO
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        internal static bool IsReservedName(string name)
+        {
+            if (CompiledMathFunctions.func2Num.ContainsKey(name))
+                return true;
+            if (name == "tensort")
+                return true;
+            return false;
+        }
     }
 }

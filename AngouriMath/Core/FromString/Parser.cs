@@ -34,19 +34,41 @@ namespace AngouriMath.Core.FromString
             BraceType.BRACKET_OPEN,
             BraceType.BRACKET_CLOSE
         };
+        /// <summary>
+        /// [ or (
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns></returns>
         internal static bool IsOpen(BraceType s)
         {
             return s == BraceType.BRACKET_OPEN || s == BraceType.PARENTHESIS_OPEN;
         }
+        /// <summary>
+        /// ((, (), )), (), [[, [].... all of the same type
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         internal static bool SameType(BraceType a, BraceType b)
         {
             return parentheses.Contains(a) && parentheses.Contains(b) ||
                    brackets.Contains(a) && brackets.Contains(b);
         }
+
+        /// <summary>
+        /// (()()[]([[]])) is a finished sequence
+        /// ([]( is not
+        /// </summary>
+        /// <returns></returns>
         internal bool IsFinished()
         {
             return braces.Count == 0;
         }
+
+        /// <summary>
+        /// Appends a brace and checks whether everything is ok
+        /// </summary>
+        /// <param name="symbol"></param>
         internal void Add(BraceType symbol)
         {
             if (symbol == BraceType.NONE)
@@ -83,6 +105,11 @@ namespace AngouriMath.Core.FromString
     }
     internal static class Parser
     {
+        /// <summary>
+        /// Builds a tree of the expression
+        /// </summary>
+        /// <param name="lexer"></param>
+        /// <returns></returns>
         internal static Entity Parse(Lexer lexer)
         {
             var linearExpression = new List<Entity>();
@@ -120,6 +147,13 @@ namespace AngouriMath.Core.FromString
             }
             return HangLinearExpression(linearExpression);
         }
+
+        /// <summary>
+        /// DOCTODO
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <param name="op"></param>
+        /// <param name="reversed"></param>
         private static void FindOperator(List<Entity> expr, string op, bool reversed = false)
         {
             int i = 1;
@@ -137,6 +171,12 @@ namespace AngouriMath.Core.FromString
                 i++;
             }
         }
+
+        /// <summary>
+        /// Hanging "a + b * c - t ^ g"
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
         private static Entity HangLinearExpression(List<Entity> expr)
         {
             FindOperator(expr, "powf", reversed: true);
@@ -148,6 +188,12 @@ namespace AngouriMath.Core.FromString
             }
             return expr[0];
         }
+
+        /// <summary>
+        /// Sequence of latin letters is "AsVariable"
+        /// </summary>
+        /// <param name="lexer"></param>
+        /// <returns></returns>
         private static Entity ParseAsVariable(Lexer lexer)
         {
             Entity e = null;
@@ -175,6 +221,13 @@ namespace AngouriMath.Core.FromString
             }
             return e;
         }
+
+        /// <summary>
+        /// f(a, b, c) is 
+        /// f with three children
+        /// </summary>
+        /// <param name="lexer"></param>
+        /// <returns></returns>
         private static Entity ParseFunctionExpression(Lexer lexer)
         {
             if (lexer.Current.Type != TokenType.FUNCTION)
@@ -192,6 +245,12 @@ namespace AngouriMath.Core.FromString
             f.Children = ParseFunctionArguments(lexer);
             return f;
         }
+
+        /// <summary>
+        /// Divides a, b, c into a, b, c
+        /// </summary>
+        /// <param name="lexer"></param>
+        /// <returns></returns>
         private static List<Entity> ParseFunctionArguments(Lexer lexer)
         {
             var args = new List<Entity>();

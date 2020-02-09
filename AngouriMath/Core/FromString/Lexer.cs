@@ -8,6 +8,10 @@ namespace AngouriMath.Core.FromString
     using TokenType = Token.TokenType;
     internal class TokenList : List<Token>
     {
+        /// <summary>
+        /// Safely appends a token to a list
+        /// </summary>
+        /// <param name="a"></param>
         public new void Add(Token a)
         {
             if (!string.IsNullOrEmpty(a.Value))
@@ -19,6 +23,10 @@ namespace AngouriMath.Core.FromString
     }
     internal partial class Token
     {
+        /// <summary>
+        /// Safe copy of a token
+        /// </summary>
+        /// <returns></returns>
         internal Token Copy()
         {
             var res = new Token();
@@ -57,7 +65,6 @@ namespace AngouriMath.Core.FromString
         }
         internal TokenType Type { get; private set; }
         internal string Value { get; set; }
-        internal Entity Attribute { get; private set; }
         internal static BraceType GetBraceType(char s)
         {
             switch(s)
@@ -97,6 +104,12 @@ namespace AngouriMath.Core.FromString
         {
             return "{" + Value + " | " + this.Type.ToString() + "}";
         }
+
+        /// <summary>
+        /// Normal way to get the type of a token is to seal it and resolve the type
+        /// But sometimes we need to get it without sealing the token
+        /// </summary>
+        /// <returns></returns>
         internal TokenType GetCurrentType()
         {
             TokenType type;
@@ -144,19 +157,38 @@ namespace AngouriMath.Core.FromString
     {
         private readonly TokenList tokens;
         private int index;
+
+        /// <summary>
+        /// Seals all the tokens
+        /// </summary>
         internal void Seal()
         {
             foreach (var token in tokens)
                 token.Seal();
         }
+
+        /// <summary>
+        /// If EOF, there's no tokens remaining
+        /// </summary>
+        /// <returns></returns>
         internal bool EOF()
         {
             return index >= tokens.Count;
         }
+
+        /// <summary>
+        /// Goes to the next
+        /// Current changes
+        /// </summary>
         internal void Next()
         {
             index++;
         }
+
+        /// <summary>
+        /// Goes to the next without changing Current
+        /// </summary>
+        /// <returns></returns>
         internal Token GlanceNext()
         {
             if (index >= tokens.Count)
@@ -168,19 +200,36 @@ namespace AngouriMath.Core.FromString
                 return tokens[index + 1];
             }
         }
+
+        /// <summary>
+        /// If needed, we have a way back
+        /// </summary>
         internal void Prev()
         {
             index = Math.Max(index - 1, 0);
         }
+
+        /// <summary>
+        /// Property. Returns the current token
+        /// </summary>
         internal Token Current
         {
             get => tokens[index];
         }
+
+        /// <summary>
+        /// Resets the lexer
+        /// </summary>
         internal void ToBegin()
         {
             index = 0;
         }
 
+
+        /// <summary>
+        /// DOCTODO
+        /// </summary>
+        /// <param name="src"></param>
         internal Lexer(string src)
         {
             tokens = new TokenList();

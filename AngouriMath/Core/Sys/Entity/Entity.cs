@@ -20,6 +20,7 @@ namespace AngouriMath
     {
         protected abstract Entity __copy();
         protected abstract bool EqualsTo(Entity obj);
+        internal abstract void Check();
         
         public string Name = string.Empty;
 

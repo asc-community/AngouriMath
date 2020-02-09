@@ -41,7 +41,14 @@ namespace AngouriMath.Core.TreeAnalysis
         }
 
         internal static bool ContainsName(Entity expr, string name)
-            => expr.Name == name || expr.Children.Select(p => ContainsName(p, name)).Any();
+        {
+            if (name == expr.Name)
+                return true;
+            foreach (var child in expr.Children)
+                if (ContainsName(child, name))
+                    return true;
+            return false;
+        }
     }
 }
 

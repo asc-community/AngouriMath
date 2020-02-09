@@ -147,7 +147,11 @@ public Entity SubstituteConstants()
             var r = DeepCopy();
             TensorFunctional.__EvalTensor(ref r);
             if (r.entType == EntType.TENSOR)
-                return r as Tensor;
+            {
+                Tensor result = r as Tensor;
+                TensorFunctional.Apply(result, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
+                return result;
+            }
             else
                 throw new SysException("Unexpected behaviour");
         }

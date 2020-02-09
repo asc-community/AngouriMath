@@ -143,18 +143,19 @@ namespace Samples
         
         static void Main(string[] _)
         {
-            var m = MathS.Matrix(5, 3,
-                    10, 11, 12,
-                    20, 21, 22,
-                    30, 31, 32,
-                    40, 41, 42,
-                    50, 51, 52
-                    );
-            var a = m.DeepCopy() as Tensor;
-            m.Transpose();
-            //Console.WriteLine(m[0, 3]);
             
-            Console.WriteLine((a * m).EvalTensor().PrintOut());
+            Tensor A = MathS.Matrix(2, 4,
+            1, 2, 3, 4,
+            5, 6, 7, 8
+            );
+            Tensor B = MathS.Matrix(4, 2,
+            1, 2,
+            3, 4,
+            5, 6,
+            7, 8
+            );
+            Console.WriteLine((A * B).EvalTensor().PrintOut());
+            
         }
     }
 #pragma warning restore IDE0051
