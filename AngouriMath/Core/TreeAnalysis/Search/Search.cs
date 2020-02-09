@@ -74,6 +74,10 @@ namespace AngouriMath
         /// <returns></returns>
         internal bool ContainsName(string name) => TreeAnalyzer.ContainsName(this, name);
 
+        /// <summary>
+        /// Finds out whether an expression contains at least one tensor
+        /// </summary>
+        /// <returns></returns>
         internal bool IsTensoric() => ContainsName("tensort");
     }
 }

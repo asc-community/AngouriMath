@@ -18,6 +18,8 @@ namespace AngouriMath
     #pragma warning restore CS0661
     #pragma warning restore CS0660
     {
+        protected abstract Entity __copy();
+        
         public string Name = string.Empty;
 
         public bool IsLeaf { get => Children.Count == 0; }
@@ -39,15 +41,17 @@ namespace AngouriMath
             switch (entType)
             {
                 case EntType.NUMBER:
-                    return new NumberEntity((this as NumberEntity).Value);
+                    return this.__copy() as NumberEntity;
                 case EntType.VARIABLE:
-                    return new VariableEntity(Name);
+                    return this.__copy() as VariableEntity;
                 case EntType.OPERATOR:
-                    return new OperatorEntity(Name, Priority);
+                    return this.__copy() as OperatorEntity;
                 case EntType.FUNCTION:
-                    return new FunctionEntity(Name);
+                    return this.__copy() as FunctionEntity;
+                case EntType.TENSOR:
+                    return this.__copy() as Tensor;
                 default:
-                    throw new MathSException("Unknowne entity type");
+                    throw new MathSException("Unknown entity type");
             }
         }
 
@@ -117,20 +121,37 @@ namespace AngouriMath
         public static implicit operator NumberEntity(int num) => new NumberEntity(num);
         public static implicit operator NumberEntity(Number num) => new NumberEntity(num);
 
+        protected override Entity __copy()
+        {
+            return new NumberEntity(Value);
+        }
+
     }
     public class VariableEntity : Entity
     {
         public VariableEntity(string name) : base(name, EntType.VARIABLE) => Priority = Const.PRIOR_VAR;
         public static implicit operator VariableEntity(string name) => new VariableEntity(name);
+        protected override Entity __copy()
+        {
+            return new VariableEntity(Name);
+        }
     }
     public class OperatorEntity : Entity
     {
         public OperatorEntity(string name, int priority) : base(name, EntType.OPERATOR) {
             Priority = priority;
         }
+        protected override Entity __copy()
+        {
+            return new OperatorEntity(Name, Priority);
+        }
     }
     public class FunctionEntity : Entity
     {
         public FunctionEntity(string name) : base(name, EntType.FUNCTION) => Priority = Const.PRIOR_FUNC;
+        protected override Entity __copy()
+        {
+            return new FunctionEntity(Name);
+        }
     }
 }

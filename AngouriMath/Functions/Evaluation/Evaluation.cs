@@ -1,4 +1,6 @@
 ﻿using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Evaluation.Simplification;
 using System;
@@ -142,8 +144,12 @@ namespace AngouriMath
                 throw new MathSException("To eval an expression as a tensor, it should contain at least one tensor (matrix, vector)");
             if (entType == EntType.TENSOR)
                 return this as Tensor;
-            //if (entType)
-            return null;
+            var r = DeepCopy();
+            TensorFunctional.__EvalTensor(ref r);
+            if (r.entType == EntType.TENSOR)
+                return r as Tensor;
+            else
+                throw new SysException("Unexpected behaviour");
         }
     }
 

@@ -239,6 +239,13 @@ namespace AngouriMath
             PatternNumber = num;
             PatternType = type;
         }
+
+        protected override Entity __copy()
+        {
+            var r = new Pattern(PatternNumber, PatternType);
+            return r;
+        }
+
         internal Dictionary<int, Entity> EqFits(Entity tree)
         {
             // TODO: optimization

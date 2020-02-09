@@ -114,14 +114,14 @@ namespace AngouriMath.Core
             };
 
         public string PrintOut()
-        => PrintOut(6);
+        => PrintOut(15);
 
         public string PrintOut(int maxElLen)
         {
             var bias = ToString();
             switch(Dimensions)
             {
-                case 1: return bias + "< " + string.Join<Entity>(' ', Data);
+                case 1: return bias + "< " + string.Join<Entity>(" | ", Data) + " >";
                 case 2:
                     var res = bias + "\n";
                     var maxlen = Math.Min(maxElLen, Data.Select(el => el == null ? 4 : el.ToString().Length).Max());
@@ -189,6 +189,14 @@ namespace AngouriMath.Core
                 Transpose(0, 1);
             else
                 throw new MathSException("Specify axes numbers for non-matrices");
+        }
+
+        protected override Entity __copy()
+        {
+            var t = new Tensor(Shape.ToArray());
+            for (int i = 0; i < Data.Length; i++)
+                t.Data[i] = Data[i].DeepCopy();
+            return t;
         }
     }
 }

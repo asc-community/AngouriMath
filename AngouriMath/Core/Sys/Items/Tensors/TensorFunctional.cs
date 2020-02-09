@@ -6,14 +6,61 @@ namespace AngouriMath.Core.Sys.Items.Tensors
 {
     internal static class TensorFunctional
     {
+        /// <summary>
+        /// Performs scalar product operation on two vectors
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        internal static Entity ScalarProduct(Tensor a, Tensor b)
+        {
+            // TODO: Extend to tensors
+            if (!a.IsVector() || !b.IsVector())
+                throw new MathSException("Scalar product of non-vectors is not supported yet");
+            // TODO: allow different shapes
+            if (a.Shape[0] != b.Shape[0])
+                throw new MathSException("Vectors should be the same size");
+            // TODO: to remove "0" from the final sum
+            Entity res = 0;
+            for (int i = 0; i < a.Shape[0]; i++)
+                res += a[i] * b[i];
+            return res;
+        }
 
-
+        /// <summary>
+        /// Changes each tensor's data item -> app(item)
+        /// </summary>
+        /// <param name="tensor"></param>
+        /// <param name="app"></param>
         internal static void Apply(Tensor tensor, Func<Entity, Entity> app)
         {
             for (int i = 0; i < tensor.Data.Length; i++)
                 tensor.Data[i] = app(tensor.Data[i]);
         }
 
+        /// <summary>
+        /// Returns a new matrix, whose each item = app(A.item, B.item)
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <param name="app"></param>
+        /// <returns></returns>
+        internal static Entity ApplyPointwise(Tensor A, Tensor B, Func<Entity, Entity, Entity> app)
+        {
+            if (!SameShape(A, B))
+                throw new MathSException("You need two same-shape tensors to perform pointwise operations");
+            var C = new Tensor(A.Shape.ToArray());
+            for (int i = 0; i < A.Data.Length; i++)
+                C.Data[i] = app(A.Data[i], B.Data[i]);
+            return C;
+        }
+
+        /// <summary>
+        /// Finds out whether tensors are of the same shape
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <returns></returns>
         internal static bool SameShape(Tensor A, Tensor B)
         {
             if (A.Dimensions != B.Dimensions)
@@ -24,8 +71,16 @@ namespace AngouriMath.Core.Sys.Items.Tensors
             return true;
         }
 
+        /// <summary>
+        /// Performs dot product operation on two matrices
+        /// TODO: extend to tensors
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <returns></returns>
         internal static Tensor DotProduct(Tensor A, Tensor B)
         {
+            // TODO: Extend to tensors
             if (!A.IsMatrix() || !B.IsMatrix())
                 throw new MathSException("Dot product is only applicable to matrices");
             if (A.Shape[1] != B.Shape[0])
@@ -41,6 +96,10 @@ namespace AngouriMath.Core.Sys.Items.Tensors
             return C;
         }
 
+        /// <summary>
+        /// Collapses the entire expression into tensor
+        /// </summary>
+        /// <param name="expr"></param>
         internal static void __EvalTensor(ref Entity expr)
         {
             if (!expr.IsLeaf)
@@ -70,14 +129,50 @@ namespace AngouriMath.Core.Sys.Items.Tensors
                         }
                         break;
                     case 2:
-                        break;
-                        /*
                         var ch1 = expr.Children[0];
                         var ch2 = expr.Children[1];
                         if (ch1.entType == Entity.EntType.TENSOR && ch2.entType == Entity.EntType.TENSOR)
                         {
-                            
-                        }*/
+                            var t1 = ch1 as Tensor;
+                            var t2 = ch2 as Tensor;
+                            if (expr.Name == "mulf")
+                            {
+                                if (t1.Dimensions == t2.Dimensions)
+                                // if both are matrices, vectors, ...
+                                {
+                                    if (t1.IsMatrix())
+                                        expr = DotProduct(t1, t2);
+                                    else
+                                        expr = ApplyPointwise(t1, t2, (a, b) => a * b);
+                                }
+                            }
+                            else
+                            {
+                                string name = expr.Name;
+                                expr = ApplyPointwise(t1, t2, (a, b) => MathFunctions.evalTable[name](new List<Entity>{ a, b }));
+                            }
+                        }
+                        else if (ch1.entType == Entity.EntType.TENSOR || ch2.entType == Entity.EntType.TENSOR)
+                        {
+                            Tensor t;
+                            Entity c;
+                            if (ch1.entType == Entity.EntType.TENSOR)
+                            {
+                                t = ch1 as Tensor;
+                                c = ch2;
+                            }
+                            else
+                            {
+                                t = ch2 as Tensor;
+                                c = ch1;
+                            }
+                            string name = expr.Name;
+                            Apply(t, e => MathFunctions.evalTable[name](new List<Entity> { e, c }));
+                            expr = t;
+                        }
+                        break;
+                    default:
+                        throw new NotImplementedException("More than 2 arguments is not supported yet");
                 }
             }
         }

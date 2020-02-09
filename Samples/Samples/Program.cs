@@ -143,7 +143,10 @@ namespace Samples
         
         static void Main(string[] _)
         {
-           
+            var v1 = MathS.Vector(1, 2, 3);
+            var v2 = MathS.Vector(1, 2, 3);
+            var expr = v1 * v2;
+            Console.WriteLine(expr.EvalTensor().PrintOut());
         }
     }
 #pragma warning restore IDE0051
