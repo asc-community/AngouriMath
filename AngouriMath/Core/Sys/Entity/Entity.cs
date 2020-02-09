@@ -24,6 +24,9 @@ namespace AngouriMath
         
         public string Name = string.Empty;
 
+        /// <summary>
+        /// Usually IsLeaf <=> number, variable, tensor
+        /// </summary>
         public bool IsLeaf { get => Children.Count == 0; }
         /* changed from protected to internal due to protection level of EntType */
         internal Entity(string name, EntType type)
@@ -59,6 +62,12 @@ namespace AngouriMath
         public static implicit operator Entity(double num) => new NumberEntity(num);
         public static implicit operator Entity(string expr) => MathS.FromString(expr);
 
+        /// <summary>
+        /// Deep but stupid comparison
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator ==(Entity a, Entity b)
         {
             // Entity must be casted to object before comparing for null
