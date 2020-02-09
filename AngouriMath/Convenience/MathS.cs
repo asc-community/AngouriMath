@@ -190,9 +190,18 @@ namespace AngouriMath
         /// <returns></returns>
         public static Number Num(double a) => new Number(a);
 
+        /// <summary>
+        /// List of public constants
+        /// </summary>
         public static readonly VariableEntity e = "e";
         public static readonly Number i = new Number(0, 1);
         public static readonly VariableEntity pi = "pi";
+        
+        /// <summary>
+        /// Sets threshold for comparison
+        /// For example, if you don't need precision higher than 6 digits after .,
+        /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
+        /// </summary>
         public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-11;
 
         /// <summary>
@@ -263,5 +272,57 @@ namespace AngouriMath
         /// <param name="N"></param>
         /// <returns></returns>
         public static double FromBaseN(string num, int N) => NumberSystem.FromBaseN(num, N);
+
+        /// <summary>
+        /// Creates an instance of Tensor: Matrix
+        /// Usage example:
+        /// var t = MathS.Matrix(5, 3,
+        ///        10, 11, 12,
+        ///        20, 21, 22,
+        ///        30, 31, 32,
+        ///        40, 41, 42,
+        ///        50, 51, 52
+        ///        );
+        /// creates matrix 5x3 with the appropriate elements
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        public static Tensor Matrix(int rows, int columns, params Entity[] values)
+        {
+            if (values.Length != rows * columns)
+                throw new MathSException("Axes don't match data");
+            var r = new Tensor(rows, columns);
+            r.Assign(values);
+            return r;
+        }
+
+        /// <summary>
+        /// Creates an instance of vector
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        public static Tensor Vector(params Entity[] p)
+        {
+            var r = new Tensor(p.Length);
+            r.Assign(p);
+            return r;
+        }
+
+        /// <summary>
+        /// Returns dot product of two matrices
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <returns></returns>
+        public static Tensor DotProduct(Tensor A, Tensor B) => AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.DotProduct(A, B);
+        
+        /// <summary>
+        /// Returns scalar product of two matrices
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <returns></returns>
+        public static Entity ScalarProduct(Tensor A, Tensor B) => AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.ScalarProduct(A, B);
     }
 }

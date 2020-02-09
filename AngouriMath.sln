@@ -19,8 +19,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotnetBenchmark", "Tests\Do
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMathPlot", "AngouriMathPlot\AngouriMathPlot.csproj", "{B7D28355-A342-4E6E-AD45-3D47F4A054A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GraphicExample", "Samples\GraphicExample\GraphicExample\GraphicExample.csproj", "{EE064BFF-CDE6-43E3-8924-D8562BDDDF02}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,10 +49,6 @@ Global
 		{B7D28355-A342-4E6E-AD45-3D47F4A054A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B7D28355-A342-4E6E-AD45-3D47F4A054A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B7D28355-A342-4E6E-AD45-3D47F4A054A5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EE064BFF-CDE6-43E3-8924-D8562BDDDF02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EE064BFF-CDE6-43E3-8924-D8562BDDDF02}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EE064BFF-CDE6-43E3-8924-D8562BDDDF02}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EE064BFF-CDE6-43E3-8924-D8562BDDDF02}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -64,7 +58,6 @@ Global
 		{23AA3D9F-77DA-4439-8F18-31B37F427492} = {D15528F2-AB50-46E2-9DB1-821B278C4931}
 		{587644B2-EBB3-432E-82B6-860F5586BB04} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
 		{3F82FF3F-13E3-4106-9FE6-E986549528F2} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
-		{EE064BFF-CDE6-43E3-8924-D8562BDDDF02} = {D15528F2-AB50-46E2-9DB1-821B278C4931}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1CD9B3-4EAB-4B8C-BDC1-03280EB31298}

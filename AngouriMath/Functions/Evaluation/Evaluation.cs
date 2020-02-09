@@ -1,4 +1,6 @@
 ﻿using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Evaluation.Simplification;
 using System;
@@ -16,6 +18,8 @@ namespace AngouriMath
         public static bool IsConstant(Entity expr) => (expr.entType == Entity.EntType.VARIABLE && MathS.ConstantList.ContainsKey(expr.Name));
         public static bool CanBeEvaluated(Entity expr)
         {
+            if (expr.IsTensoric())
+                return false;
             if (expr.entType == Entity.EntType.VARIABLE)
                 return IsConstant(expr);
             for (int i = 0; i < expr.Children.Count; i++)
@@ -86,8 +90,8 @@ namespace AngouriMath
         public Entity Simplify(int level) => Simplificator.Simplify(this, level);
 
         public EntitySet Alternate(int level) => Simplificator.Alternate(this, level);
-        internal Entity InnerSimplify()
-        {
+        internal abstract Entity InnerSimplify();
+        /*{
             if (IsLeaf)
                 return this;
             else
@@ -96,14 +100,14 @@ namespace AngouriMath
                     return Number.Null;
                 return MathFunctions.InvokeEval(Name, Children);
             }
-        }
+        }*/
 
         /// <summary>
         /// Fast substitution of some mathematical constants,
         /// e. g. pi * e + 3 => 3.1415 * 2.718 + 3
         /// </summary>
         /// <returns></returns>
-        public Entity SubstituteConstants()
+public Entity SubstituteConstants()
         {
             Entity curr = this.DeepCopy();  // Instead of copying in substitute, 
             // we better copy first and then do inPlace substitute
@@ -120,6 +124,37 @@ namespace AngouriMath
         /// Number since new version
         /// </returns>
         public Number Eval() => SubstituteConstants().Simplify(0).GetValue();
+        
+        /// <summary>
+        /// Collapses the entire expression into a tensor if possible
+        /// ( x y ) + 1 => ( x+1 y+1 )
+        /// 
+        /// ( 1 2 ) + ( 3 4 ) => ( 4 6 ) vectors pointwise
+        /// 
+        ///              (( 3 )
+        /// (( 1 2 3 )) x ( 4 ) => (( 26 )) Matrices dot product
+        ///               ( 5 ))
+        ///               
+        /// ( 1 2 ) x ( 1 3 ) => ( 1 6 ) Vectors pointwise
+        /// </summary>
+        /// <returns></returns>
+        public Tensor EvalTensor()
+        {
+            if (!IsTensoric())
+                throw new MathSException("To eval an expression as a tensor, it should contain at least one tensor (matrix, vector)");
+            if (entType == EntType.TENSOR)
+                return this as Tensor;
+            var r = DeepCopy();
+            TensorFunctional.__EvalTensor(ref r);
+            if (r.entType == EntType.TENSOR)
+            {
+                Tensor result = r as Tensor;
+                TensorFunctional.Apply(result, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
+                return result;
+            }
+            else
+                throw new SysException("Unexpected behaviour");
+        }
     }
 
     // Adding invoke table for eval

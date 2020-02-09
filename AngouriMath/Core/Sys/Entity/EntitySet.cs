@@ -6,11 +6,19 @@ using System.Text;
 
 namespace AngouriMath
 {
+    /// <summary>
+    /// Custom view for list of entities
+    /// </summary>
     public class EntitySet : List<Entity>
     {
         public EntitySet Simplify() => Simplify(3);
         public EntitySet Simplify(int level) => new EntitySet(this.Select(p => p.Simplify(level)));
         private readonly HashSet<string> exsts = new HashSet<string>();
+
+        /// <summary>
+        /// Neat output
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             return "[" + string.Join(", ", this) + "]";

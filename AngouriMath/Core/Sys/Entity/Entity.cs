@@ -18,8 +18,15 @@ namespace AngouriMath
     #pragma warning restore CS0661
     #pragma warning restore CS0660
     {
+        protected abstract Entity __copy();
+        protected abstract bool EqualsTo(Entity obj);
+        internal abstract void Check();
+        
         public string Name = string.Empty;
 
+        /// <summary>
+        /// Usually IsLeaf <=> number, variable, tensor
+        /// </summary>
         public bool IsLeaf { get => Children.Count == 0; }
         /* changed from protected to internal due to protection level of EntType */
         internal Entity(string name, EntType type)
@@ -34,22 +41,7 @@ namespace AngouriMath
         /// Use this to copy one node (unsafe copy!)
         /// </summary>
         /// <returns></returns>
-        public Entity Copy()
-        {
-            switch (entType)
-            {
-                case EntType.NUMBER:
-                    return new NumberEntity((this as NumberEntity).Value);
-                case EntType.VARIABLE:
-                    return new VariableEntity(Name);
-                case EntType.OPERATOR:
-                    return new OperatorEntity(Name, Priority);
-                case EntType.FUNCTION:
-                    return new FunctionEntity(Name);
-                default:
-                    throw new MathSException("Unknowne entity type");
-            }
-        }
+        internal Entity Copy() => this.__copy();
 
         /// <summary>
         /// Use this to copy an entity. Recommended to use if you need a safe copy
@@ -70,6 +62,12 @@ namespace AngouriMath
         public static implicit operator Entity(double num) => new NumberEntity(num);
         public static implicit operator Entity(string expr) => MathS.FromString(expr);
 
+        /// <summary>
+        /// Deep but stupid comparison
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
         public static bool operator ==(Entity a, Entity b)
         {
             // Entity must be casted to object before comparing for null
@@ -85,18 +83,7 @@ namespace AngouriMath
             }
             if (a.entType != b.entType)
                 return false;
-            if (a.entType == EntType.NUMBER && b.entType == EntType.NUMBER)
-                return (a as NumberEntity).GetValue() == (b as NumberEntity).GetValue();
-            if ((a.Name != b.Name) || (a.Children.Count() != b.Children.Count()))
-            {
-                return false;
-            }
-            for (int i = 0; i < a.Children.Count; i++)
-            {
-                if (!(a.Children[i] == b.Children[i]))
-                    return false;
-            }
-            return true;
+            return a.EqualsTo(b);
         }
         public static bool operator !=(Entity a, Entity b) => !(a == b);
 
@@ -104,7 +91,7 @@ namespace AngouriMath
         internal new string GetHashCode() => ToString();
 
     }
-    public class NumberEntity : Entity
+    public partial class NumberEntity : Entity
     {
         public NumberEntity(Number value) : base(value.ToString(), EntType.NUMBER) 
         {
@@ -117,20 +104,37 @@ namespace AngouriMath
         public static implicit operator NumberEntity(int num) => new NumberEntity(num);
         public static implicit operator NumberEntity(Number num) => new NumberEntity(num);
 
+        protected override Entity __copy()
+        {
+            return new NumberEntity(Value);
+        }
+
     }
-    public class VariableEntity : Entity
+    public partial class VariableEntity : Entity
     {
         public VariableEntity(string name) : base(name, EntType.VARIABLE) => Priority = Const.PRIOR_VAR;
         public static implicit operator VariableEntity(string name) => new VariableEntity(name);
+        protected override Entity __copy()
+        {
+            return new VariableEntity(Name);
+        }
     }
-    public class OperatorEntity : Entity
+    public partial class OperatorEntity : Entity
     {
         public OperatorEntity(string name, int priority) : base(name, EntType.OPERATOR) {
             Priority = priority;
         }
+        protected override Entity __copy()
+        {
+            return new OperatorEntity(Name, Priority);
+        }
     }
-    public class FunctionEntity : Entity
+    public partial class FunctionEntity : Entity
     {
         public FunctionEntity(string name) : base(name, EntType.FUNCTION) => Priority = Const.PRIOR_FUNC;
+        protected override Entity __copy()
+        {
+            return new FunctionEntity(Name);
+        }
     }
 }

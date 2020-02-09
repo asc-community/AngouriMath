@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
-using System.Text;
+using AngouriMath.Core.Sys;
 
 namespace AngouriMath.Core
 {
     #pragma warning disable CS0660
     #pragma warning disable CS0661
-    public class Number
+    public class Number : MathItem
     #pragma warning restore CS0660
     #pragma warning restore CS0661
     {

@@ -17,6 +17,7 @@ namespace AngouriMath
             OPERATOR,
             VARIABLE,
             PATTERN,
+            TENSOR
         }
         internal enum PatType
         {
@@ -234,10 +235,23 @@ namespace AngouriMath
 
     internal class Pattern : Entity
     {
+
+        internal override Entity InnerSimplify()
+        {
+            // Actually, no need to implement
+            throw new NotImplementedException();
+        }
         public Pattern(int num, PatType type, string name = "") : base(name, EntType.PATTERN) {
             PatternNumber = num;
             PatternType = type;
         }
+
+        protected override Entity __copy()
+        {
+            var r = new Pattern(PatternNumber, PatternType);
+            return r;
+        }
+
         internal Dictionary<int, Entity> EqFits(Entity tree)
         {
             // TODO: optimization
@@ -247,6 +261,13 @@ namespace AngouriMath
             else
                 return res;
         }
+
+        protected override bool EqualsTo(Entity obj)
+        {
+            // Actually, no need to implement
+            throw new NotImplementedException();
+        }
+
         public static Pattern operator +(Pattern a, Pattern b) => Sumf.PHang(a, b);
         public static Pattern operator +(Pattern a, Entity b) => Sumf.PHang(a, b);
 
