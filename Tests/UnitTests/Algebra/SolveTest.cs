@@ -273,5 +273,16 @@ namespace UnitTests
             AssertRoots(expr, x, roots[1]);
             AssertRoots(expr, x, roots[2]);
         }
+
+        [TestMethod]
+        public void TestRepl1()
+        {
+            Entity toRepl = "sin(x2 + 3)";
+            Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1;
+            var roots = expr.Solve(x);
+            Assert.IsTrue(roots.Count == 4);
+            foreach (var root in roots)
+                AssertRoots(expr, x, root.Substitute("n", 3));
+        }
     }
 }

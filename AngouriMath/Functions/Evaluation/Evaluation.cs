@@ -124,7 +124,7 @@ public Entity SubstituteConstants()
         /// Number since new version
         /// </returns>
         public Number Eval() => SubstituteConstants().Simplify(0).GetValue();
-        
+
         /// <summary>
         /// Collapses the entire expression into a tensor if possible
         /// ( x y ) + 1 => ( x+1 y+1 )
@@ -141,9 +141,14 @@ public Entity SubstituteConstants()
         public Tensor EvalTensor()
         {
             if (!IsTensoric())
-                throw new MathSException("To eval an expression as a tensor, it should contain at least one tensor (matrix, vector)");
+                throw new MathSException(
+                    "To eval an expression as a tensor, it should contain at least one tensor (matrix, vector)");
             if (entType == EntType.TENSOR)
-                return this as Tensor;
+            {
+                Tensor result = this as Tensor;
+                TensorFunctional.Apply(result, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
+                return result;
+            }
             var r = DeepCopy();
             TensorFunctional.__EvalTensor(ref r);
             if (r.entType == EntType.TENSOR)

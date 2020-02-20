@@ -1,13 +1,8 @@
 ﻿using AngouriMath.Core;
 using AngouriMath.Core.FromString;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Globalization;
 using System.Linq.Expressions;
 using AngouriMath.Core.FromLinq;
 using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Core.TreeAnalysis.Division.RationalDiv;
 using AngouriMath.Functions.NumberSystem;
 
 namespace AngouriMath
@@ -15,10 +10,8 @@ namespace AngouriMath
     /// <summary>
     /// Use functions from this class
     /// </summary>
-
     public static partial class MathS
     {
-
         /// <summary>
         /// https://en.wikipedia.org/wiki/Trigonometric_functions
         /// </summary>
@@ -194,9 +187,10 @@ namespace AngouriMath
         /// List of public constants
         /// </summary>
         public static readonly VariableEntity e = "e";
+
         public static readonly Number i = new Number(0, 1);
         public static readonly VariableEntity pi = "pi";
-        
+
         /// <summary>
         /// Sets threshold for comparison
         /// For example, if you don't need precision higher than 6 digits after .,
@@ -315,15 +309,17 @@ namespace AngouriMath
         /// <param name="A"></param>
         /// <param name="B"></param>
         /// <returns></returns>
-        public static Tensor DotProduct(Tensor A, Tensor B) => AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.DotProduct(A, B);
-        
+        public static Tensor DotProduct(Tensor A, Tensor B) =>
+            AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.DotProduct(A, B);
+
         /// <summary>
         /// Returns scalar product of two matrices
         /// </summary>
         /// <param name="A"></param>
         /// <param name="B"></param>
         /// <returns></returns>
-        public static Entity ScalarProduct(Tensor A, Tensor B) => AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.ScalarProduct(A, B);
+        public static Entity ScalarProduct(Tensor A, Tensor B) =>
+            AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.ScalarProduct(A, B);
 
         /// <summary>
         /// Checks tree for some unexpected bad occasions

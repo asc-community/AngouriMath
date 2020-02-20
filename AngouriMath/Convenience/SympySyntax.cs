@@ -1,8 +1,5 @@
-﻿using AngouriMath.Core;
-using AngouriMath.Core.TreeAnalysis;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Linq;
+using AngouriMath.Core;
 
 namespace AngouriMath.Convenience
 {
@@ -15,7 +12,6 @@ namespace AngouriMath.Convenience
     public static class SySyn
     {
         /// Here sympy-like syntax implementation goes
-
         /// <summary>
         /// Differentiation
         /// </summary>
@@ -29,8 +25,7 @@ namespace AngouriMath.Convenience
         /// <returns></returns>
         public static Entity Diff(Entity expr, params VariableEntity[] vars)
         {
-            foreach (var v in vars)
-                expr = expr.Derive(v);
+            expr = vars.Aggregate(expr, (current, v) => current.Derive(v));
             return expr.Simplify();
         }
 

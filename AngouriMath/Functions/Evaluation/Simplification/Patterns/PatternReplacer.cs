@@ -1,8 +1,9 @@
 ﻿using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Runtime.CompilerServices;
+
+[assembly: InternalsVisibleTo("UnitTests")]
 
 namespace AngouriMath
 {
@@ -235,17 +236,9 @@ namespace AngouriMath
 
     internal class Pattern : Entity
     {
-
-        
         public Pattern(int num, PatType type, string name = "") : base(name, EntType.PATTERN) {
             PatternNumber = num;
             PatternType = type;
-        }
-
-        protected override Entity __copy()
-        {
-            var r = new Pattern(PatternNumber, PatternType);
-            return r;
         }
 
         internal Dictionary<int, Entity> EqFits(Entity tree)
@@ -257,21 +250,26 @@ namespace AngouriMath
             else
                 return res;
         }
+        protected override Entity __copy()
+        {
+            // Actually, no need to implement
+            throw new SysException("@");
+        }
 
         protected override bool EqualsTo(Entity obj)
         {
             // Actually, no need to implement
-            throw new NotImplementedException();
+            throw new SysException("@");
         }
         internal override Entity InnerSimplify()
         {
             // Actually, no need to implement
-            throw new NotImplementedException();
+            throw new SysException("@");
         }
         internal override void Check()
         {
             // Actually, no need to implement
-            throw new NotImplementedException();
+            throw new SysException("@");
         }
 
         public static Pattern operator +(Pattern a, Pattern b) => Sumf.PHang(a, b);

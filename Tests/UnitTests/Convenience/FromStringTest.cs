@@ -96,5 +96,11 @@ namespace UnitTests
         {
             Assert.IsTrue(MathS.FromString("x sqrt(3)") == x * MathS.Sqrt(3));
         }
+        [TestMethod]
+        public void TestSys()
+        {
+            Entity expr = "x2";
+            Assert.IsTrue(expr == MathS.Sqr(x));
+        }
     }
 }

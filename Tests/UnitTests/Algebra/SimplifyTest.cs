@@ -1,5 +1,4 @@
 using AngouriMath;
-using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests
@@ -7,7 +6,7 @@ namespace UnitTests
     [TestClass]
     public class SimplifyTest
     {
-        public readonly static VariableEntity x = MathS.Var("x");
+        public static readonly VariableEntity x = MathS.Var("x");
         [TestMethod]
         public void TestMinus()
         {

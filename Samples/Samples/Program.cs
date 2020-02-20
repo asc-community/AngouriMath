@@ -16,8 +16,6 @@ namespace Samples
 #pragma warning disable IDE0051
     class Program
     {
-        public static object MathExpressionGenerator { get; private set; }
-        
         static void Sample1()
         {
             var inp = "1 + 2 * log(9, 3)";
@@ -140,13 +138,36 @@ namespace Samples
 
         static Complex MyFunc(Complex x)
             => x + 3 * x;
-        
+
+        public static readonly Tensor A = MathS.Matrix(4, 2,
+            1, 2,
+            3, 4,
+            5, 6,
+            7, 8
+        );
+        public static readonly Tensor B = MathS.Matrix(4, 2,
+            1, 2,
+            3, 4,
+            5, 6,
+            7, 8
+        );
+        public static readonly Tensor C = MathS.Matrix(2, 4,
+            1, 2, 3, 4,
+            5, 6, 7, 8
+        );
+
         static void Main(string[] _)
         {
-            Entity a = "x2";
-            Entity b = "(H - x)2 + (sqrt(2) * a)2";
-            var ans = (a - b).Solve("x")[0];
-            Console.WriteLine(ans.Simplify());
+            Entity toRepl = "sin(x2 + 3)";
+            Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1;
+            var roots = expr.Solve("x");
+            foreach (var root in roots)
+                //Console.WriteLine(expr.Substitute("x", root).Substitute("n", 3).Eval();
+            {
+                //Console.WriteLine(root);
+                var t = root.Substitute("n", 3).Eval();
+                Console.WriteLine(expr.Substitute("x", t).Eval());
+            }
         }
     }
 #pragma warning restore IDE0051

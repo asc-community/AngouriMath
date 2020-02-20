@@ -24,7 +24,7 @@ namespace AngouriMath.Core.FromString
     internal class BraceProcessor
     {
         private readonly List<BraceType> braces = new List<BraceType>();
-        public static readonly List<BraceType> parentheses = new List<BraceType>
+        internal static readonly List<BraceType> parentheses = new List<BraceType>
         { 
             BraceType.PARENTHESIS_OPEN,
             BraceType.PARENTHESIS_CLOSE
@@ -63,44 +63,6 @@ namespace AngouriMath.Core.FromString
         internal bool IsFinished()
         {
             return braces.Count == 0;
-        }
-
-        /// <summary>
-        /// Appends a brace and checks whether everything is ok
-        /// </summary>
-        /// <param name="symbol"></param>
-        internal void Add(BraceType symbol)
-        {
-            if (symbol == BraceType.NONE)
-            {
-                throw new ParseException("Brace error");
-            }
-            if (!IsOpen(symbol))
-            {
-                if (IsFinished())
-                {
-                    throw new ParseException("Brace error");
-                }
-                else
-                {
-                    if (SameType(braces[braces.Count - 1], symbol))
-                    {
-                        if (IsOpen(braces[braces.Count - 1]))
-                        {
-                            braces.RemoveAt(braces.Count - 1);
-                        }
-                        // otherwise is unreacheable.
-                    }
-                    else
-                    {
-                        throw new ParseException("Brace error");
-                    }
-                }
-            }
-            else
-            {
-                braces.Add(symbol);
-            }
         }
     }
     internal static class Parser
