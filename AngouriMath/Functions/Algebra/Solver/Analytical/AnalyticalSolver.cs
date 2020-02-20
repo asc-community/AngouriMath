@@ -206,7 +206,7 @@ namespace AngouriMath.Core.TreeAnalysis
                         // cos(x) = value => x = arccos(value) + 2pi * n
                         res.AddRange(GetNotNullEntites(FindInvertExpression(a, MathS.Arccos(value) + 2 * pi * n, x)));
                         // cos(x) = value => x = -arccos(value) + 2pi * n
-                        res.AddRange(GetNotNullEntites(FindInvertExpression(a, -MathS.Arccos(value) + 2 * pi * n, x)));
+                        res.AddRange(GetNotNullEntites(FindInvertExpression(a, -MathS.Arccos(value) - 2 * pi * n, x)));
                         return res;
                     }
                 case "tanf":

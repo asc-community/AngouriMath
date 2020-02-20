@@ -211,7 +211,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     res.Add(x, check: false /* we are sure that there's no such root yet */);
                 }
 
-           return res;
+            return res;
         }
 
         internal static bool ReduceCommonPower(ref Dictionary<int, Entity> monomials)

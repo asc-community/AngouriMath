@@ -274,15 +274,39 @@ namespace UnitTests
             AssertRoots(expr, x, roots[2]);
         }
 
-        [TestMethod]
-        public void TestRepl1()
+        public void InvertedFunctionTests(string func, int rootAmount)
         {
-            Entity toRepl = "sin(x2 + 3)";
+            Entity toRepl = func + "(x2 + 3)";
             Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1;
             var roots = expr.Solve(x);
-            Assert.IsTrue(roots.Count == 4);
+            Assert.IsTrue(roots.Count == rootAmount);
             foreach (var root in roots)
                 AssertRoots(expr, x, root.Substitute("n", 3));
         }
+
+        [TestMethod]
+        public void TestRepl1()
+            => InvertedFunctionTests("sin", 4);
+        [TestMethod]
+        public void TestRepl2()
+            => InvertedFunctionTests("cos", 4);
+        [TestMethod]
+        public void TestRepl3()
+            => InvertedFunctionTests("tan", 2);
+        [TestMethod]
+        public void TestRepl4()
+            => InvertedFunctionTests("cotan", 2);
+        [TestMethod]
+        public void TestRepl5()
+            => InvertedFunctionTests("arcsin", 4);
+        [TestMethod]
+        public void TestRepl6()
+            => InvertedFunctionTests("arccos", 4);
+        [TestMethod]
+        public void TestRepl7()
+            => InvertedFunctionTests("arctan", 4);
+        [TestMethod]
+        public void TestRepl8()
+            => InvertedFunctionTests("arccotan", 4);
     }
 }
