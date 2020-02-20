@@ -67,6 +67,9 @@ namespace AngouriMath.Core.TreeAnalysis
                     // in order to minimize number of occurances of x in this sub
                     ocs = newocs;
                     best = subtree;
+                    // 80085
+                    if (ocs > 1)
+                        break;
                 }
             }
             return best == null || ocs == 1 ? ent : best;
@@ -313,8 +316,20 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 dst.Add(0);
             } else
             {
-                expr = expr.Simplify();
-                Entity actualVar = TreeAnalyzer.GetMinimumSubtree(expr, x);
+                Entity actualVarRaw = TreeAnalyzer.GetMinimumSubtree(expr, x);
+                Entity exprSimplified = expr.Simplify();
+                Entity actualVarSimplified = TreeAnalyzer.GetMinimumSubtree(exprSimplified, x);
+                Entity actualVar;
+                if (actualVarSimplified.Complexity() > actualVarRaw.Complexity())
+                {
+                    actualVar = actualVarSimplified;
+                    expr = exprSimplified;
+                }
+                else
+                {
+                    actualVar = actualVarRaw;
+                }
+
                 var res = PolynomialSolver.SolveAsPolynomial(expr, actualVar);
 
                 if (res != null)
@@ -325,6 +340,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         {
                             foreach (var r in res)
                                 dst.AddRange(TreeAnalyzer.FindInvertExpression(actualVar, r, x));
+                        }
+                        else
+                        {
+                            foreach (var r in res)
+                                //dst.AddRange(TreeAnalyzer.FindInvertExpression(actualVar, r, x));
+                                dst.AddRange((actualVar - r).Solve(x));
                         }
                     }
                     else

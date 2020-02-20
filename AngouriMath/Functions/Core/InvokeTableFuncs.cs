@@ -22,6 +22,7 @@ namespace AngouriMath
     /// To static MathS()
     /// To Analytical Solver
     /// To TreeAnalyzer Optimization
+    /// To ToSympyCode
     /// </summary>
     public static partial class MathS
     {

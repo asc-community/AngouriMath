@@ -158,8 +158,10 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity a = "(3x3 + 2x2 + 2x) ^ 3 + (3x3 + 2x2 + 2x) ^ 2 + (3x3 + 2x2 + 2x) + (3x3 + 2x2 + 2x)";
-            Console.WriteLine(a.Solve("x").Count);
+            Entity v = "(3x3 + 2x2 + 2x) ^ 3 + (3x3 + 2x2 + 2x) ^ 2 + (3x3 + 2x2 + 2x) + a"; 
+            //Console.WriteLine(MathS.ToSympyCode(v));
+            Console.WriteLine(v.ToString());
+            //Console.WriteLine();
             return;
             Entity toRepl = "arcsin(x2 + 3)";
             Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 3;

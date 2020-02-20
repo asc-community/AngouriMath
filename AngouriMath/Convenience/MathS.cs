@@ -4,6 +4,7 @@ using System.Linq.Expressions;
 using AngouriMath.Core.FromLinq;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.NumberSystem;
+using AngouriMath.Functions.Output;
 
 namespace AngouriMath
 {
@@ -337,5 +338,12 @@ namespace AngouriMath
         /// <param name="expr"></param>
         /// <returns></returns>
         public static void CheckTree(Entity expr) => TreeAnalyzer.CheckTree(expr);
+
+        /// <summary>
+        /// Returns sympy interpretable format
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        public static string ToSympyCode(Entity expr) => Functions.Output.ToSympy.GenerateCode(expr);
     }
 }
