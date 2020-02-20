@@ -135,22 +135,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
                         {
                             var t1 = ch1 as Tensor;
                             var t2 = ch2 as Tensor;
-                            if (expr.Name == "mulf")
-                            {
-                                if (t1.Dimensions == t2.Dimensions)
-                                // if both are matrices, vectors, ...
-                                {
-                                    if (t1.IsMatrix())
-                                        expr = DotProduct(t1, t2);
-                                    else
-                                        expr = ApplyPointwise(t1, t2, (a, b) => a * b);
-                                }
-                            }
-                            else
-                            {
-                                string name = expr.Name;
-                                expr = ApplyPointwise(t1, t2, (a, b) => MathFunctions.evalTable[name](new List<Entity>{ a, b }));
-                            }
+                            string name = expr.Name;
+                            expr = ApplyPointwise(t1, t2, (a, b) => MathFunctions.evalTable[name](new List<Entity>{ a, b }));
                         }
                         else if (ch1.entType == Entity.EntType.TENSOR || ch2.entType == Entity.EntType.TENSOR)
                         {

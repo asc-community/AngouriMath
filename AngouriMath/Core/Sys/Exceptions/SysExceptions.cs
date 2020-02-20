@@ -4,8 +4,8 @@ using System.Text;
 
 namespace AngouriMath.Core.Exceptions
 {
-    internal class SysException : Exception
+    public class SysException : Exception
     {
-        internal SysException(string msg) : base(msg) { }
+        public SysException(string msg) : base(msg) { }
     }
 }

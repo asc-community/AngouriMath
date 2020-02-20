@@ -19,15 +19,11 @@ namespace AngouriMath.Core.TreeAnalysis
             }
             if (expr.entType == Entity.EntType.OPERATOR && expr.Name == "divf")
                 if (cond(expr.Children[0], expr.Children[1]))
-                {
                     expr = DividePolynoms(expr.Children[0], expr.Children[1]);
-                    return;
-                }
         }
 
         internal static Entity DividePolynoms(Entity p, Entity q)
         {
-            //  Entity expr = "sqrt(x) * sin(y) + a ^ (-1) * x * 5 - x ^ 3 * sin(y) ^ 0.2 - 2 + a ^ 4";
             // ---> (x^0.6 + 2x^0.3 + 1) / (x^0.3 + 1)
             var replacementInfo = GatherAllPossiblePolynomials(p + q, replaceVars: true).replacementInfo;
 
