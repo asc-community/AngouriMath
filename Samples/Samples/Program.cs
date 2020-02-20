@@ -130,11 +130,11 @@ namespace Samples
             Console.WriteLine(SySyn.Diff(expr, x, x));
         }
 
-        static void Sample17()
+        private static void Sample17()
         {
             string x = MathS.ToBaseN(-32.25, 4);
             Console.WriteLine("-32.25(10) = " + x + "(4)");
-            double y = MathS.FromBaseN("AB.3", 16);
+            var y = MathS.FromBaseN("AB.3", 16);
             Console.WriteLine("AB.3(16) = " + y + "(1)");
         }
 
@@ -143,19 +143,10 @@ namespace Samples
         
         static void Main(string[] _)
         {
-            
-            Tensor A = MathS.Matrix(2, 4,
-            1, 2, 3, 4,
-            5, 6, 7, 8
-            );
-            Tensor B = MathS.Matrix(4, 2,
-            1, 2,
-            3, 4,
-            5, 6,
-            7, 8
-            );
-            Console.WriteLine((A * B).EvalTensor().PrintOut());
-            
+            Entity a = "x2";
+            Entity b = "(H - x)2 + (sqrt(2) * a)2";
+            var ans = (a - b).Solve("x")[0];
+            Console.WriteLine(ans.Simplify());
         }
     }
 #pragma warning restore IDE0051

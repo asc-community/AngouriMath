@@ -324,5 +324,22 @@ namespace AngouriMath
         /// <param name="B"></param>
         /// <returns></returns>
         public static Entity ScalarProduct(Tensor A, Tensor B) => AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.ScalarProduct(A, B);
+
+        /// <summary>
+        /// Checks tree for some unexpected bad occasions
+        /// Throws SysException's children
+        /// If you need a message, it's better to write
+        /// try
+        /// {
+        ///     MathS.CheckTree(a);
+        /// }
+        /// catch (SysException e)
+        /// {
+        ///     Console.WriteLine(e.Message);
+        /// }
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        public static void CheckTree(Entity expr) => TreeAnalyzer.CheckTree(expr);
     }
 }
