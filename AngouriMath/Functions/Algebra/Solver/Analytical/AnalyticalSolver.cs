@@ -179,6 +179,31 @@ namespace AngouriMath.Core.TreeAnalysis
             }
         }
 
+        /// <summary>
+        /// Returns true if a is inside a rect with corners from and to,
+        /// OR a is an unevaluable expression
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        private static bool EntityInBounds(Entity a, Number from, Number to)
+        {
+            if (!MathS.CanBeEvaluated(a))
+                return true;
+            var r = a.Eval();
+            return r.Re >= from.Re &&
+                   r.Im >= from.Im &&
+                   r.Re <= to.Re &&
+                   r.Im <= to.Im;
+        }
+
+        private static readonly Number ArcsinFrom = new Number(-Math.PI / 2, -double.MaxValue);
+        private static readonly Number ArcsinTo = new Number(+Math.PI / 2, double.MaxValue);
+        private static readonly Number ArccosFrom = new Number(0, -double.MaxValue);
+        private static readonly Number ArccosTo = new Number(Math.PI, double.MaxValue);
+        private static readonly EntitySet Empty = new EntitySet();
+
         public static EntitySet InvertFunctionEntity(FunctionEntity func, Entity value, Entity x)
         {
             Entity a = func.Children[0];
@@ -228,10 +253,16 @@ namespace AngouriMath.Core.TreeAnalysis
                     }
                 case "arcsinf":
                     // arcsin(x) = value => x = sin(value)
-                    return GetNotNullEntites(FindInvertExpression(a, MathS.Sin(value), x));
+                    if (EntityInBounds(value, ArcsinFrom, ArcsinTo))
+                        return GetNotNullEntites(FindInvertExpression(a, MathS.Sin(value), x));
+                    else
+                        return Empty;
                 case "arccosf":
                     // arccos(x) = value => x = cos(value)
-                    return GetNotNullEntites(FindInvertExpression(a, MathS.Cos(value), x));
+                    if (EntityInBounds(value, ArccosFrom, ArccosTo))
+                        return GetNotNullEntites(FindInvertExpression(a, MathS.Cos(value), x));
+                    else
+                        return Empty;
                 case "arctanf":
                     // arctan(x) = value => x = tan(value)
                     return GetNotNullEntites(FindInvertExpression(a, MathS.Tan(value), x));
