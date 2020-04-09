@@ -51,6 +51,11 @@ namespace AngouriMath.Core.TreeAnalysis
                 then number of mentions of `ent` in expression should be 6*/
             }
 
+            // parent -> child
+            // OperationOnChilds { return Func<void, Parent>(parent) => parent. .... }
+            // callback = parent.OperationOnChilds()
+            // callback(parent)
+
             int depth = 1;
             Entity subtree;
             Entity best = null;
@@ -72,9 +77,9 @@ namespace AngouriMath.Core.TreeAnalysis
                         break;
                 }
             }
-            return best == null || ocs == 1 ? ent : best;
+            return best ?? ent;
         }
-
+        
         private static Entity GetTreeByDepth(Entity expr, Entity ent, int depth)
         {
             while(depth > 0)
@@ -258,6 +263,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     internal static class AnalyticalSolver
     {
         internal static void Solve(Entity expr, VariableEntity x, EntitySet dst)
+            => Solve(expr, x, dst, compensateSolving: false);
+        internal static void Solve(Entity expr, VariableEntity x, EntitySet dst, bool compensateSolving)
         {
             if (expr.entType == Entity.EntType.OPERATOR)
             {
@@ -273,6 +280,30 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     case "powf":
                         Solve(expr.Children[0], x, dst);
                         return;
+                    // TODO: investigate cases x - a, x + a
+                    case "minusf":
+                        if (expr.Children[1].FindSubtree(x) == null && compensateSolving)
+                        {
+                            var subs = 0;
+                            Entity lastChild = null;
+                            foreach (var child in expr.Children[0].Children)
+                            {
+                                if (child.FindSubtree(x) != null)
+                                {
+                                    subs++;
+                                    lastChild = child;
+                                }
+                            }
+                            if (subs != 1)
+                                break;
+                            var res = TreeAnalyzer.FindInvertExpression(expr.Children[0], expr.Children[1], lastChild);
+                            foreach (var result in res)
+                                Solve(lastChild - result, x, dst);
+                            //foreach (var block in res.Select(r => (lastChild - r).Solve(x)))
+                            //    dst.AddRange(block);
+                            return;
+                        }
+                        break;
                 }
             }
             else if (expr.entType == Entity.EntType.FUNCTION)
@@ -316,21 +347,29 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 dst.Add(0);
             } else
             {
-                Entity actualVarRaw = TreeAnalyzer.GetMinimumSubtree(expr, x);
-                Entity exprSimplified = expr.Simplify();
-                Entity actualVarSimplified = TreeAnalyzer.GetMinimumSubtree(exprSimplified, x);
                 Entity actualVar;
-                if (actualVarSimplified.Complexity() > actualVarRaw.Complexity())
+                var res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), x);
+
+                if (res == null)
                 {
-                    actualVar = actualVarSimplified;
-                    expr = exprSimplified;
+                    Entity actualVarRaw = TreeAnalyzer.GetMinimumSubtree(expr, x);
+                    Entity exprSimplified = expr.Simplify();
+                    Entity actualVarSimplified = TreeAnalyzer.GetMinimumSubtree(exprSimplified, x);
+
+                    if (actualVarSimplified.Complexity() < actualVarRaw.Complexity())
+                    {
+                        actualVar = actualVarSimplified;
+                        expr = exprSimplified;
+                    }
+                    else
+                    {
+                        actualVar = actualVarRaw;
+                    }
+
+                    res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), actualVar);
                 }
                 else
-                {
-                    actualVar = actualVarRaw;
-                }
-
-                var res = PolynomialSolver.SolveAsPolynomial(expr, actualVar);
+                    actualVar = x;
 
                 if (res != null)
                 {
@@ -344,8 +383,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         else
                         {
                             foreach (var r in res)
-                                //dst.AddRange(TreeAnalyzer.FindInvertExpression(actualVar, r, x));
-                                dst.AddRange((actualVar - r).Solve(x));
+                            {
+                                //dst.AddRange((actualVar - r).Solve(x));
+                                Solve(actualVar - r, x, dst, compensateSolving: true);
+                            }
                         }
                     }
                     else
@@ -361,5 +402,4 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
         }
     }
-    
 }

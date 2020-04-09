@@ -158,23 +158,63 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity v = "(3x3 + 2x2 + 2x) ^ 3 + (3x3 + 2x2 + 2x) ^ 2 + (3x3 + 2x2 + 2x) + a"; 
+            //foreach (var ve in MathS.Quack(-0.5))
+            //    Console.WriteLine(MathS.Arccos(ve).Eval());
+            //return;
+
+            //Entity v = "(3x3 + 2x2 + 2x) ^ 3 + (3x3 + 2x2 + 2x) ^ 2 + (3x3 + 2x2 + 2x) + a"; 
+            //Entity v = "(3x + 2x2 + 2x) ^ 2 + (3x + 2x2 + 2x) ^ 2 + (3x + 2x2 + 2x) + 1";
             //Console.WriteLine(MathS.ToSympyCode(v));
-            Console.WriteLine(v.ToString());
+            //Console.WriteLine(v.ToString());
+
+
+            /*
+            var a = new Number(24, 1);
+
+            foreach (var r in MathS.Quack(a))
+                Console.WriteLine(r.Eval());
+            Console.WriteLine();
+            Console.WriteLine(Complex.Acos(a));
+            Console.WriteLine(-Complex.Acos(a));
+            Console.WriteLine();
+            Console.WriteLine();
+            foreach (var r in MathS.Quack(a))
+                Console.WriteLine(Complex.Cos(r.Eval()));
+            Console.WriteLine();
+            Console.WriteLine(Complex.Cos(Complex.Acos(a)));
+            Console.WriteLine(Complex.Cos(-Complex.Acos(a)));
             //Console.WriteLine();
-            return;
-            Entity toRepl = "arcsin(x2 + 3)";
+            return;*/
+            // cos(x2 + 2x + 2) ^ 2 + cos(x2 + 2x + 2) + 3
+            // cos(t + 2) ^ 2 + cos(t + 2) + 3
+            // g ^ 2 + g + 3
+            // g = 3
+            // cos(t + 2) = 3
+            // t = 5
+            // 5 = x2 + 2x
+            // x = 6
+            //Console.WriteLine(MathS.Quack("cos(x3 + x2)2 + cos(x3 + x2)", "x"));
+            //Entity q = "x2";
+            Entity expr = "cos(x2 + x) - 1";
+            var a = expr.Name;
+            //Console.WriteLine(expr.Solve("x").Count);
+            foreach (var root in expr.Solve("x"))
+                Console.WriteLine(expr.Substitute("x", root).Substitute("n", 3).Eval());
+            /*
+            Entity toRepl = "cos(x2 + 2x + 1)"; // cos(x2 + 2x + 1) -> cos(t + 1) -> ... g
+            //Entity toRepl = "cos(x)";
             Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 3;
             Console.WriteLine(expr.ToString().Replace("^", "**"));
             var roots = expr.Solve("x");
             foreach (var root in roots)
                 //Console.WriteLine(expr.Substitute("x", root).Substitute("n", 3).Eval();
             {
-                Console.WriteLine(root);
-                var t = root.Substitute("n", 3).Eval();
-                Console.WriteLine(expr.Substitute("x", t).Eval());
+                Console.WriteLine("Корень: " + root.ToString());
+                var t = root.Substitute("n", 5).Eval();
+                Console.WriteLine("Корень пощитанный: " + t.ToString());
+                Console.WriteLine("Ашипка:" + expr.Substitute("x", t).Eval().ToString());
                 Console.WriteLine();
-            }
+            }*/
         }
     }
 #pragma warning restore IDE0051

@@ -3,6 +3,7 @@ using AngouriMath.Core.FromString;
 using System.Linq.Expressions;
 using AngouriMath.Core.FromLinq;
 using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Functions.Algebra.Solver.Analytical;
 using AngouriMath.Functions.NumberSystem;
 using AngouriMath.Functions.Output;
 
@@ -13,6 +14,8 @@ namespace AngouriMath
     /// </summary>
     public static partial class MathS
     {
+        public static Entity Quack(Entity c, Entity ent) => TreeAnalyzer.GetMinimumSubtree(c, ent);
+
         /// <summary>
         /// https://en.wikipedia.org/wiki/Trigonometric_functions
         /// </summary>

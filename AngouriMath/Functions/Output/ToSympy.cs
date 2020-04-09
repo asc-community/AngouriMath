@@ -15,10 +15,10 @@ namespace AngouriMath.Functions.Output
             { "cosf", "cos" },
             { "tanf", "tan" },
             { "cotanf", "cotan" },
-            { "arcsinf", "arcsin" },
-            { "arccosf", "arccos" },
-            { "arctanf", "arctan" },
-            { "arccotanf", "arccotan" },
+            { "arcsinf", "asin" },
+            { "arccosf", "acos" },
+            { "arctanf", "atan" },
+            { "arccotanf", "acotan" },
             { "logf", "log" }
         };
 
