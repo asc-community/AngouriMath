@@ -26,22 +26,23 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 expr = expr.InnerSimplify();
             }
 
-            void IterAddHistory(Entity expr)
+            void __IterAddHistory(Entity expr)
             {
                 Entity refexpr = expr.DeepCopy();
                 TryInnerSimplify(ref refexpr);
                 var n = refexpr.Complexity() > expr.Complexity() ? expr : refexpr;
                 history[n.Complexity()] = n;
             }
-
+            
             void AddHistory(Entity expr)
             {
-                IterAddHistory(expr);
+                __IterAddHistory(expr);
                 Entity _res = expr;
                 TreeAnalyzer.InvertNegativePowers(ref _res);
-                IterAddHistory(_res);
+                __IterAddHistory(_res);
             }
 
+            AddHistory(stage1);
             Entity res = stage1;
 
             for (int i = 0; i < Math.Abs(level); i++)
