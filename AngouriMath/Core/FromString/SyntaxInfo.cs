@@ -7,7 +7,7 @@ namespace AngouriMath.Core.FromString
     internal static class SyntaxInfo
     {
         internal static readonly string goodCharsForNumbers = "1234567890i.";
-        internal static readonly string goodCharsForVars = "qwertyuiopasdfghjklzxcvbnm";
+        internal static readonly string goodCharsForVars = "QqWwEeRrTtYyUuIiOoPpAaSsDdFfGgHhJjKkLlZzXxCcVvBbNnMmΑαΒβΓγΔδΕεΖζΗηΘθΙιΚκΛλΜμΝνΞξΟοΠπΡρΣσςΤτΥυΦφΧχΨψΩω";
         internal static readonly string goodCharsForOperators = "+-*/^,";
         internal static int GetFuncArg(string name) => goodStringsForFunctions[name.Substring(0, name.Length - 1)];
         internal static readonly Dictionary<string, int> goodStringsForFunctions = new Dictionary<string, int> {
