@@ -20,11 +20,17 @@ namespace GraphicExample
         }
         AMPlotter plotter;
         double t = 120;
+        protected override void OnSizeChanged(EventArgs e)
+        {
+            base.OnSizeChanged(e);
+            Chart.Size = new Size(Width, Height - 104);
+            button1.Location = new Point(0, Height - 98);
+        }
         private void MainFormLoad(object sender, EventArgs e)
         {
             plotter = new AMPlotter(Chart);
         }
-        
+
         private void EveryFrame(object sender, EventArgs e)
         {
             var B = MathS.Var("B");

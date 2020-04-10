@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="ScottPlot" version="4.0.9"/>
+    <PackageReference Include="ScottPlot.WinForms" version="4.0.9"/>
+    <ProjectReference Include="../../AngouriMath/AngouriMath.csproj"/>
+    <ProjectReference Include="../../AngouriMathPlot/AngouriMathPlot.csproj"/>
+  </ItemGroup>
+</Project>
