@@ -217,13 +217,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         internal static bool ReduceCommonPower(ref Dictionary<int, Entity> monomials)
         {
             int commonPower = monomials.Keys.Min();
-            if (commonPower < 1)
+            if (commonPower == 0)
                 return false;
             var newDict = new Dictionary<int, Entity>();
             foreach (var pair in monomials)
                 newDict[pair.Key - commonPower] = pair.Value;
             monomials = newDict;
-            return true;
+            return commonPower > 0;
         }
 
         /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/
