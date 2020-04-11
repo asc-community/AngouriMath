@@ -229,7 +229,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/
         internal static EntitySet SolveAsPolynomial(Entity expr, Entity subtree)
         {
-            VariableEntity newVar = "x";
+            var uniqVars = MathS.GetUniqueVariables(expr);
+            uniqVars.Sort((a, b) => b.Name.Length.CompareTo(a.Name.Length));
+            VariableEntity newVar = uniqVars[0].Name + "quack";
             TreeAnalyzer.FindAndReplace(ref expr, subtree, newVar);
             subtree = newVar;
             expr = expr.Expand(); // (x + 1) * x => x^2 + x

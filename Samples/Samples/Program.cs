@@ -3,6 +3,7 @@ using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Convenience;
 using System.Numerics;
+using System.Collections.Generic;
 
 namespace Samples
 {
@@ -155,18 +156,45 @@ namespace Samples
             // 3^x + 4^x - 5^x
             //Entity expr = "log(t, 1 - t) - 0.3"; здесь мы обкакались
             //"4^x + 2^x - 6^x" а здесь вольфрам обкакался
-            Entity expr = "φ^2 + φ^(-2) + b φ + b/ φ + c"; // (x^2 + x^(-2))
-            // добавьте фичу интегрировать по жопе
-            //Entity expr = "x2 + x3 + x4";
-            Console.WriteLine(expr.Solve("x").Count);
-            foreach (var root in expr.Solve("x"))
+            /*
+            var equations = new List<Entity>()
             {
-                //Console.WriteLine(root);
-                //Console.WriteLine(root.Substitute("a", 3).Eval());
-                //Console.WriteLine(root);
-                //var a = root.Substitute("a", 3).Eval();
-                //Console.WriteLine(expr.Substitute("a", 3).Substitute("x", a).Eval());
-            }
+                "2x + 3y - 3",
+                "3x + 4y - z + 8",
+                "z + x - 109"
+            };
+            var vars = new List<VariableEntity>()
+            {
+                "x", "y", "z"
+            };*/
+            //Entity exr = "x8 - a";
+            //Console.WriteLine(exr.Solve("x"));
+            //return;
+
+            //"2x2 + 3y - a",
+            //"3x + 4y + 8",
+            //"x - z2 + F"
+
+            var equations = new List<Entity>()
+            {
+                "2x2 + 3y - 4",
+                "3x + 4y + 8",
+                "x - z2 + 1"
+            };
+            var vars = new List<VariableEntity>()
+            {
+                "x", "y", "z"
+            };
+            var sols = MathS.Solve(equations, vars);
+            sols = sols.EvalTensor();
+            Console.WriteLine(sols.PrintOut(30));
+            /*
+            for (int i = 0; i < sols.Shape[0]; i++)
+            {
+                for (int j = 0; j < sols.Shape[1]; j++)
+                    Console.Write(sols[i, j].Eval().ToString() + "  ");
+                Console.WriteLine();
+            }*/
         }
     }
 #pragma warning restore IDE0051

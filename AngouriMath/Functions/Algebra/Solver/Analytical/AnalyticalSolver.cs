@@ -166,11 +166,11 @@ namespace AngouriMath.Core.TreeAnalysis
                     if (arg == 0)
                     {
                         // x ^ a = value => x = value ^ (1/a)
-                        if (value.entType == Entity.EntType.NUMBER && a.entType == Entity.EntType.NUMBER && a.GetValue().IsInteger())
+                        if (a.entType == Entity.EntType.NUMBER && a.GetValue().IsInteger())
                         {
                             var res = new EntitySet();
-                            foreach (var root in Number.GetAllRoots(value.GetValue(), (int)(a.GetValue().Re)))
-                                res.AddRange(FindInvertExpression(un, root, x));
+                            foreach (var root in Number.GetAllRoots(1, (int)(a.GetValue().Re)))
+                                res.AddRange(FindInvertExpression(un, root * MathS.Pow(value, 1 / a), x));
                             return res;
                         }
                         else
@@ -321,7 +321,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             {
                                 if (child.FindSubtree(x) != null)
                                 {
-                                    subs++;
+                                    subs += 1;
                                     lastChild = child;
                                 }
                             }
@@ -411,7 +411,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             foreach (var r in res)
                                 dst.AddRange(TreeAnalyzer.FindInvertExpression(actualVar, r, x));
                         }
-                        else
+                        else if (!compensateSolving)
                         {
                             foreach (var r in res)
                             {

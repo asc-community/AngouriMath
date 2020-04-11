@@ -11,4 +11,11 @@ namespace AngouriMath
         {
         }
     }
+
+    public class SolvingException : MathSException
+    {
+        public SolvingException(string message) : base(message)
+        {
+        }
+    }
 }

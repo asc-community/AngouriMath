@@ -6,6 +6,8 @@ using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.Solver.Analytical;
 using AngouriMath.Functions.NumberSystem;
 using AngouriMath.Functions.Output;
+using AngouriMath.Functions.Algebra.Solver;
+using System.Collections.Generic;
 
 namespace AngouriMath
 {
@@ -14,7 +16,27 @@ namespace AngouriMath
     /// </summary>
     public static partial class MathS
     {
-        public static Entity Quack(Entity c, Entity ent) => TreeAnalyzer.GetMinimumSubtree(c, ent);
+        /// <summary>
+        /// Solves a system of equations
+        /// </summary>
+        /// <param name="equations"></param>
+        /// <param name="vars"></param>
+        /// <returns>
+        /// Returns a matrix of solutions
+        /// matrix.shape[0] - number of solutions
+        /// matrix.shape[1] is equal to amount of variables
+        /// </returns>
+        public static Tensor Solve(List<Entity> equations, List<VariableEntity> vars)
+            => EquationSolver.SolveSystem(equations, vars);
+
+        /// <summary>
+        /// Solves one equation over one variable
+        /// </summary>
+        /// <param name="equation"></param>
+        /// <param name="var"></param>
+        /// <returns></returns>
+        public static EntitySet Solve(Entity equation, VariableEntity var)
+            => equation.Solve(var);
 
         /// <summary>
         /// https://en.wikipedia.org/wiki/Trigonometric_functions
