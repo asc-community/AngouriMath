@@ -1,15 +1,8 @@
 ﻿using System;
 using AngouriMath;
 using AngouriMath.Core;
-using System.Diagnostics;
-using System.Numerics;
-using System.Linq.Expressions;
-using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Convenience;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
+using System.Numerics;
 
 namespace Samples
 {
@@ -158,63 +151,22 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            //foreach (var ve in MathS.Quack(-0.5))
-            //    Console.WriteLine(MathS.Arccos(ve).Eval());
-            //return;
-
-            //Entity v = "(3x3 + 2x2 + 2x) ^ 3 + (3x3 + 2x2 + 2x) ^ 2 + (3x3 + 2x2 + 2x) + a"; 
-            //Entity v = "(3x + 2x2 + 2x) ^ 2 + (3x + 2x2 + 2x) ^ 2 + (3x + 2x2 + 2x) + 1";
-            //Console.WriteLine(MathS.ToSympyCode(v));
-            //Console.WriteLine(v.ToString());
-
-
-            /*
-            var a = new Number(24, 1);
-
-            foreach (var r in MathS.Quack(a))
-                Console.WriteLine(r.Eval());
-            Console.WriteLine();
-            Console.WriteLine(Complex.Acos(a));
-            Console.WriteLine(-Complex.Acos(a));
-            Console.WriteLine();
-            Console.WriteLine();
-            foreach (var r in MathS.Quack(a))
-                Console.WriteLine(Complex.Cos(r.Eval()));
-            Console.WriteLine();
-            Console.WriteLine(Complex.Cos(Complex.Acos(a)));
-            Console.WriteLine(Complex.Cos(-Complex.Acos(a)));
-            //Console.WriteLine();
-            return;*/
-            // cos(x2 + 2x + 2) ^ 2 + cos(x2 + 2x + 2) + 3
-            // cos(t + 2) ^ 2 + cos(t + 2) + 3
-            // g ^ 2 + g + 3
-            // g = 3
-            // cos(t + 2) = 3
-            // t = 5
-            // 5 = x2 + 2x
-            // x = 6
-            //Console.WriteLine(MathS.Quack("cos(x3 + x2)2 + cos(x3 + x2)", "x"));
-            //Entity q = "x2";
-            Entity expr = "cos(x2 + x) - 1";
-            var a = expr.Name;
-            //Console.WriteLine(expr.Solve("x").Count);
+            // 4sin(x) + 3cos(x) - 5
+            // 3^x + 4^x - 5^x
+            //Entity expr = "log(t, 1 - t) - 0.3"; здесь мы обкакались
+            //"4^x + 2^x - 6^x" а здесь вольфрам обкакался
+            Entity expr = "φ^2 + φ^(-2) + b φ + b/ φ + c"; // (x^2 + x^(-2))
+            // добавьте фичу интегрировать по жопе
+            //Entity expr = "x2 + x3 + x4";
+            Console.WriteLine(expr.Solve("x").Count);
             foreach (var root in expr.Solve("x"))
-                Console.WriteLine(expr.Substitute("x", root).Substitute("n", 3).Eval());
-            /*
-            Entity toRepl = "cos(x2 + 2x + 1)"; // cos(x2 + 2x + 1) -> cos(t + 1) -> ... g
-            //Entity toRepl = "cos(x)";
-            Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 3;
-            Console.WriteLine(expr.ToString().Replace("^", "**"));
-            var roots = expr.Solve("x");
-            foreach (var root in roots)
-                //Console.WriteLine(expr.Substitute("x", root).Substitute("n", 3).Eval();
             {
-                Console.WriteLine("Корень: " + root.ToString());
-                var t = root.Substitute("n", 5).Eval();
-                Console.WriteLine("Корень пощитанный: " + t.ToString());
-                Console.WriteLine("Ашипка:" + expr.Substitute("x", t).Eval().ToString());
-                Console.WriteLine();
-            }*/
+                //Console.WriteLine(root);
+                //Console.WriteLine(root.Substitute("a", 3).Eval());
+                //Console.WriteLine(root);
+                //var a = root.Substitute("a", 3).Eval();
+                //Console.WriteLine(expr.Substitute("a", 3).Substitute("x", a).Eval());
+            }
         }
     }
 #pragma warning restore IDE0051
