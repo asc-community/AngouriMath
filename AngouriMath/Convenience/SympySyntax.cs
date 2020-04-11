@@ -65,7 +65,7 @@ namespace AngouriMath.Convenience
         /// any other symbols but numbers and functions.
         /// </summary>
         /// <returns></returns>
-        public static Entity Evalf(Entity expr) => expr.Eval();
+        public static Number Evalf(Entity expr) => expr.Eval();
 
         /// <summary>
         /// Returns the expression in format of latex (for example, a / b -> \frac{a}{b})

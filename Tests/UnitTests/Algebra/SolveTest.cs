@@ -2,6 +2,9 @@
 using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using System.Collections.Generic;
+using System.Numerics;
+using AngouriMath.Functions.Algebra.Solver.Analytical;
 
 namespace UnitTests
 {
@@ -308,5 +311,31 @@ namespace UnitTests
         [TestMethod]
         public void TestRepl8()
             => InvertedFunctionTests("arccotan", 4);
+
+
+        private readonly List<Number> KeyPoints = new List<Number>
+        {
+            new Number(0, 1),
+            new Number(1, 0),
+            new Number(-3, -3),
+            new Number(2, 2),
+            new Number(13, 13),
+            new Number(-9, +7),
+            new Number(0.5, -0.5),
+            new Number(-0.5, 0.5),
+        };
+
+        
+
+        [TestMethod]
+        public void TestInvertSin()
+        {
+            foreach (var kp in KeyPoints)
+            {
+                var roots = Trigonometry.FindInvertSin(kp);
+                Assert.IsTrue(roots[0].Eval().value == Complex.Asin(kp));
+                Assert.IsTrue(roots[1].Eval().value == Complex.Asin(kp));
+            }
+        }
     }
 }

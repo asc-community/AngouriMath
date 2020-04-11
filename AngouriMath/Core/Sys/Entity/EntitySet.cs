@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Sockets;
 using System.Text;
 
 namespace AngouriMath
@@ -77,5 +78,7 @@ namespace AngouriMath
         public static EntitySet operator -(Entity a, EntitySet set) => new EntitySet(set.Select(el => a - el));
         public static EntitySet operator *(Entity a, EntitySet set) => new EntitySet(set.Select(el => a * el));
         public static EntitySet operator /(Entity a, EntitySet set) => new EntitySet(set.Select(el => a / el));
+        public EntitySet Log(Entity ba) => new EntitySet(this.Select(el => el.Log(ba)));
+        public EntitySet Ln() => this.Log(MathS.e);
     }
 }

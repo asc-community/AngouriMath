@@ -51,6 +51,11 @@ namespace AngouriMath.Core.TreeAnalysis
                 then number of mentions of `ent` in expression should be 6*/
             }
 
+            // parent -> child
+            // OperationOnChilds { return Func<void, Parent>(parent) => parent. .... }
+            // callback = parent.OperationOnChilds()
+            // callback(parent)
+
             int depth = 1;
             Entity subtree;
             Entity best = null;
@@ -67,11 +72,14 @@ namespace AngouriMath.Core.TreeAnalysis
                     // in order to minimize number of occurances of x in this sub
                     ocs = newocs;
                     best = subtree;
+                    // 80085
+                    if (ocs > 1)
+                        break;
                 }
             }
-            return best == null || ocs == 1 ? ent : best;
+            return best ?? ent;
         }
-
+        
         private static Entity GetTreeByDepth(Entity expr, Entity ent, int depth)
         {
             while(depth > 0)
@@ -176,6 +184,31 @@ namespace AngouriMath.Core.TreeAnalysis
             }
         }
 
+        /// <summary>
+        /// Returns true if a is inside a rect with corners from and to,
+        /// OR a is an unevaluable expression
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <returns></returns>
+        private static bool EntityInBounds(Entity a, Number from, Number to)
+        {
+            if (!MathS.CanBeEvaluated(a))
+                return true;
+            var r = a.Eval();
+            return r.Re >= from.Re &&
+                   r.Im >= from.Im &&
+                   r.Re <= to.Re &&
+                   r.Im <= to.Im;
+        }
+
+        private static readonly Number ArcsinFrom = new Number(-Math.PI / 2, -double.MaxValue);
+        private static readonly Number ArcsinTo = new Number(+Math.PI / 2, double.MaxValue);
+        private static readonly Number ArccosFrom = new Number(0, -double.MaxValue);
+        private static readonly Number ArccosTo = new Number(Math.PI, double.MaxValue);
+        private static readonly EntitySet Empty = new EntitySet();
+
         public static EntitySet InvertFunctionEntity(FunctionEntity func, Entity value, Entity x)
         {
             Entity a = func.Children[0];
@@ -225,10 +258,16 @@ namespace AngouriMath.Core.TreeAnalysis
                     }
                 case "arcsinf":
                     // arcsin(x) = value => x = sin(value)
-                    return GetNotNullEntites(FindInvertExpression(a, MathS.Sin(value), x));
+                    if (EntityInBounds(value, ArcsinFrom, ArcsinTo))
+                        return GetNotNullEntites(FindInvertExpression(a, MathS.Sin(value), x));
+                    else
+                        return Empty;
                 case "arccosf":
                     // arccos(x) = value => x = cos(value)
-                    return GetNotNullEntites(FindInvertExpression(a, MathS.Cos(value), x));
+                    if (EntityInBounds(value, ArccosFrom, ArccosTo))
+                        return GetNotNullEntites(FindInvertExpression(a, MathS.Cos(value), x));
+                    else
+                        return Empty;
                 case "arctanf":
                     // arctan(x) = value => x = tan(value)
                     return GetNotNullEntites(FindInvertExpression(a, MathS.Tan(value), x));
@@ -255,6 +294,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     internal static class AnalyticalSolver
     {
         internal static void Solve(Entity expr, VariableEntity x, EntitySet dst)
+            => Solve(expr, x, dst, compensateSolving: false);
+        internal static void Solve(Entity expr, VariableEntity x, EntitySet dst, bool compensateSolving)
         {
             if (expr.entType == Entity.EntType.OPERATOR)
             {
@@ -270,6 +311,30 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     case "powf":
                         Solve(expr.Children[0], x, dst);
                         return;
+                    // TODO: investigate cases x - a, x + a
+                    case "minusf":
+                        if (expr.Children[1].FindSubtree(x) == null && compensateSolving)
+                        {
+                            var subs = 0;
+                            Entity lastChild = null;
+                            foreach (var child in expr.Children[0].Children)
+                            {
+                                if (child.FindSubtree(x) != null)
+                                {
+                                    subs++;
+                                    lastChild = child;
+                                }
+                            }
+                            if (subs != 1)
+                                break;
+                            var res = TreeAnalyzer.FindInvertExpression(expr.Children[0], expr.Children[1], lastChild);
+                            foreach (var result in res)
+                                Solve(lastChild - result, x, dst);
+                            //foreach (var block in res.Select(r => (lastChild - r).Solve(x)))
+                            //    dst.AddRange(block);
+                            return;
+                        }
+                        break;
                 }
             }
             else if (expr.entType == Entity.EntType.FUNCTION)
@@ -313,9 +378,29 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 dst.Add(0);
             } else
             {
-                expr = expr.Simplify();
-                Entity actualVar = TreeAnalyzer.GetMinimumSubtree(expr, x);
-                var res = PolynomialSolver.SolveAsPolynomial(expr, actualVar);
+                Entity actualVar;
+                var res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), x);
+
+                if (res == null)
+                {
+                    Entity actualVarRaw = TreeAnalyzer.GetMinimumSubtree(expr, x);
+                    Entity exprSimplified = expr.Simplify();
+                    Entity actualVarSimplified = TreeAnalyzer.GetMinimumSubtree(exprSimplified, x);
+
+                    if (actualVarSimplified.Complexity() < actualVarRaw.Complexity())
+                    {
+                        actualVar = actualVarSimplified;
+                        expr = exprSimplified;
+                    }
+                    else
+                    {
+                        actualVar = actualVarRaw;
+                    }
+
+                    res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), actualVar);
+                }
+                else
+                    actualVar = x;
 
                 if (res != null)
                 {
@@ -325,6 +410,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         {
                             foreach (var r in res)
                                 dst.AddRange(TreeAnalyzer.FindInvertExpression(actualVar, r, x));
+                        }
+                        else
+                        {
+                            foreach (var r in res)
+                            {
+                                //dst.AddRange((actualVar - r).Solve(x));
+                                Solve(actualVar - r, x, dst, compensateSolving: true);
+                            }
                         }
                     }
                     else
@@ -340,5 +433,4 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
         }
     }
-    
 }

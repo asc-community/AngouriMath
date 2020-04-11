@@ -56,7 +56,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     internal static class PolynomialSolver
     {
         // solves ax + b
-        private static EntitySet SolveLinear(Entity a, Entity b)
+        internal static EntitySet SolveLinear(Entity a, Entity b)
         {
             // ax + b = 0
             // ax = -b
@@ -64,7 +64,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             return new EntitySet(-b / a);
         }
         // solves ax2 + bx + c
-        private static EntitySet SolveQuadratic(Entity a, Entity b, Entity c)
+        internal static EntitySet SolveQuadratic(Entity a, Entity b, Entity c)
         {
             EntitySet res;
             if (TreeAnalyzer.IsZero(c))
@@ -85,7 +85,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
         
         // solves ax3 + bx2 + cx + d
-        private static EntitySet SolveCubic(Entity a, Entity b, Entity c, Entity d)
+        internal static EntitySet SolveCubic(Entity a, Entity b, Entity c, Entity d)
         {
             // en: https://en.wikipedia.org/wiki/Cubic_equation
             // ru: https://ru.wikipedia.org/wiki/%D0%A4%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B0_%D0%9A%D0%B0%D1%80%D0%B4%D0%B0%D0%BD%D0%BE
@@ -170,7 +170,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
         // END
         // solves hx4 + ax3 + bx2 + cx + d
-        private static EntitySet SolveQuartic(Entity a, Entity b, Entity c, Entity d, Entity e)
+        internal static EntitySet SolveQuartic(Entity a, Entity b, Entity c, Entity d, Entity e)
         {
             // en: https://en.wikipedia.org/wiki/Quartic_function
             // ru: https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D1%82%D0%BE%D0%B4_%D0%A4%D0%B5%D1%80%D1%80%D0%B0%D1%80%D0%B8
