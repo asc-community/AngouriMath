@@ -33,3 +33,4 @@
 /AngouriMathPlot/obj
 /AngouriMathPlot/bin/Debug/netstandard2.0
 *.vsp
+/Interactive
