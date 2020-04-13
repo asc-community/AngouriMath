@@ -26,7 +26,7 @@ namespace AngouriMath.Core.TreeAnalysis
             }
         }
 
-        internal static Pattern NegativeMultiplyerPattern = Patterns.any1 + Patterns.const1 * Patterns.any2;
+        internal static readonly Pattern NegativeMultiplyerPattern = Patterns.any1 + Patterns.const1 * Patterns.any2;
 
         internal static void InvertNegativeMultipliers(ref Entity expr)
         {

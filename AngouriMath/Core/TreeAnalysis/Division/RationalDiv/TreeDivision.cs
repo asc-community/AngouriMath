@@ -103,11 +103,6 @@ namespace AngouriMath.Core.TreeAnalysis
                     { 
                         monoinfoP[polyvar][newpow] -= deltamul * n.Value;
                     }
-                    /*
-                    monoinfoP[polyvar][newpow] = monoinfoP[polyvar][newpow].SimplifyIntelli();
-                    if(monoinfoP[polyvar][newpow] == 0)
-                        monoinfoP[polyvar].Remove(newpow);
-                    */
                 }
                 if (monoinfoP[polyvar].ContainsKey(maxpowP))
                     monoinfoP[polyvar].Remove(maxpowP);

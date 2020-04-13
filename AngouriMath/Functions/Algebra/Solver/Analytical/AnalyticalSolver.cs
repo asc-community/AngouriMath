@@ -52,31 +52,17 @@ namespace AngouriMath.Core.TreeAnalysis
                 then number of mentions of `ent` in expression should be 6*/
             }
 
-            // parent -> child
-            // OperationOnChilds { return Func<void, Parent>(parent) => parent. .... }
-            // callback = parent.OperationOnChilds()
-            // callback(parent)
 
             int depth = 1;
             Entity subtree;
             Entity best = null;
-            int ocs = 0;
             while ((subtree = GetTreeByDepth(expr, ent, depth)) != ent)
             {
                 if (subtree.Children.Count == 0) return subtree;
 
                 depth++;
-                int newocs;
                 if (GoodSub(subtree))
-                {
-                    // we're looking for good subs with maximum number of occurances
-                    // in order to minimize number of occurances of x in this sub
-                    //ocs = newocs;
                     best = subtree;
-                    // 80085
-                    //if (ocs > 1)
-                    //    break;
-                }
             }
             return best ?? ent;
         }

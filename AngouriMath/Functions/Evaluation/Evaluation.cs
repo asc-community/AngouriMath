@@ -91,16 +91,6 @@ namespace AngouriMath
 
         public EntitySet Alternate(int level) => Simplificator.Alternate(this, level);
         internal abstract Entity InnerSimplify();
-        /*{
-            if (IsLeaf)
-                return this;
-            else
-            {
-                if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsNull))
-                    return Number.Null;
-                return MathFunctions.InvokeEval(Name, Children);
-            }
-        }*/
 
         /// <summary>
         /// Fast substitution of some mathematical constants,

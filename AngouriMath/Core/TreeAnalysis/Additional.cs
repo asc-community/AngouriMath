@@ -19,27 +19,12 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <returns></returns>
         internal static EntitySet EvalAll(Entity expr)
         {
-            /*
-            var res = new EntitySet();
-            EvalCombs(expr, res);
-            return res;
-            */
             throw new NotImplementedException();
         }
         
         internal static void EvalCombs(Entity expr, EntitySet set)
         {
             throw new NotImplementedException();
-            /*
-            if (expr.Name == "Powf" && 
-                MathS.CanBeEvaluated(expr.Children[1]) && 
-                MathS.CanBeEvaluated(expr.Children[0]) &&
-                ())
-            {
-
-            }
-            else
-                set.Add(expr.InnerSimplify());*/
         }
     }
 }

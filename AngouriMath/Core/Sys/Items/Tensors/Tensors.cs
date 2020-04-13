@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Core
 {
@@ -57,7 +58,7 @@ namespace AngouriMath.Core
         public Tensor(params int[] dims) : base("tensort", EntType.TENSOR)
         {
             if (dims.Length == 0)
-                throw new Exception("Tensor must consist of dimensions");
+                throw new TreeException("Tensor must consist of dimensions");
             Shape = new List<int>();
             Shape.AddRange(dims);
             InitVolumes();
@@ -142,7 +143,6 @@ namespace AngouriMath.Core
                 case 1: return bias + "< " + string.Join<Entity>(" | ", Data) + " >";
                 case 2:
                     var res = bias + "\n";
-                    //var maxlen = Math.Min(maxElLen, Data.Select(el => el == null ? 4 : el.ToString().Length).Max());
                     var maxlen = new List<int>();
                     for (int i = 0; i < Shape[1]; i++)
                     {

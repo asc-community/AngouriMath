@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.FromString;
 
 namespace AngouriMath.Core.FromLinq
 {
@@ -72,7 +74,7 @@ namespace AngouriMath.Core.FromLinq
                         return func;
                     }
                 default:
-                    throw new Exception("Parse error");
+                    throw new ParseException("Parse error");
             }
         }
 
