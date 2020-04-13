@@ -142,16 +142,23 @@ namespace AngouriMath.Core
                 case 1: return bias + "< " + string.Join<Entity>(" | ", Data) + " >";
                 case 2:
                     var res = bias + "\n";
-                    var maxlen = Math.Min(maxElLen, Data.Select(el => el == null ? 4 : el.ToString().Length).Max());
-                    var gap = maxlen + 3;
+                    //var maxlen = Math.Min(maxElLen, Data.Select(el => el == null ? 4 : el.ToString().Length).Max());
+                    var maxlen = new List<int>();
+                    for (int i = 0; i < Shape[1]; i++)
+                    {
+                        var mxlen = 0;
+                        for (int j = 0; j < Shape[0]; j++)
+                            mxlen = Math.Max(mxlen, this[j, i] == null ? 4 : this[j, i].ToString().Length);
+                        maxlen.Add(mxlen);
+                    }
                     for (int x = 0; x < Shape[0]; x++)
                     {
                         for (int y = 0; y < Shape[1]; y++)
                         {
                             var ents = this[x, y] == null ? "null" : this[x, y].ToString();
-                            if (ents.Length > maxlen)
-                                ents = ents.Substring(0, maxlen - 1) + @"\";
-                            res += ents + new string(' ', gap - ents.Length);
+                            if (ents.Length > maxlen[y])
+                                ents = ents.Substring(0, maxlen[y] - 1) + @"\";
+                            res += ents + new string(' ', maxlen[y] - ents.Length + 3);
                         }
                         res += "\n";
                     }

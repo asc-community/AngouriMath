@@ -8,6 +8,7 @@ using AngouriMath.Functions.NumberSystem;
 using AngouriMath.Functions.Output;
 using AngouriMath.Functions.Algebra.Solver;
 using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
 
 namespace AngouriMath
 {
@@ -16,6 +17,8 @@ namespace AngouriMath
     /// </summary>
     public static partial class MathS
     {
+        public static Entity Quack(Entity expr, VariableEntity x)
+            => TreeAnalyzer.GetMinimumSubtree(expr, x);
         /// <summary>
         /// Solves a system of equations
         /// </summary>

@@ -18,7 +18,7 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
         /// <returns></returns>
         internal static EntitySet FindInvertSin(Entity c)
         {
-            var cproots = PolynomialSolver.SolveQuadratic(1, -2 * c, -1);
+            var cproots = PolynomialSolver.SolveQuadratic(1, -2 * c * MathS.i, -1);
             return -1 * MathS.i * cproots.Ln();
         }
 

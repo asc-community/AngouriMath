@@ -15,7 +15,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static EntitySet Solve(Entity equation, VariableEntity x)
         {
             var res = new EntitySet();
-            AnalyticalSolver.Solve(equation, x, res);
+            AnalyticalSolver.Solve(equation.DeepCopy(), x, res);
             for (int i = 0; i < res.Count; i++)
                 res[i] = res[i].InnerSimplify();
             return res;

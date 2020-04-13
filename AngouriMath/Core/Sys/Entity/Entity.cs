@@ -1,6 +1,7 @@
 ﻿using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -47,6 +48,7 @@ namespace AngouriMath
         /// Use this to copy an entity. Recommended to use if you need a safe copy
         /// </summary>
         /// <returns></returns>
+        [DebuggerStepThrough]
         public Entity DeepCopy()
         {
             Entity res = Copy();

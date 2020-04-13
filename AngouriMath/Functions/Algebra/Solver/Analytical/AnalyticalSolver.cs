@@ -5,6 +5,7 @@ using AngouriMath.Functions.Algebra.Solver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace AngouriMath
@@ -66,15 +67,15 @@ namespace AngouriMath.Core.TreeAnalysis
 
                 depth++;
                 int newocs;
-                if (GoodSub(subtree) && (newocs = expr.CountOccurances(subtree.ToString())) > ocs)
+                if (GoodSub(subtree))
                 {
                     // we're looking for good subs with maximum number of occurances
                     // in order to minimize number of occurances of x in this sub
-                    ocs = newocs;
+                    //ocs = newocs;
                     best = subtree;
                     // 80085
-                    if (ocs > 1)
-                        break;
+                    //if (ocs > 1)
+                    //    break;
                 }
             }
             return best ?? ent;
@@ -297,6 +298,19 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             => Solve(expr, x, dst, compensateSolving: false);
         internal static void Solve(Entity expr, VariableEntity x, EntitySet dst, bool compensateSolving)
         {
+            if (expr == x)
+            {
+                dst.Add(0);
+                return;
+            }
+
+            EntitySet res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), x);
+            if (res != null)
+            {
+                dst.AddRange(res);
+                return;
+            }
+
             if (expr.entType == Entity.EntType.OPERATOR)
             {
                 switch (expr.Name)
@@ -311,10 +325,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     case "powf":
                         Solve(expr.Children[0], x, dst);
                         return;
-                    // TODO: investigate cases x - a, x + a
                     case "minusf":
                         if (expr.Children[1].FindSubtree(x) == null && compensateSolving)
                         {
+                            if (expr.Children[0] == x)
+                            {
+                                dst.Add(expr.Children[1]);
+                                return;
+                            }
                             var subs = 0;
                             Entity lastChild = null;
                             foreach (var child in expr.Children[0].Children)
@@ -327,9 +345,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             }
                             if (subs != 1)
                                 break;
-                            var res = TreeAnalyzer.FindInvertExpression(expr.Children[0], expr.Children[1], lastChild);
-                            foreach (var result in res)
-                                Solve(lastChild - result, x, dst);
+                            var resInverted = TreeAnalyzer.FindInvertExpression(expr.Children[0], expr.Children[1], lastChild);
+                            foreach (var result in resInverted)
+                                Solve(lastChild - result, x, dst, compensateSolving: true);
                             //foreach (var block in res.Select(r => (lastChild - r).Solve(x)))
                             //    dst.AddRange(block);
                             return;
@@ -339,97 +357,61 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
             else if (expr.entType == Entity.EntType.FUNCTION)
             {
-                switch (expr.Name)
+                dst.AddRange(TreeAnalyzer.InvertFunctionEntity(expr as FunctionEntity, 0, x));
+            }
+
+            
+
+            
+            // Here we generate a unique variable name
+            var uniqVars = MathS.GetUniqueVariables(expr);
+            uniqVars.Sort((a, b) => b.Name.Length.CompareTo(a.Name.Length));
+            VariableEntity newVar = uniqVars[0].Name + "quack";
+            // // //
+
+            // Here we find all possible replacements
+            var replacements = new List<Tuple<Entity, Entity>>();
+            replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(expr, x), expr));
+            var exprSimplified = expr.Simplify();
+            replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(exprSimplified, x), exprSimplified));
+            // // //
+
+            // Here we find one that has at least one solution
+            EntitySet solutions = null;
+            Entity bestReplacement = null;
+            foreach (var replacement in replacements)
+            {
+                var newExpr = replacement.Item2.DeepCopy();
+                TreeAnalyzer.FindAndReplace(ref newExpr, replacement.Item1, newVar);
+                solutions = newExpr.Solve(newVar);
+                if (solutions.Count > 0)
                 {
-                    case "sinf":
-                        Solve(expr.Children[0] + "n" * MathS.pi, x, dst);
-                        return;
-                    case "cosf":
-                        Solve(expr.Children[0] + MathS.pi / 2 + "n" * MathS.pi, x, dst);
-                        return;
-                    case "tanf":
-                        Solve(expr.Children[0] + "n" * MathS.pi, x, dst);
-                        return;
-                    case "cotanf":
-                        Solve(expr.Children[0] + MathS.pi / 2 + "n" * MathS.pi, x, dst);
-                        return;
-                    case "arcsinf":
-                        Solve(expr.Children[0], x, dst);
-                        return;
-                    case "arccosf":
-                        Solve(expr.Children[0] - 1, x, dst);
-                        return;
-                    case "arctanf":
-                        Solve(expr.Children[0], x, dst);
-                        return;
-                    case "logf":
-                        // x ^ n
-                        if (expr.Children[0].FindSubtree(x) != null && expr.Children[1].FindSubtree(x) == null)
-                        {
-                            Solve(expr.Children[0], x, dst);
-                            return;
-                        }
-                        break;
+                    bestReplacement = replacement.Item1;
+                    break;
                 }
             }
+            // // //
+
+            // Here we get back to our initial variable
+            if (bestReplacement != null)
+            {
+                EntitySet newDst = new EntitySet();
+                foreach (var solution in solutions)
+                {
+                    var str = bestReplacement.ToString();
+                    Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
+                }
+                dst.AddRange(newDst);
+            }
+            // // //
             
-            if (expr == x)
+
+            if (dst.Count == 0) // if nothing has been found so far
             {
-                dst.Add(0);
-            } else
-            {
-                Entity actualVar;
-                var res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), x);
-
-                if (res == null)
-                {
-                    Entity actualVarRaw = TreeAnalyzer.GetMinimumSubtree(expr, x);
-                    Entity exprSimplified = expr.Simplify();
-                    Entity actualVarSimplified = TreeAnalyzer.GetMinimumSubtree(exprSimplified, x);
-
-                    if (actualVarSimplified.Complexity() < actualVarRaw.Complexity())
-                    {
-                        actualVar = actualVarSimplified;
-                        expr = exprSimplified;
-                    }
-                    else
-                    {
-                        actualVar = actualVarRaw;
-                    }
-
-                    res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), actualVar);
-                }
-                else
-                    actualVar = x;
-
-                if (res != null)
-                {
-                    if (actualVar != x) // if we found a variable replacement
-                    {
-                        if (actualVar.CountOccurances(x.ToString()) == 1)
-                        {
-                            foreach (var r in res)
-                                dst.AddRange(TreeAnalyzer.FindInvertExpression(actualVar, r, x));
-                        }
-                        else if (!compensateSolving)
-                        {
-                            foreach (var r in res)
-                            {
-                                //dst.AddRange((actualVar - r).Solve(x));
-                                Solve(actualVar - r, x, dst, compensateSolving: true);
-                            }
-                        }
-                    }
-                    else
-                        dst.AddRange(res);
-                }
-                else
-                {
-                    EntitySet vars = new EntitySet();
-                    TreeAnalyzer.GetUniqueVariables(expr.SubstituteConstants() /* otherwise it will count `pi`, `e` as variables */, vars);
-                    if (vars.Count == 1)
-                        dst.Merge(expr.SolveNt(x));
-                }
+                EntitySet allVars = new EntitySet();
+                TreeAnalyzer.GetUniqueVariables(expr, allVars);
+                if (allVars.Count == 1)
+                    dst.Merge(expr.SolveNt(x));
             }
         }
     }

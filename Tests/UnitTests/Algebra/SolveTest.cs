@@ -280,25 +280,25 @@ namespace UnitTests
         public void InvertedFunctionTests(string func, int rootAmount)
         {
             Entity toRepl = func + "(x2 + 3)";
-            Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1;
+            Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1 * MathS.Var("a");
             var roots = expr.Solve(x);
             Assert.IsTrue(roots.Count == rootAmount);
             foreach (var root in roots)
-                AssertRoots(expr, x, root.Substitute("n", 3));
+                AssertRoots(expr.Substitute("a", 5), x, root.Substitute("n", 3).Substitute("a", 5));
         }
 
         [TestMethod]
         public void TestRepl1()
-            => InvertedFunctionTests("sin", 4);
+            => InvertedFunctionTests("sin", 8);
         [TestMethod]
         public void TestRepl2()
-            => InvertedFunctionTests("cos", 4);
+            => InvertedFunctionTests("cos", 8);
         [TestMethod]
         public void TestRepl3()
-            => InvertedFunctionTests("tan", 2);
+            => InvertedFunctionTests("tan", 4);
         [TestMethod]
         public void TestRepl4()
-            => InvertedFunctionTests("cotan", 2);
+            => InvertedFunctionTests("cotan", 4);
         [TestMethod]
         public void TestRepl5()
             => InvertedFunctionTests("arcsin", 4);
@@ -333,9 +333,81 @@ namespace UnitTests
             foreach (var kp in KeyPoints)
             {
                 var roots = Trigonometry.FindInvertSin(kp);
-                Assert.IsTrue(roots[0].Eval().value == Complex.Asin(kp));
-                Assert.IsTrue(roots[1].Eval().value == Complex.Asin(kp));
+                Assert.IsTrue(roots[0].Sin().Eval() == kp, kp.ToString());
+                Assert.IsTrue(roots[1].Sin().Eval() == kp, kp.ToString());
             }
+        }
+
+        public void AssertSystemSolvable(List<Entity> equations, List<VariableEntity> vars, int rootCount = -1)
+        {
+            var sol = MathS.Solve(equations, vars);
+            Assert.IsTrue(sol.Shape[0] == rootCount || rootCount == -1, "Got " + sol.Shape[0] + " instead of " + rootCount);
+            for (int i = 0; i < sol.Shape[0]; i++)
+            {
+                foreach (var eq in equations)
+                {
+                    var eqCopy = eq.DeepCopy();
+                    Assert.AreEqual(sol.Shape[1], vars.Count, "Incorrect output of Solve");
+                    for (int rootid = 0; rootid < sol.Shape[1]; rootid++)
+                    {
+                        eqCopy = eqCopy.Substitute(vars[rootid], sol[i, rootid]);
+                    }
+
+                    foreach (var uniqvar in MathS.GetUniqueVariables(eqCopy))
+                        eqCopy = eqCopy.Substitute(uniqvar.Name, 3);
+                    Assert.IsTrue(eqCopy.Eval() == 0,
+                        "i: " + i + "  eq: " + eq.ToString() + "  E: " + eqCopy.Eval().ToString());
+                }
+            }
+        }
+
+        public List<Entity> EQ(params Entity[] equations)
+            => new List<Entity>(equations);
+
+        public List<VariableEntity> VA(params VariableEntity[] vars)
+            => new List<VariableEntity>(vars);
+
+        [TestMethod]
+        public void TestLinSystem2()
+        {
+            var eqs = EQ(
+                "x + y - 3",
+                "x + 2y - 4"
+                );
+            AssertSystemSolvable(eqs, VA("x", "y"), 1);
+        }
+
+        [TestMethod]
+        public void TestLinSystem3()
+        {
+            var eqs = EQ(
+                "x + y - 3",
+                "x + 2y - 4z",
+                "z + 3x - 0.1y - 1"
+            );
+            AssertSystemSolvable(eqs, VA("x", "y", "z"), 1);
+        }
+
+        [TestMethod]
+        public void TestPolySystem3()
+        {
+            var eqs = EQ(
+                "x2 + y3 + z + 4",
+                "3y3 - z - 2",
+                "x2 - 0.1z + 4x2 + 4y3"
+                );
+            AssertSystemSolvable(eqs, VA("x", "y", "z"), 6);
+        }
+
+        [TestMethod]
+        public void TestTrigSystem2()
+        {
+            var eqs = EQ(
+                "cos(x2 + 1)^2 + 3y",
+                "(-y) + 4cos(x2 + 1)"
+                );
+            AssertSystemSolvable(eqs, VA("x", "y", "z"), 6);
         }
     }
 }
+

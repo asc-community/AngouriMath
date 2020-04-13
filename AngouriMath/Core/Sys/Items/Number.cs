@@ -250,6 +250,9 @@ namespace AngouriMath.Core
         internal void _sin() => this.value = Complex.Sin(this.value);
         internal void _cos() => this.value = Complex.Cos(this.value);
 
+        public static double Dist(Number n1, Number n2)
+            => Abs(n1 - n2);
+
     }
 
     /// <summary>
@@ -257,7 +260,7 @@ namespace AngouriMath.Core
     /// </summary>
     public class NumberSet : List<Number>
     {
-        internal NumberSet()
+        public NumberSet()
         {
 
         }

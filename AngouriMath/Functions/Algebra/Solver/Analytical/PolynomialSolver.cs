@@ -229,11 +229,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/
         internal static EntitySet SolveAsPolynomial(Entity expr, Entity subtree)
         {
-            var uniqVars = MathS.GetUniqueVariables(expr);
-            uniqVars.Sort((a, b) => b.Name.Length.CompareTo(a.Name.Length));
-            VariableEntity newVar = uniqVars[0].Name + "quack";
-            TreeAnalyzer.FindAndReplace(ref expr, subtree, newVar);
-            subtree = newVar;
             expr = expr.Expand(); // (x + 1) * x => x^2 + x
             List<Entity> children;
             EntitySet res = new EntitySet();
@@ -342,6 +337,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
         internal static void ParseMonomial<T>(Entity aVar, Entity expr, out Entity freeMono, ref TreeAnalyzer.IPrimitive<T> power)
         {
+            if (expr.FindSubtree(aVar) == null)
+            {
+                freeMono = expr;
+                return;
+            }
+
             freeMono = 1; // a * b
 
             bool allowFloat = typeof(T) == typeof(double);
