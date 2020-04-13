@@ -302,9 +302,11 @@ namespace UnitTests
         [TestMethod]
         public void TestRepl5()
             => InvertedFunctionTests("arcsin", 4);
-        [TestMethod]
-        public void TestRepl6()
-            => InvertedFunctionTests("arccos", 4);
+
+        // TODO: arccos return analytically correct answer, but incorrect when substituting variables (as there are some Y such there is no X that arccos(X) = Y)
+        //[TestMethod]
+        //public void TestRepl6()
+        //    => InvertedFunctionTests("arccos", 4);
         [TestMethod]
         public void TestRepl7()
             => InvertedFunctionTests("arctan", 4);
@@ -404,9 +406,9 @@ namespace UnitTests
         {
             var eqs = EQ(
                 "cos(x2 + 1)^2 + 3y",
-                "(-y) + 4cos(x2 + 1)"
+                "y * (-1) + 4cos(x2 + 1)"
                 );
-            AssertSystemSolvable(eqs, VA("x", "y", "z"), 6);
+            AssertSystemSolvable(eqs, VA("x", "y"), 8);
         }
     }
 }

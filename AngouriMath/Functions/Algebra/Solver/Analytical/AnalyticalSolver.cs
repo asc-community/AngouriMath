@@ -344,11 +344,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             else if (expr.entType == Entity.EntType.FUNCTION)
             {
                 dst.AddRange(TreeAnalyzer.InvertFunctionEntity(expr as FunctionEntity, 0, x));
+                return;
             }
 
-            
 
-            
             // Here we generate a unique variable name
             var uniqVars = MathS.GetUniqueVariables(expr);
             uniqVars.Sort((a, b) => b.Name.Length.CompareTo(a.Name.Length));
@@ -358,8 +357,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // Here we find all possible replacements
             var replacements = new List<Tuple<Entity, Entity>>();
             replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(expr, x), expr));
-            var exprSimplified = expr.Simplify();
-            replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(exprSimplified, x), exprSimplified));
+            foreach (var alt in expr.Alternate(4))
+                replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
             // // //
 
             // Here we find one that has at least one solution
@@ -367,10 +366,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             Entity bestReplacement = null;
             foreach (var replacement in replacements)
             {
+                if (replacement.Item1 == x)
+                    continue;
                 var newExpr = replacement.Item2.DeepCopy();
                 TreeAnalyzer.FindAndReplace(ref newExpr, replacement.Item1, newVar);
                 solutions = newExpr.Solve(newVar);
-                if (solutions.Count > 0)
+                if (solutions.Count > 0/* && !newExpr.Children.Any(c => c == newVar)*/)
                 {
                     bestReplacement = replacement.Item1;
                     break;
@@ -385,7 +386,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 foreach (var solution in solutions)
                 {
                     var str = bestReplacement.ToString();
-                    Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
+                    if (bestReplacement - solution != expr)
+                        Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
                 }
                 dst.AddRange(newDst);
             }

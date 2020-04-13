@@ -84,7 +84,7 @@ Console.WriteLine(expr.Eval());
 ```
 
 #### Solve equations analytically
-Under developing & testing right now.
+Under developing now and forever (always available)
 ```cs
 Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
 foreach (var root in expr.Solve("x"))
@@ -98,6 +98,16 @@ foreach (var root in expr.Solve("x"))
 >>> i
 >>> 1
 >>> 2
+```
+
+#### Solve systems of non-linear equations
+Under developing now and forever (always available)
+```
+var eqs = new List<Entity> {
+    "cos(x2 + 1)^2 + 3y",
+    "y * (-1) + 4cos(x2 + 1)"
+};
+Console.WriteLine(MathS.Solve(eqs, new List<VariableEntity>{"x", "y"}).PrintOut());
 ```
 
 #### Integrate

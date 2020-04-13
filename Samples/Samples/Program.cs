@@ -2,6 +2,7 @@
 using AngouriMath.Convenience;
 using AngouriMath.Core;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 
@@ -152,112 +153,11 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            // 4sin(x) + 3cos(x) - 5
-            // 3^x + 4^x - 5^x
-            //Entity expr = "log(t, 1 - t) - 0.3"; здесь мы обкакались
-            //"4^x + 2^x - 6^x" а здесь вольфрам обкакался
-            /*
-            var equations = new List<Entity>()
-            {
-                "2x + 3y - 3",
-                "3x + 4y - z + 8",
-                "z + x - 109"
-            };
-            var vars = new List<VariableEntity>()
-            {
-                "x", "y", "z"
-            };*/
-            //Entity exr = "x8 - a";
-            //Console.WriteLine(exr.Solve("x"));
-            //return;
-
-            //"2x2 + 3y - a",
-            //"3x + 4y + 8",
-            //"x - z2 + F"
-            /*
-            var equations = new List<Entity>()
-            {
+            var eqs = new List<Entity> {
                 "cos(x2 + 1)^2 + 3y",
-                "-1 * y + 4cos(x2 + 1) + a"
+                "y * (-1) + 4cos(x2 + 1)"
             };
-            var vars = new List<VariableEntity>()
-            {
-                "x", "y"
-            };
-            var sols = MathS.Solve(equations, vars);
-            sols = sols.EvalTensor();
-            Console.WriteLine(sols.PrintOut(1000));*/
-            //Entity expr = "cos((x4 + x3 + x2)2 + 1)4 + cos((x4 + x3 + x2)2 + 1) + f";
-            // Entity expr = "1 - cos(x)^2 + 2 * sin(x) + 1"; stackoverflow
-            // Entity expr = "log(x - 2, 3) + log(x + 2, 3) - log(2x - 1, 3)"; add axiomatics for logarithms
-            // x === x^1 === (x ^ 0.5) ^ 2 === ...?
-            Number a = new Number(2, 3);
-            a.Re = 3;
-            return;
-            Entity expr = "x + x^4 + 1";
-            
-            var ns = new NumberSet();
-            foreach( var r in expr.SolveNt("x"))
-                ns.Add(Number.Pow(r, 2));
-            Console.WriteLine(ns);
-            return;
-            //Console.WriteLine(expr);
-            //return;
-            //Console.WriteLine(expr.Solve("x").Count);
-            //Console.WriteLine(expr.Latexise())
-            var sols = expr.Solve("x");
-            Console.WriteLine(sols.Count);
-            return;
-            for (int i = 0; i < sols.Count; i++)
-            for (int j = i + 1; j < sols.Count; j++)
-            {
-                var sub1 = sols[i].Substitute("f", 3).Substitute("n", 5).Eval();
-                var sub2 = sols[j].Substitute("f", 3).Substitute("n", 5).Eval();
-                Console.WriteLine(Number.Dist(sub1, sub2));
-            }
-            /*
-            foreach (var e in )
-            {
-                //Console.WriteLine(e);
-                
-                Console.WriteLine(sub.Eval());
-            }*/
-            //Console.WriteLine(MathS.Quack(expr, "x"));
-            /*
-        Entity toRepl = "arccos(x2 + a)";
-        var ф = MathS.Var("ф");
-        Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1 * ф;
-        //Console.WriteLine(expr.Solve("x").Count);
-        Console.WriteLine(expr);
-        /*
-        Entity ex = "4^x + 2^x - 6^x";
-        foreach (var root in ex.Solve("x"))
-        {
-            Console.WriteLine("root: " + root.ToString());
-            Console.WriteLine("error: " + ex.Substitute("x", root).Eval().ToString());
-            Console.WriteLine();
-        }
-        ex.Simplify(())
-        */
-            /*
-            Entity expr = "(sin(x + x2)2 + cos(x + x2)2 + sin(a)/cos(a) + e^log(3, 2) + e^log(e, x))^2 + (x2 - y2)";
-            foreach (var alform in expr.Alternate(10))
-            {
-                Console.WriteLine(alform);
-                Console.WriteLine();
-            }*/
-            //Entity expr = "cos(x)3 + sin(x)2 + cos(x)2";
-            //Console.WriteLine(expr.Simplify());
-            //Entity expr = "(x + 1)2(x + 1)2(x + 1)";
-            //Console.WriteLine(expr.Expand().Simplify());
-
-            /*
-            for (int i = 0; i < sols.Shape[0]; i++)
-            {
-                for (int j = 0; j < sols.Shape[1]; j++)
-                    Console.Write(sols[i, j].Eval().ToString() + "  ");
-                Console.WriteLine();
-            }*/
+            Console.WriteLine(MathS.Solve(eqs, new List<VariableEntity>{"x", "y"}).PrintOut());
         }
     }
 #pragma warning restore IDE0051

@@ -32,7 +32,9 @@ namespace AngouriMath.Functions.Algebra.Solver
             int initVarCount = vars.Count;
             for (int i = 0; i < equations.Count; i++)
                 equations[i] = equations[i].InnerSimplify();
+
             var res = EquationSolver.InSolveSystem(equations, vars);
+
             foreach (var tuple in res)
                 if (tuple.Count != initVarCount)
                     throw new SysException("InSolveSystem incorrect output");
@@ -52,6 +54,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static List<List<Entity>> InSolveSystem(List<Entity> equations, List<VariableEntity> vars)
         {
             var var = vars.Last();
+            vars = new List<VariableEntity>(vars); // copying
             List<List<Entity>> result;
             if (equations.Count == 1)
                 return InSolveSystemOne(equations[0], var);
