@@ -1,0 +1,1243 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<SolutionRoot CoveredStatements="2871" TotalStatements="3528" CoveragePercent="81" ReportType="Xml" DotCoverVersion="2019.3.2">
+  <SolutionFolder Name="Samples" CoveredStatements="0" TotalStatements="91" CoveragePercent="0">
+    <Project Name="Samples" CoveredStatements="0" TotalStatements="91" CoveragePercent="0">
+      <Namespace Name="Samples" CoveredStatements="0" TotalStatements="91" CoveragePercent="0">
+        <Type Name="Program" CoveredStatements="0" TotalStatements="91" CoveragePercent="0">
+          <Constructor Name="Program()" CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+          <Method Name="Main(string[]):void" CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+          <Method Name="MyFunc(Complex):Complex" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="Sample1():void" CoveredStatements="0" TotalStatements="4" CoveragePercent="0" />
+          <Method Name="Sample10():void" CoveredStatements="0" TotalStatements="5" CoveragePercent="0" />
+          <Method Name="Sample11():void" CoveredStatements="0" TotalStatements="4" CoveragePercent="0" />
+          <Method Name="Sample12():void" CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+          <Method Name="Sample13():void" CoveredStatements="0" TotalStatements="6" CoveragePercent="0" />
+          <Method Name="Sample14():void" CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+          <Method Name="Sample15():void" CoveredStatements="0" TotalStatements="6" CoveragePercent="0" />
+          <Method Name="Sample16():void" CoveredStatements="0" TotalStatements="6" CoveragePercent="0" />
+          <Method Name="Sample17():void" CoveredStatements="0" TotalStatements="5" CoveragePercent="0" />
+          <Method Name="Sample2():void" CoveredStatements="0" TotalStatements="5" CoveragePercent="0" />
+          <Method Name="Sample3():void" CoveredStatements="0" TotalStatements="5" CoveragePercent="0" />
+          <Method Name="Sample4():void" CoveredStatements="0" TotalStatements="5" CoveragePercent="0" />
+          <Method Name="Sample5():void" CoveredStatements="0" TotalStatements="8" CoveragePercent="0">
+            <OwnCoverage CoveredStatements="0" TotalStatements="7" CoveragePercent="0" />
+            <AnonymousMethod Name="(NumberEntity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          </Method>
+          <Method Name="Sample6():void" CoveredStatements="0" TotalStatements="5" CoveragePercent="0" />
+          <Method Name="Sample7():void" CoveredStatements="0" TotalStatements="4" CoveragePercent="0" />
+          <Method Name="Sample8():void" CoveredStatements="0" TotalStatements="4" CoveragePercent="0" />
+          <Method Name="Sample9():void" CoveredStatements="0" TotalStatements="6" CoveragePercent="0" />
+        </Type>
+      </Namespace>
+    </Project>
+  </SolutionFolder>
+  <SolutionFolder Name="Tests" CoveredStatements="631" TotalStatements="745" CoveragePercent="85">
+    <Project Name="DotnetBenchmark" CoveredStatements="0" TotalStatements="34" CoveragePercent="0">
+      <Namespace Name="DotnetBenchmark" CoveredStatements="0" TotalStatements="34" CoveragePercent="0">
+        <Type Name="AlgebraTest" CoveredStatements="0" TotalStatements="11" CoveragePercent="0">
+          <Constructor Name="AlgebraTest()" CoveredStatements="0" TotalStatements="7" CoveragePercent="0" />
+          <Method Name="SolveAnal():void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="SolveEasy():void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="SolveHard():void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="SolveMedium():void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Type>
+        <Type Name="CacheCompiledFuncTest" CoveredStatements="0" TotalStatements="11" CoveragePercent="0">
+          <Constructor Name="CacheCompiledFuncTest()" CoveredStatements="0" TotalStatements="7" CoveragePercent="0" />
+          <Method Name="LinqCompiled():Complex" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="MyCompiled():Number" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="NotCompiled():Number" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="SysIncode():Complex" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Type>
+        <Type Name="CompiledFuncTest" CoveredStatements="0" TotalStatements="10" CoveragePercent="0">
+          <Constructor Name="CompiledFuncTest()" CoveredStatements="0" TotalStatements="7" CoveragePercent="0" />
+          <Method Name="LinqSin():void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="MultiFunc():void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="NotCompiled():void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Type>
+        <Type Name="Program" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+          <Method Name="Main(string[]):void" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        </Type>
+      </Namespace>
+    </Project>
+    <Project Name="PerformanceBenchmark" CoveredStatements="0" TotalStatements="69" CoveragePercent="0">
+      <Namespace Name="PerformanceBenchmark" CoveredStatements="0" TotalStatements="69" CoveragePercent="0">
+        <Namespace Name="Tests" CoveredStatements="0" TotalStatements="56" CoveragePercent="0">
+          <Type Name="CommonTest" CoveredStatements="0" TotalStatements="22" CoveragePercent="0">
+            <Constructor Name="CommonTest()" CoveredStatements="0" TotalStatements="4" CoveragePercent="0" />
+            <AutoProperty Name="IterCount:int" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+              <PropertyGetter CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <PropertySetter CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            </AutoProperty>
+            <Method Name="Evaluate():string" CoveredStatements="0" TotalStatements="8" CoveragePercent="0" />
+            <Method Name="Watch(Func&lt;object&gt;):double" CoveredStatements="0" TotalStatements="8" CoveragePercent="0" />
+          </Type>
+          <Type Name="CompiledFunctionTest" CoveredStatements="0" TotalStatements="10" CoveragePercent="0">
+            <Constructor Name="CompiledFunctionTest()" CoveredStatements="0" TotalStatements="10" CoveragePercent="0">
+              <OwnCoverage CoveredStatements="0" TotalStatements="9" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            </Constructor>
+          </Type>
+          <Type Name="DerivationTest" CoveredStatements="0" TotalStatements="8" CoveragePercent="0">
+            <Constructor Name="DerivationTest()" CoveredStatements="0" TotalStatements="8" CoveragePercent="0">
+              <OwnCoverage CoveredStatements="0" TotalStatements="4" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            </Constructor>
+          </Type>
+          <Type Name="SimplificationTest" CoveredStatements="0" TotalStatements="8" CoveragePercent="0">
+            <Constructor Name="SimplificationTest()" CoveredStatements="0" TotalStatements="8" CoveragePercent="0">
+              <OwnCoverage CoveredStatements="0" TotalStatements="4" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            </Constructor>
+          </Type>
+          <Type Name="SubsTest" CoveredStatements="0" TotalStatements="8" CoveragePercent="0">
+            <Constructor Name="SubsTest()" CoveredStatements="0" TotalStatements="8" CoveragePercent="0">
+              <OwnCoverage CoveredStatements="0" TotalStatements="4" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="():object" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            </Constructor>
+          </Type>
+        </Namespace>
+        <Type Name="Program" CoveredStatements="0" TotalStatements="13" CoveragePercent="0">
+          <Method Name="Main(string[]):void" CoveredStatements="0" TotalStatements="13" CoveragePercent="0" />
+        </Type>
+      </Namespace>
+    </Project>
+    <Project Name="UnitTests" CoveredStatements="631" TotalStatements="642" CoveragePercent="98">
+      <Namespace Name="UnitTests" CoveredStatements="631" TotalStatements="642" CoveragePercent="98">
+        <Namespace Name="Algebra" CoveredStatements="15" TotalStatements="15" CoveragePercent="100">
+          <Type Name="MatrixTest" CoveredStatements="15" TotalStatements="15" CoveragePercent="100">
+            <Constructor Name="MatrixTest()" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+            <Method Name="DotPointwiseProduct1():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+            <Method Name="DotProduct():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+            <Method Name="ScalarProduct1():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+            <Method Name="SumProduct1():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          </Type>
+        </Namespace>
+        <Namespace Name="Common" CoveredStatements="42" TotalStatements="53" CoveragePercent="79">
+          <Type Name="CircleTest" CoveredStatements="19" TotalStatements="19" CoveragePercent="100">
+            <Constructor Name="CircleTest()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <Method Name="Test1():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+            <Method Name="Test2():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+            <Method Name="Test3():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+            <Method Name="Test4():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+            <Method Name="Test5():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+            <Method Name="Test6():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+            <Method Name="Test7():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+            <Method Name="Test8():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          </Type>
+          <Type Name="ExceptionTest" CoveredStatements="23" TotalStatements="34" CoveragePercent="68">
+            <Method Name="AssertExceptionThrown(Func&lt;bool&gt;):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <Method Name="AssertExceptionThrown(Func&lt;bool&gt;,string):void" CoveredStatements="5" TotalStatements="10" CoveragePercent="50" />
+            <Method Name="NotImplemented():void" CoveredStatements="10" TotalStatements="14" CoveragePercent="71">
+              <OwnCoverage CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+              <AnonymousMethod Name="():bool" CoveredStatements="1" TotalStatements="2" CoveragePercent="50" />
+              <AnonymousMethod Name="():bool" CoveredStatements="1" TotalStatements="2" CoveragePercent="50" />
+              <AnonymousMethod Name="():bool" CoveredStatements="1" TotalStatements="2" CoveragePercent="50" />
+              <AnonymousMethod Name="():bool" CoveredStatements="1" TotalStatements="2" CoveragePercent="50" />
+            </Method>
+            <Method Name="TreeCheck1():void" CoveredStatements="3" TotalStatements="4" CoveragePercent="75">
+              <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <AnonymousMethod Name="():bool" CoveredStatements="2" TotalStatements="3" CoveragePercent="67" />
+            </Method>
+            <Method Name="TreeCheck2():void" CoveredStatements="4" TotalStatements="5" CoveragePercent="80">
+              <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <AnonymousMethod Name="():bool" CoveredStatements="3" TotalStatements="4" CoveragePercent="75" />
+            </Method>
+          </Type>
+        </Namespace>
+        <Namespace Name="Core" CoveredStatements="5" TotalStatements="5" CoveragePercent="100">
+          <Type Name="Sys" CoveredStatements="5" TotalStatements="5" CoveragePercent="100">
+            <Method Name="NumberTest1():void" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+          </Type>
+        </Namespace>
+        <Type Name="CompilationTest" CoveredStatements="25" TotalStatements="25" CoveragePercent="100">
+          <Constructor Name="CompilationTest()" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test1():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test2():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test3():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test4():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test5():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test6():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="Test7():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        </Type>
+        <Type Name="DerivativeTest" CoveredStatements="42" TotalStatements="42" CoveragePercent="100">
+          <Constructor Name="DerivativeTest()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Test1():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestArc1():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestArc2():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestArc3():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestArc4():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestArc5():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestCosCustom():void" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+          <Method Name="TestCoTan():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestCusfunc():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPoly():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPow():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestSin():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestTan():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        </Type>
+        <Type Name="ExpandCollapseTest" CoveredStatements="11" TotalStatements="11" CoveragePercent="100">
+          <Constructor Name="ExpandCollapseTest()" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test1():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test2():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test3():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        </Type>
+        <Type Name="FromLinqTest" CoveredStatements="15" TotalStatements="15" CoveragePercent="100">
+          <Constructor Name="FromLinqTest()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Test1():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test2():void" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+          <Method Name="Test3():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test4():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        </Type>
+        <Type Name="FromStringTest" CoveredStatements="40" TotalStatements="40" CoveragePercent="100">
+          <Constructor Name="FromStringTest()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Test1():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test10():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test11():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test12():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test13():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test14():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test15():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test16():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="Test17():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test2():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test3():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test4():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test5():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test6():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test7():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test8():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Test9():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestSys():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        </Type>
+        <Type Name="FunctionTest" CoveredStatements="46" TotalStatements="46" CoveragePercent="100">
+          <Method Name="TestNSFrom0():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestNSFrom1():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestNSFrom2():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestNSTo0():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestNSTo1():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestNSTo2():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestRoots0():void" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <Method Name="TestRoots1():void" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <Method Name="TestRoots2():void" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <Method Name="TestRoots3():void" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+        </Type>
+        <Type Name="IntegrationTest" CoveredStatements="12" TotalStatements="12" CoveragePercent="100">
+          <Method Name="Test1():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="Test2():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="Test3():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        </Type>
+        <Type Name="LatexTests" CoveredStatements="15" TotalStatements="15" CoveragePercent="100">
+          <Constructor Name="LatexTests()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="TestFrac():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestM1():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestMi():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestMMi():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestPow():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestSqrt():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestVar():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        </Type>
+        <Type Name="OperatorTest" CoveredStatements="16" TotalStatements="16" CoveragePercent="100">
+          <Method Name="TestB():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestDM():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestDP():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestEq():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestIneq():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestMi():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestMm():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="TestR():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        </Type>
+        <Type Name="PerformanceTest" CoveredStatements="18" TotalStatements="18" CoveragePercent="100">
+          <Constructor Name="PerformanceTest()" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Measure(Func&lt;object&gt;):long" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+          <Method Name="Test1():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+            <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <AnonymousMethod Name="():object" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          </Method>
+          <Method Name="Test2():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+            <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <AnonymousMethod Name="():object" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          </Method>
+          <Method Name="Test4():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+            <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <AnonymousMethod Name="():object" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          </Method>
+          <Method Name="Test5():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+            <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <AnonymousMethod Name="():object" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          </Method>
+          <Method Name="Test6():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+            <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <AnonymousMethod Name="():object" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          </Method>
+        </Type>
+        <Type Name="SimplifyTest" CoveredStatements="66" TotalStatements="66" CoveragePercent="100">
+          <Constructor Name="SimplifyTest()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="TestMinus():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestMul0():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestMul1():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="TestPatt1():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPatt10():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPatt11():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPatt12():void" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <Method Name="TestPatt2():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="TestPatt3():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="TestPatt4():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="TestPatt5():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPatt6():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPatt7():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPatt8():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPatt9():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPow0():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="TestPow1():void" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+          <Method Name="TestSum0():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        </Type>
+        <Type Name="SolveTest" CoveredStatements="232" TotalStatements="232" CoveragePercent="100">
+          <Constructor Name="SolveTest()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Constructor Name="SolveTest()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="AssertRoots(Entity,VariableEntity,Entity):void" CoveredStatements="7" TotalStatements="7" CoveragePercent="100">
+            <OwnCoverage CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+            <LocalFunction Name="LimitString(string):string" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          </Method>
+          <Method Name="AssertSystemSolvable(List&lt;Entity&gt;,List&lt;VariableEntity&gt;,int):void" CoveredStatements="20" TotalStatements="20" CoveragePercent="100" />
+          <Method Name="CheckRoots(Entity,VariableEntity,Entity):double" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <Method Name="EQ(params Entity[]):List&lt;Entity&gt;" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="InvertedFunctionTests(string,int):void" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+          <Method Name="Test1():void" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+          <Method Name="Test2():void" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+          <Method Name="Test3():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="Test4():void" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+          <Method Name="Test5():void" CoveredStatements="8" TotalStatements="8" CoveragePercent="100" />
+          <Method Name="Test6():void" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+          <Method Name="Test7():void" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+          <Method Name="Test8():void" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+          <Method Name="Test9():void" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+          <Method Name="TestAllNumbers3():void" CoveredStatements="11" TotalStatements="11" CoveragePercent="100" />
+          <Method Name="TestAllNumbers3complex():void" CoveredStatements="11" TotalStatements="11" CoveragePercent="100" />
+          <Method Name="TestAllNumbers3complexCount():void" CoveredStatements="13" TotalStatements="13" CoveragePercent="100" />
+          <Method Name="TestAllNumbers4():void" CoveredStatements="13" TotalStatements="13" CoveragePercent="100" />
+          <Method Name="TestAllNumbers4complex():void" CoveredStatements="11" TotalStatements="11" CoveragePercent="100" />
+          <Method Name="TestInvertSin():void" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <Method Name="TestLinSystem2():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestLinSystem3():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestPolySystem3():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestReduce():void" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <Method Name="TestRepl1():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="TestRepl2():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="TestRepl3():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="TestRepl4():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="TestRepl5():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="TestRepl7():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="TestRepl8():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="TestTrigSystem2():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <Method Name="TestVars2():void" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+          <Method Name="TestVars2_0():void" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <Method Name="TestVars3():void" CoveredStatements="8" TotalStatements="8" CoveragePercent="100" />
+          <Method Name="TestVars4():void" CoveredStatements="12" TotalStatements="12" CoveragePercent="100" />
+          <Method Name="TestVars4mp():void" CoveredStatements="8" TotalStatements="8" CoveragePercent="100" />
+          <Method Name="VA(params VariableEntity[]):List&lt;VariableEntity&gt;" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </Type>
+        <Type Name="SubstituteTest" CoveredStatements="15" TotalStatements="15" CoveragePercent="100">
+          <Method Name="Test1():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="Test2():void" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <Method Name="Test3():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        </Type>
+        <Type Name="SynonimFunctionTest" CoveredStatements="16" TotalStatements="16" CoveragePercent="100">
+          <Constructor Name="SynonimFunctionTest()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="TestComplex():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="TestInner():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="TestInnerComplex():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Method Name="TestSqrt():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        </Type>
+      </Namespace>
+    </Project>
+  </SolutionFolder>
+  <Project Name="AngouriMath" CoveredStatements="2240" TotalStatements="2692" CoveragePercent="83">
+    <Namespace Name="AngouriMath" CoveredStatements="2240" TotalStatements="2692" CoveragePercent="83">
+      <Namespace Name="Convenience" CoveredStatements="1" TotalStatements="12" CoveragePercent="8">
+        <Type Name="SySyn" CoveredStatements="1" TotalStatements="12" CoveragePercent="8">
+          <Method Name="Collapse(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="Diff(Entity,params VariableEntity[]):Entity" CoveredStatements="0" TotalStatements="3" CoveragePercent="0">
+            <OwnCoverage CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+            <AnonymousMethod Name="(Entity,VariableEntity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          </Method>
+          <Method Name="Evalf(Entity):Number" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="Exp(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="Expand(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="Latex(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="Rational(Number,Number):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Simplify(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="Solve(Entity,VariableEntity):EntitySet" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="Symbol(string):VariableEntity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Type>
+      </Namespace>
+      <Namespace Name="Core" CoveredStatements="803" TotalStatements="1016" CoveragePercent="79">
+        <Namespace Name="Exceptions" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+          <Type Name="SysException" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+            <Constructor Name="SysException(string)" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          </Type>
+        </Namespace>
+        <Namespace Name="FromLinq" CoveredStatements="22" TotalStatements="29" CoveragePercent="76">
+          <Type Name="LinqParser" CoveredStatements="22" TotalStatements="29" CoveragePercent="76">
+            <Constructor Name="LinqParser(Expression)" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+            <Method Name="InnerParse(Expression):Entity" CoveredStatements="18" TotalStatements="25" CoveragePercent="72" />
+            <Method Name="Parse():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          </Type>
+        </Namespace>
+        <Namespace Name="FromString" CoveredStatements="196" TotalStatements="232" CoveragePercent="84">
+          <Type Name="BraceProcessor" CoveredStatements="2" TotalStatements="6" CoveragePercent="33">
+            <Constructor Name="BraceProcessor()" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            <Constructor Name="BraceProcessor()" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+            <Method Name="IsFinished():bool" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            <Method Name="IsOpen(Token.BraceType):bool" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            <Method Name="SameType(Token.BraceType,Token.BraceType):bool" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          </Type>
+          <Type Name="Lexer" CoveredStatements="73" TotalStatements="74" CoveragePercent="99">
+            <Constructor Name="Lexer(string)" CoveredStatements="32" TotalStatements="32" CoveragePercent="100">
+              <OwnCoverage CoveredStatements="31" TotalStatements="31" CoveragePercent="100" />
+              <AnonymousMethod Name="():Token.TokenType" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            </Constructor>
+            <Property Name="Current:Token" CoveredStatements="1" TotalStatements="1" CoveragePercent="100">
+              <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            </Property>
+            <Method Name="AddOmittedOperators():void" CoveredStatements="26" TotalStatements="26" CoveragePercent="100">
+              <OwnCoverage CoveredStatements="17" TotalStatements="17" CoveragePercent="100" />
+              <LocalFunction Name="FindSubPair(Token.TokenType,Token.TokenType):int" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+              <LocalFunction Name="InsertIntoPair(Token.TokenType,Token.TokenType,Token):void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+            </Method>
+            <Method Name="EOF():bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <Method Name="GlanceNext():Token" CoveredStatements="2" TotalStatements="3" CoveragePercent="67" />
+            <Method Name="Next():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+            <Method Name="Prev():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+            <Method Name="Seal():void" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+            <Method Name="ToBegin():void" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          </Type>
+          <Type Name="LexicException" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+            <Constructor Name="LexicException(string)" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+          </Type>
+          <Type Name="ParseException" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+            <Constructor Name="ParseException(string)" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+          </Type>
+          <Type Name="Parser" CoveredStatements="67" TotalStatements="80" CoveragePercent="84">
+            <Method Name="FindOperator(List&lt;Entity&gt;,string,bool):void" CoveredStatements="11" TotalStatements="11" CoveragePercent="100" />
+            <Method Name="HangLinearExpression(List&lt;Entity&gt;):Entity" CoveredStatements="5" TotalStatements="6" CoveragePercent="83" />
+            <Method Name="Parse(Lexer):Entity" CoveredStatements="13" TotalStatements="16" CoveragePercent="81" />
+            <Method Name="ParseAsVariable(Lexer):Entity" CoveredStatements="16" TotalStatements="17" CoveragePercent="94" />
+            <Method Name="ParseFunctionArguments(Lexer):List&lt;Entity&gt;" CoveredStatements="11" TotalStatements="15" CoveragePercent="73" />
+            <Method Name="ParseFunctionExpression(Lexer):Entity" CoveredStatements="6" TotalStatements="8" CoveragePercent="75" />
+            <Method Name="ParseParenthesisExpression(Lexer):Entity" CoveredStatements="5" TotalStatements="7" CoveragePercent="71" />
+          </Type>
+          <Type Name="SymbolProcessor" CoveredStatements="1" TotalStatements="2" CoveragePercent="50">
+            <Method Name="IsDelimiter(string):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <Method Name="IsOperator(char):bool" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          </Type>
+          <Type Name="SyntaxException" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+            <Constructor Name="SyntaxException(string)" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+          </Type>
+          <Type Name="SyntaxInfo" CoveredStatements="6" TotalStatements="7" CoveragePercent="86">
+            <Constructor Name="SyntaxInfo()" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+            <Method Name="GetFuncArg(string):int" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          </Type>
+          <Type Name="Token" CoveredStatements="43" TotalStatements="53" CoveragePercent="81">
+            <Type Name="BraceType" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+            <Type Name="TokenType" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+            <Constructor Name="Token(char)" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+            <Constructor Name="Token()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+            <Constructor Name="Token()" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+            <AutoProperty Name="children:List&lt;Entity&gt;" CoveredStatements="0" TotalStatements="1" CoveragePercent="0">
+              <PropertyGetter CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            </AutoProperty>
+            <AutoProperty Name="Type:TokenType" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+              <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <PropertySetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            </AutoProperty>
+            <AutoProperty Name="Value:string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+              <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <PropertySetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            </AutoProperty>
+            <Method Name="Copy():Token" CoveredStatements="0" TotalStatements="4" CoveragePercent="0" />
+            <Method Name="GetBraceType(char):BraceType" CoveredStatements="3" TotalStatements="5" CoveragePercent="60" />
+            <Method Name="GetCurrentType():TokenType" CoveredStatements="16" TotalStatements="18" CoveragePercent="89" />
+            <Method Name="IsFinishedType(TokenType):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <Method Name="IsNumber(string):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <Method Name="IsOperator(string):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <Method Name="IsVariable(string):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <Method Name="Seal():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+            <Method Name="ToString():string" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          </Type>
+          <Type Name="TokenList" CoveredStatements="4" TotalStatements="4" CoveragePercent="100">
+            <Method Name="Add(Token):void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          </Type>
+        </Namespace>
+        <Namespace Name="Sys.Items.Tensors" CoveredStatements="68" TotalStatements="88" CoveragePercent="77">
+          <Type Name="TensorFunctional" CoveredStatements="68" TotalStatements="88" CoveragePercent="77">
+            <Method Name="__EvalTensor(ref Entity):void" CoveredStatements="27" TotalStatements="40" CoveragePercent="68">
+              <OwnCoverage CoveredStatements="25" TotalStatements="34" CoveragePercent="74" />
+              <AnonymousMethod Name="(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="(Entity,Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <AnonymousMethod Name="(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <LocalFunction Name="Wrap(Entity,Entity):Entity" CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+            </Method>
+            <Method Name="Apply(Tensor,Func&lt;Entity,Entity&gt;):void" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+            <Method Name="ApplyPointwise(Tensor,Tensor,Func&lt;Entity,Entity,Entity&gt;):Entity" CoveredStatements="7" TotalStatements="8" CoveragePercent="88" />
+            <Method Name="DotProduct(Tensor,Tensor):Tensor" CoveredStatements="15" TotalStatements="17" CoveragePercent="88" />
+            <Method Name="SameShape(Tensor,Tensor):bool" CoveredStatements="6" TotalStatements="8" CoveragePercent="75" />
+            <Method Name="ScalarProduct(Tensor,Tensor):Entity" CoveredStatements="8" TotalStatements="10" CoveragePercent="80" />
+          </Type>
+        </Namespace>
+        <Namespace Name="TreeAnalysis" CoveredStatements="339" TotalStatements="385" CoveragePercent="88">
+          <Namespace Name="Division.RationalDiv" CoveredStatements="3" TotalStatements="4" CoveragePercent="75">
+            <Type Name="PolyInfo" CoveredStatements="3" TotalStatements="4" CoveragePercent="75">
+              <Constructor Name="PolyInfo()" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+              <Method Name="NewVarName(string):string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <Method Name="OldVarName(string):string" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            </Type>
+          </Namespace>
+          <Type Name="TreeAnalyzer" CoveredStatements="334" TotalStatements="379" CoveragePercent="88">
+            <Type Name="Optimization" CoveredStatements="13" TotalStatements="13" CoveragePercent="100">
+              <Constructor Name="Optimization()" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+              <Method Name="Contains(Entity,HashSet&lt;string&gt;):bool" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+              <Method Name="ContainsPower(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <Method Name="ContainsTrigonometric(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            </Type>
+            <Type Name="PrimitiveDouble" CoveredStatements="2" TotalStatements="6" CoveragePercent="33">
+              <Method Name="Add(double):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <Method Name="AddMp(double,Number):void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <Method Name="Assign(double):void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <Method Name="Create():IPrimitive&lt;double&gt;" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <Method Name="GetValue():double" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <Method Name="op_Implicit(PrimitiveDouble):double" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            </Type>
+            <Type Name="PrimitiveInt" CoveredStatements="3" TotalStatements="6" CoveragePercent="50">
+              <Method Name="Add(int):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <Method Name="AddMp(int,Number):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <Method Name="Assign(int):void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <Method Name="Create():IPrimitive&lt;int&gt;" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <Method Name="GetValue():int" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <Method Name="op_Implicit(PrimitiveInt):int" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            </Type>
+            <Type Name="SortLevel" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+            <Constructor Name="TreeAnalyzer()" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+            <Method Name="AssertTree(bool,string):void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+            <Method Name="CheckTree(Entity):void" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+            <Method Name="ContainsName(Entity,string):bool" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+            <Method Name="DividePolynoms(Entity,Entity):Entity" CoveredStatements="62" TotalStatements="65" CoveragePercent="95">
+              <OwnCoverage CoveredStatements="61" TotalStatements="64" CoveragePercent="95" />
+              <AnonymousMethod Name="(KeyValuePair&lt;string,Entity&gt;):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            </Method>
+            <Method Name="EntityInBounds(Entity,Number,Number):bool" CoveredStatements="2" TotalStatements="4" CoveragePercent="50" />
+            <Method Name="EvalAll(Entity):EntitySet" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            <Method Name="EvalCombs(Entity,EntitySet):void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            <Method Name="FindAndReplace(ref Entity,Entity,Entity):void" CoveredStatements="10" TotalStatements="10" CoveragePercent="100" />
+            <Method Name="FindDivisors(ref Entity,Func&lt;Entity,Entity,bool&gt;):void" CoveredStatements="10" TotalStatements="10" CoveragePercent="100" />
+            <Method Name="FindInvertExpression(Entity,Entity,Entity):EntitySet" CoveredStatements="9" TotalStatements="12" CoveragePercent="75" />
+            <Method Name="GatherAllPossiblePolynomials(Entity,bool):PolyInfo" CoveredStatements="25" TotalStatements="25" CoveragePercent="100" />
+            <Method Name="GetMinimumSubtree(Entity,Entity):Entity" CoveredStatements="9" TotalStatements="10" CoveragePercent="90">
+              <OwnCoverage CoveredStatements="8" TotalStatements="9" CoveragePercent="89" />
+              <LocalFunction Name="GoodSub(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            </Method>
+            <Method Name="GetTreeByDepth(Entity,Entity,int):Entity" CoveredStatements="11" TotalStatements="11" CoveragePercent="100" />
+            <Method Name="GetUniqueVariables(Entity,EntitySet):void" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+            <Method Name="GroupByHash(List&lt;Entity&gt;,SortLevel):List&lt;List&lt;Entity&gt;&gt;" CoveredStatements="16" TotalStatements="16" CoveragePercent="100" />
+            <Method Name="InvertFunctionEntity(FunctionEntity,Entity,Entity):EntitySet" CoveredStatements="25" TotalStatements="33" CoveragePercent="76">
+              <OwnCoverage CoveredStatements="23" TotalStatements="31" CoveragePercent="74" />
+              <LocalFunction Name="GetNotNullEntites(EntitySet):EntitySet" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+                <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+                <AnonymousMethod Name="(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              </LocalFunction>
+            </Method>
+            <Method Name="InvertNegativeMultipliers(ref Entity):void" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+            <Method Name="InvertNegativePowers(ref Entity):void" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+            <Method Name="InvertOperatorEntity(OperatorEntity,Entity,Entity):EntitySet" CoveredStatements="14" TotalStatements="28" CoveragePercent="50" />
+            <Method Name="IsZero(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <Method Name="LinearChildren(Entity,string,string,Func&lt;Entity,OperatorEntity&gt;):List&lt;Entity&gt;" CoveredStatements="15" TotalStatements="15" CoveragePercent="100" />
+            <Method Name="MultiHang(List&lt;Entity&gt;,string,int):Entity" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+            <Method Name="R():Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            <Method Name="Replace(RuleList,Entity):Entity" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+            <Method Name="ReplaceInPlace(RuleList,ref Entity):void" CoveredStatements="8" TotalStatements="8" CoveragePercent="100" />
+            <Method Name="ReplaceOneInPlace(ref Entity,Pattern,Entity):void" CoveredStatements="13" TotalStatements="15" CoveragePercent="87" />
+            <Method Name="Sort(List&lt;Entity&gt;,SortLevel):void" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+              <OwnCoverage CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <AnonymousMethod Name="(Entity,Entity):int" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+            </Method>
+            <Method Name="Sort(ref Entity,SortLevel):void" CoveredStatements="20" TotalStatements="20" CoveragePercent="100" />
+          </Type>
+          <Type Name="TreeException" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+            <Constructor Name="TreeException(string)" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          </Type>
+        </Namespace>
+        <Type Name="Number" CoveredStatements="94" TotalStatements="124" CoveragePercent="76">
+          <Constructor Name="Number(bool)" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+          <Constructor Name="Number(object)" CoveredStatements="7" TotalStatements="12" CoveragePercent="58" />
+          <Constructor Name="Number(double)" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+          <Constructor Name="Number(double,double)" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+          <Constructor Name="Number(Complex)" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+          <Constructor Name="Number()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Property Name="Im:double" CoveredStatements="1" TotalStatements="4" CoveragePercent="25">
+            <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <PropertySetter CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+          </Property>
+          <Property Name="IsNull:bool" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+            <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <PropertySetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          </Property>
+          <Property Name="Re:double" CoveredStatements="3" TotalStatements="3" CoveragePercent="100">
+            <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            <PropertySetter CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          </Property>
+          <Method Name="_add(Number):void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="_cos():void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="_div(Number):void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="_log(Number):void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="_mul(Number):void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="_pow(Number):void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="_sin():void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="_sub(Number):void" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="Abs(Number):double" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Arccos(Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Arccotan(Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Arcsin(Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Arctan(Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Copy():Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Cos(Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Cotan(Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Dist(Number,Number):double" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="GetAllRoots(Number,int):NumberSet" CoveredStatements="11" TotalStatements="11" CoveragePercent="100" />
+          <Method Name="IsComplex():bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="IsDoubleZero(double):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="IsInteger():bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="IsNatural():bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Log(Number,Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="op_Addition(Number,Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="op_Division(Number,Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="op_Equality(Number,Number):bool" CoveredStatements="4" TotalStatements="5" CoveragePercent="80" />
+          <Method Name="op_GreaterThan(Number,Number):bool" CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+          <Method Name="op_Implicit(int):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="op_Implicit(double):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="op_Implicit(Complex):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="op_Implicit(Number):Complex" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="op_Inequality(Number,Number):bool" CoveredStatements="0" TotalStatements="5" CoveragePercent="0" />
+          <Method Name="op_LessThan(Number,Number):bool" CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+          <Method Name="op_Multiply(Number,Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="op_Subtraction(Number,Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Parse(string):Number" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <Method Name="Pow(Number,Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Sin(Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="Tan(Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="ToDouble(string):double" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="ToString():string" CoveredStatements="14" TotalStatements="15" CoveragePercent="93" />
+        </Type>
+        <Type Name="NumberSet" CoveredStatements="12" TotalStatements="13" CoveragePercent="92">
+          <Constructor Name="NumberSet()" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+          <Method Name="Include(Number):void" CoveredStatements="10" TotalStatements="10" CoveragePercent="100" />
+          <Method Name="ToString():string" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Type>
+        <Type Name="Tensor" CoveredStatements="70" TotalStatements="143" CoveragePercent="49">
+          <Constructor Name="Tensor(params int[])" CoveredStatements="12" TotalStatements="13" CoveragePercent="92" />
+          <Property Name="Dimensions:int" CoveredStatements="1" TotalStatements="1" CoveragePercent="100">
+            <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          </Property>
+          <Property Name="Item:Entity" CoveredStatements="7" TotalStatements="9" CoveragePercent="78">
+            <PropertyGetter CoveredStatements="3" TotalStatements="4" CoveragePercent="75" />
+            <PropertySetter CoveredStatements="4" TotalStatements="5" CoveragePercent="80" />
+          </Property>
+          <AutoProperty Name="Shape:List&lt;int&gt;" CoveredStatements="1" TotalStatements="1" CoveragePercent="100">
+            <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          </AutoProperty>
+          <Method Name="__copy():Entity" CoveredStatements="16" TotalStatements="16" CoveragePercent="100" />
+          <Method Name="Assign(Entity[]):void" CoveredStatements="2" TotalStatements="3" CoveragePercent="67" />
+          <Method Name="Check():void" CoveredStatements="0" TotalStatements="7" CoveragePercent="0" />
+          <Method Name="CheckBounds(int[]):bool" CoveredStatements="5" TotalStatements="6" CoveragePercent="83" />
+          <Method Name="EqualsTo(Entity):bool" CoveredStatements="7" TotalStatements="9" CoveragePercent="78" />
+          <Method Name="GetDataIdByIndexes(int[]):int" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+          <Method Name="GetIndexesByDataId(int[],int):void" CoveredStatements="0" TotalStatements="7" CoveragePercent="0" />
+          <Method Name="InitData(int):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="InitVolumes():void" CoveredStatements="10" TotalStatements="10" CoveragePercent="100" />
+          <Method Name="InnerSimplify():Entity" CoveredStatements="0" TotalStatements="4" CoveragePercent="0">
+            <OwnCoverage CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+            <AnonymousMethod Name="(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          </Method>
+          <Method Name="IsMatrix():bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="IsVector():bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <Method Name="PrintOut():string" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="PrintOut(int):string" CoveredStatements="0" TotalStatements="36" CoveragePercent="0" />
+          <Method Name="ToString():string" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <Method Name="Transpose(int,int):void" CoveredStatements="0" TotalStatements="7" CoveragePercent="0" />
+          <Method Name="Transpose():void" CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+        </Type>
+      </Namespace>
+      <Namespace Name="Functions" CoveredStatements="505" TotalStatements="580" CoveragePercent="87">
+        <Namespace Name="Algebra" CoveredStatements="353" TotalStatements="406" CoveragePercent="87">
+          <Namespace Name="AnalyticalSolving" CoveredStatements="239" TotalStatements="279" CoveragePercent="86">
+            <Type Name="AnalyticalSolver" CoveredStatements="58" TotalStatements="76" CoveragePercent="76">
+              <Method Name="Solve(Entity,VariableEntity,EntitySet):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <Method Name="Solve(Entity,VariableEntity,EntitySet,bool):void" CoveredStatements="57" TotalStatements="75" CoveragePercent="76">
+                <OwnCoverage CoveredStatements="56" TotalStatements="74" CoveragePercent="76" />
+                <AnonymousMethod Name="(Entity,Entity):int" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              </Method>
+            </Type>
+            <Type Name="PolynomialSolver" CoveredStatements="181" TotalStatements="203" CoveragePercent="89">
+              <Method Name="GatherMonomialInformation&lt;T&gt;(List&lt;Entity&gt;,Entity):Dictionary&lt;T,Entity&gt;" CoveredStatements="16" TotalStatements="16" CoveragePercent="100" />
+              <Method Name="ParseMonomial&lt;T&gt;(Entity,Entity,out Entity,ref TreeAnalyzer.IPrimitive&lt;T&gt;):void" CoveredStatements="37" TotalStatements="45" CoveragePercent="82" />
+              <Method Name="ReduceCommonPower(ref Dictionary&lt;int,Entity&gt;):bool" CoveredStatements="10" TotalStatements="10" CoveragePercent="100" />
+              <Method Name="SolveAsPolynomial(Entity,Entity):EntitySet" CoveredStatements="40" TotalStatements="47" CoveragePercent="85">
+                <OwnCoverage CoveredStatements="39" TotalStatements="46" CoveragePercent="85" />
+                <LocalFunction Name="GetMonomialByPower(int):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              </Method>
+              <Method Name="SolveCubic(Entity,Entity,Entity,Entity):EntitySet" CoveredStatements="45" TotalStatements="46" CoveragePercent="98" />
+              <Method Name="SolveLinear(Entity,Entity):EntitySet" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+              <Method Name="SolveQuadratic(Entity,Entity,Entity):EntitySet" CoveredStatements="7" TotalStatements="11" CoveragePercent="64" />
+              <Method Name="SolveQuartic(Entity,Entity,Entity,Entity,Entity):EntitySet" CoveredStatements="26" TotalStatements="27" CoveragePercent="96" />
+            </Type>
+          </Namespace>
+          <Namespace Name="NumbericalSolving" CoveredStatements="34" TotalStatements="38" CoveragePercent="89">
+            <Type Name="NumericalSolver" CoveredStatements="34" TotalStatements="38" CoveragePercent="89">
+              <Method Name="NewtonIter(FastExpression,FastExpression,Number,int):Number" CoveredStatements="14" TotalStatements="16" CoveragePercent="88" />
+              <Method Name="SolveNt(Entity,VariableEntity,Number,Number,Number,int):NumberSet" CoveredStatements="20" TotalStatements="22" CoveragePercent="91" />
+            </Type>
+          </Namespace>
+          <Namespace Name="Solver" CoveredStatements="80" TotalStatements="89" CoveragePercent="90">
+            <Namespace Name="Analytical" CoveredStatements="2" TotalStatements="8" CoveragePercent="25">
+              <Type Name="Trigonometry" CoveredStatements="2" TotalStatements="8" CoveragePercent="25">
+                <Method Name="FindInvertCos(Entity):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+                <Method Name="FindInvertCotan(Entity):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+                <Method Name="FindInvertSin(Entity):EntitySet" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+                <Method Name="FindInvertTan(Entity):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+              </Type>
+            </Namespace>
+            <Type Name="EquationSolver" CoveredStatements="78" TotalStatements="81" CoveragePercent="96">
+              <Method Name="InSolveSystem(List&lt;Entity&gt;,List&lt;VariableEntity&gt;):List&lt;List&lt;Entity&gt;&gt;" CoveredStatements="37" TotalStatements="37" CoveragePercent="100" />
+              <Method Name="InSolveSystemOne(Entity,VariableEntity):List&lt;List&lt;Entity&gt;&gt;" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+              <Method Name="Solve(Entity,VariableEntity):EntitySet" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+              <Method Name="SolveSystem(List&lt;Entity&gt;,List&lt;VariableEntity&gt;):Tensor" CoveredStatements="28" TotalStatements="31" CoveragePercent="90">
+                <OwnCoverage CoveredStatements="26" TotalStatements="29" CoveragePercent="90" />
+                <AnonymousMethod Name="(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+                <AnonymousMethod Name="(VariableEntity):VariableEntity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              </Method>
+            </Type>
+          </Namespace>
+        </Namespace>
+        <Namespace Name="Evaluation" CoveredStatements="103" TotalStatements="104" CoveragePercent="99">
+          <Namespace Name="Compilation" CoveredStatements="37" TotalStatements="38" CoveragePercent="97">
+            <Type Name="Compiler" CoveredStatements="37" TotalStatements="38" CoveragePercent="97">
+              <Method Name="Compile(Entity,params VariableEntity[]):FastExpression" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+              <Method Name="Compile(Entity,params string[]):FastExpression" CoveredStatements="12" TotalStatements="12" CoveragePercent="100" />
+              <Method Name="InnerCompile(Entity,FastExpression,string[],Dictionary&lt;string,int&gt;):void" CoveredStatements="18" TotalStatements="19" CoveragePercent="95" />
+            </Type>
+          </Namespace>
+          <Namespace Name="Simplification" CoveredStatements="66" TotalStatements="66" CoveragePercent="100">
+            <Type Name="Simplificator" CoveredStatements="66" TotalStatements="66" CoveragePercent="100">
+              <Method Name="Alternate(Entity,int):EntitySet" CoveredStatements="64" TotalStatements="64" CoveragePercent="100">
+                <OwnCoverage CoveredStatements="50" TotalStatements="50" CoveragePercent="100" />
+                <AnonymousMethod Name="(Entity,Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+                <LocalFunction Name="__IterAddHistory(Entity):void" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+                <LocalFunction Name="AddHistory(Entity):void" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+                <LocalFunction Name="TryInnerSimplify(ref Entity):void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+              </Method>
+              <Method Name="Simplify(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+              <Method Name="Simplify(Entity,int):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+            </Type>
+          </Namespace>
+        </Namespace>
+        <Namespace Name="NumberSystem" CoveredStatements="49" TotalStatements="52" CoveragePercent="94">
+          <Type Name="NumberSystem" CoveredStatements="49" TotalStatements="52" CoveragePercent="94">
+            <Constructor Name="NumberSystem()" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+            <Method Name="FloatFromBaseN(string,int):double" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+            <Method Name="FloatToBaseN(double,int):string" CoveredStatements="8" TotalStatements="9" CoveragePercent="89" />
+            <Method Name="FromBaseN(string,int):double" CoveredStatements="10" TotalStatements="10" CoveragePercent="100" />
+            <Method Name="IntFromBaseN(string,int):int" CoveredStatements="8" TotalStatements="8" CoveragePercent="100" />
+            <Method Name="IntToBaseN(int,int):string" CoveredStatements="6" TotalStatements="7" CoveragePercent="86" />
+            <Method Name="ToBaseN(double,int):string" CoveredStatements="8" TotalStatements="9" CoveragePercent="89" />
+          </Type>
+        </Namespace>
+        <Namespace Name="Output" CoveredStatements="0" TotalStatements="18" CoveragePercent="0">
+          <Type Name="ToSympy" CoveredStatements="0" TotalStatements="18" CoveragePercent="0">
+            <Constructor Name="ToSympy()" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+            <Method Name="GenerateCode(Entity):string" CoveredStatements="0" TotalStatements="10" CoveragePercent="0" />
+            <Method Name="ToSympyExpr(Entity):string" CoveredStatements="0" TotalStatements="6" CoveragePercent="0" />
+          </Type>
+        </Namespace>
+      </Namespace>
+      <Type Name="Arccosf" CoveredStatements="22" TotalStatements="24" CoveragePercent="92">
+        <Constructor Name="Arccosf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Eval(List&lt;Entity&gt;):Entity" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Hang(Entity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity):Pattern" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="Arccotanf" CoveredStatements="22" TotalStatements="24" CoveragePercent="92">
+        <Constructor Name="Arccotanf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Eval(List&lt;Entity&gt;):Entity" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Hang(Entity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity):Pattern" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="Arcsinf" CoveredStatements="22" TotalStatements="24" CoveragePercent="92">
+        <Constructor Name="Arcsinf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Eval(List&lt;Entity&gt;):Entity" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Hang(Entity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity):Pattern" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="Arctanf" CoveredStatements="22" TotalStatements="24" CoveragePercent="92">
+        <Constructor Name="Arctanf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Eval(List&lt;Entity&gt;):Entity" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Hang(Entity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity):Pattern" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="CompiledMathFunctions" CoveredStatements="1" TotalStatements="1" CoveragePercent="100">
+        <Constructor Name="CompiledMathFunctions()" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="Const" CoveredStatements="15" TotalStatements="16" CoveragePercent="94">
+        <Constructor Name="Const()" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+        <Method Name="FuncIfMul(Entity):OperatorEntity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="FuncIfSum(Entity):OperatorEntity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="IsReservedName(string):bool" CoveredStatements="4" TotalStatements="5" CoveragePercent="80" />
+      </Type>
+      <Type Name="Cosf" CoveredStatements="22" TotalStatements="24" CoveragePercent="92">
+        <Constructor Name="Cosf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Hang(Entity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity):Pattern" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Simplify(List&lt;Entity&gt;):Entity" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="Cotanf" CoveredStatements="22" TotalStatements="24" CoveragePercent="92">
+        <Constructor Name="Cotanf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Hang(Entity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity):Pattern" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Simplify(List&lt;Entity&gt;):Entity" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="Divf" CoveredStatements="32" TotalStatements="32" CoveragePercent="100">
+        <Constructor Name="Divf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Hang(Entity,Entity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="PHang(Entity,Entity):Pattern" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Simplify(List&lt;Entity&gt;):Entity" CoveredStatements="10" TotalStatements="10" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="Entity" CoveredStatements="220" TotalStatements="260" CoveragePercent="85">
+        <Type Name="EntType" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+        <Type Name="PatType" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+        <Constructor Name="Entity(string,EntType)" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+        <AutoProperty Name="Children:List&lt;Entity&gt;" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+          <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <PropertySetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </AutoProperty>
+        <Property Name="IsLeaf:bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100">
+          <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </Property>
+        <AutoProperty Name="PatternNumber:int" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+          <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <PropertySetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </AutoProperty>
+        <AutoProperty Name="Priority:int" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+          <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <PropertySetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </AutoProperty>
+        <Method Name="Alternate(int):EntitySet" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Arccos():Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="Arccotan():Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="Arcsin():Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="Arctan():Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="BuildTree(Dictionary&lt;int,Entity&gt;):Entity" CoveredStatements="22" TotalStatements="34" CoveragePercent="65" />
+        <Method Name="Collapse():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Collapse(int):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Compile(params VariableEntity[]):FastExpression" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Compile(params string[]):FastExpression" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="Complexity():int" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+        <Method Name="ContainsName(string):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Copy():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Cos():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Cotan():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="CountOccurances(string):int" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+        <Method Name="DeepCopy():Entity" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+        <Method Name="DefiniteIntegral(VariableEntity,Number,Number):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="DefiniteIntegral(VariableEntity,Number,Number,int):Number" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="Derive(VariableEntity):Entity" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Eval():Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="EvalTensor():Tensor" CoveredStatements="13" TotalStatements="15" CoveragePercent="87">
+          <OwnCoverage CoveredStatements="11" TotalStatements="13" CoveragePercent="85" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </Method>
+        <Method Name="Expand():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Expand(int):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="FindChildrenNumber(Entity):int" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+        <Method Name="FindParent(Entity):Entity" CoveredStatements="10" TotalStatements="10" CoveragePercent="100" />
+        <Method Name="FindPatternSubtree(Pattern):Entity" CoveredStatements="8" TotalStatements="8" CoveragePercent="100" />
+        <Method Name="FindSubtree(Entity):Entity" CoveredStatements="10" TotalStatements="10" CoveragePercent="100" />
+        <Method Name="GetHashCode():string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="GetValue():Number" CoveredStatements="2" TotalStatements="3" CoveragePercent="67" />
+        <Method Name="Hash(TreeAnalyzer.SortLevel):string" CoveredStatements="11" TotalStatements="11" CoveragePercent="100">
+          <OwnCoverage CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+          <AnonymousMethod Name="(Entity):string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <AnonymousMethod Name="(Entity):{Entity,string}" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <AnonymousMethod Name="({Entity,string}):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <AnonymousMethod Name="({Entity,string}):string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </Method>
+        <Method Name="IsLowerThan(Entity):bool" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="IsTensoric():bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Latexise():string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Latexise(bool):string" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Log(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Match(Entity):bool" CoveredStatements="14" TotalStatements="16" CoveragePercent="88" />
+        <Method Name="op_Addition(Entity,Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Division(Entity,Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Equality(Entity,Entity):bool" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+        <Method Name="op_Implicit(int):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Implicit(Number):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Implicit(double):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Implicit(string):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Inequality(Entity,Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Multiply(Entity,Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Subtraction(Entity,Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_UnaryNegation(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_UnaryPlus(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="PatternMakeMatch(Pattern,Dictionary&lt;int,Entity&gt;):bool" CoveredStatements="13" TotalStatements="15" CoveragePercent="87" />
+        <Method Name="PatternMatches(Entity,Entity):bool" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Pow(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Simplify():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Simplify(int):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Sin():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Solve(VariableEntity):EntitySet" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="SolveNt(VariableEntity,int):NumberSet" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="SolveNt(VariableEntity,Number,Number,int):NumberSet" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="SolveNt(VariableEntity,Number,Number,Number,int):NumberSet" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Stringize():string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Stringize(bool):string" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Substitute(string,Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Substitute(VariableEntity,Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Substitute(VariableEntity,Entity,bool):Entity" CoveredStatements="10" TotalStatements="10" CoveragePercent="100" />
+        <Method Name="SubstituteConstants():Entity" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+        <Method Name="Tan():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="ToString():string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Unfold():List&lt;Entity&gt;" CoveredStatements="0" TotalStatements="12" CoveragePercent="0" />
+      </Type>
+      <Type Name="EntitySet" CoveredStatements="38" TotalStatements="68" CoveragePercent="56">
+        <Constructor Name="EntitySet(params Entity[])" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+        <Constructor Name="EntitySet(bool,params Entity[])" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+        <Constructor Name="EntitySet(IEnumerable&lt;Entity&gt;)" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+        <Method Name="Add(Entity):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Add(Entity,bool):void" CoveredStatements="11" TotalStatements="13" CoveragePercent="85" />
+        <Method Name="Ln():EntitySet" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Log(Entity):EntitySet" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+          <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </Method>
+        <Method Name="Merge(IEnumerable&lt;Number&gt;):void" CoveredStatements="0" TotalStatements="5" CoveragePercent="0" />
+        <Method Name="Merge(IEnumerable&lt;Entity&gt;):void" CoveredStatements="0" TotalStatements="5" CoveragePercent="0" />
+        <Method Name="op_Addition(EntitySet,Entity):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+          <OwnCoverage CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Method>
+        <Method Name="op_Addition(Entity,EntitySet):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+          <OwnCoverage CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Method>
+        <Method Name="op_Division(EntitySet,Entity):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+          <OwnCoverage CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Method>
+        <Method Name="op_Division(Entity,EntitySet):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+          <OwnCoverage CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Method>
+        <Method Name="op_Multiply(EntitySet,Entity):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+          <OwnCoverage CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Method>
+        <Method Name="op_Multiply(Entity,EntitySet):EntitySet" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+          <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </Method>
+        <Method Name="op_Subtraction(EntitySet,Entity):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+          <OwnCoverage CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Method>
+        <Method Name="op_Subtraction(Entity,EntitySet):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+          <OwnCoverage CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Method>
+        <Method Name="Simplify():EntitySet" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="Simplify(int):EntitySet" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+          <OwnCoverage CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <AnonymousMethod Name="(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        </Method>
+        <Method Name="ToString():string" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+      </Type>
+      <Type Name="FastExpression" CoveredStatements="40" TotalStatements="61" CoveragePercent="66">
+        <Constructor Name="FastExpression(int,Entity)" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+        <AutoProperty Name="RawExpr:Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100">
+          <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </AutoProperty>
+        <Method Name="Call(params Number[]):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Seal():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Substitute(params Number[]):Number" CoveredStatements="29" TotalStatements="44" CoveragePercent="66" />
+        <Method Name="ToString():string" CoveredStatements="0" TotalStatements="6" CoveragePercent="0" />
+      </Type>
+      <Type Name="FunctionEntity" CoveredStatements="14" TotalStatements="20" CoveragePercent="70">
+        <Constructor Name="FunctionEntity(string)" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="__copy():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Check():void" CoveredStatements="0" TotalStatements="3" CoveragePercent="0" />
+        <Method Name="EqualsTo(Entity):bool" CoveredStatements="8" TotalStatements="10" CoveragePercent="80" />
+        <Method Name="InnerSimplify():Entity" CoveredStatements="3" TotalStatements="4" CoveragePercent="75">
+          <OwnCoverage CoveredStatements="2" TotalStatements="3" CoveragePercent="67" />
+          <AnonymousMethod Name="(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </Method>
+      </Type>
+      <Type Name="Instruction" CoveredStatements="30" TotalStatements="38" CoveragePercent="79">
+        <Type Name="InstructionType" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+        <Constructor Name="Instruction(string,int)" CoveredStatements="8" TotalStatements="8" CoveragePercent="100" />
+        <Constructor Name="Instruction(int)" CoveredStatements="8" TotalStatements="8" CoveragePercent="100" />
+        <Constructor Name="Instruction(Complex)" CoveredStatements="8" TotalStatements="8" CoveragePercent="100" />
+        <Constructor Name="Instruction(int,bool)" CoveredStatements="6" TotalStatements="6" CoveragePercent="100" />
+        <Method Name="ToString():string" CoveredStatements="0" TotalStatements="8" CoveragePercent="0" />
+      </Type>
+      <Type Name="InstructionSet" CoveredStatements="5" TotalStatements="5" CoveragePercent="100">
+        <Method Name="AddCallInstruction(string,int):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="AddPullCacheInstruction(int):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="AddPushCacheInstruction(int):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="AddPushNumInstruction(Complex):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="AddPushVarInstruction(int):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="Integration" CoveredStatements="13" TotalStatements="13" CoveragePercent="100">
+        <Method Name="Integrate(Entity,VariableEntity,Number,Number,int):Number" CoveredStatements="13" TotalStatements="13" CoveragePercent="100" />
+      </Type>
+      <Type Name="Logf" CoveredStatements="30" TotalStatements="33" CoveragePercent="91">
+        <Constructor Name="Logf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Eval(List&lt;Entity&gt;):Entity" CoveredStatements="10" TotalStatements="11" CoveragePercent="91" />
+        <Method Name="Hang(Entity,Entity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity,Entity):Pattern" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="MathFunctions" CoveredStatements="15" TotalStatements="16" CoveragePercent="94">
+        <Constructor Name="MathFunctions()" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="AssertArgs(int,int):void" CoveredStatements="2" TotalStatements="3" CoveragePercent="67" />
+        <Method Name="GetAnotherEntity(List&lt;Entity&gt;,NumberEntity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="InvokeDerive(string,List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="InvokeEval(string,List&lt;Entity&gt;):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="InvokeLatex(string,List&lt;Entity&gt;):string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="InvokeStringize(string,List&lt;Entity&gt;):string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="IsOneNumber(List&lt;Entity&gt;,NumberEntity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="ParenthesesOnNeed(string,bool):string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="MathS" CoveredStatements="74" TotalStatements="82" CoveragePercent="90">
+        <Type Name="NumFunc" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+        <Type Name="OneArg" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+        <Type Name="TwoArg" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+        <Type Name="VarFunc" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+        <Constructor Name="MathS()" CoveredStatements="21" TotalStatements="21" CoveragePercent="100" />
+        <AutoProperty Name="EQUALITY_THRESHOLD:double" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+          <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <PropertySetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </AutoProperty>
+        <Method Name="Arccos(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Arccotan(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Arcsin(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Arctan(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="B(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="CanBeEvaluated(Entity):bool" CoveredStatements="9" TotalStatements="10" CoveragePercent="90" />
+        <Method Name="CheckTree(Entity):void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Cos(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Cosec(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Cotan(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="DotProduct(Tensor,Tensor):Tensor" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="FromBaseN(string,int):double" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="FromLinq(Expression):Entity" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="FromString(string):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="FromString(string,bool):Entity" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="GetUniqueVariables(Entity):EntitySet" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="IsConstant(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Ln(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Log(Entity,Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Matrix(int,int,params Entity[]):Tensor" CoveredStatements="4" TotalStatements="5" CoveragePercent="80" />
+        <Method Name="Num(double,double):Number" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="Num(double):Number" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Pow(Entity,Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Quack(Entity,VariableEntity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="ScalarProduct(Tensor,Tensor):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Sec(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Sin(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Solve(List&lt;Entity&gt;,List&lt;VariableEntity&gt;):Tensor" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Solve(Entity,VariableEntity):EntitySet" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="Sqr(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Sqrt(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Tan(Entity):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="TB(Entity):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="ToBaseN(double,int):string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="ToSympyCode(Entity):string" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="Var(string):VariableEntity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Vector(params Entity[]):Tensor" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+      </Type>
+      <Type Name="MathSException" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+        <Constructor Name="MathSException(string)" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+      </Type>
+      <Type Name="Minusf" CoveredStatements="29" TotalStatements="32" CoveragePercent="91">
+        <Constructor Name="Minusf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Hang(Entity,Entity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity,Entity):Pattern" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Simplify(List&lt;Entity&gt;):Entity" CoveredStatements="9" TotalStatements="10" CoveragePercent="90" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="Mulf" CoveredStatements="31" TotalStatements="33" CoveragePercent="94">
+        <Constructor Name="Mulf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Hang(Entity,Entity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity,Entity):Pattern" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Simplify(List&lt;Entity&gt;):Entity" CoveredStatements="11" TotalStatements="11" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="NumberEntity" CoveredStatements="14" TotalStatements="15" CoveragePercent="93">
+        <Constructor Name="NumberEntity(Number)" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Property Name="Name:string" CoveredStatements="1" TotalStatements="1" CoveragePercent="100">
+          <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </Property>
+        <AutoProperty Name="Value:Number" CoveredStatements="2" TotalStatements="2" CoveragePercent="100">
+          <PropertyGetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <PropertySetter CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </AutoProperty>
+        <Method Name="__copy():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Check():void" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="EqualsTo(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="InnerSimplify():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Implicit(int):NumberEntity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Implicit(Number):NumberEntity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+      </Type>
+      <Type Name="OperatorEntity" CoveredStatements="21" TotalStatements="22" CoveragePercent="95">
+        <Constructor Name="OperatorEntity(string,int)" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="__copy():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Check():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="EqualsTo(Entity):bool" CoveredStatements="9" TotalStatements="10" CoveragePercent="90" />
+        <Method Name="InnerSimplify():Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100">
+          <OwnCoverage CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+          <AnonymousMethod Name="(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </Method>
+      </Type>
+      <Type Name="Pattern" CoveredStatements="19" TotalStatements="24" CoveragePercent="79">
+        <Constructor Name="Pattern(int,Entity.PatType,string)" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="__copy():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Check():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="EqFits(Entity):Dictionary&lt;int,Entity&gt;" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="EqualsTo(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="InnerSimplify():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Addition(Pattern,Pattern):Pattern" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Addition(Pattern,Entity):Pattern" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Addition(Entity,Pattern):Pattern" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="op_Division(Pattern,Pattern):Pattern" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Division(Pattern,Entity):Pattern" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="op_Division(Entity,Pattern):Pattern" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Multiply(Pattern,Pattern):Pattern" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Multiply(Pattern,Entity):Pattern" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="op_Multiply(Entity,Pattern):Pattern" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Subtraction(Pattern,Pattern):Pattern" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Subtraction(Pattern,Entity):Pattern" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+        <Method Name="op_Subtraction(Entity,Pattern):Pattern" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+      </Type>
+      <Type Name="Patterns" CoveredStatements="19" TotalStatements="19" CoveragePercent="100">
+        <Constructor Name="Patterns()" CoveredStatements="18" TotalStatements="18" CoveragePercent="100" />
+        <Method Name="Num(double):Pattern" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="Powf" CoveredStatements="42" TotalStatements="44" CoveragePercent="95">
+        <Constructor Name="Powf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="9" TotalStatements="10" CoveragePercent="90" />
+        <Method Name="Hang(Entity,Entity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="PHang(Entity,Entity):Pattern" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Simplify(List&lt;Entity&gt;):Entity" CoveredStatements="11" TotalStatements="12" CoveragePercent="92" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="RuleList" CoveredStatements="0" TotalStatements="0" CoveragePercent="0" />
+      <Type Name="Sinf" CoveredStatements="22" TotalStatements="24" CoveragePercent="92">
+        <Constructor Name="Sinf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Hang(Entity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity):Pattern" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Simplify(List&lt;Entity&gt;):Entity" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="SolvingException" CoveredStatements="0" TotalStatements="2" CoveragePercent="0">
+        <Constructor Name="SolvingException(string)" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+      </Type>
+      <Type Name="Sumf" CoveredStatements="29" TotalStatements="31" CoveragePercent="94">
+        <Constructor Name="Sumf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Hang(Entity,Entity):Entity" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity,Entity):Pattern" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="Simplify(List&lt;Entity&gt;):Entity" CoveredStatements="9" TotalStatements="9" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="SynonymFunctions" CoveredStatements="12" TotalStatements="13" CoveragePercent="92">
+        <Constructor Name="SynonymFunctions()" CoveredStatements="5" TotalStatements="6" CoveragePercent="83">
+          <OwnCoverage CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <AnonymousMethod Name="(List&lt;Entity&gt;):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <AnonymousMethod Name="(List&lt;Entity&gt;):Entity" CoveredStatements="0" TotalStatements="1" CoveragePercent="0" />
+          <AnonymousMethod Name="(List&lt;Entity&gt;):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <AnonymousMethod Name="(List&lt;Entity&gt;):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+          <AnonymousMethod Name="(List&lt;Entity&gt;):Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        </Constructor>
+        <Method Name="Synonymize(Entity):Entity" CoveredStatements="7" TotalStatements="7" CoveragePercent="100" />
+      </Type>
+      <Type Name="Tanf" CoveredStatements="22" TotalStatements="24" CoveragePercent="92">
+        <Constructor Name="Tanf()" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Derive(List&lt;Entity&gt;,VariableEntity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Hang(Entity):Entity" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Latex(List&lt;Entity&gt;):string" CoveredStatements="0" TotalStatements="2" CoveragePercent="0" />
+        <Method Name="PHang(Entity):Pattern" CoveredStatements="3" TotalStatements="3" CoveragePercent="100" />
+        <Method Name="Simplify(List&lt;Entity&gt;):Entity" CoveredStatements="5" TotalStatements="5" CoveragePercent="100" />
+        <Method Name="Stringize(List&lt;Entity&gt;):string" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="Wakeup():void" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+      <Type Name="VariableEntity" CoveredStatements="10" TotalStatements="10" CoveragePercent="100">
+        <Constructor Name="VariableEntity(string)" CoveredStatements="2" TotalStatements="2" CoveragePercent="100" />
+        <Method Name="__copy():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="Check():void" CoveredStatements="4" TotalStatements="4" CoveragePercent="100" />
+        <Method Name="EqualsTo(Entity):bool" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="InnerSimplify():Entity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+        <Method Name="op_Implicit(string):VariableEntity" CoveredStatements="1" TotalStatements="1" CoveragePercent="100" />
+      </Type>
+    </Namespace>
+  </Project>
+</SolutionRoot>

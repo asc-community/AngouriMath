@@ -3,7 +3,7 @@
 ![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)
 
 
-Nuget: https://www.nuget.org/packages/AngouriMath   ![Nuget (with prereleases)](https://img.shields.io/nuget/vpre/AngouriMath)
+Nuget: https://www.nuget.org/packages/AngouriMath
 ## AngouriMath
 AngouriMath is an open-source library that enables to work with non-linear 
 multi-variable expressions. Its functionality includes derivation, 
@@ -102,7 +102,7 @@ foreach (var root in expr.Solve("x"))
 
 #### Solve systems of non-linear equations
 Under developing now and forever (always available)
-```
+```cs
 var eqs = new List<Entity> {
     "cos(x2 + 1)^2 + 3y",
     "y * (-1) + 4cos(x2 + 1)"

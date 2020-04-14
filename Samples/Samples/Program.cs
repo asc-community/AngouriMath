@@ -153,11 +153,8 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            var eqs = new List<Entity> {
-                "cos(x2 + 1)^2 + 3y",
-                "y * (-1) + 4cos(x2 + 1)"
-            };
-            Console.WriteLine(MathS.Solve(eqs, new List<VariableEntity>{"x", "y"}).PrintOut());
+            Entity expr = "e ^ ((x - a)2 / (2c))";
+            Console.WriteLine(expr.Derive("x").Simplify().Latexise());
         }
     }
 #pragma warning restore IDE0051
