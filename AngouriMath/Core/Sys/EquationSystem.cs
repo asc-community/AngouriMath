@@ -20,10 +20,14 @@ namespace AngouriMath.Core.Sys
 
         public string Latexise()
         {
+            if (equations.Count == 1)
+                return equations[0].Latexise();
+            if (equations.Count == 0)
+                return string.Empty;
             var sb = new StringBuilder();
             sb.Append(@"\begin{cases}");
             foreach (var eq in equations)
-                sb.Append(eq).Append(" = 0").Append(@"\\");
+                sb.Append(eq.Latexise()).Append(" = 0").Append(@"\\");
             sb.Append(@"\end{cases}");
             return sb.ToString();
         }
