@@ -153,8 +153,12 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity expr = "e ^ ((x - a)2 / (2c))";
-            Console.WriteLine(expr.Derive("x").Simplify().Latexise());
+            var sols = MathS.Equations(
+                "x + 2y + z",
+                "2x - z + 4y",
+                "2y3 + 6x - 3z"
+            );
+            Console.WriteLine(sols.Latexise());
         }
     }
 #pragma warning restore IDE0051

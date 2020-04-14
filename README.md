@@ -103,11 +103,13 @@ foreach (var root in expr.Solve("x"))
 #### Solve systems of non-linear equations
 Under developing now and forever (always available)
 ```cs
-var eqs = new List<Entity> {
+var system = MathS.Equations(
     "cos(x2 + 1)^2 + 3y",
     "y * (-1) + 4cos(x2 + 1)"
-};
-Console.WriteLine(MathS.Solve(eqs, new List<VariableEntity>{"x", "y"}).PrintOut());
+);
+Console.WriteLine(system.Latexise());
+var solutions = system.Solve("x", "y");
+Console.WriteLine(Solutions.PrintOut());
 ```
 
 #### Integrate
