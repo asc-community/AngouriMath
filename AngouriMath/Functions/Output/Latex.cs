@@ -18,12 +18,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
     using LatexTable = Dictionary<string, Func<List<Entity>, string>>;
 
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// Returns the expression in format of latex (for example, a / b -> \frac{a}{b})
@@ -49,7 +50,7 @@ namespace AngouriMath
         }
         internal static string ParenthesesOnNeed(string s, bool need)
         {
-            return need ? "(" + s + ")" : s;
+            return need ? @"\left(" + s + @"\right)" : s;
         }
     }
 

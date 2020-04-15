@@ -20,11 +20,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
     using SortLevel = TreeAnalyzer.SortLevel;
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         internal string Hash(SortLevel level)
         {

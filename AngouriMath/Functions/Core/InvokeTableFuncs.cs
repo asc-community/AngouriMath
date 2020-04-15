@@ -20,7 +20,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
 using AngouriMath.Core;
-using AngouriMath.Core.TreeAnalysis;
+ using AngouriMath.Core.Sys.Interfaces;
+ using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath
 {
@@ -225,7 +226,7 @@ namespace AngouriMath
         }
     }
 
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         public int Priority { get; internal set; }
         public static Entity operator +(Entity a, Entity b) => Sumf.Hang(a, b);

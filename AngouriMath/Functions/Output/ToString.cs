@@ -19,12 +19,13 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
     using StringTable = Dictionary<string, Func<List<Entity>, string>>;
 
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// An expression into a string

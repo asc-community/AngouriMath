@@ -27,6 +27,7 @@ using AngouriMath.Functions.Algebra.Solver;
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
  using AngouriMath.Core.Sys;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
@@ -234,7 +235,6 @@ namespace AngouriMath
         /// List of public constants
         /// </summary>
         public static readonly VariableEntity e = "e";
-
         public static readonly Number i = new Number(0, 1);
         public static readonly VariableEntity pi = "pi";
 
@@ -391,5 +391,13 @@ namespace AngouriMath
         /// <param name="expr"></param>
         /// <returns></returns>
         public static string ToSympyCode(Entity expr) => Functions.Output.ToSympy.GenerateCode(expr);
+
+        /// <summary>
+        /// Returns LaTeX code of the argument
+        /// </summary>
+        /// <param name="latexiseable"></param>
+        /// <returns></returns>
+        public static string Latex(ILatexiseable latexiseable)
+            => latexiseable.Latexise();
     }
 }

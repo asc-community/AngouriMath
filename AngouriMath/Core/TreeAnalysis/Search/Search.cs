@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -71,7 +72,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
 namespace AngouriMath
 {
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// Finds a subtree in the tree

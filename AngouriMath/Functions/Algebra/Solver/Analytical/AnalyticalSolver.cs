@@ -24,10 +24,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// Attempt to find analytical roots of a custom equation

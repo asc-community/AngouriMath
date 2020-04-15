@@ -19,7 +19,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using AngouriMath.Core.TreeAnalysis;
+ using System.Threading;
+ using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Core
 {
@@ -251,6 +252,41 @@ namespace AngouriMath.Core
                 t.Data[i] = Data[i].DeepCopy();
             AxesOrder.CopyTo(t.AxesOrder, 0);
             return t;
+        }
+
+        public new string Latexise()
+        {
+            if (IsMatrix())
+            {
+                var sb = new StringBuilder();
+                sb.Append(@"\begin{pmatrix}");
+                var lines = new List<string>();
+                for (int x = 0; x < Shape[0]; x++)
+                {
+                    var items = new List<string>();
+
+                    for (int y = 0; y < Shape[1]; y++)
+                        items.Add(this[x, y].Latexise());
+
+                    var line = string.Join(" & ", items);
+                    lines.Add(line);
+                }
+                sb.Append(string.Join(@"\\", lines));
+                sb.Append(@"\end{pmatrix}");
+                return sb.ToString();
+            }
+            else if (IsVector())
+            {
+                var sb = new StringBuilder();
+                sb.Append(@"\begin{bmatrix}");
+                sb.Append(string.Join(" & ", Data.Select(c => c.Latexise())));
+                sb.Append(@"\end{bmatrix}");
+                return sb.ToString();
+            }
+            else
+            {
+                return this.ToString();
+            }
         }
     }
 }

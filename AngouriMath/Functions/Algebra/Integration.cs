@@ -19,10 +19,11 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// Returns a value of a definite integral of a function. Only works for one-variable functions

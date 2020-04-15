@@ -22,10 +22,11 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// Compile function so you can evaluate numerical value 15x faster,
@@ -53,7 +54,7 @@ namespace AngouriMath
 
 namespace AngouriMath
 {
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// Returns number of nodes in tree

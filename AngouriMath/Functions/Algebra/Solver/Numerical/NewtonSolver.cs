@@ -20,6 +20,7 @@ using AngouriMath.Functions.Algebra.NumbericalSolving;
 using System;
 using System.Collections.Generic;
 using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath.Functions.Algebra.NumbericalSolving
 {
@@ -80,7 +81,7 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
 
 namespace AngouriMath
 {
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// To get Number from NumberEntity (in case of need a concrete number)

@@ -23,6 +23,8 @@ using AngouriMath.Functions.Evaluation.Simplification;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+ using AngouriMath.Core.Sys.Interfaces;
+
 namespace AngouriMath
 {
     public static partial class MathS
@@ -53,7 +55,7 @@ namespace AngouriMath
     using SortLevel = Core.TreeAnalysis.TreeAnalyzer.SortLevel;
 
     // Adding function Eval to Entity
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )

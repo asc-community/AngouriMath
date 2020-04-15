@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
@@ -32,7 +33,7 @@ namespace AngouriMath
     /// </summary>
     #pragma warning disable CS0660
     #pragma warning disable CS0661
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     #pragma warning restore CS0661
     #pragma warning restore CS0660
     {

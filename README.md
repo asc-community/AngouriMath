@@ -7,8 +7,8 @@ Nuget: https://www.nuget.org/packages/AngouriMath
 ## AngouriMath
 AngouriMath is an open-source library that enables to work with non-linear 
 multi-variable expressions. Its functionality includes derivation, 
-variable substitution, equation solving, definite integration, formula-to-latex 
-formatting, and some more.
+variable substitution, equation solving, equation system solving, definite integration, 
+formula-to-latex formatting, and some more.
 
 ### Examples
 
@@ -193,7 +193,7 @@ we get the following performance
 So, for most cases compilation will save you enough time even though built-in functions are 
 still faster sometimes.
 
-## Full documentation
+## Full documentation (not updated since January)
 
 ### Entity methods
 

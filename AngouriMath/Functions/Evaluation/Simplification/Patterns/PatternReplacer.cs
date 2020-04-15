@@ -19,12 +19,13 @@
 using AngouriMath.Core.Exceptions;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
+ using AngouriMath.Core.Sys.Interfaces;
 
 [assembly: InternalsVisibleTo("UnitTests")]
 
 namespace AngouriMath
 {
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         internal readonly EntType entType;
 

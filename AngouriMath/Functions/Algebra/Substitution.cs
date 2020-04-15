@@ -18,10 +18,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// Substitute a variable with an expression

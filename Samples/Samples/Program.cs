@@ -131,6 +131,23 @@ namespace Samples
             Console.WriteLine("AB.3(16) = " + y + "(1)");
         }
 
+        private static void Sample18()
+        {
+            var solutions = MathS.Equations(
+                "x2 + 2x - 2"
+            ).Solve("x");
+            Console.WriteLine(solutions.EvalTensor().PrintOut(30));
+        }
+
+        private static void Sample19()
+        {
+            var solutions = MathS.Equations(
+                "x2 + 2x - y",
+                "y2 + 2y - x"
+            ).Solve("x", "y");
+            Console.WriteLine(solutions.EvalTensor().PrintOut(30));
+        }
+
         static Complex MyFunc(Complex x)
             => x + 3 * x;
 
@@ -154,9 +171,9 @@ namespace Samples
         static void Main(string[] _)
         {
             var sols = MathS.Equations(
-                "x + 2y + z",
-                "2x - z + 4y",
-                "2y3 + 6x - 3z"
+                "x3 + x2 - z",
+                "3z2 + y2 + x + 3",
+                "x + z * (y / (48 + 5/4) - 4)"
             );
             Console.WriteLine(sols.Latexise());
         }

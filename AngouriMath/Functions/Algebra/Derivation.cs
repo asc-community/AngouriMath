@@ -18,13 +18,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
     using DeriveTable = Dictionary<string, Func<List<Entity>, VariableEntity, Entity>>;
 
     // Adding function Derive to Entity
-    public abstract partial class Entity
+    public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
         /// Derivation over a variable (without simplification)
