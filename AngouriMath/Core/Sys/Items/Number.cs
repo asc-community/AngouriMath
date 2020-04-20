@@ -219,7 +219,7 @@ namespace AngouriMath.Core
             return !IsComplex() && IsInteger() && Re > 0;
         }
         public static Number Pow(Number a, Number b) => new Number(b.value == 0.5 ? Complex.Sqrt(a.value) : Complex.Pow(a.value, b.value));
-        public static Number Log(Number a, Number b) => new Number(Complex.Log(a.value, b.Re));
+        public static Number Log(Number a, Number @base) => new Number(Complex.Log(a.value, @base.Re));
         public static Number Sin(Number a) => a.__isReal ? new Number(Math.Sin(a.value.Real)) : new Number(Complex.Sin(a.value));
         public static Number Cos(Number a) => a.__isReal ? new Number(Math.Cos(a.value.Real)) : new Number(Complex.Cos(a.value));
         public static Number Tan(Number a) => a.__isReal ? new Number(Math.Tan(a.value.Real)) : new Number(Complex.Tan(a.value));
@@ -247,6 +247,14 @@ namespace AngouriMath.Core
             return res;
         }
 
+        static readonly System.Random random = new Random();
+
+        /// <summary>
+        /// Returns a complex number a + ib such that a, base in [-1; 1]
+        /// </summary>
+        /// <returns></returns>
+        public static Number Random()
+            => new Number(random.NextDouble() * 2 - 1, random.NextDouble() * 2 - 1);
         public static Number Cotan(Number a) => a.__isReal ? new Number(1 / Math.Tan(a.value.Real)) : new Number(1 / Complex.Tan(a.value));
         public static Number Arcsin(Number a) => new Number(Complex.Asin(a.value));
         public static Number Arccos(Number a) => new Number(Complex.Acos(a.value));

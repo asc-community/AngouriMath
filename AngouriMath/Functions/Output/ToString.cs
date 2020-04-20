@@ -48,7 +48,7 @@ namespace AngouriMath
                     _ => this.Name.Length == 0 || this.Name[0] != '-' ? this.Name : "(" + this.Name + ")"
                 };
             else
-                return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeStringize(Name, Children), parenthesesRequired);
+                return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeStringize(Name, Children), parenthesesRequired, latex: false);
         }
     }
 

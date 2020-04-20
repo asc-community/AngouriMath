@@ -3,6 +3,7 @@ using AngouriMath.Convenience;
 using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design.Serialization;
 using System.Diagnostics;
 using System.Numerics;
 
@@ -168,14 +169,72 @@ namespace Samples
             5, 6, 7, 8
         );
 
+        public static Entity GenerateExample(Number num, int depth)
+        {
+            Entity res = num;
+
+            Entity __c_sum(Number val, int depth)
+            {
+                if (depth == 0)
+                    return val;
+                var a = Number.Random() * Number.Abs(val);
+                Entity f = a;
+                Entity k = val - a;
+                f = GenerateExample(f.GetValue(), depth - 1);
+                return f + k;
+            }
+
+            Entity __c_mul(Number val, int depth)
+            {
+                if (depth == 0)
+                    return val;
+                var a = Number.Random() * Number.Abs(val);
+                Entity f = a;
+                Entity k = val / a;
+                f = GenerateExample(f.GetValue(), depth - 1);
+                return f * k;
+            }
+
+            Entity __c_div(Number val, int depth)
+            {
+                if (depth == 0)
+                    return val;
+                var a = Number.Random() * Number.Abs(val);
+                Entity f = a;
+                Entity k = val * a;
+                f = GenerateExample(f.GetValue(), depth - 1);
+                return k / f;
+            }
+
+            Entity __c_min(Number val, int depth)
+            {
+                if (depth == 0)
+                    return val;
+                var a = Number.Random() * Number.Abs(val);
+                Entity f = a;
+                Entity k = val + a;
+                f = GenerateExample(f.GetValue(), depth - 1);
+                return k - f;
+            }
+
+            var funcs = new List<Func<Number, int, Entity>>
+            {
+                __c_div,
+                __c_min,
+                __c_mul,
+                __c_sum
+            };
+            var random = new Random();
+            return funcs[random.Next(0, funcs.Count)](num, depth);
+        }
+
         static void Main(string[] _)
         {
-            var sols = MathS.Equations(
-                "x3 + x2 - z",
-                "3z2 + y2 + x + 3",
-                "x + z * (y / (48 + 5/4) - 4)"
-            );
-            Console.WriteLine(sols.Latexise());
+            Entity expr = "sin(x) + sin(sqrt(2)x)";
+            double mx = 0;
+            foreach (var x in expr.Derive("x").SolveEquation("x"))
+                mx = Math.Max(expr.Substitute("x", x).Eval().Re, mx);
+            Console.WriteLine(mx);
         }
     }
 #pragma warning restore IDE0051

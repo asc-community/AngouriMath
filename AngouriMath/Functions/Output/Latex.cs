@@ -36,7 +36,7 @@ namespace AngouriMath
             if (IsLeaf)
                 return this.entType == EntType.NUMBER ? this.GetValue().ToString() : this.ToString();
             else
-                return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired);
+                return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
         }
     }
 
@@ -48,9 +48,12 @@ namespace AngouriMath
         {
             return latexTable[typeName](args);
         }
-        internal static string ParenthesesOnNeed(string s, bool need)
+        internal static string ParenthesesOnNeed(string s, bool need, bool latex)
         {
-            return need ? @"\left(" + s + @"\right)" : s;
+            if (latex)
+                return need ? @"\left(" + s + @"\right)" : s;
+            else
+                return need ? @"(" + s + @")" : s;
         }
     }
 
