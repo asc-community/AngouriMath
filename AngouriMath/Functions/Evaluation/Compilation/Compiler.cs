@@ -44,6 +44,8 @@ namespace AngouriMath.Functions.Evaluation.Compilation
             }
             func = func.SubstituteConstants();
             var res = new FastExpression(variables.Length, func);
+            func.UpdateHash(); // Count hash for O(N)
+            Entity.HashOccurancesUpdate(func); // Update occurances for each node for O(N) instead of O(N^2)
             InnerCompile(func, res, variables, varNamespace);
             res.Seal(); // Creates stack
             return res;
@@ -52,7 +54,7 @@ namespace AngouriMath.Functions.Evaluation.Compilation
         private static void InnerCompile(Entity expr, FastExpression fe, string[] variables, Dictionary<string, int> varNamespace)
         {
             // Check whether it's better to pull from cache or not
-            string hash = expr.ToString();
+            string hash = expr.Hash;
             if (fe.HashToNum.ContainsKey(hash))
             {
                 fe.instructions.AddPullCacheInstruction(fe.HashToNum[hash]);
@@ -71,8 +73,8 @@ namespace AngouriMath.Functions.Evaluation.Compilation
                 throw new SysException("Unknown entity");
 
             // If the function is used more than once AND complex enough, we put it in cache
-            if (fe.RawExpr.CountOccurances(hash) > 1 /*Raw expr is basically the root entity that we're compiling*/
-                && expr.Complexity() > 1 /* we don't check if it is already in cache as in this case it will pull from cache*/)
+            if (expr.HashOccurances > 1 /*expr.HashOccurances is the number of this expression being replicated*/
+                && !expr.IsLeaf /* we don't check if it is already in cache as in this case it will pull from cache*/)
             {
                 fe.HashToNum[hash] = fe.HashToNum.Count;
                 fe.instructions.AddPushCacheInstruction(fe.HashToNum[hash]);

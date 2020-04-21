@@ -27,10 +27,10 @@ namespace AngouriMath
     using SortLevel = TreeAnalyzer.SortLevel;
     public abstract partial class Entity : ILatexiseable
     {
-        internal string Hash(SortLevel level)
+        internal string SortHash(SortLevel level)
         {
             if (this.entType == Entity.EntType.FUNCTION)
-                return this.Name + "_" + string.Join("_", from child in Children select child.Hash(level));
+                return this.Name + "_" + string.Join("_", from child in Children select child.SortHash(level));
             else if (this.entType == EntType.NUMBER)
                 return level == SortLevel.HIGH_LEVEL ? "" : this.Name + " ";
             else if (this.entType == Entity.EntType.VARIABLE)
@@ -38,7 +38,7 @@ namespace AngouriMath
             else
                 return (level == SortLevel.LOW_LEVEL ? this.Name + "_" : "") + string.Join("_", 
                     from child in Children
-                    let hash = child.Hash(level)
+                    let hash = child.SortHash(level)
                     where !string.IsNullOrEmpty(hash)
                     select hash);
 
@@ -61,7 +61,7 @@ namespace AngouriMath.Core.TreeAnalysis
             var dict = new Dictionary<string, List<Entity>>();
             foreach (var ent in entities)
             {
-                var hash = ent.Hash(level);
+                var hash = ent.SortHash(level);
                 if (!dict.ContainsKey(hash))
                     dict[hash] = new List<Entity>();
                 dict[hash].Add(ent);
@@ -74,13 +74,51 @@ namespace AngouriMath.Core.TreeAnalysis
             return res;
         }
 
-        internal static Entity MultiHang(List<Entity> children, string opName, int opPrior)
+        /// <summary>
+        /// Linear multi hanging
+        /// (1 + (1 + (1 + 1)))
+        /// </summary>
+        /// <param name="children"></param>
+        /// <param name="opName"></param>
+        /// <param name="opPrior"></param>
+        /// <returns></returns>
+        internal static Entity MultiHangLinear(List<Entity> children, string opName, int opPrior)
         {
+            if (children.Count == 0)
+                throw new TreeException("At least 1 child required");
             if (children.Count == 1)
                 return children[0];
             Entity res = new OperatorEntity(opName, opPrior);
             res.Children.Add(children[0]);
-            res.Children.Add(MultiHang(children.GetRange(1, children.Count - 1), opName, opPrior));
+            res.Children.Add(MultiHangLinear(children.GetRange(1, children.Count - 1), opName, opPrior));
+            return res;
+        }
+
+        /// <summary>
+        /// Binary multi hanging
+        /// ((1 + 1) + (1 + 1))
+        /// </summary>
+        /// <param name="children"></param>
+        /// <param name="opName"></param>
+        /// <param name="opPrior"></param>
+        /// <returns></returns>
+        internal static Entity MultiHangBinary(List<Entity> children, string opName, int opPrior)
+        {
+            if (children.Count == 0)
+                throw new TreeException("At least 1 child required");
+            if (children.Count == 1)
+                return children[0];
+            Entity res = new OperatorEntity(opName, opPrior);
+            res.Children.Add(
+                MultiHangBinary(
+                    children.GetRange(0, children.Count / 2)
+                    , opName, opPrior)
+                );
+            res.Children.Add(
+                MultiHangBinary(
+                    children.GetRange(children.Count / 2, children.Count - (children.Count / 2))
+                , opName, opPrior)
+                );
             return res;
         }
 
@@ -104,9 +142,9 @@ namespace AngouriMath.Core.TreeAnalysis
             var groups = TreeAnalyzer.GroupByHash(linChildren, level);
             var grouppedChildren = new List<Entity>();
             foreach (var list in groups)
-                grouppedChildren.Add(TreeAnalyzer.MultiHang(list,
+                grouppedChildren.Add(TreeAnalyzer.MultiHangLinear(list,
                     isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL));
-            tree = TreeAnalyzer.MultiHang(grouppedChildren, isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL);
+            tree = TreeAnalyzer.MultiHangLinear(grouppedChildren, isSum ? "sumf" : "mulf", isSum ? Const.PRIOR_SUM : Const.PRIOR_MUL);
         }
     }
 }

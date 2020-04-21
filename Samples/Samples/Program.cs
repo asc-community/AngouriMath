@@ -10,6 +10,20 @@ using System.Numerics;
 namespace Samples
 {
 #pragma warning disable IDE0051
+
+    class Quack
+    {
+        public static class SysInfo
+        {
+            public static int Zhopa;
+        }
+
+        public Quack(int s)
+        {
+            SysInfo.Zhopa = s;
+        }
+    }
+
     class Program
     {
         static void Sample1()
@@ -230,11 +244,12 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity expr = "sin(x) + sin(sqrt(2)x)";
-            double mx = 0;
-            foreach (var x in expr.Derive("x").SolveEquation("x"))
-                mx = Math.Max(expr.Substitute("x", x).Eval().Re, mx);
-            Console.WriteLine(mx);
+            var x = MathS.Var("x");
+            var y = MathS.Var("y");
+            var func1 = MathS.OptimizeTree(x / y);
+            var func = (x / y).Compile(x, y);
+            Console.WriteLine(func.Call(3, 5));
+            
         }
     }
 #pragma warning restore IDE0051

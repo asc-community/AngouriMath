@@ -60,6 +60,7 @@ namespace AngouriMath
         /// Use this to copy one node (unsafe copy!)
         /// </summary>
         /// <returns></returns>
+        [DebuggerStepThrough]
         internal Entity Copy() => this.__copy();
 
         /// <summary>

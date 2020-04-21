@@ -71,14 +71,14 @@ namespace AngouriMath
         }
 
         /// <summary>
-        /// Obviouosly, returns number of subtrees having exact same hash
+        /// Obviouosly, returns number of subtrees having exact same stringName
         /// </summary>
         /// <returns></returns>
-        internal int CountOccurances(string hash)
+        internal int CountOccurances(string stringName)
         {
-            int res = this.ToString() == hash ? 1 : 0;
+            int res = this.ToString() == stringName ? 1 : 0;
             foreach (var child in Children)
-                res += child.CountOccurances(hash);
+                res += child.CountOccurances(stringName);
             return res;
         }
     }

@@ -399,5 +399,19 @@ namespace AngouriMath
         /// <returns></returns>
         public static string Latex(ILatexiseable latexiseable)
             => latexiseable.Latexise();
+
+        /// <summary>
+        /// Optimizes tree to binary
+        /// Might boost some operations
+        /// Not necessary to use
+        /// </summary>
+        /// <param name="tree"></param>
+        /// <returns></returns>
+        public static Entity OptimizeTree(Entity tree)
+        {
+            tree = tree.DeepCopy();
+            TreeAnalyzer.Optimization.OptimizeTree(ref tree);
+            return tree;
+        }
     }
 }

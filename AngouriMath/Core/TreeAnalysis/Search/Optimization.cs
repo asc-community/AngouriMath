@@ -17,7 +17,47 @@
 
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+ using System.Linq;
+ using System.Text;
+ using AngouriMath.Core.Sys.Interfaces;
+ using AngouriMath.Core.TreeAnalysis;
+
+
+namespace AngouriMath
+{
+    public abstract partial class Entity : ILatexiseable
+    {
+        internal string Hash { get; private set; }
+        internal int HashOccurances { get; set; }
+        internal string UpdateHash()
+        {
+            var ownHash = Name;
+            var sb = new StringBuilder();
+            foreach (var ch in Children)
+                sb.Append(ch.UpdateHash());
+            Hash = Const.HashString(sb.ToString() + ownHash);
+            return Hash;
+        }
+
+        internal static void HashOccurancesUpdate(Entity expr)
+        {
+            var unfolded = expr.Unfold();
+
+            // First, we count number of occurances for each hash
+            var counts = new Dictionary<string, int>();
+            foreach (var node in unfolded)
+            {
+                if (!counts.ContainsKey(node.Hash))
+                    counts[node.Hash] = 0;
+                counts[node.Hash]++;
+            }
+
+            // Second, we assign those numbers to each node
+            foreach (var node in unfolded)
+                node.HashOccurances = counts[node.Hash];
+        }
+    }
+}
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -51,6 +91,33 @@ namespace AngouriMath.Core.TreeAnalysis
             }
             internal static bool ContainsTrigonometric(Entity expr) => Contains(expr, Trigonometry);
             internal static bool ContainsPower(Entity expr) => Contains(expr, Power);
+
+            internal static void OptimizeTree(ref Entity expr)
+            {
+                if (expr.entType == Entity.EntType.OPERATOR)
+                {
+                    if (expr.Name == "sumf" || expr.Name == "minusf")
+                    {
+                        var children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
+                        expr = TreeAnalyzer.MultiHangBinary(children, "sumf", expr.Priority);
+                    }
+                    if (expr.Name == "mulf" || expr.Name == "divf")
+                    {
+                        var children = TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul);
+                        expr = TreeAnalyzer.MultiHangBinary(children, "mulf", expr.Priority);
+                    }
+                }
+
+                for (int i = 0; i < expr.Children.Count; i++)
+                {
+                    var tmp = expr.Children[i];
+                    OptimizeTree(ref tmp);
+                    expr.Children[i] = tmp;
+                }
+            }
+
+            internal static int CountDepth(Entity expr)
+                => 1 + (expr.Children.Count == 0 ? 0 : expr.Children.Select(CountDepth).Max());
         }
     }
 }

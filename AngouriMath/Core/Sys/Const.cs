@@ -18,6 +18,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+ using System.Security.Cryptography;
 
 namespace AngouriMath
 {
@@ -66,6 +67,16 @@ namespace AngouriMath
             if (name == "tensort")
                 return true;
             return false;
+        }
+
+        internal static string HashString(string input)
+        {
+            using (var sha = new SHA256Managed())
+            {
+                byte[] bytes = Encoding.UTF8.GetBytes(input);
+                byte[] computedByteHash = sha.ComputeHash(bytes);
+                return BitConverter.ToString(computedByteHash).Replace("-", String.Empty);
+            }
         }
     }
 }

@@ -61,5 +61,57 @@ namespace UnitTests.Common
         {
             Assert.IsTrue(MathS.Arccotan(MathS.Cotan(x * 3)).Simplify() == 3 * x);
         }
+
+        public bool FunctionsAreEqualHack(Entity eq1, Entity eq2)
+        {
+            var vars1 = MathS.GetUniqueVariables(eq1);
+            var vars2 = MathS.GetUniqueVariables(eq2);
+            vars1.Sort((entity, entity1) => entity.Name.CompareTo(entity1.Name));
+            vars2.Sort((entity, entity1) => entity.Name.CompareTo(entity1.Name));
+            if (vars1.Count != vars2.Count)
+                return false;
+            for(int i = 0; i < vars1.Count; i++)
+                if (vars1[i] != vars2[i])
+                    return false;
+            for (int i = 1; i < 10; i++)
+            {
+                var a = eq1.DeepCopy();
+                var b = eq2.DeepCopy();
+                foreach (var var in vars1)
+                {
+                    a = a.Substitute(var as VariableEntity, i);
+                    b = b.Substitute(var as VariableEntity, i);
+                }
+
+                if (a.Eval() != b.Eval())
+                    return false;
+            }
+
+            return true;
+        }
+
+        [TestMethod]
+        public void TestLinch()
+        {
+            Entity expr = "x / y + x * x * y";
+            Entity exprOptimized = MathS.OptimizeTree(expr);
+            Assert.IsTrue(FunctionsAreEqualHack(expr, exprOptimized), "Expressions " + expr.ToString() + " and " + exprOptimized.ToString() + " are not equal");
+        }
+
+        [TestMethod]
+        public void TestLinch1()
+        {
+            Entity expr = "x / 1 + 2";
+            Entity exprOptimized = MathS.OptimizeTree(expr);
+            Assert.IsTrue(FunctionsAreEqualHack(expr, exprOptimized), "Expressions " + expr.ToString() + " and " + exprOptimized.ToString() + " are not equal");
+        }
+
+        [TestMethod]
+        public void TestLinch2()
+        {
+            Entity expr = "(x + y + x + 1 / (x + 4 + 4 + sin(x))) / (x + x + 3 / y) + 3";
+            Entity exprOptimized = MathS.OptimizeTree(expr);
+            Assert.IsTrue(FunctionsAreEqualHack(expr, exprOptimized), "Expressions " + expr.ToString() + " and " + exprOptimized.ToString() + " are not equal");
+        }
     }
 }
