@@ -78,7 +78,7 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Latexise(args[0].Priority < Const.PRIOR_MUL) + "*" + args[1].Latexise(args[1].Priority < Const.PRIOR_MUL);
+            return args[0].Latexise(args[0].Priority < Const.PRIOR_MUL) + @"\times " + args[1].Latexise(args[1].Priority < Const.PRIOR_MUL);
         }
     }
     public static partial class Divf
@@ -118,7 +118,7 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            return "cotan(" + args[0].Latexise() + ")";
+            return "cot(" + args[0].Latexise() + ")";
         }
     }
     public static partial class Logf
@@ -173,7 +173,7 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            return "arccotan(" + args[0].Latexise() + ")";
+            return "arccot(" + args[0].Latexise() + ")";
         }
     }
 }
