@@ -60,7 +60,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
             }
 
             AddHistory(stage1);
-            Entity res = stage1;
+            var res = stage1.DeepCopy();
 
             for (int i = 0; i < Math.Abs(level); i++)
             {
@@ -109,7 +109,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     AddHistory(res);
                 }
                 AddHistory(res);
-                res = history[history.Keys.Min()];
+                res = history[history.Keys.Min()].DeepCopy();
             }
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {

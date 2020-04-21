@@ -116,7 +116,7 @@ namespace AngouriMath
         /// e. g. pi * e + 3 => 3.1415 * 2.718 + 3
         /// </summary>
         /// <returns></returns>
-public Entity SubstituteConstants()
+        public Entity SubstituteConstants()
         {
             Entity curr = this.DeepCopy();  // Instead of copying in substitute, 
             // we better copy first and then do inPlace substitute

@@ -3,8 +3,10 @@ using AngouriMath.Convenience;
 using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.ComponentModel.Design.Serialization;
 using System.Diagnostics;
+using System.Linq;
 using System.Numerics;
 
 namespace Samples
@@ -244,12 +246,31 @@ namespace Samples
 
         static void Main(string[] _)
         {
+            Entity expr = "a / b / c";
+            Console.WriteLine(expr.Simplify());
+            /*
+            Entity expr = "32 + x";
+            var q = new List<Entity>();
+            q.Add(expr);
+            var quack = expr.DeepCopy();
+            quack = "y + 43";
+            Console.WriteLine(q[0]);
+            */
+            /*
+            int prec = 1000;
+            Entity funcRaw = 0;
             var x = MathS.Var("x");
-            var y = MathS.Var("y");
-            var func1 = MathS.OptimizeTree(x / y);
-            var func = (x / y).Compile(x, y);
-            Console.WriteLine(func.Call(3, 5));
-            
+            for (int i = 0; i < prec; i++)
+                funcRaw += MathS.Sin(1 / MathS.Sqrt(i + 1) * x) * (i % 2 == 0 ? -1 : 1);
+            Console.WriteLine("Function gathered");
+            var func = funcRaw.Compile(x);
+            Console.WriteLine("Function compiled");
+            var roots = funcRaw.Derive(x).SolveNt(x);
+            Console.WriteLine("Extremums found");
+            var values = roots.Where(r => r.IsReal()).Select(c => func.Call(c)).ToList();
+            values.Sort();
+            foreach (var v in values)
+                Console.WriteLine(values);*/
         }
     }
 #pragma warning restore IDE0051

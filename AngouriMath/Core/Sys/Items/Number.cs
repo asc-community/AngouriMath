@@ -202,6 +202,9 @@ namespace AngouriMath.Core
         }
         public static readonly Number Null = new Number(true);
 
+        public bool IsReal()
+            => !IsComplex();
+
         /// <summary>
         /// Check whether a number is complex or real
         /// </summary>

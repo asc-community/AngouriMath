@@ -127,7 +127,7 @@ namespace AngouriMath
 
         protected override Entity __copy()
         {
-            return new NumberEntity(Value);
+            return new NumberEntity(Value.Copy());
         }
 
     }
