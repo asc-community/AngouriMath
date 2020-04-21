@@ -147,7 +147,7 @@ namespace AngouriMath.Core
             {
                 1 => "Vector[" + Shape[0] + "]",
                 2 => "Matrix[" + Shape[0] + "x" + Shape[1] + "]",
-                _ => "Tensor[" + string.Join<int>('x', Shape) + "]"
+                _ => "Tensor[" + string.Join<int>("x", Shape) + "]"
             };
 
         public string PrintOut()
