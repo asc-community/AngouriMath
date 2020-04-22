@@ -35,7 +35,7 @@ namespace AngouriMath
         {
             if (IsLeaf)
                 return this.entType == EntType.NUMBER ? this.GetValue().ToString()
-                     : this.entType == EntType.VARIABLE && this.Name == "pi" ? @"\pi "
+                     : this == MathS,pi ? @"\pi "
                      : this.ToString();
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
