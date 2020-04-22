@@ -99,7 +99,7 @@ namespace AngouriMath.Core.FromString
             }
         }
         internal static readonly Regex numberRegexp = new Regex(@"^-?(\d+(\.(\d+)?)?)?i?$");
-        internal static readonly Regex variableRegexp = new Regex(@"^[a-zA-ZΑ-Ωα-ω]+$");
+        internal static readonly Regex variableRegexp = new Regex(@"^[a-zA-ZΑ-Ωα-ω_]+$");
         internal static bool IsNumber(string s)
         {
             return numberRegexp.IsMatch(s);
