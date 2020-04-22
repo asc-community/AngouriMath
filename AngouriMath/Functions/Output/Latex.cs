@@ -131,7 +131,7 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             if (args[1] == 10)
                 return @"\log\left(" + args[0].Latexize() + @"\right)";
-            else if (args[1].entType == EntType.VARIABLE && args[1].Name == "e")
+            else if (args[1] == MathS.e)
                 return @"\ln\left(" + args[0].Latexize() + @"\right)";
             else
                 return @"\log_{" + args[1].Latexise() + @"}\left(" + args[0].Latexise() + @"\right)";
