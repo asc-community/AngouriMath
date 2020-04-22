@@ -130,9 +130,9 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 2);
             if (args[1] == 10)
-                return @"\log\left(" + args[0].Latexize() + @"\right)";
+                return @"\log\left(" + args[0].Latexise() + @"\right)";
             else if (args[1] == MathS.e)
-                return @"\ln\left(" + args[0].Latexize() + @"\right)";
+                return @"\ln\left(" + args[0].Latexise() + @"\right)";
             else
                 return @"\log_{" + args[1].Latexise() + @"}\left(" + args[0].Latexise() + @"\right)";
         }
