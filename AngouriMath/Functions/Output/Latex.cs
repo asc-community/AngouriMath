@@ -78,7 +78,10 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Latexise(args[0].Priority < Const.PRIOR_MUL) + @"\times " + args[1].Latexise(args[1].Priority < Const.PRIOR_MUL);
+            if (args[0] == -1)
+                return "-" + args[1].Latexise(args[1].Priority < Const.PRIOR_MUL);
+            else
+                return args[0].Latexise(args[0].Priority < Const.PRIOR_MUL) + @"\times " + args[1].Latexise(args[1].Priority < Const.PRIOR_MUL);
         }
     }
     public static partial class Divf
@@ -126,7 +129,12 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return @"\log_{" + args[1].Latexise() + @"}\left(" + args[0].Latexise() + @"\right)";
+            if (args[1] == 10)
+                return @"\log\left(" + args[0].Latexize() + @"\right)";
+            else if (args[1] == MathS.e)
+                return @"\ln\left(" + args[0].Latexize() + @"\right)";
+            else
+                return @"\log_{" + args[1].Latexise() + @"}\left(" + args[0].Latexise() + @"\right)";
         }
     }
     public static partial class Powf
