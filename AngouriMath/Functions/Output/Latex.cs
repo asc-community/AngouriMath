@@ -33,8 +33,21 @@ namespace AngouriMath
         public string Latexise() => Latexise(false);
         internal string Latexise(bool parenthesesRequired)
         {
+            static string SurroundUnderscores(string name)
+            {
+                var sb = new StringBuilder(name);
+                for (int i = sb.Length - 1; i >= 0; i--)
+                    if (sb[i] == '_')
+                    {
+                        sb.Insert(i + 1, '{');
+                        sb.Append('}');
+                    }
+                return sb.ToString();
+            }
             if (IsLeaf)
-                return this.entType == EntType.NUMBER ? this.GetValue().ToString() : this.ToString();
+                return this.entType == EntType.NUMBER ? this.GetValue().ToString()
+                     : this == MathS.pi ? @"\pi "
+                     : SurroundUnderscores(this.ToString());
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
         }
