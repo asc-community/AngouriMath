@@ -207,7 +207,7 @@ namespace AngouriMath
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
-        /// angle between B and C
+        /// angle between C and B
         /// </returns>
         public static Entity Arcsec(Entity a) => Arccosf.Hang(1 / a);
      
@@ -216,7 +216,7 @@ namespace AngouriMath
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
-        /// angle between B and C
+        /// angle between C and A
         /// </returns>
         public static Entity Arccosec(Entity a) => Arcsinf.Hang(1 / a);
 
