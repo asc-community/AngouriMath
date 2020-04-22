@@ -198,7 +198,7 @@ namespace AngouriMath
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
-        /// angle between B and C
+        /// angle between B and A
         /// </returns>
         public static Entity Arccotan(Entity a) => Arccotanf.Hang(a);
      
