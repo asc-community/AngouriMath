@@ -270,7 +270,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return null;
             powers.Sort();
             if (powers.Last() == 0)
-                return SolveLinear(0, powers[0]);
+                return res;
             if (powers.Last() > 4 && powers.Count > 2)
                 return null; // So far, we can't solve equations of powers more than 4
             if (powers.Count == 1)

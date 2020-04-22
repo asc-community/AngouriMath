@@ -98,6 +98,8 @@ namespace AngouriMath.Functions.Algebra.Solver
                             var Z = sol.DeepCopy();
                             for (int varid = 0; varid < newvars.Count; varid++)
                                 Z = Z.Substitute(newvars[varid], inSol[j][varid]);
+
+                            Z = Z.Simplify();
                             inSol[j].Add(Z);
                         }
                         result.AddRange(inSol);

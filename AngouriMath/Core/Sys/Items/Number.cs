@@ -116,6 +116,7 @@ namespace AngouriMath.Core
             string a = Re.ToString(CultureInfo.InvariantCulture);
             if (Number.IsDoubleZero(Im))
             {
+                if (Re == -0.0f) Re = 0.0f; // -0 workaround
                 res = a;
             }
             else
