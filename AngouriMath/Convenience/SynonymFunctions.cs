@@ -36,6 +36,8 @@ namespace AngouriMath
             { "lnf", args => MathS.Log(args[0], MathS.e) },
             { "secf", args => MathS.Sec(args[0]) },
             { "cosecf", args => MathS.Cosec(args[0]) },
+            { "arcsecf", args => MathS.Arcsec(args[0]) },
+            { "arccosecf", args => MathS.Arccosec(args[0]) },
         };
 
         /// <summary>

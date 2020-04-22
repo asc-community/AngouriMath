@@ -42,6 +42,8 @@ namespace AngouriMath.Core.FromString
             { "arccos", 1 },
             { "arctan", 1 },
             { "arccotan", 1 },
+            { "arcsec", 1 },
+            { "arccosec", 1 },
         };
         internal static readonly Dictionary<char, string> operatorNames = new Dictionary<char, string>
         {
