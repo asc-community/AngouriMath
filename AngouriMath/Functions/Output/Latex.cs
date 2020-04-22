@@ -70,7 +70,7 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Latexise(args[0].Priority < Const.PRIOR_MINUS) + "-" + args[1].Latexise(args[0].Priority < Const.PRIOR_MINUS);
+            return args[0].Latexise(args[0].Priority < Const.PRIOR_MINUS) + "-" + args[1].Latexise(args[0].Priority <= Const.PRIOR_MINUS);
         }
     }
     public static partial class Mulf
