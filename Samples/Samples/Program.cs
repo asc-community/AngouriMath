@@ -185,6 +185,13 @@ namespace Samples
             5, 6, 7, 8
         );
 
+
+        /// <summary>
+        /// Unfolds the given num into a long expression
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="depth"></param>
+        /// <returns></returns>
         public static Entity GenerateExample(Number num, int depth)
         {
             Entity res = num;
@@ -246,10 +253,8 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            var eqs = AngouriMath.MathS.Equations("a+b-c", "3a+3b-2c", "3a+4b-4c");
-            var sol = eqs.Solve("a", "b", "c");
-            var latex = sol.Latexise();
-            Console.WriteLine(latex);
+            Entity expr = "x + 2 + (x + 2)";
+            Console.WriteLine(expr);
 
             /*
             Entity expr = "32 + x";

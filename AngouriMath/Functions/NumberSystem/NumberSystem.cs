@@ -45,6 +45,12 @@ namespace AngouriMath.Functions.NumberSystem
             { 'F', 15 },
         };
 
+        /// <summary>
+        /// Transforms an integer to the corresponding base (in string)
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="N"></param>
+        /// <returns></returns>
         internal static string IntToBaseN(int num, int N)
         {
             if (num < 0)
@@ -58,6 +64,12 @@ namespace AngouriMath.Functions.NumberSystem
             return res;
         }
 
+        /// <summary>
+        /// Transforms a floating number, but this number should be in [0; 1]
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="N"></param>
+        /// <returns></returns>
         internal static string FloatToBaseN(double num /*should be < 1*/, int N)
         {
             if (num > 1 || num < 0)
@@ -73,6 +85,13 @@ namespace AngouriMath.Functions.NumberSystem
             return res;
         }
 
+        /// <summary>
+        /// if a number is A + B where A is integer and B is in [0; 1], it performs operations
+        /// for A and B separately and then concatenates
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="N"></param>
+        /// <returns></returns>
         internal static string ToBaseN(double num, int N)
         {
             if (N > ALPHABET_TOCHAR.Length)
@@ -88,6 +107,12 @@ namespace AngouriMath.Functions.NumberSystem
             return leftPart + rightPart;
         }
 
+        /// <summary>
+        /// Gets an integer from a string (which should not contain any ,.-)
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="N"></param>
+        /// <returns></returns>
         internal static int IntFromBaseN(string num, int N)
         {
             int res = 0;
@@ -100,6 +125,12 @@ namespace AngouriMath.Functions.NumberSystem
             return res;
         }
 
+        /// <summary>
+        /// if num is ABC, the initial number was 0.ABC
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="N"></param>
+        /// <returns></returns>
         internal static double FloatFromBaseN(string num, int N)
         {
             double res = 0;
@@ -111,6 +142,12 @@ namespace AngouriMath.Functions.NumberSystem
             return res;
         }
 
+        /// <summary>
+        /// Performs operations on both the integer and floating parts of a number and concatenates
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="N"></param>
+        /// <returns></returns>
         internal static double FromBaseN(string num, int N)
         {
             int sign = num[0] == '-' ? -1 : 1;

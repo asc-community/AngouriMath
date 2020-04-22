@@ -27,8 +27,24 @@ namespace AngouriMath
 {
     public abstract partial class Entity : ILatexiseable
     {
+        /// <summary>
+        /// Static hash. It won't recount automatically, to recount it call
+        /// expr.UpdateHash()
+        /// </summary>
         internal string Hash { get; private set; }
+
+        /// <summary>
+        /// Occurances of this exact subtree.
+        /// To recount it, call
+        /// Entity.UpdateHashOccurances(expr)
+        /// </summary>
         internal int HashOccurances { get; set; }
+
+        /// <summary>
+        /// Recounts expr.Hash
+        /// Before using expr.Hash, make sure you called this function
+        /// </summary>
+        /// <returns></returns>
         internal string UpdateHash()
         {
             var ownHash = Name;
@@ -39,6 +55,11 @@ namespace AngouriMath
             return Hash;
         }
 
+        /// <summary>
+        /// Recounts expr.HashOccurances
+        /// Before using expr.HashOccurances, make sure you called this function
+        /// </summary>
+        /// <param name="expr"></param>
         internal static void HashOccurancesUpdate(Entity expr)
         {
             var unfolded = expr.Unfold();
@@ -80,6 +101,14 @@ namespace AngouriMath.Core.TreeAnalysis
                 "powf"
                 // TODO: to add logarithm?
             };
+
+            /// <summary>
+            /// Finds out a category of an expression
+            /// To be precise, finds out whether expr belongs to cat
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <param name="cat"></param>
+            /// <returns></returns>
             private static bool Contains(Entity expr, FunctionCategory cat)
             {
                 if (cat.Contains(expr.Name))
@@ -89,9 +118,25 @@ namespace AngouriMath.Core.TreeAnalysis
                         return true;
                 return false;
             }
+
+            /// <summary>
+            /// Determines whether expr is trigonometric
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <returns></returns>
             internal static bool ContainsTrigonometric(Entity expr) => Contains(expr, Trigonometry);
+
+            /// <summary>
+            /// Determines whether expr is exponential
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <returns></returns>
             internal static bool ContainsPower(Entity expr) => Contains(expr, Power);
 
+            /// <summary>
+            /// Converts a tree into binary
+            /// </summary>
+            /// <param name="expr"></param>
             internal static void OptimizeTree(ref Entity expr)
             {
                 if (expr.entType == Entity.EntType.OPERATOR)
@@ -116,6 +161,11 @@ namespace AngouriMath.Core.TreeAnalysis
                 }
             }
 
+            /// <summary>
+            /// Used to analyze tree's complexity
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <returns></returns>
             internal static int CountDepth(Entity expr)
                 => 1 + (expr.Children.Count == 0 ? 0 : expr.Children.Select(CountDepth).Max());
         }

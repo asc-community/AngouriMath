@@ -26,6 +26,11 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
+        /// <summary>
+        /// Finds all entries of variables ignoring constants and moves them to dst
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <param name="dst"></param>
         internal static void GetUniqueVariables(Entity expr, EntitySet dst)
         {
             // If it is a variable, we will add it
@@ -42,7 +47,12 @@ namespace AngouriMath.Core.TreeAnalysis
                     GetUniqueVariables(child, dst);
         }
         
-
+        /// <summary>
+        /// Replaces all entries of oldsubtree with newsubtree
+        /// </summary>
+        /// <param name="originTree"></param>
+        /// <param name="oldSubtree"></param>
+        /// <param name="newSubtree"></param>
         internal static void FindAndReplace(ref Entity originTree, Entity oldSubtree, Entity newSubtree)
         {
             if (originTree == oldSubtree)

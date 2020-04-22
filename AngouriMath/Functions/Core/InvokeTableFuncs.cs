@@ -72,7 +72,7 @@ namespace AngouriMath
             Arccotanf.Wakeup();
         }
     }
-    public static partial class Sumf
+    internal static partial class Sumf
     {
         public static void Wakeup() { }
         static Sumf() {
@@ -82,7 +82,7 @@ namespace AngouriMath
             MathFunctions.stringTable["sumf"] = Stringize;
         }
     }
-    public static partial class Minusf
+    internal static partial class Minusf
     {
         public static void Wakeup() { }
         static Minusf()
@@ -93,7 +93,7 @@ namespace AngouriMath
             MathFunctions.stringTable["minusf"] = Stringize;
         }
     }
-    public static partial class Mulf
+    internal static partial class Mulf
     {
         public static void Wakeup() { }
         static Mulf()
@@ -104,7 +104,7 @@ namespace AngouriMath
             MathFunctions.stringTable["mulf"] = Stringize;
         }
     }
-    public static partial class Divf
+    internal static partial class Divf
     {
         public static void Wakeup() { }
         static Divf()
@@ -115,7 +115,7 @@ namespace AngouriMath
             MathFunctions.stringTable["divf"] = Stringize;
         }
     }
-    public static partial class Powf
+    internal static partial class Powf
     {
         public static void Wakeup() { }
         static Powf()
@@ -126,7 +126,7 @@ namespace AngouriMath
             MathFunctions.stringTable["powf"] = Stringize;
         }
     }
-    public static partial class Sinf
+    internal static partial class Sinf
     {
         public static void Wakeup() { }
         static Sinf()
@@ -137,7 +137,7 @@ namespace AngouriMath
             MathFunctions.stringTable["sinf"] = Stringize;
         }
     }
-    public static partial class Cosf
+    internal static partial class Cosf
     {
         public static void Wakeup() { }
         static Cosf()
@@ -148,7 +148,7 @@ namespace AngouriMath
             MathFunctions.stringTable["cosf"] = Stringize;
         }
     }
-    public static partial class Tanf
+    internal static partial class Tanf
     {
         public static void Wakeup() { }
         static Tanf()
@@ -159,7 +159,7 @@ namespace AngouriMath
             MathFunctions.stringTable["tanf"] = Stringize;
         }
     }
-    public static partial class Cotanf
+    internal static partial class Cotanf
     {
         public static void Wakeup() { }
         static Cotanf()
@@ -170,7 +170,7 @@ namespace AngouriMath
             MathFunctions.stringTable["cotanf"] = Stringize;
         }
     }
-    public static partial class Logf
+    internal static partial class Logf
     {
         public static void Wakeup() { }
         static Logf()
@@ -181,7 +181,7 @@ namespace AngouriMath
             MathFunctions.stringTable["logf"] = Stringize;
         }
     }
-    public static partial class Arcsinf
+    internal static partial class Arcsinf
     {
         public static void Wakeup() { }
         static Arcsinf()
@@ -192,7 +192,7 @@ namespace AngouriMath
             MathFunctions.stringTable["arcsinf"] = Stringize;
         }
     }
-    public static partial class Arccosf
+    internal static partial class Arccosf
     {
         public static void Wakeup() { }
         static Arccosf()
@@ -203,7 +203,7 @@ namespace AngouriMath
             MathFunctions.stringTable["arccosf"] = Stringize;
         }
     }
-    public static partial class Arctanf
+    internal static partial class Arctanf
     {
         public static void Wakeup() { }
         static Arctanf()
@@ -214,7 +214,7 @@ namespace AngouriMath
             MathFunctions.stringTable["arctanf"] = Stringize;
         }
     }
-    public static partial class Arccotanf
+    internal static partial class Arccotanf
     {
         public static void Wakeup() { }
         static Arccotanf()

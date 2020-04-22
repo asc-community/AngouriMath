@@ -36,6 +36,11 @@ namespace AngouriMath
     /// </summary>
     public static partial class MathS
     {
+        /// <summary>
+        /// Use it to solve equations
+        /// </summary>
+        /// <param name="equations"></param>
+        /// <returns></returns>
         public static EquationSystem Equations(params Entity[] equations)
         => new EquationSystem(equations);
         /// <summary>
@@ -58,7 +63,7 @@ namespace AngouriMath
         /// <param name="var"></param>
         /// <returns></returns>
         public static EntitySet Solve(Entity equation, VariableEntity var)
-            => equation.Solve(var);
+            => EquationSolver.Solve(equation, var);
 
         /// <summary>
         /// https://en.wikipedia.org/wiki/Trigonometric_functions

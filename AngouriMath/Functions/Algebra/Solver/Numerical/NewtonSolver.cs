@@ -26,6 +26,14 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
 {
     internal static class NumericalSolver
     {
+        /// <summary>
+        /// Perform one iteration of searching for a root with Newton-Raphson method
+        /// </summary>
+        /// <param name="f"></param>
+        /// <param name="df"></param>
+        /// <param name="value"></param>
+        /// <param name="precision"></param>
+        /// <returns></returns>
         private static Number NewtonIter(FastExpression f, FastExpression df, Number value, int precision)
         {
             Number prev = value;
@@ -51,7 +59,25 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                 return value;
         }
 
-
+        /// <summary>
+        /// Performs a grid search with each iteration done by NewtonIter
+        /// </summary>
+        /// <param name="expr">
+        /// The equation with one variable to be solved
+        /// </param>
+        /// <param name="v">
+        /// The variable to solve over
+        /// </param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="stepCount">
+        /// A complex number, thus, if stepCount.Im == 0, no operations will be performed at all. If you
+        /// need to iterate over real numbers only, set it to 1, i. e. new Number(your_number, 1)
+        /// </param>
+        /// <param name="precision">
+        /// How many approximations we need to do before we reach the most precise result.
+        /// </param>
+        /// <returns></returns>
         internal static NumberSet SolveNt(Entity expr, VariableEntity v, Number from, Number to, Number stepCount, int precision = 30)
         {
             var res = new NumberSet();

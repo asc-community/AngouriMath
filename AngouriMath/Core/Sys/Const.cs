@@ -22,6 +22,9 @@ using System.Text;
 
 namespace AngouriMath
 {
+    /// <summary>
+    /// This class contains some extra functions for different purposes
+    /// </summary>
     internal static class Const
     {
         internal static readonly int PRIOR_SUM = 2;
@@ -33,6 +36,12 @@ namespace AngouriMath
         internal static readonly int PRIOR_VAR = 10;
         internal static readonly int PRIOR_NUM = 2;
         internal static readonly string ARGUMENT_DELIMITER = ",";
+
+        /// <summary>
+        /// Used for generating linear children over sum
+        /// </summary>
+        /// <param name="child"></param>
+        /// <returns></returns>
         internal static OperatorEntity FuncIfSum(Entity child)
         {
             return new OperatorEntity("mulf", Const.PRIOR_MUL)
@@ -43,6 +52,12 @@ namespace AngouriMath
                     }
             };
         }
+
+        /// <summary>
+        /// Used for generating linear children over product
+        /// </summary>
+        /// <param name="child"></param>
+        /// <returns></returns>
         internal static OperatorEntity FuncIfMul(Entity child)
         {
             return new OperatorEntity("powf", Const.PRIOR_POW)
@@ -69,6 +84,11 @@ namespace AngouriMath
             return false;
         }
 
+        /// <summary>
+        /// Returns SHA hashcode of a string
+        /// </summary>
+        /// <param name="input"></param>
+        /// <returns></returns>
         internal static string HashString(string input)
         {
             using (var sha = new SHA256Managed())

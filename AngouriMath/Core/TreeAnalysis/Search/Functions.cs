@@ -23,7 +23,18 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
+        /// <summary>
+        /// If an evaluable expression is equal to zero, true, otherwise, false
+        /// For example, 1 - 1 is zero, but 1 + a is not
+        /// </summary>
+        /// <param name="e"></param>
+        /// <returns></returns>
         internal static bool IsZero(Entity e) => MathS.CanBeEvaluated(e) && e.Eval() == 0;
+
+        /// <summary>
+        /// a ^ (-1) => 1 / a
+        /// </summary>
+        /// <param name="expr"></param>
         internal static void InvertNegativePowers(ref Entity expr)
         {
             if (expr.entType == Entity.EntType.OPERATOR &&
@@ -45,6 +56,10 @@ namespace AngouriMath.Core.TreeAnalysis
 
         internal static readonly Pattern NegativeMultiplyerPattern = Patterns.any1 + Patterns.const1 * Patterns.any2;
 
+        /// <summary>
+        /// 1 + (-x) => 1 - x
+        /// </summary>
+        /// <param name="expr"></param>
         internal static void InvertNegativeMultipliers(ref Entity expr)
         {
             if (NegativeMultiplyerPattern.Match(expr) &&

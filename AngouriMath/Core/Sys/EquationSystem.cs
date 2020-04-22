@@ -26,16 +26,33 @@ namespace AngouriMath.Core.Sys
     public class EquationSystem : ILatexiseable
     {
         private readonly List<Entity> equations;
+
+        /// <summary>
+        /// After having created a system of equations,
+        /// you may solve or latexise it
+        /// </summary>
+        /// <param name="equations"></param>
         public EquationSystem(params Entity[] equations)
         {
             this.equations = equations.ToList();
         }
 
+        /// <summary>
+        /// Returns a solution matrix
+        /// The first axis of the matrix corresponds to the number of solutions,
+        /// the second one corresponds to the number of variables.
+        /// </summary>
+        /// <param name="vars">
+        /// Number of variables must match number of equations
+        /// </param>
+        /// <returns></returns>
         public Tensor Solve(params VariableEntity[] vars)
-        {
-            return MathS.Solve(equations, vars.ToList());
-        }
+        => MathS.Solve(equations, vars.ToList());
 
+        /// <summary>
+        /// Returns latexised version of the system
+        /// </summary>
+        /// <returns></returns>
         public string Latexise()
         {
             if (equations.Count == 1)

@@ -64,9 +64,18 @@ namespace AngouriMath
             return Integration.Integrate(this, x, from, to, stepCount);
         }
     }
-    public static class Integration
+    internal static class Integration
     {
-        public static Number Integrate(Entity func, VariableEntity x, Number from, Number to, int stepCount)
+        /// <summary>
+        /// Numberican integration, see more in Entity.DefiniteIntegral
+        /// </summary>
+        /// <param name="func"></param>
+        /// <param name="x"></param>
+        /// <param name="from"></param>
+        /// <param name="to"></param>
+        /// <param name="stepCount"></param>
+        /// <returns></returns>
+        internal static Number Integrate(Entity func, VariableEntity x, Number from, Number to, int stepCount)
         {
             double ReFrom = from.Re;
             double ImFrom = from.Im;

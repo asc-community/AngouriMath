@@ -25,6 +25,15 @@ namespace AngouriMath.Functions.Evaluation.Compilation
 {
     internal static class Compiler
     {
+        /// <summary>
+        /// Returns a compiled expression
+        /// Allows to boost substitution a lot
+        /// </summary>
+        /// <param name="func"></param>
+        /// <param name="variables">
+        /// Must be equal to func's variables (ignoring constants)
+        /// </param>
+        /// <returns></returns>
         internal static FastExpression Compile(Entity func, params VariableEntity[] variables)
         {
             var strings = new List<string>();
@@ -33,6 +42,13 @@ namespace AngouriMath.Functions.Evaluation.Compilation
                     strings.Add(varEnt.Name);
             return Compile(func, strings.ToArray());
         }
+
+        /// <summary>
+        /// Compiles from strings (see Compile for more details)
+        /// </summary>
+        /// <param name="func"></param>
+        /// <param name="variables"></param>
+        /// <returns></returns>
         internal static FastExpression Compile(Entity func, params string[] variables)
         {
             var varNamespace = new Dictionary<string, int>();
@@ -51,6 +67,13 @@ namespace AngouriMath.Functions.Evaluation.Compilation
             return res;
         }
 
+        /// <summary>
+        /// Recursive compilation that pushes intructions to the stack (fe.instructions)
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <param name="fe"></param>
+        /// <param name="variables"></param>
+        /// <param name="varNamespace"></param>
         private static void InnerCompile(Entity expr, FastExpression fe, string[] variables, Dictionary<string, int> varNamespace)
         {
             // Check whether it's better to pull from cache or not

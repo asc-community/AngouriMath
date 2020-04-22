@@ -24,6 +24,11 @@ namespace AngouriMath.Core
 {
     public partial class Tensor : Entity
     {
+        /// <summary>
+        /// Compares two Tensors
+        /// </summary>
+        /// <param name="obj"></param>
+        /// <returns></returns>
         protected override bool EqualsTo(Entity obj)
         {
             var t = obj as Tensor;

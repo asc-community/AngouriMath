@@ -63,6 +63,12 @@ namespace AngouriMath.Functions.Output
                     throw new MathSException("Unexpected node type");
             }
         }
+
+        /// <summary>
+        /// Generates sympy-like code
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
         internal static string GenerateCode(Entity expr)
         {
             var sb = new StringBuilder();

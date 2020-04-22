@@ -40,14 +40,28 @@ namespace AngouriMath
         }
     }
 
-    public static partial class MathFunctions
+    internal static partial class MathFunctions
     {
         internal static readonly LatexTable latexTable = new LatexTable();
 
+        /// <summary>
+        /// Finds an appropriate function to call latex
+        /// </summary>
+        /// <param name="typeName"></param>
+        /// <param name="args"></param>
+        /// <returns></returns>
         internal static string InvokeLatex(string typeName, List<Entity> args)
         {
             return latexTable[typeName](args);
         }
+
+        /// <summary>
+        /// Wraps a string with parentheses
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="need"></param>
+        /// <param name="latex"></param>
+        /// <returns></returns>
         internal static string ParenthesesOnNeed(string s, bool need, bool latex)
         {
             if (latex)
@@ -57,7 +71,7 @@ namespace AngouriMath
         }
     }
 
-    public static partial class Sumf
+    internal static partial class Sumf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -65,7 +79,7 @@ namespace AngouriMath
             return args[0].Latexise(args[0].Priority < Const.PRIOR_SUM) + "+" + args[1].Latexise(args[1].Priority < Const.PRIOR_SUM);
         }
     }
-    public static partial class Minusf
+    internal static partial class Minusf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -73,7 +87,7 @@ namespace AngouriMath
             return args[0].Latexise(args[0].Priority < Const.PRIOR_MINUS) + "-" + args[1].Latexise(args[1].Priority <= Const.PRIOR_MINUS);
         }
     }
-    public static partial class Mulf
+    internal static partial class Mulf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -84,7 +98,7 @@ namespace AngouriMath
                 return args[0].Latexise(args[0].Priority < Const.PRIOR_MUL) + @"\times " + args[1].Latexise(args[1].Priority < Const.PRIOR_MUL);
         }
     }
-    public static partial class Divf
+    internal static partial class Divf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -92,7 +106,7 @@ namespace AngouriMath
             return @"\frac{" + args[0].Latexise() + "}{" + args[1].Latexise() + "}";
         }
     }
-    public static partial class Sinf
+    internal static partial class Sinf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -100,7 +114,7 @@ namespace AngouriMath
             return @"\sin\left(" + args[0].Latexise() + @"\right)";
         }
     }
-    public static partial class Cosf
+    internal static partial class Cosf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -108,7 +122,7 @@ namespace AngouriMath
             return @"\cos\left(" + args[0].Latexise() + @"\right)";
         }
     }
-    public static partial class Tanf
+    internal static partial class Tanf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -116,7 +130,7 @@ namespace AngouriMath
             return @"\tan\left(" + args[0].Latexise() + @"\right)";
         }
     }
-    public static partial class Cotanf
+    internal static partial class Cotanf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -124,7 +138,7 @@ namespace AngouriMath
             return @"\cot\left(" + args[0].Latexise() + @"\right)";
         }
     }
-    public static partial class Logf
+    internal static partial class Logf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -137,7 +151,7 @@ namespace AngouriMath
                 return @"\log_{" + args[1].Latexise() + @"}\left(" + args[0].Latexise() + @"\right)";
         }
     }
-    public static partial class Powf
+    internal static partial class Powf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -152,7 +166,7 @@ namespace AngouriMath
             }
         }
     }
-    public static partial class Arcsinf
+    internal static partial class Arcsinf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -160,7 +174,7 @@ namespace AngouriMath
             return @"\arcsin\left(" + args[0].Latexise() + @"\right)";
         }
     }
-    public static partial class Arccosf
+    internal static partial class Arccosf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -168,7 +182,7 @@ namespace AngouriMath
             return @"\arccos\left(" + args[0].Latexise() + @"\right)";
         }
     }
-    public static partial class Arctanf
+    internal static partial class Arctanf
     {
         internal static string Latex(List<Entity> args)
         {
@@ -176,7 +190,7 @@ namespace AngouriMath
             return @"\arctan\left(" + args[0].Latexise() + @"\right)";
         }
     }
-    public static partial class Arccotanf
+    internal static partial class Arccotanf
     {
         internal static string Latex(List<Entity> args)
         {

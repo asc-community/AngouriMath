@@ -24,6 +24,10 @@ using System.Text;
 
 namespace AngouriMath.Core
 {
+    /// <summary>
+    /// Basic tensor implementation
+    /// https://en.wikipedia.org/wiki/Tensor
+    /// </summary>
     public partial class Tensor : Entity
     {
         /// <summary>
@@ -36,6 +40,9 @@ namespace AngouriMath.Core
         /// </summary>
         public int Dimensions { get => Shape.Count; }
 
+        /// <summary>
+        /// Used for swapping axes if a tensor is transposed
+        /// </summary>
         private readonly int[] AxesOrder;
 
         /// <summary>
@@ -254,6 +261,10 @@ namespace AngouriMath.Core
             return t;
         }
 
+        /// <summary>
+        /// Converts into LaTeX format
+        /// </summary>
+        /// <returns></returns>
         public new string Latexise()
         {
             if (IsMatrix())

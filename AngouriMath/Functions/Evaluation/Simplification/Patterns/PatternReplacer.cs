@@ -352,14 +352,16 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             HashSet<string> replaced = new HashSet<string>();
             var res = source.DeepCopy();
+            res.UpdateHash();
             string hash;
-            while (!replaced.Contains(hash = res.GetHashCode()))
+            while (!replaced.Contains(hash = res.Hash))
             {
                 replaced.Add(hash);
                 foreach (var pair in rules)
                 {
                     ReplaceOneInPlace(ref res, pair.Key, pair.Value);
                 }
+                res.UpdateHash();
             }
             return res;
         }
@@ -368,13 +370,15 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             HashSet<string> replaced = new HashSet<string>();
             string hash;
-            while (!replaced.Contains(hash = source.GetHashCode()))
+            source.UpdateHash();
+            while (!replaced.Contains(hash = source.Hash))
             {
                 replaced.Add(hash);
                 foreach (var pair in rules)
                 {
                     ReplaceOneInPlace(ref source, pair.Key, pair.Value);
                 }
+                source.UpdateHash();
             }
         }
     }

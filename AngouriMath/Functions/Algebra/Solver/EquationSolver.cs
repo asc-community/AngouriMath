@@ -29,6 +29,12 @@ namespace AngouriMath.Functions.Algebra.Solver
 {
     internal static class EquationSolver
     {
+        /// <summary>
+        /// Solves one equation
+        /// </summary>
+        /// <param name="equation"></param>
+        /// <param name="x"></param>
+        /// <returns></returns>
         internal static EntitySet Solve(Entity equation, VariableEntity x)
         {
             var res = new EntitySet();
@@ -37,6 +43,25 @@ namespace AngouriMath.Functions.Algebra.Solver
                 res[i] = res[i].InnerSimplify();
             return res;
         }
+        
+        /// <summary>
+        /// Solves a system of equations by solving one after another with substitution, e. g.
+        /// let 
+        /// x - y + a = 0
+        /// y + 2a = 0
+        /// be a system of equations for variables { x, y }
+        /// Then we first find y from the first equation,
+        /// y = x + a
+        /// then we substitute it to all others
+        /// x + a + 2a = 0
+        /// then we find x
+        /// x = -3a
+        /// Then we substitute back
+        /// y = -3a + a = -2a
+        /// </summary>
+        /// <param name="equations"></param>
+        /// <param name="vars"></param>
+        /// <returns></returns>
         internal static Tensor SolveSystem(List<Entity> equations, List<VariableEntity> vars)
         {
             if (equations.Count != vars.Count)

@@ -34,6 +34,16 @@ namespace AngouriMath
             { "pi", Math.PI },
             { "e", Math.E }
         };
+
+        /// <summary>
+        /// Determines whether something is a variable or contant, e. g.
+        /// x + 3 - is not a constant
+        /// e - is a constant
+        /// x - is not a constant
+        /// pi + 4 - is not a constant (but pi is)
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
         public static bool IsConstant(Entity expr) => (expr.entType == Entity.EntType.VARIABLE && MathS.ConstantList.ContainsKey(expr.Name));
         public static bool CanBeEvaluated(Entity expr)
         {
@@ -108,6 +118,11 @@ namespace AngouriMath
         /// <returns></returns>
         public Entity Simplify(int level) => Simplificator.Simplify(this, level);
 
+        /// <summary>
+        /// Finds all alternative forms of an expression sorted by their complexity
+        /// </summary>
+        /// <param name="level"></param>
+        /// <returns></returns>
         public EntitySet Alternate(int level) => Simplificator.Alternate(this, level);
         internal abstract Entity InnerSimplify();
 
@@ -172,22 +187,22 @@ namespace AngouriMath
     }
 
     // Adding invoke table for eval
-    public static partial class MathFunctions
+    internal static partial class MathFunctions
     {
         internal static readonly EvalTable evalTable = new EvalTable();
 
-        public static Entity InvokeEval(string typeName, List<Entity> args)
+        internal static Entity InvokeEval(string typeName, List<Entity> args)
         {
             return evalTable[typeName](args);
         }
 
-        public static bool IsOneNumber(List<Entity> args, NumberEntity e)
+        internal static bool IsOneNumber(List<Entity> args, NumberEntity e)
         {
             return (args[0].entType == Entity.EntType.NUMBER && (args[0] as NumberEntity).Value == e.Value ||
                     args[1].entType == Entity.EntType.NUMBER && (args[1] as NumberEntity).Value == e.Value);
                     
         }
-        public static Entity GetAnotherEntity(List<Entity> args, NumberEntity e)
+        internal static Entity GetAnotherEntity(List<Entity> args, NumberEntity e)
         {
             if (args[0].entType == Entity.EntType.NUMBER && (args[0] as NumberEntity).Value == e.Value)
                 return args[1];
@@ -197,7 +212,7 @@ namespace AngouriMath
     }
 
     // Each function and operator processing
-    public static partial class Sumf
+    internal static partial class Sumf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -214,7 +229,7 @@ namespace AngouriMath
                     return r1 + r2;
         }
     }
-    public static partial class Minusf
+    internal static partial class Minusf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -231,7 +246,7 @@ namespace AngouriMath
                 return r1 - r2;
         }
     }
-    public static partial class Mulf
+    internal static partial class Mulf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -250,7 +265,7 @@ namespace AngouriMath
 
         }
     }
-    public static partial class Divf
+    internal static partial class Divf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -267,7 +282,7 @@ namespace AngouriMath
                 return r1 / r2;
         }
     }
-    public static partial class Powf
+    internal static partial class Powf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -286,7 +301,7 @@ namespace AngouriMath
                 return r1.Pow(r2);
         }
     }
-    public static partial class Sinf
+    internal static partial class Sinf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -298,7 +313,7 @@ namespace AngouriMath
                 return r.Sin();
         }
     }
-    public static partial class Cosf
+    internal static partial class Cosf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -310,7 +325,7 @@ namespace AngouriMath
                 return r.Cos();
         }
     }
-    public static partial class Tanf
+    internal static partial class Tanf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -322,7 +337,7 @@ namespace AngouriMath
                 return r.Tan();
         }
     }
-    public static partial class Cotanf
+    internal static partial class Cotanf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -335,7 +350,7 @@ namespace AngouriMath
         }
     }
 
-    public static partial class Logf
+    internal static partial class Logf
     {
         public static Entity Eval(List<Entity> args)
         {
@@ -354,7 +369,7 @@ namespace AngouriMath
         }
     }
     
-    public static partial class Arcsinf
+    internal static partial class Arcsinf
     {
         public static Entity Eval(List<Entity> args)
         {
@@ -366,7 +381,7 @@ namespace AngouriMath
                 return Arcsinf.Hang(arg);
         }
     }
-    public static partial class Arccosf
+    internal static partial class Arccosf
     {
         public static Entity Eval(List<Entity> args)
         {
@@ -378,7 +393,7 @@ namespace AngouriMath
                 return Arccosf.Hang(arg);
         }
     }
-    public static partial class Arctanf
+    internal static partial class Arctanf
     {
         public static Entity Eval(List<Entity> args)
         {
@@ -390,7 +405,7 @@ namespace AngouriMath
                 return Arctanf.Hang(arg);
         }
     }
-    public static partial class Arccotanf
+    internal static partial class Arccotanf
     {
         public static Entity Eval(List<Entity> args)
         {

@@ -25,7 +25,7 @@ namespace AngouriMath.Core
 {
     #pragma warning disable CS0660
     #pragma warning disable CS0661
-    public class Number : MathItem
+    public class Number
     #pragma warning restore CS0660
     #pragma warning restore CS0661
     {
@@ -52,6 +52,10 @@ namespace AngouriMath.Core
                 __isReal = this.value.Imaginary == 0;
             }
         }
+
+        /// <summary>
+        /// Fast access to Complex value
+        /// </summary>
         internal Complex value;
         private bool isNull;
         public bool IsNull { get => isNull || (double.IsNaN(value.Imaginary)) || (double.IsNaN(value.Real)); set => isNull = value; }
@@ -110,6 +114,11 @@ namespace AngouriMath.Core
         {
             return IsNull ? Number.Null : new Number(value);
         }
+
+        /// <summary>
+        /// Does not wrap the number with additional parentheses, unlike NumberEntity.ToString
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             string res;
@@ -286,6 +295,7 @@ namespace AngouriMath.Core
 
     /// <summary>
     /// A set of Numbers
+    /// TODO
     /// </summary>
     public class NumberSet : List<Number>
     {

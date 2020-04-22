@@ -41,7 +41,7 @@ namespace AngouriMath
         protected abstract bool EqualsTo(Entity obj);
         internal abstract void Check();
         
-        public string Name = string.Empty;
+        public readonly string Name = string.Empty;
 
         /// <summary>
         /// Usually IsLeaf <=> number, variable, tensor
@@ -54,6 +54,9 @@ namespace AngouriMath
             Children = new List<Entity>();
             Name = name;
         }
+        /// <summary>
+        /// All children nodes of an expression
+        /// </summary>
         public List<Entity> Children { get; internal set; }
 
         /// <summary>
@@ -108,10 +111,11 @@ namespace AngouriMath
         }
         public static bool operator !=(Entity a, Entity b) => !(a == b);
 
-        // TODO create hash for entity
-        internal new string GetHashCode() => ToString();
-
     }
+
+    /// <summary>
+    /// Number node. Maybe converted from Number
+    /// </summary>
     public partial class NumberEntity : Entity
     {
         public NumberEntity(Number value) : base(value.ToString(), EntType.NUMBER) 
@@ -120,6 +124,9 @@ namespace AngouriMath
             Value = value;
         }
 
+        /// <summary>
+        /// NumberEntity is a node, not a number. To get the number, use either Eval or direct access Value.
+        /// </summary>
         public Number Value { get; internal set; }
         public new string Name { get => Value.ToString(); }
         public static implicit operator NumberEntity(int num) => new NumberEntity(num);
@@ -131,6 +138,10 @@ namespace AngouriMath
         }
 
     }
+
+    /// <summary>
+    /// Variable node. It only has a name
+    /// </summary>
     public partial class VariableEntity : Entity
     {
         public VariableEntity(string name) : base(name, EntType.VARIABLE) => Priority = Const.PRIOR_VAR;
@@ -140,6 +151,10 @@ namespace AngouriMath
             return new VariableEntity(Name);
         }
     }
+
+    /// <summary>
+    /// Operator node. Only binary operators are supported yet
+    /// </summary>
     public partial class OperatorEntity : Entity
     {
         public OperatorEntity(string name, int priority) : base(name, EntType.OPERATOR) {
@@ -150,6 +165,10 @@ namespace AngouriMath
             return new OperatorEntity(Name, Priority);
         }
     }
+
+    /// <summary>
+    /// Function entity.
+    /// </summary>
     public partial class FunctionEntity : Entity
     {
         public FunctionEntity(string name) : base(name, EntType.FUNCTION) => Priority = Const.PRIOR_FUNC;

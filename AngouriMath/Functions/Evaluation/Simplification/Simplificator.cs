@@ -25,8 +25,26 @@ namespace AngouriMath.Functions.Evaluation.Simplification
 {
     internal static class Simplificator
     {
+        /// <summary>
+        /// See more details in Entity.Simplify
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
         internal static Entity Simplify(Entity expr) => Simplify(expr, 2);
+
+        /// <summary>
+        /// See more details in Entity.Simplify
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
         internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level)[0].InnerSimplify();
+
+        /// <summary>
+        /// Finds all alternative forms of an expression
+        /// </summary>
+        /// <param name="src"></param>
+        /// <param name="level"></param>
+        /// <returns></returns>
         internal static EntitySet Alternate(Entity src, int level)
         {
             if (src.entType == Entity.EntType.NUMBER || src.entType == Entity.EntType.VARIABLE)

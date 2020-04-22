@@ -139,6 +139,16 @@ namespace AngouriMath.Core.TreeAnalysis
             return new EntitySet(value);
         }
 
+        /// <summary>
+        /// Inverts operator and returns a set
+        /// x^2 = a
+        /// => x = sqrt(a)
+        /// x = -sqrt(a)
+        /// </summary>
+        /// <param name="func"></param>
+        /// <param name="value"></param>
+        /// <param name="x"></param>
+        /// <returns></returns>
         public static EntitySet InvertOperatorEntity(OperatorEntity func, Entity value, Entity x)
         {
             Entity a, un;
@@ -224,6 +234,16 @@ namespace AngouriMath.Core.TreeAnalysis
         private static readonly Number ArccosTo = new Number(Math.PI, double.MaxValue);
         private static readonly EntitySet Empty = new EntitySet();
 
+        /// <summary>
+        /// Returns a set of possible roots of a function, e. g.
+        /// sin(x) = a =>
+        /// x = arcsin(a) + 2 pi n
+        /// x = pi - arcsin(a) + 2 pi n
+        /// </summary>
+        /// <param name="func"></param>
+        /// <param name="value"></param>
+        /// <param name="x"></param>
+        /// <returns></returns>
         public static EntitySet InvertFunctionEntity(FunctionEntity func, Entity value, Entity x)
         {
             Entity a = func.Children[0];
@@ -308,6 +328,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     using PatType = Entity.PatType;
     internal static class AnalyticalSolver
     {
+        /// <summary>
+        /// Equation solver
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <param name="x"></param>
+        /// <param name="dst"></param>
         internal static void Solve(Entity expr, VariableEntity x, EntitySet dst)
             => Solve(expr, x, dst, compensateSolving: false);
         internal static void Solve(Entity expr, VariableEntity x, EntitySet dst, bool compensateSolving)

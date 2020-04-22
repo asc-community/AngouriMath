@@ -25,6 +25,12 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer 
     {   
+        /// <summary>
+        /// Returns information about all monomials of an expression
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <param name="replaceVars"></param>
+        /// <returns></returns>
         internal static PolyInfo GatherAllPossiblePolynomials(Entity expr, bool replaceVars)
         {
             // TODO: refactor

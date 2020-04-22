@@ -23,6 +23,25 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
+        /// <summary>
+        /// Gathers linear children of an entity
+        /// e. g. 1 + x - a / 2 + b - 4
+        /// would return
+        /// { 1, x, (-1) * a / 2, b, (-1) * 4 }
+        /// if funcName == "sumf" and badFuncName == "minusf"
+        /// </summary>
+        /// <param name="tree"></param>
+        /// <param name="funcName">
+        /// The operator you gather children over (e. g. "sumf" or "mulf")
+        /// </param>
+        /// <param name="badFuncName">
+        /// The operator similar to funcName but somehow inverse to it (e. g. "minusf" or "divf")
+        /// </param>
+        /// <param name="supCreator">
+        /// Function that compensates the fact that badFuncName is inverse to funcName
+        /// Usually used Const.FuncIfSum or Const.FuncIfMul
+        /// </param>
+        /// <returns></returns>
         internal static List<Entity> LinearChildren(Entity tree,
                                              string funcName /*e. g. "sumf" */,
                                              string badFuncName /* e. g. "minusf" */,
@@ -48,6 +67,12 @@ namespace AngouriMath.Core.TreeAnalysis
                 res.Add(tree);
             return res;
         }
+
+        /// <summary>
+        /// Sorts children to provide a better simplification
+        /// </summary>
+        /// <param name="children"></param>
+        /// <param name="level"></param>
         internal static void Sort(List<Entity> children, SortLevel level) => children.Sort((a, b) => a.SortHash(level).CompareTo(b.SortHash(level)));        
     }
 }

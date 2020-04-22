@@ -27,6 +27,11 @@ namespace AngouriMath
     using SortLevel = TreeAnalyzer.SortLevel;
     public abstract partial class Entity : ILatexiseable
     {
+        /// <summary>
+        /// Hash that is convenient to sort with
+        /// </summary>
+        /// <param name="level"></param>
+        /// <returns></returns>
         internal string SortHash(SortLevel level)
         {
             if (this.entType == Entity.EntType.FUNCTION)
@@ -56,6 +61,14 @@ namespace AngouriMath.Core.TreeAnalysis
             MIDDLE_LEVEL, // Contants are now countable
             LOW_LEVEL, // De facto full hash
         }
+
+        /// <summary>
+        /// One group - one hash,
+        /// Different hashes - different groups
+        /// </summary>
+        /// <param name="entities"></param>
+        /// <param name="level"></param>
+        /// <returns></returns>
         internal static List<List<Entity>> GroupByHash(List<Entity> entities, SortLevel level)
         {
             var dict = new Dictionary<string, List<Entity>>();
@@ -122,6 +135,11 @@ namespace AngouriMath.Core.TreeAnalysis
             return res;
         }
 
+        /// <summary>
+        /// Actual sorting with sortHash
+        /// </summary>
+        /// <param name="tree"></param>
+        /// <param name="level"></param>
         internal static void Sort(ref Entity tree, SortLevel level)
         {
             Func<Entity, OperatorEntity> funcIfSum = Const.FuncIfSum;

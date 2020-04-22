@@ -70,6 +70,9 @@ namespace AngouriMath.Core.TreeAnalysis
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
+    /// <summary>
+    /// Solves all forms of Polynomials that are trivially solved
+    /// </summary>
     internal static class PolynomialSolver
     {
         // solves ax + b
@@ -324,7 +327,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             else return null;
         }
     
-
+        /// <summary>
+        /// Finds all terms of a polynomial
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="terms"></param>
+        /// <param name="subtree"></param>
+        /// <returns></returns>
         internal static Dictionary<T, Entity> GatherMonomialInformation<T>(List<Entity> terms, Entity subtree)
         {
             var monomialsByPower = new Dictionary<T, Entity>();

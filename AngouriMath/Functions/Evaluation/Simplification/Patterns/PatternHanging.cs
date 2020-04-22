@@ -22,7 +22,7 @@ using System.Text;
 namespace AngouriMath
 {
     using PatType = Entity.PatType;
-    public static partial class Sumf
+    internal static partial class Sumf
     {
         internal static Pattern PHang(Entity a, Entity b)
         {
@@ -32,7 +32,7 @@ namespace AngouriMath
             return res;
         }
     }
-    public static partial class Minusf
+    internal static partial class Minusf
     {
         internal static Pattern PHang(Entity a, Entity b)
         {
@@ -42,7 +42,7 @@ namespace AngouriMath
             return res;
         }
     }
-    public static partial class Mulf
+    internal static partial class Mulf
     {
         internal static Pattern PHang(Entity a, Entity b)
         {
@@ -52,7 +52,7 @@ namespace AngouriMath
             return res;
         }
     }
-    public static partial class Divf
+    internal static partial class Divf
     {
         internal static Pattern PHang(Entity a, Entity b)
         {
@@ -62,7 +62,7 @@ namespace AngouriMath
             return res;
         }
     }
-    public static partial class Powf
+    internal static partial class Powf
     {
         internal static Pattern PHang(Entity a, Entity b)
         {
@@ -73,7 +73,7 @@ namespace AngouriMath
         }
     }
 
-    public static partial class Sinf
+    internal static partial class Sinf
     {
         internal static Pattern PHang(Entity a)
         {
@@ -83,7 +83,7 @@ namespace AngouriMath
         }
     }
 
-    public static partial class Cosf
+    internal static partial class Cosf
     {
         internal static Pattern PHang(Entity a)
         {
@@ -92,7 +92,7 @@ namespace AngouriMath
             return res;
         }
     }
-    public static partial class Tanf
+    internal static partial class Tanf
     {
         internal static Pattern PHang(Entity a)
         {
@@ -102,7 +102,7 @@ namespace AngouriMath
         }
     }
 
-    public static partial class Cotanf
+    internal static partial class Cotanf
     {
         internal static Pattern PHang(Entity a)
         {
@@ -112,7 +112,7 @@ namespace AngouriMath
         }
     }
 
-    public static partial class Arcsinf
+    internal static partial class Arcsinf
     {
         internal static Pattern PHang(Entity a)
         {
@@ -121,7 +121,7 @@ namespace AngouriMath
             return res;
         }
     }
-    public static partial class Arccosf
+    internal static partial class Arccosf
     {
         internal static Pattern PHang(Entity a)
         {
@@ -130,7 +130,7 @@ namespace AngouriMath
             return res;
         }
     }
-    public static partial class Arctanf
+    internal static partial class Arctanf
     {
         internal static Pattern PHang(Entity a)
         {
@@ -140,7 +140,7 @@ namespace AngouriMath
         }
     }
 
-    public static partial class Arccotanf
+    internal static partial class Arccotanf
     {
         internal static Pattern PHang(Entity a)
         {
@@ -150,7 +150,7 @@ namespace AngouriMath
         }
     }
 
-    public static partial class Logf
+    internal static partial class Logf
     {
         internal static Pattern PHang(Entity a, Entity n)
         {

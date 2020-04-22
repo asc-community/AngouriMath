@@ -49,6 +49,16 @@ namespace AngouriMath
         /// <returns></returns>
         public Entity Substitute(VariableEntity x, Entity value)
             => Substitute(x, value, false);
+
+        /// <summary>
+        /// See Substitute instead
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="value"></param>
+        /// <param name="inPlace">
+        /// If no need to copy, we do it in place
+        /// </param>
+        /// <returns></returns>
         public Entity Substitute(VariableEntity x, Entity value, bool inPlace)
         {
             Entity res;

@@ -25,6 +25,11 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
+        /// <summary>
+        /// Finds all possible divisions to perform DividePolynoms
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <param name="cond"></param>
         internal static void FindDivisors(ref Entity expr, Func<Entity, Entity, bool> cond)
         {
             for (int i = 0; i < expr.Children.Count; i++)
@@ -39,6 +44,12 @@ namespace AngouriMath.Core.TreeAnalysis
                     expr = DividePolynoms(expr.Children[0], expr.Children[1]);
         }
 
+        /// <summary>
+        /// Divides one polynom over another one
+        /// </summary>
+        /// <param name="p"></param>
+        /// <param name="q"></param>
+        /// <returns></returns>
         internal static Entity DividePolynoms(Entity p, Entity q)
         {
             // ---> (x^0.6 + 2x^0.3 + 1) / (x^0.3 + 1)

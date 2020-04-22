@@ -410,6 +410,27 @@ namespace UnitTests
                 );
             AssertSystemSolvable(eqs, VA("x", "y"), 8);
         }
+
+        [TestMethod]
+        public void TestTrigSystem3()
+        {
+            var eqs = EQ(
+                "a+b-c", 
+                "3a+3b-2c",
+                "3a+4b-4c"
+            );
+            AssertSystemSolvable(eqs, VA("a", "b", "c"), 1);
+        }
+
+        [TestMethod]
+        public void TestTrigSystem4()
+        {
+            var eqs = EQ(
+                "a - 1",
+                "b * 0"
+            );
+            AssertSystemSolvable(eqs, VA("a", "b"), 0);
+        }
     }
 }
 

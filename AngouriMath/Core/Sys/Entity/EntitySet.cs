@@ -29,7 +29,19 @@ namespace AngouriMath
     /// </summary>
     public class EntitySet : List<Entity>
     {
+        /// <summary>
+        /// Simplifies all entites by the level of 3
+        /// </summary>
+        /// <returns></returns>
         public EntitySet Simplify() => Simplify(3);
+
+        /// <summary>
+        /// Simplifies all entities
+        /// </summary>
+        /// <param name="level">
+        /// See this parameter for Entity.Simplify
+        /// </param>
+        /// <returns></returns>
         public EntitySet Simplify(int level) => new EntitySet(this.Select(p => p.Simplify(level)));
         private readonly HashSet<string> exsts = new HashSet<string>();
 
@@ -71,6 +83,11 @@ namespace AngouriMath
             foreach (var l in list)
                 Add(l);
         }
+
+        public new void AddRange(IEnumerable<Entity> list)
+            => Merge(list);
+        public void AddRange(IEnumerable<Number> list)
+            => Merge(list);
         public EntitySet(params Entity[] entites)
         {
             foreach (var el in entites)

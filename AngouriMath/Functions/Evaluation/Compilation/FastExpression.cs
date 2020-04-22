@@ -100,6 +100,10 @@ namespace AngouriMath
             RawExpr = rawExpr;
         }
 
+        /// <summary>
+        /// You cannot modify this function once it is sealed. The final user will never access to its
+        /// direct instructions
+        /// </summary>
         internal void Seal()
         {
             stack = new Stack<Complex>(instructions.Count);
@@ -197,6 +201,10 @@ namespace AngouriMath
             return stack.Pop();
         }
 
+        /// <summary>
+        /// Might be useful for debug if a function works too slowly
+        /// </summary>
+        /// <returns></returns>
         public override string ToString()
         {
             var sb = new StringBuilder();

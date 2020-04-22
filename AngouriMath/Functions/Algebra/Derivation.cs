@@ -49,7 +49,7 @@ namespace AngouriMath
     }
 
     // Adding invoke table for eval
-    public static partial class MathFunctions
+    internal static partial class MathFunctions
     {
         internal static readonly DeriveTable deriveTable = new DeriveTable();
 
@@ -61,7 +61,7 @@ namespace AngouriMath
 
 
     // Each function and operator processing
-    public static partial class Sumf
+    internal static partial class Sumf
     {
         // (a + b)' = a' + b'
         public static Entity Derive(List<Entity> args, VariableEntity variable) {
@@ -72,7 +72,7 @@ namespace AngouriMath
         }
         
     }
-    public static partial class Minusf
+    internal static partial class Minusf
     {
         // (a - b)' = a' - b'
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -83,7 +83,7 @@ namespace AngouriMath
             return a.Derive(variable) - b.Derive(variable);
         }
     }
-    public static partial class Mulf
+    internal static partial class Mulf
     {
         // (a * b)' = a' * b + b' * a
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -95,7 +95,7 @@ namespace AngouriMath
         }
     }
 
-    public static partial class Divf
+    internal static partial class Divf
     {
         // (a / b)' = (a' * b - b' * a) / b^2
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -106,7 +106,7 @@ namespace AngouriMath
             return (a.Derive(variable) * b - b.Derive(variable) * a) / (b.Pow(2));
         }
     }
-    public static partial class Powf
+    internal static partial class Powf
     {
         // (a ^ b)' = e ^ (ln(a) * b) * (a' * b / a + ln(a) * b')
         // (a ^ const)' = const * a ^ (const - 1)
@@ -130,7 +130,7 @@ namespace AngouriMath
                 return a.Pow(b) * (a.Derive(variable) * b / a + MathS.Ln(a) * b.Derive(variable));
         }
     }
-    public static partial class Sinf
+    internal static partial class Sinf
     {
         // sin(a) = cos(a) * a'
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -140,7 +140,7 @@ namespace AngouriMath
             return a.Cos() * a.Derive(variable);
         }
     }
-    public static partial class Cosf
+    internal static partial class Cosf
     {
         // sin(a) = -sin(a) * a'
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -150,7 +150,7 @@ namespace AngouriMath
             return -1 * a.Sin() * a.Derive(variable);
         }
     }
-    public static partial class Tanf
+    internal static partial class Tanf
     {
         // tan(a) = 1 / cos(a) ^ 2
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -160,7 +160,7 @@ namespace AngouriMath
             return 1 / a.Cos().Pow(2) * a.Derive(variable);
         }
     }
-    public static partial class Cotanf
+    internal static partial class Cotanf
     {
         // tan(a) = -1 / sin(a) ^ 2
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -170,7 +170,7 @@ namespace AngouriMath
             return -1 / a.Sin().Pow(2) * a.Derive(variable);
         }
     }
-    public static partial class Logf
+    internal static partial class Logf
     {
         // log(a, b) = (ln(a) / ln(b))' = (ln(a)' * ln(b) - ln(a) * ln(b)') / ln(b)^2 = (a' / a * ln(b) - ln(a) * b' / b) / ln(b)^2
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -181,7 +181,7 @@ namespace AngouriMath
             return (a.Derive(variable) / a * MathS.Ln(b) - MathS.Ln(a) * b.Derive(variable) / b) / (MathS.Ln(b).Pow(2));
         }
     }
-    public static partial class Arcsinf
+    internal static partial class Arcsinf
     {
         // arcsin(x)' = 1 / sqrt(1 - x^2)
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -191,7 +191,7 @@ namespace AngouriMath
             return 1 / MathS.Sqrt(1 - MathS.Sqr(a)) * a.Derive(variable);
         }
     }
-    public static partial class Arccosf
+    internal static partial class Arccosf
     {
         // arccos(x)' = -1 / sqrt(1 - x^2)
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -201,7 +201,7 @@ namespace AngouriMath
             return -1 / MathS.Sqrt(1 - MathS.Sqr(a)) * a.Derive(variable);
         }
     }
-    public static partial class Arctanf
+    internal static partial class Arctanf
     {
         // arctan(x)' = 1 / (1 + x^2)
         public static Entity Derive(List<Entity> args, VariableEntity variable)
@@ -211,7 +211,7 @@ namespace AngouriMath
             return 1 / (1 + MathS.Sqr(a)) * a.Derive(variable);
         }
     }
-    public static partial class Arccotanf
+    internal static partial class Arccotanf
     {
         // arccotan(x)' = -1 / (1 + x^2)
         public static Entity Derive(List<Entity> args, VariableEntity variable)
