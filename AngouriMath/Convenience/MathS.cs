@@ -201,6 +201,24 @@ namespace AngouriMath
         /// angle between B and C
         /// </returns>
         public static Entity Arccotan(Entity a) => Arccotanf.Hang(a);
+     
+        /// <summary>
+        /// https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
+        /// </summary>
+        /// <param name="a"></param>
+        /// <returns>
+        /// angle between B and C
+        /// </returns>
+        public static Entity Arcsec(Entity a) => Arccosf.Hang(1 / a);
+     
+        /// <summary>
+        /// https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
+        /// </summary>
+        /// <param name="a"></param>
+        /// <returns>
+        /// angle between B and C
+        /// </returns>
+        public static Entity Arccosec(Entity a) => Arcsinf.Hang(1 / a);
 
         /// <summary>
         /// https://en.wikipedia.org/wiki/Natural_logarithm
