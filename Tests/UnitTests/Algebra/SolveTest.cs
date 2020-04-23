@@ -342,7 +342,8 @@ namespace UnitTests
 
         public void AssertSystemSolvable(List<Entity> equations, List<VariableEntity> vars, int rootCount = -1)
         {
-            var sol = MathS.Solve(equations, vars);
+            var sys = MathS.Equations(equations.ToArray());
+            var sol = sys.Solve(vars.ToArray());
             Assert.IsTrue(sol.Shape[0] == rootCount || rootCount == -1, "Got " + sol.Shape[0] + " instead of " + rootCount);
             for (int i = 0; i < sol.Shape[0]; i++)
             {
@@ -430,6 +431,15 @@ namespace UnitTests
                 "b * 0"
             );
             AssertSystemSolvable(eqs, VA("a", "b"), 0);
+        }
+
+        [TestMethod]
+        public void TestLogs()
+        {
+            Entity eqs = "log(32, x) - 5";
+            var roots = eqs.SolveEquation("x");
+            Assert.IsTrue(roots.Count == 1);
+            AssertRoots(eqs, "x", roots[0]);
         }
     }
 }

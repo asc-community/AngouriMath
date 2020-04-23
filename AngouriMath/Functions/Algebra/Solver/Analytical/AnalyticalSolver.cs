@@ -315,7 +315,7 @@ namespace AngouriMath.Core.TreeAnalysis
                         return GetNotNullEntites(FindInvertExpression(a, MathS.Pow(b, value), x));
                     else
                         // log(a, x) = value => a = x ^ value => x = a ^ (1 / value)
-                        return GetNotNullEntites(FindInvertExpression(a, 1 / MathS.Pow(b, value), x));
+                        return GetNotNullEntites(FindInvertExpression(b, MathS.Pow(a, 1 / value), x));
                 default:
                     throw new SysException("Unknown function");
             }
@@ -424,7 +424,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     continue;
                 var newExpr = replacement.Item2.DeepCopy();
                 TreeAnalyzer.FindAndReplace(ref newExpr, replacement.Item1, newVar);
-                solutions = newExpr.Solve(newVar);
+                solutions = newExpr.SolveEquation(newVar);
                 if (solutions.Count > 0/* && !newExpr.Children.Any(c => c == newVar)*/)
                 {
                     bestReplacement = replacement.Item1;
@@ -440,7 +440,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 foreach (var solution in solutions)
                 {
                     var str = bestReplacement.ToString();
-                    if (bestReplacement - solution != expr)
+                        if (!compensateSolving || bestReplacement - solution != expr)
                         Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
                 }
                 dst.AddRange(newDst);

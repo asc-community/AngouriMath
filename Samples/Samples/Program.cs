@@ -253,10 +253,8 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity a = MathS.Vector(2, 3, 4);
-            Entity b = MathS.Vector(5, 6, 7);
-            if (a.IsTensoric() && b.IsTensoric())
-                Console.WriteLine(MathS.ScalarProduct(a as Tensor, b as Tensor));
+            Entity eqs = "x^y-3";
+            Console.WriteLine(eqs.SolveEquation("y"));
             /*
             Entity expr = "32 + x";
             var q = new List<Entity>();

@@ -14,8 +14,8 @@
  */
 
 
-
-﻿using AngouriMath.Core;
+using System;
+using AngouriMath.Core;
 using AngouriMath.Core.FromString;
 using System.Linq.Expressions;
 using AngouriMath.Core.FromLinq;
@@ -53,6 +53,7 @@ namespace AngouriMath
         /// matrix.shape[0] - number of solutions
         /// matrix.shape[1] is equal to amount of variables
         /// </returns>
+        [ObsoleteAttribute("Use MathS.Equations instead")]
         public static Tensor Solve(List<Entity> equations, List<VariableEntity> vars)
             => EquationSolver.SolveSystem(equations, vars);
 
@@ -62,7 +63,17 @@ namespace AngouriMath
         /// <param name="equation"></param>
         /// <param name="var"></param>
         /// <returns></returns>
+        [ObsoleteAttribute("Use either MathS.Equations or MathS.SolveEquation or yourexpr.SolveEquation instead")]
         public static EntitySet Solve(Entity equation, VariableEntity var)
+            => EquationSolver.Solve(equation, var);
+
+        /// <summary>
+        /// Solves one equation over one variable
+        /// </summary>
+        /// <param name="equation"></param>
+        /// <param name="var"></param>
+        /// <returns></returns>
+        public static EntitySet SolveEquation(Entity equation, VariableEntity var)
             => EquationSolver.Solve(equation, var);
 
         /// <summary>

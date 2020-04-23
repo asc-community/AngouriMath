@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Functions.Algebra.Solver;
 
 namespace AngouriMath.Core.Sys
 {
@@ -47,7 +48,7 @@ namespace AngouriMath.Core.Sys
         /// </param>
         /// <returns></returns>
         public Tensor Solve(params VariableEntity[] vars)
-        => MathS.Solve(equations, vars.ToList());
+        => EquationSolver.SolveSystem(equations, vars.ToList());
 
         /// <summary>
         /// Returns latexised version of the system
