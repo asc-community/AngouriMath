@@ -253,9 +253,10 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity expr = "x + 2 + (x + 2)";
-            Console.WriteLine(expr);
-
+            Entity a = MathS.Vector(2, 3, 4);
+            Entity b = MathS.Vector(5, 6, 7);
+            if (a.IsTensoric() && b.IsTensoric())
+                Console.WriteLine(MathS.ScalarProduct(a as Tensor, b as Tensor));
             /*
             Entity expr = "32 + x";
             var q = new List<Entity>();

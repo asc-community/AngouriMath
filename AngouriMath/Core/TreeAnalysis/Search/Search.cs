@@ -113,6 +113,6 @@ namespace AngouriMath
         /// Finds out whether an expression contains at least one tensor
         /// </summary>
         /// <returns></returns>
-        internal bool IsTensoric() => ContainsName("tensort");
+        public bool IsTensoric() => ContainsName("tensort");
     }
 }
