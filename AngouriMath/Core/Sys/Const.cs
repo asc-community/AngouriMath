@@ -104,7 +104,7 @@ namespace AngouriMath
         /// Yet to be extended
         /// Case does matter, not all letters have both displays in LaTeX
         /// </summary>
-        private static readonly List<string> LatexesiableConstants = new List<string>
+        private static readonly List<string> LatexisableConstants = new List<string>
         {
             "alpha",
             "beta",
@@ -158,7 +158,7 @@ namespace AngouriMath
         /// <param name="constName"></param>
         /// <returns></returns>
         internal static string LatexiseConst(string constName)
-            => LatexesiableConstants.Contains(constName) ? @"\" + constName : constName;
+            => LatexisableConstants.Contains(constName) ? @"\" + constName : constName;
 
     }
 }
