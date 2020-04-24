@@ -259,8 +259,8 @@ namespace Samples
             for (float i = 0; i < 10; i += 0.2f)
                 Console.WriteLine(func1.Call(i).ToString() + "  " + func2.Call(i).ToString());
                 */
-            Entity ex = "e";
-            Console.WriteLine(ex.Eval());
+            Entity ex = "e + pi / alpha + Omega ^ (theta + gc)";
+            Console.WriteLine(ex.Latexise());
             /*
             Entity expr = "32 + x";
             var q = new List<Entity>();

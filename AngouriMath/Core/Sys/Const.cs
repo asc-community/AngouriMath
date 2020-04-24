@@ -98,5 +98,37 @@ namespace AngouriMath
                 return BitConverter.ToString(computedByteHash).Replace("-", String.Empty);
             }
         }
+
+        /// <summary>
+        /// List of constants LaTeX will correctly display
+        /// Yet to be extended
+        /// Case does matter, not all letters have both displays in LaTeX
+        /// </summary>
+        private static readonly List<string> LatexesiableConstants = new List<string>
+        {
+            "pi",
+            "Pi",
+            "alpha",
+            "omega",
+            "Omega",
+            "theta",
+            "Theta",
+            "epsilon",
+            "kappa",
+            "psi",
+            "Psi",
+            "phi",
+            "Phi",
+        };
+
+        /// <summary>
+        /// Returns latexised const if it is possible to latexise it,
+        /// or its original name otherwise
+        /// </summary>
+        /// <param name="constName"></param>
+        /// <returns></returns>
+        internal static string LatexiseConst(string constName)
+            => LatexesiableConstants.Contains(constName) ? @"\" + constName : constName;
+
     }
 }
