@@ -253,8 +253,14 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity eqs = "x^y-3";
-            Console.WriteLine(eqs.SolveEquation("y"));
+            /*
+            var func1 = MathS.FromString("sin(x)2").Compile("x");
+            var func2 = MathS.FromString("(1 - cos(2x)) / 2").Compile("x");
+            for (float i = 0; i < 10; i += 0.2f)
+                Console.WriteLine(func1.Call(i).ToString() + "  " + func2.Call(i).ToString());
+                */
+            Entity ex = "e";
+            Console.WriteLine(ex.Eval());
             /*
             Entity expr = "32 + x";
             var q = new List<Entity>();

@@ -133,6 +133,8 @@ namespace AngouriMath
         /// <returns></returns>
         public Entity SubstituteConstants()
         {
+            if (MathS.IsConstant(this))
+                return MathS.ConstantList[this.Name];
             Entity curr = this.DeepCopy();  // Instead of copying in substitute, 
             // we better copy first and then do inPlace substitute
             foreach (var pair in MathS.ConstantList)

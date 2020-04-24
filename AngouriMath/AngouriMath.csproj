@@ -4,22 +4,22 @@
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.0</TargetFramework>
     <LangVersion>8.0</LangVersion>
-    <Authors>Angourisoft</Authors>
+    <Authors>WhiteBlackGoose</Authors>
     <Company>Angourisoft</Company>
     <Copyright>Angourisoft</Copyright>
     <PackageProjectUrl>asc-community.org</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Angourisoft/MathS</RepositoryUrl>
-    <AssemblyVersion>0.0.18.0</AssemblyVersion>
-    <FileVersion>0.0.18.0</FileVersion>
+    <AssemblyVersion>0.0.20.0</AssemblyVersion>
+    <FileVersion>0.0.20.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-    <PackageTags>Math, csharp, derivation, latex, calculator, parse, simplification, compute, symbol, compilation, algebra</PackageTags>
-    <Version>1.0.18.0-Alpha</Version>
+    <PackageTags>Math, csharp, derivation, latex, calculator, parse, simplification, compute, symbol, compilation, algebra, equation system, equation</PackageTags>
+    <Version>1.0.20.0</Version>
     <PackageIconUrl>https://raw.githubusercontent.com/Angourisoft/MathS/master/icon.png</PackageIconUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <Description>Enables to work with formulas built in the code or from a string. Computing, derivating, latex rendering, fast functions, and many more.</Description>
-    <PackageReleaseNotes>Solving equations &amp; simplification has improved &amp; tons of bugs fixed &amp; some more features</PackageReleaseNotes>
+    <Description>Enables to work with formulas built in the code or from a string. Computing, derivating, latex rendering, fast functions, solving equations and systems of equations analytycally, simplification, and much more.</Description>
+    <PackageReleaseNotes>Added Tensor, system of equations, polynom divisions, periodic roots for solvers, compilation boosted, simplification improved, LaTeX formatting improved, cache for compiled functions added, search boosted, tons of bugs fixed</PackageReleaseNotes>
     <PackageId>AngouriMath</PackageId>
     <Product>AngouriMath</Product>
     <ApplicationIcon />
