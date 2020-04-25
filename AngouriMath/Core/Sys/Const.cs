@@ -104,21 +104,51 @@ namespace AngouriMath
         /// Yet to be extended
         /// Case does matter, not all letters have both displays in LaTeX
         /// </summary>
-        private static readonly List<string> LatexesiableConstants = new List<string>
+        private static readonly List<string> LatexisableConstants = new List<string>
         {
-            "pi",
-            "Pi",
             "alpha",
-            "omega",
-            "Omega",
-            "theta",
-            "Theta",
+            "beta",
+            "gamma",
+            "delta",
             "epsilon",
+            "varepsilon",
+            "zeta",
+            "eta",
+            "theta",
+            "vartheta",
+            "iota",
             "kappa",
-            "psi",
-            "Psi",
+            "varkappa",
+            "lambda",
+            "mu",
+            "nu",
+            "xi",
+            "omicron",
+            "pi",
+            "varpi",
+            "rho",
+            "varrho",
+            "sigma",
+            "varsigma",
+            "tau",
+            "upsilon",
             "phi",
+            "varphi",
+            "chi",
+            "psi",
+            "omega",
+    
+            "Gamma",
+            "Delta",
+            "Theta",
+            "Lambda",
+            "Xi",
+            "Pi",
+            "Sigma",
+            "Upsilon",
             "Phi",
+            "Psi",
+            "Omega",
         };
 
         /// <summary>
@@ -128,7 +158,7 @@ namespace AngouriMath
         /// <param name="constName"></param>
         /// <returns></returns>
         internal static string LatexiseConst(string constName)
-            => LatexesiableConstants.Contains(constName) ? @"\" + constName : constName;
+            => LatexisableConstants.Contains(constName) ? @"\" + constName : constName;
 
     }
 }
