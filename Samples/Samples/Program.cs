@@ -128,7 +128,7 @@ namespace Samples
         static void Sample15()
         {
             Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3)x + 2 + 3x2 + (x - 3)x3)";
-            foreach (var root in expr.Solve("x"))
+            foreach (var root in expr.SolveEquation("x"))
                 Console.WriteLine(root);
         }
         static void Sample16()
@@ -253,13 +253,21 @@ namespace Samples
 
         static void Main(string[] _)
         {
+            //Console.WriteLine(Number.Parse("43.3 + 323.3i"));
+            //var a = (Complex) ("1");
+            Number a;
+            if (Number.TryParse("edi", out a))
+                Console.WriteLine(a);
+            else
+                Console.WriteLine("Not successful");
+            return;
             /*
             var func1 = MathS.FromString("sin(x)2").Compile("x");
             var func2 = MathS.FromString("(1 - cos(2x)) / 2").Compile("x");
             for (float i = 0; i < 10; i += 0.2f)
                 Console.WriteLine(func1.Call(i).ToString() + "  " + func2.Call(i).ToString());
                 */
-            Entity ex = "e + pi / alpha + Omega ^ (theta + gc)";
+            Entity ex = "sqrt(e + pi / alpha) + Omega ^ (theta + gc) - epsilon^(sqrt(2i + x))";
             Console.WriteLine(ex.Latexise());
             /*
             Entity expr = "32 + x";

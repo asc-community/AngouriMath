@@ -19,7 +19,9 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
-using AngouriMath.Core.Sys;
+ using System.Runtime.CompilerServices;
+ using AngouriMath.Core.FromString;
+ using AngouriMath.Core.Sys;
 
 namespace AngouriMath.Core
 {
@@ -144,35 +146,84 @@ namespace AngouriMath.Core
             }
             return res.Replace(",", ".");
         }
-        public static double ToDouble(string s)
+        private static double ToDouble(string s)
         {
             return double.Parse(s, CultureInfo.InvariantCulture);
+        }
+
+        private static bool TryToDouble(string s, out double res)
+            => double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out res);
+
+
+        /// <summary>
+        /// Parses a Number from a string
+        /// </summary>
+        /// <param name="s"></param>
+        /// <returns>
+        /// Number if parsing went without errors
+        /// An exception thrown otherwise
+        /// </returns>
+        public static Number Parse(string s)
+        {
+            Number res;
+            if (TryParse(s, out res))
+                return res;
+            else
+                throw new ParseException("String `" + s + "` cannot be parsed as Number");
         }
 
         /// <summary>
         /// To get a number from a string
         /// </summary>
         /// <param name="s"></param>
-        /// <returns></returns>
-        public static Number Parse(string s)
+        /// <param name="result">
+        /// Number to be overriden by the result of the function (even if not successful)
+        /// </param>
+        /// <returns>
+        /// true if parsing was successful,
+        /// false otherwise
+        /// </returns>
+        public static bool TryParse(string s, out Number result)
         {
+            result = null;
+            if (s == "")
+                return false;
+
             if (s == "-i")
             {
-                return new Number(0, -1);
+                result = new Number(0, -1);
+                return true;
             }
             if (s == "i")
             {
-                return new Number(0, 1);
+                result = new Number(0, 1);
+                return true;
             }
             if (s[s.Length - 1] == 'i')
             {
-                return new Number(0, ToDouble(s.Substring(0, s.Length - 1)));
+                double imag;
+                if (TryToDouble(s.Substring(0, s.Length - 1), out imag))
+                {
+                    result = new Number(0, imag);
+                    return true;
+                }
+                else
+                    return false;
             }
             else
             {
-                return ToDouble(s);
+                double real;
+                if (TryToDouble(s, out real))
+                {
+                    result = new Number(real, 0);
+                    return true;
+                }
+                else
+                    return false;
             }
         }
+
+
         internal bool __isReal;
         public static implicit operator Number(int num) => new Number(num);
         public static implicit operator Number(double num) => new Number(num);
