@@ -79,7 +79,9 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Latexise(args[0].Priority < Const.PRIOR_SUM) + "+" + args[1].Latexise(args[1].Priority < Const.PRIOR_SUM);
+            var arg1latex = args[1].Latexise(args[1].Priority < Const.PRIOR_SUM);
+            return args[0].Latexise(args[0].Priority < Const.PRIOR_SUM) +
+                (arg1latex.StartsWith("-") ? arg1latex : "+" + arg1latex);
         }
     }
     internal static partial class Minusf
