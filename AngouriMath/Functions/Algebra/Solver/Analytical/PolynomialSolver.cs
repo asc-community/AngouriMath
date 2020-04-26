@@ -214,6 +214,21 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var beta = MathS.Pow(b, 3) / (8 * MathS.Pow(a, 3)) - (b * c) / (2 * MathS.Sqr(a)) + d / a;
             var gamma = -3 * MathS.Pow(b, 4) / (256 * MathS.Pow(a, 4)) + MathS.Sqr(b) * c / (16 * MathS.Pow(a, 3)) - (b * d) / (4 * MathS.Sqr(a)) + e / a;
 
+            if (MathS.CanBeEvaluated(beta))
+                beta = beta.Eval();
+            if (beta == 0)
+            {
+                for (int s = -1; s <= 1; s += 2)
+                for (int t = -1; t <= 1; t += 2)
+                {
+                    var x = -b / 4 * a + s * MathS.Sqrt((-alpha + t * MathS.Sqrt(MathS.Sqr(alpha) - 4 * gamma)) / 2);
+                    res.Add(x, check: false);
+                }
+                return res;
+            }
+
+            
+
             var P = -MathS.Sqr(alpha) / 12 - gamma;
             var Q = -MathS.Pow(alpha, 3) / 108 + alpha * gamma / 3 - MathS.Sqr(beta) / 8;
             var R = -Q / 2 + MathS.Sqrt(MathS.Sqr(Q) / 4 + MathS.Pow(P, 3) / 27);

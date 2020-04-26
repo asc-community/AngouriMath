@@ -3,7 +3,7 @@ using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 
-namespace UnitTests
+namespace UnitTests.Algebra
 {
     [TestClass]
     public class IntegrationTest

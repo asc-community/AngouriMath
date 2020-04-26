@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq.Expressions;
 
-namespace UnitTests
+namespace UnitTests.Convenience
 {
     [TestClass]
     public class FromLinqTest

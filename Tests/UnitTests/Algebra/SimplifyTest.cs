@@ -1,7 +1,7 @@
 using AngouriMath;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTests
+namespace UnitTests.Algebra
 {
     [TestClass]
     public class SimplifyTest

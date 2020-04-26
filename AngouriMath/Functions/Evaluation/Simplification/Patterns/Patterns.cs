@@ -308,6 +308,12 @@ namespace AngouriMath
                 (Powf.PHang(any1, const1 / Num(2)) - Powf.PHang(any2, const2 / Num(2))) *
                 (Powf.PHang(any1, const1 / Num(2)) + Powf.PHang(any2, const2 / Num(2))) },
 
+            
+            {
+                Powf.PHang(any1, Num(2)) - const1,
+                (any1 - Powf.PHang(const1, Num(0.5))) * (any1 + Powf.PHang(const1, Num(0.5)))
+            },
+
             // {1} * {2} + {1} * {3} = {1} * ({2} + {3})
             { any1 * any2 + any1 * any3, any1 * (any2 + any3) },
             { any1 * any2 + any3 * any1, any1 * (any2 + any3) },

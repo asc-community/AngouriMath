@@ -2,7 +2,7 @@
 using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTests
+namespace UnitTests.Common
 {
     [TestClass]
     public class SubstituteTest

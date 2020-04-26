@@ -3,7 +3,7 @@ using AngouriMath.Core;
 using AngouriMath.Core.FromString;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTests
+namespace UnitTests.Convenience
 {
     [TestClass]
     public class SynonimFunctionTest

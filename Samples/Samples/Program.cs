@@ -253,45 +253,8 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            //Console.WriteLine(Number.Parse("43.3 + 323.3i"));
-            //var a = (Complex) ("1");
-            Number a;
-            if (Number.TryParse("edi", out a))
-                Console.WriteLine(a);
-            else
-                Console.WriteLine("Not successful");
-            return;
-            /*
-            var func1 = MathS.FromString("sin(x)2").Compile("x");
-            var func2 = MathS.FromString("(1 - cos(2x)) / 2").Compile("x");
-            for (float i = 0; i < 10; i += 0.2f)
-                Console.WriteLine(func1.Call(i).ToString() + "  " + func2.Call(i).ToString());
-                */
-            Entity ex = "sqrt(e + pi / alpha) + Omega ^ (theta + gc) - epsilon^(sqrt(2i + x))";
-            Console.WriteLine(ex.Latexise());
-            /*
-            Entity expr = "32 + x";
-            var q = new List<Entity>();
-            q.Add(expr);
-            var quack = expr.DeepCopy();
-            quack = "y + 43";
-            Console.WriteLine(q[0]);
-            */
-            /*
-            int prec = 1000;
-            Entity funcRaw = 0;
-            var x = MathS.Var("x");
-            for (int i = 0; i < prec; i++)
-                funcRaw += MathS.Sin(1 / MathS.Sqrt(i + 1) * x) * (i % 2 == 0 ? -1 : 1);
-            Console.WriteLine("Function gathered");
-            var func = funcRaw.Compile(x);
-            Console.WriteLine("Function compiled");
-            var roots = funcRaw.Derive(x).SolveNt(x);
-            Console.WriteLine("Extremums found");
-            var values = roots.Where(r => r.IsReal()).Select(c => func.Call(c)).ToList();
-            values.Sort();
-            foreach (var v in values)
-                Console.WriteLine(values);*/
+            Entity expr = "x4 - 2x2 - 2";
+            Console.Write(expr.SolveEquation("x"));
         }
     }
 #pragma warning restore IDE0051
