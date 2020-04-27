@@ -103,9 +103,8 @@ namespace AngouriMath
         /// List of constants LaTeX will correctly display
         /// Yet to be extended
         /// Case does matter, not all letters have both displays in LaTeX
-        /// TODO: log2N search instead of N
         /// </summary>
-        private static readonly List<string> LatexisableConstants = new List<string>
+        private static readonly HashSet<string> LatexisableConstants = new HashSet<string>
         {
             "alpha",
             "beta",
