@@ -12,20 +12,6 @@ using System.Numerics;
 namespace Samples
 {
 #pragma warning disable IDE0051
-
-    class Quack
-    {
-        public static class SysInfo
-        {
-            public static int Zhopa;
-        }
-
-        public Quack(int s)
-        {
-            SysInfo.Zhopa = s;
-        }
-    }
-
     class Program
     {
         static void Sample1()
@@ -253,8 +239,7 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity expr = "x4 - 2x2 - 2";
-            Console.Write(expr.SolveEquation("x"));
+            
         }
     }
 #pragma warning restore IDE0051

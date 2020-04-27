@@ -412,6 +412,22 @@ namespace UnitTests.Algebra
             foreach (var root in roots)
                 AssertRoots(eq, "x", root);
         }
+
+        [TestMethod]
+        public void Test1px()
+        {
+            Entity expr = "pi - 1^x";
+            expr.SolveEquation("x"); // Check if it doesn't hang
+        }
+
+        [TestMethod]
+        public void ExpSimpl()
+        {
+            Entity expr = "x^4 * x^y - 2";
+            var roots = expr.SolveEquation("x");
+            Assert.IsTrue(roots.Count == 1);
+            AssertRoots(expr, "x", roots[0]);
+        }
     }
 }
 

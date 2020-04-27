@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
  using AngouriMath.Core.Sys;
  using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Functions.Algebra.AnalyticalSolving;
 
 namespace AngouriMath
 {
@@ -446,6 +447,28 @@ namespace AngouriMath
             tree = tree.DeepCopy();
             TreeAnalyzer.Optimization.OptimizeTree(ref tree);
             return tree;
+        }
+
+        public static class Utils
+        {
+            /// <summary>
+            /// Returns an entity in polynomial order if possible
+            /// </summary>
+            /// <param name="expr">
+            /// To parse from
+            /// </param>
+            /// <param name="variable">
+            /// Polynomial is a function of a variable
+            /// </param>
+            /// <param name="dst">
+            /// To return to
+            /// </param>
+            /// <returns>
+            /// true if success
+            /// false otherwise (do not access dst in this case, it's undefined)
+            /// </returns>
+            public static bool TryPolynomial(Entity expr, VariableEntity variable, out Entity dst)
+                => Functions.Utils.TryPolynomial(expr, variable, out dst);
         }
     }
 }

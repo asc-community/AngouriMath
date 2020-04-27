@@ -388,8 +388,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             var resInverted = TreeAnalyzer.FindInvertExpression(expr.Children[0], expr.Children[1], lastChild);
                             foreach (var result in resInverted)
                                 Solve(lastChild - result, x, dst, compensateSolving: true);
-                            //foreach (var block in res.Select(r => (lastChild - r).Solve(x)))
-                            //    dst.AddRange(block);
                             return;
                         }
                         break;
@@ -412,7 +410,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var replacements = new List<Tuple<Entity, Entity>>();
             replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(expr, x), expr));
             foreach (var alt in expr.Alternate(4))
+            {
+                if (alt.FindSubtree(x) == null)
+                    return; // in this case there is either 0 or +oo solutions
                 replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
+            }
             // // //
 
             // Here we find one that has at least one solution
@@ -425,29 +427,26 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 var newExpr = replacement.Item2.DeepCopy();
                 TreeAnalyzer.FindAndReplace(ref newExpr, replacement.Item1, newVar);
                 solutions = newExpr.SolveEquation(newVar);
-                if (solutions.Count > 0/* && !newExpr.Children.Any(c => c == newVar)*/)
+                if (solutions.Count > 0 /* && !newExpr.Children.Any(c => c == newVar)*/)
                 {
                     bestReplacement = replacement.Item1;
-                    break;
-                }
-            }
-            // // //
 
-            // Here we get back to our initial variable
-            if (bestReplacement != null)
-            {
-                EntitySet newDst = new EntitySet();
-                foreach (var solution in solutions)
-                {
-                    var str = bestReplacement.ToString();
+                    // Here we are trying to solve for this replacement
+                    EntitySet newDst = new EntitySet();
+                    foreach (var solution in solutions)
+                    {
+                        var str = bestReplacement.ToString();
                         if (!compensateSolving || bestReplacement - solution != expr)
-                        Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
+                            Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
+                    }
+                    dst.AddRange(newDst);
+                    if (dst.Count > 0)
+                        break;
+                    // // //
                 }
-                dst.AddRange(newDst);
             }
             // // //
             
-
             if (dst.Count == 0) // if nothing has been found so far
             {
                 EntitySet allVars = new EntitySet();
