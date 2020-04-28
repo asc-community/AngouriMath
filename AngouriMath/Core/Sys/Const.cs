@@ -161,5 +161,17 @@ namespace AngouriMath
         internal static string LatexiseConst(string constName)
             => LatexisableConstants.Contains(constName) ? @"\" + constName : constName;
 
+        /// <summary>
+        /// Swaps two primitive types
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        internal static void Swap<T>(ref T a, ref T b)
+        {
+            T c = a;
+            a = b;
+            b = c;
+        }
     }
 }

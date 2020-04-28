@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,7 +15,7 @@
 
 
 
-﻿using System;
+ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Numerics;
@@ -327,7 +327,7 @@ namespace AngouriMath.Core
         public static double Abs(Number a) => Complex.Abs(a.value);
         public static bool IsDoubleZero(double a)
         {
-            return Math.Abs(a) < MathS.EQUALITY_THRESHOLD;
+            return Math.Abs(a) < MathS.Utils.EQUALITY_THRESHOLD;
         }
 
         internal void _add(Number a) => this.value += a.value;

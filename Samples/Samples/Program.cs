@@ -239,7 +239,10 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            
+            //Entity expr = "a2 + x2 + 2 a x - (1 - x2)";
+            //foreach (var root in expr.SolveEquation("a"))
+            //    Console.WriteLine(root.Substitute("x", "sqrt(2) / 2").Simplify());
+            Entity expr = "";
         }
     }
 #pragma warning restore IDE0051
