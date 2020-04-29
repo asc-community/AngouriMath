@@ -155,7 +155,7 @@ namespace AngouriMath.Core
 
 
         /// <summary>
-        /// Creates an instance of a closed interval (use Set-functions to change it,
+        /// Creates an instance of a closed interval (use SetNode-functions to change it,
         /// see more in MathS.Sets.Interval() )
         /// </summary>
         /// <param name="a"></param>
@@ -191,6 +191,9 @@ namespace AngouriMath.Core
 
         public override Edge LowerBound()
             => CopyEdge(entity);
+
+        public override string ToString()
+            => "{" + entity.Item1.ToString() + "}";
     }
 
     public class IntervalPiece : Piece
@@ -254,6 +257,31 @@ namespace AngouriMath.Core
         {
             leftEdge = new Edge(leftEdge.Item1, Re, Im);
             return this;
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            if (leftEdge.Item3)
+                sb.Append("[");
+            else
+                sb.Append("(");
+            if (leftEdge.Item2)
+                sb.Append("[");
+            else
+                sb.Append("(");
+            sb.Append(leftEdge.Item1.ToString());
+            sb.Append("; ");
+            sb.Append(rightEdge.Item1.ToString());
+            if (leftEdge.Item2)
+                sb.Append("]");
+            else
+                sb.Append(")");
+            if (leftEdge.Item3)
+                sb.Append("]");
+            else
+                sb.Append(")");
+            return sb.ToString();
         }
     }
 }

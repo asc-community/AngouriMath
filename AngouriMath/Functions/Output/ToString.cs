@@ -18,8 +18,10 @@
 ﻿using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
-using System.Text;
+ using System.Linq;
+ using System.Text;
  using AngouriMath.Core.Sys.Interfaces;
+ using AngouriMath.Core.Sys.Sets;
 
 namespace AngouriMath
 {
@@ -180,5 +182,25 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 1);
             return "arccotan(" + args[0].Stringize() + ")";
         }
+    }
+
+    internal static class SetToString
+    {
+        static List<string> Operators = new List<string>
+        {
+            "∪",
+            "∩",
+            @"\"
+        };
+        internal static string OperatorToString(OperatorSet set)
+        {
+            // TODO: add check whether set is correct (add TreeAnalyzer.CheckSet)
+            if (set.ConnectionType == OperatorSet.OperatorType.INVERSION)
+                return "!" + set.Children[0].ToString();
+            return "(" + set.Children[0].ToString() + ")" + Operators[(int)set.ConnectionType] + "(" + set.Children[1].ToString() + ")";
+        }
+
+        internal static string LinearSetToString(Set set)
+            => string.Join("∪", set.pieces.Select(c => c.ToString()));
     }
 }

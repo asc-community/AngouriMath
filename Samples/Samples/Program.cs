@@ -239,10 +239,19 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            //Entity expr = "a2 + x2 + 2 a x - (1 - x2)";
-            //foreach (var root in expr.SolveEquation("a"))
-            //    Console.WriteLine(root.Substitute("x", "sqrt(2) / 2").Simplify());
-            Entity expr = "";
+            var A = MathS.Sets.Set();
+            A.AddElements(1, 2, 3);
+
+            var B = MathS.Sets.Set();
+            B.AddElements(5, 6, 7);
+
+            var C = A & B;
+            var D = C | A;
+            
+            Console.WriteLine(A);
+            Console.WriteLine(B);
+            Console.WriteLine(C.ToString());
+            Console.WriteLine(D);
         }
     }
 #pragma warning restore IDE0051

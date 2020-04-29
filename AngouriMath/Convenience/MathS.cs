@@ -466,7 +466,7 @@ namespace AngouriMath
         /// <summary>
         /// Functions and classes related to sets defined here
         /// 
-        /// Class Set defines true mathematical sets
+        /// Class SetNode defines true mathematical sets
         /// It can be empty, it can contain numbers, it can contain intervals etc.
         /// It supports intersection (with & operator), union (with | operator), subtracting (with - operator)
         /// </summary>

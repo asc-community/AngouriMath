@@ -22,11 +22,65 @@ namespace AngouriMath.Core.Sys.Sets
 {
     /// <summary>
     /// Class defines true mathematical sets
-    /// It can be empty, it can contain numbers, it can contain intervals etc.
+    /// It can be empty, it can contain numbers, it can contain intervals etc. It also maybe an operator (|, &, -)
     /// It supports intersection (with & operator), union (with | operator), subtracting (with - operator)
     /// TODO: To make sets work faster
     /// </summary>
-    public class Set : IEnumerable
+    public abstract class SetNode
+    {
+        public enum NodeType
+        {
+            SET,
+            OPERATOR
+        }
+
+        public NodeType Type { get; }
+
+        protected SetNode(NodeType type)
+            => Type = type;
+        public static SetNode operator &(SetNode A, SetNode B)
+        {
+            return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B);
+        }
+
+        public static SetNode operator |(SetNode A, SetNode B)
+        {
+            return new OperatorSet(OperatorSet.OperatorType.UNION, A, B);
+        }
+
+        public static SetNode operator -(SetNode A, SetNode B)
+        {
+            return new OperatorSet(OperatorSet.OperatorType.COMPLEMENT, A, B);
+        }
+
+        public static SetNode operator !(SetNode A)
+        {
+            return new OperatorSet(OperatorSet.OperatorType.INVERSION, A);
+        }
+    }
+
+    public class OperatorSet : SetNode
+    {
+        public enum OperatorType
+        {
+            UNION,           // OR
+            INTERSECTION,    // AND
+            COMPLEMENT,      // SUBTRACT
+            INVERSION,       // NOT
+        }
+        internal SetNode[] Children { get; }
+        public readonly OperatorType ConnectionType;
+        internal OperatorSet(OperatorType type, params SetNode[] children) : base(NodeType.OPERATOR)
+        {
+            Children = children;
+            ConnectionType = type;
+        }
+
+        public override string ToString()
+            => SetToString.OperatorToString(this);
+    }
+
+    public class Set : SetNode, IEnumerable
     {
         IEnumerator IEnumerable.GetEnumerator()
         {
@@ -36,26 +90,12 @@ namespace AngouriMath.Core.Sys.Sets
         public SetEnumerator GetEnumerator()
             => new SetEnumerator(pieces.ToArray());
 
-        private readonly List<Piece> pieces = new List<Piece>();
+        internal readonly List<Piece> pieces = new List<Piece>();
 
         internal void AddPiece(Piece piece)
         {
-            throw new NotImplementedException();
-        }
-
-        public static Set operator &(Set A, Set B)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static Set operator |(Set A, Set B)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static Set operator -(Set A, Set B)
-        {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            pieces.Add(piece);
         }
 
         public bool Contains(Set set)
@@ -69,13 +109,13 @@ namespace AngouriMath.Core.Sys.Sets
         public bool Contains(Piece piece)
             => pieces.Any(p => p.Contains(piece));
 
-        public Set()
+        public Set() : base(NodeType.SET)
         {
             
         }
 
         /// <summary>
-        /// Adds a set of numbers to the set
+        /// Adds a setNode of numbers to the setNode
         /// </summary>
         /// <param name="elements"></param>
         public void AddElements(params Entity[] elements)
@@ -99,6 +139,9 @@ namespace AngouriMath.Core.Sys.Sets
             AddPiece(piece);
             return piece; // so we could modify it later
         }
+
+        public override string ToString()
+            => SetToString.LinearSetToString(this);
     }
 
     public class SetEnumerator : IEnumerator
