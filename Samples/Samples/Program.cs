@@ -239,13 +239,9 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            var x = MathS.FromString("sin(x) + cos(x) - 1");
-            var sols = x.Solve("x");
-            Console.WriteLine(sols);
-            foreach(var sol in sols)
-            {
-                Console.WriteLine(x.Substitute("x", sol).Eval());
-            }
+            var expr = MathS.FromString("sin(x)^2 + cos(x) - 1");
+            var sol = MathS.SolveEquation(expr, "x");
+            Console.WriteLine(sol);
         }
     }
 #pragma warning restore IDE0051

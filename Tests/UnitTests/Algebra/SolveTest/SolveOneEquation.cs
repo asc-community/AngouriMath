@@ -428,6 +428,38 @@ namespace UnitTests.Algebra
             Assert.IsTrue(roots.Count == 1);
             AssertRoots(expr, "x", roots[0]);
         }
+
+        [TestMethod]
+        public void TestLinearTrigRoots1()
+        {
+            Entity expr = "sin(x) + cos(x) - 1";
+            var roots = expr.SolveEquation("x");
+            Assert.IsTrue(roots.Count == 2);
+        }
+
+        [TestMethod]
+        public void TestLinearTrigRoots2()
+        {
+            Entity expr = "sin(x) + cos(x) - 0.5";
+            var roots = expr.SolveEquation("x");
+            Assert.IsTrue(roots.Count == 2);
+        }
+
+        [TestMethod]
+        public void TestLinearTrigRoots3()
+        {
+            Entity expr = "sin(x) + cos(x) - 2";
+            var roots = expr.SolveEquation("x");
+            Assert.IsTrue(roots.Count == 2);
+        }
+
+        // [TestMethod]
+        // public void TestLinearTrigRoots4()
+        // {
+        //     Entity expr = "sin(x)^2 + cos(x) - 1";
+        //     var roots = expr.SolveEquation("x");
+        //     Assert.IsTrue(roots.Count == 2);
+        // }
     }
 }
 
