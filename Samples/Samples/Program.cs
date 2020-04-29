@@ -239,7 +239,13 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            
+            var x = MathS.FromString("sin(x) + cos(x) - 1");
+            var sols = x.Solve("x");
+            Console.WriteLine(sols);
+            foreach(var sol in sols)
+            {
+                Console.WriteLine(x.Substitute("x", sol).Eval());
+            }
         }
     }
 #pragma warning restore IDE0051
