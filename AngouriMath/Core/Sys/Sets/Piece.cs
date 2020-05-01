@@ -1,7 +1,7 @@
 ﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+ * Permission is hereby granted, free of charge, to any person obtaining A copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
  * modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
  * is furnished to do so, subject to the following conditions:
@@ -63,19 +63,19 @@ namespace AngouriMath.Core
         public abstract Edge LowerBound();
 
         /// <summary>
-        /// True if num is in between a, b
+        /// True if num is in between A, B
         /// </summary>
         /// <param name="a">
         /// one bound
         /// </param>
         /// <param name="b">
-        /// another bound (if a > b, they swap)
+        /// another bound (if A > B, they swap)
         /// </param>
         /// <param name="closedA">
-        /// whether a inclusive
+        /// whether A inclusive
         /// </param>
         /// <param name="closedB">
-        /// whether b inclusive
+        /// whether B inclusive
         /// </param>
         /// <param name="closedNum">
         /// if false, then
@@ -113,21 +113,27 @@ namespace AngouriMath.Core
                InBetween(a.Im, b.Im, closedAIm, closedBIm, num.Im, closedIm);
 
         /// <summary>
+        /// So that any numberical operations could be performed
+        /// </summary>
+        /// <returns></returns>
+        protected bool IsNumeric()
+            => (MathS.CanBeEvaluated(LowerBound().Item1) && MathS.CanBeEvaluated(UpperBound().Item1));
+
+            /// <summary>
         /// Determines whether interval or element of piece is in this
         /// </summary>
         /// <param name="piece"></param>
         /// <returns></returns>
         public bool Contains(Piece piece)
-        {
+            {
+                if (!piece.IsNumeric() || !this.IsNumeric())
+                    return false;
+
             // Gather all information
             var up = UpperBound();
             var low = LowerBound();
-            if (!MathS.CanBeEvaluated(up.Item1) || !MathS.CanBeEvaluated(low.Item1))
-                return false;
             var up_l = piece.LowerBound();
             var low_l = piece.UpperBound();
-            if (!MathS.CanBeEvaluated(up_l.Item1) || !MathS.CanBeEvaluated(low_l.Item1))
-                return false;
             // If still running the function, all entities are numbers now
 
             // Evaluate them
@@ -155,7 +161,7 @@ namespace AngouriMath.Core
 
 
         /// <summary>
-        /// Creates an instance of a closed interval (use SetNode-functions to change it,
+        /// Creates an instance of A closed interval (use SetNode-functions to change it,
         /// see more in MathS.Sets.Interval() )
         /// </summary>
         /// <param name="a"></param>
@@ -207,6 +213,12 @@ namespace AngouriMath.Core
             rightEdge = new Edge(right, closedBRe, closedBIm);
         }
 
+        internal IntervalPiece(Edge left, Edge right) : base(PieceType.INTERVAL)
+        {
+            leftEdge = left;
+            rightEdge = right;
+        }
+
         public override Edge UpperBound()
             => CopyEdge(leftEdge);
 
@@ -255,7 +267,7 @@ namespace AngouriMath.Core
         /// <returns></returns>
         public IntervalPiece SetRightClosed(bool Re, bool Im)
         {
-            leftEdge = new Edge(leftEdge.Item1, Re, Im);
+            rightEdge = new Edge(rightEdge.Item1, Re, Im);
             return this;
         }
 
@@ -273,11 +285,11 @@ namespace AngouriMath.Core
             sb.Append(leftEdge.Item1.ToString());
             sb.Append("; ");
             sb.Append(rightEdge.Item1.ToString());
-            if (leftEdge.Item2)
+            if (rightEdge.Item2)
                 sb.Append("]");
             else
                 sb.Append(")");
-            if (leftEdge.Item3)
+            if (rightEdge.Item3)
                 sb.Append("]");
             else
                 sb.Append(")");

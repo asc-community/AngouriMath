@@ -21,7 +21,7 @@ using System.Collections.Generic;
  using System.Linq;
  using System.Text;
  using AngouriMath.Core.Sys.Interfaces;
- using AngouriMath.Core.Sys.Sets;
+ using AngouriMath.Core.Sys;
 
 namespace AngouriMath
 {

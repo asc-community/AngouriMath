@@ -6,11 +6,13 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.Design.Serialization;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 
 namespace Samples
 {
+
 #pragma warning disable IDE0051
     class Program
     {
@@ -237,8 +239,13 @@ namespace Samples
             return funcs[random.Next(0, funcs.Count)](num, depth);
         }
 
+        public const string RecordCode = "{0}:RecordCode";
+
         static void Main(string[] _)
+
         {
+            
+            /*
             var A = MathS.Sets.Set();
             A.AddElements(1, 2, 3);
 
@@ -247,11 +254,12 @@ namespace Samples
 
             var C = A & B;
             var D = C | A;
-            
+
             Console.WriteLine(A);
             Console.WriteLine(B);
             Console.WriteLine(C.ToString());
             Console.WriteLine(D);
+            */
         }
     }
 #pragma warning restore IDE0051

@@ -18,7 +18,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AngouriMath.Core.Sys.Sets
+namespace AngouriMath.Core
 {
     /// <summary>
     /// Class defines true mathematical sets
@@ -46,6 +46,7 @@ namespace AngouriMath.Core.Sys.Sets
         public static SetNode operator |(SetNode A, SetNode B)
         {
             return new OperatorSet(OperatorSet.OperatorType.UNION, A, B);
+            //Edge1D
         }
 
         public static SetNode operator -(SetNode A, SetNode B)
@@ -94,8 +95,7 @@ namespace AngouriMath.Core.Sys.Sets
 
         internal void AddPiece(Piece piece)
         {
-            //throw new NotImplementedException();
-            pieces.Add(piece);
+            
         }
 
         public bool Contains(Set set)

@@ -476,8 +476,8 @@ namespace AngouriMath
             /// Creates an instance of a set
             /// </summary>
             /// <returns></returns>
-            public static AngouriMath.Core.Sys.Sets.Set Set()
-                => new AngouriMath.Core.Sys.Sets.Set();
+            public static AngouriMath.Core.Set Set()
+                => new AngouriMath.Core.Set();
         }
 
     }
