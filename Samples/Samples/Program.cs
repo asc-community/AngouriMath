@@ -244,7 +244,15 @@ namespace Samples
         static void Main(string[] _)
 
         {
-            
+            Entity rex = "sin(sin(x + 1) + 1) - 3";
+            Console.WriteLine(rex.SolveEquation("x"));
+
+            return;
+            var set = MathS.Sets.Set();
+            var int1 = set.AddInterval(new Number(3, 4), new Number(10, 13)).SetLeftClosed(true).SetRightClosed(false, false);
+            var set1 = MathS.Sets.Set();
+            var int2 = set1.AddInterval(new Number(2, 4.5), new Number(7, 12.1)).SetLeftClosed(true, false).SetRightClosed(false);
+            Console.WriteLine(int1 + " and " + int2 + " = " + SetFunctions.Intersect(int1, int2));
             /*
             var A = MathS.Sets.Set();
             A.AddElements(1, 2, 3);

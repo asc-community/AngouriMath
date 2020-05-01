@@ -159,6 +159,8 @@ namespace AngouriMath.Core
         internal static Edge CopyEdge(Edge edge)
         => new Edge(edge.Item1.DeepCopy(), edge.Item2, edge.Item3);
 
+        internal static bool EdgeEqual(Edge A, Edge B)
+            => A.Item1 == B.Item1 && A.Item2 == B.Item2 && A.Item3 == B.Item3;
 
         /// <summary>
         /// Creates an instance of A closed interval (use SetNode-functions to change it,
@@ -200,6 +202,12 @@ namespace AngouriMath.Core
 
         public override string ToString()
             => "{" + entity.Item1.ToString() + "}";
+
+        public static bool operator ==(OneElementPiece A, OneElementPiece B)
+            => EdgeEqual(A.entity, B.entity);
+
+        public static bool operator !=(OneElementPiece A, OneElementPiece B)
+            => !(A == B);
     }
 
     public class IntervalPiece : Piece
@@ -295,5 +303,11 @@ namespace AngouriMath.Core
                 sb.Append(")");
             return sb.ToString();
         }
+
+        public static bool operator ==(IntervalPiece A, IntervalPiece B)
+            => EdgeEqual(A.leftEdge, B.leftEdge) && EdgeEqual(A.rightEdge, B.rightEdge);
+
+        public static bool operator !=(IntervalPiece A, IntervalPiece B)
+            => !(A == B);
     }
 }
