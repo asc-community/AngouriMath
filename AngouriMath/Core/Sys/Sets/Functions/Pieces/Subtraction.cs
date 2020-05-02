@@ -22,9 +22,9 @@ using System.Collections.Generic;
  *
  */
 
-namespace AngouriMath.Core
+namespace AngouriMath.Core.Sets
 {
-    public static partial class SetFunctions
+    public static partial class PieceFunctions
     {
         /// <summary>
         /// Subtracts B from A
@@ -45,8 +45,14 @@ namespace AngouriMath.Core
             if (A == B)
                 return result;
 
-            //if (A.Contains(B))
-            throw new NotImplementedException();
+            foreach (var piece in Invert(B))
+            {
+                var conj = Intersect(A, piece);
+                if (!(conj is null))
+                    result.Add(conj);
+            }
+
+            return result;
         }
     }
 }

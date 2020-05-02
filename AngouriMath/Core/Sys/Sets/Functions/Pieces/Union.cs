@@ -15,39 +15,28 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 /*
  *
- * INVERSTION
+ * UNION
  *
  */
-
-namespace AngouriMath.Core
+namespace AngouriMath.Core.Sets
 {
-    public static partial class SetFunctions
+    public static partial class PieceFunctions
     {
-        public static List<Piece> Invert(Piece A)
+        public static List<Piece> Unite(Piece A, Piece B)
         {
-            var sortedEdges = SortEdges(A.LowerBound(), A.UpperBound());
-            var edgeLower = sortedEdges.Item1;
-            var edgeUpper = sortedEdges.Item2;
-            var edgeLowerNum = edgeLower.Item1.Eval();
-            var edgeUpperNum = edgeUpper.Item1.Eval();
-           /*
-                      +oo Im
-                       |
-                       |
-                       |_______________________________ +oo Re
-                       |leftUp      rightUp  |
-                       |                     |
-                       |leftDown    rightDown|
-      -oo Re  -------------------------------|
-                                             |
-                                             |
-                                            -oo Im
-             */
-           var numLeftDown = new Number(edgeLower);
-           throw new NotImplementedException();
+            var intersection = Intersect(A, B);
+            if (intersection == null)
+                return new List<Piece> { A, B };
+            else
+            {
+                var res = Subtract(A, B);
+                res.Add(B);
+                return res;
+            }
         }
     }
 }

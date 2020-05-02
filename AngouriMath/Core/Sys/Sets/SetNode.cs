@@ -17,6 +17,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using AngouriMath.Core.Sets;
 
 namespace AngouriMath.Core
 {
@@ -95,7 +96,16 @@ namespace AngouriMath.Core
 
         internal void AddPiece(Piece piece)
         {
-            
+            var remainders = new List<Piece>{ piece };
+            foreach (var p in pieces)
+            {
+                var newRemainders = new List<Piece>();
+                foreach (var rem in remainders)
+                    newRemainders.AddRange(PieceFunctions.Subtract(rem, p));
+                remainders = newRemainders;
+            }
+
+            pieces.AddRange(remainders);
         }
 
         public bool Contains(Set set)
