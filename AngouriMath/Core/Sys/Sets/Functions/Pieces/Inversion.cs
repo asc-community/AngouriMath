@@ -35,6 +35,8 @@ namespace AngouriMath.Core.Sets
             var edgeLowerNum = edgeLower.Item1.Eval();
             var edgeUpperNum = edgeUpper.Item1.Eval();
            /*
+
+
                       +oo Im
                        |
                        |       (upper.Item2)
@@ -46,10 +48,13 @@ namespace AngouriMath.Core.Sets
                             (lower.Item2)    |
                                              |
                                             -oo Im
+
+            if a side not included, we add an interval instead
+
              */
            /*
             *
-            * for each of 4 pieces we close only one side or zero (so there's no intersection between pieces)
+            * for each of 4 Pieces we close only one side or zero (so there's no intersection between Pieces)
             *
             */
            var numLeftDown = new Number(edgeLowerNum.Re, edgeLowerNum.Im);
@@ -58,29 +63,58 @@ namespace AngouriMath.Core.Sets
            var numRightDown = new Number(edgeUpperNum.Re, edgeLowerNum.Im);
            var pieceDown = new IntervalPiece(
                numRightDown, new Number(double.NegativeInfinity, double.NegativeInfinity), 
-               edgeLower.Item2, false, false, false);
+               true, false, false, false);
            var pieceLeft = new IntervalPiece(
                numLeftDown, new Number(double.NegativeInfinity, double.PositiveInfinity),
-               false, edgeLower.Item3, false, false);
+               false, true, false, false);
            var pieceUp = new IntervalPiece(
                numLeftUp, new Number(double.PositiveInfinity, double.PositiveInfinity),
-               edgeUpper.Item2 && (numRightDown.Im != numLeftUp.Im), false, false, false);
+               true, false, false, false);
            var pieceRight = new IntervalPiece(
                numRightUp, new Number(double.PositiveInfinity, double.NegativeInfinity),
-               false, edgeUpper.Item3 && (numLeftDown.Re != numRightUp.Re), false, false);
+               false, true, false, false);
            var res = new List<Piece> { pieceDown, pieceLeft, pieceUp, pieceRight };
 
-           bool IsPieceCorrect(Piece piece)
-           {
-               var lower = piece.LowerBound();
-               var upper = piece.UpperBound();
-               var num1 = lower.Item1.Eval();
-               var num2 = upper.Item1.Eval();
-               return (num1.Re != num2.Re || lower.Item2 && upper.Item2) &&
-                      (num1.Im != num2.Im || lower.Item3 && upper.Item3);
-           }
+           if (!edgeLower.Item2)
+               res.Add(new IntervalPiece(
+                   new Number(numLeftDown.Re, numLeftDown.Im),
+                   new Number(numLeftDown.Re, numLeftUp.Im), // Re part is the same
+                   true, true, true, true
+                   ));
 
-           return res.Where(IsPieceCorrect).ToList();
+           if (!edgeLower.Item3)
+               res.Add(new IntervalPiece(
+                   new Number(numLeftUp.Re, numLeftDown.Im),
+                   new Number(numRightUp.Re, numLeftDown.Im), // Im part is the same
+                   true, true, true, true
+               ));
+
+           if (!edgeUpper.Item2)
+               res.Add(new IntervalPiece(
+                   new Number(numRightUp.Re, numRightDown.Im),
+                   new Number(numRightUp.Re, numRightUp.Im), // Re part is the same
+                   true, true, true, true
+               ));
+
+           if (!edgeLower.Item3)
+               res.Add(new IntervalPiece(
+                   new Number(numLeftDown.Re, numRightDown.Im),
+                   new Number(numRightDown.Re, numRightDown.Im), // Im part is the same
+                   true, true, true, true
+               ));
+
+           return res;
+        }
+
+
+        internal static bool IsPieceCorrect(Piece piece)
+        {
+            var lower = piece.LowerBound();
+            var upper = piece.UpperBound();
+            var num1 = lower.Item1.Eval();
+            var num2 = upper.Item1.Eval();
+            return (num1.Re != num2.Re || lower.Item2 && upper.Item2) &&
+                   (num1.Im != num2.Im || lower.Item3 && upper.Item3);
         }
     }
 }

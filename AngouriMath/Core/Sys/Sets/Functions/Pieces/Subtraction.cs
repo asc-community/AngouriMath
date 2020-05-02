@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 /*
  *
@@ -45,14 +46,19 @@ namespace AngouriMath.Core.Sets
             if (A == B)
                 return result;
 
-            foreach (var piece in Invert(B))
+            if (B.Contains(A))
+                return result;
+
+            var inverted = Invert(B);
+
+            foreach (var piece in inverted)
             {
                 var conj = Intersect(A, piece);
                 if (!(conj is null))
                     result.Add(conj);
             }
 
-            return result;
+            return result.Where(IsPieceCorrect).ToList();
         }
     }
 }

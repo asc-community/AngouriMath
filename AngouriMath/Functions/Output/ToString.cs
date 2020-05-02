@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,7 +15,7 @@
 
 
 
-﻿using AngouriMath.Core;
+ using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
  using System.Linq;
@@ -201,6 +201,6 @@ namespace AngouriMath
         }
 
         internal static string LinearSetToString(Set set)
-            => string.Join("∪", set.pieces.Select(c => c.ToString()));
+            => string.Join("∪", set.Pieces.Select(c => c.ToString()));
     }
 }

@@ -47,7 +47,6 @@ namespace AngouriMath.Core
         public static SetNode operator |(SetNode A, SetNode B)
         {
             return new OperatorSet(OperatorSet.OperatorType.UNION, A, B);
-            //Edge1D
         }
 
         public static SetNode operator -(SetNode A, SetNode B)
@@ -90,14 +89,14 @@ namespace AngouriMath.Core
         }
 
         public SetEnumerator GetEnumerator()
-            => new SetEnumerator(pieces.ToArray());
+            => new SetEnumerator(Pieces.ToArray());
 
-        internal readonly List<Piece> pieces = new List<Piece>();
+        internal List<Piece> Pieces = new List<Piece>();
 
         internal void AddPiece(Piece piece)
         {
             var remainders = new List<Piece>{ piece };
-            foreach (var p in pieces)
+            foreach (var p in Pieces)
             {
                 var newRemainders = new List<Piece>();
                 foreach (var rem in remainders)
@@ -105,7 +104,7 @@ namespace AngouriMath.Core
                 remainders = newRemainders;
             }
 
-            pieces.AddRange(remainders);
+            Pieces.AddRange(remainders);
         }
 
         public bool Contains(Set set)
@@ -117,7 +116,7 @@ namespace AngouriMath.Core
         }
 
         public bool Contains(Piece piece)
-            => pieces.Any(p => p.Contains(piece));
+            => Pieces.Any(p => p.Contains(piece));
 
         public Set() : base(NodeType.SET)
         {

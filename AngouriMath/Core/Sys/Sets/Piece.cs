@@ -116,7 +116,7 @@ namespace AngouriMath.Core
         /// So that any numberical operations could be performed
         /// </summary>
         /// <returns></returns>
-        protected bool IsNumeric()
+        internal bool IsNumeric()
             => (MathS.CanBeEvaluated(LowerBound().Item1) && MathS.CanBeEvaluated(UpperBound().Item1));
 
             /// <summary>
