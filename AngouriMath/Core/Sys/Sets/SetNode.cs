@@ -40,6 +40,10 @@ namespace AngouriMath.Core
 
         protected SetNode(NodeType type)
             => Type = type;
+
+        public abstract bool Contains(Piece piece);
+
+
         public static SetNode operator &(SetNode A, SetNode B)
         {
             return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B).Eval();
@@ -104,6 +108,16 @@ namespace AngouriMath.Core
 
         public override string ToString()
             => SetToString.OperatorToString(this);
+
+        public override bool Contains(Piece piece)
+            => ConnectionType switch
+            {
+                OperatorType.UNION => Children[0].Contains(piece) || Children[1].Contains(piece),
+                OperatorType.INTERSECTION => Children[0].Contains(piece) & Children[1].Contains(piece),
+                OperatorType.COMPLEMENT => Children[0].Contains(piece) && !Children[1].Contains(piece),
+                OperatorType.INVERSION => !Children[0].Contains(piece)
+            };
+
     }
 
     public class Set : SetNode, IEnumerable
@@ -140,7 +154,7 @@ namespace AngouriMath.Core
             return true;
         }
 
-        public bool Contains(Piece piece)
+        public override bool Contains(Piece piece)
             => Pieces.Any(p => p.Contains(piece));
 
         public Set() : base(NodeType.SET)
