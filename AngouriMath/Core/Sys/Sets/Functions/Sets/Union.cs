@@ -6,6 +6,18 @@ namespace AngouriMath.Core.Sets
 {
     public static partial class SetFunctions
     {
+        public static SetNode Unite(SetNode A, SetNode B)
+        {
+            if (A.Type == SetNode.NodeType.OPERATOR || B.Type == SetNode.NodeType.OPERATOR)
+                return A - B;
+            var newSet = new Set();
+            foreach (var piece in A as Set)
+                newSet.AddPiece(piece);
+            foreach (var piece in B as Set)
+                newSet.AddPiece(piece);
+            return newSet;
+        }
+
         internal static List<Piece> UniteList(List<Piece> pieces)
         {
             if (pieces.Count == 0)

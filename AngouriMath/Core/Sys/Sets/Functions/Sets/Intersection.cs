@@ -15,11 +15,11 @@ namespace AngouriMath.Core.Sets
         public static SetNode Intersect(SetNode A, SetNode B)
         {
             if (A.Type == SetNode.NodeType.OPERATOR || B.Type == SetNode.NodeType.OPERATOR)
-                return A & B;
+                return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B);
             var (goodAPieces, badAPieces) = GatherEvaluablePieces(A as Set);
             var (goodBPieces, badBPieces) = GatherEvaluablePieces(B as Set);
             if (goodAPieces.Count * goodBPieces.Count == 0)
-                return A & B;
+                return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B);
             var newPieces = new List<Piece>();
             foreach (var goodAPiece in goodAPieces)
                 foreach (var goodBPiece in goodBPieces)
@@ -32,9 +32,10 @@ namespace AngouriMath.Core.Sets
             var badA = new Set{ Pieces = badAPieces };
             var badB = new Set{ Pieces = badBPieces };
             if (union.Count == 0)
-                return badA & badB;
+                return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, badA, badB);
             var united = new Set{ Pieces = union };
-            return united & A & B;
+            return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, united,
+                new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B));
         }
 
         internal static (List<Piece>, List<Piece>) GatherEvaluablePieces(Set A)

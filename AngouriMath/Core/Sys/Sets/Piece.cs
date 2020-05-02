@@ -183,6 +183,11 @@ namespace AngouriMath.Core
         /// <returns></returns>
         internal static OneElementPiece Element(Entity a)
         => new OneElementPiece(a);
+
+        internal static IntervalPiece CreateUniverse()
+            => new IntervalPiece(new Number(double.NegativeInfinity, double.NegativeInfinity),
+                new Number(double.PositiveInfinity, double.PositiveInfinity),
+                false, false, false, false);
     }
 
     public class OneElementPiece : Piece

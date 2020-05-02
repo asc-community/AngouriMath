@@ -17,6 +17,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sets;
 
 namespace AngouriMath.Core
@@ -41,22 +42,46 @@ namespace AngouriMath.Core
             => Type = type;
         public static SetNode operator &(SetNode A, SetNode B)
         {
-            return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B);
+            return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B).Eval();
         }
 
         public static SetNode operator |(SetNode A, SetNode B)
         {
-            return new OperatorSet(OperatorSet.OperatorType.UNION, A, B);
+            return new OperatorSet(OperatorSet.OperatorType.UNION, A, B).Eval();
         }
 
         public static SetNode operator -(SetNode A, SetNode B)
         {
-            return new OperatorSet(OperatorSet.OperatorType.COMPLEMENT, A, B);
+            return new OperatorSet(OperatorSet.OperatorType.COMPLEMENT, A, B).Eval();
         }
 
         public static SetNode operator !(SetNode A)
         {
-            return new OperatorSet(OperatorSet.OperatorType.INVERSION, A);
+            return new OperatorSet(OperatorSet.OperatorType.INVERSION, A).Eval();
+        }
+
+        public SetNode Eval()
+        {
+            switch (Type)
+            {
+                case NodeType.SET:
+                    return this;
+                case NodeType.OPERATOR:
+                    var op = this as OperatorSet;
+                    return op.ConnectionType switch
+                    {
+                        OperatorSet.OperatorType.UNION =>
+                            SetFunctions.Unite(op.Children[0], op.Children[1]),
+                        OperatorSet.OperatorType.INTERSECTION =>
+                            SetFunctions.Intersect(op.Children[0], op.Children[1]),
+                        OperatorSet.OperatorType.COMPLEMENT =>
+                            SetFunctions.Subtract(op.Children[0], op.Children[1]),
+                        OperatorSet.OperatorType.INVERSION =>
+                            SetFunctions.Invert(op.Children[0])
+                    };
+            }
+
+            throw new SysException("Unknown error");
         }
     }
 
