@@ -8,7 +8,7 @@ Nuget: https://www.nuget.org/packages/AngouriMath
 AngouriMath is an open-source library that enables to work with non-linear 
 multi-variable expressions. Its functionality includes derivation, 
 variable substitution, equation solving, equation system solving, definite integration, 
-formula-to-latex formatting, and some more.
+formula-to-latex formatting, working with mathematical sets, and some more.
 
 ### Examples
 
@@ -138,6 +138,13 @@ Console.WriteLine(func.Substitute(3));
 var expr = MathS.FromString("3x3 + 2 2 2 - x(3 0.5)");
 Console.WriteLine(expr);
 >>> 3 * x ^ 3 + 2 ^ 2 ^ 2 - x * sqrt(3)
+```
+
+#### Work with sets
+```cs
+var A = new Set(3, 4, (5, 6)); // {3, 4} | [5; 6]
+var B = new Set((x, MathS.Sqrt(x)), 4);
+var C = (A | B) & A;
 ```
 
 #### Try SymPy syntax

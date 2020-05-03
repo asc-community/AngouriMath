@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace AngouriMath.Core
@@ -201,6 +202,17 @@ namespace AngouriMath.Core
                 false, false, false, false).AsInterval();
 
         internal IntervalPiece AsInterval() => this as IntervalPiece;
+
+        public static implicit operator Piece((Entity, Entity) tup)
+            => Interval(tup.Item1, tup.Item2);
+        public static implicit operator Piece(Entity element)
+            => new OneElementPiece(element);
+        public static implicit operator Piece(float element)
+            => new OneElementPiece(element);
+        public static implicit operator Piece(int element)
+            => new OneElementPiece(element);
+        public static implicit operator Piece(Number element)
+            => new OneElementPiece(element);
     }
 
     public class OneElementPiece : Piece

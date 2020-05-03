@@ -188,8 +188,8 @@ namespace AngouriMath
     {
         static List<string> Operators = new List<string>
         {
-            "∪",
-            "∩",
+            "|",
+            "&",
             @"\"
         };
         internal static string OperatorToString(OperatorSet set)
@@ -201,6 +201,6 @@ namespace AngouriMath
         }
 
         internal static string LinearSetToString(Set set)
-            => string.Join("∪", set.Pieces.Select(c => c.ToString()));
+            => string.Join("|", set.Pieces.Select(c => c.ToString()));
     }
 }

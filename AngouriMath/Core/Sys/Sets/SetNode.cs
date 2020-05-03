@@ -146,9 +146,16 @@ namespace AngouriMath.Core
 
         internal void AddPiece(Piece piece)
         {
+            if (!piece.IsNumeric())
+            {
+                Pieces.Add(piece);
+                return;
+            }
             var remainders = new List<Piece>{ piece };
             foreach (var p in Pieces)
             {
+                if (!p.IsNumeric())
+                    continue;
                 var newRemainders = new List<Piece>();
                 foreach (var rem in remainders)
                     newRemainders.AddRange(PieceFunctions.Subtract(rem, p));
@@ -180,9 +187,10 @@ namespace AngouriMath.Core
         public override bool Contains(Entity entity)
             => Contains(new OneElementPiece(entity));
 
-        public Set() : base(NodeType.SET)
+        public Set(params Piece[] elements) : base(NodeType.SET)
         {
-            
+            foreach (var el in elements)
+                AddPiece(el);
         }
 
         /// <summary>

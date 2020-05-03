@@ -245,41 +245,7 @@ namespace Samples
         static void Main(string[] _)
 
         {
-            /*
-            var set = MathS.Sets.Set();
-            var int1 = set.AddInterval(new Number(3, 4), new Number(10, 13)).SetLeftClosed(true).SetRightClosed(false, false);
-            var set1 = MathS.Sets.Set();
-            var int2 = set1.AddInterval(new Number(2, 4.5), new Number(7, 12.1)).SetLeftClosed(true, false).SetRightClosed(false);
-            //foreach (var int_ in PieceFunctions.)
-            Console.WriteLine(int1 + " and " + int2 + " = " + PieceFunctions.Intersect(int1, int2));
-            Console.WriteLine(int1 + " or " + int2 + " = ");
-            foreach (var int_ in PieceFunctions.Unite(int1, int2))
-                Console.WriteLine(int_);
-                */
-
-
-
-            /*
-            var set = MathS.Sets.Set();
-            var int1 = set.AddInterval(3, 4);
-            foreach (var inv in PieceFunctions.Invert(int1))
-                Console.WriteLine(inv);
-                */
-            /*
-            var A = MathS.Sets.Set();
-            A.AddElements(1, 2, 3);
-
-            var B = MathS.Sets.Set();
-            B.AddElements(5, 6, 7);
-
-            var C = A & B;
-            var D = C | A;
-
-            Console.WriteLine(A);
-            Console.WriteLine(B);
-            Console.WriteLine(C.ToString());
-            Console.WriteLine(D);
-            */
+            
         }
     }
 #pragma warning restore IDE0051
