@@ -12,6 +12,9 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
         internal static EntitySet SolveLinear(Entity expr, VariableEntity variable)
         {
+            // SolveLinear should also solve tan and cotan equations, but currently Polynomial solver cannot handle big powers
+            // uncomment lines above when it will be fixed (TODO)
+
             var replacement = new VariableEntity(variable.Name + "_trig");
             var sin = expr.FindSubtree(MathS.Sin  (variable));
             var cos = expr.FindSubtree(MathS.Cos  (variable));
@@ -19,12 +22,12 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             var cot = expr.FindSubtree(MathS.Cotan(variable));
             var sinReplacement = (MathS.Sqr(replacement) - 1) / (2 * MathS.i * replacement);
             var cosReplacement = (MathS.Sqr(replacement) + 1) / (2 * replacement);
-            var tanReplacement = (1 - MathS.Sqr(replacement)) * MathS.i / (MathS.Sqr(replacement) + 1);
-            var cotReplacement = (MathS.Sqr(replacement) + 1) * MathS.i / (MathS.Sqr(replacement) - 1);
+            // var tanReplacement = (1 - MathS.Sqr(replacement)) * MathS.i / (MathS.Sqr(replacement) + 1);
+            // var cotReplacement = (MathS.Sqr(replacement) + 1) * MathS.i / (MathS.Sqr(replacement) - 1);
             TreeAnalyzer.FindAndReplace(ref expr, sin, sinReplacement);
             TreeAnalyzer.FindAndReplace(ref expr, cos, cosReplacement);
-            TreeAnalyzer.FindAndReplace(ref expr, tan, tanReplacement);
-            TreeAnalyzer.FindAndReplace(ref expr, cot, cotReplacement);
+            // TreeAnalyzer.FindAndReplace(ref expr, tan, tanReplacement);
+            // TreeAnalyzer.FindAndReplace(ref expr, cot, cotReplacement);
 
             // if there is still original variable after replacements,
             // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))

@@ -81,8 +81,6 @@ namespace AngouriMath
         {
             // Number has no children
             TreeAnalyzer.AssertTree(Children.Count == 0, "A number cannot have children");
-            // Is null?
-            TreeAnalyzer.AssertTree(Token.IsNumber(Name), "Number's name is not number");
         }
     }
     public partial class VariableEntity
@@ -91,8 +89,6 @@ namespace AngouriMath
         {
             // Var has no children
             TreeAnalyzer.AssertTree(Children.Count == 0, "A variable cannot have children");
-            // Correct name for var
-            TreeAnalyzer.AssertTree(Token.IsVariable(Name), "Weird sequence in variable '" + Name + "'");
             // Reserved word (e. g. "sumf") can't be a var's name
             TreeAnalyzer.AssertTree(!Const.IsReservedName(Name), "`" + Name + "` is a reserved word");
         }

@@ -40,7 +40,7 @@ namespace UnitTests.Common
         [TestMethod]
         public void TestMi()
         {
-            Assert.IsTrue(MathS.FromString("-i^2").Eval() == -1);
+            Assert.IsTrue(MathS.FromString("-i^2").Eval() == 1);
         }
         [TestMethod]
         public void TestMm()

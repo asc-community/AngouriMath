@@ -15,262 +15,155 @@
 
 
 
-﻿using System;
+using Antlr;
+using Antlr.Runtime;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace AngouriMath.Core.FromString
 {
-    using BraceType = Token.BraceType;
-    using TokenType = Token.TokenType;
-    internal partial class Token
+    class AngouriMathTokenStream : CommonTokenStream
     {
-        public List<Entity> children { get; } = new List<Entity>();
-    }
-    internal static class SymbolProcessor
-    {
-        public static bool IsOperator(char s)
+        public AngouriMathTokenStream(ITokenSource source)
+            : base(source) { }
+
+        public new List<IToken> GetTokens()
         {
-            return SyntaxInfo.operatorNames.ContainsKey(s);
-        }
-        public static bool IsDelimiter(string s)
-        {
-            return s == Const.ARGUMENT_DELIMITER;
+            ToString();
+            return _tokens;
         }
     }
-    internal class BraceProcessor
+
+    static class Parser
     {
-        private readonly List<BraceType> braces = new List<BraceType>();
-        internal static readonly List<BraceType> parentheses = new List<BraceType>
+        static public Entity Parse(string source)
+        {
+            AngouriMathTokenStream GetTokenStream(string source)
+            {
+                var stream = new ANTLRStringStream(source);
+                var lexer = new AngourimathLexer(stream);
+                return new AngouriMathTokenStream(lexer);
+            }
+
+            var tokenList = GetTokenStream(source).GetTokens();
+            if (tokenList.Count == 0) 
+                throw new ParseException("input string is invalid");
+            source = Parser.PreProcess(tokenList);
+            var tokens = GetTokenStream(source);
+
+            var parser = new AngourimathParser(tokens);
+            parser.Parse();
+            var result = Parser.PostProcess(parser.Result);
+            return result;
+        }
+
+        static string PreProcess(List<IToken> tokens)
         { 
-            BraceType.PARENTHESIS_OPEN,
-            BraceType.PARENTHESIS_CLOSE
-        };
-        internal static readonly List<BraceType> brackets = new List<BraceType>
-        {
-            BraceType.BRACKET_OPEN,
-            BraceType.BRACKET_CLOSE
-        };
-        /// <summary>
-        /// [ or (
-        /// </summary>
-        /// <param name="s"></param>
-        /// <returns></returns>
-        internal static bool IsOpen(BraceType s)
-        {
-            return s == BraceType.BRACKET_OPEN || s == BraceType.PARENTHESIS_OPEN;
-        }
-        /// <summary>
-        /// ((, (), )), (), [[, [].... all of the same type
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        internal static bool SameType(BraceType a, BraceType b)
-        {
-            return parentheses.Contains(a) && parentheses.Contains(b) ||
-                   brackets.Contains(a) && brackets.Contains(b);
-        }
+            const int NUMBER = 8;             // from Antlr
+            const int ID = 6;                 // from Antlr
+            const int PARENTHESIS_OPEN = 10;  // from Antlr
+            const int PARENTHESIS_CLOSE = 11; // from Antlr
+            const int MULTIPLY = 12;          // from Antlr
+            const int POWER = 17;             // from Antlr
 
-        /// <summary>
-        /// (()()[]([[]])) is a finished sequence
-        /// ([]( is not
-        /// </summary>
-        /// <returns></returns>
-        internal bool IsFinished()
-        {
-            return braces.Count == 0;
-        }
-    }
-    internal static class Parser
-    {
-        /// <summary>
-        /// Builds a tree of the expression
-        /// </summary>
-        /// <param name="lexer"></param>
-        /// <returns></returns>
-        internal static Entity Parse(Lexer lexer)
-        {
-            var linearExpression = new List<Entity>();
-            while (!lexer.EOF())
+            const int FUNCTION = -0xFF;
+            const int VARIABLE = -0xEE;
+
+            tokens = tokens.Where(token => token.Channel == 0).ToList();
+
+            bool IsTypeEqual(IToken token, int type)
             {
-                linearExpression.Add(ParseAsVariable(lexer));
-                lexer.Next();
-                if (lexer.EOF())
+                if (token.Type == ID)
                 {
-                    break;
+                    if (SyntaxInfo.goodStringsForFunctions.ContainsKey(token.Text))
+                        return type == FUNCTION;
+                    else 
+                        return type == VARIABLE;
                 }
-                if ((lexer.Current.Type == TokenType.PARENTHESIS_CLOSE) || (SymbolProcessor.IsDelimiter(lexer.Current.Value)))
-                { 
-                    break; 
-                }
-                if (!lexer.EOF() && !Token.IsOperator(lexer.Current.Value))
+                else return token.Type == type;
+            }
+
+            /// <summary>
+            /// Provided two types of tokens, returns position of first token if
+            /// the pair if found, -1 otherwisely.
+            /// </summary> 
+
+            int FindSubPair(int type1, int type2)
+            {
+                for (int i = 0; i < tokens.Count - 1; i++)
+                    if (IsTypeEqual(tokens[i], type1) && IsTypeEqual(tokens[i + 1], type2))
+                        return i;
+                return -1;
+            }
+
+            /// <summary>
+            /// Finds all occurances of [t1, t2] and inserts token in between each of them
+            /// </summary>
+            void InsertIntoPair(int type1, int type2, IToken token)
+            {
+                int pos;
+                while ((pos = FindSubPair(type1, type2)) != -1)
                 {
-                    throw new ParseException("Expected operator");
+                    tokens.Insert(pos + 1 /* we need to keep the first one behind*/, token);
                 }
-                if (!lexer.EOF())
-                {
-                    linearExpression.Add(new OperatorEntity(SyntaxInfo.operatorNames[lexer.Current.Value[0]], SyntaxInfo.operatorPriorities[lexer.Current.Value[0]]));
-                    lexer.Next();
-                }
+            }
 
-            }
-            if (linearExpression.Count == 0)
+            IToken multiplyer = new ClassicToken(MULTIPLY, "*");
+            IToken power = new ClassicToken(POWER, "^");
+
+            // 2x -> 2 * x
+            InsertIntoPair(NUMBER, VARIABLE, multiplyer);
+
+            // x y -> x * y
+            InsertIntoPair(VARIABLE, VARIABLE, multiplyer);
+
+            // 2( -> 2 * (
+            InsertIntoPair(NUMBER, PARENTHESIS_OPEN, multiplyer);
+
+            // )2 -> ) ^ 2
+            InsertIntoPair(PARENTHESIS_CLOSE, NUMBER, power);
+
+            // x( -> x * (
+            InsertIntoPair(VARIABLE, PARENTHESIS_OPEN, multiplyer);
+
+            // )x -> ) * x
+            InsertIntoPair(PARENTHESIS_CLOSE, VARIABLE, multiplyer);
+
+            // x2 -> x ^ 2
+            InsertIntoPair(VARIABLE, NUMBER, power);
+
+            // 3 2 -> 3 ^ 2
+            InsertIntoPair(NUMBER, NUMBER, power);
+
+            // 2sqrt -> 2 * sqrt
+            InsertIntoPair(NUMBER, FUNCTION, multiplyer);
+
+            // x sqrt -> x * sqrt
+            InsertIntoPair(VARIABLE, FUNCTION, multiplyer);
+
+            // )sqrt -> ) * sqrt
+            InsertIntoPair(PARENTHESIS_CLOSE, FUNCTION, multiplyer);
+
+            // )( -> ) * (
+            // )sqrt -> ) * sqrt
+            InsertIntoPair(PARENTHESIS_CLOSE, PARENTHESIS_OPEN, multiplyer);
+
+            var builder = new StringBuilder();
+            tokens.RemoveAt(tokens.Count - 1); // remove <EOF> token
+            foreach(var token in tokens)
             {
-                throw new ParseException("Empty expression");
+                builder.Append(token.Text);
             }
-            if (linearExpression[linearExpression.Count - 1].entType == Entity.EntType.OPERATOR &&
-                linearExpression[linearExpression.Count - 1].IsLeaf) //check case `2 + 3 - `
-            {
-                throw new ParseException("Expected expression not to end with operator");
-            }
-            return HangLinearExpression(linearExpression);
+            return builder.ToString();
         }
 
-        /// <summary>
-        /// DOCTODO
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <param name="op"></param>
-        /// <param name="reversed"></param>
-        private static void FindOperator(List<Entity> expr, string op, bool reversed = false)
+        static Entity PostProcess(Entity result)
         {
-            int i = 1;
-            while(i < expr.Count - 1)
-            {
-                var id = reversed ? expr.Count - i - 1 : i;
-                if(expr[id].IsLeaf && expr[id].entType == Entity.EntType.OPERATOR && op.Contains(expr[id].Name))
-                {
-                    expr[id].Children.Add(expr[id - 1]);
-                    expr[id].Children.Add(expr[id + 1]);
-                    expr.RemoveAt(id + 1);
-                    expr.RemoveAt(id - 1);
-                    i--;
-                }
-                i++;
-            }
-        }
-
-        /// <summary>
-        /// Hanging "a + b * c - t ^ g"
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        private static Entity HangLinearExpression(List<Entity> expr)
-        {
-            FindOperator(expr, "powf", reversed: true);
-            FindOperator(expr, "mulfdivf");
-            FindOperator(expr, "sumfminusf");
-            if (expr.Count != 1)
-            {
-                throw new ParseException("Tree is ambigious");
-            }
-            return expr[0];
-        }
-
-        /// <summary>
-        /// Sequence of latin letters is "AsVariable"
-        /// </summary>
-        /// <param name="lexer"></param>
-        /// <returns></returns>
-        private static Entity ParseAsVariable(Lexer lexer)
-        {
-            Entity e = null;
-            var current = lexer.Current;
-            if (current.Type == TokenType.PARENTHESIS_OPEN)
-            {
-                e = ParseParenthesisExpression(lexer); // out of scope
-            }
-            else if (current.Type == TokenType.NUMBER)
-            {
-                e = new NumberEntity(Number.Parse(current.Value));
-            }
-            else if (current.Type == TokenType.VARIABLE || current.Type == TokenType.FUNCTION && lexer.GlanceNext().Type != TokenType.PARENTHESIS_OPEN)
-            {
-                e = new VariableEntity(current.Value);
-            }
-            else if (current.Type == TokenType.FUNCTION)
-            {
-                e = ParseFunctionExpression(lexer);
-                lexer.Prev();
-            }
-            else
-            {
-                throw new ParseException("unexpected token");
-            }
-            return e;
-        }
-
-        /// <summary>
-        /// f(a, b, c) is 
-        /// f with three children
-        /// </summary>
-        /// <param name="lexer"></param>
-        /// <returns></returns>
-        private static Entity ParseFunctionExpression(Lexer lexer)
-        {
-            if (lexer.Current.Type != TokenType.FUNCTION)
-            {
-                throw new ParseException("function expected");
-            }
-
-            var f = new FunctionEntity(lexer.Current.Value + "f");
-            lexer.Next(); // `func` -> `(`
-            if (lexer.Current.Type != TokenType.PARENTHESIS_OPEN)
-            {
-                throw new ParseException("`(` expected after function name");
-            }
-
-            f.Children = ParseFunctionArguments(lexer);
-            return f;
-        }
-
-        /// <summary>
-        /// Divides a, b, c into a, b, c
-        /// </summary>
-        /// <param name="lexer"></param>
-        /// <returns></returns>
-        private static List<Entity> ParseFunctionArguments(Lexer lexer)
-        {
-            var args = new List<Entity>();
-
-            if (lexer.Current.Type != TokenType.PARENTHESIS_OPEN)
-            {
-                throw new ParseException("`(` expected after function name");
-            }
-            lexer.Next(); // `(` -> args ...
-
-            if (lexer.Current.Type == TokenType.PARENTHESIS_CLOSE)
-                return args; // 0 arguments
-
-            while (!lexer.EOF())
-            {
-                args.Add(Parse(lexer));
-                if (lexer.Current.Type == TokenType.PARENTHESIS_CLOSE)
-                {
-                    lexer.Next(); // `)` -> ...
-                    return args;
-                }
-                if (!SymbolProcessor.IsDelimiter(lexer.Current.Value))
-                {
-                    throw new ParseException("`,` expected between function arguments");
-                }
-                lexer.Next(); // `,` -> args ...
-            }
-            throw new ParseException("EOF reached");
-        }
-        private static Entity ParseParenthesisExpression(Lexer lexer)
-        {
-            if (lexer.Current.Type != TokenType.PARENTHESIS_OPEN)
-                throw new ParseException("`(` expected");
-            lexer.Next(); // `(` -> ...
-
-            Entity e = Parse(lexer);
-
-            if (lexer.Current.Type != TokenType.PARENTHESIS_CLOSE)
-                throw new ParseException("`)` expected");
-
-            return e;
+            result = result.Substitute("i", MathS.i);
+            result = SynonymFunctions.Synonymize(result);
+            return result;
         }
     }
 }
