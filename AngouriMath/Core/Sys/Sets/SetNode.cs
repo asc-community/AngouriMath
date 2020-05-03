@@ -165,6 +165,11 @@ namespace AngouriMath.Core
             Pieces.AddRange(remainders);
         }
 
+        internal void AddRange(Set set)
+        {
+            foreach (var piece in set)
+                AddPiece(piece);
+        }
 
         public override bool Contains(Piece piece)
         {
@@ -192,6 +197,8 @@ namespace AngouriMath.Core
             foreach (var el in elements)
                 AddPiece(el);
         }
+
+        public void Add(Piece piece) => AddPiece(piece);
 
         /// <summary>
         /// Adds a setNode of numbers to the setNode

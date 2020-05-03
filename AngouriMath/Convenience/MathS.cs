@@ -20,7 +20,6 @@ using AngouriMath.Core.FromString;
 using System.Linq.Expressions;
 using AngouriMath.Core.FromLinq;
 using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.Solver.Analytical;
 using AngouriMath.Functions.NumberSystem;
 using AngouriMath.Functions.Output;
 using AngouriMath.Functions.Algebra.Solver;
@@ -52,7 +51,7 @@ namespace AngouriMath
         /// <param name="equation"></param>
         /// <param name="var"></param>
         /// <returns></returns>
-        public static EntitySet SolveEquation(Entity equation, VariableEntity var)
+        public static Set SolveEquation(Entity equation, VariableEntity var)
             => EquationSolver.Solve(equation, var);
 
         /// <summary>
@@ -287,9 +286,9 @@ namespace AngouriMath
         /// <param name="expr"></param>
         /// <returns></returns>
         [ObsoleteAttribute("Use MathS.Utils.GetUniqueVariables instead")]
-        public static EntitySet GetUniqueVariables(Entity expr)
+        public static Set GetUniqueVariables(Entity expr)
         {
-            var res = new EntitySet();
+            var res = new Set();
             TreeAnalyzer.GetUniqueVariables(expr, res);
             return res;
         }
@@ -695,7 +694,7 @@ namespace AngouriMath
         /// <param name="var"></param>
         /// <returns></returns>
         [Obsolete("Use either MathS.Equations or MathS.SolveEquation or yourexpr.SolveEquation instead")]
-        public static EntitySet Solve(Entity equation, VariableEntity var)
+        public static Set Solve(Entity equation, VariableEntity var)
             => EquationSolver.Solve(equation, var);
     }
 }

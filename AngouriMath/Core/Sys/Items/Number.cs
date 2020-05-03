@@ -296,9 +296,9 @@ namespace AngouriMath.Core
         /// <param name="value"></param>
         /// <param name="rootPower"></param>
         /// <returns></returns>
-        public static NumberSet GetAllRoots(Number value, int rootPower)
+        public static Set GetAllRoots(Number value, int rootPower)
         {
-            var res = new NumberSet();
+            var res = new Set();
             Complex val = value.value;
             double phi = (Complex.Log(val / Complex.Abs(val)) / MathS.i.value).Real;
             double newMod = Math.Pow(Complex.Abs(val), 1.0 / rootPower);
@@ -342,33 +342,5 @@ namespace AngouriMath.Core
         public static double Dist(Number n1, Number n2)
             => Abs(n1 - n2);
 
-    }
-
-    /// <summary>
-    /// A set of Numbers
-    /// TODO
-    /// </summary>
-    public class NumberSet : List<Number>
-    {
-        public NumberSet()
-        {
-
-        }
-        internal void Include(Number num)
-        {
-            var alreadyExists = false;
-            foreach (var elem in this)
-                if (elem == num)
-                {
-                    alreadyExists = true;
-                    break;
-                }
-            if (!alreadyExists)
-                this.Add(num);
-        }
-        public override string ToString()
-        {
-            return "[" + string.Join(", ", this) + "]";
-        }
     }
 }

@@ -34,12 +34,12 @@ namespace AngouriMath.Core.TreeAnalysis
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
-        internal static EntitySet EvalAll(Entity expr)
+        internal static Set EvalAll(Entity expr)
         {
             throw new NotImplementedException();
         }
         
-        internal static void EvalCombs(Entity expr, EntitySet set)
+        internal static void EvalCombs(Entity expr, Set set)
         {
             throw new NotImplementedException();
         }

@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -213,11 +214,16 @@ namespace AngouriMath.Core
             => new OneElementPiece(element);
         public static implicit operator Piece(Number element)
             => new OneElementPiece(element);
+        public static implicit operator Piece(Complex element)
+            => new OneElementPiece(element);
+
+        public static explicit operator Entity(Piece piece)
+            => (piece as OneElementPiece).entity.Item1;
     }
 
     public class OneElementPiece : Piece
     {
-        private readonly Edge entity;
+        internal readonly Edge entity;
 
         internal OneElementPiece(Entity element) : base(PieceType.ENTITY)
         {

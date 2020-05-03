@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+ using AngouriMath.Core;
 
 namespace AngouriMath.Functions.Evaluation.Simplification
 {
@@ -45,13 +46,13 @@ namespace AngouriMath.Functions.Evaluation.Simplification
         /// <param name="src"></param>
         /// <param name="level"></param>
         /// <returns></returns>
-        internal static EntitySet Alternate(Entity src, int level)
+        internal static Set Alternate(Entity src, int level)
         {
             if (src.entType == Entity.EntType.NUMBER || src.entType == Entity.EntType.VARIABLE)
-                return new EntitySet(false, src.Copy());
+                return new Set(src.Copy());
             var stage1 = src.InnerSimplify();
             if (stage1.entType == Entity.EntType.NUMBER)
-                return new EntitySet(false, stage1);
+                return new Set(stage1);
 
             var history = new SortedDictionary<int, Entity>();
 
@@ -136,7 +137,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 var collapsed = res.Collapse().Simplify(-level);
                 AddHistory(collapsed);
             }
-            return new EntitySet(history.Values);
+            return new Set(history.Values);
         }
     }
 }

@@ -327,17 +327,6 @@ namespace UnitTests.Algebra
         };
 
         [TestMethod]
-        public void TestInvertSin()
-        {
-            foreach (var kp in KeyPoints)
-            {
-                var roots = Trigonometry.FindInvertSin(kp);
-                Assert.IsTrue(roots[0].Sin().Eval() == kp, kp.ToString());
-                Assert.IsTrue(roots[1].Sin().Eval() == kp, kp.ToString());
-            }
-        }
-
-        [TestMethod]
         public void TestLogs()
         {
             Entity eqs = "log(32, x) - 5";
