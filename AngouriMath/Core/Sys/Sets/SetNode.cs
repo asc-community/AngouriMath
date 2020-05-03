@@ -17,9 +17,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sets;
 
+[assembly: InternalsVisibleTo("UnitTests.Core")]
 namespace AngouriMath.Core
 {
     /// <summary>
@@ -42,27 +44,20 @@ namespace AngouriMath.Core
             => Type = type;
 
         public abstract bool Contains(Piece piece);
-
+        public abstract bool Contains(Set piece);
+        public abstract bool Contains(Entity piece);
 
         public static SetNode operator &(SetNode A, SetNode B)
-        {
-            return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B).Eval();
-        }
+            => OperatorSet.And(A, B).Eval();
 
         public static SetNode operator |(SetNode A, SetNode B)
-        {
-            return new OperatorSet(OperatorSet.OperatorType.UNION, A, B).Eval();
-        }
+            => OperatorSet.Or(A, B).Eval();
 
         public static SetNode operator -(SetNode A, SetNode B)
-        {
-            return new OperatorSet(OperatorSet.OperatorType.COMPLEMENT, A, B).Eval();
-        }
+            => OperatorSet.Minus(A, B).Eval();
 
         public static SetNode operator !(SetNode A)
-        {
-            return new OperatorSet(OperatorSet.OperatorType.INVERSION, A).Eval();
-        }
+            => OperatorSet.Inverse(A).Eval();
 
         public SetNode Eval()
         {
@@ -118,6 +113,23 @@ namespace AngouriMath.Core
                 OperatorType.INVERSION => !Children[0].Contains(piece)
             };
 
+        public override bool Contains(Set set)
+            => set.Pieces.All(Contains);
+
+        public override bool Contains(Entity entity)
+            => Contains(new OneElementPiece(entity));
+
+        internal static SetNode And(SetNode A, SetNode B)
+        => new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B);
+
+        internal static SetNode Or(SetNode A, SetNode B)
+            => new OperatorSet(OperatorSet.OperatorType.UNION, A, B);
+
+        internal static SetNode Minus(SetNode A, SetNode B)
+        => new OperatorSet(OperatorSet.OperatorType.COMPLEMENT, A, B);
+
+        internal static SetNode Inverse(SetNode A)
+        => new OperatorSet(OperatorSet.OperatorType.INVERSION, A);
     }
 
     public class Set : SetNode, IEnumerable
@@ -146,16 +158,27 @@ namespace AngouriMath.Core
             Pieces.AddRange(remainders);
         }
 
-        public bool Contains(Set set)
-        {
-            foreach (var p in set)
-                if (!this.Contains(p))
-                    return false;
-            return true;
-        }
 
         public override bool Contains(Piece piece)
-            => Pieces.Any(p => p.Contains(piece));
+        {
+            // we will subtract each this.piece from piece and if piece finally becomes 0 then
+            // there is no point outside this set
+            var remainders = new List<Piece>{ piece };
+            foreach (var p in this.Pieces)
+            {
+                var newRemainders = new List<Piece>();
+                foreach (var rem in remainders)
+                    newRemainders.AddRange(PieceFunctions.Subtract(rem, p));
+                remainders = newRemainders;
+            }
+            return remainders.Count == 0;
+        }
+
+        public override bool Contains(Set set)
+            => set.Pieces.All(Contains);
+
+        public override bool Contains(Entity entity)
+            => Contains(new OneElementPiece(entity));
 
         public Set() : base(NodeType.SET)
         {
@@ -174,22 +197,19 @@ namespace AngouriMath.Core
 
 
         /// <summary>
-        /// Creates a closed interval
-        /// Modify it with setters, for example,
-        /// myset.AddInterval(3, 4).SetLeftClosed(true).SetRightClosed(false);
+        /// Creates an interval, for example
+        /// AddInterval(MathS.Sets.Interval(3, 4).SetLeftClosed(true).SetRightClosed(true, true)
         /// </summary>
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        public IntervalPiece AddInterval(Number a, Number b)
-        {
-            var piece = Piece.Interval(a, b);
-            AddPiece(piece);
-            return piece; // so we could modify it later
-        }
+        public void AddInterval(IntervalPiece interval) 
+            => AddPiece(interval);
 
         public override string ToString()
             => SetToString.LinearSetToString(this);
+
+        public bool IsEmpty() => Pieces.Count == 0;
     }
 
     public class SetEnumerator : IEnumerator

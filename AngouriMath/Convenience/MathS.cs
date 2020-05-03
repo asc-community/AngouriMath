@@ -473,11 +473,68 @@ namespace AngouriMath
         public static class Sets
         {
             /// <summary>
-            /// Creates an instance of a set
+            /// Creates an instance of an empty set
             /// </summary>
             /// <returns></returns>
-            public static AngouriMath.Core.Set Set()
-                => new AngouriMath.Core.Set();
+            public static Set Empty()
+                => new Set();
+
+            /// <summary>
+            /// Returns a set of all complex numbers
+            /// </summary>
+            /// <returns></returns>
+            public static Set C()
+                => new Set
+                {
+                    Pieces = new List<Piece>
+                    {
+                        Piece.Interval(
+                            new Number(double.NegativeInfinity, double.NegativeInfinity),
+                            new Number(double.PositiveInfinity, double.PositiveInfinity)
+                            ).AsInterval().SetLeftClosed(false, false).SetRightClosed(false, false)
+                    }
+                };
+
+            /// <summary>
+            /// Returns a set of all real numbers
+            /// </summary>
+            /// <returns></returns>
+            public static Set R()
+                => new Set
+                {
+                    Pieces = new List<Piece>
+                    {
+                        Piece.Interval(
+                            new Number(double.NegativeInfinity),
+                            new Number(double.PositiveInfinity)
+                        ).AsInterval().SetLeftClosed(false).SetRightClosed(false)
+                    }
+                };
+
+            /// <summary>
+            /// Creats a set that you can fill with elements
+            /// Later on, you may add an Interval if wish
+            /// </summary>
+            /// <param name="entities"></param>
+            /// <returns></returns>
+            public static Set Finite(params Entity[] entities)
+            {
+                var res = new Set();
+                foreach (var entity in entities)
+                    res.AddElements(entity);
+                return res;
+            }
+
+            /// <summary>
+            /// Creates an interval
+            /// To modify it, use
+            /// Interval(3, 4).SetLeftClosed (see more alike functions in set documentation)
+            /// </summary>
+            /// <param name="from"></param>
+            /// <param name="to"></param>
+            /// <returns></returns>
+            public static IntervalPiece Interval(Entity from, Entity to)
+                => Piece.Interval(from, to).AsInterval();
         }
 
     }

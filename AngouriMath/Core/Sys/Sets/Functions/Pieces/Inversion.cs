@@ -61,43 +61,43 @@ namespace AngouriMath.Core.Sets
            var numLeftUp = new Number(edgeLowerNum.Re, edgeUpperNum.Im);
            var numRightUp = new Number(edgeUpperNum.Re, edgeUpperNum.Im);
            var numRightDown = new Number(edgeUpperNum.Re, edgeLowerNum.Im);
-           var pieceDown = new IntervalPiece(
+           var pieceDown = Piece.Interval(
                numRightDown, new Number(double.NegativeInfinity, double.NegativeInfinity), 
                true, false, false, false);
-           var pieceLeft = new IntervalPiece(
+           var pieceLeft = Piece.Interval(
                numLeftDown, new Number(double.NegativeInfinity, double.PositiveInfinity),
                false, true, false, false);
-           var pieceUp = new IntervalPiece(
+           var pieceUp = Piece.Interval(
                numLeftUp, new Number(double.PositiveInfinity, double.PositiveInfinity),
                true, false, false, false);
-           var pieceRight = new IntervalPiece(
+           var pieceRight = Piece.Interval(
                numRightUp, new Number(double.PositiveInfinity, double.NegativeInfinity),
                false, true, false, false);
            var res = new List<Piece> { pieceDown, pieceLeft, pieceUp, pieceRight };
 
            if (!edgeLower.Item2)
-               res.Add(new IntervalPiece(
+               res.Add(Piece.Interval(
                    new Number(numLeftDown.Re, numLeftDown.Im),
                    new Number(numLeftDown.Re, numLeftUp.Im), // Re part is the same
                    true, true, true, true
                    ));
 
            if (!edgeLower.Item3)
-               res.Add(new IntervalPiece(
+               res.Add(Piece.Interval(
                    new Number(numLeftUp.Re, numLeftDown.Im),
                    new Number(numRightUp.Re, numLeftDown.Im), // Im part is the same
                    true, true, true, true
                ));
 
            if (!edgeUpper.Item2)
-               res.Add(new IntervalPiece(
+               res.Add(Piece.Interval(
                    new Number(numRightUp.Re, numRightDown.Im),
                    new Number(numRightUp.Re, numRightUp.Im), // Re part is the same
                    true, true, true, true
                ));
 
            if (!edgeLower.Item3)
-               res.Add(new IntervalPiece(
+               res.Add(Piece.Interval(
                    new Number(numLeftDown.Re, numRightDown.Im),
                    new Number(numRightDown.Re, numRightDown.Im), // Im part is the same
                    true, true, true, true

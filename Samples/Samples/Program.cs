@@ -257,13 +257,8 @@ namespace Samples
                 Console.WriteLine(int_);
                 */
 
-            var set = MathS.Sets.Set();
-            set.AddInterval(3, 4);
-            set.AddElements(11, 12);
-            set.AddInterval(-1, 3.5);
-            foreach (var i in set)
-                Console.WriteLine(i);
-                
+
+
             /*
             var set = MathS.Sets.Set();
             var int1 = set.AddInterval(3, 4);

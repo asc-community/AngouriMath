@@ -31,6 +31,9 @@ namespace AngouriMath.Core
             INTERVAL,
         }
 
+        public bool In(Set set)
+            => set.Contains(this);
+
         public PieceType Type { get; private set; }
 
         public static bool operator ==(Piece a, Piece b)
@@ -162,6 +165,14 @@ namespace AngouriMath.Core
         internal static bool EdgeEqual(Edge A, Edge B)
             => A.Item1 == B.Item1 && A.Item2 == B.Item2 && A.Item3 == B.Item3;
 
+        internal static Piece Interval(Entity a, Entity b, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm)
+        {
+            if (a == b)
+                return new OneElementPiece(a);
+            var interval = new IntervalPiece(a, b, closedARe, closedAIm, closedBRe, closedBIm);
+            return interval;
+        }
+
         /// <summary>
         /// Creates an instance of A closed interval (use SetNode-functions to change it,
         /// see more in MathS.Sets.Interval() )
@@ -169,11 +180,11 @@ namespace AngouriMath.Core
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        internal static IntervalPiece Interval(Entity a, Entity b)
-        {
-            var interval = new IntervalPiece(a, b, true, true, true, true);
-            return interval;
-        }
+        internal static Piece Interval(Entity a, Entity b)
+            => Interval(a, b, true, true, true, true);
+
+        internal static Piece Interval(Edge A, Edge B)
+            => Interval(A.Item1, B.Item1, A.Item2, A.Item3, B.Item2, B.Item3);
 
         /// <summary>
         /// Creates an instance of an element
@@ -185,9 +196,11 @@ namespace AngouriMath.Core
         => new OneElementPiece(a);
 
         internal static IntervalPiece CreateUniverse()
-            => new IntervalPiece(new Number(double.NegativeInfinity, double.NegativeInfinity),
+            => Piece.Interval(new Number(double.NegativeInfinity, double.NegativeInfinity),
                 new Number(double.PositiveInfinity, double.PositiveInfinity),
-                false, false, false, false);
+                false, false, false, false).AsInterval();
+
+        internal IntervalPiece AsInterval() => this as IntervalPiece;
     }
 
     public class OneElementPiece : Piece

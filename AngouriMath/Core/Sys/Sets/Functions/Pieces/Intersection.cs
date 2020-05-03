@@ -128,10 +128,10 @@ namespace AngouriMath.Core.Sets
             var low2Num = low2.Item1.Eval();
             var up1Num = up1.Item1.Eval();
             var up2Num = up2.Item1.Eval();
-            if (low1Num.Re > up2Num.Re ||
-                low2Num.Re > up1Num.Re ||
-                low1Num.Im > up2Num.Im ||
-                low2Num.Im > up1Num.Im)
+            if (low1Num.Re > up2Num.Re || (low1Num.Re == up2Num.Re && (!low1.Item2 || !up2.Item2)) ||
+                low2Num.Re > up1Num.Re || (low2Num.Re == up1Num.Re && (!low2.Item2 || !up1.Item2)) ||
+                low1Num.Im > up2Num.Im || (low1Num.Im == up2Num.Im && (!low1.Item3 || !up2.Item3)) ||
+                low2Num.Im > up1Num.Im || (low2Num.Im == up1Num.Im && (!low2.Item3 || !up1.Item3)))
                 return null; // if they don't intersect
             var realAxis = IntersectAxis(
                 low1Num.Re, low1.Item2,
@@ -153,7 +153,7 @@ namespace AngouriMath.Core.Sets
                 new Number(realAxis.Item2.Item1, imaginaryAxis.Item2.Item1),
                 realAxis.Item2.Item2,
                 imaginaryAxis.Item2.Item2);
-            var res = new IntervalPiece(edgeLeft, edgeRight);
+            var res = Piece.Interval(edgeLeft, edgeRight);
             return res;
         }
     }
