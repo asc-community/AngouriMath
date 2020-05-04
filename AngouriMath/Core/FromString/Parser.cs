@@ -15,10 +15,11 @@
 
 
 
-using Antlr;
-using Antlr.Runtime;
+using Antlr4;
+using Antlr4.Runtime;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 
@@ -28,27 +29,35 @@ namespace AngouriMath.Core.FromString
     {
         public AngouriMathTokenStream(ITokenSource source)
             : base(source) { }
-
-        public new List<IToken> GetTokens()
-        {
-            ToString();
-            return _tokens;
-        }
     }
 
     static class Parser
     {
+        static readonly Dictionary<string, int> antlrDict =
+            new Dictionary<string, int>();
+        static Parser()
+        {
+            var tokenReader = new StreamReader(typeof(Parser).Assembly.GetManifestResourceStream("AngouriMath.Core.FromString.Antlr.Angourimath.tokens"));
+            while (!tokenReader.EndOfStream)
+            {
+                var t = tokenReader.ReadLine().Split('=');
+                antlrDict.Add(t[0], int.Parse(t[1], System.Globalization.CultureInfo.InvariantCulture));
+            }
+        }
         static public Entity Parse(string source)
         {
             AngouriMathTokenStream GetTokenStream(string source)
             {
-                var stream = new ANTLRStringStream(source);
+                var stream = new AntlrInputStream(source);
                 var lexer = new AngourimathLexer(stream);
+
                 return new AngouriMathTokenStream(lexer);
             }
 
-            var tokenList = GetTokenStream(source).GetTokens();
-            if (tokenList.Count == 0) 
+            var tokenStream = GetTokenStream(source);
+            tokenStream.Fill();
+            var tokenList = tokenStream.GetTokens();
+            if (tokenList.Count == 0)
                 throw new ParseException("input string is invalid");
             source = Parser.PreProcess(tokenList);
             var tokens = GetTokenStream(source);
@@ -59,14 +68,14 @@ namespace AngouriMath.Core.FromString
             return result;
         }
 
-        static string PreProcess(List<IToken> tokens)
-        { 
-            const int NUMBER = 8;             // from Antlr
-            const int ID = 6;                 // from Antlr
-            const int PARENTHESIS_OPEN = 10;  // from Antlr
-            const int PARENTHESIS_CLOSE = 11; // from Antlr
-            const int MULTIPLY = 12;          // from Antlr
-            const int POWER = 17;             // from Antlr
+        static string PreProcess(IList<IToken> tokens)
+        {
+            int NUMBER = antlrDict[nameof(NUMBER)];
+            int ID = antlrDict[nameof(ID)];
+            int PARENTHESIS_OPEN = antlrDict["'('"];
+            int PARENTHESIS_CLOSE = antlrDict["')'"];
+            int MULTIPLY = antlrDict["'*'"];
+            int POWER = antlrDict["'^'"];
 
             const int FUNCTION = -0xFF;
             const int VARIABLE = -0xEE;
@@ -79,7 +88,7 @@ namespace AngouriMath.Core.FromString
                 {
                     if (SyntaxInfo.goodStringsForFunctions.ContainsKey(token.Text))
                         return type == FUNCTION;
-                    else 
+                    else
                         return type == VARIABLE;
                 }
                 else return token.Type == type;
@@ -110,8 +119,8 @@ namespace AngouriMath.Core.FromString
                 }
             }
 
-            IToken multiplyer = new ClassicToken(MULTIPLY, "*");
-            IToken power = new ClassicToken(POWER, "^");
+            IToken multiplyer = new CommonToken(MULTIPLY, "*");
+            IToken power = new CommonToken(POWER, "^");
 
             // 2x -> 2 * x
             InsertIntoPair(NUMBER, VARIABLE, multiplyer);
@@ -152,7 +161,7 @@ namespace AngouriMath.Core.FromString
 
             var builder = new StringBuilder();
             tokens.RemoveAt(tokens.Count - 1); // remove <EOF> token
-            foreach(var token in tokens)
+            foreach (var token in tokens)
             {
                 builder.Append(token.Text);
             }
