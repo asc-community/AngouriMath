@@ -118,6 +118,8 @@ namespace AngouriMath.Core.Sets
         /// <returns></returns>
         public static Piece Intersect(Piece A, Piece B)
         {
+            if (A == B)
+                return A;
             var edgesASorted = SortEdges(A.LowerBound(), A.UpperBound());
             var edgesBSorted = SortEdges(B.LowerBound(), B.UpperBound());
             var low1 = edgesASorted.Item1;

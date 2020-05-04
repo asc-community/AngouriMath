@@ -142,13 +142,22 @@ namespace AngouriMath.Core
         public SetEnumerator GetEnumerator()
             => new SetEnumerator(Pieces.ToArray());
 
+        public FiniteSet FiniteSet()
+            => new FiniteSet(Pieces.ToArray());
+
         internal List<Piece> Pieces = new List<Piece>();
 
         internal void AddPiece(Piece piece)
         {
-            if (!piece.IsNumeric())
+            if (FastAddingMode)
             {
                 Pieces.Add(piece);
+                return;
+            }
+            if (!piece.IsNumeric())
+            {
+                if (Pieces.All(p => p != piece))
+                    Pieces.Add(piece);
                 return;
             }
             var remainders = new List<Piece>{ piece };
@@ -225,6 +234,119 @@ namespace AngouriMath.Core
             => SetToString.LinearSetToString(this);
 
         public bool IsEmpty() => Pieces.Count == 0;
+
+        public enum PowerLevel
+        {
+            EMPTY,
+            FINITE,
+            INFINITE
+        }
+
+        public PowerLevel Power
+        {
+            get
+            {
+                if (Pieces.Count == 0)
+                    return 0;
+                if (Pieces.Any(p => p.Type == Piece.PieceType.INTERVAL))
+                    return PowerLevel.INFINITE;
+                else
+                    return PowerLevel.FINITE;
+            }
+        }
+
+        public int Count
+        {
+            get => Power == PowerLevel.INFINITE ? -1 : Pieces.Count;
+        }
+
+        public IEnumerable<T> Select<T>(Func<Piece, T> selector)
+            => Pieces.Select(selector);
+
+        public Set Where(Func<Piece, bool> selector)
+            => new Set { Pieces = Pieces.Where(selector).ToList() };
+
+        public Set FiniteWhere(Func<Entity, bool> selector)
+            => new Set
+            {
+                Pieces = Pieces.Where(p => p.Type == Piece.PieceType.ENTITY && selector((Entity)p)).ToList()
+            };
+
+        public void Apply(Func<Piece, Piece> processor)
+        {
+            for (int i = 0; i < Pieces.Count; i++)
+                Pieces[i] = processor(Pieces[i]);
+        }
+
+        public void FiniteApply(Func<Entity, Entity> processor)
+        {
+            for (int i = 0; i < Pieces.Count; i++)
+            {
+                if (Pieces[i].Type == Piece.PieceType.INTERVAL)
+                    continue;
+                var oneelem = Pieces[i] as OneElementPiece;
+                oneelem.entity = new Tuple<Entity, bool, bool>(
+                    processor(oneelem.entity.Item1),
+                    oneelem.entity.Item2,
+                    oneelem.entity.Item3);
+            }
+        }
+
+        /// <summary>
+        /// Without check whether entity is already in the set
+        /// </summary>
+        public bool FastAddingMode { get; set; } = false;
+    }
+
+    public class FiniteSet : IEnumerable
+    {
+        private Piece[] pieces;
+        internal FiniteSet(Piece[] pieces)
+            => this.pieces = pieces;
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return (IEnumerator)GetEnumerator();
+        }
+
+        public SetFiniteEnumerator GetEnumerator()
+            => new SetFiniteEnumerator(
+                pieces.Where(p => p.Type == Piece.PieceType.ENTITY)
+                    .Select(p => (Entity)p).ToArray()
+            );
+    }
+
+    public class SetFiniteEnumerator : IEnumerator
+    {
+        private Entity[] entities;
+        private int position = -1;
+        public SetFiniteEnumerator(Entity[] entities)
+            => this.entities = entities;
+
+        public bool MoveNext()
+        {
+            position++;
+            return position < entities.Length;
+        }
+
+        public void Reset()
+        {
+            position = -1;
+        }
+
+        public void Dispose()
+        {
+            // do nothing if disposed
+        }
+
+        object IEnumerator.Current
+        {
+            get => Current;
+        }
+
+        public Entity Current
+        {
+            get => entities[position];
+        }
     }
 
     public class SetEnumerator : IEnumerator

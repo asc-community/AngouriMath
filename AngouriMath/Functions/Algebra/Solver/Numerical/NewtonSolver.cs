@@ -98,7 +98,7 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                                            from.Im * yShare + to.Im * (1 - yShare));
                     var root = NewtonIter(f, df, value, precision);
                     if (!root.IsNull)
-                        res.Include(root);
+                        res.Add(root);
                 }
             return res;
         }

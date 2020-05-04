@@ -38,7 +38,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
-        internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level)[0].InnerSimplify();
+        internal static Entity Simplify(Entity expr, int level) => ((Entity)Alternate(expr, level).Pieces[0]).InnerSimplify();
 
         /// <summary>
         /// Finds all alternative forms of an expression
@@ -137,7 +137,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 var collapsed = res.Collapse().Simplify(-level);
                 AddHistory(collapsed);
             }
-            return new Set(history.Values);
+            return new Set(history.Values.Select(p => (Piece)p).ToArray());
         }
     }
 }

@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using AngouriMath.Core;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 
@@ -79,5 +80,9 @@ namespace AngouriMath.Functions
             dst = dst.InnerSimplify();
             return true;
         }
+
+        internal static Number CutoffImprecision(Number num)
+            => new Number(num.Re - num.Re % MathS.Utils.EQUALITY_THRESHOLD,
+                num.Im - num.Im % MathS.Utils.EQUALITY_THRESHOLD);
     }
 }

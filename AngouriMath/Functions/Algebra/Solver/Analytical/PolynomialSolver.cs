@@ -150,7 +150,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     
                     beta = beta.Eval();
                     var p3 = (-p / 3).Eval();
-                    foreach (var root in Number.GetAllRoots(beta3, 3))
+                    foreach (var root in Number.GetAllRoots(beta3, 3).FiniteSet())
                         if ((root * alpha).Eval() == p3)
                         {
                             beta = root;
@@ -218,12 +218,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 beta = beta.Eval();
             if (beta == 0)
             {
+                res.FastAddingMode = true;
                 for (int s = -1; s <= 1; s += 2)
                 for (int t = -1; t <= 1; t += 2)
                 {
                     var x = -b / 4 * a + s * MathS.Sqrt((-alpha + t * MathS.Sqrt(MathS.Sqr(alpha) - 4 * gamma)) / 2);
-                    res.Add(x, check: false);
+                    res.Add(x);
                 }
+                res.FastAddingMode = false;
                 return res;
             }
 
@@ -239,13 +241,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var W = MathS.Sqrt(alpha + 2 * y);
            
             // Now we need to permutate all four combinations
+            res.FastAddingMode = true;  /* we are sure that there's no such root yet */
             for (int s = -1; s <= 1; s += 2)
                 for (int t = -1; t <= 1; t += 2)
                 {
                     var x = -b / (4 * a) + (s * W + t * MathS.Sqrt(-(3 * alpha + 2 * y + s * 2 * beta / W))) / 2;
-                    res.Add(x, check: false /* we are sure that there's no such root yet */);
+                    res.Add(x);
                 }
-
+            res.FastAddingMode = false;
             return res;
         }
 

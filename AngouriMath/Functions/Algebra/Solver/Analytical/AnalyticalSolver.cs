@@ -195,7 +195,7 @@ namespace AngouriMath.Core.TreeAnalysis
                         if (a.entType == Entity.EntType.NUMBER && a.GetValue().IsInteger())
                         {
                             var res = new Set();
-                            foreach (var root in Number.GetAllRoots(1, (int)(a.GetValue().Re)))
+                            foreach (var root in Number.GetAllRoots(1, (int)(a.GetValue().Re)).FiniteSet())
                                 res.AddRange(FindInvertExpression(un, root * MathS.Pow(value, 1 / a), x));
                             return res;
                         }
@@ -256,7 +256,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
             Set GetNotNullEntites(Set set)
             {
-                return new Set(set.Where(el => el.entType != Entity.EntType.NUMBER || !el.GetValue().IsNull));
+                return set.FiniteWhere(el => el.entType != Entity.EntType.NUMBER || !el.GetValue().IsNull);
             }
 
             switch (func.Name)
@@ -410,11 +410,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // Here we find all possible replacements
             var replacements = new List<Tuple<Entity, Entity>>();
             replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(expr, x), expr));
-            foreach (var alt in expr.Alternate(4))
+            foreach (var alt in expr.Alternate(4).FiniteSet())
             {
-                if (((Entity)alt).FindSubtree(x) == null)
+                if ((alt).FindSubtree(x) == null)
                     return; // in this case there is either 0 or +oo solutions
-                replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree((Entity)alt, x), alt));
+                replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
             }
             // // //
 
@@ -428,7 +428,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 var newExpr = replacement.Item2.DeepCopy();
                 TreeAnalyzer.FindAndReplace(ref newExpr, replacement.Item1, newVar);
                 solutions = newExpr.SolveEquation(newVar);
-                if (solutions.Count > 0 /* && !newExpr.Children.Any(c => c == newVar)*/)
+                if (!solutions.IsEmpty())
                 {
                     bestReplacement = replacement.Item1;
 
@@ -437,23 +437,23 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     foreach (var solution in solutions)
                     {
                         var str = bestReplacement.ToString();
-                        if (!compensateSolving || bestReplacement - solution != expr)
-                            Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
+                        if (!compensateSolving || bestReplacement - (Entity)solution != expr)
+                            Solve(bestReplacement - (Entity)solution, x, newDst, compensateSolving: true);
                     }
                     dst.AddRange(newDst);
-                    if (dst.Count > 0)
+                    if (!dst.IsEmpty())
                         break;
                     // // //
                 }
             }
             // // //
             
-            if (dst.Count == 0) // if nothing has been found so far
+            if (dst.IsEmpty()) // if nothing has been found so far
             {
                 Set allVars = new Set();
                 TreeAnalyzer.GetUniqueVariables(expr, allVars);
                 if (allVars.Count == 1)
-                    dst.Merge(expr.SolveNt(x));
+                    dst.AddRange(expr.SolveNt(x));
             }
         }
     }

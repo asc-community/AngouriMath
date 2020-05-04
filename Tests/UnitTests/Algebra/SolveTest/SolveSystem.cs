@@ -24,7 +24,7 @@ namespace UnitTests.Algebra
                         eqCopy = eqCopy.Substitute(vars[rootid], sol[i, rootid]);
                     }
 
-                    foreach (var uniqvar in MathS.GetUniqueVariables(eqCopy))
+                    foreach (var uniqvar in MathS.Utils.GetUniqueVariables(eqCopy).FiniteSet())
                         eqCopy = eqCopy.Substitute(uniqvar.Name, 3);
                     Assert.IsTrue(eqCopy.Eval() == 0,
                         "i: " + i + "  eq: " + eq.ToString() + "  E: " + eqCopy.Eval().ToString());

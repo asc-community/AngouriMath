@@ -64,20 +64,20 @@ namespace UnitTests.Common
 
         public bool FunctionsAreEqualHack(Entity eq1, Entity eq2)
         {
-            var vars1 = MathS.GetUniqueVariables(eq1);
-            var vars2 = MathS.GetUniqueVariables(eq2);
-            vars1.Sort((entity, entity1) => entity.Name.CompareTo(entity1.Name));
-            vars2.Sort((entity, entity1) => entity.Name.CompareTo(entity1.Name));
+            var vars1 = MathS.Utils.GetUniqueVariables(eq1);
+            var vars2 = MathS.Utils.GetUniqueVariables(eq2);
+            vars1.Pieces.Sort((entity, entity1) => ((Entity)entity).Name.CompareTo(((Entity)entity1).Name));
+            vars2.Pieces.Sort((entity, entity1) => ((Entity)entity).Name.CompareTo(((Entity)entity1).Name));
             if (vars1.Count != vars2.Count)
                 return false;
             for(int i = 0; i < vars1.Count; i++)
-                if (vars1[i] != vars2[i])
+                if (vars1.Pieces[i] != vars2.Pieces[i])
                     return false;
             for (int i = 1; i < 10; i++)
             {
                 var a = eq1.DeepCopy();
                 var b = eq2.DeepCopy();
-                foreach (var var in vars1)
+                foreach (var var in vars1.FiniteSet())
                 {
                     a = a.Substitute(var as VariableEntity, i);
                     b = b.Substitute(var as VariableEntity, i);

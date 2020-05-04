@@ -39,8 +39,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         {
             var res = new Set();
             AnalyticalSolver.Solve(equation.DeepCopy(), x, res);
-            for (int i = 0; i < res.Count; i++)
-                res[i] = res[i].InnerSimplify();
+            res.FiniteApply(p => p.InnerSimplify());
             return res;
         }
         
@@ -89,7 +88,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static List<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var)
         {
             var result = new List<List<Entity>>();
-            foreach (var sol in eq.Solve(var))
+            foreach (var sol in eq.Solve(var).FiniteSet())
                 result.Add(new List<Entity>() { sol });
             return result;
         }
@@ -109,7 +108,7 @@ namespace AngouriMath.Functions.Algebra.Solver
                     equations.RemoveAt(i);
                     vars.RemoveAt(vars.Count - 1);
                     
-                    foreach (var sol in solutionsOverVar)
+                    foreach (var sol in solutionsOverVar.FiniteSet())
                     {
                         var newequations = new List<Entity>();
                         for (int eqid = 0; eqid < equations.Count; eqid++)

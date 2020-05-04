@@ -410,7 +410,7 @@ namespace AngouriMath
             /// For example, if you don't need precision higher than 6 digits after .,
             /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
             /// </summary>
-            public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-11;
+            public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-7;
 
             /// <summary>
             /// Converts an exprssion from linq expression
@@ -460,6 +460,19 @@ namespace AngouriMath
             /// <param name="expr"></param>
             /// <returns></returns>
             public static string ToSympyCode(Entity expr) => Functions.Output.ToSympy.GenerateCode(expr);
+
+            /// <summary>
+            /// Returns list of unique variables, for example 
+            /// it extracts `x`, `goose` from (x + 2 * goose) - pi * x
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <returns></returns>
+            public static Set GetUniqueVariables(Entity expr)
+            {
+                var res = new Set();
+                TreeAnalyzer.GetUniqueVariables(expr, res);
+                return res;
+            }
         }
 
         /// <summary>
@@ -559,7 +572,7 @@ namespace AngouriMath
         /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
         /// </summary>
         [Obsolete("Use MathS.Utils.EQUALITY_THRESHOLD instead")]
-        public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-11;
+        public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-7;
 
         /// <summary>
         /// Converts an exprssion from linq expression

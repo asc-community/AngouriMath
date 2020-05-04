@@ -41,7 +41,7 @@ namespace UnitTests.Convenience
         [TestMethod]
         public void Test7()
         {
-            Assert.IsTrue(MathS.FromString("x^2+1").SolveNt(MathS.Var("x"))[0] == MathS.i);
+            Assert.IsTrue(MathS.FromString("x^2+1").SolveNt(MathS.Var("x")).Pieces[0] == MathS.i);
         }
         [TestMethod]
         public void Test8()
