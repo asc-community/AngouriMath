@@ -203,4 +203,85 @@ namespace AngouriMath
             return @"\arccot\left(" + args[0].Latexise() + @"\right)";
         }
     }
+    namespace Core
+    {
+        partial class SetNode : ILatexiseable
+        {
+            public string Latexise()
+            {
+                var sb = new StringBuilder();
+                switch (Type)
+                {
+                    case NodeType.SET:
+                        var pieces = ((Set)this).Pieces;
+                        if (pieces.Count == 0)
+                        {
+                            sb.Append(@"\emptyset");
+                            break;
+                        }
+                        sb.Append(@"\left\{");
+                        foreach(var p in pieces)
+                        {
+                            switch (p.Type)
+                            {
+                                case Piece.PieceType.ENTITY:
+                                    sb.Append(((OneElementPiece)p).entity.Item1.Latexise());
+                                    break;
+                                case Piece.PieceType.INTERVAL:
+                                    var lower = p.LowerBound();
+                                    var upper = p.UpperBound();
+                                    var l = lower.Item1.Latexise();
+                                    var u = upper.Item1.Latexise();
+                                    switch (lower.Item2, lower.Item3, upper.Item2, upper.Item3)
+                                    {
+                                        case (false, false, false, false):
+                                            sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right)");
+                                            break;
+                                        case (true, true, false, false):
+                                            sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right)");
+                                            break;
+                                        case (false, false, true, true):
+                                            sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right]");
+                                            break;
+                                        case (true, true, true, true):
+                                            sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right]");
+                                            break;
+                                        case var (lr, li, ur, ui):
+                                            sb.Append(@"\left\{z\in\mathbb C:\Re\left(z\right)\in\left")
+                                                .Append(lr ? '[' : '(').Append(@"\Re\left(")
+                                                .Append(l).Append(@"\right),\Re\left(").Append(u).Append(@"\right)\right")
+                                                .Append(ur ? ']' : ')').Append(@",\Im\left(z\right)\in\left")
+                                                .Append(li ? '[' : '(').Append(@"\Im\left(")
+                                                .Append(l).Append(@"\right),\Im\left(").Append(u).Append(@"\right)\right")
+                                                .Append(ui ? ']' : ')').Append(@"\right\}");
+                                            break;
+                                    }
+                                    break;
+                            }
+                            sb.Append(',');
+                        }
+                        sb.Remove(sb.Length - 1, 1); // Remove extra ,
+                        sb.Append(@"\right\}");
+                        break;
+                    case NodeType.OPERATOR:
+                        var op = (OperatorSet)this;
+                        var connector = op.ConnectionType switch
+                        {
+                            OperatorSet.OperatorType.UNION => @"\cup",
+                            OperatorSet.OperatorType.INTERSECTION => @"\cap",
+                            OperatorSet.OperatorType.COMPLEMENT => @"\setminus",
+                            OperatorSet.OperatorType.INVERSION => @"'",
+                        };
+                        for(int i = 0; i < op.Children.Length; i++)
+                        {
+                            sb.Append(op.Children[i].Latexise());
+                            if (op.Children.Length == 1 || i < op.Children.Length - 1)
+                                sb.Append(connector);
+                        }
+                        break;
+                }
+                return sb.ToString();
+            }
+        }
+    }
 }
