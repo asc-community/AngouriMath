@@ -30,7 +30,7 @@ namespace AngouriMath.Core
     /// It supports intersection (with & operator), union (with | operator), subtracting (with - operator)
     /// TODO: To make sets work faster
     /// </summary>
-    public abstract class SetNode
+    public abstract partial class SetNode
     {
         public enum NodeType
         {
