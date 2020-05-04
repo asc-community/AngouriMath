@@ -20,7 +20,6 @@ using AngouriMath.Core.FromString;
 using System.Linq.Expressions;
 using AngouriMath.Core.FromLinq;
 using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.Solver.Analytical;
 using AngouriMath.Functions.NumberSystem;
 using AngouriMath.Functions.Output;
 using AngouriMath.Functions.Algebra.Solver;
@@ -44,19 +43,7 @@ namespace AngouriMath
         /// <returns></returns>
         public static EquationSystem Equations(params Entity[] equations)
         => new EquationSystem(equations);
-        /// <summary>
-        /// Solves a system of equations
-        /// </summary>
-        /// <param name="equations"></param>
-        /// <param name="vars"></param>
-        /// <returns>
-        /// Returns a matrix of solutions
-        /// matrix.shape[0] - number of solutions
-        /// matrix.shape[1] is equal to amount of variables
-        /// </returns>
-        [ObsoleteAttribute("Use MathS.Equations instead")]
-        public static Tensor Solve(List<Entity> equations, List<VariableEntity> vars)
-            => EquationSolver.SolveSystem(equations, vars);
+        
 
         /// <summary>
         /// Solves one equation over one variable
@@ -64,17 +51,7 @@ namespace AngouriMath
         /// <param name="equation"></param>
         /// <param name="var"></param>
         /// <returns></returns>
-        [ObsoleteAttribute("Use either MathS.Equations or MathS.SolveEquation or yourexpr.SolveEquation instead")]
-        public static EntitySet Solve(Entity equation, VariableEntity var)
-            => EquationSolver.Solve(equation, var);
-
-        /// <summary>
-        /// Solves one equation over one variable
-        /// </summary>
-        /// <param name="equation"></param>
-        /// <param name="var"></param>
-        /// <returns></returns>
-        public static EntitySet SolveEquation(Entity equation, VariableEntity var)
+        public static Set SolveEquation(Entity equation, VariableEntity var)
             => EquationSolver.Solve(equation, var);
 
         /// <summary>
@@ -274,13 +251,6 @@ namespace AngouriMath
         public static readonly VariableEntity pi = "pi";
 
         /// <summary>
-        /// Sets threshold for comparison
-        /// For example, if you don't need precision higher than 6 digits after .,
-        /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
-        /// </summary>
-        public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-11;
-
-        /// <summary>
         /// Converts an expression from a string
         /// </summary>
         /// <param name="expr">
@@ -304,25 +274,15 @@ namespace AngouriMath
             => Parser.Parse(expr);
 
         /// <summary>
-        /// Converts an exprssion from linq expression
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        public static Entity FromLinq(Expression expr)
-        {
-            var parser = new LinqParser(expr);
-            return parser.Parse();
-        }
-
-        /// <summary>
         /// Returns list of unique variables, for example 
         /// it extracts `x`, `goose` from (x + 2 * goose) - pi * x
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
-        public static EntitySet GetUniqueVariables(Entity expr)
+        [ObsoleteAttribute("Use MathS.Utils.GetUniqueVariables instead")]
+        public static Set GetUniqueVariables(Entity expr)
         {
-            var res = new EntitySet();
+            var res = new Set();
             TreeAnalyzer.GetUniqueVariables(expr, res);
             return res;
         }
@@ -343,84 +303,8 @@ namespace AngouriMath
         /// <returns></returns>
         public static double FromBaseN(string num, int N) => NumberSystem.FromBaseN(num, N);
 
-        /// <summary>
-        /// Creates an instance of Tensor: Matrix
-        /// Usage example:
-        /// var t = MathS.Matrix(5, 3,
-        ///        10, 11, 12,
-        ///        20, 21, 22,
-        ///        30, 31, 32,
-        ///        40, 41, 42,
-        ///        50, 51, 52
-        ///        );
-        /// creates matrix 5x3 with the appropriate elements
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        public static Tensor Matrix(int rows, int columns, params Entity[] values)
-        {
-            if (values.Length != rows * columns)
-                throw new MathSException("Axes don't match data");
-            var r = new Tensor(rows, columns);
-            r.Assign(values);
-            return r;
-        }
-
-        /// <summary>
-        /// Creates an instance of vector
-        /// </summary>
-        /// <param name="p"></param>
-        /// <returns></returns>
-        public static Tensor Vector(params Entity[] p)
-        {
-            var r = new Tensor(p.Length);
-            r.Assign(p);
-            return r;
-        }
-
-        /// <summary>
-        /// Returns dot product of two matrices
-        /// </summary>
-        /// <param name="A"></param>
-        /// <param name="B"></param>
-        /// <returns></returns>
-        public static Tensor DotProduct(Tensor A, Tensor B) =>
-            AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.DotProduct(A, B);
-
-        /// <summary>
-        /// Returns scalar product of two matrices
-        /// </summary>
-        /// <param name="A"></param>
-        /// <param name="B"></param>
-        /// <returns></returns>
-        public static Entity ScalarProduct(Tensor A, Tensor B) =>
-            AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.ScalarProduct(A, B);
-
-        /// <summary>
-        /// Checks tree for some unexpected bad occasions
-        /// Throws SysException's children
-        /// If you need a message, it's better to write
-        /// try
-        /// {
-        ///     MathS.CheckTree(a);
-        /// }
-        /// catch (SysException e)
-        /// {
-        ///     Console.WriteLine(e.Message);
-        /// }
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        public static void CheckTree(Entity expr) => TreeAnalyzer.CheckTree(expr);
-
-        /// <summary>
-        /// Returns sympy interpretable format
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        public static string ToSympyCode(Entity expr) => Functions.Output.ToSympy.GenerateCode(expr);
-
+        
+        
         /// <summary>
         /// Returns LaTeX code of the argument
         /// </summary>
@@ -429,20 +313,71 @@ namespace AngouriMath
         public static string Latex(ILatexiseable latexiseable)
             => latexiseable.Latexise();
 
+
         /// <summary>
-        /// Optimizes tree to binary
-        /// Might boost some operations
-        /// Not necessary to use
+        /// Classes and functions related to matrices defined here
         /// </summary>
-        /// <param name="tree"></param>
-        /// <returns></returns>
-        public static Entity OptimizeTree(Entity tree)
+        public static class Matrices
         {
-            tree = tree.DeepCopy();
-            TreeAnalyzer.Optimization.OptimizeTree(ref tree);
-            return tree;
+            /// <summary>
+            /// Creates an instance of Tensor: Matrix
+            /// Usage example:
+            /// var t = MathS.Matrix(5, 3,
+            ///        10, 11, 12,
+            ///        20, 21, 22,
+            ///        30, 31, 32,
+            ///        40, 41, 42,
+            ///        50, 51, 52
+            ///        );
+            /// creates matrix 5x3 with the appropriate elements
+            /// </summary>
+            /// <param name="x"></param>
+            /// <param name="y"></param>
+            /// <returns></returns>
+            public static Tensor Matrix(int rows, int columns, params Entity[] values)
+            {
+                if (values.Length != rows * columns)
+                    throw new MathSException("Axes don't match data");
+                var r = new Tensor(rows, columns);
+                r.Assign(values);
+                return r;
+            }
+
+            /// <summary>
+            /// Creates an instance of vector
+            /// </summary>
+            /// <param name="p"></param>
+            /// <returns></returns>
+            public static Tensor Vector(params Entity[] p)
+            {
+                var r = new Tensor(p.Length);
+                r.Assign(p);
+                return r;
+            }
+
+            /// <summary>
+            /// Returns dot product of two matrices
+            /// </summary>
+            /// <param name="A"></param>
+            /// <param name="B"></param>
+            /// <returns></returns>
+            public static Tensor DotProduct(Tensor A, Tensor B) =>
+                AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.DotProduct(A, B);
+
+            /// <summary>
+            /// Returns scalar product of two matrices
+            /// </summary>
+            /// <param name="A"></param>
+            /// <param name="B"></param>
+            /// <returns></returns>
+            public static Entity ScalarProduct(Tensor A, Tensor B) =>
+                AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.ScalarProduct(A, B);
+
         }
 
+        /// <summary>
+        /// Some additional functions defined here
+        /// </summary>
         public static class Utils
         {
             /// <summary>
@@ -463,6 +398,310 @@ namespace AngouriMath
             /// </returns>
             public static bool TryPolynomial(Entity expr, VariableEntity variable, out Entity dst)
                 => Functions.Utils.TryPolynomial(expr, variable, out dst);
+
+            /// <summary>
+            /// Sets threshold for comparison
+            /// For example, if you don't need precision higher than 6 digits after .,
+            /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
+            /// </summary>
+            public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-7;
+
+            /// <summary>
+            /// Converts an exprssion from linq expression
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <returns></returns>
+            public static Entity FromLinq(Expression expr)
+            {
+                var parser = new LinqParser(expr);
+                return parser.Parse();
+            }
+
+            /// <summary>
+            /// Checks tree for some unexpected bad occasions
+            /// Throws SysException's children
+            /// If you need a message, it's better to write
+            /// try
+            /// {
+            ///     MathS.CheckTree(a);
+            /// }
+            /// catch (SysException e)
+            /// {
+            ///     Console.WriteLine(e.Message);
+            /// }
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <returns></returns>
+            public static void CheckTree(Entity expr) => TreeAnalyzer.CheckTree(expr);
+
+            /// <summary>
+            /// Optimizes tree to binary
+            /// Might boost some operations
+            /// Not necessary to use
+            /// </summary>
+            /// <param name="tree"></param>
+            /// <returns></returns>
+            public static Entity OptimizeTree(Entity tree)
+            {
+                tree = tree.DeepCopy();
+                TreeAnalyzer.Optimization.OptimizeTree(ref tree);
+                return tree;
+            }
+
+            /// <summary>
+            /// Returns sympy interpretable format
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <returns></returns>
+            public static string ToSympyCode(Entity expr) => Functions.Output.ToSympy.GenerateCode(expr);
+
+            /// <summary>
+            /// Returns list of unique variables, for example 
+            /// it extracts `x`, `goose` from (x + 2 * goose) - pi * x
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <returns></returns>
+            public static Set GetUniqueVariables(Entity expr)
+            {
+                var res = new Set();
+                TreeAnalyzer.GetUniqueVariables(expr, res);
+                return res;
+            }
         }
+
+        /// <summary>
+        /// Functions and classes related to sets defined here
+        /// 
+        /// Class SetNode defines true mathematical sets
+        /// It can be empty, it can contain numbers, it can contain intervals etc.
+        /// It supports intersection (with & operator), union (with | operator), subtracting (with - operator)
+        /// </summary>
+        public static class Sets
+        {
+            /// <summary>
+            /// Creates an instance of an empty set
+            /// </summary>
+            /// <returns></returns>
+            public static Set Empty()
+                => new Set();
+
+            /// <summary>
+            /// Returns a set of all complex numbers
+            /// </summary>
+            /// <returns></returns>
+            public static Set C()
+                => new Set
+                {
+                    Pieces = new List<Piece>
+                    {
+                        Piece.Interval(
+                            new Number(double.NegativeInfinity, double.NegativeInfinity),
+                            new Number(double.PositiveInfinity, double.PositiveInfinity)
+                            ).AsInterval().SetLeftClosed(false, false).SetRightClosed(false, false)
+                    }
+                };
+
+            /// <summary>
+            /// Returns a set of all real numbers
+            /// </summary>
+            /// <returns></returns>
+            public static Set R()
+                => new Set
+                {
+                    Pieces = new List<Piece>
+                    {
+                        Piece.Interval(
+                            new Number(double.NegativeInfinity),
+                            new Number(double.PositiveInfinity)
+                        ).AsInterval().SetLeftClosed(false).SetRightClosed(false)
+                    }
+                };
+
+            /// <summary>
+            /// Creats a set that you can fill with elements
+            /// Later on, you may add an Interval if wish
+            /// </summary>
+            /// <param name="entities"></param>
+            /// <returns></returns>
+            public static Set Finite(params Entity[] entities)
+            {
+                var res = new Set();
+                foreach (var entity in entities)
+                    res.AddElements(entity);
+                return res;
+            }
+
+            /// <summary>
+            /// Creates an interval
+            /// To modify it, use
+            /// Interval(3, 4).SetLeftClosed (see more alike functions in set documentation)
+            /// </summary>
+            /// <param name="from"></param>
+            /// <param name="to"></param>
+            /// <returns></returns>
+            public static IntervalPiece Interval(Entity from, Entity to)
+                => Piece.Interval(from, to).AsInterval();
+        }
+
+    }
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////
+/*
+ *
+ * Obsolete attributes. Not recommended to use
+ *
+ */
+////////////////////////////////////////////////////////////////////////////////////
+
+
+namespace AngouriMath
+{
+    public static partial class MathS
+    {
+        /// <summary>
+        /// Sets threshold for comparison
+        /// For example, if you don't need precision higher than 6 digits after .,
+        /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
+        /// </summary>
+        [Obsolete("Use MathS.Utils.EQUALITY_THRESHOLD instead")]
+        public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-7;
+
+        /// <summary>
+        /// Converts an exprssion from linq expression
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        [Obsolete("Use MathS.Utils.FromLinq instead")]
+        public static Entity FromLinq(Expression expr)
+        {
+            var parser = new LinqParser(expr);
+            return parser.Parse();
+        }
+
+        /// <summary>
+        /// Checks tree for some unexpected bad occasions
+        /// Throws SysException's children
+        /// If you need a message, it's better to write
+        /// try
+        /// {
+        ///     MathS.CheckTree(a);
+        /// }
+        /// catch (SysException e)
+        /// {
+        ///     Console.WriteLine(e.Message);
+        /// }
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        [Obsolete("Use MathS.Utils.CheckTree instead")]
+        public static void CheckTree(Entity expr) => TreeAnalyzer.CheckTree(expr);
+
+        /// <summary>
+        /// Returns sympy interpretable format
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        [Obsolete("Use MathS.Utils.ToSympyCode instead")]
+        public static string ToSympyCode(Entity expr) => Functions.Output.ToSympy.GenerateCode(expr);
+
+
+        /// <summary>
+        /// Optimizes tree to binary
+        /// Might boost some operations
+        /// Not necessary to use
+        /// </summary>
+        /// <param name="tree"></param>
+        /// <returns></returns>
+        [Obsolete("Use MathS.Utils.OptimizeTree instead")]
+        public static Entity OptimizeTree(Entity tree)
+        {
+            tree = tree.DeepCopy();
+            TreeAnalyzer.Optimization.OptimizeTree(ref tree);
+            return tree;
+        }
+
+        /// <summary>
+        /// Creates an instance of Tensor: Matrix
+        /// Usage example:
+        /// var t = MathS.Matrix(5, 3,
+        ///        10, 11, 12,
+        ///        20, 21, 22,
+        ///        30, 31, 32,
+        ///        40, 41, 42,
+        ///        50, 51, 52
+        ///        );
+        /// creates matrix 5x3 with the appropriate elements
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        [Obsolete("Use MathS.Matrices.Matrix instead")]
+        public static Tensor Matrix(int rows, int columns, params Entity[] values)
+        {
+            if (values.Length != rows * columns)
+                throw new MathSException("Axes don't match data");
+            var r = new Tensor(rows, columns);
+            r.Assign(values);
+            return r;
+        }
+
+        /// <summary>
+        /// Creates an instance of vector
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        [Obsolete("Use MathS.Matrices.Vector instead")]
+        public static Tensor Vector(params Entity[] p)
+        {
+            var r = new Tensor(p.Length);
+            r.Assign(p);
+            return r;
+        }
+
+        /// <summary>
+        /// Returns dot product of two matrices
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <returns></returns>
+        [Obsolete("Use MathS.Matrices.DotProduct instead")]
+        public static Tensor DotProduct(Tensor A, Tensor B) =>
+            AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.DotProduct(A, B);
+
+        /// <summary>
+        /// Returns scalar product of two matrices
+        /// </summary>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
+        /// <returns></returns>
+        [Obsolete("Use MathS.Matrices.ScalarProduct instead")]
+        public static Entity ScalarProduct(Tensor A, Tensor B) =>
+            AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.ScalarProduct(A, B);
+
+        /// <summary>
+        /// Solves a system of equations
+        /// </summary>
+        /// <param name="equations"></param>
+        /// <param name="vars"></param>
+        /// <returns>
+        /// Returns a matrix of solutions
+        /// matrix.shape[0] - number of solutions
+        /// matrix.shape[1] is equal to amount of variables
+        /// </returns>
+        [Obsolete("Use MathS.Equations instead")]
+        public static Tensor Solve(List<Entity> equations, List<VariableEntity> vars)
+            => EquationSolver.SolveSystem(equations, vars);
+
+        /// <summary>
+        /// Solves one equation over one variable
+        /// </summary>
+        /// <param name="equation"></param>
+        /// <param name="var"></param>
+        /// <returns></returns>
+        [Obsolete("Use either MathS.Equations or MathS.SolveEquation or yourexpr.SolveEquation instead")]
+        public static Set Solve(Entity equation, VariableEntity var)
+            => EquationSolver.Solve(equation, var);
     }
 }

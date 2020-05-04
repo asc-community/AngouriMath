@@ -45,7 +45,7 @@ namespace AngouriMath.Core.TreeAnalysis
             if (replaceVars)
             {
                 // Replace all variables we can
-                foreach (var varMentioned in mentionedVarList)
+                foreach (var varMentioned in mentionedVarList.FiniteSet())
                 {
                     if (expr.FindSubtree(varMentioned) == null)
                         continue;
@@ -57,7 +57,7 @@ namespace AngouriMath.Core.TreeAnalysis
             }
             else
             {
-                foreach(var v in mentionedVarList)
+                foreach(var v in mentionedVarList.FiniteSet())
                 {
                     newList.Add(v.Name);
                 }

@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -13,35 +13,30 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace AngouriMath.Core.TreeAnalysis
+/*
+ *
+ * UNION
+ *
+ */
+namespace AngouriMath.Core.Sets
 {
-    internal static partial class TreeAnalyzer
+    public static partial class PieceFunctions
     {
-        // TODO: duplication
-        internal static Entity R() => new VariableEntity("r");
-
-        // TODO: realize all methods
-        
-        /// <summary>
-        /// Counts all combinations of roots, for example
-        /// 3 ^ 0.5 + 4 ^ 0.25 will return a set of 8 different numbers
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        internal static Set EvalAll(Entity expr)
+        public static List<Piece> Unite(Piece A, Piece B)
         {
-            throw new NotImplementedException();
-        }
-        
-        internal static void EvalCombs(Entity expr, Set set)
-        {
-            throw new NotImplementedException();
+            var intersection = Intersect(A, B);
+            if (intersection == null)
+                return new List<Piece> { A, B };
+            else
+            {
+                var res = Subtract(A, B);
+                res.Add(B);
+                return res;
+            }
         }
     }
 }

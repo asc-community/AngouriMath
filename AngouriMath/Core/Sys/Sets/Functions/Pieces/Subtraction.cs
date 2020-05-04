@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -13,35 +13,52 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 
-namespace AngouriMath.Core.TreeAnalysis
+/*
+ *
+ * SUBTRACTION
+ *
+ */
+
+namespace AngouriMath.Core.Sets
 {
-    internal static partial class TreeAnalyzer
+    public static partial class PieceFunctions
     {
-        // TODO: duplication
-        internal static Entity R() => new VariableEntity("r");
-
-        // TODO: realize all methods
-        
         /// <summary>
-        /// Counts all combinations of roots, for example
-        /// 3 ^ 0.5 + 4 ^ 0.25 will return a set of 8 different numbers
+        /// Subtracts B from A
+        /// A \ B = A & !B
         /// </summary>
-        /// <param name="expr"></param>
+        /// <param name="A"></param>
+        /// <param name="B"></param>
         /// <returns></returns>
-        internal static Set EvalAll(Entity expr)
+        public static List<Piece> Subtract(Piece A, Piece B)
         {
-            throw new NotImplementedException();
-        }
-        
-        internal static void EvalCombs(Entity expr, Set set)
-        {
-            throw new NotImplementedException();
+            var result = new List<Piece>();
+            if (Intersect(A, B) == null) // if A & B is none, then A \ B = A
+            {
+                result.Add(A);
+                return result;
+            }
+
+            if (A == B)
+                return result;
+
+            if (B.Contains(A))
+                return result;
+
+            var inverted = Invert(B);
+
+            foreach (var piece in inverted)
+            {
+                var conj = Intersect(A, piece);
+                if (!(conj is null))
+                    result.Add(conj);
+            }
+
+            return result.Where(IsPieceCorrect).ToList();
         }
     }
 }

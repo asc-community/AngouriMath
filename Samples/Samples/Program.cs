@@ -6,11 +6,14 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.ComponentModel.Design.Serialization;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Numerics;
+using AngouriMath.Core.Sets;
 
 namespace Samples
 {
+
 #pragma warning disable IDE0051
     class Program
     {
@@ -237,10 +240,12 @@ namespace Samples
             return funcs[random.Next(0, funcs.Count)](num, depth);
         }
 
+        public const string RecordCode = "{0}:RecordCode";
+
         static void Main(string[] _)
+
         {
-            var e = MathS.FromString("n_1");
-            Console.WriteLine(e);
+
         }
     }
 #pragma warning restore IDE0051

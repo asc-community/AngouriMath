@@ -31,7 +31,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// </summary>
         /// <param name="expr"></param>
         /// <param name="dst"></param>
-        internal static void GetUniqueVariables(Entity expr, EntitySet dst)
+        internal static void GetUniqueVariables(Entity expr, Set dst)
         {
             // If it is a variable, we will add it
             // 1 2 1 1 1 2 1

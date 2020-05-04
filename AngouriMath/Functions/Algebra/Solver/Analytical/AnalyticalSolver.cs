@@ -24,6 +24,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+ using AngouriMath.Core;
  using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Functions.Algebra.Solver.Analytical;
 
@@ -36,19 +37,19 @@ namespace AngouriMath
         /// </summary>
         /// <param name="x"></param>
         /// <returns>
-        /// Returns EntitySet. Work with it as with a list
+        /// Returns Set. Work with it as with a list
         /// </returns>
         [ObsoleteAttribute("This method will soon be deprecated. Use SolveEquation instead.")]
-        public EntitySet Solve(VariableEntity x) => EquationSolver.Solve(this, x);
+        public Set Solve(VariableEntity x) => EquationSolver.Solve(this, x);
 
         /// <summary>
         /// Attempt to find analytical roots of a custom equation
         /// </summary>
         /// <param name="x"></param>
         /// <returns>
-        /// Returns EntitySet. Work with it as with a list
+        /// Returns Set. Work with it as with a list
         /// </returns>
-        public EntitySet SolveEquation(VariableEntity x) => EquationSolver.Solve(this, x);
+        public Set SolveEquation(VariableEntity x) => EquationSolver.Solve(this, x);
     }
 }
 
@@ -123,21 +124,21 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="value"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        public static EntitySet FindInvertExpression(Entity func, Entity value, Entity x)
+        public static Set FindInvertExpression(Entity func, Entity value, Entity x)
         {
             value = MathS.CanBeEvaluated(value) ? value.Eval() : value;
             if (func == x)
-                return new EntitySet(value);
+                return new Set(value);
             if (func.entType == Entity.EntType.NUMBER)
                 throw new MathSException("This function must contain x");
             if (func.entType == Entity.EntType.VARIABLE)
-                return new EntitySet(func);
+                return new Set(func);
             if (func.entType == Entity.EntType.OPERATOR)
                 return InvertOperatorEntity(func as OperatorEntity, value, x);
             if (func.entType == Entity.EntType.FUNCTION)
                 return InvertFunctionEntity(func as FunctionEntity, value, x);
 
-            return new EntitySet(value);
+            return new Set(value);
         }
 
         /// <summary>
@@ -150,7 +151,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="value"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        public static EntitySet InvertOperatorEntity(OperatorEntity func, Entity value, Entity x)
+        public static Set InvertOperatorEntity(OperatorEntity func, Entity value, Entity x)
         {
             Entity a, un;
             int arg;
@@ -194,8 +195,8 @@ namespace AngouriMath.Core.TreeAnalysis
                         // x ^ a = value => x = value ^ (1/a)
                         if (a.entType == Entity.EntType.NUMBER && a.GetValue().IsInteger())
                         {
-                            var res = new EntitySet();
-                            foreach (var root in Number.GetAllRoots(1, (int)(a.GetValue().Re)))
+                            var res = new Set();
+                            foreach (var root in Number.GetAllRoots(1, (int)(a.GetValue().Re)).FiniteSet())
                                 res.AddRange(FindInvertExpression(un, root * MathS.Pow(value, 1 / a), x));
                             return res;
                         }
@@ -233,7 +234,7 @@ namespace AngouriMath.Core.TreeAnalysis
         private static readonly Number ArcsinTo = new Number(+Math.PI / 2, double.MaxValue);
         private static readonly Number ArccosFrom = new Number(0, -double.MaxValue);
         private static readonly Number ArccosTo = new Number(Math.PI, double.MaxValue);
-        private static readonly EntitySet Empty = new EntitySet();
+        private static readonly Set Empty = new Set();
 
         /// <summary>
         /// Returns a set of possible roots of a function, e. g.
@@ -245,18 +246,18 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="value"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        public static EntitySet InvertFunctionEntity(FunctionEntity func, Entity value, Entity x)
+        public static Set InvertFunctionEntity(FunctionEntity func, Entity value, Entity x)
         {
             Entity a = func.Children[0];
             Entity b = func.Children.Count == 2 ? func.Children[1] : null;
             int arg = func.Children.Count == 2 && func.Children[1].FindSubtree(x) != null ? 1 : 0;
             var n = MathS.Var("n");
-            var res = new EntitySet();
+            var res = new Set();
             var pi = MathS.pi;
 
-            EntitySet GetNotNullEntites(EntitySet set)
+            Set GetNotNullEntites(Set set)
             {
-                return new EntitySet(set.Where(el => el.entType != Entity.EntType.NUMBER || !el.GetValue().IsNull));
+                return set.FiniteWhere(el => el.entType != Entity.EntType.NUMBER || !el.GetValue().IsNull);
             }
 
             switch (func.Name)
@@ -335,9 +336,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <param name="expr"></param>
         /// <param name="x"></param>
         /// <param name="dst"></param>
-        internal static void Solve(Entity expr, VariableEntity x, EntitySet dst)
+        internal static void Solve(Entity expr, VariableEntity x, Set dst)
             => Solve(expr, x, dst, compensateSolving: false);
-        internal static void Solve(Entity expr, VariableEntity x, EntitySet dst, bool compensateSolving)
+        internal static void Solve(Entity expr, VariableEntity x, Set dst, bool compensateSolving)
         {
             if (expr == x)
             {
@@ -345,16 +346,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return;
             }
             
-            // probably needs some of refactoring, but i cant figure out how to do this
-            EntitySet res;
-
-            res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), x);
+            Set res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), x);
             if (res != null)
             {
                 dst.AddRange(res);
                 return;
             }
-
+          
             res = TrigonometricSolver.SolveLinear(expr.DeepCopy(), x);
             if (res != null)
             {
@@ -398,7 +396,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                                 break;
                             var resInverted = TreeAnalyzer.FindInvertExpression(expr.Children[0], expr.Children[1], lastChild);
                             foreach (var result in resInverted)
-                                Solve(lastChild - result, x, dst, compensateSolving: true);
+                                Solve(lastChild - (Entity)result, x, dst, compensateSolving: true);
                             return;
                         }
                         break;
@@ -413,23 +411,23 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             // Here we generate a unique variable name
             var uniqVars = MathS.GetUniqueVariables(expr);
-            uniqVars.Sort((a, b) => b.Name.Length.CompareTo(a.Name.Length));
-            VariableEntity newVar = uniqVars[0].Name + "quack";
+            uniqVars.Pieces.Sort((a, b) => ((Entity)b).Name.Length.CompareTo(((Entity)a).Name.Length));
+            VariableEntity newVar = ((Entity)uniqVars.Pieces[0]).Name + "quack";
             // // //
 
             // Here we find all possible replacements
             var replacements = new List<Tuple<Entity, Entity>>();
             replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(expr, x), expr));
-            foreach (var alt in expr.Alternate(4))
+            foreach (var alt in expr.Alternate(4).FiniteSet())
             {
-                if (alt.FindSubtree(x) == null)
+                if ((alt).FindSubtree(x) == null)
                     return; // in this case there is either 0 or +oo solutions
                 replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
             }
             // // //
 
             // Here we find one that has at least one solution
-            EntitySet solutions = null;
+            Set solutions = null;
             Entity bestReplacement = null;
             foreach (var replacement in replacements)
             {
@@ -438,32 +436,32 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 var newExpr = replacement.Item2.DeepCopy();
                 TreeAnalyzer.FindAndReplace(ref newExpr, replacement.Item1, newVar);
                 solutions = newExpr.SolveEquation(newVar);
-                if (solutions.Count > 0 /* && !newExpr.Children.Any(c => c == newVar)*/)
+                if (!solutions.IsEmpty())
                 {
                     bestReplacement = replacement.Item1;
 
                     // Here we are trying to solve for this replacement
-                    EntitySet newDst = new EntitySet();
+                    Set newDst = new Set();
                     foreach (var solution in solutions)
                     {
                         var str = bestReplacement.ToString();
-                        if (!compensateSolving || bestReplacement - solution != expr)
-                            Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
+                        if (!compensateSolving || bestReplacement - (Entity)solution != expr)
+                            Solve(bestReplacement - (Entity)solution, x, newDst, compensateSolving: true);
                     }
                     dst.AddRange(newDst);
-                    if (dst.Count > 0)
+                    if (!dst.IsEmpty())
                         break;
                     // // //
                 }
             }
             // // //
             
-            if (dst.Count == 0) // if nothing has been found so far
+            if (dst.IsEmpty()) // if nothing has been found so far
             {
-                EntitySet allVars = new EntitySet();
+                Set allVars = new Set();
                 TreeAnalyzer.GetUniqueVariables(expr, allVars);
                 if (allVars.Count == 1)
-                    dst.Merge(expr.SolveNt(x));
+                    dst.AddRange(expr.SolveNt(x));
             }
         }
     }

@@ -94,17 +94,11 @@ namespace AngouriMath
         /// <returns></returns>
         public static bool operator ==(Entity a, Entity b)
         {
-            // Entity must be casted to object before comparing for null
-            // Without casting stack overflow occurs as a == null calls same method
-            var obj1 = (object)a;
-            var obj2 = (object)b;
-            if (obj1 == null || obj2 == null)
-            {
-                if (obj1 == null && obj2 == null)
-                    return true;
-                else
-                    return false;
-            }
+            // Since 7.0 we can compare objects to null without casting them into object
+            if (a is null && b is null)
+                return true;
+            if (a is null || b is null)
+                return false;
             if (a.entType != b.entType)
                 return false;
             return a.EqualsTo(b);

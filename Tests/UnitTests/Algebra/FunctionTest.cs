@@ -13,7 +13,7 @@ namespace UnitTests.Algebra
         {
             var num = 3;
             var pow = 3;
-            foreach (var root in Number.GetAllRoots(num, pow))
+            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
                 Assert.IsTrue(Number.Pow(root, pow) == num, "Found root " + root + " and it is equal to " + Number.Pow(root, pow));
         }
         [TestMethod]
@@ -21,7 +21,7 @@ namespace UnitTests.Algebra
         {
             var num = 5 + MathS.i * 5;
             var pow = 4;
-            foreach (var root in Number.GetAllRoots(num, pow))
+            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
                 Assert.IsTrue(Number.Pow(root, pow) == num, "Found root " + root + " and it is equal to " + Number.Pow(root, pow));
         }
         [TestMethod]
@@ -29,7 +29,7 @@ namespace UnitTests.Algebra
         {
             var num = -3 + MathS.i * 8;
             var pow = 5;
-            foreach (var root in Number.GetAllRoots(num, pow))
+            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
                 Assert.IsTrue(Number.Pow(root, pow) == num, "Found root " + root + " and it is equal to " + Number.Pow(root, pow));
         }
         [TestMethod]
@@ -37,7 +37,7 @@ namespace UnitTests.Algebra
         {
             var num = -3 + MathS.i * 8;
             var pow = 8;
-            foreach (var root in Number.GetAllRoots(num, pow))
+            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
                 Assert.IsTrue(Number.Pow(root, pow) == num, "Found root " + root + " and it is equal to " + Number.Pow(root, pow));
         }
 

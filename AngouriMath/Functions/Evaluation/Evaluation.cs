@@ -123,7 +123,7 @@ namespace AngouriMath
         /// </summary>
         /// <param name="level"></param>
         /// <returns></returns>
-        public EntitySet Alternate(int level) => Simplificator.Alternate(this, level);
+        public Set Alternate(int level) => Simplificator.Alternate(this, level);
         internal abstract Entity InnerSimplify();
 
         /// <summary>

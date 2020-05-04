@@ -76,17 +76,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     internal static class PolynomialSolver
     {
         // solves ax + b
-        internal static EntitySet SolveLinear(Entity a, Entity b)
+        internal static Set SolveLinear(Entity a, Entity b)
         {
             // ax + b = 0
             // ax = -b
             // x = -b / a
-            return new EntitySet(-b / a);
+            return new Set(-b / a);
         }
         // solves ax2 + bx + c
-        internal static EntitySet SolveQuadratic(Entity a, Entity b, Entity c)
+        internal static Set SolveQuadratic(Entity a, Entity b, Entity c)
         {
-            EntitySet res;
+            Set res;
             if (TreeAnalyzer.IsZero(c))
             {
                 res = SolveLinear(a, b);
@@ -97,7 +97,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (TreeAnalyzer.IsZero(a))
                 return SolveLinear(b, c);
 
-            res = new EntitySet();
+            res = new Set();
             var D = MathS.Sqr(b) - 4 * a * c;
             res.Add((-b - MathS.Sqrt(D)) / (2 * a));
             res.Add((-b + MathS.Sqrt(D)) / (2 * a));
@@ -105,14 +105,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
         
         // solves ax3 + bx2 + cx + d
-        internal static EntitySet SolveCubic(Entity a, Entity b, Entity c, Entity d)
+        internal static Set SolveCubic(Entity a, Entity b, Entity c, Entity d)
         {
             // en: https://en.wikipedia.org/wiki/Cubic_equation
             // ru: https://ru.wikipedia.org/wiki/%D0%A4%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B0_%D0%9A%D0%B0%D1%80%D0%B4%D0%B0%D0%BD%D0%BE
 
             // TODO (to remove sympy code!)
 
-            EntitySet res;
+            Set res;
 
             if (TreeAnalyzer.IsZero(d))
             {
@@ -124,7 +124,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (TreeAnalyzer.IsZero(a))
                 return SolveQuadratic(b, c, d);
 
-            res = new EntitySet();
+            res = new Set();
 
             if (MathS.CanBeEvaluated(a) &&
                 MathS.CanBeEvaluated(b) &&
@@ -150,7 +150,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     
                     beta = beta.Eval();
                     var p3 = (-p / 3).Eval();
-                    foreach (var root in Number.GetAllRoots(beta3, 3))
+                    foreach (var root in Number.GetAllRoots(beta3, 3).FiniteSet())
                         if ((root * alpha).Eval() == p3)
                         {
                             beta = root;
@@ -190,12 +190,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
         // END
         // solves hx4 + ax3 + bx2 + cx + d
-        internal static EntitySet SolveQuartic(Entity a, Entity b, Entity c, Entity d, Entity e)
+        internal static Set SolveQuartic(Entity a, Entity b, Entity c, Entity d, Entity e)
         {
             // en: https://en.wikipedia.org/wiki/Quartic_function
             // ru: https://ru.wikipedia.org/wiki/%D0%9C%D0%B5%D1%82%D0%BE%D0%B4_%D0%A4%D0%B5%D1%80%D1%80%D0%B0%D1%80%D0%B8
 
-            EntitySet res;
+            Set res;
 
             if (TreeAnalyzer.IsZero(e))
             {
@@ -208,7 +208,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return SolveCubic(b, c, d, e);
 
             
-            res = new EntitySet();
+            res = new Set();
 
             var alpha = -3 * MathS.Sqr(b) / (8 * MathS.Sqr(a)) + c / a;
             var beta = MathS.Pow(b, 3) / (8 * MathS.Pow(a, 3)) - (b * c) / (2 * MathS.Sqr(a)) + d / a;
@@ -218,12 +218,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 beta = beta.Eval();
             if (beta == 0)
             {
+                res.FastAddingMode = true;
                 for (int s = -1; s <= 1; s += 2)
                 for (int t = -1; t <= 1; t += 2)
                 {
                     var x = -b / 4 * a + s * MathS.Sqrt((-alpha + t * MathS.Sqrt(MathS.Sqr(alpha) - 4 * gamma)) / 2);
-                    res.Add(x, check: false);
+                    res.Add(x);
                 }
+                res.FastAddingMode = false;
                 return res;
             }
 
@@ -239,13 +241,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var W = MathS.Sqrt(alpha + 2 * y);
            
             // Now we need to permutate all four combinations
+            res.FastAddingMode = true;  /* we are sure that there's no such root yet */
             for (int s = -1; s <= 1; s += 2)
                 for (int t = -1; t <= 1; t += 2)
                 {
                     var x = -b / (4 * a) + (s * W + t * MathS.Sqrt(-(3 * alpha + 2 * y + s * 2 * beta / W))) / 2;
-                    res.Add(x, check: false /* we are sure that there's no such root yet */);
+                    res.Add(x);
                 }
-
+            res.FastAddingMode = false;
             return res;
         }
 
@@ -262,11 +265,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
 
         /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/
-        internal static EntitySet SolveAsPolynomial(Entity expr, Entity subtree)
+        internal static Set SolveAsPolynomial(Entity expr, Entity subtree)
         {
             expr = expr.Expand(); // (x + 1) * x => x^2 + x
             List<Entity> children;
-            EntitySet res = new EntitySet();
+            Set res = new Set();
             if (expr.entType == Entity.EntType.OPERATOR && expr.Name == "sumf" || expr.Name == "minusf")
                 children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
             else

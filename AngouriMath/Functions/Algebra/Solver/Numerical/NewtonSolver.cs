@@ -78,9 +78,9 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         /// How many approximations we need to do before we reach the most precise result.
         /// </param>
         /// <returns></returns>
-        internal static NumberSet SolveNt(Entity expr, VariableEntity v, Number from, Number to, Number stepCount, int precision = 30)
+        internal static Set SolveNt(Entity expr, VariableEntity v, Number from, Number to, Number stepCount, int precision = 30)
         {
-            var res = new NumberSet();
+            var res = new Set();
             if (from == null)
                 from = new Number(-10, -10);
             if (to == null)
@@ -98,7 +98,7 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                                            from.Im * yShare + to.Im * (1 - yShare));
                     var root = NewtonIter(f, df, value, precision);
                     if (!root.IsNull)
-                        res.Include(root);
+                        res.Add(root);
                 }
             return res;
         }
@@ -121,9 +121,9 @@ namespace AngouriMath
                 throw new MathSException("Cannot get number from expression");
         }
         
-        public NumberSet SolveNt(VariableEntity v, int precision = 30)
+        public Set SolveNt(VariableEntity v, int precision = 30)
             => SolveNt(v, new Number(-10, -10), new Number(10, 10), new Number(10, 10), precision: precision);
-        public NumberSet SolveNt(VariableEntity v, Number from, Number to, int precision = 30)
+        public Set SolveNt(VariableEntity v, Number from, Number to, int precision = 30)
             => SolveNt(v, from, to, new Number(10, 10),  precision: precision);
 
         /// <summary>
@@ -148,7 +148,7 @@ namespace AngouriMath
         /// If you get very similar roots that you think are equal, increase precision (but it will slower the algorithm)
         /// </param>
         /// <returns></returns>
-        public NumberSet SolveNt(VariableEntity v, Number from, Number to, Number stepCount, int precision = 30)
+        public Set SolveNt(VariableEntity v, Number from, Number to, Number stepCount, int precision = 30)
         => NumericalSolver.SolveNt(this, v, from, to, stepCount, precision);
     }
 }
