@@ -31,7 +31,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// </summary>
         /// <param name="expr"></param>
         /// <param name="dst"></param>
-        internal static void GetUniqueVariables(Entity expr, Set dst)
+        internal static void GetUniqueVariables(Entity expr, HashSet<VariableEntity> dst)
         {
             // If it is a variable, we will add it
             // 1 2 1 1 1 2 1
@@ -39,7 +39,7 @@ namespace AngouriMath.Core.TreeAnalysis
             {
                 // But if it is a constant, we ignore it
                 if (!MathS.ConstantList.ContainsKey(expr.Name))
-                    dst.Add(expr);
+                    dst.Add((VariableEntity)expr);
             }
             else
                 // Otherwise, we will try to find unique variables from its children

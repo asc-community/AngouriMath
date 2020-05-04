@@ -280,9 +280,9 @@ namespace AngouriMath
         /// <param name="expr"></param>
         /// <returns></returns>
         [ObsoleteAttribute("Use MathS.Utils.GetUniqueVariables instead")]
-        public static Set GetUniqueVariables(Entity expr)
+        public static HashSet<VariableEntity> GetUniqueVariables(Entity expr)
         {
-            var res = new Set();
+            var res = new HashSet<VariableEntity>();
             TreeAnalyzer.GetUniqueVariables(expr, res);
             return res;
         }
@@ -461,9 +461,9 @@ namespace AngouriMath
             /// </summary>
             /// <param name="expr"></param>
             /// <returns></returns>
-            public static Set GetUniqueVariables(Entity expr)
+            public static HashSet<VariableEntity> GetUniqueVariables(Entity expr)
             {
-                var res = new Set();
+                var res = new HashSet<VariableEntity>();
                 TreeAnalyzer.GetUniqueVariables(expr, res);
                 return res;
             }
