@@ -26,30 +26,17 @@
     <StartupObject />
   </PropertyGroup>
 
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DebugType>full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <None Remove="Core\FromString\Antlr\Angourimath.tokens" />
-  </ItemGroup>
-
   <ItemGroup>
     <None Include="..\LICENSE.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Include="Core\FromString\Antlr\Angourimath.tokens" />
   </ItemGroup>
+
   <Target Name="GenerateANTLR" BeforeTargets="BeforeBuild">
     <Exec Command="java -jar antlr-4.8-complete.jar -Dlanguage=CSharp Core\FromString\Antlr\Angourimath.g" />
   </Target>
+
 </Project>
