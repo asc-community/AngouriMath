@@ -283,7 +283,7 @@ namespace UnitTests.Algebra
             var roots = expr.Solve(x);
             Assert.IsTrue(roots.Count == rootAmount);
             foreach (var root in roots)
-                AssertRoots(expr.Substitute("a", 5), x, root.Substitute("n", 3).Substitute("a", 5));
+                AssertRoots(expr.Substitute("a", -3), x, root.Substitute("n", 2).Substitute("a", -3));
         }
 
         [TestMethod]
