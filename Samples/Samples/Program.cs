@@ -245,9 +245,7 @@ namespace Samples
         static void Main(string[] _)
 
         {
-            var eq = MathS.Sqr("x") + 1;
-            var roots = eq.SolveNt("x");
-            Console.WriteLine(roots);
+
         }
     }
 #pragma warning restore IDE0051

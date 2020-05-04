@@ -32,7 +32,7 @@ namespace AngouriMath
         internal static readonly Dictionary<string, Number> ConstantList = new Dictionary<string, Number>
         {
             { "pi", Math.PI },
-            { "e", Math.E }
+            { "e", Math.E },
         };
 
         /// <summary>

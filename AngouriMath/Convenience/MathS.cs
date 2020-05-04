@@ -271,13 +271,7 @@ namespace AngouriMath
         /// </param>
         /// <returns></returns>
         public static Entity FromString(string expr, bool intelli)
-        {
-            var lexer = new Lexer(expr);
-            if (intelli)
-                lexer.AddOmittedOperators();
-            var res = Parser.Parse(lexer);
-            return SynonymFunctions.Synonymize(res);
-        }
+            => Parser.Parse(expr);
 
         /// <summary>
         /// Returns list of unique variables, for example 

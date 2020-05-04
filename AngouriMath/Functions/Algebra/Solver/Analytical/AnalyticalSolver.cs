@@ -26,6 +26,7 @@ using System.Reflection;
 using System.Text;
  using AngouriMath.Core;
  using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Functions.Algebra.Solver.Analytical;
 
 namespace AngouriMath
 {
@@ -344,8 +345,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 dst.Add(0);
                 return;
             }
-
+            
             Set res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), x);
+            if (res != null)
+            {
+                dst.AddRange(res);
+                return;
+            }
+          
+            res = TrigonometricSolver.SolveLinear(expr.DeepCopy(), x);
             if (res != null)
             {
                 dst.AddRange(res);
