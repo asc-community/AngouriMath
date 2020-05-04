@@ -1,4 +1,5 @@
-﻿using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Core;
+using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using System;
 using System.Collections.Generic;
@@ -10,7 +11,7 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
     internal static class TrigonometricSolver
     {
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
-        internal static EntitySet SolveLinear(Entity expr, VariableEntity variable)
+        internal static Set SolveLinear(Entity expr, VariableEntity variable)
         {
             // SolveLinear should also solve tan and cotan equations, but currently Polynomial solver cannot handle big powers
             // uncomment lines above when it will be fixed (TODO)
@@ -39,10 +40,10 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             var solutions = EquationSolver.Solve(expr, replacement);
             if (solutions == null) return null;
 
-            var actualSolutions = new EntitySet();
+            var actualSolutions = new Set();
             foreach(var solution in solutions)
             {
-                var sol = EquationSolver.Solve(MathS.Pow(MathS.e, MathS.i * variable) - solution, variable);
+                var sol = EquationSolver.Solve(MathS.Pow(MathS.e, MathS.i * variable) - (Entity)solution, variable);
                 if (sol != null)
                     actualSolutions.AddRange(sol);
             }

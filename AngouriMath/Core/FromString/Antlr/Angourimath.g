@@ -15,7 +15,7 @@ options
     using System.Globalization;
 }
 
-@members
+@parser::members
 {
     public Entity Result = null;
     
@@ -37,11 +37,12 @@ NUMBER
     ;
 
 COMMENT
-    :   '//' ~('\n'|'\r')* '\r'? '\n' { $channel = Hidden; }
-    |   '/*' ( options {greedy=false;} : . )* '*/' { $channel = Hidden; }
+    :   ( '//' ~[\r\n]* '\r'? '\n'
+        | '/*' .*? '*/'
+        ) -> skip
     ;
     
-WS : (' ' | '\t')+ { $channel = Hidden; }
+WS : (' ' | '\t')+ -> skip
    ;
 
 fragment
