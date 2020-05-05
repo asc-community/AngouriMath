@@ -410,7 +410,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
 
             // Here we generate a unique variable name
-            var uniqVars = MathS.GetUniqueVariables(expr);
+            var uniqVars = MathS.Utils.GetUniqueVariables(expr);
             uniqVars.Pieces.Sort((a, b) => ((Entity)b).Name.Length.CompareTo(((Entity)a).Name.Length));
             VariableEntity newVar = ((Entity)uniqVars.Pieces[0]).Name + "quack";
             // // //
@@ -459,7 +459,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (dst.IsEmpty()) // if nothing has been found so far
             {
                 Set allVars = new Set();
-                TreeAnalyzer.GetUniqueVariables(expr, allVars);
+                TreeAnalyzer._GetUniqueVariables(expr, allVars);
                 if (allVars.Count == 1)
                     dst.AddRange(expr.SolveNt(x));
             }

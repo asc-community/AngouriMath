@@ -24,9 +24,11 @@ using AngouriMath.Functions.NumberSystem;
 using AngouriMath.Functions.Output;
 using AngouriMath.Functions.Algebra.Solver;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
  using AngouriMath.Core.Sys;
  using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 
 namespace AngouriMath
@@ -43,7 +45,7 @@ namespace AngouriMath
         /// <returns></returns>
         public static EquationSystem Equations(params Entity[] equations)
         => new EquationSystem(equations);
-        
+
 
         /// <summary>
         /// Solves one equation over one variable
@@ -61,6 +63,7 @@ namespace AngouriMath
         /// <returns>
         /// A / C
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Sin(Entity a) => Sinf.Hang(a);
 
         /// <summary>
@@ -70,6 +73,7 @@ namespace AngouriMath
         /// <returns>
         /// B / C
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cos(Entity a) => Cosf.Hang(a);
 
         /// <summary>
@@ -78,6 +82,7 @@ namespace AngouriMath
         /// <param name="num"></param>
         /// <param name="base_"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Log(Entity num, Entity base_) => Logf.Hang(num, base_);
 
         /// <summary>
@@ -86,6 +91,7 @@ namespace AngouriMath
         /// <param name="base_"></param>
         /// <param name="power"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Pow(Entity base_, Entity power) => Powf.Hang(base_, power);
 
         /// <summary>
@@ -95,6 +101,7 @@ namespace AngouriMath
         /// <returns>
         /// a ^ 0.5
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Sqrt(Entity a) => Powf.Hang(a, 0.5);
 
         /// <summary>
@@ -104,6 +111,7 @@ namespace AngouriMath
         /// <returns>
         /// a ^ 2
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Sqr(Entity a) => Powf.Hang(a, 2);
 
         /// <summary>
@@ -113,6 +121,7 @@ namespace AngouriMath
         /// <returns>
         /// A / B
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Tan(Entity a) => Tanf.Hang(a);
 
         /// <summary>
@@ -122,6 +131,7 @@ namespace AngouriMath
         /// <returns>
         /// B / A
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cotan(Entity a) => Cotanf.Hang(a);
 
         /// <summary>
@@ -131,6 +141,7 @@ namespace AngouriMath
         /// <returns>
         /// C / B
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Sec(Entity a) => 1 / Cos(a);
 
         /// <summary>
@@ -140,6 +151,7 @@ namespace AngouriMath
         /// <returns>
         /// C / A
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cosec(Entity a) => 1 / Sin(a);
 
         /// <summary>
@@ -149,6 +161,7 @@ namespace AngouriMath
         /// <returns>
         /// x * sin(x)
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity B(Entity a) => a * Sin(a);
 
         /// <summary>
@@ -158,6 +171,7 @@ namespace AngouriMath
         /// <returns>
         /// x * cos(x)
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity TB(Entity a) => a * Cos(a);
 
         /// <summary>
@@ -167,6 +181,7 @@ namespace AngouriMath
         /// <returns>
         /// angle between A and C
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arcsin(Entity a) => Arcsinf.Hang(a);
 
         /// <summary>
@@ -176,6 +191,7 @@ namespace AngouriMath
         /// <returns>
         /// angle between B and C
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arccos(Entity a) => Arccosf.Hang(a);
 
         /// <summary>
@@ -185,6 +201,7 @@ namespace AngouriMath
         /// <returns>
         /// angle between A and C
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arctan(Entity a) => Arctanf.Hang(a);
 
         /// <summary>
@@ -194,8 +211,9 @@ namespace AngouriMath
         /// <returns>
         /// angle between B and A
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arccotan(Entity a) => Arccotanf.Hang(a);
-     
+
         /// <summary>
         /// https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
         /// </summary>
@@ -203,8 +221,9 @@ namespace AngouriMath
         /// <returns>
         /// angle between C and B
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arcsec(Entity a) => Arccosf.Hang(1 / a);
-     
+
         /// <summary>
         /// https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
         /// </summary>
@@ -212,6 +231,7 @@ namespace AngouriMath
         /// <returns>
         /// angle between C and A
         /// </returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arccosec(Entity a) => Arcsinf.Hang(1 / a);
 
         /// <summary>
@@ -219,6 +239,7 @@ namespace AngouriMath
         /// </summary>
         /// <param name="a"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Ln(Entity a) => Logf.Hang(a, e);
 
         /// <summary>
@@ -234,6 +255,7 @@ namespace AngouriMath
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Number Num(double a, double b) => new Number(a, b);
 
         /// <summary>
@@ -241,6 +263,7 @@ namespace AngouriMath
         /// </summary>
         /// <param name="a"></param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Number Num(double a) => new Number(a);
 
         /// <summary>
@@ -257,35 +280,9 @@ namespace AngouriMath
         /// String expression, for example, "2 * x + 3 + sqrt(x)"
         /// </param>
         /// <returns></returns>
-        public static Entity FromString(string expr) => FromString(expr, true);
-
-        /// <summary>
-        /// Converts an expression from a string
-        /// </summary>
-        /// <param name="expr">
-        /// String expression, for example, "2 * x + 3 + sqrt(x)"
-        /// </param>
-        /// <param name="intelli">
-        /// Bool parameter responsible for neat-syntax parsing, for example
-        /// 2x will be parsed as 2 * x.
-        /// </param>
-        /// <returns></returns>
-        public static Entity FromString(string expr, bool intelli)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity FromString(string expr)
             => Parser.Parse(expr);
-
-        /// <summary>
-        /// Returns list of unique variables, for example 
-        /// it extracts `x`, `goose` from (x + 2 * goose) - pi * x
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        [ObsoleteAttribute("Use MathS.Utils.GetUniqueVariables instead")]
-        public static Set GetUniqueVariables(Entity expr)
-        {
-            var res = new Set();
-            TreeAnalyzer.GetUniqueVariables(expr, res);
-            return res;
-        }
 
         /// <summary>
         /// Translates num10 into another number system
@@ -293,7 +290,9 @@ namespace AngouriMath
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        public static string ToBaseN(double num, int N) => NumberSystem.ToBaseN(num, N);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string ToBaseN(double num, int N) 
+            => NumberSystem.ToBaseN(num, N);
 
         /// <summary>
         /// Translates num into 10 number system
@@ -301,10 +300,10 @@ namespace AngouriMath
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        public static double FromBaseN(string num, int N) => NumberSystem.FromBaseN(num, N);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double FromBaseN(string num, int N)
+            => NumberSystem.FromBaseN(num, N);
 
-        
-        
         /// <summary>
         /// Returns LaTeX code of the argument
         /// </summary>
@@ -335,25 +334,15 @@ namespace AngouriMath
             /// <param name="y"></param>
             /// <returns></returns>
             public static Tensor Matrix(int rows, int columns, params Entity[] values)
-            {
-                if (values.Length != rows * columns)
-                    throw new MathSException("Axes don't match data");
-                var r = new Tensor(rows, columns);
-                r.Assign(values);
-                return r;
-            }
+                => TensorFunctional.Matrix(rows, columns, values);
 
             /// <summary>
             /// Creates an instance of vector
             /// </summary>
             /// <param name="p"></param>
             /// <returns></returns>
-            public static Tensor Vector(params Entity[] p)
-            {
-                var r = new Tensor(p.Length);
-                r.Assign(p);
-                return r;
-            }
+            public static Tensor Vector(params Entity[] values)
+                => TensorFunctional.Vector(values);
 
             /// <summary>
             /// Returns dot product of two matrices
@@ -362,7 +351,7 @@ namespace AngouriMath
             /// <param name="B"></param>
             /// <returns></returns>
             public static Tensor DotProduct(Tensor A, Tensor B) =>
-                AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.DotProduct(A, B);
+                TensorFunctional.DotProduct(A, B);
 
             /// <summary>
             /// Returns scalar product of two matrices
@@ -371,7 +360,7 @@ namespace AngouriMath
             /// <param name="B"></param>
             /// <returns></returns>
             public static Entity ScalarProduct(Tensor A, Tensor B) =>
-                AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.ScalarProduct(A, B);
+                TensorFunctional.ScalarProduct(A, B);
 
         }
 
@@ -412,10 +401,7 @@ namespace AngouriMath
             /// <param name="expr"></param>
             /// <returns></returns>
             public static Entity FromLinq(Expression expr)
-            {
-                var parser = new LinqParser(expr);
-                return parser.Parse();
-            }
+                => LinqParser.FromLinq(expr);
 
             /// <summary>
             /// Checks tree for some unexpected bad occasions
@@ -432,7 +418,8 @@ namespace AngouriMath
             /// </summary>
             /// <param name="expr"></param>
             /// <returns></returns>
-            public static void CheckTree(Entity expr) => TreeAnalyzer.CheckTree(expr);
+            public static void CheckTree(Entity expr) 
+                => TreeAnalyzer.CheckTree(expr);
 
             /// <summary>
             /// Optimizes tree to binary
@@ -442,18 +429,15 @@ namespace AngouriMath
             /// <param name="tree"></param>
             /// <returns></returns>
             public static Entity OptimizeTree(Entity tree)
-            {
-                tree = tree.DeepCopy();
-                TreeAnalyzer.Optimization.OptimizeTree(ref tree);
-                return tree;
-            }
+                => TreeAnalyzer.Optimization.OptimizeTree(tree);
 
             /// <summary>
             /// Returns sympy interpretable format
             /// </summary>
             /// <param name="expr"></param>
             /// <returns></returns>
-            public static string ToSympyCode(Entity expr) => Functions.Output.ToSympy.GenerateCode(expr);
+            public static string ToSympyCode(Entity expr)
+                => ToSympy.GenerateCode(expr);
 
             /// <summary>
             /// Returns list of unique variables, for example 
@@ -462,11 +446,7 @@ namespace AngouriMath
             /// <param name="expr"></param>
             /// <returns></returns>
             public static Set GetUniqueVariables(Entity expr)
-            {
-                var res = new Set();
-                TreeAnalyzer.GetUniqueVariables(expr, res);
-                return res;
-            }
+                => TreeAnalyzer.GetUniqueVariables(expr);
         }
 
         /// <summary>
@@ -482,6 +462,7 @@ namespace AngouriMath
             /// Creates an instance of an empty set
             /// </summary>
             /// <returns></returns>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Set Empty()
                 => new Set();
 
@@ -490,32 +471,14 @@ namespace AngouriMath
             /// </summary>
             /// <returns></returns>
             public static Set C()
-                => new Set
-                {
-                    Pieces = new List<Piece>
-                    {
-                        Piece.Interval(
-                            new Number(double.NegativeInfinity, double.NegativeInfinity),
-                            new Number(double.PositiveInfinity, double.PositiveInfinity)
-                            ).AsInterval().SetLeftClosed(false, false).SetRightClosed(false, false)
-                    }
-                };
+                => Set.C();
 
             /// <summary>
             /// Returns a set of all real numbers
             /// </summary>
             /// <returns></returns>
             public static Set R()
-                => new Set
-                {
-                    Pieces = new List<Piece>
-                    {
-                        Piece.Interval(
-                            new Number(double.NegativeInfinity),
-                            new Number(double.PositiveInfinity)
-                        ).AsInterval().SetLeftClosed(false).SetRightClosed(false)
-                    }
-                };
+                => Set.R();
 
             /// <summary>
             /// Creats a set that you can fill with elements
@@ -524,12 +487,7 @@ namespace AngouriMath
             /// <param name="entities"></param>
             /// <returns></returns>
             public static Set Finite(params Entity[] entities)
-            {
-                var res = new Set();
-                foreach (var entity in entities)
-                    res.AddElements(entity);
-                return res;
-            }
+                => Set.Finite(entities);
 
             /// <summary>
             /// Creates an interval
@@ -575,10 +533,7 @@ namespace AngouriMath
         /// <returns></returns>
         [Obsolete("Use MathS.Utils.FromLinq instead")]
         public static Entity FromLinq(Expression expr)
-        {
-            var parser = new LinqParser(expr);
-            return parser.Parse();
-        }
+            => LinqParser.FromLinq(expr);
 
         /// <summary>
         /// Checks tree for some unexpected bad occasions
@@ -616,11 +571,7 @@ namespace AngouriMath
         /// <returns></returns>
         [Obsolete("Use MathS.Utils.OptimizeTree instead")]
         public static Entity OptimizeTree(Entity tree)
-        {
-            tree = tree.DeepCopy();
-            TreeAnalyzer.Optimization.OptimizeTree(ref tree);
-            return tree;
-        }
+            => TreeAnalyzer.Optimization.OptimizeTree(tree);
 
         /// <summary>
         /// Creates an instance of Tensor: Matrix
@@ -639,13 +590,7 @@ namespace AngouriMath
         /// <returns></returns>
         [Obsolete("Use MathS.Matrices.Matrix instead")]
         public static Tensor Matrix(int rows, int columns, params Entity[] values)
-        {
-            if (values.Length != rows * columns)
-                throw new MathSException("Axes don't match data");
-            var r = new Tensor(rows, columns);
-            r.Assign(values);
-            return r;
-        }
+            => TensorFunctional.Matrix(rows, columns, values);
 
         /// <summary>
         /// Creates an instance of vector
@@ -653,12 +598,8 @@ namespace AngouriMath
         /// <param name="p"></param>
         /// <returns></returns>
         [Obsolete("Use MathS.Matrices.Vector instead")]
-        public static Tensor Vector(params Entity[] p)
-        {
-            var r = new Tensor(p.Length);
-            r.Assign(p);
-            return r;
-        }
+        public static Tensor Vector(params Entity[] values)
+            => TensorFunctional.Vector(values);
 
         /// <summary>
         /// Returns dot product of two matrices
@@ -668,7 +609,7 @@ namespace AngouriMath
         /// <returns></returns>
         [Obsolete("Use MathS.Matrices.DotProduct instead")]
         public static Tensor DotProduct(Tensor A, Tensor B) =>
-            AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.DotProduct(A, B);
+            TensorFunctional.DotProduct(A, B);
 
         /// <summary>
         /// Returns scalar product of two matrices
@@ -678,7 +619,7 @@ namespace AngouriMath
         /// <returns></returns>
         [Obsolete("Use MathS.Matrices.ScalarProduct instead")]
         public static Entity ScalarProduct(Tensor A, Tensor B) =>
-            AngouriMath.Core.Sys.Items.Tensors.TensorFunctional.ScalarProduct(A, B);
+            TensorFunctional.ScalarProduct(A, B);
 
         /// <summary>
         /// Solves a system of equations
@@ -703,5 +644,31 @@ namespace AngouriMath
         [Obsolete("Use either MathS.Equations or MathS.SolveEquation or yourexpr.SolveEquation instead")]
         public static Set Solve(Entity equation, VariableEntity var)
             => EquationSolver.Solve(equation, var);
+
+        /// <summary>
+        /// Returns list of unique variables, for example 
+        /// it extracts `x`, `goose` from (x + 2 * goose) - pi * x
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        [ObsoleteAttribute("Use MathS.Utils.GetUniqueVariables instead")]
+        public static Set GetUniqueVariables(Entity expr)
+            => TreeAnalyzer.GetUniqueVariables(expr);
+
+
+        /// <summary>
+        /// Converts an expression from a string
+        /// </summary>
+        /// <param name="expr">
+        /// String expression, for example, "2 * x + 3 + sqrt(x)"
+        /// </param>
+        /// <param name="intelli">
+        /// Bool parameter responsible for neat-syntax parsing, for example
+        /// 2x will be parsed as 2 * x.
+        /// </param>
+        /// <returns></returns>
+        [Obsolete("intelli mode is enabled by default")]
+        public static Entity FromString(string expr, bool intelli)
+            => Parser.Parse(expr);
     }
 }

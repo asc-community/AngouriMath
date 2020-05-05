@@ -60,7 +60,7 @@ namespace AngouriMath.Convenience
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        public static Set Solve(Entity expr, VariableEntity x) => expr.Solve(x);
+        public static Set Solve(Entity expr, VariableEntity x) => expr.SolveEquation(x);
 
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )

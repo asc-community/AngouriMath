@@ -179,5 +179,21 @@ namespace AngouriMath.Core.Sys.Items.Tensors
                 }
             }
         }
+
+        internal static Tensor Matrix(int rows, int columns, params Entity[] values)
+        {
+            if (values.Length != rows * columns)
+                throw new MathSException("Axes don't match data");
+            var r = new Tensor(rows, columns);
+            r.Assign(values);
+            return r;
+        }
+
+        internal static Tensor Vector(params Entity[] p)
+        {
+            var r = new Tensor(p.Length);
+            r.Assign(p);
+            return r;
+        }
     }
 }

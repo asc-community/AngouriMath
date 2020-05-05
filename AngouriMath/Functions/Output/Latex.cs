@@ -213,19 +213,20 @@ namespace AngouriMath
                 switch (Type)
                 {
                     case NodeType.SET:
-                        var pieces = ((Set)this).Pieces;
-                        if (pieces.Count == 0)
+                        var set = this as Set;
+                        if (set.IsEmpty())
                         {
                             sb.Append(@"\emptyset");
                             break;
                         }
+                        
                         sb.Append(@"\left\{");
-                        foreach(var p in pieces)
+                        foreach(var p in set)
                         {
                             switch (p.Type)
                             {
                                 case Piece.PieceType.ENTITY:
-                                    sb.Append(((OneElementPiece)p).entity.Item1.Latexise());
+                                    sb.Append(((OneElementPiece)p).UpperBound().Item1.Latexise());
                                     break;
                                 case Piece.PieceType.INTERVAL:
                                     var lower = p.LowerBound();

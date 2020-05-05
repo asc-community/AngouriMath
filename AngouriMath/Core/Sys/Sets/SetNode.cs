@@ -296,6 +296,51 @@ namespace AngouriMath.Core
         /// Without check whether entity is already in the set
         /// </summary>
         public bool FastAddingMode { get; set; } = false;
+
+        /// <summary>
+        /// Returns a set of all complex numbers
+        /// </summary>
+        /// <returns></returns>
+        internal static Set C()
+            => new Set
+            {
+                Pieces = new List<Piece>
+                {
+                    Piece.Interval(
+                        new Number(double.NegativeInfinity, double.NegativeInfinity),
+                        new Number(double.PositiveInfinity, double.PositiveInfinity)
+                    ).AsInterval().SetLeftClosed(false, false).SetRightClosed(false, false)
+                }
+            };
+
+        /// <summary>
+        /// Returns a set of all real numbers
+        /// </summary>
+        /// <returns></returns>
+        internal static Set R()
+            => new Set
+            {
+                Pieces = new List<Piece>
+                {
+                    Piece.Interval(
+                        new Number(double.NegativeInfinity),
+                        new Number(double.PositiveInfinity)
+                    ).AsInterval().SetLeftClosed(false).SetRightClosed(false)
+                }
+            };
+
+        /// <summary>
+        /// Creates a finite set
+        /// </summary>
+        /// <param name="entities"></param>
+        /// <returns></returns>
+        internal static Set Finite(params Entity[] entities)
+        {
+            var res = new Set();
+            foreach (var entity in entities)
+                res.AddElements(entity);
+            return res;
+        }
     }
 
     public class FiniteSet : IEnumerable

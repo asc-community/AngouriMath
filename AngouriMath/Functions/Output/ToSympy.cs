@@ -72,7 +72,7 @@ namespace AngouriMath.Functions.Output
         internal static string GenerateCode(Entity expr)
         {
             var sb = new StringBuilder();
-            var vars = MathS.GetUniqueVariables(expr);
+            var vars = MathS.Utils.GetUniqueVariables(expr);
             sb.Append("import sympy\n\n");
             foreach (var f in vars)
                 sb.Append(f.ToString() + " = sympy.Symbol('" + f.ToString() + "')\n");

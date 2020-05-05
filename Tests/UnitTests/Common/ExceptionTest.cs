@@ -31,7 +31,7 @@ namespace UnitTests.Common
             => AssertExceptionThrown(() =>
             {
                 Entity expr = "x2 + x3 / 0";
-                MathS.CheckTree(expr);
+                MathS.Utils.CheckTree(expr);
                 return true;
             });
 
@@ -41,7 +41,7 @@ namespace UnitTests.Common
             {
                 Entity expr = "x2 + x3 / 0";
                 expr.Children.Add(expr);
-                MathS.CheckTree(expr);
+                MathS.Utils.CheckTree(expr);
                 return true;
             });
 

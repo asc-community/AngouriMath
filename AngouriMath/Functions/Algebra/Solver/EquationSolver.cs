@@ -88,7 +88,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static List<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var)
         {
             var result = new List<List<Entity>>();
-            foreach (var sol in eq.Solve(var).FiniteSet())
+            foreach (var sol in eq.SolveEquation(var).FiniteSet())
                 result.Add(new List<Entity>() { sol });
             return result;
         }
@@ -104,7 +104,7 @@ namespace AngouriMath.Functions.Algebra.Solver
             for (int i = 0; i < equations.Count; i++)
                 if (equations[i].FindSubtree(var) != null)
                 {
-                    var solutionsOverVar = equations[i].Solve(var);
+                    var solutionsOverVar = equations[i].SolveEquation(var);
                     equations.RemoveAt(i);
                     vars.RemoveAt(vars.Count - 1);
                     

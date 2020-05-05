@@ -31,7 +31,14 @@ namespace AngouriMath.Core.TreeAnalysis
         /// </summary>
         /// <param name="expr"></param>
         /// <param name="dst"></param>
-        internal static void GetUniqueVariables(Entity expr, Set dst)
+        internal static Set GetUniqueVariables(Entity expr)
+        {
+            var res = new Set();
+            _GetUniqueVariables(expr, res);
+            return res;
+        }
+    
+        internal static void _GetUniqueVariables(Entity expr, Set dst)
         {
             // If it is a variable, we will add it
             // 1 2 1 1 1 2 1
@@ -44,7 +51,7 @@ namespace AngouriMath.Core.TreeAnalysis
             else
                 // Otherwise, we will try to find unique variables from its children
                 foreach (var child in expr.Children)
-                    GetUniqueVariables(child, dst);
+                    _GetUniqueVariables(child, dst);
         }
         
         /// <summary>

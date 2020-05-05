@@ -94,7 +94,7 @@ namespace UnitTests.Common
         public void TestLinch()
         {
             Entity expr = "x / y + x * x * y";
-            Entity exprOptimized = MathS.OptimizeTree(expr);
+            Entity exprOptimized = MathS.Utils.OptimizeTree(expr);
             Assert.IsTrue(FunctionsAreEqualHack(expr, exprOptimized), "Expressions " + expr.ToString() + " and " + exprOptimized.ToString() + " are not equal");
         }
 
@@ -102,7 +102,7 @@ namespace UnitTests.Common
         public void TestLinch1()
         {
             Entity expr = "x / 1 + 2";
-            Entity exprOptimized = MathS.OptimizeTree(expr);
+            Entity exprOptimized = MathS.Utils.OptimizeTree(expr);
             Assert.IsTrue(FunctionsAreEqualHack(expr, exprOptimized), "Expressions " + expr.ToString() + " and " + exprOptimized.ToString() + " are not equal");
         }
 
@@ -110,7 +110,7 @@ namespace UnitTests.Common
         public void TestLinch2()
         {
             Entity expr = "(x + y + x + 1 / (x + 4 + 4 + sin(x))) / (x + x + 3 / y) + 3";
-            Entity exprOptimized = MathS.OptimizeTree(expr);
+            Entity exprOptimized = MathS.Utils.OptimizeTree(expr);
             Assert.IsTrue(FunctionsAreEqualHack(expr, exprOptimized), "Expressions " + expr.ToString() + " and " + exprOptimized.ToString() + " are not equal");
         }
     }

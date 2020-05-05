@@ -97,5 +97,11 @@ namespace AngouriMath.Core.FromLinq
 
         internal Entity Parse()
             => InnerParse(src);
+
+        internal static Entity FromLinq(Expression expr)
+        {
+            var parser = new LinqParser(expr);
+            return parser.Parse();
+        }
     }
 }

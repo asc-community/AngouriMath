@@ -168,6 +168,13 @@ namespace AngouriMath.Core.TreeAnalysis
             /// <returns></returns>
             internal static int CountDepth(Entity expr)
                 => 1 + (expr.Children.Count == 0 ? 0 : expr.Children.Select(CountDepth).Max());
+
+            internal static Entity OptimizeTree(Entity tree)
+            {
+                tree = tree.DeepCopy();
+                TreeAnalyzer.Optimization.OptimizeTree(ref tree);
+                return tree;
+            }
         }
     }
 }

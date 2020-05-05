@@ -243,9 +243,8 @@ namespace Samples
         public const string RecordCode = "{0}:RecordCode";
 
         static void Main(string[] _)
-
         {
-
+            
         }
     }
 #pragma warning restore IDE0051

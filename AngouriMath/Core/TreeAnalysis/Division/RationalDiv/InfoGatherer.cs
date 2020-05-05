@@ -39,7 +39,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
             // Init
             var res = new PolyInfo();
-            var mentionedVarList = MathS.GetUniqueVariables(expr);
+            var mentionedVarList = MathS.Utils.GetUniqueVariables(expr);
             var newList = new List<string>();
 
             if (replaceVars)
