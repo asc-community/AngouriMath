@@ -157,19 +157,19 @@ namespace Samples
         static Complex MyFunc(Complex x)
             => x + 3 * x;
 
-        public static readonly Tensor A = MathS.Matrix(4, 2,
+        public static readonly Tensor A = MathS.Matrices.Matrix(4, 2,
             1, 2,
             3, 4,
             5, 6,
             7, 8
         );
-        public static readonly Tensor B = MathS.Matrix(4, 2,
+        public static readonly Tensor B = MathS.Matrices.Matrix(4, 2,
             1, 2,
             3, 4,
             5, 6,
             7, 8
         );
-        public static readonly Tensor C = MathS.Matrix(2, 4,
+        public static readonly Tensor C = MathS.Matrices.Matrix(2, 4,
             1, 2, 3, 4,
             5, 6, 7, 8
         );
@@ -244,7 +244,8 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            
+            Entity expr = "sin(sin(x) + 0.9) + 0.3";
+            Console.WriteLine(expr.SolveEquation("x").Latexise());
         }
     }
 #pragma warning restore IDE0051

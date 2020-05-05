@@ -299,6 +299,10 @@ namespace AngouriMath
             { any1 * (any2 - any3), any1 * any2 - any1 * any3 },
             { (any2 + any3) * any1, any1 * any2 + any1 * any3 },
             { (any2 - any3) * any1, any1 * any2 - any1 * any3 },
+
+            // ({1} +- {2}) / {3} == {1} / {3} +- {2} / {3}
+            { (any1 + any2) / any3, any1 / any3 + any2 / any3 },
+            { (any1 - any2) / any3, any1 / any3 - any2 / any3 }
         };
 
         internal static readonly RuleList CollapseRules = new RuleList

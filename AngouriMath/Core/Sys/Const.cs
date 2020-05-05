@@ -19,6 +19,7 @@
 using System.Collections.Generic;
 using System.Text;
  using System.Security.Cryptography;
+ using AngouriMath.Functions;
 
 namespace AngouriMath
 {
@@ -158,7 +159,12 @@ namespace AngouriMath
         /// <param name="constName"></param>
         /// <returns></returns>
         internal static string LatexiseConst(string constName)
-            => LatexisableConstants.Contains(constName) ? @"\" + constName : constName;
+        {
+            var index = Utils.ParseIndex(constName);
+            constName = index.prefix ?? constName;
+            constName = LatexisableConstants.Contains(constName) ? @"\" + constName : constName;
+            return index.prefix is null ? constName : (constName + "_" + index.num);
+        }
 
         /// <summary>
         /// Swaps two primitive types

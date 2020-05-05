@@ -25,7 +25,7 @@ using System.Linq;
 
 namespace AngouriMath.Core.Sets
 {
-    public static partial class PieceFunctions
+    static partial class PieceFunctions
     {
         public static List<Piece> Invert(Piece A)
         {

@@ -38,7 +38,8 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static Set Solve(Entity equation, VariableEntity x)
         {
             var res = new Set();
-            AnalyticalSolver.Solve(equation.DeepCopy(), x, res);
+            equation = equation.DeepCopy();
+            AnalyticalSolver.Solve(equation, x, res);
             res.FiniteApply(p => p.InnerSimplify());
             return res;
         }

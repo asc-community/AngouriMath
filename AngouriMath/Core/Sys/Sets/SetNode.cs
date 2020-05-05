@@ -108,7 +108,7 @@ namespace AngouriMath.Core
             => ConnectionType switch
             {
                 OperatorType.UNION => Children[0].Contains(piece) || Children[1].Contains(piece),
-                OperatorType.INTERSECTION => Children[0].Contains(piece) & Children[1].Contains(piece),
+                OperatorType.INTERSECTION => Children[0].Contains(piece) && Children[1].Contains(piece),
                 OperatorType.COMPLEMENT => Children[0].Contains(piece) && !Children[1].Contains(piece),
                 OperatorType.INVERSION => !Children[0].Contains(piece)
             };

@@ -81,8 +81,52 @@ namespace AngouriMath.Functions
             return true;
         }
 
+        /// <summary>
+        /// Rounds numbers to the given precision
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         internal static Number CutoffImprecision(Number num)
             => new Number(num.Re - num.Re % MathS.Utils.EQUALITY_THRESHOLD,
                 num.Im - num.Im % MathS.Utils.EQUALITY_THRESHOLD);
+
+
+        internal static (string prefix, int num) ParseIndex(string name)
+        {
+            int pos_ = name.IndexOf('_');
+            if (pos_ != -1)
+            {
+                string varName = name.Substring(0, pos_);
+                int num;
+                if (Int32.TryParse(name.Substring(pos_ + 1), out num))
+                {
+                    return (varName, num);
+                }
+            }
+            return (null, 0);
+        }
+
+        /// <summary>
+        /// Finds next var index name starting with 1, e. g.
+        /// x + n_0 + n_a + n_3 + n_1
+        /// will find n_2
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <param name="prefix"></param>
+        /// <returns></returns>
+        internal static VariableEntity FindNextIndex(Entity expr, string prefix)
+        {
+            var indices = new HashSet<int>();
+            foreach (var var in MathS.Utils.GetUniqueVariables(expr).FiniteSet())
+            {
+                var index = ParseIndex(var.Name);
+                if (index.prefix == prefix)
+                    indices.Add(index.num);
+            }
+            int i = 1;
+            while (indices.Contains(i))
+                i++;
+            return new VariableEntity(prefix + "_" + i);
+        }
     }
 }

@@ -54,7 +54,7 @@ namespace AngouriMath
                 return false;
             for (int i = 0; i < obj.Children.Count; i++)
             {
-                if (!(Children[i] == obj.Children[i]))
+                if (Children[i] != obj.Children[i])
                     return false;
             }
             return true;

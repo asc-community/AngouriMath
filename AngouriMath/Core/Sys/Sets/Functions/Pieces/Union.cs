@@ -24,7 +24,7 @@ using System.Text;
  */
 namespace AngouriMath.Core.Sets
 {
-    public static partial class PieceFunctions
+    internal static partial class PieceFunctions
     {
         public static List<Piece> Unite(Piece A, Piece B)
         {

@@ -26,7 +26,8 @@ using System.Reflection;
 using System.Text;
  using AngouriMath.Core;
  using AngouriMath.Core.Sys.Interfaces;
-using AngouriMath.Functions.Algebra.Solver.Analytical;
+ using AngouriMath.Functions;
+ using AngouriMath.Functions.Algebra.Solver.Analytical;
 
 namespace AngouriMath
 {
@@ -167,6 +168,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 un = func.Children[1];
                 arg = 1;
             }
+            var n = Utils.FindNextIndex(func + value, "n");
             switch (func.Name)
             {
                 case "sumf":
@@ -205,7 +207,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     }
                     else
                         // a ^ x = value => x = log(value, a)
-                        return FindInvertExpression(un, MathS.Log(value, a), x);
+                        return FindInvertExpression(un, MathS.Log(value, a) + 2 * MathS.i * n * MathS.pi, x);
                 default:
                     throw new SysException("Unknown operator");
             }
@@ -251,7 +253,7 @@ namespace AngouriMath.Core.TreeAnalysis
             Entity a = func.Children[0];
             Entity b = func.Children.Count == 2 ? func.Children[1] : null;
             int arg = func.Children.Count == 2 && func.Children[1].FindSubtree(x) != null ? 1 : 0;
-            var n = MathS.Var("n");
+            var n = Utils.FindNextIndex(func + value, "n");
             var res = new Set();
             var pi = MathS.pi;
 
@@ -345,15 +347,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 dst.Add(0);
                 return;
             }
-            
-            Set res = PolynomialSolver.SolveAsPolynomial(expr.DeepCopy(), x);
-            if (res != null)
-            {
-                dst.AddRange(res);
-                return;
-            }
-          
-            res = TrigonometricSolver.SolveLinear(expr.DeepCopy(), x);
+
+            var polyexpr = expr.DeepCopy();
+            Set res = PolynomialSolver.SolveAsPolynomial(polyexpr, x);
             if (res != null)
             {
                 dst.AddRange(res);
@@ -395,8 +391,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             if (subs != 1)
                                 break;
                             var resInverted = TreeAnalyzer.FindInvertExpression(expr.Children[0], expr.Children[1], lastChild);
-                            foreach (var result in resInverted)
-                                Solve(lastChild - (Entity)result, x, dst, compensateSolving: true);
+                            foreach (var result in resInverted.FiniteSet())
+                                Solve(lastChild - result, x, dst, compensateSolving: true);
                             return;
                         }
                         break;
@@ -442,11 +438,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
                     // Here we are trying to solve for this replacement
                     Set newDst = new Set();
-                    foreach (var solution in solutions)
+                    foreach (var solution in solutions.FiniteSet())
                     {
                         var str = bestReplacement.ToString();
-                        if (!compensateSolving || bestReplacement - (Entity)solution != expr)
-                            Solve(bestReplacement - (Entity)solution, x, newDst, compensateSolving: true);
+                        if (!compensateSolving || bestReplacement - solution != expr)
+                            Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
                     }
                     dst.AddRange(newDst);
                     if (!dst.IsEmpty())
@@ -455,8 +451,23 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 }
             }
             // // //
-            
-            if (dst.IsEmpty()) // if nothing has been found so far
+
+            // if no replacement worked, try trigonometry solver
+            if (dst.IsEmpty())
+            {
+                var trigexpr = expr.DeepCopy();
+                res = TrigonometricSolver.SolveLinear(trigexpr, x);
+                if (res != null)
+                {
+                    dst.AddRange(res);
+                    return;
+                }
+            }
+            // // //
+
+
+            // if nothing has been found so far
+            if (dst.IsEmpty())
             {
                 Set allVars = new Set();
                 TreeAnalyzer._GetUniqueVariables(expr, allVars);
