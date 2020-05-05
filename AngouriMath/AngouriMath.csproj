@@ -32,11 +32,11 @@
       <PackagePath></PackagePath>
     </None>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
-    <EmbeddedResource Include="Core\FromString\Antlr\Angourimath.tokens" />
+    <EmbeddedResource Include="Core/FromString/Antlr/Angourimath.tokens" />
   </ItemGroup>
 
   <Target Name="GenerateANTLR" BeforeTargets="BeforeBuild">
-    <Exec Command="java -jar antlr-4.8-complete.jar -Dlanguage=CSharp Core\FromString\Antlr\Angourimath.g" />
+    <Exec Command="java -jar antlr-4.8-complete.jar -Dlanguage=CSharp Core/FromString/Antlr/Angourimath.g" />
   </Target>
 
 </Project>
