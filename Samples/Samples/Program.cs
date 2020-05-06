@@ -240,12 +240,9 @@ namespace Samples
             return funcs[random.Next(0, funcs.Count)](num, depth);
         }
 
-        public const string RecordCode = "{0}:RecordCode";
-
         static void Main(string[] _)
         {
-            Entity expr = "sin(sin(x) + 0.9) + 0.3";
-            Console.WriteLine(expr.SolveEquation("x").Latexise());
+
         }
     }
 #pragma warning restore IDE0051

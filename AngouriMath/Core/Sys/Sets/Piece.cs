@@ -204,8 +204,12 @@ namespace AngouriMath.Core
 
         internal IntervalPiece AsInterval() => this as IntervalPiece;
 
-        public static implicit operator Piece((Entity, Entity) tup)
-            => Interval(tup.Item1, tup.Item2);
+        public static implicit operator Piece((Entity left, Entity right) tup)
+            => Interval(tup.left, tup.right);
+        public static implicit operator Piece((Entity left, Entity right, bool leftClosed, bool rightClosed) tup)
+            => Interval(tup.left, tup.right).AsInterval().SetLeftClosed(tup.leftClosed).SetRightClosed(tup.rightClosed);
+        public static implicit operator Piece((Entity left, Entity right, bool leftReClosed, bool leftImClosed, bool rightReClosed, bool rightImClosed) tup)
+            => Interval(tup.left, tup.right).AsInterval().SetLeftClosed(tup.leftReClosed, tup.leftImClosed).SetRightClosed(tup.rightReClosed, tup.rightImClosed);
         public static implicit operator Piece(Entity element)
             => new OneElementPiece(element);
         public static implicit operator Piece(float element)
