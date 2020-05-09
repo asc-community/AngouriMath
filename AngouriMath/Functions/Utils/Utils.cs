@@ -128,5 +128,29 @@ namespace AngouriMath.Functions
                 i++;
             return new VariableEntity(prefix + "_" + i);
         }
+
+        private static int _GCD(int a, int b)
+        {
+            while (a * b > 0)
+            {
+                if (a > b)
+                    a %= b;
+                else
+                    b %= a;
+            }
+
+            return a == 0 ? b : a;
+        }
+
+        internal static int GCD(params int[] numbers)
+        {
+            if (numbers.Length == 1)
+                return numbers[0] == 0 ? 1 : numbers[0]; // technically, if number[0] == 0, then gcd = +oo
+            if (numbers.Length == 2)
+                return _GCD(numbers[0], numbers[1]);
+            var rest = (new ArraySegment<int>(numbers, 2, numbers.Length - 2)).ToList();
+            rest.Add(_GCD(numbers[0], numbers[1]));
+            return GCD(rest.ToArray());
+        }
     }
 }

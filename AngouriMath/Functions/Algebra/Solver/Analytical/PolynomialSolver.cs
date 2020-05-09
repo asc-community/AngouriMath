@@ -267,6 +267,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/
         internal static Set SolveAsPolynomial(Entity expr, Entity subtree)
         {
+            // Here we find all terms
             expr = expr.Expand(); // (x + 1) * x => x^2 + x
             List<Entity> children;
             Set res = new Set();
@@ -287,17 +288,51 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (ReduceCommonPower(ref monomialsByPower)) // x5 + x3 + x2 - common power is 2, one root is 0, then x3 + x + 1
                 res.Add(0);
             var powers = new List<int>(monomialsByPower.Keys);
+            var gcdPower = Utils.GCD(powers.ToArray());
+            // // //
+
+
+
+            // Change all replacements, x6 + x3 + 1 => x2 + x + 1
+            if (gcdPower != 1)
+            {
+                for (int i = 0; i < powers.Count; i++)
+                    powers[i] /= gcdPower;
+
+                var newMonom = new Dictionary<int, Entity>();
+                foreach (var pair in monomialsByPower)
+                    newMonom[pair.Key / gcdPower] = pair.Value;
+                monomialsByPower = newMonom;
+            }
+            // // //
+
+
+
+            // if we had x^6 + x^3 + 1, we replace it with x^2 + x + 1 and find all cubic roots of the final answer
+            Set FinalPostProcess(Set set)
+            {
+                if (gcdPower != 1)
+                {
+                    var newSet = new Set();
+                    foreach (var root in set.FiniteSet())
+                    foreach (var coef in Number.GetAllRoots(1, gcdPower).FiniteSet())
+                        newSet.Add(coef * MathS.Pow(root, MathS.Num(1.0) / gcdPower));
+                    set = newSet;
+                }
+                return set;
+            }
+
             if (powers.Count == 0)
                 return null;
             powers.Sort();
             if (powers.Last() == 0)
-                return res;
+                return FinalPostProcess(res);
             if (powers.Last() > 4 && powers.Count > 2)
                 return null; // So far, we can't solve equations of powers more than 4
             if (powers.Count == 1)
             {
                 res.Add(0);
-                return res;
+                return FinalPostProcess(res);
             }
             else if (powers.Count == 2)
             {
@@ -306,7 +341,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // (- a / b) ^ (1 / n) = x
                 // x ^ n = (-a / b)
                 res.AddRange(TreeAnalyzer.FindInvertExpression(MathS.Pow(subtree, powers[1]), (-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).Simplify(), subtree));
-                return res;
+                return FinalPostProcess(res);
             }
             // By this moment we know for sure that expr's power is <= 4, that expr is not a monomial,
             // and that it consists of more than 2 monomials
@@ -317,7 +352,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 var c = GetMonomialByPower(0);
 
                 res.AddRange(SolveQuadratic(a, b, c));
-                return res;
+                return FinalPostProcess(res);
             }
             else if (powers.Last() == 3)
             {
@@ -327,7 +362,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 var d = GetMonomialByPower(0);
 
                 res.AddRange(SolveCubic(a, b, c, d));
-                return res;
+                return FinalPostProcess(res);
             }
             else if (powers.Last() == 4)
             {
@@ -338,7 +373,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 var e = GetMonomialByPower(0);
 
                 res.AddRange(SolveQuartic(a, b, c, d, e));
-                return res;
+                return FinalPostProcess(res);
             }
             // TODO maybe throw exception here?
             // Maybe, who knows...

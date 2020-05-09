@@ -100,5 +100,15 @@ namespace UnitTests.Algebra
             );
             AssertSystemSolvable(eqs, VA("a", "b"), 0);
         }
+
+        [TestMethod]
+        public void TestSystemFromGermanOlympiad()
+        {
+            var eqs = EQ(
+                "x3 - 9 x2 y - 10",
+                "y3 + x y2 - 2"
+            );
+            AssertSystemSolvable(eqs, VA("x", "y"), 9);
+        }
     }
 }
