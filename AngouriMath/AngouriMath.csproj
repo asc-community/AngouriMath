@@ -36,7 +36,9 @@
   </ItemGroup>
 
   <Target Name="GenerateANTLR" BeforeTargets="BeforeBuild">
-    <Exec Command="java -jar antlr-4.8-complete.jar -Dlanguage=CSharp Core/FromString/Antlr/Angourimath.g" />
+    
+    <Exec Command="cd ./Core/FromString/Antlr 
+          call java -jar ./antlr-4.8-complete.jar -Dlanguage=CSharp ./Angourimath.g" />
   </Target>
 
 </Project>

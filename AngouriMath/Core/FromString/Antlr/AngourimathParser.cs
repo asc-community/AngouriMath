@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from Core\FromString\Antlr\Angourimath.g by ANTLR 4.8
+// Generated from ./Angourimath.g by ANTLR 4.8
 
 // Unreachable code detected
 #pragma warning disable 0162
