@@ -26,7 +26,7 @@ namespace UnitTests.Algebra
 
                     foreach (var uniqvar in MathS.Utils.GetUniqueVariables(eqCopy).FiniteSet())
                         eqCopy = eqCopy.Substitute(uniqvar.Name, 3);
-                    Assert.IsTrue(eqCopy.Eval() == 0,
+                    Assert.IsTrue(Number.Abs(eqCopy.Eval()) < 0.0001,
                         "i: " + i + "  eq: " + eq.ToString() + "  E: " + eqCopy.Eval().ToString());
                 }
             }
@@ -107,6 +107,16 @@ namespace UnitTests.Algebra
             var eqs = EQ(
                 "x3 - 9 x2 y - 10",
                 "y3 + x y2 - 2"
+            );
+            AssertSystemSolvable(eqs, VA("x", "y"), 9);
+        }
+
+        [TestMethod]
+        public void TestSystemFromGermanOlympiadAnalytical()
+        {
+            var eqs = EQ(
+                "x3 - 9 x2 y - f",
+                "y3 + x y2 - a"
             );
             AssertSystemSolvable(eqs, VA("x", "y"), 9);
         }

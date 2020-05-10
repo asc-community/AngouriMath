@@ -243,11 +243,11 @@ namespace Samples
         static void Main(string[] _)
         {
             var eqs = MathS.Equations(
-                "a+b-c",
-                "3a+3b-2c",
-                "3a+4b-4c"
+                "x3 - 9 x2 y - 10",
+                "y3 + x y2 - f"
                 );
-            Console.WriteLine(eqs.Solve("a", "b", "c").PrintOut(1000));
+            var text = eqs.Solve("x", "y").PrintOut(100000).ToString();
+            System.IO.File.WriteAllText("D:/tmp/sol.txt", text);
         }
     }
 #pragma warning restore IDE0051
