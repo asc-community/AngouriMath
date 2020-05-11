@@ -90,20 +90,43 @@ namespace AngouriMath.Functions
             => new Number(num.Re - num.Re % MathS.Utils.EQUALITY_THRESHOLD,
                 num.Im - num.Im % MathS.Utils.EQUALITY_THRESHOLD);
 
-
-        internal static (string prefix, int num) ParseIndex(string name)
+        /// <summary>
+        /// Alike to ParseIndex, but strict on index: it should be a number
+        /// </summary>
+        /// <param name="name">
+        /// Common name (e. g. "qua" or "phi_3")
+        /// </param>
+        /// <returns>
+        /// (null, 0) if it's not a valid indexed-name with numeric index,
+        /// (string prefix, int num) otherwise
+        /// </returns>
+        internal static (string prefix, int num) ParseIndexNumeric(string name)
         {
-            int pos_ = name.IndexOf('_');
+            var parsedIndex = ParseIndex(name);
+            if (!(parsedIndex.prefix is null) && int.TryParse(parsedIndex.index, out var num))
+                return (parsedIndex.prefix, num);
+            return (null, 0);
+        }
+
+        /// <summary>
+        /// Extracts a variable's name and  index from its Name
+        /// </summary>
+        /// <param name="name">
+        /// Common name (e. g. "qua" or "phi_3" or "qu_q")
+        /// </param>
+        /// <returns>
+        /// If it contains _ and valid name and index, returns a pair of (string prefix, string index)
+        /// (null, null) otherwise
+        /// </returns>
+        internal static (string prefix, string index) ParseIndex(string name)
+        {
+            var pos_ = name.IndexOf('_');
             if (pos_ != -1)
             {
-                string varName = name.Substring(0, pos_);
-                int num;
-                if (Int32.TryParse(name.Substring(pos_ + 1), out num))
-                {
-                    return (varName, num);
-                }
+                var varName = name.Substring(0, pos_);
+                return (varName, name.Substring(pos_ + 1));
             }
-            return (null, 0);
+            return (null, null);
         }
 
         /// <summary>
@@ -119,16 +142,33 @@ namespace AngouriMath.Functions
             var indices = new HashSet<int>();
             foreach (var var in MathS.Utils.GetUniqueVariables(expr).FiniteSet())
             {
-                var index = ParseIndex(var.Name);
+                var index = ParseIndexNumeric(var.Name);
                 if (index.prefix == prefix)
                     indices.Add(index.num);
             }
-            int i = 1;
+            var i = 1;
             while (indices.Contains(i))
                 i++;
             return new VariableEntity(prefix + "_" + i);
         }
 
+        /// <summary>
+        /// Finds greatest common divisor (with Euler's algorithm)
+        /// </summary>
+        /// <param name="a">
+        /// First number
+        /// </param>
+        /// <param name="b">
+        /// Second number
+        /// </param>
+        /// <returns>
+        /// Returns such c that all are true
+        /// a | c
+        /// b | c
+        /// !∃ d > c,
+        ///     a | d
+        ///     b | d
+        /// </returns>
         private static int _GCD(int a, int b)
         {
             while (a * b > 0)
@@ -142,6 +182,16 @@ namespace AngouriMath.Functions
             return a == 0 ? b : a;
         }
 
+        /// <summary>
+        /// Finds greatest common divisors of natural numbers
+        /// </summary>
+        /// <param name="numbers">
+        /// Array of natural numbers
+        /// </param>
+        /// <returns>
+        /// Greatest common divisor of numbers if numbers doesn't only consist of 0
+        /// 1 otherwise
+        /// </returns>
         internal static int GCD(params int[] numbers)
         {
             if (numbers.Length == 1)

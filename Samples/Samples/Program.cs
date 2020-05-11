@@ -242,12 +242,7 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            var eqs = MathS.Equations(
-                "x3 - 9 x2 y - 10",
-                "y3 + x y2 - f"
-                );
-            var text = eqs.Solve("x", "y").PrintOut(100000).ToString();
-            System.IO.File.WriteAllText("D:/tmp/sol.txt", text);
+            
         }
     }
 #pragma warning restore IDE0051

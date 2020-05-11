@@ -104,15 +104,16 @@ namespace UnitTests.Algebra
         [TestMethod]
         public void TestSystemFromGermanOlympiad()
         {
+            // https://www.youtube.com/watch?v=dVs26SSUJSA
             var eqs = EQ(
-                "x3 - 9 x2 y - 10",
+                "x3 + 9 x2 y - 10",
                 "y3 + x y2 - 2"
             );
             AssertSystemSolvable(eqs, VA("x", "y"), 9);
         }
 
         [TestMethod]
-        public void TestSystemFromGermanOlympiadAnalytical()
+        public void TestSystemFromSomewhereHmmAnalytical()
         {
             var eqs = EQ(
                 "x3 - 9 x2 y - f",

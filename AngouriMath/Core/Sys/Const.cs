@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,7 +15,7 @@
 
 
 
-﻿using System;
+ using System;
 using System.Collections.Generic;
 using System.Text;
  using System.Security.Cryptography;
@@ -163,7 +163,7 @@ namespace AngouriMath
             var index = Utils.ParseIndex(constName);
             constName = index.prefix ?? constName;
             constName = LatexisableConstants.Contains(constName) ? @"\" + constName : constName;
-            return index.prefix is null ? constName : (constName + "_" + index.num);
+            return index.prefix is null ? constName : (constName + "_" + index.index);
         }
 
         /// <summary>

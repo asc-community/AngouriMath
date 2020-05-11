@@ -86,6 +86,17 @@ namespace AngouriMath.Functions.Algebra.Solver
                     result[i, j] = res[i][j];
             return result;
         }
+
+        /// <summary>
+        /// Solves an equation, useful once InSolveSystem reaches equations.Count == 1
+        /// </summary>
+        /// <param name="eq">
+        /// The equation to solve
+        /// </param>
+        /// <param name="var">
+        /// Variable to solve for
+        /// </param>
+        /// <returns></returns>
         internal static List<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var)
         {
             var result = new List<List<Entity>>();
@@ -93,6 +104,17 @@ namespace AngouriMath.Functions.Algebra.Solver
                 result.Add(new List<Entity>() { sol });
             return result;
         }
+
+        /// <summary>
+        /// Solves system of equations
+        /// </summary>
+        /// <param name="equations">
+        /// List of Entities
+        /// </param>
+        /// <param name="vars">
+        /// List of variables, where each of them must be mentioned in at least one entity from equations
+        /// </param>
+        /// <returns></returns>
         internal static List<List<Entity>> InSolveSystem(List<Entity> equations, List<VariableEntity> vars)
         {
             var var = vars.Last();

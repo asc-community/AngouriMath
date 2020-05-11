@@ -75,7 +75,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     /// </summary>
     internal static class PolynomialSolver
     {
-        // solves ax + b
+        /// <summary>
+        /// Solves ax + b
+        /// </summary>
+        /// <param name="a">
+        /// Coefficient of x
+        /// </param>
+        /// <param name="b">
+        /// Free coefficient
+        /// </param>
+        /// <returns>
+        /// Set of roots
+        /// </returns>
         internal static Set SolveLinear(Entity a, Entity b)
         {
             // ax + b = 0
@@ -83,7 +94,22 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // x = -b / a
             return new Set(-b / a);
         }
-        // solves ax2 + bx + c
+
+        /// <summary>
+        /// solves ax2 + bx + c
+        /// </summary>
+        /// <param name="a">
+        /// Coefficient of x^2
+        /// </param>
+        /// <param name="b">
+        /// Coefficient of x
+        /// </param>
+        /// <param name="c">
+        /// Free coefficient
+        /// </param>
+        /// <returns>
+        /// Set of roots
+        /// </returns>
         internal static Set SolveQuadratic(Entity a, Entity b, Entity c)
         {
             Set res;
@@ -103,8 +129,25 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             res.Add((-b + MathS.Sqrt(D)) / (2 * a));
             return res;
         }
-        
-        // solves ax3 + bx2 + cx + d
+
+        /// <summary>
+        /// solves ax3 + bx2 + cx + d
+        /// </summary>
+        /// <param name="a">
+        /// Coefficient of x^3
+        /// </param>
+        /// <param name="b">
+        /// Coefficient of x^2
+        /// </param>
+        /// <param name="c">
+        /// Coefficient of x
+        /// </param>
+        /// <param name="d">
+        /// Free coefficient
+        /// </param>
+        /// <returns>
+        /// Set of roots
+        /// </returns>
         internal static Set SolveCubic(Entity a, Entity b, Entity c, Entity d)
         {
             // en: https://en.wikipedia.org/wiki/Cubic_equation
@@ -188,8 +231,28 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return res;
             }
         }
-        // END
-        // solves hx4 + ax3 + bx2 + cx + d
+
+        /// <summary>
+        /// solves ax4 + bx3 + cx2 + dx + e
+        /// </summary>
+        /// <param name="a">
+        /// Coefficient of x^4
+        /// </param>
+        /// <param name="b">
+        /// Coefficient of x^3
+        /// </param>
+        /// <param name="c">
+        /// Coefficient of x^2
+        /// </param>
+        /// <param name="d">
+        /// Coefficient of x
+        /// </param>
+        /// <param name="e">
+        /// Free coefficient
+        /// </param>
+        /// <returns>
+        /// Set of roots
+        /// </returns>
         internal static Set SolveQuartic(Entity a, Entity b, Entity c, Entity d, Entity e)
         {
             // en: https://en.wikipedia.org/wiki/Quartic_function
@@ -252,6 +315,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             return res;
         }
 
+        /// <summary>
+        /// So that the final list of powers contains power = 0 and all powers >= 0
+        /// (e. g. if the dictionaty's keys are 3, 4, 6, the final answer will contain keys
+        /// 0, 1, 3, if the dictionary's keys are -2, 0, 3, the final answer will contain keys
+        /// 0, 2, 5)
+        /// </summary>
+        /// <param name="monomials">
+        /// Dictionary to process. Key - power, value - coefficient of the corresponding term
+        /// </param>
+        /// <returns>
+        /// Returns whether all initiall powers where > 0 (if so, x = 0 is a root)
+        /// </returns>
         internal static bool ReduceCommonPower(ref Dictionary<int, Entity> monomials)
         {
             int commonPower = monomials.Keys.Min();
@@ -264,7 +339,19 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             return commonPower > 0;
         }
 
-        /* e. g. x or cos(x), actually, relative to what we're checking whether the equation is polynomial*/
+        /// <summary>
+        /// Tries to solve as polynomial
+        /// </summary>
+        /// <param name="expr">
+        /// Polynomial of an expression
+        /// </param>
+        /// <param name="subtree">
+        /// The expression the polynomial of (e. g. cos(x)^2 + cos(x) + 1 is a polynomial of cos(x))
+        /// </param>
+        /// <returns>
+        /// a finite Set if successful,
+        /// null otherwise
+        /// </returns>
         internal static Set SolveAsPolynomial(Entity expr, Entity subtree)
         {
             // Here we find all terms
@@ -375,9 +462,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 res.AddRange(SolveQuartic(a, b, c, d, e));
                 return FinalPostProcess(res);
             }
-            // TODO maybe throw exception here?
-            // Maybe, who knows...
-            else return null;
+            return null;
         }
     
         /// <summary>
