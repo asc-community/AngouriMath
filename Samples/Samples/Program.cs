@@ -242,7 +242,13 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            
+            Entity expr = "sin(2*x + 1) - sin(x) - a";
+            var sols = expr.SolveEquation("x");
+            foreach(var sol in sols.FiniteSet())
+            {
+                var exact = sol.Substitute("n_1", 1).Substitute("a", 11);
+                Console.WriteLine(expr.Substitute("a", 11).Substitute("x", exact).Eval());
+            }
         }
     }
 #pragma warning restore IDE0051

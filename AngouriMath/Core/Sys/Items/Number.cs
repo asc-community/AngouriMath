@@ -233,6 +233,8 @@ namespace AngouriMath.Core
         public static Number operator -(Number a, Number b) => new Number(a.value - b.value);
         public static Number operator *(Number a, Number b) => new Number(a.value * b.value);
         public static Number operator /(Number a, Number b) => new Number(a.value / b.value);
+        public static Number operator+(Number n) => new Number( n.value);
+        public static Number operator-(Number n) => new Number(-n.value);
         public static bool operator ==(Number a, Number b)
         {
             if ( ((object)a) == null && ((object)b) == null )
