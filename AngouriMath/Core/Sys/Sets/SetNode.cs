@@ -48,16 +48,16 @@ namespace AngouriMath.Core
         public abstract bool Contains(Entity piece);
 
         public static SetNode operator &(SetNode A, SetNode B)
-            => OperatorSet.And(A, B);
+            => OperatorSet.And(A, B).Eval();
 
         public static SetNode operator |(SetNode A, SetNode B)
-            => OperatorSet.Or(A, B);
+            => OperatorSet.Or(A, B).Eval();
 
         public static SetNode operator -(SetNode A, SetNode B)
-            => OperatorSet.Minus(A, B);
+            => OperatorSet.Minus(A, B).Eval();
 
         public static SetNode operator !(SetNode A)
-            => OperatorSet.Inverse(A);
+            => OperatorSet.Inverse(A).Eval();
 
         public SetNode Eval()
         {
@@ -119,16 +119,16 @@ namespace AngouriMath.Core
         public override bool Contains(Entity entity)
             => Contains(new OneElementPiece(entity));
 
-        internal static SetNode And(SetNode A, SetNode B)
+        public static SetNode And(SetNode A, SetNode B)
         => new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B);
 
-        internal static SetNode Or(SetNode A, SetNode B)
+        public static SetNode Or(SetNode A, SetNode B)
             => new OperatorSet(OperatorSet.OperatorType.UNION, A, B);
 
-        internal static SetNode Minus(SetNode A, SetNode B)
+        public static SetNode Minus(SetNode A, SetNode B)
         => new OperatorSet(OperatorSet.OperatorType.COMPLEMENT, A, B);
 
-        internal static SetNode Inverse(SetNode A)
+        public static SetNode Inverse(SetNode A)
         => new OperatorSet(OperatorSet.OperatorType.INVERSION, A);
     }
 
