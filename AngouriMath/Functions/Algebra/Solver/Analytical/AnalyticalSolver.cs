@@ -411,6 +411,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             VariableEntity newVar = ((Entity)uniqVars.Pieces[0]).Name + "quack";
             // // //
 
+            /* TODO: uncomment
+            
             // Here we find all possible replacements
             var replacements = new List<Tuple<Entity, Entity>>();
             replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(expr, x), expr));
@@ -451,6 +453,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 }
             }
             // // //
+            */
 
             // if no replacement worked, try trigonometry solver
             if (dst.IsEmpty())

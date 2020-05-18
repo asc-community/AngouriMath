@@ -242,7 +242,8 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            
+            Entity expr = "sin(2*x + 1) - sin(x) - a";
+            Console.WriteLine(expr.Solve("x"));
         }
     }
 #pragma warning restore IDE0051

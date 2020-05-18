@@ -474,6 +474,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <returns></returns>
         internal static Dictionary<T, Entity> GatherMonomialInformation<T>(List<Entity> terms, Entity subtree)
         {
+            terms = terms.Select(t => t.Collapse().InnerSimplify()).ToList();
+
             var monomialsByPower = new Dictionary<T, Entity>();
             // here we fill the dictionary with information about monomials' coefficiants
             foreach (var child in terms)
