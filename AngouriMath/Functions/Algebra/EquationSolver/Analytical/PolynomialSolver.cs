@@ -511,18 +511,24 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             bool allowFloat = typeof(T) == typeof(double);
             foreach (var mp in TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul))
-                if (mp.entType == Entity.EntType.OPERATOR &&
+                if (mp.FindSubtree(aVar) == null)
+                {
+                    freeMono *= mp;
+                }
+                else if (mp.entType == Entity.EntType.OPERATOR &&
                     mp.Name == "powf")
                 {
-                    // x ^ a is bad
-                    if (mp.Children[1].entType != Entity.EntType.NUMBER)
+                    var pow_num = MathS.CanBeEvaluated(mp.Children[1]) ? mp.Children[1].Eval() : mp.Children[1];
+
+                     // x ^ a is bad
+                    if (pow_num.entType != Entity.EntType.NUMBER)
                     {
                         freeMono = null;
                         return;
                     }
 
                     // x ^ 0.3 is bad
-                    if (!allowFloat && !mp.Children[1].GetValue().IsInteger())
+                    if (!allowFloat && !pow_num.Eval().IsInteger())
                     {
                         freeMono = null;
                         return;
@@ -531,9 +537,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     if (mp == aVar)
                     {
                         if (allowFloat)
-                            (power as TreeAnalyzer.PrimitiveDouble).Add(mp.Children[1].GetValue().Re);
+                            (power as TreeAnalyzer.PrimitiveDouble).Add(pow_num.GetValue().Re);
                         else
-                            (power as TreeAnalyzer.PrimitiveInt).Add((int)Math.Round(mp.Children[1].GetValue().Re));
+                            (power as TreeAnalyzer.PrimitiveInt).Add((int)Math.Round(pow_num.GetValue().Re));
                     }
                     else
                     {

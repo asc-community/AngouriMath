@@ -358,6 +358,9 @@ namespace AngouriMath.Core
                 pieces.Where(p => p.Type == Piece.PieceType.ENTITY)
                     .Select(p => (Entity)p).ToArray()
             );
+
+        public List<Entity> ToList()
+        => pieces.Select(c => (c as OneElementPiece).entity.Item1).ToList();
     }
 
     public class SetFiniteEnumerator : IEnumerator

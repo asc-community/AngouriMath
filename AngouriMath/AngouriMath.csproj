@@ -37,9 +37,7 @@
 
   <Target Name="GenerateANTLR" BeforeTargets="BeforeBuild">
     
-    <Exec Command="
-      cd ./Core/FromString/Antlr 
-      java -jar ./antlr-4.8-complete.jar -Dlanguage=CSharp ./Angourimath.g" />
+    <Exec Command="&#xD;&#xA;      cd ./Core/FromString/Antlr &#xD;&#xA;      java -jar ./antlr-4.8-complete.jar -Dlanguage=CSharp ./Angourimath.g" />
   </Target>
 
 </Project>
