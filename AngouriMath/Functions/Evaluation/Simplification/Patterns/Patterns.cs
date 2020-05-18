@@ -37,7 +37,7 @@ namespace AngouriMath
         internal static readonly Pattern func1 = new Pattern(400, PatType.FUNCTION);
         internal static readonly Pattern func2 = new Pattern(401, PatType.FUNCTION);
         private static int InternNumber = 10000;
-        static Pattern Num(double a) => new Pattern(++InternNumber, PatType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
+        internal static Pattern Num(double a) => new Pattern(++InternNumber, PatType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
 
         internal static readonly RuleList DivisionPreparingRules = new RuleList
         {
@@ -340,6 +340,15 @@ namespace AngouriMath
 
             // a ^ b * c ^ b = (a * c) ^ b
             { Powf.PHang(any1, any2) * Powf.PHang(any3, any2), Powf.PHang(any1 * any3, any2) },
+
+            // all cases to reduce a*a*a*... -> a^N
+            { Powf.PHang(any1, any2) * Powf.PHang(any1, any3), Powf.PHang(any1, any2 + any3) },
+            { any1 * Powf.PHang(any1, any3), Powf.PHang(any1, 1 + any3) },
+            { Powf.PHang(any1, any3) * any1, Powf.PHang(any1, 1 + any3) },
+            { any1 * any1, Powf.PHang(any1, 2) },
+
+            // (a ^ b) ^ c = a ^ (b * c)
+            { Powf.PHang(Powf.PHang(any1, any2), any3), Powf.PHang(any1, any2 * any3) },
         };
     }
 }
