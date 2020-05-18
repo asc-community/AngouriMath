@@ -70,13 +70,13 @@ namespace AngouriMath.Core
                     return op.ConnectionType switch
                     {
                         OperatorSet.OperatorType.UNION =>
-                            SetFunctions.Unite(op.Children[0], op.Children[1]),
+                            SetFunctions.Unite(op.Children[0].Eval(), op.Children[1].Eval()),
                         OperatorSet.OperatorType.INTERSECTION =>
-                            SetFunctions.Intersect(op.Children[0], op.Children[1]),
+                            SetFunctions.Intersect(op.Children[0].Eval(), op.Children[1].Eval()),
                         OperatorSet.OperatorType.COMPLEMENT =>
-                            SetFunctions.Subtract(op.Children[0], op.Children[1]),
+                            SetFunctions.Subtract(op.Children[0].Eval(), op.Children[1].Eval()),
                         OperatorSet.OperatorType.INVERSION =>
-                            SetFunctions.Invert(op.Children[0])
+                            SetFunctions.Invert(op.Children[0].Eval())
                     };
             }
 
