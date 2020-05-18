@@ -22,22 +22,21 @@ using System.Text;
 
 namespace AngouriMath
 {
-    using PatType = Entity.PatType;
     class RuleList : Dictionary<Pattern, Entity> { }
     internal static class Patterns
     {
-        internal static readonly Pattern any1 = new Pattern(100, PatType.COMMON);
-        internal static readonly Pattern any2 = new Pattern(101, PatType.COMMON);
-        internal static readonly Pattern any3 = new Pattern(102, PatType.COMMON);
-        internal static readonly Pattern any4 = new Pattern(103, PatType.COMMON);
-        internal static readonly Pattern const1 = new Pattern(200, PatType.NUMBER);
-        internal static readonly Pattern const2 = new Pattern(201, PatType.NUMBER);
-        internal static readonly Pattern const3 = new Pattern(202, PatType.NUMBER);
-        internal static readonly Pattern var1 = new Pattern(300, PatType.VARIABLE);
-        internal static readonly Pattern func1 = new Pattern(400, PatType.FUNCTION);
-        internal static readonly Pattern func2 = new Pattern(401, PatType.FUNCTION);
+        internal static readonly Pattern any1 = new Pattern(100, Entity.PatType.COMMON, tree => true);
+        internal static readonly Pattern any2 = new Pattern(101, Entity.PatType.COMMON, tree => true);
+        internal static readonly Pattern any3 = new Pattern(102, Entity.PatType.COMMON, tree => true);
+        internal static readonly Pattern any4 = new Pattern(103, Entity.PatType.COMMON, tree => true);
+        internal static readonly Pattern const1 = new Pattern(200, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER);
+        internal static readonly Pattern const2 = new Pattern(201, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER);
+        internal static readonly Pattern const3 = new Pattern(202, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER);
+        internal static readonly Pattern var1 = new Pattern(300, Entity.PatType.VARIABLE, tree => tree.entType == Entity.EntType.VARIABLE);
+        internal static readonly Pattern func1 = new Pattern(400, Entity.PatType.FUNCTION, tree => tree.entType == Entity.EntType.FUNCTION);
+        internal static readonly Pattern func2 = new Pattern(401, Entity.PatType.FUNCTION, tree => tree.entType == Entity.EntType.FUNCTION);
         private static int InternNumber = 10000;
-        static Pattern Num(double a) => new Pattern(++InternNumber, PatType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
+        static Pattern Num(double a) => new Pattern(++InternNumber, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
 
         internal static readonly RuleList DivisionPreparingRules = new RuleList
         {

@@ -178,5 +178,11 @@ namespace AngouriMath
             a = b;
             b = c;
         }
+
+        internal static class Patterns
+        {
+            internal static bool AlwaysTrue(Entity tree)
+                => true;
+        }
     }
 }

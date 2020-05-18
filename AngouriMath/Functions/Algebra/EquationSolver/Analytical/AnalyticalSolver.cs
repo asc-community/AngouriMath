@@ -329,7 +329,6 @@ namespace AngouriMath.Core.TreeAnalysis
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
-    using PatType = Entity.PatType;
     internal static class AnalyticalSolver
     {
         /// <summary>

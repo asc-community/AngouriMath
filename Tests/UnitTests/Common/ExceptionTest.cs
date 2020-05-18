@@ -48,12 +48,7 @@ namespace UnitTests.Common
         [TestMethod]
         public void NotImplemented()
         {
-            var p = new Pattern(3, Entity.PatType.COMMON);
-            AssertExceptionThrown((() =>
-            {
-                p.Copy();
-                return true;
-            }), "@");
+            var p = new Pattern(3, Entity.PatType.COMMON, Const.Patterns.AlwaysTrue);
             AssertExceptionThrown((() =>
             {
                 p.Check();
