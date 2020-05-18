@@ -271,7 +271,7 @@ namespace AngouriMath
                             OperatorSet.OperatorType.UNION => @"\cup",
                             OperatorSet.OperatorType.INTERSECTION => @"\cap",
                             OperatorSet.OperatorType.COMPLEMENT => @"\setminus",
-                            OperatorSet.OperatorType.INVERSION => @"'",
+                            OperatorSet.OperatorType.INVERSION => @"^\complement",
                         };
                         for(int i = 0; i < op.Children.Length; i++)
                         {
