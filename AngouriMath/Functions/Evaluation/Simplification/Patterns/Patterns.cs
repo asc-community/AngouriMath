@@ -36,7 +36,7 @@ namespace AngouriMath
         internal static readonly Pattern func1 = new Pattern(400, Entity.PatType.FUNCTION, tree => tree.entType == Entity.EntType.FUNCTION);
         internal static readonly Pattern func2 = new Pattern(401, Entity.PatType.FUNCTION, tree => tree.entType == Entity.EntType.FUNCTION);
         private static int InternNumber = 10000;
-        static Pattern Num(double a) => new Pattern(++InternNumber, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
+        internal static Pattern Num(double a) => new Pattern(++InternNumber, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
 
         internal static readonly RuleList DivisionPreparingRules = new RuleList
         {
