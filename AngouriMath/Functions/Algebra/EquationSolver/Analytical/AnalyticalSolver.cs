@@ -411,7 +411,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             VariableEntity newVar = ((Entity)uniqVars.Pieces[0]).Name + "quack";
             // // //
 
-            /* TODO: uncomment
             
             // Here we find all possible replacements
             var replacements = new List<Tuple<Entity, Entity>>();
@@ -443,7 +442,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     foreach (var solution in solutions.FiniteSet())
                     {
                         var str = bestReplacement.ToString();
-                        if (!compensateSolving || bestReplacement - solution != expr)
+                        if (!compensateSolving || ((bestReplacement - solution) - expr).Simplify() != 0)
                             Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
                     }
                     dst.AddRange(newDst);
@@ -453,7 +452,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 }
             }
             // // //
-            */
 
             // if no replacement worked, try trigonometry solver
             if (dst.IsEmpty())
