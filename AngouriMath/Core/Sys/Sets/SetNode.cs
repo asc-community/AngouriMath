@@ -48,16 +48,16 @@ namespace AngouriMath.Core
         public abstract bool Contains(Entity piece);
 
         public static SetNode operator &(SetNode A, SetNode B)
-            => OperatorSet.And(A, B).Eval();
+            => OperatorSet.And(A, B);
 
         public static SetNode operator |(SetNode A, SetNode B)
-            => OperatorSet.Or(A, B).Eval();
+            => OperatorSet.Or(A, B);
 
         public static SetNode operator -(SetNode A, SetNode B)
-            => OperatorSet.Minus(A, B).Eval();
+            => OperatorSet.Minus(A, B);
 
         public static SetNode operator !(SetNode A)
-            => OperatorSet.Inverse(A).Eval();
+            => OperatorSet.Inverse(A);
 
         public SetNode Eval()
         {
