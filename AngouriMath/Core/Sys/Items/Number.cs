@@ -146,10 +146,6 @@ namespace AngouriMath.Core
             }
             return res.Replace(",", ".");
         }
-        private static double ToDouble(string s)
-        {
-            return double.Parse(s, CultureInfo.InvariantCulture);
-        }
 
         private static bool TryToDouble(string s, out double res)
             => double.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out res);
@@ -251,18 +247,6 @@ namespace AngouriMath.Core
                 return !double.IsNaN(a.Re) && !double.IsNaN(a.Im);
             return !(a == b);
         }
-        public static bool operator >(Number a, Number b)
-        {
-            if (a.IsComplex() || b.IsComplex())
-                throw new MathSException("Can't compare complex number with a number");
-            return a.Re > b.Re;
-        }
-        public static bool operator <(Number a, Number b)
-        {
-            if (a.IsComplex() || b.IsComplex())
-                throw new MathSException("Can't compare complex number with a number");
-            return a.Re < b.Re;
-        }
         public static readonly Number Null = new Number(true);
 
         public bool IsReal()
@@ -331,15 +315,6 @@ namespace AngouriMath.Core
         {
             return Math.Abs(a) < MathS.Utils.EQUALITY_THRESHOLD;
         }
-
-        internal void _add(Number a) => this.value += a.value;
-        internal void _sub(Number a) => this.value -= a.value;
-        internal void _mul(Number a) => this.value *= a.value;
-        internal void _div(Number a) => this.value /= a.value;
-        internal void _pow(Number a) => this.value = Complex.Pow(this.value, a.value);
-        internal void _log(Number a) => this.value = Complex.Log(this.value, a.Re);
-        internal void _sin() => this.value = Complex.Sin(this.value);
-        internal void _cos() => this.value = Complex.Cos(this.value);
 
         public static double Dist(Number n1, Number n2)
             => Abs(n1 - n2);

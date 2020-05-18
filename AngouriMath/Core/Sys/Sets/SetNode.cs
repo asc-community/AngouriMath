@@ -94,7 +94,7 @@ namespace AngouriMath.Core
             INVERSION,       // NOT
         }
         internal SetNode[] Children { get; }
-        public readonly OperatorType ConnectionType;
+        internal readonly OperatorType ConnectionType;
         internal OperatorSet(OperatorType type, params SetNode[] children) : base(NodeType.OPERATOR)
         {
             Children = children;
