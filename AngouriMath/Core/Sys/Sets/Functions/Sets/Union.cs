@@ -24,7 +24,7 @@ namespace AngouriMath.Core.Sets
         public static SetNode Unite(SetNode A, SetNode B)
         {
             if (A.Type == SetNode.NodeType.OPERATOR || B.Type == SetNode.NodeType.OPERATOR)
-                return A - B;
+                return A & B;
             var newSet = new Set();
             foreach (var piece in A as Set)
                 newSet.AddPiece(piece);
