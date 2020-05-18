@@ -24,7 +24,7 @@ using System.Text;
 
 namespace AngouriMath.Functions.Algebra.NumbericalSolving
 {
-    internal static class NumericalSolver
+    internal static class NumericalEquationSolver
     {
         /// <summary>
         /// Perform one iteration of searching for a root with Newton-Raphson method
@@ -149,6 +149,6 @@ namespace AngouriMath
         /// </param>
         /// <returns></returns>
         public Set SolveNt(VariableEntity v, Number from, Number to, Number stepCount, int precision = 30)
-        => NumericalSolver.SolveNt(this, v, from, to, stepCount, precision);
+        => NumericalEquationSolver.SolveNt(this, v, from, to, stepCount, precision);
     }
 }

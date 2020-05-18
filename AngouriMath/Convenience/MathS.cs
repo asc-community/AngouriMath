@@ -30,6 +30,7 @@ using System.Security.Cryptography.X509Certificates;
  using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using AngouriMath.Functions.Algebra.InequalitySolver;
 
 namespace AngouriMath
 {
@@ -55,6 +56,26 @@ namespace AngouriMath
         /// <returns></returns>
         public static Set SolveEquation(Entity equation, VariableEntity var)
             => EquationSolver.Solve(equation, var);
+
+        /// <summary>
+        /// Will be soon!
+        /// Solves an inequality numerically
+        /// </summary>
+        /// <param name="inequality">
+        /// This must only contain one variable, which is var
+        /// </param>
+        /// <param name="var">
+        /// The only variable
+        /// </param>
+        /// <param name="sign">
+        /// ">", "<", ">=", "<="
+        /// </param>
+        /// <returns></returns>
+        public static Set SolveInequalityNumerically(Entity inequality, VariableEntity var, string sign)
+        {
+            throw new NotSupportedException("Will be added soon");
+            return NumericalInequalitySolver.Solve(inequality, var, sign);
+        }
 
         /// <summary>
         /// https://en.wikipedia.org/wiki/Trigonometric_functions
