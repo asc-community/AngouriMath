@@ -235,7 +235,7 @@ namespace AngouriMath
                                     var u = upper.Item1.Latexise();
                                     switch (lower.Item2, lower.Item3, upper.Item2, upper.Item3)
                                     {
-                                        // Complex part is inclusive for all real intervals
+                                        // Complex part is inclusive for all real intervals which is [0, 0]i
                                         case (false, true, false, true):
                                             sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right)");
                                             break;
