@@ -267,10 +267,10 @@ namespace AngouriMath.Core
             rightEdge = right;
         }
 
-        public override Edge UpperBound()
+        public override Edge LowerBound()
             => CopyEdge(leftEdge);
 
-        public override Edge LowerBound()
+        public override Edge UpperBound()
             => CopyEdge(rightEdge);
 
         /// <summary>
