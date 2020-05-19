@@ -281,7 +281,7 @@ namespace AngouriMath.Core
         /// <param name="isClosed"></param>
         /// <returns></returns>
         public IntervalPiece SetLeftClosed(bool isClosed)
-            => SetLeftClosed(isClosed, true);
+            => SetLeftClosed(isClosed, isClosed);
 
         /// <summary>
         /// Used for real intervals only.
@@ -291,7 +291,7 @@ namespace AngouriMath.Core
         /// <param name="isClosed"></param>
         /// <returns></returns>
         public IntervalPiece SetRightClosed(bool isClosed)
-            => SetRightClosed(isClosed, true);
+            => SetRightClosed(isClosed, isClosed);
 
         /// <summary>
         /// Used for any type of interval
