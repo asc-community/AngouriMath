@@ -38,7 +38,7 @@ namespace AngouriMath
                     return Const.LatexiseConst(this.Name);
                 else
                     // \infty with space because it may be followed directly by i
-                    return this.GetValue().Replace("Infinity", @"\infty ").ToString();     // Reached only when this is NumberEntity
+                    return this.GetValue().ToString().Replace("Infinity", @"\infty ");     // Reached only when this is NumberEntity
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
         }
