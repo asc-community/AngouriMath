@@ -34,11 +34,13 @@ namespace AngouriMath
         internal string Latexise(bool parenthesesRequired)
         {
             if (IsLeaf)
-                if (this.entType == EntType.VARIABLE)
-                    return Const.LatexiseConst(this.Name);
-                else
-                    // \infty with space because it may be followed directly by i
-                    return this.GetValue().ToString().Replace("Infinity", @"\infty ");     // Reached only when this is NumberEntity
+                return entType switch
+                {
+                  EntType.VARIABLE => Const.LatexiseConst(Name),
+                  EntType.TENSOR => ((Core.Tensor)this).Latexise(),
+                  // \infty with space because it may be followed directly by variables which will invalidate the LaTeX command
+                  EntType.NUMBER => GetValue().ToString().Replace("Infinity", @"\infty ")
+                };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
         }
