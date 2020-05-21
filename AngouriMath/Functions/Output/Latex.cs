@@ -275,9 +275,10 @@ namespace AngouriMath
                         };
                         for(int i = 0; i < op.Children.Length; i++)
                         {
-                            sb.Append(op.Children[i].Latexise());
+                            sb.Append(@"\left(").Append(op.Children[i].Latexise());
                             if (op.Children.Length == 1 || i < op.Children.Length - 1)
                                 sb.Append(connector);
+                            sb.Append(@"\right)")
                         }
                         break;
                 }
