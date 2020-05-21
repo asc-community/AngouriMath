@@ -285,7 +285,7 @@ namespace AngouriMath
                             sb.Append(@"\left(").Append(op.Children[i].Latexise());
                             if (op.Children.Length == 1 || i < op.Children.Length - 1)
                                 sb.Append(connector);
-                            sb.Append(@"\right)")
+                            sb.Append(@"\right)");
                         }
                         break;
                 }
