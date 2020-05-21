@@ -134,7 +134,7 @@ namespace AngouriMath.Core
             {
                 string b = Math.Abs(Im).ToString(CultureInfo.InvariantCulture);
                 if (!Number.IsDoubleZero(Re))
-                    res = a + (Im < 0 ? " - " : " + ") + b + "i";
+                    res = a + (Im < 0 ? " - " : " + ") + (Im == -1 || Im == 1 ? "" : b) + "i";
                 else if (Im == -1)
                     res = "-i";
                 else if (Im == 1)
