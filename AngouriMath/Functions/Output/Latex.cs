@@ -39,7 +39,7 @@ namespace AngouriMath
                   EntType.VARIABLE => Const.LatexiseConst(Name),
                   EntType.TENSOR => ((Core.Tensor)this).Latexise(),
                   // \infty with space because it may be followed directly by variables which will invalidate the LaTeX command
-                  EntType.NUMBER => GetValue().ToString().Replace("Infinity", @"\infty ")
+                  EntType.NUMBER => GetValue().Latexise()
                 };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
@@ -208,6 +208,10 @@ namespace AngouriMath
     }
     namespace Core
     {
+        partial class Number : ILatexiseable
+        {
+            public string Latexise() => ToString().Replace("Infinity", @"\infty ");
+        }
         partial class SetNode : ILatexiseable
         {
             public string Latexise()
