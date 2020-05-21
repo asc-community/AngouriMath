@@ -36,10 +36,9 @@ namespace AngouriMath
             if (IsLeaf)
                 return entType switch
                 {
-                  EntType.VARIABLE => Const.LatexiseConst(Name),
-                  EntType.TENSOR => ((Core.Tensor)this).Latexise(),
-                  // \infty with space because it may be followed directly by variables which will invalidate the LaTeX command
-                  EntType.NUMBER => GetValue().Latexise()
+                    EntType.VARIABLE => Const.LatexiseConst(Name),
+                    EntType.TENSOR => ((Core.Tensor)this).Latexise(),
+                    EntType.NUMBER => GetValue().Latexise()
                 };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
@@ -210,6 +209,7 @@ namespace AngouriMath
     {
         partial class Number : ILatexiseable
         {
+            // \infty with space because it may be followed directly by variables which will invalidate the LaTeX command
             public string Latexise() => ToString().Replace("Infinity", @"\infty ");
         }
         partial class SetNode : ILatexiseable
