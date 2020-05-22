@@ -210,7 +210,14 @@ namespace AngouriMath
         partial class Number : ILatexiseable
         {
             // \infty with space because it may be followed directly by variables which will invalidate the LaTeX command
-            public string Latexise() => ToString().Replace("Infinity", @"\infty ");
+            public string Latexise()
+            {
+                var latex = ToString().Replace("Infinity", @"\infty ");
+                return
+                    latex.Contains("E")
+                    ? latex.Replace("E+", "E").Replace("E-0", "E-").Replace("E", @"\times 10^{") + "}"
+                    : latex;
+            }
         }
         partial class SetNode : ILatexiseable
         {
