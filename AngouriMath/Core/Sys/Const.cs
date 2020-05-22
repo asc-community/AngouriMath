@@ -163,7 +163,7 @@ namespace AngouriMath
             var index = Utils.ParseIndex(constName);
             constName = index.prefix ?? constName;
             constName = LatexisableConstants.Contains(constName) ? @"\" + constName : constName;
-            return index.prefix is null ? constName : (constName + "_" + index.index);
+            return index.prefix is null ? constName : (constName + "_{" + index.index + "}");
         }
 
         /// <summary>
@@ -177,6 +177,12 @@ namespace AngouriMath
             T c = a;
             a = b;
             b = c;
+        }
+
+        internal static class Patterns
+        {
+            internal static bool AlwaysTrue(Entity tree)
+                => true;
         }
     }
 }

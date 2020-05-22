@@ -34,10 +34,12 @@ namespace AngouriMath
         internal string Latexise(bool parenthesesRequired)
         {
             if (IsLeaf)
-                if (this.entType == EntType.VARIABLE)
-                    return Const.LatexiseConst(this.Name);
-                else
-                    return this.GetValue().ToString();     // Reached only when this is NumberEntity
+                return entType switch
+                {
+                    EntType.VARIABLE => Const.LatexiseConst(Name),
+                    EntType.TENSOR => ((Core.Tensor)this).Latexise(),
+                    EntType.NUMBER => GetValue().Latexise()
+                };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
         }
@@ -205,6 +207,11 @@ namespace AngouriMath
     }
     namespace Core
     {
+        partial class Number : ILatexiseable
+        {
+            // \infty with space because it may be followed directly by variables which will invalidate the LaTeX command
+            public string Latexise() => ToString().Replace("Infinity", @"\infty ");
+        }
         partial class SetNode : ILatexiseable
         {
             public string Latexise()
@@ -271,13 +278,14 @@ namespace AngouriMath
                             OperatorSet.OperatorType.UNION => @"\cup",
                             OperatorSet.OperatorType.INTERSECTION => @"\cap",
                             OperatorSet.OperatorType.COMPLEMENT => @"\setminus",
-                            OperatorSet.OperatorType.INVERSION => @"'",
+                            OperatorSet.OperatorType.INVERSION => @"^\complement",
                         };
                         for(int i = 0; i < op.Children.Length; i++)
                         {
-                            sb.Append(op.Children[i].Latexise());
+                            sb.Append(@"\left(").Append(op.Children[i].Latexise());
                             if (op.Children.Length == 1 || i < op.Children.Length - 1)
                                 sb.Append(connector);
+                            sb.Append(@"\right)");
                         }
                         break;
                 }

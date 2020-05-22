@@ -1,11 +1,22 @@
+
+/* Copyright (c) 2019-2020 Angourisoft
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
+ * modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
+ * is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+ * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
 using AngouriMath.Core;
 using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using System;
 using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Net.NetworkInformation;
-using System.Text;
 
 namespace AngouriMath.Functions.Algebra.Solver.Analytical
 {
@@ -98,42 +109,45 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             }
 
             // arg => (x, a, b)
-            var pattern1 = Sinf.PHang(Patterns.const1 * Patterns.var1 + Patterns.any1);
+            // TODO: refactor this. Move to a list
+            var variablePattern = new Pattern(1000, Entity.PatType.VARIABLE, 
+                tree => tree.entType == Entity.EntType.VARIABLE && tree.Name == variable.Name);
+            var pattern1 = Sinf.PHang(Patterns.const1 * variablePattern + Patterns.any1);
             MatchSinUntil(pattern1, arg => (arg.Children[0].Children[1], arg.Children[0].Children[0], arg.Children[1]));
-            var pattern2 = Sinf.PHang(Patterns.var1 * Patterns.const1 + Patterns.any1);
+            var pattern2 = Sinf.PHang(variablePattern * Patterns.const1 + Patterns.any1);
             MatchSinUntil(pattern2, arg => (arg.Children[0].Children[0], arg.Children[0].Children[1], arg.Children[1]));
 
-            var pattern3 = Sinf.PHang(Patterns.any1 + Patterns.const1 * Patterns.var1);
+            var pattern3 = Sinf.PHang(Patterns.any1 + Patterns.const1 * variablePattern);
             MatchSinUntil(pattern3, arg => (arg.Children[1].Children[1], arg.Children[1].Children[0], arg.Children[0]));
-            var pattern4 = Sinf.PHang(Patterns.any1 + Patterns.var1 * Patterns.const1);
+            var pattern4 = Sinf.PHang(Patterns.any1 + variablePattern * Patterns.const1);
             MatchSinUntil(pattern4, arg => (arg.Children[1].Children[0], arg.Children[1].Children[1], arg.Children[0]));
 
-            var pattern5 = Sinf.PHang(Patterns.const1 * Patterns.var1);
+            var pattern5 = Sinf.PHang(Patterns.const1 * variablePattern);
             MatchSinUntil(pattern5, arg => (arg.Children[1], arg.Children[0], 0));
-            var pattern6 = Sinf.PHang(Patterns.var1 * Patterns.const1);
+            var pattern6 = Sinf.PHang(variablePattern * Patterns.const1);
             MatchSinUntil(pattern6, arg => (arg.Children[0], arg.Children[1], 0));
-            var pattern7 = Sinf.PHang(Patterns.any1 + Patterns.var1);
+            var pattern7 = Sinf.PHang(Patterns.any1 + variablePattern);
             MatchSinUntil(pattern7, arg => (arg.Children[1], 1, arg.Children[0]));
-            var pattern8 = Sinf.PHang(Patterns.var1 + Patterns.any1);
+            var pattern8 = Sinf.PHang(variablePattern + Patterns.any1);
             MatchSinUntil(pattern8, arg => (arg.Children[0], 1, arg.Children[1]));
 
-            var pattern9 = Cosf.PHang(Patterns.const1 * Patterns.var1 + Patterns.any1);
+            var pattern9 = Cosf.PHang(Patterns.const1 * variablePattern + Patterns.any1);
             MatchCosUntil(pattern9, arg => (arg.Children[0].Children[1], arg.Children[0].Children[0], arg.Children[1]));
-            var pattern10 = Cosf.PHang(Patterns.var1 * Patterns.const1 + Patterns.any1);
+            var pattern10 = Cosf.PHang(variablePattern * Patterns.const1 + Patterns.any1);
             MatchCosUntil(pattern10, arg => (arg.Children[0].Children[0], arg.Children[0].Children[1], arg.Children[1]));
 
-            var pattern11 = Cosf.PHang(Patterns.any1 + Patterns.const1 * Patterns.var1);
+            var pattern11 = Cosf.PHang(Patterns.any1 + Patterns.const1 * variablePattern);
             MatchCosUntil(pattern11, arg => (arg.Children[1].Children[1], arg.Children[1].Children[0], arg.Children[0]));
-            var pattern12 = Cosf.PHang(Patterns.any1 + Patterns.var1 * Patterns.const1);
+            var pattern12 = Cosf.PHang(Patterns.any1 + variablePattern * Patterns.const1);
             MatchCosUntil(pattern12, arg => (arg.Children[1].Children[0], arg.Children[1].Children[1], arg.Children[0]));
 
-            var pattern13 = Cosf.PHang(Patterns.const1 * Patterns.var1);
+            var pattern13 = Cosf.PHang(Patterns.const1 * variablePattern);
             MatchCosUntil(pattern13, arg => (arg.Children[1], arg.Children[0], 0));
-            var pattern14 = Cosf.PHang(Patterns.var1 * Patterns.const1);
+            var pattern14 = Cosf.PHang(variablePattern * Patterns.const1);
             MatchCosUntil(pattern14, arg => (arg.Children[0], arg.Children[1], 0));
-            var pattern15 = Cosf.PHang(Patterns.any1 + Patterns.var1);
+            var pattern15 = Cosf.PHang(Patterns.any1 + variablePattern);
             MatchCosUntil(pattern15, arg => (arg.Children[1], 1, arg.Children[0]));
-            var pattern16 = Cosf.PHang(Patterns.var1 + Patterns.any1);
+            var pattern16 = Cosf.PHang(variablePattern + Patterns.any1);
             MatchCosUntil(pattern16, arg => (arg.Children[0], 1, arg.Children[1]));
 
             // re-substitute all false replacement to return expression to normal

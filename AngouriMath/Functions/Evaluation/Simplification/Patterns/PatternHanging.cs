@@ -21,12 +21,11 @@ using System.Text;
 
 namespace AngouriMath
 {
-    using PatType = Entity.PatType;
     internal static partial class Sumf
     {
         internal static Pattern PHang(Entity a, Entity b)
         {
-            var res = new Pattern(-1, PatType.OPERATOR, "sumf");
+            var res = new Pattern(-1, Entity.PatType.OPERATOR, Const.Patterns.AlwaysTrue, "sumf");
             res.Children.Add(a);
             res.Children.Add(b);
             return res;
@@ -36,7 +35,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a, Entity b)
         {
-            var res = new Pattern(-1, PatType.OPERATOR, "minusf");
+            var res = new Pattern(-1, Entity.PatType.OPERATOR, Const.Patterns.AlwaysTrue, "minusf");
             res.Children.Add(a);
             res.Children.Add(b);
             return res;
@@ -46,7 +45,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a, Entity b)
         {
-            var res = new Pattern(-1, PatType.OPERATOR, "mulf");
+            var res = new Pattern(-1, Entity.PatType.OPERATOR, Const.Patterns.AlwaysTrue, "mulf");
             res.Children.Add(a);
             res.Children.Add(b);
             return res;
@@ -56,7 +55,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a, Entity b)
         {
-            var res = new Pattern(-1, PatType.OPERATOR, "divf");
+            var res = new Pattern(-1, Entity.PatType.OPERATOR, Const.Patterns.AlwaysTrue, "divf");
             res.Children.Add(a);
             res.Children.Add(b);
             return res;
@@ -66,7 +65,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a, Entity b)
         {
-            var res = new Pattern(-1, PatType.OPERATOR, "powf");
+            var res = new Pattern(-1, Entity.PatType.OPERATOR, Const.Patterns.AlwaysTrue, "powf");
             res.Children.Add(a);
             res.Children.Add(b);
             return res;
@@ -77,7 +76,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a)
         {
-            var res = new Pattern(-1, PatType.FUNCTION, "sinf");
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "sinf");
             res.Children.Add(a);
             return res;
         }
@@ -87,7 +86,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a)
         {
-            var res = new Pattern(-1, PatType.FUNCTION, "cosf");
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "cosf");
             res.Children.Add(a);
             return res;
         }
@@ -96,7 +95,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a)
         {
-            var res = new Pattern(-1, PatType.FUNCTION, "tanf");
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "tanf");
             res.Children.Add(a);
             return res;
         }
@@ -106,7 +105,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a)
         {
-            var res = new Pattern(-1, PatType.FUNCTION, "cotanf");
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "cotanf");
             res.Children.Add(a);
             return res;
         }
@@ -116,7 +115,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a)
         {
-            var res = new Pattern(-1, PatType.FUNCTION, "arcsinf");
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "arcsinf");
             res.Children.Add(a);
             return res;
         }
@@ -125,7 +124,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a)
         {
-            var res = new Pattern(-1, PatType.FUNCTION, "arccosf");
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "arccosf");
             res.Children.Add(a);
             return res;
         }
@@ -134,7 +133,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a)
         {
-            var res = new Pattern(-1, PatType.FUNCTION, "arctanf");
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "arctanf");
             res.Children.Add(a);
             return res;
         }
@@ -144,7 +143,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a)
         {
-            var res = new Pattern(-1, PatType.FUNCTION, "arccotanf");
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "arccotanf");
             res.Children.Add(a);
             return res;
         }
@@ -154,7 +153,7 @@ namespace AngouriMath
     {
         internal static Pattern PHang(Entity a, Entity n)
         {
-            var res = new Pattern(-1, PatType.FUNCTION, "logf");
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "logf");
             res.Children.Add(a);
             res.Children.Add(n);
             return res;

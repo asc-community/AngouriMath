@@ -45,7 +45,7 @@ namespace AngouriMath
         {
             if (IsLeaf)
                 return entType switch { 
-                    EntType.PATTERN => "{ " + PatternNumber + " : " + PatternType + " }",
+                    EntType.PATTERN => "{ " + PatternNumber + " : " + (this as Pattern).patType + " }",
                     EntType.TENSOR => (this as Tensor).ToString(),
                     _ => this.Name.Length == 0 || this.Name[0] != '-' ? this.Name : "(" + this.Name + ")"
                 };

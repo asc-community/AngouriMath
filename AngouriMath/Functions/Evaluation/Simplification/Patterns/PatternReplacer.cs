@@ -20,6 +20,7 @@ using AngouriMath.Core.Exceptions;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
  using AngouriMath.Core.Sys.Interfaces;
+using System;
 
 [assembly: InternalsVisibleTo("UnitTests")]
 
@@ -48,13 +49,10 @@ namespace AngouriMath
             OPERATOR
         }
         internal int PatternNumber { get; set; }
-        internal PatType PatternType; // not a getter due to performance requirements
+        internal Predicate<Entity> Condition; // not a getter due to performance requirements
         internal static bool PatternMatches(Entity pattern, Entity tree)
         {
-            if (!(pattern.PatternType == PatType.NUMBER && tree.entType == EntType.NUMBER ||
-                   pattern.PatternType == PatType.FUNCTION && tree.entType == EntType.FUNCTION ||
-                   pattern.PatternType == PatType.OPERATOR && tree.entType == EntType.OPERATOR ||
-                   pattern.PatternType == PatType.VARIABLE && tree.entType == EntType.VARIABLE))
+            if (!pattern.Condition(tree))
                 return false;
             return string.IsNullOrEmpty(pattern.Name) || pattern.Name == tree.Name;
         }
@@ -69,8 +67,9 @@ namespace AngouriMath
         /// </returns>
         internal bool Match(Entity tree)
         {
-            if (this.PatternType == PatType.NONE)
+            if (entType != EntType.PATTERN)
                 return this == tree;
+            var PatternType = (this as Pattern).patType;
             if (PatternType == PatType.COMMON)
                 return (this as Pattern).EqFits(tree) != null;
             if (!PatternMatches(this, tree))
@@ -209,6 +208,7 @@ namespace AngouriMath
                 return this;
             if (keys.ContainsKey(PatternNumber))
                 return keys[PatternNumber];
+            var PatternType = (this as Pattern).patType;
             if (PatternType == PatType.NUMBER)
                 return new NumberEntity(Number.Parse(Name));
             if (PatternType == PatType.VARIABLE)
@@ -254,9 +254,11 @@ namespace AngouriMath
 
     internal class Pattern : Entity
     {
-        public Pattern(int num, PatType type, string name = "") : base(name, EntType.PATTERN) {
+        internal PatType patType;
+        public Pattern(int num, PatType type, Predicate<Entity> condition, string name = "") : base(name, EntType.PATTERN) {
             PatternNumber = num;
-            PatternType = type;
+            Condition = condition;
+            patType = type;
         }
 
         internal Dictionary<int, Entity> EqFits(Entity tree)
@@ -269,10 +271,7 @@ namespace AngouriMath
                 return res;
         }
         protected override Entity __copy()
-        {
-            // Actually, no need to implement
-            throw new SysException("@");
-        }
+            => new Pattern(this.PatternNumber, patType, Condition, Name);
 
         protected override bool EqualsTo(Entity obj)
         {
