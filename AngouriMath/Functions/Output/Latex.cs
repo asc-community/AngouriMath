@@ -215,7 +215,7 @@ namespace AngouriMath
                 var latex = ToString().Replace("Infinity", @"\infty ");
                 return
                     latex.Contains("E")
-                    ? latex.Replace("E+", "E").Replace("E-0", "E-").Replace("E", @"\times 10^{") + "}"
+                    ? @"\left(" + latex.Replace("E+", "E").Replace("E-0", "E-").Replace("E", @"\right)\times 10^{") + "}"
                     : latex;
             }
         }
