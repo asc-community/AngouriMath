@@ -31,6 +31,7 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
+    <None Include="Core\Sys\Items\Numeric\Numeric.csproj" />
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
     <EmbeddedResource Include="Core/FromString/Antlr/Angourimath.tokens" />
   </ItemGroup>
