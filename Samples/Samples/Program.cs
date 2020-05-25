@@ -10,6 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using AngouriMath.Core.Sets;
+using AngouriMath.Core.Numeric;
 
 namespace Samples
 {
@@ -17,6 +18,7 @@ namespace Samples
 #pragma warning disable IDE0051
     class Program
     {
+        /*
         static void Sample1()
         {
             var inp = "1 + 2 * log(9, 3)";
@@ -239,11 +241,11 @@ namespace Samples
             var random = new Random();
             return funcs[random.Next(0, funcs.Count)](num, depth);
         }
-
+        */
         static void Main(string[] _)
         {
-            Entity expr = "((t + 1/t) / (t - 1/t))2";
-            Console.WriteLine(expr.Expand().Simplify(4).Latexise());
+            var pb = RealNumber.Zero();
+            Console.WriteLine(pb.ToString());
         }
     }
 #pragma warning restore IDE0051

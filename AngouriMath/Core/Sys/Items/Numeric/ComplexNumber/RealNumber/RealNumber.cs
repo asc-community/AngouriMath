@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AngouriMath.Core
+namespace AngouriMath.Core.Numeric
 {
     public partial class RealNumber : ComplexNumber
     {
@@ -71,12 +71,15 @@ namespace AngouriMath.Core
             return (Value, 0);
         }
 
-        protected static RealNumber Zero()
+        public static RealNumber Zero()
         {
             var ra = new RealNumber();
             ra.Value = 0;
             ra.Real = ra;
             ra.Imaginary = ra;
+            ra.Type = HierarchyLevel.REAL;
+            ra.State = UndefinedState.DEFINED;
+            (ra as ComplexNumber).Init();
             return ra;
         }
 
@@ -126,5 +129,14 @@ namespace AngouriMath.Core
 
         public bool IsDefinite()
             => State == UndefinedState.DEFINED;
+
+        public static RealNumber NegativeInfinity()
+            => new RealNumber(UndefinedState.NEGATIVE_INFINITY);
+
+        public static RealNumber PositiveInfinity()
+            => new RealNumber(UndefinedState.POSITIVE_INFINITY);
+
+        public static RealNumber NaN()
+            => new RealNumber(UndefinedState.NAN);
     }
 }

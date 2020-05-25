@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AngouriMath.Core
+namespace AngouriMath.Core.Numeric
 {
     public partial class RationalNumber : RealNumber
     {

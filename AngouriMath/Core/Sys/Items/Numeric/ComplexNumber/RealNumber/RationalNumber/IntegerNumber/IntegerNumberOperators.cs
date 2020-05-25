@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AngouriMath.Core
+namespace AngouriMath.Core.Numeric
 {
     public partial class IntegerNumber : RationalNumber
     {
@@ -44,5 +44,11 @@ namespace AngouriMath.Core
 
         public static IntegerNumber operator -(IntegerNumber a)
             => (-1 * a).AsIntegerNumber();
+
+        public static implicit operator IntegerNumber(int num)
+            => new IntegerNumber(num);
+
+        public static implicit operator IntegerNumber(long num)
+            => new IntegerNumber(num);
     }
 }

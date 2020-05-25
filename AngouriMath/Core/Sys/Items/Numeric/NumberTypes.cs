@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-namespace AngouriMath.Core
+namespace AngouriMath.Core.Numeric
 {
     public abstract partial class Number
     {

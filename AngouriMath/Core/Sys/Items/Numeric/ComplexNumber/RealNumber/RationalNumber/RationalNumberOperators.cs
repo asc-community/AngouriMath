@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace AngouriMath.Core
+namespace AngouriMath.Core.Numeric
 {
     public partial class RationalNumber : RealNumber
     {

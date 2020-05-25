@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-namespace AngouriMath.Core
+namespace AngouriMath.Core.Numeric
 {
     public abstract partial class Number
     {

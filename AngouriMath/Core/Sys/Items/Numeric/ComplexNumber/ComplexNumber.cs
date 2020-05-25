@@ -3,12 +3,20 @@ using System.Globalization;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-namespace AngouriMath.Core
+namespace AngouriMath.Core.Numeric
 {
     public partial class ComplexNumber : Number
     {
         public RealNumber Real { get; protected set; }
         public RealNumber Imaginary { get; protected set; }
+
+        public (RealNumber.UndefinedState Re, RealNumber.UndefinedState Im) State
+        {
+            get => (Real.State, Imaginary.State);
+        }
+
+        public bool IsDefinite()
+            => Real.IsDefinite() && Imaginary.IsDefinite();
         private void InitClass(RealNumber realPart, RealNumber imaginaryPart)
         {
             Real = realPart;
@@ -70,5 +78,11 @@ namespace AngouriMath.Core
             dst = null;
             return false;
         }
+
+        public static ComplexNumber Indefinite(RealNumber.UndefinedState re, RealNumber.UndefinedState im)
+            => new ComplexNumber(new RealNumber(re), new RealNumber(im));
+
+        public static ComplexNumber Indefinite(RealNumber.UndefinedState both)
+            => new ComplexNumber(new RealNumber(both), new RealNumber(both));
     }
 }

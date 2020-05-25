@@ -1,4 +1,4 @@
-﻿namespace AngouriMath.Core
+﻿namespace AngouriMath.Core.Numeric
 {
     public partial class ComplexNumber
     {
