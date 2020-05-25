@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
@@ -38,7 +39,7 @@ namespace AngouriMath
         /// The up bound for integrating
         /// </param>
         /// <returns></returns>
-        public Number DefiniteIntegral(VariableEntity x, Number from, Number to)
+        public ComplexNumber DefiniteIntegral(VariableEntity x, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to)
         {
             return Integration.Integrate(this, x, from, to, 100);
         }
@@ -59,7 +60,7 @@ namespace AngouriMath
         /// Accuracy (initially, amount of iterations)
         /// </param>
         /// <returns></returns>
-        public Number DefiniteIntegral(VariableEntity x, Number from, Number to, int stepCount)
+        public Number DefiniteIntegral(VariableEntity x, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, int stepCount)
         {
             return Integration.Integrate(this, x, from, to, stepCount);
         }
@@ -75,21 +76,17 @@ namespace AngouriMath
         /// <param name="to"></param>
         /// <param name="stepCount"></param>
         /// <returns></returns>
-        internal static Number Integrate(Entity func, VariableEntity x, Number from, Number to, int stepCount)
+        internal static ComplexNumber Integrate(Entity func, VariableEntity x, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, int stepCount)
         {
-            double ReFrom = from.Re;
-            double ImFrom = from.Im;
-            double ReTo = to.Re;
-            double ImTo = to.Im;
-            var res = new Number(0, 0);
+            var res = new ComplexNumber(0, 0);
             var cfunc = func.Compile(x);
             for(int i = 0; i <= stepCount; i++)
             {
-                var share = ((double)i) / stepCount;
-                var tmp = new Number(ReFrom * share + ReTo * (1 - share), ImFrom * share + ImTo * (1 - share));
+                var share = ((decimal)i) / stepCount;
+                var tmp = Number.Create(from.Re * share + to.Re * (1 - share), from.Im * share + to.Im * (1 - share));
                 res += cfunc.Substitute(tmp);
             }
-            return res / (stepCount + 1) * (to - from);
+            return res / (stepCount + 1) * (Number.Create(to.Re, to.Im) - Number.Create(from.Re, from.Im));
         }
     }
 }

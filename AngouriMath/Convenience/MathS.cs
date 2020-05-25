@@ -25,12 +25,12 @@ using AngouriMath.Functions.Output;
 using AngouriMath.Functions.Algebra.Solver;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
- using AngouriMath.Core.Sys;
+using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Sys;
  using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Core.Sys.Items.Tensors;
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Functions.Algebra.InequalitySolver;
+using Number = AngouriMath.Core.Numerix.Number;
 
 namespace AngouriMath
 {
@@ -277,7 +277,7 @@ namespace AngouriMath
         /// <param name="b"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Number Num(double a, double b) => new Number(a, b);
+        public static Number Num(decimal a, decimal b) => new ComplexNumber(a, b);
 
         /// <summary>
         /// Creates a real instance of Number (not NumberEntity!)
@@ -285,13 +285,13 @@ namespace AngouriMath
         /// <param name="a"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Number Num(double a) => new Number(a);
+        public static ComplexNumber Num(decimal a) => new RealNumber(a);
 
         /// <summary>
         /// List of public constants
         /// </summary>
         public static readonly VariableEntity e = "e";
-        public static readonly Number i = new Number(0, 1);
+        public static readonly ComplexNumber i = new ComplexNumber(0, 1);
         public static readonly VariableEntity pi = "pi";
 
         /// <summary>
@@ -414,7 +414,7 @@ namespace AngouriMath
             /// For example, if you don't need precision higher than 6 digits after .,
             /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
             /// </summary>
-            public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-7;
+            public static decimal EQUALITY_THRESHOLD { get; set; } = 1.0e-7m;
 
             /// <summary>
             /// Converts an exprssion from linq expression

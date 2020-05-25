@@ -4,7 +4,7 @@ using System.Numerics;
 using System.Text;
 
 
-namespace AngouriMath.Core.Numeric
+namespace AngouriMath.Core.Numerix
 {
     public abstract partial class Number
     {
@@ -116,7 +116,7 @@ namespace AngouriMath.Core.Numeric
         /// <param name="base"></param>
         /// <param name="power"></param>
         /// <returns></returns>
-        public static Number Pow(Number @base, Number power)
+        public static ComplexNumber Pow(Number @base, Number power)
         {
             // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
             var baseCom = @base.AsComplexNumber();
@@ -124,7 +124,7 @@ namespace AngouriMath.Core.Numeric
             if (baseCom.IsDefinite() && powerCom.IsDefinite())
                 return Functional.Downcast(
                     Complex.Pow(baseCom.AsComplex(), powerCom.AsComplex())
-                );
+                ) as ComplexNumber;
             else
                 return ComplexNumber.Indefinite(RealNumber.UndefinedState.NAN);
         }
@@ -135,50 +135,50 @@ namespace AngouriMath.Core.Numeric
         /// <param name="base"></param>
         /// <param name="powered"></param>
         /// <returns></returns>
-        public static Number Log(RealNumber @base, Number powered)
+        public static ComplexNumber Log(RealNumber @base, Number powered)
         {
             var baseCom = @base.AsComplexNumber();
             var poweredCom = powered.AsComplexNumber();
             if (baseCom.IsDefinite() && poweredCom.IsDefinite())
                 return Functional.Downcast(
                 Complex.Log(powered.AsDouble(), @base.AsDouble())
-            );
+            ) as ComplexNumber;
             else
                 return ComplexNumber.Indefinite(RealNumber.UndefinedState.NAN);
         }
 
-        public static Number Sin(Number num)
+        public static ComplexNumber Sin(Number num)
             => (num as ComplexNumber).IsDefinite()
-                ? Functional.Downcast(Complex.Sin(num.AsComplex()))
+                ? Functional.Downcast(Complex.Sin(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
 
-        public static Number Cos(Number num)
+        public static ComplexNumber Cos(Number num)
             => (num as ComplexNumber).IsDefinite()
-                ? Functional.Downcast(Complex.Cos(num.AsComplex()))
+                ? Functional.Downcast(Complex.Cos(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
-        public static Number Tan(Number num)
+        public static ComplexNumber Tan(Number num)
             => (num as ComplexNumber).IsDefinite()
-                ? Functional.Downcast(Complex.Tan(num.AsComplex()))
+                ? Functional.Downcast(Complex.Tan(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
-        public static Number Cotan(Number num)
+        public static ComplexNumber Cotan(Number num)
             => (num as ComplexNumber).IsDefinite()
-                ? Functional.Downcast(1 / Complex.Tan(num.AsComplex()))
+                ? Functional.Downcast(1 / Complex.Tan(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
-        public static Number Arcsin(Number num)
+        public static ComplexNumber Arcsin(Number num)
             => (num as ComplexNumber).IsDefinite()
-                ? Functional.Downcast(Complex.Asin(num.AsComplex()))
+                ? Functional.Downcast(Complex.Asin(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
-        public static Number Arccos(Number num)
+        public static ComplexNumber Arccos(Number num)
             => (num as ComplexNumber).IsDefinite()
-                ? Functional.Downcast(Complex.Acos(num.AsComplex()))
+                ? Functional.Downcast(Complex.Acos(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
-        public static Number Arctan(Number num)
+        public static ComplexNumber Arctan(Number num)
             => (num as ComplexNumber).IsDefinite()
-                ? Functional.Downcast(Complex.Atan(num.AsComplex()))
+                ? Functional.Downcast(Complex.Atan(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
-        public static Number Arccotan(Number num)
+        public static ComplexNumber Arccotan(Number num)
             => (num as ComplexNumber).IsDefinite()
-                ? Functional.Downcast(Complex.Atan(1 / num.AsComplex()))
+                ? Functional.Downcast(Complex.Atan(1 / num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
 
     }

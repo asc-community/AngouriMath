@@ -1,9 +1,11 @@
 ﻿using System;
 
-namespace AngouriMath.Core.Numeric
+namespace AngouriMath.Core.Numerix
 {
     public partial class RationalNumber : RealNumber
     {
+        public new RationalNumber Copy()
+            => new RationalNumber(this);
         public IntegerNumber Numerator { get; protected set; }
         public IntegerNumber Denominator { get; protected set; }
         private void InitClass(IntegerNumber numerator, IntegerNumber denominator)

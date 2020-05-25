@@ -1,7 +1,9 @@
-﻿namespace AngouriMath.Core.Numeric
+﻿namespace AngouriMath.Core.Numerix
 {
     public partial class IntegerNumber : RationalNumber
     {
+        public new IntegerNumber Copy()
+            => new IntegerNumber(this);
         public new long Value { get; protected set; }
         private void InitClass(long value, UndefinedState state)
         {

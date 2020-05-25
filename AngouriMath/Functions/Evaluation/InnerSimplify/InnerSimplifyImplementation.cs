@@ -21,6 +21,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath
 {
@@ -28,8 +29,9 @@ namespace AngouriMath
     {
         internal override Entity InnerSimplify()
         {
-            if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsNull))
-                return Number.Null;
+            // TODO: do we need to process it here or leave it to Numerix?
+            //if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsDefinite()))
+            //    return Number.Null;
             return MathFunctions.InvokeEval(Name, Children);
         }
     }
@@ -37,8 +39,9 @@ namespace AngouriMath
     {
         internal override Entity InnerSimplify()
         {
-            if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsNull))
-                return Number.Null;
+            // TODO: do we need to process it here or leave it to Numerix?
+            //if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsNull))
+            //    return Number.Null;
             return MathFunctions.InvokeEval(Name, Children);
         }
     }

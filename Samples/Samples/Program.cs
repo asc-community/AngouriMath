@@ -10,7 +10,7 @@ using System.IO;
 using System.Linq;
 using System.Numerics;
 using AngouriMath.Core.Sets;
-using AngouriMath.Core.Numeric;
+using AngouriMath.Core.Numerix;
 
 namespace Samples
 {

@@ -1,12 +1,15 @@
 ﻿using System;
 using System.Globalization;
+using System.IO.Compression;
 using System.Numerics;
 using System.Text.RegularExpressions;
 
-namespace AngouriMath.Core.Numeric
+namespace AngouriMath.Core.Numerix
 {
     public partial class ComplexNumber : Number
     {
+        public new ComplexNumber Copy()
+            => new ComplexNumber(this);
         public RealNumber Real { get; protected set; }
         public RealNumber Imaginary { get; protected set; }
 
@@ -84,5 +87,14 @@ namespace AngouriMath.Core.Numeric
 
         public static ComplexNumber Indefinite(RealNumber.UndefinedState both)
             => new ComplexNumber(new RealNumber(both), new RealNumber(both));
+
+        public static ComplexNumber NegNegInfinity()
+            => new ComplexNumber(RealNumber.NegativeInfinity(), RealNumber.NegativeInfinity());
+        public static ComplexNumber NegPosInfinity()
+            => new ComplexNumber(RealNumber.NegativeInfinity(), RealNumber.PositiveInfinity());
+        public static ComplexNumber PosNegInfinity()
+            => new ComplexNumber(RealNumber.PositiveInfinity(), RealNumber.NegativeInfinity());
+        public static ComplexNumber PosPosInfinity()
+            => new ComplexNumber(RealNumber.PositiveInfinity(), RealNumber.PositiveInfinity());
     }
 }

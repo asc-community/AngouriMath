@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AngouriMath.Core.Numeric
+namespace AngouriMath.Core.Numerix
 {
     public partial class IntegerNumber : RationalNumber
     {

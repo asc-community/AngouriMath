@@ -64,7 +64,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             if (NegativeMultiplyerPattern.Match(expr) &&
                 !expr.Children[1].Children[0].GetValue().IsComplex() &&
-                expr.Children[1].Children[0].GetValue().Re > 0)
+                expr.Children[1].Children[0].GetValue().Real > 0)
                 expr = expr.Children[0] - (-1 * expr.Children[1].Children[0].GetValue()) * expr.Children[1].Children[1];
             else
             {

@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,12 +15,14 @@
 
 
 
-﻿using AngouriMath.Core;
+ using AngouriMath.Core;
 using AngouriMath.Functions.Algebra.NumbericalSolving;
 using System;
 using System.Collections.Generic;
 using System.Text;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
+ using Antlr4.Runtime.Atn;
 
 namespace AngouriMath.Functions.Algebra.NumbericalSolving
 {
@@ -34,9 +36,9 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         /// <param name="value"></param>
         /// <param name="precision"></param>
         /// <returns></returns>
-        private static Number NewtonIter(FastExpression f, FastExpression df, Number value, int precision)
+        private static ComplexNumber NewtonIter(FastExpression f, FastExpression df, ComplexNumber value, int precision)
         {
-            Number prev = value;
+            ComplexNumber prev = value;
             int minCheckIters = (int)Math.Sqrt(precision);
             for (int i = 0; i < precision; i++)
             {
@@ -44,7 +46,7 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                     prev = value.Copy();
                 try
                 {
-                    value -= f.Substitute(value) / df.Substitute(value);
+                    value -= (f.Substitute(value) / df.Substitute(value)) as ComplexNumber;
                 }
                 catch (MathSException)
                 {
@@ -54,7 +56,7 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                     return value;
             }
             if (Number.Abs(prev - value) > 0.01)
-                return Number.Null;
+                return RealNumber.NaN();
             else
                 return value;
         }
@@ -78,26 +80,23 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         /// How many approximations we need to do before we reach the most precise result.
         /// </param>
         /// <returns></returns>
-        internal static Set SolveNt(Entity expr, VariableEntity v, Number from, Number to, Number stepCount, int precision = 30)
+        internal static Set SolveNt(Entity expr, VariableEntity v, 
+            (decimal Re, decimal Im) from, 
+            (decimal Re, decimal Im) to, 
+            (int Re, int Im) stepCount, int precision)
         {
             var res = new Set();
-            if (from == null)
-                from = new Number(-10, -10);
-            if (to == null)
-                to = new Number(10, 10);
-            int xStep = (int)stepCount.Re;
-            int yStep = (int)stepCount.Im;
             var df = expr.Derive(v).Simplify().Compile(v);
             var f = expr.Simplify().Compile(v);
-            for (int x = 0; x < xStep; x++)
-                for (int y = 0; y < yStep; y++)
+            for (int x = 0; x < stepCount.Re; x++)
+                for (int y = 0; y < stepCount.Im; y++)
                 {
-                    double xShare = ((double)x) / xStep;
-                    double yShare = ((double)y) / yStep;
-                    var value = new Number(from.Re * xShare + to.Re * (1 - xShare),
+                    var xShare = ((decimal)x) / stepCount.Re;
+                    var yShare = ((decimal)y) / stepCount.Im;
+                    var value = Number.Create(from.Re * xShare + to.Re * (1 - xShare),
                                            from.Im * yShare + to.Im * (1 - yShare));
                     var root = NewtonIter(f, df, value, precision);
-                    if (!root.IsNull)
+                    if (root.IsDefinite())
                         res.Add(root);
                 }
             return res;
@@ -113,7 +112,7 @@ namespace AngouriMath
         /// To get Number from NumberEntity (in case of need a concrete number)
         /// </summary>
         /// <returns></returns>
-        public Number GetValue()
+        public ComplexNumber GetValue()
         {
             if (this.entType == EntType.NUMBER)
                 return (this as NumberEntity).Value;
@@ -122,9 +121,9 @@ namespace AngouriMath
         }
         
         public Set SolveNt(VariableEntity v, int precision = 30)
-            => SolveNt(v, new Number(-10, -10), new Number(10, 10), new Number(10, 10), precision: precision);
-        public Set SolveNt(VariableEntity v, Number from, Number to, int precision = 30)
-            => SolveNt(v, from, to, new Number(10, 10),  precision: precision);
+            => SolveNt(v, (-10, -10), (10, 10), (10, 10), precision: precision);
+        public Set SolveNt(VariableEntity v, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, int precision = 30)
+            => SolveNt(v, from, to, (10, 10),  precision: precision);
 
         /// <summary>
         /// Searches for numerical solutions via Newton's method https://en.wikipedia.org/wiki/Newton%27s_method
@@ -148,7 +147,7 @@ namespace AngouriMath
         /// If you get very similar roots that you think are equal, increase precision (but it will slower the algorithm)
         /// </param>
         /// <returns></returns>
-        public Set SolveNt(VariableEntity v, Number from, Number to, Number stepCount, int precision = 30)
+        public Set SolveNt(VariableEntity v, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, (int Re, int Im) stepCount, int precision = 30)
         => NumericalEquationSolver.SolveNt(this, v, from, to, stepCount, precision);
     }
 }

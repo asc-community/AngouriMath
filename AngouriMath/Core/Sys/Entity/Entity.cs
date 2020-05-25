@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,13 +15,14 @@
 
 
 
-﻿using AngouriMath.Core;
+ using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
@@ -81,9 +82,9 @@ namespace AngouriMath
             return res;
         }
         
-        public static implicit operator Entity(int num) => new NumberEntity(num);
-        public static implicit operator Entity(Number num) => new NumberEntity(num);
-        public static implicit operator Entity(double num) => new NumberEntity(num);
+        public static implicit operator Entity(int num) => new NumberEntity(new IntegerNumber(num));
+        public static implicit operator Entity(ComplexNumber num) => new NumberEntity(num);
+        public static implicit operator Entity(double num) => new NumberEntity(new RealNumber(num));
         public static implicit operator Entity(string expr) => MathS.FromString(expr);
 
         /// <summary>
@@ -112,7 +113,7 @@ namespace AngouriMath
     /// </summary>
     public partial class NumberEntity : Entity
     {
-        public NumberEntity(Number value) : base(value.ToString(), EntType.NUMBER) 
+        public NumberEntity(ComplexNumber value) : base(value.ToString(), EntType.NUMBER) 
         {
             Priority = Const.PRIOR_NUM;
             Value = value;
@@ -121,10 +122,10 @@ namespace AngouriMath
         /// <summary>
         /// NumberEntity is a node, not a number. To get the number, use either Eval or direct access Value.
         /// </summary>
-        public Number Value { get; internal set; }
+        public ComplexNumber Value { get; internal set; }
         public new string Name { get => Value.ToString(); }
-        public static implicit operator NumberEntity(int num) => new NumberEntity(num);
-        public static implicit operator NumberEntity(Number num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(int num) => new NumberEntity(new IntegerNumber(num));
+        public static implicit operator NumberEntity(ComplexNumber num) => new NumberEntity(num);
 
         protected override Entity __copy()
         {

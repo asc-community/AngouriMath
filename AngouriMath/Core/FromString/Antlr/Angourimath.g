@@ -12,6 +12,7 @@ options
     using System.Collections;
     using AngouriMath;
     using AngouriMath.Core;
+    using AngouriMath.Core.Numerix;
     using System.Globalization;
 }
 

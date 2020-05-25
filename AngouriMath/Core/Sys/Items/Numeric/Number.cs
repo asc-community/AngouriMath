@@ -19,7 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-namespace AngouriMath.Core.Numeric
+namespace AngouriMath.Core.Numerix
 {
     public abstract partial class Number
     {
@@ -94,6 +94,23 @@ namespace AngouriMath.Core.Numeric
             );
             return needParentheses ? "(" + str + ")" : str;
         }
+
+        public static Set GetAllRoots(ComplexNumber value, int rootPower)
+        {
+            var res = new Set();
+            decimal phi = (Number.Log(Math.E, value / value.Abs()) / MathS.i).Value.Re;
+            decimal newMod = Number.Pow(Number.Abs(value), 1.0 / rootPower).Value.Re;
+            var i = new ComplexNumber(0, 1);
+            for (int n = 0; n < rootPower; n++)
+            {
+                decimal newPow = phi / rootPower + 2 * (decimal)Math.PI * n / rootPower;
+                res.Add(newMod * ComplexNumber.Pow(Math.E, i * newPow));
+            }
+            return res;
+        }
+
+        public static RealNumber Abs(Number num)
+            => (num as ComplexNumber).Abs();
     }
 
     public class InvalidNumberCastException : InvalidCastException

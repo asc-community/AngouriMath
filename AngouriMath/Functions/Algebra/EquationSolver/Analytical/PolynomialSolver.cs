@@ -21,7 +21,8 @@ using System.Linq;
 using System.Text;
 using AngouriMath.Convenience;
 using AngouriMath.Core;
-using AngouriMath.Core.TreeAnalysis;
+ using AngouriMath.Core.Numerix;
+ using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -35,7 +36,7 @@ namespace AngouriMath.Core.TreeAnalysis
         internal interface IPrimitive<T>
         {
             void Add(T a);
-            void AddMp(T a, Number b);
+            void AddMp(T a, ComplexNumber b);
             void Assign(T val);
             T GetValue();
         }
@@ -43,7 +44,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             private double value = 0;
             public void Add(double a) => value += a;
-            public void AddMp(double a, Number b) => Add(a * b.Re);
+            public void AddMp(double a, ComplexNumber b) => Add(a * b.Real);
             public void Assign(double a) => value = a;
             public static implicit operator double(PrimitiveDouble obj) => obj.value;
             internal static IPrimitive<double> Create()
@@ -52,18 +53,18 @@ namespace AngouriMath.Core.TreeAnalysis
             }
             public double GetValue() => value;
         }
-        internal class PrimitiveInt : IPrimitive<int>
+        internal class PrimitiveInt : IPrimitive<long>
         {
-            private int value = 0;
-            public void Add(int a) => value += a;
-            public void AddMp(int a, Number b) => Add((int)(a * b.Re));
-            public void Assign(int a) => value = a;
-            public static implicit operator int(PrimitiveInt obj) => obj.value;
-            internal static IPrimitive<int> Create()
+            private long value = 0;
+            public void Add(long a) => value += a;
+            public void AddMp(long a, ComplexNumber b) => Add((a * b.Real).AsIntegerNumber());
+            public void Assign(long a) => value = a;
+            public static implicit operator long(PrimitiveInt obj) => obj.value;
+            internal static IPrimitive<long> Create()
             {
                 return new PrimitiveInt();
             }
-            public int GetValue() => value;
+            public long GetValue() => value;
         }
     }
 }
@@ -403,7 +404,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var newSet = new Set();
                     foreach (var root in set.FiniteSet())
                     foreach (var coef in Number.GetAllRoots(1, gcdPower).FiniteSet())
-                        newSet.Add(coef * MathS.Pow(root, MathS.Num(1.0) / gcdPower));
+                        newSet.Add(coef * MathS.Pow(root, Number.Create(1.0) / gcdPower));
                     set = newSet;
                 }
                 return set;
@@ -537,9 +538,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     if (mp == aVar)
                     {
                         if (allowFloat)
-                            (power as TreeAnalyzer.PrimitiveDouble).Add(pow_num.GetValue().Re);
+                            (power as TreeAnalyzer.PrimitiveDouble).Add(pow_num.GetValue().Real);
                         else
-                            (power as TreeAnalyzer.PrimitiveInt).Add((int)Math.Round(pow_num.GetValue().Re));
+                            (power as TreeAnalyzer.PrimitiveInt).Add(pow_num.GetValue().Real.AsInt());
                     }
                     else
                     {

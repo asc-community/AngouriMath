@@ -25,6 +25,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
  using AngouriMath.Core;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
  using AngouriMath.Functions;
  using AngouriMath.Functions.Algebra.Solver.Analytical;
@@ -198,7 +199,7 @@ namespace AngouriMath.Core.TreeAnalysis
                         if (a.entType == Entity.EntType.NUMBER && a.GetValue().IsInteger())
                         {
                             var res = new Set();
-                            foreach (var root in Number.GetAllRoots(1, (int)(a.GetValue().Re)).FiniteSet())
+                            foreach (var root in Number.GetAllRoots(1, a.GetValue().AsIntegerNumber()).FiniteSet())
                                 res.AddRange(FindInvertExpression(un, root * MathS.Pow(value, 1 / a), x));
                             return res;
                         }
@@ -221,21 +222,21 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <returns></returns>
-        private static bool EntityInBounds(Entity a, Number from, Number to)
+        private static bool EntityInBounds(Entity a, ComplexNumber from, ComplexNumber to)
         {
             if (!MathS.CanBeEvaluated(a))
                 return true;
             var r = a.Eval();
-            return r.Re >= from.Re &&
-                   r.Im >= from.Im &&
-                   r.Re <= to.Re &&
-                   r.Im <= to.Im;
+            return r.Real >= from.Real &&
+                   r.Imaginary >= from.Imaginary &&
+                   r.Real <= to.Real &&
+                   r.Imaginary <= to.Imaginary;
         }
 
-        private static readonly Number ArcsinFrom = new Number(-Math.PI / 2, -double.MaxValue);
-        private static readonly Number ArcsinTo = new Number(+Math.PI / 2, double.MaxValue);
-        private static readonly Number ArccosFrom = new Number(0, -double.MaxValue);
-        private static readonly Number ArccosTo = new Number(Math.PI, double.MaxValue);
+        private static readonly ComplexNumber ArcsinFrom = Number.Create(-Math.PI / 2, -double.MaxValue);
+        private static readonly ComplexNumber ArcsinTo = Number.Create(+Math.PI / 2, double.MaxValue);
+        private static readonly ComplexNumber ArccosFrom = Number.Create(0.0, -double.MaxValue);
+        private static readonly ComplexNumber ArccosTo = Number.Create(Math.PI, double.MaxValue);
         private static readonly Set Empty = new Set();
 
         /// <summary>
@@ -259,7 +260,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
             Set GetNotNullEntites(Set set)
             {
-                return set.FiniteWhere(el => el.entType != Entity.EntType.NUMBER || !el.GetValue().IsNull);
+                return set.FiniteWhere(el => el.entType != Entity.EntType.NUMBER || el.GetValue().IsDefinite());
             }
 
             switch (func.Name)

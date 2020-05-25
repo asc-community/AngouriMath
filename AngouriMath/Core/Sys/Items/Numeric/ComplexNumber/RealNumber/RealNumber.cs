@@ -1,9 +1,11 @@
 ﻿using System;
 
-namespace AngouriMath.Core.Numeric
+namespace AngouriMath.Core.Numerix
 {
     public partial class RealNumber : ComplexNumber
     {
+        public new RealNumber Copy()
+            => new RealNumber(this);
         public enum UndefinedState : System.Byte
         {
             DEFINED,

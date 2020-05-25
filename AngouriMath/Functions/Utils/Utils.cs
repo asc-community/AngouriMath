@@ -18,6 +18,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 
@@ -73,7 +74,7 @@ namespace AngouriMath.Functions
             for (int i = 1; i < terms.Count; i++)
                 if (terms[i].Name == "mulf" &&
                     terms[i].Children[0].entType == Entity.EntType.NUMBER &&
-                    terms[i].Children[0].GetValue().IsReal() && terms[i].Children[0].GetValue().Re < 0)
+                    terms[i].Children[0].GetValue().IsReal() && terms[i].Children[0].GetValue().Real < 0)
                     dst -= ((-1) * terms[i].Children[0].GetValue()) * terms[i].Children[1];
                 else
                     dst += terms[i];
@@ -86,9 +87,9 @@ namespace AngouriMath.Functions
         /// </summary>
         /// <param name="num"></param>
         /// <returns></returns>
-        internal static Number CutoffImprecision(Number num)
-            => new Number(num.Re - num.Re % MathS.Utils.EQUALITY_THRESHOLD,
-                num.Im - num.Im % MathS.Utils.EQUALITY_THRESHOLD);
+        internal static ComplexNumber CutoffImprecision(ComplexNumber num)
+            => Number.Create(num.Real.Value - num.Real.Value % MathS.Utils.EQUALITY_THRESHOLD,
+                num.Imaginary.Value - num.Imaginary.Value % MathS.Utils.EQUALITY_THRESHOLD);
 
         /// <summary>
         /// Alike to ParseIndex, but strict on index: it should be a number

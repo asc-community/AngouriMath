@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-namespace AngouriMath.Core.Numeric
+namespace AngouriMath.Core.Numerix
 {
     public abstract partial class Number
     {
@@ -34,16 +34,16 @@ namespace AngouriMath.Core.Numeric
         
 
         public IntegerNumber AsIntegerNumber()
-            => new IntegerNumber(this);
+            => new IntegerNumber(Functional.Downcast(this));
 
         public RationalNumber AsRationalNumber()
-            => new RationalNumber(this);
+            => new RationalNumber(Functional.Downcast(this));
 
         public RealNumber AsRealNumber()
-            => new RealNumber(this);
+            => new RealNumber(Functional.Downcast(this));
 
         public ComplexNumber AsComplexNumber()
-            => new ComplexNumber(this);
+            => new ComplexNumber(Functional.Downcast(this));
 
         public long AsInt()
             => AsIntegerNumber().Value;

@@ -1,4 +1,4 @@
-﻿namespace AngouriMath.Core.Numeric
+﻿namespace AngouriMath.Core.Numerix
 {
     public partial class ComplexNumber
     {
@@ -51,5 +51,14 @@
 
         public static bool operator !=(ComplexNumber a, ComplexNumber b)
             => !(a == b);
+
+        public static implicit operator ComplexNumber(int value)
+            => new ComplexNumber(value);
+        public static implicit operator ComplexNumber(double value)
+            => new ComplexNumber(value);
+        public static implicit operator ComplexNumber(decimal value)
+            => new ComplexNumber(value);
+        public static implicit operator ComplexNumber(float value)
+            => new ComplexNumber(value);
     }
 }

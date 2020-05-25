@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Globalization;
 using AngouriMath.Core;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
  using AngouriMath.Core.TreeAnalysis;
 

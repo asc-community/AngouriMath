@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using AngouriMath.Core.Numeric;
+using AngouriMath.Core.Numerix;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Core

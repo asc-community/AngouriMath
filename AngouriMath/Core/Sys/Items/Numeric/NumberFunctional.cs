@@ -1,11 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
-namespace AngouriMath.Core.Numeric
+namespace AngouriMath.Core.Numerix
 {
     public abstract partial class Number
     {
+        public static ComplexNumber Create(Complex value)
+            => new ComplexNumber(value);
+        public static IntegerNumber Create(long value)
+            => new IntegerNumber(value);
+        public static IntegerNumber Create(int value) 
+            => new IntegerNumber(value);
+        public static RationalNumber Create(int numerator, int denominator)
+            => new RationalNumber(numerator, denominator);
+        public static RationalNumber Create(int numerator, long denominator)
+            => new RationalNumber(numerator, denominator);
+        public static RationalNumber Create(long numerator, int denominator)
+            => new RationalNumber(numerator, denominator);
+        public static RationalNumber Create(long numerator, long denominator)
+            => new RationalNumber(numerator, denominator);
+        public static RealNumber Create(decimal value)
+            => new RealNumber(value);
+        public static RealNumber Create(double value)
+            => new RealNumber(value);
+        public static ComplexNumber Create(RealNumber re, RealNumber im)
+            => new ComplexNumber(re, im);
         public Number Copy()
             => SuperSwitch(
                 num => new IntegerNumber(num[0] as Number),
@@ -15,11 +36,6 @@ namespace AngouriMath.Core.Numeric
                 Type,
                 this
             );
-
-        public static Number Parse(string s)
-        {
-            return null;
-        }
 
         public static class Functional
         {

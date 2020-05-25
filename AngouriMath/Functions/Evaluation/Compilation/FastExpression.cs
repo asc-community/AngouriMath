@@ -22,6 +22,7 @@ using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
@@ -117,7 +118,7 @@ namespace AngouriMath
         /// List arguments in the same order in which you compiled the function
         /// </param>
         /// <returns></returns>
-        public Number Call(params Number[] variables)
+        public ComplexNumber Call(params ComplexNumber[] variables)
             => Substitute(variables);
 
         /// <summary>
@@ -127,7 +128,7 @@ namespace AngouriMath
         /// List arguments in the same order in which you compiled the function
         /// </param>
         /// <returns></returns>
-        public Number Substitute(params Number[] variables)
+        public ComplexNumber Substitute(params ComplexNumber[] variables)
         {
             if (variables.Length != varCount)
                 throw new SysException("Wrong amount of parameters");
@@ -138,7 +139,7 @@ namespace AngouriMath
                 switch (instruction.Type)
                 {
                     case Instruction.InstructionType.PUSHVAR:
-                        stack.Push(variables[instruction.VarNumber]);
+                        stack.Push(variables[instruction.VarNumber].AsComplex());
                         break;
                     case Instruction.InstructionType.PUSHCONST:
                         stack.Push(instruction.Value);
@@ -198,7 +199,7 @@ namespace AngouriMath
                         break;
                 }
             }
-            return stack.Pop();
+            return new ComplexNumber(stack.Pop());
         }
 
         /// <summary>

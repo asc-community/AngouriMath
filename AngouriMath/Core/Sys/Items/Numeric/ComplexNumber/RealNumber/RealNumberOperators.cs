@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AngouriMath.Core.Numeric
+namespace AngouriMath.Core.Numerix
 {
     public partial class RealNumber
     {
@@ -90,7 +90,14 @@ namespace AngouriMath.Core.Numeric
             => (double)value.Value;
         public static implicit operator decimal(RealNumber value)
             => value.Value;
-
+        public static implicit operator RealNumber(double value)
+            => new RealNumber(value);
+        public static implicit operator RealNumber(decimal value)
+            => new RealNumber(value);
+        public static implicit operator RealNumber(int value)
+            => new RealNumber(value);
+        public static implicit operator RealNumber(long value)
+            => new RealNumber(value);
         public static bool operator >(RealNumber a, RealNumber b)
         {
             if (a.State == UndefinedState.NAN || b.State == UndefinedState.NAN)
@@ -127,7 +134,7 @@ namespace AngouriMath.Core.Numeric
 }
 
 
-namespace AngouriMath.Core.Numeric
+namespace AngouriMath.Core.Numerix
 {
     public partial class RealNumber
     {

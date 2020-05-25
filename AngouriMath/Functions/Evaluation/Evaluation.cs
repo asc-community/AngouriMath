@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,7 +15,7 @@
 
 
 
-﻿using AngouriMath.Core;
+ using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Core.TreeAnalysis;
@@ -23,13 +23,14 @@ using AngouriMath.Functions.Evaluation.Simplification;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
     public static partial class MathS
     {
-        internal static readonly Dictionary<string, Number> ConstantList = new Dictionary<string, Number>
+        internal static readonly Dictionary<string, ComplexNumber> ConstantList = new Dictionary<string, ComplexNumber>
         {
             { "pi", Math.PI },
             { "e", Math.E },
@@ -149,7 +150,7 @@ namespace AngouriMath
         /// <returns>
         /// Number since new version
         /// </returns>
-        public Number Eval() => SubstituteConstants().Simplify(0).GetValue();
+        public ComplexNumber Eval() => SubstituteConstants().Simplify(0).GetValue();
 
         /// <summary>
         /// Collapses the entire expression into a tensor if possible
@@ -361,7 +362,7 @@ namespace AngouriMath
             var n = args[1].InnerSimplify();
             args = new List<Entity> { r, n };
             if (r.entType == Entity.EntType.NUMBER && n.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Log((r as NumberEntity).Value, (n as NumberEntity).Value));
+                return new NumberEntity(Number.Log((n as NumberEntity).Value.Real, (r as NumberEntity).Value));
             else if (r == n)
                 return 1;
             else if (r == 1)
