@@ -60,5 +60,7 @@
             => new ComplexNumber(value);
         public static implicit operator ComplexNumber(float value)
             => new ComplexNumber(value);
+        public static implicit operator ComplexNumber((decimal re, decimal im) value)
+            => new ComplexNumber(value.re, value.im);
     }
 }

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Globalization;
 using System.IO.Compression;
+using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using AngouriMath.Core.FromString;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -76,11 +78,6 @@ namespace AngouriMath.Core.Numerix
         public RealNumber Abs()
         => Number.Pow(Real * Real + Imaginary * Imaginary, new RealNumber(0.5m)) as RealNumber;
 
-        internal static bool TryParse(string s, out ComplexNumber dst)
-        {
-            dst = null;
-            return false;
-        }
 
         public static ComplexNumber Indefinite(RealNumber.UndefinedState re, RealNumber.UndefinedState im)
             => new ComplexNumber(new RealNumber(re), new RealNumber(im));
@@ -96,5 +93,33 @@ namespace AngouriMath.Core.Numerix
             => new ComplexNumber(RealNumber.PositiveInfinity(), RealNumber.NegativeInfinity());
         public static ComplexNumber PosPosInfinity()
             => new ComplexNumber(RealNumber.PositiveInfinity(), RealNumber.PositiveInfinity());
+
+        public static ComplexNumber Parse(string s)
+        {
+            if (TryParse(s, out var res))
+                return res;
+            else
+                throw new ParseException("Cannot parse number from " + s);
+        }
+
+        // TODO
+        public static bool TryParse(string s, out ComplexNumber dst)
+        {
+            dst = null;
+            if (RealNumber.TryParse(s, out var real))
+            {
+                dst = real;
+                return true;
+            }
+            if (s.Last() == 'i')
+                if (RealNumber.TryParse(s.Substring(0, s.Length - 1), out var realPart))
+                {
+                    dst = Number.Create(0, realPart);
+                    return true;
+                }
+                else
+                    return false;
+            return false;
+        }
     }
 }

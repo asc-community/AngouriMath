@@ -37,7 +37,7 @@ namespace GraphicExample
             var expr2 = B * MathS.Sin(t + B) * MathS.Pow(MathS.e, MathS.i * B * MathS.Cos(t));
             var niceFunc2 = expr2.Compile(B);
             plotter.Clear();
-            plotter.PlotIterativeComplex(niceFunc2, 0, t);
+            plotter.PlotIterativeComplex(niceFunc2, (0, 0), ((decimal)t, 0));
             plotter.Render();
             t += 0.0005;
         }

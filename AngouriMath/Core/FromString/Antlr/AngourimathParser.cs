@@ -591,7 +591,7 @@ public partial class AngourimathParser : Parser {
 				EnterOuterAlt(_localctx, 1);
 				{
 				State = 85; _localctx._NUMBER = Match(NUMBER);
-				 _localctx.value =  Number.Parse((_localctx._NUMBER!=null?_localctx._NUMBER.Text:null)); 
+				 _localctx.value =  ComplexNumber.Parse((_localctx._NUMBER!=null?_localctx._NUMBER.Text:null)); 
 				}
 				break;
 			case 2:

@@ -1,5 +1,6 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Common
@@ -20,7 +21,7 @@ namespace UnitTests.Common
         [TestMethod]
         public void TestR()
         {
-            Assert.IsTrue(new Number(0, 1) == new Number(0, (1.0/3) * 3));
+            Assert.IsTrue(new ComplexNumber(0, 1) == new ComplexNumber(0, (1.0/3) * 3));
         }
         [TestMethod]
         public void TestDP()

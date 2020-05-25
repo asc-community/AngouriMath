@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -136,7 +137,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     return originalP / originalQ;
             }
 
-            Entity res = new Number(0);
+            Entity res = Number.Create(0);
             foreach(var pair in result)
             {
                 res += pair.Value.Simplify(5) * MathS.Pow(new VariableEntity(polyvar), pair.Key);

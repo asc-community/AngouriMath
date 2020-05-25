@@ -44,6 +44,11 @@ namespace AngouriMath
             return Integration.Integrate(this, x, from, to, 100);
         }
 
+        public ComplexNumber DefiniteIntegral(VariableEntity x, decimal from, decimal to)
+        {
+            return Integration.Integrate(this, x, (from, 0), (to, 0), 100);
+        }
+
         /// <summary>
         /// Returns a value of a definite integral of a function. Only works for one-variable functions
         /// </summary>

@@ -2,6 +2,7 @@
 using System.Linq;
 using AngouriMath;
 using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sets;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -17,8 +18,8 @@ namespace UnitTests.Core
             A.AddElements(3, 4, 5);
             A.AddInterval(MathS.Sets.Interval(10, 15).SetLeftClosed(true).SetRightClosed(false));
             A.AddInterval(MathS.Sets.Interval(14, 19).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(new Number(8, 3), new Number(11, 5)).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(new Number(3, 51), new Number(3, 61)));
+            A.AddInterval(MathS.Sets.Interval(new ComplexNumber(8, 3), new ComplexNumber(11, 5)).SetLeftClosed(true).SetRightClosed(false));
+            A.AddInterval(MathS.Sets.Interval(new ComplexNumber(3, 51), new ComplexNumber(3, 61)));
 
             B.AddElements(11);
 
@@ -101,8 +102,8 @@ namespace UnitTests.Core
         private Set Bf = MathS.Sets.Finite(1, 2, 4);
         private Set Cf = MathS.Sets.Finite(-7);
         private Set Df = MathS.Sets.Finite();
-        private Set Ef = MathS.Sets.Finite(new Number(-1, -1));
-        private Set Gf = MathS.Sets.Finite(new Number(-1, -1));
+        private Set Ef = MathS.Sets.Finite(new ComplexNumber(-1, -1));
+        private Set Gf = MathS.Sets.Finite(new ComplexNumber(-1, -1));
 
         [TestMethod]
         public void SetsFiniteTestDisj()

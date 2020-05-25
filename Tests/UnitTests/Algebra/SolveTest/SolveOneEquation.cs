@@ -3,6 +3,7 @@ using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using AngouriMath.Core.Numerix;
 
 namespace UnitTests.Algebra
 {
@@ -79,7 +80,7 @@ namespace UnitTests.Algebra
         {
             var eq = x.Pow(2) + 2 * x + 1;
             var tmpEQTHR = MathS.Utils.EQUALITY_THRESHOLD;
-            MathS.Utils.EQUALITY_THRESHOLD = 1e-6;
+            MathS.Utils.EQUALITY_THRESHOLD = 1e-6m;
             var roots = eq.SolveNt(x, precision: 100);
             MathS.Utils.EQUALITY_THRESHOLD = tmpEQTHR;
             AssertRootCount(roots, 1);
@@ -320,14 +321,14 @@ namespace UnitTests.Algebra
 
         private readonly List<Number> KeyPoints = new List<Number>
         {
-            new Number(0, 1),
-            new Number(1, 0),
-            new Number(-3, -3),
-            new Number(2, 2),
-            new Number(13, 13),
-            new Number(-9, +7),
-            new Number(0.5, -0.5),
-            new Number(-0.5, 0.5),
+            new ComplexNumber(0, 1),
+            new ComplexNumber(1, 0),
+            new ComplexNumber(-3, -3),
+            new ComplexNumber(2, 2),
+            new ComplexNumber(13, 13),
+            new ComplexNumber(-9, +7),
+            new ComplexNumber(0.5, -0.5),
+            new ComplexNumber(-0.5, 0.5),
         };
 
         [TestMethod]

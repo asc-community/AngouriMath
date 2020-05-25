@@ -21,6 +21,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.FromString;
+ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Core.FromLinq
 {
@@ -51,7 +52,7 @@ namespace AngouriMath.Core.FromLinq
                 case ExpressionType.Lambda:
                     return InnerParse((linq as LambdaExpression).Body);
                 case ExpressionType.Constant:
-                    return new NumberEntity(new Number((linq as ConstantExpression).Value));
+                    return new NumberEntity((decimal)(linq as ConstantExpression).Value);
                 case ExpressionType.Parameter:
                     return new VariableEntity((linq as ParameterExpression).Name);
                 case ExpressionType.Negate:

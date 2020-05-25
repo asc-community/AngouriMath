@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sets;
 
 [assembly: InternalsVisibleTo("UnitTests.Core")]
@@ -308,8 +309,8 @@ namespace AngouriMath.Core
                 Pieces = new List<Piece>
                 {
                     Piece.Interval(
-                        new Number(double.NegativeInfinity, double.NegativeInfinity),
-                        new Number(double.PositiveInfinity, double.PositiveInfinity)
+                        ComplexNumber.NegNegInfinity(),
+                        ComplexNumber.PosPosInfinity()
                     ).AsInterval().SetLeftClosed(false, false).SetRightClosed(false, false)
                 }
             };
@@ -324,8 +325,8 @@ namespace AngouriMath.Core
                 Pieces = new List<Piece>
                 {
                     Piece.Interval(
-                        new Number(double.NegativeInfinity),
-                        new Number(double.PositiveInfinity)
+                        Number.Create(RealNumber.NegativeInfinity(), 0),
+                        Number.Create(RealNumber.PositiveInfinity(), 0)
                     ).AsInterval().SetLeftClosed(false).SetRightClosed(false)
                 }
             };

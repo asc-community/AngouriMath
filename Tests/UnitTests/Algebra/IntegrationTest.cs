@@ -2,6 +2,7 @@
 using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
+using AngouriMath.Core.Numerix;
 
 namespace UnitTests.Algebra
 {
@@ -13,7 +14,7 @@ namespace UnitTests.Algebra
         {
             var x = MathS.Var("x");
             var expr = x;
-            Assert.IsTrue(Math.Abs(expr.DefiniteIntegral(x, 0, 1).Re - 1.0/2) < 0.1);
+            Assert.IsTrue(Number.Abs(expr.DefiniteIntegral(x, 0, 1).Real - 1.0/2) < 0.1);
         }
         [TestMethod]
         public void Test2()
@@ -27,7 +28,7 @@ namespace UnitTests.Algebra
         {
             var x = MathS.Var("x");
             var expr = MathS.Sin(x);
-            Assert.IsTrue(expr.DefiniteIntegral(x, 0, 3).Re > 1.5);
+            Assert.IsTrue(expr.DefiniteIntegral(x, 0, 3).Real > 1.5);
         }
     }
 }

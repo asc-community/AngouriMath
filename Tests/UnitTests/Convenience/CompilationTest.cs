@@ -51,7 +51,7 @@ namespace UnitTests.Convenience
         {
             var expr = MathS.pi + MathS.e + x;
             var func = expr.Compile(x);
-            Assert.IsTrue(func.Call(3).Re > 7 && func.Call(3).Re < 10);
+            Assert.IsTrue(func.Call(3).Real > 7 && func.Call(3).Real < 10);
         }
     }
 }
