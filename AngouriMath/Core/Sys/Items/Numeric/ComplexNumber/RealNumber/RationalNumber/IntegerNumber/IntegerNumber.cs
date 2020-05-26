@@ -3,7 +3,7 @@
     public partial class IntegerNumber : RationalNumber
     {
         public new IntegerNumber Copy()
-            => new IntegerNumber(this);
+            => Number.Copy(this) as IntegerNumber;
         public new long Value { get; protected set; }
         private void InitClass(long value, UndefinedState state)
         {
@@ -24,6 +24,7 @@
 
         public IntegerNumber(Number number)
         {
+            number = Functional.Downcast(number);
             if (number.Is(HierarchyLevel.INTEGER))
                 InitClass((number as IntegerNumber).Value, (number as RealNumber).State);
             else

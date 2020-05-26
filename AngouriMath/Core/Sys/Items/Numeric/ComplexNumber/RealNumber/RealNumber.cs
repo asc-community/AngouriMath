@@ -5,7 +5,7 @@ namespace AngouriMath.Core.Numerix
     public partial class RealNumber : ComplexNumber
     {
         public new RealNumber Copy()
-            => new RealNumber(this);
+            => Number.Copy(this) as RealNumber;
         public enum UndefinedState : System.Byte
         {
             DEFINED,
@@ -55,6 +55,7 @@ namespace AngouriMath.Core.Numerix
 
         public RealNumber(Number number)
         {
+            number = Functional.Downcast(number);
             if (number.Is(HierarchyLevel.REAL))
                 InitClass((number as RealNumber).Value, (number as RealNumber).State);
             else

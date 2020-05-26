@@ -122,11 +122,8 @@ namespace AngouriMath.Core.Numerix
         public static bool operator <=(RealNumber a, RealNumber b)
             => !(a > b);
 
-        public static bool operator ==(RealNumber a, RealNumber b)
+        public static bool AreEqual(RealNumber a, RealNumber b)
             => a.Value == b.Value && a.State == b.State;
-
-        public static bool operator !=(RealNumber a, RealNumber b)
-            => !(a == b);
 
         public static RealNumber operator -(RealNumber a)
             => (-1 * a).AsRealNumber();

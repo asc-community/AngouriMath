@@ -23,6 +23,15 @@ namespace AngouriMath.Core.Numerix
 {
     public abstract partial class Number
     {
+        public static Number Copy(Number num)
+            => SuperSwitch(
+                (num) => new IntegerNumber(num[0]),
+                (num) => new RationalNumber(num[0]),
+                (num) => new RealNumber(num[0]),
+                (num) => new ComplexNumber(num[0]),
+                num.Type,
+                num
+            );
         public enum HierarchyLevel
         {
             INTEGER,
@@ -95,7 +104,7 @@ namespace AngouriMath.Core.Numerix
             return needParentheses ? "(" + str + ")" : str;
         }
 
-        public static Set GetAllRoots(ComplexNumber value, int rootPower)
+        public static Set GetAllRoots(ComplexNumber value, long rootPower)
         {
             var res = new Set();
             decimal phi = (Number.Log(Math.E, value / value.Abs()) / MathS.i).Value.Re;

@@ -2,31 +2,32 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
+using AngouriMath.Functions;
 
 namespace AngouriMath.Core.Numerix
 {
     public abstract partial class Number
     {
         public static ComplexNumber Create(Complex value)
-            => new ComplexNumber(value);
+            => Number.Functional.Downcast(new ComplexNumber(value)) as ComplexNumber;
         public static IntegerNumber Create(long value)
-            => new IntegerNumber(value);
+            => Number.Functional.Downcast(new IntegerNumber(value)) as IntegerNumber;
         public static IntegerNumber Create(int value) 
-            => new IntegerNumber(value);
+            => Number.Functional.Downcast(new IntegerNumber(value)) as IntegerNumber;
         public static RationalNumber Create(int numerator, int denominator)
-            => new RationalNumber(numerator, denominator);
+            => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
         public static RationalNumber Create(int numerator, long denominator)
-            => new RationalNumber(numerator, denominator);
+            => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
         public static RationalNumber Create(long numerator, int denominator)
-            => new RationalNumber(numerator, denominator);
+            => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
         public static RationalNumber Create(long numerator, long denominator)
-            => new RationalNumber(numerator, denominator);
+            => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
         public static RealNumber Create(decimal value)
-            => new RealNumber(value);
+            => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
         public static RealNumber Create(double value)
-            => new RealNumber(value);
+            => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
         public static ComplexNumber Create(RealNumber re, RealNumber im)
-            => new ComplexNumber(re, im);
+            => Number.Functional.Downcast(new ComplexNumber(re, im)) as ComplexNumber;
         public Number Copy()
             => SuperSwitch(
                 num => new IntegerNumber(num[0] as Number),
@@ -78,7 +79,7 @@ namespace AngouriMath.Core.Numerix
                         if (!(a as RealNumber).IsDefinite())
                             return (Result: a, Continue: false);
                         var ratnum = num[0];
-                        var gcd = GCD(ratnum.Denominator.Value, ratnum.Numerator.Value);
+                        var gcd = Utils.GCD(ratnum.Denominator.Value, ratnum.Numerator.Value);
                         ratnum = new RationalNumber(
                             new IntegerNumber(ratnum.Numerator.Value / gcd),
                             new IntegerNumber(ratnum.Denominator.Value / gcd)
@@ -116,21 +117,9 @@ namespace AngouriMath.Core.Numerix
                     return res.Result;
             }
 
-            private static long GCD(long a, long b)
-            {
-                while (a * b > 0)
-                {
-                    if (a > b)
-                        a %= b;
-                    else
-                        b %= a;
-                }
-                return a == 0 ? b : a;
-            }
-
             private static bool IsZero(decimal value)
             {
-                return Math.Abs(value) < 0.0000001m; // TODO with Threshold
+                return Math.Abs(value) < MathS.Utils.EQUALITY_THRESHOLD;
             }
 
             public static RationalNumber FindRational(decimal num)
@@ -140,17 +129,19 @@ namespace AngouriMath.Core.Numerix
             {
                 if (iterCount < 0)
                     return null;
+                long sign = num > 0 ? 1 : -1;
+                num *= sign;
                 var intPart = (IntegerNumber)((long)Math.Floor(num));
                 decimal rest = num - intPart.Value;
                 if (IsZero(rest))
-                    return intPart.AsRationalNumber();
+                    return (sign * intPart).AsRationalNumber();
                 else
                 {
                     var inv = 1 / rest;
                     var rat = FindRational(inv, iterCount - 1);
                     if (rat is null)
                         return null;
-                    return intPart + new IntegerNumber(1) / rat;
+                    return intPart * sign + new IntegerNumber(sign) / rat;
                 }
             }
 

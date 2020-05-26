@@ -5,7 +5,7 @@ namespace AngouriMath.Core.Numerix
     public partial class RationalNumber : RealNumber
     {
         public new RationalNumber Copy()
-            => new RationalNumber(this);
+            => Number.Copy(this) as RationalNumber;
         public IntegerNumber Numerator { get; protected set; }
         public IntegerNumber Denominator { get; protected set; }
         private void InitClass(IntegerNumber numerator, IntegerNumber denominator)
@@ -27,6 +27,7 @@ namespace AngouriMath.Core.Numerix
 
         public RationalNumber(Number number)
         {
+            number = Functional.Downcast(number);
             if (number.Is(HierarchyLevel.RATIONAL))
                 InitClass((number as RationalNumber).Numerator, (number as RationalNumber).Denominator);
             else

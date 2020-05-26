@@ -11,7 +11,7 @@ namespace AngouriMath.Core.Numerix
     public partial class ComplexNumber : Number
     {
         public new ComplexNumber Copy()
-            => new ComplexNumber(this);
+            => Number.Copy(this) as ComplexNumber;
         public RealNumber Real { get; protected set; }
         public RealNumber Imaginary { get; protected set; }
 
@@ -97,7 +97,7 @@ namespace AngouriMath.Core.Numerix
         public static ComplexNumber Parse(string s)
         {
             if (TryParse(s, out var res))
-                return res;
+                return Number.Functional.Downcast(res) as ComplexNumber;
             else
                 throw new ParseException("Cannot parse number from " + s);
         }
@@ -106,13 +106,25 @@ namespace AngouriMath.Core.Numerix
         public static bool TryParse(string s, out ComplexNumber dst)
         {
             dst = null;
+            if (string.IsNullOrEmpty(s))
+                return false;
             if (RealNumber.TryParse(s, out var real))
             {
                 dst = real;
                 return true;
             }
             if (s.Last() == 'i')
-                if (RealNumber.TryParse(s.Substring(0, s.Length - 1), out var realPart))
+                if (s == "i")
+                {
+                    dst = Number.Create(0.0, 1.0);
+                    return true;
+                }
+                else if (s == "-i")
+                {
+                    dst = Number.Create(0.0, -1.0);
+                    return true;
+                }
+                else if (RealNumber.TryParse(s.Substring(0, s.Length - 1), out var realPart))
                 {
                     dst = Number.Create(0, realPart);
                     return true;

@@ -242,10 +242,21 @@ namespace Samples
             return funcs[random.Next(0, funcs.Count)](num, depth);
         }
         */
+        /*
+        public static int Akherman(int M, int N)
+        {
+            if (M == 0)
+                return N + 1;
+            else if (N == 0 && M > 0)
+                return Akherman(M - 1, 1);
+            else
+                return Akherman(M - 1, Akherman(M, N - 1));
+        }*/
         static void Main(string[] _)
         {
-            var pb = RealNumber.Zero();
-            Console.WriteLine(pb.ToString());
+            Console.WriteLine(Number.GetAllRoots(3, 3));
+            //Entity a = Number.Create(3, 5);
+            //Console.WriteLine(MathS.CanBeEvaluated(a));
         }
     }
 #pragma warning restore IDE0051

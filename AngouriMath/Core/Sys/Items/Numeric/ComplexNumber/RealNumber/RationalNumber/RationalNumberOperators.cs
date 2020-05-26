@@ -42,11 +42,8 @@ namespace AngouriMath.Core.Numerix
             return Number.Functional.Downcast(new RationalNumber(num, den)) as RationalNumber;
         }
 
-        public static bool operator ==(RationalNumber a, RationalNumber b)
+        internal static bool AreEqual(RationalNumber a, RationalNumber b)
             => a.Numerator == b.Numerator && a.Denominator == b.Denominator && a.State == b.State;
-
-        public static bool operator !=(RationalNumber a, RationalNumber b)
-            => !(a == b);
 
         public static RationalNumber operator -(RationalNumber a)
             => (-1 * a).AsRationalNumber();

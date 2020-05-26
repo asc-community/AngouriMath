@@ -199,7 +199,7 @@ namespace AngouriMath
                         break;
                 }
             }
-            return new ComplexNumber(stack.Pop());
+            return Number.Create(stack.Pop());
         }
 
         /// <summary>

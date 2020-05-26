@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,7 +15,7 @@
 
 
 
-﻿using System;
+ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -328,12 +328,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <returns>
         /// Returns whether all initiall powers where > 0 (if so, x = 0 is a root)
         /// </returns>
-        internal static bool ReduceCommonPower(ref Dictionary<int, Entity> monomials)
+        internal static bool ReduceCommonPower(ref Dictionary<long, Entity> monomials)
         {
-            int commonPower = monomials.Keys.Min();
+            var commonPower = monomials.Keys.Min();
             if (commonPower == 0)
                 return false;
-            var newDict = new Dictionary<int, Entity>();
+            var newDict = new Dictionary<long, Entity>();
             foreach (var pair in monomials)
                 newDict[pair.Key - commonPower] = pair.Value;
             monomials = newDict;
@@ -364,18 +364,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             else
                 children = new List<Entity> { expr };
             // Check if all are like {1} * x^n & gather information about them
-            var monomialsByPower = GatherMonomialInformation<int>(children, subtree);
+            var monomialsByPower = GatherMonomialInformation<long>(children, subtree);
 
             if (monomialsByPower == null)
                 return null; // meaning that the given equation is not polynomial
 
-            Entity GetMonomialByPower(int power)
+            Entity GetMonomialByPower(long power)
             {
                 return monomialsByPower.ContainsKey(power) ? monomialsByPower[power] : 0;
             }
             if (ReduceCommonPower(ref monomialsByPower)) // x5 + x3 + x2 - common power is 2, one root is 0, then x3 + x + 1
                 res.Add(0);
-            var powers = new List<int>(monomialsByPower.Keys);
+            var powers = new List<long>(monomialsByPower.Keys);
             var gcdPower = Utils.GCD(powers.ToArray());
             // // //
 
@@ -387,7 +387,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 for (int i = 0; i < powers.Count; i++)
                     powers[i] /= gcdPower;
 
-                var newMonom = new Dictionary<int, Entity>();
+                var newMonom = new Dictionary<long, Entity>();
                 foreach (var pair in monomialsByPower)
                     newMonom[pair.Key / gcdPower] = pair.Value;
                 monomialsByPower = newMonom;

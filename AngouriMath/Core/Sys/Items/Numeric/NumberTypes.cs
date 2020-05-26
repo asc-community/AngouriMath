@@ -74,6 +74,6 @@ namespace AngouriMath.Core.Numerix
             => new RealNumber(value);
 
         public static implicit operator Number(Complex a)
-        => new ComplexNumber(new RealNumber(a.Real), new RealNumber(a.Imaginary));
+        => Number.Create(a.Real, a.Imaginary);
     }
 }

@@ -277,7 +277,7 @@ namespace AngouriMath
         /// <param name="b"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Number Num(decimal a, decimal b) => new ComplexNumber(a, b);
+        public static Number Num(decimal a, decimal b) => Number.Create(a, b);
 
         /// <summary>
         /// Creates a real instance of Number (not NumberEntity!)
@@ -291,7 +291,7 @@ namespace AngouriMath
         /// List of public constants
         /// </summary>
         public static readonly VariableEntity e = "e";
-        public static readonly ComplexNumber i = new ComplexNumber(0, 1);
+        public static readonly ComplexNumber i = Number.Create(0, 1.0);
         public static readonly VariableEntity pi = "pi";
 
         /// <summary>

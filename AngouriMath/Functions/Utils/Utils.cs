@@ -170,8 +170,10 @@ namespace AngouriMath.Functions
         ///     a | d
         ///     b | d
         /// </returns>
-        private static int _GCD(int a, int b)
+        private static long _GCD(long a, long b)
         {
+            a = Math.Abs(a);
+            b = Math.Abs(b);
             while (a * b > 0)
             {
                 if (a > b)
@@ -193,13 +195,13 @@ namespace AngouriMath.Functions
         /// Greatest common divisor of numbers if numbers doesn't only consist of 0
         /// 1 otherwise
         /// </returns>
-        internal static int GCD(params int[] numbers)
+        internal static long GCD(params long[] numbers)
         {
             if (numbers.Length == 1)
                 return numbers[0] == 0 ? 1 : numbers[0]; // technically, if number[0] == 0, then gcd = +oo
             if (numbers.Length == 2)
                 return _GCD(numbers[0], numbers[1]);
-            var rest = (new ArraySegment<int>(numbers, 2, numbers.Length - 2)).ToList();
+            var rest = (new ArraySegment<long>(numbers, 2, numbers.Length - 2)).ToList();
             rest.Add(_GCD(numbers[0], numbers[1]));
             return GCD(rest.ToArray());
         }

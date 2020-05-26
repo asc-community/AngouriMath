@@ -85,6 +85,7 @@ namespace AngouriMath.Core.Numerix
                 return true;
             if (a is null || b is null)
                 return false;
+            (a, b, _) = Functional.MakeEqual(a, b);
             if (a.IsReal() && b.IsReal())
             {
                 var aAsReal = (a as RealNumber);
@@ -98,10 +99,10 @@ namespace AngouriMath.Core.Numerix
             if (a.Type != b.Type)
                 return false;
             return SuperSwitch(
-                num => num[0] == num[1],
-                num => num[0] == num[1],
-                num => num[0] == num[1],
-                num => num[0] == num[1],
+                num => IntegerNumber.AreEqual(num[0], num[1]),
+                num => RationalNumber.AreEqual(num[0], num[1]),
+                num => RealNumber.AreEqual(num[0], num[1]),
+                num => ComplexNumber.AreEqual(num[0], num[1]),
                 a.Type,
                 a, b
             );

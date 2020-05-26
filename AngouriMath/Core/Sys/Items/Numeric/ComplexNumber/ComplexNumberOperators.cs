@@ -39,18 +39,16 @@
              * => ans = (a + ib) * (c - id) / (c2 + d2)
              */
             var conj = b.Conjugate();
-            var abs = b.Abs();
-            var Re = conj.Real / abs;
-            var Im = conj.Imaginary / abs;
+            var abs2 = b.Abs() * b.Abs();
+            var Re = conj.Real / abs2;
+            var Im = conj.Imaginary / abs2;
             var c = new ComplexNumber(Re, Im);
             return Number.Functional.Downcast(a * c) as ComplexNumber;
         }
 
-        public static bool operator ==(ComplexNumber a, ComplexNumber b)
+        public static bool AreEqual(ComplexNumber a, ComplexNumber b)
             => a.Real == b.Real && a.Imaginary == b.Imaginary;
 
-        public static bool operator !=(ComplexNumber a, ComplexNumber b)
-            => !(a == b);
 
         public static implicit operator ComplexNumber(int value)
             => new ComplexNumber(value);
