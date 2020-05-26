@@ -72,6 +72,8 @@ namespace AngouriMath.Core.Numerix
 
             internal static Number Downcast(Number a)
             {
+                if (!MathS.Settings.DowncastingEnabled)
+                    return a;
                 var res = SuperSwitch(
                     num => (Result: num[0], Continue: false),
                     (num) =>
@@ -94,7 +96,7 @@ namespace AngouriMath.Core.Numerix
                         if (!(a as RealNumber).IsDefinite())
                             return (Result: a, Continue: false);
                         var realnum = num[0];
-                        var attempt = FindRational(realnum.Value);
+                        var attempt = FindRational(realnum.Value, MathS.Settings.FloatToRationalIterCount);
                         if (attempt is null)
                             return (Result: realnum, Continue: false);
                         else

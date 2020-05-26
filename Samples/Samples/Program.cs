@@ -254,9 +254,10 @@ namespace Samples
         }*/
         static void Main(string[] _)
         {
-            Console.WriteLine(Number.GetAllRoots(3, 3));
-            //Entity a = Number.Create(3, 5);
-            //Console.WriteLine(MathS.CanBeEvaluated(a));
+            var x = MathS.Var("x");
+            var func = MathS.Sqr(x) + 2 * x + 1;
+            var a = func.Derive(x).Simplify() == 2 * (1 + x);
+            Console.WriteLine(a);
         }
     }
 #pragma warning restore IDE0051

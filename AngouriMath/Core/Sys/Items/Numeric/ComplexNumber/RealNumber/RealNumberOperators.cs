@@ -123,7 +123,7 @@ namespace AngouriMath.Core.Numerix
             => !(a > b);
 
         public static bool AreEqual(RealNumber a, RealNumber b)
-            => a.Value == b.Value && a.State == b.State;
+            => Math.Abs(a.Value - b.Value) < MathS.Utils.EQUALITY_THRESHOLD && a.State == b.State;
 
         public static RealNumber operator -(RealNumber a)
             => (-1 * a).AsRealNumber();

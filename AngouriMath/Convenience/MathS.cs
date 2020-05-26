@@ -385,6 +385,12 @@ namespace AngouriMath
 
         }
 
+        public static class Settings
+        {
+            public static bool DowncastingEnabled { get; set; } = true;
+            public static int FloatToRationalIterCount { get; set; } = 15;
+        }
+
         /// <summary>
         /// Some additional functions defined here
         /// </summary>

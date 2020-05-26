@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Globalization;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -121,7 +122,7 @@ namespace AngouriMath.Core.Numerix
 
         internal static bool TryParse(string s, out RealNumber dst)
         {
-            if (decimal.TryParse(s, out var res))
+            if (decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out var res))
             {
                 dst = new RealNumber(res);
                 return true;

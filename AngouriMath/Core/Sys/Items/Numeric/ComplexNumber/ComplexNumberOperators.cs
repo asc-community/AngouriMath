@@ -16,7 +16,7 @@
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.COMPLEX))
                 return Number.OpSub(a, b) as ComplexNumber;
             var Re = a.Real - b.Real;
-            var Im = a.Imaginary - a.Imaginary;
+            var Im = a.Imaginary - b.Imaginary;
             return Number.Functional.Downcast(new ComplexNumber(Re, Im)) as ComplexNumber;
         }
 

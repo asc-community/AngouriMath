@@ -24,6 +24,7 @@ using System.Numerics;
 using System.Text;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
+ using Antlr4.Runtime.Atn;
 
 namespace AngouriMath
 {
@@ -199,8 +200,25 @@ namespace AngouriMath
                         break;
                 }
             }
-            return Number.Create(stack.Pop());
+            var res = stack.Pop();
+
+            RealNumber Normalize(double value)
+            {
+                if (value > maxDecimal)
+                    return RealNumber.PositiveInfinity();
+                else if (value < minDecimal)
+                    return RealNumber.NegativeInfinity();
+                else
+                    return Number.Create(value);
+            }
+
+            var re = Normalize(res.Real);
+            var im = Normalize(res.Imaginary);
+            return Number.Create(re, im);
         }
+
+        private static readonly double maxDecimal = (double)decimal.MaxValue;
+        private static readonly double minDecimal = (double)decimal.MinValue;
 
         /// <summary>
         /// Might be useful for debug if a function works too slowly

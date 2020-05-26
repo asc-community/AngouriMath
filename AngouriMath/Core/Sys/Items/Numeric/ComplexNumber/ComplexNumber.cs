@@ -4,6 +4,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.FromString;
 
 namespace AngouriMath.Core.Numerix
@@ -76,7 +77,18 @@ namespace AngouriMath.Core.Numerix
             => new ComplexNumber(Real, Imaginary * new IntegerNumber(-1));
 
         public RealNumber Abs()
-        => Number.Pow(Real * Real + Imaginary * Imaginary, new RealNumber(0.5m)) as RealNumber;
+        {
+            var Re2 = Real * Real;
+            var Im2 = Imaginary * Imaginary;
+            var sum2 = Re2 + Im2;
+            if (sum2.State == RealNumber.UndefinedState.NAN)
+                return RealNumber.NaN();
+            if (sum2.State == RealNumber.UndefinedState.POSITIVE_INFINITY)
+                return RealNumber.PositiveInfinity();
+            if (sum2.State == RealNumber.UndefinedState.NEGATIVE_INFINITY)
+                throw new SysException("Universe collapse"); // unreacheable case (I hope so)
+            return Number.Pow(Real * Real + Imaginary * Imaginary, new RealNumber(0.5m)) as RealNumber;
+        }
 
 
         public static ComplexNumber Indefinite(RealNumber.UndefinedState re, RealNumber.UndefinedState im)

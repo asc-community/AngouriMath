@@ -55,7 +55,7 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                 if (i > minCheckIters && prev == value)
                     return value;
             }
-            if (Number.Abs(prev - value) > 0.01)
+            if (Number.Abs(prev - value) > MathS.Utils.EQUALITY_THRESHOLD) // TODO: threshold
                 return RealNumber.NaN();
             else
                 return value;
@@ -85,6 +85,8 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
             (decimal Re, decimal Im) to, 
             (int Re, int Im) stepCount, int precision)
         {
+            var userIterCount = MathS.Settings.FloatToRationalIterCount;
+            MathS.Settings.FloatToRationalIterCount = -1;
             var res = new Set();
             var df = expr.Derive(v).Simplify().Compile(v);
             var f = expr.Simplify().Compile(v);
@@ -96,9 +98,10 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                     var value = Number.Create(from.Re * xShare + to.Re * (1 - xShare),
                                            from.Im * yShare + to.Im * (1 - yShare));
                     var root = NewtonIter(f, df, value, precision);
-                    if (root.IsDefinite())
+                    if (root.IsDefinite() && f.Call(root).Abs() < MathS.Utils.EQUALITY_THRESHOLD)
                         res.Add(root);
                 }
+            MathS.Settings.FloatToRationalIterCount = userIterCount;
             return res;
         }
     }

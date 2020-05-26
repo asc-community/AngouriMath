@@ -233,10 +233,10 @@ namespace AngouriMath.Core.TreeAnalysis
                    r.Imaginary <= to.Imaginary;
         }
 
-        private static readonly ComplexNumber ArcsinFrom = Number.Create(-Math.PI / 2, -double.MaxValue);
-        private static readonly ComplexNumber ArcsinTo = Number.Create(+Math.PI / 2, double.MaxValue);
-        private static readonly ComplexNumber ArccosFrom = Number.Create(0.0, -double.MaxValue);
-        private static readonly ComplexNumber ArccosTo = Number.Create(Math.PI, double.MaxValue);
+        private static readonly ComplexNumber ArcsinFrom = Number.Create(-Math.PI / 2, RealNumber.NegativeInfinity());
+        private static readonly ComplexNumber ArcsinTo = Number.Create(+Math.PI / 2, RealNumber.PositiveInfinity());
+        private static readonly ComplexNumber ArccosFrom = Number.Create(0.0, RealNumber.NegativeInfinity());
+        private static readonly ComplexNumber ArccosTo = Number.Create(Math.PI, RealNumber.PositiveInfinity());
         private static readonly Set Empty = new Set();
 
         /// <summary>

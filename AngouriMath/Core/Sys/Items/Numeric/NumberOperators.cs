@@ -142,7 +142,7 @@ namespace AngouriMath.Core.Numerix
             var poweredCom = powered.AsComplexNumber();
             if (baseCom.IsDefinite() && poweredCom.IsDefinite())
                 return Functional.Downcast(
-                Complex.Log(powered.AsDouble(), @base.AsDouble())
+                Complex.Log(powered.AsComplex(), @base.AsDouble())
             ) as ComplexNumber;
             else
                 return ComplexNumber.Indefinite(RealNumber.UndefinedState.NAN);
