@@ -1,18 +1,20 @@
-﻿namespace AngouriMath.Core.Numerix
+﻿using System.Numerics;
+
+namespace AngouriMath.Core.Numerix
 {
     public partial class IntegerNumber : RationalNumber
     {
         public new IntegerNumber Copy()
             => Number.Copy(this) as IntegerNumber;
-        public new long Value { get; protected set; }
-        private void InitClass(long value, UndefinedState state)
+        public new BigInteger Value { get; protected set; }
+        private void InitClass(BigInteger value, UndefinedState state)
         {
             Value = value;
             Type = HierarchyLevel.INTEGER;
             State = state;
             Init();
         }
-        public IntegerNumber(long value)
+        public IntegerNumber(BigInteger value)
         {
             InitClass(value, UndefinedState.DEFINED);
         }
@@ -71,7 +73,7 @@
         {
             if (long.TryParse(s, out long res))
             {
-                dst = new IntegerNumber(res);
+                dst = Number.Create(res);
                 return true;
             }
             dst = null;

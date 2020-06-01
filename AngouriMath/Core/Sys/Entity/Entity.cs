@@ -82,8 +82,11 @@ namespace AngouriMath
             return res;
         }
         
-        public static implicit operator Entity(int num) => new NumberEntity(new IntegerNumber(num));
+        public static implicit operator Entity(int num) => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(long num) => new NumberEntity(Number.Create(num));
         public static implicit operator Entity(ComplexNumber num) => new NumberEntity(num);
+        public static implicit operator Entity(decimal num) => new NumberEntity(new RealNumber(num));
+        public static implicit operator Entity(float num) => new NumberEntity(new RealNumber(num));
         public static implicit operator Entity(double num) => new NumberEntity(new RealNumber(num));
         public static implicit operator Entity(string expr) => MathS.FromString(expr);
 
@@ -124,7 +127,7 @@ namespace AngouriMath
         /// </summary>
         public ComplexNumber Value { get; internal set; }
         public new string Name { get => Value.ToString(); }
-        public static implicit operator NumberEntity(int num) => new NumberEntity(new IntegerNumber(num));
+        public static implicit operator NumberEntity(int num) => new NumberEntity(Number.Create(num));
         public static implicit operator NumberEntity(ComplexNumber num) => new NumberEntity(num);
 
         protected override Entity __copy()

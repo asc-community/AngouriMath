@@ -42,7 +42,7 @@ namespace AngouriMath.Core.Numerix
                 Denominator = new IntegerNumber(-Denominator.Value);
             }
             if (Denominator.Value != 0)
-                this.Value = (decimal)Numerator.Value / Denominator.Value;
+                this.Value = (decimal)Numerator.Value / (decimal)Denominator.Value;
             else
             {
                 if (Numerator.Value == 0)

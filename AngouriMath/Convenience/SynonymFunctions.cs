@@ -33,7 +33,7 @@ namespace AngouriMath
         {
             { "sqrtf", args => MathS.Pow(args[0], 0.5) },
             { "sqrf", args => MathS.Pow(args[0], 2) },
-            { "lnf", args => MathS.Log(args[0], MathS.e) },
+            { "lnf", args => MathS.Log(MathS.e, args[0]) },
             { "secf", args => MathS.Sec(args[0]) },
             { "cosecf", args => MathS.Cosec(args[0]) },
             { "arcsecf", args => MathS.Arcsec(args[0]) },

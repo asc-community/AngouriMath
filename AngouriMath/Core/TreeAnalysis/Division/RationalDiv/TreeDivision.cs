@@ -92,7 +92,7 @@ namespace AngouriMath.Core.TreeAnalysis
             var maxvalQ = monoinfoQ[polyvar][maxpowQ];
             var maxvalP = monoinfoP[polyvar][maxpowP];
 
-            var result = new Dictionary<double, Entity>();
+            var result = new Dictionary<decimal, Entity>();
 
             // TODO: add case where all powers are non-positive
             // for now just return polynomials unchanged
@@ -102,14 +102,14 @@ namespace AngouriMath.Core.TreeAnalysis
             while (maxpowP >= maxpowQ)
             {
                 // KeyPair is ax^n with Key=n, Value=a
-                double deltapow = maxpowP - maxpowQ;
+                decimal deltapow = maxpowP - maxpowQ;
                 Entity deltamul = maxvalP / maxvalQ;
                 result[deltapow] = deltamul;
 
                 foreach (var n in monoinfoQ[polyvar])
                 {
                     // TODO: precision loss can happen here. MUST be fixed somehow
-                    double newpow = deltapow + n.Key;
+                    decimal newpow = deltapow + n.Key;
                     if (!monoinfoP[polyvar].ContainsKey(newpow))
                     {
                         monoinfoP[polyvar][newpow] = -deltamul * n.Value;

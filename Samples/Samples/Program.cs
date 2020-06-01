@@ -11,6 +11,7 @@ using System.Linq;
 using System.Numerics;
 using AngouriMath.Core.Sets;
 using AngouriMath.Core.Numerix;
+using System.Numerics;
 
 namespace Samples
 {
@@ -254,11 +255,7 @@ namespace Samples
         }*/
         static void Main(string[] _)
         {
-            var x = MathS.Var("x");
-            var func = MathS.Sqr(x) + 2 * x + 1;
-            var a = func.Derive(x).Simplify() == 2 * (1 + x);
-            Console.WriteLine(a);
+            
         }
     }
-#pragma warning restore IDE0051
 }

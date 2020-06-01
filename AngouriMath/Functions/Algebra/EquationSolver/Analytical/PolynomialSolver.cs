@@ -40,18 +40,18 @@ namespace AngouriMath.Core.TreeAnalysis
             void Assign(T val);
             T GetValue();
         }
-        internal class PrimitiveDouble : IPrimitive<double>
+        internal class PrimitiveDouble : IPrimitive<decimal>
         {
-            private double value = 0;
-            public void Add(double a) => value += a;
-            public void AddMp(double a, ComplexNumber b) => Add(a * b.Real);
-            public void Assign(double a) => value = a;
-            public static implicit operator double(PrimitiveDouble obj) => obj.value;
-            internal static IPrimitive<double> Create()
+            private decimal value = 0;
+            public void Add(decimal a) => value += a;
+            public void AddMp(decimal a, ComplexNumber b) => Add(a * b.Real);
+            public void Assign(decimal a) => value = a;
+            public static implicit operator decimal(PrimitiveDouble obj) => obj.value;
+            internal static IPrimitive<decimal> Create()
             {
                 return new PrimitiveDouble();
             }
-            public double GetValue() => value;
+            public decimal GetValue() => value;
         }
         internal class PrimitiveInt : IPrimitive<long>
         {
@@ -482,7 +482,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // TODO
                 Entity free;
                 object pow;
-                if (typeof(T) == typeof(double))
+                if (typeof(T) == typeof(decimal))
                     pow = new TreeAnalyzer.PrimitiveDouble();
                 else
                     pow = new TreeAnalyzer.PrimitiveInt();
@@ -510,7 +510,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             freeMono = 1; // a * b
 
-            bool allowFloat = typeof(T) == typeof(double);
+            bool allowFloat = typeof(T) == typeof(decimal);
             foreach (var mp in TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul))
                 if (mp.FindSubtree(aVar) == null)
                 {
@@ -552,7 +552,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         Entity tmpFree;
                         // TODO
                         object pow;
-                        if (typeof(T) == typeof(double))
+                        if (typeof(T) == typeof(decimal))
                             pow = new TreeAnalyzer.PrimitiveDouble();
                         else
                             pow = new TreeAnalyzer.PrimitiveInt();

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -68,8 +69,8 @@ namespace AngouriMath.Core.Numerix
                     () => new RealNumber(UndefinedState.NAN),
                     () => b.Value >= 0 ? new RealNumber(UndefinedState.POSITIVE_INFINITY) : new RealNumber(UndefinedState.NEGATIVE_INFINITY),
                     () => b.Value >= 0 ? new RealNumber(UndefinedState.NEGATIVE_INFINITY) : new RealNumber(UndefinedState.POSITIVE_INFINITY),
-                    () => new IntegerNumber(0), 
-                    () => new IntegerNumber(0),
+                    () => new IntegerNumber(BigInteger.Zero), 
+                    () => new IntegerNumber(BigInteger.Zero),
                     a, b);
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpDiv(a, b) as RealNumber;
@@ -123,7 +124,7 @@ namespace AngouriMath.Core.Numerix
             => !(a > b);
 
         public static bool AreEqual(RealNumber a, RealNumber b)
-            => Math.Abs(a.Value - b.Value) < MathS.Utils.EQUALITY_THRESHOLD && a.State == b.State;
+            => Math.Abs(a.Value - b.Value) < MathS.Settings.PrecisionError && a.State == b.State;
 
         public static RealNumber operator -(RealNumber a)
             => (-1 * a).AsRealNumber();

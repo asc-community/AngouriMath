@@ -46,6 +46,9 @@ namespace AngouriMath.Core.Numerix
             => new ComplexNumber(Functional.Downcast(this));
 
         public long AsInt()
+            => (long)AsIntegerNumber().Value;
+
+        public BigInteger AsBigInt()
             => AsIntegerNumber().Value;
 
         public decimal AsDecimal()
@@ -62,9 +65,9 @@ namespace AngouriMath.Core.Numerix
 
 
         public static implicit operator Number(int value)
-            => new IntegerNumber(value);
+            => Number.Create(value);
         public static implicit operator Number(long value)
-            => new IntegerNumber(value);
+            => Number.Create(value);
 
         public static implicit operator Number(float value)
             => new RealNumber((decimal)value);

@@ -15,7 +15,7 @@
 
 using System;
 using AngouriMath.Core.Numerix;
-using Edge1D = System.Tuple<double, bool>;
+using Edge1D = System.Tuple<decimal, bool>;
 using Edge = System.Tuple<AngouriMath.Entity, bool, bool>;
 
 
@@ -29,12 +29,12 @@ namespace AngouriMath.Core.Sets
     static partial class PieceFunctions
     {
         internal static Edge1D IntersectEdge(
-            double num1, bool closed1,
-            double num2, bool closed2,
-            Func<double, double, bool> comparator
+            decimal num1, bool closed1,
+            decimal num2, bool closed2,
+            Func<decimal, decimal, bool> comparator
             )
         {
-            double res;
+            decimal res;
             bool closed;
             if (num2 == num1)
             {
@@ -56,10 +56,10 @@ namespace AngouriMath.Core.Sets
         }
 
         internal static Tuple<Edge1D, Edge1D> IntersectAxis(
-            double min1, bool closedMin1,
-            double max1, bool closedMax1,
-            double min2, bool closedMin2,
-            double max2, bool closedMax2)
+            decimal min1, bool closedMin1,
+            decimal max1, bool closedMax1,
+            decimal min2, bool closedMin2,
+            decimal max2, bool closedMax2)
             => new Tuple<Edge1D, Edge1D>(
                 IntersectEdge(
                     min1, closedMin1,
@@ -77,10 +77,10 @@ namespace AngouriMath.Core.Sets
         {
             var num1 = A.Item1.Eval();
             var num2 = B.Item1.Eval();
-            double lowRe = num1.Real;
-            double upRe = num2.Real;
-            double lowIm = num1.Imaginary;
-            double upIm = num2.Imaginary;
+            decimal lowRe = num1.Real;
+            decimal upRe = num2.Real;
+            decimal lowIm = num1.Imaginary;
+            decimal upIm = num2.Imaginary;
             bool lowReClosed = A.Item2;
             bool upReClosed = B.Item2;
             bool lowImClosed = A.Item3;

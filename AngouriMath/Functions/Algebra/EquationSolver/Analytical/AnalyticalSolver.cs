@@ -208,7 +208,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     }
                     else
                         // a ^ x = value => x = log(value, a)
-                        return FindInvertExpression(un, MathS.Log(value, a) + 2 * MathS.i * n * MathS.pi, x);
+                        return FindInvertExpression(un, MathS.Log(a, value) + 2 * MathS.i * n * MathS.pi, x);
                 default:
                     throw new SysException("Unknown operator");
             }

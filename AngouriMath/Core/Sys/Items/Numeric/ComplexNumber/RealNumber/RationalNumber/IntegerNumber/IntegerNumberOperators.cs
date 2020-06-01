@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -34,6 +35,8 @@ namespace AngouriMath.Core.Numerix
         public static implicit operator int(IntegerNumber val)
             => (int)val.Value;
         public static implicit operator long(IntegerNumber val)
+            => (long)val.Value;
+        public static implicit operator BigInteger(IntegerNumber val)
             => val.Value;
 
         public static bool AreEqual(IntegerNumber a, IntegerNumber b)
@@ -43,9 +46,9 @@ namespace AngouriMath.Core.Numerix
             => (-1 * a).AsIntegerNumber();
 
         public static implicit operator IntegerNumber(int num)
-            => new IntegerNumber(num);
+            => new IntegerNumber((BigInteger)num);
 
         public static implicit operator IntegerNumber(long num)
-            => new IntegerNumber(num);
+            => new IntegerNumber((BigInteger)num);
     }
 }

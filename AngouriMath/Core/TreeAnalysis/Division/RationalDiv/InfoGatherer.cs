@@ -71,7 +71,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
                 else
                     children = new List<Entity> { expr };
-                res.monoInfo[varMentioned] = PolynomialSolver.GatherMonomialInformation<double>(children, MathS.Var(varMentioned));
+                res.monoInfo[varMentioned] = PolynomialSolver.GatherMonomialInformation<decimal>(children, MathS.Var(varMentioned));
             }
 
             return res;
@@ -82,7 +82,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
 namespace AngouriMath.Core.TreeAnalysis.Division.RationalDiv
 {
-    using MonomialInfo = Dictionary<string, Dictionary<double, Entity>>;
+    using MonomialInfo = Dictionary<string, Dictionary<decimal, Entity>>;
     using ReplacementInfo = Dictionary<string, Entity>;
     internal class PolyInfo
     {

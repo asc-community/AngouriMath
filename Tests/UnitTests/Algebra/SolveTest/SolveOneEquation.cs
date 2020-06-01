@@ -29,10 +29,10 @@ namespace UnitTests.Algebra
             }
             string eqNormal = equation.ToString();
             var err = CheckRoots(equation, toSub, varValue);
-            Assert.IsTrue(err < 0.001, "Error is : " + err + "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
+            Assert.IsTrue(err < 0.001m, "Error is : " + err + "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
         }
 
-        public double CheckRoots(Entity equation, VariableEntity toSub, Entity varValue)
+        public decimal CheckRoots(Entity equation, VariableEntity toSub, Entity varValue)
         {
             equation = equation.Substitute(toSub, varValue);
             var allVars = MathS.Utils.GetUniqueVariables(equation);
@@ -79,10 +79,10 @@ namespace UnitTests.Algebra
         public void Test4()
         {
             var eq = x.Pow(2) + 2 * x + 1;
-            var tmpEQTHR = MathS.Utils.EQUALITY_THRESHOLD;
-            MathS.Utils.EQUALITY_THRESHOLD = 1e-6m;
+            var tmpEQTHR = MathS.Settings.PrecisionError;
+            MathS.Settings.PrecisionError = 1e-6m;
             var roots = eq.SolveNt(x, precision: 100);
-            MathS.Utils.EQUALITY_THRESHOLD = tmpEQTHR;
+            MathS.Settings.PrecisionError = tmpEQTHR;
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
@@ -184,7 +184,7 @@ namespace UnitTests.Algebra
                            (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10)));
                 var newexpr = expr.Expand();
                 foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                    WA += CheckRoots(newexpr, x, root) > 0.001 ? 1 : 0;
+                    WA += CheckRoots(newexpr, x, root) > 0.001m ? 1 : 0;
             }
             Assert.IsTrue(WA == 0, "WA count: " + WA);
         }

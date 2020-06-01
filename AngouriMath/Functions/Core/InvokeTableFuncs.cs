@@ -50,7 +50,7 @@ namespace AngouriMath
         public delegate Entity OneArg(Entity a);
         public delegate Entity TwoArg(Entity a, Entity n);
         public delegate VariableEntity VarFunc(string v);
-        public delegate Number NumFunc(double a, double b = 0);
+        public delegate Number NumFunc(decimal a, decimal b = 0);
         static MathS()
         {
             NumberFormatInfo nfi = new NumberFormatInfo

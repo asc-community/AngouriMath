@@ -11,16 +11,18 @@ namespace AngouriMath.Core.Numerix
         public static ComplexNumber Create(Complex value)
             => Number.Functional.Downcast(new ComplexNumber(value)) as ComplexNumber;
         public static IntegerNumber Create(long value)
+            => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+        public static IntegerNumber Create(BigInteger value)
             => Number.Functional.Downcast(new IntegerNumber(value)) as IntegerNumber;
         public static IntegerNumber Create(int value) 
-            => Number.Functional.Downcast(new IntegerNumber(value)) as IntegerNumber;
-        public static RationalNumber Create(int numerator, int denominator)
+            => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+        public static RationalNumber CreateRational(int numerator, int denominator)
             => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
-        public static RationalNumber Create(int numerator, long denominator)
+        public static RationalNumber CreateRational(int numerator, long denominator)
             => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
-        public static RationalNumber Create(long numerator, int denominator)
+        public static RationalNumber CreateRational(long numerator, int denominator)
             => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
-        public static RationalNumber Create(long numerator, long denominator)
+        public static RationalNumber CreateRational(long numerator, long denominator)
             => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
         public static RealNumber Create(decimal value)
             => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
@@ -97,7 +99,9 @@ namespace AngouriMath.Core.Numerix
                             return (Result: a, Continue: false);
                         var realnum = num[0];
                         var attempt = FindRational(realnum.Value, MathS.Settings.FloatToRationalIterCount);
-                        if (attempt is null)
+                        if (attempt is null || 
+                            Math.Abs(attempt.Numerator) > MathS.Settings.MaxAbsNumeratorOrDenominatorValue ||
+                            Math.Abs(attempt.Denominator) > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                             return (Result: realnum, Continue: false);
                         else
                             return (Result: attempt, Continue: true);
@@ -121,7 +125,7 @@ namespace AngouriMath.Core.Numerix
 
             private static bool IsZero(decimal value)
             {
-                return Math.Abs(value) < MathS.Utils.EQUALITY_THRESHOLD;
+                return Math.Abs(value) < MathS.Settings.PrecisionError;
             }
 
             public static RationalNumber FindRational(decimal num)
@@ -134,7 +138,7 @@ namespace AngouriMath.Core.Numerix
                 long sign = num > 0 ? 1 : -1;
                 num *= sign;
                 var intPart = (IntegerNumber)((long)Math.Floor(num));
-                decimal rest = num - intPart.Value;
+                decimal rest = num - (decimal)intPart.Value;
                 if (IsZero(rest))
                     return (sign * intPart).AsRationalNumber();
                 else
@@ -143,7 +147,7 @@ namespace AngouriMath.Core.Numerix
                     var rat = FindRational(inv, iterCount - 1);
                     if (rat is null)
                         return null;
-                    return intPart * sign + new IntegerNumber(sign) / rat;
+                    return intPart * sign + Number.Create(sign) / rat;
                 }
             }
 

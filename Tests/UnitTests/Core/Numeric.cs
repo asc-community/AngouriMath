@@ -40,7 +40,7 @@ namespace UnitTests.Core
         public void TestInteger()
         {
             Assert.IsTrue(
-                new IntegerNumber(3) + new IntegerNumber(5) ==
+                Number.Create(3) + Number.Create(5) ==
                 new RationalNumber(8)
             );
         }
@@ -105,7 +105,7 @@ namespace UnitTests.Core
         [TestMethod]
         public void TestWithUndefined7()
         {
-            var a = new IntegerNumber(4);
+            var a = Number.Create(4);
             var b = new RealNumber(0.0m);
             Assert.IsTrue(a / b == RealNumber.PositiveInfinity());
         }
@@ -113,7 +113,7 @@ namespace UnitTests.Core
         [TestMethod]
         public void TestWithUndefined8()
         {
-            var x = new RationalNumber(new IntegerNumber(-1), new IntegerNumber(2));
+            var x = new RationalNumber(Number.Create(-1), Number.Create(2));
             Assert.IsTrue(x / 0 == RealNumber.NegativeInfinity());
         }
     }

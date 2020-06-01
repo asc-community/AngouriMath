@@ -39,7 +39,8 @@
              * => ans = (a + ib) * (c - id) / (c2 + d2)
              */
             var conj = b.Conjugate();
-            var abs2 = b.Abs() * b.Abs();
+            var bAbs = b.Abs();
+            var abs2 = bAbs * bAbs;
             var Re = conj.Real / abs2;
             var Im = conj.Imaginary / abs2;
             var c = new ComplexNumber(Re, Im);

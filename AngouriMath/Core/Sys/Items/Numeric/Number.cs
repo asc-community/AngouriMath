@@ -25,7 +25,7 @@ namespace AngouriMath.Core.Numerix
     {
         public static Number Copy(Number num)
             => SuperSwitch(
-                (num) => new IntegerNumber(num[0]),
+                (num) => new IntegerNumber(num[0] as Number),
                 (num) => new RationalNumber(num[0]),
                 (num) => new RealNumber(num[0]),
                 (num) => new ComplexNumber(num[0]),

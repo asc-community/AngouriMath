@@ -19,7 +19,7 @@ namespace GraphicExample
             InitializeComponent();
         }
         AMPlotter plotter;
-        double t = 120;
+        decimal t = 120;
         protected override void OnSizeChanged(EventArgs e)
         {
             base.OnSizeChanged(e);
@@ -39,12 +39,12 @@ namespace GraphicExample
             plotter.Clear();
             plotter.PlotIterativeComplex(niceFunc2, (0, 0), ((decimal)t, 0));
             plotter.Render();
-            t += 0.0005;
+            t += 0.0005m;
         }
 
         private void JumpClick(object sender, EventArgs e)
         {
-            t += 1.0;
+            t += 1.0m;
         }
     }
 }

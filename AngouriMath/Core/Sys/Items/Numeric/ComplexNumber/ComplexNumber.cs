@@ -64,17 +64,48 @@ namespace AngouriMath.Core.Numerix
             return (Real.Value, Imaginary.Value);
         }
 
+        private static RealNumber _zero = new RealNumber(0.0m);
+        private static RealNumber _plus_one = new RealNumber(1.0m);
+        private static RealNumber _minus_one = new RealNumber(-1.0m);
         protected internal string InternalToString()
-            => Real.ToString() + " + " + Imaginary.ToString() + "i";
+        {
+            string RenderNum(RealNumber number)
+            {
+                if (number == _minus_one)
+                    return "-";
+                else if (number == _plus_one)
+                    return "";
+                else
+                    return number.ToString();
+            }
+            if (Imaginary.IsDefinite() && Imaginary == _zero)
+                return Real.ToString();
+            else if (Real.IsDefinite() && Real.Value == _zero)
+                return RenderNum(Imaginary) + "i";
+            return Real.ToString() + " + " + RenderNum(Imaginary) + "i";
+        }
 
         protected internal string InternalLatexise()
         {
+            string RenderNum(RealNumber number)
+            {
+                if (number == _minus_one)
+                    return "-";
+                else if (number == _plus_one)
+                    return "";
+                else
+                    return number.Latexise();
+            }
+            if (Imaginary.IsDefinite() && Imaginary == _zero)
+                return Real.Latexise();
+            else if (Real.IsDefinite() && Real.Value == _zero)
+                return RenderNum(Imaginary) + "i";
             var (Im, sign) = Imaginary.Value > 0 ? (Imaginary, "+") : (-Imaginary, "-");
             return Real.Latexise() + sign + Imaginary.Latexise(Imaginary.IsFraction() && Imaginary.IsDefinite()) + "i";
         }
 
         public ComplexNumber Conjugate()
-            => new ComplexNumber(Real, Imaginary * new IntegerNumber(-1));
+            => new ComplexNumber(Real, Imaginary * Number.Create(-1));
 
         public RealNumber Abs()
         {

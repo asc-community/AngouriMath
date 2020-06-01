@@ -13,14 +13,14 @@ namespace PerformanceBenchmark.Tests
         protected static readonly VariableEntity y = MathS.Var("y");
         protected static readonly VariableEntity z = MathS.Var("z");
         protected static int IterCount { get; set; } = 1000;
-        private double Watch(Func<object> func)
+        private decimal Watch(Func<object> func)
         {
             var stopWatch = new Stopwatch();
             stopWatch.Start();
             for (int i = 0; i < IterCount; i++)
                 func();
             stopWatch.Stop();
-            return ((double)stopWatch.ElapsedMilliseconds) / IterCount;
+            return ((decimal)stopWatch.ElapsedMilliseconds) / IterCount;
         }
         internal string Evaluate()
         {
