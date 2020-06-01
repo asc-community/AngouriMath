@@ -170,67 +170,22 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             res = new Set();
 
-            if (MathS.CanBeEvaluated(a) &&
-                MathS.CanBeEvaluated(b) &&
-                MathS.CanBeEvaluated(c) &&
-                MathS.CanBeEvaluated(d))
+            var coeff = MathS.i * MathS.Sqrt(3) / 2;
+
+            var u1 = new NumberEntity(1);
+            var u2 = SySyn.Rational(-1, 2) + coeff;
+            var u3 = SySyn.Rational(-1, 2) - coeff;
+            var D0 = MathS.Sqr(b) - 3 * a * c;
+            var D1 = 2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d;
+            var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, Number.CreateRational(1, 3));
+
+            foreach (var uk in new List<Entity> {u1, u2, u3})
+                //res.Add(-(b + uk * C + D0 / C / uk) / 3 / a);
             {
-                var p = ((3 * a * c - MathS.Sqr(b)) / (3 * MathS.Sqr(a))).Simplify();
-                var q = ((2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d) / (27 * MathS.Pow(a, 3)));
-
-                var Q = MathS.Pow(p / 3, 3) + MathS.Sqr(q / 2);
-
-                var alpha = (MathS.Pow(-q / 2 + MathS.Sqrt(Q), 1.0 / 3.0));
-                var beta = (MathS.Pow(-q / 2 - MathS.Sqrt(Q), 1.0 / 3.0));
-
-                // To find correct beta, you should find such beta that alpha + beta = -p / 3
-                // Such beta always exists
-                if (p.entType == Entity.EntType.NUMBER && 
-                    MathS.CanBeEvaluated(alpha) &&
-                    MathS.CanBeEvaluated(beta))
-                {
-                    var beta3 = (-q / 2 - MathS.Sqrt(Q)).Eval();
-                    alpha = alpha.Eval();
-                    
-                    beta = beta.Eval();
-                    var p3 = (-p / 3).Eval();
-                    foreach (var root in Number.GetAllRoots(beta3, 3).FiniteSet())
-                        if ((root * alpha).Eval() == p3)
-                        {
-                            beta = root;
-                            break;
-                        }
-                }
-                var y1 = alpha + beta;
-                var y2 = (-(alpha + beta) / 2 + MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
-                var y3 = (-(alpha + beta) / 2 - MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
-
-                var x1 = y1 - b / (3 * a);
-                var x2 = y2 - b / (3 * a);
-                var x3 = y3 - b / (3 * a);
-
-                res.Add(x1);
-                res.Add(x2);
-                res.Add(x3);
-
-                return res;
+                var r = -(b + uk * C + D0 / C / uk) / 3 / a;
+                res.Add(r);
             }
-            else
-            {
-                // TO REMOVE
-                var coeff = MathS.i * MathS.Sqrt(3) / 2;
-
-                var u1 = new NumberEntity(1);
-                var u2 = SySyn.Rational(-1, 2) + coeff;
-                var u3 = SySyn.Rational(-1, 2) - coeff;
-                var D0 = MathS.Sqr(b) - 3 * a * c;
-                var D1 = 2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d;
-                var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, 1.0 / 3);
-
-                foreach (var uk in new List<Entity> { u1, u2, u3 })
-                    res.Add(-(b + uk * C + D0 / C / uk) / 3 / a);
-                return res;
-            }
+            return res;
         }
 
         /// <summary>
@@ -278,9 +233,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var beta = MathS.Pow(b, 3) / (8 * MathS.Pow(a, 3)) - (b * c) / (2 * MathS.Sqr(a)) + d / a;
             var gamma = -3 * MathS.Pow(b, 4) / (256 * MathS.Pow(a, 4)) + MathS.Sqr(b) * c / (16 * MathS.Pow(a, 3)) - (b * d) / (4 * MathS.Sqr(a)) + e / a;
 
-            if (MathS.CanBeEvaluated(beta))
-                beta = beta.Eval();
-            if (beta == 0)
+            if (Const.EvalIfCan(beta) == 0)
             {
                 res.FastAddingMode = true;
                 for (int s = -1; s <= 1; s += 2)
@@ -293,15 +246,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return res;
             }
 
-            
 
+            var oneThird = Number.CreateRational(1, 3);
             var P = -MathS.Sqr(alpha) / 12 - gamma;
             var Q = -MathS.Pow(alpha, 3) / 108 + alpha * gamma / 3 - MathS.Sqr(beta) / 8;
             var R = -Q / 2 + MathS.Sqrt(MathS.Sqr(Q) / 4 + MathS.Pow(P, 3) / 27);
-            var U = MathS.Pow(R, 1.0 / 3);
-            if (MathS.CanBeEvaluated(U))
-                U = U.Eval();  // further, we will compare it to 0
-            var y = SySyn.Rational(-5, 6) * alpha + U + (U == 0 ? -MathS.Pow(Q, 1.0 / 3) : -P / (3 * U));
+            var U = MathS.Pow(R, oneThird);
+            var y = Number.CreateRational(-5, 6) * alpha + U + (Const.EvalIfCan(U) == 0 ? -MathS.Pow(Q, oneThird) : -P / (3 * U));
             var W = MathS.Sqrt(alpha + 2 * y);
            
             // Now we need to permutate all four combinations

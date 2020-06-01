@@ -238,6 +238,17 @@ namespace UnitTests.Algebra
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
         }
+
+        [TestMethod]
+        public void MomoTest()
+        {
+            Entity expr = "1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4";
+            var sols = expr.SolveEquation("x");
+            AssertRootCount(sols, 4);
+            foreach (var root in sols.FiniteSet())
+                AssertRoots(expr, x, root);
+        }
+
         [TestMethod]
         public void TestVars3()
         {

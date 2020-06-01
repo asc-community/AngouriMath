@@ -144,6 +144,7 @@ namespace AngouriMath.Core
         public SetEnumerator GetEnumerator()
             => new SetEnumerator(Pieces.ToArray());
 
+        // TODO: exception
         public FiniteSet FiniteSet()
             => new FiniteSet(Pieces.ToArray());
 
@@ -156,6 +157,7 @@ namespace AngouriMath.Core
                 Pieces.Add(piece);
                 return;
             }
+
             if (!piece.IsNumeric())
             {
                 if (Pieces.All(p => p != piece))

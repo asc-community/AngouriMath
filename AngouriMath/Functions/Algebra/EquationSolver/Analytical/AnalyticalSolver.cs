@@ -468,7 +468,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
 
             // if nothing has been found so far
-            if (dst.IsEmpty())
+            if (dst.IsEmpty() && MathS.Settings.AllowNewton)
             {
                 Set allVars = new Set();
                 TreeAnalyzer._GetUniqueVariables(expr, allVars);

@@ -255,8 +255,24 @@ namespace Samples
         }*/
         static void Main(string[] _)
         {
-            var a = MathS.FromString("3 ^ 3 ^ 3");
-            Console.WriteLine(a.Eval().Real > 1000);
+            /*
+            var eqs = MathS.Equations(
+                "x3 + 9 x2 y - 10",
+                "y3 + x y2 - 2"
+                );
+            var sols = eqs.Solve("x", "y");
+            Console.WriteLine(sols.PrintOut(3233));
+            */
+            //MathS.Settings.FloatToRationalIterCount = 0;
+            MathS.Settings.PrecisionError = 1.0e-6m;
+            Entity a = "1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4";
+            var roots = a.SolveEquation("x").FiniteSet();
+            MathS.Settings.FloatToRationalIterCount = 15;
+            foreach (var b in roots)
+                Console.WriteLine(Number.Create(b.GetValue().Real.Value) as Number);
+            //MathS.Settings
+            //foreach (var root in a.SolveEquation("x").FiniteSet())
+
         }
     }
 }

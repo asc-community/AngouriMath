@@ -16,13 +16,7 @@ namespace AngouriMath.Core.Numerix
             => Number.Functional.Downcast(new IntegerNumber(value)) as IntegerNumber;
         public static IntegerNumber Create(int value) 
             => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
-        public static RationalNumber CreateRational(int numerator, int denominator)
-            => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
-        public static RationalNumber CreateRational(int numerator, long denominator)
-            => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
-        public static RationalNumber CreateRational(long numerator, int denominator)
-            => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
-        public static RationalNumber CreateRational(long numerator, long denominator)
+        public static RationalNumber CreateRational(IntegerNumber numerator, IntegerNumber denominator)
             => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
         public static RealNumber Create(decimal value)
             => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
@@ -98,6 +92,7 @@ namespace AngouriMath.Core.Numerix
                         if (!(a as RealNumber).IsDefinite())
                             return (Result: a, Continue: false);
                         var realnum = num[0];
+
                         var attempt = FindRational(realnum.Value, MathS.Settings.FloatToRationalIterCount);
                         if (attempt is null || 
                             Math.Abs(attempt.Numerator) > MathS.Settings.MaxAbsNumeratorOrDenominatorValue ||
@@ -133,7 +128,7 @@ namespace AngouriMath.Core.Numerix
 
             public static RationalNumber FindRational(decimal num, int iterCount)
             {
-                if (iterCount < 0)
+                if (iterCount <= 0)
                     return null;
                 long sign = num > 0 ? 1 : -1;
                 num *= sign;

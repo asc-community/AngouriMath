@@ -27,8 +27,9 @@ namespace UnitTests.Algebra
 
                     foreach (var uniqvar in MathS.Utils.GetUniqueVariables(eqCopy).FiniteSet())
                         eqCopy = eqCopy.Substitute(uniqvar.Name, 3);
-                    Assert.IsTrue(Number.Abs(eqCopy.Eval()) < 0.0001,
-                        "i: " + i + "  eq: " + eq.ToString() + "  E: " + eqCopy.Eval().ToString());
+                    var E = Number.Abs(eqCopy.Eval());
+                    Assert.IsTrue(E.IsDefinite() && E < 0.0001,
+                        "i: " + i + "  eq: " + eq.ToString() + "  E: " + E.ToString());
                 }
             }
         }

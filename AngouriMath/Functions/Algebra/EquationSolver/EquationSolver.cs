@@ -66,9 +66,6 @@ namespace AngouriMath.Functions.Algebra.Solver
         {
             if (equations.Count != vars.Count)
                 throw new MathSException("Amount of equations must be equal to that of vars");
-            foreach (var v in vars)
-                if (!(v is VariableEntity))
-                    throw new TreeException("Arguments passed under vars should be Variable Entities");
             equations = new List<Entity>(equations.Select(c => c));
             vars = new List<VariableEntity>(vars.Select(c => c));
             int initVarCount = vars.Count;

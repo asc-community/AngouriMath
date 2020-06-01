@@ -7,3 +7,4 @@ Since 331st commit, AM is not compatible to the previous versions. Here are chan
 5. FromLinq removed
 6. MathS.Utils.EQUALITY_THRESHOLD -> MathS.Settings.PrecisionError
 7. All obsolete methods removed, check previous version to look for the replacing method
+8. CubicFormula numerical case removed

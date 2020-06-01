@@ -396,6 +396,8 @@ namespace AngouriMath
             /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
             /// </summary>
             public static decimal PrecisionError { get; set; } = 1.0e-6m;
+
+            public static bool AllowNewton { get; set; } = true;
         }
 
         /// <summary>
