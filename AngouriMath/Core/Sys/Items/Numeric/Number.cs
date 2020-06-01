@@ -27,7 +27,7 @@ namespace AngouriMath.Core.Numerix
             => SuperSwitch(
                 (num) => new IntegerNumber(num[0] as Number),
                 (num) => new RationalNumber(num[0]),
-                (num) => new RealNumber(num[0]),
+                (num) => new RealNumber(num[0] as Number),
                 (num) => new ComplexNumber(num[0]),
                 num.Type,
                 num

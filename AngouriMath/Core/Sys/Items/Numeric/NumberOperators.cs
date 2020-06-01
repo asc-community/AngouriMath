@@ -123,9 +123,18 @@ namespace AngouriMath.Core.Numerix
             var baseCom = @base.AsComplexNumber();
             var powerCom = power.AsComplexNumber();
             if (baseCom.IsDefinite() && powerCom.IsDefinite())
-                return Functional.Downcast(
-                    Complex.Pow(baseCom.AsComplex(), powerCom.AsComplex())
-                ) as ComplexNumber;
+            {
+                try
+                {
+                    return Functional.Downcast(
+                        Complex.Pow(baseCom.AsComplex(), powerCom.AsComplex())
+                    ) as ComplexNumber;
+                }
+                catch (OverflowException)
+                {
+                    return RealNumber.NaN();
+                }
+            }
             else
                 return ComplexNumber.Indefinite(RealNumber.UndefinedState.NAN);
         }

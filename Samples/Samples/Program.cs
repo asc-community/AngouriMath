@@ -255,7 +255,8 @@ namespace Samples
         }*/
         static void Main(string[] _)
         {
-            
+            var a = MathS.FromString("3 ^ 3 ^ 3");
+            Console.WriteLine(a.Eval().Real > 1000);
         }
     }
 }

@@ -89,7 +89,7 @@ namespace AngouriMath.Core
         /// </param>
         /// <param name="num"></param>
         /// <returns></returns>
-        private static bool InBetween(decimal a, decimal b, bool closedA, bool closedB, decimal num, bool closedNum)
+        private static bool InBetween(RealNumber a, RealNumber b, bool closedA, bool closedB, RealNumber num, bool closedNum)
         {
             if (num == a && (closedA || !closedNum))
                 return true;
