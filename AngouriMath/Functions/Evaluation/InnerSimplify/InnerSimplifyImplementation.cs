@@ -49,7 +49,7 @@ namespace AngouriMath
     {
         internal override Entity InnerSimplify()
         {
-            return this;
+            return new NumberEntity(Number.Functional.Downcast(this.Value) as ComplexNumber);
         }
     }
     public partial class VariableEntity : Entity

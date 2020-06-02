@@ -150,7 +150,7 @@ namespace AngouriMath
         /// <returns>
         /// Number since new version
         /// </returns>
-        public ComplexNumber Eval() => SubstituteConstants().Simplify(0).GetValue();
+        public ComplexNumber Eval() => SubstituteConstants().InnerSimplify().GetValue();//.Simplify(0).GetValue();
 
         /// <summary>
         /// Collapses the entire expression into a tensor if possible

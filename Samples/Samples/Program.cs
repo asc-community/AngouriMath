@@ -275,12 +275,16 @@ namespace Samples
 
             //Entity a = "(2.4 - x)(sqrt(3 + pi) - x)(sqrt(5) - x)(5*e + x)";
             //Console.WriteLine(a.Expand().Collapse());
-            
-            Entity a = "1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4";
-            var roots = a.SolveEquation("x").FiniteSet();
-            foreach (var b in roots)
-                Console.WriteLine(b);
-              
+            /*
+            var x = MathS.Var("x");
+            var eq = x.Pow(3) + 3 * x.Pow(2) + 3 * x + 1;
+            var roots = eq.SolveEquation("x");
+            foreach (var root in roots.FiniteSet())
+                Console.WriteLine(root);
+                */
+            var x = MathS.Var("x");
+            var eq = x.Pow(3) + 3 * x.Pow(2) + 3 * x + 1;
+            var roots = eq.SolveEquation("x");
             //var a = new Set(3, 5, MathS.Sqrt(3 + MathS.Sin(5)), 7, 9, MathS.Sqrt(3 + MathS.Sin(5)));
             //Console.WriteLine(a);
             /*

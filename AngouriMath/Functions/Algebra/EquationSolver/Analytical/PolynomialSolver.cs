@@ -180,7 +180,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, Number.CreateRational(1, 3));
 
             foreach (var uk in new List<Entity> {u1, u2, u3})
-                //res.Add(-(b + uk * C + D0 / C / uk) / 3 / a);
             {
                 var r = -(b + uk * C + D0 / C / uk) / 3 / a;
                 res.Add(r);
