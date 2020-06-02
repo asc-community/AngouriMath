@@ -285,6 +285,7 @@ namespace Samples
             var x = MathS.Var("x");
             var eq = x.Pow(3) + 3 * x.Pow(2) + 3 * x + 1;
             var roots = eq.SolveEquation("x");
+            Console.WriteLine(roots);
             //var a = new Set(3, 5, MathS.Sqrt(3 + MathS.Sin(5)), 7, 9, MathS.Sqrt(3 + MathS.Sin(5)));
             //Console.WriteLine(a);
             /*

@@ -181,7 +181,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             foreach (var uk in new List<Entity> {u1, u2, u3})
             {
-                var r = -(b + uk * C + D0 / C / uk) / 3 / a;
+                Entity r;
+                if (Const.EvalIfCan(C) == 0 && Const.EvalIfCan(D0) == 0)
+                    r = -(b + uk * C) / 3 / a;
+                else
+                    r = -(b + uk * C + D0 / C / uk) / 3 / a;
                 res.Add(r);
             }
             return res;

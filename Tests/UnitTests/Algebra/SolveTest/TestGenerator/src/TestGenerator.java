@@ -13,7 +13,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Random;
@@ -26,7 +25,7 @@ public class TestGenerator {
 
     static final String path = "./../SolverNumericalTests.cs";
 
-    public static String generate(String className, int iterCount, int power, boolean complex)
+    public static String generatePolynomial(String className, int iterCount, int power, boolean complex)
     {
         var sb = new StringBuilder();
         sb.append("namespace UnitTests.Algebra.PolynomialSolverTests\n");
@@ -73,13 +72,13 @@ public class TestGenerator {
         sb.append(" */\n\n\n");
         sb.append("using AngouriMath;\n");
         sb.append("using Microsoft.VisualStudio.TestTools.UnitTesting;\n\n");
-        sb.append(generate("ClassRealCardanoNumericRoots", 20, 3, false));
+        sb.append(generatePolynomial("ClassRealCardanoNumericRoots", 20, 3, false));
         sb.append("\n\n");
-        sb.append(generate("ClassComplexCardanoNumericRoots", 20, 3, true));
+        sb.append(generatePolynomial("ClassComplexCardanoNumericRoots", 30, 3, true));
         sb.append("\n\n");
-        sb.append(generate("ClassRealFerrariNumericRoots", 20, 4, false));
+        sb.append(generatePolynomial("ClassRealFerrariNumericRoots", 12, 4, false));
         sb.append("\n\n");
-        sb.append(generate("ClassComplexFerrariNumericRoots", 20, 4, true));
+        sb.append(generatePolynomial("ClassComplexFerrariNumericRoots", 8, 4, true));
         var writer = new FileWriter(path);
         writer.write(sb.toString());
         writer.close();
