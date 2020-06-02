@@ -32,8 +32,8 @@ namespace AngouriMath
     {
         internal static readonly Dictionary<string, ComplexNumber> ConstantList = new Dictionary<string, ComplexNumber>
         {
-            { "pi", Math.PI },
-            { "e", Math.E },
+            { "pi", MathS.DecimalConst.pi },
+            { "e", MathS.DecimalConst.e },
         };
 
         /// <summary>

@@ -385,10 +385,29 @@ namespace AngouriMath
 
         }
 
+        /// <summary>
+        /// A couple of settings allowing you to set some preferences for AM's algorithms
+        /// To use those settings the syntax is
+        /// MathS.Settings.SomeSetting.Set(5);   // Here you set a value to the setting
+        /// ... // your code
+        /// MathS.Settings.SomeSettings.Unset(); // Optional. Reverts the setting to the previous value
+        /// </summary>
         public static class Settings
         {
+            /// <summary>
+            /// Enables downcasting. Not recommended to turn off, disabling might be only useful for some calculations
+            /// </summary>
             public static Setting<bool> DowncastingEnabled { get; } = true;
+
+            /// <summary>
+            /// Amount of iterations allowed for attempting to cast to a rational
+            /// The more iterations, the larger fraction could be calculated
+            /// </summary>
             public static Setting<int> FloatToRationalIterCount { get; } = 5;
+
+            /// <summary>
+            /// If a numerator or denominator is too large, it's suspended to better keep the real number instead of casting
+            /// </summary>
             public static Setting<long> MaxAbsNumeratorOrDenominatorValue { get; } = 100000000;
 
             /// <summary>
@@ -398,8 +417,14 @@ namespace AngouriMath
             /// </summary>
             public static Setting<decimal> PrecisionErrorCommon { get; } = 1.0e-6m;
 
+            /// <summary>
+            /// Numbers whose absolute value is less than PrecisionErrorZeroRange are considered zeros
+            /// </summary>
             public static Setting<decimal> PrecisionErrorZeroRange { get; } = 1.0e-16m;
 
+            /// <summary>
+            /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
+            /// </summary>
             public static Setting<bool> AllowNewton { get; } = true;
         }
 
@@ -526,5 +551,17 @@ namespace AngouriMath
                 => Piece.Interval(from, to).AsInterval();
         }
 
+        public static class DecimalConst
+        {
+            /// <summary>
+            /// Pi constant
+            /// </summary>
+            public static readonly decimal pi = 3.14159_26535_89793_23846_26433m;
+
+            /// <summary>
+            /// E constant
+            /// </summary>
+            public static readonly decimal e  = 2.71828_18284_59045_23536_02874m;
+        }
     }
 }

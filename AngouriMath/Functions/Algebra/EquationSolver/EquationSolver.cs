@@ -40,7 +40,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         {
             var res = new Set();
             equation = equation.DeepCopy();
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
+            MathS.Settings.PrecisionErrorZeroRange.Set(1e-13m);
             MathS.Settings.FloatToRationalIterCount.Set(0);
             AnalyticalSolver.Solve(equation, x, res);
 
