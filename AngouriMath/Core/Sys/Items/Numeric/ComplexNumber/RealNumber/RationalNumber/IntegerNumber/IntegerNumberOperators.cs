@@ -50,5 +50,7 @@ namespace AngouriMath.Core.Numerix
 
         public static implicit operator IntegerNumber(long num)
             => new IntegerNumber((BigInteger)num);
+        public static implicit operator IntegerNumber(BigInteger num)
+            => new IntegerNumber(num);
     }
 }

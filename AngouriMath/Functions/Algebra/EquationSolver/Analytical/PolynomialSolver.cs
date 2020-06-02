@@ -519,7 +519,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             // Can we eval it right here?
                             mp.Children[1] = mp.Children[1].Eval();
                             freeMono *= MathS.Pow(tmpFree, mp.Children[1]);
-                            power.AddMp(q.GetValue(), mp.Children[1].GetValue());
+                            try
+                            {
+                                power.AddMp(q.GetValue(), mp.Children[1].GetValue());
+                            }
+                            catch
+                            {
+                                power.AddMp(q.GetValue(), mp.Children[1].GetValue());
+                                throw new Exception(q.GetValue() + "   " + mp.Children[1].GetValue());
+                            }
                         }
                     }
                 }

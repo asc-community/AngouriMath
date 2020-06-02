@@ -89,8 +89,8 @@ namespace AngouriMath.Functions
         /// <param name="num"></param>
         /// <returns></returns>
         internal static ComplexNumber CutoffImprecision(ComplexNumber num)
-            => Number.Create(num.Real.Value - num.Real.Value % MathS.Settings.PrecisionError,
-                num.Imaginary.Value - num.Imaginary.Value % MathS.Settings.PrecisionError);
+            => Number.Create(num.Real.Value - num.Real.Value % MathS.Settings.PrecisionErrorCommon,
+                num.Imaginary.Value - num.Imaginary.Value % MathS.Settings.PrecisionErrorCommon);
 
         /// <summary>
         /// Alike to ParseIndex, but strict on index: it should be a number
@@ -231,6 +231,40 @@ namespace AngouriMath.Functions
             var rest = (new ArraySegment<long>(numbers, 2, numbers.Length - 2)).ToList();
             rest.Add(_GCD(numbers[0], numbers[1]));
             return GCD(rest.ToArray());
+        }
+    }
+
+    public class Setting<T>
+    {
+        private Stack<T> sets = new Stack<T>();
+        internal Setting(T defaultValue)
+        {
+            Set(defaultValue);
+        }
+
+        public void Set(T value)
+        {
+            sets.Push(value);
+        }
+
+        public void Unset()
+        {
+            sets.Pop();
+        }
+
+        public static implicit operator T(Setting<T> s)
+        {
+            return s.sets.Peek();
+        }
+
+        public static implicit operator Setting<T>(T a)
+        {
+            return new Setting<T>(a);
+        }
+
+        public override string ToString()
+        {
+            return sets.Peek().ToString();
         }
     }
 }

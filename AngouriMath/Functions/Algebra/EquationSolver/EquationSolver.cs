@@ -23,6 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+ using AngouriMath.Core.Numerix;
 
 
 namespace AngouriMath.Functions.Algebra.Solver
@@ -39,8 +40,26 @@ namespace AngouriMath.Functions.Algebra.Solver
         {
             var res = new Set();
             equation = equation.DeepCopy();
+            MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
+            MathS.Settings.FloatToRationalIterCount.Set(0);
             AnalyticalSolver.Solve(equation, x, res);
-            res.FiniteApply(p => p.InnerSimplify());
+
+            Entity TryDowncast(Entity root)
+            {
+                if (!MathS.CanBeEvaluated(root))
+                    return root;
+                var preciseValue = root.Eval();
+                MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
+                MathS.Settings.FloatToRationalIterCount.Set(20);
+                var downcasted = Number.Functional.Downcast(preciseValue) as ComplexNumber;
+                MathS.Settings.FloatToRationalIterCount.Unset();
+                MathS.Settings.PrecisionErrorZeroRange.Unset();
+                var error = equation.Substitute(x, downcasted).Eval();
+                return error.Abs() < MathS.Settings.PrecisionErrorZeroRange ? downcasted : preciseValue;
+            }
+            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.FloatToRationalIterCount.Unset();
+            res.FiniteApply(TryDowncast);
             return res;
         }
         

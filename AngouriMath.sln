@@ -21,7 +21,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DotnetBenchmark", "Tests\Do
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMathPlot", "AngouriMathPlot\AngouriMathPlot.csproj", "{B7D28355-A342-4E6E-AD45-3D47F4A054A5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "testprj", "fieldtest\testprj\testprj.csproj", "{82DC716A-2FC7-49DC-9C62-CCE4CB29885E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "testprj", "fieldtest\testprj\testprj.csproj", "{82DC716A-2FC7-49DC-9C62-CCE4CB29885E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9C4C2000-D0E3-45FE-A9D3-1B489ACA4594}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

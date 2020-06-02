@@ -118,8 +118,11 @@ namespace AngouriMath.Core.Numerix
             return res;
         }
 
-        public static RealNumber Abs(Number num)
-            => (num as ComplexNumber).Abs();
+        public static RealNumber Abs(ComplexNumber num)
+            => num.Abs();
+
+        public static IntegerNumber Abs(IntegerNumber num)
+            => num.Value >= 0 ? num : new IntegerNumber(-num.Value);
     }
 
     public class InvalidNumberCastException : InvalidCastException

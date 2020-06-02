@@ -28,6 +28,7 @@ using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sys;
  using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Core.Sys.Items.Tensors;
+using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra.InequalitySolver;
 using Number = AngouriMath.Core.Numerix.Number;
 
@@ -386,18 +387,20 @@ namespace AngouriMath
 
         public static class Settings
         {
-            public static bool DowncastingEnabled { get; set; } = true;
-            public static int FloatToRationalIterCount { get; set; } = 5;
-            public static long MaxAbsNumeratorOrDenominatorValue { get; set; } = 100000000;
+            public static Setting<bool> DowncastingEnabled { get; } = true;
+            public static Setting<int> FloatToRationalIterCount { get; } = 5;
+            public static Setting<long> MaxAbsNumeratorOrDenominatorValue { get; } = 100000000;
 
             /// <summary>
             /// Sets threshold for comparison
             /// For example, if you don't need precision higher than 6 digits after .,
             /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
             /// </summary>
-            public static decimal PrecisionError { get; set; } = 1.0e-6m;
+            public static Setting<decimal> PrecisionErrorCommon { get; } = 1.0e-6m;
 
-            public static bool AllowNewton { get; set; } = true;
+            public static Setting<decimal> PrecisionErrorZeroRange { get; } = 1.0e-16m;
+
+            public static Setting<bool> AllowNewton { get; } = true;
         }
 
         /// <summary>

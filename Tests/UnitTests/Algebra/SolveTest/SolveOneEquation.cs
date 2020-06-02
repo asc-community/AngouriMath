@@ -79,10 +79,9 @@ namespace UnitTests.Algebra
         public void Test4()
         {
             var eq = x.Pow(2) + 2 * x + 1;
-            var tmpEQTHR = MathS.Settings.PrecisionError;
-            MathS.Settings.PrecisionError = 1e-6m;
+            MathS.Settings.PrecisionErrorCommon.Set(1e-6m);
             var roots = eq.SolveNt(x, precision: 100);
-            MathS.Settings.PrecisionError = tmpEQTHR;
+            MathS.Settings.PrecisionErrorCommon.Unset();
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
@@ -209,7 +208,7 @@ namespace UnitTests.Algebra
         public void TestAllNumbers4complex()
         {
             var rand = new Random(24 /* seed should be specified due to required determinism*/ );
-            for (int i = 0; i < 30; i++)
+            for (int i = 0; i < 5; i++)
             {
                 var expr = (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
                            (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *

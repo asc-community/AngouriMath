@@ -124,7 +124,7 @@ namespace AngouriMath.Core.Numerix
             => !(a > b);
 
         public static bool AreEqual(RealNumber a, RealNumber b)
-            => Math.Abs(a.Value - b.Value) < MathS.Settings.PrecisionError && a.State == b.State;
+            => Math.Abs(a.Value - b.Value) < MathS.Settings.PrecisionErrorCommon && a.State == b.State;
 
         public static RealNumber operator -(RealNumber a)
             => (-1 * a).AsRealNumber();

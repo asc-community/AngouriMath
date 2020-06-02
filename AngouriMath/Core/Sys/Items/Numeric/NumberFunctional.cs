@@ -34,6 +34,16 @@ namespace AngouriMath.Core.Numerix
                 this
             );
 
+        public static bool IsZero(RealNumber num)
+        {
+            if (!num.IsDefinite())
+                return false;
+            return Functional.IsZero(num.Value);
+        }
+
+        public static bool IsZero(ComplexNumber num)
+            => IsZero(num.Real) && IsZero(num.Imaginary);
+
         public static class Functional
         {
             /// <summary>
@@ -66,6 +76,21 @@ namespace AngouriMath.Core.Numerix
                 return (UpCastTo(a, newType), UpCastTo(b, newType), newType);
             }
 
+            private static bool TryCastToInt(decimal value, out BigInteger res)
+            {
+                var intPart = Math.Round(value);
+                var rest = value - intPart;
+                if (IsZero(rest))
+                {
+                    res = (BigInteger)intPart;
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
             internal static Number Downcast(Number a)
             {
                 if (!MathS.Settings.DowncastingEnabled)
@@ -93,10 +118,13 @@ namespace AngouriMath.Core.Numerix
                             return (Result: a, Continue: false);
                         var realnum = num[0];
 
+                        if (TryCastToInt(realnum.Value, out var intres))
+                            return (Result: new IntegerNumber(intres), Continue: false);
+
                         var attempt = FindRational(realnum.Value, MathS.Settings.FloatToRationalIterCount);
                         if (attempt is null || 
-                            Math.Abs(attempt.Numerator) > MathS.Settings.MaxAbsNumeratorOrDenominatorValue ||
-                            Math.Abs(attempt.Denominator) > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
+                            Number.Abs(attempt.Numerator) > MathS.Settings.MaxAbsNumeratorOrDenominatorValue ||
+                            Number.Abs(attempt.Denominator) > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                             return (Result: realnum, Continue: false);
                         else
                             return (Result: attempt, Continue: true);
@@ -104,7 +132,7 @@ namespace AngouriMath.Core.Numerix
                     (num) =>
                     {
                         var complnum = num[0];
-                        if (complnum.Imaginary.IsDefinite() && complnum.Imaginary.Value == 0)
+                        if (complnum.Imaginary.IsDefinite() && Number.IsZero(complnum.Imaginary.Value)) // Momo's fix
                             return (Result: complnum.Real, Continue: true);
                         else
                             return (Result: complnum, Continue: false);
@@ -118,9 +146,9 @@ namespace AngouriMath.Core.Numerix
                     return res.Result;
             }
 
-            private static bool IsZero(decimal value)
+            internal static bool IsZero(decimal value)
             {
-                return Math.Abs(value) < MathS.Settings.PrecisionError;
+                return Math.Abs(value) <= MathS.Settings.PrecisionErrorZeroRange;
             }
 
             public static RationalNumber FindRational(decimal num)
@@ -132,7 +160,9 @@ namespace AngouriMath.Core.Numerix
                     return null;
                 long sign = num > 0 ? 1 : -1;
                 num *= sign;
-                var intPart = (IntegerNumber)((long)Math.Floor(num));
+                var intPart = (IntegerNumber)((BigInteger)Math.Floor(num));
+                if (intPart > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
+                    return null;
                 decimal rest = num - (decimal)intPart.Value;
                 if (IsZero(rest))
                     return (sign * intPart).AsRationalNumber();

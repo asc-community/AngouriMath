@@ -264,12 +264,34 @@ namespace Samples
             Console.WriteLine(sols.PrintOut(3233));
             */
             //MathS.Settings.FloatToRationalIterCount = 0;
+            /*
             MathS.Settings.PrecisionError = 1.0e-6m;
             Entity a = "1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4";
             var roots = a.SolveEquation("x").FiniteSet();
             MathS.Settings.FloatToRationalIterCount = 15;
             foreach (var b in roots)
                 Console.WriteLine(Number.Create(b.GetValue().Real.Value) as Number);
+                */
+
+            //Entity a = "(2.4 - x)(sqrt(3 + pi) - x)(sqrt(5) - x)(5*e + x)";
+            //Console.WriteLine(a.Expand().Collapse());
+            
+            Entity a = "1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4";
+            var roots = a.SolveEquation("x").FiniteSet();
+            foreach (var b in roots)
+                Console.WriteLine(b);
+              
+            //var a = new Set(3, 5, MathS.Sqrt(3 + MathS.Sin(5)), 7, 9, MathS.Sqrt(3 + MathS.Sin(5)));
+            //Console.WriteLine(a);
+            /*
+            var num = 122222;
+            var den = 1363333m;
+            var ray = Number.Functional.FindRational(num / den);
+            Console.WriteLine(ray as Number);
+            Console.WriteLine(num + " / " + den);
+            Console.WriteLine("Target: " + num / den);
+            Console.WriteLine("Actual: " + ray.Value);
+            */
             //MathS.Settings
             //foreach (var root in a.SolveEquation("x").FiniteSet())
 
