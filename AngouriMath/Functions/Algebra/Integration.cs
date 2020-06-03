@@ -83,7 +83,7 @@ namespace AngouriMath
         /// <returns></returns>
         internal static ComplexNumber Integrate(Entity func, VariableEntity x, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, int stepCount)
         {
-            var res = Number.Create(0.0, 0.0);
+            ComplexNumber res = 0;
             var cfunc = func.Compile(x);
             for(int i = 0; i <= stepCount; i++)
             {

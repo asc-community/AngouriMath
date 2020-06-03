@@ -366,6 +366,17 @@ namespace AngouriMath.Core.Numerix
             {
                 return a.Type == type && b.Type == type;
             }
+
+            public static ComplexNumber BinaryIntPow(ComplexNumber num, long val)
+            {
+                if (val == 0)
+                    return 1;
+                if (val == 1)
+                    return num;
+                if (val == -1)
+                    return 1 / num;
+                return BinaryIntPow(num, val / 2) * BinaryIntPow(num, val / 2) * BinaryIntPow(num, val % 2);
+            }
         }
     }
 }

@@ -1,17 +1,7 @@
-﻿using AngouriMath;
-using AngouriMath.Convenience;
-using AngouriMath.Core;
+﻿
 using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.ComponentModel.Design.Serialization;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Numerics;
-using AngouriMath.Core.Sets;
+using AngouriMath;
 using AngouriMath.Core.Numerix;
-using System.Numerics;
 
 namespace Samples
 {
@@ -19,7 +9,10 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-     
+            VariableEntity x = "x";
+            Entity expr = MathS.Log(2, x) - 5;
+            var roots = expr.SolveEquation(x);
+            Console.WriteLine(roots);
         }
     }
 }

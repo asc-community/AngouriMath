@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,7 +15,7 @@
 
 
 
-﻿using AngouriMath.Core.TreeAnalysis;
+ using AngouriMath.Core.TreeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +38,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
-        internal static Entity Simplify(Entity expr, int level) => ((Entity)Alternate(expr, level).Pieces[0]).InnerSimplify();
+        internal static Entity Simplify(Entity expr, int level) => ((Entity)Alternate(expr, level).Pieces[0]).InnerEval();
 
         /// <summary>
         /// Finds all alternative forms of an expression
@@ -50,7 +50,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
         {
             if (src.entType == Entity.EntType.NUMBER || src.entType == Entity.EntType.VARIABLE)
                 return new Set(src.Copy());
-            var stage1 = src.InnerSimplify();
+            var stage1 = src.InnerEval();
             if (stage1.entType == Entity.EntType.NUMBER)
                 return new Set(stage1);
 
@@ -59,7 +59,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
             void TryInnerSimplify(ref Entity expr)
             {
                 TreeAnalyzer.Sort(ref expr, TreeAnalyzer.SortLevel.HIGH_LEVEL);
-                expr = expr.InnerSimplify();
+                expr = expr.InnerEval();
             }
 
             void __IterAddHistory(Entity expr)
@@ -108,11 +108,11 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 {
                     TreeAnalyzer.InvertNegativePowers(ref res);
                     TreeAnalyzer.ReplaceInPlace(Patterns.DivisionPreparingRules, ref res);
-                    res = res.InnerSimplify();
+                    res = res.InnerEval();
                     TreeAnalyzer.FindDivisors(ref res, (num, denom) => !MathS.CanBeEvaluated(num) && !MathS.CanBeEvaluated(denom));
                 }
 
-                res = res.InnerSimplify();
+                res = res.InnerEval();
                 if (TreeAnalyzer.Optimization.ContainsTrigonometric(res))
                 {
                     var res1 = res.DeepCopy();

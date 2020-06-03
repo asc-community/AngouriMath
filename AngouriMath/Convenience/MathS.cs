@@ -100,11 +100,11 @@ namespace AngouriMath
         /// <summary>
         /// https://en.wikipedia.org/wiki/Logarithm
         /// </summary>
-        /// <param name="num"></param>
-        /// <param name="base_"></param>
+        /// <param name="@base"></param>
+        /// <param name="x"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Log(Entity @base, Entity x) => Logf.Hang(x, @base);
+        public static Entity Log(Entity @base, Entity x) => Logf.Hang(@base, x);
 
         /// <summary>
         /// https://en.wikipedia.org/wiki/Power_function
@@ -261,7 +261,7 @@ namespace AngouriMath
         /// <param name="a"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Ln(Entity a) => Logf.Hang(a, e);
+        public static Entity Ln(Entity a) => Logf.Hang(e, a);
 
         /// <summary>
         /// Creates an instance of variable entity.

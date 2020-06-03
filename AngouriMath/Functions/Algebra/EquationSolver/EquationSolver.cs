@@ -40,26 +40,13 @@ namespace AngouriMath.Functions.Algebra.Solver
         {
             var res = new Set();
             equation = equation.DeepCopy();
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-13m);
-            MathS.Settings.FloatToRationalIterCount.Set(0);
-            AnalyticalSolver.Solve(equation, x, res);
 
-            Entity TryDowncast(Entity root)
-            {
-                if (!MathS.CanBeEvaluated(root))
-                    return root;
-                var preciseValue = root.Eval();
-                MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
-                MathS.Settings.FloatToRationalIterCount.Set(20);
-                var downcasted = Number.Functional.Downcast(preciseValue) as ComplexNumber;
+            MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
+                MathS.Settings.FloatToRationalIterCount.Set(0);
+                    AnalyticalSolver.Solve(equation, x, res);
                 MathS.Settings.FloatToRationalIterCount.Unset();
-                MathS.Settings.PrecisionErrorZeroRange.Unset();
-                var error = equation.Substitute(x, downcasted).Eval();
-                return error.Abs() < MathS.Settings.PrecisionErrorZeroRange ? downcasted : preciseValue;
-            }
             MathS.Settings.PrecisionErrorZeroRange.Unset();
-            MathS.Settings.FloatToRationalIterCount.Unset();
-            res.FiniteApply(TryDowncast);
+
             return res;
         }
         
@@ -89,7 +76,7 @@ namespace AngouriMath.Functions.Algebra.Solver
             vars = new List<VariableEntity>(vars.Select(c => c));
             int initVarCount = vars.Count;
             for (int i = 0; i < equations.Count; i++)
-                equations[i] = equations[i].InnerSimplify();
+                equations[i] = equations[i].InnerEval();
 
             var res = EquationSolver.InSolveSystem(equations, vars);
 
@@ -116,7 +103,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static List<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var)
         {
             var result = new List<List<Entity>>();
-            foreach (var sol in eq.InnerSimplify().SolveEquation(var).FiniteSet())
+            foreach (var sol in eq.InnerEval().SolveEquation(var).FiniteSet())
                 result.Add(new List<Entity>() { sol });
             return result;
         }
@@ -162,7 +149,7 @@ namespace AngouriMath.Functions.Algebra.Solver
                             for (int varid = 0; varid < newvars.Count; varid++)
                                 Z = Z.Substitute(newvars[varid], inSol[j][varid]);
 
-                            Z = Z.InnerSimplify();
+                            Z = Z.InnerEval();
                             inSol[j].Add(Z);
                         }
                         result.AddRange(inSol);

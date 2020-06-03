@@ -27,7 +27,7 @@ namespace AngouriMath.Core.Numerix
         /// Not only a real value can be assigned to a RealNumber
         /// Create a real number of undefined state with Number.Create(RealNumber.UndefinedState)
         /// </summary>
-        public enum UndefinedState : System.Byte
+        public enum UndefinedState : byte
         {
             DEFINED,
             POSITIVE_INFINITY,

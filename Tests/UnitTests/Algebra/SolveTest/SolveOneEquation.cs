@@ -284,7 +284,7 @@ namespace UnitTests.Algebra
         [TestMethod]
         public void TestLogs()
         {
-            Entity eqs = "log(32, x) - 5";
+            Entity eqs = "log(x, 32) - 5";
             var roots = eqs.SolveEquation("x");
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())

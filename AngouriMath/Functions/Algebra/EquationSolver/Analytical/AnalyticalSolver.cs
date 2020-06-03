@@ -207,7 +207,7 @@ namespace AngouriMath.Core.TreeAnalysis
                             return FindInvertExpression(un, MathS.Pow(value, 1 / a), x);
                     }
                     else
-                        // a ^ x = value => x = log(value, a)
+                        // a ^ x = value => x = log(a, value)
                         return FindInvertExpression(un, MathS.Log(a, value) + 2 * MathS.i * n * MathS.pi, x);
                 default:
                     throw new SysException("Unknown operator");
@@ -315,12 +315,12 @@ namespace AngouriMath.Core.TreeAnalysis
                     // arccotan(x) = value => x = cotan(value)
                     return GetNotNullEntites(FindInvertExpression(a, MathS.Cotan(value), x));
                 case "logf":
-                    if (arg == 0)
+                    if (arg != 0)
                         // log(x, a) = value => x = a ^ value
-                        return GetNotNullEntites(FindInvertExpression(a, MathS.Pow(b, value), x));
+                        return GetNotNullEntites(FindInvertExpression(b, MathS.Pow(a, value), x));
                     else
                         // log(a, x) = value => a = x ^ value => x = a ^ (1 / value)
-                        return GetNotNullEntites(FindInvertExpression(b, MathS.Pow(a, 1 / value), x));
+                        return GetNotNullEntites(FindInvertExpression(a, MathS.Pow(b, 1 / value), x));
                 default:
                     throw new SysException("Unknown function");
             }
@@ -332,6 +332,25 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     internal static class AnalyticalSolver
     {
+        private static Entity TryDowncast(Entity equation, VariableEntity x, Entity root)
+        {
+            if (!MathS.CanBeEvaluated(root))
+            //if (true)
+                return root;
+            var preciseValue = root.Eval();
+            MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
+                MathS.Settings.FloatToRationalIterCount.Set(20);
+                    var downcasted = Number.Functional.Downcast(preciseValue) as ComplexNumber;
+                MathS.Settings.FloatToRationalIterCount.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            var errorExpr = equation.Substitute(x, downcasted);
+            if (!MathS.CanBeEvaluated(errorExpr))
+                return root;
+            var error = errorExpr.Eval();
+            return Number.IsZero(error) ? downcasted : preciseValue;
+        }
+
+
         /// <summary>
         /// Equation solver
         /// </summary>
@@ -348,11 +367,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return;
             }
 
+            // Applies an attempt to downcast roots
+            void DestinationAddRange(Set toAdd)
+            {
+                toAdd.FiniteApply(ent => TryDowncast(expr, x, ent));
+                dst.AddRange(toAdd);
+            }
+
             var polyexpr = expr.DeepCopy();
             Set res = PolynomialSolver.SolveAsPolynomial(polyexpr, x);
             if (res != null)
             {
-                dst.AddRange(res);
+                DestinationAddRange(res);
                 return;
             }
 
@@ -400,7 +426,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
             else if (expr.entType == Entity.EntType.FUNCTION)
             {
-                dst.AddRange(TreeAnalyzer.InvertFunctionEntity(expr as FunctionEntity, 0, x));
+                DestinationAddRange(TreeAnalyzer.InvertFunctionEntity(expr as FunctionEntity, 0, x));
                 return;
             }
 
@@ -445,7 +471,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         if (!compensateSolving || ((bestReplacement - solution) - expr).Simplify() != 0)
                             Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
                     }
-                    dst.AddRange(newDst);
+                    DestinationAddRange(newDst);
                     if (!dst.IsEmpty())
                         break;
                     // // //
@@ -460,7 +486,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 res = TrigonometricSolver.SolveLinear(trigexpr, x);
                 if (res != null)
                 {
-                    dst.AddRange(res);
+                    DestinationAddRange(res);
                     return;
                 }
             }
@@ -473,7 +499,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 Set allVars = new Set();
                 TreeAnalyzer._GetUniqueVariables(expr, allVars);
                 if (allVars.Count == 1)
-                    dst.AddRange(expr.SolveNt(x));
+                    DestinationAddRange(expr.SolveNt(x));
             }
         }
     }

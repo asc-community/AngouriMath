@@ -158,7 +158,7 @@ namespace AngouriMath.Core
             };
 
         public string PrintOut()
-        => PrintOut(25);
+        => PrintOut(55);
 
         public string PrintOut(int maxElLen)
         {

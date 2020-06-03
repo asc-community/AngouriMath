@@ -142,6 +142,8 @@ namespace AngouriMath.Core.Numerix
         public static ComplexNumber Pow(Number @base, Number power)
         {
             // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
+            if (power.IsInteger())
+                return Functional.BinaryIntPow(@base as ComplexNumber, power.AsInt());
             var baseCom = @base.AsComplexNumber();
             var powerCom = power.AsComplexNumber();
             if (baseCom.IsDefinite() && powerCom.IsDefinite())

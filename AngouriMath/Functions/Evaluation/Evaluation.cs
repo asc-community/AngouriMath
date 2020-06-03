@@ -125,7 +125,7 @@ namespace AngouriMath
         /// <param name="level"></param>
         /// <returns></returns>
         public Set Alternate(int level) => Simplificator.Alternate(this, level);
-        internal abstract Entity InnerSimplify();
+        internal abstract Entity InnerEval();
 
         /// <summary>
         /// Fast substitution of some mathematical constants,
@@ -150,7 +150,7 @@ namespace AngouriMath
         /// <returns>
         /// Number since new version
         /// </returns>
-        public ComplexNumber Eval() => SubstituteConstants().InnerSimplify().GetValue();//.Simplify(0).GetValue();
+        public ComplexNumber Eval() => SubstituteConstants().InnerEval().GetValue();
 
         /// <summary>
         /// Collapses the entire expression into a tensor if possible
@@ -220,8 +220,8 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerSimplify();
-            var r2 = args[1].InnerSimplify();
+            var r1 = args[0].InnerEval();
+            var r2 = args[1].InnerEval();
             args = new List<Entity> { r1, r2 };
             if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
                 return new NumberEntity((r1 as NumberEntity).Value + (r2 as NumberEntity).Value);
@@ -237,8 +237,8 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerSimplify();
-            var r2 = args[1].InnerSimplify();
+            var r1 = args[0].InnerEval();
+            var r2 = args[1].InnerEval();
             if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
                 return new NumberEntity((r1 as NumberEntity).Value - (r2 as NumberEntity).Value);
             else if (r1 == r2)
@@ -254,8 +254,8 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerSimplify();
-            var r2 = args[1].InnerSimplify();
+            var r1 = args[0].InnerEval();
+            var r2 = args[1].InnerEval();
             args = new List<Entity> { r1, r2 };
             if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
                 return new NumberEntity((r1 as NumberEntity).Value * (r2 as NumberEntity).Value);
@@ -273,8 +273,8 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerSimplify();
-            var r2 = args[1].InnerSimplify();
+            var r1 = args[0].InnerEval();
+            var r2 = args[1].InnerEval();
             if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
                 return new NumberEntity((r1 as NumberEntity).Value / (r2 as NumberEntity).Value);
             else if (r1 == 0)
@@ -290,8 +290,8 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerSimplify();
-            var r2 = args[1].InnerSimplify();
+            var r1 = args[0].InnerEval();
+            var r2 = args[1].InnerEval();
             if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
                 return new NumberEntity(Number.Pow((r1 as NumberEntity).Value, (r2 as NumberEntity).Value));
             else if (r1 == 0 || r1 == 1)
@@ -309,7 +309,7 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerSimplify();
+            var r = args[0].InnerEval();
             if (r.entType == Entity.EntType.NUMBER)
                 return new NumberEntity(Number.Sin((r as NumberEntity).Value));
             else
@@ -321,7 +321,7 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerSimplify();
+            var r = args[0].InnerEval();
             if (r.entType == Entity.EntType.NUMBER)
                 return new NumberEntity(Number.Cos((r as NumberEntity).Value));
             else
@@ -333,7 +333,7 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerSimplify();
+            var r = args[0].InnerEval();
             if (r.entType == Entity.EntType.NUMBER)
                 return new NumberEntity(Number.Tan((r as NumberEntity).Value));
             else
@@ -345,7 +345,7 @@ namespace AngouriMath
         public static Entity Simplify(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerSimplify();
+            var r = args[0].InnerEval();
             if (r.entType == Entity.EntType.NUMBER)
                 return new NumberEntity(Number.Cotan((r as NumberEntity).Value));
             else
@@ -358,11 +358,11 @@ namespace AngouriMath
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            var r = args[0].InnerSimplify();
-            var n = args[1].InnerSimplify();
+            var r = args[0].InnerEval();
+            var n = args[1].InnerEval();
             args = new List<Entity> { r, n };
             if (r.entType == Entity.EntType.NUMBER && n.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Log((n as NumberEntity).Value.Real, (r as NumberEntity).Value));
+                return new NumberEntity(Number.Log((r as NumberEntity).Value.Real, (n as NumberEntity).Value));
             else if (r == n)
                 return 1;
             else if (r == 1)
@@ -377,7 +377,7 @@ namespace AngouriMath
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerSimplify();
+            var arg = args[0].InnerEval();
             if (arg.entType == Entity.EntType.NUMBER)
                 return new NumberEntity(Number.Arcsin((arg as NumberEntity).Value));
             else
@@ -389,7 +389,7 @@ namespace AngouriMath
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerSimplify();
+            var arg = args[0].InnerEval();
             if (arg.entType == Entity.EntType.NUMBER)
                 return new NumberEntity(Number.Arccos((arg as NumberEntity).Value));
             else
@@ -401,7 +401,7 @@ namespace AngouriMath
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerSimplify();
+            var arg = args[0].InnerEval();
             if (arg.entType == Entity.EntType.NUMBER)
                 return new NumberEntity(Number.Arctan((arg as NumberEntity).Value));
             else
@@ -413,7 +413,7 @@ namespace AngouriMath
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerSimplify();
+            var arg = args[0].InnerEval();
             if (arg.entType == Entity.EntType.NUMBER)
                 return new NumberEntity(Number.Arccotan((arg as NumberEntity).Value));
             else

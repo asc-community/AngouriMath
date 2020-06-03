@@ -22,7 +22,7 @@ namespace UnitTests.Convenience
         [TestMethod]
         public void Test3()
         {
-            Assert.IsTrue(MathS.FromString("log(4, 2)").Eval() == 2);
+            Assert.IsTrue(MathS.FromString("log(2, 4)").Eval() == 2);
         }
         [TestMethod]
         public void Test4()

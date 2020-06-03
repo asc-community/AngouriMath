@@ -143,7 +143,8 @@ namespace AngouriMath.Core.Numerix
             => a < b || a == b;
 
         internal static bool AreEqual(RealNumber a, RealNumber b)
-            => a.State == b.State && Number.Functional.IsZero(a.Value - b.Value);
+            => a.IsDefinite() && b.IsDefinite() && Math.Abs(a.Value - b.Value) < MathS.Settings.PrecisionErrorCommon ||
+               a.State == b.State && !a.IsDefinite();
 
         public static RealNumber operator -(RealNumber a)
             => (-1 * a).AsRealNumber();
