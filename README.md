@@ -4,7 +4,8 @@
 
 ![alt text](./banner.png "Logo")
 
-Nuget: https://www.nuget.org/packages/AngouriMath
+[Nuget](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository")
+
 ## AngouriMath
 AngouriMath is an open-source library that enables to work with non-linear 
 multi-variable expressions. Its functionality includes derivation, 

@@ -8,3 +8,4 @@ Since 331st commit, AM is not compatible to the previous versions. Here are chan
 6. FromLinq removed
 7. All obsolete methods removed, check previous version to look for the replacing method
 8. CubicFormula numerical case removed
+9. InngerSimplify -> InnerEval
