@@ -19,6 +19,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
@@ -249,6 +250,8 @@ namespace AngouriMath.Functions
 
         public void Unset()
         {
+            if (sets.Count == 1)
+                throw new SysException("Cannot unset the last setting");
             sets.Pop();
         }
 

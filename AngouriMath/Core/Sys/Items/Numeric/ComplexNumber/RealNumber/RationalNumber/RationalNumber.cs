@@ -19,9 +19,21 @@ namespace AngouriMath.Core.Numerix
 {
     public partial class RationalNumber : RealNumber
     {
+        /// <summary>
+        /// Safely copies the instance of a Number
+        /// </summary>
+        /// <returns></returns>
         public new RationalNumber Copy()
             => Number.Copy(this) as RationalNumber;
+
+        /// <summary>
+        /// Given a rational a / b, a is the Numerator of type IntegerNumber
+        /// </summary>
         public IntegerNumber Numerator { get; protected set; }
+
+        /// <summary>
+        /// Given a rational a / b, b is the Denominator of type IntegerNumber
+        /// </summary>
         public IntegerNumber Denominator { get; protected set; }
         private void InitClass(IntegerNumber numerator, IntegerNumber denominator)
         {
@@ -30,7 +42,13 @@ namespace AngouriMath.Core.Numerix
             Type = HierarchyLevel.RATIONAL;
             Init();
         }
-        public RationalNumber(IntegerNumber numerator, IntegerNumber denominator)
+
+        /// <summary>
+        /// Use Number.Create(IntegerNumber, IntegerNumber) instead
+        /// </summary>
+        /// <param name="numerator"></param>
+        /// <param name="denominator"></param>
+        internal RationalNumber(IntegerNumber numerator, IntegerNumber denominator)
         {
             InitClass(numerator, denominator);
         }
@@ -40,7 +58,11 @@ namespace AngouriMath.Core.Numerix
 
         }
 
-        public RationalNumber(Number number)
+        /// <summary>
+        /// Use Number.Copy(Number) or this.Copy() instead
+        /// </summary>
+        /// <param name="number"></param>
+        internal RationalNumber(Number number)
         {
             number = Functional.Downcast(number);
             if (number.Is(HierarchyLevel.RATIONAL))

@@ -19,8 +19,16 @@ namespace AngouriMath.Core.Numerix
 {
     public partial class IntegerNumber : RationalNumber
     {
+        /// <summary>
+        /// Safely copies this
+        /// </summary>
+        /// <returns></returns>
         public new IntegerNumber Copy()
             => Number.Copy(this) as IntegerNumber;
+
+        /// <summary>
+        /// Exact value of the number
+        /// </summary>
         public new BigInteger Value { get; protected set; }
         private void InitClass(BigInteger value, UndefinedState state)
         {
@@ -29,7 +37,12 @@ namespace AngouriMath.Core.Numerix
             State = state;
             Init();
         }
-        public IntegerNumber(BigInteger value)
+
+        /// <summary>
+        /// Use Number.Create(BigInteger) instead
+        /// </summary>
+        /// <param name="value"></param>
+        internal IntegerNumber(BigInteger value)
         {
             InitClass(value, UndefinedState.DEFINED);
         }
@@ -39,7 +52,11 @@ namespace AngouriMath.Core.Numerix
 
         }
 
-        public IntegerNumber(Number number)
+        /// <summary>
+        /// Use Number.Copy(Number) or this.Copy()
+        /// </summary>
+        /// <param name="number"></param>
+        internal IntegerNumber(Number number)
         {
             number = Functional.Downcast(number);
             if (number.Is(HierarchyLevel.INTEGER))

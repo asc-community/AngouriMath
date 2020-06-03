@@ -22,6 +22,11 @@ namespace AngouriMath.Core.Numerix
     {
         public new RealNumber Copy()
             => Number.Copy(this) as RealNumber;
+
+        /// <summary>
+        /// Not only a real value can be assigned to a RealNumber
+        /// Create a real number of undefined state with Number.Create(RealNumber.UndefinedState)
+        /// </summary>
         public enum UndefinedState : System.Byte
         {
             DEFINED,
@@ -30,7 +35,16 @@ namespace AngouriMath.Core.Numerix
             NAN
         }
 
+        /// <summary>
+        /// The exact value of the type decimal
+        /// </summary>
         public new decimal Value { get; protected set; }
+
+        /// <summary>
+        /// To check whether one is defined, you may write
+        /// this.IsDefinite()
+        /// Or check directly, this.State == RealNumber.UndefinedState.DEFINED
+        /// </summary>
         public UndefinedState State { get; protected set; }
         private void InitClass(decimal value, UndefinedState state)
         {
@@ -52,14 +66,22 @@ namespace AngouriMath.Core.Numerix
             Init();
         }
 
-        public RealNumber(UndefinedState state)
+        /// <summary>
+        /// Use Number.Create(RealNumber.UndefinedState) instead
+        /// </summary>
+        /// <param name="state"></param>
+        internal RealNumber(UndefinedState state)
         {
             if (state == UndefinedState.DEFINED)
                 throw new InvalidOperationException("You cannot define undefined number with defined state");
             InitClass(0, state);
         }
 
-        public RealNumber(decimal value)
+        /// <summary>
+        /// Use Number.Create(decimal) instead
+        /// </summary>
+        /// <param name="value"></param>
+        internal RealNumber(decimal value)
         {
             InitClass(value, UndefinedState.DEFINED);
         }
@@ -69,7 +91,11 @@ namespace AngouriMath.Core.Numerix
             
         }
 
-        public RealNumber(Number number)
+        /// <summary>
+        /// Use Number.Copy(Number) instead, or this.Copy()
+        /// </summary>
+        /// <param name="number"></param>
+        internal RealNumber(Number number)
         {
             number = Functional.Downcast(number);
             if (number.Is(HierarchyLevel.REAL))
@@ -146,15 +172,31 @@ namespace AngouriMath.Core.Numerix
             return false;
         }
 
+        /// <summary>
+        /// Checks whether one's state is defined meaning that it could be safely used for calculations
+        /// </summary>
+        /// <returns></returns>
         public bool IsDefinite()
             => State == UndefinedState.DEFINED;
 
+        /// <summary>
+        /// Creates an instance of Negative Infinity RealNumber (-oo)
+        /// </summary>
+        /// <returns></returns>
         public static RealNumber NegativeInfinity()
             => new RealNumber(UndefinedState.NEGATIVE_INFINITY);
 
+        /// <summary>
+        /// Creates an instance of Positive Infinity RealNumber (+oo)
+        /// </summary>
+        /// <returns></returns>
         public static RealNumber PositiveInfinity()
             => new RealNumber(UndefinedState.POSITIVE_INFINITY);
 
+        /// <summary>
+        /// Creates an instance of Not A Number RealNumber (NaN)
+        /// </summary>
+        /// <returns></returns>
         public static RealNumber NaN()
             => new RealNumber(UndefinedState.NAN);
     }

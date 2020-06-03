@@ -24,20 +24,49 @@ using AngouriMath.Core.FromString;
 
 namespace AngouriMath.Core.Numerix
 {
+    /// <summary>
+    /// Extension for RealNumbers
+    /// https://en.wikipedia.org/wiki/Complex_number
+    /// </summary>
     public partial class ComplexNumber : Number
     {
+        /// <summary>
+        /// Copies a complex number to keep it ComplexNumber class
+        /// </summary>
+        /// <returns></returns>
         public new ComplexNumber Copy()
             => Number.Copy(this) as ComplexNumber;
+
+        /// <summary>
+        /// Real part of the complex number
+        /// </summary>
         public RealNumber Real { get; protected set; }
+
+        /// <summary>
+        /// Imaginary part of the complex number
+        /// </summary>
         public RealNumber Imaginary { get; protected set; }
 
+        /// <summary>
+        /// Pair of definition states for Real and Imaginary parts respectively. See RealNumber.State
+        /// </summary>
         public (RealNumber.UndefinedState Re, RealNumber.UndefinedState Im) State
         {
             get => (Real.State, Imaginary.State);
         }
 
+        /// <summary>
+        /// Checks whether both parts of the complex number are definite. See RealNumber.IsDefinite()
+        /// </summary>
+        /// <returns></returns>
         public bool IsDefinite()
             => Real.IsDefinite() && Imaginary.IsDefinite();
+
+        /// <summary>
+        /// Inits all versions of the number beyond complex representation
+        /// </summary>
+        /// <param name="realPart"></param>
+        /// <param name="imaginaryPart"></param>
         private void InitClass(RealNumber realPart, RealNumber imaginaryPart)
         {
             Real = realPart;
@@ -46,22 +75,38 @@ namespace AngouriMath.Core.Numerix
             Init();
         }
 
-        public ComplexNumber(Complex value)
+        /// <summary>
+        /// Use Number.Create(RealNumber, RealNumber) instead
+        /// </summary>
+        /// <param name="value"></param>
+        internal ComplexNumber(Complex value)
         {
             InitClass(new RealNumber(value.Real), new RealNumber(value.Imaginary));
         }
 
-        public ComplexNumber(RealNumber realPart, RealNumber imaginaryPart)
+        /// <summary>
+        /// Use Number.Create(RealNumber, RealNumber) instead
+        /// </summary>
+        /// <param name="value"></param>
+        internal ComplexNumber(RealNumber realPart, RealNumber imaginaryPart)
         {
             InitClass(realPart, imaginaryPart);
         }
 
+        /// <summary>
+        /// Use Number.Create(RealNumber, RealNumber) instead
+        /// </summary>
+        /// <param name="value"></param>
         protected ComplexNumber()
         {
             
         }
 
-        public ComplexNumber(Number number)
+        /// <summary>
+        /// Use Number.Copy(Number) instead, or this.Copy()
+        /// </summary>
+        /// <param name="value"></param>
+        internal ComplexNumber(Number number)
         {
             if (number.Is(HierarchyLevel.COMPLEX))
                 InitClass((number as ComplexNumber).Real, (number as ComplexNumber).Imaginary);
@@ -119,9 +164,20 @@ namespace AngouriMath.Core.Numerix
             return Real.Latexise() + sign + Imaginary.Latexise(Imaginary.IsFraction() && Imaginary.IsDefinite()) + "i";
         }
 
+        /// <summary>
+        /// Returns conjugate of a complex number
+        /// Given this = a + ib, Conjugate() -> a - ib
+        /// </summary>
+        /// <returns>
+        /// Conjugate of the number
+        /// </returns>
         public ComplexNumber Conjugate()
             => new ComplexNumber(Real, Imaginary * Number.Create(-1));
 
+        /// <summary>
+        /// See Number.Abs(ComplexNumber)
+        /// </summary>
+        /// <returns></returns>
         public RealNumber Abs()
         {
             var Re2 = Real * Real;
@@ -136,53 +192,114 @@ namespace AngouriMath.Core.Numerix
             return Number.Pow(Real * Real + Imaginary * Imaginary, new RealNumber(0.5m)) as RealNumber;
         }
 
-
-        public static ComplexNumber Indefinite(RealNumber.UndefinedState re, RealNumber.UndefinedState im)
+        /// <summary>
+        /// Creates an indefinite complex number on both real and imaginary parts separately, e. g.
+        /// ComplexNumber Indefinite(RealNumber.UndefinedState.POSITIVE_INFINITY, RealNumber.UndefinedState.NEGATIVE_INFINITY)
+        /// -> +oo + -ooi
+        /// </summary>
+        /// <param name="re">
+        /// State that must not be DEFINED (otherwise an expception will be thrown)
+        /// </param>
+        /// <param name="im">
+        /// State that must not be DEFINED (otherwise an expception will be thrown)
+        /// </param>
+        /// <returns></returns>
+        internal static ComplexNumber Indefinite(RealNumber.UndefinedState re, RealNumber.UndefinedState im)
             => new ComplexNumber(new RealNumber(re), new RealNumber(im));
 
-        public static ComplexNumber Indefinite(RealNumber.UndefinedState both)
-            => new ComplexNumber(new RealNumber(both), new RealNumber(both));
+        /// <summary>
+        /// Creates an indefinite complex number on both real and imaginary parts, e. g.
+        /// ComplexNumber Indefinite(RealNumber.UndefinedState.POSITIVE_INFINITY)
+        /// -> +oo + +ooi
+        /// </summary>
+        /// <param name="re">
+        /// State that must not be DEFINED (otherwise an expception will be thrown)
+        /// </param>
+        /// <param name="im">
+        /// State that must not be DEFINED (otherwise an expception will be thrown)
+        /// </param>
+        /// <returns></returns>
+        internal static ComplexNumber Indefinite(RealNumber.UndefinedState both)
+            => Indefinite(both, both);
 
-        public static ComplexNumber NegNegInfinity()
+        /// <summary>
+        /// Special case of Indefinite() (see ComplexNumber.Indefinite()), -oo + -ooi
+        /// </summary>
+        /// <returns></returns>
+        internal static ComplexNumber NegNegInfinity()
             => new ComplexNumber(RealNumber.NegativeInfinity(), RealNumber.NegativeInfinity());
-        public static ComplexNumber NegPosInfinity()
+
+        /// <summary>
+        /// Special case of Indefinite() (see ComplexNumber.Indefinite()), -oo + +ooi
+        /// </summary>
+        /// <returns></returns>
+        internal static ComplexNumber NegPosInfinity()
             => new ComplexNumber(RealNumber.NegativeInfinity(), RealNumber.PositiveInfinity());
-        public static ComplexNumber PosNegInfinity()
+
+        /// <summary>
+        /// Special case of Indefinite() (see ComplexNumber.Indefinite()), +oo + -ooi
+        /// </summary>
+        /// <returns></returns>
+        internal static ComplexNumber PosNegInfinity()
             => new ComplexNumber(RealNumber.PositiveInfinity(), RealNumber.NegativeInfinity());
-        public static ComplexNumber PosPosInfinity()
+
+        /// <summary>
+        /// Special case of Indefinite() (see ComplexNumber.Indefinite()), +oo + +ooi
+        /// </summary>
+        /// <returns></returns>
+        internal static ComplexNumber PosPosInfinity()
             => new ComplexNumber(RealNumber.PositiveInfinity(), RealNumber.PositiveInfinity());
 
-        public static ComplexNumber Parse(string s)
+        /// <summary>
+        /// Parses a string into ComplexNumber
+        /// May throw ParseException
+        /// </summary>
+        /// <returns>
+        /// ComplexNumber
+        /// </returns>
+        public static ComplexNumber Parse(string source)
         {
-            if (TryParse(s, out var res))
+            if (TryParse(source, out var res))
                 return Number.Functional.Downcast(res) as ComplexNumber;
             else
-                throw new ParseException("Cannot parse number from " + s);
+                throw new ParseException("Cannot parse number from " + source);
         }
 
-        // TODO
-        public static bool TryParse(string s, out ComplexNumber dst)
+        /// <summary>
+        /// Tries to parse a ComplexNumber from string
+        /// </summary>
+        /// <param name="source"></param>
+        /// <param name="dst">
+        /// The result will be written to this variable only if parsing was successful,
+        /// if it was not, do not access this variable
+        /// </param>
+        /// <returns>
+        /// If parsing was successful - true,
+        /// false otherwise
+        /// </returns>
+        // TODO: parse more possible values of complex numbers
+        public static bool TryParse(string source, out ComplexNumber dst)
         {
             dst = null;
-            if (string.IsNullOrEmpty(s))
+            if (string.IsNullOrEmpty(source))
                 return false;
-            if (RealNumber.TryParse(s, out var real))
+            if (RealNumber.TryParse(source, out var real))
             {
                 dst = real;
                 return true;
             }
-            if (s.Last() == 'i')
-                if (s == "i")
+            if (source.Last() == 'i')
+                if (source == "i")
                 {
                     dst = Number.Create(0.0, 1.0);
                     return true;
                 }
-                else if (s == "-i")
+                else if (source == "-i")
                 {
                     dst = Number.Create(0.0, -1.0);
                     return true;
                 }
-                else if (RealNumber.TryParse(s.Substring(0, s.Length - 1), out var realPart))
+                else if (RealNumber.TryParse(source.Substring(0, source.Length - 1), out var realPart))
                 {
                     dst = Number.Create(0, realPart);
                     return true;

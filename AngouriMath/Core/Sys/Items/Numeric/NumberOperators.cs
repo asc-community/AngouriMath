@@ -94,6 +94,9 @@ namespace AngouriMath.Core.Numerix
         public static Number operator -(Number a)
             => -1 * a;
 
+        public static Number operator +(Number a)
+            => a;
+
         public static bool operator ==(Number a, Number b)
         {
             if (a is null && b is null)
@@ -129,8 +132,12 @@ namespace AngouriMath.Core.Numerix
         /// <summary>
         /// e. g. Pow(2, 5) = 32
         /// </summary>
-        /// <param name="base"></param>
-        /// <param name="power"></param>
+        /// <param name="base">
+        /// The base of the exponential, base^power
+        /// </param>
+        /// <param name="power">
+        /// The power of the exponential, base^power
+        /// </param>
         /// <returns></returns>
         public static ComplexNumber Pow(Number @base, Number power)
         {
@@ -157,50 +164,100 @@ namespace AngouriMath.Core.Numerix
         /// <summary>
         /// e. g. Log(2, 32) = 5
         /// </summary>
-        /// <param name="base"></param>
-        /// <param name="powered"></param>
+        /// <param name="base">
+        /// Log's base, log(base, x) is a number y such that base^y = x
+        /// </param>
+        /// <param name="x">
+        /// The number of which we want to get its base power
+        /// </param>
         /// <returns></returns>
-        public static ComplexNumber Log(RealNumber @base, Number powered)
+        public static ComplexNumber Log(RealNumber @base, Number x)
         {
             var baseCom = @base.AsComplexNumber();
-            var poweredCom = powered.AsComplexNumber();
+            var poweredCom = x.AsComplexNumber();
             if (baseCom.IsDefinite() && poweredCom.IsDefinite())
                 return Functional.Downcast(
-                Complex.Log(powered.AsComplex(), @base.AsDouble())
+                Complex.Log(x.AsComplex(), @base.AsDouble())
             ) as ComplexNumber;
             else
                 return ComplexNumber.Indefinite(RealNumber.UndefinedState.NAN);
         }
 
+        /// <summary>
+        /// Calculates the exact value of sine of num
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static ComplexNumber Sin(Number num)
             => (num as ComplexNumber).IsDefinite()
                 ? Functional.Downcast(Complex.Sin(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
 
+        /// <summary>
+        /// Calculates the exact value of cosine of num
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static ComplexNumber Cos(Number num)
             => (num as ComplexNumber).IsDefinite()
                 ? Functional.Downcast(Complex.Cos(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
+
+        /// <summary>
+        /// Calculates the exact value of tangent of num
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static ComplexNumber Tan(Number num)
             => (num as ComplexNumber).IsDefinite()
                 ? Functional.Downcast(Complex.Tan(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
+
+        /// <summary>
+        /// Calculates the exact value of cotangent of num
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static ComplexNumber Cotan(Number num)
             => (num as ComplexNumber).IsDefinite()
                 ? Functional.Downcast(1 / Complex.Tan(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
+
+        /// <summary>
+        /// Calculates the exact value of arcsine of num
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static ComplexNumber Arcsin(Number num)
             => (num as ComplexNumber).IsDefinite()
                 ? Functional.Downcast(Complex.Asin(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
+
+        /// <summary>
+        /// Calculates the exact value of arccosine of num
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static ComplexNumber Arccos(Number num)
             => (num as ComplexNumber).IsDefinite()
                 ? Functional.Downcast(Complex.Acos(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
+
+        /// <summary>
+        /// Calculates the exact value of arctangent of num
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static ComplexNumber Arctan(Number num)
             => (num as ComplexNumber).IsDefinite()
                 ? Functional.Downcast(Complex.Atan(num.AsComplex())) as ComplexNumber
                 : RealNumber.NaN();
+
+        /// <summary>
+        /// Calculates the exact value of arccotangent of num
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static ComplexNumber Arccotan(Number num)
             => (num as ComplexNumber).IsDefinite()
                 ? Functional.Downcast(Complex.Atan(1 / num.AsComplex())) as ComplexNumber

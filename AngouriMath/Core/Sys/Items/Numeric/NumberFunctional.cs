@@ -24,32 +24,138 @@ namespace AngouriMath.Core.Numerix
 {
     public abstract partial class Number
     {
+        /*
+         *
+         * This list represents the only possible way to explicitly create numeric instances
+         * It will automatically downcast the result for you, so that 1.0 is an IntegerNumber
+         * To avoid it, you may temporarily disable it
+         *
+         *   MathS.Settings.DowncastingEnabled.Set(false);
+         *     var yourNum = Number.Create(1.0);
+         *   MathS.Settings.DowncastingEnabled.Unset();
+         *
+         */
+
+        /// <summary>
+        /// Creates an instance of ComplexNumber from System.Numerics.Complex
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>
+        /// ComplexNumber
+        /// </returns>
         public static ComplexNumber Create(Complex value)
             => Number.Functional.Downcast(new ComplexNumber(value)) as ComplexNumber;
+
+        /// <summary>
+        /// Creates an instance of IntegerNumber from long
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>
+        /// IntegerNumber
+        /// </returns>
         public static IntegerNumber Create(long value)
             => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+
+        /// <summary>
+        /// Creates an instance of IntegerNumber from System.Numerics.BigInteger
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>
+        /// IntegerNumber
+        /// </returns>
         public static IntegerNumber Create(BigInteger value)
             => Number.Functional.Downcast(new IntegerNumber(value)) as IntegerNumber;
+
+        /// <summary>
+        /// Creates an instance of IntegerNumber from int
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>
+        /// IntegerNumber
+        /// </returns>
         public static IntegerNumber Create(int value) 
             => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+
+        /// <summary>
+        /// Creates an instance of RationalNumber of two IntegerNumbers
+        /// </summary>
+        /// <param name="numerator"></param>
+        /// <param name="denominator"></param>
+        /// <returns>
+        /// RationalNumber
+        /// </returns>
         public static RationalNumber CreateRational(IntegerNumber numerator, IntegerNumber denominator)
             => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
+
+        /// <summary>
+        /// Creates an instance of RealNumber from decimal
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>
+        /// RealNumber
+        /// </returns>
         public static RealNumber Create(decimal value)
             => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
+
+        /// <summary>
+        /// Creates an instance of RealNumber from double
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>
+        /// RealNumber
+        /// </returns>
         public static RealNumber Create(double value)
             => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
+
+        /// <summary>
+        /// Creates an instance of ComplexNumber from two RealNumbers
+        /// </summary>
+        /// <param name="re">
+        /// Real part of a desired complex number
+        /// </param>
+        /// <param name="im">
+        /// Imaginary part of a desired complex number
+        /// </param>
+        /// <returns>
+        /// ComplexNumber
+        /// </returns>
         public static ComplexNumber Create(RealNumber re, RealNumber im)
             => Number.Functional.Downcast(new ComplexNumber(re, im)) as ComplexNumber;
-        public Number Copy()
-            => SuperSwitch(
-                num => new IntegerNumber(num[0] as Number),
-                num => new RationalNumber(num[0]),
-                num => new RealNumber(num[0] as Number),
-                num => new ComplexNumber(num[0]),
-                Type,
-                this
-            );
 
+        /// <summary>
+        /// If you need an indefinite value of a real number, use this
+        /// Number.Create(RealNumber.UndefinedState.POSITIVE_INFINITY)
+        /// Number.Create(RealNumber.UndefinedState.NEGATIVE_INFINITY)
+        /// Number.Create(RealNumber.UndefinedState.NAN)
+        /// </summary>
+        /// <param name="state"></param>
+        /// <returns></returns>
+        public static RealNumber Create(RealNumber.UndefinedState state)
+            => new RealNumber(state);
+
+        /// <summary>
+        /// If you need an indefinite value of a complex number, e. g.
+        /// Number.Create(RealNumber.UndefinedState.POSITIVE_INFINITY, RealNumber.UndefinedState.NEGATIVE_INFINITY)
+        /// -> +oo + -ooi
+        /// </summary>
+        /// <returns></returns>
+        public static ComplexNumber Create(RealNumber.UndefinedState realState, RealNumber.UndefinedState imaginaryState)
+            => Number.Create(Number.Create(realState), Number.Create(imaginaryState));
+
+        /// <summary>
+        /// Copies a Number with respect due to its hierarchy type, but without implicit downcasting
+        /// </summary>
+        /// <returns>
+        /// Safely copied instance of Number
+        /// </returns>
+        public Number Copy()
+            => Number.Copy(this);
+
+        /// <summary>
+        /// Checks whether a number is zero
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static bool IsZero(RealNumber num)
         {
             if (!num.IsDefinite())
@@ -57,17 +163,30 @@ namespace AngouriMath.Core.Numerix
             return Functional.IsZero(num.Value);
         }
 
+        /// <summary>
+        /// Checks whether a number is zero
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static bool IsZero(ComplexNumber num)
             => IsZero(num.Real) && IsZero(num.Imaginary);
 
+        /// <summary>
+        /// This class is developed for some additional functions
+        /// Some functions are public
+        /// </summary>
         public static class Functional
         {
             /// <summary>
             /// Can be only called if num is in type's set of numbers, e. g.
             /// we can upcast longeger to real, but we cannot upcast complex to real
             /// </summary>
-            /// <param name="num"></param>
-            /// <param name="type"></param>
+            /// <param name="num">
+            /// Number to upcast
+            /// </param>
+            /// <param name="type">
+            /// The level the Number to upcast to
+            /// </param>
             /// <returns></returns>
             internal static Number UpCastTo(Number num, Number.HierarchyLevel type)
             {
@@ -85,6 +204,12 @@ namespace AngouriMath.Core.Numerix
                 );
             }
 
+            /// <summary>
+            /// Upcasts both a and b to the same minimal level
+            /// </summary>
+            /// <param name="a"></param>
+            /// <param name="b"></param>
+            /// <returns></returns>
             internal static (Number a, Number b, HierarchyLevel type) MakeEqual(Number a, Number b)
             {
                 var maxLevel = Math.Max((long)a.Type, (long)b.Type);
@@ -92,11 +217,17 @@ namespace AngouriMath.Core.Numerix
                 return (UpCastTo(a, newType), UpCastTo(b, newType), newType);
             }
 
+            /// <summary>
+            /// If the difference between value & round(value) is zero (see Number.IsZero), we consider value as an integer
+            /// </summary>
+            /// <param name="value"></param>
+            /// <param name="res"></param>
+            /// <returns></returns>
             private static bool TryCastToInt(decimal value, out BigInteger res)
             {
                 var intPart = Math.Round(value);
                 var rest = value - intPart;
-                if (IsZero(rest))
+                if (Number.IsZero(rest))
                 {
                     res = (BigInteger)intPart;
                     return true;
@@ -107,6 +238,16 @@ namespace AngouriMath.Core.Numerix
                 }
             }
 
+            /// <summary>
+            /// Performs so-called downcasting, an attempt to narrow a number's affiliation to a number set
+            /// It attempts to cast ComplexNumber to RealNumber, RealNumber to RationalNumber, RationalNumber to IntegerNumber
+            /// </summary>
+            /// <param name="a">
+            /// Number to downcast
+            /// </param>
+            /// <returns>
+            /// Downcasted or kept Number
+            /// </returns>
             internal static Number Downcast(Number a)
             {
                 if (!MathS.Settings.DowncastingEnabled)
@@ -167,9 +308,38 @@ namespace AngouriMath.Core.Numerix
                 return Math.Abs(value) <= MathS.Settings.PrecisionErrorZeroRange;
             }
 
+            /// <summary>
+            /// Tries to find a pair of two IntegerNumbers (which is RationalNumber) so that its rational value is equal to num,
+            /// to set some options for this function, you can use
+            /// MathS.Settings.FloatToRationalIterCount.Set(20) to set a number of iterations allowed to be spent on searching for a rational
+            /// and MathS.Settings.MaxAbsNumeratorOrDenominatorValue to limit the absolute value of both denominator and numerator
+            /// </summary>
+            /// <param name="num">
+            /// e. g. 1.5m -> 3/2
+            /// </param>
+            /// <returns>
+            /// RationalNumber if found,
+            /// null otherwise
+            /// </returns>
             public static RationalNumber FindRational(decimal num)
                 => FindRational(num, 15);
 
+            /// <summary>
+            /// Tries to find a pair of two IntegerNumbers (which is RationalNumber) so that its rational value is equal to num,
+            /// to set some options for this function, you can use
+            /// MathS.Settings.MaxAbsNumeratorOrDenominatorValue to limit the absolute value of both denominator and numerator
+            /// </summary>
+            /// <param name="num">
+            /// e. g. 1.5m -> 3/2
+            /// </param>
+            /// <param name="iterCount">
+            /// number of iterations allowed to be spent for searching the rational, the more,
+            /// the higher probability it will find a RationalNumber
+            /// </param>
+            /// <returns>
+            /// RationalNumber if found,
+            /// null otherwise
+            /// </returns>
             public static RationalNumber FindRational(decimal num, int iterCount)
             {
                 if (iterCount <= 0)
@@ -180,7 +350,7 @@ namespace AngouriMath.Core.Numerix
                 if (intPart > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                     return null;
                 decimal rest = num - (decimal)intPart.Value;
-                if (IsZero(rest))
+                if (Number.IsZero(rest))
                     return (sign * intPart).AsRationalNumber();
                 else
                 {
@@ -192,7 +362,7 @@ namespace AngouriMath.Core.Numerix
                 }
             }
 
-            public static bool BothAreEqual(Number a, Number b, HierarchyLevel type)
+            internal static bool BothAreEqual(Number a, Number b, HierarchyLevel type)
             {
                 return a.Type == type && b.Type == type;
             }

@@ -23,6 +23,12 @@ namespace AngouriMath.Core.Numerix
 {
     public abstract partial class Number
     {
+        /// <summary>
+        /// Copies a Number with respect due to its hierarchy type, but without implicit downcasting
+        /// </summary>
+        /// <returns>
+        /// Safely copied instance of Number
+        /// </returns>
         public static Number Copy(Number num)
             => SuperSwitch(
                 (num) => new IntegerNumber(num[0] as Number),
@@ -39,9 +45,33 @@ namespace AngouriMath.Core.Numerix
             REAL,
             COMPLEX
         }
+
+        /// <summary>
+        /// Type of a Number, e. g. INTEGER or RATIONAL
+        /// It's recommended to use method Is instead
+        /// </summary>
         public HierarchyLevel Type { get; protected set; }
+
+        /// <summary>
+        /// The final value. Only useful for calculations
+        /// </summary>
         public (decimal Re, decimal Im) Value { get => GetValue(); }
         protected abstract (decimal Re, decimal Im) GetValue();
+
+        /// <summary>
+        /// Checks affiliation of a number
+        /// e. g.
+        /// num.Is(Number.HierarchyLevel.INTEGER) would check whether a num is an IntegerNumber
+        /// </summary>
+        /// <param name="type">
+        /// Number.HierarchyLevel {
+        ///   INTEGER,
+        ///   RATIONAL,
+        ///   REAL,
+        ///   COMPLEX
+        /// }
+        /// </param>
+        /// <returns></returns>
         public bool Is(HierarchyLevel type)
             => (long) Type <= (long) type;
 
@@ -73,7 +103,10 @@ namespace AngouriMath.Core.Numerix
                 _ => throw new NotSupportedException()
             };
 
-
+        /// <summary>
+        /// Gets a latexised version of a number
+        /// </summary>
+        /// <returns></returns>
         public string Latexise() => Latexise(false);
         internal string Latexise(bool needParentheses)
         {
@@ -104,23 +137,48 @@ namespace AngouriMath.Core.Numerix
             return needParentheses ? "(" + str + ")" : str;
         }
 
+        /// <summary>
+        /// Finds all complex roots of a number
+        /// e. g. sqrt(1) = { -1, 1 }
+        /// root(1, 4) = { -i, i, -1, 1 }
+        /// </summary>
+        /// <param name="value"></param>
+        /// <param name="rootPower"></param>
+        /// <returns></returns>
         public static Set GetAllRoots(ComplexNumber value, long rootPower)
         {
+            // TODO: do we need to use decimals here?
             var res = new Set();
-            decimal phi = (Number.Log(Math.E, value / value.Abs()) / MathS.i).Value.Re;
+            decimal phi = (Number.Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Value.Re;
             decimal newMod = Number.Pow(Number.Abs(value), 1.0 / rootPower).Value.Re;
             var i = new ComplexNumber(0, 1);
             for (int n = 0; n < rootPower; n++)
             {
-                decimal newPow = phi / rootPower + 2 * (decimal)Math.PI * n / rootPower;
-                res.Add(newMod * ComplexNumber.Pow(Math.E, i * newPow));
+                decimal newPow = phi / rootPower + 2 * MathS.DecimalConst.pi * n / rootPower;
+                res.Add(newMod * ComplexNumber.Pow(MathS.DecimalConst.e, i * newPow));
             }
             return res;
         }
 
+        /// <summary>
+        /// Returns the absolute value of a complex number num, to be precise,
+        /// if num = a + ib, num.Abs() -> sqrt(a^2 + b^2)
+        /// </summary>
+        /// <param name="num">
+        /// RealNumber
+        /// </param>
+        /// <returns></returns>
         public static RealNumber Abs(ComplexNumber num)
             => num.Abs();
 
+        /// <summary>
+        /// Returns the absolute value of a real number, basically keeps the same if num is positive,
+        /// inverts the sign otherwise
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns>
+        /// RealNumber
+        /// </returns>
         public static IntegerNumber Abs(IntegerNumber num)
             => num.Value >= 0 ? num : new IntegerNumber(-num.Value);
     }

@@ -133,13 +133,17 @@ namespace AngouriMath.Core.Numerix
             => a > b || a == b;
 
         public static bool operator <(RealNumber a, RealNumber b)
-            => !(a >= b);
+        {
+            if (a.State == UndefinedState.NAN || b.State == UndefinedState.NAN)
+                return true; // if something is undefined, a < b is undefined, hence true
+            return !(a >= b);
+        }
 
         public static bool operator <=(RealNumber a, RealNumber b)
-            => !(a > b);
+            => a < b || a == b;
 
-        public static bool AreEqual(RealNumber a, RealNumber b)
-            => Math.Abs(a.Value - b.Value) < MathS.Settings.PrecisionErrorCommon && a.State == b.State;
+        internal static bool AreEqual(RealNumber a, RealNumber b)
+            => a.State == b.State && Number.Functional.IsZero(a.Value - b.Value);
 
         public static RealNumber operator -(RealNumber a)
             => (-1 * a).AsRealNumber();
