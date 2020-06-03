@@ -62,9 +62,10 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="expr"></param>
         internal static void InvertNegativeMultipliers(ref Entity expr)
         {
-            if (NegativeMultiplyerPattern.Match(expr) &&
-                !expr.Children[1].Children[0].GetValue().IsComplex() &&
-                expr.Children[1].Children[0].GetValue().Re > 0)
+            bool ifMatches = NegativeMultiplyerPattern.Match(expr);
+            bool isRealAndMatches = ifMatches && expr.Children[1].Children[0].GetValue().IsReal();
+            bool isPositiveAndIsRealAndMatches = isRealAndMatches && expr.Children[1].Children[0].GetValue().Real > 0;
+            if (isPositiveAndIsRealAndMatches)
                 expr = expr.Children[0] - (-1 * expr.Children[1].Children[0].GetValue()) * expr.Children[1].Children[1];
             else
             {

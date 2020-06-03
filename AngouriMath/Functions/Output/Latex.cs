@@ -207,11 +207,6 @@ namespace AngouriMath
     }
     namespace Core
     {
-        partial class Number : ILatexiseable
-        {
-            // \infty with space because it may be followed directly by variables which will invalidate the LaTeX command
-            public string Latexise() => ToString().Replace("Infinity", @"\infty ");
-        }
         partial class SetNode : ILatexiseable
         {
             public string Latexise()

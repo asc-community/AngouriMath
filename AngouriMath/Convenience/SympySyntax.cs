@@ -17,6 +17,7 @@
 
 ﻿using System.Linq;
 using AngouriMath.Core;
+ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Convenience
 {
@@ -114,6 +115,6 @@ namespace AngouriMath.Convenience
         /// Denominator
         /// </param>
         /// <returns></returns>
-        public static Entity Rational(Number a, Number b) => new NumberEntity(a) / new NumberEntity(b);
+        public static Entity Rational(ComplexNumber a, ComplexNumber b) => new NumberEntity(a) / new NumberEntity(b);
     }
 }

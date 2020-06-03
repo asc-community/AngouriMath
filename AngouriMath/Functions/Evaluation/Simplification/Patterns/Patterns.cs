@@ -36,7 +36,7 @@ namespace AngouriMath
         internal static readonly Pattern func1 = new Pattern(400, Entity.PatType.FUNCTION, tree => tree.entType == Entity.EntType.FUNCTION);
         internal static readonly Pattern func2 = new Pattern(401, Entity.PatType.FUNCTION, tree => tree.entType == Entity.EntType.FUNCTION);
         private static int InternNumber = 10000;
-        internal static Pattern Num(double a) => new Pattern(++InternNumber, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
+        internal static Pattern Num(decimal a) => new Pattern(++InternNumber, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
 
         internal static readonly RuleList DivisionPreparingRules = new RuleList
         {
@@ -48,8 +48,8 @@ namespace AngouriMath
         internal static readonly RuleList TrigonometricRules = new RuleList
         {
             // sin({}) * cos({}) = 1/2 * sin(2{})
-            { Sinf.PHang(any1) * Cosf.PHang(any1), Num(1.0/2) * Sinf.PHang(Num(2) * any1) },
-            { Cosf.PHang(any1) * Sinf.PHang(any1), Num(1.0/2) * Sinf.PHang(Num(2) * any1) },
+            { Sinf.PHang(any1) * Cosf.PHang(any1), Num(1.0m/2) * Sinf.PHang(Num(2) * any1) },
+            { Cosf.PHang(any1) * Sinf.PHang(any1), Num(1.0m/2) * Sinf.PHang(Num(2) * any1) },
 
             // arc1({}) + arc2({}) = pi/2
             { Arcsinf.PHang(any1) + Arccosf.PHang(any1), MathS.pi / 2 },
@@ -78,8 +78,8 @@ namespace AngouriMath
         };
 
         internal static readonly RuleList ExpandTrigonometricRules = new RuleList {
-            { Num(1.0/2) * Sinf.PHang(Num(2) * any1), Sinf.PHang(any1) * Cosf.PHang(any1) },
-            { Num(1.0/2) * Sinf.PHang(Num(2) * any1), Cosf.PHang(any1) * Sinf.PHang(any1) },
+            { Num(1.0m/2) * Sinf.PHang(Num(2) * any1), Sinf.PHang(any1) * Cosf.PHang(any1) },
+            { Num(1.0m/2) * Sinf.PHang(Num(2) * any1), Cosf.PHang(any1) * Sinf.PHang(any1) },
 
             { Cosf.PHang(Num(2) * any1), Powf.PHang(Cosf.PHang(any1), Num(2)) - Powf.PHang(Sinf.PHang(any1), Num(2)) },
         };
@@ -314,7 +314,7 @@ namespace AngouriMath
             
             {
                 Powf.PHang(any1, Num(2)) - const1,
-                (any1 - Powf.PHang(const1, Num(0.5))) * (any1 + Powf.PHang(const1, Num(0.5)))
+                (any1 - Powf.PHang(const1, Num(0.5m))) * (any1 + Powf.PHang(const1, Num(0.5m)))
             },
 
             // {1} * {2} + {1} * {3} = {1} * ({2} + {3})

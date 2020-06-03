@@ -16,8 +16,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 
@@ -37,7 +40,7 @@ namespace AngouriMath.Functions
         {
             dst = null;
             var children = TreeAnalyzer.LinearChildren(expr.Expand(), "sumf", "minusf", Const.FuncIfSum);
-            var monomialsByPower = PolynomialSolver.GatherMonomialInformation<int>(children, variable);
+            var monomialsByPower = PolynomialSolver.GatherMonomialInformation<long>(children, variable);
             if (monomialsByPower == null)
                 return false;
             var newMonomialsByPower = new Dictionary<int, Entity>();
@@ -46,7 +49,7 @@ namespace AngouriMath.Functions
             var terms = new List<Entity>();
             foreach (var index in keys)
             {
-                var pair = new KeyValuePair<int, Entity>(index, monomialsByPower[index]);
+                var pair = new KeyValuePair<long, Entity>(index, monomialsByPower[index]);
                 Entity px;
                 if (pair.Key == 0)
                 {
@@ -73,11 +76,11 @@ namespace AngouriMath.Functions
             for (int i = 1; i < terms.Count; i++)
                 if (terms[i].Name == "mulf" &&
                     terms[i].Children[0].entType == Entity.EntType.NUMBER &&
-                    terms[i].Children[0].GetValue().IsReal() && terms[i].Children[0].GetValue().Re < 0)
+                    terms[i].Children[0].GetValue().IsReal() && terms[i].Children[0].GetValue().Real < 0)
                     dst -= ((-1) * terms[i].Children[0].GetValue()) * terms[i].Children[1];
                 else
                     dst += terms[i];
-            dst = dst.InnerSimplify();
+            dst = dst.InnerEval();
             return true;
         }
 
@@ -86,9 +89,9 @@ namespace AngouriMath.Functions
         /// </summary>
         /// <param name="num"></param>
         /// <returns></returns>
-        internal static Number CutoffImprecision(Number num)
-            => new Number(num.Re - num.Re % MathS.Utils.EQUALITY_THRESHOLD,
-                num.Im - num.Im % MathS.Utils.EQUALITY_THRESHOLD);
+        internal static ComplexNumber CutoffImprecision(ComplexNumber num)
+            => Number.Create(num.Real.Value - num.Real.Value % MathS.Settings.PrecisionErrorCommon,
+                num.Imaginary.Value - num.Imaginary.Value % MathS.Settings.PrecisionErrorCommon);
 
         /// <summary>
         /// Alike to ParseIndex, but strict on index: it should be a number
@@ -169,8 +172,25 @@ namespace AngouriMath.Functions
         ///     a | d
         ///     b | d
         /// </returns>
-        private static int _GCD(int a, int b)
+        private static BigInteger _GCD(BigInteger a, BigInteger b)
         {
+            a = BigInteger.Abs(a);
+            b = BigInteger.Abs(b);
+            while (a * b > 0)
+            {
+                if (a > b)
+                    a %= b;
+                else
+                    b %= a;
+            }
+
+            return a == 0 ? b : a;
+        }
+
+        private static long _GCD(long a, long b)
+        {
+            a = Math.Abs(a);
+            b = Math.Abs(b);
             while (a * b > 0)
             {
                 if (a > b)
@@ -192,15 +212,62 @@ namespace AngouriMath.Functions
         /// Greatest common divisor of numbers if numbers doesn't only consist of 0
         /// 1 otherwise
         /// </returns>
-        internal static int GCD(params int[] numbers)
+        internal static BigInteger GCD(params BigInteger[] numbers)
         {
             if (numbers.Length == 1)
                 return numbers[0] == 0 ? 1 : numbers[0]; // technically, if number[0] == 0, then gcd = +oo
             if (numbers.Length == 2)
                 return _GCD(numbers[0], numbers[1]);
-            var rest = (new ArraySegment<int>(numbers, 2, numbers.Length - 2)).ToList();
+            var rest = (new ArraySegment<BigInteger>(numbers, 2, numbers.Length - 2)).ToList();
             rest.Add(_GCD(numbers[0], numbers[1]));
             return GCD(rest.ToArray());
+        }
+
+        internal static long GCD(params long[] numbers)
+        {
+            if (numbers.Length == 1)
+                return numbers[0] == 0 ? 1 : numbers[0]; // technically, if number[0] == 0, then gcd = +oo
+            if (numbers.Length == 2)
+                return _GCD(numbers[0], numbers[1]);
+            var rest = (new ArraySegment<long>(numbers, 2, numbers.Length - 2)).ToList();
+            rest.Add(_GCD(numbers[0], numbers[1]));
+            return GCD(rest.ToArray());
+        }
+    }
+
+    public class Setting<T>
+    {
+        private Stack<T> sets = new Stack<T>();
+        internal Setting(T defaultValue)
+        {
+            Set(defaultValue);
+        }
+
+        public void Set(T value)
+        {
+            sets.Push(value);
+        }
+
+        public void Unset()
+        {
+            if (sets.Count == 1)
+                throw new SysException("Cannot unset the last setting");
+            sets.Pop();
+        }
+
+        public static implicit operator T(Setting<T> s)
+        {
+            return s.sets.Peek();
+        }
+
+        public static implicit operator Setting<T>(T a)
+        {
+            return new Setting<T>(a);
+        }
+
+        public override string ToString()
+        {
+            return sets.Peek().ToString();
         }
     }
 }

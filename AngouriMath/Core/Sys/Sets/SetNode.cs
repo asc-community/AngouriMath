@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sets;
 
 [assembly: InternalsVisibleTo("UnitTests.Core")]
@@ -110,7 +111,8 @@ namespace AngouriMath.Core
                 OperatorType.UNION => Children[0].Contains(piece) || Children[1].Contains(piece),
                 OperatorType.INTERSECTION => Children[0].Contains(piece) && Children[1].Contains(piece),
                 OperatorType.COMPLEMENT => Children[0].Contains(piece) && !Children[1].Contains(piece),
-                OperatorType.INVERSION => !Children[0].Contains(piece)
+                OperatorType.INVERSION => !Children[0].Contains(piece),
+                _ => throw new SysException("Not all operators considered")
             };
 
         public override bool Contains(Set set)
@@ -142,6 +144,7 @@ namespace AngouriMath.Core
         public SetEnumerator GetEnumerator()
             => new SetEnumerator(Pieces.ToArray());
 
+        // TODO: exception
         public FiniteSet FiniteSet()
             => new FiniteSet(Pieces.ToArray());
 
@@ -154,12 +157,19 @@ namespace AngouriMath.Core
                 Pieces.Add(piece);
                 return;
             }
+
             if (!piece.IsNumeric())
             {
                 if (Pieces.All(p => p != piece))
                     Pieces.Add(piece);
                 return;
             }
+            /*
+            if (piece.Type == Piece.PieceType.ENTITY && !Pieces.Any(p => p.Contains(piece)))
+            {
+                Pieces.Add(piece);
+                return;
+            }*/
             var remainders = new List<Piece>{ piece };
             foreach (var p in Pieces)
             {
@@ -307,8 +317,8 @@ namespace AngouriMath.Core
                 Pieces = new List<Piece>
                 {
                     Piece.Interval(
-                        new Number(double.NegativeInfinity, double.NegativeInfinity),
-                        new Number(double.PositiveInfinity, double.PositiveInfinity)
+                        ComplexNumber.NegNegInfinity(),
+                        ComplexNumber.PosPosInfinity()
                     ).AsInterval().SetLeftClosed(false, false).SetRightClosed(false, false)
                 }
             };
@@ -323,8 +333,8 @@ namespace AngouriMath.Core
                 Pieces = new List<Piece>
                 {
                     Piece.Interval(
-                        new Number(double.NegativeInfinity),
-                        new Number(double.PositiveInfinity)
+                        Number.Create(RealNumber.NegativeInfinity(), 0),
+                        Number.Create(RealNumber.PositiveInfinity(), 0)
                     ).AsInterval().SetLeftClosed(false).SetRightClosed(false)
                 }
             };

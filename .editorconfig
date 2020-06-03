@@ -1,0 +1,4 @@
+﻿[*.cs]
+
+# CS0660: 'IntervalPiece' defines operator == or operator != but does not override Object.Equals(object o)
+dotnet_diagnostic.CS0660.severity = suggestion

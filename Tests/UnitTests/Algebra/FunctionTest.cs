@@ -1,5 +1,6 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Algebra
@@ -58,8 +59,8 @@ namespace UnitTests.Algebra
         [TestMethod]
         public void TestNSTo2()
         {
-            Assert.IsTrue(MathS.ToBaseN(-8.125, 2) == "-1000.001");
-            Assert.IsTrue(MathS.ToBaseN(-8.125, 8) == "-10.1");
+            Assert.IsTrue(MathS.ToBaseN(-8.125m, 2) == "-1000.001");
+            Assert.IsTrue(MathS.ToBaseN(-8.125m, 8) == "-10.1");
         }
         [TestMethod]
         public void TestNSFrom0()
@@ -70,14 +71,14 @@ namespace UnitTests.Algebra
         [TestMethod]
         public void TestNSFrom1()
         {
-            Assert.IsTrue(MathS.FromBaseN("-A.4", 16) == -10.25);
+            Assert.IsTrue(MathS.FromBaseN("-A.4", 16) == -10.25m);
             Assert.IsTrue(MathS.FromBaseN("-A0", 14) == -140);
         }
         [TestMethod]
         public void TestNSFrom2()
         {
-            Assert.IsTrue(MathS.FromBaseN("-0.125", 10) == -0.125);
-            Assert.IsTrue(MathS.FromBaseN("0.3", 12) == 0.25);
+            Assert.IsTrue(MathS.FromBaseN("-0.125", 10) == -0.125m);
+            Assert.IsTrue(MathS.FromBaseN("0.3", 12) == 0.25m);
         }
     }
 }

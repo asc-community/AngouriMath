@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,43 +15,46 @@
 
 
 
-﻿using AngouriMath.Core;
+ using AngouriMath.Core;
 using AngouriMath.Core.Sys.Items.Tensors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath
 {
     public partial class FunctionEntity : Entity
     {
-        internal override Entity InnerSimplify()
+        internal override Entity InnerEval()
         {
-            if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsNull))
-                return Number.Null;
+            // TODO: do we need to process it here or leave it to Numerix?
+            //if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsDefinite()))
+            //    return Number.Null;
             return MathFunctions.InvokeEval(Name, Children);
         }
     }
     public partial class OperatorEntity : Entity
     {
-        internal override Entity InnerSimplify()
+        internal override Entity InnerEval()
         {
-            if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsNull))
-                return Number.Null;
+            // TODO: do we need to process it here or leave it to Numerix?
+            //if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsNull))
+            //    return Number.Null;
             return MathFunctions.InvokeEval(Name, Children);
         }
     }
     public partial class NumberEntity : Entity
     {
-        internal override Entity InnerSimplify()
+        internal override Entity InnerEval()
         {
-            return this;
+            return new NumberEntity(Number.Functional.Downcast(this.Value) as ComplexNumber);
         }
     }
     public partial class VariableEntity : Entity
     {
-        internal override Entity InnerSimplify()
+        internal override Entity InnerEval()
         {
             return this;
         }
@@ -62,10 +65,10 @@ namespace AngouriMath.Core
 {
     public partial class Tensor : Entity
     {
-        internal override Entity InnerSimplify()
+        internal override Entity InnerEval()
         {
             var r = DeepCopy() as Tensor;
-            TensorFunctional.Apply(r, e => e.InnerSimplify());
+            TensorFunctional.Apply(r, e => e.InnerEval());
             return r;
         }
     }

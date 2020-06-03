@@ -25,6 +25,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
  using AngouriMath.Core;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
  using AngouriMath.Functions;
  using AngouriMath.Functions.Algebra.Solver.Analytical;
@@ -198,7 +199,7 @@ namespace AngouriMath.Core.TreeAnalysis
                         if (a.entType == Entity.EntType.NUMBER && a.GetValue().IsInteger())
                         {
                             var res = new Set();
-                            foreach (var root in Number.GetAllRoots(1, (int)(a.GetValue().Re)).FiniteSet())
+                            foreach (var root in Number.GetAllRoots(1, a.GetValue().AsIntegerNumber()).FiniteSet())
                                 res.AddRange(FindInvertExpression(un, root * MathS.Pow(value, 1 / a), x));
                             return res;
                         }
@@ -206,8 +207,8 @@ namespace AngouriMath.Core.TreeAnalysis
                             return FindInvertExpression(un, MathS.Pow(value, 1 / a), x);
                     }
                     else
-                        // a ^ x = value => x = log(value, a)
-                        return FindInvertExpression(un, MathS.Log(value, a) + 2 * MathS.i * n * MathS.pi, x);
+                        // a ^ x = value => x = log(a, value)
+                        return FindInvertExpression(un, MathS.Log(a, value) + 2 * MathS.i * n * MathS.pi, x);
                 default:
                     throw new SysException("Unknown operator");
             }
@@ -221,21 +222,21 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="from"></param>
         /// <param name="to"></param>
         /// <returns></returns>
-        private static bool EntityInBounds(Entity a, Number from, Number to)
+        private static bool EntityInBounds(Entity a, ComplexNumber from, ComplexNumber to)
         {
             if (!MathS.CanBeEvaluated(a))
                 return true;
             var r = a.Eval();
-            return r.Re >= from.Re &&
-                   r.Im >= from.Im &&
-                   r.Re <= to.Re &&
-                   r.Im <= to.Im;
+            return r.Real >= from.Real &&
+                   r.Imaginary >= from.Imaginary &&
+                   r.Real <= to.Real &&
+                   r.Imaginary <= to.Imaginary;
         }
 
-        private static readonly Number ArcsinFrom = new Number(-Math.PI / 2, -double.MaxValue);
-        private static readonly Number ArcsinTo = new Number(+Math.PI / 2, double.MaxValue);
-        private static readonly Number ArccosFrom = new Number(0, -double.MaxValue);
-        private static readonly Number ArccosTo = new Number(Math.PI, double.MaxValue);
+        private static readonly ComplexNumber ArcsinFrom = Number.Create(-Math.PI / 2, RealNumber.NegativeInfinity());
+        private static readonly ComplexNumber ArcsinTo = Number.Create(+Math.PI / 2, RealNumber.PositiveInfinity());
+        private static readonly ComplexNumber ArccosFrom = Number.Create(0.0, RealNumber.NegativeInfinity());
+        private static readonly ComplexNumber ArccosTo = Number.Create(Math.PI, RealNumber.PositiveInfinity());
         private static readonly Set Empty = new Set();
 
         /// <summary>
@@ -259,7 +260,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
             Set GetNotNullEntites(Set set)
             {
-                return set.FiniteWhere(el => el.entType != Entity.EntType.NUMBER || !el.GetValue().IsNull);
+                return set.FiniteWhere(el => el.entType != Entity.EntType.NUMBER || el.GetValue().IsDefinite());
             }
 
             switch (func.Name)
@@ -314,12 +315,12 @@ namespace AngouriMath.Core.TreeAnalysis
                     // arccotan(x) = value => x = cotan(value)
                     return GetNotNullEntites(FindInvertExpression(a, MathS.Cotan(value), x));
                 case "logf":
-                    if (arg == 0)
+                    if (arg != 0)
                         // log(x, a) = value => x = a ^ value
-                        return GetNotNullEntites(FindInvertExpression(a, MathS.Pow(b, value), x));
+                        return GetNotNullEntites(FindInvertExpression(b, MathS.Pow(a, value), x));
                     else
                         // log(a, x) = value => a = x ^ value => x = a ^ (1 / value)
-                        return GetNotNullEntites(FindInvertExpression(b, MathS.Pow(a, 1 / value), x));
+                        return GetNotNullEntites(FindInvertExpression(a, MathS.Pow(b, 1 / value), x));
                 default:
                     throw new SysException("Unknown function");
             }
@@ -331,6 +332,25 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     internal static class AnalyticalSolver
     {
+        private static Entity TryDowncast(Entity equation, VariableEntity x, Entity root)
+        {
+            if (!MathS.CanBeEvaluated(root))
+            //if (true)
+                return root;
+            var preciseValue = root.Eval();
+            MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
+                MathS.Settings.FloatToRationalIterCount.Set(20);
+                    var downcasted = Number.Functional.Downcast(preciseValue) as ComplexNumber;
+                MathS.Settings.FloatToRationalIterCount.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            var errorExpr = equation.Substitute(x, downcasted);
+            if (!MathS.CanBeEvaluated(errorExpr))
+                return root;
+            var error = errorExpr.Eval();
+            return Number.IsZero(error) ? downcasted : preciseValue;
+        }
+
+
         /// <summary>
         /// Equation solver
         /// </summary>
@@ -347,11 +367,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return;
             }
 
+            // Applies an attempt to downcast roots
+            void DestinationAddRange(Set toAdd)
+            {
+                toAdd.FiniteApply(ent => TryDowncast(expr, x, ent));
+                dst.AddRange(toAdd);
+            }
+
             var polyexpr = expr.DeepCopy();
             Set res = PolynomialSolver.SolveAsPolynomial(polyexpr, x);
             if (res != null)
             {
-                dst.AddRange(res);
+                DestinationAddRange(res);
                 return;
             }
 
@@ -399,7 +426,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
             else if (expr.entType == Entity.EntType.FUNCTION)
             {
-                dst.AddRange(TreeAnalyzer.InvertFunctionEntity(expr as FunctionEntity, 0, x));
+                DestinationAddRange(TreeAnalyzer.InvertFunctionEntity(expr as FunctionEntity, 0, x));
                 return;
             }
 
@@ -444,7 +471,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         if (!compensateSolving || ((bestReplacement - solution) - expr).Simplify() != 0)
                             Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
                     }
-                    dst.AddRange(newDst);
+                    DestinationAddRange(newDst);
                     if (!dst.IsEmpty())
                         break;
                     // // //
@@ -459,7 +486,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 res = TrigonometricSolver.SolveLinear(trigexpr, x);
                 if (res != null)
                 {
-                    dst.AddRange(res);
+                    DestinationAddRange(res);
                     return;
                 }
             }
@@ -467,12 +494,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
 
             // if nothing has been found so far
-            if (dst.IsEmpty())
+            if (dst.IsEmpty() && MathS.Settings.AllowNewton)
             {
                 Set allVars = new Set();
                 TreeAnalyzer._GetUniqueVariables(expr, allVars);
                 if (allVars.Count == 1)
-                    dst.AddRange(expr.SolveNt(x));
+                    DestinationAddRange(expr.SolveNt(x));
             }
         }
     }

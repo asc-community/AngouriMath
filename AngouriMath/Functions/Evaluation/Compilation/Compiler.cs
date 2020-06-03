@@ -89,7 +89,7 @@ namespace AngouriMath.Functions.Evaluation.Compilation
             if (expr.entType == Entity.EntType.OPERATOR || expr.entType == Entity.EntType.FUNCTION)
                 fe.instructions.AddCallInstruction(expr.Name, expr.Children.Count);
             else if (expr.entType == Entity.EntType.NUMBER)
-                fe.instructions.AddPushNumInstruction(expr.GetValue().value);
+                fe.instructions.AddPushNumInstruction(expr.GetValue().AsComplex());
             else if (expr.entType == Entity.EntType.VARIABLE)
                 fe.instructions.AddPushVarInstruction(varNamespace[expr.Name]);
             else

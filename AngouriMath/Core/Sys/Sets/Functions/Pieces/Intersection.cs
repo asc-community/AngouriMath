@@ -14,7 +14,8 @@
  */
 
 using System;
-using Edge1D = System.Tuple<double, bool>;
+using AngouriMath.Core.Numerix;
+using Edge1D = System.Tuple<AngouriMath.Core.Numerix.RealNumber, bool>;
 using Edge = System.Tuple<AngouriMath.Entity, bool, bool>;
 
 
@@ -28,12 +29,12 @@ namespace AngouriMath.Core.Sets
     static partial class PieceFunctions
     {
         internal static Edge1D IntersectEdge(
-            double num1, bool closed1,
-            double num2, bool closed2,
-            Func<double, double, bool> comparator
+            RealNumber num1, bool closed1,
+            RealNumber num2, bool closed2,
+            Func<RealNumber, RealNumber, bool> comparator
             )
         {
-            double res;
+            RealNumber res;
             bool closed;
             if (num2 == num1)
             {
@@ -55,10 +56,10 @@ namespace AngouriMath.Core.Sets
         }
 
         internal static Tuple<Edge1D, Edge1D> IntersectAxis(
-            double min1, bool closedMin1,
-            double max1, bool closedMax1,
-            double min2, bool closedMin2,
-            double max2, bool closedMax2)
+            RealNumber min1, bool closedMin1,
+            RealNumber max1, bool closedMax1,
+            RealNumber min2, bool closedMin2,
+            RealNumber max2, bool closedMax2)
             => new Tuple<Edge1D, Edge1D>(
                 IntersectEdge(
                     min1, closedMin1,
@@ -76,10 +77,10 @@ namespace AngouriMath.Core.Sets
         {
             var num1 = A.Item1.Eval();
             var num2 = B.Item1.Eval();
-            double lowRe = num1.Re;
-            double upRe = num2.Re;
-            double lowIm = num1.Im;
-            double upIm = num2.Im;
+            var lowRe = num1.Real;
+            var upRe = num2.Real;
+            var lowIm = num1.Imaginary;
+            var upIm = num2.Imaginary;
             bool lowReClosed = A.Item2;
             bool upReClosed = B.Item2;
             bool lowImClosed = A.Item3;
@@ -98,12 +99,12 @@ namespace AngouriMath.Core.Sets
 
             return new Tuple<Edge, Edge>(
                 new Edge(
-                    new Number(lowRe, lowIm),
+                    Number.Create(lowRe, lowIm),
                     lowReClosed,
                     lowImClosed
                     ),
                 new Edge(
-                    new Number(upRe, upIm),
+                    Number.Create(upRe, upIm),
                     upReClosed,
                     upImClosed
                     )
@@ -130,29 +131,29 @@ namespace AngouriMath.Core.Sets
             var low2Num = low2.Item1.Eval();
             var up1Num = up1.Item1.Eval();
             var up2Num = up2.Item1.Eval();
-            if (low1Num.Re > up2Num.Re || (low1Num.Re == up2Num.Re && (!low1.Item2 || !up2.Item2)) ||
-                low2Num.Re > up1Num.Re || (low2Num.Re == up1Num.Re && (!low2.Item2 || !up1.Item2)) ||
-                low1Num.Im > up2Num.Im || (low1Num.Im == up2Num.Im && (!low1.Item3 || !up2.Item3)) ||
-                low2Num.Im > up1Num.Im || (low2Num.Im == up1Num.Im && (!low2.Item3 || !up1.Item3)))
+            if (low1Num.Real > up2Num.Real || (low1Num.Real == up2Num.Real && (!low1.Item2 || !up2.Item2)) ||
+                low2Num.Real > up1Num.Real || (low2Num.Real == up1Num.Real && (!low2.Item2 || !up1.Item2)) ||
+                low1Num.Imaginary > up2Num.Imaginary || (low1Num.Imaginary == up2Num.Imaginary && (!low1.Item3 || !up2.Item3)) ||
+                low2Num.Imaginary > up1Num.Imaginary || (low2Num.Imaginary == up1Num.Imaginary && (!low2.Item3 || !up1.Item3)))
                 return null; // if they don't intersect
             var realAxis = IntersectAxis(
-                low1Num.Re, low1.Item2,
-                up1Num.Re, up1.Item2,
-                low2Num.Re, low2.Item2,
-                up2Num.Re, up2.Item2
+                low1Num.Real, low1.Item2,
+                up1Num.Real, up1.Item2,
+                low2Num.Real, low2.Item2,
+                up2Num.Real, up2.Item2
             );
             var imaginaryAxis = IntersectAxis(
-                low1Num.Im, low1.Item3,
-                up1Num.Im, up1.Item3,
-                low2Num.Im, low2.Item3,
-                up2Num.Im, up2.Item3
+                low1Num.Imaginary, low1.Item3,
+                up1Num.Imaginary, up1.Item3,
+                low2Num.Imaginary, low2.Item3,
+                up2Num.Imaginary, up2.Item3
             );
             var edgeLeft = new Edge(
-                new Number(realAxis.Item1.Item1, imaginaryAxis.Item1.Item1),
+                Number.Create(realAxis.Item1.Item1, imaginaryAxis.Item1.Item1),
                 realAxis.Item1.Item2,
                 imaginaryAxis.Item1.Item2);
             var edgeRight = new Edge(
-                new Number(realAxis.Item2.Item1, imaginaryAxis.Item2.Item1),
+                Number.Create(realAxis.Item2.Item1, imaginaryAxis.Item2.Item1),
                 realAxis.Item2.Item2,
                 imaginaryAxis.Item2.Item2);
             var res = Piece.Interval(edgeLeft, edgeRight);
