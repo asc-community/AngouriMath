@@ -164,41 +164,6 @@ namespace AngouriMath.Core.Numerix
             return res;
         }
 
-
-        // New with doubles (not working)
-        /*
-        public static Set GetAllRoots(ComplexNumber value, long rootPower)
-        {
-            MathS.Settings.FloatToRationalIterCount.Set(0);
-            var res = new Set();
-            double phi = (Complex.Log((value / value.Abs()).AsComplex(), Math.E) / new Complex(0, 1)).Real;
-            double newMod = Complex.Pow(value.AsComplex(), 1.0 / rootPower).Real;
-            var i = new Complex(0, 1);
-            for (int n = 0; n < rootPower; n++)
-            {
-                double newPow = phi / rootPower + 2 * Math.PI * n / rootPower;
-                res.Add(newMod * Complex.Pow(Math.E, i * newPow));
-            }
-            MathS.Settings.FloatToRationalIterCount.Unset();
-            return res;
-        }*/
-
-        // Old but working in that commit
-        /*
-        public static Set GetAllRoots(ComplexNumber value, long rootPower)
-        {
-            var res = new Set();
-            decimal phi = (Number.Log(Math.E, value / value.Abs()) / MathS.i).Value.Re;
-            decimal newMod = Number.Pow(Number.Abs(value), 1.0 / rootPower).Value.Re;
-            var i = new ComplexNumber(0, 1);
-            for (int n = 0; n < rootPower; n++)
-            {
-                decimal newPow = phi / rootPower + 2 * (decimal)Math.PI * n / rootPower;
-                res.Add(newMod * ComplexNumber.Pow(Math.E, i * newPow));
-            }
-            return res;
-        }*/
-
         /// <summary>
         /// Returns the absolute value of a complex number num, to be precise,
         /// if num = a + ib, num.Abs() -> sqrt(a^2 + b^2)

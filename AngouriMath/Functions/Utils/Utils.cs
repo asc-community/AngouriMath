@@ -237,7 +237,7 @@ namespace AngouriMath.Functions
 
     public class Setting<T>
     {
-        private Stack<T> sets = new Stack<T>();
+        private readonly Stack<T> sets = new Stack<T>();
         internal Setting(T defaultValue)
         {
             Set(defaultValue);

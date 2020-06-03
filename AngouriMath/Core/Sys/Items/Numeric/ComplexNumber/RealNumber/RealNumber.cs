@@ -155,10 +155,10 @@ namespace AngouriMath.Core.Numerix
         }
 
         protected internal new string InternalToString()
-            => InternalToStringDefinition(Value.ToString());
+            => InternalToStringDefinition(Value.ToString(CultureInfo.InvariantCulture));
 
         protected internal new string InternalLatexise()
-            => InternalLatexiseDefinition(Value.ToString());
+            => InternalLatexiseDefinition(Value.ToString(CultureInfo.InvariantCulture));
 
 
         internal static bool TryParse(string s, out RealNumber dst)

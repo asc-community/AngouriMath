@@ -116,9 +116,12 @@ namespace AngouriMath.Core.Numerix
 
         protected internal void Init()
         {
-
+            /*
+             will be filled with initialization of parent class, quaternion,
+             when the last one will be implemented
+            */
         }
-        
+
         protected override (decimal Re, decimal Im) GetValue()
         {
             return (Real.Value, Imaginary.Value);

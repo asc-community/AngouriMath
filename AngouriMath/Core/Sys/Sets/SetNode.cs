@@ -164,12 +164,6 @@ namespace AngouriMath.Core
                     Pieces.Add(piece);
                 return;
             }
-            /*
-            if (piece.Type == Piece.PieceType.ENTITY && !Pieces.Any(p => p.Contains(piece)))
-            {
-                Pieces.Add(piece);
-                return;
-            }*/
             var remainders = new List<Piece>{ piece };
             foreach (var p in Pieces)
             {

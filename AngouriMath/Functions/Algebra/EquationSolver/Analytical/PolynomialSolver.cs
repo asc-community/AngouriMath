@@ -45,7 +45,7 @@ namespace AngouriMath.Core.TreeAnalysis
             private decimal value = 0;
             public void Add(decimal a) => value += a;
             public void AddMp(decimal a, ComplexNumber b) => Add(a * b.Real);
-            public void Assign(decimal a) => value = a;
+            public void Assign(decimal val) => value = val;
             public static implicit operator decimal(PrimitiveDouble obj) => obj.value;
             internal static IPrimitive<decimal> Create()
             {
@@ -58,7 +58,7 @@ namespace AngouriMath.Core.TreeAnalysis
             private long value = 0;
             public void Add(long a) => value += a;
             public void AddMp(long a, ComplexNumber b) => Add((a * b.Real).AsIntegerNumber());
-            public void Assign(long a) => value = a;
+            public void Assign(long val) => value = val;
             public static implicit operator long(PrimitiveInt obj) => obj.value;
             internal static IPrimitive<long> Create()
             {
@@ -522,15 +522,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             // Can we eval it right here?
                             mp.Children[1] = mp.Children[1].Eval();
                             freeMono *= MathS.Pow(tmpFree, mp.Children[1]);
-                            try
-                            {
-                                power.AddMp(q.GetValue(), mp.Children[1].GetValue());
-                            }
-                            catch
-                            {
-                                power.AddMp(q.GetValue(), mp.Children[1].GetValue());
-                                throw new Exception(q.GetValue() + "   " + mp.Children[1].GetValue());
-                            }
+                            power.AddMp(q.GetValue(), mp.Children[1].GetValue());
                         }
                     }
                 }

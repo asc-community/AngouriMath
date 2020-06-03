@@ -29,9 +29,6 @@ namespace AngouriMath
     {
         internal override Entity InnerEval()
         {
-            // TODO: do we need to process it here or leave it to Numerix?
-            //if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsDefinite()))
-            //    return Number.Null;
             return MathFunctions.InvokeEval(Name, Children);
         }
     }
@@ -39,9 +36,6 @@ namespace AngouriMath
     {
         internal override Entity InnerEval()
         {
-            // TODO: do we need to process it here or leave it to Numerix?
-            //if (Children.Any(el => el.entType == Entity.EntType.NUMBER && el.GetValue().IsNull))
-            //    return Number.Null;
             return MathFunctions.InvokeEval(Name, Children);
         }
     }
