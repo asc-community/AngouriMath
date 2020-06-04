@@ -352,7 +352,7 @@ namespace AngouriMath.Core.Numerix
                 }
                 catch (OverflowException)
                 {
-                    throw new SysException("While downcasting overflow occured. Please report it to");
+                    throw new SysException("While downcasting overflow occured. Please report it on Issues on the repository of AngouriMath");
                 }
                 if (intPart > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                     return null;
