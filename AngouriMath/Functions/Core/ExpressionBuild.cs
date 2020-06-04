@@ -15,11 +15,6 @@
 
 
 
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 /*
  * The main file for building an expression tree of AngouriMath

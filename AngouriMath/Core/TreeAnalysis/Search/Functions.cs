@@ -14,11 +14,6 @@
  */
 
 
-
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer

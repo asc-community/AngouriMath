@@ -17,13 +17,9 @@
 
 ﻿using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
-using System;
-using System.Collections.Generic;
+ using AngouriMath.Functions.Algebra.AnalyticalSolving;
+ using System.Collections.Generic;
 using System.Linq;
-using System.Text;
- using AngouriMath.Core.Numerix;
 
 
 namespace AngouriMath.Functions.Algebra.Solver

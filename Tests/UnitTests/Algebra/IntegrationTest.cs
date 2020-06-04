@@ -1,7 +1,5 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using AngouriMath.Core.Numerix;
 
 namespace UnitTests.Algebra

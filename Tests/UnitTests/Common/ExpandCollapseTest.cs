@@ -1,7 +1,5 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 
 namespace UnitTests.Common
 {

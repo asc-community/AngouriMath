@@ -13,12 +13,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
-using System.Globalization;
-using System.IO.Compression;
 using System.Linq;
 using System.Numerics;
-using System.Text.RegularExpressions;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.FromString;
 
@@ -51,9 +47,8 @@ namespace AngouriMath.Core.Numerix
         /// Pair of definition states for Real and Imaginary parts respectively. See RealNumber.State
         /// </summary>
         public (RealNumber.UndefinedState Re, RealNumber.UndefinedState Im) State
-        {
-            get => (Real.State, Imaginary.State);
-        }
+            => (Real.State, Imaginary.State);
+        
 
         /// <summary>
         /// Checks whether both parts of the complex number are definite. See RealNumber.IsDefinite()
@@ -127,9 +122,9 @@ namespace AngouriMath.Core.Numerix
             return (Real.Value, Imaginary.Value);
         }
 
-        private static RealNumber _zero = new RealNumber(0.0m);
-        private static RealNumber _plus_one = new RealNumber(1.0m);
-        private static RealNumber _minus_one = new RealNumber(-1.0m);
+        private static readonly RealNumber _zero = new RealNumber(0.0m);
+        private static readonly RealNumber _plus_one = new RealNumber(1.0m);
+        private static readonly RealNumber _minus_one = new RealNumber(-1.0m);
         protected internal string InternalToString()
         {
             string RenderNum(RealNumber number)

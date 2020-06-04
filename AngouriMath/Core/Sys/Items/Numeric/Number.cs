@@ -15,9 +15,7 @@
 
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -55,7 +53,7 @@ namespace AngouriMath.Core.Numerix
         /// <summary>
         /// The final value. Only useful for calculations
         /// </summary>
-        public (decimal Re, decimal Im) Value { get => GetValue(); }
+        public (decimal Re, decimal Im) Value => GetValue();
         protected abstract (decimal Re, decimal Im) GetValue();
 
         /// <summary>

@@ -17,13 +17,9 @@
 
 ﻿using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
-using AngouriMath.Functions.Algebra.Solver;
+ using AngouriMath.Functions.Algebra.Solver;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
  using AngouriMath.Core;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
@@ -450,10 +446,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // // //
 
             // Here we find one that has at least one solution
-            Set solutions = null;
-            Entity bestReplacement = null;
+            
             foreach (var replacement in replacements)
             {
+                Set solutions = null;
                 if (replacement.Item1 == x)
                     continue;
                 var newExpr = replacement.Item2.DeepCopy();
@@ -461,7 +457,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 solutions = newExpr.SolveEquation(newVar);
                 if (!solutions.IsEmpty())
                 {
-                    bestReplacement = replacement.Item1;
+                    var bestReplacement = replacement.Item1;
 
                     // Here we are trying to solve for this replacement
                     Set newDst = new Set();

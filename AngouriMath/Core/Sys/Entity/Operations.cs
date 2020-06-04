@@ -16,9 +16,6 @@
 
 
 ﻿using AngouriMath.Core.Sys.Items.Tensors;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AngouriMath.Core
 {

@@ -1,5 +1,4 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Convenience
@@ -7,8 +6,8 @@ namespace UnitTests.Convenience
     [TestClass]
     public class CompilationTest
     {
-        private readonly static VariableEntity x = MathS.Var("x");
-        private readonly static VariableEntity y = MathS.Var("y");
+        private static readonly VariableEntity x = MathS.Var("x");
+        private static readonly VariableEntity y = MathS.Var("y");
         [TestMethod]
         public void Test1()
         {

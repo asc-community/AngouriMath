@@ -1,9 +1,5 @@
 ﻿using AngouriMath;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
 
 namespace DotnetBenchmark
 {

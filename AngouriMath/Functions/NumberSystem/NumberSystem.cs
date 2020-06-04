@@ -18,7 +18,6 @@
 ﻿using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace AngouriMath.Functions.NumberSystem
 {

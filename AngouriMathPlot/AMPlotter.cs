@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using AngouriMath;
-using AngouriMath.Core;
 using ScottPlot;
-using System.Windows.Forms;
 using AngouriMath.Core.Numerix;
 
 namespace AngouriMathPlot

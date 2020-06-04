@@ -1,11 +1,7 @@
 ﻿using AngouriMath;
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
-using AngouriMath.Core;
 using System.Linq.Expressions;
 using AngouriMath.Core.Numerix;
 

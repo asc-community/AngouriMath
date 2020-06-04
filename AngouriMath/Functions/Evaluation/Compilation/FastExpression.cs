@@ -14,17 +14,13 @@
  */
 
 
-
-﻿using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Functions.Evaluation.Compilation;
-using System;
 using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
- using Antlr4.Runtime.Atn;
 
 namespace AngouriMath
 {

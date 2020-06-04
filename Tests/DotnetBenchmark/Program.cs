@@ -2,7 +2,6 @@
 using System.Linq.Expressions;
 using System.Numerics;
 using AngouriMath;
-using AngouriMath.Core;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 

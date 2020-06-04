@@ -14,15 +14,10 @@
  */
 
 
-
- using AngouriMath.Core;
-using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
- using AngouriMath.Core.Numerix;
+using System.Numerics;
+using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
@@ -47,7 +42,7 @@ namespace AngouriMath
         /// <summary>
         /// Usually IsLeaf <=> number, variable, tensor
         /// </summary>
-        public bool IsLeaf { get => Children.Count == 0; }
+        public bool IsLeaf => Children.Count == 0;
         /* changed from protected to internal due to protection level of EntType */
         internal Entity(string name, EntType type)
         {
@@ -126,7 +121,12 @@ namespace AngouriMath
         /// NumberEntity is a node, not a number. To get the number, use either Eval or direct access Value.
         /// </summary>
         public ComplexNumber Value { get; internal set; }
-        public new string Name { get => Value.ToString(); }
+        public new string Name => Value.ToString();
+        public static implicit operator NumberEntity((double, double) num) => new NumberEntity(Number.Create(num.Item1, num.Item2));
+        public static implicit operator NumberEntity(Complex num) => new NumberEntity(Number.Create(num));
+        public static implicit operator NumberEntity(long num) => new NumberEntity(Number.Create(num));
+        public static implicit operator NumberEntity(float num) => new NumberEntity(Number.Create(num));
+        public static implicit operator NumberEntity(double num) => new NumberEntity(Number.Create(num));
         public static implicit operator NumberEntity(int num) => new NumberEntity(Number.Create(num));
         public static implicit operator NumberEntity(ComplexNumber num) => new NumberEntity(num);
 

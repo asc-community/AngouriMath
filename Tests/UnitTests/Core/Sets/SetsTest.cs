@@ -1,9 +1,6 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using AngouriMath;
+﻿using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Core.Numerix;
-using AngouriMath.Core.Sets;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Core
@@ -11,7 +8,7 @@ namespace UnitTests.Core
     [TestClass]
     public class SetsTest
     {
-        private Set A = MathS.Sets.Empty();
+        private readonly Set A = MathS.Sets.Empty();
 
         public SetsTest()
         {
@@ -47,7 +44,7 @@ namespace UnitTests.Core
             Assert.IsTrue(A.Contains(Piece.Interval(10, 15)));
         }
 
-        private Set B = MathS.Sets.Empty();
+        private readonly Set B = MathS.Sets.Empty();
 
         [TestMethod]
         public void InvididualNumbersInIntervalsTwoSets()
@@ -58,7 +55,7 @@ namespace UnitTests.Core
             Assert.IsTrue(C.Contains(11.1));
         }
 
-        private Set C = MathS.Sets.Empty();
+        private readonly Set C = MathS.Sets.Empty();
 
         [TestMethod]
         public void RealIntervalDisjunctionTest()
@@ -98,12 +95,12 @@ namespace UnitTests.Core
             Assert.IsFalse(D.Contains(5));
         }
 
-        private Set Af = MathS.Sets.Finite(3, 4, 5);
-        private Set Bf = MathS.Sets.Finite(1, 2, 4);
-        private Set Cf = MathS.Sets.Finite(-7);
-        private Set Df = MathS.Sets.Finite();
-        private Set Ef = MathS.Sets.Finite(new ComplexNumber(-1, -1));
-        private Set Gf = MathS.Sets.Finite(new ComplexNumber(-1, -1));
+        private readonly Set Af = MathS.Sets.Finite(3, 4, 5);
+        private readonly Set Bf = MathS.Sets.Finite(1, 2, 4);
+        private readonly Set Cf = MathS.Sets.Finite(-7);
+        private readonly Set Df = MathS.Sets.Finite();
+        private readonly Set Ef = MathS.Sets.Finite(new ComplexNumber(-1, -1));
+        private readonly Set Gf = MathS.Sets.Finite(new ComplexNumber(-1, -1));
 
         [TestMethod]
         public void SetsFiniteTestDisj()

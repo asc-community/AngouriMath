@@ -101,7 +101,7 @@ namespace AngouriMath.Core.Numerix
         internal static bool TryParse(string s, out RationalNumber dst)
         {
             dst = null;
-            var pos = s.IndexOf("/");
+            var pos = s.IndexOf("/", StringComparison.Ordinal);
             if (pos == -1)
                 return false;
             var numString = s.Substring(0, pos).Replace(" ", "");

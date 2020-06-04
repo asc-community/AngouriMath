@@ -19,7 +19,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
- using System.Threading;
  using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Core
@@ -38,7 +37,7 @@ namespace AngouriMath.Core
         /// <summary>
         /// Numbere of dimensions. 2 for matrix, 1 for vector
         /// </summary>
-        public int Dimensions { get => Shape.Count; }
+        public int Dimensions => Shape.Count;
 
         /// <summary>
         /// Used for swapping axes if a tensor is transposed

@@ -260,9 +260,7 @@ namespace AngouriMath.Core
         }
 
         public int Count
-        {
-            get => Power == PowerLevel.INFINITE ? -1 : Pieces.Count;
-        }
+            => Power == PowerLevel.INFINITE ? -1 : Pieces.Count;
 
         public IEnumerable<T> Select<T>(Func<Piece, T> selector)
             => Pieces.Select(selector);
@@ -349,7 +347,7 @@ namespace AngouriMath.Core
 
     public class FiniteSet : IEnumerable
     {
-        private Piece[] pieces;
+        private readonly Piece[] pieces;
         internal FiniteSet(Piece[] pieces)
             => this.pieces = pieces;
         IEnumerator IEnumerable.GetEnumerator()
@@ -369,7 +367,7 @@ namespace AngouriMath.Core
 
     public class SetFiniteEnumerator : IEnumerator
     {
-        private Entity[] entities;
+        private readonly Entity[] entities;
         private int position = -1;
         public SetFiniteEnumerator(Entity[] entities)
             => this.entities = entities;
@@ -390,20 +388,14 @@ namespace AngouriMath.Core
             // do nothing if disposed
         }
 
-        object IEnumerator.Current
-        {
-            get => Current;
-        }
+        object IEnumerator.Current => Current;
 
-        public Entity Current
-        {
-            get => entities[position];
-        }
+        public Entity Current => entities[position];
     }
 
     public class SetEnumerator : IEnumerator
     {
-        private Piece[] pieces;
+        private readonly Piece[] pieces;
         private int position = -1;
 
         public SetEnumerator(Piece[] pieces)
@@ -425,14 +417,8 @@ namespace AngouriMath.Core
             // do nothing if disposed
         }
 
-        object IEnumerator.Current
-        {
-            get => Current;
-        }
+        object IEnumerator.Current => Current;
 
-        public Piece Current
-        {
-            get => pieces[position];
-        }
+        public Piece Current => pieces[position];
     }
 }

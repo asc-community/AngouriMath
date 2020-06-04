@@ -22,7 +22,6 @@ using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Evaluation.Simplification;
 using System;
 using System.Collections.Generic;
-using System.Linq;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
@@ -63,7 +62,6 @@ namespace AngouriMath
 namespace AngouriMath
 {
     using EvalTable = Dictionary<string, Func<List<Entity>, Entity>>;
-    using SortLevel = Core.TreeAnalysis.TreeAnalyzer.SortLevel;
 
     // Adding function Eval to Entity
     public abstract partial class Entity : ILatexiseable

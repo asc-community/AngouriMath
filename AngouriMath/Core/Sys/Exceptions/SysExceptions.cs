@@ -16,11 +16,12 @@
 
 
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AngouriMath.Core.Exceptions
 {
+    /// <summary>
+    /// If one was thrown, the exception is probably not foreseen by AM. Repost it is an issue
+    /// </summary>
     public class SysException : Exception
     {
         public SysException(string msg) : base(msg) { }

@@ -17,7 +17,6 @@
 
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -73,6 +72,6 @@ namespace AngouriMath.Core.TreeAnalysis
         /// </summary>
         /// <param name="children"></param>
         /// <param name="level"></param>
-        internal static void Sort(List<Entity> children, SortLevel level) => children.Sort((a, b) => a.SortHash(level).CompareTo(b.SortHash(level)));        
+        internal static void Sort(List<Entity> children, SortLevel level) => children.Sort((a, b) => String.Compare(a.SortHash(level), b.SortHash(level), StringComparison.Ordinal);        
     }
 }

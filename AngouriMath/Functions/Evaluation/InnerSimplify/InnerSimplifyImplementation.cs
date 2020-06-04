@@ -14,14 +14,8 @@
  */
 
 
-
- using AngouriMath.Core;
 using AngouriMath.Core.Sys.Items.Tensors;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
- using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Numerix;
 
 namespace AngouriMath
 {

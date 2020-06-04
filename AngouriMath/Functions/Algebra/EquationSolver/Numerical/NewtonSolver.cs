@@ -18,11 +18,8 @@
  using AngouriMath.Core;
 using AngouriMath.Functions.Algebra.NumbericalSolving;
 using System;
-using System.Collections.Generic;
-using System.Text;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
- using Antlr4.Runtime.Atn;
 
 namespace AngouriMath.Functions.Algebra.NumbericalSolving
 {

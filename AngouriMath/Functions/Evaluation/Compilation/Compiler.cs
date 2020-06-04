@@ -16,10 +16,7 @@
 
 
 ﻿using AngouriMath.Core.Exceptions;
-using AngouriMath.Core.TreeAnalysis;
-using System;
-using System.Collections.Generic;
-using System.Text;
+ using System.Collections.Generic;
 
 namespace AngouriMath.Functions.Evaluation.Compilation
 {

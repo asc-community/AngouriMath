@@ -14,9 +14,7 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text;
 using AngouriMath.Core.Numerix;
 
@@ -37,7 +35,7 @@ namespace AngouriMath.Core
         public bool In(Set set)
             => set.Contains(this);
 
-        public PieceType Type { get; private set; }
+        public PieceType Type { get; }
 
         public static bool operator ==(Piece a, Piece b)
         {

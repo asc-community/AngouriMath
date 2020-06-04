@@ -14,8 +14,6 @@
  */
 
 
-
- using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;

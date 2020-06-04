@@ -16,10 +16,6 @@
 
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using AngouriMath.Functions.Algebra.NumbericalSolving;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Functions.Algebra.InequalitySolver

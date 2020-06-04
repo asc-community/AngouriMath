@@ -1,9 +1,4 @@
-﻿
-using System;
-using AngouriMath;
-using AngouriMath.Core.Numerix;
-
-namespace Samples
+﻿namespace Samples
 {
     class Program
     {

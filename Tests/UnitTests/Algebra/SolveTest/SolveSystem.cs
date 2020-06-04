@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using AngouriMath;
-using AngouriMath.Core;
 using AngouriMath.Core.Numerix;
 
 namespace UnitTests.Algebra

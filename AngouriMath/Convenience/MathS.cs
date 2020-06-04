@@ -17,12 +17,10 @@
 using System;
 using AngouriMath.Core;
 using AngouriMath.Core.FromString;
-using System.Linq.Expressions;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.NumberSystem;
 using AngouriMath.Functions.Output;
 using AngouriMath.Functions.Algebra.Solver;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sys;
@@ -277,6 +275,7 @@ namespace AngouriMath
         /// <param name="b"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [Obsolete("Use Number.Create or implicit construction instead")]
         public static Number Num(decimal a, decimal b) => Number.Create(a, b);
 
         /// <summary>
@@ -285,7 +284,8 @@ namespace AngouriMath
         /// <param name="a"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static ComplexNumber Num(decimal a) => new RealNumber(a);
+        [Obsolete("Use Number.Create or implicit construction instead")]
+        public static ComplexNumber Num(decimal a) => Number.Create(a);
 
         /// <summary>
         /// List of public constants

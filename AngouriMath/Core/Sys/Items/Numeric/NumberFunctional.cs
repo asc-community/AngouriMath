@@ -15,9 +15,8 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
+using AngouriMath.Core.Exceptions;
 using AngouriMath.Functions;
 
 namespace AngouriMath.Core.Numerix
@@ -346,7 +345,15 @@ namespace AngouriMath.Core.Numerix
                     return null;
                 long sign = num > 0 ? 1 : -1;
                 num *= sign;
-                var intPart = (IntegerNumber)((BigInteger)Math.Floor(num));
+                IntegerNumber intPart;
+                try
+                {
+                    intPart = (BigInteger) Math.Floor(num);
+                }
+                catch (OverflowException)
+                {
+                    throw new SysException("While downcasting overflow occured. Please report it to");
+                }
                 if (intPart > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                     return null;
                 decimal rest = num - (decimal)intPart.Value;

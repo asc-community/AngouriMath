@@ -14,12 +14,7 @@
  */
 
 
-
-﻿using AngouriMath.Core;
-using System;
-using System.Collections.Generic;
-using System.Text;
- using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath

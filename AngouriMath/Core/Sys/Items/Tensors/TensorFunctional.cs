@@ -17,9 +17,7 @@
 
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
  using AngouriMath.Core.TreeAnalysis;
- using AngouriMath.Functions;
 
 namespace AngouriMath.Core.Sys.Items.Tensors
 {

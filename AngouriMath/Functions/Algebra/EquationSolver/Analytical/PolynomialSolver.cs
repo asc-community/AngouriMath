@@ -14,11 +14,8 @@
  */
 
 
-
- using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using AngouriMath.Convenience;
 using AngouriMath.Core;
  using AngouriMath.Core.Numerix;
