@@ -7,7 +7,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity expr = "x + sin(3)";
+            Entity expr = "x + sin(pi / 6) + 3";
             Console.WriteLine(expr.SolveEquation("x"));
         }
     }

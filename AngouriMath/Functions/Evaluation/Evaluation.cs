@@ -468,7 +468,7 @@ namespace AngouriMath
         static bool IsGood(RealNumber cand, RealNumber[] nums)
         {
             var maxLevel = nums.Select(n => (int)n.Type).Max();
-            return cand.IsRational() || (int) cand.Type > maxLevel;
+            return cand.IsRational() || (int) cand.Type <= maxLevel;
         }
     }
 
