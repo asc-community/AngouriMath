@@ -37,16 +37,6 @@ namespace AngouriMath
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        [ObsoleteAttribute("This method will soon be deprecated. Use SolveEquation instead.")]
-        public Set Solve(VariableEntity x) => EquationSolver.Solve(this, x);
-
-        /// <summary>
-        /// Attempt to find analytical roots of a custom equation
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns>
-        /// Returns Set. Work with it as with a list
-        /// </returns>
         public Set SolveEquation(VariableEntity x) => EquationSolver.Solve(this, x);
     }
 }

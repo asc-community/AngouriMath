@@ -78,7 +78,7 @@ namespace AngouriMath.Functions
                     dst -= ((-1) * terms[i].Children[0].GetValue()) * terms[i].Children[1];
                 else
                     dst += terms[i];
-            dst = dst.InnerEval();
+            dst = dst.InnerSimplify();
             return true;
         }
 

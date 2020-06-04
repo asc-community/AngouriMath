@@ -64,7 +64,8 @@ namespace AngouriMath
     {
         public static void Wakeup() { }
         static Sumf() {
-            MathFunctions.evalTable["sumf"] = Simplify;
+            MathFunctions.evalTable["sumf"] = Eval;
+            MathFunctions.simplifyTable["sumf"] = Simplify;
             MathFunctions.deriveTable["sumf"] = Derive;
             MathFunctions.latexTable["sumf"] = Latex;
             MathFunctions.stringTable["sumf"] = Stringize;
@@ -75,7 +76,8 @@ namespace AngouriMath
         public static void Wakeup() { }
         static Minusf()
         {
-            MathFunctions.evalTable["minusf"] = Simplify;
+            MathFunctions.evalTable["minusf"] = Eval;
+            MathFunctions.simplifyTable["minusf"] = Simplify;
             MathFunctions.deriveTable["minusf"] = Derive;
             MathFunctions.latexTable["minusf"] = Latex;
             MathFunctions.stringTable["minusf"] = Stringize;
@@ -86,7 +88,8 @@ namespace AngouriMath
         public static void Wakeup() { }
         static Mulf()
         {
-            MathFunctions.evalTable["mulf"] = Simplify;
+            MathFunctions.evalTable["mulf"] = Eval;
+            MathFunctions.simplifyTable["mulf"] = Simplify;
             MathFunctions.deriveTable["mulf"] = Derive;
             MathFunctions.latexTable["mulf"] = Latex;
             MathFunctions.stringTable["mulf"] = Stringize;
@@ -97,7 +100,8 @@ namespace AngouriMath
         public static void Wakeup() { }
         static Divf()
         {
-            MathFunctions.evalTable["divf"] = Simplify;
+            MathFunctions.evalTable["divf"] = Eval;
+            MathFunctions.simplifyTable["divf"] = Simplify;
             MathFunctions.deriveTable["divf"] = Derive;
             MathFunctions.latexTable["divf"] = Latex;
             MathFunctions.stringTable["divf"] = Stringize;
@@ -108,7 +112,8 @@ namespace AngouriMath
         public static void Wakeup() { }
         static Powf()
         {
-            MathFunctions.evalTable["powf"] = Simplify;
+            MathFunctions.evalTable["powf"] = Eval;
+            MathFunctions.simplifyTable["powf"] = Simplify;
             MathFunctions.deriveTable["powf"] = Derive;
             MathFunctions.latexTable["powf"] = Latex;
             MathFunctions.stringTable["powf"] = Stringize;
@@ -119,7 +124,8 @@ namespace AngouriMath
         public static void Wakeup() { }
         static Sinf()
         {
-            MathFunctions.evalTable["sinf"] = Simplify;
+            MathFunctions.evalTable["sinf"] = Eval;
+            MathFunctions.simplifyTable["sinf"] = Simplify;
             MathFunctions.deriveTable["sinf"] = Derive;
             MathFunctions.latexTable["sinf"] = Latex;
             MathFunctions.stringTable["sinf"] = Stringize;
@@ -130,7 +136,8 @@ namespace AngouriMath
         public static void Wakeup() { }
         static Cosf()
         {
-            MathFunctions.evalTable["cosf"] = Simplify;
+            MathFunctions.evalTable["cosf"] = Eval;
+            MathFunctions.simplifyTable["cosf"] = Simplify;
             MathFunctions.deriveTable["cosf"] = Derive;
             MathFunctions.latexTable["cosf"] = Latex;
             MathFunctions.stringTable["cosf"] = Stringize;
@@ -141,7 +148,8 @@ namespace AngouriMath
         public static void Wakeup() { }
         static Tanf()
         {
-            MathFunctions.evalTable["tanf"] = Simplify;
+            MathFunctions.evalTable["tanf"] = Eval;
+            MathFunctions.simplifyTable["tanf"] = Simplify;
             MathFunctions.deriveTable["tanf"] = Derive;
             MathFunctions.latexTable["tanf"] = Latex;
             MathFunctions.stringTable["tanf"] = Stringize;
@@ -152,7 +160,8 @@ namespace AngouriMath
         public static void Wakeup() { }
         static Cotanf()
         {
-            MathFunctions.evalTable["cotanf"] = Simplify;
+            MathFunctions.evalTable["cotanf"] = Eval;
+            MathFunctions.simplifyTable["cotanf"] = Simplify;
             MathFunctions.deriveTable["cotanf"] = Derive;
             MathFunctions.latexTable["cotanf"] = Latex;
             MathFunctions.stringTable["cotanf"] = Stringize;
@@ -164,6 +173,7 @@ namespace AngouriMath
         static Logf()
         {
             MathFunctions.evalTable["logf"] = Eval;
+            MathFunctions.simplifyTable["logf"] = Simplify;
             MathFunctions.deriveTable["logf"] = Derive;
             MathFunctions.latexTable["logf"] = Latex;
             MathFunctions.stringTable["logf"] = Stringize;
@@ -175,6 +185,7 @@ namespace AngouriMath
         static Arcsinf()
         {
             MathFunctions.evalTable["arcsinf"] = Eval;
+            MathFunctions.simplifyTable["arcsinf"] = Simplify;
             MathFunctions.deriveTable["arcsinf"] = Derive;
             MathFunctions.latexTable["arcsinf"] = Latex;
             MathFunctions.stringTable["arcsinf"] = Stringize;
@@ -186,6 +197,7 @@ namespace AngouriMath
         static Arccosf()
         {
             MathFunctions.evalTable["arccosf"] = Eval;
+            MathFunctions.simplifyTable["arccosf"] = Simplify;
             MathFunctions.deriveTable["arccosf"] = Derive;
             MathFunctions.latexTable["arccosf"] = Latex;
             MathFunctions.stringTable["arccosf"] = Stringize;
@@ -197,6 +209,7 @@ namespace AngouriMath
         static Arctanf()
         {
             MathFunctions.evalTable["arctanf"] = Eval;
+            MathFunctions.simplifyTable["arctanf"] = Simplify;
             MathFunctions.deriveTable["arctanf"] = Derive;
             MathFunctions.latexTable["arctanf"] = Latex;
             MathFunctions.stringTable["arctanf"] = Stringize;
@@ -208,6 +221,7 @@ namespace AngouriMath
         static Arccotanf()
         {
             MathFunctions.evalTable["arccotanf"] = Eval;
+            MathFunctions.simplifyTable["arccotanf"] = Simplify;
             MathFunctions.deriveTable["arccotanf"] = Derive;
             MathFunctions.latexTable["arccotanf"] = Latex;
             MathFunctions.stringTable["arccotanf"] = Stringize;
