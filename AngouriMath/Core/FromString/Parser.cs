@@ -14,7 +14,9 @@
  */
 
 
+using AngouriMath.Core.Exceptions;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Misc;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -26,6 +28,17 @@ namespace AngouriMath.Core.FromString
     {
         public AngouriMathTokenStream(ITokenSource source)
             : base(source) { }
+    }
+
+    // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
+    class AngourimathTextWriter : TextWriter
+    {
+        public override Encoding Encoding => Encoding.UTF8;
+
+        public override void WriteLine(string s)
+        {
+            throw new ParseException("parsing error: " + s);
+        }
     }
 
     static class Parser
@@ -46,7 +59,8 @@ namespace AngouriMath.Core.FromString
             AngouriMathTokenStream GetTokenStream(string source)
             {
                 var stream = new AntlrInputStream(source);
-                var lexer = new AngourimathLexer(stream);
+                // TODO: can output stream be null or not?
+                var lexer = new AngourimathLexer(stream, null, new AngourimathTextWriter());
 
                 return new AngouriMathTokenStream(lexer);
             }
@@ -58,8 +72,9 @@ namespace AngouriMath.Core.FromString
                 throw new ParseException("input string is invalid");
             source = Parser.PreProcess(tokenList);
             var tokens = GetTokenStream(source);
-
-            var parser = new AngourimathParser(tokens);
+            
+            // TODO: can output stream be null or not?
+            var parser = new AngourimathParser(tokens, null, new AngourimathTextWriter());
             parser.Parse();
             var result = Parser.PostProcess(parser.Result);
             return result;
