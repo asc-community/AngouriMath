@@ -1,4 +1,5 @@
-﻿using AngouriMath.Core.Numerix;
+﻿using AngouriMath;
+using AngouriMath.Core.Numerix;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Core
@@ -112,6 +113,15 @@ namespace UnitTests.Core
         {
             var x = new RationalNumber(Number.Create(-1), Number.Create(2));
             Assert.IsTrue(x / 0 == RealNumber.NegativeInfinity());
+        }
+
+        [TestMethod]
+        public void TestComplexDowncasting()
+        {
+            Entity x = "x2 + 1/9";
+            var roots = x.SolveEquation("x");
+            foreach (var root in roots.FiniteSet())
+                Assert.IsTrue(root.GetValue().Real.IsRational() && root.GetValue().Imaginary.IsRational());
         }
     }
 }

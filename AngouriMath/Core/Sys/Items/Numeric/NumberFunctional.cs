@@ -291,7 +291,11 @@ namespace AngouriMath.Core.Numerix
                         if (complnum.Imaginary.IsDefinite() && Number.IsZero(complnum.Imaginary.Value)) // Momo's fix
                             return (Result: complnum.Real, Continue: true);
                         else
-                            return (Result: complnum, Continue: false);
+                        {
+                            var reDowncasted = Downcast(complnum.Real) as RealNumber;
+                            var imDowncasted = Downcast(complnum.Imaginary) as RealNumber;
+                            return (Result: new ComplexNumber(reDowncasted, imDowncasted), Continue: false);
+                        }
                     },
                     a.Type,
                     a
