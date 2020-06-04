@@ -207,11 +207,6 @@ namespace AngouriMath
     }
     namespace Core
     {
-        partial class Number : ILatexiseable
-        {
-            // \infty with space because it may be followed directly by variables which will invalidate the LaTeX command
-            public string Latexise() => ToString().Replace("Infinity", @"\infty ");
-        }
         partial class SetNode : ILatexiseable
         {
             public string Latexise()
@@ -242,13 +237,14 @@ namespace AngouriMath
                                     var u = upper.Item1.Latexise();
                                     switch (lower.Item2, lower.Item3, upper.Item2, upper.Item3)
                                     {
-                                        case (false, false, false, false):
+                                        // Complex part is inclusive for all real intervals which is [0, 0]i
+                                        case (false, true, false, true):
                                             sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right)");
                                             break;
-                                        case (true, true, false, false):
+                                        case (true, true, false, true):
                                             sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right)");
                                             break;
-                                        case (false, false, true, true):
+                                        case (false, true, true, true):
                                             sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right]");
                                             break;
                                         case (true, true, true, true):

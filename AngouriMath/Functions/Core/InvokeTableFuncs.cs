@@ -14,14 +14,8 @@
  */
 
 
-
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Globalization;
-using AngouriMath.Core;
- using AngouriMath.Core.Sys.Interfaces;
- using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
@@ -44,12 +38,6 @@ namespace AngouriMath
     /// </summary>
     public static partial class MathS
     {
-        
-
-        public delegate Entity OneArg(Entity a);
-        public delegate Entity TwoArg(Entity a, Entity n);
-        public delegate VariableEntity VarFunc(string v);
-        public delegate Number NumFunc(double a, double b = 0);
         static MathS()
         {
             NumberFormatInfo nfi = new NumberFormatInfo

@@ -17,12 +17,9 @@
 
 ﻿using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
-using System;
-using System.Collections.Generic;
+ using AngouriMath.Functions.Algebra.AnalyticalSolving;
+ using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 
 namespace AngouriMath.Functions.Algebra.Solver
@@ -39,8 +36,13 @@ namespace AngouriMath.Functions.Algebra.Solver
         {
             var res = new Set();
             equation = equation.DeepCopy();
-            AnalyticalSolver.Solve(equation, x, res);
-            res.FiniteApply(p => p.InnerSimplify());
+
+            MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
+                MathS.Settings.FloatToRationalIterCount.Set(0);
+                    AnalyticalSolver.Solve(equation, x, res);
+                MathS.Settings.FloatToRationalIterCount.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.Unset();
+
             return res;
         }
         
@@ -66,14 +68,11 @@ namespace AngouriMath.Functions.Algebra.Solver
         {
             if (equations.Count != vars.Count)
                 throw new MathSException("Amount of equations must be equal to that of vars");
-            foreach (var v in vars)
-                if (!(v is VariableEntity))
-                    throw new TreeException("Arguments passed under vars should be Variable Entities");
             equations = new List<Entity>(equations.Select(c => c));
             vars = new List<VariableEntity>(vars.Select(c => c));
             int initVarCount = vars.Count;
             for (int i = 0; i < equations.Count; i++)
-                equations[i] = equations[i].InnerSimplify();
+                equations[i] = equations[i].InnerEval();
 
             var res = EquationSolver.InSolveSystem(equations, vars);
 
@@ -100,7 +99,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static List<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var)
         {
             var result = new List<List<Entity>>();
-            foreach (var sol in eq.SolveEquation(var).FiniteSet())
+            foreach (var sol in eq.InnerEval().SolveEquation(var).FiniteSet())
                 result.Add(new List<Entity>() { sol });
             return result;
         }
@@ -146,7 +145,7 @@ namespace AngouriMath.Functions.Algebra.Solver
                             for (int varid = 0; varid < newvars.Count; varid++)
                                 Z = Z.Substitute(newvars[varid], inSol[j][varid]);
 
-                            Z = Z.InnerSimplify();
+                            Z = Z.InnerEval();
                             inSol[j].Add(Z);
                         }
                         result.AddRange(inSol);

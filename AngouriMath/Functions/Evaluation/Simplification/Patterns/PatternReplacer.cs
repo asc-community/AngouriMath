@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -14,13 +14,12 @@
  */
 
 
-
-﻿using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
  using AngouriMath.Core.Sys.Interfaces;
 using System;
+ using AngouriMath.Core.Numerix;
 
 [assembly: InternalsVisibleTo("UnitTests")]
 
@@ -210,7 +209,7 @@ namespace AngouriMath
                 return keys[PatternNumber];
             var PatternType = (this as Pattern).patType;
             if (PatternType == PatType.NUMBER)
-                return new NumberEntity(Number.Parse(Name));
+                return new NumberEntity(ComplexNumber.Parse(Name));
             if (PatternType == PatType.VARIABLE)
                 return new VariableEntity(Name);
             var newChildren = new List<Entity>();
@@ -278,7 +277,7 @@ namespace AngouriMath
             // Actually, no need to implement
             throw new SysException("@");
         }
-        internal override Entity InnerSimplify()
+        internal override Entity InnerEval()
         {
             // Actually, no need to implement
             throw new SysException("@");

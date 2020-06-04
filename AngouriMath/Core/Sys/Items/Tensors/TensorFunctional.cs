@@ -17,7 +17,7 @@
 
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+ using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Core.Sys.Items.Tensors
 {
@@ -37,11 +37,10 @@ namespace AngouriMath.Core.Sys.Items.Tensors
             // TODO: allow different shapes
             if (a.Shape[0] != b.Shape[0])
                 throw new MathSException("Vectors should be the same size");
-            // TODO: to remove "0" from the final sum
-            Entity res = 0;
+            var operands = new List<Entity>();
             for (int i = 0; i < a.Shape[0]; i++)
-                res += a[i] * b[i];
-            return res;
+                operands.Add(a[i] * b[i]);
+            return TreeAnalyzer.MultiHangBinary(operands, "sumf", Const.PRIOR_SUM);
         }
 
         /// <summary>

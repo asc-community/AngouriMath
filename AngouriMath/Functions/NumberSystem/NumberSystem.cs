@@ -18,7 +18,6 @@
 ﻿using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace AngouriMath.Functions.NumberSystem
 {
@@ -70,7 +69,7 @@ namespace AngouriMath.Functions.NumberSystem
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        internal static string FloatToBaseN(double num /*should be < 1*/, int N)
+        internal static string FloatToBaseN(decimal num /*should be < 1*/, int N)
         {
             if (num > 1 || num < 0)
                 throw new SysException("Error in FloatToBaseN");
@@ -92,14 +91,14 @@ namespace AngouriMath.Functions.NumberSystem
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        internal static string ToBaseN(double num, int N)
+        internal static string ToBaseN(decimal num, int N)
         {
             if (N > ALPHABET_TOCHAR.Length)
                 throw new MathSException("N should be <= than " + ALPHABET_TOCHAR.Length);
             string sign = num < 0 ? "-" : "";
             num = Math.Abs(num);
             int intPart = (int)Math.Floor(num);
-            double floatPart = num - intPart;
+            decimal floatPart = num - intPart;
 
             string rightPart = floatPart != 0 ? "." + FloatToBaseN(floatPart, N) : "";
             string leftPart = sign + IntToBaseN(intPart, N);
@@ -131,13 +130,13 @@ namespace AngouriMath.Functions.NumberSystem
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        internal static double FloatFromBaseN(string num, int N)
+        internal static decimal FloatFromBaseN(string num, int N)
         {
-            double res = 0;
+            decimal res = 0;
             for (int i = 0; i < num.Length; i++)
             {
                 char digit = num[i];
-                res += ALPHABET_FROMCHAR[digit] / Math.Pow(N, i + 1);
+                res += ALPHABET_FROMCHAR[digit] / (decimal)Math.Pow(N, i + 1);
             }
             return res;
         }
@@ -148,7 +147,7 @@ namespace AngouriMath.Functions.NumberSystem
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        internal static double FromBaseN(string num, int N)
+        internal static decimal FromBaseN(string num, int N)
         {
             int sign = num[0] == '-' ? -1 : 1;
             num = num[0] == '-' ? num.Substring(1) : num;

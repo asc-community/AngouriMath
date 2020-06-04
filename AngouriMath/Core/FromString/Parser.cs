@@ -14,10 +14,7 @@
  */
 
 
-
-using Antlr4;
 using Antlr4.Runtime;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -44,7 +41,7 @@ namespace AngouriMath.Core.FromString
                 antlrDict.Add(t[0], int.Parse(t[1], System.Globalization.CultureInfo.InvariantCulture));
             }
         }
-        static public Entity Parse(string source)
+        public static Entity Parse(string source)
         {
             AngouriMathTokenStream GetTokenStream(string source)
             {

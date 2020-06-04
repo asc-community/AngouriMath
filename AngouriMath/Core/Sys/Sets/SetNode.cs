@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sets;
 
 [assembly: InternalsVisibleTo("UnitTests.Core")]
@@ -110,7 +111,8 @@ namespace AngouriMath.Core
                 OperatorType.UNION => Children[0].Contains(piece) || Children[1].Contains(piece),
                 OperatorType.INTERSECTION => Children[0].Contains(piece) && Children[1].Contains(piece),
                 OperatorType.COMPLEMENT => Children[0].Contains(piece) && !Children[1].Contains(piece),
-                OperatorType.INVERSION => !Children[0].Contains(piece)
+                OperatorType.INVERSION => !Children[0].Contains(piece),
+                _ => throw new SysException("Not all operators considered")
             };
 
         public override bool Contains(Set set)
@@ -142,6 +144,7 @@ namespace AngouriMath.Core
         public SetEnumerator GetEnumerator()
             => new SetEnumerator(Pieces.ToArray());
 
+        // TODO: exception
         public FiniteSet FiniteSet()
             => new FiniteSet(Pieces.ToArray());
 
@@ -154,6 +157,7 @@ namespace AngouriMath.Core
                 Pieces.Add(piece);
                 return;
             }
+
             if (!piece.IsNumeric())
             {
                 if (Pieces.All(p => p != piece))
@@ -256,9 +260,7 @@ namespace AngouriMath.Core
         }
 
         public int Count
-        {
-            get => Power == PowerLevel.INFINITE ? -1 : Pieces.Count;
-        }
+            => Power == PowerLevel.INFINITE ? -1 : Pieces.Count;
 
         public IEnumerable<T> Select<T>(Func<Piece, T> selector)
             => Pieces.Select(selector);
@@ -307,8 +309,8 @@ namespace AngouriMath.Core
                 Pieces = new List<Piece>
                 {
                     Piece.Interval(
-                        new Number(double.NegativeInfinity, double.NegativeInfinity),
-                        new Number(double.PositiveInfinity, double.PositiveInfinity)
+                        ComplexNumber.NegNegInfinity(),
+                        ComplexNumber.PosPosInfinity()
                     ).AsInterval().SetLeftClosed(false, false).SetRightClosed(false, false)
                 }
             };
@@ -323,8 +325,8 @@ namespace AngouriMath.Core
                 Pieces = new List<Piece>
                 {
                     Piece.Interval(
-                        new Number(double.NegativeInfinity),
-                        new Number(double.PositiveInfinity)
+                        Number.Create(RealNumber.NegativeInfinity(), 0),
+                        Number.Create(RealNumber.PositiveInfinity(), 0)
                     ).AsInterval().SetLeftClosed(false).SetRightClosed(false)
                 }
             };
@@ -345,7 +347,7 @@ namespace AngouriMath.Core
 
     public class FiniteSet : IEnumerable
     {
-        private Piece[] pieces;
+        private readonly Piece[] pieces;
         internal FiniteSet(Piece[] pieces)
             => this.pieces = pieces;
         IEnumerator IEnumerable.GetEnumerator()
@@ -365,7 +367,7 @@ namespace AngouriMath.Core
 
     public class SetFiniteEnumerator : IEnumerator
     {
-        private Entity[] entities;
+        private readonly Entity[] entities;
         private int position = -1;
         public SetFiniteEnumerator(Entity[] entities)
             => this.entities = entities;
@@ -386,20 +388,14 @@ namespace AngouriMath.Core
             // do nothing if disposed
         }
 
-        object IEnumerator.Current
-        {
-            get => Current;
-        }
+        object IEnumerator.Current => Current;
 
-        public Entity Current
-        {
-            get => entities[position];
-        }
+        public Entity Current => entities[position];
     }
 
     public class SetEnumerator : IEnumerator
     {
-        private Piece[] pieces;
+        private readonly Piece[] pieces;
         private int position = -1;
 
         public SetEnumerator(Piece[] pieces)
@@ -421,14 +417,8 @@ namespace AngouriMath.Core
             // do nothing if disposed
         }
 
-        object IEnumerator.Current
-        {
-            get => Current;
-        }
+        object IEnumerator.Current => Current;
 
-        public Piece Current
-        {
-            get => pieces[position];
-        }
+        public Piece Current => pieces[position];
     }
 }

@@ -1,13 +1,7 @@
 ﻿using AngouriMath;
 using AngouriMathPlot;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace GraphicExample
@@ -19,7 +13,7 @@ namespace GraphicExample
             InitializeComponent();
         }
         AMPlotter plotter;
-        double t = 120;
+        decimal t = 120;
         protected override void OnSizeChanged(EventArgs e)
         {
             base.OnSizeChanged(e);
@@ -37,14 +31,14 @@ namespace GraphicExample
             var expr2 = B * MathS.Sin(t + B) * MathS.Pow(MathS.e, MathS.i * B * MathS.Cos(t));
             var niceFunc2 = expr2.Compile(B);
             plotter.Clear();
-            plotter.PlotIterativeComplex(niceFunc2, 0, t);
+            plotter.PlotIterativeComplex(niceFunc2, (0, 0), ((decimal)t, 0));
             plotter.Render();
-            t += 0.0005;
+            t += 0.0005m;
         }
 
         private void JumpClick(object sender, EventArgs e)
         {
-            t += 1.0;
+            t += 1.0m;
         }
     }
 }

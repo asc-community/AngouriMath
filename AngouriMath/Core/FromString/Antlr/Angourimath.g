@@ -12,6 +12,7 @@ options
     using System.Collections;
     using AngouriMath;
     using AngouriMath.Core;
+    using AngouriMath.Core.Numerix;
     using System.Globalization;
 }
 
@@ -94,7 +95,7 @@ sum_expression returns[Entity value]
    ;
    
 atom returns[Entity value]
-    : NUMBER { $value = Number.Parse($NUMBER.text); }
+    : NUMBER { $value = ComplexNumber.Parse($NUMBER.text); }
     | ID { $value = new VariableEntity($ID.text); }
     | '(' expression ')' { $value = $expression.value; }
     | ID '(' args = function_arguments ')' { $value = new FunctionEntity($ID.text + 'f'); foreach(var arg in $args.list) { $value.Children.Add(arg); } }

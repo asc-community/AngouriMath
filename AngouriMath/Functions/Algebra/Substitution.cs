@@ -14,11 +14,7 @@
  */
 
 
-
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
- using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {

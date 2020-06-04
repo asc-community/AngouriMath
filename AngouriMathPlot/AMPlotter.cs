@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using AngouriMath;
-using AngouriMath.Core;
 using ScottPlot;
-using System.Windows.Forms;
+using AngouriMath.Core.Numerix;
 
 namespace AngouriMathPlot
 {
@@ -52,7 +51,7 @@ namespace AngouriMathPlot
         /// <param name="to">
         /// High bound
         /// </param>
-        public void PlotScatter(Entity expr, VariableEntity x, Number from, Number to)
+        public void PlotScatter(Entity expr, VariableEntity x, ComplexNumber from, ComplexNumber to)
             => PlotScatter(expr.Compile(x), from, to);
 
         /// <summary>
@@ -67,12 +66,12 @@ namespace AngouriMathPlot
         /// <param name="to">
         /// High bound
         /// </param>
-        public void PlotScatter(FastExpression func, Number from, Number to)
+        public void PlotScatter(FastExpression func, ComplexNumber from, ComplexNumber to)
         {
-            Func<int, double> inner = it => ((to - from) / (pointCount - 1) * it).Re;
+            Func<int, decimal> inner = it => ((to - from) / (pointCount - 1) * it).Real;
             Clear();
             BuildData(inner,
-                        it => func.Call(inner(it)).Re);
+                        it => func.Call(inner(it)).Real);
             destination.plt.PlotScatter(dataX, dataY);
             destination.Render();
         }
@@ -84,10 +83,10 @@ namespace AngouriMathPlot
         /// <param name="func"></param>
         /// <param name="from"></param>
         /// <param name="to"></param>
-        public void PlotIterativeComplex(FastExpression func, Number from, Number to)
+        public void PlotIterativeComplex(FastExpression func, ComplexNumber from, ComplexNumber to)
         {
-            Func<int, double> X = it => func.Call((from + to) / (pointCount - 1) * it).Re;
-            Func<int, double> Y = it => func.Call((from + to) / (pointCount - 1) * it).Im;
+            Func<int, decimal> X = it => func.Call((from + to) / (pointCount - 1) * it).Real;
+            Func<int, decimal> Y = it => func.Call((from + to) / (pointCount - 1) * it).Imaginary;
             BuildData(X, Y);
             destination.plt.PlotScatter(dataX, dataY);
         }
@@ -108,12 +107,12 @@ namespace AngouriMathPlot
             destination.Render();
         }
 
-        private void BuildData(Func<int, double> X, Func<int, double> Y)
+        private void BuildData(Func<int, decimal> X, Func<int, decimal> Y)
         {
             for(int i = 0; i < pointCount; i++)
             {
-                dataX[i] = X(i);
-                dataY[i] = Y(i);
+                dataX[i] = (double)X(i);
+                dataY[i] = (double)Y(i);
             }
         }
     }

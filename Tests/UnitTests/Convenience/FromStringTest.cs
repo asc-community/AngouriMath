@@ -1,5 +1,5 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Convenience
@@ -21,7 +21,7 @@ namespace UnitTests.Convenience
         [TestMethod]
         public void Test3()
         {
-            Assert.IsTrue(MathS.FromString("log(4, 2)").Eval() == 2);
+            Assert.IsTrue(MathS.FromString("log(2, 4)").Eval() == 2);
         }
         [TestMethod]
         public void Test4()
@@ -31,7 +31,7 @@ namespace UnitTests.Convenience
         [TestMethod]
         public void Test5()
         {
-            Assert.IsTrue(MathS.FromString("3 ^ 3 ^ 3").Eval().Re > 10000);
+            Assert.IsTrue(MathS.FromString("3 ^ 3 ^ 3").Eval().Real > 10000);
         }
         [TestMethod]
         public void Test6()
@@ -51,7 +51,7 @@ namespace UnitTests.Convenience
         [TestMethod]
         public void Test9()
         {
-            Assert.IsTrue(MathS.FromString("2i + 2 * 2 - 1i").Eval() == new Number(4, 1));
+            Assert.IsTrue(MathS.FromString("2i + 2 * 2 - 1i").Eval() == new ComplexNumber(4, 1));
         }
         [TestMethod]
         public void Test10()

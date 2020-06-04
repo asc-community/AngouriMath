@@ -13,9 +13,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
+using AngouriMath.Core.Numerix;
 
 /*
  *
@@ -57,49 +56,49 @@ namespace AngouriMath.Core.Sets
             * for each of 4 Pieces we close only one side or zero (so there's no intersection between Pieces)
             *
             */
-           var numLeftDown = new Number(edgeLowerNum.Re, edgeLowerNum.Im);
-           var numLeftUp = new Number(edgeLowerNum.Re, edgeUpperNum.Im);
-           var numRightUp = new Number(edgeUpperNum.Re, edgeUpperNum.Im);
-           var numRightDown = new Number(edgeUpperNum.Re, edgeLowerNum.Im);
+           var numLeftDown = Number.Create(edgeLowerNum.Real, edgeLowerNum.Imaginary);
+           var numLeftUp = Number.Create(edgeLowerNum.Real, edgeUpperNum.Imaginary);
+           var numRightUp = Number.Create(edgeUpperNum.Real, edgeUpperNum.Imaginary);
+           var numRightDown = Number.Create(edgeUpperNum.Real, edgeLowerNum.Imaginary);
            var pieceDown = Piece.Interval(
-               numRightDown, new Number(double.NegativeInfinity, double.NegativeInfinity), 
+               numRightDown, ComplexNumber.NegNegInfinity(), 
                true, false, false, false);
            var pieceLeft = Piece.Interval(
-               numLeftDown, new Number(double.NegativeInfinity, double.PositiveInfinity),
+               numLeftDown, ComplexNumber.NegPosInfinity(),
                false, true, false, false);
            var pieceUp = Piece.Interval(
-               numLeftUp, new Number(double.PositiveInfinity, double.PositiveInfinity),
+               numLeftUp, ComplexNumber.PosPosInfinity(),
                true, false, false, false);
            var pieceRight = Piece.Interval(
-               numRightUp, new Number(double.PositiveInfinity, double.NegativeInfinity),
+               numRightUp, ComplexNumber.PosNegInfinity(),
                false, true, false, false);
            var res = new List<Piece> { pieceDown, pieceLeft, pieceUp, pieceRight };
 
            if (!edgeLower.Item2)
                res.Add(Piece.Interval(
-                   new Number(numLeftDown.Re, numLeftDown.Im),
-                   new Number(numLeftDown.Re, numLeftUp.Im), // Re part is the same
+                   Number.Create(numLeftDown.Real, numLeftDown.Imaginary),
+                   Number.Create(numLeftDown.Real, numLeftUp.Imaginary), // Re part is the same
                    true, true, true, true
                    ));
 
            if (!edgeLower.Item3)
                res.Add(Piece.Interval(
-                   new Number(numLeftUp.Re, numLeftDown.Im),
-                   new Number(numRightUp.Re, numLeftDown.Im), // Im part is the same
+                   Number.Create(numLeftUp.Real, numLeftDown.Imaginary),
+                   Number.Create(numRightUp.Real, numLeftDown.Imaginary), // Im part is the same
                    true, true, true, true
                ));
 
            if (!edgeUpper.Item2)
                res.Add(Piece.Interval(
-                   new Number(numRightUp.Re, numRightDown.Im),
-                   new Number(numRightUp.Re, numRightUp.Im), // Re part is the same
+                   Number.Create(numRightUp.Real, numRightDown.Imaginary),
+                   Number.Create(numRightUp.Real, numRightUp.Imaginary), // Re part is the same
                    true, true, true, true
                ));
 
            if (!edgeLower.Item3)
                res.Add(Piece.Interval(
-                   new Number(numLeftDown.Re, numRightDown.Im),
-                   new Number(numRightDown.Re, numRightDown.Im), // Im part is the same
+                   Number.Create(numLeftDown.Real, numRightDown.Imaginary),
+                   Number.Create(numRightDown.Real, numRightDown.Imaginary), // Im part is the same
                    true, true, true, true
                ));
 
@@ -113,8 +112,8 @@ namespace AngouriMath.Core.Sets
             var upper = piece.UpperBound();
             var num1 = lower.Item1.Eval();
             var num2 = upper.Item1.Eval();
-            return (num1.Re != num2.Re || lower.Item2 && upper.Item2) &&
-                   (num1.Im != num2.Im || lower.Item3 && upper.Item3);
+            return (num1.Real != num2.Real || lower.Item2 && upper.Item2) &&
+                   (num1.Imaginary != num2.Imaginary || lower.Item3 && upper.Item3);
         }
     }
 }

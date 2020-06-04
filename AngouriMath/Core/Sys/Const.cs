@@ -184,5 +184,8 @@ namespace AngouriMath
             internal static bool AlwaysTrue(Entity tree)
                 => true;
         }
+
+        internal static Entity EvalIfCan(Entity a)
+            => MathS.CanBeEvaluated(a) ? a.Eval() : a;
     }
 }

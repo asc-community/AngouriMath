@@ -1,5 +1,4 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Algebra
@@ -7,7 +6,7 @@ namespace UnitTests.Algebra
     [TestClass]
     public class DerivativeTest
     {
-        static VariableEntity x = MathS.Var("x");
+        static readonly VariableEntity x = MathS.Var("x");
         [TestMethod]
         public void Test1()
         {

@@ -16,10 +16,7 @@
 
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using AngouriMath.Functions.Algebra.NumbericalSolving;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Functions.Algebra.InequalitySolver
 {
@@ -39,13 +36,13 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
         /// <returns></returns>
         internal static Set _Solve(Entity expr, VariableEntity x, string sign)
         {
-            bool Corresponds(Number val)
+            bool Corresponds(RealNumber val)
             => sign switch
             {
-                ">" => val.Re > 0,
-                "<" => val.Re < 0,
-                ">=" => val.Re >= 0,
-                "<=" => val.Re <= 0,
+                ">" => val > 0,
+                "<" => val < 0,
+                ">=" => val >= 0,
+                "<=" => val <= 0,
                 _ => throw new SysException("Uknown sign")
             } && val.IsReal();
 
@@ -53,7 +50,7 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
             var roots = expr.SolveNt(x);
             var realRootsSet = roots.FiniteWhere(root => root.Eval().IsReal());
             var realRoots = realRootsSet.FiniteSet().ToList();
-            realRoots.Sort((a, b) => a.Eval().Re.CompareTo(b.Eval().Re));
+            realRoots.Sort((a, b) => a.Eval().Real.Value.CompareTo(b.Eval().Real.Value));
             if (realRoots.Count > 0)
             {
                 realRoots.Insert(0, realRoots[0].Eval() - 5);
@@ -62,11 +59,11 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
             var result = new Set();
             for(int i = 0; i < realRoots.Count - 1; i++)
             {
-                var left = realRoots[i].Eval().Re;
-                var right = realRoots[i + 1].Eval().Re;
+                var left = realRoots[i].Eval().Real;
+                var right = realRoots[i + 1].Eval().Real;
                 var point = (left + right) / 2;
                 var val = compiled.Call(point);
-                if (Corresponds(val))
+                if (Corresponds(val.AsRealNumber()))
                     result.Add((left, right, false, false));
             }
             if (sign.Contains("="))

@@ -16,16 +16,11 @@
 
 
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
-        // TODO: duplication
-        internal static Entity R() => new VariableEntity("r");
-
         // TODO: realize all methods
         
         /// <summary>

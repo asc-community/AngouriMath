@@ -14,10 +14,7 @@
  */
 
 
-
-﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using AngouriMath.Core.TreeAnalysis.Division.RationalDiv;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 
@@ -64,14 +61,14 @@ namespace AngouriMath.Core.TreeAnalysis
             }
 
             // Gather info about each var as if this var was the only argument of the polynomial P(x)
-            List<Entity> children;
             foreach (var varMentioned in newList)
             {
+                List<Entity> children;
                 if (expr.entType == Entity.EntType.OPERATOR && expr.Name == "sumf" || expr.Name == "minusf")
                     children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
                 else
                     children = new List<Entity> { expr };
-                res.monoInfo[varMentioned] = PolynomialSolver.GatherMonomialInformation<double>(children, MathS.Var(varMentioned));
+                res.monoInfo[varMentioned] = PolynomialSolver.GatherMonomialInformation<decimal>(children, MathS.Var(varMentioned));
             }
 
             return res;
@@ -82,7 +79,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
 namespace AngouriMath.Core.TreeAnalysis.Division.RationalDiv
 {
-    using MonomialInfo = Dictionary<string, Dictionary<double, Entity>>;
+    using MonomialInfo = Dictionary<string, Dictionary<decimal, Entity>>;
     using ReplacementInfo = Dictionary<string, Entity>;
     internal class PolyInfo
     {

@@ -2,8 +2,10 @@
 ![Nuget](https://img.shields.io/nuget/dt/AngouriMath?color=blue&label=NuGet%20installs&logoColor=blue)
 ![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)
 
+![alt text](./banner.png "Logo")
 
-Nuget: https://www.nuget.org/packages/AngouriMath
+[Nuget](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository")
+
 ## AngouriMath
 AngouriMath is an open-source library that enables to work with non-linear 
 multi-variable expressions. Its functionality includes derivation, 
@@ -23,7 +25,7 @@ Console.WriteLine(MathS.Sqr(c));
 
 #### Use as a simple calculator
 ```cs
-var inp = "1 + 2 * log(9, 3)";
+var inp = "1 + 2 * log(3, 9)";
 var expr = MathS.FromString(inp);
 Console.WriteLine(expr.Eval());
 >>> 5
@@ -35,7 +37,7 @@ var x = MathS.Var("x");
 var expr = x * 2 + MathS.Sin(x) / MathS.Sin(MathS.Pow(2, x));
 var subs = expr.Substitute(x, 0.3);
 Console.WriteLine(subs.Eval());
->>> 0,9134260185941638
+>>> 0,9134260185941638995386706112
 ```
 
 #### Find derivatives
@@ -43,15 +45,15 @@ Console.WriteLine(subs.Eval());
 var x = MathS.Var("x");
 var func = MathS.Sqr(x) + MathS.Ln(MathS.Cos(x) + 3) + 4 * x;
 var derivative = func.Derive(x);
-Console.WriteLine(derivative.Eval());
->>> 2 * x + -1 * sin(x) / (cos(x) + 3) + 4
+Console.WriteLine(derivative.Simplify());
+>>> 4 + (-1) * sin(x) / (cos(x) + 3) + 2 * x
 ```
 
 #### Build expressions faster
 ```cs
 Entity expr = "sqr(x + y)";
 Console.WriteLine(expr.Expand().Simplify());
->>> 2 * x * y + x ^ 2 + y ^ 2
+>>> x ^ 2 + 2 * x * y + y ^ 2
 ```
 
 #### Simplify
@@ -62,7 +64,7 @@ var b = MathS.Var("b");
 var expr = MathS.Sqrt(x) / x + a * b + b * a + (b - x) * (x + b) + 
     MathS.Arcsin(x + a) + MathS.Arccos(a + x);
 Console.WriteLine(expr.Simplify());
->>> 1.5707963267948966 + 2 * a * b + b ^ 2 + x ^ (-0.5) - x ^ 2
+>>> 2 * a * b + b ^ 2 + pi / 2 + x ^ (-1 / 2) - x ^ 2
 ```
 
 #### Render latex
@@ -71,7 +73,7 @@ var x = MathS.Var("x");
 var y = MathS.Var("y");
 var expr = x.Pow(y) + MathS.Sqrt(x + y / 4) * (6 / x);
 Console.WriteLine(expr.Latexise());
->>> {x}^{y}+\sqrt{x+\frac{y}{4}}*\frac{6}{x}
+>>> {x}^{y}+\sqrt{x+\frac{y}{4}}\times \frac{6}{x}
 ```
 
 #### Play with complex numbers
@@ -79,7 +81,7 @@ Console.WriteLine(expr.Latexise());
 var expr = MathS.Pow(MathS.e, MathS.pi * MathS.i);
 Console.WriteLine(expr);
 Console.WriteLine(expr.Eval());
->>> 2,718281828459045 ^ 3,141592653589793i
+>>> e ^ (pi * i)
 >>> -1
 ```
 
@@ -119,7 +121,7 @@ var x = MathS.Var("x");
 var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
 Console.WriteLine(expr.DefiniteIntegral(x, -3, 3));
 var expr2 = MathS.Sin(x);
-Console.WriteLine(expr2.DefiniteIntegral(x, 0, MathS.pi));
+Console.WriteLine(expr2.DefiniteIntegral(x, 0, MathS.DecimalConst.pi));
 >>> 5.56669223384056 + 0.0889406793629381i
 >>> 1.98003515236381
 ```
@@ -135,7 +137,7 @@ Console.WriteLine(func.Substitute(3));
 
 #### Try new syntax
 ```cs
-var expr = MathS.FromString("3x3 + 2 2 2 - x(3 0.5)");
+Entity expr = "3x3 + 2 2 2 - x(3 0.5)";
 Console.WriteLine(expr);
 >>> 3 * x ^ 3 + 2 ^ 2 ^ 2 - x * sqrt(3)
 ```
@@ -154,6 +156,14 @@ var expr = SySyn.Exp(x) + x;
 Console.WriteLine(SySyn.Diff(expr));
 Console.WriteLine(SySyn.Diff(expr, x));
 Console.WriteLine(SySyn.Diff(expr, x, x));
+```
+
+#### Work with numbers
+```cs
+var rat1 = Number.CreateRational(3, 4);
+var rat2 = Number.CreateRational(5, 6);
+Console.WriteLine((rat1 + rat2).ToString());
+>>> 19 / 12
 ```
 
 #### Translate number systems

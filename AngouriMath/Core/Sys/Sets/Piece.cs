@@ -14,10 +14,9 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text;
+using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Core
 {
@@ -36,7 +35,7 @@ namespace AngouriMath.Core
         public bool In(Set set)
             => set.Contains(this);
 
-        public PieceType Type { get; private set; }
+        public PieceType Type { get; }
 
         public static bool operator ==(Piece a, Piece b)
         {
@@ -88,7 +87,8 @@ namespace AngouriMath.Core
         /// </param>
         /// <param name="num"></param>
         /// <returns></returns>
-        private static bool InBetween(double a, double b, bool closedA, bool closedB, double num, bool closedNum)
+        private static bool InBetween(RealNumber a, RealNumber b, bool closedA, bool closedB, RealNumber num,
+            bool closedNum)
         {
             if (num == a && (closedA || !closedNum))
                 return true;
@@ -112,10 +112,11 @@ namespace AngouriMath.Core
         /// <param name="closedRe"></param>
         /// <param name="closedIm"></param>
         /// <returns></returns>
-        private static bool ComplexInBetween(Number a, Number b, bool closedARe, bool closedAIm, bool closedBRe,
-            bool closedBIm, Number num, bool closedRe, bool closedIm)
-            => InBetween(a.Re, b.Re, closedARe, closedBRe, num.Re, closedRe) &&
-               InBetween(a.Im, b.Im, closedAIm, closedBIm, num.Im, closedIm);
+        private static bool ComplexInBetween(ComplexNumber a, ComplexNumber b, bool closedARe, bool closedAIm,
+            bool closedBRe,
+            bool closedBIm, ComplexNumber num, bool closedRe, bool closedIm)
+            => InBetween(a.Real, b.Real, closedARe, closedBRe, num.Real, closedRe) &&
+               InBetween(a.Imaginary, b.Imaginary, closedAIm, closedBIm, num.Imaginary, closedIm);
 
         /// <summary>
         /// So that any numberical operations could be performed
@@ -124,15 +125,15 @@ namespace AngouriMath.Core
         internal bool IsNumeric()
             => (MathS.CanBeEvaluated(LowerBound().Item1) && MathS.CanBeEvaluated(UpperBound().Item1));
 
-            /// <summary>
+        /// <summary>
         /// Determines whether interval or element of piece is in this
         /// </summary>
         /// <param name="piece"></param>
         /// <returns></returns>
         public bool Contains(Piece piece)
-            {
-                if (!piece.IsNumeric() || !this.IsNumeric())
-                    return false;
+        {
+            if (!piece.IsNumeric() || !this.IsNumeric())
+                return false;
 
             // Gather all information
             var up = UpperBound();
@@ -148,9 +149,9 @@ namespace AngouriMath.Core
             var num_low = low_l.Item1.Eval();
             // // //
 
-            return ComplexInBetween(num1, num2, up.Item2, up.Item3, 
-                low.Item2, low.Item3, num_low, low_l.Item2,
-                low_l.Item3) &&
+            return ComplexInBetween(num1, num2, up.Item2, up.Item3,
+                       low.Item2, low.Item3, num_low, low_l.Item2,
+                       low_l.Item3) &&
                    ComplexInBetween(num1, num2, up.Item2, up.Item3,
                        low.Item2, low.Item3, num_up, up_l.Item2,
                        up_l.Item3);
@@ -162,12 +163,12 @@ namespace AngouriMath.Core
         }
 
         internal static Edge CopyEdge(Edge edge)
-        => new Edge(edge.Item1.DeepCopy(), edge.Item2, edge.Item3);
+            => new Edge(edge.Item1.DeepCopy(), edge.Item2, edge.Item3);
 
         internal static bool EdgeEqual(Edge A, Edge B)
-            => A.Item1 == B.Item1 && A.Item2 == B.Item2 && A.Item3 == B.Item3;
+            => Const.EvalIfCan(A.Item1) == Const.EvalIfCan(B.Item1) && A.Item2 == B.Item2 && A.Item3 == B.Item3;
 
-        internal static Piece Interval(Entity a, Entity b, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm)
+            internal static Piece Interval(Entity a, Entity b, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm)
         {
             if (a == b)
                 return new OneElementPiece(a);
@@ -198,8 +199,8 @@ namespace AngouriMath.Core
         => new OneElementPiece(a);
 
         internal static IntervalPiece CreateUniverse()
-            => Piece.Interval(new Number(double.NegativeInfinity, double.NegativeInfinity),
-                new Number(double.PositiveInfinity, double.PositiveInfinity),
+            => Piece.Interval(ComplexNumber.NegNegInfinity(),
+                ComplexNumber.PosPosInfinity(),
                 false, false, false, false).AsInterval();
 
         internal IntervalPiece AsInterval() => this as IntervalPiece;
@@ -216,11 +217,10 @@ namespace AngouriMath.Core
             => new OneElementPiece(element);
         public static implicit operator Piece(int element)
             => new OneElementPiece(element);
-        public static implicit operator Piece(Number element)
+        public static implicit operator Piece(ComplexNumber element)
             => new OneElementPiece(element);
         public static implicit operator Piece(Complex element)
-            => new OneElementPiece(new Number(element));
-
+            => new OneElementPiece(Number.Create(element));
         public static explicit operator Entity(Piece piece)
             => (piece as OneElementPiece).entity.Item1;
     }

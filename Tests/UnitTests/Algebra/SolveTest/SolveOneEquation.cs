@@ -3,6 +3,7 @@ using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using AngouriMath.Core.Numerix;
 
 namespace UnitTests.Algebra
 {
@@ -17,7 +18,7 @@ namespace UnitTests.Algebra
         /// <param name="equation"></param>
         /// <param name="toSub"></param>
         /// <param name="varValue"></param>
-        public void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue)
+        public static void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue)
         {
             string LimitString(string s)
             {
@@ -28,10 +29,10 @@ namespace UnitTests.Algebra
             }
             string eqNormal = equation.ToString();
             var err = CheckRoots(equation, toSub, varValue);
-            Assert.IsTrue(err < 0.001, "Error is : " + err + "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
+            Assert.IsTrue(err < 0.001m, "Error is : " + err + "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
         }
 
-        public double CheckRoots(Entity equation, VariableEntity toSub, Entity varValue)
+        public static decimal CheckRoots(Entity equation, VariableEntity toSub, Entity varValue)
         {
             equation = equation.Substitute(toSub, varValue);
             var allVars = MathS.Utils.GetUniqueVariables(equation);
@@ -43,7 +44,7 @@ namespace UnitTests.Algebra
             return Number.Abs(equation.Eval());
         }
 
-        public void AssertRootCount(Set roots, int target)
+        public static void AssertRootCount(Set roots, int target)
         {
             Assert.IsFalse(roots.Power == Set.PowerLevel.INFINITE, "Set of roots must be finite");
             Assert.IsTrue(roots.Count == target, string.Format("Number of roots must be equal {0} but is {1}", target, roots.Count));
@@ -78,10 +79,9 @@ namespace UnitTests.Algebra
         public void Test4()
         {
             var eq = x.Pow(2) + 2 * x + 1;
-            var tmpEQTHR = MathS.Utils.EQUALITY_THRESHOLD;
-            MathS.Utils.EQUALITY_THRESHOLD = 1e-6;
+            MathS.Settings.PrecisionErrorCommon.Set(1e-6m);
             var roots = eq.SolveNt(x, precision: 100);
-            MathS.Utils.EQUALITY_THRESHOLD = tmpEQTHR;
+            MathS.Settings.PrecisionErrorCommon.Unset();
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
@@ -144,34 +144,6 @@ namespace UnitTests.Algebra
                 AssertRoots(eq, x, root);
         }
         [TestMethod]
-        public void TestAllNumbers3()
-        {
-            var rand = new Random(24 /* seed should be specified due to required determinism*/ );
-            for (int i = 0; i < 30; i++)
-            {
-                var expr = (x - rand.Next(0, 10)) *
-                           (x - rand.Next(0, 10)) *
-                           (x - rand.Next(0, 10));
-                var newexpr = expr.Expand();
-                foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                    AssertRoots(newexpr, x, root);
-            }
-        }
-        [TestMethod]
-        public void TestAllNumbers3complex()
-        {
-            var rand = new Random(24 /* seed should be specified due to required determinism*/ );
-            for (int i = 0; i < 30; i++)
-            {
-                var expr = (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
-                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
-                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10)));
-                var newexpr = expr.Expand();
-                foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                    AssertRoots(newexpr, x, root);
-            }
-        }
-        [TestMethod]
         public void TestAllNumbers3complexCount()
         {
             var rand = new Random(24 /* seed should be specified due to required determinism*/ );
@@ -183,41 +155,9 @@ namespace UnitTests.Algebra
                            (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10)));
                 var newexpr = expr.Expand();
                 foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                    WA += CheckRoots(newexpr, x, root) > 0.001 ? 1 : 0;
+                    WA += CheckRoots(newexpr, x, root) > 0.001m ? 1 : 0;
             }
             Assert.IsTrue(WA == 0, "WA count: " + WA);
-        }
-        [TestMethod]
-        public void TestAllNumbers4()
-        {
-            var rand = new Random(24 /* seed should be specified due to required determinism*/ );
-            for (int i = 0; i < 30; i++)
-            {
-                var expr = (x - rand.Next(0, 10)) *
-                           (x - rand.Next(0, 10)) *
-                           (x - rand.Next(0, 10)) *
-                           (x - rand.Next(0, 10));
-                var newexpr = expr.Expand();
-                var roots = newexpr.SolveEquation(x);
-                Assert.IsTrue(roots.Count > 0);
-                foreach (var root in roots.FiniteSet())
-                    AssertRoots(newexpr, x, root);
-            }
-        }
-        [TestMethod]
-        public void TestAllNumbers4complex()
-        {
-            var rand = new Random(24 /* seed should be specified due to required determinism*/ );
-            for (int i = 0; i < 30; i++)
-            {
-                var expr = (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
-                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
-                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
-                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10)));
-                var newexpr = expr.Expand();
-                foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                    AssertRoots(newexpr, x, root);
-            }
         }
         [TestMethod]
         public void TestVars2()
@@ -237,6 +177,17 @@ namespace UnitTests.Algebra
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
         }
+
+        [TestMethod]
+        public void MomoTest()
+        {
+            Entity expr = "1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4";
+            var sols = expr.SolveEquation("x");
+            AssertRootCount(sols, 4);
+            foreach (var root in sols.FiniteSet())
+                AssertRoots(expr, x, root);
+        }
+
         [TestMethod]
         public void TestVars3()
         {
@@ -320,20 +271,20 @@ namespace UnitTests.Algebra
 
         private readonly List<Number> KeyPoints = new List<Number>
         {
-            new Number(0, 1),
-            new Number(1, 0),
-            new Number(-3, -3),
-            new Number(2, 2),
-            new Number(13, 13),
-            new Number(-9, +7),
-            new Number(0.5, -0.5),
-            new Number(-0.5, 0.5),
+            new ComplexNumber(0, 1),
+            new ComplexNumber(1, 0),
+            new ComplexNumber(-3, -3),
+            new ComplexNumber(2, 2),
+            new ComplexNumber(13, 13),
+            new ComplexNumber(-9, +7),
+            new ComplexNumber(0.5, -0.5),
+            new ComplexNumber(-0.5, 0.5),
         };
 
         [TestMethod]
         public void TestLogs()
         {
-            Entity eqs = "log(32, x) - 5";
+            Entity eqs = "log(x, 32) - 5";
             var roots = eqs.SolveEquation("x");
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())
@@ -520,4 +471,5 @@ namespace UnitTests.Algebra
         }
     }
 }
+
 

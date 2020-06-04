@@ -180,7 +180,6 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             foreach(var solution in solutions.FiniteSet())
             {
                 var sol = TreeAnalyzer.FindInvertExpression(MathS.Pow(MathS.e, MathS.i * variable), solution, variable);
-                //var sol = EquationSolver.Solve(MathS.Pow(MathS.e, MathS.i * variable) - (Entity)solution, variable);
                 if (sol != null)
                     actualSolutions.AddRange(sol);
             }

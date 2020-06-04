@@ -17,20 +17,18 @@
 using System;
 using AngouriMath.Core;
 using AngouriMath.Core.FromString;
-using System.Linq.Expressions;
-using AngouriMath.Core.FromLinq;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.NumberSystem;
 using AngouriMath.Functions.Output;
 using AngouriMath.Functions.Algebra.Solver;
-using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using System.Security.Cryptography.X509Certificates;
- using AngouriMath.Core.Sys;
+using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Sys;
  using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Core.Sys.Items.Tensors;
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra.InequalitySolver;
+using Number = AngouriMath.Core.Numerix.Number;
 
 namespace AngouriMath
 {
@@ -100,11 +98,11 @@ namespace AngouriMath
         /// <summary>
         /// https://en.wikipedia.org/wiki/Logarithm
         /// </summary>
-        /// <param name="num"></param>
-        /// <param name="base_"></param>
+        /// <param name="@base"></param>
+        /// <param name="x"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Log(Entity num, Entity base_) => Logf.Hang(num, base_);
+        public static Entity Log(Entity @base, Entity x) => Logf.Hang(@base, x);
 
         /// <summary>
         /// https://en.wikipedia.org/wiki/Power_function
@@ -261,7 +259,7 @@ namespace AngouriMath
         /// <param name="a"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Ln(Entity a) => Logf.Hang(a, e);
+        public static Entity Ln(Entity a) => Logf.Hang(e, a);
 
         /// <summary>
         /// Creates an instance of variable entity.
@@ -277,7 +275,8 @@ namespace AngouriMath
         /// <param name="b"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Number Num(double a, double b) => new Number(a, b);
+        [Obsolete("Use Number.Create or implicit construction instead")]
+        public static Number Num(decimal a, decimal b) => Number.Create(a, b);
 
         /// <summary>
         /// Creates a real instance of Number (not NumberEntity!)
@@ -285,13 +284,14 @@ namespace AngouriMath
         /// <param name="a"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Number Num(double a) => new Number(a);
+        [Obsolete("Use Number.Create or implicit construction instead")]
+        public static ComplexNumber Num(decimal a) => Number.Create(a);
 
         /// <summary>
         /// List of public constants
         /// </summary>
         public static readonly VariableEntity e = "e";
-        public static readonly Number i = new Number(0, 1);
+        public static readonly ComplexNumber i = Number.Create(0, 1.0);
         public static readonly VariableEntity pi = "pi";
 
         /// <summary>
@@ -312,7 +312,7 @@ namespace AngouriMath
         /// <param name="N"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToBaseN(double num, int N) 
+        public static string ToBaseN(decimal num, int N) 
             => NumberSystem.ToBaseN(num, N);
 
         /// <summary>
@@ -322,7 +322,7 @@ namespace AngouriMath
         /// <param name="N"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static double FromBaseN(string num, int N)
+        public static decimal FromBaseN(string num, int N)
             => NumberSystem.FromBaseN(num, N);
 
         /// <summary>
@@ -386,6 +386,49 @@ namespace AngouriMath
         }
 
         /// <summary>
+        /// A couple of settings allowing you to set some preferences for AM's algorithms
+        /// To use those settings the syntax is
+        /// MathS.Settings.SomeSetting.Set(5);   // Here you set a value to the setting
+        /// ... // your code
+        /// MathS.Settings.SomeSettings.Unset(); // Optional. Reverts the setting to the previous value
+        /// </summary>
+        public static class Settings
+        {
+            /// <summary>
+            /// Enables downcasting. Not recommended to turn off, disabling might be only useful for some calculations
+            /// </summary>
+            public static Setting<bool> DowncastingEnabled { get; } = true;
+
+            /// <summary>
+            /// Amount of iterations allowed for attempting to cast to a rational
+            /// The more iterations, the larger fraction could be calculated
+            /// </summary>
+            public static Setting<int> FloatToRationalIterCount { get; } = 5;
+
+            /// <summary>
+            /// If a numerator or denominator is too large, it's suspended to better keep the real number instead of casting
+            /// </summary>
+            public static Setting<long> MaxAbsNumeratorOrDenominatorValue { get; } = 100000000;
+
+            /// <summary>
+            /// Sets threshold for comparison
+            /// For example, if you don't need precision higher than 6 digits after .,
+            /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
+            /// </summary>
+            public static Setting<decimal> PrecisionErrorCommon { get; } = 1.0e-6m;
+
+            /// <summary>
+            /// Numbers whose absolute value is less than PrecisionErrorZeroRange are considered zeros
+            /// </summary>
+            public static Setting<decimal> PrecisionErrorZeroRange { get; } = 1.0e-16m;
+
+            /// <summary>
+            /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
+            /// </summary>
+            public static Setting<bool> AllowNewton { get; } = true;
+        }
+
+        /// <summary>
         /// Some additional functions defined here
         /// </summary>
         public static class Utils
@@ -409,20 +452,6 @@ namespace AngouriMath
             public static bool TryPolynomial(Entity expr, VariableEntity variable, out Entity dst)
                 => Functions.Utils.TryPolynomial(expr, variable, out dst);
 
-            /// <summary>
-            /// Sets threshold for comparison
-            /// For example, if you don't need precision higher than 6 digits after .,
-            /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
-            /// </summary>
-            public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-7;
-
-            /// <summary>
-            /// Converts an exprssion from linq expression
-            /// </summary>
-            /// <param name="expr"></param>
-            /// <returns></returns>
-            public static Entity FromLinq(Expression expr)
-                => LinqParser.FromLinq(expr);
 
             /// <summary>
             /// Checks tree for some unexpected bad occasions
@@ -522,174 +551,17 @@ namespace AngouriMath
                 => Piece.Interval(from, to).AsInterval();
         }
 
-    }
-}
+        public static class DecimalConst
+        {
+            /// <summary>
+            /// Pi constant
+            /// </summary>
+            public static readonly decimal pi = 3.14159_26535_89793_23846_26433m;
 
-
-////////////////////////////////////////////////////////////////////////////////////
-/*
- *
- * Obsolete attributes. Not recommended to use
- *
- */
-////////////////////////////////////////////////////////////////////////////////////
-
-
-namespace AngouriMath
-{
-    public static partial class MathS
-    {
-        /// <summary>
-        /// Sets threshold for comparison
-        /// For example, if you don't need precision higher than 6 digits after .,
-        /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
-        /// </summary>
-        [Obsolete("Use MathS.Utils.EQUALITY_THRESHOLD instead")]
-        public static double EQUALITY_THRESHOLD { get; set; } = 1.0e-7;
-
-        /// <summary>
-        /// Converts an exprssion from linq expression
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        [Obsolete("Use MathS.Utils.FromLinq instead")]
-        public static Entity FromLinq(Expression expr)
-            => LinqParser.FromLinq(expr);
-
-        /// <summary>
-        /// Checks tree for some unexpected bad occasions
-        /// Throws SysException's children
-        /// If you need a message, it's better to write
-        /// try
-        /// {
-        ///     MathS.CheckTree(a);
-        /// }
-        /// catch (SysException e)
-        /// {
-        ///     Console.WriteLine(e.Message);
-        /// }
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        [Obsolete("Use MathS.Utils.CheckTree instead")]
-        public static void CheckTree(Entity expr) => TreeAnalyzer.CheckTree(expr);
-
-        /// <summary>
-        /// Returns sympy interpretable format
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        [Obsolete("Use MathS.Utils.ToSympyCode instead")]
-        public static string ToSympyCode(Entity expr) => Functions.Output.ToSympy.GenerateCode(expr);
-
-
-        /// <summary>
-        /// Optimizes tree to binary
-        /// Might boost some operations
-        /// Not necessary to use
-        /// </summary>
-        /// <param name="tree"></param>
-        /// <returns></returns>
-        [Obsolete("Use MathS.Utils.OptimizeTree instead")]
-        public static Entity OptimizeTree(Entity tree)
-            => TreeAnalyzer.Optimization.OptimizeTree(tree);
-
-        /// <summary>
-        /// Creates an instance of Tensor: Matrix
-        /// Usage example:
-        /// var t = MathS.Matrix(5, 3,
-        ///        10, 11, 12,
-        ///        20, 21, 22,
-        ///        30, 31, 32,
-        ///        40, 41, 42,
-        ///        50, 51, 52
-        ///        );
-        /// creates matrix 5x3 with the appropriate elements
-        /// </summary>
-        /// <param name="x"></param>
-        /// <param name="y"></param>
-        /// <returns></returns>
-        [Obsolete("Use MathS.Matrices.Matrix instead")]
-        public static Tensor Matrix(int rows, int columns, params Entity[] values)
-            => TensorFunctional.Matrix(rows, columns, values);
-
-        /// <summary>
-        /// Creates an instance of vector
-        /// </summary>
-        /// <param name="p"></param>
-        /// <returns></returns>
-        [Obsolete("Use MathS.Matrices.Vector instead")]
-        public static Tensor Vector(params Entity[] values)
-            => TensorFunctional.Vector(values);
-
-        /// <summary>
-        /// Returns dot product of two matrices
-        /// </summary>
-        /// <param name="A"></param>
-        /// <param name="B"></param>
-        /// <returns></returns>
-        [Obsolete("Use MathS.Matrices.DotProduct instead")]
-        public static Tensor DotProduct(Tensor A, Tensor B) =>
-            TensorFunctional.DotProduct(A, B);
-
-        /// <summary>
-        /// Returns scalar product of two matrices
-        /// </summary>
-        /// <param name="A"></param>
-        /// <param name="B"></param>
-        /// <returns></returns>
-        [Obsolete("Use MathS.Matrices.ScalarProduct instead")]
-        public static Entity ScalarProduct(Tensor A, Tensor B) =>
-            TensorFunctional.ScalarProduct(A, B);
-
-        /// <summary>
-        /// Solves a system of equations
-        /// </summary>
-        /// <param name="equations"></param>
-        /// <param name="vars"></param>
-        /// <returns>
-        /// Returns a matrix of solutions
-        /// matrix.shape[0] - number of solutions
-        /// matrix.shape[1] is equal to amount of variables
-        /// </returns>
-        [Obsolete("Use MathS.Equations instead")]
-        public static Tensor Solve(List<Entity> equations, List<VariableEntity> vars)
-            => EquationSolver.SolveSystem(equations, vars);
-
-        /// <summary>
-        /// Solves one equation over one variable
-        /// </summary>
-        /// <param name="equation"></param>
-        /// <param name="var"></param>
-        /// <returns></returns>
-        [Obsolete("Use either MathS.Equations or MathS.SolveEquation or yourexpr.SolveEquation instead")]
-        public static Set Solve(Entity equation, VariableEntity var)
-            => EquationSolver.Solve(equation, var);
-
-        /// <summary>
-        /// Returns list of unique variables, for example 
-        /// it extracts `x`, `goose` from (x + 2 * goose) - pi * x
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        [ObsoleteAttribute("Use MathS.Utils.GetUniqueVariables instead")]
-        public static Set GetUniqueVariables(Entity expr)
-            => TreeAnalyzer.GetUniqueVariables(expr);
-
-
-        /// <summary>
-        /// Converts an expression from a string
-        /// </summary>
-        /// <param name="expr">
-        /// String expression, for example, "2 * x + 3 + sqrt(x)"
-        /// </param>
-        /// <param name="intelli">
-        /// Bool parameter responsible for neat-syntax parsing, for example
-        /// 2x will be parsed as 2 * x.
-        /// </param>
-        /// <returns></returns>
-        [Obsolete("intelli mode is enabled by default")]
-        public static Entity FromString(string expr, bool intelli)
-            => Parser.Parse(expr);
+            /// <summary>
+            /// E constant
+            /// </summary>
+            public static readonly decimal e  = 2.71828_18284_59045_23536_02874m;
+        }
     }
 }

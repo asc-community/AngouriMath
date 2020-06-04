@@ -1,5 +1,4 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Common
@@ -27,7 +26,8 @@ namespace UnitTests.Common
         public void Test3()
         {
             const string expr = "23.3 + 3 / 3 + i";
-            Assert.AreEqual(expr, MathS.FromString(expr).ToString());
+            var exprActual = MathS.FromString(expr);
+            Assert.AreEqual("233 / 10 + 3 / 3 + i", exprActual.ToString());
         }
 
         [TestMethod]

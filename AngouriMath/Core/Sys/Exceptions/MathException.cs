@@ -14,10 +14,6 @@
  */
 
 
-
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath

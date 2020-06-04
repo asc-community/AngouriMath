@@ -1,12 +1,9 @@
 ﻿using AngouriMath;
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 using BenchmarkDotNet.Attributes;
-using BenchmarkDotNet.Running;
-using AngouriMath.Core;
 using System.Linq.Expressions;
+using AngouriMath.Core.Numerix;
 
 namespace DotnetBenchmark
 {
@@ -26,12 +23,12 @@ namespace DotnetBenchmark
             linqComp = linqExpr.Compile();
         }
         [Benchmark]
-        public Number MyCompiled() => complexFunc.Call(3);
+        public ComplexNumber MyCompiled() => complexFunc.Call(3);
         [Benchmark]
         public Complex SysIncode() => Complex.Sin(Complex.Pow(3, 2)) + Complex.Cos(Complex.Pow(3, 2)) + Complex.Pow(3, 2) + Complex.Sin(Complex.Pow(3, 2));
         [Benchmark]
         public Complex LinqCompiled() => linqComp.Invoke(3);
         [Benchmark]
-        public Number NotCompiled() => notCompiled.Substitute(x, 3).Eval();
+        public ComplexNumber NotCompiled() => notCompiled.Substitute(x, 3).Eval();
     }
 }

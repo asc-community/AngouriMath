@@ -19,9 +19,7 @@
 using System;
 using System.Collections.Generic;
  using System.Linq;
- using System.Text;
  using AngouriMath.Core.Sys.Interfaces;
- using AngouriMath.Core.Sys;
 
 namespace AngouriMath
 {
@@ -186,7 +184,7 @@ namespace AngouriMath
 
     internal static class SetToString
     {
-        static List<string> Operators = new List<string>
+        static readonly List<string> Operators = new List<string>
         {
             "|",
             "&",

@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -14,14 +14,12 @@
  */
 
 
-
-﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using AngouriMath.Convenience;
 using AngouriMath.Core;
-using AngouriMath.Core.TreeAnalysis;
+ using AngouriMath.Core.Numerix;
+ using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -35,35 +33,35 @@ namespace AngouriMath.Core.TreeAnalysis
         internal interface IPrimitive<T>
         {
             void Add(T a);
-            void AddMp(T a, Number b);
+            void AddMp(T a, ComplexNumber b);
             void Assign(T val);
             T GetValue();
         }
-        internal class PrimitiveDouble : IPrimitive<double>
+        internal class PrimitiveDouble : IPrimitive<decimal>
         {
-            private double value = 0;
-            public void Add(double a) => value += a;
-            public void AddMp(double a, Number b) => Add(a * b.Re);
-            public void Assign(double a) => value = a;
-            public static implicit operator double(PrimitiveDouble obj) => obj.value;
-            internal static IPrimitive<double> Create()
+            private decimal value = 0;
+            public void Add(decimal a) => value += a;
+            public void AddMp(decimal a, ComplexNumber b) => Add(a * b.Real);
+            public void Assign(decimal val) => value = val;
+            public static implicit operator decimal(PrimitiveDouble obj) => obj.value;
+            internal static IPrimitive<decimal> Create()
             {
                 return new PrimitiveDouble();
             }
-            public double GetValue() => value;
+            public decimal GetValue() => value;
         }
-        internal class PrimitiveInt : IPrimitive<int>
+        internal class PrimitiveInt : IPrimitive<long>
         {
-            private int value = 0;
-            public void Add(int a) => value += a;
-            public void AddMp(int a, Number b) => Add((int)(a * b.Re));
-            public void Assign(int a) => value = a;
-            public static implicit operator int(PrimitiveInt obj) => obj.value;
-            internal static IPrimitive<int> Create()
+            private long value = 0;
+            public void Add(long a) => value += a;
+            public void AddMp(long a, ComplexNumber b) => Add((a * b.Real).AsIntegerNumber());
+            public void Assign(long val) => value = val;
+            public static implicit operator long(PrimitiveInt obj) => obj.value;
+            internal static IPrimitive<long> Create()
             {
                 return new PrimitiveInt();
             }
-            public int GetValue() => value;
+            public long GetValue() => value;
         }
     }
 }
@@ -169,67 +167,25 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             res = new Set();
 
-            if (MathS.CanBeEvaluated(a) &&
-                MathS.CanBeEvaluated(b) &&
-                MathS.CanBeEvaluated(c) &&
-                MathS.CanBeEvaluated(d))
+            var coeff = MathS.i * MathS.Sqrt(3) / 2;
+
+            var u1 = new NumberEntity(1);
+            var u2 = SySyn.Rational(-1, 2) + coeff;
+            var u3 = SySyn.Rational(-1, 2) - coeff;
+            var D0 = MathS.Sqr(b) - 3 * a * c;
+            var D1 = 2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d;
+            var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, Number.CreateRational(1, 3));
+
+            foreach (var uk in new List<Entity> {u1, u2, u3})
             {
-                var p = ((3 * a * c - MathS.Sqr(b)) / (3 * MathS.Sqr(a))).Simplify();
-                var q = ((2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d) / (27 * MathS.Pow(a, 3)));
-
-                var Q = MathS.Pow(p / 3, 3) + MathS.Sqr(q / 2);
-
-                var alpha = (MathS.Pow(-q / 2 + MathS.Sqrt(Q), 1.0 / 3.0));
-                var beta = (MathS.Pow(-q / 2 - MathS.Sqrt(Q), 1.0 / 3.0));
-
-                // To find correct beta, you should find such beta that alpha + beta = -p / 3
-                // Such beta always exists
-                if (p.entType == Entity.EntType.NUMBER && 
-                    MathS.CanBeEvaluated(alpha) &&
-                    MathS.CanBeEvaluated(beta))
-                {
-                    var beta3 = (-q / 2 - MathS.Sqrt(Q)).Eval();
-                    alpha = alpha.Eval();
-                    
-                    beta = beta.Eval();
-                    var p3 = (-p / 3).Eval();
-                    foreach (var root in Number.GetAllRoots(beta3, 3).FiniteSet())
-                        if ((root * alpha).Eval() == p3)
-                        {
-                            beta = root;
-                            break;
-                        }
-                }
-                var y1 = alpha + beta;
-                var y2 = (-(alpha + beta) / 2 + MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
-                var y3 = (-(alpha + beta) / 2 - MathS.i * (alpha - beta) / 2 * MathS.Sqrt(3));
-
-                var x1 = y1 - b / (3 * a);
-                var x2 = y2 - b / (3 * a);
-                var x3 = y3 - b / (3 * a);
-
-                res.Add(x1);
-                res.Add(x2);
-                res.Add(x3);
-
-                return res;
+                Entity r;
+                if (Const.EvalIfCan(C) == 0 && Const.EvalIfCan(D0) == 0)
+                    r = -(b + uk * C) / 3 / a;
+                else
+                    r = -(b + uk * C + D0 / C / uk) / 3 / a;
+                res.Add(r);
             }
-            else
-            {
-                // TO REMOVE
-                var coeff = MathS.i * MathS.Sqrt(3) / 2;
-
-                var u1 = new NumberEntity(1);
-                var u2 = SySyn.Rational(-1, 2) + coeff;
-                var u3 = SySyn.Rational(-1, 2) - coeff;
-                var D0 = MathS.Sqr(b) - 3 * a * c;
-                var D1 = 2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d;
-                var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, 1.0 / 3);
-
-                foreach (var uk in new List<Entity> { u1, u2, u3 })
-                    res.Add(-(b + uk * C + D0 / C / uk) / 3 / a);
-                return res;
-            }
+            return res;
         }
 
         /// <summary>
@@ -277,9 +233,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var beta = MathS.Pow(b, 3) / (8 * MathS.Pow(a, 3)) - (b * c) / (2 * MathS.Sqr(a)) + d / a;
             var gamma = -3 * MathS.Pow(b, 4) / (256 * MathS.Pow(a, 4)) + MathS.Sqr(b) * c / (16 * MathS.Pow(a, 3)) - (b * d) / (4 * MathS.Sqr(a)) + e / a;
 
-            if (MathS.CanBeEvaluated(beta))
-                beta = beta.Eval();
-            if (beta == 0)
+            if (Const.EvalIfCan(beta) == 0)
             {
                 res.FastAddingMode = true;
                 for (int s = -1; s <= 1; s += 2)
@@ -292,15 +246,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return res;
             }
 
-            
 
+            var oneThird = Number.CreateRational(1, 3);
             var P = -MathS.Sqr(alpha) / 12 - gamma;
             var Q = -MathS.Pow(alpha, 3) / 108 + alpha * gamma / 3 - MathS.Sqr(beta) / 8;
             var R = -Q / 2 + MathS.Sqrt(MathS.Sqr(Q) / 4 + MathS.Pow(P, 3) / 27);
-            var U = MathS.Pow(R, 1.0 / 3);
-            if (MathS.CanBeEvaluated(U))
-                U = U.Eval();  // further, we will compare it to 0
-            var y = SySyn.Rational(-5, 6) * alpha + U + (U == 0 ? -MathS.Pow(Q, 1.0 / 3) : -P / (3 * U));
+            var U = MathS.Pow(R, oneThird);
+            var y = Number.CreateRational(-5, 6) * alpha + U + (Const.EvalIfCan(U) == 0 ? -MathS.Pow(Q, oneThird) : -P / (3 * U));
             var W = MathS.Sqrt(alpha + 2 * y);
            
             // Now we need to permutate all four combinations
@@ -327,12 +279,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <returns>
         /// Returns whether all initiall powers where > 0 (if so, x = 0 is a root)
         /// </returns>
-        internal static bool ReduceCommonPower(ref Dictionary<int, Entity> monomials)
+        internal static bool ReduceCommonPower(ref Dictionary<long, Entity> monomials)
         {
-            int commonPower = monomials.Keys.Min();
+            var commonPower = monomials.Keys.Min();
             if (commonPower == 0)
                 return false;
-            var newDict = new Dictionary<int, Entity>();
+            var newDict = new Dictionary<long, Entity>();
             foreach (var pair in monomials)
                 newDict[pair.Key - commonPower] = pair.Value;
             monomials = newDict;
@@ -363,18 +315,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             else
                 children = new List<Entity> { expr };
             // Check if all are like {1} * x^n & gather information about them
-            var monomialsByPower = GatherMonomialInformation<int>(children, subtree);
+            var monomialsByPower = GatherMonomialInformation<long>(children, subtree);
 
             if (monomialsByPower == null)
                 return null; // meaning that the given equation is not polynomial
 
-            Entity GetMonomialByPower(int power)
+            Entity GetMonomialByPower(long power)
             {
                 return monomialsByPower.ContainsKey(power) ? monomialsByPower[power] : 0;
             }
             if (ReduceCommonPower(ref monomialsByPower)) // x5 + x3 + x2 - common power is 2, one root is 0, then x3 + x + 1
                 res.Add(0);
-            var powers = new List<int>(monomialsByPower.Keys);
+            var powers = new List<long>(monomialsByPower.Keys);
             var gcdPower = Utils.GCD(powers.ToArray());
             // // //
 
@@ -386,7 +338,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 for (int i = 0; i < powers.Count; i++)
                     powers[i] /= gcdPower;
 
-                var newMonom = new Dictionary<int, Entity>();
+                var newMonom = new Dictionary<long, Entity>();
                 foreach (var pair in monomialsByPower)
                     newMonom[pair.Key / gcdPower] = pair.Value;
                 monomialsByPower = newMonom;
@@ -403,7 +355,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var newSet = new Set();
                     foreach (var root in set.FiniteSet())
                     foreach (var coef in Number.GetAllRoots(1, gcdPower).FiniteSet())
-                        newSet.Add(coef * MathS.Pow(root, MathS.Num(1.0) / gcdPower));
+                        newSet.Add(coef * MathS.Pow(root, Number.Create(1.0) / gcdPower));
                     set = newSet;
                 }
                 return set;
@@ -481,7 +433,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // TODO
                 Entity free;
                 object pow;
-                if (typeof(T) == typeof(double))
+                if (typeof(T) == typeof(decimal))
                     pow = new TreeAnalyzer.PrimitiveDouble();
                 else
                     pow = new TreeAnalyzer.PrimitiveInt();
@@ -509,7 +461,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             freeMono = 1; // a * b
 
-            bool allowFloat = typeof(T) == typeof(double);
+            bool allowFloat = typeof(T) == typeof(decimal);
             foreach (var mp in TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul))
                 if (mp.FindSubtree(aVar) == null)
                 {
@@ -537,9 +489,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     if (mp == aVar)
                     {
                         if (allowFloat)
-                            (power as TreeAnalyzer.PrimitiveDouble).Add(pow_num.GetValue().Re);
+                            (power as TreeAnalyzer.PrimitiveDouble).Add(pow_num.GetValue().Real);
                         else
-                            (power as TreeAnalyzer.PrimitiveInt).Add((int)Math.Round(pow_num.GetValue().Re));
+                            (power as TreeAnalyzer.PrimitiveInt).Add(pow_num.GetValue().Real.AsInt());
                     }
                     else
                     {
@@ -551,7 +503,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         Entity tmpFree;
                         // TODO
                         object pow;
-                        if (typeof(T) == typeof(double))
+                        if (typeof(T) == typeof(decimal))
                             pow = new TreeAnalyzer.PrimitiveDouble();
                         else
                             pow = new TreeAnalyzer.PrimitiveInt();

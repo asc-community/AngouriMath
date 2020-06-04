@@ -9,6 +9,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Algebra\SolveTest\TestGenerator\**" />
+    <EmbeddedResource Remove="Algebra\SolveTest\TestGenerator\**" />
+    <None Remove="Algebra\SolveTest\TestGenerator\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="1.4.0" />
     <PackageReference Include="MSTest.TestFramework" Version="1.4.0" />
