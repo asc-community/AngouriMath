@@ -41,7 +41,7 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
             {
                 if (i == precision - 1)
                     prev = value.Copy();
-                try
+                try // TODO: remove try catch in for
                 {
                     value -= (f.Substitute(value) / df.Substitute(value)) as ComplexNumber;
                 }
