@@ -7,8 +7,9 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity expr = "x + sin(pi / 6) + 3";
-            Console.WriteLine(expr.SolveEquation("x"));
+            Entity expr = "arcsin(x / pi) + 0.6";
+            var roots = expr.SolveEquation("x");
+            Console.WriteLine(roots);
         }
     }
 }

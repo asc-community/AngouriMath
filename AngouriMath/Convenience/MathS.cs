@@ -121,7 +121,7 @@ namespace AngouriMath
         /// a ^ 0.5
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Sqrt(Entity a) => Powf.Hang(a, 0.5);
+        public static Entity Sqrt(Entity a) => Powf.Hang(a, Number.CreateRational(1, 2));
 
         /// <summary>
         /// Special case of power function

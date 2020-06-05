@@ -448,6 +448,7 @@ namespace AngouriMath
 /*
  *
  * This class contains implementation for basic simplification for all operators and functions
+ * This keeps all numbers rational or as an expression so no precision loss occurres
  *
  */
 
@@ -458,17 +459,32 @@ namespace AngouriMath
     {
         internal static Entity KeepIfBad(ComplexNumber candidate, Entity ifAllBad, params ComplexNumber[] nums)
         {
-            if (IsGood(candidate.Real, nums.Select(n => n.Real).ToArray()) &&
-                IsGood(candidate.Imaginary, nums.Select(n => n.Imaginary).ToArray()))
+            if (IsGood(candidate.Real, nums.Select(n => n.Real).ToArray(), false) &&
+                IsGood(candidate.Imaginary, nums.Select(n => n.Imaginary).ToArray(), false))
                 return candidate;
             else
                 return ifAllBad;
         }
 
-        static bool IsGood(RealNumber cand, RealNumber[] nums)
+        internal static bool KeepIfBad(ComplexNumber candidate, out Entity res, bool disableIrrational, params ComplexNumber[] nums)
         {
-            var maxLevel = nums.Select(n => (int)n.Type).Max();
-            return cand.IsRational() || (int) cand.Type <= maxLevel;
+            if (IsGood(candidate.Real, nums.Select(n => n.Real).ToArray(), disableIrrational) &&
+                IsGood(candidate.Imaginary, nums.Select(n => n.Imaginary).ToArray(), disableIrrational))
+            {
+                res = candidate;
+                return true;
+            }
+            else
+            {
+                res = null;
+                return false;
+            }
+        }
+
+        static bool IsGood(RealNumber cand, RealNumber[] nums, bool disableIrrational)
+        {
+            var minLevel = nums.Select(n => (int)n.Type).Min();
+            return cand.IsRational() || ((int) cand.Type <= minLevel && !disableIrrational);
         }
     }
 
@@ -564,6 +580,7 @@ namespace AngouriMath
             var r2 = args[1].InnerSimplify();
             if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
             {
+                // TODO: Consider cases like sqrt(12) which could be simplified to 2 sqrt(3)
                 var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
                 return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Pow(n1, n2), MathS.Pow(r1, r2), n1, n2);
             }
@@ -583,10 +600,18 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            if (r.entType == Entity.EntType.NUMBER)
+            ComplexNumber evaled = null;
+            if (MathS.CanBeEvaluated(r))
+                evaled = r.Eval();
+            if (!(evaled is null))
             {
-                var n = (r as NumberEntity).Value;
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Sin(n), MathS.Sin(r), n);
+                var n = evaled;
+                if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Sin(n), out var res, true, n))
+                    return res;
+                else if (Const.TrigonometryTableValues.PullFromTable(Const.TrigonometryTableValues.TableSin, n, out res))
+                    return res;
+                else
+                    return MathS.Sin(r);
             }
             else
                 return r.Sin();
@@ -598,10 +623,18 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            if (r.entType == Entity.EntType.NUMBER)
+            ComplexNumber evaled = null;
+            if (MathS.CanBeEvaluated(r))
+                evaled = r.Eval();
+            if (!(evaled is null))
             {
-                var n = (r as NumberEntity).Value;
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Cos(n), MathS.Cos(r), n);
+                var n = evaled;
+                if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Cos(n), out var res, true, n))
+                    return res;
+                else if (Const.TrigonometryTableValues.PullFromTable(Const.TrigonometryTableValues.TableCos, n, out res))
+                    return res;
+                else
+                    return r.Cos();
             }
             else
                 return r.Cos();
@@ -613,10 +646,18 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            if (r.entType == Entity.EntType.NUMBER)
+            ComplexNumber evaled = null;
+            if (MathS.CanBeEvaluated(r))
+                evaled = r.Eval();
+            if (!(evaled is null))
             {
-                var n = (r as NumberEntity).Value;
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Tan(n), MathS.Tan(r), n);
+                var n = evaled;
+                if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Tan(n), out var res, true, n))
+                    return res;
+                else if (Const.TrigonometryTableValues.PullFromTable(Const.TrigonometryTableValues.TableTan, n, out res))
+                    return res;
+                else
+                    return r.Tan();
             }
             else
                 return r.Tan();
@@ -628,10 +669,18 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            if (r.entType == Entity.EntType.NUMBER)
+            ComplexNumber evaled = null;
+            if (MathS.CanBeEvaluated(r))
+                evaled = r.Eval();
+            if (!(evaled is null))
             {
-                var n = (r as NumberEntity).Value;
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Cotan(n), MathS.Cotan(r), n);
+                var n = evaled;
+                if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Cotan(n), out var res, true, n))
+                    return 1 / res;
+                else if (Const.TrigonometryTableValues.PullFromTable(Const.TrigonometryTableValues.TableTan, n, out res))
+                    return 1 / res;
+                else
+                    return r.Cotan();
             }
             else
                 return r.Cotan();
