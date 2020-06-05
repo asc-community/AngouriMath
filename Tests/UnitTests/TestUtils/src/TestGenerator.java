@@ -43,7 +43,7 @@ public class TestGenerator {
         {
             sb.append(tab2); sb.append("[TestMethod]\n");
             sb.append(tab2); sb.append("public void TestAll");
-                sb.append("complexNumeric"); sb.append(i + 1); sb.append("_"); sb.append(power); sb.append("()\n");
+            sb.append("complexNumeric"); sb.append(i + 1); sb.append("_"); sb.append(power); sb.append("()\n");
             sb.append(tab2); sb.append("{\n");
             sb.append(tab3); sb.append("var expr = ");
             for(int j = 0; j < power; j++)
@@ -144,7 +144,7 @@ public class TestGenerator {
         sb.append("\n");
         sb.append(BuildTests("Tan", Arrays.asList(4)));
         sb.append("\n");
-        sb.append(BuildTests("Cotan", Arrays.asList(2, 4)));
+        sb.append(BuildTests("Cotan", Arrays.asList(1, 2, 4)));
         sb.append("}\n");
         var writer = new FileWriter(tableTrigTestsPath);
         writer.write(sb.toString());

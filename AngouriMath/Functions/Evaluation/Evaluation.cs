@@ -609,7 +609,7 @@ namespace AngouriMath
                 var n = evaled;
                 if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Sin(n), out var res, true, n))
                     return res;
-                else if (Const.TrigonometryTableValues.PullFromTable(Const.TrigonometryTableValues.TableSin, n, out res))
+                else if (Const.TrigonometryTableValues.PullSin(n, out res))
                     return res;
                 else
                     return MathS.Sin(r);
@@ -632,7 +632,7 @@ namespace AngouriMath
                 var n = evaled;
                 if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Cos(n), out var res, true, n))
                     return res;
-                else if (Const.TrigonometryTableValues.PullFromTable(Const.TrigonometryTableValues.TableCos, n, out res))
+                else if (Const.TrigonometryTableValues.PullCos(n, out res))
                     return res;
                 else
                     return r.Cos();
@@ -655,7 +655,7 @@ namespace AngouriMath
                 var n = evaled;
                 if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Tan(n), out var res, true, n))
                     return res;
-                else if (Const.TrigonometryTableValues.PullFromTable(Const.TrigonometryTableValues.TableTan, n, out res))
+                else if (Const.TrigonometryTableValues.PullTan(n, out res))
                     return res;
                 else
                     return r.Tan();
@@ -678,7 +678,7 @@ namespace AngouriMath
                 var n = evaled;
                 if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Cotan(n), out var res, true, n))
                     return 1 / res;
-                else if (Const.TrigonometryTableValues.PullFromTable(Const.TrigonometryTableValues.TableTan, n, out res))
+                else if (Const.TrigonometryTableValues.PullTan(n, out res))
                     return 1 / res;
                 else
                     return r.Cotan();

@@ -979,17 +979,6 @@ namespace UnitTests.Core.TrigTableConstTest
     public class TestTrigTableConstCotan
     {
         [TestMethod]
-        public void Cotan1Test()
-        {
-            MathS.Settings.PrecisionErrorCommon.Set(1e-8m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 1);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.IsTrue(expected == real, "expected: " + expected.ToString() + "  Got instead: " + real.ToString());
-            MathS.Settings.PrecisionErrorCommon.Unset();
-        }
-
-        [TestMethod]
         public void Cotan3Test()
         {
             MathS.Settings.PrecisionErrorCommon.Set(1e-8m);

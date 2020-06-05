@@ -10,7 +10,7 @@ namespace AngouriMath
     {
         internal static class TrigonometryTableValues
         {
-            internal static bool PullFromTable(TrigTable table, ComplexNumber arg, out Entity res)
+            internal static bool TryPulling(TrigTable table, ComplexNumber arg, out Entity res)
             {
                 if (arg.IsImaginary())
                 {
@@ -37,7 +37,7 @@ namespace AngouriMath
                     }
                 }
 
-                for(var j = begin; j <= end; j++)
+                for (var j = begin; j <= end; j++)
                 {
                     if (Number.Functional.IsZero(table[j].arg - dArg))
                     {
@@ -46,6 +46,51 @@ namespace AngouriMath
                     }
                 }
                 res = null;
+                return false;
+            }
+
+            internal static bool PullSin(ComplexNumber arg, out Entity res)
+            {
+                if (TryPulling(TableSin, arg, out res))
+                    return true;
+                if (TryPulling(TableSin, MathS.DecimalConst.pi - arg, out res))
+                    return true;
+                if (TryPulling(TableCos, arg * 2, out res))
+                {
+                    res = MathS.Sqrt((1 - res) / 2);
+                    return true;
+                }
+                return false;
+            }
+
+            internal static bool PullCos(ComplexNumber arg, out Entity res)
+            {
+                if (TryPulling(TableCos, arg, out res))
+                    return true;
+                if (TryPulling(TableCos, -1 * arg, out res))
+                    return true;
+                if (TryPulling(TableCos, arg * 2, out res))
+                {
+                    res = MathS.Sqrt((1 + res) / 2);
+                    return true;
+                }
+                return false;
+            }
+
+            internal static bool PullTan(ComplexNumber arg, out Entity res)
+            {
+                if (TryPulling(TableTan, arg, out res))
+                    return true;
+                if (TryPulling(TableTan, MathS.DecimalConst.pi - arg, out res))
+                {
+                    res *= -1;
+                    return true;
+                }
+                if (TryPulling(TableCos, arg * 2, out res))
+                {
+                    res = MathS.Sqrt((1 - res) / (1 + res));
+                    return true;
+                }
                 return false;
             }
 
