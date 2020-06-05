@@ -370,6 +370,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             Set res = PolynomialSolver.SolveAsPolynomial(polyexpr, x);
             if (res != null)
             {
+                res.FiniteApply(e => e.InnerSimplify());
                 DestinationAddRange(res);
                 return;
             }

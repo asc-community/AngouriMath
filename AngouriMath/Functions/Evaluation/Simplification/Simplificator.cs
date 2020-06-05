@@ -88,6 +88,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     TreeAnalyzer.Sort(ref res, TreeAnalyzer.SortLevel.MIDDLE_LEVEL);
                 else if (i == 2)
                     TreeAnalyzer.Sort(ref res, TreeAnalyzer.SortLevel.LOW_LEVEL);
+                res = res.InnerSimplify();
                 if (TreeAnalyzer.Optimization.ContainsPower(res))
                 {
                     TreeAnalyzer.ReplaceInPlace(Patterns.PowerRules, ref res);

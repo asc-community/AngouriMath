@@ -24,7 +24,7 @@ namespace DotnetBenchmark
         [Benchmark]
         public void SolveHard() => exprHard.SolveNt(x);
         [Benchmark]
-        public void SolveAnal() => exprSolvable.Solve(x);
+        public void SolveAnal() => exprSolvable.SolveEquation(x);
 
     }
 }

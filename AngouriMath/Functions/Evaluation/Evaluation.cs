@@ -468,6 +468,7 @@ namespace AngouriMath
 
         internal static bool KeepIfBad(ComplexNumber candidate, out Entity res, bool disableIrrational, params ComplexNumber[] nums)
         {
+            candidate = Number.Functional.Downcast(candidate) as ComplexNumber;
             if (IsGood(candidate.Real, nums.Select(n => n.Real).ToArray(), disableIrrational) &&
                 IsGood(candidate.Imaginary, nums.Select(n => n.Imaginary).ToArray(), disableIrrational))
             {

@@ -65,22 +65,23 @@ namespace AngouriMath
             private static decimal PiOver(int a)
                 => 2 * MathS.DecimalConst.pi / a;
 
+            private static Entity f1_6 = Number.CreateRational(1, 6);
+
             /// <summary>
             /// Credit: https://en.wikipedia.org/wiki/Trigonometric_constants_expressed_in_real_radicals
+            /// Although some formulas have been changed because they are wrong on Wikipedia
             /// </summary>
             internal static TrigTable TableSin = new TrigTable
             {
                 (PiOver(1), 0),
                 (PiOver(2), 0),
-                (PiOver(3), f1_2 * Cubt(3)),
+                (PiOver(3), f1_2 * Sqrt(3)),
                 (PiOver(4), 1),
                 (PiOver(5), f1_4 * Sqrt(10 + 2 * Sqrt(5))),
                 (PiOver(6), f1_2 * Sqrt(3)),
-                (PiOver(7), f1_2 * Sqrt(
-                    f1_3 * (7 - Cubt((7 + 21 * Sqrt(-3)) / 2) - Cubt((7 - 21 * Sqrt(-3)) / 2))
-                )),
+                (PiOver(7), Sqrt(1 - MathS.Pow(f1_6 * (-1 + Cubt((7 + 21 * Sqrt(-3)) / 2) + Cubt((7 - 21 * Sqrt(-3)) / 2)), 2))),
                 (PiOver(8), f1_2 * Sqrt(2)),
-                (PiOver(9), f1_2 * Sqrt(2)),
+                (PiOver(9), MathS.i / 2 * (Cubt((-1 - Sqrt(-3)) / 2) - Cubt((-1 + Sqrt(-3)) / 2))),
                 (PiOver(10), f1_4 * Sqrt(10 - 2 * Sqrt(5))),
                 (PiOver(12), f1_2),
                 (PiOver(14), f1_24 * Sqrt(3 * 
@@ -99,7 +100,6 @@ namespace AngouriMath
             };
 
             private static Entity f1_16 = Number.CreateRational(1, 16);
-            private static Entity f1_6 = Number.CreateRational(1, 6); 
 
             internal static TrigTable TableCos = new TrigTable
             {
@@ -113,12 +113,12 @@ namespace AngouriMath
                 (PiOver(8), f1_2 * Sqrt(2)),
                 (PiOver(9), f1_2 * (Cubt((-1 + Sqrt(-3)) / 2) + Cubt((-1 - Sqrt(-3)) / 2))),
                 (PiOver(10), f1_4 * (Sqrt(5) + 1)),
-                (PiOver(12), f1_2 * Cubt(3)),
+                (PiOver(12), f1_2 * Sqrt(3)),
                 (PiOver(14), f1_24 * Sqrt(3 *
-                                          (80 + Cubt(14336 + Sqrt(-5549064193)) - Cubt(14336 - Sqrt(-5549064193))
+                                          (80 + Cubt(14336 + Sqrt(-5549064193)) + Cubt(14336 - Sqrt(-5549064193))
                                           ))),
                 (PiOver(15), f1_8 * (1 + Sqrt(5) + Sqrt(30 - 6 * Sqrt(5)))),
-                (PiOver(16), f1_2 * Sqrt(2 - Sqrt(2))),
+                (PiOver(16), f1_2 * Sqrt(2 + Sqrt(2))),
                 (PiOver(17), f1_16 * (-1 + Sqrt(17) + Sqrt(34 - 2 * Sqrt(17)) + 2 * Sqrt(
                     17 + 3 * Sqrt(17) - Sqrt(34 - 2 * Sqrt(17)) - 2 * Sqrt(34 + 2 * Sqrt(17))
                     ))),
@@ -141,7 +141,7 @@ namespace AngouriMath
                 (PiOver(14), Sqrt(
                     (112 - Cubt(14336 + Sqrt(-5549064193)) - Cubt(14336 - Sqrt(-5549064193)))
                     /
-                    (80 + Cubt(14336 + Sqrt(-5549064193)) - Cubt(14336 - Sqrt(-5549064193)))
+                    (80 + Cubt(14336 + Sqrt(-5549064193)) + Cubt(14336 - Sqrt(-5549064193)))
                     )),
                 (PiOver(15), f1_2 * (-3 * Sqrt(3) - Sqrt(15) + Sqrt(50 + 22 * Sqrt(5)))),
                 (PiOver(16), Sqrt(2) - 1),
