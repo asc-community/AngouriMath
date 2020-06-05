@@ -379,7 +379,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // a = -b x ^ n
                 // (- a / b) ^ (1 / n) = x
                 // x ^ n = (-a / b)
-                res.AddRange(TreeAnalyzer.FindInvertExpression(MathS.Pow(subtree, powers[1]), (-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).Simplify(), subtree));
+                var value = (-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).Simplify();
+                res.AddRange(TreeAnalyzer.FindInvertExpression(MathS.Pow(subtree, powers[1]), value, subtree));
                 return FinalPostProcess(res);
             }
             // By this moment we know for sure that expr's power is <= 4, that expr is not a monomial,

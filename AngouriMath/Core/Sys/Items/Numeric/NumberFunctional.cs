@@ -247,7 +247,7 @@ namespace AngouriMath.Core.Numerix
             /// <returns>
             /// Downcasted or kept Number
             /// </returns>
-            internal static Number Downcast(Number a)
+            public static Number Downcast(Number a)
             {
                 if (!MathS.Settings.DowncastingEnabled)
                     return a;

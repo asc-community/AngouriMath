@@ -17,5 +17,6 @@ obj/
 /AngouriMath/Core/Sys/Items/Numeric/packages
 /Tests/UnitTests/Algebra/SolveTest/TestGenerator/.idea
 /Tests/UnitTests/Algebra/SolveTest/TestGenerator/out/production/AM_utils
+/Tests/UnitTests/TestGenerator/.idea
 /Tests/UnitTests/TestUtils/.idea
 /Tests/UnitTests/TestUtils/out/production/TestGenerator

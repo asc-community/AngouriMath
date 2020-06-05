@@ -26,7 +26,7 @@ namespace AngouriMath
     /// <summary>
     /// This class contains some extra functions for different purposes
     /// </summary>
-    internal static class Const
+    internal static partial class Const
     {
         internal static readonly int PRIOR_SUM = 2;
         internal static readonly int PRIOR_MINUS = 2;

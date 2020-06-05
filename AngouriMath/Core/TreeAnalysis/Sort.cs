@@ -36,7 +36,14 @@ namespace AngouriMath
             if (this.entType == Entity.EntType.FUNCTION)
                 return this.Name + "_" + string.Join("_", from child in Children select child.SortHash(level));
             else if (this.entType == EntType.NUMBER)
-                return level == SortLevel.HIGH_LEVEL ? "" : this.Name + " ";
+            {
+                if (level == SortLevel.HIGH_LEVEL)
+                    return "";
+                else if (level == SortLevel.MIDDLE_LEVEL)
+                    return (this as NumberEntity).Value.Type.ToString();
+                else
+                    return this.Name + " ";
+            }
             else if (this.entType == Entity.EntType.VARIABLE)
                 return "v_" + Name;
             else

@@ -43,6 +43,8 @@ namespace AngouriMath.Functions.Algebra.Solver
                 MathS.Settings.FloatToRationalIterCount.Unset();
             MathS.Settings.PrecisionErrorZeroRange.Unset();
 
+            res.FiniteApply(entity => entity.InnerSimplify());
+
             return res;
         }
         
@@ -72,7 +74,7 @@ namespace AngouriMath.Functions.Algebra.Solver
             vars = new List<VariableEntity>(vars.Select(c => c));
             int initVarCount = vars.Count;
             for (int i = 0; i < equations.Count; i++)
-                equations[i] = equations[i].InnerEval();
+                equations[i] = equations[i].InnerSimplify();
 
             var res = EquationSolver.InSolveSystem(equations, vars);
 
@@ -99,7 +101,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static List<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var)
         {
             var result = new List<List<Entity>>();
-            foreach (var sol in eq.InnerEval().SolveEquation(var).FiniteSet())
+            foreach (var sol in eq.InnerSimplify().SolveEquation(var).FiniteSet())
                 result.Add(new List<Entity>() { sol });
             return result;
         }
@@ -145,7 +147,7 @@ namespace AngouriMath.Functions.Algebra.Solver
                             for (int varid = 0; varid < newvars.Count; varid++)
                                 Z = Z.Substitute(newvars[varid], inSol[j][varid]);
 
-                            Z = Z.InnerEval();
+                            Z = Z.InnerSimplify();
                             inSol[j].Add(Z);
                         }
                         result.AddRange(inSol);

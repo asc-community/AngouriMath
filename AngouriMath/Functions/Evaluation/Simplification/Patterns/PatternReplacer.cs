@@ -282,6 +282,11 @@ namespace AngouriMath
             // Actually, no need to implement
             throw new SysException("@");
         }
+        internal override Entity InnerSimplify()
+        {
+            // Actually, no need to implement
+            throw new SysException("@");
+        }
         internal override void Check()
         {
             // Actually, no need to implement
