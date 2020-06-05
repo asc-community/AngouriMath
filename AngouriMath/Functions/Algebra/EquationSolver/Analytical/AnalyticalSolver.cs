@@ -37,16 +37,6 @@ namespace AngouriMath
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        [ObsoleteAttribute("This method will soon be deprecated. Use SolveEquation instead.")]
-        public Set Solve(VariableEntity x) => EquationSolver.Solve(this, x);
-
-        /// <summary>
-        /// Attempt to find analytical roots of a custom equation
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns>
-        /// Returns Set. Work with it as with a list
-        /// </returns>
         public Set SolveEquation(VariableEntity x) => EquationSolver.Solve(this, x);
     }
 }
@@ -124,7 +114,8 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <returns></returns>
         public static Set FindInvertExpression(Entity func, Entity value, Entity x)
         {
-            value = MathS.CanBeEvaluated(value) ? value.Eval() : value;
+            //value = MathS.CanBeEvaluated(value) ? value.Eval() : value;
+            value = value.InnerSimplify();
             if (func == x)
                 return new Set(value);
             if (func.entType == Entity.EntType.NUMBER)
@@ -331,7 +322,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         private static Entity TryDowncast(Entity equation, VariableEntity x, Entity root)
         {
             if (!MathS.CanBeEvaluated(root))
-            //if (true)
                 return root;
             var preciseValue = root.Eval();
             MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
@@ -343,7 +333,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (!MathS.CanBeEvaluated(errorExpr))
                 return root;
             var error = errorExpr.Eval();
-            return Number.IsZero(error) ? downcasted : preciseValue;
+
+            bool ComplexRational(ComplexNumber a)
+                => a.Real.IsRational() && a.Imaginary.IsRational();
+
+            var innerSimplified = root.InnerSimplify();
+
+            return Number.IsZero(error) && ComplexRational(downcasted) ? downcasted : innerSimplified;
         }
 
 
@@ -374,6 +370,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             Set res = PolynomialSolver.SolveAsPolynomial(polyexpr, x);
             if (res != null)
             {
+                res.FiniteApply(e => e.InnerSimplify());
                 DestinationAddRange(res);
                 return;
             }
