@@ -417,27 +417,48 @@ namespace UnitTests.Algebra
             // 2 pi n, -pi/2 + 2 pi n, pi/2 + 2 pi n
         }
 
-        [TestMethod]
-        public void TestLinearTrigRoots5()
+        public void TestLinearTrig5Func(Entity expr)
         {
-            var exprs = new List<Entity>() {
-                "3 * sin(2 * x + 1) - sin(x) - a",
-                "3 * sin(1 + 2 * x) - sin(x) - a",
-                "3 * sin(1 + x * 2) - sin(x) - a",
-                "3 * sin(x * 2 + 1) - sin(x) - a",
-                "3 * cos(2 * x + 1) - cos(x) - a",
-                "3 * cos(1 + 2 * x) - cos(x) - a",
-                "3 * cos(1 + x * 2) - cos(x) - a",
-                "3 * cos(x * 2 + 1) - cos(x) - a",
-            };
-            foreach (var expr in exprs)
-            {
-                var roots = expr.SolveEquation("x");
-                AssertRootCount(roots, 4);
-                foreach (var root in roots.FiniteSet())
-                    AssertRoots(expr, x, root);
-            }
+            var roots = expr.SolveEquation("x");
+            AssertRootCount(roots, 4);
+            foreach (var root in roots.FiniteSet())
+                AssertRoots(expr, x, root);
         }
+
+        [TestMethod]
+        public void TestLinearTrigRoots5_1()
+            => TestLinearTrig5Func("3 * sin(2 * x + 1) - sin(x) - a");
+
+        [TestMethod]
+        public void TestLinearTrigRoots5_2()
+            => TestLinearTrig5Func("3 * sin(1 + 2 * x) - sin(x) - a");
+
+        [TestMethod]
+        public void TestLinearTrigRoots5_3()
+            => TestLinearTrig5Func("3 * sin(1 + x * 2) - sin(x) - a");
+
+        [TestMethod]
+        public void TestLinearTrigRoots5_4()
+            => TestLinearTrig5Func("3 * sin(x * 2 + 1) - sin(x) - a");
+
+        [TestMethod]
+        public void TestLinearTrigRoots5_5()
+            => TestLinearTrig5Func("3 * cos(2 * x + 1) - cos(x) - a");
+
+        [TestMethod]
+        public void TestLinearTrigRoots5_6()
+            => TestLinearTrig5Func("3 * cos(1 + 2 * x) - cos(x) - a");
+
+        [TestMethod]
+        public void TestLinearTrigRoots5_7()
+            => TestLinearTrig5Func("3 * cos(1 + x * 2) - cos(x) - a");
+
+        [TestMethod]
+        public void TestLinearTrigRoots5_8()
+            => TestLinearTrig5Func("3 * cos(x * 2 + 1) - cos(x) - a");
+        [TestMethod]
+        public void TestLinearTrigRootsMomosIssue()
+            => TestLinearTrig5Func("sin(2x + 2) + sin(x + 1) - a");
 
         [TestMethod]
         public void TestLinearTrigRoots7()

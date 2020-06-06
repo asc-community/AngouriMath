@@ -460,7 +460,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     foreach (var solution in solutions.FiniteSet())
                     {
                         var str = bestReplacement.ToString();
-                        if (!compensateSolving || ((bestReplacement - solution) - expr).Simplify() != 0)
+                        // TODO: make a smarter comparison than just comparison of complexities of two expressions
+                        // The idea is  
+                        // similarToPrevious = ((bestReplacement - solution) - expr).Simplify() == 0
+                        // But Simplify costs us too much time
+                        var similarToPrevious = (bestReplacement - solution).Complexity() >= expr.Complexity();
+                        if (!compensateSolving || !similarToPrevious)
                             Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
                     }
                     DestinationAddRange(newDst);
