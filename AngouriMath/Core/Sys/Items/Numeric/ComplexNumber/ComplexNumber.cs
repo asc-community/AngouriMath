@@ -159,7 +159,7 @@ namespace AngouriMath.Core.Numerix
             else if (Real.IsDefinite() && Real.Value == _zero)
                 return RenderNum(Imaginary) + "i";
             var (Im, sign) = Imaginary.Value > 0 ? (Imaginary, "+") : (-Imaginary, "-");
-            return Real.Latexise() + sign + Imaginary.Latexise(Imaginary.IsFraction() && Imaginary.IsDefinite()) + "i";
+            return Real.Latexise() + sign + (Im == 1 ? "" : Imaginary.Latexise(Imaginary.IsFraction() && Imaginary.IsDefinite())) + "i";
         }
 
         /// <summary>
