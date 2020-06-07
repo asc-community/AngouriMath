@@ -150,12 +150,12 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            if (args[1] == 10)
-                return @"\log\left(" + args[0].Latexise() + @"\right)";
-            else if (args[1] == MathS.e)
-                return @"\ln\left(" + args[0].Latexise() + @"\right)";
+            if (args[0] == 10)
+                return @"\log\left(" + args[1].Latexise() + @"\right)";
+            else if (args[0] == MathS.e)
+                return @"\ln\left(" + args[1].Latexise() + @"\right)";
             else
-                return @"\log_{" + args[1].Latexise() + @"}\left(" + args[0].Latexise() + @"\right)";
+                return @"\log_{" + args[0].Latexise() + @"}\left(" + args[1].Latexise() + @"\right)";
         }
     }
     internal static partial class Powf
