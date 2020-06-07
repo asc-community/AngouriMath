@@ -90,7 +90,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // ax + b = 0
             // ax = -b
             // x = -b / a
-            return new Set(-b / a);
+            return new Set((-b / a).InnerSimplify());
         }
 
         /// <summary>
@@ -123,8 +123,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             res = new Set();
             var D = MathS.Sqr(b) - 4 * a * c;
-            res.Add((-b - MathS.Sqrt(D)) / (2 * a));
-            res.Add((-b + MathS.Sqrt(D)) / (2 * a));
+            res.Add(((-b - MathS.Sqrt(D)) / (2 * a)).InnerSimplify());
+            res.Add(((-b + MathS.Sqrt(D)) / (2 * a)).InnerSimplify());
             return res;
         }
 
@@ -173,7 +173,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var u2 = SySyn.Rational(-1, 2) + coeff;
             var u3 = SySyn.Rational(-1, 2) - coeff;
             var D0 = MathS.Sqr(b) - 3 * a * c;
-            var D1 = 2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d;
+            var D1 = (2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d).InnerSimplify();
             var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, Number.CreateRational(1, 3));
 
             foreach (var uk in new List<Entity> {u1, u2, u3})
@@ -229,9 +229,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             
             res = new Set();
 
-            var alpha = -3 * MathS.Sqr(b) / (8 * MathS.Sqr(a)) + c / a;
-            var beta = MathS.Pow(b, 3) / (8 * MathS.Pow(a, 3)) - (b * c) / (2 * MathS.Sqr(a)) + d / a;
-            var gamma = -3 * MathS.Pow(b, 4) / (256 * MathS.Pow(a, 4)) + MathS.Sqr(b) * c / (16 * MathS.Pow(a, 3)) - (b * d) / (4 * MathS.Sqr(a)) + e / a;
+            var alpha = (-3 * MathS.Sqr(b) / (8 * MathS.Sqr(a)) + c / a)
+                .InnerSimplify();
+            var beta = (MathS.Pow(b, 3) / (8 * MathS.Pow(a, 3)) - (b * c) / (2 * MathS.Sqr(a)) + d / a)
+                .InnerSimplify();
+            var gamma = (-3 * MathS.Pow(b, 4) / (256 * MathS.Pow(a, 4)) + MathS.Sqr(b) * c / (16 * MathS.Pow(a, 3)) - (b * d) / (4 * MathS.Sqr(a)) + e / a)
+                .InnerSimplify();
 
             if (Const.EvalIfCan(beta) == 0)
             {
@@ -248,12 +251,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
 
             var oneThird = Number.CreateRational(1, 3);
-            var P = -MathS.Sqr(alpha) / 12 - gamma;
-            var Q = -MathS.Pow(alpha, 3) / 108 + alpha * gamma / 3 - MathS.Sqr(beta) / 8;
+            var P = (-MathS.Sqr(alpha) / 12 - gamma)
+                .InnerSimplify();
+            var Q = (-MathS.Pow(alpha, 3) / 108 + alpha * gamma / 3 - MathS.Sqr(beta) / 8)
+                .InnerSimplify();
             var R = -Q / 2 + MathS.Sqrt(MathS.Sqr(Q) / 4 + MathS.Pow(P, 3) / 27);
-            var U = MathS.Pow(R, oneThird);
-            var y = Number.CreateRational(-5, 6) * alpha + U + (Const.EvalIfCan(U) == 0 ? -MathS.Pow(Q, oneThird) : -P / (3 * U));
-            var W = MathS.Sqrt(alpha + 2 * y);
+            var U = MathS.Pow(R, oneThird)
+                .InnerSimplify();
+            var y = (Number.CreateRational(-5, 6) * alpha + U + (Const.EvalIfCan(U) == 0 ? -MathS.Pow(Q, oneThird) : -P / (3 * U)))
+                .InnerSimplify();
+            var W = MathS.Sqrt(alpha + 2 * y)
+                .InnerSimplify();
            
             // Now we need to permutate all four combinations
             res.FastAddingMode = true;  /* we are sure that there's no such root yet */
@@ -322,7 +330,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             Entity GetMonomialByPower(long power)
             {
-                return monomialsByPower.ContainsKey(power) ? monomialsByPower[power] : 0;
+                return monomialsByPower.ContainsKey(power) ? monomialsByPower[power].InnerSimplify() : 0;
             }
             if (ReduceCommonPower(ref monomialsByPower)) // x5 + x3 + x2 - common power is 2, one root is 0, then x3 + x + 1
                 res.Add(0);

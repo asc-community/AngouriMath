@@ -140,7 +140,8 @@ namespace AngouriMath.Core.Numerix
                 return Real.ToString();
             else if (Real.IsDefinite() && Real.Value == _zero)
                 return RenderNum(Imaginary) + "i";
-            return Real.ToString() + " + " + RenderNum(Imaginary) + "i";
+            var (l, r) = Imaginary.IsFraction() ? ("(", ")") : ("", "");
+            return Real.ToString() + " + " + l + RenderNum(Imaginary) + r + "i";
         }
 
         protected internal string InternalLatexise()

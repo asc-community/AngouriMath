@@ -17,7 +17,9 @@
 
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+ using System.Numerics;
+ using System.Text;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
@@ -163,9 +165,18 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            if (args[1] == 0.5)
+            if (args[1].entType == Entity.EntType.NUMBER && args[1].GetValue().IsFraction())
             {
-                return @"\sqrt{" + args[0].Latexise() + "}";
+                var val = args[1].GetValue() as RationalNumber;
+                var (numerator, denominator) = (val.Numerator, val.Denominator);
+
+                var str = @"\sqrt[" + denominator.Latexise() + "]{" + args[0].Latexise() + "}";
+                var abs = BigInteger.Abs(numerator.Value);
+                if (abs != 1)
+                    str += "^{" + abs + "}";
+                if (numerator.Value < 0)
+                    str = @"\frac{1}{" + str + "}";
+                return str;
             }
             else
             {

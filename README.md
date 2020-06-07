@@ -217,4 +217,4 @@ still faster sometimes.
 
 ## More information
 
-More info about methods see on [Wiki](/asc-community/AngouriMath/wiki).
+More info about methods see on [Wiki](https://github.com/asc-community/AngouriMath/wiki).

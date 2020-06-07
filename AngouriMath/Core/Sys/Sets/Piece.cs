@@ -163,7 +163,7 @@ namespace AngouriMath.Core
         }
 
         internal static Edge CopyEdge(Edge edge)
-            => new Edge(edge.Item1.DeepCopy(), edge.Item2, edge.Item3);
+            => new Edge(edge.Item1, edge.Item2, edge.Item3);
 
         internal static bool EdgeEqual(Edge A, Edge B)
             => Const.EvalIfCan(A.Item1) == Const.EvalIfCan(B.Item1) && A.Item2 == B.Item2 && A.Item3 == B.Item3;
@@ -228,6 +228,17 @@ namespace AngouriMath.Core
     public class OneElementPiece : Piece
     {
         internal Edge entity;
+        private ComplexNumber evaled;
+
+        internal ComplexNumber Evaluated
+        {
+            get
+            {
+                if (evaled is null)
+                    evaled = entity.Item1.Eval();
+                return evaled;
+            }
+        }
 
         internal OneElementPiece(Entity element) : base(PieceType.ENTITY)
         {

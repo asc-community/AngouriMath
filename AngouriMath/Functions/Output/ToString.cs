@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
  using System.Linq;
+ using AngouriMath.Core.Exceptions;
  using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
@@ -42,10 +43,12 @@ namespace AngouriMath
         internal string Stringize(bool parenthesesRequired)
         {
             if (IsLeaf)
-                return entType switch { 
+                return entType switch {
                     EntType.PATTERN => "{ " + PatternNumber + " : " + (this as Pattern).patType + " }",
                     EntType.TENSOR => (this as Tensor).ToString(),
-                    _ => this.Name.Length == 0 || this.Name[0] != '-' ? this.Name : "(" + this.Name + ")"
+                    EntType.VARIABLE => this.Name,
+                    EntType.NUMBER => GetValue().ToString(parenthesesRequired),
+                    _ => throw new SysException("Unexpected entity type")
                 };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeStringize(Name, Children), parenthesesRequired, latex: false);

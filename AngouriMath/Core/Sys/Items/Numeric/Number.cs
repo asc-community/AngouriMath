@@ -134,7 +134,7 @@ namespace AngouriMath.Core.Numerix
                 Type,
                 this
             );
-            return needParentheses ? "(" + str + ")" : str;
+            return needParentheses && (this.IsImaginary() || this.IsFraction()) ? "(" + str + ")" : str;
         }
 
         /// <summary>
