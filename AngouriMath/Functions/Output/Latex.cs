@@ -170,7 +170,11 @@ namespace AngouriMath
                 var val = args[1].GetValue() as RationalNumber;
                 var (numerator, denominator) = (val.Numerator, val.Denominator);
 
-                var str = @"\sqrt[" + denominator.Latexise() + "]{" + args[0].Latexise() + "}";
+                string str;
+                if (denominator.Value != 2)
+                    str = @"\sqrt[" + denominator.Latexise() + "]{" + args[0].Latexise() + "}";
+                else
+                    str = @"\sqrt{" + args[0].Latexise() + "}";
                 var abs = BigInteger.Abs(numerator.Value);
                 if (abs != 1)
                     str += "^{" + abs + "}";

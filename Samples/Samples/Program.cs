@@ -9,9 +9,11 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity expr = "(a + 3)^(-1/3)";
-            expr = expr.Simplify();
-            Console.WriteLine(expr.Latexise());
+            Entity n1 = Number.Create(RealNumber.UndefinedState.POSITIVE_INFINITY);
+            Entity n2 = Number.Create(1);
+            var expr = n1 + n2;
+            
+            Console.WriteLine(expr.Simplify());
         }
     }
 }
