@@ -38,7 +38,7 @@ namespace AngouriMath
                 {
                     EntType.VARIABLE => Const.LatexiseConst(Name),
                     EntType.TENSOR => ((Core.Tensor)this).Latexise(),
-                    EntType.NUMBER => GetValue().Latexise()
+                    EntType.NUMBER => GetValue().Latexise(parenthesesRequired)
                 };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
