@@ -148,8 +148,8 @@ namespace AngouriMath.Core.Numerix
             else
                 return State switch
                 {
-                    UndefinedState.NEGATIVE_INFINITY => @"-\infty",
-                    UndefinedState.POSITIVE_INFINITY => @"\infty",
+                    UndefinedState.NEGATIVE_INFINITY => @"-\infty ",
+                    UndefinedState.POSITIVE_INFINITY => @"\infty ",
                     UndefinedState.NAN => @"NaN"
                 };
         }
