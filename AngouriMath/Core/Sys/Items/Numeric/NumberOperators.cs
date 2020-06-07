@@ -141,7 +141,7 @@ namespace AngouriMath.Core.Numerix
         {
             // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
             if (power.IsInteger())
-                return Functional.BinaryIntPow(@base as ComplexNumber, power.AsInt());
+                return Functional.Downcast(Functional.BinaryIntPow(@base as ComplexNumber, power.AsInt())) as ComplexNumber;
             var baseCom = @base.AsComplexNumber();
             var powerCom = power.AsComplexNumber();
             if (baseCom.IsDefinite() && powerCom.IsDefinite())
