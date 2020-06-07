@@ -19,7 +19,7 @@ using System.Linq;
 
 namespace AngouriMath.Core.Numerix
 {
-    public abstract partial class Number
+    public abstract partial class Number : Sys.Interfaces.ILatexiseable
     {
         /// <summary>
         /// Copies a Number with respect due to its hierarchy type, but without implicit downcasting
