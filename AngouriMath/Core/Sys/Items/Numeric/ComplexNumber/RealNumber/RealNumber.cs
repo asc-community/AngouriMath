@@ -136,7 +136,7 @@ namespace AngouriMath.Core.Numerix
                 return State switch
                 {
                     UndefinedState.NEGATIVE_INFINITY => "-oo",
-                    UndefinedState.POSITIVE_INFINITY => "+oo",
+                    UndefinedState.POSITIVE_INFINITY => "oo",
                     UndefinedState.NAN => "NaN"
                 };
         }
@@ -149,7 +149,7 @@ namespace AngouriMath.Core.Numerix
                 return State switch
                 {
                     UndefinedState.NEGATIVE_INFINITY => @"-\infty",
-                    UndefinedState.POSITIVE_INFINITY => @"+\infty",
+                    UndefinedState.POSITIVE_INFINITY => @"\infty",
                     UndefinedState.NAN => @"NaN"
                 };
         }
