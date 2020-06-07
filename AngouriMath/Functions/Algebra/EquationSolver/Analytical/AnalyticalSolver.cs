@@ -20,6 +20,7 @@ using AngouriMath.Core.TreeAnalysis;
  using AngouriMath.Functions.Algebra.Solver;
 using System;
 using System.Collections.Generic;
+ using System.Linq;
  using AngouriMath.Core;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
@@ -383,7 +384,25 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         Solve(expr.Children[1], x, dst);
                         return;
                     case "divf":
-                        Solve(expr.Children[0], x, dst);
+
+                        bool IsSetNumeric(Set a)
+                            => a.Select(piece => piece.LowerBound().Item1).All(MathS.CanBeEvaluated);
+
+                        var zeroNumerators = new Set();
+                        Solve(expr.Children[0], x, zeroNumerators);
+                        if (!IsSetNumeric(zeroNumerators))
+                        {
+                            dst.AddRange(zeroNumerators);
+                            return;
+                        }
+                        var zeroDenominators = new Set();
+                        Solve(expr.Children[1], x, zeroDenominators);
+                        if (!IsSetNumeric(zeroDenominators))
+                        {
+                            dst.AddRange(zeroNumerators);
+                            return;
+                        }
+                        dst.AddRange((zeroNumerators & !zeroDenominators) as Set);
                         return;
                     case "powf":
                         Solve(expr.Children[0], x, dst);

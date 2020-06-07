@@ -15,6 +15,7 @@
 
 
 using System;
+using System.Numerics;
 using AngouriMath.Core;
 using AngouriMath.Core.FromString;
 using AngouriMath.Core.TreeAnalysis;
@@ -333,6 +334,117 @@ namespace AngouriMath
         public static string Latex(ILatexiseable latexiseable)
             => latexiseable.Latexise();
 
+        /// <summary>
+        /// All operations for Number and its derived classes are available from here
+        /// </summary>
+        public static class Numbers
+        {
+            /// <summary>
+            /// Creates an instance of ComplexNumber from System.Numerics.Complex
+            /// </summary>
+            /// <param name="value"></param>
+            /// <returns>
+            /// ComplexNumber
+            /// </returns>
+            public static ComplexNumber Create(Complex value)
+                => Number.Functional.Downcast(new ComplexNumber(value)) as ComplexNumber;
+
+            /// <summary>
+            /// Creates an instance of IntegerNumber from long
+            /// </summary>
+            /// <param name="value"></param>
+            /// <returns>
+            /// IntegerNumber
+            /// </returns>
+            public static IntegerNumber Create(long value)
+                => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+
+            /// <summary>
+            /// Creates an instance of IntegerNumber from System.Numerics.BigInteger
+            /// </summary>
+            /// <param name="value"></param>
+            /// <returns>
+            /// IntegerNumber
+            /// </returns>
+            public static IntegerNumber Create(BigInteger value)
+                => Number.Functional.Downcast(new IntegerNumber(value)) as IntegerNumber;
+
+            /// <summary>
+            /// Creates an instance of IntegerNumber from int
+            /// </summary>
+            /// <param name="value"></param>
+            /// <returns>
+            /// IntegerNumber
+            /// </returns>
+            public static IntegerNumber Create(int value)
+                => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+
+            /// <summary>
+            /// Creates an instance of RationalNumber of two IntegerNumbers
+            /// </summary>
+            /// <param name="numerator"></param>
+            /// <param name="denominator"></param>
+            /// <returns>
+            /// RationalNumber
+            /// </returns>
+            public static RationalNumber CreateRational(IntegerNumber numerator, IntegerNumber denominator)
+                => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
+
+            /// <summary>
+            /// Creates an instance of RealNumber from decimal
+            /// </summary>
+            /// <param name="value"></param>
+            /// <returns>
+            /// RealNumber
+            /// </returns>
+            public static RealNumber Create(decimal value)
+                => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
+
+            /// <summary>
+            /// Creates an instance of RealNumber from double
+            /// </summary>
+            /// <param name="value"></param>
+            /// <returns>
+            /// RealNumber
+            /// </returns>
+            public static RealNumber Create(double value)
+                => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
+
+            /// <summary>
+            /// Creates an instance of ComplexNumber from two RealNumbers
+            /// </summary>
+            /// <param name="re">
+            /// Real part of a desired complex number
+            /// </param>
+            /// <param name="im">
+            /// Imaginary part of a desired complex number
+            /// </param>
+            /// <returns>
+            /// ComplexNumber
+            /// </returns>
+            public static ComplexNumber Create(RealNumber re, RealNumber im)
+                => Number.Functional.Downcast(new ComplexNumber(re, im)) as ComplexNumber;
+
+            /// <summary>
+            /// If you need an indefinite value of a real number, use this
+            /// Number.Create(RealNumber.UndefinedState.POSITIVE_INFINITY)
+            /// Number.Create(RealNumber.UndefinedState.NEGATIVE_INFINITY)
+            /// Number.Create(RealNumber.UndefinedState.NAN)
+            /// </summary>
+            /// <param name="state"></param>
+            /// <returns></returns>
+            public static RealNumber Create(RealNumber.UndefinedState state)
+                => new RealNumber(state);
+
+            /// <summary>
+            /// If you need an indefinite value of a complex number, e. g.
+            /// Number.Create(RealNumber.UndefinedState.POSITIVE_INFINITY, RealNumber.UndefinedState.NEGATIVE_INFINITY)
+            /// -> +oo + -ooi
+            /// </summary>
+            /// <returns></returns>
+            public static ComplexNumber Create(RealNumber.UndefinedState realState, RealNumber.UndefinedState imaginaryState)
+                => Number.Create(Number.Create(realState), Number.Create(imaginaryState));
+        }
 
         /// <summary>
         /// Classes and functions related to matrices defined here

@@ -144,22 +144,6 @@ namespace UnitTests.Algebra
                 AssertRoots(eq, x, root);
         }
         [TestMethod]
-        public void TestAllNumbers3complexCount()
-        {
-            var rand = new Random(24 /* seed should be specified due to required determinism*/ );
-            int WA = 0;
-            for (int i = 0; i < 30; i++)
-            {
-                var expr = (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
-                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10))) *
-                           (x - (rand.Next(0, 10) + MathS.i * rand.Next(0, 10)));
-                var newexpr = expr.Expand();
-                foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                    WA += CheckRoots(newexpr, x, root) > 0.001m ? 1 : 0;
-            }
-            Assert.IsTrue(WA == 0, "WA count: " + WA);
-        }
-        [TestMethod]
         public void TestVars2()
         {
             var goose = MathS.Var("goose");

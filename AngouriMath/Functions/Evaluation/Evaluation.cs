@@ -485,7 +485,9 @@ namespace AngouriMath
         static bool IsGood(RealNumber cand, RealNumber[] nums, bool disableIrrational)
         {
             var minLevel = nums.Select(n => (int)n.Type).Min();
-            return cand.IsRational() || ((int) cand.Type <= minLevel && !disableIrrational);
+            return cand.IsRational() || 
+                   ((int) cand.Type <= minLevel && !disableIrrational) ||
+                (cand.IsIrrational() && cand.Value == 0); // TODO: make im:0 downcastable
         }
     }
 
@@ -538,17 +540,16 @@ namespace AngouriMath
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
             args = new List<Entity> { r1, r2 };
-            if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
+            if (MathFunctions.IsOneNumber(args, 1))
+                return MathFunctions.GetAnotherEntity(args, 1);
+            else if (MathFunctions.IsOneNumber(args, 0))
+                return 0;
+            else if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
             {
                 var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
                 return InnerSimplifyAdditionalFunctional.KeepIfBad(n1 * n2, r1 * r2, n1, n2);
             }
-            else if (MathFunctions.IsOneNumber(args, 1))
-                return MathFunctions.GetAnotherEntity(args, 1);
-            else if (MathFunctions.IsOneNumber(args, 0))
-                return 0;
-            else
-                return r1 * r2;
+            else return r1 * r2;
 
         }
     }
