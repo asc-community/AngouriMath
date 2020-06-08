@@ -122,11 +122,11 @@ namespace UnitTests.Convenience
         [TestMethod] public void Trig() =>
             TestSimplify(@"\sin\left(\cos\left(\tan\left(\cot\left(x\right)\right)\right)\right)", MathS.Sin(MathS.Cos(MathS.Tan(MathS.Cotan(x)))));
         [TestMethod] public void SecCosec() =>
-            TestSimplify(@"{\cos\left({\sin\left(x\right)}^{-1}\right)}^{-1}", MathS.Sec(MathS.Cosec(x)));
+            TestSimplify(@"\frac{1}{\cos\left(\frac{1}{\sin\left(x\right)}\right)}", MathS.Sec(MathS.Cosec(x)));
         [TestMethod] public void ArcTrig() =>
             TestSimplify(@"\arcsin\left(\arccos\left(\arctan\left(\arccot\left(x\right)\right)\right)\right)", MathS.Arcsin(MathS.Arccos(MathS.Arctan(MathS.Arccotan(x)))));
         [TestMethod] public void ArcSecCosec() =>
-            TestSimplify(@"{\cos\left({\sin\left(x\right)}^{-1}\right)}^{-1}", MathS.Sec(MathS.Cosec(x)));
+            TestSimplify(@"\frac{1}{\cos\left(\frac{1}{\sin\left(x\right)}\right)}", MathS.Sec(MathS.Cosec(x)));
         [TestMethod] public void Log10() => Test(@"\log\left(10\right)", MathS.Log(10, 10));
         [TestMethod] public void Ln() => Test(@"\ln\left(10\right)", MathS.Ln(10));
         [TestMethod] public void LnAlternate() => Test(@"\ln\left(10\right)", MathS.Log(MathS.e, 10));

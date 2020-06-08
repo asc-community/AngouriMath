@@ -58,6 +58,8 @@ namespace AngouriMath
                 if (TryPulling(TableCos, arg * 2, out res))
                 {
                     res = MathS.Sqrt((1 - res) / 2);
+                    if ((Number.Sin(arg) as RealNumber).Value < 0)
+                        res *= -1;
                     return true;
                 }
                 return false;
@@ -72,6 +74,8 @@ namespace AngouriMath
                 if (TryPulling(TableCos, arg * 2, out res))
                 {
                     res = MathS.Sqrt((1 + res) / 2);
+                    if ((Number.Cos(arg) as RealNumber).Value < 0)
+                        res *= -1;
                     return true;
                 }
                 return false;

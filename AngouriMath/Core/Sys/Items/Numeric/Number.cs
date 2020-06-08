@@ -169,7 +169,7 @@ namespace AngouriMath.Core.Numerix
             res.FastAddingMode = true;
             for (int i = 0; i < rootPower; i++)
             {
-                var angle = (Number.CreateRational(i * 2, rootPower) * MathS.pi).InnerSimplify();
+                var angle = Number.CreateRational(i * 2, rootPower) * MathS.pi;
                 res.Add((MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplify());
             }
             res.FastAddingMode = false;

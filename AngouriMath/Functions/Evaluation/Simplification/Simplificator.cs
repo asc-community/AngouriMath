@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
  using AngouriMath.Core;
+ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Functions.Evaluation.Simplification
 {
@@ -61,12 +62,38 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 expr = expr.InnerSimplify();
             }
 
+            int CountExpressionComplexity(Entity expr)
+            {
+                var res = 0;
+
+                // Number of nodes
+                res += expr.Complexity();
+
+                // Number of variables
+                res += TreeAnalyzer.Count(expr, entity => entity.entType == Entity.EntType.VARIABLE);
+
+                // Number of negative powers
+                res += TreeAnalyzer.Count(expr, (entity) =>
+                {
+                    if (!(entity.entType == Entity.EntType.OPERATOR &&
+                          entity.Name == "powf" &&
+                          entity.Children[1].entType == Entity.EntType.NUMBER))
+                        return false;
+                    var numEntity = entity.Children[1] as NumberEntity;
+                    if (numEntity.Value.IsImaginary())
+                        return false;
+                    var realNumber = numEntity.Value as RealNumber;
+                    return realNumber < 0;
+                });
+                return res;
+            }
+
             void __IterAddHistory(Entity expr)
             {
                 Entity refexpr = expr.DeepCopy();
                 TryInnerSimplify(ref refexpr);
-                var compl1 = refexpr.Complexity();
-                var compl2 = expr.Complexity();
+                var compl1 = CountExpressionComplexity(refexpr);
+                var compl2 = CountExpressionComplexity(expr);
                 var n = compl1 > compl2 ? expr : refexpr;
                 var ncompl = Math.Min(compl2, compl1);
                 if (!history.ContainsKey(ncompl))
