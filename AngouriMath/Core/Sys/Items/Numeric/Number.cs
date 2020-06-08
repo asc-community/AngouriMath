@@ -116,9 +116,9 @@ namespace AngouriMath.Core.Numerix
                 Type,
                 this
             );
-            // If parentheses are required, they might be only required when complicated numbres are wrapped,
-            // such as fractions and complex
-            return needParentheses && (this.IsImaginary() || this.IsFraction()) ? @"\left(" + str + @"\right)" : str;
+            // If parentheses are required, they might be only required when complicated numbers are wrapped,
+            // such as fractions and complex but not a single i
+            return needParentheses && this.Value != (0, 1) && (this.IsImaginary() || this.IsFraction()) ? @"\left(" + str + @"\right)" : str;
         }
 
         public override string ToString()
