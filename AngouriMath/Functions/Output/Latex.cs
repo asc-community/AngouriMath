@@ -169,8 +169,8 @@ namespace AngouriMath
             {
                 var val = args[1].GetValue() as RationalNumber;
                 var (numerator, denominator) = (val.Numerator, val.Denominator);
-
-                var str = @"\sqrt[" + denominator.Latexise() + "]{" + args[0].Latexise() + "}";
+                var denomLatex = denominator.Latexise();
+                var str = @"\sqrt" + (denomLatex == "2" ? "" : denomLatex) + "{" + args[0].Latexise() + "}";
                 var abs = BigInteger.Abs(numerator.Value);
                 if (abs != 1)
                     str += "^{" + abs + "}";
