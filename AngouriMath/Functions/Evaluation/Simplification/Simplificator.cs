@@ -53,7 +53,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
             if (stage1.entType == Entity.EntType.NUMBER)
                 return new Set(stage1);
 
-            var history = new SortedDictionary<int, Entity>();
+            var history = new SortedDictionary<int, List<Entity>>();
 
             void TryInnerSimplify(ref Entity expr)
             {
@@ -65,8 +65,13 @@ namespace AngouriMath.Functions.Evaluation.Simplification
             {
                 Entity refexpr = expr.DeepCopy();
                 TryInnerSimplify(ref refexpr);
-                var n = refexpr.Complexity() > expr.Complexity() ? expr : refexpr;
-                history[n.Complexity()] = n;
+                var compl1 = refexpr.Complexity();
+                var compl2 = expr.Complexity();
+                var n = compl1 > compl2 ? expr : refexpr;
+                var ncompl = Math.Min(compl2, compl1);
+                if (!history.ContainsKey(ncompl))
+                    history[ncompl] = new List<Entity>();
+                history[ncompl].Add(n);
             }
             
             void AddHistory(Entity expr)
@@ -128,7 +133,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     AddHistory(res);
                 }
                 AddHistory(res);
-                res = history[history.Keys.Min()].DeepCopy();
+                res = history[history.Keys.Min()][0].DeepCopy();
             }
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
@@ -137,7 +142,13 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 var collapsed = res.Collapse().Simplify(-level);
                 AddHistory(collapsed);
             }
-            return new Set(history.Values.Select(p => (Piece)p).ToArray());
+            var result = new Set();
+            result.FastAddingMode = true;
+            foreach (var pair in history)
+                foreach (var el in pair.Value)
+                    result.Add(el);
+            result.FastAddingMode = false;
+            return result;
         }
     }
 }

@@ -18,6 +18,7 @@ using AngouriMath.Core.Exceptions;
 using AngouriMath.Functions.Evaluation.Compilation;
 using System.Collections.Generic;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
@@ -115,6 +116,7 @@ namespace AngouriMath
         /// List arguments in the same order in which you compiled the function
         /// </param>
         /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public ComplexNumber Call(params ComplexNumber[] variables)
             => Substitute(variables);
 
@@ -125,6 +127,7 @@ namespace AngouriMath
         /// List arguments in the same order in which you compiled the function
         /// </param>
         /// <returns></returns>
+        // TODO: Optimization
         public ComplexNumber Substitute(params ComplexNumber[] variables)
         {
             if (variables.Length != varCount)
