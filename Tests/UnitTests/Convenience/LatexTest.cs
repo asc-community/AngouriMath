@@ -136,6 +136,8 @@ namespace UnitTests.Convenience
         [TestMethod] public void MOOAlternate() => Test(@"-\infty ", -RealNumber.PositiveInfinity());
         [TestMethod] public void OOPI() => Test(@"\infty  + i", RealNumber.PositiveInfinity() + MathS.i);
         [TestMethod] public void OOMI() => Test(@"\infty  - i", RealNumber.PositiveInfinity() - MathS.i);
+        [TestMethod] public void OOI() => Test(@"\infty i", RealNumber.PositiveInfinity() * MathS.i);
+        [TestMethod] public void MOOI() => Test(@"-\infty i", RealNumber.PositiveInfinity() / MathS.i);
         [TestMethod] public void OOPOOI() => Test(@"\infty  + \infty i", RealNumber.PositiveInfinity() * (1 + MathS.i));
         [TestMethod] public void OOMOOI() => Test(@"\infty  - \infty i", RealNumber.PositiveInfinity() * (1 - MathS.i));
         [TestMethod] public void MOOPOOI() => Test(@"-\infty  + \infty i", RealNumber.PositiveInfinity() * (-1 + MathS.i));
