@@ -362,8 +362,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 {
                     var newSet = new Set();
                     foreach (var root in set.FiniteSet())
-                    foreach (var coef in Number.GetAllRoots(1, gcdPower).FiniteSet())
-                        newSet.Add(coef * MathS.Pow(root, Number.Create(1.0) / gcdPower));
+                    foreach (var coef in Number.GetAllRootsOf1(gcdPower).FiniteSet())
+                        newSet.Add(coef * MathS.Pow(root, Number.CreateRational(1, gcdPower)));
                     set = newSet;
                 }
                 return set;

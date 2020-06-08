@@ -170,7 +170,8 @@ namespace AngouriMath
                 && rational.IsFraction())
             {
                 var (numerator, denominator) = (rational.Numerator, rational.Denominator);
-                var str = @"\sqrt" + (denominator.Value == 2 ? "" : "[" + denominator.Latexise() + "]") + "{" + args[0].Latexise() + "}";
+                var str = @"\sqrt" + (denominator.Value == 2 ? "" : "[" + denominator.Latexise() + "]") + 
+                  "{" + args[0].Latexise() + "}";
                 var abs = BigInteger.Abs(numerator.Value);
                 if (abs != 1)
                     str += "^{" + abs + "}";

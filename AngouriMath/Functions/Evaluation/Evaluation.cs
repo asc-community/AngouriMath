@@ -459,6 +459,8 @@ namespace AngouriMath
     {
         internal static Entity KeepIfBad(ComplexNumber candidate, Entity ifAllBad, params ComplexNumber[] nums)
         {
+            if (!candidate.IsDefinite())
+                return candidate;
             if (IsGood(candidate.Real, nums.Select(n => n.Real).ToArray(), false) &&
                 IsGood(candidate.Imaginary, nums.Select(n => n.Imaginary).ToArray(), false))
                 return candidate;
@@ -468,6 +470,11 @@ namespace AngouriMath
 
         internal static bool KeepIfBad(ComplexNumber candidate, out Entity res, bool disableIrrational, params ComplexNumber[] nums)
         {
+            if (!candidate.IsDefinite())
+            {
+                res = candidate;
+                return true;
+            }
             candidate = Number.Functional.Downcast(candidate) as ComplexNumber;
             if (IsGood(candidate.Real, nums.Select(n => n.Real).ToArray(), disableIrrational) &&
                 IsGood(candidate.Imaginary, nums.Select(n => n.Imaginary).ToArray(), disableIrrational))

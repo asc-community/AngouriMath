@@ -146,7 +146,6 @@ namespace AngouriMath.Core.Numerix
         /// <param name="rootPower"></param>
         /// <returns></returns>
 
-        // New with decimals (not working)
         
         public static Set GetAllRoots(ComplexNumber value, long rootPower)
         {
@@ -161,6 +160,19 @@ namespace AngouriMath.Core.Numerix
                 res.Add(newMod * Number.Pow(MathS.DecimalConst.e, i * newPow));
             }
             MathS.Settings.FloatToRationalIterCount.Unset();
+            return res;
+        }
+
+        public static Set GetAllRootsOf1(long rootPower)
+        {
+            var res = new Set();
+            res.FastAddingMode = true;
+            for (int i = 0; i < rootPower; i++)
+            {
+                var angle = (Number.CreateRational(i * 2, rootPower) * MathS.pi).InnerSimplify();
+                res.Add((MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplify());
+            }
+            res.FastAddingMode = false;
             return res;
         }
 
