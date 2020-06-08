@@ -165,10 +165,11 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            if (args[1].entType == Entity.EntType.NUMBER && args[1].GetValue().IsFraction())
+            if (args[1].entType == Entity.EntType.NUMBER
+                && Number.Functional.Downcast(args[1].GetValue()) is RationalNumber rational
+                && rational.IsFraction())
             {
-                var val = args[1].GetValue() as RationalNumber;
-                var (numerator, denominator) = (val.Numerator, val.Denominator);
+                var (numerator, denominator) = (rational.Numerator, rational.Denominator);
                 var str = @"\sqrt" + (denominator.Value == 2 ? "" : "[" + denominator.Latexise() + "]") + "{" + args[0].Latexise() + "}";
                 var abs = BigInteger.Abs(numerator.Value);
                 if (abs != 1)
@@ -274,7 +275,7 @@ namespace AngouriMath
                                                 .Append(Extract(upper.Item1, true)).Append(@"\right").Append(ur ? ']' : ')')
                                                 .Append(@"\wedge\Im\left(z\right)\in\left")
                                                 .Append(li ? '[' : '(').Append(Extract(lower.Item1, false)).Append(',')
-                                                .Append(Extract(upper.Item1, false)).Append(@"\right").Append(ur ? ']' : ')')
+                                                .Append(Extract(upper.Item1, false)).Append(@"\right").Append(ui ? ']' : ')')
                                                 .Append(@"\right\}");
                                             break;
                                     }
