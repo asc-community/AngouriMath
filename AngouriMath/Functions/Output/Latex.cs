@@ -266,13 +266,21 @@ namespace AngouriMath
                                             sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right]");
                                             break;
                                         case var (lr, li, ur, ui):
+                                            static string Extract(Entity entity, bool takeReal) =>
+                                                (entity.entType, takeReal) switch
+                                                {
+                                                    (Entity.EntType.NUMBER, true) => entity.GetValue().Real.Latexise(),
+                                                    (Entity.EntType.NUMBER, false) => entity.GetValue().Imaginary.Latexise(),
+                                                    (_, true) => @"\Re\left(" + entity.Latexise() + @"\right)",
+                                                    (_, false) => @"\Im\left(" + entity.Latexise() + @"\right)",
+                                                };
                                             sb.Append(@"\left\{z\in\mathbb C:\Re\left(z\right)\in\left")
-                                                .Append(lr ? '[' : '(').Append(@"\Re\left(")
-                                                .Append(l).Append(@"\right),\Re\left(").Append(u).Append(@"\right)\right")
-                                                .Append(ur ? ']' : ')').Append(@",\Im\left(z\right)\in\left")
-                                                .Append(li ? '[' : '(').Append(@"\Im\left(")
-                                                .Append(l).Append(@"\right),\Im\left(").Append(u).Append(@"\right)\right")
-                                                .Append(ui ? ']' : ')').Append(@"\right\}");
+                                                .Append(lr ? '[' : '(').Append(Extract(lower.Item1, true)).Append(',')
+                                                .Append(Extract(upper.Item1, true)).Append(@"\right").Append(ur ? ']' : ')')
+                                                .Append(@"\wedge\Im\left(z\right)\in\left")
+                                                .Append(li ? '[' : '(').Append(Extract(lower.Item1, false)).Append(',')
+                                                .Append(Extract(upper.Item1, false)).Append(@"\right").Append(ur ? ']' : ')')
+                                                .Append(@"\right\}");
                                             break;
                                     }
                                     break;
