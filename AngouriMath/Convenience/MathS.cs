@@ -28,6 +28,7 @@ using AngouriMath.Core.Sys;
  using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Functions;
+using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Functions.Algebra.InequalitySolver;
 using Number = AngouriMath.Core.Numerix.Number;
 
@@ -38,6 +39,9 @@ namespace AngouriMath
     /// </summary>
     public static partial class MathS
     {
+        public static Entity Quack(Entity expr, VariableEntity x)
+            => CommonDenominatorSolver.FindCD(expr, x);
+
         /// <summary>
         /// Use it to solve equations
         /// </summary>

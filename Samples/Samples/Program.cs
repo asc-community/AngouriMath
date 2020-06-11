@@ -11,6 +11,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
+            Console.WriteLine(MathS.Quack("(x - b) / (x + a) + b", "x"));
         }
     }
 }

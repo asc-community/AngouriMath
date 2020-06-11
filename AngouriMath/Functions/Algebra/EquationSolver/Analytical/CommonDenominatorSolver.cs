@@ -82,6 +82,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <param name="x"></param>
         /// <returns></returns>
         internal static Set Solve(Entity expr, VariableEntity x)
+            => FindCD(expr, x).SolveEquation(x);
+
+        internal static Entity FindCD(Entity expr, VariableEntity x)
         {
             var terms = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
             var denominators = new Dictionary<string, (Entity den, RealNumber pow)>();
@@ -103,20 +106,31 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (denominators.Count == 0)
                 return null; // If there's no denominators or it's equal to 1, then we don't have to try to solve yet anymore
 
+            Dictionary<string, (Entity den, RealNumber pow)> ToDict(List<(Entity den, RealNumber pow)> list)
+            {
+                var res = new Dictionary<string, (Entity den, RealNumber pow)>();
+                foreach (var el in list)
+                    res[el.den.ToString()] = el;
+                return res;
+            }
+
             var newTerms = new List<Entity>();
             foreach (var frac in fracs)
             {
                 var (num, dens) = frac;
+                var denDict = ToDict(dens);
                 Entity invertDenominator = 1;
-                foreach (var mp in dens)
+                foreach (var mp in denominators)
                 {
-                    invertDenominator *= MathS.Pow(mp.den, denominators[mp.den.ToString()].pow - mp.pow);
+                    if (denDict.ContainsKey(mp.Key))
+                        invertDenominator *= MathS.Pow(mp.Value.den, denominators[mp.Key].pow - denDict[mp.Key].pow);
+                    else
+                        invertDenominator *= MathS.Pow(mp.Value.den, denominators[mp.Key].pow);
                 }
                 newTerms.Add(invertDenominator * num);
             }
 
-            var finalExpr = TreeAnalyzer.MultiHangBinary(newTerms, "sumf", Const.PRIOR_SUM);
-            return finalExpr.SolveEquation(x);
+            return TreeAnalyzer.MultiHangBinary(newTerms, "sumf", Const.PRIOR_SUM).InnerSimplify();
         }
     }
 }
