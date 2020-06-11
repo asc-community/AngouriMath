@@ -203,6 +203,8 @@ namespace AngouriMath
 
             RealNumber Normalize(double value)
             {
+                if (double.IsNaN(value))
+                    return Number.Create(RealNumber.UndefinedState.NAN);
                 if (value > maxDecimal)
                     return RealNumber.PositiveInfinity();
                 else if (value < minDecimal)

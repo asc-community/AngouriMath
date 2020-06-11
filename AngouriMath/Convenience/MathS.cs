@@ -538,6 +538,11 @@ namespace AngouriMath
             /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
             /// </summary>
             public static Setting<bool> AllowNewton { get; } = true;
+
+            /// <summary>
+            /// Criteria for simplifier so you could control which expressions are considered easier by you
+            /// </summary>
+            public static Setting<Func<Entity, int>> ComplexityCriteria { get; } = Const.DefaultComplexityCriteria;
         }
 
         /// <summary>
@@ -609,6 +614,14 @@ namespace AngouriMath
             /// <returns></returns>
             public static Set GetUniqueVariables(Entity expr)
                 => TreeAnalyzer.GetUniqueVariables(expr);
+
+            /// <summary>
+            /// Counts all nodes & subnodes that match criteria
+            /// </summary>
+            /// <param name="criteria"></param>
+            /// <returns></returns>
+            public static int Count(Entity expr, Predicate<Entity> criteria)
+                => TreeAnalyzer.Count(expr, criteria);
         }
 
         /// <summary>

@@ -79,7 +79,7 @@ namespace UnitTests.Algebra
         public void Test4()
         {
             var eq = x.Pow(2) + 2 * x + 1;
-            MathS.Settings.PrecisionErrorCommon.Set(1e-6m);
+            MathS.Settings.PrecisionErrorCommon.Set(1e-8m);
             var roots = eq.SolveNt(x, precision: 100);
             MathS.Settings.PrecisionErrorCommon.Unset();
             AssertRootCount(roots, 1);

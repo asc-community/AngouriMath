@@ -366,14 +366,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 dst.AddRange(toAdd);
             }
 
-            var polyexpr = expr.DeepCopy();
-            Set res = PolynomialSolver.SolveAsPolynomial(polyexpr, x);
+            Set res = PolynomialSolver.SolveAsPolynomial(expr, x);
             if (res != null)
             {
                     res.FiniteApply(e => e.InnerSimplify());
                 DestinationAddRange(res);
                 return;
             }
+
+
 
             if (expr.entType == Entity.EntType.OPERATOR)
             {

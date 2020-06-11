@@ -265,7 +265,9 @@ namespace AngouriMath.Functions
 
         public override string ToString()
         {
-            return sets.Peek().ToString();
+            return Value.ToString();
         }
+
+        public T Value => sets.Peek();
     }
 }

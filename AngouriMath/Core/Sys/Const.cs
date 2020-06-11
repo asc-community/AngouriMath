@@ -19,6 +19,8 @@
 using System.Collections.Generic;
 using System.Text;
  using System.Security.Cryptography;
+ using AngouriMath.Core.Numerix;
+ using AngouriMath.Core.TreeAnalysis;
  using AngouriMath.Functions;
 
 namespace AngouriMath
@@ -187,5 +189,31 @@ namespace AngouriMath
 
         internal static Entity EvalIfCan(Entity a)
             => MathS.CanBeEvaluated(a) ? a.Eval() : a;
+
+        internal static Func<Entity, int> DefaultComplexityCriteria = new Func<Entity, int>(expr =>
+        {
+            var res = 0;
+
+            // Number of nodes
+            res += expr.Complexity();
+
+            // Number of variables
+            res += TreeAnalyzer.Count(expr, entity => entity.entType == Entity.EntType.VARIABLE);
+
+            // Number of negative powers
+            res += TreeAnalyzer.Count(expr, (entity) =>
+            {
+                if (!(entity.entType == Entity.EntType.OPERATOR &&
+                      entity.Name == "powf" &&
+                      entity.Children[1].entType == Entity.EntType.NUMBER))
+                    return false;
+                var numEntity = entity.Children[1] as NumberEntity;
+                if (numEntity.Value.IsImaginary())
+                    return false;
+                var realNumber = numEntity.Value as RealNumber;
+                return realNumber < 0;
+            });
+            return res;
+        });
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using AngouriMath;
@@ -10,7 +11,6 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-
         }
     }
 }
