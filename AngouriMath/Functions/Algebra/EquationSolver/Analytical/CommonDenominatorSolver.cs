@@ -29,12 +29,21 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <returns></returns>
         internal static (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) FindFractions(Entity term, VariableEntity x)
         {
+            // TODO: consider cases where we should NOT gather all powers in row
             Entity GetPower(Entity expr)
             {
                 if (expr.entType != Entity.EntType.OPERATOR || expr.Name != "powf")
                     return 1;
                 else
                     return expr.Children[1] * GetPower(expr.Children[0]);
+            }
+
+            Entity GetBase(Entity expr)
+            {
+                if (expr.entType != Entity.EntType.OPERATOR || expr.Name != "powf")
+                    return expr;
+                else
+                    return GetBase(expr.Children[0]);
             }
 
             (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) oneInfo;
@@ -68,7 +77,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     oneInfo.numerator *= multiplyer;
                     continue;
                 }
-                oneInfo.denominatorMultipliers.Add((multiplyer, realPart));
+                oneInfo.denominatorMultipliers.Add((GetBase(multiplyer), realPart));
             }
 
             return oneInfo;
@@ -98,7 +107,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var name = den.ToString(); // TODO: Replace with faster hashing
                     if (!denominators.ContainsKey(name))
                         denominators[name] = (den, 0);
-                    denominators[name] = (den, denominators[name].pow + pow);
+                    denominators[name] = (den, Number.Max(denominators[name].pow, -pow));
                 }
                 fracs.Add(oneInfo);
             }
@@ -110,7 +119,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             {
                 var res = new Dictionary<string, (Entity den, RealNumber pow)>();
                 foreach (var el in list)
-                    res[el.den.ToString()] = el;
+                    res[el.den.ToString()] = (el.den, -el.pow);
                 return res;
             }
 

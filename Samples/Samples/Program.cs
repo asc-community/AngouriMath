@@ -11,7 +11,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Console.WriteLine(MathS.Quack("(x - b) / (x + a) + b", "x"));
+            //Console.WriteLine(MathS.Quack("(x - b) / (x + a)2 + e^x / (x + a) + (x - i) / (y*x) + b", "x").Simplify());
+            Console.WriteLine(MathS.SolveEquation("(x - b) / (x + a) + c", "x"));
         }
     }
 }
