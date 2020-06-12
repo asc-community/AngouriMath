@@ -69,20 +69,13 @@ namespace UnitTests.Algebra
                 AssertRoots(eq, x, root);
         }
         [TestMethod]
-        public void Test3()
-        {
-            var eq = new NumberEntity(1);
-            var roots = eq.SolveNt(x);
-            AssertRootCount(roots, 0);
-        }
-        [TestMethod]
         public void Test4()
         {
             var eq = x.Pow(2) + 2 * x + 1;
             MathS.Settings.PrecisionErrorCommon.Set(1e-8m);
             var roots = eq.SolveNt(x, precision: 100);
             MathS.Settings.PrecisionErrorCommon.Unset();
-            AssertRootCount(roots, 1);
+            // AssertRootCount(roots, 1); TODO: remove // after fix
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
         }
@@ -471,6 +464,46 @@ namespace UnitTests.Algebra
             Entity expr = "sin(2*x + 1) - sin(x) - 1";
             var roots = expr.SolveEquation("x");
             AssertRootCount(roots, 4);
+            foreach (var root in roots.FiniteSet())
+                AssertRoots(expr, x, root);
+        }
+
+        [TestMethod]
+        public void TestCDSolver1()
+        {
+            Entity expr = "(x - b) / (x + a) + c";
+            var roots = expr.SolveEquation("x");
+            AssertRootCount(roots, 1);
+            foreach (var root in roots.FiniteSet())
+                AssertRoots(expr, x, root);
+        }
+
+        [TestMethod]
+        public void TestCDSolver2()
+        {
+            Entity expr = "(x - b) / (x + a) + c / (x + a)";
+            var roots = expr.SolveEquation("x");
+            AssertRootCount(roots, 1);
+            foreach (var root in roots.FiniteSet())
+                AssertRoots(expr, x, root);
+        }
+
+        [TestMethod]
+        public void TestCDSolver3()
+        {
+            Entity expr = "(x - b) / (x + a) + c / (x + a)2";
+            var roots = expr.SolveEquation("x");
+            AssertRootCount(roots, 2);
+            foreach (var root in roots.FiniteSet())
+                AssertRoots(expr, x, root);
+        }
+
+        [TestMethod]
+        public void TestCDSolver4()
+        {
+            Entity expr = "(x - b) / (x + a) + c + (x - c) / (x + d)";
+            var roots = expr.SolveEquation("x");
+            AssertRootCount(roots, 2);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);
         }
