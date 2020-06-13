@@ -14,13 +14,25 @@
  */
 
 using System;
+using System.Linq;
 using System.Numerics;
-
 
 namespace AngouriMath.Core.Numerix
 {
     public abstract partial class Number
     {
+        public static RealNumber Max(params RealNumber[] nums)
+            => nums.Length == 1 ? nums[0] : InternalMax(nums[0], Max(new ArraySegment<RealNumber>(nums, 1, nums.Length - 1).ToArray()));
+
+        public static RealNumber Min(params RealNumber[] nums)
+            => nums.Length == 1 ? nums[0] : InternalMin(nums[0], Min(new ArraySegment<RealNumber>(nums, 1, nums.Length - 1).ToArray()));
+
+        private static RealNumber InternalMax(RealNumber a, RealNumber b)
+            => a > b ? a : b;
+
+        private static RealNumber InternalMin(RealNumber a, RealNumber b)
+            => a < b ? a : b;
+
         internal static Number OpSum(Number a, Number b)
         {
             HierarchyLevel level;

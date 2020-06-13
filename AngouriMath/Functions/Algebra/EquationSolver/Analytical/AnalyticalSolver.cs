@@ -509,6 +509,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
             // // //
 
+            if (dst.IsEmpty())
+            {
+                res = CommonDenominatorSolver.Solve(expr, x);
+                if (res != null)
+                {
+                    DestinationAddRange(res);
+                    return;
+                }
+            }
+
 
             // if nothing has been found so far
             if (dst.IsEmpty() && MathS.Settings.AllowNewton)
