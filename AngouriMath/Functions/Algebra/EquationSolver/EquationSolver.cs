@@ -14,12 +14,13 @@
  */
 
 
-
-﻿using AngouriMath.Core;
+using System;
+using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
  using AngouriMath.Functions.Algebra.AnalyticalSolving;
  using System.Collections.Generic;
 using System.Linq;
+ using AngouriMath.Core.TreeAnalysis;
 
 
 namespace AngouriMath.Functions.Algebra.Solver
@@ -43,7 +44,30 @@ namespace AngouriMath.Functions.Algebra.Solver
                 MathS.Settings.FloatToRationalIterCount.Unset();
             MathS.Settings.PrecisionErrorZeroRange.Unset();
 
-            res.FiniteApply(entity => entity.InnerSimplify());
+            if (res.Power == Set.PowerLevel.FINITE)
+            {
+                res.FiniteApply(entity => entity.InnerSimplify());
+                Func<Entity, Entity> simplifier = entity => entity.InnerSimplify();
+                Func<Entity, Entity> evaluator = entity => entity.InnerEval();
+
+                Entity collapser(Entity expr)
+                {
+                    if (MathS.Utils.GetUniqueVariables(equation).Count == 1)
+                        return expr.InnerEval();
+                    else
+                        return expr.InnerSimplify();
+                }
+
+                var finalSet = new Set();
+                finalSet.FastAddingMode = true;
+                foreach (var elem in res.FiniteSet())
+                    if (TreeAnalyzer.IsDefinite(elem) &&
+                        TreeAnalyzer.IsDefinite(collapser(equation.Substitute(x, elem)))
+                        )
+                        finalSet.Add(elem);
+                finalSet.FastAddingMode = false;
+                res = finalSet;
+            }
 
             return res;
         }
