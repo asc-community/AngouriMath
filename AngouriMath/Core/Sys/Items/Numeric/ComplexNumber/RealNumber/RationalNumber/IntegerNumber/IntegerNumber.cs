@@ -29,7 +29,7 @@ namespace AngouriMath.Core.Numerix
         /// <summary>
         /// Exact value of the number
         /// </summary>
-        public new BigInteger Value { get; protected set; }
+        public new BigInteger Value { get; internal set; }
         private void InitClass(BigInteger value, UndefinedState state)
         {
             Value = value;
@@ -47,7 +47,7 @@ namespace AngouriMath.Core.Numerix
             InitClass(value, UndefinedState.DEFINED);
         }
 
-        private IntegerNumber()
+        internal IntegerNumber()
         {
 
         }

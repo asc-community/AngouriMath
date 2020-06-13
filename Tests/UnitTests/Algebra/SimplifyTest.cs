@@ -52,7 +52,7 @@ namespace UnitTests.Algebra
         public void TestPatt1()
         {
             var expr = MathS.Pow(x * 4, 3);
-            Assert.IsTrue(expr.Simplify() == 64 * MathS.Pow(x, 3));
+            Assert.IsTrue(expr.Simplify() == MathS.Pow(4 * x, 3));
         }
         [TestMethod]
         public void TestPatt2()

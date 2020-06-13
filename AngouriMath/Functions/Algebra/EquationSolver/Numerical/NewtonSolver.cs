@@ -36,6 +36,15 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         private static ComplexNumber NewtonIter(FastExpression f, FastExpression df, ComplexNumber value, int precision)
         {
             ComplexNumber prev = value;
+
+            ComplexNumber ChooseGood()
+            {
+                if (Number.Abs(prev - value) > MathS.Settings.PrecisionErrorCommon)
+                    return RealNumber.NaN();
+                else
+                    return value;
+            }
+
             int minCheckIters = (int)Math.Sqrt(precision);
             for (int i = 0; i < precision; i++)
             {
@@ -43,19 +52,19 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                     prev = value.Copy();
                 try // TODO: remove try catch in for
                 {
-                    value -= (f.Substitute(value) / df.Substitute(value)) as ComplexNumber;
+                    var dfv = df.Substitute(value);
+                    if (dfv == 0)
+                        return ChooseGood();
+                    value -= f.Substitute(value) / dfv;
                 }
-                catch (MathSException)
+                catch (OverflowException)
                 {
-                    throw new MathSException("Two or more variables in SolveNt is forbidden");
+                    return ChooseGood();
                 }
                 if (i > minCheckIters && prev == value)
                     return value;
             }
-            if (Number.Abs(prev - value) > MathS.Settings.PrecisionErrorCommon)
-                return RealNumber.NaN();
-            else
-                return value;
+            return ChooseGood();
         }
 
         /// <summary>
@@ -82,6 +91,8 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
             (decimal Re, decimal Im) to, 
             (int Re, int Im) stepCount, int precision)
         {
+            if (MathS.Utils.GetUniqueVariables(expr).Count != 1)
+                throw new MathSException("Two or more or less than one variables in SolveNt is prohibited");
             MathS.Settings.FloatToRationalIterCount.Set(0);
             var res = new Set();
             var df = expr.Derive(v).Simplify().Compile(v);

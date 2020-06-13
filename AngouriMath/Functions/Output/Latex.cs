@@ -17,7 +17,9 @@
 
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
+ using System.Numerics;
+ using System.Text;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
@@ -38,7 +40,7 @@ namespace AngouriMath
                 {
                     EntType.VARIABLE => Const.LatexiseConst(Name),
                     EntType.TENSOR => ((Core.Tensor)this).Latexise(),
-                    EntType.NUMBER => GetValue().Latexise()
+                    EntType.NUMBER => GetValue().Latexise(parenthesesRequired)
                 };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
@@ -150,12 +152,12 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            if (args[1] == 10)
-                return @"\log\left(" + args[0].Latexise() + @"\right)";
-            else if (args[1] == MathS.e)
-                return @"\ln\left(" + args[0].Latexise() + @"\right)";
+            if (args[0] == 10)
+                return @"\log\left(" + args[1].Latexise() + @"\right)";
+            else if (args[0] == MathS.e)
+                return @"\ln\left(" + args[1].Latexise() + @"\right)";
             else
-                return @"\log_{" + args[1].Latexise() + @"}\left(" + args[0].Latexise() + @"\right)";
+                return @"\log_{" + args[0].Latexise() + @"}\left(" + args[1].Latexise() + @"\right)";
         }
     }
     internal static partial class Powf
@@ -163,9 +165,19 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            if (args[1] == 0.5)
+            if (args[1].entType == Entity.EntType.NUMBER
+                && Number.Functional.Downcast(args[1].GetValue()) is RationalNumber rational
+                && rational.IsFraction())
             {
-                return @"\sqrt{" + args[0].Latexise() + "}";
+                var (numerator, denominator) = (rational.Numerator, rational.Denominator);
+                var str = @"\sqrt" + (denominator.Value == 2 ? "" : "[" + denominator.Latexise() + "]") + 
+                  "{" + args[0].Latexise() + "}";
+                var abs = BigInteger.Abs(numerator.Value);
+                if (abs != 1)
+                    str += "^{" + abs + "}";
+                if (numerator.Value < 0)
+                    str = @"\frac{1}{" + str + "}";
+                return str;
             }
             else
             {
@@ -251,13 +263,21 @@ namespace AngouriMath
                                             sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right]");
                                             break;
                                         case var (lr, li, ur, ui):
+                                            static string Extract(Entity entity, bool takeReal) =>
+                                                (entity.entType, takeReal) switch
+                                                {
+                                                    (Entity.EntType.NUMBER, true) => entity.GetValue().Real.Latexise(),
+                                                    (Entity.EntType.NUMBER, false) => entity.GetValue().Imaginary.Latexise(),
+                                                    (_, true) => @"\Re\left(" + entity.Latexise() + @"\right)",
+                                                    (_, false) => @"\Im\left(" + entity.Latexise() + @"\right)",
+                                                };
                                             sb.Append(@"\left\{z\in\mathbb C:\Re\left(z\right)\in\left")
-                                                .Append(lr ? '[' : '(').Append(@"\Re\left(")
-                                                .Append(l).Append(@"\right),\Re\left(").Append(u).Append(@"\right)\right")
-                                                .Append(ur ? ']' : ')').Append(@",\Im\left(z\right)\in\left")
-                                                .Append(li ? '[' : '(').Append(@"\Im\left(")
-                                                .Append(l).Append(@"\right),\Im\left(").Append(u).Append(@"\right)\right")
-                                                .Append(ui ? ']' : ')').Append(@"\right\}");
+                                                .Append(lr ? '[' : '(').Append(Extract(lower.Item1, true)).Append(',')
+                                                .Append(Extract(upper.Item1, true)).Append(@"\right").Append(ur ? ']' : ')')
+                                                .Append(@"\wedge\Im\left(z\right)\in\left")
+                                                .Append(li ? '[' : '(').Append(Extract(lower.Item1, false)).Append(',')
+                                                .Append(Extract(upper.Item1, false)).Append(@"\right").Append(ui ? ']' : ')')
+                                                .Append(@"\right\}");
                                             break;
                                     }
                                     break;

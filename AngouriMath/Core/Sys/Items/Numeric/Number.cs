@@ -19,7 +19,7 @@ using System.Linq;
 
 namespace AngouriMath.Core.Numerix
 {
-    public abstract partial class Number
+    public abstract partial class Number : Sys.Interfaces.ILatexiseable
     {
         /// <summary>
         /// Copies a Number with respect due to its hierarchy type, but without implicit downcasting
@@ -116,7 +116,9 @@ namespace AngouriMath.Core.Numerix
                 Type,
                 this
             );
-            return needParentheses ? "(" + str + ")" : str;
+            // If parentheses are required, they might be only required when complicated numbers are wrapped,
+            // such as fractions and complex but not a single i
+            return needParentheses && this.Value != (0, 1) && (this.IsImaginary() || this.IsFraction()) ? @"\left(" + str + @"\right)" : str;
         }
 
         public override string ToString()
@@ -132,7 +134,7 @@ namespace AngouriMath.Core.Numerix
                 Type,
                 this
             );
-            return needParentheses ? "(" + str + ")" : str;
+            return needParentheses && (this.IsImaginary() || this.IsFraction()) ? "(" + str + ")" : str;
         }
 
         /// <summary>
@@ -144,7 +146,6 @@ namespace AngouriMath.Core.Numerix
         /// <param name="rootPower"></param>
         /// <returns></returns>
 
-        // New with decimals (not working)
         
         public static Set GetAllRoots(ComplexNumber value, long rootPower)
         {
@@ -159,6 +160,19 @@ namespace AngouriMath.Core.Numerix
                 res.Add(newMod * Number.Pow(MathS.DecimalConst.e, i * newPow));
             }
             MathS.Settings.FloatToRationalIterCount.Unset();
+            return res;
+        }
+
+        public static Set GetAllRootsOf1(long rootPower)
+        {
+            var res = new Set();
+            res.FastAddingMode = true;
+            for (int i = 0; i < rootPower; i++)
+            {
+                var angle = Number.CreateRational(i * 2, rootPower) * MathS.pi;
+                res.Add((MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplify());
+            }
+            res.FastAddingMode = false;
             return res;
         }
 

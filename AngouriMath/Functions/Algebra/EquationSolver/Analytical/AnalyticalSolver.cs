@@ -20,6 +20,7 @@ using AngouriMath.Core.TreeAnalysis;
  using AngouriMath.Functions.Algebra.Solver;
 using System;
 using System.Collections.Generic;
+ using System.Linq;
  using AngouriMath.Core;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
@@ -30,16 +31,6 @@ namespace AngouriMath
 {
     public abstract partial class Entity : ILatexiseable
     {
-        /// <summary>
-        /// Attempt to find analytical roots of a custom equation
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns>
-        /// Returns Set. Work with it as with a list
-        /// </returns>
-        [ObsoleteAttribute("This method will soon be deprecated. Use SolveEquation instead.")]
-        public Set Solve(VariableEntity x) => EquationSolver.Solve(this, x);
-
         /// <summary>
         /// Attempt to find analytical roots of a custom equation
         /// </summary>
@@ -124,7 +115,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <returns></returns>
         public static Set FindInvertExpression(Entity func, Entity value, Entity x)
         {
-            value = MathS.CanBeEvaluated(value) ? value.Eval() : value;
+            value = value.InnerSimplify();
             if (func == x)
                 return new Set(value);
             if (func.entType == Entity.EntType.NUMBER)
@@ -331,7 +322,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         private static Entity TryDowncast(Entity equation, VariableEntity x, Entity root)
         {
             if (!MathS.CanBeEvaluated(root))
-            //if (true)
                 return root;
             var preciseValue = root.Eval();
             MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
@@ -343,7 +333,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (!MathS.CanBeEvaluated(errorExpr))
                 return root;
             var error = errorExpr.Eval();
-            return Number.IsZero(error) ? downcasted : preciseValue;
+
+            bool ComplexRational(ComplexNumber a)
+                => a.Real.IsRational() && a.Imaginary.IsRational();
+
+            var innerSimplified = root.InnerSimplify();
+
+            return Number.IsZero(error) && ComplexRational(downcasted) ? downcasted : innerSimplified;
         }
 
 
@@ -370,13 +366,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 dst.AddRange(toAdd);
             }
 
-            var polyexpr = expr.DeepCopy();
-            Set res = PolynomialSolver.SolveAsPolynomial(polyexpr, x);
+            Set res = PolynomialSolver.SolveAsPolynomial(expr, x);
             if (res != null)
             {
+                    res.FiniteApply(e => e.InnerSimplify());
                 DestinationAddRange(res);
                 return;
             }
+
+
 
             if (expr.entType == Entity.EntType.OPERATOR)
             {
@@ -387,7 +385,25 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         Solve(expr.Children[1], x, dst);
                         return;
                     case "divf":
-                        Solve(expr.Children[0], x, dst);
+
+                        bool IsSetNumeric(Set a)
+                            => a.Select(piece => piece.LowerBound().Item1).All(MathS.CanBeEvaluated);
+
+                        var zeroNumerators = new Set();
+                        Solve(expr.Children[0], x, zeroNumerators);
+                        if (!IsSetNumeric(zeroNumerators))
+                        {
+                            dst.AddRange(zeroNumerators);
+                            return;
+                        }
+                        var zeroDenominators = new Set();
+                        Solve(expr.Children[1], x, zeroDenominators);
+                        if (!IsSetNumeric(zeroDenominators))
+                        {
+                            dst.AddRange(zeroNumerators);
+                            return;
+                        }
+                        dst.AddRange((zeroNumerators & !zeroDenominators) as Set);
                         return;
                     case "powf":
                         Solve(expr.Children[0], x, dst);
@@ -464,7 +480,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     foreach (var solution in solutions.FiniteSet())
                     {
                         var str = bestReplacement.ToString();
-                        if (!compensateSolving || ((bestReplacement - solution) - expr).Simplify() != 0)
+                        // TODO: make a smarter comparison than just comparison of complexities of two expressions
+                        // The idea is  
+                        // similarToPrevious = ((bestReplacement - solution) - expr).Simplify() == 0
+                        // But Simplify costs us too much time
+                        var similarToPrevious = (bestReplacement - solution).Complexity() >= expr.Complexity();
+                        if (!compensateSolving || !similarToPrevious)
                             Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
                     }
                     DestinationAddRange(newDst);
@@ -487,6 +508,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 }
             }
             // // //
+
+            if (dst.IsEmpty())
+            {
+                res = CommonDenominatorSolver.Solve(expr, x);
+                if (res != null)
+                {
+                    DestinationAddRange(res);
+                    return;
+                }
+            }
 
 
             // if nothing has been found so far

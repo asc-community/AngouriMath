@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
  using AngouriMath.Core;
+ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Functions.Evaluation.Simplification
 {
@@ -37,7 +38,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
-        internal static Entity Simplify(Entity expr, int level) => ((Entity)Alternate(expr, level).Pieces[0]).InnerEval();
+        internal static Entity Simplify(Entity expr, int level) => ((Entity)Alternate(expr, level).Pieces[0]).InnerSimplify();
 
         /// <summary>
         /// Finds all alternative forms of an expression
@@ -49,24 +50,33 @@ namespace AngouriMath.Functions.Evaluation.Simplification
         {
             if (src.entType == Entity.EntType.NUMBER || src.entType == Entity.EntType.VARIABLE)
                 return new Set(src.Copy());
-            var stage1 = src.InnerEval();
+            var stage1 = src.InnerSimplify();
             if (stage1.entType == Entity.EntType.NUMBER)
                 return new Set(stage1);
 
-            var history = new SortedDictionary<int, Entity>();
+            var history = new SortedDictionary<int, List<Entity>>();
 
             void TryInnerSimplify(ref Entity expr)
             {
                 TreeAnalyzer.Sort(ref expr, TreeAnalyzer.SortLevel.HIGH_LEVEL);
-                expr = expr.InnerEval();
+                expr = expr.InnerSimplify();
             }
+
+            // List of criterians of expr's complexity
+            int CountExpressionComplexity(Entity expr)
+            => MathS.Settings.ComplexityCriteria.Value(expr);
 
             void __IterAddHistory(Entity expr)
             {
                 Entity refexpr = expr.DeepCopy();
                 TryInnerSimplify(ref refexpr);
-                var n = refexpr.Complexity() > expr.Complexity() ? expr : refexpr;
-                history[n.Complexity()] = n;
+                var compl1 = CountExpressionComplexity(refexpr);
+                var compl2 = CountExpressionComplexity(expr);
+                var n = compl1 > compl2 ? expr : refexpr;
+                var ncompl = Math.Min(compl2, compl1);
+                if (!history.ContainsKey(ncompl))
+                    history[ncompl] = new List<Entity>();
+                history[ncompl].Add(n);
             }
             
             void AddHistory(Entity expr)
@@ -88,6 +98,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     TreeAnalyzer.Sort(ref res, TreeAnalyzer.SortLevel.MIDDLE_LEVEL);
                 else if (i == 2)
                     TreeAnalyzer.Sort(ref res, TreeAnalyzer.SortLevel.LOW_LEVEL);
+                res = res.InnerSimplify();
                 if (TreeAnalyzer.Optimization.ContainsPower(res))
                 {
                     TreeAnalyzer.ReplaceInPlace(Patterns.PowerRules, ref res);
@@ -107,11 +118,11 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 {
                     TreeAnalyzer.InvertNegativePowers(ref res);
                     TreeAnalyzer.ReplaceInPlace(Patterns.DivisionPreparingRules, ref res);
-                    res = res.InnerEval();
+                    res = res.InnerSimplify();
                     TreeAnalyzer.FindDivisors(ref res, (num, denom) => !MathS.CanBeEvaluated(num) && !MathS.CanBeEvaluated(denom));
                 }
 
-                res = res.InnerEval();
+                res = res.InnerSimplify();
                 if (TreeAnalyzer.Optimization.ContainsTrigonometric(res))
                 {
                     var res1 = res.DeepCopy();
@@ -127,7 +138,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     AddHistory(res);
                 }
                 AddHistory(res);
-                res = history[history.Keys.Min()].DeepCopy();
+                res = history[history.Keys.Min()][0].DeepCopy();
             }
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
@@ -136,7 +147,14 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 var collapsed = res.Collapse().Simplify(-level);
                 AddHistory(collapsed);
             }
-            return new Set(history.Values.Select(p => (Piece)p).ToArray());
+
+            var result = new Set();
+            result.FastAddingMode = true;
+            foreach (var pair in history)
+                foreach (var el in pair.Value)
+                    result.Add(el);
+            result.FastAddingMode = false;
+            return result;
         }
     }
 }

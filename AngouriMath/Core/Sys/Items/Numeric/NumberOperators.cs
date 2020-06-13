@@ -14,13 +14,25 @@
  */
 
 using System;
+using System.Linq;
 using System.Numerics;
-
 
 namespace AngouriMath.Core.Numerix
 {
     public abstract partial class Number
     {
+        public static RealNumber Max(params RealNumber[] nums)
+            => nums.Length == 1 ? nums[0] : InternalMax(nums[0], Max(new ArraySegment<RealNumber>(nums, 1, nums.Length - 1).ToArray()));
+
+        public static RealNumber Min(params RealNumber[] nums)
+            => nums.Length == 1 ? nums[0] : InternalMin(nums[0], Min(new ArraySegment<RealNumber>(nums, 1, nums.Length - 1).ToArray()));
+
+        private static RealNumber InternalMax(RealNumber a, RealNumber b)
+            => a > b ? a : b;
+
+        private static RealNumber InternalMin(RealNumber a, RealNumber b)
+            => a < b ? a : b;
+
         internal static Number OpSum(Number a, Number b)
         {
             HierarchyLevel level;
@@ -141,7 +153,7 @@ namespace AngouriMath.Core.Numerix
         {
             // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
             if (power.IsInteger())
-                return Functional.BinaryIntPow(@base as ComplexNumber, power.AsInt());
+                return Functional.Downcast(Functional.BinaryIntPow(@base as ComplexNumber, power.AsInt())) as ComplexNumber;
             var baseCom = @base.AsComplexNumber();
             var powerCom = power.AsComplexNumber();
             if (baseCom.IsDefinite() && powerCom.IsDefinite())

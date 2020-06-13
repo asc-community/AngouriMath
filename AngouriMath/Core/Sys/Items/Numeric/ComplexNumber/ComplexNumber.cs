@@ -140,7 +140,8 @@ namespace AngouriMath.Core.Numerix
                 return Real.ToString();
             else if (Real.IsDefinite() && Real.Value == _zero)
                 return RenderNum(Imaginary) + "i";
-            return Real.ToString() + " + " + RenderNum(Imaginary) + "i";
+            var (l, r) = Imaginary.IsFraction() ? ("(", ")") : ("", "");
+            return Real.ToString() + " + " + l + RenderNum(Imaginary) + r + "i";
         }
 
         protected internal string InternalLatexise()
@@ -158,8 +159,8 @@ namespace AngouriMath.Core.Numerix
                 return Real.Latexise();
             else if (Real.IsDefinite() && Real.Value == _zero)
                 return RenderNum(Imaginary) + "i";
-            var (Im, sign) = Imaginary.Value > 0 ? (Imaginary, "+") : (-Imaginary, "-");
-            return Real.Latexise() + sign + Imaginary.Latexise(Imaginary.IsFraction() && Imaginary.IsDefinite()) + "i";
+            var (im, sign) = Imaginary.Value > 0 ? (Imaginary, "+") : (-Imaginary, "-");
+            return Real.Latexise() + " " + sign + " " + (im == 1 ? "" : im.Latexise(im.IsFraction() && im.IsDefinite())) + "i";
         }
 
         /// <summary>

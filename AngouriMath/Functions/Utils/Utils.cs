@@ -78,7 +78,7 @@ namespace AngouriMath.Functions
                     dst -= ((-1) * terms[i].Children[0].GetValue()) * terms[i].Children[1];
                 else
                     dst += terms[i];
-            dst = dst.InnerEval();
+            dst = dst.InnerSimplify();
             return true;
         }
 
@@ -265,7 +265,9 @@ namespace AngouriMath.Functions
 
         public override string ToString()
         {
-            return sets.Peek().ToString();
+            return Value.ToString();
         }
+
+        public T Value => sets.Peek();
     }
 }

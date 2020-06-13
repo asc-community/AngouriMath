@@ -11,7 +11,7 @@ namespace UnitTests.Algebra
         public void Test1()
         {
             var func = MathS.Sqr(x) + 2 * x + 1;
-            Assert.IsTrue(func.Derive(x).Simplify() == 2 * (1 + x));
+            Assert.IsTrue(func.Derive(x).Simplify() == 2 + 2 * x);
         }
         [TestMethod]
         public void TestSin()
