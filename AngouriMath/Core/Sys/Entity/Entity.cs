@@ -111,9 +111,16 @@ namespace AngouriMath
     /// </summary>
     public partial class NumberEntity : Entity
     {
-        public NumberEntity(ComplexNumber value) : base(value.ToString(), EntType.NUMBER) 
+        public NumberEntity(ComplexNumber value) : base(value.ToString(), EntType.NUMBER)
         {
-            Priority = Const.PRIOR_NUM;
+            if (value.IsFraction())
+                Priority = Const.PRIOR_DIV;
+            else if (value.IsImaginary() && value.Real != 0)
+                Priority = Const.PRIOR_SUM;
+            else if (value.Real < 0 || value.Imaginary < 0)
+                Priority = Const.PRIOR_MUL;
+            else
+                Priority = Const.PRIOR_NUM;
             Value = value;
         }
 

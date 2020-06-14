@@ -92,8 +92,8 @@ namespace UnitTests.Convenience
         [TestMethod] public void ISquare() => Test("{i}^{2}", MathS.Sqr(MathS.i));
         [TestMethod] public void ISquareSimplified() => TestSimplify("-1", MathS.Sqr(MathS.i));
         [TestMethod] public void Frac34Add() => Test(@"\frac{3}{4}+\frac{3}{4}", frac34 + frac34);
-        [TestMethod] public void Frac34Subtract() => Test(@"\frac{3}{4}-\left(\frac{3}{4}\right)", frac34 - frac34);
-        [TestMethod] public void Frac34Multiply() => Test(@"\left(\frac{3}{4}\right)\times \left(\frac{3}{4}\right)", frac34 * frac34);
+        [TestMethod] public void Frac34Subtract() => Test(@"\frac{3}{4}-\frac{3}{4}", frac34 - frac34);
+        [TestMethod] public void Frac34Multiply() => Test(@"\frac{3}{4}\times \frac{3}{4}", frac34 * frac34);
         [TestMethod] public void Frac34Divide() => Test(@"\frac{\frac{3}{4}}{\frac{3}{4}}", frac34 / frac34);
         [TestMethod] public void Frac34Square() => Test(@"{\left(\frac{3}{4}\right)}^{2}", MathS.Sqr(frac34));
         [TestMethod] public void Frac34SquareRoot() => Test(@"\sqrt{\frac{3}{4}}", MathS.Sqrt(frac34));
@@ -101,8 +101,14 @@ namespace UnitTests.Convenience
         [TestMethod] public void Frac34Pow() => Test(@"{\left(\frac{3}{4}\right)}^{x}", MathS.Pow(frac34, x));
         [TestMethod] public void PowFrac34() => Test(@"\sqrt[4]{2}^{3}", MathS.Pow(2, frac34));
         [TestMethod] public void M2IAdd() => Test(@"-2i-2i", m2i + m2i);
-        [TestMethod] public void M2ISubtract() => Test(@"-2i-\left(-2i\right)", m2i - m2i);
-        [TestMethod] public void M2IMultiply() => Test(@"\left(-2i\right)\times \left(-2i\right)", m2i * m2i);
+
+        // Which is better,
+        // -2i-\left(-2i\right)
+        // or
+        // -2i--2i
+        // ? TODO
+        [TestMethod] public void M2ISubtract() => Test(@"-2i--2i", m2i - m2i);
+        [TestMethod] public void M2IMultiply() => Test(@"-2i\times -2i", m2i * m2i);
         [TestMethod] public void M2IDivide() => Test(@"\frac{-2i}{-2i}", m2i / m2i);
         [TestMethod] public void M2ISquare() => Test(@"{\left(-2i\right)}^{2}", MathS.Sqr(m2i));
         [TestMethod] public void M2ISquareRoot() => Test(@"\sqrt{-2i}", MathS.Sqrt(m2i));

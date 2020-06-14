@@ -18,8 +18,10 @@ namespace UnitTests.Algebra
         /// <param name="equation"></param>
         /// <param name="toSub"></param>
         /// <param name="varValue"></param>
-        public static void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue)
+        public static void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber subValue = null)
         {
+            if (subValue is null)
+                subValue = 3;
             string LimitString(string s)
             {
                 if (s.Length < 30)
@@ -28,18 +30,22 @@ namespace UnitTests.Algebra
                     return s.Substring(0, 10) + "..." + s.Substring(s.Length - 10, 10);
             }
             string eqNormal = equation.ToString();
-            var err = CheckRoots(equation, toSub, varValue);
+            var err = CheckRoots(equation, toSub, varValue, subValue);
             Assert.IsTrue(err < 0.001m, "Error is : " + err + "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
         }
 
-        public static decimal CheckRoots(Entity equation, VariableEntity toSub, Entity varValue)
+        public static decimal CheckRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber subValue)
         {
             equation = equation.Substitute(toSub, varValue);
             var allVars = MathS.Utils.GetUniqueVariables(equation);
-            
+
+            var offset = 0;
             foreach (var vr in allVars.FiniteSet())
-                equation = equation.Substitute(vr.Name, 3
+            {
+                equation = equation.Substitute(vr.Name, subValue + offset
                     /* MUST be integer to correspond to integer coefficient of periodic roots*/);
+                offset++;
+            }
 
             return Number.Abs(equation.Eval());
         }
@@ -507,7 +513,7 @@ namespace UnitTests.Algebra
             var roots = expr.SolveEquation("x");
             AssertRootCount(roots, 2);
             foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
+                AssertRoots(expr, x, root, 11 /* to avoid division by 0 */ );
         }
     }
 }

@@ -37,7 +37,7 @@ namespace AngouriMath
         internal static readonly int PRIOR_POW = 6;
         internal static readonly int PRIOR_FUNC = 8;
         internal static readonly int PRIOR_VAR = 10;
-        internal static readonly int PRIOR_NUM = 2;
+        internal static readonly int PRIOR_NUM = 10;
         internal static readonly string ARGUMENT_DELIMITER = ",";
 
         /// <summary>
