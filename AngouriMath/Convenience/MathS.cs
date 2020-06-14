@@ -547,6 +547,20 @@ namespace AngouriMath
             /// Criteria for simplifier so you could control which expressions are considered easier by you
             /// </summary>
             public static Setting<Func<Entity, int>> ComplexityCriteria { get; } = Const.DefaultComplexityCriteria;
+
+            /// <summary>
+            /// Settings for the Newton-Raphson's root-search method
+            /// e. g.
+            /// MathS.Settings.NewtonSolver.Set(
+            /// new NewtonSetting() {
+            ///     From = (-10, -10),
+            ///     To = (10, 10),
+            ///     StepCount = (10, 10),
+            ///     Precision = 30
+            /// }
+            /// );
+            /// </summary>
+            public static Setting<NewtonSetting> NewtonSolver { get; set; } = new NewtonSetting();
         }
 
         /// <summary>

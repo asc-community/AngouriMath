@@ -73,7 +73,9 @@ namespace UnitTests.Algebra
         {
             var eq = x.Pow(2) + 2 * x + 1;
             MathS.Settings.PrecisionErrorCommon.Set(1e-8m);
-            var roots = eq.SolveNt(x, precision: 100);
+            MathS.Settings.NewtonSolver.Set(new NewtonSetting() {Precision = 100});
+            var roots = eq.SolveNt(x);
+            MathS.Settings.NewtonSolver.Unset();
             MathS.Settings.PrecisionErrorCommon.Unset();
             // AssertRootCount(roots, 1); TODO: remove // after fix
             foreach (var root in roots.FiniteSet())

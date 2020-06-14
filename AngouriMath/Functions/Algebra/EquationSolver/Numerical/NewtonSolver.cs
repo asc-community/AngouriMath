@@ -87,9 +87,7 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         /// </param>
         /// <returns></returns>
         internal static Set SolveNt(Entity expr, VariableEntity v, 
-            (decimal Re, decimal Im) from, 
-            (decimal Re, decimal Im) to, 
-            (int Re, int Im) stepCount, int precision)
+            NewtonSetting settings)
         {
             if (MathS.Utils.GetUniqueVariables(expr).Count != 1)
                 throw new MathSException("Two or more or less than one variables in SolveNt is prohibited");
@@ -97,14 +95,14 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
             var res = new Set();
             var df = expr.Derive(v).Simplify().Compile(v);
             var f = expr.Simplify().Compile(v);
-            for (int x = 0; x < stepCount.Re; x++)
-                for (int y = 0; y < stepCount.Im; y++)
+            for (int x = 0; x < settings.StepCount.Re; x++)
+                for (int y = 0; y < settings.StepCount.Im; y++)
                 {
-                    var xShare = ((decimal)x) / stepCount.Re;
-                    var yShare = ((decimal)y) / stepCount.Im;
-                    var value = Number.Create(from.Re * xShare + to.Re * (1 - xShare),
-                                           from.Im * yShare + to.Im * (1 - yShare));
-                    var root = NewtonIter(f, df, value, precision);
+                    var xShare = ((decimal)x) / settings.StepCount.Re;
+                    var yShare = ((decimal)y) / settings.StepCount.Im;
+                    var value = Number.Create(settings.From.Re * xShare + settings.To.Re * (1 - xShare),
+                                           settings.From.Im * yShare + settings.To.Im * (1 - yShare));
+                    var root = NewtonIter(f, df, value, settings.Precision);
                     if (root.IsDefinite() && f.Call(root).Abs() < MathS.Settings.PrecisionErrorCommon)
                         res.Add(root);
                 }
@@ -116,6 +114,22 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
 
 namespace AngouriMath
 {
+    public class NewtonSetting
+    {
+        public (decimal Re, decimal Im) From;
+        public (decimal Re, decimal Im) To;
+        public (int Re, int Im) StepCount;
+        public int Precision;
+
+        public NewtonSetting()
+        {
+            From = (-10, -10);
+            To = (10, 10);
+            StepCount = (10, 10);
+            Precision = 30;
+        }
+    }
+
     public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
@@ -129,35 +143,13 @@ namespace AngouriMath
             else
                 throw new MathSException("Cannot get number from expression");
         }
-        
-        public Set SolveNt(VariableEntity v, int precision = 30)
-            => SolveNt(v, (-10, -10), (10, 10), (10, 10), precision: precision);
-        public Set SolveNt(VariableEntity v, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, int precision = 30)
-            => SolveNt(v, from, to, (10, 10),  precision: precision);
 
         /// <summary>
         /// Searches for numerical solutions via Newton's method https://en.wikipedia.org/wiki/Newton%27s_method
+        /// To change parameters see MathS.Settings.NewtonSolver
         /// </summary>
-        /// <param name="v">
-        /// Variable to solve over
-        /// </param>
-        /// <param name="from">
-        /// Re(from) - down bound of search in real numbers, Im(from) - that in imaginary. 
-        /// For example, from: new Number(-10, -10)
-        /// </param>
-        /// <param name="to">
-        /// Re(to) - up bound of search in real numbers, Im(to) - that in imaginary.
-        /// For exmaple, to: new Number(10, 10)
-        /// </param>
-        /// <param name="stepCount">
-        /// Re(stepCount) - number of steps over real numbers, Im(stepCount) - number of steps over imaginary numbers.
-        /// For example, stepCount: new Number(10, 10)
-        /// </param>
-        /// <param name="precision">
-        /// If you get very similar roots that you think are equal, increase precision (but it will slower the algorithm)
-        /// </param>
         /// <returns></returns>
-        public Set SolveNt(VariableEntity v, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, (int Re, int Im) stepCount, int precision = 30)
-        => NumericalEquationSolver.SolveNt(this, v, from, to, stepCount, precision);
+        public Set SolveNt(VariableEntity v)
+        => NumericalEquationSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
     }
 }
