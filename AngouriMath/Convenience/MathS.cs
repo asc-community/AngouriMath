@@ -692,6 +692,16 @@ namespace AngouriMath
             /// <returns></returns>
             public static IntervalPiece Interval(Entity from, Entity to)
                 => Piece.Interval(from, to).AsInterval();
+
+            /// <summary>
+            /// Creates an element for set
+            /// One can be created implicitly,
+            /// Piece a = 3;
+            /// </summary>
+            /// <param name="element"></param>
+            /// <returns></returns>
+            public static OneElementPiece Element(Entity element)
+                => new OneElementPiece(element);
         }
 
         public static class DecimalConst

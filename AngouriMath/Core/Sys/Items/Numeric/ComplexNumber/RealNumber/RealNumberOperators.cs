@@ -84,8 +84,8 @@ namespace AngouriMath.Core.Numerix
                     () => new RealNumber(UndefinedState.NAN),
                     () => b.Value >= 0 ? new RealNumber(UndefinedState.POSITIVE_INFINITY) : new RealNumber(UndefinedState.NEGATIVE_INFINITY),
                     () => b.Value >= 0 ? new RealNumber(UndefinedState.NEGATIVE_INFINITY) : new RealNumber(UndefinedState.POSITIVE_INFINITY),
-                    () => new IntegerNumber(BigInteger.Zero), 
-                    () => new IntegerNumber(BigInteger.Zero),
+                    () => RealNumber.NaN(),
+                    () => RealNumber.NaN(),
                     a, b);
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpDiv(a, b) as RealNumber;

@@ -40,10 +40,16 @@ namespace AngouriMath.Core.Numerix
             return new IntegerNumber(a.Value * b.Value);
         }
 
-        public static RationalNumber operator /(IntegerNumber a, IntegerNumber b)
+        public static RealNumber operator /(IntegerNumber a, IntegerNumber b)
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.INTEGER))
                 return Number.OpDiv(a, b) as IntegerNumber;
+            if (b == 0 && a == 0)
+                return RealNumber.NaN();
+            if (b == 0)
+                return a > 0
+                    ? RealNumber.PositiveInfinity()
+                    : RealNumber.NegativeInfinity();
             return Number.Functional.Downcast(new RationalNumber(a, b)) as RationalNumber;
         }
         public static implicit operator int(IntegerNumber val)

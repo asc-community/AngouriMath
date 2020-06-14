@@ -202,6 +202,7 @@ namespace AngouriMath
         }
 
         internal static string LinearSetToString(Set set)
-            => string.Join("|", set.Pieces.Select(c => c.ToString()));
+        => set.IsEmpty() ? "{}" :
+            string.Join("|", set.Pieces.Select(c => c.ToString()));
     }
 }

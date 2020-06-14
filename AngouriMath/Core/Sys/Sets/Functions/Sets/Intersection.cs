@@ -45,7 +45,10 @@ namespace AngouriMath.Core.Sets
             var badA = new Set{ Pieces = badAPieces };
             var badB = new Set{ Pieces = badBPieces };
             if (union.Count == 0)
-                return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, badA, badB);
+                if (badA.IsEmpty() || badB.IsEmpty())
+                    return new Set();
+                else
+                    return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, badA, badB);
             var united = new Set{ Pieces = union };
             if (badBPieces.Count + badAPieces.Count == 0)
                 return united;

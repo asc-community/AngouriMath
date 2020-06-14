@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using AngouriMath;
+using AngouriMath.Core;
 using AngouriMath.Core.Numerix;
 
 namespace Samples
@@ -11,7 +12,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-
+            
         }
     }
 }
