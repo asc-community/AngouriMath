@@ -18,6 +18,7 @@
  using AngouriMath.Core;
 using AngouriMath.Functions.Algebra.NumbericalSolving;
 using System;
+ using System.Numerics;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
@@ -33,14 +34,14 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         /// <param name="value"></param>
         /// <param name="precision"></param>
         /// <returns></returns>
-        private static ComplexNumber NewtonIter(FastExpression f, FastExpression df, ComplexNumber value, int precision)
+        private static ComplexNumber NewtonIter(FastExpression f, FastExpression df, Complex value, int precision)
         {
-            ComplexNumber prev = value;
+            Complex prev = value;
 
-            ComplexNumber ChooseGood()
+            Complex ChooseGood()
             {
-                if (Number.Abs(prev - value) > MathS.Settings.PrecisionErrorCommon)
-                    return RealNumber.NaN();
+                if (Complex.Abs(prev - value) > (double)MathS.Settings.PrecisionErrorCommon.Value)
+                    return double.NaN;
                 else
                     return value;
             }
@@ -49,9 +50,10 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
             for (int i = 0; i < precision; i++)
             {
                 if (i == precision - 1)
-                    prev = value.Copy();
+                    prev = value;//.Copy();
                 try // TODO: remove try catch in for
                 {
+                    
                     var dfv = df.Substitute(value);
                     if (dfv == 0)
                         return ChooseGood();
@@ -102,8 +104,8 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                     var yShare = ((decimal)y) / settings.StepCount.Im;
                     var value = Number.Create(settings.From.Re * xShare + settings.To.Re * (1 - xShare),
                                            settings.From.Im * yShare + settings.To.Im * (1 - yShare));
-                    var root = NewtonIter(f, df, value, settings.Precision);
-                    if (root.IsDefinite() && f.Call(root).Abs() < MathS.Settings.PrecisionErrorCommon)
+                    var root = NewtonIter(f, df, value.AsComplex(), settings.Precision);
+                    if (root.IsDefinite() && f.Call(root.AsComplex()).ToComplexNumber().Abs() < MathS.Settings.PrecisionErrorCommon)
                         res.Add(root);
                 }
             MathS.Settings.FloatToRationalIterCount.Unset();

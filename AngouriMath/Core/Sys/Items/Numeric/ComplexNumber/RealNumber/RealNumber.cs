@@ -15,7 +15,9 @@
 
 using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("DotnetBenchmark")]
 namespace AngouriMath.Core.Numerix
 {
     public partial class RealNumber : ComplexNumber
@@ -86,9 +88,34 @@ namespace AngouriMath.Core.Numerix
             InitClass(value, UndefinedState.DEFINED);
         }
 
+        internal RealNumber(int value)
+        {
+            InitClass(value, UndefinedState.DEFINED);
+        }
+
+        internal RealNumber(long value)
+        {
+            InitClass(value, UndefinedState.DEFINED);
+        }
+
         protected RealNumber()
         {
             
+        }
+
+        private static readonly double maxDecimal = (double)decimal.MaxValue;
+        private static readonly double minDecimal = (double)decimal.MinValue;
+
+        internal RealNumber(double value)
+        {
+            if (double.IsNaN(value))
+                InitClass(0, UndefinedState.NAN);
+            else if (value > maxDecimal)
+                InitClass(decimal.MaxValue, UndefinedState.POSITIVE_INFINITY);
+            else if (value < minDecimal)
+                InitClass(decimal.MinValue, UndefinedState.NEGATIVE_INFINITY);
+            else
+                InitClass((decimal)value, UndefinedState.DEFINED);
         }
 
         /// <summary>

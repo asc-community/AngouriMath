@@ -345,28 +345,29 @@ namespace AngouriMath.Core.Numerix
             /// </returns>
             public static RationalNumber FindRational(decimal num, int iterCount)
             {
+                MathS.Settings.DowncastingEnabled.Set(false);
+                var res = FindRational_(num, iterCount);
+                MathS.Settings.DowncastingEnabled.Unset();
+                return res;
+            }
+
+            public static RationalNumber FindRational_(decimal num, int iterCount)
+            {
                 if (iterCount <= 0)
                     return null;
                 long sign = num > 0 ? 1 : -1;
                 num *= sign;
                 IntegerNumber intPart;
-                try
-                {
-                    intPart = (BigInteger) Math.Floor(num);
-                }
-                catch (OverflowException)
-                {
-                    throw new SysException("While downcasting overflow occured. Please report it on Issues on the repository of AngouriMath");
-                }
+                intPart = (BigInteger) Math.Floor(num);
                 if (intPart > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                     return null;
                 decimal rest = num - (decimal)intPart.Value;
                 if (Number.IsZero(rest))
-                    return (sign * intPart).AsRationalNumber();
+                    return sign * intPart;
                 else
                 {
                     var inv = 1 / rest;
-                    var rat = FindRational(inv, iterCount - 1);
+                    var rat = FindRational_(inv, iterCount - 1);
                     if (rat is null)
                         return null;
                     return intPart * sign + Number.Create(sign) / rat;

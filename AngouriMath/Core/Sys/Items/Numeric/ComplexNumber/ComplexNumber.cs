@@ -307,5 +307,8 @@ namespace AngouriMath.Core.Numerix
                     return false;
             return false;
         }
+
+        public static implicit operator ComplexNumber(Complex value)
+            => Number.Create(value);
     }
 }

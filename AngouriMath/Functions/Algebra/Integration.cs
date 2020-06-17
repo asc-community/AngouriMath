@@ -14,6 +14,7 @@
  */
 
 
+using System.Numerics;
 using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
@@ -78,15 +79,15 @@ namespace AngouriMath
         /// <returns></returns>
         internal static ComplexNumber Integrate(Entity func, VariableEntity x, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, int stepCount)
         {
-            ComplexNumber res = 0;
+            Complex res = 0;
             var cfunc = func.Compile(x);
             for(int i = 0; i <= stepCount; i++)
             {
                 var share = ((decimal)i) / stepCount;
                 var tmp = Number.Create(from.Re * share + to.Re * (1 - share), from.Im * share + to.Im * (1 - share));
-                res += cfunc.Substitute(tmp);
+                res += cfunc.Substitute(tmp.AsComplex());
             }
-            return res / (stepCount + 1) * (Number.Create(to.Re, to.Im) - Number.Create(from.Re, from.Im));
+            return res.ToComplexNumber() / (stepCount + 1) * (Number.Create(to.Re, to.Im) - Number.Create(from.Re, from.Im));
         }
     }
 }

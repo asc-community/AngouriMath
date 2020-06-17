@@ -276,4 +276,13 @@ namespace AngouriMath.Core.Numerix
                 : RealNumber.NaN();
 
     }
+
+    public static class NumberExtensions
+    {
+        public static ComplexNumber ToComplexNumber(this Complex complex)
+            => Number.Create(complex);
+
+        public static RealNumber ToRealNumber(this decimal dec)
+            => Number.Create(dec);
+    }
 }

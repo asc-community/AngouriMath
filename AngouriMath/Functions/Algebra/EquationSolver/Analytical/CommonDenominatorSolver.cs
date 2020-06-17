@@ -91,7 +91,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <param name="x"></param>
         /// <returns></returns>
         internal static Set Solve(Entity expr, VariableEntity x)
-            => FindCD(expr, x).SolveEquation(x);
+        {
+            var res = FindCD(expr, x);
+            return res?.SolveEquation(x);
+        }
 
         internal static Entity FindCD(Entity expr, VariableEntity x)
         {

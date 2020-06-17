@@ -298,7 +298,10 @@ namespace AngouriMath
 
             // ({1} +- {2}) / {3} == {1} / {3} +- {2} / {3}
             { (any1 + any2) / any3, any1 / any3 + any2 / any3 },
-            { (any1 - any2) / any3, any1 / any3 - any2 / any3 }
+            { (any1 - any2) / any3, any1 / any3 - any2 / any3 },
+
+            { Sinf.PHang(any1 + any2), Sinf.PHang(any1) * Cosf.PHang(any2) + Sinf.PHang(any2) * Cosf.PHang(any1) },
+            { Sinf.PHang(any1 - any2), Sinf.PHang(any1) * Cosf.PHang(any2) - Sinf.PHang(any2) * Cosf.PHang(any1) },
         };
 
         internal static readonly RuleList CollapseRules = new RuleList
