@@ -17,6 +17,8 @@
 
 ﻿using System;
 using System.Collections.Generic;
+ using System.Numerics;
+ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath
 {
@@ -56,5 +58,20 @@ namespace AngouriMath
             else
                 return tree;
         }
+    }
+}
+
+namespace AngouriMath.Extensions
+{
+    public static class AMExtensions
+    {
+        public static ComplexNumber ToComplexNumber(this Complex complex)
+            => Number.Create(complex);
+
+        public static RealNumber ToRealNumber(this decimal dec)
+            => Number.Create(dec);
+
+        public static Entity ToEntity(this String expr)
+            => MathS.FromString(expr);
     }
 }

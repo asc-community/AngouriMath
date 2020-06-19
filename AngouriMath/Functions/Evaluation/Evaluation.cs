@@ -491,7 +491,7 @@ namespace AngouriMath
 
         static bool IsGood(RealNumber cand, RealNumber[] nums, bool disableIrrational)
         {
-            var minLevel = nums.Select(n => (int)n.Type).Min();
+            var minLevel = nums.Select(n => n == 0 ? 0 : (int)n.Type).Min();
             return cand.IsRational() || 
                    ((int) cand.Type <= minLevel && !disableIrrational) ||
                 (cand.IsIrrational() && cand.Value == 0); // TODO: make im:0 downcastable
@@ -599,6 +599,8 @@ namespace AngouriMath
                 return r1;
             else if (r2 == 0)
                 return 1;
+            else if (r2 == -1)
+                return 1 / r1;
             else
                 return r1.Pow(r2);
         }

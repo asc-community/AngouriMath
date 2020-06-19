@@ -77,13 +77,13 @@ namespace AngouriMath
             return res;
         }
         
-        public static implicit operator Entity(int num) => new NumberEntity(Number.Create(num));
-        public static implicit operator Entity(long num) => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(int num)           => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(long num)          => new NumberEntity(Number.Create(num));
         public static implicit operator Entity(ComplexNumber num) => new NumberEntity(num);
-        public static implicit operator Entity(decimal num) => new NumberEntity(new RealNumber(num));
-        public static implicit operator Entity(float num) => new NumberEntity(new RealNumber(num));
-        public static implicit operator Entity(double num) => new NumberEntity(new RealNumber(num));
-        public static implicit operator Entity(string expr) => MathS.FromString(expr);
+        public static implicit operator Entity(decimal num)       => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(float num)         => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(double num)        => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(string expr)       => MathS.FromString(expr);
 
         /// <summary>
         /// Deep but stupid comparison

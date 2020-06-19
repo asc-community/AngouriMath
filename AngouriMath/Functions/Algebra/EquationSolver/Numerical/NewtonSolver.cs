@@ -21,6 +21,7 @@ using System;
  using System.Numerics;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
+ using AngouriMath.Extensions;
 
 namespace AngouriMath.Functions.Algebra.NumbericalSolving
 {

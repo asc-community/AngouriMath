@@ -28,7 +28,7 @@ namespace AngouriMath
     /// <summary>
     /// This class contains some extra functions for different purposes
     /// </summary>
-    internal static partial class Const
+    public static partial class Const
     {
         internal static readonly int PRIOR_SUM = 2;
         internal static readonly int PRIOR_MINUS = 2;
@@ -190,7 +190,7 @@ namespace AngouriMath
         internal static Entity EvalIfCan(Entity a)
             => MathS.CanBeEvaluated(a) ? a.Eval() : a;
 
-        internal static Func<Entity, int> DefaultComplexityCriteria = new Func<Entity, int>(expr =>
+        public static Func<Entity, int> DefaultComplexityCriteria = new Func<Entity, int>(expr =>
         {
             var res = 0;
 
@@ -199,6 +199,9 @@ namespace AngouriMath
 
             // Number of variables
             res += TreeAnalyzer.Count(expr, entity => entity.entType == Entity.EntType.VARIABLE);
+
+            // Number of variables
+            res += TreeAnalyzer.Count(expr, entity => entity.entType == Entity.EntType.OPERATOR && entity.Name == "divf") / 2;
 
             // Number of negative powers
             res += TreeAnalyzer.Count(expr, (entity) =>

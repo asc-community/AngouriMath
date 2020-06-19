@@ -15,6 +15,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace AngouriMath.Core.Numerix
@@ -36,6 +37,7 @@ namespace AngouriMath.Core.Numerix
                 num.Type,
                 num
             );
+
         public enum HierarchyLevel
         {
             INTEGER,
@@ -54,6 +56,7 @@ namespace AngouriMath.Core.Numerix
         /// The final value. Only useful for calculations
         /// </summary>
         public (decimal Re, decimal Im) Value => GetValue();
+
         protected abstract (decimal Re, decimal Im) GetValue();
 
         /// <summary>
@@ -106,6 +109,7 @@ namespace AngouriMath.Core.Numerix
         /// </summary>
         /// <returns></returns>
         public string Latexise() => Latexise(false);
+
         internal string Latexise(bool needParentheses)
         {
             var str = SuperSwitch(
@@ -118,7 +122,9 @@ namespace AngouriMath.Core.Numerix
             );
             // If parentheses are required, they might be only required when complicated numbers are wrapped,
             // such as fractions and complex but not a single i
-            return needParentheses && this.Value != (0, 1) && (this.IsImaginary() || this.IsFraction()) ? @"\left(" + str + @"\right)" : str;
+            return needParentheses && this.Value != (0, 1) && (this.IsImaginary() || this.IsFraction())
+                ? @"\left(" + str + @"\right)"
+                : str;
         }
 
         public override string ToString()
@@ -145,8 +151,6 @@ namespace AngouriMath.Core.Numerix
         /// <param name="value"></param>
         /// <param name="rootPower"></param>
         /// <returns></returns>
-
-        
         public static Set GetAllRoots(ComplexNumber value, long rootPower)
         {
             MathS.Settings.FloatToRationalIterCount.Set(0);
@@ -157,7 +161,8 @@ namespace AngouriMath.Core.Numerix
             for (int n = 0; n < rootPower; n++)
             {
                 decimal newPow = phi / rootPower + 2 * MathS.DecimalConst.pi * n / rootPower;
-                res.Add(newMod * Number.Pow(MathS.DecimalConst.e, i * newPow));
+                var root = newMod * Number.Pow(MathS.DecimalConst.e, i * newPow);
+                res.Add(root);
             }
             MathS.Settings.FloatToRationalIterCount.Unset();
             return res;

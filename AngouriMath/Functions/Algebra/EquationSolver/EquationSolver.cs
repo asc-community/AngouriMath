@@ -125,7 +125,8 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static List<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var)
         {
             var result = new List<List<Entity>>();
-            foreach (var sol in eq.InnerSimplify().SolveEquation(var).FiniteSet())
+            eq = eq.InnerSimplify();
+            foreach (var sol in eq.SolveEquation(var).FiniteSet())
                 result.Add(new List<Entity>() { sol });
             return result;
         }

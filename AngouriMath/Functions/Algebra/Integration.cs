@@ -17,6 +17,7 @@
 using System.Numerics;
 using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Extensions;
 
 namespace AngouriMath
 {

@@ -18,7 +18,7 @@ namespace UnitTests.Convenience
         void TestSimplify(string expected, Entity actual) =>
             Test(expected, actual.Simplify());
         [TestMethod] public void Num() => TestSimplify("123", 123);
-        [TestMethod] public void Float() => Test("123.456", (Entity)123.456);
+        [TestMethod] public void Float() => Test(@"\frac{15432}{125}", (Entity)123.456);
         [TestMethod] public void FloatSimplify() => TestSimplify(@"\frac{15432}{125}", 123.456);
         [TestMethod] public void FracParse() => Test(@"3", ComplexNumber.Parse("3.000"));
         [TestMethod] public void FloatZero() => Test(@"123.4561234567890", ComplexNumber.Parse("123.4561234567890"));

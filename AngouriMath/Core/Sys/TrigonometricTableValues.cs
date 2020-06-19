@@ -6,7 +6,7 @@ using AngouriMath.Core.Numerix;
 namespace AngouriMath
 {
     using TrigTable = List<(decimal arg, Entity res)>;
-    internal static partial class Const
+    public static partial class Const
     {
         internal static class TrigonometryTableValues
         {

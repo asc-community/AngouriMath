@@ -13,14 +13,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
- using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Core.TreeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
  using AngouriMath.Core;
- using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Numerix;
+
 
 namespace AngouriMath.Functions.Evaluation.Simplification
 {
@@ -110,6 +110,15 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     TreeAnalyzer.InvertNegativeMultipliers(ref res);
                     TreeAnalyzer.Sort(ref res, TreeAnalyzer.SortLevel.HIGH_LEVEL);
                     AddHistory(res);
+#if DEBUG
+                    var pre = res.Substitute("x", 3).InnerEval();
+#endif
+                    res = res.InnerSimplify();
+#if DEBUG
+                    var post = res.Substitute("x", 3).InnerEval();
+                    if (post != pre && MathS.CanBeEvaluated(res))
+                        throw new SysException("Wrong inner simplification");
+#endif
                     TreeAnalyzer.ReplaceInPlace(Patterns.CommonRules, ref res);
                     AddHistory(res);
                     TreeAnalyzer.InvertNegativePowers(ref res);
@@ -149,11 +158,11 @@ namespace AngouriMath.Functions.Evaluation.Simplification
             }
 
             var result = new Set();
-            result.FastAddingMode = true;
+            
             foreach (var pair in history)
                 foreach (var el in pair.Value)
                     result.Add(el);
-            result.FastAddingMode = false;
+            
             return result;
         }
     }
