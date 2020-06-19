@@ -99,9 +99,9 @@ namespace DotnetBenchmark
         public static void Main(string[] _)
         {
             //BenchmarkRunner.Run<CacheCompiledFuncTest>();
-            
-            BenchmarkRunner.Run<NumbersBenchmark>();
-            //BenchmarkRunner.Run<AlgebraTest>();
+            //BenchmarkRunner.Run<CommonFunctionsInterVersionTest>();
+            Entity a = "(sin(x) + sqr(sin(x)) + a)4 + (sin(x) + sqr(sin(x)) + a) + b";
+            Console.WriteLine(a.SolveEquation("x"));
         }
     }
 }

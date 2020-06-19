@@ -314,7 +314,20 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// </returns>
         internal static Set SolveAsPolynomial(Entity expr, Entity subtree)
         {
+            // Safely expand the expression
+
+            Entity finalExpr = 0;
+            foreach (var child in TreeAnalyzer.LinearChildrenOverSum(expr))
+                if (child.FindSubtree(subtree) is null)
+                    finalExpr += child; // We don't need to expand constants
+                else
+                    finalExpr += child.Expand();
+            // // //
+
+
+
             // Here we find all terms
+
             expr = expr.Expand(); // (x + 1) * x => x^2 + x
             List<Entity> children;
             Set res = new Set();
