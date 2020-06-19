@@ -13,7 +13,7 @@ variable substitution, equation solving, equation system solving, definite integ
 formula-to-latex formatting, working with mathematical sets, and some more.
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
-documentation. If you prefer full manual to AM, see [Wiki](/asc-community/AngouriMath/wiki).
+documentation. If you prefer full manual to AM, see [Wiki](https://github.com/asc-community/AngouriMath/wiki).
 If you want to contribute, we surely appreciate it, but so far do not have documentation for
 you. It will appear soon!
 
