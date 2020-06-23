@@ -141,7 +141,7 @@ namespace AngouriMath
             // a / (b / c) = a * c / b
             { any1 / (any2 / any3), any1 * any3 / any2 },
 
-            // a / (b / c) = a * c / b
+            // a / b / c = a * c / b
             { any1 / any2 / any3, any1 / (any2 * any3) },
 
             // a * (b / c) = (a * b) / c

@@ -14,11 +14,13 @@
  */
 
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Convenience;
 using AngouriMath.Core;
- using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Numerix;
  using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Core.TreeAnalysis
@@ -312,29 +314,27 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// a finite Set if successful,
         /// null otherwise
         /// </returns>
-        internal static Set SolveAsPolynomial(Entity expr, Entity subtree)
+        internal static Set SolveAsPolynomial(Entity expr, VariableEntity subtree)
         {
             // Safely expand the expression
-
-            Entity finalExpr = 0;
-            foreach (var child in TreeAnalyzer.LinearChildrenOverSum(expr))
+            // Here we find all terms
+            var children = new List<Entity>();
+            var subNodes = TreeAnalyzer.LinearChildrenOverSum(expr);
+            foreach (var child in subNodes)
                 if (child.FindSubtree(subtree) is null)
-                    finalExpr += child; // We don't need to expand constants
+                    children.Add(child); // We don't need to expand constants
                 else
-                    finalExpr += child.Expand();
+                {
+                    
+                    var expanded = TreeAnalyzer.SmartExpandOver(child, subtree);
+                    if (expanded is null) // Expanded expression is predicted to be too big
+                        return null;
+                    children.AddRange(expanded);
+                }
             // // //
 
+            var res = new Set();
 
-
-            // Here we find all terms
-
-            expr = expr.Expand(); // (x + 1) * x => x^2 + x
-            List<Entity> children;
-            Set res = new Set();
-            if (expr.entType == Entity.EntType.OPERATOR && expr.Name == "sumf" || expr.Name == "minusf")
-                children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
-            else
-                children = new List<Entity> { expr };
             // Check if all are like {1} * x^n & gather information about them
             var monomialsByPower = GatherMonomialInformation<long>(children, subtree);
 
@@ -400,7 +400,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // a = -b x ^ n
                 // (- a / b) ^ (1 / n) = x
                 // x ^ n = (-a / b)
-                var value = (-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).Simplify();
+                var value = (-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).InnerSimplify();
                 res.AddRange(TreeAnalyzer.FindInvertExpression(MathS.Pow(subtree, powers[1]), value, subtree));
                 return FinalPostProcess(res);
             }

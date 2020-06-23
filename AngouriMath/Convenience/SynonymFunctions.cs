@@ -18,6 +18,7 @@
 ﻿using System;
 using System.Collections.Generic;
  using System.Numerics;
+ using AngouriMath.Core;
  using AngouriMath.Core.Numerix;
 
 namespace AngouriMath
@@ -73,5 +74,11 @@ namespace AngouriMath.Extensions
 
         public static Entity ToEntity(this String expr)
             => MathS.FromString(expr);
+
+        public static Entity Simplify(this String expr)
+            => expr.ToEntity().Simplify();
+
+        public static Set SolveEquation(this String expr, VariableEntity x)
+            => expr.ToEntity().SolveEquation(x);
     }
 }

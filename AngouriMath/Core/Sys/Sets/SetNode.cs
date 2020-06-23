@@ -169,7 +169,7 @@ namespace AngouriMath.Core
             else if (this.Power == PowerLevel.FINITE && piece.Type == Piece.PieceType.ENTITY)
             {
                 var evaled = (piece as OneElementPiece).Evaluated;
-                if (Pieces.Select(p => (p as OneElementPiece).Evaluated).All(p => p != evaled))
+                if (Pieces.Where(p => p.IsNumeric()).Select(p => (p as OneElementPiece).Evaluated).All(p => p != evaled))
                     Pieces.Add(piece);
                 return;
             }

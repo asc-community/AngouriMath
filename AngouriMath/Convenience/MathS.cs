@@ -15,6 +15,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using AngouriMath.Core;
 using AngouriMath.Core.FromString;
@@ -30,6 +31,7 @@ using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Functions.Algebra.InequalitySolver;
+using AngouriMath.Functions.DiscreteMath;
 using Number = AngouriMath.Core.Numerix.Number;
 
 namespace AngouriMath
@@ -39,9 +41,6 @@ namespace AngouriMath
     /// </summary>
     public static partial class MathS
     {
-        public static Entity Quack(Entity expr, VariableEntity x)
-            => CommonDenominatorSolver.FindCD(expr, x);
-
         /// <summary>
         /// Use it to solve equations
         /// </summary>
@@ -561,6 +560,18 @@ namespace AngouriMath
             /// );
             /// </summary>
             public static Setting<NewtonSetting> NewtonSolver { get; set; } = new NewtonSetting();
+            
+            /// <summary>
+            /// The maximum number of linear children of an expression in polynomial solver
+            /// considering that there's no more than 1 children with the required variable, e. g.
+            /// complexities are counted like that:
+            /// (x + 2) ^ 2           -> 3 [x2, 4x, 4]
+            /// x + 3 + a             -> 2 [x, 3 + a]
+            /// (x + a)(b + c)        -> 2 [(b + c)x, a(b + c)]
+            /// (x + 3 + a) / (x + 3) -> 2 [x / (x + 3), (3 + a) / (x + 3)]
+            /// x2 + x + 1            -> 3 [x2, x, 1]
+            /// </summary>
+            public static Setting<int> MaxPolynomialExpansionComplexity { get; set; } = 50;
         }
 
         /// <summary>
