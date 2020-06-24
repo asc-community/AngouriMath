@@ -65,16 +65,16 @@ namespace AngouriMath.Core.Numerix
         public static bool AreEqual(ComplexNumber a, ComplexNumber b)
             => a.Real == b.Real && a.Imaginary == b.Imaginary;
 
-
+        
         public static implicit operator ComplexNumber(int value)
-            => new ComplexNumber(value);
+            => Number.Create(value);
         public static implicit operator ComplexNumber(double value)
-            => new ComplexNumber(value);
+            => Number.Create(value);
         public static implicit operator ComplexNumber(decimal value)
-            => new ComplexNumber(value);
+            => Number.Create(value);
         public static implicit operator ComplexNumber(float value)
-            => new ComplexNumber(value);
+            => Number.Create(value);
         public static implicit operator ComplexNumber((decimal re, decimal im) value)
-            => new ComplexNumber(value.re, value.im);
+            => Number.Create(value.re, value.im);
     }
 }
