@@ -100,8 +100,7 @@ namespace DotnetBenchmark
     {
         public static void Main(string[] _)
         {
-            //Entity expr = "1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4";
-            //var sols = expr.SolveEquation("x");
+
         }
     }
 }

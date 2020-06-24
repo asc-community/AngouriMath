@@ -78,26 +78,29 @@ namespace AngouriMath.Core.Numerix
         {
             if (!a.IsDefinite() || !b.IsDefinite())
                 return UndefinedStateSuperSwitch.Switch(
-                    () => new RealNumber(UndefinedState.NAN),
-                    () => new RealNumber(UndefinedState.NAN),
-                    () => new RealNumber(UndefinedState.NAN),
-                    () => new RealNumber(UndefinedState.NAN),
-                    () => b.Value >= 0 ? new RealNumber(UndefinedState.POSITIVE_INFINITY) : new RealNumber(UndefinedState.NEGATIVE_INFINITY),
-                    () => b.Value >= 0 ? new RealNumber(UndefinedState.NEGATIVE_INFINITY) : new RealNumber(UndefinedState.POSITIVE_INFINITY),
                     () => RealNumber.NaN(),
                     () => RealNumber.NaN(),
+                    () => RealNumber.NaN(),
+                    () => RealNumber.NaN(),
+                    () => b.Value switch {
+                                var x when x > 0 => new RealNumber(UndefinedState.POSITIVE_INFINITY),
+                                var x when x < 0 => new RealNumber(UndefinedState.NEGATIVE_INFINITY),
+                                var x when x == 0 => RealNumber.NaN()
+                    },
+                    () => b.Value switch {
+                        var x when x > 0 => new RealNumber(UndefinedState.NEGATIVE_INFINITY),
+                        var x when x < 0 => new RealNumber(UndefinedState.POSITIVE_INFINITY),
+                        var x when x == 0 => RealNumber.NaN()
+                    },
+                    () => 0,
+                    () => 0,
                     a, b);
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpDiv(a, b) as RealNumber;
             if (b.Value != 0)
                 return Number.Functional.Downcast(new RealNumber(a.Value / b.Value)) as RealNumber;
             else
-                return a.Value switch
-                {
-                    var x when x > 0 => new RealNumber(UndefinedState.POSITIVE_INFINITY),
-                    var x when x < 0 => new RealNumber(UndefinedState.NEGATIVE_INFINITY),
-                    _ => new RealNumber(UndefinedState.NAN)
-                };
+                return new RealNumber(UndefinedState.NAN);
         }
 
         public static implicit operator float(RealNumber value)

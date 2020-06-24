@@ -251,7 +251,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return res;
             }
 
-
             var oneThird = Number.CreateRational(1, 3);
             var P = (-MathS.Sqr(alpha) / 12 - gamma)
                 .InnerSimplify();
