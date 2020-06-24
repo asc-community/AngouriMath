@@ -168,6 +168,16 @@ namespace AngouriMath.Core.Numerix
         /// </summary>
         /// <param name="num"></param>
         /// <returns></returns>
+        public static bool IsZero(EDecimal num)
+        {
+            return EDecimalWrapper.IsLess(num.Abs(), MathS.Settings.PrecisionErrorZeroRange);
+        }
+
+        /// <summary>
+        /// Checks whether a number is zero
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static bool IsZero(ComplexNumber num)
             => IsZero(num.Real) && IsZero(num.Imaginary);
 
@@ -225,16 +235,18 @@ namespace AngouriMath.Core.Numerix
             /// <returns></returns>
             private static bool TryCastToInt(EDecimal value, out EInteger res)
             {
+                res = null;
+                if (!value.IsFinite)
+                    return false;
                 var intPart = value.ToEInteger();
-                var rest = value - intPart;
-                if (Number.IsZero(rest))
+                var rest = RealNumber.CtxSubtract(value, intPart);
+                if (EDecimalWrapper.IsLess(rest.Abs(), MathS.Settings.PrecisionErrorZeroRange))
                 {
-                    res = (EInteger)intPart;
+                    res = intPart;
                     return true;
                 }
                 else
                 {
-                    res = null;
                     return false;
                 }
             }
@@ -357,18 +369,20 @@ namespace AngouriMath.Core.Numerix
             {
                 if (iterCount <= 0)
                     return null;
+                if (!num.IsFinite)
+                    return null;
                 long sign = EDecimalWrapper.IsGreater(num, 0) ? 1 : -1;
                 num *= sign;
                 IntegerNumber intPart;
                 intPart = num.ToEInteger();
-                if (intPart > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
+                if (intPart.Value.ToInt64Checked() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                     return null;
-                EDecimal rest = num - (EDecimal)intPart.Value;
+                EDecimal rest = RealNumber.CtxSubtract(num, intPart.Value);
                 if (Number.IsZero(rest))
                     return sign * intPart;
                 else
                 {
-                    var inv = 1 / rest;
+                    var inv = RealNumber.CtxDivide(EDecimal.One, rest);
                     var rat = FindRational_(inv, iterCount - 1);
                     if (rat is null)
                         return null;

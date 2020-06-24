@@ -79,14 +79,16 @@ namespace AngouriMath.Functions.NumberSystem
             string res = "";
             while (EDecimalWrapper.IsGreater(num, 0))
             {
-                num *= N;
+                num = RealNumber.CtxMultiply(num, N);
 
-                EInteger intPart = num.RoundToIntegerExact(MathS.Settings.DecimalPrecisionContext).ToEInteger();
+                EInteger intPart = num.RoundToIntegerExact(FloorContext).ToEInteger();
                 res += ALPHABET_TOCHAR[intPart.ToInt32Checked()];
                 num -= intPart;
             }
             return res;
         }
+
+        internal static EContext FloorContext = new EContext(100, ERounding.Floor, -30, 30, false);
 
         /// <summary>
         /// if a number is A + B where A is integer and B is in [0; 1], it performs operations
@@ -101,8 +103,8 @@ namespace AngouriMath.Functions.NumberSystem
                 throw new MathSException("N should be <= than " + ALPHABET_TOCHAR.Length);
             string sign = EDecimalWrapper.IsLess(num, 0) ? "-" : "";
             num = num.Abs();
-            var intPart = num.ToEInteger();
-            EDecimal floatPart = num - intPart;
+            var intPart = num.RoundToIntegerExact(FloorContext).ToEInteger();
+            EDecimal floatPart = RealNumber.CtxSubtract(num, intPart);
 
             string rightPart = !EDecimalWrapper.IsEqual(floatPart, 0) ? "." + FloatToBaseN(floatPart, N) : "";
             string leftPart = sign + IntToBaseN(intPart, N);
@@ -140,7 +142,7 @@ namespace AngouriMath.Functions.NumberSystem
             for (int i = 0; i < num.Length; i++)
             {
                 char digit = num[i];
-                res += ALPHABET_FROMCHAR[digit] / EInteger.FromInt32(N).Pow(i + 1);
+                res = RealNumber.CtxAdd(res, RealNumber.CtxDivide(ALPHABET_FROMCHAR[digit], EDecimal.FromInt32(N).Pow(i + 1)));
             }
             return res;
         }

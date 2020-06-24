@@ -21,8 +21,8 @@ namespace AngouriMath.Core.Numerix
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.RATIONAL))
                 return Number.OpSum(a, b) as RationalNumber;
-            var num = a.Numerator * b.Denominator + b.Numerator * a.Denominator;
-            var den = a.Denominator * b.Denominator;
+            var num = CtxAdd(CtxMultiply(a.Numerator, b.Denominator), CtxMultiply(b.Numerator, a.Denominator));
+            var den = CtxMultiply(a.Denominator, b.Denominator);
             return Number.Functional.Downcast(new RationalNumber(num, den)) as RationalNumber;
         }
 
@@ -30,8 +30,8 @@ namespace AngouriMath.Core.Numerix
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.RATIONAL))
                 return Number.OpSub(a, b) as RationalNumber;
-            var num = a.Numerator * b.Denominator - b.Numerator * a.Denominator;
-            var den = a.Denominator * b.Denominator;
+            var num = CtxSubtract(CtxMultiply(a.Numerator, b.Denominator), CtxMultiply(b.Numerator, a.Denominator));
+            var den = CtxMultiply(a.Denominator, b.Denominator);
             return Number.Functional.Downcast(new RationalNumber(num, den)) as RationalNumber;
         }
 
@@ -39,8 +39,8 @@ namespace AngouriMath.Core.Numerix
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.RATIONAL))
                 return Number.OpMul(a, b) as RationalNumber;
-            var num = a.Numerator * b.Numerator;
-            var den = a.Denominator * b.Denominator;
+            var num = CtxMultiply(a.Numerator, b.Numerator);
+            var den = CtxMultiply(a.Denominator, b.Denominator);
             return Number.Functional.Downcast(new RationalNumber(num, den)) as RationalNumber;
         }
 
@@ -48,8 +48,8 @@ namespace AngouriMath.Core.Numerix
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.RATIONAL))
                 return Number.OpDiv(a, b) as RationalNumber;
-            var num = a.Numerator * b.Denominator;
-            var den = a.Denominator * b.Numerator;
+            var num = CtxMultiply(a.Numerator, b.Denominator);
+            var den = CtxMultiply(a.Denominator, b.Numerator);
             return Number.Functional.Downcast(new RationalNumber(num, den)) as RationalNumber;
         }
 

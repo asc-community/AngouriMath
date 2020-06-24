@@ -24,21 +24,21 @@ namespace AngouriMath.Core.Numerix
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.INTEGER))
                 return Number.OpSum(a, b) as IntegerNumber;
-            return new IntegerNumber(a.Value + b.Value);
+            return new IntegerNumber(CtxAdd(a.Value, b.Value));
         }
 
         public static IntegerNumber operator -(IntegerNumber a, IntegerNumber b)
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.INTEGER))
                 return Number.OpSub(a, b) as IntegerNumber;
-            return new IntegerNumber(a.Value - b.Value);
+            return new IntegerNumber(CtxSubtract(a.Value, b.Value));
         }
 
         public static IntegerNumber operator *(IntegerNumber a, IntegerNumber b)
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.INTEGER))
                 return Number.OpMul(a, b) as IntegerNumber;
-            return new IntegerNumber(a.Value * b.Value);
+            return new IntegerNumber(CtxMultiply(a.Value, b.Value));
         }
 
         public static RealNumber operator /(IntegerNumber a, IntegerNumber b)
@@ -61,7 +61,7 @@ namespace AngouriMath.Core.Numerix
             => val.Value;
 
         public static bool AreEqual(IntegerNumber a, IntegerNumber b)
-            => a.Value == b.Value;
+            => a.Value.Equals(b.Value);
 
         public static IntegerNumber operator -(IntegerNumber a)
             => (-1 * a).AsIntegerNumber();

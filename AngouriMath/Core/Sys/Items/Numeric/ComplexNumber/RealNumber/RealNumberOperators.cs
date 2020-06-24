@@ -36,7 +36,7 @@ namespace AngouriMath.Core.Numerix
                     a, b);
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpSum(a, b) as RealNumber;
-            return Number.Functional.Downcast(new RealNumber(a.Value + b.Value)) as RealNumber;
+            return Number.Functional.Downcast(new RealNumber(CtxAdd(a.Value, b.Value))) as RealNumber;
         }
 
         public static RealNumber operator -(RealNumber a, RealNumber b)
@@ -54,7 +54,7 @@ namespace AngouriMath.Core.Numerix
                     a, b);
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpSub(a, b) as RealNumber;
-            return Number.Functional.Downcast(new RealNumber(a.Value - b.Value)) as RealNumber;
+            return Number.Functional.Downcast(new RealNumber(CtxSubtract(a.Value, b.Value))) as RealNumber;
         }
 
         public static RealNumber operator *(RealNumber a, RealNumber b)
@@ -72,7 +72,7 @@ namespace AngouriMath.Core.Numerix
                     a, b);
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpMul(a, b) as RealNumber;
-            return Number.Functional.Downcast(new RealNumber(a.Value * b.Value)) as RealNumber;
+            return Number.Functional.Downcast(new RealNumber(CtxMultiply(a.Value, b.Value))) as RealNumber;
         }
 
         public static RealNumber operator /(RealNumber a, RealNumber b)
@@ -99,7 +99,7 @@ namespace AngouriMath.Core.Numerix
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpDiv(a, b) as RealNumber;
             if (!EDecimalWrapper.IsEqual(b.Value, 0))
-                return Number.Functional.Downcast(new RealNumber(a.Value / b.Value)) as RealNumber;
+                return Number.Functional.Downcast(new RealNumber(CtxDivide(a.Value, b.Value))) as RealNumber;
             else
                 return new RealNumber(UndefinedState.NAN);
         }
@@ -151,11 +151,29 @@ namespace AngouriMath.Core.Numerix
             => a < b || a == b;
 
         internal static bool AreEqual(RealNumber a, RealNumber b)
-            => a.IsDefinite() && b.IsDefinite() && EDecimalWrapper.IsLess((a.Value - b.Value).Abs(), MathS.Settings.PrecisionErrorCommon) ||
+            => a.IsDefinite() && b.IsDefinite() && EDecimalWrapper.IsLess((CtxSubtract(a.Value, b.Value)).Abs(), MathS.Settings.PrecisionErrorCommon) ||
                a.State == b.State && !a.IsDefinite();
 
         public static RealNumber operator -(RealNumber a)
             => (-1 * a).AsRealNumber();
+
+        internal static EDecimal CtxDivide(EDecimal a, EDecimal b)
+            => a.DivideToExponent(b, -MathS.Settings.DecimalPrecisionContext.Value.Precision);
+        internal static EDecimal CtxMultiply(EDecimal a, EDecimal b)
+            => a.Multiply(b, MathS.Settings.DecimalPrecisionContext);
+        internal static EDecimal CtxAdd(EDecimal a, EDecimal b)
+            => a.Add(b, MathS.Settings.DecimalPrecisionContext);
+        internal static EDecimal CtxSubtract(EDecimal a, EDecimal b)
+            => a.Subtract(b, MathS.Settings.DecimalPrecisionContext);
+
+        internal static EInteger CtxDivide(EInteger a, EInteger b)
+            => a.Divide(b);
+        internal static EInteger CtxMultiply(EInteger a, EInteger b)
+            => a.Multiply(b);
+        internal static EInteger CtxAdd(EInteger a, EInteger b)
+            => a.Add(b);
+        internal static EInteger CtxSubtract(EInteger a, EInteger b)
+            => a.Subtract(b);
     }
 }
 

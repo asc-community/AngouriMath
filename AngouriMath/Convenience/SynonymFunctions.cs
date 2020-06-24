@@ -70,14 +70,14 @@ namespace AngouriMath.Extensions
         public static ComplexNumber ToComplexNumber(this Complex complex)
             => Number.Create(complex);
 
-        public static RealNumber ToRealNumber(this EDecimal dec)
-            => Number.Create(dec);
-
         public static Entity ToEntity(this String expr)
             => MathS.FromString(expr);
 
         public static Entity Simplify(this String expr)
             => expr.ToEntity().Simplify();
+
+        public static ComplexNumber Eval(this String expr)
+            => expr.ToEntity().Eval();
 
         public static Entity Expand(this String expr)
             => expr.ToEntity().Expand();
@@ -87,5 +87,11 @@ namespace AngouriMath.Extensions
 
         public static Set SolveEquation(this String expr, VariableEntity x)
             => expr.ToEntity().SolveEquation(x);
+
+        public static RealNumber ToNumber(this EDecimal value)
+            => Number.Create(value);
+
+        public static IntegerNumber ToNumber(this EInteger value)
+            => Number.Create(value);
     }
 }

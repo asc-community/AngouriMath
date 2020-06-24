@@ -80,7 +80,7 @@ namespace AngouriMath.Core.Numerix
                 Denominator = new IntegerNumber(-Denominator.Value);
             }
             if (!EDecimalWrapper.IsEqual(Denominator.Value, 0))
-                this.Value = (EDecimal)Numerator.Value / (EDecimal)Denominator.Value;
+                this.Value = CtxDivide((EDecimal)Numerator.Value, (EDecimal)Denominator.Value);
             else
             {
                 if (EDecimalWrapper.IsEqual(Numerator.Value, 0))

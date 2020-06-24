@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Numerics;
+using AngouriMath.Extensions;
 using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
@@ -163,8 +164,8 @@ namespace AngouriMath.Core.Numerix
             var i = new ComplexNumber(0, 1);
             for (int n = 0; n < rootPower; n++)
             {
-                EDecimal newPow = phi / rootPower + 2 * MathS.DecimalConst.pi * n / rootPower;
-                var root = newMod * Number.Pow(MathS.DecimalConst.e, i * newPow);
+                EDecimal newPow = RealNumber.CtxAdd(RealNumber.CtxDivide(phi, rootPower), RealNumber.CtxDivide(RealNumber.CtxMultiply(RealNumber.CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
+                var root = newMod.ToNumber() * Number.Pow(MathS.DecimalConst.e, i * newPow.ToNumber());
                 res.Add(root);
             }
             MathS.Settings.FloatToRationalIterCount.Unset();

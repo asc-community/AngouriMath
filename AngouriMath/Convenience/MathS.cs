@@ -317,7 +317,7 @@ namespace AngouriMath
         /// <param name="N"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToBaseN(EDecimal num, int N) 
+        public static string ToBaseN(RealNumber num, int N) 
             => NumberSystem.ToBaseN(num, N);
 
         /// <summary>
@@ -327,7 +327,7 @@ namespace AngouriMath
         /// <param name="N"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static EDecimal FromBaseN(string num, int N)
+        public static RealNumber FromBaseN(string num, int N)
             => NumberSystem.FromBaseN(num, N);
 
         /// <summary>
