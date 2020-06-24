@@ -177,7 +177,7 @@ namespace AngouriMath.Core.Numerix
                 {
                     UndefinedState.NEGATIVE_INFINITY => @"-\infty ",
                     UndefinedState.POSITIVE_INFINITY => @"\infty ",
-                    UndefinedState.NAN => @"\mathrm{NaN}"
+                    UndefinedState.NAN => @"\mathrm{undefined}"
                 };
         }
 
