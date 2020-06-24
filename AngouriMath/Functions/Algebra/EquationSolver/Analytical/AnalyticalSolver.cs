@@ -326,7 +326,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var preciseValue = root.Eval();
             MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
                 MathS.Settings.FloatToRationalIterCount.Set(20);
-                    var downcasted = Number.Functional.Downcast(preciseValue) as ComplexNumber;
+                var downcasted = Number.Functional.Downcast(preciseValue) as ComplexNumber;
                 MathS.Settings.FloatToRationalIterCount.Unset();
             MathS.Settings.PrecisionErrorZeroRange.Unset();
             var errorExpr = equation.Substitute(x, downcasted);

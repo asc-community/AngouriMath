@@ -40,8 +40,19 @@ namespace AngouriMath.Functions.Algebra.Solver
 
             MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
                 MathS.Settings.FloatToRationalIterCount.Set(0);
-                    AnalyticalSolver.Solve(equation, x, res);
+            /*
+            try
+            {
+                AnalyticalSolver.Solve(equation, x, res);
+            }
+            catch (Exception e)
+            {
                 MathS.Settings.FloatToRationalIterCount.Unset();
+                MathS.Settings.PrecisionErrorZeroRange.Unset();
+                throw e;
+            }*/
+            AnalyticalSolver.Solve(equation, x, res);
+            MathS.Settings.FloatToRationalIterCount.Unset();
             MathS.Settings.PrecisionErrorZeroRange.Unset();
 
             if (res.Power == Set.PowerLevel.FINITE)

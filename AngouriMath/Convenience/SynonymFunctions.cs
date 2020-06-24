@@ -78,6 +78,12 @@ namespace AngouriMath.Extensions
         public static Entity Simplify(this String expr)
             => expr.ToEntity().Simplify();
 
+        public static Entity Expand(this String expr)
+            => expr.ToEntity().Expand();
+
+        public static Entity Collapse(this String expr)
+            => expr.ToEntity().Collapse();
+
         public static Set SolveEquation(this String expr, VariableEntity x)
             => expr.ToEntity().SolveEquation(x);
     }
