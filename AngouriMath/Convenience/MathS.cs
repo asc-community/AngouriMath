@@ -571,7 +571,7 @@ namespace AngouriMath
             /// (x + 3 + a) / (x + 3) -> 2 [x / (x + 3), (3 + a) / (x + 3)]
             /// x2 + x + 1            -> 3 [x2, x, 1]
             /// </summary>
-            public static Setting<int> MaxPolynomialExpansionComplexity { get; set; } = 50;
+            public static Setting<int> MaxExpansionTermCount { get; set; } = 50;
         }
 
         /// <summary>

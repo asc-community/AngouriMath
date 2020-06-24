@@ -82,6 +82,10 @@ namespace AngouriMath
         /// <returns></returns>
         public Entity Collapse() => Collapse(2);
 
+        private Entity Expand_(int level)
+            => level <= 1
+                ? TreeAnalyzer.Replace(Patterns.ExpandRules, this)
+                : TreeAnalyzer.Replace(Patterns.ExpandRules, this).Expand_(level - 1);
 
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
@@ -90,11 +94,24 @@ namespace AngouriMath
         /// The number of iterations (increase this argument in case if some parentheses remain)
         /// </param>
         /// <returns>
-        /// An expanded Entity
+        /// An expanded Entity if it wasn't too complicated,
+        /// current entity otherwise
+        /// To change the limit use MathS.Settings.MaxExpansionTermCount
         /// </returns>
-        public Entity Expand(int level) => level <= 1
-            ? TreeAnalyzer.Replace(Patterns.ExpandRules, this)
-            : TreeAnalyzer.Replace(Patterns.ExpandRules, this).Expand(level - 1);
+        public Entity Expand(int level)
+        {
+            var expChildren = new List<Entity>();
+            foreach (var linChild in TreeAnalyzer.LinearChildrenOverSum(this))
+            {
+                var exp = TreeAnalyzer.SmartExpandOver(linChild, entity => true);
+                if (!(exp is null))
+                    expChildren.AddRange(exp);
+                else
+                    return this; // if one is too complicated, return the current one
+            }
+            var expanded = TreeAnalyzer.MultiHangBinary(expChildren, "sumf", Const.PRIOR_SUM);
+            return expanded.Expand_(level).InnerSimplify();
+        }
 
         /// <summary>
         /// Collapses an equation trying to eliminate as many power-uses as possible ( e. g. x * 3 + x * y = x * (3 + y) )
@@ -709,7 +726,7 @@ namespace AngouriMath
             if (r.entType == Entity.EntType.NUMBER && n.entType == Entity.EntType.NUMBER)
             {
                 var (n1, n2) = ((r as NumberEntity).Value, (n as NumberEntity).Value);
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Log(n1.Real, n2), MathS.Pow(r, n), n1, n2);
+                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Log(n1.Real, n2), MathS.Log(r, n), n1, n2);
             }
             else if (r == n)
                 return 1;

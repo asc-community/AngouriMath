@@ -20,11 +20,11 @@ namespace UnitTests.Algebra
         }
         public void AssertExpander(Entity expr, params ComplexNumber[] toSubs)
         {
-            MathS.Settings.MaxPolynomialExpansionComplexity.Set(3000);
+            MathS.Settings.MaxExpansionTermCount.Set(3000);
             var expanded =
                 TreeAnalyzer.MultiHangBinary(
-                    TreeAnalyzer.SmartExpandOver(expr, "x"), "sumf", Const.PRIOR_SUM);
-            MathS.Settings.MaxPolynomialExpansionComplexity.Unset();
+                    TreeAnalyzer.SmartExpandOver(expr, entity => entity.FindSubtree("x") != null), "sumf", Const.PRIOR_SUM);
+            MathS.Settings.MaxExpansionTermCount.Unset();
             foreach (var toSub in toSubs)
             {
                 var comparisonResult = AreEqual(expr, expanded, toSub);

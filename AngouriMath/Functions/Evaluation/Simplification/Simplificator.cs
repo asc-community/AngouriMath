@@ -110,15 +110,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     TreeAnalyzer.InvertNegativeMultipliers(ref res);
                     TreeAnalyzer.Sort(ref res, TreeAnalyzer.SortLevel.HIGH_LEVEL);
                     AddHistory(res);
-#if DEBUG
-                    var pre = res.Substitute("x", 3).InnerEval();
-#endif
                     res = res.InnerSimplify();
-#if DEBUG
-                    var post = res.Substitute("x", 3).InnerEval();
-                    if (post != pre && MathS.CanBeEvaluated(res))
-                        throw new SysException("Wrong inner simplification");
-#endif
                     TreeAnalyzer.ReplaceInPlace(Patterns.CommonRules, ref res);
                     AddHistory(res);
                     TreeAnalyzer.InvertNegativePowers(ref res);
@@ -151,7 +143,8 @@ namespace AngouriMath.Functions.Evaluation.Simplification
             }
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
-                var expanded = res.Expand().Simplify(-level);
+                var expandedRaw = res.Expand();
+                var expanded = expandedRaw.Simplify(-level);
                 AddHistory(expanded);
                 var collapsed = res.Collapse().Simplify(-level);
                 AddHistory(collapsed);

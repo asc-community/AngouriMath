@@ -326,7 +326,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 else
                 {
                     
-                    var expanded = TreeAnalyzer.SmartExpandOver(child, subtree);
+                    var expanded = TreeAnalyzer.SmartExpandOver(child, entity => entity.FindSubtree(subtree) != null);
                     if (expanded is null) // Expanded expression is predicted to be too big
                         return null;
                     children.AddRange(expanded);

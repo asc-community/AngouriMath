@@ -66,16 +66,16 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="expr"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        private static List<Entity> GatherLinearChildrenOverAndExpand(Entity expr, VariableEntity x)
+        private static List<Entity> GatherLinearChildrenOverAndExpand(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
         {
             if (expr.Name != "sumf" && expr.Name != "minusf")
-                return SmartExpandOver(expr, x);
+                return SmartExpandOver(expr, conditionForUniqueTerms);
             var res = new List<Entity>();
             Entity freeTerm = 0;
             foreach (var child in TreeAnalyzer.LinearChildrenOverSum(expr))
-                if (child.FindSubtree(x) != null)
+                if (conditionForUniqueTerms(child))
                 {
-                    var expanded = SmartExpandOver(child, x);
+                    var expanded = SmartExpandOver(child, conditionForUniqueTerms);
                     if (expanded is null)
                         return null;
                     res.AddRange(expanded);
@@ -92,7 +92,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="expr"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        internal static List<Entity> SmartExpandOver(Entity expr, VariableEntity x)
+        internal static List<Entity> SmartExpandOver(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
         {
             var keepResult = new List<Entity> { expr };
             if (expr.entType != Entity.EntType.OPERATOR && expr.entType != Entity.EntType.FUNCTION)
@@ -105,18 +105,18 @@ namespace AngouriMath.Core.TreeAnalysis
                 case "minusf":
                     throw new SysException("SmartExpandOver must be only called of non-sum expression");
                 case "divf":
-                    var numChildren = GatherLinearChildrenOverAndExpand(expr.Children[0], x);
+                    var numChildren = GatherLinearChildrenOverAndExpand(expr.Children[0], conditionForUniqueTerms);
                     if (numChildren is null)
                         return null;
-                    if (numChildren.Count > MathS.Settings.MaxPolynomialExpansionComplexity)
+                    if (numChildren.Count > MathS.Settings.MaxExpansionTermCount)
                         return null;
                     return numChildren.Select(c => c / expr.Children[1]).ToList();
                 case "mulf":
-                    var oneChildren = GatherLinearChildrenOverAndExpand(expr.Children[0], x);
-                    var twoChildren = GatherLinearChildrenOverAndExpand(expr.Children[1], x);
+                    var oneChildren = GatherLinearChildrenOverAndExpand(expr.Children[0], conditionForUniqueTerms);
+                    var twoChildren = GatherLinearChildrenOverAndExpand(expr.Children[1], conditionForUniqueTerms);
                     if (oneChildren is null || twoChildren is null)
                         return null;
-                    if (oneChildren.Count * twoChildren.Count > MathS.Settings.MaxPolynomialExpansionComplexity)
+                    if (oneChildren.Count * twoChildren.Count > MathS.Settings.MaxExpansionTermCount)
                         return null;
                     foreach (var one in oneChildren)
                     foreach (var two in twoChildren)
@@ -126,14 +126,14 @@ namespace AngouriMath.Core.TreeAnalysis
                     IntegerNumber power = null;
                     if (expr.Children[1].entType != Entity.EntType.NUMBER || !expr.Children[1].GetValue().IsInteger() || (power = expr.Children[1].GetValue() as IntegerNumber) < 1)
                         return keepResult;
-                    var linBaseChildren = GatherLinearChildrenOverAndExpand(expr.Children[0], x);
+                    var linBaseChildren = GatherLinearChildrenOverAndExpand(expr.Children[0], conditionForUniqueTerms);
                     if (linBaseChildren is null)
                         return null;
                     if (linBaseChildren.Count == 1)
                         return new List<Entity> {expr};
                     if (power.Value > 20 && linBaseChildren.Count > 1 ||
                         EstimateTermCount(linBaseChildren.Count, (int) power.Value) >
-                        MathS.Settings.MaxPolynomialExpansionComplexity)
+                        MathS.Settings.MaxExpansionTermCount)
                         return null;
                     foreach (var powerListForTerm in Combinatorics.CombinateSums(linBaseChildren.Count, power))
                     {

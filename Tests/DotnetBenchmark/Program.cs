@@ -102,24 +102,6 @@ namespace DotnetBenchmark
         {
             //BenchmarkRunner.Run<CacheCompiledFuncTest>();
             //BenchmarkRunner.Run<CommonFunctionsInterVersionTest>()
-            /*
-            Entity a = "(sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a)4 + (sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a) + b";
-            var stopWatch = new Stopwatch();
-            stopWatch.Start();
-            Console.WriteLine(a.SolveEquation("x"));
-            stopWatch.Stop();
-            Console.WriteLine(stopWatch.ElapsedMilliseconds);
-            */
-            //Console.WriteLine("(((x + a)^4 + a)^4 + b)^4".ToEntity().Expand());
-            //Console.WriteLine(Number.Pow(-1 / 64m, Number.CreateRational(1, 3)));
-            //Console.WriteLine("((cos(x)+sin(x))4 + (cos(x)-sin(x))4 + cos(4*x) - 3)".Simplify());
-            /*
-            Console.WriteLine(
-                "(x + a + b + c + d + e + f) ^ 4 + (x + a + b + c + d + e + f) ^ 3 * (x + a + b + c + d + e + f) + (x + a + b + c + d + e + f) ^ 2 * (x + a + b + c + d + e + f) ^ 2"
-                    .SolveEquation("x"));
-                    */
-            //Console.WriteLine("(x + a + b + c + d + e)2".ToEntity().Expand());
-            Console.WriteLine("(sin(x) + a)3 + 3(a + sin(x)) + c".SolveEquation("x"));
         }
     }
 }

@@ -110,7 +110,7 @@ namespace AngouriMath
             // x^n / x^m
 
             // c ^ log(c, a) = a
-            { Powf.PHang(const1, Logf.PHang(any1, const1)), any1 },
+            { Powf.PHang(const1, Logf.PHang(const1, any1)), any1 },
 
             { Powf.PHang(any1, any3) * (any1 * any2), (Powf.PHang(any1, any3 + Num(1))) * any2 },
             { Powf.PHang(any1, any3) * (any2 * any1), (Powf.PHang(any1, any3 + Num(1))) * any2 },
@@ -277,32 +277,6 @@ namespace AngouriMath
 
         internal static readonly RuleList ExpandRules = new RuleList
         {
-            // (any1 + any2)2
-            { Powf.PHang(any1, Num(1)), any1 },
-            { Powf.PHang(any1, Num(2)), any1 * any1 },
-            { Powf.PHang(any1, Num(3)), any1 * any1 * any1 },
-            { Powf.PHang(any1, Num(4)), any1 * any1 * any1 * any1 },
-
-            // ({1} - {2}) ({1} + {2}) = x2 - {}2
-            { (any1 - any2) * (any1 + any2), Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)) },
-            { (any1 + any2) * (any1 - any2), Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)) },
-
-            // ({1} + {2}) * ({3} + {4}) = {1}{3} + {1}{4} + {2}{3} + {2}{4}
-            { (any1 + any2) * (any3 + any4), any1 * any3 + any1 * any4 + any2 * any3 + any2 * any4 },
-            { (any1 - any2) * (any3 + any4), any1 * any3 + any1 * any4 - any2 * any3 - any2 * any4 },
-            { (any1 + any2) * (any3 - any4), any1 * any3 - any1 * any4 + any2 * any3 - any2 * any4 },
-            { (any1 - any2) * (any3 - any4), any1 * any3 - any1 * any4 - any2 * any3 + any2 * any4 },
-            
-            // {1} * ({2} + {3})
-            { any1 * (any2 + any3), any1 * any2 + any1 * any3 },
-            { any1 * (any2 - any3), any1 * any2 - any1 * any3 },
-            { (any2 + any3) * any1, any1 * any2 + any1 * any3 },
-            { (any2 - any3) * any1, any1 * any2 - any1 * any3 },
-
-            // ({1} +- {2}) / {3} == {1} / {3} +- {2} / {3}
-            { (any1 + any2) / any3, any1 / any3 + any2 / any3 },
-            { (any1 - any2) / any3, any1 / any3 - any2 / any3 },
-
             { Sinf.PHang(any1 + any2), Sinf.PHang(any1) * Cosf.PHang(any2) + Sinf.PHang(any2) * Cosf.PHang(any1) },
             { Sinf.PHang(any1 - any2), Sinf.PHang(any1) * Cosf.PHang(any2) - Sinf.PHang(any2) * Cosf.PHang(any1) },
         };
