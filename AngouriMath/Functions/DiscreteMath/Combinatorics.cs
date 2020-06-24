@@ -6,15 +6,16 @@ using System.Runtime.InteropServices;
 using System.Text;
 using AngouriMath.Core;
 using AngouriMath.Core.Numerix;
+using PeterO.Numbers;
 
 namespace AngouriMath.Functions.DiscreteMath
 {
     internal static class Combinatorics
     {
-        internal static BigInteger Factorial(int t)
+        internal static EInteger Factorial(int t)
             => t == 0 ? 1 : t * Factorial(t - 1);
 
-        internal static BigInteger C(int n, int k)
+        internal static EInteger C(int n, int k)
             => Factorial(n) / (Factorial(n - k) * Factorial(k));
 
         internal static IEnumerable<List<int>> Combinations(int min, int max, int cellCount)

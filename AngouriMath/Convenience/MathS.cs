@@ -33,6 +33,7 @@ using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Functions.Algebra.InequalitySolver;
 using AngouriMath.Functions.DiscreteMath;
 using Number = AngouriMath.Core.Numerix.Number;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -280,7 +281,7 @@ namespace AngouriMath
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Obsolete("Use Number.Create or implicit construction instead")]
-        public static Number Num(decimal a, decimal b) => Number.Create(a, b);
+        public static Number Num(EDecimal a, EDecimal b) => Number.Create(a, b);
 
         /// <summary>
         /// Creates a real instance of Number (not NumberEntity!)
@@ -289,7 +290,7 @@ namespace AngouriMath
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Obsolete("Use Number.Create or implicit construction instead")]
-        public static ComplexNumber Num(decimal a) => Number.Create(a);
+        public static ComplexNumber Num(EDecimal a) => Number.Create(a);
 
         /// <summary>
         /// List of public constants
@@ -316,7 +317,7 @@ namespace AngouriMath
         /// <param name="N"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToBaseN(decimal num, int N) 
+        public static string ToBaseN(EDecimal num, int N) 
             => NumberSystem.ToBaseN(num, N);
 
         /// <summary>
@@ -326,7 +327,7 @@ namespace AngouriMath
         /// <param name="N"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static decimal FromBaseN(string num, int N)
+        public static EDecimal FromBaseN(string num, int N)
             => NumberSystem.FromBaseN(num, N);
 
         /// <summary>
@@ -360,16 +361,16 @@ namespace AngouriMath
             /// IntegerNumber
             /// </returns>
             public static IntegerNumber Create(long value)
-                => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+                => Number.Functional.Downcast(new IntegerNumber((EInteger)value)) as IntegerNumber;
 
             /// <summary>
-            /// Creates an instance of IntegerNumber from System.Numerics.BigInteger
+            /// Creates an instance of IntegerNumber from System.Numerics.EInteger
             /// </summary>
             /// <param name="value"></param>
             /// <returns>
             /// IntegerNumber
             /// </returns>
-            public static IntegerNumber Create(BigInteger value)
+            public static IntegerNumber Create(EInteger value)
                 => Number.Functional.Downcast(new IntegerNumber(value)) as IntegerNumber;
 
             /// <summary>
@@ -380,7 +381,7 @@ namespace AngouriMath
             /// IntegerNumber
             /// </returns>
             public static IntegerNumber Create(int value)
-                => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+                => Number.Functional.Downcast(new IntegerNumber((EInteger)value)) as IntegerNumber;
 
             /// <summary>
             /// Creates an instance of RationalNumber of two IntegerNumbers
@@ -394,13 +395,13 @@ namespace AngouriMath
                 => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
 
             /// <summary>
-            /// Creates an instance of RealNumber from decimal
+            /// Creates an instance of RealNumber from EDecimal
             /// </summary>
             /// <param name="value"></param>
             /// <returns>
             /// RealNumber
             /// </returns>
-            public static RealNumber Create(decimal value)
+            public static RealNumber Create(EDecimal value)
                 => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
 
             /// <summary>
@@ -530,12 +531,12 @@ namespace AngouriMath
             /// For example, if you don't need precision higher than 6 digits after .,
             /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
             /// </summary>
-            public static Setting<decimal> PrecisionErrorCommon { get; } = 1.0e-6m;
+            public static Setting<EDecimal> PrecisionErrorCommon { get; } = EDecimal.FromDecimal(1.0e-6m);
 
             /// <summary>
             /// Numbers whose absolute value is less than PrecisionErrorZeroRange are considered zeros
             /// </summary>
-            public static Setting<decimal> PrecisionErrorZeroRange { get; } = 1.0e-16m;
+            public static Setting<EDecimal> PrecisionErrorZeroRange { get; } = EDecimal.FromDecimal(1.0e-16m);
 
             /// <summary>
             /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
@@ -572,6 +573,11 @@ namespace AngouriMath
             /// x2 + x + 1            -> 3 [x2, x, 1]
             /// </summary>
             public static Setting<int> MaxExpansionTermCount { get; set; } = 50;
+
+            /// <summary>
+            /// Settings for EDecimal precisions of PeterO Numbers (https://github.com/peteroupc/Numbers)
+            /// </summary>
+            public static Setting<EContext> DecimalPrecisionContext { get; set; } = new EContext(100, ERounding.HalfUp, -100, 100, false);
         }
 
         /// <summary>
@@ -720,12 +726,12 @@ namespace AngouriMath
             /// <summary>
             /// Pi constant
             /// </summary>
-            public static readonly decimal pi = 3.14159_26535_89793_23846_26433m;
+            public static readonly EDecimal pi = 3.14159_26535_89793_23846_26433m;
 
             /// <summary>
             /// E constant
             /// </summary>
-            public static readonly decimal e  = 2.71828_18284_59045_23536_02874m;
+            public static readonly EDecimal e  = 2.71828_18284_59045_23536_02874m;
         }
     }
 }

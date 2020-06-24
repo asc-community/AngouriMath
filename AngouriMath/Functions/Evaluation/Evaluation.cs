@@ -511,7 +511,7 @@ namespace AngouriMath
             var minLevel = nums.Select(n => n == 0 ? 0 : (int)n.Type).Min();
             return cand.IsRational() || 
                    ((int) cand.Type <= minLevel && !disableIrrational) ||
-                (cand.IsIrrational() && cand.Value == 0); // TODO: make im:0 downcastable
+                (cand.IsIrrational() && cand.Value.IsZero); // TODO: make im:0 downcastable
         }
     }
 

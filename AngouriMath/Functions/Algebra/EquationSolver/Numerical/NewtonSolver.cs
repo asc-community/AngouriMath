@@ -22,6 +22,7 @@ using System;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
  using AngouriMath.Extensions;
+ using PeterO.Numbers;
 
 namespace AngouriMath.Functions.Algebra.NumbericalSolving
 {
@@ -101,12 +102,12 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
             for (int x = 0; x < settings.StepCount.Re; x++)
                 for (int y = 0; y < settings.StepCount.Im; y++)
                 {
-                    var xShare = ((decimal)x) / settings.StepCount.Re;
-                    var yShare = ((decimal)y) / settings.StepCount.Im;
+                    var xShare = ((EDecimal)x) / settings.StepCount.Re;
+                    var yShare = ((EDecimal)y) / settings.StepCount.Im;
                     var value = Number.Create(settings.From.Re * xShare + settings.To.Re * (1 - xShare),
                                            settings.From.Im * yShare + settings.To.Im * (1 - yShare));
                     var root = NewtonIter(f, df, value.AsComplex(), settings.Precision);
-                    if (root.IsDefinite() && f.Call(root.AsComplex()).ToComplexNumber().Abs() < MathS.Settings.PrecisionErrorCommon)
+                    if (root.IsDefinite() && f.Call(root.AsComplex()).ToComplexNumber().Abs() < MathS.Settings.PrecisionErrorCommon.Value)
                         res.Add(root);
                 }
             MathS.Settings.FloatToRationalIterCount.Unset();
@@ -119,8 +120,8 @@ namespace AngouriMath
 {
     public class NewtonSetting
     {
-        public (decimal Re, decimal Im) From;
-        public (decimal Re, decimal Im) To;
+        public (EDecimal Re, EDecimal Im) From;
+        public (EDecimal Re, EDecimal Im) To;
         public (int Re, int Im) StepCount;
         public int Precision;
 

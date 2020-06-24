@@ -17,6 +17,7 @@ using System.Linq;
 using System.Numerics;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.FromString;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -117,12 +118,12 @@ namespace AngouriMath.Core.Numerix
             */
         }
 
-        protected override (decimal Re, decimal Im) GetValue()
+        protected override (EDecimal Re, EDecimal Im) GetValue()
         {
             return (Real.Value, Imaginary.Value);
         }
 
-        private static readonly RealNumber _zero = new RealNumber(0.0m);
+        private static readonly RealNumber _zero = new RealNumber(EDecimal.Zero);
         private static readonly RealNumber _plus_one = new RealNumber(1.0m);
         private static readonly RealNumber _minus_one = new RealNumber(-1.0m);
         protected internal string InternalToString()
@@ -138,7 +139,7 @@ namespace AngouriMath.Core.Numerix
             }
             if (Imaginary.IsDefinite() && Imaginary == _zero)
                 return Real.ToString();
-            else if (Real.IsDefinite() && Real.Value == _zero)
+            else if (Real.IsDefinite() && Real == _zero)
                 return RenderNum(Imaginary) + "i";
             var (l, r) = Imaginary.IsFraction() ? ("(", ")") : ("", "");
             return Real.ToString() + " + " + l + RenderNum(Imaginary) + r + "i";
@@ -157,9 +158,9 @@ namespace AngouriMath.Core.Numerix
             }
             if (Imaginary.IsDefinite() && Imaginary == _zero)
                 return Real.Latexise();
-            else if (Real.IsDefinite() && Real.Value == _zero)
+            else if (Real.IsDefinite() && Real == _zero)
                 return RenderNum(Imaginary) + "i";
-            var (im, sign) = Imaginary.Value > 0 ? (Imaginary, "+") : (-Imaginary, "-");
+            var (im, sign) = Imaginary > 0 ? (Imaginary, "+") : (-Imaginary, "-");
             return Real.Latexise() + " " + sign + " " + (im == 1 ? "" : im.Latexise(im.IsFraction() && im.IsDefinite())) + "i";
         }
 

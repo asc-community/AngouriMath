@@ -16,7 +16,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Numerics;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -55,9 +58,9 @@ namespace AngouriMath.Core.Numerix
         /// <summary>
         /// The final value. Only useful for calculations
         /// </summary>
-        public (decimal Re, decimal Im) Value => GetValue();
+        public (EDecimal Re, EDecimal Im) Value => GetValue();
 
-        protected abstract (decimal Re, decimal Im) GetValue();
+        protected abstract (EDecimal Re, EDecimal Im) GetValue();
 
         /// <summary>
         /// Checks affiliation of a number
@@ -122,7 +125,7 @@ namespace AngouriMath.Core.Numerix
             );
             // If parentheses are required, they might be only required when complicated numbers are wrapped,
             // such as fractions and complex but not a single i
-            return needParentheses && this.Value != (0, 1) && (this.IsImaginary() || this.IsFraction())
+            return needParentheses && this.Value != (EDecimal.Zero, EDecimal.One) && (this.IsImaginary() || this.IsFraction())
                 ? @"\left(" + str + @"\right)"
                 : str;
         }
@@ -155,12 +158,12 @@ namespace AngouriMath.Core.Numerix
         {
             MathS.Settings.FloatToRationalIterCount.Set(0);
             var res = new Set();
-            decimal phi = (Number.Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Value.Re;
-            decimal newMod = Number.Pow(Number.Abs(value), 1.0 / rootPower).Value.Re;
+            EDecimal phi = (Number.Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Value.Re;
+            EDecimal newMod = Number.Pow(Number.Abs(value), 1.0 / rootPower).Value.Re;
             var i = new ComplexNumber(0, 1);
             for (int n = 0; n < rootPower; n++)
             {
-                decimal newPow = phi / rootPower + 2 * MathS.DecimalConst.pi * n / rootPower;
+                EDecimal newPow = phi / rootPower + 2 * MathS.DecimalConst.pi * n / rootPower;
                 var root = newMod * Number.Pow(MathS.DecimalConst.e, i * newPow);
                 res.Add(root);
             }
@@ -211,5 +214,23 @@ namespace AngouriMath.Core.Numerix
         {
             
         }
+    }
+
+    internal static class EDecimalWrapper
+    {
+        internal static bool IsGreater(EDecimal a, EDecimal b)
+            => a.CompareTo(b) == 1;
+
+        internal static bool IsLess(EDecimal a, EDecimal b)
+            => a.CompareTo(b) == -1;
+
+        internal static bool IsEqual(EDecimal a, EDecimal b)
+            => a.CompareTo(b) == 0;
+
+        internal static bool IsGreaterOrEqual(EDecimal a, EDecimal b)
+            => IsGreater(a, b) || IsEqual(a, b);
+
+        internal static bool IsLessOrEqual(EDecimal a, EDecimal b)
+            => IsLess(a, b) || IsEqual(a, b);
     }
 }

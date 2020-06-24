@@ -14,6 +14,7 @@
  */
 
 using System;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -78,11 +79,11 @@ namespace AngouriMath.Core.Numerix
                 Numerator = new IntegerNumber(-Numerator.Value);
                 Denominator = new IntegerNumber(-Denominator.Value);
             }
-            if (Denominator.Value != 0)
-                this.Value = (decimal)Numerator.Value / (decimal)Denominator.Value;
+            if (!EDecimalWrapper.IsEqual(Denominator.Value, 0))
+                this.Value = (EDecimal)Numerator.Value / (EDecimal)Denominator.Value;
             else
             {
-                if (Numerator.Value == 0)
+                if (EDecimalWrapper.IsEqual(Numerator.Value, 0))
                     State = UndefinedState.NAN;
                 else if (Numerator.Value > 0)
                     State = UndefinedState.POSITIVE_INFINITY;

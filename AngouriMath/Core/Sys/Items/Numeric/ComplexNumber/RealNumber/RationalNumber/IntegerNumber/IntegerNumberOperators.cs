@@ -14,6 +14,7 @@
  */
 
 using System.Numerics;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -56,7 +57,7 @@ namespace AngouriMath.Core.Numerix
             => (int)val.Value;
         public static implicit operator long(IntegerNumber val)
             => (long)val.Value;
-        public static implicit operator BigInteger(IntegerNumber val)
+        public static implicit operator EInteger(IntegerNumber val)
             => val.Value;
 
         public static bool AreEqual(IntegerNumber a, IntegerNumber b)
@@ -66,11 +67,11 @@ namespace AngouriMath.Core.Numerix
             => (-1 * a).AsIntegerNumber();
 
         public static implicit operator IntegerNumber(int num)
-            => new IntegerNumber((BigInteger)num);
+            => new IntegerNumber((EInteger)num);
 
         public static implicit operator IntegerNumber(long num)
-            => new IntegerNumber((BigInteger)num);
-        public static implicit operator IntegerNumber(BigInteger num)
+            => new IntegerNumber((EInteger)num);
+        public static implicit operator IntegerNumber(EInteger num)
             => new IntegerNumber(num);
     }
 }

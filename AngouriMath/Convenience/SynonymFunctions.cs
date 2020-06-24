@@ -20,6 +20,7 @@ using System.Collections.Generic;
  using System.Numerics;
  using AngouriMath.Core;
  using AngouriMath.Core.Numerix;
+ using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -69,7 +70,7 @@ namespace AngouriMath.Extensions
         public static ComplexNumber ToComplexNumber(this Complex complex)
             => Number.Create(complex);
 
-        public static RealNumber ToRealNumber(this decimal dec)
+        public static RealNumber ToRealNumber(this EDecimal dec)
             => Number.Create(dec);
 
         public static Entity ToEntity(this String expr)

@@ -17,6 +17,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -179,7 +180,7 @@ namespace AngouriMath.Core.Numerix
             if (power.IsInteger())
                 return Functional.Downcast(Functional.BinaryIntPow(@base as ComplexNumber, power.AsInt())) as ComplexNumber;
                     
-            if (power.IsRational() && BigInteger.Abs((power as RationalNumber).Denominator.Value) < 10) // there should be a minimal threshold to avoid long searches 
+            if (power.IsRational() && ((power as RationalNumber).Denominator.Value).Abs() < 10) // there should be a minimal threshold to avoid long searches 
                 return Number.Pow(FindGoodRoot(@base, (power as RationalNumber).Denominator), (power as RationalNumber).Numerator);
                 
             var baseCom = @base.AsComplexNumber();

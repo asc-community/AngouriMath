@@ -13,6 +13,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using PeterO.Numbers;
+
 namespace AngouriMath.Core.Numerix
 {
     public partial class ComplexNumber
@@ -70,11 +72,11 @@ namespace AngouriMath.Core.Numerix
             => Number.Create(value);
         public static implicit operator ComplexNumber(double value)
             => Number.Create(value);
-        public static implicit operator ComplexNumber(decimal value)
+        public static implicit operator ComplexNumber(EDecimal value)
             => Number.Create(value);
         public static implicit operator ComplexNumber(float value)
             => Number.Create(value);
-        public static implicit operator ComplexNumber((decimal re, decimal im) value)
+        public static implicit operator ComplexNumber((EDecimal re, EDecimal im) value)
             => Number.Create(value.re, value.im);
     }
 }

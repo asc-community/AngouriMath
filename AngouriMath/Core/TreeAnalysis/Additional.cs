@@ -17,12 +17,11 @@
 
 ﻿using System;
  using System.Collections.Generic;
- using System.Globalization;
  using System.Linq;
- using System.Numerics;
  using AngouriMath.Core.Exceptions;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Functions.DiscreteMath;
+ using PeterO.Numbers;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -53,7 +52,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="numberOfTerms"></param>
         /// <param name="power"></param>
         /// <returns></returns>
-        internal static BigInteger EstimateTermCount(int numberOfTerms, int power)
+        internal static EInteger EstimateTermCount(int numberOfTerms, int power)
             => Combinatorics.C(power + numberOfTerms - 1, power);
 
         /// <summary>
@@ -133,12 +132,12 @@ namespace AngouriMath.Core.TreeAnalysis
                         return new List<Entity> {expr};
                     if (power.Value > 20 && linBaseChildren.Count > 1 ||
                         EstimateTermCount(linBaseChildren.Count, (int) power.Value) >
-                        MathS.Settings.MaxExpansionTermCount)
+                        EInteger.FromInt32(MathS.Settings.MaxExpansionTermCount))
                         return null;
                     foreach (var powerListForTerm in Combinatorics.CombinateSums(linBaseChildren.Count, power))
                     {
-                        BigInteger biCoef = 1;
-                        BigInteger sumPow = power;
+                        EInteger biCoef = 1;
+                        EInteger sumPow = power.Value;
                         foreach (var pow in powerListForTerm)
                         {
                             biCoef *= Combinatorics.C((int)sumPow, pow);

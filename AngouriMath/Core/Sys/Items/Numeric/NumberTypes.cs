@@ -14,6 +14,7 @@
  */
 
 using System.Numerics;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -129,17 +130,17 @@ namespace AngouriMath.Core.Numerix
             => (long)AsIntegerNumber().Value;
 
         /// <summary>
-        /// Forcefully casts one to BigInteger with downcasting
+        /// Forcefully casts one to EInteger with downcasting
         /// </summary>
         /// <returns></returns>
-        public BigInteger AsBigInt()
+        public EInteger AsBigInt()
             => AsIntegerNumber().Value;
 
         /// <summary>
-        /// Forcefully casts one to decimal with downcasting
+        /// Forcefully casts one to EDecimal with downcasting
         /// </summary>
         /// <returns></returns>
-        public decimal AsDecimal()
+        public EDecimal AsDecimal()
             => AsRealNumber().Value;
 
         /// <summary>
@@ -166,10 +167,10 @@ namespace AngouriMath.Core.Numerix
             => Number.Create(value);
 
         public static implicit operator Number(float value)
-            => new RealNumber((decimal)value);
+            => new RealNumber(EDecimal.FromDouble(value));
         public static implicit operator Number(double value)
-            => new RealNumber((decimal)value);
-        public static implicit operator Number(decimal value)
+            => new RealNumber(EDecimal.FromDouble(value));
+        public static implicit operator Number(EDecimal value)
             => new RealNumber(value);
 
         public static implicit operator Number(Complex a)

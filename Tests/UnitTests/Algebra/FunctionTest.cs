@@ -64,20 +64,20 @@ namespace UnitTests.Algebra
         [TestMethod]
         public void TestNSFrom0()
         {
-            Assert.IsTrue(MathS.FromBaseN("A", 16) == 10);
-            Assert.IsTrue(MathS.FromBaseN("1010", 2) == 10);
+            Assert.IsTrue(MathS.FromBaseN("A", 16).ToDecimal() == 10);
+            Assert.IsTrue(MathS.FromBaseN("1010", 2).ToDecimal() == 10);
         }
         [TestMethod]
         public void TestNSFrom1()
         {
-            Assert.IsTrue(MathS.FromBaseN("-A.4", 16) == -10.25m);
-            Assert.IsTrue(MathS.FromBaseN("-A0", 14) == -140);
+            Assert.IsTrue(MathS.FromBaseN("-A.4", 16).ToDecimal() == -10.25m);
+            Assert.IsTrue(MathS.FromBaseN("-A0", 14).ToDecimal() == -140);
         }
         [TestMethod]
         public void TestNSFrom2()
         {
-            Assert.IsTrue(MathS.FromBaseN("-0.125", 10) == -0.125m);
-            Assert.IsTrue(MathS.FromBaseN("0.3", 12) == 0.25m);
+            Assert.IsTrue(MathS.FromBaseN("-0.125", 10).ToDecimal() == -0.125m);
+            Assert.IsTrue(MathS.FromBaseN("0.3", 12).ToDecimal() == 0.25m);
         }
     }
 }

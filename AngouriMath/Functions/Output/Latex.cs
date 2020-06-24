@@ -21,6 +21,7 @@ using System.Collections.Generic;
  using System.Text;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
+ using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -170,10 +171,10 @@ namespace AngouriMath
                 && rational.IsFraction())
             {
                 var (numerator, denominator) = (rational.Numerator, rational.Denominator);
-                var str = @"\sqrt" + (denominator.Value == 2 ? "" : "[" + denominator.Latexise() + "]") + 
+                var str = @"\sqrt" + (denominator.Value == (EInteger)2 ? "" : "[" + denominator.Latexise() + "]") + 
                   "{" + args[0].Latexise() + "}";
-                var abs = BigInteger.Abs(numerator.Value);
-                if (abs != 1)
+                var abs = numerator.Value.Abs();
+                if (abs != EInteger.One)
                     str += "^{" + abs + "}";
                 if (numerator.Value < 0)
                     str = @"\frac{1}{" + str + "}";

@@ -57,6 +57,10 @@
     <EmbeddedResource Include="Core/FromString/Antlr/Angourimath.tokens" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PeterONumbers\Numbers\Numbers.csproj" />
+  </ItemGroup>
+
   <Target Name="GenerateANTLR" BeforeTargets="BeforeBuild">
     
     <Exec Command="&#xD;&#xA;      cd ./Core/FromString/Antlr &#xD;&#xA;      java -jar ./antlr-4.8-complete.jar -Dlanguage=CSharp ./Angourimath.g" />

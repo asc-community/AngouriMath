@@ -16,6 +16,7 @@
 
 using System.Collections.Generic;
 using System.Globalization;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -33,7 +34,7 @@ namespace AngouriMath
         internal static readonly Pattern func1 = new Pattern(400, Entity.PatType.FUNCTION, tree => tree.entType == Entity.EntType.FUNCTION);
         internal static readonly Pattern func2 = new Pattern(401, Entity.PatType.FUNCTION, tree => tree.entType == Entity.EntType.FUNCTION);
         private static int InternNumber = 10000;
-        internal static Pattern Num(decimal a) => new Pattern(++InternNumber, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
+        internal static Pattern Num(EDecimal a) => new Pattern(++InternNumber, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER, a.ToString());
 
         internal static readonly RuleList DivisionPreparingRules = new RuleList
         {
