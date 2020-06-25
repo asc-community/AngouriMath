@@ -146,6 +146,7 @@ namespace UnitTests.Convenience
         [TestMethod] public void OOMOOI() => Test(@"\infty  - \infty i", RealNumber.PositiveInfinity() * (1 - MathS.i));
         [TestMethod] public void MOOPOOI() => Test(@"-\infty  + \infty i", RealNumber.PositiveInfinity() * (-1 + MathS.i));
         [TestMethod] public void MOOMOOI() => Test(@"-\infty  - \infty i", RealNumber.PositiveInfinity() * (-1 - MathS.i));
+        [TestMethod] public void Undefined() => TestSimplify(@"\mathrm{undefined}", RealNumber.PositiveInfinity() / RealNumber.PositiveInfinity());
         [TestMethod] public void Set0() => Test(@"\emptyset", MathS.Sets.Empty());
         [TestMethod] public void Set0Alternate() => Test(@"\emptyset", MathS.Sets.Finite());
         [TestMethod] public void Set1() => Test(@"\left\{1\right\}", MathS.Sets.Finite(1));
