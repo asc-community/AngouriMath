@@ -171,10 +171,10 @@ namespace AngouriMath
                 && rational.IsFraction())
             {
                 var (numerator, denominator) = (rational.Numerator, rational.Denominator);
-                var str = @"\sqrt" + (denominator.Value == (EInteger)2 ? "" : "[" + denominator.Latexise() + "]") + 
+                var str = @"\sqrt" + (denominator.Value.Equals(2) ? "" : "[" + denominator.Latexise() + "]") + 
                   "{" + args[0].Latexise() + "}";
                 var abs = numerator.Value.Abs();
-                if (abs != EInteger.One)
+                if (!EDecimalWrapper.IsEqual(abs, EInteger.One))
                     str += "^{" + abs + "}";
                 if (numerator.Value < 0)
                     str = @"\frac{1}{" + str + "}";

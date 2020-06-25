@@ -155,7 +155,7 @@ namespace AngouriMath.Core.Numerix
                a.State == b.State && !a.IsDefinite();
 
         public static RealNumber operator -(RealNumber a)
-            => (-1 * a).AsRealNumber();
+            => Functional.Downcast(-1 * a) as RealNumber;
 
         internal static EDecimal CtxDivide(EDecimal a, EDecimal b)
             => a.DivideToExponent(b, -MathS.Settings.DecimalPrecisionContext.Value.Precision);

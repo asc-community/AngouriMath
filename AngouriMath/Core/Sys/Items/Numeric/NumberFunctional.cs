@@ -365,7 +365,7 @@ namespace AngouriMath.Core.Numerix
                 return res;
             }
 
-            public static RationalNumber FindRational_(EDecimal num, int iterCount)
+            internal static RationalNumber FindRational_(EDecimal num, int iterCount)
             {
                 if (iterCount <= 0)
                     return null;
@@ -386,7 +386,7 @@ namespace AngouriMath.Core.Numerix
                     var rat = FindRational_(inv, iterCount - 1);
                     if (rat is null)
                         return null;
-                    return intPart * sign + Number.Create(sign) / rat;
+                    return intPart * sign + (Number.Create(sign) / rat) as RationalNumber;
                 }
             }
 

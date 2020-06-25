@@ -20,7 +20,21 @@ namespace AngouriMath
                 }
                 // arg in [0; 2pi]
                 var dArg = arg.Real.Value;
-                dArg = (dArg % (2 * MathS.DecimalConst.pi) + 2 * MathS.DecimalConst.pi) % (2 * MathS.DecimalConst.pi);
+                EDecimal Remainder(EDecimal a, EDecimal divisor)
+                    => a.RemainderNoRoundAfterDivide(divisor, MathS.Settings.DecimalPrecisionContext);
+
+                var twoPi = RealNumber.CtxMultiply(2, MathS.DecimalConst.pi);
+                dArg = Remainder(
+                    RealNumber.CtxAdd(           // (
+                        Remainder(dArg         //     dArg
+                            ,                      //     %
+                            twoPi)           //     2pi 
+                        ,                          //   +
+                        twoPi                    //   2pi
+                        )                          // )
+                    ,                              // %
+                    twoPi                    // 2pi
+                    );
 
                 int begin = 0;
                 int end = table.Count - 1;

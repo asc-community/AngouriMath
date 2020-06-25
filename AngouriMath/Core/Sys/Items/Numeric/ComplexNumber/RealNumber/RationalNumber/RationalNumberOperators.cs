@@ -13,6 +13,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using PeterO.Numbers;
+
 namespace AngouriMath.Core.Numerix
 {
     public partial class RationalNumber : RealNumber
@@ -44,13 +46,16 @@ namespace AngouriMath.Core.Numerix
             return Number.Functional.Downcast(new RationalNumber(num, den)) as RationalNumber;
         }
 
-        public static RationalNumber operator /(RationalNumber a, RationalNumber b)
+        public static RealNumber operator /(RationalNumber a, RationalNumber b)
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.RATIONAL))
                 return Number.OpDiv(a, b) as RationalNumber;
             var num = CtxMultiply(a.Numerator, b.Denominator);
             var den = CtxMultiply(a.Denominator, b.Numerator);
-            return Number.Functional.Downcast(new RationalNumber(num, den)) as RationalNumber;
+            if (EDecimalWrapper.IsEqual(den, 0))
+                return RealNumber.NaN();
+            else
+                return Number.Functional.Downcast(new RationalNumber(num, den)) as RationalNumber;
         }
 
         internal static bool AreEqual(RationalNumber a, RationalNumber b)
