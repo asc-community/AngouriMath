@@ -85,6 +85,9 @@ namespace AngouriMath.Extensions
         public static Entity Collapse(this String expr)
             => expr.ToEntity().Collapse();
 
+        public static Entity Substitute(this String expr, VariableEntity var, Entity value)
+            => expr.ToEntity().Substitute(var, value);
+
         public static Set SolveEquation(this String expr, VariableEntity x)
             => expr.ToEntity().SolveEquation(x);
 

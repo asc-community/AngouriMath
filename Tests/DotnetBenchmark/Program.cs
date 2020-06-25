@@ -100,7 +100,7 @@ namespace DotnetBenchmark
     {
         public static void Main(string[] _)
         {
-            
+            //BenchmarkRunner.Run<CommonFunctionsInterVersionTest>();
         }
     }
 }

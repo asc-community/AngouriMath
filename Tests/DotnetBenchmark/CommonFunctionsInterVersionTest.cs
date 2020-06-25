@@ -45,7 +45,7 @@ namespace DotnetBenchmark
 
 
 
-        internal static  Entity simplifyHardPart = "y / u + 4 * a * 8";
+        internal static Entity simplifyHardPart = "y / u + 4 * a * 8";
         internal static Entity simplifyHardPart2 = MathS.Sin(simplifyHardPart) + MathS.Pow(simplifyHardPart, "y + u");
         internal static Entity simplifyHardPart3 = MathS.Log(3, simplifyHardPart2) + MathS.Arccos(simplifyHardPart2);
         internal static Entity simplifyHard = ("(x + 1) + 2 + y + z + 3 + log(3, e + 3 / 6) - " +
@@ -119,14 +119,6 @@ namespace DotnetBenchmark
         [Benchmark]
         public void EvalEasy()
             => evalEasy.Eval();
-
-        private static Entity eval___ = evalEasy + MathS.Pow(evalEasy, 4) / MathS.Sqrt(evalEasy);
-        private static Entity evalHard = eval___ + MathS.Pow(eval___, 4) / MathS.Sqrt(eval___);
-
-        [Benchmark]
-        public void EvalHard() 
-            => evalHard.Eval();
-
 
         /*
          *
