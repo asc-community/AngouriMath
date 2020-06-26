@@ -33,15 +33,19 @@ you. It will appear soon!
 The easiest way to install AM is to install it from 
 [Nuget](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository").
 
-If you need git commands, that is how you clone the repo
+Alternatively, if you use git entirely, that is how you clone the repo:
 ```
 git clone --recurse-submodules https://github.com/asc-community/AngouriMath
 ```
-Add this repo to your project's dependencies
+Add this repo to your project's dependencies:
 ```
 git submodule add https://github.com/asc-community/AngouriMath
 ```
-After cloning, you do not need to set up it. It is ready to use, just add the reference to the AngouriMath project from your solution.
+After cloning, you do not need to set up it.
+
+However, you should make sure that you have a Java runtime installed for ANTLR to run.
+
+It is ready to use, just add the reference to the AngouriMath project from your solution.
 
 ### <a name="exam"></a>Examples
 
