@@ -45,7 +45,7 @@ After cloning, you do not need to set up it.
 
 However, you should make sure that you have a Java runtime installed for ANTLR to run.
 
-It is ready to use, just add the reference to
+It is ready to use, just add a reference to
 - the `Numbers` project at `PeterONumbers/Numbers/Numbers.csproj` and
 - the `AngouriMath` project at `AngouriMath/AngouriMath.csproj`
 
