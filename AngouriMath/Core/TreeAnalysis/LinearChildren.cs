@@ -25,6 +25,9 @@ namespace AngouriMath.Core.TreeAnalysis
         internal static List<Entity> LinearChildrenOverSum(Entity tree)
             => LinearChildren(tree, "sumf", "minusf", Const.FuncIfSum);
 
+        internal static List<Entity> LinearChildrenOverProduct(Entity tree)
+            => LinearChildren(tree, "mulf", "divf", Const.FuncIfMul);
+
         /// <summary>
         /// Gathers linear children of an entity
         /// e. g. 1 + x - a / 2 + b - 4

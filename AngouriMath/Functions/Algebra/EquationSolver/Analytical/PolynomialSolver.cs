@@ -318,6 +318,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         {
             // Safely expand the expression
             // Here we find all terms
+            /*
             var children = new List<Entity>();
             var subNodes = TreeAnalyzer.LinearChildrenOverSum(expr);
             foreach (var child in subNodes)
@@ -331,6 +332,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         return null;
                     children.AddRange(expanded);
                 }
+                */
+            var children = TreeAnalyzer.GatherLinearChildrenOverAndExpand(
+                expr, entity => entity.FindSubtree(subtree) != null
+            );
+
+            if (children is null)
+                return null;
+                
             // // //
 
             var res = new Set();

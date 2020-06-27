@@ -514,6 +514,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
             // // //
 
+            // if no trigonometric rules helped, common denominator might help
             if (dst.IsEmpty())
             {
                 res = CommonDenominatorSolver.Solve(expr, x);
@@ -523,6 +524,20 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     return;
                 }
             }
+            // // //
+
+
+            // if we have fractioned polynomials
+            if (dst.IsEmpty())
+            {
+                res = FractionedPolynoms.Solve(expr, x);
+                if (res != null)
+                {
+                    DestinationAddRange(res);
+                    return;
+                }
+            }
+            // // //
 
 
             // if nothing has been found so far

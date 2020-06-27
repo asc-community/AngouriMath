@@ -224,6 +224,16 @@ namespace AngouriMath.Functions
             rest.Add(_GCD(numbers[0], numbers[1]));
             return GCD(rest.ToArray());
         }
+
+        internal static EInteger LCM(params EInteger[] numbers)
+        {
+            if (numbers.Length == 1)
+                return numbers[0];
+            EInteger product = 1;
+            foreach (var num in numbers)
+                product = product.Multiply(num);
+            return product.Divide(GCD(numbers));
+        }
     }
 
     public class Setting<T>

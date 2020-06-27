@@ -65,7 +65,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="expr"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        private static List<Entity> GatherLinearChildrenOverAndExpand(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
+        internal static List<Entity> GatherLinearChildrenOverAndExpand(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
         {
             if (expr.Name != "sumf" && expr.Name != "minusf")
                 return SmartExpandOver(expr, conditionForUniqueTerms);

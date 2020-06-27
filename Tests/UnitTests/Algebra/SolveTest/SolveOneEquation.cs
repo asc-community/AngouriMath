@@ -56,6 +56,14 @@ namespace UnitTests.Algebra
             Assert.IsTrue(roots.Count == target, string.Format("Number of roots must be equal {0} but is {1}", target, roots.Count));
         }
 
+        public void TestSolver(Entity expr, int rootCount, ComplexNumber toSub = null)
+        {
+            var roots = expr.SolveEquation(x);
+            AssertRootCount(roots, rootCount);
+            foreach (var root in roots.FiniteSet())
+                AssertRoots(expr, x, root, toSub);
+        }
+
         [TestMethod]
         public void Test1()
         {
@@ -508,13 +516,27 @@ namespace UnitTests.Algebra
 
         [TestMethod]
         public void TestCDSolver4()
-        {
-            Entity expr = "(x - b) / (x + a) + c + (x - c) / (x + d)";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 2);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root, 11 /* to avoid division by 0 */ );
-        }
+        => TestSolver("(x - b) / (x + a) + c + (x - c) / (x + d)", 2, 11);
+
+        [TestMethod]
+        public void TestFractionedPoly2()
+            => TestSolver("x + sqr(x + a) + c", 2);
+
+        [TestMethod]
+        public void TestFractionedPoly3()
+            => TestSolver("x + sqr(x^0.1 + a) + c", 0);
+
+        
+        [TestMethod]
+        public void TestFractionedPoly6()
+            => TestSolver("(x + 6)^(1/6) + x + x3 + a", 0);
+
+        [TestMethod]
+        public void TestFractionedPoly7()
+            => TestSolver("sqrt(x + 1) + sqrt(x + 2) + a + x", 0);
+
+        public void TestFractionedPoly8()
+            => TestSolver("(x + 1)^(1/3) + x + a", 3);
     }
 }
 
