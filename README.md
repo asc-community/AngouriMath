@@ -5,8 +5,8 @@
 [Nuget](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository")
 
 ## AngouriMath
-AngouriMath is a .NET cross-platform open-source library that enables to work with non-linear 
-multi-variable expressions.
+AngouriMath is a cross-platform open-source library that enables to work with non-linear 
+multi-variable expressions. Written in C#.
 
 README navigation:
 - [Installation](#inst)
@@ -125,9 +125,11 @@ var solutions = system.Solve("x", "y");
 Console.WriteLine(solutions);
 ```
 System:
+
 <img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{x}^{2}%2By%2Ba = 0\\y-\frac{1}{10}\times x%2Bb = 0\\\end{cases}">
 
 Result:
+
 <img src="additional/readme/pic1.PNG">
 
 ```cs
@@ -181,3 +183,5 @@ Console.WriteLine("AB.3(16) = " + y + "(1)");
 >>> -32.25(10) = -200.1(4)
 >>> AB.3(16) = 171,1875(1)
 ```
+
+See more on [Wiki](https://github.com/asc-community/AngouriMath/wiki).
