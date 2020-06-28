@@ -66,10 +66,10 @@ Console.WriteLine("(-2) ^ 3".Eval());
 #### <a name="subs"></a>Substitute variables
 ```cs
 Entity expr = "2x + sin(x) / sin(2 ^ x)";
-var subs = expr.Substitute("x", 0.3);
+var subs = expr.Substitute("x", 0.3m);
 Console.WriteLine(subs);
 ```
-<img src="https://render.githubusercontent.com/render/math?math=2\times \frac{3}{10}+\frac{\sin\left(\frac{3}{10}\right)}{\sin\left(\sqrt[10]{2}^{3}\right)}">
+<img src="https://render.githubusercontent.com/render/math?math=2\times \frac{3}{10}%2B\frac{\sin\left(\frac{3}{10}\right)}{\sin\left(\sqrt[10]{2}^{3}\right)}">
 
 #### <a name="deri"></a>Find derivatives
 ```cs
@@ -84,15 +84,15 @@ Console.WriteLine(derivative.Simplify().Latexise());
 var expr = "1/2 + sin(pi / 4) + (sin(3x)2 + cos(3x)2)";
 Console.WriteLine(expr.Simplify());
 ```
-<img src="https://render.githubusercontent.com/render/math?math=\frac{1}{2}\times \left(1+\sqrt{2}\right)+1">
+<img src="https://render.githubusercontent.com/render/math?math=\frac{1}{2}%2B{\cos\left(3\times x\right)}^{2}%2B\sin\left(\frac{1}{4}\times \pi\right)%2B{\sin\left(3\times x\right)}^{2}">
 
-#### <a name="late"></a>Render latex
+#### <a name="late"></a>Build latex
 ```cs
 var expr = "x ^ y + sqrt(x + y / 4)(6 / x)";
 Console.WriteLine(expr.Latexise());
 >>> {x}^{y}+\sqrt{x+\frac{y}{4}}\times \frac{6}{x}
 ```
-<img src="https://render.githubusercontent.com/render/math?math={x}^{y}+\sqrt{x+\frac{y}{4}}\times \frac{6}{x}">
+<img src="https://render.githubusercontent.com/render/math?math={x}^{y}%2B\sqrt{x%2B\frac{y}{4}}\times \frac{6}{x}">
 
 #### <a name="equa"></a>Solve equations analytically
 Under developing now and forever (always available)
@@ -100,10 +100,25 @@ Under developing now and forever (always available)
 Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
 Console.WriteLine(expr.SolveEquation("x").Latexise());
 ```
-<img src="https://render.githubusercontent.com/render/math?math=\left\{-\left(-\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\arcsin\left(\frac{1+\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1+\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),\frac{-b}{-1},-i,i,1,2\right\}">
+<img src="https://render.githubusercontent.com/render/math?math=\left\{-\left(-\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\arcsin\left(\frac{1%2B\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1%2B\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),\frac{-b}{-1},-i,i,1,2\right\}">
 
 #### <a name="eqsys"></a>Solve systems of non-linear equations
 Under developing now and forever (always available)
+
+```cs
+var system = MathS.Equations(
+    "x2 + y + a",
+    "y - 0.1x + b"
+);
+Console.WriteLine(system);
+var solutions = system.Solve("x", "y");
+Console.WriteLine(solutions);
+```
+System:
+<img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{x}^{2}%2By%2Ba = 0\\y-\frac{1}{10}\times x%2Bb = 0\\\end{cases}">
+Result:
+<img src="https://render.githubusercontent.com/render/math?math=\begin{pmatrix}\frac{\frac{1}{10}-\sqrt{\frac{1}{100}--4\times \left(-a%2Bb\right)}}{-2} & -\left({\left(\frac{\frac{1}{10}-\sqrt{\frac{1}{100}--4\times \left(-a%2Bb\right)}}{-2}\right)}^{2}%2Ba\right)\\\frac{\frac{1}{10}%2B\sqrt{\frac{1}{100}--4\times \left(-a%2Bb\right)}}{-2} & -\left({\left(\frac{\frac{1}{10}%2B\sqrt{\frac{1}{100}--4\times \left(-a%2Bb\right)}}{-2}\right)}^{2}%2Ba\right)\end{pmatrix}">
+
 ```cs
 var system = MathS.Equations(
     "cos(x2 + 1)^2 + 3y",
@@ -113,7 +128,7 @@ Console.WriteLine(system.Latexise());
 var solutions = system.Solve("x", "y");
 Console.WriteLine(solutions);
 ```
-<img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{\cos\left({x}^{2}+1\right)}^{2}+3\times y = 0\\y\times -1+4\times \cos\left({x}^{2}+1\right) = 0\\\end{cases}">
+<img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{\cos\left({x}^{2}%2B1\right)}^{2}%2B3\times y = 0\\y\times -1%2B4\times \cos\left({x}^{2}%2B1\right) = 0\\\end{cases}">
 (solution matrix is too complicated to show)
 
 #### <a name="comp"></a>Compile functions
