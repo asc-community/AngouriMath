@@ -14,9 +14,13 @@ namespace Samples
                + "\">";
         static void Main(string[] _)
         {
-            Entity expr = "2x + sin(x) / sin(2 ^ x)";
-            var subs = expr.Substitute("x", 0.3m);
-            Console.WriteLine(ToWeb(subs));
+            var system = MathS.Equations(
+                "x2 + y + a",
+                "y - 0.1x + b"
+            );
+            //Console.WriteLine(system);
+            var solutions = system.Solve("x", "y");
+            Console.WriteLine(solutions.Latexise());
         }
     }
 }

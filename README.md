@@ -56,7 +56,7 @@ Console.WriteLine(expr.Eval());
 Console.WriteLine("2 / 3 + sqrt(-16)".Eval());
 >>> 2 / 3 + 4i
 ```
-<img src="https://render.githubusercontent.com/render/math?math=\frac{2}{3}+4i">
+<img src="https://render.githubusercontent.com/render/math?math=\frac{2}{3} %2B 4i">
 
 ```cs
 Console.WriteLine("(-2) ^ 3".Eval());
@@ -77,7 +77,7 @@ var func = "x2 + ln(cos(x) + 3) + 4x";
 var derivative = func.Derive("x");
 Console.WriteLine(derivative.Simplify().Latexise());
 ```
-<img src="https://render.githubusercontent.com/render/math?math=4+\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)+3\right)}^{2}\times \left(\cos\left(x\right)+3\right)}+2\times x">
+<img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)+3\right)}^{2}\times \left(\cos\left(x\right)+3\right)}+2\times x">
 
 #### <a name="simp"></a>Simplify
 ```cs
@@ -117,7 +117,7 @@ Console.WriteLine(solutions);
 System:
 <img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{x}^{2}%2By%2Ba = 0\\y-\frac{1}{10}\times x%2Bb = 0\\\end{cases}">
 Result:
-<img src="https://render.githubusercontent.com/render/math?math=\begin{pmatrix}\frac{\frac{1}{10}-\sqrt{\frac{1}{100}--4\times \left(-a%2Bb\right)}}{-2} & -\left({\left(\frac{\frac{1}{10}-\sqrt{\frac{1}{100}--4\times \left(-a%2Bb\right)}}{-2}\right)}^{2}%2Ba\right)\\\frac{\frac{1}{10}%2B\sqrt{\frac{1}{100}--4\times \left(-a%2Bb\right)}}{-2} & -\left({\left(\frac{\frac{1}{10}%2B\sqrt{\frac{1}{100}--4\times \left(-a%2Bb\right)}}{-2}\right)}^{2}%2Ba\right)\end{pmatrix}">
+<img src="additional/readme/pic1.PNG">
 
 ```cs
 var system = MathS.Equations(
