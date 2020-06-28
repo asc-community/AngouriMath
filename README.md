@@ -5,7 +5,7 @@
 [Nuget](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository")
 
 ## AngouriMath
-AngouriMath is a cross-platform open-source library that enables to work with non-linear 
+AngouriMath is a .NET cross-platform open-source library that enables to work with non-linear 
 multi-variable expressions.
 
 README navigation:
@@ -75,11 +75,16 @@ Console.WriteLine(subs);
 ```cs
 var func = "x2 + ln(cos(x) + 3) + 4x";
 var derivative = func.Derive("x");
-Console.WriteLine(derivative.Simplify().Latexise());
+Console.WriteLine(derivative.Simplify());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)+3\right)}^{2}\times \left(\cos\left(x\right)+3\right)}+2\times x">
 
 #### <a name="simp"></a>Simplify
+```cs
+Console.WriteLine("2x + x + 3 + (4 a * a^6) / a^3 / 5".Simplify());
+```
+<img src="https://render.githubusercontent.com/render/math?math=3%2B\frac{4}{5}\times {a}^{4}%2B3\times x">
+
 ```cs
 var expr = "1/2 + sin(pi / 4) + (sin(3x)2 + cos(3x)2)";
 Console.WriteLine(expr.Simplify());
@@ -95,6 +100,11 @@ Console.WriteLine(expr.Latexise());
 <img src="https://render.githubusercontent.com/render/math?math={x}^{y}%2B\sqrt{x%2B\frac{y}{4}}\times \frac{6}{x}">
 
 #### <a name="equa"></a>Solve equations analytically
+```cs
+Console.WriteLine("x2 + x + a".SolveEquation("x"));
+```
+<img src="https://render.githubusercontent.com/render/math?math=\left\{\frac{-1-\sqrt{1-4\times a}}{2},\frac{-1%2B\sqrt{1-4\times a}}{2}\right\}">
+
 Under developing now and forever (always available)
 ```cs
 Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
@@ -116,6 +126,7 @@ Console.WriteLine(solutions);
 ```
 System:
 <img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{x}^{2}%2By%2Ba = 0\\y-\frac{1}{10}\times x%2Bb = 0\\\end{cases}">
+
 Result:
 <img src="additional/readme/pic1.PNG">
 
@@ -138,6 +149,12 @@ var x = MathS.Var("x");
 var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
 var func = expr.Compile(x);
 Console.WriteLine(func.Substitute(3));
+```
+
+```cs
+var expr = "sin(x) + sqrt(x) / (sqrt(x) + cos(x)) + x3";
+var compiled = expr.Compile("x");
+Console.WriteLine(compiled.Substitute(4));
 ```
 
 #### <a name="sets"></a>Work with sets
