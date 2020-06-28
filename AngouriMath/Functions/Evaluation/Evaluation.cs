@@ -23,6 +23,7 @@ using AngouriMath.Functions.Evaluation.Simplification;
 using System;
 using System.Collections.Generic;
  using System.Linq;
+ using System.Numerics;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
  using EvalTable = System.Collections.Generic.Dictionary<string, System.Func<System.Collections.Generic.List<AngouriMath.Entity>, AngouriMath.Entity>>;
@@ -462,13 +463,20 @@ namespace AngouriMath
     }
 }
 
+namespace AngouriMath
+{
+    public abstract partial class Entity
+    {
+        internal ComplexNumber __cachedEvaledValue = null;
+    }
+}
+
 /*
  *
  * This class contains implementation for basic simplification for all operators and functions
  * This keeps all numbers rational or as an expression so no precision loss occurres
  *
  */
-
 
 namespace AngouriMath
 {
@@ -513,6 +521,9 @@ namespace AngouriMath
                    ((int) cand.Type <= minLevel && !disableIrrational) ||
                 (cand.IsIrrational() && cand.Value.IsZero); // TODO: make im:0 downcastable
         }
+
+        internal static bool IsRationalComplex(ComplexNumber num)
+            => num.Real.IsRational() && num.Imaginary == 0 || num.IsRational();
     }
 
     // Each function and operator processing
@@ -523,17 +534,27 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
+            ComplexNumber potentialResult = null;
+            if (!(r1.__cachedEvaledValue is null) && !(r2.__cachedEvaledValue is null))
+            {
+                potentialResult = r1.__cachedEvaledValue + r2.__cachedEvaledValue;
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) {__cachedEvaledValue = potentialResult};
+            }
             args = new List<Entity> { r1, r2 };
+            Entity result;
             if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
             {
                 var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(n1 + n2, r1 + r2, n1, n2);
+                result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 + n2, r1 + r2, n1, n2);
             }
             else
                 if (MathFunctions.IsOneNumber(args, 0))
-                return MathFunctions.GetAnotherEntity(args, 0);
+                    result = MathFunctions.GetAnotherEntity(args, 0);
             else
-                return r1 + r2;
+                    result = r1 + r2;
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
     internal static partial class Minusf
@@ -543,17 +564,29 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
+
+            ComplexNumber potentialResult = null;
+            if (!(r1.__cachedEvaledValue is null) && !(r2.__cachedEvaledValue is null))
+            {
+                potentialResult = r1.__cachedEvaledValue - r2.__cachedEvaledValue;
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
             {
                 var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(n1 - n2, r1 - r2, n1, n2);
+                result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 - n2, r1 - r2, n1, n2);
             }
             else if (r1 == r2)
-                return 0;
+                result = 0;
             else if (r2 == 0)
-                return r1;
+                result = r1;
             else
-                return r1 - r2;
+                result = r1 - r2;
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
     internal static partial class Mulf
@@ -563,17 +596,30 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
+
+            ComplexNumber potentialResult = null;
+            if (!(r1.__cachedEvaledValue is null) && !(r2.__cachedEvaledValue is null))
+            {
+                potentialResult = r1.__cachedEvaledValue * r2.__cachedEvaledValue;
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             args = new List<Entity> { r1, r2 };
             if (MathFunctions.IsOneNumber(args, 1))
-                return MathFunctions.GetAnotherEntity(args, 1);
+                result = MathFunctions.GetAnotherEntity(args, 1);
             else if (MathFunctions.IsOneNumber(args, 0))
-                return 0;
+                result = 0;
             else if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
             {
                 var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(n1 * n2, r1 * r2, n1, n2);
+                result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 * n2, r1 * r2, n1, n2);
             }
-            else return r1 * r2;
+            else 
+                result = r1 * r2;
+            result.__cachedEvaledValue = potentialResult;
+            return result;
 
         }
     }
@@ -584,17 +630,29 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
+
+            ComplexNumber potentialResult = null;
+            if (!(r1.__cachedEvaledValue is null) && !(r2.__cachedEvaledValue is null))
+            {
+                potentialResult = r1.__cachedEvaledValue / r2.__cachedEvaledValue;
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
             {
                 var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(n1 / n2, r1 / r2, n1, n2);
+                result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 / n2, r1 / r2, n1, n2);
             }
             else if (r1 == 0)
-                return 0;
+                result = 0;
             else if (r2 == 1)
-                return r1;
+                result = r1;
             else
-                return r1 / r2;
+                result = r1 / r2;
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
     internal static partial class Powf
@@ -604,22 +662,34 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
+
+            ComplexNumber potentialResult = null;
+            if (!(r1.__cachedEvaledValue is null) && !(r2.__cachedEvaledValue is null))
+            {
+                potentialResult = Number.Pow(r1.__cachedEvaledValue, r2.__cachedEvaledValue);
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
             {
                 // TODO: Consider cases like sqrt(12) which could be simplified to 2 sqrt(3)
                 var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Pow(n1, n2), MathS.Pow(r1, r2), n1, n2);
+                result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Pow(n1, n2), MathS.Pow(r1, r2), n1, n2);
             }
             else if (r1 == 0 || r1 == 1)
-                return r1;
+                result = r1;
             else if (r2 == 1)
-                return r1;
+                result = r1;
             else if (r2 == 0)
-                return 1;
+                result = 1;
             else if (r2 == -1)
-                return 1 / r1;
+                result = 1 / r1;
             else
-                return r1.Pow(r2);
+                result = r1.Pow(r2);
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
     internal static partial class Sinf
@@ -628,21 +698,31 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            ComplexNumber evaled = null;
-            if (MathS.CanBeEvaluated(r))
-                evaled = r.Eval();
+            ComplexNumber evaled = r.__cachedEvaledValue;
+
+            ComplexNumber potentialResult = null;
+            if (!(r.__cachedEvaledValue is null))
+            {
+                potentialResult = Number.Sin(r.__cachedEvaledValue);
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (!(evaled is null))
             {
                 var n = evaled;
                 if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Sin(n), out var res, true, n))
-                    return res;
+                    result = res;
                 else if (Const.TrigonometryTableValues.PullSin(n, out res))
-                    return res;
+                    result = res;
                 else
-                    return MathS.Sin(r);
+                    result = MathS.Sin(r);
             }
             else
-                return r.Sin();
+                result = r.Sin();
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
     internal static partial class Cosf
@@ -651,21 +731,31 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            ComplexNumber evaled = null;
-            if (MathS.CanBeEvaluated(r))
-                evaled = r.Eval();
+            ComplexNumber evaled = r.__cachedEvaledValue;
+
+            ComplexNumber potentialResult = null;
+            if (!(r.__cachedEvaledValue is null))
+            {
+                potentialResult = Number.Cos(r.__cachedEvaledValue);
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (!(evaled is null))
             {
                 var n = evaled;
                 if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Cos(n), out var res, true, n))
-                    return res;
+                    result = res;
                 else if (Const.TrigonometryTableValues.PullCos(n, out res))
-                    return res;
+                    result = res;
                 else
-                    return r.Cos();
+                    result = r.Cos();
             }
             else
-                return r.Cos();
+                result = r.Cos();
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
     internal static partial class Tanf
@@ -674,21 +764,31 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            ComplexNumber evaled = null;
-            if (MathS.CanBeEvaluated(r))
-                evaled = r.Eval();
+            ComplexNumber evaled = r.__cachedEvaledValue;
+
+            ComplexNumber potentialResult = null;
+            if (!(r.__cachedEvaledValue is null))
+            {
+                potentialResult = Number.Tan(r.__cachedEvaledValue);
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (!(evaled is null))
             {
                 var n = evaled;
                 if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Tan(n), out var res, true, n))
-                    return res;
+                    result = res;
                 else if (Const.TrigonometryTableValues.PullTan(n, out res))
-                    return res;
+                    result = res;
                 else
-                    return r.Tan();
+                    result = r.Tan();
             }
             else
-                return r.Tan();
+                result = r.Tan();
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
     internal static partial class Cotanf
@@ -697,21 +797,31 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            ComplexNumber evaled = null;
-            if (MathS.CanBeEvaluated(r))
-                evaled = r.Eval();
+            ComplexNumber evaled = r.__cachedEvaledValue;
+
+            ComplexNumber potentialResult = null;
+            if (!(r.__cachedEvaledValue is null))
+            {
+                potentialResult = Number.Cotan(r.__cachedEvaledValue);
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (!(evaled is null))
             {
                 var n = evaled;
                 if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Cotan(n), out var res, true, n))
-                    return 1 / res;
+                    result = 1 / res;
                 else if (Const.TrigonometryTableValues.PullTan(n, out res))
-                    return 1 / res;
+                    result = 1 / res;
                 else
-                    return r.Cotan();
+                    result = r.Cotan();
             }
             else
-                return r.Cotan();
+                result = r.Cotan();
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
 
@@ -722,6 +832,16 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var r = args[0].InnerSimplify();
             var n = args[1].InnerSimplify();
+
+            ComplexNumber potentialResult = null;
+            if (!(r.__cachedEvaledValue is null) && !(n.__cachedEvaledValue is null) && r.__cachedEvaledValue.IsReal())
+            {
+                potentialResult = Number.Log(r.__cachedEvaledValue as RealNumber, r.__cachedEvaledValue);
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             args = new List<Entity> { r, n };
             if (r.entType == Entity.EntType.NUMBER && n.entType == Entity.EntType.NUMBER)
             {
@@ -729,11 +849,13 @@ namespace AngouriMath
                 return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Log(n1.Real, n2), MathS.Log(r, n), n1, n2);
             }
             else if (r == n)
-                return 1;
+                result = 1;
             else if (r == 1)
-                return 0;
+                result = 0;
             else
-                return r.Log(args[1]);
+                result = r.Log(args[1]);
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
 
@@ -743,13 +865,25 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerSimplify();
+
+            ComplexNumber potentialResult = null;
+            if (!(arg.__cachedEvaledValue is null))
+            {
+                potentialResult = Number.Arcsin(arg.__cachedEvaledValue);
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (arg.entType == Entity.EntType.NUMBER)
             {
                 var n = (arg as NumberEntity).Value;
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arcsin(n), MathS.Arcsin(arg), n);
+                result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arcsin(n), MathS.Arcsin(arg), n);
             }
             else
-                return Arcsinf.Hang(arg);
+                result = Arcsinf.Hang(arg);
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
     internal static partial class Arccosf
@@ -758,13 +892,25 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerSimplify();
+
+            ComplexNumber potentialResult = null;
+            if (!(arg.__cachedEvaledValue is null))
+            {
+                potentialResult = Number.Arccos(arg.__cachedEvaledValue);
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (arg.entType == Entity.EntType.NUMBER)
             {
                 var n = (arg as NumberEntity).Value;
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arccos(n), MathS.Arccos(arg), n);
+                result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arccos(n), MathS.Arccos(arg), n);
             }
             else
-                return Arccosf.Hang(arg);
+                result = Arccosf.Hang(arg);
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
     internal static partial class Arctanf
@@ -773,13 +919,25 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerSimplify();
+
+            ComplexNumber potentialResult = null;
+            if (!(arg.__cachedEvaledValue is null))
+            {
+                potentialResult = Number.Arctan(arg.__cachedEvaledValue);
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (arg.entType == Entity.EntType.NUMBER)
             {
                 var n = (arg as NumberEntity).Value;
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arctan(n), MathS.Arctan(arg), n);
+                result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arctan(n), MathS.Arctan(arg), n);
             }
             else
-                return Arctanf.Hang(arg);
+                result = Arctanf.Hang(arg);
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
     internal static partial class Arccotanf
@@ -788,13 +946,25 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerSimplify();
+
+            ComplexNumber potentialResult = null;
+            if (!(arg.__cachedEvaledValue is null))
+            {
+                potentialResult = Number.Arccotan(arg.__cachedEvaledValue);
+                if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
+            }
+
+            Entity result;
             if (arg.entType == Entity.EntType.NUMBER)
             {
                 var n = (arg as NumberEntity).Value;
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arccotan(n), MathS.Arccotan(arg), n);
+                result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arccotan(n), MathS.Arccotan(arg), n);
             }
             else
-                return Arccotanf.Hang(arg);
+                result = Arccotanf.Hang(arg);
+            result.__cachedEvaledValue = potentialResult;
+            return result;
         }
     }
 }

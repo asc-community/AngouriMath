@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.IO;
 using AngouriMath;
-using AngouriMath.Core.Numerix;
+using AngouriMath.Core;
+using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Extensions;
-using PeterO.Numbers;
 
 namespace Samples
 {
@@ -12,7 +10,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            
+
         }
     }
 }

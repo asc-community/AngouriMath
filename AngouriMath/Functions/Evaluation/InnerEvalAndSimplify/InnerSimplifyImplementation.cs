@@ -37,13 +37,16 @@ namespace AngouriMath
     {
         internal override Entity InnerSimplify()
         {
-            return new NumberEntity(Number.Functional.Downcast(this.Value) as ComplexNumber);
+            var downcasted = Number.Functional.Downcast(this.Value) as ComplexNumber;
+            return new NumberEntity(downcasted){__cachedEvaledValue = downcasted};
         }
     }
     public partial class VariableEntity : Entity
     {
         internal override Entity InnerSimplify()
         {
+            if (MathS.ConstantList.ContainsKey(this.Name))
+                __cachedEvaledValue = MathS.ConstantList[this.Name];
             return this;
         }
     }

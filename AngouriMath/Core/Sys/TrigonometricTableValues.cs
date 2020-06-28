@@ -127,7 +127,7 @@ namespace AngouriMath
             private static readonly Entity i = MathS.i;
 
             private static EDecimal PiOver(int a)
-                => 2 * MathS.DecimalConst.pi / a;
+                => RealNumber.CtxDivide(RealNumber.CtxMultiply(2, MathS.DecimalConst.pi), a);
 
             private static readonly Entity f1_6 = Number.CreateRational(1, 6);
 
