@@ -45,6 +45,8 @@ namespace AngouriMath
     {
         internal override Entity InnerSimplify()
         {
+            if (MathS.ConstantList.ContainsKey(this.Name))
+                __cachedEvaledValue = MathS.ConstantList[this.Name];
             return this;
         }
     }

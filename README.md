@@ -77,7 +77,7 @@ var func = "x2 + ln(cos(x) + 3) + 4x";
 var derivative = func.Derive("x");
 Console.WriteLine(derivative.Simplify());
 ```
-<img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)+3\right)}^{2}\times \left(\cos\left(x\right)+3\right)}+2\times x">
+<img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)%2B3\right)}^{2}\times \left(\cos\left(x\right)+3\right)}+2\times x">
 
 #### <a name="simp"></a>Simplify
 ```cs
@@ -89,7 +89,7 @@ Console.WriteLine("2x + x + 3 + (4 a * a^6) / a^3 / 5".Simplify());
 var expr = "1/2 + sin(pi / 4) + (sin(3x)2 + cos(3x)2)";
 Console.WriteLine(expr.Simplify());
 ```
-<img src="https://render.githubusercontent.com/render/math?math=\frac{1}{2}%2B{\cos\left(3\times x\right)}^{2}%2B\sin\left(\frac{1}{4}\times \pi\right)%2B{\sin\left(3\times x\right)}^{2}">
+<img src="https://render.githubusercontent.com/render/math?math=\frac{1}{2}\times \left(1%2B\sqrt{2}\right)%2B1">
 
 #### <a name="late"></a>Build latex
 ```cs
