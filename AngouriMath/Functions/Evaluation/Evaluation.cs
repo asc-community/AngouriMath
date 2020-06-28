@@ -836,7 +836,7 @@ namespace AngouriMath
             ComplexNumber potentialResult = null;
             if (!(r.__cachedEvaledValue is null) && !(n.__cachedEvaledValue is null) && r.__cachedEvaledValue.IsReal())
             {
-                potentialResult = Number.Log(r.__cachedEvaledValue as RealNumber, r.__cachedEvaledValue);
+                potentialResult = Number.Log(r.__cachedEvaledValue as RealNumber, n.__cachedEvaledValue);
                 if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
                     return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
             }
