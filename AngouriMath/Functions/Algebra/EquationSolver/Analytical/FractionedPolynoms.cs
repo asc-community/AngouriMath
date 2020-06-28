@@ -26,14 +26,22 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     {
         internal static Set Solve(Entity expr, VariableEntity x)
         {
-            var children = TreeAnalyzer.GatherLinearChildrenOverAndExpand(
+            var childrenRaw = TreeAnalyzer.GatherLinearChildrenOverAndExpand(
                 expr, entity => entity.FindSubtree(x) != null
             );
 
-            if (children is null)
+            if (childrenRaw is null)
                 return null;
 
-            children = children.Select(c => c.InnerSimplify()).ToList();
+            childrenRaw = childrenRaw.Select(c => c.InnerSimplify()).ToList();
+            var children = new List<Entity>();
+            foreach (var child in childrenRaw)
+            {
+                var ch = child;
+                // sqrt(f(x))^2 => f(x)
+                TreeAnalyzer.ReplaceInPlace(Patterns.PowerRules, ref ch);
+                children.Add(ch);
+            }
 
             Entity normalPolynom = 0;
             var fractioned = new List<(Entity multiplier, List<(Entity main, IntegerNumber pow)> fracs)>();
@@ -83,13 +91,32 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     fractioned.Add(potentialFraction);
                 else
                     normalPolynom += child;
-
-                if (fractioned.Count > 1)
-                    return null; // (x + 1)^(1/2) + (x + 2)^(1/3) unsolvable yet
             }
 
             if (fractioned.Count == 0)
                 return null; // means that one can either be solved polynomially or unsolvable at all
+
+            // starting from i = 1 check if all are equal to [0]
+            bool BasesAreEqual(List<(Entity main, IntegerNumber pow)> f1,
+                List<(Entity main, IntegerNumber pow)> f2)
+            {
+                if (f1.Count != f2.Count)
+                    return false;
+                for (int i = 0; i < f1.Count; i++)
+                    if (f1[i].main != f2[i].main || f1[i].pow != f2[i].pow)
+                        return false;
+                return true;
+            }
+            for (int i = 1; i < fractioned.Count; i++)
+            {
+                if (BasesAreEqual(fractioned[i].fracs, fractioned[0].fracs))
+                {
+                    var were = fractioned[0];
+                    fractioned[0] = (were.multiplier + fractioned[i].multiplier, were.fracs);
+                }
+                else
+                    return null;
+            }
 
             var fractionedProduct = fractioned[0];
 
@@ -99,7 +126,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var intLcm = Number.Create(lcm);
 
             //                        "-" to compensate sum: x + sqrt(x + 1) = 0 => x = -sqrt(x+1)
-            Entity mp = MathS.Pow(-fractionedProduct.multiplier, intLcm);
+            Entity mp = MathS.Pow(-fractionedProduct.multiplier, intLcm).InnerSimplify();
             foreach (var mainPowPair in fractionedProduct.fracs)
                 mp *= MathS.Pow(mainPowPair.main, Number.Create(lcm.Divide(mainPowPair.pow.Value)));
 

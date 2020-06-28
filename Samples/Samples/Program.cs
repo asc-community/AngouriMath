@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using AngouriMath;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;

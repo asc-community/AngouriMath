@@ -129,7 +129,17 @@ namespace AngouriMath.Core.TreeAnalysis
                     if (linBaseChildren is null)
                         return null;
                     if (linBaseChildren.Count == 1)
-                        return new List<Entity> {expr};
+                    {
+                        var baseChild = linBaseChildren[0];
+                        if (baseChild.entType != Entity.EntType.OPERATOR)
+                            return new List<Entity> {expr};
+                        if (baseChild.Name != "divf" && baseChild.Name != "mulf")
+                            return new List<Entity> { expr };
+                        // (a / b)^2 = a^2 / b^2
+                        baseChild.Children[0] = baseChild.Children[0].Pow(expr.Children[1]);
+                        baseChild.Children[1] = baseChild.Children[1].Pow(expr.Children[1]);
+                        return new List<Entity> {baseChild};
+                    }
                     if (power.Value > 20 && linBaseChildren.Count > 1 ||
                         EstimateTermCount(linBaseChildren.Count, (int) power.Value) >
                         EInteger.FromInt32(MathS.Settings.MaxExpansionTermCount))
@@ -149,7 +159,7 @@ namespace AngouriMath.Core.TreeAnalysis
                                 term *= linBaseChildren[i];
                             else if (powerListForTerm[i] > 1)
                                 term *= MathS.Pow(linBaseChildren[i], powerListForTerm[i]);
-                        newChildren.Add(term);
+                        newChildren.AddRange(SmartExpandOver(term, conditionForUniqueTerms));
                     }
                     return newChildren;
             }

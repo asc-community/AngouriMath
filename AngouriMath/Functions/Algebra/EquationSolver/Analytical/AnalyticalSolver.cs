@@ -374,8 +374,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return;
             }
 
-
-
             if (expr.entType == Entity.EntType.OPERATOR)
             {
                 switch (expr.Name)

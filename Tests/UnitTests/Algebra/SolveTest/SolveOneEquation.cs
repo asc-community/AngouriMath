@@ -519,24 +519,25 @@ namespace UnitTests.Algebra
         => TestSolver("(x - b) / (x + a) + c + (x - c) / (x + d)", 2, 11);
 
         [TestMethod]
-        public void TestFractionedPoly2()
+        public void TestFractionedPoly1()
             => TestSolver("x + sqr(x + a) + c", 2);
 
         [TestMethod]
-        public void TestFractionedPoly3()
+        public void TestFractionedPoly2()
             => TestSolver("x + sqr(x^0.1 + a) + c", 0);
 
         
         [TestMethod]
-        public void TestFractionedPoly6()
+        public void TestFractionedPoly3()
             => TestSolver("(x + 6)^(1/6) + x + x3 + a", 0);
 
         [TestMethod]
-        public void TestFractionedPoly7()
+        public void TestFractionedPoly4()
             => TestSolver("sqrt(x + 1) + sqrt(x + 2) + a + x", 0);
 
-        public void TestFractionedPoly8()
-            => TestSolver("(x + 1)^(1/3) + x + a", 3);
+        [TestMethod]
+        public void TestFractionedPoly5()
+            => TestSolver("(x + 1)^(1/3) - x - a", 3);
     }
 }
 
