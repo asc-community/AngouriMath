@@ -47,76 +47,60 @@ After cloning, you do not need to set up it. It is ready to use, just add the re
 
 #### <a name="eval"></a>Use as a simple calculator
 ```cs
-var inp = "1 + 2 * log(3, 9)";
-var expr = MathS.FromString(inp);
+Entity expr = "1 + 2 * log(3, 9)";
 Console.WriteLine(expr.Eval());
->>> 5
 ```
+<img src="https://render.githubusercontent.com/render/math?math=5">
 
 ```cs
 Console.WriteLine("2 / 3 + sqrt(-16)".Eval());
 >>> 2 / 3 + 4i
 ```
+<img src="https://render.githubusercontent.com/render/math?math=\frac{2}{3}+4i">
 
 ```cs
 Console.WriteLine("(-2) ^ 3".Eval());
->>> -8
 ```
+<img src="https://render.githubusercontent.com/render/math?math=-8">
 
 #### <a name="subs"></a>Substitute variables
 ```cs
-var x = MathS.Var("x");
-Entity expr = x * 2 + MathS.Sin(x) / MathS.Sin(MathS.Pow(2, x));
+Entity expr = "2x + sin(x) / sin(2 ^ x)";
 var subs = expr.Substitute("x", 0.3);
-Console.WriteLine(subs.Eval());
->>> 0,9134260185941638995386706112
+Console.WriteLine(subs);
 ```
+<img src="https://render.githubusercontent.com/render/math?math=2\times \frac{3}{10}+\frac{\sin\left(\frac{3}{10}\right)}{\sin\left(\sqrt[10]{2}^{3}\right)}">
 
 #### <a name="deri"></a>Find derivatives
 ```cs
-var x = MathS.Var("x");
-var func = MathS.Sqr(x) + MathS.Ln(MathS.Cos(x) + 3) + 4 * x;
-var derivative = func.Derive(x);
-Console.WriteLine(derivative.Simplify());
->>> 4 + sin(x) / (log(e, cos(x) + 3) ^ 2 * (cos(x) + 3)) + 2 * x
+var func = "x2 + ln(cos(x) + 3) + 4x";
+var derivative = func.Derive("x");
+Console.WriteLine(derivative.Simplify().Latexise());
 ```
+<img src="https://render.githubusercontent.com/render/math?math=4+\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)+3\right)}^{2}\times \left(\cos\left(x\right)+3\right)}+2\times x">
 
 #### <a name="simp"></a>Simplify
 ```cs
-var x = MathS.Var("x");
-var a = MathS.Var("a");
-var b = MathS.Var("b");
-var expr = MathS.Sqrt(x) / x + a * b + b * a + (b - x) * (x + b) + 
-    MathS.Arcsin(x + a) + MathS.Arccos(a + x);
+var expr = "1/2 + sin(pi / 4) + (sin(3x)2 + cos(3x)2)";
 Console.WriteLine(expr.Simplify());
->>> 2 * a * b + b ^ 2 + 1 / 2 * pi + x ^ (-1 / 2) - x ^ 2
 ```
+<img src="https://render.githubusercontent.com/render/math?math=\frac{1}{2}\times \left(1+\sqrt{2}\right)+1">
 
 #### <a name="late"></a>Render latex
 ```cs
-var x = MathS.Var("x");
-var y = MathS.Var("y");
-var expr = x.Pow(y) + MathS.Sqrt(x + y / 4) * (6 / x);
+var expr = "x ^ y + sqrt(x + y / 4)(6 / x)";
 Console.WriteLine(expr.Latexise());
 >>> {x}^{y}+\sqrt{x+\frac{y}{4}}\times \frac{6}{x}
 ```
+<img src="https://render.githubusercontent.com/render/math?math={x}^{y}+\sqrt{x+\frac{y}{4}}\times \frac{6}{x}">
 
 #### <a name="equa"></a>Solve equations analytically
 Under developing now and forever (always available)
 ```cs
 Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
-foreach (var root in expr.SolveEquation("x"))
-    Console.WriteLine(root);
->>> arcsin((1 - sqrt(1 + (-4) * a)) / 2) - (-2) * n * pi
->>> 2 * n * pi + pi - arcsin((1 - sqrt(1 + (-4) * a)) / 2)
->>> arcsin(0.5 * (1 + sqrt(1 + (-4) * a))) - (-2) * n * pi
->>> 2 * n * pi + pi - arcsin((1 + sqrt(1 + (-4) * a)) / 2)
->>> b
->>> -i
->>> i
->>> 1
->>> 2
+Console.WriteLine(expr.SolveEquation("x").Latexise());
 ```
+<img src="https://render.githubusercontent.com/render/math?math=\left\{-\left(-\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\arcsin\left(\frac{1+\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1+\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),\frac{-b}{-1},-i,i,1,2\right\}">
 
 #### <a name="eqsys"></a>Solve systems of non-linear equations
 Under developing now and forever (always available)
@@ -127,8 +111,10 @@ var system = MathS.Equations(
 );
 Console.WriteLine(system.Latexise());
 var solutions = system.Solve("x", "y");
-Console.WriteLine(Solutions.PrintOut());
+Console.WriteLine(solutions);
 ```
+<img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{\cos\left({x}^{2}+1\right)}^{2}+3\times y = 0\\y\times -1+4\times \cos\left({x}^{2}+1\right) = 0\\\end{cases}">
+(solution matrix is too complicated to show)
 
 #### <a name="comp"></a>Compile functions
 Compiled functions work 15x+ faster
