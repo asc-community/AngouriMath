@@ -149,20 +149,21 @@ namespace AngouriMath.Core
         }
 
         public override string ToString()
-        => Dimensions switch
+            => PrintOut(int.MaxValue);
+
+        internal string PrintOut()
+        => PrintOut(55);
+
+        public string PrintOut(int maxElLen)
+        {
+            var bias = Dimensions switch
             {
                 1 => "Vector[" + Shape[0] + "]",
                 2 => "Matrix[" + Shape[0] + "x" + Shape[1] + "]",
                 _ => "Tensor[" + string.Join<int>("x", Shape) + "]"
             };
 
-        public string PrintOut()
-        => PrintOut(55);
-
-        public string PrintOut(int maxElLen)
-        {
-            var bias = ToString();
-            switch(Dimensions)
+            switch (Dimensions)
             {
                 case 1: return bias + "< " + string.Join<Entity>(" | ", Data) + " >";
                 case 2:

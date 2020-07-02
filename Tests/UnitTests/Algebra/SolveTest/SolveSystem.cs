@@ -8,8 +8,10 @@ namespace UnitTests.Algebra
     [TestClass]
     public class SolveSystem
     {
-        public void AssertSystemSolvable(List<Entity> equations, List<VariableEntity> vars, int rootCount = -1)
+        public void AssertSystemSolvable(List<Entity> equations, List<VariableEntity> vars, int rootCount = -1, Number ToSub = null)
         {
+            if (ToSub is null)
+                ToSub = 3;
             var sys = MathS.Equations(equations.ToArray());
             var sol = sys.Solve(vars.ToArray());
             Assert.IsTrue(sol.Shape[0] == rootCount || rootCount == -1, "Got " + sol.Shape[0] + " instead of " + rootCount);
@@ -25,7 +27,7 @@ namespace UnitTests.Algebra
                     }
 
                     foreach (var uniqvar in MathS.Utils.GetUniqueVariables(eqCopy).FiniteSet())
-                        eqCopy = eqCopy.Substitute(uniqvar.Name, 3);
+                        eqCopy = eqCopy.Substitute(uniqvar.Name, (Entity)ToSub);
                     var E = Number.Abs(eqCopy.Eval());
                     Assert.IsTrue(E.IsDefinite() && E < 0.0001,
                         "i: " + i + "  eq: " + eq.ToString() + "  E: " + E.ToString());
@@ -68,7 +70,8 @@ namespace UnitTests.Algebra
                 "3y3 - z - 2",
                 "x2 - 0.1z + 4x2 + 4y3"
                 );
-            AssertSystemSolvable(eqs, VA("x", "y", "z"), 6);
+            var vars = VA("x", "y", "z");
+            AssertSystemSolvable(eqs, vars, 6, ToSub: 5);
         }
 
         [TestMethod]

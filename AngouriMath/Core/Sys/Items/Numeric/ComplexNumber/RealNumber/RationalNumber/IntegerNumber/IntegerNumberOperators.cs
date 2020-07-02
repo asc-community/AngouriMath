@@ -14,6 +14,7 @@
  */
 
 using System.Numerics;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -23,48 +24,54 @@ namespace AngouriMath.Core.Numerix
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.INTEGER))
                 return Number.OpSum(a, b) as IntegerNumber;
-            return new IntegerNumber(a.Value + b.Value);
+            return new IntegerNumber(CtxAdd(a.Value, b.Value));
         }
 
         public static IntegerNumber operator -(IntegerNumber a, IntegerNumber b)
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.INTEGER))
                 return Number.OpSub(a, b) as IntegerNumber;
-            return new IntegerNumber(a.Value - b.Value);
+            return new IntegerNumber(CtxSubtract(a.Value, b.Value));
         }
 
         public static IntegerNumber operator *(IntegerNumber a, IntegerNumber b)
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.INTEGER))
                 return Number.OpMul(a, b) as IntegerNumber;
-            return new IntegerNumber(a.Value * b.Value);
+            return new IntegerNumber(CtxMultiply(a.Value, b.Value));
         }
 
-        public static RationalNumber operator /(IntegerNumber a, IntegerNumber b)
+        public static RealNumber operator /(IntegerNumber a, IntegerNumber b)
         {
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.INTEGER))
                 return Number.OpDiv(a, b) as IntegerNumber;
+            if (b == 0 && a == 0)
+                return RealNumber.NaN();
+            if (b == 0)
+                return a > 0
+                    ? RealNumber.PositiveInfinity()
+                    : RealNumber.NegativeInfinity();
             return Number.Functional.Downcast(new RationalNumber(a, b)) as RationalNumber;
         }
         public static implicit operator int(IntegerNumber val)
             => (int)val.Value;
         public static implicit operator long(IntegerNumber val)
             => (long)val.Value;
-        public static implicit operator BigInteger(IntegerNumber val)
+        public static implicit operator EInteger(IntegerNumber val)
             => val.Value;
 
         public static bool AreEqual(IntegerNumber a, IntegerNumber b)
-            => a.Value == b.Value;
+            => a.Value.Equals(b.Value);
 
         public static IntegerNumber operator -(IntegerNumber a)
             => (-1 * a).AsIntegerNumber();
 
         public static implicit operator IntegerNumber(int num)
-            => new IntegerNumber((BigInteger)num);
+            => new IntegerNumber((EInteger)num);
 
         public static implicit operator IntegerNumber(long num)
-            => new IntegerNumber((BigInteger)num);
-        public static implicit operator IntegerNumber(BigInteger num)
+            => new IntegerNumber((EInteger)num);
+        public static implicit operator IntegerNumber(EInteger num)
             => new IntegerNumber(num);
     }
 }

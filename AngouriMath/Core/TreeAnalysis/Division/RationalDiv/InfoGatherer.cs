@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using AngouriMath.Core.TreeAnalysis.Division.RationalDiv;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -68,7 +69,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
                 else
                     children = new List<Entity> { expr };
-                res.monoInfo[varMentioned] = PolynomialSolver.GatherMonomialInformation<decimal>(children, MathS.Var(varMentioned));
+                res.monoInfo[varMentioned] = PolynomialSolver.GatherMonomialInformation<EDecimal>(children, MathS.Var(varMentioned));
             }
 
             return res;
@@ -79,7 +80,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
 namespace AngouriMath.Core.TreeAnalysis.Division.RationalDiv
 {
-    using MonomialInfo = Dictionary<string, Dictionary<decimal, Entity>>;
+    using MonomialInfo = Dictionary<string, Dictionary<EDecimal, Entity>>;
     using ReplacementInfo = Dictionary<string, Entity>;
     internal class PolyInfo
     {

@@ -18,6 +18,7 @@ using System;
 using System.Numerics;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Functions;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -53,16 +54,16 @@ namespace AngouriMath.Core.Numerix
         /// IntegerNumber
         /// </returns>
         public static IntegerNumber Create(long value)
-            => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+            => Number.Functional.Downcast(new IntegerNumber((EInteger)value)) as IntegerNumber;
 
         /// <summary>
-        /// Creates an instance of IntegerNumber from System.Numerics.BigInteger
+        /// Creates an instance of IntegerNumber from System.Numerics.EInteger
         /// </summary>
         /// <param name="value"></param>
         /// <returns>
         /// IntegerNumber
         /// </returns>
-        public static IntegerNumber Create(BigInteger value)
+        public static IntegerNumber Create(EInteger value)
             => Number.Functional.Downcast(new IntegerNumber(value)) as IntegerNumber;
 
         /// <summary>
@@ -73,7 +74,7 @@ namespace AngouriMath.Core.Numerix
         /// IntegerNumber
         /// </returns>
         public static IntegerNumber Create(int value) 
-            => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+            => Number.Functional.Downcast(new IntegerNumber((EInteger)value)) as IntegerNumber;
 
         /// <summary>
         /// Creates an instance of RationalNumber of two IntegerNumbers
@@ -87,13 +88,13 @@ namespace AngouriMath.Core.Numerix
             => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
 
         /// <summary>
-        /// Creates an instance of RealNumber from decimal
+        /// Creates an instance of RealNumber from EDecimal
         /// </summary>
         /// <param name="value"></param>
         /// <returns>
         /// RealNumber
         /// </returns>
-        public static RealNumber Create(decimal value)
+        public static RealNumber Create(EDecimal value)
             => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
 
         /// <summary>
@@ -167,6 +168,16 @@ namespace AngouriMath.Core.Numerix
         /// </summary>
         /// <param name="num"></param>
         /// <returns></returns>
+        public static bool IsZero(EDecimal num)
+        {
+            return EDecimalWrapper.IsLess(num.Abs(), MathS.Settings.PrecisionErrorZeroRange);
+        }
+
+        /// <summary>
+        /// Checks whether a number is zero
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
         public static bool IsZero(ComplexNumber num)
             => IsZero(num.Real) && IsZero(num.Imaginary);
 
@@ -222,13 +233,16 @@ namespace AngouriMath.Core.Numerix
             /// <param name="value"></param>
             /// <param name="res"></param>
             /// <returns></returns>
-            private static bool TryCastToInt(decimal value, out BigInteger res)
+            private static bool TryCastToInt(EDecimal value, out EInteger res)
             {
-                var intPart = Math.Round(value);
-                var rest = value - intPart;
-                if (Number.IsZero(rest))
+                res = null;
+                if (!value.IsFinite)
+                    return false;
+                var intPart = value.ToEInteger();
+                var rest = RealNumber.CtxSubtract(value, intPart);
+                if (EDecimalWrapper.IsLess(rest.Abs(), MathS.Settings.PrecisionErrorZeroRange))
                 {
-                    res = (BigInteger)intPart;
+                    res = intPart;
                     return true;
                 }
                 else
@@ -263,7 +277,7 @@ namespace AngouriMath.Core.Numerix
                             new IntegerNumber(ratnum.Numerator.Value / gcd),
                             new IntegerNumber(ratnum.Denominator.Value / gcd)
                         );
-                        if (ratnum.Denominator.Value == 1)
+                        if (EDecimalWrapper.IsEqual(ratnum.Denominator.Value, 1))
                             return (Result: ratnum.Numerator, Continue: false);
                         else
                             return (Result: ratnum, Continue: false);
@@ -306,9 +320,9 @@ namespace AngouriMath.Core.Numerix
                     return res.Result;
             }
 
-            internal static bool IsZero(decimal value)
+            internal static bool IsZero(EDecimal value)
             {
-                return Math.Abs(value) <= MathS.Settings.PrecisionErrorZeroRange;
+                return EDecimalWrapper.IsLessOrEqual(value.Abs(), MathS.Settings.PrecisionErrorZeroRange);
             }
 
             /// <summary>
@@ -324,7 +338,7 @@ namespace AngouriMath.Core.Numerix
             /// RationalNumber if found,
             /// null otherwise
             /// </returns>
-            public static RationalNumber FindRational(decimal num)
+            public static RationalNumber FindRational(EDecimal num)
                 => FindRational(num, 15);
 
             /// <summary>
@@ -343,33 +357,36 @@ namespace AngouriMath.Core.Numerix
             /// RationalNumber if found,
             /// null otherwise
             /// </returns>
-            public static RationalNumber FindRational(decimal num, int iterCount)
+            public static RationalNumber FindRational(EDecimal num, int iterCount)
+            {
+                MathS.Settings.DowncastingEnabled.Set(false);
+                var res = FindRational_(num, iterCount);
+                MathS.Settings.DowncastingEnabled.Unset();
+                return res;
+            }
+
+            internal static RationalNumber FindRational_(EDecimal num, int iterCount)
             {
                 if (iterCount <= 0)
                     return null;
-                long sign = num > 0 ? 1 : -1;
+                if (!num.IsFinite)
+                    return null;
+                long sign = EDecimalWrapper.IsGreater(num, 0) ? 1 : -1;
                 num *= sign;
                 IntegerNumber intPart;
-                try
-                {
-                    intPart = (BigInteger) Math.Floor(num);
-                }
-                catch (OverflowException)
-                {
-                    throw new SysException("While downcasting overflow occured. Please report it on Issues on the repository of AngouriMath");
-                }
-                if (intPart > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
+                intPart = num.ToEInteger();
+                if (intPart.Value.ToInt64Checked() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                     return null;
-                decimal rest = num - (decimal)intPart.Value;
+                EDecimal rest = RealNumber.CtxSubtract(num, intPart.Value);
                 if (Number.IsZero(rest))
-                    return (sign * intPart).AsRationalNumber();
+                    return sign * intPart;
                 else
                 {
-                    var inv = 1 / rest;
-                    var rat = FindRational(inv, iterCount - 1);
+                    var inv = RealNumber.CtxDivide(EDecimal.One, rest);
+                    var rat = FindRational_(inv, iterCount - 1);
                     if (rat is null)
                         return null;
-                    return intPart * sign + Number.Create(sign) / rat;
+                    return intPart * sign + (Number.Create(sign) / rat) as RationalNumber;
                 }
             }
 

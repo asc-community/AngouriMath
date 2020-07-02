@@ -91,28 +91,66 @@ namespace UnitTests.Core
         {
             var a = new RealNumber(4);
             var b = new RealNumber(0.0m);
-            Assert.IsTrue(a / b == RealNumber.PositiveInfinity());
+            Assert.IsTrue(a / b == RealNumber.NaN(), (a / b).ToString());
         }
         [TestMethod]
         public void TestWithUndefined6()
         {
             var a = new RealNumber(4);
             var b = new RationalNumber(0, 6);
-            Assert.IsTrue(a / b == RealNumber.PositiveInfinity());
+            Assert.IsTrue(a / b == RealNumber.NaN(), (a / b).ToString());
         }
         [TestMethod]
         public void TestWithUndefined7()
         {
             var a = Number.Create(4);
             var b = new RealNumber(0.0m);
-            Assert.IsTrue(a / b == RealNumber.PositiveInfinity());
+            Assert.IsTrue(a / b == RealNumber.NaN(), (a / b).ToString());
         }
 
         [TestMethod]
         public void TestWithUndefined8()
         {
             var x = new RationalNumber(Number.Create(-1), Number.Create(2));
-            Assert.IsTrue(x / 0 == RealNumber.NegativeInfinity());
+            Assert.IsTrue(x / 0 == RealNumber.NaN(), (x / 0).ToString());
+        }
+
+        [TestMethod]
+        public void TestWithUndefined9()
+        {
+            var x = new RationalNumber(Number.Create(-1), Number.Create(2));
+            Assert.IsTrue(x / RealNumber.PositiveInfinity() == 0);
+        }
+
+        [TestMethod]
+        public void TestWithUndefined10()
+        {
+            var x = new RealNumber(0.5);
+            Assert.IsTrue(x / RealNumber.PositiveInfinity() == 0);
+        }
+
+        [TestMethod]
+        public void TestWithUndefined11()
+        {
+            Assert.IsTrue(RealNumber.PositiveInfinity() / 5 == RealNumber.PositiveInfinity());
+        }
+
+        [TestMethod]
+        public void TestWithUndefined12()
+        {
+            Assert.IsTrue(RealNumber.PositiveInfinity() / -5 == RealNumber.NegativeInfinity());
+        }
+
+        [TestMethod]
+        public void TestWithUndefined13()
+        {
+            Assert.IsTrue(RealNumber.PositiveInfinity() / RealNumber.NegativeInfinity() == RealNumber.NaN());
+        }
+
+        [TestMethod]
+        public void TestWithUndefined14()
+        {
+            Assert.IsTrue(RealNumber.NegativeInfinity() / 5 == RealNumber.NegativeInfinity());
         }
 
         [TestMethod]

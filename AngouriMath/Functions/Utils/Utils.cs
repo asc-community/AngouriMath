@@ -21,6 +21,7 @@ using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using PeterO.Numbers;
 
 namespace AngouriMath.Functions
 {
@@ -78,18 +79,10 @@ namespace AngouriMath.Functions
                     dst -= ((-1) * terms[i].Children[0].GetValue()) * terms[i].Children[1];
                 else
                     dst += terms[i];
-            dst = dst.InnerEval();
+            dst = dst.InnerSimplify();
             return true;
         }
 
-        /// <summary>
-        /// Rounds numbers to the given precision
-        /// </summary>
-        /// <param name="num"></param>
-        /// <returns></returns>
-        internal static ComplexNumber CutoffImprecision(ComplexNumber num)
-            => Number.Create(num.Real.Value - num.Real.Value % MathS.Settings.PrecisionErrorCommon,
-                num.Imaginary.Value - num.Imaginary.Value % MathS.Settings.PrecisionErrorCommon);
 
         /// <summary>
         /// Alike to ParseIndex, but strict on index: it should be a number
@@ -170,10 +163,10 @@ namespace AngouriMath.Functions
         ///     a | d
         ///     b | d
         /// </returns>
-        private static BigInteger _GCD(BigInteger a, BigInteger b)
+        private static EInteger _GCD(EInteger a, EInteger b)
         {
-            a = BigInteger.Abs(a);
-            b = BigInteger.Abs(b);
+            a = a.Abs();
+            b = b.Abs();
             while (a * b > 0)
             {
                 if (a > b)
@@ -182,7 +175,7 @@ namespace AngouriMath.Functions
                     b %= a;
             }
 
-            return a == 0 ? b : a;
+            return a == EInteger.Zero ? b : a;
         }
 
         private static long _GCD(long a, long b)
@@ -210,13 +203,13 @@ namespace AngouriMath.Functions
         /// Greatest common divisor of numbers if numbers doesn't only consist of 0
         /// 1 otherwise
         /// </returns>
-        internal static BigInteger GCD(params BigInteger[] numbers)
+        internal static EInteger GCD(params EInteger[] numbers)
         {
             if (numbers.Length == 1)
-                return numbers[0] == 0 ? 1 : numbers[0]; // technically, if number[0] == 0, then gcd = +oo
+                return numbers[0] == EInteger.Zero ? 1 : numbers[0]; // technically, if number[0] == 0, then gcd = +oo
             if (numbers.Length == 2)
                 return _GCD(numbers[0], numbers[1]);
-            var rest = (new ArraySegment<BigInteger>(numbers, 2, numbers.Length - 2)).ToList();
+            var rest = (new ArraySegment<EInteger>(numbers, 2, numbers.Length - 2)).ToList();
             rest.Add(_GCD(numbers[0], numbers[1]));
             return GCD(rest.ToArray());
         }
@@ -230,6 +223,16 @@ namespace AngouriMath.Functions
             var rest = (new ArraySegment<long>(numbers, 2, numbers.Length - 2)).ToList();
             rest.Add(_GCD(numbers[0], numbers[1]));
             return GCD(rest.ToArray());
+        }
+
+        internal static EInteger LCM(params EInteger[] numbers)
+        {
+            if (numbers.Length == 1)
+                return numbers[0];
+            EInteger product = 1;
+            foreach (var num in numbers)
+                product = product.Multiply(num);
+            return product.Divide(GCD(numbers));
         }
     }
 
@@ -265,7 +268,9 @@ namespace AngouriMath.Functions
 
         public override string ToString()
         {
-            return sets.Peek().ToString();
+            return Value.ToString();
         }
+
+        public T Value => sets.Peek();
     }
 }

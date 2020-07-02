@@ -14,6 +14,7 @@
  */
 
 using System.Numerics;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -29,8 +30,8 @@ namespace AngouriMath.Core.Numerix
         /// <summary>
         /// Exact value of the number
         /// </summary>
-        public new BigInteger Value { get; protected set; }
-        private void InitClass(BigInteger value, UndefinedState state)
+        public new EInteger Value { get; internal set; }
+        private void InitClass(EInteger value, UndefinedState state)
         {
             Value = value;
             Type = HierarchyLevel.INTEGER;
@@ -39,15 +40,15 @@ namespace AngouriMath.Core.Numerix
         }
 
         /// <summary>
-        /// Use Number.Create(BigInteger) instead
+        /// Use Number.Create(EInteger) instead
         /// </summary>
         /// <param name="value"></param>
-        internal IntegerNumber(BigInteger value)
+        internal IntegerNumber(EInteger value)
         {
             InitClass(value, UndefinedState.DEFINED);
         }
 
-        private IntegerNumber()
+        internal IntegerNumber()
         {
 
         }

@@ -15,7 +15,10 @@
 
 using System;
 using System.Globalization;
+using System.Runtime.CompilerServices;
+using PeterO.Numbers;
 
+[assembly: InternalsVisibleTo("DotnetBenchmark")]
 namespace AngouriMath.Core.Numerix
 {
     public partial class RealNumber : ComplexNumber
@@ -36,9 +39,9 @@ namespace AngouriMath.Core.Numerix
         }
 
         /// <summary>
-        /// The exact value of the type decimal
+        /// The exact value of the type EDecimal
         /// </summary>
-        public new decimal Value { get; protected set; }
+        public new EDecimal Value { get; protected set; }
 
         /// <summary>
         /// To check whether one is defined, you may write
@@ -46,7 +49,7 @@ namespace AngouriMath.Core.Numerix
         /// Or check directly, this.State == RealNumber.UndefinedState.DEFINED
         /// </summary>
         public UndefinedState State { get; protected set; }
-        private void InitClass(decimal value, UndefinedState state)
+        private void InitClass(EDecimal value, UndefinedState state)
         {
             Value = value;
             Type = HierarchyLevel.REAL;
@@ -54,10 +57,10 @@ namespace AngouriMath.Core.Numerix
             switch (State)
             {
                 case UndefinedState.NEGATIVE_INFINITY:
-                    Value = decimal.MinValue;
+                    Value = EDecimal.NegativeInfinity;
                     break;
                 case UndefinedState.POSITIVE_INFINITY:
-                    Value = decimal.MaxValue;
+                    Value = EDecimal.PositiveInfinity;
                     break;
                 case UndefinedState.NAN:
                     Value = 0;
@@ -78,10 +81,25 @@ namespace AngouriMath.Core.Numerix
         }
 
         /// <summary>
-        /// Use Number.Create(decimal) instead
+        /// Use Number.Create(EDecimal) instead
         /// </summary>
         /// <param name="value"></param>
+        internal RealNumber(EDecimal value)
+        {
+            InitClass(value, UndefinedState.DEFINED);
+        }
+
         internal RealNumber(decimal value)
+        {
+            InitClass(value, UndefinedState.DEFINED);
+        }
+
+        internal RealNumber(int value)
+        {
+            InitClass(value, UndefinedState.DEFINED);
+        }
+
+        internal RealNumber(long value)
         {
             InitClass(value, UndefinedState.DEFINED);
         }
@@ -89,6 +107,14 @@ namespace AngouriMath.Core.Numerix
         protected RealNumber()
         {
             
+        }
+
+        internal RealNumber(double value)
+        {
+            if (double.IsNaN(value))
+                InitClass(0, UndefinedState.NAN);
+            else
+                InitClass(EDecimal.FromDouble(value), UndefinedState.DEFINED);
         }
 
         /// <summary>
@@ -111,9 +137,13 @@ namespace AngouriMath.Core.Numerix
             base.Init();
         }
 
-        protected override (decimal Re, decimal Im) GetValue()
+        protected override (EDecimal Re, EDecimal Im) GetValue()
         {
-            return (Value, 0);
+            if (IsDefinite())
+                return (Value, 0);
+            else
+            // TODO: Since we use other Number system, should we return pair of definite/indefinite numbers or throw an exception?
+                throw new MathSException("Cannot get values of an indefinite expressions");
         }
 
         public static RealNumber Zero()
@@ -148,17 +178,17 @@ namespace AngouriMath.Core.Numerix
             else
                 return State switch
                 {
-                    UndefinedState.NEGATIVE_INFINITY => @"-\infty",
-                    UndefinedState.POSITIVE_INFINITY => @"+\infty",
-                    UndefinedState.NAN => @"NaN"
+                    UndefinedState.NEGATIVE_INFINITY => @"-\infty ",
+                    UndefinedState.POSITIVE_INFINITY => @"\infty ",
+                    UndefinedState.NAN => @"\mathrm{undefined}"
                 };
         }
 
         protected internal new string InternalToString()
-            => InternalToStringDefinition(Value.ToString(CultureInfo.InvariantCulture));
+            => InternalToStringDefinition(Value.ToString());
 
         protected internal new string InternalLatexise()
-            => InternalLatexiseDefinition(Value.ToString(CultureInfo.InvariantCulture));
+            => InternalLatexiseDefinition(Value.ToString());
 
 
         internal static bool TryParse(string s, out RealNumber dst)

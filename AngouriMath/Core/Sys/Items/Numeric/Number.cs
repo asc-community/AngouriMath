@@ -15,11 +15,16 @@
 
 
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Numerics;
+using AngouriMath.Extensions;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
-    public abstract partial class Number
+    public abstract partial class Number : Sys.Interfaces.ILatexiseable
     {
         /// <summary>
         /// Copies a Number with respect due to its hierarchy type, but without implicit downcasting
@@ -36,6 +41,7 @@ namespace AngouriMath.Core.Numerix
                 num.Type,
                 num
             );
+
         public enum HierarchyLevel
         {
             INTEGER,
@@ -53,8 +59,9 @@ namespace AngouriMath.Core.Numerix
         /// <summary>
         /// The final value. Only useful for calculations
         /// </summary>
-        public (decimal Re, decimal Im) Value => GetValue();
-        protected abstract (decimal Re, decimal Im) GetValue();
+        public (EDecimal Re, EDecimal Im) Value => GetValue();
+
+        protected abstract (EDecimal Re, EDecimal Im) GetValue();
 
         /// <summary>
         /// Checks affiliation of a number
@@ -106,6 +113,7 @@ namespace AngouriMath.Core.Numerix
         /// </summary>
         /// <returns></returns>
         public string Latexise() => Latexise(false);
+
         internal string Latexise(bool needParentheses)
         {
             var str = SuperSwitch(
@@ -116,7 +124,11 @@ namespace AngouriMath.Core.Numerix
                 Type,
                 this
             );
-            return needParentheses ? "(" + str + ")" : str;
+            // If parentheses are required, they might be only required when complicated numbers are wrapped,
+            // such as fractions and complex but not a single i
+            return needParentheses && this.Value != (EDecimal.Zero, EDecimal.One) && (this.IsImaginary() || this.IsFraction())
+                ? @"\left(" + str + @"\right)"
+                : str;
         }
 
         public override string ToString()
@@ -132,7 +144,7 @@ namespace AngouriMath.Core.Numerix
                 Type,
                 this
             );
-            return needParentheses ? "(" + str + ")" : str;
+            return needParentheses && (this.IsImaginary() || this.IsFraction()) ? "(" + str + ")" : str;
         }
 
         /// <summary>
@@ -143,22 +155,33 @@ namespace AngouriMath.Core.Numerix
         /// <param name="value"></param>
         /// <param name="rootPower"></param>
         /// <returns></returns>
-
-        // New with decimals (not working)
-        
         public static Set GetAllRoots(ComplexNumber value, long rootPower)
         {
             MathS.Settings.FloatToRationalIterCount.Set(0);
             var res = new Set();
-            decimal phi = (Number.Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Value.Re;
-            decimal newMod = Number.Pow(Number.Abs(value), 1.0 / rootPower).Value.Re;
+            EDecimal phi = (Number.Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Value.Re;
+            EDecimal newMod = Number.Pow(Number.Abs(value), 1.0 / rootPower).Value.Re;
             var i = new ComplexNumber(0, 1);
             for (int n = 0; n < rootPower; n++)
             {
-                decimal newPow = phi / rootPower + 2 * MathS.DecimalConst.pi * n / rootPower;
-                res.Add(newMod * Number.Pow(MathS.DecimalConst.e, i * newPow));
+                EDecimal newPow = RealNumber.CtxAdd(RealNumber.CtxDivide(phi, rootPower), RealNumber.CtxDivide(RealNumber.CtxMultiply(RealNumber.CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
+                var root = newMod.ToNumber() * Number.Pow(MathS.DecimalConst.e, i * newPow.ToNumber());
+                res.Add(root);
             }
             MathS.Settings.FloatToRationalIterCount.Unset();
+            return res;
+        }
+
+        public static Set GetAllRootsOf1(long rootPower)
+        {
+            var res = new Set();
+            res.FastAddingMode = true;
+            for (int i = 0; i < rootPower; i++)
+            {
+                var angle = Number.CreateRational(i * 2, rootPower) * MathS.pi;
+                res.Add((MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplify());
+            }
+            res.FastAddingMode = false;
             return res;
         }
 
@@ -192,5 +215,23 @@ namespace AngouriMath.Core.Numerix
         {
             
         }
+    }
+
+    internal static class EDecimalWrapper
+    {
+        internal static bool IsGreater(EDecimal a, EDecimal b)
+            => a.CompareTo(b) == 1;
+
+        internal static bool IsLess(EDecimal a, EDecimal b)
+            => a.CompareTo(b) == -1;
+
+        internal static bool IsEqual(EDecimal a, EDecimal b)
+            => a.CompareTo(b) == 0;
+
+        internal static bool IsGreaterOrEqual(EDecimal a, EDecimal b)
+            => IsGreater(a, b) || IsEqual(a, b);
+
+        internal static bool IsLessOrEqual(EDecimal a, EDecimal b)
+            => IsLess(a, b) || IsEqual(a, b);
     }
 }

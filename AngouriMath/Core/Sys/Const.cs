@@ -19,6 +19,8 @@
 using System.Collections.Generic;
 using System.Text;
  using System.Security.Cryptography;
+ using AngouriMath.Core.Numerix;
+ using AngouriMath.Core.TreeAnalysis;
  using AngouriMath.Functions;
 
 namespace AngouriMath
@@ -26,7 +28,7 @@ namespace AngouriMath
     /// <summary>
     /// This class contains some extra functions for different purposes
     /// </summary>
-    internal static class Const
+    public static partial class Const
     {
         internal static readonly int PRIOR_SUM = 2;
         internal static readonly int PRIOR_MINUS = 2;
@@ -35,7 +37,7 @@ namespace AngouriMath
         internal static readonly int PRIOR_POW = 6;
         internal static readonly int PRIOR_FUNC = 8;
         internal static readonly int PRIOR_VAR = 10;
-        internal static readonly int PRIOR_NUM = 2;
+        internal static readonly int PRIOR_NUM = 10;
         internal static readonly string ARGUMENT_DELIMITER = ",";
 
         /// <summary>
@@ -187,5 +189,34 @@ namespace AngouriMath
 
         internal static Entity EvalIfCan(Entity a)
             => MathS.CanBeEvaluated(a) ? a.Eval() : a;
+
+        public static Func<Entity, int> DefaultComplexityCriteria = new Func<Entity, int>(expr =>
+        {
+            var res = 0;
+
+            // Number of nodes
+            res += expr.Complexity();
+
+            // Number of variables
+            res += TreeAnalyzer.Count(expr, entity => entity.entType == Entity.EntType.VARIABLE);
+
+            // Number of variables
+            res += TreeAnalyzer.Count(expr, entity => entity.entType == Entity.EntType.OPERATOR && entity.Name == "divf") / 2;
+
+            // Number of negative powers
+            res += TreeAnalyzer.Count(expr, (entity) =>
+            {
+                if (!(entity.entType == Entity.EntType.OPERATOR &&
+                      entity.Name == "powf" &&
+                      entity.Children[1].entType == Entity.EntType.NUMBER))
+                    return false;
+                var numEntity = entity.Children[1] as NumberEntity;
+                if (numEntity.Value.IsImaginary())
+                    return false;
+                var realNumber = numEntity.Value as RealNumber;
+                return realNumber < 0;
+            });
+            return res;
+        });
     }
 }

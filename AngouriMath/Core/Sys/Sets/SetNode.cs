@@ -150,6 +150,8 @@ namespace AngouriMath.Core
 
         internal List<Piece> Pieces = new List<Piece>();
 
+
+
         internal void AddPiece(Piece piece)
         {
             if (FastAddingMode)
@@ -161,6 +163,13 @@ namespace AngouriMath.Core
             if (!piece.IsNumeric())
             {
                 if (Pieces.All(p => p != piece))
+                    Pieces.Add(piece);
+                return;
+            }
+            else if (this.Power == PowerLevel.FINITE && piece.Type == Piece.PieceType.ENTITY)
+            {
+                var evaled = (piece as OneElementPiece).Evaluated;
+                if (Pieces.Where(p => p.IsNumeric()).Select(p => (p as OneElementPiece).Evaluated).All(p => p != evaled))
                     Pieces.Add(piece);
                 return;
             }

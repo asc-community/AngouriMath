@@ -15,6 +15,7 @@
 
 using System;
 using System.Numerics;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -35,7 +36,7 @@ namespace AngouriMath.Core.Numerix
                     a, b);
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpSum(a, b) as RealNumber;
-            return Number.Functional.Downcast(new RealNumber(a.Value + b.Value)) as RealNumber;
+            return Number.Functional.Downcast(new RealNumber(CtxAdd(a.Value, b.Value))) as RealNumber;
         }
 
         public static RealNumber operator -(RealNumber a, RealNumber b)
@@ -53,7 +54,7 @@ namespace AngouriMath.Core.Numerix
                     a, b);
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpSub(a, b) as RealNumber;
-            return Number.Functional.Downcast(new RealNumber(a.Value - b.Value)) as RealNumber;
+            return Number.Functional.Downcast(new RealNumber(CtxSubtract(a.Value, b.Value))) as RealNumber;
         }
 
         public static RealNumber operator *(RealNumber a, RealNumber b)
@@ -64,56 +65,63 @@ namespace AngouriMath.Core.Numerix
                     () => new RealNumber(UndefinedState.POSITIVE_INFINITY),
                     () => new RealNumber(UndefinedState.NEGATIVE_INFINITY),
                     () => new RealNumber(UndefinedState.NEGATIVE_INFINITY),
-                    () => b.Value > 0 ? new RealNumber(UndefinedState.POSITIVE_INFINITY) : new RealNumber(UndefinedState.NEGATIVE_INFINITY),
-                    () => b.Value > 0 ? new RealNumber(UndefinedState.NEGATIVE_INFINITY) : new RealNumber(UndefinedState.POSITIVE_INFINITY),
-                    () => a.Value > 0 ? new RealNumber(UndefinedState.POSITIVE_INFINITY) : new RealNumber(UndefinedState.NEGATIVE_INFINITY),
-                    () => a.Value > 0 ? new RealNumber(UndefinedState.NEGATIVE_INFINITY) : new RealNumber(UndefinedState.POSITIVE_INFINITY),
+                    () => EDecimalWrapper.IsGreater(b.Value, 0) ? new RealNumber(UndefinedState.POSITIVE_INFINITY) : new RealNumber(UndefinedState.NEGATIVE_INFINITY),
+                    () => EDecimalWrapper.IsGreater(b.Value, 0) ? new RealNumber(UndefinedState.NEGATIVE_INFINITY) : new RealNumber(UndefinedState.POSITIVE_INFINITY),
+                    () => EDecimalWrapper.IsGreater(a.Value, 0) ? new RealNumber(UndefinedState.POSITIVE_INFINITY) : new RealNumber(UndefinedState.NEGATIVE_INFINITY),
+                    () => EDecimalWrapper.IsGreater(a.Value, 0) ? new RealNumber(UndefinedState.NEGATIVE_INFINITY) : new RealNumber(UndefinedState.POSITIVE_INFINITY),
                     a, b);
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpMul(a, b) as RealNumber;
-            return Number.Functional.Downcast(new RealNumber(a.Value * b.Value)) as RealNumber;
+            return Number.Functional.Downcast(new RealNumber(CtxMultiply(a.Value, b.Value))) as RealNumber;
         }
 
         public static RealNumber operator /(RealNumber a, RealNumber b)
         {
             if (!a.IsDefinite() || !b.IsDefinite())
                 return UndefinedStateSuperSwitch.Switch(
-                    () => new RealNumber(UndefinedState.NAN),
-                    () => new RealNumber(UndefinedState.NAN),
-                    () => new RealNumber(UndefinedState.NAN),
-                    () => new RealNumber(UndefinedState.NAN),
-                    () => b.Value >= 0 ? new RealNumber(UndefinedState.POSITIVE_INFINITY) : new RealNumber(UndefinedState.NEGATIVE_INFINITY),
-                    () => b.Value >= 0 ? new RealNumber(UndefinedState.NEGATIVE_INFINITY) : new RealNumber(UndefinedState.POSITIVE_INFINITY),
-                    () => new IntegerNumber(BigInteger.Zero), 
-                    () => new IntegerNumber(BigInteger.Zero),
+                    () => RealNumber.NaN(),
+                    () => RealNumber.NaN(),
+                    () => RealNumber.NaN(),
+                    () => RealNumber.NaN(),
+                    () => b.Value switch {
+                                var x when EDecimalWrapper.IsGreater(x, 0) => new RealNumber(UndefinedState.POSITIVE_INFINITY),
+                                var x when EDecimalWrapper.IsLess(x, 0) => new RealNumber(UndefinedState.NEGATIVE_INFINITY),
+                                var x when EDecimalWrapper.IsEqual(x, 0) => RealNumber.NaN()
+                    },
+                    () => b.Value switch {
+                        var x when EDecimalWrapper.IsGreater(x, 0) => new RealNumber(UndefinedState.NEGATIVE_INFINITY),
+                        var x when EDecimalWrapper.IsLess(x, 0) => new RealNumber(UndefinedState.POSITIVE_INFINITY),
+                        var x when EDecimalWrapper.IsEqual(x, 0) => RealNumber.NaN()
+                    },
+                    () => 0,
+                    () => 0,
                     a, b);
             if (!Functional.BothAreEqual(a, b, HierarchyLevel.REAL))
                 return Number.OpDiv(a, b) as RealNumber;
-            if (b.Value != 0)
-                return Number.Functional.Downcast(new RealNumber(a.Value / b.Value)) as RealNumber;
+            if (!EDecimalWrapper.IsEqual(b.Value, 0))
+                return Number.Functional.Downcast(new RealNumber(CtxDivide(a.Value, b.Value))) as RealNumber;
             else
-                return a.Value switch
-                {
-                    var x when x > 0 => new RealNumber(UndefinedState.POSITIVE_INFINITY),
-                    var x when x < 0 => new RealNumber(UndefinedState.NEGATIVE_INFINITY),
-                    _ => new RealNumber(UndefinedState.NAN)
-                };
+                return new RealNumber(UndefinedState.NAN);
         }
 
         public static implicit operator float(RealNumber value)
             => (float) value.Value;
         public static implicit operator double(RealNumber value)
             => (double)value.Value;
-        public static implicit operator decimal(RealNumber value)
+        public static implicit operator EDecimal(RealNumber value)
             => value.Value;
+        public static implicit operator decimal(RealNumber value)
+            => value.Value.ToDecimal();
         public static implicit operator RealNumber(double value)
-            => new RealNumber(value);
+            => Number.Create(value);
+        public static implicit operator RealNumber(EDecimal value)
+            => Number.Create(value);
         public static implicit operator RealNumber(decimal value)
-            => new RealNumber(value);
+            => Number.Create(value);
         public static implicit operator RealNumber(int value)
-            => new RealNumber(value);
+            => Number.Create(value);
         public static implicit operator RealNumber(long value)
-            => new RealNumber(value);
+            => Number.Create(value);
         public static bool operator >(RealNumber a, RealNumber b)
         {
             if (a.State == UndefinedState.NAN || b.State == UndefinedState.NAN)
@@ -126,7 +134,7 @@ namespace AngouriMath.Core.Numerix
                 return true; // anything is greater than -oo
             if (b.State == UndefinedState.POSITIVE_INFINITY)
                 return false; // anything is never greater than +oo
-            return a.Value > b.Value;
+            return EDecimalWrapper.IsGreater(a.Value, b.Value);
         }
 
         public static bool operator >=(RealNumber a, RealNumber b)
@@ -143,11 +151,29 @@ namespace AngouriMath.Core.Numerix
             => a < b || a == b;
 
         internal static bool AreEqual(RealNumber a, RealNumber b)
-            => a.IsDefinite() && b.IsDefinite() && Math.Abs(a.Value - b.Value) < MathS.Settings.PrecisionErrorCommon ||
+            => a.IsDefinite() && b.IsDefinite() && EDecimalWrapper.IsLess((CtxSubtract(a.Value, b.Value)).Abs(), MathS.Settings.PrecisionErrorCommon) ||
                a.State == b.State && !a.IsDefinite();
 
         public static RealNumber operator -(RealNumber a)
-            => (-1 * a).AsRealNumber();
+            => Functional.Downcast(-1 * a) as RealNumber;
+
+        internal static EDecimal CtxDivide(EDecimal a, EDecimal b)
+            => a.DivideToExponent(b, -MathS.Settings.DecimalPrecisionContext.Value.Precision);
+        internal static EDecimal CtxMultiply(EDecimal a, EDecimal b)
+            => a.Multiply(b, MathS.Settings.DecimalPrecisionContext);
+        internal static EDecimal CtxAdd(EDecimal a, EDecimal b)
+            => a.Add(b, MathS.Settings.DecimalPrecisionContext);
+        internal static EDecimal CtxSubtract(EDecimal a, EDecimal b)
+            => a.Subtract(b, MathS.Settings.DecimalPrecisionContext);
+
+        internal static EInteger CtxDivide(EInteger a, EInteger b)
+            => a.Divide(b);
+        internal static EInteger CtxMultiply(EInteger a, EInteger b)
+            => a.Multiply(b);
+        internal static EInteger CtxAdd(EInteger a, EInteger b)
+            => a.Add(b);
+        internal static EInteger CtxSubtract(EInteger a, EInteger b)
+            => a.Subtract(b);
     }
 }
 

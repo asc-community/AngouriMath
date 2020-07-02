@@ -5,12 +5,14 @@ namespace DotnetBenchmark
 {
     public class AlgebraTest
     {
-        private readonly VariableEntity x = MathS.Var("x");
-        private readonly Entity exprEasy;
-        private readonly Entity exprMedium;
-        private readonly Entity exprHard;
-        private readonly Entity exprSolvable;
-        public AlgebraTest()
+        private VariableEntity x = MathS.Var("x");
+        private Entity exprEasy;
+        private Entity exprMedium;
+        private Entity exprHard;
+        private Entity exprSolvable;
+
+        [GlobalSetup]
+        public void Setup()
         {
             exprEasy = x + MathS.Sqr(x) - 3;
             exprMedium = MathS.Sin(x + MathS.Cos(x)) + MathS.Sqrt(x + MathS.Sqr(x));
@@ -24,7 +26,7 @@ namespace DotnetBenchmark
         [Benchmark]
         public void SolveHard() => exprHard.SolveNt(x);
         [Benchmark]
-        public void SolveAnal() => exprSolvable.Solve(x);
+        public void SolveAnal() => exprSolvable.SolveEquation(x);
 
     }
 }

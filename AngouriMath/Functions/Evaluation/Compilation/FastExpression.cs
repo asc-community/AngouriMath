@@ -17,7 +17,9 @@
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Functions.Evaluation.Compilation;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
@@ -111,23 +113,25 @@ namespace AngouriMath
         /// <summary>
         /// Calls the compiled function (synonim to Substitute)
         /// </summary>
-        /// <param name="variables">
+        /// <param name="values">
         /// List arguments in the same order in which you compiled the function
         /// </param>
         /// <returns></returns>
-        public ComplexNumber Call(params ComplexNumber[] variables)
-            => Substitute(variables);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Complex Call(params Complex[] values)
+            => Substitute(values);
 
         /// <summary>
         /// Calls the compiled function (synonim to Call)
         /// </summary>
-        /// <param name="variables">
+        /// <param name="values">
         /// List arguments in the same order in which you compiled the function
         /// </param>
         /// <returns></returns>
-        public ComplexNumber Substitute(params ComplexNumber[] variables)
+        // TODO: Optimization
+        public Complex Substitute(params Complex[] values)
         {
-            if (variables.Length != varCount)
+            if (values.Length != varCount)
                 throw new SysException("Wrong amount of parameters");
             Instruction instruction;
             for (int i = 0; i < instructions.Count; i++)
@@ -136,7 +140,7 @@ namespace AngouriMath
                 switch (instruction.Type)
                 {
                     case Instruction.InstructionType.PUSHVAR:
-                        stack.Push(variables[instruction.VarNumber].AsComplex());
+                        stack.Push(values[instruction.VarNumber]);
                         break;
                     case Instruction.InstructionType.PUSHCONST:
                         stack.Push(instruction.Value);
@@ -196,25 +200,11 @@ namespace AngouriMath
                         break;
                 }
             }
-            var res = stack.Pop();
 
-            RealNumber Normalize(double value)
-            {
-                if (value > maxDecimal)
-                    return RealNumber.PositiveInfinity();
-                else if (value < minDecimal)
-                    return RealNumber.NegativeInfinity();
-                else
-                    return Number.Create(value);
-            }
-
-            var re = Normalize(res.Real);
-            var im = Normalize(res.Imaginary);
-            return Number.Create(re, im);
+            return stack.Pop();
         }
 
-        private static readonly double maxDecimal = (double)decimal.MaxValue;
-        private static readonly double minDecimal = (double)decimal.MinValue;
+        
 
         /// <summary>
         /// Might be useful for debug if a function works too slowly

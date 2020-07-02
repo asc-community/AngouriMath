@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -12,6 +12,8 @@
  * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -65,16 +67,16 @@ namespace AngouriMath.Core.Numerix
         public static bool AreEqual(ComplexNumber a, ComplexNumber b)
             => a.Real == b.Real && a.Imaginary == b.Imaginary;
 
-
+        
         public static implicit operator ComplexNumber(int value)
-            => new ComplexNumber(value);
+            => Number.Create(value);
         public static implicit operator ComplexNumber(double value)
-            => new ComplexNumber(value);
-        public static implicit operator ComplexNumber(decimal value)
-            => new ComplexNumber(value);
+            => Number.Create(value);
+        public static implicit operator ComplexNumber(EDecimal value)
+            => Number.Create(value);
         public static implicit operator ComplexNumber(float value)
-            => new ComplexNumber(value);
-        public static implicit operator ComplexNumber((decimal re, decimal im) value)
-            => new ComplexNumber(value.re, value.im);
+            => Number.Create(value);
+        public static implicit operator ComplexNumber((EDecimal re, EDecimal im) value)
+            => Number.Create(value.re, value.im);
     }
 }

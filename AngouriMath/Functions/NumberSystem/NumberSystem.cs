@@ -18,6 +18,9 @@
 ﻿using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
+ using System.Numerics;
+ using AngouriMath.Core.Numerix;
+ using PeterO.Numbers;
 
 namespace AngouriMath.Functions.NumberSystem
 {
@@ -50,14 +53,14 @@ namespace AngouriMath.Functions.NumberSystem
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        internal static string IntToBaseN(int num, int N)
+        internal static string IntToBaseN(EInteger num, int N)
         {
             if (num < 0)
                 throw new SysException("Error in IntToBaseN");
             string res = "";
             while (num > 0)
             {
-                res = ALPHABET_TOCHAR[num % N] + res;
+                res = ALPHABET_TOCHAR[(num % N).ToInt32Checked()] + res;
                 num /= N;
             }
             return res;
@@ -69,20 +72,23 @@ namespace AngouriMath.Functions.NumberSystem
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        internal static string FloatToBaseN(decimal num /*should be < 1*/, int N)
+        internal static string FloatToBaseN(EDecimal num /*should be < 1*/, int N)
         {
-            if (num > 1 || num < 0)
+            if (EDecimalWrapper.IsGreater(num, 1) || EDecimalWrapper.IsLess(num, 0))
                 throw new SysException("Error in FloatToBaseN");
             string res = "";
-            while (num > 0)
+            while (EDecimalWrapper.IsGreater(num, 0))
             {
-                num *= N;
-                int intPart = (int)Math.Floor(num);
-                res += ALPHABET_TOCHAR[intPart];
+                num = RealNumber.CtxMultiply(num, N);
+
+                EInteger intPart = num.RoundToIntegerExact(FloorContext).ToEInteger();
+                res += ALPHABET_TOCHAR[intPart.ToInt32Checked()];
                 num -= intPart;
             }
             return res;
         }
+
+        internal static EContext FloorContext = new EContext(100, ERounding.Floor, -30, 30, false);
 
         /// <summary>
         /// if a number is A + B where A is integer and B is in [0; 1], it performs operations
@@ -91,16 +97,16 @@ namespace AngouriMath.Functions.NumberSystem
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        internal static string ToBaseN(decimal num, int N)
+        internal static string ToBaseN(EDecimal num, int N)
         {
             if (N > ALPHABET_TOCHAR.Length)
                 throw new MathSException("N should be <= than " + ALPHABET_TOCHAR.Length);
-            string sign = num < 0 ? "-" : "";
-            num = Math.Abs(num);
-            int intPart = (int)Math.Floor(num);
-            decimal floatPart = num - intPart;
+            string sign = EDecimalWrapper.IsLess(num, 0) ? "-" : "";
+            num = num.Abs();
+            var intPart = num.RoundToIntegerExact(FloorContext).ToEInteger();
+            EDecimal floatPart = RealNumber.CtxSubtract(num, intPart);
 
-            string rightPart = floatPart != 0 ? "." + FloatToBaseN(floatPart, N) : "";
+            string rightPart = !EDecimalWrapper.IsEqual(floatPart, 0) ? "." + FloatToBaseN(floatPart, N) : "";
             string leftPart = sign + IntToBaseN(intPart, N);
 
             return leftPart + rightPart;
@@ -130,13 +136,13 @@ namespace AngouriMath.Functions.NumberSystem
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        internal static decimal FloatFromBaseN(string num, int N)
+        internal static EDecimal FloatFromBaseN(string num, int N)
         {
-            decimal res = 0;
+            EDecimal res = 0;
             for (int i = 0; i < num.Length; i++)
             {
                 char digit = num[i];
-                res += ALPHABET_FROMCHAR[digit] / (decimal)Math.Pow(N, i + 1);
+                res = RealNumber.CtxAdd(res, RealNumber.CtxDivide(ALPHABET_FROMCHAR[digit], EDecimal.FromInt32(N).Pow(i + 1)));
             }
             return res;
         }
@@ -147,7 +153,7 @@ namespace AngouriMath.Functions.NumberSystem
         /// <param name="num"></param>
         /// <param name="N"></param>
         /// <returns></returns>
-        internal static decimal FromBaseN(string num, int N)
+        internal static EDecimal FromBaseN(string num, int N)
         {
             int sign = num[0] == '-' ? -1 : 1;
             num = num[0] == '-' ? num.Substring(1) : num;
