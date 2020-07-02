@@ -13,6 +13,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using PeterO.Numbers;
+
 namespace AngouriMath.Core.Numerix
 {
     public partial class ComplexNumber
@@ -65,16 +67,16 @@ namespace AngouriMath.Core.Numerix
         public static bool AreEqual(ComplexNumber a, ComplexNumber b)
             => a.Real == b.Real && a.Imaginary == b.Imaginary;
 
-
+        
         public static implicit operator ComplexNumber(int value)
-            => new ComplexNumber(value);
+            => Number.Create(value);
         public static implicit operator ComplexNumber(double value)
-            => new ComplexNumber(value);
-        public static implicit operator ComplexNumber(decimal value)
-            => new ComplexNumber(value);
+            => Number.Create(value);
+        public static implicit operator ComplexNumber(EDecimal value)
+            => Number.Create(value);
         public static implicit operator ComplexNumber(float value)
-            => new ComplexNumber(value);
-        public static implicit operator ComplexNumber((decimal re, decimal im) value)
-            => new ComplexNumber(value.re, value.im);
+            => Number.Create(value);
+        public static implicit operator ComplexNumber((EDecimal re, EDecimal im) value)
+            => Number.Create(value.re, value.im);
     }
 }

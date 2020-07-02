@@ -14,8 +14,10 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
@@ -139,6 +141,29 @@ namespace AngouriMath.Core.Numerix
         public static bool operator !=(Number a, Number b)
             => !(a == b);
 
+        internal static ComplexNumber FindGoodRoot(ComplexNumber @base, IntegerNumber power)
+        {
+            var list = new List<ComplexNumber>();
+            foreach (var root in GetAllRoots(@base, (long) power.Value).FiniteSet())
+            {
+                MathS.Settings.FloatToRationalIterCount.Set(15);
+                    MathS.Settings.PrecisionErrorZeroRange.Set(1e-6m);
+                        var downcasted = Functional.Downcast((root as NumberEntity).Value) as ComplexNumber;
+                    MathS.Settings.PrecisionErrorZeroRange.Unset();
+                MathS.Settings.FloatToRationalIterCount.Unset();
+                if (downcasted.IsRational() && Number.IsZero(Number.Pow(downcasted, power) - @base)) // To keep user's desired precision
+                    return downcasted;
+                list.Add(downcasted);
+            }
+            foreach (var el in list)
+                if (el.IsReal() && (el as RealNumber) > 0)
+                    return el;
+            foreach (var el in list)
+                if (el.IsReal())
+                    return el;
+            return list[0];
+        }
+
         /// <summary>
         /// e. g. Pow(2, 5) = 32
         /// </summary>
@@ -149,11 +174,15 @@ namespace AngouriMath.Core.Numerix
         /// The power of the exponential, base^power
         /// </param>
         /// <returns></returns>
-        public static ComplexNumber Pow(Number @base, Number power)
+        public static ComplexNumber Pow(ComplexNumber @base, ComplexNumber power)
         {
             // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
             if (power.IsInteger())
                 return Functional.Downcast(Functional.BinaryIntPow(@base as ComplexNumber, power.AsInt())) as ComplexNumber;
+                    
+            if (power.IsRational() && ((power as RationalNumber).Denominator.Value).Abs() < 10) // there should be a minimal threshold to avoid long searches 
+                return Number.Pow(FindGoodRoot(@base, (power as RationalNumber).Denominator), (power as RationalNumber).Numerator);
+                
             var baseCom = @base.AsComplexNumber();
             var powerCom = power.AsComplexNumber();
             if (baseCom.IsDefinite() && powerCom.IsDefinite())

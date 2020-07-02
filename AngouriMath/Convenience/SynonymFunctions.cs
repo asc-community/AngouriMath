@@ -17,6 +17,10 @@
 
 ﻿using System;
 using System.Collections.Generic;
+ using System.Numerics;
+ using AngouriMath.Core;
+ using AngouriMath.Core.Numerix;
+ using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -56,5 +60,109 @@ namespace AngouriMath
             else
                 return tree;
         }
+    }
+}
+
+namespace AngouriMath.Extensions
+{
+    public static class AMExtensions
+    {
+        public static ComplexNumber ToComplexNumber(this Complex complex)
+            => Number.Create(complex);
+
+        public static Entity ToEntity(this String expr)
+            => MathS.FromString(expr);
+
+        public static Entity Simplify(this String expr)
+            => expr.ToEntity().Simplify();
+
+        public static ComplexNumber Eval(this String expr)
+            => expr.ToEntity().Eval();
+
+        public static Entity Expand(this String expr)
+            => expr.ToEntity().Expand();
+
+        public static Entity Collapse(this String expr)
+            => expr.ToEntity().Collapse();
+
+        public static Entity Substitute(this String expr, VariableEntity var, Entity value)
+            => expr.ToEntity().Substitute(var, value);
+
+        public static Set SolveEquation(this String expr, VariableEntity x)
+            => expr.ToEntity().SolveEquation(x);
+
+        public static RealNumber ToNumber(this EDecimal value)
+            => Number.Create(value);
+
+        public static RealNumber ToNumber(this decimal value)
+            => Number.Create(value);
+
+        public static RealNumber ToNumber(this double value)
+            => Number.Create(value);
+
+        public static RealNumber ToNumber(this float value)
+            => Number.Create(value);
+
+        public static IntegerNumber ToNumber(this EInteger value)
+            => Number.Create(value);
+
+        public static IntegerNumber ToNumber(this int value)
+            => Number.Create(value);
+
+        public static IntegerNumber ToNumber(this long value)
+            => Number.Create(value);
+
+        public static string Latexise(this String str)
+            => str.ToEntity().Latexise();
+
+        public static FastExpression Compile(this String str, params VariableEntity[] variables)
+            => str.ToEntity().Compile(variables);
+
+        // C# can't into templates :(
+        /*
+
+        res = ""
+
+        for i in range(2, 10):
+            res += "public static Tensor SolveSystem(this ("
+            res += ", ".join(["string eq" + str(j) for j in range(1, i + 1)])
+            res += ") eqs, "
+            res += ", ".join(["string var" + str(j) for j in range(1, i + 1)])
+            res += ")\n"
+            res += "    => MathS.Equations("
+            res += ", ".join(["eqs.eq" + str(j) for j in range(1, i + 1)])
+            res += ").Solve("
+            res += ", ".join(["var" + str(j) for j in range(1, i + 1)])
+            res += ");\n\n"
+
+        print(res)
+
+        */
+        public static Tensor SolveSystem(this (string eq1, string eq2) eqs, string var1, string var2)
+            => MathS.Equations(eqs.eq1, eqs.eq2).Solve(var1, var2);
+
+        public static Tensor SolveSystem(this (string eq1, string eq2, string eq3) eqs, string var1, string var2, string var3)
+            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3).Solve(var1, var2, var3);
+
+        public static Tensor SolveSystem(this (string eq1, string eq2, string eq3, string eq4) eqs, string var1, string var2, string var3, string var4)
+            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4).Solve(var1, var2, var3, var4);
+
+        public static Tensor SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5) eqs, string var1, string var2, string var3, string var4, string var5)
+            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5).Solve(var1, var2, var3, var4, var5);
+
+        public static Tensor SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6) eqs, string var1, string var2, string var3, string var4, string var5, string var6)
+            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6).Solve(var1, var2, var3, var4, var5, var6);
+
+        public static Tensor SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7)
+            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7).Solve(var1, var2, var3, var4, var5, var6, var7);
+
+        public static Tensor SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7, string eq8) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7, string var8)
+            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7, eqs.eq8).Solve(var1, var2, var3, var4, var5, var6, var7, var8);
+
+        public static Tensor SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7, string eq8, string eq9) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7, string var8, string var9)
+            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7, eqs.eq8, eqs.eq9).Solve(var1, var2, var3, var4, var5, var6, var7, var8, var9);
+
+        public static Tensor SolveSystem(this Entity[] equations, params VariableEntity[] vars)
+            => MathS.Equations(equations).Solve(vars);
     }
 }

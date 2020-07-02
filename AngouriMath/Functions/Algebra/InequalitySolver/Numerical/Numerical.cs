@@ -62,8 +62,9 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
                 var left = realRoots[i].Eval().Real;
                 var right = realRoots[i + 1].Eval().Real;
                 var point = (left + right) / 2;
-                var val = compiled.Call(point);
-                if (Corresponds(val.AsRealNumber()))
+                var val = compiled.Call(point.AsComplex());
+                //if (Corresponds(val.AsRealNumber()))
+                if (Corresponds(val.Real))
                     result.Add((left, right, false, false));
             }
             if (sign.Contains("="))

@@ -18,8 +18,10 @@ namespace UnitTests.Algebra
         /// <param name="equation"></param>
         /// <param name="toSub"></param>
         /// <param name="varValue"></param>
-        public static void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue)
+        public static void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber subValue = null)
         {
+            if (subValue is null)
+                subValue = 3;
             string LimitString(string s)
             {
                 if (s.Length < 30)
@@ -28,18 +30,22 @@ namespace UnitTests.Algebra
                     return s.Substring(0, 10) + "..." + s.Substring(s.Length - 10, 10);
             }
             string eqNormal = equation.ToString();
-            var err = CheckRoots(equation, toSub, varValue);
+            var err = CheckRoots(equation, toSub, varValue, subValue);
             Assert.IsTrue(err < 0.001m, "Error is : " + err + "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
         }
 
-        public static decimal CheckRoots(Entity equation, VariableEntity toSub, Entity varValue)
+        public static decimal CheckRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber subValue)
         {
             equation = equation.Substitute(toSub, varValue);
             var allVars = MathS.Utils.GetUniqueVariables(equation);
-            
+
+            var offset = 0;
             foreach (var vr in allVars.FiniteSet())
-                equation = equation.Substitute(vr.Name, 3
+            {
+                equation = equation.Substitute(vr.Name, subValue + offset
                     /* MUST be integer to correspond to integer coefficient of periodic roots*/);
+                offset++;
+            }
 
             return Number.Abs(equation.Eval());
         }
@@ -48,6 +54,14 @@ namespace UnitTests.Algebra
         {
             Assert.IsFalse(roots.Power == Set.PowerLevel.INFINITE, "Set of roots must be finite");
             Assert.IsTrue(roots.Count == target, string.Format("Number of roots must be equal {0} but is {1}", target, roots.Count));
+        }
+
+        public void TestSolver(Entity expr, int rootCount, ComplexNumber toSub = null)
+        {
+            var roots = expr.SolveEquation(x);
+            AssertRootCount(roots, rootCount);
+            foreach (var root in roots.FiniteSet())
+                AssertRoots(expr, x, root, toSub);
         }
 
         [TestMethod]
@@ -73,7 +87,9 @@ namespace UnitTests.Algebra
         {
             var eq = x.Pow(2) + 2 * x + 1;
             MathS.Settings.PrecisionErrorCommon.Set(1e-8m);
-            var roots = eq.SolveNt(x, precision: 100);
+            MathS.Settings.NewtonSolver.Set(new NewtonSetting() {Precision = 100});
+            var roots = eq.SolveNt(x);
+            MathS.Settings.NewtonSolver.Unset();
             MathS.Settings.PrecisionErrorCommon.Unset();
             // AssertRootCount(roots, 1); TODO: remove // after fix
             foreach (var root in roots.FiniteSet())
@@ -500,13 +516,28 @@ namespace UnitTests.Algebra
 
         [TestMethod]
         public void TestCDSolver4()
-        {
-            Entity expr = "(x - b) / (x + a) + c + (x - c) / (x + d)";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 2);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
+        => TestSolver("(x - b) / (x + a) + c + (x - c) / (x + d)", 2, 11);
+
+        [TestMethod]
+        public void TestFractionedPoly1()
+            => TestSolver("x + sqr(x + a) + c", 2);
+
+        [TestMethod]
+        public void TestFractionedPoly2()
+            => TestSolver("x + sqr(x^0.1 + a) + c", 0);
+
+        
+        [TestMethod]
+        public void TestFractionedPoly3()
+            => TestSolver("(x + 6)^(1/6) + x + x3 + a", 0);
+
+        [TestMethod]
+        public void TestFractionedPoly4()
+            => TestSolver("sqrt(x + 1) + sqrt(x + 2) + a + x", 0);
+
+        [TestMethod]
+        public void TestFractionedPoly5()
+            => TestSolver("(x + 1)^(1/3) - x - a", 3);
     }
 }
 

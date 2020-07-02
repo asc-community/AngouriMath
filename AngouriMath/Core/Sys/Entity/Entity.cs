@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Numerics;
 using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -77,13 +78,14 @@ namespace AngouriMath
             return res;
         }
         
-        public static implicit operator Entity(int num) => new NumberEntity(Number.Create(num));
-        public static implicit operator Entity(long num) => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(int num)           => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(long num)          => new NumberEntity(Number.Create(num));
         public static implicit operator Entity(ComplexNumber num) => new NumberEntity(num);
-        public static implicit operator Entity(decimal num) => new NumberEntity(new RealNumber(num));
-        public static implicit operator Entity(float num) => new NumberEntity(new RealNumber(num));
-        public static implicit operator Entity(double num) => new NumberEntity(new RealNumber(num));
-        public static implicit operator Entity(string expr) => MathS.FromString(expr);
+        public static implicit operator Entity(EDecimal num)       => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(decimal num) => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(float num)         => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(double num)        => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(string expr)       => MathS.FromString(expr);
 
         /// <summary>
         /// Deep but stupid comparison
@@ -111,9 +113,16 @@ namespace AngouriMath
     /// </summary>
     public partial class NumberEntity : Entity
     {
-        public NumberEntity(ComplexNumber value) : base(value.ToString(), EntType.NUMBER) 
+        public NumberEntity(ComplexNumber value) : base(value.ToString(), EntType.NUMBER)
         {
-            Priority = Const.PRIOR_NUM;
+            if (value.IsFraction())
+                Priority = Const.PRIOR_DIV;
+            else if (value.IsImaginary() && value.Real != 0)
+                Priority = Const.PRIOR_SUM;
+            else if (value.Real < 0 || value.Imaginary < 0)
+                Priority = Const.PRIOR_MUL;
+            else
+                Priority = Const.PRIOR_NUM;
             Value = value;
         }
 

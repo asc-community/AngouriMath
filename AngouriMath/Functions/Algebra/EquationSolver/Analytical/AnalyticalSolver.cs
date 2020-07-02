@@ -326,7 +326,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var preciseValue = root.Eval();
             MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
                 MathS.Settings.FloatToRationalIterCount.Set(20);
-                    var downcasted = Number.Functional.Downcast(preciseValue) as ComplexNumber;
+                var downcasted = Number.Functional.Downcast(preciseValue) as ComplexNumber;
                 MathS.Settings.FloatToRationalIterCount.Unset();
             MathS.Settings.PrecisionErrorZeroRange.Unset();
             var errorExpr = equation.Substitute(x, downcasted);
@@ -369,12 +369,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             Set res = PolynomialSolver.SolveAsPolynomial(expr, x);
             if (res != null)
             {
-                    res.FiniteApply(e => e.InnerSimplify());
+                res.FiniteApply(e => e.InnerSimplify());
                 DestinationAddRange(res);
                 return;
             }
-
-
 
             if (expr.entType == Entity.EntType.OPERATOR)
             {
@@ -442,59 +440,64 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return;
             }
 
-
-            // Here we generate a unique variable name
-            var uniqVars = MathS.Utils.GetUniqueVariables(expr);
-            uniqVars.Pieces.Sort((a, b) => ((Entity)b).Name.Length.CompareTo(((Entity)a).Name.Length));
-            VariableEntity newVar = ((Entity)uniqVars.Pieces[0]).Name + "quack";
-            // // //
-
-            
-            // Here we find all possible replacements
-            var replacements = new List<Tuple<Entity, Entity>>();
-            replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(expr, x), expr));
-            foreach (var alt in expr.Alternate(4).FiniteSet())
+            // if the replacement isn't one-variable one,
+            // then solving over replacements is already useless,
+            // so we skip this part and go to other solvers
+            if (!compensateSolving)
             {
-                if ((alt).FindSubtree(x) == null)
-                    return; // in this case there is either 0 or +oo solutions
-                replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
-            }
-            // // //
+                // Here we generate a unique variable name
+                var uniqVars = MathS.Utils.GetUniqueVariables(expr);
+                uniqVars.Pieces.Sort((a, b) => ((Entity) b).Name.Length.CompareTo(((Entity) a).Name.Length));
+                VariableEntity newVar = ((Entity) uniqVars.Pieces[0]).Name + "quack";
+                // // //
 
-            // Here we find one that has at least one solution
-            
-            foreach (var replacement in replacements)
-            {
-                Set solutions = null;
-                if (replacement.Item1 == x)
-                    continue;
-                var newExpr = replacement.Item2.DeepCopy();
-                TreeAnalyzer.FindAndReplace(ref newExpr, replacement.Item1, newVar);
-                solutions = newExpr.SolveEquation(newVar);
-                if (!solutions.IsEmpty())
+
+                // Here we find all possible replacements
+                var replacements = new List<Tuple<Entity, Entity>>();
+                replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(expr, x), expr));
+                foreach (var alt in expr.Alternate(4).FiniteSet())
                 {
-                    var bestReplacement = replacement.Item1;
-
-                    // Here we are trying to solve for this replacement
-                    Set newDst = new Set();
-                    foreach (var solution in solutions.FiniteSet())
-                    {
-                        var str = bestReplacement.ToString();
-                        // TODO: make a smarter comparison than just comparison of complexities of two expressions
-                        // The idea is  
-                        // similarToPrevious = ((bestReplacement - solution) - expr).Simplify() == 0
-                        // But Simplify costs us too much time
-                        var similarToPrevious = (bestReplacement - solution).Complexity() >= expr.Complexity();
-                        if (!compensateSolving || !similarToPrevious)
-                            Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
-                    }
-                    DestinationAddRange(newDst);
-                    if (!dst.IsEmpty())
-                        break;
-                    // // //
+                    if ((alt).FindSubtree(x) == null)
+                        return; // in this case there is either 0 or +oo solutions
+                    replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
                 }
+                // // //
+
+                // Here we find one that has at least one solution
+
+                foreach (var replacement in replacements)
+                {
+                    Set solutions = null;
+                    if (replacement.Item1 == x)
+                        continue;
+                    var newExpr = replacement.Item2.DeepCopy();
+                    TreeAnalyzer.FindAndReplace(ref newExpr, replacement.Item1, newVar);
+                    solutions = newExpr.SolveEquation(newVar);
+                    if (!solutions.IsEmpty())
+                    {
+                        var bestReplacement = replacement.Item1;
+
+                        // Here we are trying to solve for this replacement
+                        Set newDst = new Set();
+                        foreach (var solution in solutions.FiniteSet())
+                        {
+                            var str = bestReplacement.ToString();
+                            // TODO: make a smarter comparison than just comparison of complexities of two expressions
+                            // The idea is  
+                            // similarToPrevious = ((bestReplacement - solution) - expr).Simplify() == 0
+                            // But Simplify costs us too much time
+                            var similarToPrevious = (bestReplacement - solution).Complexity() >= expr.Complexity();
+                            if (!compensateSolving || !similarToPrevious)
+                                Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
+                        }
+                        DestinationAddRange(newDst);
+                        if (!dst.IsEmpty())
+                            break;
+                        // // //
+                    }
+                }
+                // // //
             }
-            // // //
 
             // if no replacement worked, try trigonometry solver
             if (dst.IsEmpty())
@@ -509,6 +512,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
             // // //
 
+            // if no trigonometric rules helped, common denominator might help
             if (dst.IsEmpty())
             {
                 res = CommonDenominatorSolver.Solve(expr, x);
@@ -518,6 +522,20 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     return;
                 }
             }
+            // // //
+
+
+            // if we have fractioned polynomials
+            if (dst.IsEmpty())
+            {
+                res = FractionedPolynoms.Solve(expr, x);
+                if (res != null)
+                {
+                    DestinationAddRange(res);
+                    return;
+                }
+            }
+            // // //
 
 
             // if nothing has been found so far

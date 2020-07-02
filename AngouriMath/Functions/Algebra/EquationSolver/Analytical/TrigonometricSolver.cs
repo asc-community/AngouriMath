@@ -179,7 +179,8 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             // TODO: make check for infinite solutions
             foreach(var solution in solutions.FiniteSet())
             {
-                var sol = TreeAnalyzer.FindInvertExpression(MathS.Pow(MathS.e, MathS.i * variable), solution, variable);
+                var func = MathS.Pow(MathS.e, MathS.i * variable);
+                var sol = TreeAnalyzer.FindInvertExpression(func, solution, variable);
                 if (sol != null)
                     actualSolutions.AddRange(sol);
             }

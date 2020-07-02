@@ -138,7 +138,8 @@ public class TestGenerator {
         sb.append("using Microsoft.VisualStudio.TestTools.UnitTesting;\n\n");
         sb.append("namespace UnitTests.Core.TrigTableConstTest\n");
         sb.append("{\n");
-        sb.append(BuildTests("Sin"));
+        // we exclude test #9 because its simplified expression is ambiguous due to cubic roots
+        sb.append(BuildTests("Sin", Arrays.asList(9)));
         sb.append("\n");
         sb.append(BuildTests("Cos"));
         sb.append("\n");

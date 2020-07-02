@@ -106,17 +106,6 @@ namespace UnitTests.Core.TrigTableConstTest
         }
 
         [TestMethod]
-        public void Sin9Test()
-        {
-            MathS.Settings.PrecisionErrorCommon.Set(1e-8m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 9);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.IsTrue(expected == real, "expected: " + expected.ToString() + "  Got instead: " + real.ToString());
-            MathS.Settings.PrecisionErrorCommon.Unset();
-        }
-
-        [TestMethod]
         public void Sin10Test()
         {
             MathS.Settings.PrecisionErrorCommon.Set(1e-8m);

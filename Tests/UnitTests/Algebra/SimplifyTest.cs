@@ -1,4 +1,5 @@
 using AngouriMath;
+using AngouriMath.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Algebra
@@ -127,5 +128,20 @@ namespace UnitTests.Algebra
             var expr = (x * y * a * b * c) / (c * b * a * x * x);
             Assert.IsTrue(expr.Simplify(4) == y / x);
         }
+
+        [TestMethod]
+        public void TestFrac1()
+        {
+            Assert.IsTrue("x / (y / z)".ToEntity().Simplify() == 
+                          "x * z / y".ToEntity());
+        }
+
+        [TestMethod]
+        public void TestFrac2()
+        {
+            Assert.IsTrue("x / y / z".ToEntity().Simplify() ==
+                          "x / (y * z)".ToEntity());
+        }
+
     }
 }

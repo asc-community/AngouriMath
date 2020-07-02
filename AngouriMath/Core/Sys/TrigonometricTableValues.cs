@@ -2,11 +2,12 @@
 using System.Collections.Generic;
 using System.Text;
 using AngouriMath.Core.Numerix;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
-    using TrigTable = List<(decimal arg, Entity res)>;
-    internal static partial class Const
+    using TrigTable = List<(EDecimal arg, Entity res)>;
+    public static partial class Const
     {
         internal static class TrigonometryTableValues
         {
@@ -19,14 +20,28 @@ namespace AngouriMath
                 }
                 // arg in [0; 2pi]
                 var dArg = arg.Real.Value;
-                dArg = (dArg % (2 * MathS.DecimalConst.pi) + 2 * MathS.DecimalConst.pi) % (2 * MathS.DecimalConst.pi);
+                EDecimal Remainder(EDecimal a, EDecimal divisor)
+                    => a.RemainderNoRoundAfterDivide(divisor, MathS.Settings.DecimalPrecisionContext);
+
+                var twoPi = RealNumber.CtxMultiply(2, MathS.DecimalConst.pi);
+                dArg = Remainder(
+                    RealNumber.CtxAdd(           // (
+                        Remainder(dArg         //     dArg
+                            ,                      //     %
+                            twoPi)           //     2pi 
+                        ,                          //   +
+                        twoPi                    //   2pi
+                        )                          // )
+                    ,                              // %
+                    twoPi                    // 2pi
+                    );
 
                 int begin = 0;
                 int end = table.Count - 1;
                 while (end - begin > 1)
                 {
                     var mid = (end + begin) / 2;
-                    if (table[mid].arg > dArg)
+                    if (EDecimalWrapper.IsGreater(table[mid].arg, dArg))
                         begin = mid;
                     else
                         end = mid;
@@ -53,12 +68,12 @@ namespace AngouriMath
             {
                 if (TryPulling(TableSin, arg, out res))
                     return true;
-                if (TryPulling(TableSin, MathS.DecimalConst.pi - arg, out res))
+                if (TryPulling(TableSin, (RealNumber)MathS.DecimalConst.pi - arg, out res))
                     return true;
                 if (TryPulling(TableCos, arg * 2, out res))
                 {
                     res = MathS.Sqrt((1 - res) / 2);
-                    if ((Number.Sin(arg) as RealNumber).Value < 0)
+                    if (EDecimalWrapper.IsLess((Number.Sin(arg) as RealNumber).Value, 0))
                         res *= -1;
                     return true;
                 }
@@ -74,7 +89,7 @@ namespace AngouriMath
                 if (TryPulling(TableCos, arg * 2, out res))
                 {
                     res = MathS.Sqrt((1 + res) / 2);
-                    if ((Number.Cos(arg) as RealNumber).Value < 0)
+                    if (EDecimalWrapper.IsLess((Number.Cos(arg) as RealNumber).Value, 0))
                         res *= -1;
                     return true;
                 }
@@ -85,7 +100,7 @@ namespace AngouriMath
             {
                 if (TryPulling(TableTan, arg, out res))
                     return true;
-                if (TryPulling(TableTan, MathS.DecimalConst.pi - arg, out res))
+                if (TryPulling(TableTan, (RealNumber)MathS.DecimalConst.pi - arg, out res))
                 {
                     res *= -1;
                     return true;
@@ -111,8 +126,8 @@ namespace AngouriMath
             private static readonly Entity f1_24 = Number.CreateRational(1, 24);
             private static readonly Entity i = MathS.i;
 
-            private static decimal PiOver(int a)
-                => 2 * MathS.DecimalConst.pi / a;
+            private static EDecimal PiOver(int a)
+                => RealNumber.CtxDivide(RealNumber.CtxMultiply(2, MathS.DecimalConst.pi), a);
 
             private static readonly Entity f1_6 = Number.CreateRational(1, 6);
 

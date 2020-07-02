@@ -13,6 +13,8 @@ namespace DotnetBenchmark
         private readonly Func<Complex, Complex> linqComp;
         private readonly Entity notCompiled;
         private readonly VariableEntity x = MathS.Var("x");
+        private readonly ComplexNumber ComNumToSub = 3;
+        private readonly Complex ComToSub = 3;
         public CacheCompiledFuncTest()
         {
 
@@ -23,7 +25,7 @@ namespace DotnetBenchmark
             linqComp = linqExpr.Compile();
         }
         [Benchmark]
-        public ComplexNumber MyCompiled() => complexFunc.Call(3);
+        public Complex MyCompiled() => complexFunc.Call(ComToSub);
         [Benchmark]
         public Complex SysIncode() => Complex.Sin(Complex.Pow(3, 2)) + Complex.Cos(Complex.Pow(3, 2)) + Complex.Pow(3, 2) + Complex.Sin(Complex.Pow(3, 2));
         [Benchmark]

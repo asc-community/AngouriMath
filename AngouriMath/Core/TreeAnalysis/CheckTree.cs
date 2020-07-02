@@ -14,8 +14,8 @@
  */
 
 
-
-﻿using AngouriMath.Core.FromString;
+using System.Linq;
+using AngouriMath.Core.FromString;
 using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Core.TreeAnalysis
@@ -48,6 +48,19 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             if (!condition)
                 throw new TreeException(message);
+        }
+
+        /// <summary>
+        /// Returns whether expr doesn't contain any indefinite numbers
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        internal static bool IsDefinite(Entity expr)
+        {
+            if (expr.entType == Entity.EntType.NUMBER)
+                return (expr as NumberEntity).Value.IsDefinite();
+            else
+                return expr.Children.All(IsDefinite);
         }
     }
 }
