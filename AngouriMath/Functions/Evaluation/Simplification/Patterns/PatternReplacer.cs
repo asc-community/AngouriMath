@@ -20,6 +20,8 @@ using System.Runtime.CompilerServices;
  using AngouriMath.Core.Sys.Interfaces;
 using System;
  using AngouriMath.Core.Numerix;
+using AngouriMath.Core.TreeAnalysis;
+using System.Linq;
 
 [assembly: InternalsVisibleTo("UnitTests")]
 
@@ -92,14 +94,7 @@ namespace AngouriMath
         /// </returns>
         internal Entity FindPatternSubtree(Pattern pattern)
         {
-            if (pattern.Match(this) && pattern.EqFits(this) != null)
-                return this;
-            Entity res;
-            // foreach is slower than raw loop
-            for (int i = 0; i < Children.Count; i++)
-                if ((res = Children[i].FindPatternSubtree(pattern)) != null)
-                    return res;
-            return null;
+            return TreeAnalyzer.GetPatternEnumerator(this, pattern).FirstOrDefault();
         }
 
         /// <summary>
