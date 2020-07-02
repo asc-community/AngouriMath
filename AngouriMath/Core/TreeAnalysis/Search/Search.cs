@@ -17,6 +17,7 @@
 
 ﻿using AngouriMath.Core.TreeAnalysis;
  using AngouriMath.Core.Sys.Interfaces;
+using System.Collections.Generic;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -79,6 +80,20 @@ namespace AngouriMath.Core.TreeAnalysis
                 if (ContainsName(child, name))
                     return true;
             return false;
+        }
+
+        internal static IEnumerable<Entity> GetPatternEnumerator(Entity expr, Pattern p)
+        {
+            if (p.Match(expr) && p.EqFits(expr) != null)
+                yield return expr;
+
+            for (int i = 0; i < expr.Children.Count; i++)
+            {
+                foreach(var res in GetPatternEnumerator(expr.Children[i], p))
+                {
+                    yield return res;
+                }
+            }
         }
     }
 }
