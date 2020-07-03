@@ -54,11 +54,8 @@
       <PackagePath></PackagePath>
     </None>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
+    <PackageReference Include="PeterO.Numbers" Version="1.6.0" />
     <EmbeddedResource Include="Core/FromString/Antlr/Angourimath.tokens" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\PeterONumbers\Numbers\Numbers.csproj" />
   </ItemGroup>
 
   <Target Name="GenerateANTLR" BeforeTargets="BeforeBuild">
