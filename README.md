@@ -22,6 +22,7 @@ README navigation:
   - [Sets](#sets)
   - [LaTeX](#late)
   - [Number system](#numsys)
+- [I want to contribute](#contrib)
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
 documentation. If you prefer full manual to AM, see [Wiki](https://github.com/asc-community/AngouriMath/wiki).
@@ -185,3 +186,13 @@ Console.WriteLine("AB.3(16) = " + y + "(1)");
 ```
 
 See more on [Wiki](https://github.com/asc-community/AngouriMath/wiki).
+
+
+### <a name="contrib"></a>Contribution
+
+We appreciate and welcome any contributors to AngouriMath.
+
+Use pull requests to contribute to it. If you want to change the parser, follow these steps:
+1. Change whatever you want
+2. Assure you have java on your machine
+3. Run `start ./AngouriMath/antrl_rerun.bat` or `./AngouriMath/antrl.bat` to regenerate the parser via ANTRL
