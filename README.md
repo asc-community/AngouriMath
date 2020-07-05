@@ -192,7 +192,6 @@ See more on [Wiki](https://github.com/asc-community/AngouriMath/wiki).
 
 We appreciate and welcome any contributors to AngouriMath.
 
-Use pull requests to contribute to it. If you want to change the parser, follow these steps:
-1. Change whatever you want
-2. Assure you have java on your machine
-3. Run `start ./AngouriMath/antrl_rerun.bat` or `./AngouriMath/antrl.bat` to regenerate the parser via ANTRL
+Use pull requests to contribute to it. If you want to regenerate the parser, follow these steps:
+1. Assure you have java on your machine
+2. Run `start ./AngouriMath/antrl_rerun.bat` or `./AngouriMath/antrl_rerun.bat` to regenerate the parser via ANTRL
