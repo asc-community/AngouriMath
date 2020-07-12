@@ -18,11 +18,10 @@ namespace UnitTests.Algebra
         /// <param name="equation"></param>
         /// <param name="toSub"></param>
         /// <param name="varValue"></param>
-        public static void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber subValue = null)
+        public static void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber? subValue = null)
         {
-            if (subValue is null)
-                subValue = 3;
-            string LimitString(string s)
+            subValue ??= 3;
+            static string LimitString(string s)
             {
                 if (s.Length < 30)
                     return s;
@@ -34,7 +33,7 @@ namespace UnitTests.Algebra
             Assert.IsTrue(err < 0.001m, "Error is : " + err + "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
         }
 
-        public static decimal CheckRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber subValue)
+        public static RealNumber CheckRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber subValue)
         {
             equation = equation.Substitute(toSub, varValue);
             var allVars = MathS.Utils.GetUniqueVariables(equation);
@@ -52,11 +51,11 @@ namespace UnitTests.Algebra
 
         public static void AssertRootCount(Set roots, int target)
         {
-            Assert.IsFalse(roots.Power == Set.PowerLevel.INFINITE, "Set of roots must be finite");
-            Assert.IsTrue(roots.Count == target, string.Format("Number of roots must be equal {0} but is {1}", target, roots.Count));
+            Assert.AreNotEqual(Set.PowerLevel.INFINITE, roots.Power);
+            Assert.AreEqual(target, roots.Count);
         }
 
-        public void TestSolver(Entity expr, int rootCount, ComplexNumber toSub = null)
+        public void TestSolver(Entity expr, int rootCount, ComplexNumber? toSub = null)
         {
             var roots = expr.SolveEquation(x);
             AssertRootCount(roots, rootCount);
@@ -264,14 +263,14 @@ namespace UnitTests.Algebra
 
         private readonly List<Number> KeyPoints = new List<Number>
         {
-            new ComplexNumber(0, 1),
-            new ComplexNumber(1, 0),
-            new ComplexNumber(-3, -3),
-            new ComplexNumber(2, 2),
-            new ComplexNumber(13, 13),
-            new ComplexNumber(-9, +7),
-            new ComplexNumber(0.5, -0.5),
-            new ComplexNumber(-0.5, 0.5),
+            ComplexNumber.Create(0, 1),
+            ComplexNumber.Create(1, 0),
+            ComplexNumber.Create(-3, -3),
+            ComplexNumber.Create(2, 2),
+            ComplexNumber.Create(13, 13),
+            ComplexNumber.Create(-9, +7),
+            ComplexNumber.Create(0.5m, -0.5m),
+            ComplexNumber.Create(-0.5m, 0.5m),
         };
 
         [TestMethod]

@@ -8,8 +8,7 @@ namespace UnitTests.Common
     [TestClass]
     public class ExceptionTest
     {
-        public void AssertExceptionThrown(Func<bool> func) => AssertExceptionThrown(func, null);
-        public void AssertExceptionThrown(Func<bool> func, string msg)
+        public void AssertExceptionThrown(Func<bool> func, string? msg = null)
         {
             try
             {
@@ -18,7 +17,8 @@ namespace UnitTests.Common
             }
             catch (SysException e)
             {
-                Assert.IsTrue(string.IsNullOrEmpty(msg) || msg == e.Message, "Unexpected message `" + e.Message + "`");
+                if (msg is { })
+                    Assert.AreEqual(msg, e.Message);
             }
             catch (Exception e)
             {

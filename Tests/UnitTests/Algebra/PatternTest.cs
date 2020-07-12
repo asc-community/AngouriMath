@@ -21,7 +21,7 @@ namespace UnitTests.Algebra
             {
                 matches.Add(match);
             }
-            Assert.IsTrue(matches.Count == 3, "not all matched were found");
+            Assert.AreEqual(3, matches.Count);
             foreach(var match in matches.FiniteSet())
             {
                 Assert.IsNotNull(expr.FindSubtree(match), "match is not in expression");
@@ -39,7 +39,7 @@ namespace UnitTests.Algebra
             {
                 matches.Add(match);
             }
-            Assert.IsTrue(matches.Count == 5, "not all matched were found");
+            Assert.AreEqual(5, matches.Count);
             foreach (var match in matches.FiniteSet())
             {
                 Assert.IsNotNull(expr.FindSubtree(match), "match is not in expression");
@@ -57,7 +57,7 @@ namespace UnitTests.Algebra
             {
                 matches.Add(match);
             }
-            Assert.IsTrue(matches.Count == 0, "match is NOT empty, but should");
+            Assert.AreEqual(0, matches.Count);
         }
     }
 }

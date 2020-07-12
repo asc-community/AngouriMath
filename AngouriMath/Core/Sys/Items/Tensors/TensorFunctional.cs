@@ -127,7 +127,7 @@ namespace AngouriMath.Core.Sys.Items.Tensors
                     expr.Children[i] = tmp;
                 }
 
-                Entity Wrap(Entity p, Entity op)
+                static Entity Wrap(Entity p, Entity op)
                 {
                     var cp = op.Copy();
                     cp.Children.Add(p);
@@ -137,40 +137,32 @@ namespace AngouriMath.Core.Sys.Items.Tensors
                 switch (expr.Children.Count)
                 {
                     case 1:
-                        if (expr.Children[0].entType == Entity.EntType.TENSOR)
+                        if (expr.Children[0] is Tensor t)
                         {
                             var ex1 = expr;
-                            Apply(expr.Children[0] as Tensor, p => Wrap(p, ex1));
+                            Apply(t, p => Wrap(p, ex1));
                             expr = expr.Children[0];
                         }
                         break;
                     case 2:
                         var ch1 = expr.Children[0];
                         var ch2 = expr.Children[1];
-                        if (ch1.entType == Entity.EntType.TENSOR && ch2.entType == Entity.EntType.TENSOR)
+                        if (ch1 is Tensor t1 && ch2 is Tensor t2)
                         {
-                            var t1 = ch1 as Tensor;
-                            var t2 = ch2 as Tensor;
                             string name = expr.Name;
-                            expr = ApplyPointwise(t1, t2, (a, b) => MathFunctions.evalTable[name](new List<Entity>{ a, b }));
+                            expr = ApplyPointwise(t1, t2, (a, b) => MathFunctions.evalTable[name](new List<Entity> { a, b }));
                         }
-                        else if (ch1.entType == Entity.EntType.TENSOR || ch2.entType == Entity.EntType.TENSOR)
+                        else if (ch1 is Tensor tt1)
                         {
-                            Tensor t;
-                            Entity c;
-                            if (ch1.entType == Entity.EntType.TENSOR)
-                            {
-                                t = ch1 as Tensor;
-                                c = ch2;
-                            }
-                            else
-                            {
-                                t = ch2 as Tensor;
-                                c = ch1;
-                            }
                             string name = expr.Name;
-                            Apply(t, e => MathFunctions.evalTable[name](new List<Entity> { e, c }));
-                            expr = t;
+                            Apply(tt1, e => MathFunctions.evalTable[name](new List<Entity> { e, ch2 }));
+                            expr = tt1;
+                        }
+                        else if (ch2 is Tensor tt2)
+                        {
+                            string name = expr.Name;
+                            Apply(tt2, e => MathFunctions.evalTable[name](new List<Entity> { e, ch1 }));
+                            expr = tt2;
                         }
                         break;
                     default:

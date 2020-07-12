@@ -39,7 +39,7 @@ namespace AngouriMath.Functions.Algebra.Solver
             equation = equation.DeepCopy();
 
             MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
-                MathS.Settings.FloatToRationalIterCount.Set(0);
+            MathS.Settings.FloatToRationalIterCount.Set(0);
             /*
             try
             {
@@ -57,23 +57,16 @@ namespace AngouriMath.Functions.Algebra.Solver
 
             if (res.Power == Set.PowerLevel.FINITE)
             {
-                res.FiniteApply(entity => entity.InnerSimplify());
-                Func<Entity, Entity> simplifier = entity => entity.InnerSimplify();
-                Func<Entity, Entity> evaluator = entity => entity.InnerEval();
+                static Entity simplifier(Entity entity) => entity.InnerSimplify();
+                static Entity evaluator(Entity entity) => entity.InnerEval();
+                Entity collapser(Entity expr) =>
+                    MathS.Utils.GetUniqueVariables(equation).Count == 1 ? evaluator(expr) : simplifier(expr);
 
-                Entity collapser(Entity expr)
-                {
-                    if (MathS.Utils.GetUniqueVariables(equation).Count == 1)
-                        return expr.InnerEval();
-                    else
-                        return expr.InnerSimplify();
-                }
-
-                var finalSet = new Set();
-                finalSet.FastAddingMode = true;
+                res.FiniteApply(simplifier);
+                var finalSet = new Set { FastAddingMode = true };
                 foreach (var elem in res.FiniteSet())
-                    if (TreeAnalyzer.IsDefinite(elem) &&
-                        TreeAnalyzer.IsDefinite(collapser(equation.Substitute(x, elem)))
+                    if (TreeAnalyzer.IsFinite(elem) &&
+                        TreeAnalyzer.IsFinite(collapser(equation.Substitute(x, elem)))
                         )
                         finalSet.Add(elem);
                 finalSet.FastAddingMode = false;
@@ -162,7 +155,7 @@ namespace AngouriMath.Functions.Algebra.Solver
             else
                 result = new List<List<Entity>>();
             for (int i = 0; i < equations.Count; i++)
-                if (equations[i].FindSubtree(var) != null)
+                if (equations[i].FindSubtree(var) is { })
                 {
                     var solutionsOverVar = equations[i].SolveEquation(var);
                     equations.RemoveAt(i);

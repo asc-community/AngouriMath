@@ -45,17 +45,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         internal static (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) FindFractions(Entity term, VariableEntity x)
         {
             // TODO: consider cases where we should NOT gather all powers in row
-            Entity GetPower(Entity expr)
+            static Entity GetPower(Entity expr)
             {
-                if (expr.entType != Entity.EntType.OPERATOR || expr.Name != "powf")
+                if (!(expr is OperatorEntity { Name: "powf" }))
                     return 1;
                 else
                     return expr.Children[1] * GetPower(expr.Children[0]);
             }
 
-            Entity GetBase(Entity expr)
+            static Entity GetBase(Entity expr)
             {
-                if (expr.entType != Entity.EntType.OPERATOR || expr.Name != "powf")
+                if (!(expr is OperatorEntity { Name: "powf" }))
                     return expr;
                 else
                     return GetBase(expr.Children[0]);
@@ -67,32 +67,31 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var multipliers = TreeAnalyzer.LinearChildren(term, "mulf", "divf", Const.FuncIfMul);
             var res = new FractionInfoList();
-            foreach (var multiplyer in multipliers)
+            foreach (var multiplier in multipliers)
             {
-                if (multiplyer.FindSubtree(x) == null)
+                if (multiplier.FindSubtree(x) is null)
                 {
-                    oneInfo.numerator *= multiplyer;
+                    oneInfo.numerator *= multiplier;
                     continue;
                 }
-                var power = GetPower(multiplyer);
+                var power = GetPower(multiplier);
                 if (!MathS.CanBeEvaluated(power))
                 {
-                    oneInfo.numerator *= multiplyer;
+                    oneInfo.numerator *= multiplier;
                     continue;
                 }
                 var preciseValue = power.Eval();
-                if (preciseValue.IsImaginary())
+                if (!(preciseValue is RealNumber realPart))
                 {
-                    oneInfo.numerator *= multiplyer;
+                    oneInfo.numerator *= multiplier;
                     continue;
                 }
-                var realPart = preciseValue as RealNumber;
                 if (realPart > 0)
                 {
-                    oneInfo.numerator *= multiplyer;
+                    oneInfo.numerator *= multiplier;
                     continue;
                 }
-                oneInfo.denominatorMultipliers.Add((GetBase(multiplyer), realPart));
+                oneInfo.denominatorMultipliers.Add((GetBase(multiplier), realPart));
             }
 
             return oneInfo;
@@ -105,13 +104,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <param name="expr"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        internal static Set Solve(Entity expr, VariableEntity x)
+        internal static Set? Solve(Entity expr, VariableEntity x)
         {
             var res = FindCD(expr, x);
             return res?.SolveEquation(x);
         }
 
-        internal static Entity FindCD(Entity expr, VariableEntity x)
+        internal static Entity? FindCD(Entity expr, VariableEntity x)
         {
             var terms = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
             var denominators = new Dictionary<string, (Entity den, RealNumber pow)>();
@@ -133,11 +132,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (denominators.Count == 0)
                 return null; // If there's no denominators or it's equal to 1, then we don't have to try to solve yet anymore
 
-            Dictionary<string, (Entity den, RealNumber pow)> ToDict(List<(Entity den, RealNumber pow)> list)
+            static Dictionary<string, (Entity den, RealNumber pow)> ToDict(List<(Entity den, RealNumber pow)> list)
             {
                 var res = new Dictionary<string, (Entity den, RealNumber pow)>();
-                foreach (var el in list)
-                    res[el.den.ToString()] = (el.den, -el.pow);
+                foreach (var (den, pow) in list)
+                    res[den.ToString()] = (den, -pow);
                 return res;
             }
 

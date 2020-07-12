@@ -9,7 +9,7 @@ namespace UnitTests.Convenience
     public class LatexTests
     {
         private static readonly VariableEntity x = MathS.Var("x");
-        private static readonly NumberEntity frac34 = Number.CreateRational(3, 4);
+        private static readonly NumberEntity frac34 = RationalNumber.Create(3, 4);
         private static readonly NumberEntity m1 = -1;
         private static readonly NumberEntity im1 = MathS.i - 1;
         private static readonly NumberEntity m2i = -2 * MathS.i;
@@ -76,9 +76,8 @@ namespace UnitTests.Convenience
         [TestMethod] public void M1Multiply() => Test(@"--1", m1 * m1);
         [TestMethod] public void M1Divide() => Test(@"\frac{-1}{-1}", m1 / m1);
         [TestMethod] public void PowM1() => Test(@"{x}^{-1}", MathS.Pow(x, m1));
-#warning Needs fixing! Should be {\left(-1\right)}^{x}
-        [TestMethod] public void M1Pow() => Test(@"{-1}^{x}", MathS.Pow(m1, x));
-        [TestMethod] public void M2Pow() => Test(@"{-2}^{x}", MathS.Pow(-2, x));
+        [TestMethod] public void M1Pow() => Test(@"{\left(-1\right)}^{x}", MathS.Pow(m1, x));
+        [TestMethod] public void M2Pow() => Test(@"{\left(-2\right)}^{x}", MathS.Pow(-2, x));
         [TestMethod] public void MI() => TestSimplify("-i", MathS.Sqrt(-1) * -1);
         [TestMethod] public void M2I() => TestSimplify("-2i", m2i);
         [TestMethod] public void IM1() => Test("-1 + i", im1);
@@ -137,16 +136,16 @@ namespace UnitTests.Convenience
         [TestMethod] public void Ln() => Test(@"\ln\left(10\right)", MathS.Ln(10));
         [TestMethod] public void LnAlternate() => Test(@"\ln\left(10\right)", MathS.Log(MathS.e, 10));
         [TestMethod] public void Log() => Test(@"\log_{2}\left(10\right)", MathS.Log(2, 10));
-        [TestMethod] public void OO() => Test(@"\infty ", RealNumber.PositiveInfinity());
-        [TestMethod] public void MOO() => Test(@"-\infty ", RealNumber.NegativeInfinity());
-        [TestMethod] public void MOOAlternate() => Test(@"-\infty ", -RealNumber.PositiveInfinity());
-        [TestMethod] public void OOPI() => Test(@"\infty  + i", RealNumber.PositiveInfinity() + MathS.i);
-        [TestMethod] public void OOMI() => Test(@"\infty  - i", RealNumber.PositiveInfinity() - MathS.i);
-        [TestMethod] public void OOPOOI() => Test(@"\infty  + \infty i", RealNumber.PositiveInfinity() * (1 + MathS.i));
-        [TestMethod] public void OOMOOI() => Test(@"\infty  - \infty i", RealNumber.PositiveInfinity() * (1 - MathS.i));
-        [TestMethod] public void MOOPOOI() => Test(@"-\infty  + \infty i", RealNumber.PositiveInfinity() * (-1 + MathS.i));
-        [TestMethod] public void MOOMOOI() => Test(@"-\infty  - \infty i", RealNumber.PositiveInfinity() * (-1 - MathS.i));
-        [TestMethod] public void Undefined() => TestSimplify(@"\mathrm{undefined}", RealNumber.PositiveInfinity() / RealNumber.PositiveInfinity());
+        [TestMethod] public void OO() => Test(@"\infty ", RealNumber.PositiveInfinity);
+        [TestMethod] public void MOO() => Test(@"-\infty ", RealNumber.NegativeInfinity);
+        [TestMethod] public void MOOAlternate() => Test(@"-\infty ", -RealNumber.PositiveInfinity);
+        [TestMethod] public void OOPI() => Test(@"\infty  + i", RealNumber.PositiveInfinity + MathS.i);
+        [TestMethod] public void OOMI() => Test(@"\infty  - i", RealNumber.PositiveInfinity - MathS.i);
+        [TestMethod] public void OOPOOI() => Test(@"\infty  + \infty i", RealNumber.PositiveInfinity * (1 + MathS.i));
+        [TestMethod] public void OOMOOI() => Test(@"\infty  - \infty i", RealNumber.PositiveInfinity * (1 - MathS.i));
+        [TestMethod] public void MOOPOOI() => Test(@"-\infty  + \infty i", RealNumber.PositiveInfinity * (-1 + MathS.i));
+        [TestMethod] public void MOOMOOI() => Test(@"-\infty  - \infty i", RealNumber.PositiveInfinity * (-1 - MathS.i));
+        [TestMethod] public void Undefined() => TestSimplify(@"\mathrm{undefined}", RealNumber.PositiveInfinity / RealNumber.PositiveInfinity);
         [TestMethod] public void Set0() => Test(@"\emptyset", MathS.Sets.Empty());
         [TestMethod] public void Set0Alternate() => Test(@"\emptyset", MathS.Sets.Finite());
         [TestMethod] public void Set1() => Test(@"\left\{1\right\}", MathS.Sets.Finite(1));

@@ -68,54 +68,26 @@ namespace AngouriMath.Extensions
     public static class AMExtensions
     {
         public static ComplexNumber ToComplexNumber(this Complex complex)
-            => Number.Create(complex);
+            => ComplexNumber.Create(EDecimal.FromDouble(complex.Real), EDecimal.FromDouble(complex.Imaginary));
 
-        public static Entity ToEntity(this String expr)
-            => MathS.FromString(expr);
-
-        public static Entity Simplify(this String expr)
-            => expr.ToEntity().Simplify();
-
-        public static ComplexNumber Eval(this String expr)
-            => expr.ToEntity().Eval();
-
-        public static Entity Expand(this String expr)
-            => expr.ToEntity().Expand();
-
-        public static Entity Collapse(this String expr)
-            => expr.ToEntity().Collapse();
-
-        public static Entity Substitute(this String expr, VariableEntity var, Entity value)
+        public static Entity ToEntity(this string expr) => MathS.FromString(expr);
+        public static Entity Simplify(this string expr) => expr.ToEntity().Simplify();
+        public static ComplexNumber Eval(this string expr) => expr.ToEntity().Eval();
+        public static Entity Expand(this string expr) => expr.ToEntity().Expand();
+        public static Entity Collapse(this string expr) => expr.ToEntity().Collapse();
+        public static Entity Substitute(this string expr, VariableEntity var, Entity value)
             => expr.ToEntity().Substitute(var, value);
-
-        public static Set SolveEquation(this String expr, VariableEntity x)
+        public static Set SolveEquation(this string expr, VariableEntity x)
             => expr.ToEntity().SolveEquation(x);
-
-        public static RealNumber ToNumber(this EDecimal value)
-            => Number.Create(value);
-
-        public static RealNumber ToNumber(this decimal value)
-            => Number.Create(value);
-
-        public static RealNumber ToNumber(this double value)
-            => Number.Create(value);
-
-        public static RealNumber ToNumber(this float value)
-            => Number.Create(value);
-
-        public static IntegerNumber ToNumber(this EInteger value)
-            => Number.Create(value);
-
-        public static IntegerNumber ToNumber(this int value)
-            => Number.Create(value);
-
-        public static IntegerNumber ToNumber(this long value)
-            => Number.Create(value);
-
-        public static string Latexise(this String str)
-            => str.ToEntity().Latexise();
-
-        public static FastExpression Compile(this String str, params VariableEntity[] variables)
+        public static RealNumber ToNumber(this EDecimal value) => RealNumber.Create(value);
+        public static RealNumber ToNumber(this decimal value) => RealNumber.Create(EDecimal.FromDecimal(value));
+        public static RealNumber ToNumber(this double value) => RealNumber.Create(EDecimal.FromDouble(value));
+        public static RealNumber ToNumber(this float value) => RealNumber.Create(EDecimal.FromSingle(value));
+        public static IntegerNumber ToNumber(this EInteger value) => IntegerNumber.Create(value);
+        public static IntegerNumber ToNumber(this int value) => IntegerNumber.Create(value);
+        public static IntegerNumber ToNumber(this long value) => IntegerNumber.Create(value);
+        public static string Latexise(this string str) => str.ToEntity().Latexise();
+        public static FastExpression Compile(this string str, params VariableEntity[] variables)
             => str.ToEntity().Compile(variables);
 
         // C# can't into templates :(

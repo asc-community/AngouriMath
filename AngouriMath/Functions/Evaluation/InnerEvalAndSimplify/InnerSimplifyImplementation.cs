@@ -37,8 +37,8 @@ namespace AngouriMath
     {
         internal override Entity InnerSimplify()
         {
-            var downcasted = Number.Functional.Downcast(this.Value) as ComplexNumber;
-            return new NumberEntity(downcasted){__cachedEvaledValue = downcasted};
+            var downcasted = ComplexNumber.Create(Value.Real, Value.Imaginary);
+            return new NumberEntity(downcasted) { __cachedEvaledValue = downcasted };
         }
     }
     public partial class VariableEntity : Entity
@@ -58,7 +58,7 @@ namespace AngouriMath.Core
     {
         internal override Entity InnerSimplify()
         {
-            var r = DeepCopy() as Tensor;
+            var r = (Tensor)DeepCopy();
             TensorFunctional.Apply(r, e => e.InnerSimplify());
             return r;
         }

@@ -83,14 +83,21 @@ namespace AngouriMath.Functions.Evaluation.Compilation
 
             for (int i = expr.Children.Count - 1; i >= 0; i--)
                 InnerCompile(expr.Children[i], fe, variables, varNamespace);
-            if (expr.entType == Entity.EntType.OPERATOR || expr.entType == Entity.EntType.FUNCTION)
-                fe.instructions.AddCallInstruction(expr.Name, expr.Children.Count);
-            else if (expr.entType == Entity.EntType.NUMBER)
-                fe.instructions.AddPushNumInstruction(expr.GetValue().AsComplex());
-            else if (expr.entType == Entity.EntType.VARIABLE)
-                fe.instructions.AddPushVarInstruction(varNamespace[expr.Name]);
-            else
-                throw new SysException("Unknown entity");
+            switch (expr)
+            {
+                case OperatorEntity _:
+                case FunctionEntity _:
+                    fe.instructions.AddCallInstruction(expr.Name, expr.Children.Count);
+                    break;
+                case NumberEntity { Value: var val }:
+                    fe.instructions.AddPushNumInstruction(val.AsComplex());
+                    break;
+                case VariableEntity _:
+                    fe.instructions.AddPushVarInstruction(varNamespace[expr.Name]);
+                    break;
+                default:
+                    throw new SysException("Unknown entity");
+            }
 
             // If the function is used more than once AND complex enough, we put it in cache
             if (expr.HashOccurances > 1 /*expr.HashOccurances is the number of this expression being replicated*/

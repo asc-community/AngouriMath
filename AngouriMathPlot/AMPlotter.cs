@@ -10,9 +10,9 @@ namespace AngouriMathPlot
     public class AMPlotter
     {
         private readonly FormsPlot destination;
-        private List<FastExpression> functions;
-        private double[] dataX;
-        private double[] dataY;
+        private List<FastExpression>? functions;
+        private double[] dataX = Array.Empty<double>();
+        private double[] dataY = Array.Empty<double>();
         private int pointCount;
 
         /// <summary>
@@ -69,7 +69,7 @@ namespace AngouriMathPlot
         /// </param>
         public void PlotScatter(FastExpression func, ComplexNumber from, ComplexNumber to)
         {
-            Func<int, double> inner = it => ((to - from) / (pointCount - 1) * it).Real;
+            double inner(int it) => ((to - from) / (pointCount - 1) * it).Real.Value.ToDouble();
             Clear();
             BuildData(inner,
                         it => func.Call(new Complex((double)inner(it), 0)).Real);
@@ -86,8 +86,8 @@ namespace AngouriMathPlot
         /// <param name="to"></param>
         public void PlotIterativeComplex(FastExpression func, ComplexNumber from, ComplexNumber to)
         {
-            Func<int, double> X = it => func.Call(((from + to) / (pointCount - 1) * it).AsComplex()).Real;
-            Func<int, double> Y = it => func.Call(((from + to) / (pointCount - 1) * it).AsComplex()).Imaginary;
+            double X(int it) => func.Call(((from + to) / (pointCount - 1) * it).AsComplex()).Real;
+            double Y(int it) => func.Call(((from + to) / (pointCount - 1) * it).AsComplex()).Imaginary;
             BuildData(X, Y);
             destination.plt.PlotScatter(dataX, dataY);
         }

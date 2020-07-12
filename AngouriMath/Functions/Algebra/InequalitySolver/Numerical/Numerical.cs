@@ -44,11 +44,11 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
                 ">=" => val >= 0,
                 "<=" => val <= 0,
                 _ => throw new SysException("Uknown sign")
-            } && val.IsReal();
+            } && val is RealNumber;
 
             var compiled = expr.Compile(x);
             var roots = expr.SolveNt(x);
-            var realRootsSet = roots.FiniteWhere(root => root.Eval().IsReal());
+            var realRootsSet = roots.FiniteWhere(root => root.Eval() is RealNumber);
             var realRoots = realRootsSet.FiniteSet().ToList();
             realRoots.Sort((a, b) => a.Eval().Real.Value.CompareTo(b.Eval().Real.Value));
             if (realRoots.Count > 0)
@@ -68,7 +68,7 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
                     result.Add((left, right, false, false));
             }
             if (sign.Contains("="))
-                return (realRootsSet | result) as Set;
+                return (Set)(realRootsSet | result);
             else
                 return result;
         }
@@ -77,8 +77,8 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
         {
             var uv = MathS.Utils.GetUniqueVariables(expr);
             if (uv.Count != 1 || 
-                uv.Pieces[0].Type != Piece.PieceType.ENTITY || 
-                uv.Pieces[0].UpperBound().Item1 != x)
+                !(uv.Pieces[0] is OneElementPiece oneelem) || 
+                oneelem.entity.Item1 != x)
                 throw new MathSException("expr should only contain VariableEntity x");
             return _Solve(expr, x, sign);
         }

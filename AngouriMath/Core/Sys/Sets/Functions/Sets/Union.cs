@@ -21,12 +21,12 @@ namespace AngouriMath.Core.Sets
     {
         public static SetNode Unite(SetNode A, SetNode B)
         {
-            if (A.Type == SetNode.NodeType.OPERATOR || B.Type == SetNode.NodeType.OPERATOR)
+            if (!(A is Set a && B is Set b))
                 return A & B;
             var newSet = new Set();
-            foreach (var piece in A as Set)
+            foreach (var piece in a)
                 newSet.AddPiece(piece);
-            foreach (var piece in B as Set)
+            foreach (var piece in b)
                 newSet.AddPiece(piece);
             return newSet;
         }

@@ -52,7 +52,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="numberOfTerms"></param>
         /// <param name="power"></param>
         /// <returns></returns>
-        internal static EInteger EstimateTermCount(int numberOfTerms, int power)
+        internal static EInteger EstimateTermCount(EInteger numberOfTerms, EInteger power)
             => Combinatorics.C(power + numberOfTerms - 1, power);
 
         /// <summary>
@@ -65,7 +65,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="expr"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        internal static List<Entity> GatherLinearChildrenOverAndExpand(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
+        internal static List<Entity>? GatherLinearChildrenOverAndExpand(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
         {
             if (expr.Name != "sumf" && expr.Name != "minusf")
                 return SmartExpandOver(expr, conditionForUniqueTerms);
@@ -91,10 +91,10 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="expr"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        internal static List<Entity> SmartExpandOver(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
+        internal static List<Entity>? SmartExpandOver(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
         {
             var keepResult = new List<Entity> { expr };
-            if (expr.entType != Entity.EntType.OPERATOR && expr.entType != Entity.EntType.FUNCTION)
+            if (!(expr is OperatorEntity || expr is FunctionEntity))
                 return keepResult;
             var newChildren = new List<Entity>();
             var result = new List<Entity>();
@@ -122,8 +122,7 @@ namespace AngouriMath.Core.TreeAnalysis
                         newChildren.Add(one * two);
                     return newChildren;
                 case "powf":
-                    IntegerNumber power = null;
-                    if (expr.Children[1].entType != Entity.EntType.NUMBER || !expr.Children[1].GetValue().IsInteger() || (power = expr.Children[1].GetValue() as IntegerNumber) < 1)
+                    if (!(expr.Children[1] is NumberEntity { Value:IntegerNumber { Value: var power } } && power >= 1))
                         return keepResult;
                     var linBaseChildren = GatherLinearChildrenOverAndExpand(expr.Children[0], conditionForUniqueTerms);
                     if (linBaseChildren is null)
@@ -131,8 +130,8 @@ namespace AngouriMath.Core.TreeAnalysis
                     if (linBaseChildren.Count == 1)
                     {
                         var baseChild = linBaseChildren[0];
-                        if (baseChild.entType != Entity.EntType.OPERATOR)
-                            return new List<Entity> {expr};
+                        if (!(baseChild is OperatorEntity))
+                            return new List<Entity> { expr };
                         if (baseChild.Name != "divf" && baseChild.Name != "mulf")
                             return new List<Entity> { expr };
                         // (a / b)^2 = a^2 / b^2
@@ -140,25 +139,25 @@ namespace AngouriMath.Core.TreeAnalysis
                         baseChild.Children[1] = baseChild.Children[1].Pow(expr.Children[1]);
                         return new List<Entity> {baseChild};
                     }
-                    if (power.Value > 20 && linBaseChildren.Count > 1 ||
-                        EstimateTermCount(linBaseChildren.Count, (int) power.Value) >
+                    if (power > 20 && linBaseChildren.Count > 1 ||
+                        EstimateTermCount(linBaseChildren.Count, power) >
                         EInteger.FromInt32(MathS.Settings.MaxExpansionTermCount))
                         return null;
                     foreach (var powerListForTerm in Combinatorics.CombinateSums(linBaseChildren.Count, power))
                     {
                         EInteger biCoef = 1;
-                        EInteger sumPow = power.Value;
+                        EInteger sumPow = power;
                         foreach (var pow in powerListForTerm)
                         {
-                            biCoef *= Combinatorics.C((int)sumPow, pow);
+                            biCoef *= Combinatorics.C(sumPow, pow);
                             sumPow -= pow;
                         }
-                        Entity term = Number.Create(biCoef);
+                        Entity term = IntegerNumber.Create(biCoef);
                         for (int i = 0; i < powerListForTerm.Count; i++)
-                            if (powerListForTerm[i] == 1)
+                            if (powerListForTerm[i].Equals(1))
                                 term *= linBaseChildren[i];
                             else if (powerListForTerm[i] > 1)
-                                term *= MathS.Pow(linBaseChildren[i], powerListForTerm[i]);
+                                term *= MathS.Pow(linBaseChildren[i], IntegerNumber.Create(powerListForTerm[i]));
                         newChildren.AddRange(SmartExpandOver(term, conditionForUniqueTerms));
                     }
                     return newChildren;
