@@ -526,7 +526,7 @@ namespace AngouriMath
             /// <summary>
             /// Numbers whose absolute value is less than PrecisionErrorZeroRange are considered zeros
             /// </summary>
-            public static Setting<EDecimal> PrecisionErrorZeroRange { get; } = EDecimal.FromDecimal(1e-15m);
+            public static Setting<EDecimal> PrecisionErrorZeroRange { get; } = EDecimal.FromDecimal(1e-16m);
 
             /// <summary>
             /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method

@@ -75,11 +75,14 @@ namespace UnitTests.Algebra
         [TestMethod]
         public void Test2()
         {
+            // TODO: Remove this line when precision is increased
+            MathS.Settings.PrecisionErrorZeroRange.Set(2e-16m);
             var eq = MathS.Sqr(x) + 1;
             var roots = eq.SolveNt(x);
             AssertRootCount(roots, 2);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
+            MathS.Settings.PrecisionErrorZeroRange.Unset();
         }
         [TestMethod]
         public void Test4()
