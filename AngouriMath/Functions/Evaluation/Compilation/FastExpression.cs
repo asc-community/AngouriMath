@@ -84,12 +84,11 @@ namespace AngouriMath
     }
     public class FastExpression
     {
-        private Stack<Complex> stack;
+        private (Stack<Complex> Stack, Complex[] Cache)? @sealed;
         internal readonly InstructionSet instructions;
         private readonly int varCount;
 
         internal readonly Dictionary<string, int> HashToNum = new Dictionary<string, int>();
-        private Complex[] Cache;
 
         internal Entity RawExpr { get; }
 
@@ -106,8 +105,7 @@ namespace AngouriMath
         /// </summary>
         internal void Seal()
         {
-            stack = new Stack<Complex>(instructions.Count);
-            Cache = new Complex[HashToNum.Count];
+            @sealed = (new Stack<Complex>(instructions.Count), new Complex[HashToNum.Count]);
         }
 
         /// <summary>
@@ -133,6 +131,8 @@ namespace AngouriMath
         {
             if (values.Length != varCount)
                 throw new SysException("Wrong amount of parameters");
+            if (!(@sealed is var (stack, cache)))
+                throw new SysException($"Not sealed. Call {nameof(Seal)} before calling {nameof(Substitute)}.");
             Instruction instruction;
             for (int i = 0; i < instructions.Count; i++)
             {
@@ -193,10 +193,10 @@ namespace AngouriMath
                         }
                         break;
                     case Instruction.InstructionType.PULLCACHE:
-                        stack.Push(Cache[instruction.CacheNumber]);
+                        stack.Push(cache[instruction.CacheNumber]);
                         break;
                     default:
-                        Cache[instruction.CacheNumber] = stack.Peek();
+                        cache[instruction.CacheNumber] = stack.Peek();
                         break;
                 }
             }

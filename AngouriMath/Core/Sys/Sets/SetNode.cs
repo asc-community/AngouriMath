@@ -33,17 +33,6 @@ namespace AngouriMath.Core
     /// </summary>
     public abstract partial class SetNode
     {
-        public enum NodeType
-        {
-            SET,
-            OPERATOR
-        }
-
-        public NodeType Type { get; }
-
-        protected SetNode(NodeType type)
-            => Type = type;
-
         public abstract bool Contains(Piece piece);
         public abstract bool Contains(Set piece);
         public abstract bool Contains(Entity piece);
@@ -62,12 +51,11 @@ namespace AngouriMath.Core
 
         public SetNode Eval()
         {
-            switch (Type)
+            switch (this)
             {
-                case NodeType.SET:
+                case Set _:
                     return this;
-                case NodeType.OPERATOR:
-                    var op = this as OperatorSet;
+                case OperatorSet op:
                     return op.ConnectionType switch
                     {
                         OperatorSet.OperatorType.UNION =>
@@ -96,7 +84,7 @@ namespace AngouriMath.Core
         }
         internal SetNode[] Children { get; }
         internal readonly OperatorType ConnectionType;
-        internal OperatorSet(OperatorType type, params SetNode[] children) : base(NodeType.OPERATOR)
+        internal OperatorSet(OperatorType type, params SetNode[] children)
         {
             Children = children;
             ConnectionType = type;
@@ -134,15 +122,11 @@ namespace AngouriMath.Core
         => new OperatorSet(OperatorSet.OperatorType.INVERSION, A);
     }
 
-    public class Set : SetNode, IEnumerable
+    public class Set : SetNode, ICollection<Piece>
     {
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return (IEnumerator)GetEnumerator();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public SetEnumerator GetEnumerator()
-            => new SetEnumerator(Pieces.ToArray());
+        public IEnumerator<Piece> GetEnumerator() => Pieces.GetEnumerator();
 
         // TODO: exception
         public FiniteSet FiniteSet()
@@ -166,10 +150,10 @@ namespace AngouriMath.Core
                     Pieces.Add(piece);
                 return;
             }
-            else if (this.Power == PowerLevel.FINITE && piece.Type == Piece.PieceType.ENTITY)
+            else if (this.Power == PowerLevel.FINITE && piece is OneElementPiece oneelem)
             {
-                var evaled = (piece as OneElementPiece).Evaluated;
-                if (Pieces.Where(p => p.IsNumeric()).Select(p => (p as OneElementPiece).Evaluated).All(p => p != evaled))
+                var evaled = oneelem.Evaluated;
+                if (Pieces.OfType<OneElementPiece>().Select(o => o.Evaluated).All(p => p != evaled))
                     Pieces.Add(piece);
                 return;
             }
@@ -214,7 +198,7 @@ namespace AngouriMath.Core
         public override bool Contains(Entity entity)
             => Contains(new OneElementPiece(entity));
 
-        public Set(params Piece[] elements) : base(NodeType.SET)
+        public Set(params Piece[] elements)
         {
             foreach (var el in elements)
                 AddPiece(el);
@@ -248,10 +232,14 @@ namespace AngouriMath.Core
 
         public bool IsEmpty() => Pieces.Count == 0;
 
+        public void Clear() => Pieces.Clear();
         public enum PowerLevel
         {
+            /// <summary>Set is empty.</summary>
             EMPTY,
+            /// <summary>Set only contains discrete entities.</summary>
             FINITE,
+            /// <summary>Set contains at least one interval.</summary>
             INFINITE
         }
 
@@ -261,7 +249,7 @@ namespace AngouriMath.Core
             {
                 if (Pieces.Count == 0)
                     return 0;
-                if (Pieces.Any(p => p.Type == Piece.PieceType.INTERVAL))
+                if (Pieces.Any(p => p is IntervalPiece))
                     return PowerLevel.INFINITE;
                 else
                     return PowerLevel.FINITE;
@@ -280,7 +268,7 @@ namespace AngouriMath.Core
         public Set FiniteWhere(Func<Entity, bool> selector)
             => new Set
             {
-                Pieces = Pieces.Where(p => p.Type == Piece.PieceType.ENTITY && selector((Entity)p)).ToList()
+                Pieces = Pieces.Where(p => p is OneElementPiece one && selector(one.entity.Item1)).ToList()
             };
 
         public void Apply(Func<Piece, Piece> processor)
@@ -293,9 +281,8 @@ namespace AngouriMath.Core
         {
             for (int i = 0; i < Pieces.Count; i++)
             {
-                if (Pieces[i].Type == Piece.PieceType.INTERVAL)
+                if (!(Pieces[i] is OneElementPiece oneelem))
                     continue;
-                var oneelem = Pieces[i] as OneElementPiece;
                 oneelem.entity = new Tuple<Entity, bool, bool>(
                     processor(oneelem.entity.Item1),
                     oneelem.entity.Item2,
@@ -308,6 +295,8 @@ namespace AngouriMath.Core
         /// </summary>
         public bool FastAddingMode { get; set; } = false;
 
+        public bool IsReadOnly => false;
+
         /// <summary>
         /// Returns a set of all complex numbers
         /// </summary>
@@ -318,8 +307,8 @@ namespace AngouriMath.Core
                 Pieces = new List<Piece>
                 {
                     Piece.Interval(
-                        ComplexNumber.NegNegInfinity(),
-                        ComplexNumber.PosPosInfinity()
+                        ComplexNumber.NegNegInfinity,
+                        ComplexNumber.PosPosInfinity
                     ).AsInterval().SetLeftClosed(false, false).SetRightClosed(false, false)
                 }
             };
@@ -333,10 +322,8 @@ namespace AngouriMath.Core
             {
                 Pieces = new List<Piece>
                 {
-                    Piece.Interval(
-                        Number.Create(RealNumber.NegativeInfinity(), 0),
-                        Number.Create(RealNumber.PositiveInfinity(), 0)
-                    ).AsInterval().SetLeftClosed(false).SetRightClosed(false)
+                    Piece.Interval(RealNumber.NegativeInfinity, RealNumber.PositiveInfinity)
+                    .AsInterval().SetLeftClosed(false).SetRightClosed(false)
                 }
             };
 
@@ -352,82 +339,23 @@ namespace AngouriMath.Core
                 res.AddElements(entity);
             return res;
         }
+
+        public void CopyTo(Piece[] array, int arrayIndex) => Pieces.CopyTo(array, arrayIndex);
+
+        public bool Remove(Piece item) => Pieces.Remove(item);
+
+        IEnumerator<Piece> IEnumerable<Piece>.GetEnumerator() => ((IEnumerable<Piece>)Pieces).GetEnumerator();
     }
 
-    public class FiniteSet : IEnumerable
-    {
-        private readonly Piece[] pieces;
-        internal FiniteSet(Piece[] pieces)
-            => this.pieces = pieces;
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return (IEnumerator)GetEnumerator();
-        }
-
-        public SetFiniteEnumerator GetEnumerator()
-            => new SetFiniteEnumerator(
-                pieces.Where(p => p.Type == Piece.PieceType.ENTITY)
-                    .Select(p => (Entity)p).ToArray()
-            );
-
-        public List<Entity> ToList()
-        => pieces.Select(c => (c as OneElementPiece).entity.Item1).ToList();
-    }
-
-    public class SetFiniteEnumerator : IEnumerator
+    public class FiniteSet : IReadOnlyList<Entity>
     {
         private readonly Entity[] entities;
-        private int position = -1;
-        public SetFiniteEnumerator(Entity[] entities)
-            => this.entities = entities;
-
-        public bool MoveNext()
-        {
-            position++;
-            return position < entities.Length;
-        }
-
-        public void Reset()
-        {
-            position = -1;
-        }
-
-        public void Dispose()
-        {
-            // do nothing if disposed
-        }
-
-        object IEnumerator.Current => Current;
-
-        public Entity Current => entities[position];
-    }
-
-    public class SetEnumerator : IEnumerator
-    {
-        private readonly Piece[] pieces;
-        private int position = -1;
-
-        public SetEnumerator(Piece[] pieces)
-            => this.pieces = pieces;
-
-        public bool MoveNext()
-        {
-            position++;
-            return position < pieces.Length;
-        }
-
-        public void Reset()
-        {
-            position = -1;
-        }
-
-        public void Dispose()
-        {
-            // do nothing if disposed
-        }
-
-        object IEnumerator.Current => Current;
-
-        public Piece Current => pieces[position];
+        public int Count => ((IReadOnlyCollection<Entity>)entities).Count;
+        public Entity this[int index] => ((IReadOnlyList<Entity>)entities)[index];
+        internal FiniteSet(Piece[] pieces)
+            => this.entities = pieces.OfType<OneElementPiece>().Select(p => p.entity.Item1).ToArray();
+        public List<Entity> ToList() => entities.ToList();
+        public IEnumerator<Entity> GetEnumerator() => ((IEnumerable<Entity>)entities).GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
     }
 }

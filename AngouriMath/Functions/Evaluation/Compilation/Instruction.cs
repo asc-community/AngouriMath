@@ -95,6 +95,11 @@ namespace AngouriMath
                 Type = InstructionType.PULLCACHE;
             else
                 Type = InstructionType.TOCACHE;
+
+            FuncName = "";
+            FuncNumber = 0;
+            VarCount = 0;
+            VarNumber = 0;
         }
 
         public override string ToString()

@@ -15,18 +15,18 @@
 
 
 
- using AngouriMath.Core;
+using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Evaluation.Simplification;
 using System;
 using System.Collections.Generic;
- using System.Linq;
- using System.Numerics;
- using AngouriMath.Core.Numerix;
- using AngouriMath.Core.Sys.Interfaces;
- using EvalTable = System.Collections.Generic.Dictionary<string, System.Func<System.Collections.Generic.List<AngouriMath.Entity>, AngouriMath.Entity>>;
+using System.Linq;
+using System.Numerics;
+using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Sys.Interfaces;
+using EvalTable = System.Collections.Generic.Dictionary<string, System.Func<System.Collections.Generic.List<AngouriMath.Entity>, AngouriMath.Entity>>;
 namespace AngouriMath
 {
     public static partial class MathS
@@ -46,12 +46,12 @@ namespace AngouriMath
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
-        public static bool IsConstant(Entity expr) => (expr.entType == Entity.EntType.VARIABLE && MathS.ConstantList.ContainsKey(expr.Name));
+        public static bool IsConstant(Entity expr) => (expr is VariableEntity && MathS.ConstantList.ContainsKey(expr.Name));
         public static bool CanBeEvaluated(Entity expr)
         {
             if (expr.IsTensoric())
                 return false;
-            if (expr.entType == Entity.EntType.VARIABLE)
+            if (expr is VariableEntity)
                 return IsConstant(expr);
             for (int i = 0; i < expr.Children.Count; i++)
                 if (!CanBeEvaluated(expr.Children[i]))
@@ -173,7 +173,10 @@ namespace AngouriMath
         /// <returns>
         /// Number since new version
         /// </returns>
-        public ComplexNumber Eval() => SubstituteConstants().InnerEval().GetValue();
+        public ComplexNumber Eval() =>
+            SubstituteConstants().InnerEval() is NumberEntity { Value:var value } ? value : 
+                throw new InvalidOperationException
+                    ($"Result cannot be represented as a simple number! Use {nameof(MathS.CanBeEvaluated)} to check beforehand.");
 
         /// <summary>
         /// Collapses the entire expression into a tensor if possible
@@ -193,19 +196,17 @@ namespace AngouriMath
             if (!IsTensoric())
                 throw new MathSException(
                     "To eval an expression as a tensor, it should contain at least one tensor (matrix, vector)");
-            if (entType == EntType.TENSOR)
+            if (this is Tensor result)
             {
-                Tensor result = this as Tensor;
                 TensorFunctional.Apply(result, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
                 return result;
             }
             var r = DeepCopy();
             TensorFunctional.__EvalTensor(ref r);
-            if (r.entType == EntType.TENSOR)
+            if (r is Tensor t)
             {
-                Tensor result = r as Tensor;
-                TensorFunctional.Apply(result, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
-                return result;
+                TensorFunctional.Apply(t, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
+                return t;
             }
             else
                 throw new SysException("Unexpected behaviour");
@@ -230,14 +231,14 @@ namespace AngouriMath
 
         internal static bool IsOneNumber(List<Entity> args, NumberEntity e)
         {
-            return (args[0].entType == Entity.EntType.NUMBER && (args[0] as NumberEntity).Value == e.Value ||
-                    args[1].entType == Entity.EntType.NUMBER && (args[1] as NumberEntity).Value == e.Value);
+            return args[0] is NumberEntity n0 && n0.Value == e.Value ||
+                   args[1] is NumberEntity n1 && n1.Value == e.Value;
 
         }
 
         internal static Entity GetAnotherEntity(List<Entity> args, NumberEntity e)
         {
-            if (args[0].entType == Entity.EntType.NUMBER && (args[0] as NumberEntity).Value == e.Value)
+            if (args[0] is NumberEntity n && n.Value == e.Value)
                 return args[1];
             else
                 return args[0];
@@ -264,13 +265,13 @@ namespace AngouriMath
             var r1 = args[0].InnerEval();
             var r2 = args[1].InnerEval();
             args = new List<Entity> { r1, r2 };
-            if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
-                return new NumberEntity((r1 as NumberEntity).Value + (r2 as NumberEntity).Value);
+            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
+                return new NumberEntity(n1.Value + n2.Value);
             else
                 if (MathFunctions.IsOneNumber(args, 0))
-                    return MathFunctions.GetAnotherEntity(args, 0);
-                else
-                    return r1 + r2;
+                return MathFunctions.GetAnotherEntity(args, 0);
+            else
+                return r1 + r2;
         }
     }
     internal static partial class Minusf
@@ -280,8 +281,8 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].InnerEval();
             var r2 = args[1].InnerEval();
-            if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
-                return new NumberEntity((r1 as NumberEntity).Value - (r2 as NumberEntity).Value);
+            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
+                return new NumberEntity(n1.Value - n2.Value);
             else if (r1 == r2)
                 return 0;
             else if (r2 == 0)
@@ -298,8 +299,8 @@ namespace AngouriMath
             var r1 = args[0].InnerEval();
             var r2 = args[1].InnerEval();
             args = new List<Entity> { r1, r2 };
-            if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
-                return new NumberEntity((r1 as NumberEntity).Value * (r2 as NumberEntity).Value);
+            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
+                return new NumberEntity(n1.Value * n2.Value);
             else if (MathFunctions.IsOneNumber(args, 1))
                 return MathFunctions.GetAnotherEntity(args, 1);
             else if (MathFunctions.IsOneNumber(args, 0))
@@ -316,8 +317,8 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].InnerEval();
             var r2 = args[1].InnerEval();
-            if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
-                return new NumberEntity((r1 as NumberEntity).Value / (r2 as NumberEntity).Value);
+            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
+                return new NumberEntity(n1.Value / n2.Value);
             else if (r1 == 0)
                 return 0;
             else if (r2 == 1)
@@ -333,8 +334,8 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].InnerEval();
             var r2 = args[1].InnerEval();
-            if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Pow((r1 as NumberEntity).Value, (r2 as NumberEntity).Value));
+            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
+                return new NumberEntity(Number.Pow(n1.Value, n2.Value));
             else if (r1 == 0 || r1 == 1)
                 return r1;
             else if (r2 == 1)
@@ -351,8 +352,8 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerEval();
-            if (r.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Sin((r as NumberEntity).Value));
+            if (r is NumberEntity n)
+                return new NumberEntity(Number.Sin(n.Value));
             else
                 return r.Sin();
         }
@@ -363,8 +364,8 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerEval();
-            if (r.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Cos((r as NumberEntity).Value));
+            if (r is NumberEntity n)
+                return new NumberEntity(Number.Cos(n.Value));
             else
                 return r.Cos();
         }
@@ -375,8 +376,8 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerEval();
-            if (r.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Tan((r as NumberEntity).Value));
+            if (r is NumberEntity n)
+                return new NumberEntity(Number.Tan(n.Value));
             else
                 return r.Tan();
         }
@@ -387,8 +388,8 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerEval();
-            if (r.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Cotan((r as NumberEntity).Value));
+            if (r is NumberEntity n)
+                return new NumberEntity(Number.Cotan(n.Value));
             else
                 return r.Cotan();
         }
@@ -402,8 +403,8 @@ namespace AngouriMath
             var r = args[0].InnerEval();
             var n = args[1].InnerEval();
             args = new List<Entity> { r, n };
-            if (r.entType == Entity.EntType.NUMBER && n.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Log((r as NumberEntity).Value.Real, (n as NumberEntity).Value));
+            if (r is NumberEntity rn && n is NumberEntity nn)
+                return new NumberEntity(Number.Log(rn.Value.Real, nn.Value));
             else if (r == n)
                 return 1;
             else if (r == 1)
@@ -412,15 +413,15 @@ namespace AngouriMath
                 return r.Log(args[1]);
         }
     }
-    
+
     internal static partial class Arcsinf
     {
         public static Entity Eval(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerEval();
-            if (arg.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Arcsin((arg as NumberEntity).Value));
+            if (arg is NumberEntity n)
+                return new NumberEntity(Number.Arcsin(n.Value));
             else
                 return Arcsinf.Hang(arg);
         }
@@ -431,8 +432,8 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerEval();
-            if (arg.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Arccos((arg as NumberEntity).Value));
+            if (arg is NumberEntity n)
+                return new NumberEntity(Number.Arccos(n.Value));
             else
                 return Arccosf.Hang(arg);
         }
@@ -443,8 +444,8 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerEval();
-            if (arg.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Arctan((arg as NumberEntity).Value));
+            if (arg is NumberEntity n)
+                return new NumberEntity(Number.Arctan(n.Value));
             else
                 return Arctanf.Hang(arg);
         }
@@ -455,8 +456,8 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerEval();
-            if (arg.entType == Entity.EntType.NUMBER)
-                return new NumberEntity(Number.Arccotan((arg as NumberEntity).Value));
+            if (arg is NumberEntity n)
+                return new NumberEntity(Number.Arccotan(n.Value));
             else
                 return Arccotanf.Hang(arg);
         }
@@ -467,7 +468,7 @@ namespace AngouriMath
 {
     public abstract partial class Entity
     {
-        internal ComplexNumber __cachedEvaledValue = null;
+        internal ComplexNumber? __cachedEvaledValue = null;
     }
 }
 
@@ -484,7 +485,7 @@ namespace AngouriMath
     {
         internal static Entity KeepIfBad(ComplexNumber candidate, Entity ifAllBad, params ComplexNumber[] nums)
         {
-            if (!candidate.IsDefinite())
+            if (!candidate.IsFinite)
                 return candidate;
             if (IsGood(candidate.Real, nums.Select(n => n.Real).ToArray(), false) &&
                 IsGood(candidate.Imaginary, nums.Select(n => n.Imaginary).ToArray(), false))
@@ -493,14 +494,15 @@ namespace AngouriMath
                 return ifAllBad;
         }
 
-        internal static bool KeepIfBad(ComplexNumber candidate, out Entity res, bool disableIrrational, params ComplexNumber[] nums)
+        internal static bool KeepIfBad(ComplexNumber candidate,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
+            out Entity? res, bool disableIrrational, params ComplexNumber[] nums)
         {
-            if (!candidate.IsDefinite())
+            if (!candidate.IsFinite)
             {
                 res = candidate;
                 return true;
             }
-            candidate = Number.Functional.Downcast(candidate) as ComplexNumber;
             if (IsGood(candidate.Real, nums.Select(n => n.Real).ToArray(), disableIrrational) &&
                 IsGood(candidate.Imaginary, nums.Select(n => n.Imaginary).ToArray(), disableIrrational))
             {
@@ -516,14 +518,21 @@ namespace AngouriMath
 
         static bool IsGood(RealNumber cand, RealNumber[] nums, bool disableIrrational)
         {
-            var minLevel = nums.Select(n => n == 0 ? 0 : (int)n.Type).Min();
-            return cand.IsRational() || 
-                   ((int) cand.Type <= minLevel && !disableIrrational) ||
-                (cand.IsIrrational() && cand.Value.IsZero); // TODO: make im:0 downcastable
+            static int GetRank(RealNumber num) =>
+                num == 0 ? 0 : num switch
+                {
+                    IntegerNumber _ => 0,
+                    RationalNumber _ => 1,
+                    RealNumber _ => 2
+                };
+            var minLevel = nums.Select(GetRank).Min();
+            return cand is RationalNumber ||
+                   (GetRank(cand) <= minLevel && !disableIrrational) ||
+                (cand is RealNumber && !(cand is RationalNumber) && cand.Value.IsZero); // TODO: make im:0 downcastable
         }
 
         internal static bool IsRationalComplex(ComplexNumber num)
-            => num.Real.IsRational() && num.Imaginary == 0 || num.IsRational();
+            => num.Real is RationalNumber && num.Imaginary == 0 || num is RationalNumber;
     }
 
     // Each function and operator processing
@@ -534,25 +543,24 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(r1.__cachedEvaledValue is null) && !(r2.__cachedEvaledValue is null))
             {
                 potentialResult = r1.__cachedEvaledValue + r2.__cachedEvaledValue;
                 if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
-                    return new NumberEntity(potentialResult) {__cachedEvaledValue = potentialResult};
+                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
             }
             args = new List<Entity> { r1, r2 };
             Entity result;
-            if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
+            if (r1 is NumberEntity { Value: var n1 } && r2 is NumberEntity { Value: var n2 })
             {
-                var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 + n2, r1 + r2, n1, n2);
             }
             else
                 if (MathFunctions.IsOneNumber(args, 0))
-                    result = MathFunctions.GetAnotherEntity(args, 0);
+                result = MathFunctions.GetAnotherEntity(args, 0);
             else
-                    result = r1 + r2;
+                result = r1 + r2;
             result.__cachedEvaledValue = potentialResult;
             return result;
         }
@@ -565,7 +573,7 @@ namespace AngouriMath
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(r1.__cachedEvaledValue is null) && !(r2.__cachedEvaledValue is null))
             {
                 potentialResult = r1.__cachedEvaledValue - r2.__cachedEvaledValue;
@@ -574,9 +582,8 @@ namespace AngouriMath
             }
 
             Entity result;
-            if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
+            if (r1 is NumberEntity { Value: var n1 } && r2 is NumberEntity { Value: var n2 })
             {
-                var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 - n2, r1 - r2, n1, n2);
             }
             else if (r1 == r2)
@@ -597,7 +604,7 @@ namespace AngouriMath
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(r1.__cachedEvaledValue is null) && !(r2.__cachedEvaledValue is null))
             {
                 potentialResult = r1.__cachedEvaledValue * r2.__cachedEvaledValue;
@@ -611,12 +618,11 @@ namespace AngouriMath
                 result = MathFunctions.GetAnotherEntity(args, 1);
             else if (MathFunctions.IsOneNumber(args, 0))
                 result = 0;
-            else if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
+            else if (r1 is NumberEntity { Value: var n1 } && r2 is NumberEntity { Value: var n2 })
             {
-                var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 * n2, r1 * r2, n1, n2);
             }
-            else 
+            else
                 result = r1 * r2;
             result.__cachedEvaledValue = potentialResult;
             return result;
@@ -631,7 +637,7 @@ namespace AngouriMath
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(r1.__cachedEvaledValue is null) && !(r2.__cachedEvaledValue is null))
             {
                 potentialResult = r1.__cachedEvaledValue / r2.__cachedEvaledValue;
@@ -640,9 +646,8 @@ namespace AngouriMath
             }
 
             Entity result;
-            if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
+            if (r1 is NumberEntity { Value: var n1 } && r2 is NumberEntity { Value: var n2 })
             {
-                var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 / n2, r1 / r2, n1, n2);
             }
             else if (r1 == 0)
@@ -663,8 +668,8 @@ namespace AngouriMath
             var r1 = args[0].InnerSimplify();
             var r2 = args[1].InnerSimplify();
 
-            ComplexNumber potentialResult = null;
-            if (!(r1.__cachedEvaledValue is null) && !(r2.__cachedEvaledValue is null))
+            ComplexNumber? potentialResult = null;
+            if (r1.__cachedEvaledValue is { } && r2.__cachedEvaledValue is { })
             {
                 potentialResult = Number.Pow(r1.__cachedEvaledValue, r2.__cachedEvaledValue);
                 if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
@@ -672,10 +677,9 @@ namespace AngouriMath
             }
 
             Entity result;
-            if (r1.entType == Entity.EntType.NUMBER && r2.entType == Entity.EntType.NUMBER)
+            if (r1 is NumberEntity { Value: var n1 } && r2 is NumberEntity { Value: var n2 })
             {
                 // TODO: Consider cases like sqrt(12) which could be simplified to 2 sqrt(3)
-                var (n1, n2) = ((r1 as NumberEntity).Value, (r2 as NumberEntity).Value);
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Pow(n1, n2), MathS.Pow(r1, r2), n1, n2);
             }
             else if (r1 == 0 || r1 == 1)
@@ -698,9 +702,9 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            ComplexNumber evaled = r.__cachedEvaledValue;
+            ComplexNumber? evaled = r.__cachedEvaledValue;
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(r.__cachedEvaledValue is null))
             {
                 potentialResult = Number.Sin(r.__cachedEvaledValue);
@@ -731,9 +735,9 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            ComplexNumber evaled = r.__cachedEvaledValue;
+            ComplexNumber? evaled = r.__cachedEvaledValue;
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(r.__cachedEvaledValue is null))
             {
                 potentialResult = Number.Cos(r.__cachedEvaledValue);
@@ -764,9 +768,9 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            ComplexNumber evaled = r.__cachedEvaledValue;
+            ComplexNumber? evaled = r.__cachedEvaledValue;
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(r.__cachedEvaledValue is null))
             {
                 potentialResult = Number.Tan(r.__cachedEvaledValue);
@@ -797,9 +801,9 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 1);
             var r = args[0].InnerSimplify();
-            ComplexNumber evaled = r.__cachedEvaledValue;
+            ComplexNumber? evaled = r.__cachedEvaledValue;
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(r.__cachedEvaledValue is null))
             {
                 potentialResult = Number.Cotan(r.__cachedEvaledValue);
@@ -833,19 +837,18 @@ namespace AngouriMath
             var r = args[0].InnerSimplify();
             var n = args[1].InnerSimplify();
 
-            ComplexNumber potentialResult = null;
-            if (!(r.__cachedEvaledValue is null) && !(n.__cachedEvaledValue is null) && r.__cachedEvaledValue.IsReal())
+            ComplexNumber? potentialResult = null;
+            if (!(r.__cachedEvaledValue is null) && !(n.__cachedEvaledValue is null) && r.__cachedEvaledValue is RealNumber real)
             {
-                potentialResult = Number.Log(r.__cachedEvaledValue as RealNumber, n.__cachedEvaledValue);
+                potentialResult = Number.Log(real, n.__cachedEvaledValue);
                 if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
                     return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
             }
 
             Entity result;
             args = new List<Entity> { r, n };
-            if (r.entType == Entity.EntType.NUMBER && n.entType == Entity.EntType.NUMBER)
+            if (r is NumberEntity { Value: var n1 } && n is NumberEntity { Value: var n2 })
             {
-                var (n1, n2) = ((r as NumberEntity).Value, (n as NumberEntity).Value);
                 return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Log(n1.Real, n2), MathS.Log(r, n), n1, n2);
             }
             else if (r == n)
@@ -866,7 +869,7 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerSimplify();
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(arg.__cachedEvaledValue is null))
             {
                 potentialResult = Number.Arcsin(arg.__cachedEvaledValue);
@@ -875,9 +878,8 @@ namespace AngouriMath
             }
 
             Entity result;
-            if (arg.entType == Entity.EntType.NUMBER)
+            if (arg is NumberEntity { Value: var n })
             {
-                var n = (arg as NumberEntity).Value;
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arcsin(n), MathS.Arcsin(arg), n);
             }
             else
@@ -893,7 +895,7 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerSimplify();
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(arg.__cachedEvaledValue is null))
             {
                 potentialResult = Number.Arccos(arg.__cachedEvaledValue);
@@ -902,9 +904,8 @@ namespace AngouriMath
             }
 
             Entity result;
-            if (arg.entType == Entity.EntType.NUMBER)
+            if (arg is NumberEntity { Value: var n })
             {
-                var n = (arg as NumberEntity).Value;
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arccos(n), MathS.Arccos(arg), n);
             }
             else
@@ -920,7 +921,7 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerSimplify();
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(arg.__cachedEvaledValue is null))
             {
                 potentialResult = Number.Arctan(arg.__cachedEvaledValue);
@@ -929,9 +930,8 @@ namespace AngouriMath
             }
 
             Entity result;
-            if (arg.entType == Entity.EntType.NUMBER)
+            if (arg is NumberEntity { Value: var n })
             {
-                var n = (arg as NumberEntity).Value;
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arctan(n), MathS.Arctan(arg), n);
             }
             else
@@ -947,7 +947,7 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 1);
             var arg = args[0].InnerSimplify();
 
-            ComplexNumber potentialResult = null;
+            ComplexNumber? potentialResult = null;
             if (!(arg.__cachedEvaledValue is null))
             {
                 potentialResult = Number.Arccotan(arg.__cachedEvaledValue);
@@ -956,9 +956,8 @@ namespace AngouriMath
             }
 
             Entity result;
-            if (arg.entType == Entity.EntType.NUMBER)
+            if (arg is NumberEntity { Value: var n })
             {
-                var n = (arg as NumberEntity).Value;
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arccotan(n), MathS.Arccotan(arg), n);
             }
             else

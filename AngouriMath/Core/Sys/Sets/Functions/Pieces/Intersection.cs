@@ -77,10 +77,10 @@ namespace AngouriMath.Core.Sets
         {
             var num1 = A.Item1.Eval();
             var num2 = B.Item1.Eval();
-            var lowRe = num1.Real;
-            var upRe = num2.Real;
-            var lowIm = num1.Imaginary;
-            var upIm = num2.Imaginary;
+            RealNumber lowRe = num1.Real;
+            RealNumber upRe = num2.Real;
+            RealNumber lowIm = num1.Imaginary;
+            RealNumber upIm = num2.Imaginary;
             bool lowReClosed = A.Item2;
             bool upReClosed = B.Item2;
             bool lowImClosed = A.Item3;
@@ -99,12 +99,12 @@ namespace AngouriMath.Core.Sets
 
             return new Tuple<Edge, Edge>(
                 new Edge(
-                    Number.Create(lowRe, lowIm),
+                    ComplexNumber.Create(lowRe, lowIm),
                     lowReClosed,
                     lowImClosed
                     ),
                 new Edge(
-                    Number.Create(upRe, upIm),
+                    ComplexNumber.Create(upRe, upIm),
                     upReClosed,
                     upImClosed
                     )
@@ -117,7 +117,7 @@ namespace AngouriMath.Core.Sets
         /// <param name="A"></param>
         /// <param name="B"></param>
         /// <returns></returns>
-        public static Piece Intersect(Piece A, Piece B)
+        public static Piece? Intersect(Piece A, Piece B)
         {
             if (A == B)
                 return A;
@@ -149,11 +149,11 @@ namespace AngouriMath.Core.Sets
                 up2Num.Imaginary, up2.Item3
             );
             var edgeLeft = new Edge(
-                Number.Create(realAxis.Item1.Item1, imaginaryAxis.Item1.Item1),
+                ComplexNumber.Create(realAxis.Item1.Item1, imaginaryAxis.Item1.Item1),
                 realAxis.Item1.Item2,
                 imaginaryAxis.Item1.Item2);
             var edgeRight = new Edge(
-                Number.Create(realAxis.Item2.Item1, imaginaryAxis.Item2.Item1),
+                ComplexNumber.Create(realAxis.Item2.Item1, imaginaryAxis.Item2.Item1),
                 realAxis.Item2.Item2,
                 imaginaryAxis.Item2.Item2);
             var res = Piece.Interval(edgeLeft, edgeRight);

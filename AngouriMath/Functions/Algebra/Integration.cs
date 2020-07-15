@@ -86,10 +86,10 @@ namespace AngouriMath
             for(int i = 0; i <= stepCount; i++)
             {
                 var share = ((EDecimal)i) / stepCount;
-                var tmp = Number.Create(from.Re * share + to.Re * (1 - share), from.Im * share + to.Im * (1 - share));
+                var tmp = ComplexNumber.Create(from.Re * share + to.Re * (1 - share), from.Im * share + to.Im * (1 - share));
                 res += cfunc.Substitute(tmp.AsComplex());
             }
-            return res.ToComplexNumber() / (stepCount + 1) * (Number.Create(to.Re, to.Im) - Number.Create(from.Re, from.Im));
+            return res.ToComplexNumber() / (stepCount + 1) * (ComplexNumber.Create(to.Re, to.Im) - ComplexNumber.Create(from.Re, from.Im));
         }
     }
 }

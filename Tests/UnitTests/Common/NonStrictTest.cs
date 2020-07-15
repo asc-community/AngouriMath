@@ -55,9 +55,8 @@ namespace UnitTests.Common
         public void TryPoly1()
         {
             Entity expr = "x + x2";
-            Entity dst;
-            if (Utils.TryPolynomial(expr, "x", out dst))
-                Assert.IsTrue(dst == MathS.FromString("x2 + x"));
+            if (Utils.TryPolynomial(expr, "x", out var dst))
+                Assert.AreEqual(MathS.FromString("x2 + x"), dst);
             else
                 Assert.Fail(expr.ToString() + " is polynomial");
         }
@@ -66,9 +65,8 @@ namespace UnitTests.Common
         public void TryPoly2()
         {
             Entity expr = "x * (x + x2)";
-            Entity dst;
-            if (Utils.TryPolynomial(expr, "x", out dst))
-                Assert.IsTrue(dst == MathS.FromString("x3 + x2"));
+            if (Utils.TryPolynomial(expr, "x", out var dst))
+                Assert.AreEqual(MathS.FromString("x3 + x2"), dst);
             else
                 Assert.Fail(expr.ToString() + " is polynomial");
         }
@@ -77,9 +75,8 @@ namespace UnitTests.Common
         public void TryPoly3()
         {
             Entity expr = "x * (x + x2 + z) + y * x";
-            Entity dst;
-            if (Utils.TryPolynomial(expr, "x", out dst))
-                Assert.IsTrue(dst == MathS.FromString("x3 + x2 + (y + z) * x"));
+            if (Utils.TryPolynomial(expr, "x", out var dst))
+                Assert.AreEqual(MathS.FromString("x3 + x2 + (y + z) * x"), dst);
             else
                 Assert.Fail(expr.ToString() + " is polynomial");
         }

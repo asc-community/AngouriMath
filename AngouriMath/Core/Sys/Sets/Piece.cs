@@ -26,30 +26,21 @@ namespace AngouriMath.Core
 
     public abstract class Piece
     {
-        public enum PieceType
-        {
-            ENTITY,
-            INTERVAL,
-        }
-
+        public abstract override int GetHashCode();
+        public abstract override bool Equals(object obj);
         public bool In(Set set)
             => set.Contains(this);
 
-        public PieceType Type { get; }
-
-        public static bool operator ==(Piece a, Piece b)
-        {
-            if (a is null && b is null)
-                return true;
-            if (a is null || b is null)
-                return false;
-            if (a.Type != b.Type)
-                return false;
-            if (a.Type == PieceType.ENTITY)
-                return a as OneElementPiece == b as OneElementPiece;
-            else
-                return a as IntervalPiece == b as IntervalPiece;
-        }
+        public static bool operator ==(Piece? a, Piece? b) =>
+            (a, b) switch
+            {
+                (null, null) => true,
+                (null, _) => false,
+                (_, null) => false,
+                (OneElementPiece aa, OneElementPiece bb) => aa == bb,
+                (IntervalPiece aa, IntervalPiece bb) => aa == bb,
+                _ => false
+            };
 
         public static bool operator !=(Piece a, Piece b)
             => !(a == b);
@@ -119,7 +110,7 @@ namespace AngouriMath.Core
                InBetween(a.Imaginary, b.Imaginary, closedAIm, closedBIm, num.Imaginary, closedIm);
 
         /// <summary>
-        /// So that any numberical operations could be performed
+        /// So that any numerical operations could be performed
         /// </summary>
         /// <returns></returns>
         internal bool IsNumeric()
@@ -155,11 +146,6 @@ namespace AngouriMath.Core
                    ComplexInBetween(num1, num2, up.Item2, up.Item3,
                        low.Item2, low.Item3, num_up, up_l.Item2,
                        up_l.Item3);
-        }
-
-        protected Piece(PieceType type)
-        {
-            Type = type;
         }
 
         internal static Edge CopyEdge(Edge edge)
@@ -199,11 +185,12 @@ namespace AngouriMath.Core
         => new OneElementPiece(a);
 
         internal static IntervalPiece CreateUniverse()
-            => Piece.Interval(ComplexNumber.NegNegInfinity(),
-                ComplexNumber.PosPosInfinity(),
+            => Piece.Interval(ComplexNumber.NegNegInfinity,
+                ComplexNumber.PosPosInfinity,
                 false, false, false, false).AsInterval();
 
-        internal IntervalPiece AsInterval() => this as IntervalPiece;
+        // TODO: Is this really needed? Can't we improve type safety instead of using unsafe casts?
+        internal IntervalPiece AsInterval() => (IntervalPiece)this;
 
         public static implicit operator Piece((Entity left, Entity right) tup)
             => Interval(tup.left, tup.right);
@@ -220,27 +207,18 @@ namespace AngouriMath.Core
         public static implicit operator Piece(ComplexNumber element)
             => new OneElementPiece(element);
         public static implicit operator Piece(Complex element)
-            => new OneElementPiece(Number.Create(element));
+            => new OneElementPiece((ComplexNumber)element);
         public static explicit operator Entity(Piece piece)
-            => (piece as OneElementPiece).entity.Item1;
+            => ((OneElementPiece)piece).entity.Item1;
     }
 
     public class OneElementPiece : Piece
     {
         internal Edge entity;
-        private ComplexNumber evaled;
+        private ComplexNumber? evaled;
+        internal ComplexNumber Evaluated => evaled ??= entity.Item1.Eval();
 
-        internal ComplexNumber Evaluated
-        {
-            get
-            {
-                if (evaled is null)
-                    evaled = entity.Item1.Eval();
-                return evaled;
-            }
-        }
-
-        internal OneElementPiece(Entity element) : base(PieceType.ENTITY)
+        internal OneElementPiece(Entity element)
         {
             entity = new Edge(element, true, true);
         }
@@ -259,6 +237,8 @@ namespace AngouriMath.Core
 
         public static bool operator !=(OneElementPiece A, OneElementPiece B)
             => !(A == B);
+        public override bool Equals(object obj) => obj is OneElementPiece p && entity.Equals(p.entity);
+        public override int GetHashCode() => entity.GetHashCode();
     }
 
     public class IntervalPiece : Piece
@@ -266,13 +246,13 @@ namespace AngouriMath.Core
         private Edge leftEdge;
         private Edge rightEdge;
 
-        internal IntervalPiece(Entity left, Entity right, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm) : base(PieceType.INTERVAL)
+        internal IntervalPiece(Entity left, Entity right, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm)
         {
             leftEdge = new Edge(left, closedARe, closedAIm);
             rightEdge = new Edge(right, closedBRe, closedBIm);
         }
 
-        internal IntervalPiece(Edge left, Edge right) : base(PieceType.INTERVAL)
+        internal IntervalPiece(Edge left, Edge right)
         {
             leftEdge = left;
             rightEdge = right;
@@ -360,5 +340,7 @@ namespace AngouriMath.Core
 
         public static bool operator !=(IntervalPiece A, IntervalPiece B)
             => !(A == B);
+        public override bool Equals(object obj) => obj is IntervalPiece p && leftEdge.Equals(p.leftEdge) && rightEdge.Equals(p.rightEdge);
+        public override int GetHashCode() => (leftEdge, rightEdge).GetHashCode();
     }
 }

@@ -21,9 +21,9 @@ namespace AngouriMath.Core.Sets
     {
         public static SetNode Invert(SetNode A)
         {
-            if (A.Type == SetNode.NodeType.OPERATOR)
+            if (!(A is Set s))
                 return new OperatorSet(OperatorSet.OperatorType.INVERSION, A);
-            var (goodAPieces, badAPieces) = GatherEvaluablePieces(A as Set);
+            var (goodAPieces, badAPieces) = GatherEvaluablePieces(s);
             var remainders = new List<Piece>{ Piece.CreateUniverse() };
             foreach (var good in goodAPieces)
             {

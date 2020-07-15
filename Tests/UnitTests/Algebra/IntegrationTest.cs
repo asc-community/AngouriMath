@@ -19,7 +19,7 @@ namespace UnitTests.Algebra
         {
             var x = MathS.Var("x");
             var expr = MathS.Sin(x);
-            Assert.IsTrue(expr.DefiniteIntegral(x, -1, 1) == 0);
+            Assert.AreEqual(0, expr.DefiniteIntegral(x, -1, 1));
         }
         [TestMethod]
         public void Test3()

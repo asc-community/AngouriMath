@@ -37,7 +37,7 @@ namespace AngouriMath
     {
         internal override Entity InnerEval()
         {
-            return new NumberEntity(Number.Functional.Downcast(this.Value) as ComplexNumber);
+            return ComplexNumber.Create(Value.Real, Value.Imaginary);
         }
     }
     public partial class VariableEntity : Entity
@@ -55,7 +55,7 @@ namespace AngouriMath.Core
     {
         internal override Entity InnerEval()
         {
-            var r = DeepCopy() as Tensor;
+            var r = (Tensor)DeepCopy();
             TensorFunctional.Apply(r, e => e.InnerEval());
             return r;
         }

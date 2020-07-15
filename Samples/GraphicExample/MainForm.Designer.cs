@@ -67,7 +67,6 @@
             this.Controls.Add(this.Chart);
             this.Name = "MainForm";
             this.Text = "Example";
-            this.Load += new System.EventHandler(this.MainFormLoad);
             this.ResumeLayout(false);
 
         }

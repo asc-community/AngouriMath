@@ -14,6 +14,8 @@
  */
 
 
+using AngouriMath.Core.Numerix;
+
 namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
@@ -32,12 +34,9 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="expr"></param>
         internal static void InvertNegativePowers(ref Entity expr)
         {
-            if (expr.entType == Entity.EntType.OPERATOR &&
-                expr.Name == "powf" &&
-                expr.Children[1].entType == Entity.EntType.NUMBER &&
-                expr.Children[1].GetValue().IsInteger() &&
-                !expr.Children[1].GetValue().IsNatural())
-                expr = 1 / MathS.Pow(expr.Children[0], (-1 * expr.Children[1].GetValue()));
+            if (expr is OperatorEntity { Name: "powf" } &&
+                expr.Children[1] is NumberEntity { Value:IntegerNumber pow } && pow < 0)
+                expr = 1 / MathS.Pow(expr.Children[0], -1 * pow);
             else
             {
                 for (int i = 0; i < expr.Children.Count; i++)
@@ -57,11 +56,10 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="expr"></param>
         internal static void InvertNegativeMultipliers(ref Entity expr)
         {
-            bool ifMatches = NegativeMultiplyerPattern.Match(expr);
-            bool isRealAndMatches = ifMatches && expr.Children[1].Children[0].GetValue().IsReal();
-            bool isPositiveAndIsRealAndMatches = isRealAndMatches && expr.Children[1].Children[0].GetValue().Real > 0;
-            if (isPositiveAndIsRealAndMatches)
-                expr = expr.Children[0] - (-1 * expr.Children[1].Children[0].GetValue()) * expr.Children[1].Children[1];
+            if (NegativeMultiplyerPattern.Match(expr)
+                && expr.Children[1].Children[0] is NumberEntity { Value:RealNumber { Value:var real } }
+                && real > IntegerNumber.Zero)
+                expr = expr.Children[0] - (-1 * real) * expr.Children[1].Children[1];
             else
             {
                 for (int i = 0; i < expr.Children.Count; i++)

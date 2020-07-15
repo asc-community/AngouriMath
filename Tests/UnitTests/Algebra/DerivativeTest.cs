@@ -9,7 +9,7 @@ namespace UnitTests.Algebra
         static readonly VariableEntity x = MathS.Var("x");
 
         public void AssertEqEntity(Entity actual, Entity target)
-            => Assert.IsTrue(actual == target, "Expected: " + target.ToString() + " Got instead: " + actual.ToString());
+            => Assert.AreEqual(target, actual);
 
         [TestMethod]
         public void Test1()

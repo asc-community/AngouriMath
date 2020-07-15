@@ -24,10 +24,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     internal static class FractionedPolynoms
     {
-        internal static Set Solve(Entity expr, VariableEntity x)
+        internal static Set? Solve(Entity expr, VariableEntity x)
         {
             var childrenRaw = TreeAnalyzer.GatherLinearChildrenOverAndExpand(
-                expr, entity => entity.FindSubtree(x) != null
+                expr, entity => entity.FindSubtree(x) is { }
             );
 
             if (childrenRaw is null)
@@ -53,7 +53,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 potentialFraction.fracs = new List<(Entity main, IntegerNumber pow)>();
                 foreach (var mpChild in TreeAnalyzer.LinearChildrenOverProduct(child))
                 {
-                    if (mpChild.entType != Entity.EntType.OPERATOR)
+                    if (!(mpChild is OperatorEntity))
                     {
                         potentialFraction.multiplier *= mpChild;
                         continue;
@@ -63,27 +63,25 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         potentialFraction.multiplier *= mpChild;
                         continue;
                     }
-                    if (mpChild.Children[1].entType != Entity.EntType.NUMBER)
+                    if (!(mpChild.Children[1] is NumberEntity { Value:var num }))
                     {
                         potentialFraction.multiplier *= mpChild;
                         continue;
                     }
-                    if (mpChild.Children[0].FindSubtree(x) == null)
+                    if (mpChild.Children[0].FindSubtree(x) is null)
                     {
                         potentialFraction.multiplier *= mpChild;
                         continue;
                     }
-                    var num = (mpChild.Children[1] as NumberEntity).Value;
-                    if (!num.IsRational())
+                    if (!(num is RationalNumber fracNum))
                         return null; // (x + 1)^0.2348728
-                    if (!num.IsFraction()) // (x + 3) ^ 3
+                    if (num is IntegerNumber) // (x + 3) ^ 3
                     { 
                         potentialFraction.multiplier *= mpChild;
                         continue;
                     }
-                    var fracNum = num as RationalNumber;
-                    var newChild = MathS.Pow(mpChild.Children[0], fracNum.Numerator).InnerSimplify();
-                    var den = fracNum.Denominator;
+                    var newChild = MathS.Pow(mpChild.Children[0], (IntegerNumber)fracNum.Value.Numerator).InnerSimplify();
+                    var den = fracNum.Value.Denominator;
                     potentialFraction.fracs.Add((newChild, den));
                 }
 
@@ -97,7 +95,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return null; // means that one can either be solved polynomially or unsolvable at all
 
             // starting from i = 1 check if all are equal to [0]
-            bool BasesAreEqual(List<(Entity main, IntegerNumber pow)> f1,
+            static bool BasesAreEqual(List<(Entity main, IntegerNumber pow)> f1,
                 List<(Entity main, IntegerNumber pow)> f2)
             {
                 if (f1.Count != f2.Count)
@@ -118,17 +116,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     return null;
             }
 
-            var fractionedProduct = fractioned[0];
+            var (multiplier, fracs) = fractioned[0];
 
-            var lcm = Utils.LCM(fractionedProduct.fracs.Select(
+            var lcm = Utils.LCM(fracs.Select(
                 c => c.pow.Value
                 ).ToArray());
-            var intLcm = Number.Create(lcm);
+            var intLcm = IntegerNumber.Create(lcm);
 
             //                        "-" to compensate sum: x + sqrt(x + 1) = 0 => x = -sqrt(x+1)
-            Entity mp = MathS.Pow(-fractionedProduct.multiplier, intLcm).InnerSimplify();
-            foreach (var mainPowPair in fractionedProduct.fracs)
-                mp *= MathS.Pow(mainPowPair.main, Number.Create(lcm.Divide(mainPowPair.pow.Value)));
+            Entity mp = MathS.Pow(-multiplier, intLcm).InnerSimplify();
+            foreach (var (main, pow) in fracs)
+                mp *= MathS.Pow(main, IntegerNumber.Create(lcm.Divide(pow.Value)));
 
             var finalExpr = MathS.Pow(normalPolynom, intLcm) - mp;
 

@@ -21,19 +21,21 @@ namespace UnitTests.Algebra
         public void AssertExpander(Entity expr, params ComplexNumber[] toSubs)
         {
             MathS.Settings.MaxExpansionTermCount.Set(3000);
+            var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.FindSubtree("x") is { });
+            if (expandOver is null)
+                throw new AssertFailedException("expandOver is null");
             var expanded =
-                TreeAnalyzer.MultiHangBinary(
-                    TreeAnalyzer.SmartExpandOver(expr, entity => entity.FindSubtree("x") != null), "sumf", Const.PRIOR_SUM);
+                TreeAnalyzer.MultiHangBinary(expandOver, "sumf", Const.PRIOR_SUM);
             MathS.Settings.MaxExpansionTermCount.Unset();
             foreach (var toSub in toSubs)
             {
-                var comparisonResult = AreEqual(expr, expanded, toSub);
-                Assert.IsTrue(comparisonResult.equal, "E: " + comparisonResult.err + "  toSub: " + toSub + "  expanded: " + expanded.ToString());
+                var (equal, err) = AreEqual(expr, expanded, toSub);
+                Assert.IsTrue(equal, "E: " + err + "  toSub: " + toSub + "  expanded: " + expanded.ToString());
             }
         }
         
 
-        private ComplexNumber[] TestSet1 = {3, 6, 8, -3, MathS.i * 2};
+        private readonly ComplexNumber[] TestSet1 = { 3, 6, 8, -3, MathS.i * 2 };
 
         [TestMethod]
         public void TestCorner1() => AssertExpander("x", TestSet1);

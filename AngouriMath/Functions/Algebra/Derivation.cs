@@ -37,7 +37,7 @@ namespace AngouriMath
         {
             if (IsLeaf)
             {
-                if (this.entType == Entity.EntType.VARIABLE && this.Name == x.Name)
+                if (this is VariableEntity && Name == x.Name)
                     return new NumberEntity(1);
                 else
                     return new NumberEntity(0);
@@ -115,13 +115,13 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 2);
             var a = args[0];
             var b = args[1];
-            if (b.entType == Entity.EntType.NUMBER)
+            if (b is NumberEntity { Value:var value })
             {
-                var cons = (b as NumberEntity).Value - 1;
+                var cons = value - 1;
                 var res = b * (a.Pow(cons)) * a.Derive(variable);
                 return res;
             }
-            else if(a.entType == Entity.EntType.NUMBER)
+            else if(a is NumberEntity)
             {
                 return a.Pow(b) * MathS.Ln(a) * b.Derive(variable);
             }

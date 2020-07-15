@@ -27,7 +27,7 @@ namespace AngouriMath.Core.Sets
         public static List<Piece> Unite(Piece A, Piece B)
         {
             var intersection = Intersect(A, B);
-            if (intersection == null)
+            if (intersection is null)
                 return new List<Piece> { A, B };
             else
             {

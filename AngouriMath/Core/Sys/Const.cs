@@ -198,22 +198,20 @@ namespace AngouriMath
             res += expr.Complexity();
 
             // Number of variables
-            res += TreeAnalyzer.Count(expr, entity => entity.entType == Entity.EntType.VARIABLE);
+            res += TreeAnalyzer.Count(expr, entity => entity is VariableEntity);
 
             // Number of variables
-            res += TreeAnalyzer.Count(expr, entity => entity.entType == Entity.EntType.OPERATOR && entity.Name == "divf") / 2;
+            res += TreeAnalyzer.Count(expr, entity => entity is OperatorEntity && entity.Name == "divf") / 2;
 
             // Number of negative powers
             res += TreeAnalyzer.Count(expr, (entity) =>
             {
-                if (!(entity.entType == Entity.EntType.OPERATOR &&
+                if (!(entity is OperatorEntity &&
                       entity.Name == "powf" &&
-                      entity.Children[1].entType == Entity.EntType.NUMBER))
+                      entity.Children[1] is NumberEntity numEntity))
                     return false;
-                var numEntity = entity.Children[1] as NumberEntity;
-                if (numEntity.Value.IsImaginary())
+                if (!(numEntity.Value is RealNumber realNumber))
                     return false;
-                var realNumber = numEntity.Value as RealNumber;
                 return realNumber < 0;
             });
             return res;
