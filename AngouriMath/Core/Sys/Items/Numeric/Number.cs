@@ -139,7 +139,9 @@ namespace AngouriMath.Core.Numerix
             // such as fractions and complex but not a single i
             needParentheses
                   && this.Value != (EDecimal.Zero, EDecimal.One)
-                  && (this is RationalNumber || (this is ComplexNumber && !(this is RealNumber)))
+                  && ((this is RationalNumber || (this is ComplexNumber && !(this is RealNumber))) || 
+                      this is RealNumber r && r < 0
+                      )
                 ? @$"\left({InternalLatexise()}\right)"
                 : InternalLatexise();
 
