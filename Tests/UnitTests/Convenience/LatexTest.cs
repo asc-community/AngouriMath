@@ -13,14 +13,17 @@ namespace UnitTests.Convenience
         private static readonly NumberEntity m1 = -1;
         private static readonly NumberEntity im1 = MathS.i - 1;
         private static readonly NumberEntity m2i = -2 * MathS.i;
+        private static readonly NumberEntity numPi = MathS.DecimalConst.pi;
+        private static readonly NumberEntity mNumPi = -MathS.DecimalConst.pi;
         void Test(string expected, AngouriMath.Core.Sys.Interfaces.ILatexiseable actual) =>
             Assert.AreEqual(expected, actual.Latexise());
         void TestSimplify(string expected, Entity actual) =>
             Test(expected, actual.Simplify());
-        [TestMethod] public void Num() => TestSimplify("123", 123);
+        [TestMethod] public void Num0() => TestSimplify("0", 0);
+        [TestMethod] public void Num123() => TestSimplify("123", 123);
         [TestMethod] public void Float() => Test(@"\frac{15432}{125}", (Entity)123.456m);
         [TestMethod] public void FloatSimplify() => TestSimplify(@"\frac{15432}{125}", 123.456m);
-        [TestMethod] public void FracParse() => Test(@"3", ComplexNumber.Parse("3.000"));
+        [TestMethod] public void FloatParse() => Test(@"3", ComplexNumber.Parse("3.000"));
         [TestMethod] public void FloatZero() => Test(@"123.4561234567890", ComplexNumber.Parse("123.4561234567890"));
         [TestMethod] public void Pi() => Test(@"\pi", MathS.pi);
         [TestMethod] public void E() => Test(@"e", MathS.e);
@@ -78,6 +81,20 @@ namespace UnitTests.Convenience
         [TestMethod] public void PowM1() => Test(@"{x}^{-1}", MathS.Pow(x, m1));
         [TestMethod] public void M1Pow() => Test(@"{\left(-1\right)}^{x}", MathS.Pow(m1, x));
         [TestMethod] public void M2Pow() => Test(@"{\left(-2\right)}^{x}", MathS.Pow(-2, x));
+        [TestMethod] public void PiPow() => Test(@"{\pi}^{x}", MathS.Pow(MathS.pi, x));
+        [TestMethod] public void MPiPow() => Test(@"{\left(-\pi\right)}^{x}", MathS.Pow(-MathS.pi, x));
+        [TestMethod] public void NumPiAdd() => Test(@"3.1415926535897932384626433+3.1415926535897932384626433", numPi + numPi);
+        [TestMethod] public void NumPiSubtract() => Test(@"3.1415926535897932384626433-3.1415926535897932384626433", numPi - numPi);
+        [TestMethod] public void NumPiMultiply() => Test(@"3.1415926535897932384626433\times 3.1415926535897932384626433", numPi * numPi);
+        [TestMethod] public void NumPiDivide() => Test(@"\frac{3.1415926535897932384626433}{3.1415926535897932384626433}", numPi / numPi);
+        [TestMethod] public void NumPiPow() => Test(@"{3.1415926535897932384626433}^{x}", MathS.Pow(numPi, x));
+        [TestMethod] public void PowNumPi() => Test(@"{x}^{3.1415926535897932384626433}", MathS.Pow(x, numPi));
+        [TestMethod] public void MNumPiAdd() => Test(@"-3.1415926535897932384626433-3.1415926535897932384626433", mNumPi + mNumPi);
+        [TestMethod] public void MNumPiSubtract() => Test(@"-3.1415926535897932384626433--3.1415926535897932384626433", mNumPi - mNumPi);
+        [TestMethod] public void MNumPiMultiply() => Test(@"-3.1415926535897932384626433\times -3.1415926535897932384626433", mNumPi * mNumPi);
+        [TestMethod] public void MNumPiDivide() => Test(@"\frac{-3.1415926535897932384626433}{-3.1415926535897932384626433}", mNumPi / mNumPi);
+        [TestMethod] public void MNumPiPow() => Test(@"{\left(-3.1415926535897932384626433\right)}^{x}", MathS.Pow(mNumPi, x));
+        [TestMethod] public void PowMNumPi() => Test(@"{x}^{-3.1415926535897932384626433}", MathS.Pow(x, mNumPi));
         [TestMethod] public void MI() => TestSimplify("-i", MathS.Sqrt(-1) * -1);
         [TestMethod] public void M2I() => TestSimplify("-2i", m2i);
         [TestMethod] public void IM1() => Test("-1 + i", im1);

@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -47,7 +47,9 @@ namespace AngouriMath
                     Pattern p => "{ " + PatternNumber + " : " + p.patType + " }",
                     Tensor t => t.ToString(),
                     VariableEntity _ => this.Name,
-                    NumberEntity n => n.Value.ToString(parenthesesRequired),
+                     // If parentheses are required, they might be only required when complicated numbers are wrapped,
+                     // such as fractions and complex but not a single i
+                     NumberEntity n => n.Value.ToString(Priority != Const.PRIOR_NUM && parenthesesRequired),
                     _ => throw new SysException("Unexpected entity type")
                 };
             else

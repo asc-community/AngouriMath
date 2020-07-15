@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -45,51 +45,6 @@ namespace AngouriMath.Core.Numerix
     public abstract partial class Number : Sys.Interfaces.ILatexiseable
     {
         /// <summary>
-        /// The final value. Only useful for calculations
-        /// </summary>
-        public (EDecimal Re, EDecimal Im) Value => GetValue();
-
-        protected abstract (EDecimal Re, EDecimal Im) GetValue();
-
-        /// <summary>
-        /// This function serves not only convenience but also protects from unexpected cases, for example,
-        /// if a new type added
-        /// </summary>
-        protected static T SuperSwitch<T>(
-            Number num,
-            Func<IntegerNumber, T> ifInt,
-            Func<RationalNumber, T> ifRat,
-            Func<RealNumber, T> ifReal,
-            Func<ComplexNumber, T> ifCom
-        )
-            => num switch
-            {
-                IntegerNumber n => ifInt(n),
-                RationalNumber r => ifRat(r),
-                RealNumber r => ifReal(r),
-                ComplexNumber c => ifCom(c),
-                _ => throw new NotSupportedException(num.GetType() + " is not supported.")
-            };
-        /// <summary>
-        /// This function serves not only convenience but also protects from unexpected cases, for example,
-        /// if a new type added
-        /// </summary>
-        protected static T SuperSwitch<T>(
-            T num,
-            Func<IntegerNumber, IntegerNumber> ifInt,
-            Func<RationalNumber, RationalNumber> ifRat,
-            Func<RealNumber, RealNumber> ifReal,
-            Func<ComplexNumber, ComplexNumber> ifCom
-        ) where T : Number
-            => (T)(Number)(num switch
-            {
-                IntegerNumber n => ifInt(n),
-                RationalNumber r => ifRat(r),
-                RealNumber r => ifReal(r),
-                ComplexNumber c => ifCom(c),
-                _ => throw new NotSupportedException(num.GetType() + " is not supported.")
-            });
-        /// <summary>
         /// This function serves not only convenience but also protects from unexpected cases, for example,
         /// if a new type added
         /// </summary>
@@ -135,23 +90,14 @@ namespace AngouriMath.Core.Numerix
 
         internal protected abstract string InternalLatexise();
         internal string Latexise(bool needParentheses) =>
-            // If parentheses are required, they might be only required when complicated numbers are wrapped,
-            // such as fractions and complex but not a single i
-            needParentheses
-                  && this.Value != (EDecimal.Zero, EDecimal.One)
-                  && (this is RationalNumber || (this is ComplexNumber && !(this is RealNumber)))
-                ? @$"\left({InternalLatexise()}\right)"
-                : InternalLatexise();
+            needParentheses ? @$"\left({InternalLatexise()}\right)" : InternalLatexise();
 
         public override string ToString()
             => ToString(false);
 
         internal protected abstract string InternalToString();
         internal string ToString(bool needParentheses) =>
-            needParentheses
-            && (this is RationalNumber || (this is ComplexNumber && !(this is RealNumber)))
-            ? $"({InternalToString()})"
-            : InternalToString();
+            needParentheses ? $"({InternalToString()})" : InternalToString();
 
         /// <summary>
         /// Finds all complex roots of a number
