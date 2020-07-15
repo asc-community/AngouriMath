@@ -21,10 +21,10 @@ namespace AngouriMath.Core.Sets
     {
         internal static SetNode Subtract(SetNode A, SetNode B)
         {
-            if (A.Type == SetNode.NodeType.OPERATOR || B.Type == SetNode.NodeType.OPERATOR)
+            if (!(A is Set a && B is Set b))
                 return A - B;
-            var (goodAPieces, badAPieces) = GatherEvaluablePieces(A as Set);
-            var (goodBPieces, badBPieces) = GatherEvaluablePieces(B as Set);
+            var (goodAPieces, badAPieces) = GatherEvaluablePieces(a);
+            var (goodBPieces, badBPieces) = GatherEvaluablePieces(b);
             var newGoodPieces = new List<Piece>();
             newGoodPieces.AddRange(goodAPieces);
             foreach (var goodB in goodBPieces)

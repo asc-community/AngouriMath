@@ -48,22 +48,22 @@ namespace AngouriMath.Functions.Evaluation.Simplification
         /// <returns></returns>
         internal static Set Alternate(Entity src, int level)
         {
-            if (src.entType == Entity.EntType.NUMBER || src.entType == Entity.EntType.VARIABLE)
+            if (src is NumberEntity || src is VariableEntity)
                 return new Set(src.Copy());
             var stage1 = src.InnerSimplify();
-            if (stage1.entType == Entity.EntType.NUMBER)
+            if (stage1 is NumberEntity)
                 return new Set(stage1);
 
             var history = new SortedDictionary<int, List<Entity>>();
 
-            void TryInnerSimplify(ref Entity expr)
+            static void TryInnerSimplify(ref Entity expr)
             {
                 TreeAnalyzer.Sort(ref expr, TreeAnalyzer.SortLevel.HIGH_LEVEL);
                 expr = expr.InnerSimplify();
             }
 
             // List of criterians of expr's complexity
-            int CountExpressionComplexity(Entity expr)
+            static int CountExpressionComplexity(Entity expr)
             => MathS.Settings.ComplexityCriteria.Value(expr);
 
             void __IterAddHistory(Entity expr)

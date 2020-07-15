@@ -7,45 +7,16 @@ namespace UnitTests.Common
     [TestClass]
     public class OperatorTest
     {
+        [TestMethod] public void TestEq() => Assert.AreEqual(MathS.Var("x"), MathS.Var("x"));
+        [TestMethod] public void TestIneq() => Assert.AreNotEqual(MathS.Var("x"), MathS.Var("y"));
         [TestMethod]
-        public void TestEq()
-        {
-            Assert.IsTrue(MathS.Var("x") == MathS.Var("x"));
-        }
-        [TestMethod]
-        public void TestIneq()
-        {
-            Assert.IsTrue(MathS.Var("x") != MathS.Var("y"));
-        }
-        [TestMethod]
-        public void TestR()
-        {
-            Assert.IsTrue(new ComplexNumber(0, 1) == new ComplexNumber(0, (1.0/3) * 3));
-        }
-        [TestMethod]
-        public void TestDP()
-        {
-            Assert.IsTrue(MathS.FromString("-23").Eval() == -23);
-        }
-        [TestMethod]
-        public void TestDM()
-        {
-            Assert.IsTrue(MathS.FromString("1 + -1").Eval() == 0);
-        }
-        [TestMethod]
-        public void TestB()
-        {
-            Assert.IsTrue(MathS.FromString("1 + (-1)").Eval() == 0);
-        }
-        [TestMethod]
-        public void TestMi()
-        {
-            Assert.IsTrue(MathS.FromString("-i^2").Eval() == 1);
-        }
-        [TestMethod]
-        public void TestMm()
-        {
-            Assert.IsTrue(MathS.FromString("-1 * -1 * -1").Eval() == -1);
-        }
+        public void TestR() =>
+            Assert.AreEqual(ComplexNumber.Create(0, 1),
+                ComplexNumber.Create(0, PeterO.Numbers.EDecimal.FromInt32(1).NextPlus(MathS.Settings.DecimalPrecisionContext)));
+        [TestMethod] public void TestDP() => Assert.AreEqual(-23, MathS.FromString("-23").Eval());
+        [TestMethod] public void TestDM() => Assert.AreEqual(0, MathS.FromString("1 + -1").Eval());
+        [TestMethod] public void TestB() => Assert.AreEqual(0, MathS.FromString("1 + (-1)").Eval());
+        [TestMethod] public void TestMi() => Assert.AreEqual(1, MathS.FromString("-i^2").Eval());
+        [TestMethod] public void TestMm() => Assert.AreEqual(-1, MathS.FromString("-1 * -1 * -1").Eval());
     }
 }

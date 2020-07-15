@@ -35,11 +35,13 @@ namespace AngouriMath.Functions
         /// <param name="variable"></param>
         /// <param name="dst"></param>
         /// <returns></returns>
-        internal static bool TryPolynomial(Entity expr, VariableEntity variable, out Entity dst)
+        internal static bool TryPolynomial(Entity expr, VariableEntity variable,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
+            out Entity? dst)
         {
             dst = null;
             var children = TreeAnalyzer.LinearChildren(expr.Expand(), "sumf", "minusf", Const.FuncIfSum);
-            var monomialsByPower = PolynomialSolver.GatherMonomialInformation<long>(children, variable);
+            var monomialsByPower = PolynomialSolver.GatherMonomialInformation<EInteger>(children, variable);
             if (monomialsByPower == null)
                 return false;
             var newMonomialsByPower = new Dictionary<int, Entity>();
@@ -48,18 +50,18 @@ namespace AngouriMath.Functions
             var terms = new List<Entity>();
             foreach (var index in keys)
             {
-                var pair = new KeyValuePair<long, Entity>(index, monomialsByPower[index]);
+                var pair = new KeyValuePair<EInteger, Entity>(index, monomialsByPower[index]);
                 Entity px;
-                if (pair.Key == 0)
+                if (pair.Key.IsZero)
                 {
                     terms.Add(pair.Value.Simplify());
                     continue;
                 }
 
-                if (pair.Key == 1)
+                if (pair.Key.Equals(EInteger.One))
                     px = variable;
                 else
-                    px = MathS.Pow(variable, pair.Key);
+                    px = MathS.Pow(variable, IntegerNumber.Create(pair.Key));
                 if (pair.Value == 1)
                 {
                     terms.Add(px);
@@ -74,9 +76,9 @@ namespace AngouriMath.Functions
             dst = terms[0];
             for (int i = 1; i < terms.Count; i++)
                 if (terms[i].Name == "mulf" &&
-                    terms[i].Children[0].entType == Entity.EntType.NUMBER &&
-                    terms[i].Children[0].GetValue().IsReal() && terms[i].Children[0].GetValue().Real < 0)
-                    dst -= ((-1) * terms[i].Children[0].GetValue()) * terms[i].Children[1];
+                    terms[i].Children[0] is NumberEntity { Value:RealNumber r }
+                    && r < 0)
+                    dst -= -r * terms[i].Children[1];
                 else
                     dst += terms[i];
             dst = dst.InnerSimplify();
@@ -94,11 +96,11 @@ namespace AngouriMath.Functions
         /// (null, 0) if it's not a valid indexed-name with numeric index,
         /// (string prefix, int num) otherwise
         /// </returns>
-        internal static (string prefix, int num) ParseIndexNumeric(string name)
+        internal static (string? prefix, int num) ParseIndexNumeric(string name)
         {
-            var parsedIndex = ParseIndex(name);
-            if (!(parsedIndex.prefix is null) && int.TryParse(parsedIndex.index, out var num))
-                return (parsedIndex.prefix, num);
+            var (prefix, index) = ParseIndex(name);
+            if (!(prefix is null) && int.TryParse(index, out var num))
+                return (prefix, num);
             return (null, 0);
         }
 
@@ -112,7 +114,7 @@ namespace AngouriMath.Functions
         /// If it contains _ and valid name and index, returns a pair of (string prefix, string index)
         /// (null, null) otherwise
         /// </returns>
-        internal static (string prefix, string index) ParseIndex(string name)
+        internal static (string? prefix, string? index) ParseIndex(string name)
         {
             var pos_ = name.IndexOf('_');
             if (pos_ != -1)
@@ -175,7 +177,7 @@ namespace AngouriMath.Functions
                     b %= a;
             }
 
-            return a == EInteger.Zero ? b : a;
+            return a.IsZero ? b : a;
         }
 
         private static long _GCD(long a, long b)
@@ -206,7 +208,7 @@ namespace AngouriMath.Functions
         internal static EInteger GCD(params EInteger[] numbers)
         {
             if (numbers.Length == 1)
-                return numbers[0] == EInteger.Zero ? 1 : numbers[0]; // technically, if number[0] == 0, then gcd = +oo
+                return numbers[0].IsZero ? 1 : numbers[0]; // technically, if number[0] == 0, then gcd = +oo
             if (numbers.Length == 2)
                 return _GCD(numbers[0], numbers[1]);
             var rest = (new ArraySegment<EInteger>(numbers, 2, numbers.Length - 2)).ToList();
@@ -236,7 +238,7 @@ namespace AngouriMath.Functions
         }
     }
 
-    public class Setting<T>
+    public class Setting<T> where T : notnull
     {
         private readonly Stack<T> sets = new Stack<T>();
         internal Setting(T defaultValue)

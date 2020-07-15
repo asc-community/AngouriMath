@@ -19,7 +19,8 @@
 using System.Collections.Generic;
  using System.Numerics;
  using System.Text;
- using AngouriMath.Core.Numerix;
+using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
  using PeterO.Numbers;
 
@@ -37,11 +38,12 @@ namespace AngouriMath
         internal string Latexise(bool parenthesesRequired)
         {
             if (IsLeaf)
-                return entType switch
+                return this switch
                 {
-                    EntType.VARIABLE => Const.LatexiseConst(Name),
-                    EntType.TENSOR => ((Core.Tensor)this).Latexise(),
-                    EntType.NUMBER => GetValue().Latexise(parenthesesRequired)
+                    VariableEntity _ => Const.LatexiseConst(Name),
+                    Tensor t => t.Latexise(),
+                    NumberEntity { Value:var value } => value.Latexise(parenthesesRequired),
+                    _ => throw new Core.Exceptions.SysException("Unknown entity")
                 };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
@@ -166,17 +168,16 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            if (args[1].entType == Entity.EntType.NUMBER
-                && Number.Functional.Downcast(args[1].GetValue()) is RationalNumber rational
-                && rational.IsFraction())
+            if (args[1] is NumberEntity { Value:RationalNumber { IsFinite:true } rational }
+                && !(rational is IntegerNumber))
             {
-                var (numerator, denominator) = (rational.Numerator, rational.Denominator);
-                var str = @"\sqrt" + (denominator.Value.Equals(2) ? "" : "[" + denominator.Latexise() + "]") + 
+                var (numerator, denominator) = (rational.Value.Numerator, rational.Value.Denominator);
+                var str = @"\sqrt" + (denominator.Equals(2) ? "" : "[" + denominator + "]") + 
                   "{" + args[0].Latexise() + "}";
-                var abs = numerator.Value.Abs();
+                var abs = numerator.Abs();
                 if (!EDecimalWrapper.IsEqual(abs, EInteger.One))
                     str += "^{" + abs + "}";
-                if (numerator.Value < 0)
+                if (numerator < 0)
                     str = @"\frac{1}{" + str + "}";
                 return str;
             }
@@ -225,10 +226,9 @@ namespace AngouriMath
             public string Latexise()
             {
                 var sb = new StringBuilder();
-                switch (Type)
+                switch (this)
                 {
-                    case NodeType.SET:
-                        var set = this as Set;
+                    case Set set:
                         if (set.IsEmpty())
                         {
                             sb.Append(@"\emptyset");
@@ -238,12 +238,12 @@ namespace AngouriMath
                         sb.Append(@"\left\{");
                         foreach(var p in set)
                         {
-                            switch (p.Type)
+                            switch (p)
                             {
-                                case Piece.PieceType.ENTITY:
-                                    sb.Append(((OneElementPiece)p).UpperBound().Item1.Latexise());
+                                case OneElementPiece oneelem:
+                                    sb.Append(oneelem.UpperBound().Item1.Latexise());
                                     break;
-                                case Piece.PieceType.INTERVAL:
+                                case IntervalPiece _:
                                     var lower = p.LowerBound();
                                     var upper = p.UpperBound();
                                     var l = lower.Item1.Latexise();
@@ -265,10 +265,10 @@ namespace AngouriMath
                                             break;
                                         case var (lr, li, ur, ui):
                                             static string Extract(Entity entity, bool takeReal) =>
-                                                (entity.entType, takeReal) switch
+                                                (entity, takeReal) switch
                                                 {
-                                                    (Entity.EntType.NUMBER, true) => entity.GetValue().Real.Latexise(),
-                                                    (Entity.EntType.NUMBER, false) => entity.GetValue().Imaginary.Latexise(),
+                                                    (NumberEntity num, true) => num.Value.Real.Latexise(),
+                                                    (NumberEntity num, false) => num.Value.Imaginary.Latexise(),
                                                     (_, true) => @"\Re\left(" + entity.Latexise() + @"\right)",
                                                     (_, false) => @"\Im\left(" + entity.Latexise() + @"\right)",
                                                 };
@@ -288,8 +288,7 @@ namespace AngouriMath
                         sb.Remove(sb.Length - 1, 1); // Remove extra ,
                         sb.Append(@"\right\}");
                         break;
-                    case NodeType.OPERATOR:
-                        var op = (OperatorSet)this;
+                    case OperatorSet op:
                         var connector = op.ConnectionType switch
                         {
                             OperatorSet.OperatorType.UNION => @"\cup",

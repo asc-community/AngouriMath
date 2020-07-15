@@ -27,10 +27,10 @@ namespace AngouriMath.Core.Sets
         /// <returns></returns>
         public static SetNode Intersect(SetNode A, SetNode B)
         {
-            if (A.Type == SetNode.NodeType.OPERATOR || B.Type == SetNode.NodeType.OPERATOR)
+            if (!(A is Set a && B is Set b))
                 return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B);
-            var (goodAPieces, badAPieces) = GatherEvaluablePieces(A as Set);
-            var (goodBPieces, badBPieces) = GatherEvaluablePieces(B as Set);
+            var (goodAPieces, badAPieces) = GatherEvaluablePieces(a);
+            var (goodBPieces, badBPieces) = GatherEvaluablePieces(b);
             if (goodAPieces.Count * goodBPieces.Count == 0)
                 return new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B);
             var newPieces = new List<Piece>();

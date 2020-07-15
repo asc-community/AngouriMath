@@ -49,28 +49,7 @@ namespace AngouriMath.Core
         /// </summary>
         internal Entity[] Data;
 
-        private void InitData(int len)
-        =>
-            Data = new Entity[len];
-
-        /// <summary>
-        /// Volumes are required to get or set an element by id, for example
-        /// given tensor 3x4x5 volumes=[60, 20, 5, 1] => tensor[1][2][3] <=>
-        /// Data[1 * 20 + 2 * 5 + 3 * 1] = Data[33]
-        /// </summary>
-        private void InitVolumes()
-        {
-            Volumes = new List<int>();
-            int r = 1;
-            Volumes.Add(r);
-            for (int i = Dimensions - 1; i >= 0; i--)
-            {
-                r *= Shape[i];
-                Volumes.Add(r);
-            }
-            Volumes.Reverse();
-        }
-        private List<int> Volumes; // 10x20x30 in Shape => 600x30x1 in Volumes
+        private readonly List<int> Volumes; // 10x20x30 in Shape => 600x30x1 in Volumes
 
         /// <summary>
         /// List of dimensions
@@ -79,16 +58,30 @@ namespace AngouriMath.Core
         /// You can't list 0 dimensions
         /// </summary>
         /// <param name="dims"></param>
-        public Tensor(params int[] dims) : base("tensort", EntType.TENSOR)
+        public Tensor(params int[] dims) : base("tensort")
         {
             if (dims.Length == 0)
                 throw new TreeException("Tensor must consist of dimensions");
             Shape = new List<int>();
             Shape.AddRange(dims);
-            InitVolumes();
+
+            // Volumes are required to get or set an element by id, for example
+            // given tensor 3x4x5 volumes=[60, 20, 5, 1] => tensor[1][2][3] <=>
+            // Data[1 * 20 + 2 * 5 + 3 * 1] = Data[33]
+            {
+                Volumes = new List<int>();
+                int r = 1;
+                Volumes.Add(r);
+                for (int i = Dimensions - 1; i >= 0; i--)
+                {
+                    r *= Shape[i];
+                    Volumes.Add(r);
+                }
+                Volumes.Reverse();
+            }
 
             // The first element of Volumes is the Volume of the entire tensor
-            InitData(Volumes[0]);
+            Data = new Entity[Volumes[0]];
 
             AxesOrder = new int[dims.Length];
             for (int i = 0; i < AxesOrder.Length; i++)
@@ -173,7 +166,7 @@ namespace AngouriMath.Core
                     {
                         var mxlen = 0;
                         for (int j = 0; j < Shape[0]; j++)
-                            mxlen = Math.Max(mxlen, this[j, i] == null ? 4 : this[j, i].ToString().Length);
+                            mxlen = Math.Max(mxlen, this[j, i]?.ToString().Length ?? 4);
                         mxlen = Math.Min(maxElLen, mxlen);
                         maxlen.Add(mxlen);
                     }
@@ -181,7 +174,7 @@ namespace AngouriMath.Core
                     {
                         for (int y = 0; y < Shape[1]; y++)
                         {
-                            var ents = this[x, y] == null ? "null" : this[x, y].ToString();
+                            var ents = this[x, y]?.ToString() ?? "null";
                             if (ents.Length > maxlen[y])
                                 ents = ents.Substring(0, maxlen[y] - 1) + @"\";
                             res += ents + new string(' ', maxlen[y] - ents.Length + 3);

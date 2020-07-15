@@ -2,19 +2,20 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using AngouriMath;
 using AngouriMath.Core.Numerix;
+using UnitTests.Algebra.PolynomialSolverTests;
 
 namespace UnitTests.Algebra
 {
     [TestClass]
     public class SolveSystem
     {
-        public void AssertSystemSolvable(List<Entity> equations, List<VariableEntity> vars, int rootCount = -1, Number ToSub = null)
+        public void AssertSystemSolvable(List<Entity> equations, List<VariableEntity> vars, int rootCount = -1, ComplexNumber? ToSub = null)
         {
-            if (ToSub is null)
-                ToSub = 3;
+            ToSub ??= 3;
             var sys = MathS.Equations(equations.ToArray());
             var sol = sys.Solve(vars.ToArray());
-            Assert.IsTrue(sol.Shape[0] == rootCount || rootCount == -1, "Got " + sol.Shape[0] + " instead of " + rootCount);
+            if (rootCount != -1)
+                Assert.AreEqual(rootCount, sol.Shape[0]);
             for (int i = 0; i < sol.Shape[0]; i++)
             {
                 foreach (var eq in equations)
@@ -27,9 +28,9 @@ namespace UnitTests.Algebra
                     }
 
                     foreach (var uniqvar in MathS.Utils.GetUniqueVariables(eqCopy).FiniteSet())
-                        eqCopy = eqCopy.Substitute(uniqvar.Name, (Entity)ToSub);
+                        eqCopy = eqCopy.Substitute(uniqvar.Name, new NumberEntity(ToSub));
                     var E = Number.Abs(eqCopy.Eval());
-                    Assert.IsTrue(E.IsDefinite() && E < 0.0001,
+                    Assert.IsTrue(E.IsFinite && E < 0.0001,
                         "i: " + i + "  eq: " + eq.ToString() + "  E: " + E.ToString());
                 }
             }

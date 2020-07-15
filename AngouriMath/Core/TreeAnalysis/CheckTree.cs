@@ -55,12 +55,12 @@ namespace AngouriMath.Core.TreeAnalysis
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
-        internal static bool IsDefinite(Entity expr)
+        internal static bool IsFinite(Entity expr)
         {
-            if (expr.entType == Entity.EntType.NUMBER)
-                return (expr as NumberEntity).Value.IsDefinite();
+            if (expr is NumberEntity { Value:var value })
+                return value.IsFinite;
             else
-                return expr.Children.All(IsDefinite);
+                return expr.Children.All(IsFinite);
         }
     }
 }
@@ -78,7 +78,7 @@ namespace AngouriMath.Core
 
             // All elements are not null
             for(int i = 0; i < Data.Length; i++)
-                TreeAnalyzer.AssertTree(Data[i] != null, "One tensor's element is null");
+                TreeAnalyzer.AssertTree(Data[i] is { }, "One tensor's element is null");
         }
     }
 }

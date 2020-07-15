@@ -49,51 +49,35 @@ namespace DotnetBenchmark
         private readonly RealNumber b = 5.4m;
             /*
         [Benchmark]
-        public void InitComplexImpl() => Number.Create(3.4m, 56m);
+        public void InitComplexImpl() => ComplexNumber.Create(3.4m, 56m);
         [Benchmark]
-        public void InitComplexImpl2() => Number.Create(3.4, 56);
+        public void InitComplexImpl2() => ComplexNumber.Create(3.4, 56);
         [Benchmark]
-        public void InitComplexExpl() => Number.Create(a, b);
+        public void InitComplexExpl() => ComplexNumber.Create(a, b);
         [Benchmark]
-        public void InitReal() => Number.Create(3.4m);
+        public void InitReal() => RealNumber.Create(3.4m);
         [Benchmark]
-        public void InitRational() => Number.CreateRational(6, 7);
+        public void InitRational() => RationalNumber.Create(6, 7);
         [Benchmark]
-        public void InitInteger() => Number.Create(68);
+        public void InitInteger() => IntegerNumber.Create(68);
         */
 
-        private readonly RealNumber e = new RealNumber(3.4m);
-        private readonly RealNumber f = new RealNumber(3.42748273484m);
-
-        private readonly ComplexNumber c = new ComplexNumber(
-                new RealNumber(3.4m),
-                new RealNumber(6.4m)
-            );
-
-        private readonly ComplexNumber d = new ComplexNumber(
-            new RealNumber(3.487449272953435m),
-            new RealNumber(6.401380141304m)
-        );
         [Benchmark]
-        public void DowncastComplexSuccessfully()
-            => Number.Functional.Downcast(c);
+        public void DowncastComplexSuccessfully() => ComplexNumber.Create(3.4m, 6.4m);
         [Benchmark]
-        public void DowncastComplexNotSucc()
-            => Number.Functional.Downcast(d);
+        public void DowncastComplexNotSucc() => ComplexNumber.Create(3.487449272953435m, 6.401380141304m);
 
         [Benchmark] 
-        public void DowncastRealSuccessfully()
-            => Number.Functional.Downcast(e);
+        public void DowncastRealSuccessfully() => RealNumber.Create(3.4m);
         [Benchmark]
-        public void DowncastRealNotSucc()
-            => Number.Functional.Downcast(f);
+        public void DowncastRealNotSucc() => RealNumber.Create(3.42748273484m);
 
         [Benchmark]
         public void FindRationalSuccess()
-            => Number.Functional.FindRational(3.4m);
+            => RationalNumber.FindRational(3.4m);
         [Benchmark]
         public void FindRationalNotSuccess()
-            => Number.Functional.FindRational(3.48426482675284m);
+            => RationalNumber.FindRational(3.48426482675284m);
     }
 
     public class Program

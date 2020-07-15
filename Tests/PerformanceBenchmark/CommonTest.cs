@@ -9,18 +9,22 @@ namespace PerformanceBenchmark.Tests
     public abstract class CommonTest
     {
         protected List<Func<object>> tests;
+        readonly int iterCount;
         protected static readonly VariableEntity x = MathS.Var("x");
         protected static readonly VariableEntity y = MathS.Var("y");
         protected static readonly VariableEntity z = MathS.Var("z");
-        protected static int IterCount { get; set; } = 1000;
+
+        protected CommonTest(int iterCount, List<Func<object>> tests) =>
+            (this.tests, this.iterCount) = (tests, iterCount);
+
         private decimal Watch(Func<object> func)
         {
             var stopWatch = new Stopwatch();
             stopWatch.Start();
-            for (int i = 0; i < IterCount; i++)
+            for (int i = 0; i < iterCount; i++)
                 func();
             stopWatch.Stop();
-            return ((decimal)stopWatch.ElapsedMilliseconds) / IterCount;
+            return ((decimal)stopWatch.ElapsedMilliseconds) / iterCount;
         }
         internal string Evaluate()
         {

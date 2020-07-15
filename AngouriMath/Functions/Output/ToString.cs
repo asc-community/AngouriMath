@@ -43,11 +43,11 @@ namespace AngouriMath
         internal string Stringize(bool parenthesesRequired)
         {
             if (IsLeaf)
-                return entType switch {
-                    EntType.PATTERN => "{ " + PatternNumber + " : " + (this as Pattern).patType + " }",
-                    EntType.TENSOR => (this as Tensor).ToString(),
-                    EntType.VARIABLE => this.Name,
-                    EntType.NUMBER => GetValue().ToString(parenthesesRequired),
+                return this switch {
+                    Pattern p => "{ " + PatternNumber + " : " + p.patType + " }",
+                    Tensor t => t.ToString(),
+                    VariableEntity _ => this.Name,
+                    NumberEntity n => n.Value.ToString(parenthesesRequired),
                     _ => throw new SysException("Unexpected entity type")
                 };
             else
@@ -94,7 +94,7 @@ namespace AngouriMath
         public static string Stringize(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(args[1].entType == Entity.EntType.OPERATOR && args[1].Priority <= Const.PRIOR_DIV);
+            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(args[1] is OperatorEntity && args[1].Priority <= Const.PRIOR_DIV);
         }
     }
     internal static partial class Sinf

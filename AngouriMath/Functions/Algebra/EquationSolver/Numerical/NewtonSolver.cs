@@ -104,10 +104,11 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                 {
                     var xShare = ((EDecimal)x) / settings.StepCount.Re;
                     var yShare = ((EDecimal)y) / settings.StepCount.Im;
-                    var value = Number.Create(settings.From.Re * xShare + settings.To.Re * (1 - xShare),
-                                           settings.From.Im * yShare + settings.To.Im * (1 - yShare));
+                    var value = ComplexNumber.Create(
+                        settings.From.Re * xShare + settings.To.Re * (1 - xShare),
+                        settings.From.Im * yShare + settings.To.Im * (1 - yShare));
                     var root = NewtonIter(f, df, value.AsComplex(), settings.Precision);
-                    if (root.IsDefinite() && f.Call(root.AsComplex()).ToComplexNumber().Abs() < MathS.Settings.PrecisionErrorCommon.Value)
+                    if (root.IsFinite && f.Call(root.AsComplex()).ToComplexNumber().Abs() < MathS.Settings.PrecisionErrorCommon.Value)
                         res.Add(root);
                 }
             MathS.Settings.FloatToRationalIterCount.Unset();
@@ -136,18 +137,6 @@ namespace AngouriMath
 
     public abstract partial class Entity : ILatexiseable
     {
-        /// <summary>
-        /// To get Number from NumberEntity (in case of need a concrete number)
-        /// </summary>
-        /// <returns></returns>
-        public ComplexNumber GetValue()
-        {
-            if (this.entType == EntType.NUMBER)
-                return (this as NumberEntity).Value;
-            else
-                throw new MathSException("Cannot get number from expression");
-        }
-
         /// <summary>
         /// Searches for numerical solutions via Newton's method https://en.wikipedia.org/wiki/Newton%27s_method
         /// To change parameters see MathS.Settings.NewtonSolver

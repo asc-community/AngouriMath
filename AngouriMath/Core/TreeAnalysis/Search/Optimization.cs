@@ -26,20 +26,21 @@ namespace AngouriMath
     {
         /// <summary>
         /// Static hash. It won't recount automatically, to recount it call
-        /// expr.UpdateHash()
+        /// <see cref="UpdateHash"/>
         /// </summary>
-        internal string Hash { get; private set; }
+        internal string Hash => _hash ??= UpdateHash();
+        string? _hash;
 
         /// <summary>
         /// Occurances of this exact subtree.
         /// To recount it, call
-        /// Entity.UpdateHashOccurances(expr)
+        /// <see cref="CountOccurances(string)"/>
         /// </summary>
         internal int HashOccurances { get; set; }
 
         /// <summary>
-        /// Recounts expr.Hash
-        /// Before using expr.Hash, make sure you called this function
+        /// Recounts <see cref="Hash"/>.
+        /// Before using <see cref="Hash"/>, make sure you called this function
         /// </summary>
         /// <returns></returns>
         internal string UpdateHash()
@@ -48,13 +49,13 @@ namespace AngouriMath
             var sb = new StringBuilder();
             foreach (var ch in Children)
                 sb.Append(ch.UpdateHash());
-            Hash = Const.HashString(sb.ToString() + ownHash);
+            _hash = Const.HashString(sb.ToString() + ownHash);
             return Hash;
         }
 
         /// <summary>
-        /// Recounts expr.HashOccurances
-        /// Before using expr.HashOccurances, make sure you called this function
+        /// Recounts <see cref="HashOccurances"/>.
+        /// Before using <see cref="HashOccurances"/>, make sure you called this function
         /// </summary>
         /// <param name="expr"></param>
         internal static void HashOccurancesUpdate(Entity expr)
@@ -136,7 +137,7 @@ namespace AngouriMath.Core.TreeAnalysis
             /// <param name="expr"></param>
             internal static void OptimizeTree(ref Entity expr)
             {
-                if (expr.entType == Entity.EntType.OPERATOR)
+                if (expr is OperatorEntity)
                 {
                     if (expr.Name == "sumf" || expr.Name == "minusf")
                     {

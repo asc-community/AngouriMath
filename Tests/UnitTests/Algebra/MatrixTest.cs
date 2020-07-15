@@ -31,7 +31,7 @@ namespace UnitTests.Algebra
                 50, 60,
                 114, 140
             );
-            Assert.IsTrue(MathS.Matrices.DotProduct(C, B).EvalTensor() == R);
+            Assert.AreEqual(R, MathS.Matrices.DotProduct(C, B).EvalTensor());
         }
         [TestMethod]
         public void DotPointwiseProduct1()
@@ -42,21 +42,18 @@ namespace UnitTests.Algebra
                 25, 36,
                 49, 64
                 ); 
-            Assert.IsTrue((A * B).EvalTensor() == C);
+            Assert.AreEqual(C, (A * B).EvalTensor());
         }
 
         [TestMethod]
-        public void SumProduct1()
-        {
-            Assert.IsTrue((A + B).EvalTensor() == (2 * A).EvalTensor());
-        }
+        public void SumProduct1() => Assert.AreEqual((2 * A).EvalTensor(), (A + B).EvalTensor());
 
         [TestMethod]
         public void ScalarProduct1()
         {
             var a = MathS.Matrices.Vector(1, 2, 3);
             var b = MathS.Matrices.Vector(1, 2, 4);
-            Assert.IsTrue(MathS.Matrices.ScalarProduct(a, b).Eval() == 17);
+            Assert.AreEqual(17, MathS.Matrices.ScalarProduct(a, b).Eval());
         }
     }
 }

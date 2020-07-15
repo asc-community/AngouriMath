@@ -55,6 +55,7 @@
     </None>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
     <PackageReference Include="PeterO.Numbers" Version="1.6.0" />
+    <PackageReference Include="Nullable" Version="1.2.1" />
     <EmbeddedResource Include="Core/FromString/Antlr/Angourimath.tokens" />
   </ItemGroup>
 </Project>
