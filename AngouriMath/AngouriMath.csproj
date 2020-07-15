@@ -42,7 +42,6 @@
     <None Remove="Core\Sys\Items\Numeric\bin\**" />
     <None Remove="Core\Sys\Items\Numeric\obj\**" />
     <None Remove="Core\Sys\Items\Numeric\packages\**" />
-    <None Remove="Core\FromString\Antlr\Angourimath.g" />
     <None Include="..\icon.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>

@@ -78,7 +78,7 @@ var func = "x2 + ln(cos(x) + 3) + 4x";
 var derivative = func.Derive("x");
 Console.WriteLine(derivative.Simplify());
 ```
-<img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)%2B3\right)}^{2}\times \left(\cos\left(x\right)+3\right)}+2\times x">
+<img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)%2B3\right)}^{2}\times \left(\cos\left(x\right)%2B3\right)}%2B2\times x">
 
 #### <a name="simp"></a>Simplify
 ```cs
@@ -193,5 +193,6 @@ See more on [Wiki](https://github.com/asc-community/AngouriMath/wiki).
 We appreciate and welcome any contributors to AngouriMath.
 
 Use pull requests to contribute to it. If you want to regenerate the parser, follow these steps:
-1. Assure you have java on your machine
-2. Run `start ./AngouriMath/antrl_rerun.bat` or `./AngouriMath/antrl_rerun.bat` to regenerate the parser via ANTRL
+1. Change files from ./AngouriMath/Core/FromString/Antlr/ with the extensions of ".interp", ".tokens", ".g"
+2. Assure you have jre on your machine
+3. Run `start ./AngouriMath/antlr_rerun.bat` or `./AngouriMath/antlr_rerun.bat` to regenerate the parser via ANTLR
