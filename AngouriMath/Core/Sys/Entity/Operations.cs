@@ -47,6 +47,8 @@ namespace AngouriMath
     {
         protected override bool EqualsTo(Entity obj)
         {
+            if (!(obj is FunctionEntity))
+                return false;
             if (obj.Name != Name)
                 return false;
             if (Children.Count != obj.Children.Count)
@@ -64,6 +66,8 @@ namespace AngouriMath
     {
         protected override bool EqualsTo(Entity obj)
         {
+            if (!(obj is OperatorEntity))
+                return false;
             if (obj.Name != Name)
                 return false;
             if (Children.Count != obj.Children.Count)
@@ -85,6 +89,6 @@ namespace AngouriMath
 
     public partial class VariableEntity
     {
-        protected override bool EqualsTo(Entity obj) => Name == obj.Name;
+        protected override bool EqualsTo(Entity obj) => obj is VariableEntity && Name == obj.Name;
     }
 }

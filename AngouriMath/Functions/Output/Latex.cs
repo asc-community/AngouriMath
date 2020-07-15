@@ -42,7 +42,9 @@ namespace AngouriMath
                 {
                     VariableEntity _ => Const.LatexiseConst(Name),
                     Tensor t => t.Latexise(),
-                    NumberEntity { Value:var value } => value.Latexise(parenthesesRequired),
+                    // If parentheses are required, they might be only required when complicated numbers are wrapped,
+                    // such as fractions and complex but not a single i
+                    NumberEntity { Value:var value } => value.Latexise(Priority != Const.PRIOR_NUM && parenthesesRequired),
                     _ => throw new Core.Exceptions.SysException("Unknown entity")
                 };
             else

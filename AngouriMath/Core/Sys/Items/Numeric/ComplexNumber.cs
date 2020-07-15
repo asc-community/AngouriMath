@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -74,11 +74,6 @@ namespace AngouriMath.Core.Numerix
                 return RealNumber.Create(real);
             else
                 return new ComplexNumber(RealNumber.Create(real), RealNumber.Create(imaginary));
-        }
-
-        protected override (EDecimal Re, EDecimal Im) GetValue()
-        {
-            return (Real.Value, Imaginary.Value);
         }
 
         protected internal override string InternalToString()
