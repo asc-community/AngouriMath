@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -81,24 +81,18 @@ namespace AngouriMath
         public static implicit operator Entity(double num)        => new NumberEntity(num);
         public static implicit operator Entity(string expr)       => MathS.FromString(expr);
 
-        /// <summary>
-        /// Deep but stupid comparison
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        public static bool operator ==(Entity a, Entity b)
+        /// <summary>Deep but stupid comparison</summary>
+        public static bool operator ==(Entity? a, Entity? b)
         {
             // Since 7.0 we can compare objects to null without casting them into object
             if (a is null && b is null)
                 return true;
             if (a is null || b is null)
                 return false;
-            if (a.GetType() != b.GetType())
-                return false;
+            // We expect the EqualsTo implementation to check if a's type is equal to b's type
             return a.EqualsTo(b);
         }
-        public static bool operator !=(Entity a, Entity b) => !(a == b);
+        public static bool operator !=(Entity? a, Entity? b) => !(a == b);
         public override bool Equals(object obj) => obj is Entity e && EqualsTo(e);
         bool System.IEquatable<Entity>.Equals(Entity other) => EqualsTo(other);
         public override int GetHashCode() => base.GetHashCode();
@@ -113,7 +107,7 @@ namespace AngouriMath
         {
             if (value is RationalNumber && !(value is IntegerNumber))
                 Priority = Const.PRIOR_DIV;
-            else if (value.Real != 0 && value.Imaginary != 0)
+            else if (!value.Real.Value.IsZero && !value.Imaginary.Value.IsZero)
                 Priority = Const.PRIOR_SUM;
             else if (value.Real < 0 || value.Imaginary < 0)
                 Priority = Const.PRIOR_MUL;

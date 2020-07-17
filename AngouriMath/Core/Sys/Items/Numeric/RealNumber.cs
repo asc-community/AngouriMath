@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -58,15 +58,6 @@ namespace AngouriMath.Core.Numerix
         }
 
         public override RealNumber Abs() => Create(Value.Abs());
-
-        protected override (EDecimal Re, EDecimal Im) GetValue()
-        {
-            if (IsFinite)
-                return (Value, 0);
-            else
-                // TODO: Since we use other Number system, should we return pair of definite/indefinite numbers or throw an exception?
-                throw new MathSException("Cannot get values of an indefinite expressions");
-        }
 
         protected internal string InternalToStringDefinition(string str) =>
             Value.IsFinite ? str
