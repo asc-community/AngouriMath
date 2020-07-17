@@ -80,10 +80,11 @@ namespace AngouriMath.Core.Numerix
         /// </returns>
         public static RationalNumber? FindRational(EDecimal num, int iterCount)
         {
-            MathS.Settings.DowncastingEnabled.Set(false);
-            var res = FindRational_(num, iterCount);
-            MathS.Settings.DowncastingEnabled.Unset();
-            return res;
+            return MathS.Settings.DowncastingEnabled.As(false, () =>
+            {
+                var res = FindRational_(num, iterCount);
+                return res;
+            });
         }
 
         internal static RationalNumber? FindRational_(EDecimal num, int iterCount)

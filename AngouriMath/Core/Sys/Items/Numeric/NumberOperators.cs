@@ -130,11 +130,11 @@ namespace AngouriMath.Core.Numerix
             var list = new List<ComplexNumber>();
             foreach (NumberEntity root in GetAllRoots(@base, power.Value).FiniteSet())
             {
-                MathS.Settings.FloatToRationalIterCount.Set(15);
-                MathS.Settings.PrecisionErrorZeroRange.Set(1e-6m);
-                var downcasted = ComplexNumber.Create(root.Value.Real, root.Value.Imaginary);
-                MathS.Settings.PrecisionErrorZeroRange.Unset();
-                MathS.Settings.FloatToRationalIterCount.Unset();
+                var downcasted = MathS.Settings.FloatToRationalIterCount.As(15, () =>
+                    MathS.Settings.PrecisionErrorZeroRange.As(1e-6m, () =>
+                    {
+                        return ComplexNumber.Create(root.Value.Real, root.Value.Imaginary);
+                    }));
                 if (downcasted is RationalNumber && IsZero(Pow(downcasted, power) - @base)) // To keep user's desired precision
                     return downcasted;
                 list.Add(downcasted);

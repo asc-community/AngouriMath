@@ -38,22 +38,11 @@ namespace AngouriMath.Functions.Algebra.Solver
             var res = new Set();
             equation = equation.DeepCopy();
 
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
-            MathS.Settings.FloatToRationalIterCount.Set(0);
-            /*
-            try
-            {
-                AnalyticalSolver.Solve(equation, x, res);
-            }
-            catch (Exception e)
-            {
-                MathS.Settings.FloatToRationalIterCount.Unset();
-                MathS.Settings.PrecisionErrorZeroRange.Unset();
-                throw e;
-            }*/
-            AnalyticalSolver.Solve(equation, x, res);
-            MathS.Settings.FloatToRationalIterCount.Unset();
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-12m, () =>
+            MathS.Settings.FloatToRationalIterCount.As(0, () => 
+                AnalyticalSolver.Solve(equation, x, res)
+            ));
 
             if (res.Power == Set.PowerLevel.FINITE)
             {

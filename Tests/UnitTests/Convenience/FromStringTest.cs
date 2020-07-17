@@ -27,9 +27,9 @@ namespace UnitTests.Convenience
         public void Test7()
         {
             // Only needed for Mac
-            MathS.Settings.PrecisionErrorZeroRange.Set(2e-16m);
-            Assert.AreEqual(MathS.i, MathS.FromString("x^2+1").SolveNt(MathS.Var("x")).Pieces[0]);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () =>
+                Assert.AreEqual(MathS.i, MathS.FromString("x^2+1").SolveNt(MathS.Var("x")).Pieces[0])
+            );
         }
         [TestMethod]
         public void Test8() => Assert.AreEqual(1, MathS.FromString("cos(sin(0))").Eval());

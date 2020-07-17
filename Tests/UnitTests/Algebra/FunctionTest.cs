@@ -12,42 +12,46 @@ namespace UnitTests.Algebra
         [TestMethod]
         public void TestRoots0()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(4e-15m);
-            var num = 3;
-            var pow = 3;
-            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
-                Assert.AreEqual(num, Number.Pow(root, pow));
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(4e-15m, () =>
+            {
+                var num = 3;
+                var pow = 3;
+                foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity) piece).Value))
+                    Assert.AreEqual(num, Number.Pow(root, pow));
+            });
         }
         [TestMethod]
         public void TestRoots1()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(3e-15m);
-            var num = 5 + MathS.i * 5;
-            var pow = 4;
-            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
-                Assert.AreEqual(num, Number.Pow(root, pow));
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(3e-15m, () =>
+            {
+                var num = 5 + MathS.i * 5;
+                var pow = 4;
+                foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity) piece).Value))
+                    Assert.AreEqual(num, Number.Pow(root, pow));
+            });
         }
         [TestMethod]
         public void TestRoots2()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(9e-15m);
-            var num = -3 + MathS.i * 8;
-            var pow = 5;
-            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
-                Assert.AreEqual(num, Number.Pow(root, pow));
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(9e-15m, () =>
+            {
+                var num = -3 + MathS.i * 8;
+                var pow = 5;
+                foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity) piece).Value))
+                    Assert.AreEqual(num, Number.Pow(root, pow));
+            });
         }
         [TestMethod]
         public void TestRoots3()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(2e-14m);
-            var num = -3 + MathS.i * 8;
-            var pow = 8;
-            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
-                Assert.AreEqual(num, Number.Pow(root, pow));
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(2e-14m, () =>
+            {
+                var num = -3 + MathS.i * 8;
+                var pow = 8;
+                foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity) piece).Value))
+                    Assert.AreEqual(num, Number.Pow(root, pow));
+            });
         }
 
 

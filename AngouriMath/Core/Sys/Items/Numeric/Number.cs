@@ -166,22 +166,25 @@ namespace AngouriMath.Core.Numerix
         public static Set GetAllRoots(ComplexNumber value, EInteger rootPower)
         {
             // Avoid infinite recursion from Abs to GetAllRoots again
-            MathS.Settings.FloatToRationalIterCount.Set(0);
-            var res = new Set();
-            EDecimal phi = (Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Real.Value;
-            if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
-                phi = EDecimal.Zero;
-
-            EDecimal newMod = Pow(Abs(value), CtxDivide(EDecimal.One, rootPower)).Real.Value;
-
-            var i = ComplexNumber.ImaginaryOne;
-            for (int n = 0; n < rootPower; n++)
+            var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
-                EDecimal newPow = CtxAdd(CtxDivide(phi, rootPower), CtxDivide(CtxMultiply(CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
-                var root = newMod.ToNumber() * Pow(MathS.DecimalConst.e, i * newPow.ToNumber());
-                res.Add(root);
-            }
-            MathS.Settings.FloatToRationalIterCount.Unset();
+                var res = new Set();
+                EDecimal phi = (Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Real.Value;
+                if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
+                    phi = EDecimal.Zero;
+
+                EDecimal newMod = Pow(Abs(value), CtxDivide(EDecimal.One, rootPower)).Real.Value;
+
+                var i = ComplexNumber.ImaginaryOne;
+                for (int n = 0; n < rootPower; n++)
+                {
+                    EDecimal newPow = CtxAdd(CtxDivide(phi, rootPower),
+                        CtxDivide(CtxMultiply(CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
+                    var root = newMod.ToNumber() * Pow(MathS.DecimalConst.e, i * newPow.ToNumber());
+                    res.Add(root);
+                }
+                return res;
+            });
             return res;
         }
 

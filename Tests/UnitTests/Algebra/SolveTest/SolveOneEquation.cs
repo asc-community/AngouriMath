@@ -76,23 +76,23 @@ namespace UnitTests.Algebra
         public void Test2()
         {
             // TODO: Remove this line when precision is increased
-            MathS.Settings.PrecisionErrorZeroRange.Set(2e-16m);
-            var eq = MathS.Sqr(x) + 1;
-            var roots = eq.SolveNt(x);
-            AssertRootCount(roots, 2);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () =>
+            {
+                var eq = MathS.Sqr(x) + 1;
+                var roots = eq.SolveNt(x);
+                AssertRootCount(roots, 2);
+                foreach (var root in roots.FiniteSet())
+                    AssertRoots(eq, x, root);
+            });
         }
         [TestMethod]
         public void Test4()
         {
             var eq = x.Pow(2) + 2 * x + 1;
-            MathS.Settings.PrecisionErrorCommon.Set(1e-8m);
-            MathS.Settings.NewtonSolver.Set(new NewtonSetting() {Precision = 100});
-            var roots = eq.SolveNt(x);
-            MathS.Settings.NewtonSolver.Unset();
-            MathS.Settings.PrecisionErrorCommon.Unset();
+            var roots = MathS.Settings.PrecisionErrorCommon.As(1e-8m, () =>
+                MathS.Settings.NewtonSolver.As(new NewtonSetting() {Precision = 100}, () =>
+                    eq.SolveNt(x)
+                ));
             // AssertRootCount(roots, 1); TODO: remove // after fix
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);

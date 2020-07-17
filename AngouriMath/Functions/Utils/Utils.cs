@@ -20,6 +20,7 @@ using System.Numerics;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using PeterO.Numbers;
 
@@ -240,27 +241,59 @@ namespace AngouriMath.Functions
 
     public class Setting<T> where T : notnull
     {
-        private readonly Stack<T> sets = new Stack<T>();
+        private T currValue;
         internal Setting(T defaultValue)
         {
-            Set(defaultValue);
+            currValue = defaultValue;
         }
 
-        public void Set(T value)
+        /// <summary>
+        /// For example,
+        /// MathS.Settings.Precision.As(100, () =>
+        /// {
+        /// // some code considering precision = 100
+        /// });
+        /// </summary>
+        /// <param name="value">New value that will be automatically reverted after action is done</param>
+        /// <param name="action">What should be done under this setting</param>
+        public void As(T value, Action action)
         {
-            sets.Push(value);
+            var previousValue = currValue;
+            currValue = value;
+            lock (currValue) // TODO: it is probably impossible to access currValue from another thread since it's ThreadStatic
+            {
+                action();
+            }
+            currValue = previousValue;
         }
 
-        public void Unset()
+        /// <summary>
+        /// For example,
+        /// var res = MathS.Settings.Precision.As(100, () =>
+        /// {
+        ///   // some code considering precision = 100
+        ///   return 4;
+        /// });
+        /// </summary>
+        /// <param name="value">New value that will be automatically reverted after action is done</param>
+        /// <param name="action">What should be done under this setting</param>
+        /// <returns></returns>
+        public TReturnType As<TReturnType>(T value, Func<TReturnType> action)
         {
-            if (sets.Count == 1)
-                throw new SysException("Cannot unset the last setting");
-            sets.Pop();
+            var previousValue = currValue;
+            currValue = value;
+            TReturnType result;
+            lock (currValue) // TODO: it is probably impossible to access currValue from another thread since it's ThreadStatic
+            {
+                result = action();
+            }
+            currValue = previousValue;
+            return result;
         }
 
         public static implicit operator T(Setting<T> s)
         {
-            return s.sets.Peek();
+            return s.currValue;
         }
 
         public static implicit operator Setting<T>(T a)
@@ -273,6 +306,42 @@ namespace AngouriMath.Functions
             return Value.ToString();
         }
 
-        public T Value => sets.Peek();
+        public T Value => currValue;
+    }
+}
+
+namespace AngouriMath
+{
+    public static partial class MathS
+    {
+        public static partial class Settings
+        {
+            [ThreadStatic]
+            private static Setting<bool>? downcastingEnabled;
+            [ThreadStatic]
+            private static Setting<int>? floatToRationalIterCount;
+            [ThreadStatic]
+            private static Setting<EInteger>? maxAbsNumeratorOrDenominatorValue;
+            [ThreadStatic]
+            private static Setting<EDecimal>? precisionErrorCommon;
+            [ThreadStatic] 
+            private static Setting<EDecimal>? precisionErrorZeroRange;
+            [ThreadStatic]
+            private static Setting<bool>? allowNewton;
+            [ThreadStatic]
+            private static Setting<Func<Entity, int>>? complexityCriteria;
+            [ThreadStatic]
+            private static Setting<NewtonSetting>? newtonSolver;
+            [ThreadStatic]
+            private static Setting<int>? maxExpansionTermCount;
+            [ThreadStatic]
+            private static Setting<EContext>? decimalPrecisionContext;
+            private static Setting<T> GetCurrentOrDefault<T>(ref Setting<T>? setting, T defaultValue) where T : notnull
+            {
+                if (setting is null)
+                    setting = defaultValue;
+                return setting;
+            }
+        }
     }
 }

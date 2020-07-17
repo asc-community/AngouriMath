@@ -498,45 +498,48 @@ namespace AngouriMath
         /// ... // your code
         /// MathS.Settings.SomeSettings.Unset(); // Optional. Reverts the setting to the previous value
         /// </summary>
-        public static class Settings
+        public static partial class Settings
         {
             /// <summary>
             /// Enables downcasting. Not recommended to turn off, disabling might be only useful for some calculations
             /// </summary>
-            public static Setting<bool> DowncastingEnabled { get; } = true;
+            public static Setting<bool> DowncastingEnabled => GetCurrentOrDefault(ref downcastingEnabled, true);
 
             /// <summary>
             /// Amount of iterations allowed for attempting to cast to a rational
             /// The more iterations, the larger fraction could be calculated
             /// </summary>
-            public static Setting<int> FloatToRationalIterCount { get; } = 5;
+            public static Setting<int> FloatToRationalIterCount => GetCurrentOrDefault(ref floatToRationalIterCount, 5);
 
             /// <summary>
             /// If a numerator or denominator is too large, it's suspended to better keep the real number instead of casting
             /// </summary>
-            public static Setting<EInteger> MaxAbsNumeratorOrDenominatorValue { get; } = (EInteger)100000000;
+            public static Setting<EInteger> MaxAbsNumeratorOrDenominatorValue =>
+                GetCurrentOrDefault(ref maxAbsNumeratorOrDenominatorValue, 100000000);
 
             /// <summary>
             /// Sets threshold for comparison
             /// For example, if you don't need precision higher than 6 digits after .,
             /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
             /// </summary>
-            public static Setting<EDecimal> PrecisionErrorCommon { get; } = EDecimal.FromDecimal(1.0e-6m);
+            public static Setting<EDecimal> PrecisionErrorCommon =>
+                GetCurrentOrDefault(ref precisionErrorCommon, 1e-6m);
+
 
             /// <summary>
             /// Numbers whose absolute value is less than PrecisionErrorZeroRange are considered zeros
             /// </summary>
-            public static Setting<EDecimal> PrecisionErrorZeroRange { get; } = EDecimal.FromDecimal(1e-16m);
+            public static Setting<EDecimal> PrecisionErrorZeroRange => GetCurrentOrDefault(ref precisionErrorZeroRange, 1e-16m);
 
             /// <summary>
             /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
             /// </summary>
-            public static Setting<bool> AllowNewton { get; } = true;
+            public static Setting<bool> AllowNewton => GetCurrentOrDefault(ref allowNewton, true);
 
             /// <summary>
             /// Criteria for simplifier so you could control which expressions are considered easier by you
             /// </summary>
-            public static Setting<Func<Entity, int>> ComplexityCriteria { get; } = Const.DefaultComplexityCriteria;
+            public static Setting<Func<Entity, int>> ComplexityCriteria => GetCurrentOrDefault(ref complexityCriteria, Const.DefaultComplexityCriteria);
 
             /// <summary>
             /// Settings for the Newton-Raphson's root-search method
@@ -550,7 +553,7 @@ namespace AngouriMath
             /// }
             /// );
             /// </summary>
-            public static Setting<NewtonSetting> NewtonSolver { get; set; } = new NewtonSetting();
+            public static Setting<NewtonSetting> NewtonSolver => GetCurrentOrDefault(ref newtonSolver, new NewtonSetting());
             
             /// <summary>
             /// The maximum number of linear children of an expression in polynomial solver
@@ -562,12 +565,12 @@ namespace AngouriMath
             /// (x + 3 + a) / (x + 3) -> 2 [x / (x + 3), (3 + a) / (x + 3)]
             /// x2 + x + 1            -> 3 [x2, x, 1]
             /// </summary>
-            public static Setting<int> MaxExpansionTermCount { get; set; } = 50;
+            public static Setting<int> MaxExpansionTermCount => GetCurrentOrDefault(ref maxExpansionTermCount, 50);
 
             /// <summary>
             /// Settings for EDecimal precisions of PeterO Numbers (https://github.com/peteroupc/Numbers)
             /// </summary>
-            public static Setting<EContext> DecimalPrecisionContext { get; set; } = new EContext(100, ERounding.HalfUp, -100, 100, false);
+            public static Setting<EContext> DecimalPrecisionContext => GetCurrentOrDefault(ref decimalPrecisionContext,  new EContext(100, ERounding.HalfUp, -100, 100, false));
         }
 
         /// <summary>

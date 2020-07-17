@@ -324,11 +324,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (!MathS.CanBeEvaluated(root))
                 return root;
             var preciseValue = root.Eval();
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
-            MathS.Settings.FloatToRationalIterCount.Set(20);
-            var downcasted = ComplexNumber.Create(preciseValue.Real.Value, preciseValue.Imaginary.Value);
-            MathS.Settings.FloatToRationalIterCount.Unset();
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            var downcasted = MathS.Settings.FloatToRationalIterCount.As(20, () =>
+                MathS.Settings.PrecisionErrorZeroRange.As(1e-7m, () =>
+                {
+                    return ComplexNumber.Create(preciseValue.Real, preciseValue.Imaginary);
+                }));
             var errorExpr = equation.Substitute(x, downcasted);
             if (!MathS.CanBeEvaluated(errorExpr))
                 return root;

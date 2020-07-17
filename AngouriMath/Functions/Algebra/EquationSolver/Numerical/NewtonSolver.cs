@@ -95,23 +95,26 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         {
             if (MathS.Utils.GetUniqueVariables(expr).Count != 1)
                 throw new MathSException("Two or more or less than one variables in SolveNt is prohibited");
-            MathS.Settings.FloatToRationalIterCount.Set(0);
-            var res = new Set();
-            var df = expr.Derive(v).Simplify().Compile(v);
-            var f = expr.Simplify().Compile(v);
-            for (int x = 0; x < settings.StepCount.Re; x++)
+            var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
+            {
+                var res = new Set();
+                var df = expr.Derive(v).Simplify().Compile(v);
+                var f = expr.Simplify().Compile(v);
+                for (int x = 0; x < settings.StepCount.Re; x++)
                 for (int y = 0; y < settings.StepCount.Im; y++)
                 {
-                    var xShare = ((EDecimal)x) / settings.StepCount.Re;
-                    var yShare = ((EDecimal)y) / settings.StepCount.Im;
+                    var xShare = ((EDecimal) x) / settings.StepCount.Re;
+                    var yShare = ((EDecimal) y) / settings.StepCount.Im;
                     var value = ComplexNumber.Create(
                         settings.From.Re * xShare + settings.To.Re * (1 - xShare),
                         settings.From.Im * yShare + settings.To.Im * (1 - yShare));
                     var root = NewtonIter(f, df, value.AsComplex(), settings.Precision);
-                    if (root.IsFinite && f.Call(root.AsComplex()).ToComplexNumber().Abs() < MathS.Settings.PrecisionErrorCommon.Value)
+                    if (root.IsFinite && f.Call(root.AsComplex()).ToComplexNumber().Abs() <
+                        MathS.Settings.PrecisionErrorCommon.Value)
                         res.Add(root);
                 }
-            MathS.Settings.FloatToRationalIterCount.Unset();
+                return res;
+            });
             return res;
         }
     }

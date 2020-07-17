@@ -20,13 +20,13 @@ namespace UnitTests.Algebra
         }
         public void AssertExpander(Entity expr, params ComplexNumber[] toSubs)
         {
-            MathS.Settings.MaxExpansionTermCount.Set(3000);
-            var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.FindSubtree("x") is { });
-            if (expandOver is null)
-                throw new AssertFailedException("expandOver is null");
-            var expanded =
-                TreeAnalyzer.MultiHangBinary(expandOver, "sumf", Const.PRIOR_SUM);
-            MathS.Settings.MaxExpansionTermCount.Unset();
+            var expanded = MathS.Settings.MaxExpansionTermCount.As(3000, () =>
+            {
+                var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.FindSubtree("x") is { });
+                if (expandOver is null)
+                    throw new AssertFailedException("expandOver is null");
+                return TreeAnalyzer.MultiHangBinary(expandOver, "sumf", Const.PRIOR_SUM);
+            });
             foreach (var toSub in toSubs)
             {
                 var (equal, err) = AreEqual(expr, expanded, toSub);

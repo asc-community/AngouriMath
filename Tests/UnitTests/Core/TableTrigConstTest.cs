@@ -20,309 +20,337 @@ namespace UnitTests.Core.TrigTableConstTest
         [TestMethod]
         public void Sin1Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 1);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 1);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin2Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 2);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 2);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin3Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 3);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 3);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin4Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 4);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 4);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin5Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 5);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 5);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin6Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 6);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 6);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin7Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 7);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 7);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin8Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 8);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 8);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin10Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 10);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 10);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin11Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 11);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 11);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin12Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 12);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 12);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin13Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 13);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 13);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin14Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-9m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 14);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 14);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin15Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 15);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 15);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin16Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 16);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 16);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin17Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 17);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 17);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin18Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 18);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 18);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin19Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 19);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 19);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin20Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 20);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 20);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin21Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 21);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 21);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin22Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 22);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 22);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin23Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 23);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 23);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin24Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 24);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 24);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin25Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 25);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 25);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin26Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 26);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 26);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin27Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 27);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 27);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin28Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 28);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 28);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Sin29Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Sin(2 * MathS.pi / 29);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Sin(2 * MathS.pi / 29);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
     }
@@ -333,320 +361,337 @@ namespace UnitTests.Core.TrigTableConstTest
         [TestMethod]
         public void Cos1Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 1);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 1);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos2Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 2);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 2);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos3Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 3);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 3);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos4Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 4);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 4);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos5Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 5);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 5);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos6Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 6);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 6);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos7Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 7);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 7);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos8Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 8);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 8);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos9Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 9);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 9);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos10Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 10);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 10);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos11Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 11);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 11);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos12Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 12);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 12);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos13Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 13);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
-        }
-
-        [TestMethod]
-        public void Cos14Test()
-        {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 14);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 13);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos15Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 15);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 15);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos16Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 16);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 16);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos17Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 17);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 17);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos18Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 18);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 18);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos19Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 19);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 19);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos20Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 20);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 20);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos21Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 21);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 21);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos22Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 22);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 22);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos23Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 23);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 23);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos24Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 24);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 24);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos25Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 25);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 25);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos26Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 26);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 26);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos27Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 27);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 27);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos28Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 28);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 28);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cos29Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cos(2 * MathS.pi / 29);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cos(2 * MathS.pi / 29);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
     }
@@ -657,309 +702,337 @@ namespace UnitTests.Core.TrigTableConstTest
         [TestMethod]
         public void Tan1Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 1);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 1);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan2Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 2);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 2);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan3Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 3);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 3);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan5Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 5);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 5);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan6Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 6);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 6);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan7Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 7);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 7);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan8Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 8);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 8);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan9Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 9);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 9);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan10Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 10);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 10);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan11Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 11);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 11);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan12Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 12);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 12);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan13Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 13);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 13);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan14Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-9m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 14);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 14);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan15Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 15);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 15);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan16Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 16);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 16);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan17Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 17);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 17);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan18Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 18);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 18);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan19Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 19);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 19);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan20Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 20);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 20);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan21Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 21);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 21);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan22Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 22);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 22);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan23Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 23);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 23);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan24Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 24);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 24);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan25Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 25);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 25);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan26Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 26);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 26);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan27Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 27);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 27);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan28Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 28);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 28);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Tan29Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Tan(2 * MathS.pi / 29);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Tan(2 * MathS.pi / 29);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
     }
@@ -970,287 +1043,313 @@ namespace UnitTests.Core.TrigTableConstTest
         [TestMethod]
         public void Cotan3Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 3);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 3);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan5Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 5);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 5);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan6Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 6);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 6);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan7Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 7);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 7);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan8Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 8);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 8);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan9Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 9);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 9);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan10Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 10);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 10);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan11Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 11);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 11);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan12Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 12);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 12);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan13Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 13);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 13);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan14Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-9m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 14);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 14);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan15Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 15);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 15);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan16Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 16);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 16);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan17Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 17);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 17);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan18Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 18);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 18);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan19Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 19);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 19);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan20Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 20);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 20);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan21Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 21);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 21);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan22Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 22);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 22);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan23Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 23);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 23);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan24Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 24);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 24);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan25Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 25);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 25);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan26Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 26);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 26);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan27Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 27);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 27);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan28Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-9m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 28);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 28);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
         [TestMethod]
         public void Cotan29Test()
         {
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
-            var toSimplify = MathS.Cotan(2 * MathS.pi / 29);
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-9m, () =>
+            {
+                var toSimplify = MathS.Cotan(2 * MathS.pi / 29);
+                var expected = toSimplify.Eval();
+                var real = toSimplify.Simplify().Eval();
+                Assert.AreEqual(expected, real);
+            });
         }
 
     }

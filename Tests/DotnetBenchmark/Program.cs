@@ -38,12 +38,12 @@ namespace DotnetBenchmark
     {
         public NumbersBenchmark()
         {
-            MathS.Settings.DowncastingEnabled.Set(true);
+            
         }
 
         ~NumbersBenchmark()
         {
-            MathS.Settings.DowncastingEnabled.Unset();
+            
         }
         private readonly RealNumber a = 3.4m;
         private readonly RealNumber b = 5.4m;
