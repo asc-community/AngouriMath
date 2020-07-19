@@ -80,9 +80,17 @@ namespace AngouriMath.Core.Numerix
                 (a, b) => IntegerNumber.Create(CtxMultiply(a.Value, b.Value)),
                 (a, b) => RationalNumber.Create(CtxMultiply(a.Value, b.Value)),
                 (a, b) => RealNumber.Create(CtxMultiply(a.Value, b.Value)),
-                (a, b) => ComplexNumber.Create(
-                    CtxSubtract(CtxMultiply(a.Real.Value, b.Real.Value), CtxMultiply(a.Imaginary.Value, b.Imaginary.Value)),
-                    CtxAdd(CtxMultiply(a.Real.Value, b.Imaginary.Value), CtxMultiply(a.Imaginary.Value, b.Real.Value)))
+                (a, b) =>
+                {
+                    // Define oo * i -> oo i and i * oo -> oo i
+                    static EDecimal ModifiedMultiply(EDecimal a, EDecimal b) =>
+                        a.IsInfinity() && b.IsZero ? EDecimal.Zero
+                        : b.IsInfinity() && a.IsZero ? EDecimal.Zero
+                        : CtxMultiply(a, b);
+                    return ComplexNumber.Create(
+                        CtxSubtract(ModifiedMultiply(a.Real.Value, b.Real.Value), ModifiedMultiply(a.Imaginary.Value, b.Imaginary.Value)),
+                        CtxAdd(ModifiedMultiply(a.Real.Value, b.Imaginary.Value), ModifiedMultiply(a.Imaginary.Value, b.Real.Value)));
+                }
              );
         internal static ComplexNumber OpDiv<T>(T a, T b) where T : Number =>
             SuperSwitch(a, b,
