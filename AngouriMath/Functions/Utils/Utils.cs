@@ -153,7 +153,7 @@ namespace AngouriMath.Functions
         internal static EInteger Lcm(this EInteger bigintFirst, EInteger bigintSecond)
         {
             if (bigintFirst.IsZero && bigintSecond.IsZero) return EInteger.Zero;
-            return bigintFirst.Multiply(bigintSecond).Abs().Divide(bigintFirst.Gcd(bigintSecond));
+            return bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
         }
     }
 
