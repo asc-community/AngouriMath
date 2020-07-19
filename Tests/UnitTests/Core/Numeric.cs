@@ -197,5 +197,13 @@ namespace UnitTests.Core
         public void TestImaginaryInfinity12() =>
             Assert.AreEqual(RealNumber.NaN,
                 ComplexNumber.MinusImaginaryOne * RealNumber.NaN);
+        [TestMethod]
+        public void TestImaginaryInfinity13() =>
+            Assert.AreEqual(ComplexNumber.Create(RealNumber.NegativeInfinity, 0),
+                ComplexNumber.Create(0, RealNumber.PositiveInfinity) * ComplexNumber.Create(0, RealNumber.PositiveInfinity));
+        [TestMethod]
+        public void TestImaginaryInfinity14() =>
+            Assert.AreEqual(ComplexNumber.Create(RealNumber.NegativeInfinity, 0),
+                ComplexNumber.Create(0, RealNumber.NegativeInfinity) * ComplexNumber.Create(0, RealNumber.NegativeInfinity));
     }
 }
