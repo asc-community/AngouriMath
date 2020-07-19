@@ -48,52 +48,33 @@ namespace AngouriMath.Core.Numerix
         public override RealNumber Abs() => Create(Value.Abs());
 
         /// <summary>
-        /// Tries to find a pair of two IntegerNumbers (which is RationalNumber) so that its rational value is equal to num,
-        /// to set some options for this function, you can use
-        /// MathS.Settings.FloatToRationalIterCount.Set(20) to set a number of iterations allowed to be spent on searching for a rational
-        /// and MathS.Settings.MaxAbsNumeratorOrDenominatorValue to limit the absolute value of both denominator and numerator
+        /// Tries to find a pair of two <see cref="IntegerNumber"/>s
+        /// (which are components that make up a <see cref="RationalNumber"/>)
+        /// so that its rational value is equal to <paramref name="num"/>.
+        /// To set some options for this function, you can use
+        /// <see cref="MathS.Settings.MaxAbsNumeratorOrDenominatorValue"/>
+        /// to limit the absolute value of both denominator and numerator.
         /// </summary>
         /// <param name="num">
-        /// e. g. 1.5m -> 3/2
-        /// </param>
-        /// <returns>
-        /// RationalNumber if found,
-        /// null otherwise
-        /// </returns>
-        public static RationalNumber? FindRational(EDecimal num) => FindRational(num, 15);
-
-        /// <summary>
-        /// Tries to find a pair of two IntegerNumbers (which is RationalNumber) so that its rational value is equal to num,
-        /// to set some options for this function, you can use
-        /// MathS.Settings.MaxAbsNumeratorOrDenominatorValue to limit the absolute value of both denominator and numerator
-        /// </summary>
-        /// <param name="num">
-        /// e. g. 1.5m -> 3/2
+        /// e.g. 1.5m -> 3/2
         /// </param>
         /// <param name="iterCount">
-        /// number of iterations allowed to be spent for searching the rational, the more,
-        /// the higher probability it will find a RationalNumber
+        /// Number of iterations allowed to be spent for searching the rational.
+        /// A higher value indicates a higher probability that it will find a <see cref="RationalNumber"/>.
+        /// Defaults to <see cref="MathS.Settings.FloatToRationalIterCount"/>.
         /// </param>
         /// <returns>
-        /// RationalNumber if found,
-        /// null otherwise
+        /// <see cref="RationalNumber"/> if found, <see langword="null"/> otherwise.
         /// </returns>
-        public static RationalNumber? FindRational(EDecimal num, int iterCount)
+        public static RationalNumber? FindRational(EDecimal num, int iterCount = int.MinValue)
         {
-            return MathS.Settings.DowncastingEnabled.As(false, () =>
-            {
-                var res = FindRational_(num, iterCount);
-                return res;
-            });
-        }
-
-        internal static RationalNumber? FindRational_(EDecimal num, int iterCount)
-        {
+            if (iterCount is int.MinValue)
+                iterCount = MathS.Settings.FloatToRationalIterCount;
             if (iterCount <= 0)
                 return null;
             if (!num.IsFinite)
                 return null;
-            EInteger sign = num.IsNegative ? -1 : 1;
+            var sign = num.Sign;
             num *= sign;
             var intPart = num.ToEInteger();
             if (intPart > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
@@ -104,7 +85,7 @@ namespace AngouriMath.Core.Numerix
             else
             {
                 var inv = CtxDivide(EDecimal.One, rest);
-                var rat = FindRational_(inv, iterCount - 1);
+                var rat = FindRational(inv, iterCount - 1);
                 if (rat is null)
                     return null;
                 return new RationalNumber(intPart * sign + sign / rat.Value);

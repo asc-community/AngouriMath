@@ -48,7 +48,7 @@ namespace AngouriMath.Core.Numerix
                 return IntegerNumber.Create(intPart);
             }
 
-            var attempt = RationalNumber.FindRational(value, MathS.Settings.FloatToRationalIterCount);
+            var attempt = RationalNumber.FindRational(value);
             if (attempt is null ||
                 attempt.Value.Numerator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue ||
                 attempt.Value.Denominator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
