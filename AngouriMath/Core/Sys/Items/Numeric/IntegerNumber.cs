@@ -17,7 +17,7 @@ using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
-    public partial class IntegerNumber : RationalNumber, System.IEquatable<IntegerNumber>
+    public partial class IntegerNumber : RationalNumber, System.IEquatable<IntegerNumber>, System.IComparable<IntegerNumber>
     {
 
         public static readonly IntegerNumber Zero = new IntegerNumber(EInteger.Zero);
@@ -55,6 +55,7 @@ namespace AngouriMath.Core.Numerix
         public static bool operator >=(IntegerNumber a, IntegerNumber b) => a.Value.CompareTo(b.Value) >= 0;
         public static bool operator <(IntegerNumber a, IntegerNumber b) => a.Value.CompareTo(b.Value) < 0;
         public static bool operator <=(IntegerNumber a, IntegerNumber b) => a.Value.CompareTo(b.Value) <= 0;
+        public int CompareTo(IntegerNumber other) => Value.CompareTo(other.Value);
         public static IntegerNumber operator +(IntegerNumber a, IntegerNumber b) => OpSum(a, b);
         public static IntegerNumber operator -(IntegerNumber a, IntegerNumber b) => OpSub(a, b);
         public static IntegerNumber operator *(IntegerNumber a, IntegerNumber b) => OpMul(a, b);

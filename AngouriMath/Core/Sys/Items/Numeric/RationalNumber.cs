@@ -17,7 +17,7 @@ using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
-    public partial class RationalNumber : RealNumber, System.IEquatable<RationalNumber>
+    public partial class RationalNumber : RealNumber, System.IEquatable<RationalNumber>, System.IComparable<RationalNumber>
     {
         /// <summary>Exact value of the number</summary>
         public new ERational Value { get; }
@@ -132,6 +132,7 @@ namespace AngouriMath.Core.Numerix
         public static bool operator >=(RationalNumber a, RationalNumber b) => a.Value.CompareTo(b.Value) >= 0;
         public static bool operator <(RationalNumber a, RationalNumber b) => a.Value.CompareTo(b.Value) < 0;
         public static bool operator <=(RationalNumber a, RationalNumber b) => a.Value.CompareTo(b.Value) <= 0;
+        public int CompareTo(RationalNumber other) => Value.CompareTo(other.Value);
         public static RationalNumber operator +(RationalNumber a, RationalNumber b) => OpSum(a, b);
         public static RationalNumber operator -(RationalNumber a, RationalNumber b) => OpSub(a, b);
         public static RationalNumber operator *(RationalNumber a, RationalNumber b) => OpMul(a, b);
