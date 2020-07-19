@@ -82,7 +82,7 @@ namespace AngouriMath.Core.Numerix
                 (a, b) => RealNumber.Create(CtxMultiply(a.Value, b.Value)),
                 (a, b) =>
                 {
-                    // Define oo * i = oo i and i * oo = oo i
+                    // Define both (oo * i) and (i * oo) to be (oo i) which is (0 + oo i) instead of (NaN + oo i)
                     static EDecimal ModifiedMultiply(EDecimal a, EDecimal b) =>
                         a.IsInfinity() && b.IsZero || b.IsInfinity() && a.IsZero ? EDecimal.Zero : CtxMultiply(a, b);
                     return ComplexNumber.Create(
