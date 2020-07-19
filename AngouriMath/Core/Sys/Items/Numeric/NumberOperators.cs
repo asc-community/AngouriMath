@@ -45,7 +45,7 @@ namespace AngouriMath.Core.Numerix
         internal static EDecimal CtxDivide(EDecimal a, EDecimal b)
             => a.DivideToExponent(b, -MathS.Settings.DecimalPrecisionContext.Value.Precision);
         internal static EDecimal CtxMod(EDecimal a, EDecimal b)
-            => a.RemainderNoRoundAfterDivide(b, MathS.Settings.DecimalPrecisionContext);
+            => a.Remainder(b, MathS.Settings.DecimalPrecisionContext);
         internal static EDecimal CtxPow(EDecimal a, EDecimal b)
             => a.Pow(b, MathS.Settings.DecimalPrecisionContext);
         internal static T Min<T>(T a, T b) where T : RealNumber => a < b ? a : b;
