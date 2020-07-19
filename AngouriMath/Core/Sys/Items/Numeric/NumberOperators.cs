@@ -92,20 +92,8 @@ namespace AngouriMath.Core.Numerix
                     return a * c;
                 }
              );
-        internal static T Min<T>(T a, T b) where T : RealNumber =>
-            SuperSwitch(a, b,
-                (a, b) => a < b ? a : b,
-                (a, b) => a < b ? a : b,
-                (a, b) => a < b ? a : b,
-                (a, b) => throw new UniverseCollapseException()
-             );
-        internal static T Max<T>(T a, T b) where T : RealNumber =>
-            SuperSwitch(a, b,
-                (a, b) => a > b ? a : b,
-                (a, b) => a > b ? a : b,
-                (a, b) => a > b ? a : b,
-                (a, b) => throw new UniverseCollapseException()
-             );
+        internal static T Min<T>(T a, T b) where T : RealNumber => a < b ? a : b;
+        internal static T Max<T>(T a, T b) where T : RealNumber => a > b ? a : b;
         internal static bool AreEqual<T>(T a, T b) where T : Number =>
             SuperSwitch(a, b,
                 (a, b) => a.Value.Equals(b.Value),
