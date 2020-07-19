@@ -18,8 +18,11 @@
  using AngouriMath.Core;
 using AngouriMath.Functions.Algebra.NumbericalSolving;
 using System;
+ using System.Numerics;
  using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
+ using AngouriMath.Extensions;
+ using PeterO.Numbers;
 
 namespace AngouriMath.Functions.Algebra.NumbericalSolving
 {
@@ -33,29 +36,39 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         /// <param name="value"></param>
         /// <param name="precision"></param>
         /// <returns></returns>
-        private static ComplexNumber NewtonIter(FastExpression f, FastExpression df, ComplexNumber value, int precision)
+        private static ComplexNumber NewtonIter(FastExpression f, FastExpression df, Complex value, int precision)
         {
-            ComplexNumber prev = value;
+            Complex prev = value;
+
+            Complex ChooseGood()
+            {
+                if (Complex.Abs(prev - value) > (double)MathS.Settings.PrecisionErrorCommon.Value)
+                    return double.NaN;
+                else
+                    return value;
+            }
+
             int minCheckIters = (int)Math.Sqrt(precision);
             for (int i = 0; i < precision; i++)
             {
                 if (i == precision - 1)
-                    prev = value.Copy();
+                    prev = value;//.Copy();
                 try // TODO: remove try catch in for
                 {
-                    value -= (f.Substitute(value) / df.Substitute(value)) as ComplexNumber;
+                    
+                    var dfv = df.Substitute(value);
+                    if (dfv == 0)
+                        return ChooseGood();
+                    value -= f.Substitute(value) / dfv;
                 }
-                catch (MathSException)
+                catch (OverflowException)
                 {
-                    throw new MathSException("Two or more variables in SolveNt is forbidden");
+                    return ChooseGood();
                 }
                 if (i > minCheckIters && prev == value)
                     return value;
             }
-            if (Number.Abs(prev - value) > MathS.Settings.PrecisionErrorCommon)
-                return RealNumber.NaN();
-            else
-                return value;
+            return ChooseGood();
         }
 
         /// <summary>
@@ -78,26 +91,30 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         /// </param>
         /// <returns></returns>
         internal static Set SolveNt(Entity expr, VariableEntity v, 
-            (decimal Re, decimal Im) from, 
-            (decimal Re, decimal Im) to, 
-            (int Re, int Im) stepCount, int precision)
+            NewtonSetting settings)
         {
-            MathS.Settings.FloatToRationalIterCount.Set(0);
-            var res = new Set();
-            var df = expr.Derive(v).Simplify().Compile(v);
-            var f = expr.Simplify().Compile(v);
-            for (int x = 0; x < stepCount.Re; x++)
-                for (int y = 0; y < stepCount.Im; y++)
+            if (MathS.Utils.GetUniqueVariables(expr).Count != 1)
+                throw new MathSException("Two or more or less than one variables in SolveNt is prohibited");
+            var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
+            {
+                var res = new Set();
+                var df = expr.Derive(v).Simplify().Compile(v);
+                var f = expr.Simplify().Compile(v);
+                for (int x = 0; x < settings.StepCount.Re; x++)
+                for (int y = 0; y < settings.StepCount.Im; y++)
                 {
-                    var xShare = ((decimal)x) / stepCount.Re;
-                    var yShare = ((decimal)y) / stepCount.Im;
-                    var value = Number.Create(from.Re * xShare + to.Re * (1 - xShare),
-                                           from.Im * yShare + to.Im * (1 - yShare));
-                    var root = NewtonIter(f, df, value, precision);
-                    if (root.IsDefinite() && f.Call(root).Abs() < MathS.Settings.PrecisionErrorCommon)
+                    var xShare = ((EDecimal) x) / settings.StepCount.Re;
+                    var yShare = ((EDecimal) y) / settings.StepCount.Im;
+                    var value = ComplexNumber.Create(
+                        settings.From.Re * xShare + settings.To.Re * (1 - xShare),
+                        settings.From.Im * yShare + settings.To.Im * (1 - yShare));
+                    var root = NewtonIter(f, df, value.AsComplex(), settings.Precision);
+                    if (root.IsFinite && f.Call(root.AsComplex()).ToComplexNumber().Abs() <
+                        MathS.Settings.PrecisionErrorCommon.Value)
                         res.Add(root);
                 }
-            MathS.Settings.FloatToRationalIterCount.Unset();
+                return res;
+            });
             return res;
         }
     }
@@ -105,48 +122,30 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
 
 namespace AngouriMath
 {
+    public class NewtonSetting
+    {
+        public (EDecimal Re, EDecimal Im) From;
+        public (EDecimal Re, EDecimal Im) To;
+        public (int Re, int Im) StepCount;
+        public int Precision;
+
+        public NewtonSetting()
+        {
+            From = (-10, -10);
+            To = (10, 10);
+            StepCount = (10, 10);
+            Precision = 30;
+        }
+    }
+
     public abstract partial class Entity : ILatexiseable
     {
         /// <summary>
-        /// To get Number from NumberEntity (in case of need a concrete number)
-        /// </summary>
-        /// <returns></returns>
-        public ComplexNumber GetValue()
-        {
-            if (this.entType == EntType.NUMBER)
-                return (this as NumberEntity).Value;
-            else
-                throw new MathSException("Cannot get number from expression");
-        }
-        
-        public Set SolveNt(VariableEntity v, int precision = 30)
-            => SolveNt(v, (-10, -10), (10, 10), (10, 10), precision: precision);
-        public Set SolveNt(VariableEntity v, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, int precision = 30)
-            => SolveNt(v, from, to, (10, 10),  precision: precision);
-
-        /// <summary>
         /// Searches for numerical solutions via Newton's method https://en.wikipedia.org/wiki/Newton%27s_method
+        /// To change parameters see MathS.Settings.NewtonSolver
         /// </summary>
-        /// <param name="v">
-        /// Variable to solve over
-        /// </param>
-        /// <param name="from">
-        /// Re(from) - down bound of search in real numbers, Im(from) - that in imaginary. 
-        /// For example, from: new Number(-10, -10)
-        /// </param>
-        /// <param name="to">
-        /// Re(to) - up bound of search in real numbers, Im(to) - that in imaginary.
-        /// For exmaple, to: new Number(10, 10)
-        /// </param>
-        /// <param name="stepCount">
-        /// Re(stepCount) - number of steps over real numbers, Im(stepCount) - number of steps over imaginary numbers.
-        /// For example, stepCount: new Number(10, 10)
-        /// </param>
-        /// <param name="precision">
-        /// If you get very similar roots that you think are equal, increase precision (but it will slower the algorithm)
-        /// </param>
         /// <returns></returns>
-        public Set SolveNt(VariableEntity v, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, (int Re, int Im) stepCount, int precision = 30)
-        => NumericalEquationSolver.SolveNt(this, v, from, to, stepCount, precision);
+        public Set SolveNt(VariableEntity v)
+        => NumericalEquationSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
     }
 }

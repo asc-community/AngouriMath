@@ -15,8 +15,8 @@ namespace UnitTests.Core
             A.AddElements(3, 4, 5);
             A.AddInterval(MathS.Sets.Interval(10, 15).SetLeftClosed(true).SetRightClosed(false));
             A.AddInterval(MathS.Sets.Interval(14, 19).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(new ComplexNumber(8, 3), new ComplexNumber(11, 5)).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(new ComplexNumber(3, 51), new ComplexNumber(3, 61)));
+            A.AddInterval(MathS.Sets.Interval(ComplexNumber.Create(8, 3), ComplexNumber.Create(11, 5)).SetLeftClosed(true).SetRightClosed(false));
+            A.AddInterval(MathS.Sets.Interval(ComplexNumber.Create(3, 51), ComplexNumber.Create(3, 61)));
 
             B.AddElements(11);
 
@@ -99,54 +99,54 @@ namespace UnitTests.Core
         private readonly Set Bf = MathS.Sets.Finite(1, 2, 4);
         private readonly Set Cf = MathS.Sets.Finite(-7);
         private readonly Set Df = MathS.Sets.Finite();
-        private readonly Set Ef = MathS.Sets.Finite(new ComplexNumber(-1, -1));
-        private readonly Set Gf = MathS.Sets.Finite(new ComplexNumber(-1, -1));
+        private readonly Set Ef = MathS.Sets.Finite(ComplexNumber.Create(-1, -1));
+        private readonly Set Gf = MathS.Sets.Finite(ComplexNumber.Create(-1, -1));
 
         [TestMethod]
         public void SetsFiniteTestDisj()
         {
             var Q = (Af | Bf) as Set;
-            Assert.IsTrue(Q.Pieces.Count == 5);
+            Assert.AreEqual(5, Q?.Pieces.Count);
         }
 
         [TestMethod]
         public void SetsFiniteTestConj()
         {
             var Q = (Af & Bf) as Set;
-            Assert.IsTrue(Q.Pieces.Count == 1);
+            Assert.AreEqual(1, Q?.Pieces.Count);
         }
 
         [TestMethod]
         public void SetsFiniteTestSub()
         {
             var Q = (Af - Bf) as Set;
-            Assert.IsTrue(Q.Pieces.Count == 2);
+            Assert.AreEqual(2, Q?.Pieces.Count);
         }
 
         [TestMethod]
         public void SetsFiniteTestDisj2()
         {
             var Q = (Ef | Gf) as Set;
-            Assert.IsTrue(Q.Pieces.Count == 1);
+            Assert.AreEqual(1, Q?.Pieces.Count);
         }
 
         [TestMethod]
         public void SetsFiniteTestSub2()
         {
             Assert.IsTrue(Df.IsEmpty());
-            Assert.IsTrue(((Df - Af) as Set).IsEmpty());
-            Assert.IsTrue(((Df - Bf) as Set).IsEmpty());
-            Assert.IsTrue(((Df - Cf) as Set).IsEmpty());
-            Assert.IsTrue(((Df - Df) as Set).IsEmpty());
-            Assert.IsTrue(((Df - Ef) as Set).IsEmpty());
-            Assert.IsTrue(((Df - Gf) as Set).IsEmpty());
+            Assert.IsTrue(((Set)(Df - Af)).IsEmpty());
+            Assert.IsTrue(((Set)(Df - Bf)).IsEmpty());
+            Assert.IsTrue(((Set)(Df - Cf)).IsEmpty());
+            Assert.IsTrue(((Set)(Df - Df)).IsEmpty());
+            Assert.IsTrue(((Set)(Df - Ef)).IsEmpty());
+            Assert.IsTrue(((Set)(Df - Gf)).IsEmpty());
         }
 
         [TestMethod]
         public void SetsFiniteTestConj2()
         {
             var Q = (Ef & Gf) as Set;
-            Assert.IsTrue(Q.Pieces.Count == 1);
+            Assert.AreEqual(1, Q?.Pieces.Count);
         }
     }
 }

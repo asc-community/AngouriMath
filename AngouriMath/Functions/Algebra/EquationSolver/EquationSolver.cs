@@ -14,12 +14,13 @@
  */
 
 
-
-﻿using AngouriMath.Core;
+using System;
+using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
  using AngouriMath.Functions.Algebra.AnalyticalSolving;
  using System.Collections.Generic;
 using System.Linq;
+ using AngouriMath.Core.TreeAnalysis;
 
 
 namespace AngouriMath.Functions.Algebra.Solver
@@ -37,13 +38,29 @@ namespace AngouriMath.Functions.Algebra.Solver
             var res = new Set();
             equation = equation.DeepCopy();
 
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
-                MathS.Settings.FloatToRationalIterCount.Set(0);
-                    AnalyticalSolver.Solve(equation, x, res);
-                MathS.Settings.FloatToRationalIterCount.Unset();
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
 
-            res.FiniteApply(entity => entity.InnerSimplify());
+            MathS.Settings.PrecisionErrorZeroRange.As(1e-12m, () =>
+            MathS.Settings.FloatToRationalIterCount.As(0, () => 
+                AnalyticalSolver.Solve(equation, x, res)
+            ));
+
+            if (res.Power == Set.PowerLevel.FINITE)
+            {
+                static Entity simplifier(Entity entity) => entity.InnerSimplify();
+                static Entity evaluator(Entity entity) => entity.InnerEval();
+                Entity collapser(Entity expr) =>
+                    MathS.Utils.GetUniqueVariables(equation).Count == 1 ? evaluator(expr) : simplifier(expr);
+
+                res.FiniteApply(simplifier);
+                var finalSet = new Set { FastAddingMode = true };
+                foreach (var elem in res.FiniteSet())
+                    if (TreeAnalyzer.IsFinite(elem) &&
+                        TreeAnalyzer.IsFinite(collapser(equation.Substitute(x, elem)))
+                        )
+                        finalSet.Add(elem);
+                finalSet.FastAddingMode = false;
+                res = finalSet;
+            }
 
             return res;
         }
@@ -101,7 +118,8 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static List<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var)
         {
             var result = new List<List<Entity>>();
-            foreach (var sol in eq.InnerSimplify().SolveEquation(var).FiniteSet())
+            eq = eq.InnerSimplify();
+            foreach (var sol in eq.SolveEquation(var).FiniteSet())
                 result.Add(new List<Entity>() { sol });
             return result;
         }
@@ -126,7 +144,7 @@ namespace AngouriMath.Functions.Algebra.Solver
             else
                 result = new List<List<Entity>>();
             for (int i = 0; i < equations.Count; i++)
-                if (equations[i].FindSubtree(var) != null)
+                if (equations[i].FindSubtree(var) is { })
                 {
                     var solutionsOverVar = equations[i].SolveEquation(var);
                     equations.RemoveAt(i);

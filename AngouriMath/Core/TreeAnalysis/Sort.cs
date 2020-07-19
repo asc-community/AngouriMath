@@ -31,29 +31,23 @@ namespace AngouriMath
         /// </summary>
         /// <param name="level"></param>
         /// <returns></returns>
-        internal string SortHash(SortLevel level)
+        internal string SortHash(SortLevel level) => this switch
         {
-            if (this.entType == Entity.EntType.FUNCTION)
-                return this.Name + "_" + string.Join("_", from child in Children select child.SortHash(level));
-            else if (this.entType == EntType.NUMBER)
+            FunctionEntity _ =>
+                Name + "_" + string.Join("_", from child in Children select child.SortHash(level)),
+            NumberEntity { Value: var value } => level switch
             {
-                if (level == SortLevel.HIGH_LEVEL)
-                    return "";
-                else if (level == SortLevel.MIDDLE_LEVEL)
-                    return (this as NumberEntity).Value.Type.ToString();
-                else
-                    return this.Name + " ";
-            }
-            else if (this.entType == Entity.EntType.VARIABLE)
-                return "v_" + Name;
-            else
-                return (level == SortLevel.LOW_LEVEL ? this.Name + "_" : "") + string.Join("_", 
+                SortLevel.HIGH_LEVEL => "",
+                SortLevel.MIDDLE_LEVEL => value.ToString(),
+                _ => Name + " "
+            },
+            VariableEntity _ => "v_" + Name,
+            _ => (level == SortLevel.LOW_LEVEL ? Name + "_" : "") + string.Join("_",
                     from child in Children
                     let hash = child.SortHash(level)
                     where !string.IsNullOrEmpty(hash)
-                    select hash);
-
-        }
+                    select hash)
+        };
     }
 }
 

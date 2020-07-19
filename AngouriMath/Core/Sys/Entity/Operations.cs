@@ -16,6 +16,7 @@
 
 
 ﻿using AngouriMath.Core.Sys.Items.Tensors;
+using System.Linq;
 
 namespace AngouriMath.Core
 {
@@ -28,7 +29,8 @@ namespace AngouriMath.Core
         /// <returns></returns>
         protected override bool EqualsTo(Entity obj)
         {
-            var t = obj as Tensor;
+            if (!(obj is Tensor t))
+                return false;
             if (!TensorFunctional.SameShape(this, t))
                 return false;
             for (int i = 0; i < Data.Length; i++)
@@ -45,6 +47,8 @@ namespace AngouriMath
     {
         protected override bool EqualsTo(Entity obj)
         {
+            if (!(obj is FunctionEntity))
+                return false;
             if (obj.Name != Name)
                 return false;
             if (Children.Count != obj.Children.Count)
@@ -62,6 +66,8 @@ namespace AngouriMath
     {
         protected override bool EqualsTo(Entity obj)
         {
+            if (!(obj is OperatorEntity))
+                return false;
             if (obj.Name != Name)
                 return false;
             if (Children.Count != obj.Children.Count)
@@ -73,21 +79,16 @@ namespace AngouriMath
             }
             return true;
         }
+        public override int GetHashCode() => Children.GetHashCode();
     }
 
     public partial class NumberEntity
     {
-        protected override bool EqualsTo(Entity obj)
-        {
-            return obj.GetValue() == GetValue();
-        }
+        protected override bool EqualsTo(Entity obj) => obj is NumberEntity n && Value == n.Value;
     }
 
     public partial class VariableEntity
     {
-        protected override bool EqualsTo(Entity obj)
-        {
-            return Name == obj.Name;
-        }
+        protected override bool EqualsTo(Entity obj) => obj is VariableEntity && Name == obj.Name;
     }
 }

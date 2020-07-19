@@ -16,24 +16,27 @@
 
 using System.Collections.Generic;
 using System.Globalization;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
-    class RuleList : Dictionary<Pattern, Entity> { }
+    class RuleList : List<(Pattern, Entity)> {
+        public void Add(Pattern oldPattern, Entity newPattern) => Add((oldPattern, newPattern));
+    }
     internal static class Patterns
     {
         internal static readonly Pattern any1 = new Pattern(100, Entity.PatType.COMMON, tree => true);
         internal static readonly Pattern any2 = new Pattern(101, Entity.PatType.COMMON, tree => true);
         internal static readonly Pattern any3 = new Pattern(102, Entity.PatType.COMMON, tree => true);
         internal static readonly Pattern any4 = new Pattern(103, Entity.PatType.COMMON, tree => true);
-        internal static readonly Pattern const1 = new Pattern(200, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER);
-        internal static readonly Pattern const2 = new Pattern(201, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER);
-        internal static readonly Pattern const3 = new Pattern(202, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER);
-        internal static readonly Pattern var1 = new Pattern(300, Entity.PatType.VARIABLE, tree => tree.entType == Entity.EntType.VARIABLE);
-        internal static readonly Pattern func1 = new Pattern(400, Entity.PatType.FUNCTION, tree => tree.entType == Entity.EntType.FUNCTION);
-        internal static readonly Pattern func2 = new Pattern(401, Entity.PatType.FUNCTION, tree => tree.entType == Entity.EntType.FUNCTION);
+        internal static readonly Pattern const1 = new Pattern(200, Entity.PatType.NUMBER, tree => tree is NumberEntity);
+        internal static readonly Pattern const2 = new Pattern(201, Entity.PatType.NUMBER, tree => tree is NumberEntity);
+        internal static readonly Pattern const3 = new Pattern(202, Entity.PatType.NUMBER, tree => tree is NumberEntity);
+        internal static readonly Pattern var1 = new Pattern(300, Entity.PatType.VARIABLE, tree => tree is VariableEntity);
+        internal static readonly Pattern func1 = new Pattern(400, Entity.PatType.FUNCTION, tree => tree is FunctionEntity);
+        internal static readonly Pattern func2 = new Pattern(401, Entity.PatType.FUNCTION, tree => tree is FunctionEntity);
         private static int InternNumber = 10000;
-        internal static Pattern Num(decimal a) => new Pattern(++InternNumber, Entity.PatType.NUMBER, tree => tree.entType == Entity.EntType.NUMBER, a.ToString(CultureInfo.InvariantCulture));
+        internal static Pattern Num(EDecimal a) => new Pattern(++InternNumber, Entity.PatType.NUMBER, tree => tree is NumberEntity, a.ToString());
 
         internal static readonly RuleList DivisionPreparingRules = new RuleList
         {
@@ -110,7 +113,7 @@ namespace AngouriMath
             // x^n / x^m
 
             // c ^ log(c, a) = a
-            { Powf.PHang(const1, Logf.PHang(any1, const1)), any1 },
+            { Powf.PHang(const1, Logf.PHang(const1, any1)), any1 },
 
             { Powf.PHang(any1, any3) * (any1 * any2), (Powf.PHang(any1, any3 + Num(1))) * any2 },
             { Powf.PHang(any1, any3) * (any2 * any1), (Powf.PHang(any1, any3 + Num(1))) * any2 },
@@ -140,6 +143,9 @@ namespace AngouriMath
 
             // a / (b / c) = a * c / b
             { any1 / (any2 / any3), any1 * any3 / any2 },
+
+            // a / b / c = a * c / b
+            { any1 / any2 / any3, any1 / (any2 * any3) },
 
             // a * (b / c) = (a * b) / c
             { any1 * (any2 / any3), (any1 * any2) / any3 },
@@ -274,31 +280,8 @@ namespace AngouriMath
 
         internal static readonly RuleList ExpandRules = new RuleList
         {
-            // (any1 + any2)2
-            { Powf.PHang(any1, Num(1)), any1 },
-            { Powf.PHang(any1, Num(2)), any1 * any1 },
-            { Powf.PHang(any1, Num(3)), any1 * any1 * any1 },
-            { Powf.PHang(any1, Num(4)), any1 * any1 * any1 * any1 },
-
-            // ({1} - {2}) ({1} + {2}) = x2 - {}2
-            { (any1 - any2) * (any1 + any2), Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)) },
-            { (any1 + any2) * (any1 - any2), Powf.PHang(any1, Num(2)) - Powf.PHang(any2, Num(2)) },
-
-            // ({1} + {2}) * ({3} + {4}) = {1}{3} + {1}{4} + {2}{3} + {2}{4}
-            { (any1 + any2) * (any3 + any4), any1 * any3 + any1 * any4 + any2 * any3 + any2 * any4 },
-            { (any1 - any2) * (any3 + any4), any1 * any3 + any1 * any4 - any2 * any3 - any2 * any4 },
-            { (any1 + any2) * (any3 - any4), any1 * any3 - any1 * any4 + any2 * any3 - any2 * any4 },
-            { (any1 - any2) * (any3 - any4), any1 * any3 - any1 * any4 - any2 * any3 + any2 * any4 },
-            
-            // {1} * ({2} + {3})
-            { any1 * (any2 + any3), any1 * any2 + any1 * any3 },
-            { any1 * (any2 - any3), any1 * any2 - any1 * any3 },
-            { (any2 + any3) * any1, any1 * any2 + any1 * any3 },
-            { (any2 - any3) * any1, any1 * any2 - any1 * any3 },
-
-            // ({1} +- {2}) / {3} == {1} / {3} +- {2} / {3}
-            { (any1 + any2) / any3, any1 / any3 + any2 / any3 },
-            { (any1 - any2) / any3, any1 / any3 - any2 / any3 }
+            { Sinf.PHang(any1 + any2), Sinf.PHang(any1) * Cosf.PHang(any2) + Sinf.PHang(any2) * Cosf.PHang(any1) },
+            { Sinf.PHang(any1 - any2), Sinf.PHang(any1) * Cosf.PHang(any2) - Sinf.PHang(any2) * Cosf.PHang(any1) },
         };
 
         internal static readonly RuleList CollapseRules = new RuleList

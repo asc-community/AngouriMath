@@ -55,14 +55,14 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             var falseReplacements = new List<KeyValuePair<VariableEntity, Entity>>();
             string falseReplacementName = "trig";
 
-            void ReplaceSinSubExpression(ref Entity expr, Entity toReplace, Entity a, Entity b, VariableEntity replacement)
+            static void ReplaceSinSubExpression(ref Entity expr, Entity toReplace, Entity a, Entity b, VariableEntity replacement)
             {
                 // sin(ax + b) = (t^a * e^(i*b) - t^(-a) * e^(-i*b)) / (2i)
                 var resultReplacement = (MathS.Pow(replacement, a) * (MathS.Pow(MathS.e, b * MathS.i) / (2 * MathS.i)) - MathS.Pow(replacement, -a) * (MathS.Pow(MathS.e, -b * MathS.i)) / (2 * MathS.i));
                 TreeAnalyzer.FindAndReplace(ref expr, toReplace, resultReplacement);
             }
 
-            void ReplaceCosSubExpression(ref Entity expr, Entity toReplace, Entity a, Entity b, VariableEntity replacement)
+            static void ReplaceCosSubExpression(ref Entity expr, Entity toReplace, Entity a, Entity b, VariableEntity replacement)
             {
                 // cos(ax + b) = (t^a * e^(i*b) + t^(-a) * e^(-i*b)) / 2
                 var resultReplacement = (MathS.Pow(replacement, a) * (MathS.Pow(MathS.e, b * MathS.i) / 2) + MathS.Pow(replacement, -a) * (MathS.Pow(MathS.e, -b * MathS.i)) / 2);
@@ -84,8 +84,7 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
 
             void MatchSinUntil(Pattern p, Func<Entity, (Entity, Entity, Entity)> variableGetter)
             {
-                Entity found;
-                while ((found = expr.FindPatternSubtree(p)) != null)
+                while (expr.FindPatternSubtree(p) is { } found)
                 {
                     (Entity x, Entity a, Entity b) = variableGetter(found.Children[0]);
                     if (CheckIfReplacementIsSuitable(ref expr, found, x, variable))
@@ -97,8 +96,7 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
 
             void MatchCosUntil(Pattern p, Func<Entity, (Entity, Entity, Entity)> variableGetter)
             {
-                Entity found;
-                while ((found = expr.FindPatternSubtree(p)) != null)
+                while (expr.FindPatternSubtree(p) is { } found)
                 {
                     (Entity x, Entity a, Entity b) = variableGetter(found.Children[0]);
                     if (CheckIfReplacementIsSuitable(ref expr, found, x, variable))
@@ -111,7 +109,7 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             // arg => (x, a, b)
             // TODO: refactor this. Move to a list
             var variablePattern = new Pattern(1000, Entity.PatType.VARIABLE, 
-                tree => tree.entType == Entity.EntType.VARIABLE && tree.Name == variable.Name);
+                tree => tree is VariableEntity && tree.Name == variable.Name);
             var pattern1 = Sinf.PHang(Patterns.const1 * variablePattern + Patterns.any1);
             MatchSinUntil(pattern1, arg => (arg.Children[0].Children[1], arg.Children[0].Children[0], arg.Children[1]));
             var pattern2 = Sinf.PHang(variablePattern * Patterns.const1 + Patterns.any1);
@@ -160,14 +158,14 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
         }
 
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
-        internal static Set SolveLinear(Entity expr, VariableEntity variable)
+        internal static Set? SolveLinear(Entity expr, VariableEntity variable)
         {
             var replacement = Utils.FindNextIndex(expr, variable.Name);
             expr = ReplaceTrigonometry(expr, variable, replacement);
 
             // if there is still original variable after replacements,
             // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
-            if (expr.FindSubtree(variable) != null)
+            if (expr.FindSubtree(variable) is { })
             {
                 return null;
             }
@@ -179,7 +177,8 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             // TODO: make check for infinite solutions
             foreach(var solution in solutions.FiniteSet())
             {
-                var sol = TreeAnalyzer.FindInvertExpression(MathS.Pow(MathS.e, MathS.i * variable), solution, variable);
+                var func = MathS.Pow(MathS.e, MathS.i * variable);
+                var sol = TreeAnalyzer.FindInvertExpression(func, solution, variable);
                 if (sol != null)
                     actualSolutions.AddRange(sol);
             }

@@ -42,22 +42,14 @@ namespace AngouriMath.Functions.Output
             {"mulf", "*"},
             {"powf", "**"},
         };
-        private static string ToSympyExpr(Entity expr)
+        private static string ToSympyExpr(Entity expr) => expr switch
         {
-            switch (expr.entType)
-            {
-                case Entity.EntType.FUNCTION:
-                    return "sympy." + FuncTable[expr.Name] + "(" + ToSympyExpr(expr.Children[0]) + ")";
-                case Entity.EntType.OPERATOR:
-                    return "(" + ToSympyExpr(expr.Children[0]) + OperatorTable[expr.Name] + ToSympyExpr(expr.Children[1]) + ")";
-                case Entity.EntType.NUMBER:
-                    return expr.ToString().Replace("i", "j");
-                case Entity.EntType.VARIABLE:
-                    return expr.ToString();
-                default:
-                    throw new MathSException("Unexpected node type");
-            }
-        }
+            FunctionEntity _ => "sympy." + FuncTable[expr.Name] + "(" + ToSympyExpr(expr.Children[0]) + ")",
+            OperatorEntity _ => "(" + ToSympyExpr(expr.Children[0]) + OperatorTable[expr.Name] + ToSympyExpr(expr.Children[1]) + ")",
+            NumberEntity _ => expr.ToString().Replace("i", "j"),
+            VariableEntity _ => expr.ToString(),
+            _ => throw new MathSException("Unexpected node type"),
+        };
 
         /// <summary>
         /// Generates sympy-like code

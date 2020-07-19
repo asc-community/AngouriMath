@@ -15,17 +15,17 @@
 
 
 
-﻿using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.TreeAnalysis;
- using AngouriMath.Functions.Algebra.Solver;
+using AngouriMath.Functions.Algebra.Solver;
 using System;
 using System.Collections.Generic;
- using System.Linq;
- using AngouriMath.Core;
- using AngouriMath.Core.Numerix;
- using AngouriMath.Core.Sys.Interfaces;
- using AngouriMath.Functions;
- using AngouriMath.Functions.Algebra.Solver.Analytical;
+using System.Linq;
+using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Functions;
+using AngouriMath.Functions.Algebra.Solver.Analytical;
 
 namespace AngouriMath
 {
@@ -59,7 +59,7 @@ namespace AngouriMath.Core.TreeAnalysis
         public static Entity GetMinimumSubtree(Entity expr, Entity ent)
         {
             // TODO: this function requires a lot of refactoring
-            
+
             // The idea is the following:
             // We must get a subtree that has more occurances than 1,
             // But at the same time it should cover all references to `ent`
@@ -74,7 +74,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
             int depth = 1;
             Entity subtree;
-            Entity best = null;
+            Entity? best = null;
             while ((subtree = GetTreeByDepth(expr, ent, depth)) != ent)
             {
                 if (subtree.Children.Count == 0) return subtree;
@@ -85,15 +85,15 @@ namespace AngouriMath.Core.TreeAnalysis
             }
             return best ?? ent;
         }
-        
+
         private static Entity GetTreeByDepth(Entity expr, Entity ent, int depth)
         {
-            while(depth > 0)
+            while (depth > 0)
             {
                 foreach (var child in expr.Children)
                     // We don't care about the order as once we encounter mention of `ent`,
                     // we need ALL subtrees be equal
-                    if (child.FindSubtree(ent) != null)
+                    if (child.FindSubtree(ent) is { })
                     {
                         expr = child;
                         break;
@@ -118,14 +118,14 @@ namespace AngouriMath.Core.TreeAnalysis
             value = value.InnerSimplify();
             if (func == x)
                 return new Set(value);
-            if (func.entType == Entity.EntType.NUMBER)
+            if (func is NumberEntity)
                 throw new MathSException("This function must contain x");
-            if (func.entType == Entity.EntType.VARIABLE)
+            if (func is VariableEntity)
                 return new Set(func);
-            if (func.entType == Entity.EntType.OPERATOR)
-                return InvertOperatorEntity(func as OperatorEntity, value, x);
-            if (func.entType == Entity.EntType.FUNCTION)
-                return InvertFunctionEntity(func as FunctionEntity, value, x);
+            if (func is OperatorEntity o)
+                return InvertOperatorEntity(o, value, x);
+            if (func is FunctionEntity f)
+                return InvertFunctionEntity(f, value, x);
 
             return new Set(value);
         }
@@ -144,7 +144,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             Entity a, un;
             int arg;
-            if (func.Children[0].FindSubtree(x) != null)
+            if (func.Children[0].FindSubtree(x) is { })
             {
                 a = func.Children[1];
                 un = func.Children[0];
@@ -183,10 +183,10 @@ namespace AngouriMath.Core.TreeAnalysis
                     if (arg == 0)
                     {
                         // x ^ a = value => x = value ^ (1/a)
-                        if (a.entType == Entity.EntType.NUMBER && a.GetValue().IsInteger())
+                        if (a is NumberEntity { Value:IntegerNumber { Value: var pow } })
                         {
                             var res = new Set();
-                            foreach (var root in Number.GetAllRoots(1, a.GetValue().AsIntegerNumber()).FiniteSet())
+                            foreach (var root in Number.GetAllRoots(1, pow).FiniteSet())
                                 res.AddRange(FindInvertExpression(un, root * MathS.Pow(value, 1 / a), x));
                             return res;
                         }
@@ -220,10 +220,10 @@ namespace AngouriMath.Core.TreeAnalysis
                    r.Imaginary <= to.Imaginary;
         }
 
-        private static readonly ComplexNumber ArcsinFrom = Number.Create(-Math.PI / 2, RealNumber.NegativeInfinity());
-        private static readonly ComplexNumber ArcsinTo = Number.Create(+Math.PI / 2, RealNumber.PositiveInfinity());
-        private static readonly ComplexNumber ArccosFrom = Number.Create(0.0, RealNumber.NegativeInfinity());
-        private static readonly ComplexNumber ArccosTo = Number.Create(Math.PI, RealNumber.PositiveInfinity());
+        private static readonly ComplexNumber ArcsinFrom = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
+        private static readonly ComplexNumber ArcsinTo = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
+        private static readonly ComplexNumber ArccosFrom = ComplexNumber.Create(0, RealNumber.NegativeInfinity.Value);
+        private static readonly ComplexNumber ArccosTo = ComplexNumber.Create(MathS.DecimalConst.pi, RealNumber.PositiveInfinity.Value);
         private static readonly Set Empty = new Set();
 
         /// <summary>
@@ -239,15 +239,14 @@ namespace AngouriMath.Core.TreeAnalysis
         public static Set InvertFunctionEntity(FunctionEntity func, Entity value, Entity x)
         {
             Entity a = func.Children[0];
-            Entity b = func.Children.Count == 2 ? func.Children[1] : null;
-            int arg = func.Children.Count == 2 && func.Children[1].FindSubtree(x) != null ? 1 : 0;
+            int arg = func.Children.Count == 2 && func.Children[1].FindSubtree(x) is { } ? 1 : 0;
             var n = Utils.FindNextIndex(func + value, "n");
             var res = new Set();
             var pi = MathS.pi;
 
-            Set GetNotNullEntites(Set set)
+            static Set GetNotNullEntites(Set set)
             {
-                return set.FiniteWhere(el => el.entType != Entity.EntType.NUMBER || el.GetValue().IsDefinite());
+                return set.FiniteWhere(el => !(el is NumberEntity e) || e.Value.IsFinite);
             }
 
             switch (func.Name)
@@ -302,6 +301,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     // arccotan(x) = value => x = cotan(value)
                     return GetNotNullEntites(FindInvertExpression(a, MathS.Cotan(value), x));
                 case "logf":
+                    Entity b = func.Children[1];
                     if (arg != 0)
                         // log(x, a) = value => x = a ^ value
                         return GetNotNullEntites(FindInvertExpression(b, MathS.Pow(a, value), x));
@@ -324,18 +324,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (!MathS.CanBeEvaluated(root))
                 return root;
             var preciseValue = root.Eval();
-            MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
-                MathS.Settings.FloatToRationalIterCount.Set(20);
-                    var downcasted = Number.Functional.Downcast(preciseValue) as ComplexNumber;
-                MathS.Settings.FloatToRationalIterCount.Unset();
-            MathS.Settings.PrecisionErrorZeroRange.Unset();
+            var downcasted = MathS.Settings.FloatToRationalIterCount.As(20, () =>
+                MathS.Settings.PrecisionErrorZeroRange.As(1e-7m, () =>
+                {
+                    return ComplexNumber.Create(preciseValue.Real, preciseValue.Imaginary);
+                }));
             var errorExpr = equation.Substitute(x, downcasted);
             if (!MathS.CanBeEvaluated(errorExpr))
                 return root;
             var error = errorExpr.Eval();
 
-            bool ComplexRational(ComplexNumber a)
-                => a.Real.IsRational() && a.Imaginary.IsRational();
+            static bool ComplexRational(ComplexNumber a)
+                => a.Real is RationalNumber && a.Imaginary is RationalNumber;
 
             var innerSimplified = root.InnerSimplify();
 
@@ -366,16 +366,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 dst.AddRange(toAdd);
             }
 
-            var polyexpr = expr.DeepCopy();
-            Set res = PolynomialSolver.SolveAsPolynomial(polyexpr, x);
-            if (res != null)
+            Set? res = PolynomialSolver.SolveAsPolynomial(expr, x);
+            if (res is { })
             {
                 res.FiniteApply(e => e.InnerSimplify());
                 DestinationAddRange(res);
                 return;
             }
 
-            if (expr.entType == Entity.EntType.OPERATOR)
+            if (expr is OperatorEntity)
             {
                 switch (expr.Name)
                 {
@@ -385,7 +384,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         return;
                     case "divf":
 
-                        bool IsSetNumeric(Set a)
+                        static bool IsSetNumeric(Set a)
                             => a.Select(piece => piece.LowerBound().Item1).All(MathS.CanBeEvaluated);
 
                         var zeroNumerators = new Set();
@@ -402,13 +401,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             dst.AddRange(zeroNumerators);
                             return;
                         }
-                        dst.AddRange((zeroNumerators & !zeroDenominators) as Set);
+                        dst.AddRange((Set)(zeroNumerators & !zeroDenominators));
                         return;
                     case "powf":
                         Solve(expr.Children[0], x, dst);
                         return;
                     case "minusf":
-                        if (expr.Children[1].FindSubtree(x) == null && compensateSolving)
+                        if (expr.Children[1].FindSubtree(x) is null && compensateSolving)
                         {
                             if (expr.Children[0] == x)
                             {
@@ -416,16 +415,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                                 return;
                             }
                             var subs = 0;
-                            Entity lastChild = null;
+                            Entity? lastChild = null;
                             foreach (var child in expr.Children[0].Children)
                             {
-                                if (child.FindSubtree(x) != null)
+                                if (child.FindSubtree(x) is { })
                                 {
                                     subs += 1;
                                     lastChild = child;
                                 }
                             }
-                            if (subs != 1)
+                            if (subs != 1 || lastChild is null)
                                 break;
                             var resInverted = TreeAnalyzer.FindInvertExpression(expr.Children[0], expr.Children[1], lastChild);
                             foreach (var result in resInverted.FiniteSet())
@@ -435,71 +434,103 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         break;
                 }
             }
-            else if (expr.entType == Entity.EntType.FUNCTION)
+            else if (expr is FunctionEntity f)
             {
-                DestinationAddRange(TreeAnalyzer.InvertFunctionEntity(expr as FunctionEntity, 0, x));
+                DestinationAddRange(TreeAnalyzer.InvertFunctionEntity(f, 0, x));
                 return;
             }
 
-
-            // Here we generate a unique variable name
-            var uniqVars = MathS.Utils.GetUniqueVariables(expr);
-            uniqVars.Pieces.Sort((a, b) => ((Entity)b).Name.Length.CompareTo(((Entity)a).Name.Length));
-            VariableEntity newVar = ((Entity)uniqVars.Pieces[0]).Name + "quack";
-            // // //
-
-            
-            // Here we find all possible replacements
-            var replacements = new List<Tuple<Entity, Entity>>();
-            replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(expr, x), expr));
-            foreach (var alt in expr.Alternate(4).FiniteSet())
+            // if the replacement isn't one-variable one,
+            // then solving over replacements is already useless,
+            // so we skip this part and go to other solvers
+            if (!compensateSolving)
             {
-                if ((alt).FindSubtree(x) == null)
-                    return; // in this case there is either 0 or +oo solutions
-                replacements.Add(new Tuple<Entity, Entity>(TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
-            }
-            // // //
+                // Here we generate a unique variable name
+                var uniqVars = MathS.Utils.GetUniqueVariables(expr);
+                uniqVars.Pieces.Sort((a, b) => ((Entity)b).Name.Length.CompareTo(((Entity)a).Name.Length));
+                VariableEntity newVar = ((Entity)uniqVars.Pieces[0]).Name + "quack";
+                // // //
 
-            // Here we find one that has at least one solution
-            
-            foreach (var replacement in replacements)
-            {
-                Set solutions = null;
-                if (replacement.Item1 == x)
-                    continue;
-                var newExpr = replacement.Item2.DeepCopy();
-                TreeAnalyzer.FindAndReplace(ref newExpr, replacement.Item1, newVar);
-                solutions = newExpr.SolveEquation(newVar);
-                if (!solutions.IsEmpty())
+
+                // Here we find all possible replacements
+                var replacements = new List<(Entity, Entity)>
                 {
-                    var bestReplacement = replacement.Item1;
-
-                    // Here we are trying to solve for this replacement
-                    Set newDst = new Set();
-                    foreach (var solution in solutions.FiniteSet())
-                    {
-                        var str = bestReplacement.ToString();
-                        // TODO: make a smarter comparison than just comparison of complexities of two expressions
-                        // The idea is  
-                        // similarToPrevious = ((bestReplacement - solution) - expr).Simplify() == 0
-                        // But Simplify costs us too much time
-                        var similarToPrevious = (bestReplacement - solution).Complexity() >= expr.Complexity();
-                        if (!compensateSolving || !similarToPrevious)
-                            Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
-                    }
-                    DestinationAddRange(newDst);
-                    if (!dst.IsEmpty())
-                        break;
-                    // // //
+                    (TreeAnalyzer.GetMinimumSubtree(expr, x), expr)
+                };
+                foreach (var alt in expr.Alternate(4).FiniteSet())
+                {
+                    if (alt.FindSubtree(x) is null)
+                        return; // in this case there is either 0 or +oo solutions
+                    replacements.Add((TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
                 }
+                // // //
+
+                // Here we find one that has at least one solution
+
+                foreach (var replacement in replacements)
+                {
+                    Set? solutions = null;
+                    if (replacement.Item1 == x)
+                        continue;
+                    var newExpr = replacement.Item2.DeepCopy();
+                    TreeAnalyzer.FindAndReplace(ref newExpr, replacement.Item1, newVar);
+                    solutions = newExpr.SolveEquation(newVar);
+                    if (!solutions.IsEmpty())
+                    {
+                        var bestReplacement = replacement.Item1;
+
+                        // Here we are trying to solve for this replacement
+                        Set newDst = new Set();
+                        foreach (var solution in solutions.FiniteSet())
+                        {
+                            var str = bestReplacement.ToString();
+                            // TODO: make a smarter comparison than just comparison of complexities of two expressions
+                            // The idea is  
+                            // similarToPrevious = ((bestReplacement - solution) - expr).Simplify() == 0
+                            // But Simplify costs us too much time
+                            var similarToPrevious = (bestReplacement - solution).Complexity() >= expr.Complexity();
+                            if (!compensateSolving || !similarToPrevious)
+                                Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
+                        }
+                        DestinationAddRange(newDst);
+                        if (!dst.IsEmpty())
+                            break;
+                        // // //
+                    }
+                }
+                // // //
             }
-            // // //
 
             // if no replacement worked, try trigonometry solver
             if (dst.IsEmpty())
             {
                 var trigexpr = expr.DeepCopy();
                 res = TrigonometricSolver.SolveLinear(trigexpr, x);
+                if (res != null)
+                {
+                    DestinationAddRange(res);
+                    return;
+                }
+            }
+            // // //
+
+            // if no trigonometric rules helped, common denominator might help
+            if (dst.IsEmpty())
+            {
+                res = CommonDenominatorSolver.Solve(expr, x);
+                if (res != null)
+                {
+                    DestinationAddRange(res);
+                    return;
+                }
+            }
+            // // //
+
+
+            // if we have fractioned polynomials
+            if (dst.IsEmpty())
+            {
+                res = FractionedPolynoms.Solve(expr, x);
                 if (res != null)
                 {
                     DestinationAddRange(res);

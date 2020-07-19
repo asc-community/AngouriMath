@@ -1,4 +1,5 @@
 using AngouriMath;
+using AngouriMath.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Algebra
@@ -6,126 +7,37 @@ namespace UnitTests.Algebra
     [TestClass]
     public class SimplifyTest
     {
-        public static readonly VariableEntity x = MathS.Var("x");
-        [TestMethod]
-        public void TestMinus()
+        static readonly VariableEntity a = MathS.Var(nameof(a));
+        static readonly VariableEntity b = MathS.Var(nameof(b));
+        static readonly VariableEntity c = MathS.Var(nameof(c));
+        static readonly VariableEntity x = MathS.Var(nameof(x));
+        static readonly VariableEntity y = MathS.Var(nameof(y));
+        void AssertSimplify(Entity original, Entity simplified, int? level = null)
         {
-            var expr = x - x;
-            Assert.IsTrue(expr.Simplify() == 0);
+            Assert.AreNotEqual(simplified, original);
+            Assert.AreEqual(simplified, level is { } l ? simplified.Simplify(l) : simplified.Simplify());
         }
-        [TestMethod]
-        public void TestMul0()
-        {
-            var expr = (x * 3) * 0;
-            Assert.IsTrue(expr.Simplify() == 0);
-        }
-        [TestMethod]
-        public void TestMul1()
-        {
-            var ex = x * 3;
-            var expr = ex * 2;
-            Assert.IsTrue(expr.Simplify() == 6 * x);
-        }
-
-        [TestMethod]
-        public void TestPow1()
-        {
-            var ex = 3 * x;
-            var expr = MathS.Pow(ex, 1);
-            var res = expr.Simplify();
-            Assert.IsTrue(res == ex);
-        }
-        [TestMethod]
-        public void TestPow0()
-        {
-            var ex = (x * 3);
-            var expr = MathS.Pow(ex, 0);
-            Assert.IsTrue(expr.Simplify() == 1);
-        }
-        [TestMethod]
-        public void TestSum0()
-        {
-            var ex = x + 0;
-            Assert.IsTrue(ex.Simplify() == x);
-        }
-        [TestMethod]
-        public void TestPatt1()
-        {
-            var expr = MathS.Pow(x * 4, 3);
-            Assert.IsTrue(expr.Simplify() == 64 * MathS.Pow(x, 3));
-        }
-        [TestMethod]
-        public void TestPatt2()
-        {
-            var y = MathS.Var("y");
-            var expr = (MathS.Sqr(MathS.Sin(x + 2 * y)) + MathS.Sqr(MathS.Cos(x + 2 * y))) / (2 * MathS.Sin(x - y) * MathS.Cos(x - y) + 1);
-            Assert.IsTrue(expr.Simplify() == 1 / (MathS.Sin(2 * (x - y)) + 1));
-        }
-        [TestMethod]
-        public void TestPatt3()
-        {
-            var y = MathS.Var("y");
-            var expr = (x - y) * (x + y);
-            Assert.IsTrue(expr.Simplify() == MathS.Sqr(x) - MathS.Sqr(y));
-        }
-        [TestMethod]
-        public void TestPatt4()
-        {
-            var y = MathS.Var("y");
-            var expr = (x - y) * (x + y) / (x * x - y * y);
-            Assert.IsTrue(expr.Simplify() == 1);
-        }
-        [TestMethod]
-        public void TestPatt5()
-        {
-            var expr = (x + 3) * (3 / (x + 3));
-            Assert.IsTrue(expr.Simplify() == 3);
-        }
-        [TestMethod]
-        public void TestPatt6()
-        {
-            var expr = (x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3));
-            Assert.IsTrue(expr.Simplify() == 1 + x);
-        }
-        [TestMethod]
-        public void TestPatt7()
-        {
-            var expr = MathS.Arcsin(x * 3) + MathS.Arccos(x * 3);
-            Assert.IsTrue(expr.Simplify() == 0.5 * MathS.pi);
-        }
-        [TestMethod]
-        public void TestPatt8()
-        {
-            var expr = MathS.Arccotan(x * 3) + MathS.Arctan(x * 3);
-            Assert.IsTrue(expr.Simplify() == 0.5 * MathS.pi);
-        }
-        [TestMethod]
-        public void TestPatt9()
-        {
-            var expr = MathS.Arccotan(x * 3) + MathS.Arctan(x * 6);
-            Assert.IsTrue(expr.Simplify() == MathS.Arccotan(3 * x) + MathS.Arctan(6 * x));
-        }
-        [TestMethod]
-        public void TestPatt10()
-        {
-            var expr = MathS.Arcsin(x * 3) + MathS.Arccos(x * 1);
-            Assert.IsTrue(expr.Simplify() == MathS.Arccos(x) + MathS.Arcsin(3 * x));
-        }
-        [TestMethod]
-        public void TestPatt11()
-        {
-            var expr = ((3 + x) + 4) + x;
-            Assert.IsTrue(expr.Simplify() == 7 + 2 * x);
-        }
-        [TestMethod]
-        public void TestPatt12()
-        {
-            var y = MathS.Var("y");
-            var a = MathS.Var("a");
-            var b = MathS.Var("b");
-            var c = MathS.Var("c");
-            var expr = (x * y * a * b * c) / (c * b * a * x * x);
-            Assert.IsTrue(expr.Simplify(4) == y / x);
-        }
+        [TestMethod] public void TestMinus() => AssertSimplify(x - x, 0);
+        [TestMethod] public void TestMul0() => AssertSimplify(x * 3 * 0, 0);
+        [TestMethod] public void TestMul1() => AssertSimplify(x * 3 * 2, 6 * x);
+        [TestMethod] public void TestPow1() => AssertSimplify(MathS.Pow(3 * x, 1), 3 * x);
+        [TestMethod] public void TestPow0() => AssertSimplify(MathS.Pow(x * 3, 0), 1);
+        [TestMethod] public void TestSum0() => AssertSimplify(x + 0, x);
+        [TestMethod] public void TestPatt1() => AssertSimplify(MathS.Pow(x * 4, 3), MathS.Pow(4 * x, 3));
+        [TestMethod] public void TestPatt2() => AssertSimplify(
+            (MathS.Sqr(MathS.Sin(x + 2 * y)) + MathS.Sqr(MathS.Cos(x + 2 * y))) / (2 * MathS.Sin(x - y) * MathS.Cos(x - y) + 1),
+            1 / (MathS.Sin(2 * (x - y)) + 1));
+        [TestMethod] public void TestPatt3() => AssertSimplify((x - y) * (x + y), MathS.Sqr(x) - MathS.Sqr(y));
+        [TestMethod] public void TestPatt4() => AssertSimplify((x - y) * (x + y) / (x * x - y * y), 1);
+        [TestMethod] public void TestPatt5() => AssertSimplify((x + 3) * (3 / (x + 3)), 3);
+        [TestMethod] public void TestPatt6() => AssertSimplify((x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3)), 1 + x);
+        [TestMethod] public void TestPatt7() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 3), 0.5 * MathS.pi);
+        [TestMethod] public void TestPatt8() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 3), 0.5 * MathS.pi);
+        [TestMethod] public void TestPatt9() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 6), MathS.Arccotan(3 * x) + MathS.Arctan(6 * x));
+        [TestMethod] public void TestPatt10() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 1), MathS.Arccos(x) + MathS.Arcsin(3 * x));
+        [TestMethod] public void TestPatt11() => AssertSimplify(3 + x + 4 + x, 7 + 2 * x);
+        [TestMethod] public void TestPatt12() => AssertSimplify((x * y * a * b * c) / (c * b * a * x * x), y / x, 4);
+        [TestMethod] public void TestFrac1() => AssertSimplify("x / (y / z)", "x * z / y");
+        [TestMethod] public void TestFrac2() => AssertSimplify("x / y / z", "x / (y * z)");
     }
 }

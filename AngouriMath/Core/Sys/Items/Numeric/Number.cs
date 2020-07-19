@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,127 +15,89 @@
 
 
 using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Numerics;
+using AngouriMath.Extensions;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
+    /// <summary>
+    /// This class represents all possible numerical values as a hierarchy,
+    /// <list>
+    ///   Number
+    ///   <list type="bullet">
+    ///     ComplexNumber
+    ///       <list type="bullet">
+    ///         RealNumber
+    ///         <list type="bullet">
+    ///           RationalNumber
+    ///           <list type="bullet">
+    ///             IntegerNumber
+    ///           </list>
+    ///         </list>
+    ///       </list>
+    ///     </list>
+    ///   </list>
+    /// </summary>
     public abstract partial class Number : Sys.Interfaces.ILatexiseable
     {
         /// <summary>
-        /// Copies a Number with respect due to its hierarchy type, but without implicit downcasting
-        /// </summary>
-        /// <returns>
-        /// Safely copied instance of Number
-        /// </returns>
-        public static Number Copy(Number num)
-            => SuperSwitch(
-                (num) => new IntegerNumber(num[0] as Number),
-                (num) => new RationalNumber(num[0]),
-                (num) => new RealNumber(num[0] as Number),
-                (num) => new ComplexNumber(num[0]),
-                num.Type,
-                num
-            );
-        public enum HierarchyLevel
-        {
-            INTEGER,
-            RATIONAL,
-            REAL,
-            COMPLEX
-        }
-
-        /// <summary>
-        /// Type of a Number, e. g. INTEGER or RATIONAL
-        /// It's recommended to use method Is instead
-        /// </summary>
-        public HierarchyLevel Type { get; protected set; }
-
-        /// <summary>
-        /// The final value. Only useful for calculations
-        /// </summary>
-        public (decimal Re, decimal Im) Value => GetValue();
-        protected abstract (decimal Re, decimal Im) GetValue();
-
-        /// <summary>
-        /// Checks affiliation of a number
-        /// e. g.
-        /// num.Is(Number.HierarchyLevel.INTEGER) would check whether a num is an IntegerNumber
-        /// </summary>
-        /// <param name="type">
-        /// Number.HierarchyLevel {
-        ///   INTEGER,
-        ///   RATIONAL,
-        ///   REAL,
-        ///   COMPLEX
-        /// }
-        /// </param>
-        /// <returns></returns>
-        public bool Is(HierarchyLevel type)
-            => (long) Type <= (long) type;
-
-        /// <summary>
-        /// This function serves not only convenience but also protects from unexpeceted cases, for example,
+        /// This function serves not only convenience but also protects from unexpected cases, for example,
         /// if a new type added
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="ifInt"></param>
-        /// <param name="ifRat"></param>
-        /// <param name="ifReal"></param>
-        /// <param name="ifCom"></param>
-        /// <param name="nums"></param>
-        /// <returns></returns>
         protected static T SuperSwitch<T>(
-            Func<IntegerNumber[], T> ifInt,
-            Func<RationalNumber[], T> ifRat,
-            Func<RealNumber[], T> ifReal,
-            Func<ComplexNumber[], T> ifCom,
-            HierarchyLevel type,
-            params Number[] nums
-        )
-            => type switch
+            Number num1, Number num2,
+            Func<IntegerNumber, IntegerNumber, T> ifInt,
+            Func<RationalNumber, RationalNumber, T> ifRat,
+            Func<RealNumber, RealNumber, T> ifReal,
+            Func<ComplexNumber, ComplexNumber, T> ifCom
+        ) => (num1, num2) switch
             {
-                HierarchyLevel.INTEGER => ifInt(nums.Select(n => (n as IntegerNumber)).ToArray()),
-                HierarchyLevel.RATIONAL => ifRat(nums.Select(n => (n as RationalNumber)).ToArray()),
-                HierarchyLevel.REAL => ifReal(nums.Select(n => (n as RealNumber)).ToArray()),
-                HierarchyLevel.COMPLEX => ifCom(nums.Select(n => (n as ComplexNumber)).ToArray()),
-                _ => throw new NotSupportedException()
+                (IntegerNumber n1, IntegerNumber n2) => ifInt(n1, n2),
+                (RationalNumber r1, RationalNumber r2) => ifRat(r1, r2),
+                (RealNumber r1, RealNumber r2) => ifReal(r1, r2),
+                (ComplexNumber c1, ComplexNumber c2) => ifCom(c1, c2),
+                _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
             };
+        /// <summary>
+        /// This function serves not only convenience but also protects from unexpected cases, for example,
+        /// if a new type added
+        /// </summary>
+        protected static T SuperSwitch<T>(
+            T num1, T num2,
+            Func<IntegerNumber, IntegerNumber, IntegerNumber> ifInt,
+            Func<RationalNumber, RationalNumber, RationalNumber> ifRat,
+            Func<RealNumber, RealNumber, RealNumber> ifReal,
+            Func<ComplexNumber, ComplexNumber, ComplexNumber> ifCom
+        ) where T : Number
+            => (T)(Number)((num1, num2) switch
+            {
+                (IntegerNumber n1, IntegerNumber n2) => ifInt(n1, n2),
+                (RationalNumber r1, RationalNumber r2) => ifRat(r1, r2),
+                (RealNumber r1, RealNumber r2) => ifReal(r1, r2),
+                (ComplexNumber c1, ComplexNumber c2) => ifCom(c1, c2),
+                _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
+            });
 
         /// <summary>
         /// Gets a latexised version of a number
         /// </summary>
         /// <returns></returns>
         public string Latexise() => Latexise(false);
-        internal string Latexise(bool needParentheses)
-        {
-            var str = SuperSwitch(
-                num => num[0].InternalLatexise(),
-                num => num[0].InternalLatexise(),
-                num => num[0].InternalLatexise(),
-                num => num[0].InternalLatexise(),
-                Type,
-                this
-            );
-            // If parentheses are required, they might be only required when complicated numbers are wrapped,
-            // such as fractions and complex but not a single i
-            return needParentheses && this.Value != (0, 1) && (this.IsImaginary() || this.IsFraction()) ? @"\left(" + str + @"\right)" : str;
-        }
+
+        internal protected abstract string InternalLatexise();
+        internal string Latexise(bool needParentheses) =>
+            needParentheses ? @$"\left({InternalLatexise()}\right)" : InternalLatexise();
 
         public override string ToString()
             => ToString(false);
 
-        internal string ToString(bool needParentheses)
-        {
-            var str = SuperSwitch(
-                num => num[0].InternalToString(),
-                num => num[0].InternalToString(),
-                num => num[0].InternalToString(),
-                num => num[0].InternalToString(),
-                Type,
-                this
-            );
-            return needParentheses && (this.IsImaginary() || this.IsFraction()) ? "(" + str + ")" : str;
-        }
+        internal protected abstract string InternalToString();
+        internal string ToString(bool needParentheses) =>
+            needParentheses ? $"({InternalToString()})" : InternalToString();
 
         /// <summary>
         /// Finds all complex roots of a number
@@ -145,31 +107,38 @@ namespace AngouriMath.Core.Numerix
         /// <param name="value"></param>
         /// <param name="rootPower"></param>
         /// <returns></returns>
-
-        
-        public static Set GetAllRoots(ComplexNumber value, long rootPower)
+        public static Set GetAllRoots(ComplexNumber value, EInteger rootPower)
         {
-            MathS.Settings.FloatToRationalIterCount.Set(0);
-            var res = new Set();
-            decimal phi = (Number.Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Value.Re;
-            decimal newMod = Number.Pow(Number.Abs(value), 1.0 / rootPower).Value.Re;
-            var i = new ComplexNumber(0, 1);
-            for (int n = 0; n < rootPower; n++)
+            // Avoid infinite recursion from Abs to GetAllRoots again
+            var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
-                decimal newPow = phi / rootPower + 2 * MathS.DecimalConst.pi * n / rootPower;
-                res.Add(newMod * Number.Pow(MathS.DecimalConst.e, i * newPow));
-            }
-            MathS.Settings.FloatToRationalIterCount.Unset();
+                var res = new Set();
+                EDecimal phi = (Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Real.Value;
+                if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
+                    phi = EDecimal.Zero;
+
+                EDecimal newMod = Pow(Abs(value), CtxDivide(EDecimal.One, rootPower)).Real.Value;
+
+                var i = ComplexNumber.ImaginaryOne;
+                for (int n = 0; n < rootPower; n++)
+                {
+                    EDecimal newPow = CtxAdd(CtxDivide(phi, rootPower),
+                        CtxDivide(CtxMultiply(CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
+                    var root = newMod.ToNumber() * Pow(MathS.DecimalConst.e, i * newPow.ToNumber());
+                    res.Add(root);
+                }
+                return res;
+            });
             return res;
         }
 
-        public static Set GetAllRootsOf1(long rootPower)
+        public static Set GetAllRootsOf1(EInteger rootPower)
         {
             var res = new Set();
             res.FastAddingMode = true;
             for (int i = 0; i < rootPower; i++)
             {
-                var angle = (Number.CreateRational(i * 2, rootPower) * MathS.pi).InnerSimplify();
+                var angle = RationalNumber.Create(i * 2, rootPower) * MathS.pi;
                 res.Add((MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplify());
             }
             res.FastAddingMode = false;
@@ -188,23 +157,65 @@ namespace AngouriMath.Core.Numerix
             => num.Abs();
 
         /// <summary>
-        /// Returns the absolute value of a real number, basically keeps the same if num is positive,
-        /// inverts the sign otherwise
+        /// Forcefully casts one to Complex with downcasting
         /// </summary>
-        /// <param name="num"></param>
-        /// <returns>
-        /// RealNumber
-        /// </returns>
-        public static IntegerNumber Abs(IntegerNumber num)
-            => num.Value >= 0 ? num : new IntegerNumber(-num.Value);
+        /// <returns></returns>
+        public Complex AsComplex() =>
+            this is ComplexNumber c
+            ? new Complex(c.Real.Value.ToDouble(), c.Imaginary.Value.ToDouble())
+            : throw new InvalidNumberCastException(GetType(), typeof(ComplexNumber));
+
+        /// <summary>
+        /// Forcefully casts one to double with downcasting
+        /// </summary>
+        /// <returns></returns>
+        public double AsDouble() =>
+            this is RealNumber r
+            ? r.Value.ToDouble()
+            : throw new InvalidNumberCastException(GetType(), typeof(RealNumber));
+        public static implicit operator Number(sbyte value) => IntegerNumber.Create(value);
+        public static implicit operator Number(byte value) => IntegerNumber.Create(value);
+        public static implicit operator Number(short value) => IntegerNumber.Create(value);
+        public static implicit operator Number(ushort value) => IntegerNumber.Create(value);
+        public static implicit operator Number(int value) => IntegerNumber.Create(value);
+        public static implicit operator Number(uint value) => IntegerNumber.Create(value);
+        public static implicit operator Number(long value) => IntegerNumber.Create(value);
+        public static implicit operator Number(ulong value) => IntegerNumber.Create(value);
+        public static implicit operator Number(EInteger value) => IntegerNumber.Create(value);
+        public static implicit operator Number(ERational value) => RationalNumber.Create(value);
+        public static implicit operator Number(EDecimal value) => RealNumber.Create(value);
+        public static implicit operator Number(float value) => RealNumber.Create(EDecimal.FromSingle(value));
+        public static implicit operator Number(double value) => RealNumber.Create(EDecimal.FromDouble(value));
+        public static implicit operator Number(decimal value) => RealNumber.Create(EDecimal.FromDecimal(value));
+        public static implicit operator Number(Complex value) =>
+            ComplexNumber.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
     }
 
     public class InvalidNumberCastException : InvalidCastException
     {
-        public InvalidNumberCastException(Number.HierarchyLevel typeFrom, Number.HierarchyLevel typeTo) 
-            : base("Cannot cast from " + typeFrom + " to " + typeTo)
-        {
-            
-        }
+        public InvalidNumberCastException(Type typeFrom, Type typeTo)
+            : base("Cannot cast from " + typeFrom + " to " + typeTo) { }
+    }
+    public class UniverseCollapseException : Exceptions.SysException
+    {
+        public UniverseCollapseException() : base("Universe collapse!") { }
+    }
+
+    internal static class EDecimalWrapper
+    {
+        internal static bool IsGreater(EDecimal a, EDecimal b)
+            => a.CompareTo(b) == 1;
+
+        internal static bool IsLess(EDecimal a, EDecimal b)
+            => a.CompareTo(b) == -1;
+
+        internal static bool IsEqual(EDecimal a, EDecimal b)
+            => a.CompareTo(b) == 0;
+
+        internal static bool IsGreaterOrEqual(EDecimal a, EDecimal b)
+            => IsGreater(a, b) || IsEqual(a, b);
+
+        internal static bool IsLessOrEqual(EDecimal a, EDecimal b)
+            => IsLess(a, b) || IsEqual(a, b);
     }
 }

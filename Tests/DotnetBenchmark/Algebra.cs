@@ -10,6 +10,8 @@ namespace DotnetBenchmark
         private readonly Entity exprMedium;
         private readonly Entity exprHard;
         private readonly Entity exprSolvable;
+
+        // [GlobalSetup] can be replaced with constructor? https://benchmarkdotnet.org/articles/overview.html
         public AlgebraTest()
         {
             exprEasy = x + MathS.Sqr(x) - 3;

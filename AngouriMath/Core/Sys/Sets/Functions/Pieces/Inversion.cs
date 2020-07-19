@@ -56,49 +56,49 @@ namespace AngouriMath.Core.Sets
             * for each of 4 Pieces we close only one side or zero (so there's no intersection between Pieces)
             *
             */
-           var numLeftDown = Number.Create(edgeLowerNum.Real, edgeLowerNum.Imaginary);
-           var numLeftUp = Number.Create(edgeLowerNum.Real, edgeUpperNum.Imaginary);
-           var numRightUp = Number.Create(edgeUpperNum.Real, edgeUpperNum.Imaginary);
-           var numRightDown = Number.Create(edgeUpperNum.Real, edgeLowerNum.Imaginary);
+           var numLeftDown = ComplexNumber.Create(edgeLowerNum.Real, edgeLowerNum.Imaginary);
+           var numLeftUp = ComplexNumber.Create(edgeLowerNum.Real, edgeUpperNum.Imaginary);
+           var numRightUp = ComplexNumber.Create(edgeUpperNum.Real, edgeUpperNum.Imaginary);
+           var numRightDown = ComplexNumber.Create(edgeUpperNum.Real, edgeLowerNum.Imaginary);
            var pieceDown = Piece.Interval(
-               numRightDown, ComplexNumber.NegNegInfinity(), 
+               numRightDown, ComplexNumber.NegNegInfinity, 
                true, false, false, false);
            var pieceLeft = Piece.Interval(
-               numLeftDown, ComplexNumber.NegPosInfinity(),
+               numLeftDown, ComplexNumber.NegPosInfinity,
                false, true, false, false);
            var pieceUp = Piece.Interval(
-               numLeftUp, ComplexNumber.PosPosInfinity(),
+               numLeftUp, ComplexNumber.PosPosInfinity,
                true, false, false, false);
            var pieceRight = Piece.Interval(
-               numRightUp, ComplexNumber.PosNegInfinity(),
+               numRightUp, ComplexNumber.PosNegInfinity,
                false, true, false, false);
            var res = new List<Piece> { pieceDown, pieceLeft, pieceUp, pieceRight };
 
            if (!edgeLower.Item2)
                res.Add(Piece.Interval(
-                   Number.Create(numLeftDown.Real, numLeftDown.Imaginary),
-                   Number.Create(numLeftDown.Real, numLeftUp.Imaginary), // Re part is the same
+                   ComplexNumber.Create(numLeftDown.Real, numLeftDown.Imaginary),
+                   ComplexNumber.Create(numLeftDown.Real, numLeftUp.Imaginary), // Re part is the same
                    true, true, true, true
                    ));
 
            if (!edgeLower.Item3)
                res.Add(Piece.Interval(
-                   Number.Create(numLeftUp.Real, numLeftDown.Imaginary),
-                   Number.Create(numRightUp.Real, numLeftDown.Imaginary), // Im part is the same
+                   ComplexNumber.Create(numLeftUp.Real, numLeftDown.Imaginary),
+                   ComplexNumber.Create(numRightUp.Real, numLeftDown.Imaginary), // Im part is the same
                    true, true, true, true
                ));
 
            if (!edgeUpper.Item2)
                res.Add(Piece.Interval(
-                   Number.Create(numRightUp.Real, numRightDown.Imaginary),
-                   Number.Create(numRightUp.Real, numRightUp.Imaginary), // Re part is the same
+                   ComplexNumber.Create(numRightUp.Real, numRightDown.Imaginary),
+                   ComplexNumber.Create(numRightUp.Real, numRightUp.Imaginary), // Re part is the same
                    true, true, true, true
                ));
 
            if (!edgeLower.Item3)
                res.Add(Piece.Interval(
-                   Number.Create(numLeftDown.Real, numRightDown.Imaginary),
-                   Number.Create(numRightDown.Real, numRightDown.Imaginary), // Im part is the same
+                   ComplexNumber.Create(numLeftDown.Real, numRightDown.Imaginary),
+                   ComplexNumber.Create(numRightDown.Real, numRightDown.Imaginary), // Im part is the same
                    true, true, true, true
                ));
 

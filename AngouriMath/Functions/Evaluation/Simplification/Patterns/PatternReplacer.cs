@@ -20,6 +20,8 @@ using System.Runtime.CompilerServices;
  using AngouriMath.Core.Sys.Interfaces;
 using System;
  using AngouriMath.Core.Numerix;
+using AngouriMath.Core.TreeAnalysis;
+using System.Linq;
 
 [assembly: InternalsVisibleTo("UnitTests")]
 
@@ -27,17 +29,6 @@ namespace AngouriMath
 {
     public abstract partial class Entity : ILatexiseable
     {
-        internal readonly EntType entType;
-
-        internal enum EntType
-        {
-            NUMBER,
-            FUNCTION,
-            OPERATOR,
-            VARIABLE,
-            PATTERN,
-            TENSOR
-        }
         internal enum PatType
         {
             NONE,
@@ -48,10 +39,14 @@ namespace AngouriMath
             OPERATOR
         }
         internal int PatternNumber { get; set; }
-        internal Predicate<Entity> Condition; // not a getter due to performance requirements
+        // TODO: Not using getters is a micro-optimization. Have performance measurements been carried out yet?
+        internal Predicate<Entity>? Condition; // not a getter due to performance requirements
         internal static bool PatternMatches(Entity pattern, Entity tree)
         {
-            if (!pattern.Condition(tree))
+            var condition = pattern.Condition;
+            if (condition is null)
+                throw new ArgumentException("Not a pattern", nameof(pattern));
+            if (!condition(tree))
                 return false;
             return string.IsNullOrEmpty(pattern.Name) || pattern.Name == tree.Name;
         }
@@ -66,21 +61,21 @@ namespace AngouriMath
         /// </returns>
         internal bool Match(Entity tree)
         {
-            if (entType != EntType.PATTERN)
+            if (!(this is Pattern p))
                 return this == tree;
-            var PatternType = (this as Pattern).patType;
+            var PatternType = p.patType;
             if (PatternType == PatType.COMMON)
-                return (this as Pattern).EqFits(tree) != null;
+                return p.EqFits(tree) != null;
             if (!PatternMatches(this, tree))
                 return false;
             if (PatternType == PatType.FUNCTION && PatternNumber != -1)
-                return (this as Pattern).EqFits(tree) != null;
+                return p.EqFits(tree) != null;
             if (Children.Count != tree.Children.Count)
                 return false;
             for (int i = 0; i < Children.Count; i++)
                 if (!Children[i].Match(tree.Children[i]))
                     return false;
-            return (this as Pattern).EqFits(tree) != null;
+            return p.EqFits(tree) != null;
         }
 
         /// <summary>
@@ -90,16 +85,9 @@ namespace AngouriMath
         /// <returns>
         /// Entity: first found subtree
         /// </returns>
-        internal Entity FindPatternSubtree(Pattern pattern)
+        internal Entity? FindPatternSubtree(Pattern pattern)
         {
-            if (pattern.Match(this) && pattern.EqFits(this) != null)
-                return this;
-            Entity res;
-            // foreach is slower than raw loop
-            for (int i = 0; i < Children.Count; i++)
-                if ((res = Children[i].FindPatternSubtree(pattern)) != null)
-                    return res;
-            return null;
+            return TreeAnalyzer.GetPatternEnumerator(this, pattern).FirstOrDefault();
         }
 
         /// <summary>
@@ -107,7 +95,7 @@ namespace AngouriMath
         /// </summary>
         /// <param name="kinder"></param>
         /// <returns></returns>
-        internal Entity FindParent(Entity kinder)
+        internal Entity? FindParent(Entity kinder)
         {
             foreach (var child in Children)
             {
@@ -116,7 +104,7 @@ namespace AngouriMath
                 else
                 {
                     var res = child.FindParent(kinder);
-                    if (res != null)
+                    if (res is { })
                         return res;
                 }
             }
@@ -179,9 +167,9 @@ namespace AngouriMath
                     return false;
                 for (int i = 0; i < Children.Count; i++)
                 {
-                    if (pattern.Children[i].entType != EntType.PATTERN)
+                    if (!(pattern.Children[i] is Pattern p))
                         throw new SysException("Numbers in pattern should look like Num(3)");
-                    if (!Children[i].PatternMakeMatch((pattern.Children[i] as Pattern), matchings))
+                    if (!Children[i].PatternMakeMatch(p, matchings))
                         return false;
                 }
             }
@@ -203,11 +191,11 @@ namespace AngouriMath
         /// <returns></returns>
         internal Entity BuildTree(Dictionary<int, Entity> keys)
         {
-            if (this.entType != Entity.EntType.PATTERN)
+            if (!(this is Pattern p))
                 return this;
             if (keys.ContainsKey(PatternNumber))
                 return keys[PatternNumber];
-            var PatternType = (this as Pattern).patType;
+            var PatternType = p.patType;
             if (PatternType == PatType.NUMBER)
                 return new NumberEntity(ComplexNumber.Parse(Name));
             if (PatternType == PatType.VARIABLE)
@@ -226,41 +214,39 @@ namespace AngouriMath
                 return res;
             }
             else if (PatternType == PatType.OPERATOR)
-                switch (Name)
+                return Name switch
                 {
-                    case "sumf": return newChildren[0] + newChildren[1];
-                    case "minusf": return newChildren[0] - newChildren[1];
-                    case "mulf": return newChildren[0] * newChildren[1];
-                    case "divf": return newChildren[0] / newChildren[1];
-
-                    case "powf": return MathS.Pow(newChildren[0], newChildren[1]);
-                    case "logf": return MathS.Log(newChildren[0], newChildren[1]);
-                    case "sinf": return MathS.Sin(newChildren[0]);
-                    case "cosf": return MathS.Cos(newChildren[0]);
-                    case "tanf": return MathS.Tan(newChildren[0]);
-                    case "cotanf": return MathS.Cotan(newChildren[0]);
-                    case "arcsinf": return MathS.Arcsin(newChildren[0]);
-                    case "arccosf": return MathS.Arccos(newChildren[0]);
-                    case "arctanf": return MathS.Arctan(newChildren[0]);
-                    case "arccotanf": return MathS.Arccotan(newChildren[0]);
-
-                    default: return null;
-                }
+                    "sumf" => newChildren[0] + newChildren[1],
+                    "minusf" => newChildren[0] - newChildren[1],
+                    "mulf" => newChildren[0] * newChildren[1],
+                    "divf" => newChildren[0] / newChildren[1],
+                    "powf" => MathS.Pow(newChildren[0], newChildren[1]),
+                    "logf" => MathS.Log(newChildren[0], newChildren[1]),
+                    "sinf" => MathS.Sin(newChildren[0]),
+                    "cosf" => MathS.Cos(newChildren[0]),
+                    "tanf" => MathS.Tan(newChildren[0]),
+                    "cotanf" => MathS.Cotan(newChildren[0]),
+                    "arcsinf" => MathS.Arcsin(newChildren[0]),
+                    "arccosf" => MathS.Arccos(newChildren[0]),
+                    "arctanf" => MathS.Arctan(newChildren[0]),
+                    "arccotanf" => MathS.Arccotan(newChildren[0]),
+                    _ => throw new NotImplementedException(Name + " is not implemented"),
+                };
             else
-                return null;
+                throw new NotImplementedException(PatternType + " is not implemented");
         }
     }
 
     internal class Pattern : Entity
     {
         internal PatType patType;
-        public Pattern(int num, PatType type, Predicate<Entity> condition, string name = "") : base(name, EntType.PATTERN) {
+        public Pattern(int num, PatType type, Predicate<Entity>? condition, string name = "") : base(name) {
             PatternNumber = num;
             Condition = condition;
             patType = type;
         }
 
-        internal Dictionary<int, Entity> EqFits(Entity tree)
+        internal Dictionary<int, Entity>? EqFits(Entity tree)
         {
             // TODO: optimization
             var res = new Dictionary<int, Entity>();
@@ -273,6 +259,11 @@ namespace AngouriMath
             => new Pattern(this.PatternNumber, patType, Condition, Name);
 
         protected override bool EqualsTo(Entity obj)
+        {
+            // Actually, no need to implement
+            throw new SysException("@");
+        }
+        public override int GetHashCode()
         {
             // Actually, no need to implement
             throw new SysException("@");
@@ -316,12 +307,13 @@ namespace AngouriMath.Core.TreeAnalysis
         internal static void ReplaceOneInPlace(ref Entity source, Pattern oldPattern, Entity newPattern)
         {
             var sub = source.FindPatternSubtree(oldPattern);
-            if (sub == null) return;
+            if (sub is null) return;
 
             Dictionary<int, Entity> nodeList;
             try
             {
-                nodeList = oldPattern.EqFits(sub);
+                nodeList = oldPattern.EqFits(sub)
+                    ?? throw new SysException($"Pattern from {nameof(source.FindPatternSubtree)} does not fit");
             }
             catch (SysException error)
             {
@@ -335,7 +327,8 @@ namespace AngouriMath.Core.TreeAnalysis
             }
             else
             {
-                var parent = source.FindParent(sub);
+                var parent = source.FindParent(sub)
+                    ?? throw new SysException($"{nameof(sub)} from {nameof(source.FindPatternSubtree)} has no parent");
                 var number = source.FindChildrenNumber(sub);
                 parent.Children[number] = newNode;
             }
@@ -360,9 +353,9 @@ namespace AngouriMath.Core.TreeAnalysis
             while (!replaced.Contains(hash = res.Hash))
             {
                 replaced.Add(hash);
-                foreach (var pair in rules)
+                foreach (var (oldPattern, newPattern) in rules)
                 {
-                    ReplaceOneInPlace(ref res, pair.Key, pair.Value);
+                    ReplaceOneInPlace(ref res, oldPattern, newPattern);
                 }
                 res.UpdateHash();
             }
@@ -377,9 +370,9 @@ namespace AngouriMath.Core.TreeAnalysis
             while (!replaced.Contains(hash = source.Hash))
             {
                 replaced.Add(hash);
-                foreach (var pair in rules)
+                foreach (var (oldPattern, newPattern) in rules)
                 {
-                    ReplaceOneInPlace(ref source, pair.Key, pair.Value);
+                    ReplaceOneInPlace(ref source, oldPattern, newPattern);
                 }
                 source.UpdateHash();
             }

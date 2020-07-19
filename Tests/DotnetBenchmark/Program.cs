@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Numerics;
 using AngouriMath;
+using AngouriMath.Core.Numerix;
+using AngouriMath.Extensions;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
@@ -13,7 +16,8 @@ namespace DotnetBenchmark
         private readonly FastExpression multiFunc;
         private readonly Entity multiFuncNotCompiled;
         private readonly Func<Complex, Complex> linqFunc;
-        
+        private readonly Complex CToSub = 3;
+        private readonly ComplexNumber CNumToSub = 3;
         public CompiledFuncTest()
         {
             x = MathS.Var("x");
@@ -23,20 +27,64 @@ namespace DotnetBenchmark
             linqFunc = expr.Compile();
         }
         [Benchmark]
-        public void MultiFunc() => multiFunc.Call(3);
+        public void MultiFunc() => multiFunc.Call(CToSub);
         [Benchmark]
         public void LinqSin() => linqFunc(3);
         [Benchmark]
         public void NotCompiled() => multiFuncNotCompiled.Substitute(x, 3).Eval();
     }
 
+    public class NumbersBenchmark
+    {
+        public NumbersBenchmark()
+        {
+            
+        }
+
+        ~NumbersBenchmark()
+        {
+            
+        }
+        private readonly RealNumber a = 3.4m;
+        private readonly RealNumber b = 5.4m;
+            /*
+        [Benchmark]
+        public void InitComplexImpl() => ComplexNumber.Create(3.4m, 56m);
+        [Benchmark]
+        public void InitComplexImpl2() => ComplexNumber.Create(3.4, 56);
+        [Benchmark]
+        public void InitComplexExpl() => ComplexNumber.Create(a, b);
+        [Benchmark]
+        public void InitReal() => RealNumber.Create(3.4m);
+        [Benchmark]
+        public void InitRational() => RationalNumber.Create(6, 7);
+        [Benchmark]
+        public void InitInteger() => IntegerNumber.Create(68);
+        */
+
+        [Benchmark]
+        public void DowncastComplexSuccessfully() => ComplexNumber.Create(3.4m, 6.4m);
+        [Benchmark]
+        public void DowncastComplexNotSucc() => ComplexNumber.Create(3.487449272953435m, 6.401380141304m);
+
+        [Benchmark] 
+        public void DowncastRealSuccessfully() => RealNumber.Create(3.4m);
+        [Benchmark]
+        public void DowncastRealNotSucc() => RealNumber.Create(3.42748273484m);
+
+        [Benchmark]
+        public void FindRationalSuccess()
+            => RationalNumber.FindRational(3.4m);
+        [Benchmark]
+        public void FindRationalNotSuccess()
+            => RationalNumber.FindRational(3.48426482675284m);
+    }
+
     public class Program
     {
         public static void Main(string[] _)
         {
-            //BenchmarkRunner.Run<CacheCompiledFuncTest>();
-            BenchmarkRunner.Run<CompiledFuncTest>();
-            //BenchmarkRunner.Run<AlgebraTest>();
+            //BenchmarkRunner.Run<CommonFunctionsInterVersionTest>();
         }
     }
 }

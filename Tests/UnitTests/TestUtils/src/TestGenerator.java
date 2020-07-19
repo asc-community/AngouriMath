@@ -13,6 +13,62 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+ /*
+ TODO:
+ Why is this even a thing? Why use a different language as a generator!?
+ Using [DataTestMethod] and [DataRow] not only simplifies these tests greatly,
+ but also makes contributing tests much more straight-forward.
+
+ For example, instead of repeating
+
+        [TestMethod]
+        public void Sin1Test()
+        {
+            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
+            var toSimplify = MathS.Sin(2 * MathS.pi / 1);
+            var expected = toSimplify.Eval();
+            var real = toSimplify.Simplify().Eval();
+            Assert.AreEqual(expected, real);
+            MathS.Settings.PrecisionErrorZeroRange.Unset();
+        }
+
+ 24 times, we can have
+
+        [DataTestMethod]
+        [DataRow(1)]
+        [DataRow(2)]
+        [DataRow(3)]
+        // ...
+        [DataRow(23)]
+        [DataRow(24)]
+        public void SinTests(int i)
+        {
+            MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
+            var toSimplify = MathS.Sin(2 * MathS.pi / i);
+            var expected = toSimplify.Eval();
+            var real = toSimplify.Simplify().Eval();
+            Assert.AreEqual(expected, real);
+            MathS.Settings.PrecisionErrorZeroRange.Unset();
+        }
+
+ which acts as individual tests.
+
+ I know that these DataRows show up as one test case with multiple results instead of multiple test cases
+ each with a singular result, but this is a shortcoming of MSTest - NUnit and xUnit both handle parameterized tests
+ beautifully by displaying individual test cases, where each case can be debugged individually, unlike in MSTest.
+
+ On top of that, both NUnit and xUnit have more assertion methods to help clarify the error messages when
+ tests fail: https://xunit.github.io/docs/comparisons.html
+
+ What's more, xUnit runs tests parallel by default - meaning all cores in the computer are utilized instead
+ of running tests sequentially on one single core only as seen in MSTest and NUnit.
+ This can run tests much more quickly, which speeds up development.
+
+ WhiteBlackGoose: alright, I'll probably migrate to it at some point
+ */
+
+
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Array;
@@ -91,10 +147,10 @@ public class TestGenerator {
 
     public static String BuildTests(String funcName)
     {
-        return BuildTests(funcName, Arrays.asList());
+        return BuildTests(funcName, Arrays.asList(), Arrays.asList());
     }
 
-    public static String BuildTests(String funcName, List<Integer> toIgnore)
+    public static String BuildTests(String funcName, List<Integer> areMoreImprecise, List<Integer> toIgnore)
     {
         var sb = new StringBuilder();
 
@@ -109,13 +165,16 @@ public class TestGenerator {
             sb.append(tab2); sb.append("[TestMethod]\n");
             sb.append(tab2); sb.append("public void "); sb.append(funcName); sb.append(i); sb.append("Test()\n");
             sb.append(tab2); sb.append("{\n");
-            sb.append(tab3); sb.append("MathS.Settings.PrecisionErrorCommon.Set(1e-8m);\n");
-            sb.append(tab3); sb.append("var toSimplify = MathS."); sb.append(funcName);
+            sb.append(tab3); sb.append("MathS.Settings.PrecisionErrorZeroRange.As(1e-");
+            if (areMoreImprecise.contains(i)) sb.append("11"); else sb.append("9");
+            sb.append("m, () =>\n");
+            sb.append(tab3); sb.append("{\n");
+            sb.append(tab4); sb.append("var toSimplify = MathS."); sb.append(funcName);
             sb.append("(2 * MathS.pi / "); sb.append(i); sb.append(");\n");
-            sb.append(tab3); sb.append("var expected = toSimplify.Eval();\n");
-            sb.append(tab3); sb.append("var real = toSimplify.Simplify().Eval();\n");
-            sb.append(tab3); sb.append("Assert.IsTrue(expected == real, \"expected: \" + expected.ToString() + \"  Got instead: \" + real.ToString());\n");
-            sb.append(tab3); sb.append("MathS.Settings.PrecisionErrorCommon.Unset();\n");
+            sb.append(tab4); sb.append("var expected = toSimplify.Eval();\n");
+            sb.append(tab4); sb.append("var real = toSimplify.Simplify().Eval();\n");
+            sb.append(tab4); sb.append("Assert.AreEqual(expected, real);\n");
+            sb.append(tab3); sb.append("});\n");
             sb.append(tab2); sb.append("}\n\n");
         }
 
@@ -138,13 +197,14 @@ public class TestGenerator {
         sb.append("using Microsoft.VisualStudio.TestTools.UnitTesting;\n\n");
         sb.append("namespace UnitTests.Core.TrigTableConstTest\n");
         sb.append("{\n");
-        sb.append(BuildTests("Sin"));
+        // we exclude test #9 because its simplified expression is ambiguous due to cubic roots
+        sb.append(BuildTests("Sin", Arrays.asList(), Arrays.asList(9)));
         sb.append("\n");
-        sb.append(BuildTests("Cos"));
+        sb.append(BuildTests("Cos", Arrays.asList(), Arrays.asList(14)));
         sb.append("\n");
-        sb.append(BuildTests("Tan", Arrays.asList(4)));
+        sb.append(BuildTests("Tan", Arrays.asList(), Arrays.asList(4)));
         sb.append("\n");
-        sb.append(BuildTests("Cotan", Arrays.asList(1, 2, 4)));
+        sb.append(BuildTests("Cotan", Arrays.asList(), Arrays.asList(1, 2, 4)));
         sb.append("}\n");
         var writer = new FileWriter(tableTrigTestsPath);
         writer.write(sb.toString());

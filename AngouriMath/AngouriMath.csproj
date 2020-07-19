@@ -9,17 +9,17 @@
     <Copyright>Angourisoft</Copyright>
     <PackageProjectUrl>asc-community.org</PackageProjectUrl>
     <RepositoryUrl>https://github.com/Angourisoft/MathS</RepositoryUrl>
-    <AssemblyVersion>0.1.0.0</AssemblyVersion>
-    <FileVersion>0.1.0.0</FileVersion>
+    <AssemblyVersion>0.1.0.1</AssemblyVersion>
+    <FileVersion>0.1.0.1</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression></PackageLicenseExpression>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <PackageTags>Math, csharp, derivation, latex, calculator, parse, simplification, compute, symbol, compilation, algebra, equation system, equation</PackageTags>
-    <Version>1.1.0.0</Version>
+    <Version>1.1.0.1</Version>
     <PackageIconUrl></PackageIconUrl>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>Enables to work with formulas built in the code or from a string. Computing, derivating, latex rendering, fast functions, solving equations and systems of equations analytycally, simplification, and much more.</Description>
-    <PackageReleaseNotes>Added Numerix module, and this version is not compatible to all previous versions, migrate changes see in https://github.com/asc-community/AngouriMath/blob/master/CHANGELOG.md</PackageReleaseNotes>
+    <PackageReleaseNotes>Bugs fixed + smart expansion + solver improved + EDecimal and EInteger instead of decimal and BigInteger</PackageReleaseNotes>
     <PackageId>AngouriMath</PackageId>
     <Product>AngouriMath</Product>
     <ApplicationIcon />
@@ -54,12 +54,8 @@
       <PackagePath></PackagePath>
     </None>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
+    <PackageReference Include="PeterO.Numbers" Version="1.6.0" />
+    <PackageReference Include="Nullable" Version="1.2.1" />
     <EmbeddedResource Include="Core/FromString/Antlr/Angourimath.tokens" />
   </ItemGroup>
-
-  <Target Name="GenerateANTLR" BeforeTargets="BeforeBuild">
-    
-    <Exec Command="&#xD;&#xA;      cd ./Core/FromString/Antlr &#xD;&#xA;      java -jar ./antlr-4.8-complete.jar -Dlanguage=CSharp ./Angourimath.g" />
-  </Target>
-
 </Project>

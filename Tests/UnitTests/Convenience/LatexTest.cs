@@ -9,18 +9,22 @@ namespace UnitTests.Convenience
     public class LatexTests
     {
         private static readonly VariableEntity x = MathS.Var("x");
-        private static readonly NumberEntity frac34 = Number.CreateRational(3, 4);
+        private static readonly NumberEntity frac34 = RationalNumber.Create(3, 4);
         private static readonly NumberEntity m1 = -1;
         private static readonly NumberEntity im1 = MathS.i - 1;
         private static readonly NumberEntity m2i = -2 * MathS.i;
+        private static readonly NumberEntity numPi = MathS.DecimalConst.pi;
+        private static readonly NumberEntity mNumPi = -MathS.DecimalConst.pi;
         void Test(string expected, AngouriMath.Core.Sys.Interfaces.ILatexiseable actual) =>
             Assert.AreEqual(expected, actual.Latexise());
         void TestSimplify(string expected, Entity actual) =>
             Test(expected, actual.Simplify());
-        [TestMethod] public void Num() => TestSimplify("123", 123);
-        [TestMethod] public void Float() => Test("123.456", (Entity)123.456);
-        [TestMethod] public void FloatSimplify() => TestSimplify(@"\frac{15432}{125}", 123.456);
-        [TestMethod] public void FracParse() => Test(@"3", ComplexNumber.Parse("3.000"));
+        [TestMethod] public void Num0() => TestSimplify("0", 0);
+        [TestMethod] public void Num123() => TestSimplify("123", 123);
+        [TestMethod] public void NumNegReal() => Test(@"{\left(-123.2452\right)}^{4}", MathS.Pow("-123.2452", 4));
+        [TestMethod] public void Float() => Test(@"\frac{15432}{125}", (Entity)123.456m);
+        [TestMethod] public void FloatSimplify() => TestSimplify(@"\frac{15432}{125}", 123.456m);
+        [TestMethod] public void FloatParse() => Test(@"3", ComplexNumber.Parse("3.000"));
         [TestMethod] public void FloatZero() => Test(@"123.4561234567890", ComplexNumber.Parse("123.4561234567890"));
         [TestMethod] public void Pi() => Test(@"\pi", MathS.pi);
         [TestMethod] public void E() => Test(@"e", MathS.e);
@@ -76,9 +80,22 @@ namespace UnitTests.Convenience
         [TestMethod] public void M1Multiply() => Test(@"--1", m1 * m1);
         [TestMethod] public void M1Divide() => Test(@"\frac{-1}{-1}", m1 / m1);
         [TestMethod] public void PowM1() => Test(@"{x}^{-1}", MathS.Pow(x, m1));
-#warning Needs fixing! Should be {\left(-1\right)}^{x}
-        [TestMethod] public void M1Pow() => Test(@"{-1}^{x}", MathS.Pow(m1, x));
-        [TestMethod] public void M2Pow() => Test(@"{-2}^{x}", MathS.Pow(-2, x));
+        [TestMethod] public void M1Pow() => Test(@"{\left(-1\right)}^{x}", MathS.Pow(m1, x));
+        [TestMethod] public void M2Pow() => Test(@"{\left(-2\right)}^{x}", MathS.Pow(-2, x));
+        [TestMethod] public void PiPow() => Test(@"{\pi}^{x}", MathS.Pow(MathS.pi, x));
+        [TestMethod] public void MPiPow() => Test(@"{\left(-\pi\right)}^{x}", MathS.Pow(-MathS.pi, x));
+        [TestMethod] public void NumPiAdd() => Test(@"3.1415926535897932384626433+3.1415926535897932384626433", numPi + numPi);
+        [TestMethod] public void NumPiSubtract() => Test(@"3.1415926535897932384626433-3.1415926535897932384626433", numPi - numPi);
+        [TestMethod] public void NumPiMultiply() => Test(@"3.1415926535897932384626433\times 3.1415926535897932384626433", numPi * numPi);
+        [TestMethod] public void NumPiDivide() => Test(@"\frac{3.1415926535897932384626433}{3.1415926535897932384626433}", numPi / numPi);
+        [TestMethod] public void NumPiPow() => Test(@"{3.1415926535897932384626433}^{x}", MathS.Pow(numPi, x));
+        [TestMethod] public void PowNumPi() => Test(@"{x}^{3.1415926535897932384626433}", MathS.Pow(x, numPi));
+        [TestMethod] public void MNumPiAdd() => Test(@"-3.1415926535897932384626433-3.1415926535897932384626433", mNumPi + mNumPi);
+        [TestMethod] public void MNumPiSubtract() => Test(@"-3.1415926535897932384626433--3.1415926535897932384626433", mNumPi - mNumPi);
+        [TestMethod] public void MNumPiMultiply() => Test(@"-3.1415926535897932384626433\times -3.1415926535897932384626433", mNumPi * mNumPi);
+        [TestMethod] public void MNumPiDivide() => Test(@"\frac{-3.1415926535897932384626433}{-3.1415926535897932384626433}", mNumPi / mNumPi);
+        [TestMethod] public void MNumPiPow() => Test(@"{\left(-3.1415926535897932384626433\right)}^{x}", MathS.Pow(mNumPi, x));
+        [TestMethod] public void PowMNumPi() => Test(@"{x}^{-3.1415926535897932384626433}", MathS.Pow(x, mNumPi));
         [TestMethod] public void MI() => TestSimplify("-i", MathS.Sqrt(-1) * -1);
         [TestMethod] public void M2I() => TestSimplify("-2i", m2i);
         [TestMethod] public void IM1() => Test("-1 + i", im1);
@@ -92,8 +109,8 @@ namespace UnitTests.Convenience
         [TestMethod] public void ISquare() => Test("{i}^{2}", MathS.Sqr(MathS.i));
         [TestMethod] public void ISquareSimplified() => TestSimplify("-1", MathS.Sqr(MathS.i));
         [TestMethod] public void Frac34Add() => Test(@"\frac{3}{4}+\frac{3}{4}", frac34 + frac34);
-        [TestMethod] public void Frac34Subtract() => Test(@"\frac{3}{4}-\left(\frac{3}{4}\right)", frac34 - frac34);
-        [TestMethod] public void Frac34Multiply() => Test(@"\left(\frac{3}{4}\right)\times \left(\frac{3}{4}\right)", frac34 * frac34);
+        [TestMethod] public void Frac34Subtract() => Test(@"\frac{3}{4}-\frac{3}{4}", frac34 - frac34);
+        [TestMethod] public void Frac34Multiply() => Test(@"\frac{3}{4}\times \frac{3}{4}", frac34 * frac34);
         [TestMethod] public void Frac34Divide() => Test(@"\frac{\frac{3}{4}}{\frac{3}{4}}", frac34 / frac34);
         [TestMethod] public void Frac34Square() => Test(@"{\left(\frac{3}{4}\right)}^{2}", MathS.Sqr(frac34));
         [TestMethod] public void Frac34SquareRoot() => Test(@"\sqrt{\frac{3}{4}}", MathS.Sqrt(frac34));
@@ -101,8 +118,14 @@ namespace UnitTests.Convenience
         [TestMethod] public void Frac34Pow() => Test(@"{\left(\frac{3}{4}\right)}^{x}", MathS.Pow(frac34, x));
         [TestMethod] public void PowFrac34() => Test(@"\sqrt[4]{2}^{3}", MathS.Pow(2, frac34));
         [TestMethod] public void M2IAdd() => Test(@"-2i-2i", m2i + m2i);
-        [TestMethod] public void M2ISubtract() => Test(@"-2i-\left(-2i\right)", m2i - m2i);
-        [TestMethod] public void M2IMultiply() => Test(@"\left(-2i\right)\times \left(-2i\right)", m2i * m2i);
+
+        // Which is better,
+        // -2i-\left(-2i\right)
+        // or
+        // -2i--2i
+        // ? TODO
+        [TestMethod] public void M2ISubtract() => Test(@"-2i--2i", m2i - m2i);
+        [TestMethod] public void M2IMultiply() => Test(@"-2i\times -2i", m2i * m2i);
         [TestMethod] public void M2IDivide() => Test(@"\frac{-2i}{-2i}", m2i / m2i);
         [TestMethod] public void M2ISquare() => Test(@"{\left(-2i\right)}^{2}", MathS.Sqr(m2i));
         [TestMethod] public void M2ISquareRoot() => Test(@"\sqrt{-2i}", MathS.Sqrt(m2i));
@@ -122,26 +145,25 @@ namespace UnitTests.Convenience
         [TestMethod] public void Trig() =>
             TestSimplify(@"\sin\left(\cos\left(\tan\left(\cot\left(x\right)\right)\right)\right)", MathS.Sin(MathS.Cos(MathS.Tan(MathS.Cotan(x)))));
         [TestMethod] public void SecCosec() =>
-            TestSimplify(@"{\cos\left({\sin\left(x\right)}^{-1}\right)}^{-1}", MathS.Sec(MathS.Cosec(x)));
+            TestSimplify(@"\frac{1}{\cos\left(\frac{1}{\sin\left(x\right)}\right)}", MathS.Sec(MathS.Cosec(x)));
         [TestMethod] public void ArcTrig() =>
             TestSimplify(@"\arcsin\left(\arccos\left(\arctan\left(\arccot\left(x\right)\right)\right)\right)", MathS.Arcsin(MathS.Arccos(MathS.Arctan(MathS.Arccotan(x)))));
         [TestMethod] public void ArcSecCosec() =>
-            TestSimplify(@"{\cos\left({\sin\left(x\right)}^{-1}\right)}^{-1}", MathS.Sec(MathS.Cosec(x)));
+            TestSimplify(@"\arccos\left(\frac{1}{\arcsin\left(\frac{1}{x}\right)}\right)", MathS.Arcsec(MathS.Arccosec(x)));
         [TestMethod] public void Log10() => Test(@"\log\left(10\right)", MathS.Log(10, 10));
         [TestMethod] public void Ln() => Test(@"\ln\left(10\right)", MathS.Ln(10));
         [TestMethod] public void LnAlternate() => Test(@"\ln\left(10\right)", MathS.Log(MathS.e, 10));
         [TestMethod] public void Log() => Test(@"\log_{2}\left(10\right)", MathS.Log(2, 10));
-        [TestMethod] public void OO() => Test(@"\infty ", RealNumber.PositiveInfinity());
-        [TestMethod] public void MOO() => Test(@"-\infty ", RealNumber.NegativeInfinity());
-        [TestMethod] public void MOOAlternate() => Test(@"-\infty ", -RealNumber.PositiveInfinity());
-        [TestMethod] public void OOPI() => Test(@"\infty  + i", RealNumber.PositiveInfinity() + MathS.i);
-        [TestMethod] public void OOMI() => Test(@"\infty  - i", RealNumber.PositiveInfinity() - MathS.i);
-        [TestMethod] public void OOI() => Test(@"\infty i", RealNumber.PositiveInfinity() * MathS.i);
-        [TestMethod] public void MOOI() => Test(@"-\infty i", RealNumber.PositiveInfinity() / MathS.i);
-        [TestMethod] public void OOPOOI() => Test(@"\infty  + \infty i", RealNumber.PositiveInfinity() * (1 + MathS.i));
-        [TestMethod] public void OOMOOI() => Test(@"\infty  - \infty i", RealNumber.PositiveInfinity() * (1 - MathS.i));
-        [TestMethod] public void MOOPOOI() => Test(@"-\infty  + \infty i", RealNumber.PositiveInfinity() * (-1 + MathS.i));
-        [TestMethod] public void MOOMOOI() => Test(@"-\infty  - \infty i", RealNumber.PositiveInfinity() * (-1 - MathS.i));
+        [TestMethod] public void OO() => Test(@"\infty ", RealNumber.PositiveInfinity);
+        [TestMethod] public void MOO() => Test(@"-\infty ", RealNumber.NegativeInfinity);
+        [TestMethod] public void MOOAlternate() => Test(@"-\infty ", -RealNumber.PositiveInfinity);
+        [TestMethod] public void OOPI() => Test(@"\infty  + i", RealNumber.PositiveInfinity + MathS.i);
+        [TestMethod] public void OOMI() => Test(@"\infty  - i", RealNumber.PositiveInfinity - MathS.i);
+        [TestMethod] public void OOPOOI() => Test(@"\infty  + \infty i", RealNumber.PositiveInfinity * (1 + MathS.i));
+        [TestMethod] public void OOMOOI() => Test(@"\infty  - \infty i", RealNumber.PositiveInfinity * (1 - MathS.i));
+        [TestMethod] public void MOOPOOI() => Test(@"-\infty  + \infty i", RealNumber.PositiveInfinity * (-1 + MathS.i));
+        [TestMethod] public void MOOMOOI() => Test(@"-\infty  - \infty i", RealNumber.PositiveInfinity * (-1 - MathS.i));
+        [TestMethod] public void Undefined() => TestSimplify(@"\mathrm{undefined}", RealNumber.PositiveInfinity / RealNumber.PositiveInfinity);
         [TestMethod] public void Set0() => Test(@"\emptyset", MathS.Sets.Empty());
         [TestMethod] public void Set0Alternate() => Test(@"\emptyset", MathS.Sets.Finite());
         [TestMethod] public void Set1() => Test(@"\left\{1\right\}", MathS.Sets.Finite(1));

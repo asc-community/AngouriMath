@@ -14,8 +14,11 @@
  */
 
 
+using System.Numerics;
 using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Extensions;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -34,12 +37,12 @@ namespace AngouriMath
         /// The up bound for integrating
         /// </param>
         /// <returns></returns>
-        public ComplexNumber DefiniteIntegral(VariableEntity x, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to)
+        public ComplexNumber DefiniteIntegral(VariableEntity x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to)
         {
             return Integration.Integrate(this, x, from, to, 100);
         }
 
-        public ComplexNumber DefiniteIntegral(VariableEntity x, decimal from, decimal to)
+        public ComplexNumber DefiniteIntegral(VariableEntity x, EDecimal from, EDecimal to)
         {
             return Integration.Integrate(this, x, (from, 0), (to, 0), 100);
         }
@@ -60,7 +63,7 @@ namespace AngouriMath
         /// Accuracy (initially, amount of iterations)
         /// </param>
         /// <returns></returns>
-        public Number DefiniteIntegral(VariableEntity x, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, int stepCount)
+        public Number DefiniteIntegral(VariableEntity x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount)
         {
             return Integration.Integrate(this, x, from, to, stepCount);
         }
@@ -76,17 +79,17 @@ namespace AngouriMath
         /// <param name="to"></param>
         /// <param name="stepCount"></param>
         /// <returns></returns>
-        internal static ComplexNumber Integrate(Entity func, VariableEntity x, (decimal Re, decimal Im) from, (decimal Re, decimal Im) to, int stepCount)
+        internal static ComplexNumber Integrate(Entity func, VariableEntity x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount)
         {
-            ComplexNumber res = 0;
+            Complex res = 0;
             var cfunc = func.Compile(x);
             for(int i = 0; i <= stepCount; i++)
             {
-                var share = ((decimal)i) / stepCount;
-                var tmp = Number.Create(from.Re * share + to.Re * (1 - share), from.Im * share + to.Im * (1 - share));
-                res += cfunc.Substitute(tmp);
+                var share = ((EDecimal)i) / stepCount;
+                var tmp = ComplexNumber.Create(from.Re * share + to.Re * (1 - share), from.Im * share + to.Im * (1 - share));
+                res += cfunc.Substitute(tmp.AsComplex());
             }
-            return res / (stepCount + 1) * (Number.Create(to.Re, to.Im) - Number.Create(from.Re, from.Im));
+            return res.ToComplexNumber() / (stepCount + 1) * (ComplexNumber.Create(to.Re, to.Im) - ComplexNumber.Create(from.Re, from.Im));
         }
     }
 }

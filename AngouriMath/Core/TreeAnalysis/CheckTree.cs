@@ -14,8 +14,8 @@
  */
 
 
-
-﻿using AngouriMath.Core.FromString;
+using System.Linq;
+using AngouriMath.Core.FromString;
 using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Core.TreeAnalysis
@@ -49,6 +49,19 @@ namespace AngouriMath.Core.TreeAnalysis
             if (!condition)
                 throw new TreeException(message);
         }
+
+        /// <summary>
+        /// Returns whether expr doesn't contain any indefinite numbers
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <returns></returns>
+        internal static bool IsFinite(Entity expr)
+        {
+            if (expr is NumberEntity { Value:var value })
+                return value.IsFinite;
+            else
+                return expr.Children.All(IsFinite);
+        }
     }
 }
 
@@ -65,7 +78,7 @@ namespace AngouriMath.Core
 
             // All elements are not null
             for(int i = 0; i < Data.Length; i++)
-                TreeAnalyzer.AssertTree(Data[i] != null, "One tensor's element is null");
+                TreeAnalyzer.AssertTree(Data[i] is { }, "One tensor's element is null");
         }
     }
 }

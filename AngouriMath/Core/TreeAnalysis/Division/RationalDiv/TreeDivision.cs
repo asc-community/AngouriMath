@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
  using AngouriMath.Core.Numerix;
+ using PeterO.Numbers;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -39,7 +40,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 FindDivisors(ref temporaryElement, cond);
                 expr.Children[i] = temporaryElement;
             }
-            if (expr.entType == Entity.EntType.OPERATOR && expr.Name == "divf")
+            if (expr is OperatorEntity { Name: "divf" })
                 if (cond(expr.Children[0], expr.Children[1]))
                     expr = DividePolynoms(expr.Children[0], expr.Children[1]);
         }
@@ -71,7 +72,7 @@ namespace AngouriMath.Core.TreeAnalysis
             var monoinfoQ = GatherAllPossiblePolynomials(q.Expand(), replaceVars: false).monoInfo;
             var monoinfoP = GatherAllPossiblePolynomials(p.Expand(), replaceVars: false).monoInfo;
 
-            string polyvar = null;
+            string? polyvar = null;
 
             // TODO use Linq to find polyvar
             // First attempt to find polynoms
@@ -84,31 +85,31 @@ namespace AngouriMath.Core.TreeAnalysis
                 }
             }
             // cannot divide, return unchanged
-            if (string.IsNullOrEmpty(polyvar)) return originalP / originalQ;
+            if (polyvar is null || polyvar is "") return originalP / originalQ;
 
             var maxpowQ = monoinfoQ[polyvar].Keys.Max();
             var maxpowP = monoinfoP[polyvar].Keys.Max();
             var maxvalQ = monoinfoQ[polyvar][maxpowQ];
             var maxvalP = monoinfoP[polyvar][maxpowP];
 
-            var result = new Dictionary<decimal, Entity>();
+            var result = new Dictionary<EDecimal, Entity>();
 
             // TODO: add case where all powers are non-positive
             // for now just return polynomials unchanged
-            if (maxpowP < maxpowQ) return originalP / originalQ;
+            if (EDecimalWrapper.IsLess(maxpowP, maxpowQ)) return originalP / originalQ;
 
             // possibly very long process
-            while (maxpowP >= maxpowQ)
+            while (EDecimalWrapper.IsGreaterOrEqual(maxpowP, maxpowQ))
             {
                 // KeyPair is ax^n with Key=n, Value=a
-                decimal deltapow = maxpowP - maxpowQ;
+                EDecimal deltapow = maxpowP - maxpowQ;
                 Entity deltamul = maxvalP / maxvalQ;
                 result[deltapow] = deltamul;
 
                 foreach (var n in monoinfoQ[polyvar])
                 {
                     // TODO: precision loss can happen here. MUST be fixed somehow
-                    decimal newpow = deltapow + n.Key;
+                    EDecimal newpow = deltapow + n.Key;
                     if (!monoinfoP[polyvar].ContainsKey(newpow))
                     {
                         monoinfoP[polyvar][newpow] = -deltamul * n.Value;
@@ -136,13 +137,13 @@ namespace AngouriMath.Core.TreeAnalysis
                     return originalP / originalQ;
             }
 
-            Entity res = Number.Create(0);
+            Entity res = IntegerNumber.Create(0);
             foreach(var pair in result)
             {
                 res += pair.Value.Simplify(5) * MathS.Pow(new VariableEntity(polyvar), pair.Key);
             }
             // TODO: we know that variable is the same but with suffux '_r'. This foreach loop can be speeded-up
-            while (replacementInfo.Any(rep => res.FindSubtree(new VariableEntity(PolyInfo.NewVarName(rep.Key))) != null))
+            while (replacementInfo.Any(rep => res.FindSubtree(new VariableEntity(PolyInfo.NewVarName(rep.Key))) is { }))
                 foreach (var subst in replacementInfo)
                 {
                     FindAndReplace(ref res, new VariableEntity(PolyInfo.NewVarName(subst.Key)), subst.Value);

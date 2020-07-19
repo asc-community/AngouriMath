@@ -15,6 +15,7 @@
 
 
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using AngouriMath.Core;
 using AngouriMath.Core.FromString;
@@ -28,8 +29,11 @@ using AngouriMath.Core.Sys;
  using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Functions;
+using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Functions.Algebra.InequalitySolver;
+using AngouriMath.Functions.DiscreteMath;
 using Number = AngouriMath.Core.Numerix.Number;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -122,7 +126,7 @@ namespace AngouriMath
         /// a ^ 0.5
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Sqrt(Entity a) => Powf.Hang(a, Number.CreateRational(1, 2));
+        public static Entity Sqrt(Entity a) => Powf.Hang(a, RationalNumber.Create(1, 2));
 
         /// <summary>
         /// Special case of power function
@@ -277,7 +281,7 @@ namespace AngouriMath
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Obsolete("Use Number.Create or implicit construction instead")]
-        public static Number Num(decimal a, decimal b) => Number.Create(a, b);
+        public static Number Num(EDecimal a, EDecimal b) => ComplexNumber.Create(a, b);
 
         /// <summary>
         /// Creates a real instance of Number (not NumberEntity!)
@@ -286,13 +290,13 @@ namespace AngouriMath
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Obsolete("Use Number.Create or implicit construction instead")]
-        public static ComplexNumber Num(decimal a) => Number.Create(a);
+        public static ComplexNumber Num(EDecimal a) => RealNumber.Create(a);
 
         /// <summary>
         /// List of public constants
         /// </summary>
         public static readonly VariableEntity e = "e";
-        public static readonly ComplexNumber i = Number.Create(0, 1.0);
+        public static readonly ComplexNumber i = ComplexNumber.ImaginaryOne;
         public static readonly VariableEntity pi = "pi";
 
         /// <summary>
@@ -313,8 +317,8 @@ namespace AngouriMath
         /// <param name="N"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToBaseN(decimal num, int N) 
-            => NumberSystem.ToBaseN(num, N);
+        public static string ToBaseN(RealNumber num, int N) 
+            => NumberSystem.ToBaseN(num.Value, N);
 
         /// <summary>
         /// Translates num into 10 number system
@@ -323,7 +327,7 @@ namespace AngouriMath
         /// <param name="N"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static decimal FromBaseN(string num, int N)
+        public static RealNumber FromBaseN(string num, int N)
             => NumberSystem.FromBaseN(num, N);
 
         /// <summary>
@@ -339,6 +343,17 @@ namespace AngouriMath
         /// </summary>
         public static class Numbers
         {
+            /*
+             *
+             * This list represents the only possible way to explicitly create numeric instances
+             * It will automatically downcast the result for you, so that 1.0 is an IntegerNumber
+             * To avoid it, you may temporarily disable it
+             *
+             *   MathS.Settings.DowncastingEnabled.Set(false);
+             *     var yourNum = Number.Create(1.0);
+             *   MathS.Settings.DowncastingEnabled.Unset();
+             *
+             */
             /// <summary>
             /// Creates an instance of ComplexNumber from System.Numerics.Complex
             /// </summary>
@@ -346,8 +361,8 @@ namespace AngouriMath
             /// <returns>
             /// ComplexNumber
             /// </returns>
-            public static ComplexNumber Create(Complex value)
-                => Number.Functional.Downcast(new ComplexNumber(value)) as ComplexNumber;
+            public static ComplexNumber Create(Complex value) =>
+                Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
 
             /// <summary>
             /// Creates an instance of IntegerNumber from long
@@ -356,18 +371,16 @@ namespace AngouriMath
             /// <returns>
             /// IntegerNumber
             /// </returns>
-            public static IntegerNumber Create(long value)
-                => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+            public static IntegerNumber Create(long value) => IntegerNumber.Create(value);
 
             /// <summary>
-            /// Creates an instance of IntegerNumber from System.Numerics.BigInteger
+            /// Creates an instance of IntegerNumber from System.Numerics.EInteger
             /// </summary>
             /// <param name="value"></param>
             /// <returns>
             /// IntegerNumber
             /// </returns>
-            public static IntegerNumber Create(BigInteger value)
-                => Number.Functional.Downcast(new IntegerNumber(value)) as IntegerNumber;
+            public static IntegerNumber Create(EInteger value) => IntegerNumber.Create(value);
 
             /// <summary>
             /// Creates an instance of IntegerNumber from int
@@ -376,29 +389,32 @@ namespace AngouriMath
             /// <returns>
             /// IntegerNumber
             /// </returns>
-            public static IntegerNumber Create(int value)
-                => Number.Functional.Downcast(new IntegerNumber((BigInteger)value)) as IntegerNumber;
+            public static IntegerNumber Create(int value) => IntegerNumber.Create(value);
 
             /// <summary>
             /// Creates an instance of RationalNumber of two IntegerNumbers
             /// </summary>
-            /// <param name="numerator"></param>
-            /// <param name="denominator"></param>
             /// <returns>
             /// RationalNumber
             /// </returns>
-            public static RationalNumber CreateRational(IntegerNumber numerator, IntegerNumber denominator)
-                => Number.Functional.Downcast(new RationalNumber(numerator, denominator)) as RationalNumber;
+            public static RationalNumber CreateRational(EInteger numerator, EInteger denominator)
+                => RationalNumber.Create(numerator, denominator);
+            /// <summary>
+            /// Creates an instance of RationalNumber of two IntegerNumbers
+            /// </summary>
+            /// <returns>
+            /// RationalNumber
+            /// </returns>
+            public static RationalNumber Create(ERational rational) => RationalNumber.Create(rational);
 
             /// <summary>
-            /// Creates an instance of RealNumber from decimal
+            /// Creates an instance of RealNumber from EDecimal
             /// </summary>
             /// <param name="value"></param>
             /// <returns>
             /// RealNumber
             /// </returns>
-            public static RealNumber Create(decimal value)
-                => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
+            public static RealNumber Create(EDecimal value) => RealNumber.Create(value);
 
             /// <summary>
             /// Creates an instance of RealNumber from double
@@ -407,8 +423,7 @@ namespace AngouriMath
             /// <returns>
             /// RealNumber
             /// </returns>
-            public static RealNumber Create(double value)
-                => Number.Functional.Downcast(new RealNumber(value)) as RealNumber;
+            public static RealNumber Create(double value) => RealNumber.Create(EDecimal.FromDouble(value));
 
             /// <summary>
             /// Creates an instance of ComplexNumber from two RealNumbers
@@ -422,28 +437,7 @@ namespace AngouriMath
             /// <returns>
             /// ComplexNumber
             /// </returns>
-            public static ComplexNumber Create(RealNumber re, RealNumber im)
-                => Number.Functional.Downcast(new ComplexNumber(re, im)) as ComplexNumber;
-
-            /// <summary>
-            /// If you need an indefinite value of a real number, use this
-            /// Number.Create(RealNumber.UndefinedState.POSITIVE_INFINITY)
-            /// Number.Create(RealNumber.UndefinedState.NEGATIVE_INFINITY)
-            /// Number.Create(RealNumber.UndefinedState.NAN)
-            /// </summary>
-            /// <param name="state"></param>
-            /// <returns></returns>
-            public static RealNumber Create(RealNumber.UndefinedState state)
-                => new RealNumber(state);
-
-            /// <summary>
-            /// If you need an indefinite value of a complex number, e. g.
-            /// Number.Create(RealNumber.UndefinedState.POSITIVE_INFINITY, RealNumber.UndefinedState.NEGATIVE_INFINITY)
-            /// -> +oo + -ooi
-            /// </summary>
-            /// <returns></returns>
-            public static ComplexNumber Create(RealNumber.UndefinedState realState, RealNumber.UndefinedState imaginaryState)
-                => Number.Create(Number.Create(realState), Number.Create(imaginaryState));
+            public static ComplexNumber Create(EDecimal re, EDecimal im) => ComplexNumber.Create(re, im);
         }
 
         /// <summary>
@@ -504,40 +498,79 @@ namespace AngouriMath
         /// ... // your code
         /// MathS.Settings.SomeSettings.Unset(); // Optional. Reverts the setting to the previous value
         /// </summary>
-        public static class Settings
+        public static partial class Settings
         {
             /// <summary>
             /// Enables downcasting. Not recommended to turn off, disabling might be only useful for some calculations
             /// </summary>
-            public static Setting<bool> DowncastingEnabled { get; } = true;
+            public static Setting<bool> DowncastingEnabled => GetCurrentOrDefault(ref downcastingEnabled, true);
 
             /// <summary>
             /// Amount of iterations allowed for attempting to cast to a rational
             /// The more iterations, the larger fraction could be calculated
             /// </summary>
-            public static Setting<int> FloatToRationalIterCount { get; } = 5;
+            public static Setting<int> FloatToRationalIterCount => GetCurrentOrDefault(ref floatToRationalIterCount, 5);
 
             /// <summary>
             /// If a numerator or denominator is too large, it's suspended to better keep the real number instead of casting
             /// </summary>
-            public static Setting<long> MaxAbsNumeratorOrDenominatorValue { get; } = 100000000;
+            public static Setting<EInteger> MaxAbsNumeratorOrDenominatorValue =>
+                GetCurrentOrDefault(ref maxAbsNumeratorOrDenominatorValue, 100000000);
 
             /// <summary>
             /// Sets threshold for comparison
             /// For example, if you don't need precision higher than 6 digits after .,
             /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
             /// </summary>
-            public static Setting<decimal> PrecisionErrorCommon { get; } = 1.0e-6m;
+            public static Setting<EDecimal> PrecisionErrorCommon =>
+                GetCurrentOrDefault(ref precisionErrorCommon, 1e-6m);
+
 
             /// <summary>
             /// Numbers whose absolute value is less than PrecisionErrorZeroRange are considered zeros
             /// </summary>
-            public static Setting<decimal> PrecisionErrorZeroRange { get; } = 1.0e-16m;
+            public static Setting<EDecimal> PrecisionErrorZeroRange => GetCurrentOrDefault(ref precisionErrorZeroRange, 1e-16m);
 
             /// <summary>
             /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
             /// </summary>
-            public static Setting<bool> AllowNewton { get; } = true;
+            public static Setting<bool> AllowNewton => GetCurrentOrDefault(ref allowNewton, true);
+
+            /// <summary>
+            /// Criteria for simplifier so you could control which expressions are considered easier by you
+            /// </summary>
+            public static Setting<Func<Entity, int>> ComplexityCriteria => GetCurrentOrDefault(ref complexityCriteria, Const.DefaultComplexityCriteria);
+
+            /// <summary>
+            /// Settings for the Newton-Raphson's root-search method
+            /// e. g.
+            /// MathS.Settings.NewtonSolver.Set(
+            /// new NewtonSetting() {
+            ///     From = (-10, -10),
+            ///     To = (10, 10),
+            ///     StepCount = (10, 10),
+            ///     Precision = 30
+            /// }
+            /// );
+            /// </summary>
+            public static Setting<NewtonSetting> NewtonSolver => GetCurrentOrDefault(ref newtonSolver, new NewtonSetting());
+            
+            /// <summary>
+            /// The maximum number of linear children of an expression in polynomial solver
+            /// considering that there's no more than 1 children with the required variable, e. g.
+            /// complexities are counted like that:
+            /// (x + 2) ^ 2           -> 3 [x2, 4x, 4]
+            /// x + 3 + a             -> 2 [x, 3 + a]
+            /// (x + a)(b + c)        -> 2 [(b + c)x, a(b + c)]
+            /// (x + 3 + a) / (x + 3) -> 2 [x / (x + 3), (3 + a) / (x + 3)]
+            /// x2 + x + 1            -> 3 [x2, x, 1]
+            /// </summary>
+            public static Setting<int> MaxExpansionTermCount => GetCurrentOrDefault(ref maxExpansionTermCount, 50);
+
+            /// <summary>
+            /// Settings for EDecimal precisions of PeterO Numbers (https://github.com/peteroupc/Numbers)
+            /// </summary>
+            public static Setting<EContext> DecimalPrecisionContext => GetCurrentOrDefault(ref decimalPrecisionContext,  new EContext(100, ERounding.HalfUp, -100, 100, false));
         }
 
         /// <summary>
@@ -561,7 +594,9 @@ namespace AngouriMath
             /// true if success
             /// false otherwise (do not access dst in this case, it's undefined)
             /// </returns>
-            public static bool TryPolynomial(Entity expr, VariableEntity variable, out Entity dst)
+            public static bool TryPolynomial(Entity expr, VariableEntity variable,
+                [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
+                out Entity? dst)
                 => Functions.Utils.TryPolynomial(expr, variable, out dst);
 
 
@@ -609,6 +644,14 @@ namespace AngouriMath
             /// <returns></returns>
             public static Set GetUniqueVariables(Entity expr)
                 => TreeAnalyzer.GetUniqueVariables(expr);
+
+            /// <summary>
+            /// Counts all nodes & subnodes that match criteria
+            /// </summary>
+            /// <param name="criteria"></param>
+            /// <returns></returns>
+            public static int Count(Entity expr, Predicate<Entity> criteria)
+                => TreeAnalyzer.Count(expr, criteria);
         }
 
         /// <summary>
@@ -661,6 +704,16 @@ namespace AngouriMath
             /// <returns></returns>
             public static IntervalPiece Interval(Entity from, Entity to)
                 => Piece.Interval(from, to).AsInterval();
+
+            /// <summary>
+            /// Creates an element for set
+            /// One can be created implicitly,
+            /// Piece a = 3;
+            /// </summary>
+            /// <param name="element"></param>
+            /// <returns></returns>
+            public static OneElementPiece Element(Entity element)
+                => new OneElementPiece(element);
         }
 
         public static class DecimalConst
@@ -668,12 +721,12 @@ namespace AngouriMath
             /// <summary>
             /// Pi constant
             /// </summary>
-            public static readonly decimal pi = 3.14159_26535_89793_23846_26433m;
+            public static readonly EDecimal pi = 3.14159_26535_89793_23846_26433m;
 
             /// <summary>
             /// E constant
             /// </summary>
-            public static readonly decimal e  = 2.71828_18284_59045_23536_02874m;
+            public static readonly EDecimal e  = 2.71828_18284_59045_23536_02874m;
         }
     }
 }

@@ -1,8 +1,8 @@
 ﻿using System;
-using System.Diagnostics;
-using System.IO;
 using AngouriMath;
-using AngouriMath.Core.Numerix;
+using AngouriMath.Core;
+using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Extensions;
 
 namespace Samples
 {

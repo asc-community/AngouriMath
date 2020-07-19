@@ -17,6 +17,7 @@
 using System.Collections.Generic;
 using AngouriMath.Core.TreeAnalysis.Division.RationalDiv;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -44,7 +45,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 // Replace all variables we can
                 foreach (var varMentioned in mentionedVarList.FiniteSet())
                 {
-                    if (expr.FindSubtree(varMentioned) == null)
+                    if (expr.FindSubtree(varMentioned) is null)
                         continue;
                     var replacement = TreeAnalyzer.GetMinimumSubtree(expr, varMentioned);
                     res.replacementInfo[varMentioned.Name] = replacement;
@@ -64,11 +65,12 @@ namespace AngouriMath.Core.TreeAnalysis
             foreach (var varMentioned in newList)
             {
                 List<Entity> children;
-                if (expr.entType == Entity.EntType.OPERATOR && expr.Name == "sumf" || expr.Name == "minusf")
-                    children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
+                if (expr is OperatorEntity && expr.Name == "sumf" || expr.Name == "minusf")
+                    children = LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
                 else
                     children = new List<Entity> { expr };
-                res.monoInfo[varMentioned] = PolynomialSolver.GatherMonomialInformation<decimal>(children, MathS.Var(varMentioned));
+                if (PolynomialSolver.GatherMonomialInformation<EDecimal>(children, MathS.Var(varMentioned)) is { } info)
+                    res.monoInfo[varMentioned] = info;
             }
 
             return res;
@@ -79,7 +81,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
 namespace AngouriMath.Core.TreeAnalysis.Division.RationalDiv
 {
-    using MonomialInfo = Dictionary<string, Dictionary<decimal, Entity>>;
+    using MonomialInfo = Dictionary<string, Dictionary<EDecimal, Entity>>;
     using ReplacementInfo = Dictionary<string, Entity>;
     internal class PolyInfo
     {

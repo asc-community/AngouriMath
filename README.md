@@ -2,113 +2,137 @@
 ![Nuget](https://img.shields.io/nuget/dt/AngouriMath?color=blue&label=NuGet%20installs&logoColor=blue)
 ![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)
 
-![alt text](./banner.png "Logo")
-
 [Nuget](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository")
 
 ## AngouriMath
-AngouriMath is an open-source library that enables to work with non-linear 
-multi-variable expressions. Its functionality includes derivation, 
-variable substitution, equation solving, equation system solving, definite integration, 
-formula-to-latex formatting, working with mathematical sets, and some more.
+AngouriMath is a cross-platform open-source library that enables to work with non-linear 
+multi-variable expressions. Written in C#.
+
+README navigation:
+- [Installation](#inst)
+- [Examples](#exam)
+  - [Evaluation](#eval)
+  - [Substitution](#subs)
+  - [Derivation](#deri)
+  - [Simplification](#simp)
+  - [Numbers](#numb)
+  - [Equations](#equa)
+  - [Equation systems](#eqsys)
+  - [Compilation](#comp)
+  - [Sets](#sets)
+  - [LaTeX](#late)
+  - [Number system](#numsys)
+- [I want to contribute](#contrib)
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
-documentation. If you prefer full manual to AM, see [Wiki](/asc-community/AngouriMath/wiki).
+documentation. If you prefer full manual to AM, see [Wiki](https://github.com/asc-community/AngouriMath/wiki).
 If you want to contribute, we surely appreciate it, but so far do not have documentation for
 you. It will appear soon!
 
-### Examples
+### <a name="inst"></a>Installation
 
-#### Build an expression
-```cs
-var x = MathS.Var("x");
-var y = MathS.Var("y");
-var c = x * y + x / y;
-Console.WriteLine(MathS.Sqr(c));
->>> (x * y + x / y) ^ 2
+The easiest way to install AM is to install it from 
+[Nuget](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository").
+
+If you need git commands, that is how you clone the repo
 ```
+git clone --recurse-submodules https://github.com/asc-community/AngouriMath
+```
+Add this repo to your project's dependencies
+```
+git submodule add https://github.com/asc-community/AngouriMath
+```
+After cloning, you do not need to set up it. It is ready to use, just add the reference to the AngouriMath project from your solution.
 
-#### Use as a simple calculator
+### <a name="exam"></a>Examples
+
+#### <a name="eval"></a>Use as a simple calculator
 ```cs
-var inp = "1 + 2 * log(3, 9)";
-var expr = MathS.FromString(inp);
+Entity expr = "1 + 2 * log(3, 9)";
 Console.WriteLine(expr.Eval());
->>> 5
 ```
+<img src="https://render.githubusercontent.com/render/math?math=5">
 
-#### Substitute variables
 ```cs
-var x = MathS.Var("x");
-var expr = x * 2 + MathS.Sin(x) / MathS.Sin(MathS.Pow(2, x));
-var subs = expr.Substitute(x, 0.3);
-Console.WriteLine(subs.Eval());
->>> 0,9134260185941638995386706112
+Console.WriteLine("2 / 3 + sqrt(-16)".Eval());
+>>> 2 / 3 + 4i
 ```
+<img src="https://render.githubusercontent.com/render/math?math=\frac{2}{3} %2B 4i">
 
-#### Find derivatives
 ```cs
-var x = MathS.Var("x");
-var func = MathS.Sqr(x) + MathS.Ln(MathS.Cos(x) + 3) + 4 * x;
-var derivative = func.Derive(x);
+Console.WriteLine("(-2) ^ 3".Eval());
+```
+<img src="https://render.githubusercontent.com/render/math?math=-8">
+
+#### <a name="subs"></a>Substitute variables
+```cs
+Entity expr = "2x + sin(x) / sin(2 ^ x)";
+var subs = expr.Substitute("x", 0.3m);
+Console.WriteLine(subs);
+```
+<img src="https://render.githubusercontent.com/render/math?math=2\times \frac{3}{10}%2B\frac{\sin\left(\frac{3}{10}\right)}{\sin\left(\sqrt[10]{2}^{3}\right)}">
+
+#### <a name="deri"></a>Find derivatives
+```cs
+var func = "x2 + ln(cos(x) + 3) + 4x";
+var derivative = func.Derive("x");
 Console.WriteLine(derivative.Simplify());
->>> 4 + (-1) * sin(x) / (cos(x) + 3) + 2 * x
 ```
+<img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)%2B3\right)}^{2}\times \left(\cos\left(x\right)%2B3\right)}%2B2\times x">
 
-#### Build expressions faster
+#### <a name="simp"></a>Simplify
 ```cs
-Entity expr = "sqr(x + y)";
-Console.WriteLine(expr.Expand().Simplify());
->>> x ^ 2 + 2 * x * y + y ^ 2
+Console.WriteLine("2x + x + 3 + (4 a * a^6) / a^3 / 5".Simplify());
 ```
+<img src="https://render.githubusercontent.com/render/math?math=3%2B\frac{4}{5}\times {a}^{4}%2B3\times x">
 
-#### Simplify
 ```cs
-var x = MathS.Var("x");
-var a = MathS.Var("a");
-var b = MathS.Var("b");
-var expr = MathS.Sqrt(x) / x + a * b + b * a + (b - x) * (x + b) + 
-    MathS.Arcsin(x + a) + MathS.Arccos(a + x);
+var expr = "1/2 + sin(pi / 4) + (sin(3x)2 + cos(3x)2)";
 Console.WriteLine(expr.Simplify());
->>> 2 * a * b + b ^ 2 + pi / 2 + x ^ (-1 / 2) - x ^ 2
 ```
+<img src="https://render.githubusercontent.com/render/math?math=\frac{1}{2}\times \left(1%2B\sqrt{2}\right)%2B1">
 
-#### Render latex
+#### <a name="late"></a>Build latex
 ```cs
-var x = MathS.Var("x");
-var y = MathS.Var("y");
-var expr = x.Pow(y) + MathS.Sqrt(x + y / 4) * (6 / x);
+var expr = "x ^ y + sqrt(x + y / 4)(6 / x)";
 Console.WriteLine(expr.Latexise());
 >>> {x}^{y}+\sqrt{x+\frac{y}{4}}\times \frac{6}{x}
 ```
+<img src="https://render.githubusercontent.com/render/math?math={x}^{y}%2B\sqrt{x%2B\frac{y}{4}}\times \frac{6}{x}">
 
-#### Play with complex numbers
+#### <a name="equa"></a>Solve equations analytically
 ```cs
-var expr = MathS.Pow(MathS.e, MathS.pi * MathS.i);
-Console.WriteLine(expr);
-Console.WriteLine(expr.Eval());
->>> e ^ (pi * i)
->>> -1
+Console.WriteLine("x2 + x + a".SolveEquation("x"));
 ```
+<img src="https://render.githubusercontent.com/render/math?math=\left\{\frac{-1-\sqrt{1-4\times a}}{2},\frac{-1%2B\sqrt{1-4\times a}}{2}\right\}">
 
-#### Solve equations analytically
 Under developing now and forever (always available)
 ```cs
 Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
-foreach (var root in expr.Solve("x"))
-    Console.WriteLine(root);
->>> arcsin((1 - sqrt(1 + (-4) * a)) / 2) - (-2) * n * pi
->>> 2 * n * pi + pi - arcsin((1 - sqrt(1 + (-4) * a)) / 2)
->>> arcsin(0.5 * (1 + sqrt(1 + (-4) * a))) - (-2) * n * pi
->>> 2 * n * pi + pi - arcsin((1 + sqrt(1 + (-4) * a)) / 2)
->>> b
->>> -i
->>> i
->>> 1
->>> 2
+Console.WriteLine(expr.SolveEquation("x").Latexise());
 ```
+<img src="https://render.githubusercontent.com/render/math?math=\left\{-\left(-\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\arcsin\left(\frac{1%2B\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1%2B\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),\frac{-b}{-1},-i,i,1,2\right\}">
 
-#### Solve systems of non-linear equations
+#### <a name="eqsys"></a>Solve systems of non-linear equations
 Under developing now and forever (always available)
+
+```cs
+var system = MathS.Equations(
+    "x2 + y + a",
+    "y - 0.1x + b"
+);
+Console.WriteLine(system);
+var solutions = system.Solve("x", "y");
+Console.WriteLine(solutions);
+```
+System:
+
+<img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{x}^{2}%2By%2Ba = 0\\y-\frac{1}{10}\times x%2Bb = 0\\\end{cases}">
+
+Result:
+
+<img src="additional/readme/pic1.PNG">
+
 ```cs
 var system = MathS.Equations(
     "cos(x2 + 1)^2 + 3y",
@@ -116,22 +140,12 @@ var system = MathS.Equations(
 );
 Console.WriteLine(system.Latexise());
 var solutions = system.Solve("x", "y");
-Console.WriteLine(Solutions.PrintOut());
+Console.WriteLine(solutions);
 ```
+<img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{\cos\left({x}^{2}%2B1\right)}^{2}%2B3\times y = 0\\y\times -1%2B4\times \cos\left({x}^{2}%2B1\right) = 0\\\end{cases}">
+(solution matrix is too complicated to show)
 
-#### Integrate
-Only definite integral over single variable is supported yet :(
-```cs
-var x = MathS.Var("x");
-var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
-Console.WriteLine(expr.DefiniteIntegral(x, -3, 3));
-var expr2 = MathS.Sin(x);
-Console.WriteLine(expr2.DefiniteIntegral(x, 0, MathS.DecimalConst.pi));
->>> 5.56669223384056 + 0.0889406793629381i
->>> 1.98003515236381
-```
-
-#### Compile functions
+#### <a name="comp"></a>Compile functions
 Compiled functions work 15x+ faster
 ```cs
 var x = MathS.Var("x");
@@ -140,30 +154,20 @@ var func = expr.Compile(x);
 Console.WriteLine(func.Substitute(3));
 ```
 
-#### Try new syntax
 ```cs
-Entity expr = "3x3 + 2 2 2 - x(3 0.5)";
-Console.WriteLine(expr);
->>> 3 * x ^ 3 + 2 ^ 2 ^ 2 - x * sqrt(3)
+var expr = "sin(x) + sqrt(x) / (sqrt(x) + cos(x)) + x3";
+var compiled = expr.Compile("x");
+Console.WriteLine(compiled.Substitute(4));
 ```
 
-#### Work with sets
+#### <a name="sets"></a>Work with sets
 ```cs
 var A = new Set(3, 4, (5, 6)); // {3, 4} | [5; 6]
 var B = new Set((x, MathS.Sqrt(x)), 4);
 var C = (A | B) & A;
 ```
 
-#### Try SymPy syntax
-```cs
-var x = SySyn.Symbol("x");
-var expr = SySyn.Exp(x) + x;
-Console.WriteLine(SySyn.Diff(expr));
-Console.WriteLine(SySyn.Diff(expr, x));
-Console.WriteLine(SySyn.Diff(expr, x, x));
-```
-
-#### Work with numbers
+#### <a name="numb"></a>Work with numbers
 ```cs
 var rat1 = Number.CreateRational(3, 4);
 var rat2 = Number.CreateRational(5, 6);
@@ -171,7 +175,7 @@ Console.WriteLine((rat1 + rat2).ToString());
 >>> 19 / 12
 ```
 
-#### Translate number systems
+#### <a name="numsys"></a>Translate number systems
 ```cs
 string x = MathS.ToBaseN(-32.25, 4);
 Console.WriteLine("-32.25(10) = " + x + "(4)");
@@ -181,40 +185,14 @@ Console.WriteLine("AB.3(16) = " + y + "(1)");
 >>> AB.3(16) = 171,1875(1)
 ```
 
-### Performance
-Performane improved a lot. Testing on i7-7700HQ and ```expr = MathS.Sin(x)``` we get the following report:
+See more on [Wiki](https://github.com/asc-community/AngouriMath/wiki).
 
-| Function                             | Time per iteration              |
-| ------------------------------------ | ------------------------------- |
-| Substitute(x, 3).Eval() from 1.0.13  | 12000 ns                        |
-| Substitute(x, 3).Eval() from 1.0.15  | 2500 ns                         |
-| Call(3) from 1.0.15                  | 54 ns                           |
-| Complex.Sin(3)                       | 27 ns                           |
 
-If we take ```expr = MathS.Sin(MathS.Sqr(x)) + MathS.Cos(MathS.Sqr(x)) + MathS.Sqr(x) + MathS.Sin(MathS.Sqr(x))```, AM Compiled
-is faster than any other methods:
+### <a name="contrib"></a>Contribution
 
-| Method                   | Time per iteration |
-|------------------------- |-------------------:|
-| AM Compiled              |  310.0 ns          |
-| In-code expression       |  424.2 ns          |
-| LinqCompiled             |  435.9 ns          |
-| Substitute(x, 3).Eval()  | 6777.3 ns          |
+We appreciate and welcome any contributors to AngouriMath.
 
-It is true since release of 1.0.17.1 Beta, when cache instructions in compiled functions were added.
-
-Finally, if we take ```expr = (MathS.Log(x, 3) + MathS.Sqr(x)) * MathS.Sin(x + MathS.Cosec(x))```, 
-we get the following performance
-
-| Method                   | Time per iteration |
-|--------------------------|-------------------:|
-| AM Compiled              |  380.8 ns          |
-| In-code expression       |  211.5 ns          |
-| Substitute(x, 3).Eval()  | 5656.3 ns          |
-
-So, for most cases compilation will save you enough time even though built-in functions are 
-still faster sometimes.
-
-## More information
-
-More info about methods see on [Wiki](https://github.com/asc-community/AngouriMath/wiki).
+Use pull requests to contribute to it. If you want to regenerate the parser, follow these steps:
+1. Change files from ./AngouriMath/Core/FromString/Antlr/ with the extensions of ".interp", ".tokens", ".g"
+2. Assure you have jre on your machine
+3. Run `start ./AngouriMath/antlr_rerun.bat` or `./AngouriMath/antlr_rerun.bat` to regenerate the parser via ANTLR

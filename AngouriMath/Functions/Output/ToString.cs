@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -43,11 +43,13 @@ namespace AngouriMath
         internal string Stringize(bool parenthesesRequired)
         {
             if (IsLeaf)
-                return entType switch {
-                    EntType.PATTERN => "{ " + PatternNumber + " : " + (this as Pattern).patType + " }",
-                    EntType.TENSOR => (this as Tensor).ToString(),
-                    EntType.VARIABLE => this.Name,
-                    EntType.NUMBER => GetValue().ToString(parenthesesRequired),
+                return this switch {
+                    Pattern p => "{ " + PatternNumber + " : " + p.patType + " }",
+                    Tensor t => t.ToString(),
+                    VariableEntity _ => this.Name,
+                     // If parentheses are required, they might be only required when complicated numbers are wrapped,
+                     // such as fractions and complex but not a single i
+                     NumberEntity n => n.Value.ToString(Priority != Const.PRIOR_NUM && parenthesesRequired),
                     _ => throw new SysException("Unexpected entity type")
                 };
             else
@@ -94,7 +96,7 @@ namespace AngouriMath
         public static string Stringize(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(args[1].entType == Entity.EntType.OPERATOR && args[1].Priority <= Const.PRIOR_DIV);
+            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(args[1] is OperatorEntity && args[1].Priority <= Const.PRIOR_DIV);
         }
     }
     internal static partial class Sinf
@@ -202,6 +204,7 @@ namespace AngouriMath
         }
 
         internal static string LinearSetToString(Set set)
-            => string.Join("|", set.Pieces.Select(c => c.ToString()));
+        => set.IsEmpty() ? "{}" :
+            string.Join("|", set.Pieces.Select(c => c.ToString()));
     }
 }

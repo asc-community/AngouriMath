@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using AngouriMath;
 using ScottPlot;
 using AngouriMath.Core.Numerix;
@@ -9,9 +10,9 @@ namespace AngouriMathPlot
     public class AMPlotter
     {
         private readonly FormsPlot destination;
-        private List<FastExpression> functions;
-        private double[] dataX;
-        private double[] dataY;
+        private List<FastExpression>? functions;
+        private double[] dataX = Array.Empty<double>();
+        private double[] dataY = Array.Empty<double>();
         private int pointCount;
 
         /// <summary>
@@ -68,10 +69,10 @@ namespace AngouriMathPlot
         /// </param>
         public void PlotScatter(FastExpression func, ComplexNumber from, ComplexNumber to)
         {
-            Func<int, decimal> inner = it => ((to - from) / (pointCount - 1) * it).Real;
+            double inner(int it) => ((to - from) / (pointCount - 1) * it).Real.Value.ToDouble();
             Clear();
             BuildData(inner,
-                        it => func.Call(inner(it)).Real);
+                        it => func.Call(new Complex((double)inner(it), 0)).Real);
             destination.plt.PlotScatter(dataX, dataY);
             destination.Render();
         }
@@ -85,8 +86,8 @@ namespace AngouriMathPlot
         /// <param name="to"></param>
         public void PlotIterativeComplex(FastExpression func, ComplexNumber from, ComplexNumber to)
         {
-            Func<int, decimal> X = it => func.Call((from + to) / (pointCount - 1) * it).Real;
-            Func<int, decimal> Y = it => func.Call((from + to) / (pointCount - 1) * it).Imaginary;
+            double X(int it) => func.Call(((from + to) / (pointCount - 1) * it).AsComplex()).Real;
+            double Y(int it) => func.Call(((from + to) / (pointCount - 1) * it).AsComplex()).Imaginary;
             BuildData(X, Y);
             destination.plt.PlotScatter(dataX, dataY);
         }
@@ -107,12 +108,12 @@ namespace AngouriMathPlot
             destination.Render();
         }
 
-        private void BuildData(Func<int, decimal> X, Func<int, decimal> Y)
+        private void BuildData(Func<int, double> X, Func<int, double> Y)
         {
             for(int i = 0; i < pointCount; i++)
             {
-                dataX[i] = (double)X(i);
-                dataY[i] = (double)Y(i);
+                dataX[i] = X(i);
+                dataY[i] = Y(i);
             }
         }
     }

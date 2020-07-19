@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.Numerics;
 using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -27,11 +28,7 @@ namespace AngouriMath
     /// Every node, expression, or number is an Entity
     /// However, you cannot create an instance of this class
     /// </summary>
-    #pragma warning disable CS0660
-    #pragma warning disable CS0661
-    public abstract partial class Entity : ILatexiseable
-    #pragma warning restore CS0661
-    #pragma warning restore CS0660
+    public abstract partial class Entity : ILatexiseable, System.IEquatable<Entity>
     {
         protected abstract Entity __copy();
         protected abstract bool EqualsTo(Entity obj);
@@ -43,10 +40,8 @@ namespace AngouriMath
         /// Usually IsLeaf <=> number, variable, tensor
         /// </summary>
         public bool IsLeaf => Children.Count == 0;
-        /* changed from protected to internal due to protection level of EntType */
-        internal Entity(string name, EntType type)
+        protected Entity(string name)
         {
-            this.entType = type;
             Children = new List<Entity>();
             Name = name;
         }
@@ -77,33 +72,30 @@ namespace AngouriMath
             return res;
         }
         
-        public static implicit operator Entity(int num) => new NumberEntity(Number.Create(num));
-        public static implicit operator Entity(long num) => new NumberEntity(Number.Create(num));
+        public static implicit operator Entity(int num)           => new NumberEntity(num);
+        public static implicit operator Entity(long num)          => new NumberEntity(num);
         public static implicit operator Entity(ComplexNumber num) => new NumberEntity(num);
-        public static implicit operator Entity(decimal num) => new NumberEntity(new RealNumber(num));
-        public static implicit operator Entity(float num) => new NumberEntity(new RealNumber(num));
-        public static implicit operator Entity(double num) => new NumberEntity(new RealNumber(num));
-        public static implicit operator Entity(string expr) => MathS.FromString(expr);
+        public static implicit operator Entity(EDecimal num)      => new NumberEntity(num);
+        public static implicit operator Entity(decimal num)       => new NumberEntity(num);
+        public static implicit operator Entity(float num)         => new NumberEntity(num);
+        public static implicit operator Entity(double num)        => new NumberEntity(num);
+        public static implicit operator Entity(string expr)       => MathS.FromString(expr);
 
-        /// <summary>
-        /// Deep but stupid comparison
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        public static bool operator ==(Entity a, Entity b)
+        /// <summary>Deep but stupid comparison</summary>
+        public static bool operator ==(Entity? a, Entity? b)
         {
             // Since 7.0 we can compare objects to null without casting them into object
             if (a is null && b is null)
                 return true;
             if (a is null || b is null)
                 return false;
-            if (a.entType != b.entType)
-                return false;
+            // We expect the EqualsTo implementation to check if a's type is equal to b's type
             return a.EqualsTo(b);
         }
-        public static bool operator !=(Entity a, Entity b) => !(a == b);
-
+        public static bool operator !=(Entity? a, Entity? b) => !(a == b);
+        public override bool Equals(object obj) => obj is Entity e && EqualsTo(e);
+        bool System.IEquatable<Entity>.Equals(Entity other) => EqualsTo(other);
+        public override int GetHashCode() => base.GetHashCode();
     }
 
     /// <summary>
@@ -111,9 +103,16 @@ namespace AngouriMath
     /// </summary>
     public partial class NumberEntity : Entity
     {
-        public NumberEntity(ComplexNumber value) : base(value.ToString(), EntType.NUMBER) 
+        public NumberEntity(ComplexNumber value) : base(value.ToString())
         {
-            Priority = Const.PRIOR_NUM;
+            if (value is RationalNumber && !(value is IntegerNumber))
+                Priority = Const.PRIOR_DIV;
+            else if (!value.Real.Value.IsZero && !value.Imaginary.Value.IsZero)
+                Priority = Const.PRIOR_SUM;
+            else if (value.Real < 0 || value.Imaginary < 0)
+                Priority = Const.PRIOR_MUL;
+            else
+                Priority = Const.PRIOR_NUM;
             Value = value;
         }
 
@@ -122,19 +121,31 @@ namespace AngouriMath
         /// </summary>
         public ComplexNumber Value { get; internal set; }
         public new string Name => Value.ToString();
-        public static implicit operator NumberEntity((double, double) num) => new NumberEntity(Number.Create(num.Item1, num.Item2));
-        public static implicit operator NumberEntity(Complex num) => new NumberEntity(Number.Create(num));
-        public static implicit operator NumberEntity(long num) => new NumberEntity(Number.Create(num));
-        public static implicit operator NumberEntity(float num) => new NumberEntity(Number.Create(num));
-        public static implicit operator NumberEntity(double num) => new NumberEntity(Number.Create(num));
-        public static implicit operator NumberEntity(int num) => new NumberEntity(Number.Create(num));
+        public static implicit operator NumberEntity(sbyte num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(byte num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(short num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(ushort num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(int num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(uint num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(long num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(ulong num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(float num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(double num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(decimal num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(EInteger num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(IntegerNumber num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(ERational num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(RationalNumber num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(EDecimal num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(RealNumber num) => new NumberEntity(num);
+        public static implicit operator NumberEntity(Complex num) => new NumberEntity(num);
         public static implicit operator NumberEntity(ComplexNumber num) => new NumberEntity(num);
 
         protected override Entity __copy()
         {
-            return new NumberEntity(Value.Copy());
+            // Numbers are immutable, no copying needed
+            return new NumberEntity(Value);
         }
-
     }
 
     /// <summary>
@@ -142,7 +153,7 @@ namespace AngouriMath
     /// </summary>
     public partial class VariableEntity : Entity
     {
-        public VariableEntity(string name) : base(name, EntType.VARIABLE) => Priority = Const.PRIOR_VAR;
+        public VariableEntity(string name) : base(name) => Priority = Const.PRIOR_VAR;
         public static implicit operator VariableEntity(string name) => new VariableEntity(name);
         protected override Entity __copy()
         {
@@ -155,7 +166,7 @@ namespace AngouriMath
     /// </summary>
     public partial class OperatorEntity : Entity
     {
-        public OperatorEntity(string name, int priority) : base(name, EntType.OPERATOR) {
+        public OperatorEntity(string name, int priority) : base(name) {
             Priority = priority;
         }
         protected override Entity __copy()
@@ -169,7 +180,7 @@ namespace AngouriMath
     /// </summary>
     public partial class FunctionEntity : Entity
     {
-        public FunctionEntity(string name) : base(name, EntType.FUNCTION) => Priority = Const.PRIOR_FUNC;
+        public FunctionEntity(string name) : base(name) => Priority = Const.PRIOR_FUNC;
         protected override Entity __copy()
         {
             return new FunctionEntity(Name);

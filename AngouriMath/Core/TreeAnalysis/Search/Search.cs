@@ -17,6 +17,7 @@
 
 ﻿using AngouriMath.Core.TreeAnalysis;
  using AngouriMath.Core.Sys.Interfaces;
+using System.Collections.Generic;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -38,7 +39,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             // If it is a variable, we will add it
             // 1 2 1 1 1 2 1
-            if (expr.entType == Entity.EntType.VARIABLE)
+            if (expr is VariableEntity)
             {
                 // But if it is a constant, we ignore it
                 if (!MathS.ConstantList.ContainsKey(expr.Name))
@@ -56,8 +57,10 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="originTree"></param>
         /// <param name="oldSubtree"></param>
         /// <param name="newSubtree"></param>
-        internal static void FindAndReplace(ref Entity originTree, Entity oldSubtree, Entity newSubtree)
+        internal static void FindAndReplace(ref Entity originTree, Entity? oldSubtree, Entity newSubtree)
         {
+            if (oldSubtree is null)
+                return;
             if (originTree == oldSubtree)
             {
                 originTree = newSubtree;
@@ -80,6 +83,20 @@ namespace AngouriMath.Core.TreeAnalysis
                     return true;
             return false;
         }
+
+        internal static IEnumerable<Entity> GetPatternEnumerator(Entity expr, Pattern p)
+        {
+            if (p.Match(expr) && p.EqFits(expr) != null)
+                yield return expr;
+
+            for (int i = 0; i < expr.Children.Count; i++)
+            {
+                foreach(var res in GetPatternEnumerator(expr.Children[i], p))
+                {
+                    yield return res;
+                }
+            }
+        }
     }
 }
 
@@ -91,15 +108,15 @@ namespace AngouriMath
         /// Finds a subtree in the tree
         /// </summary>
         /// <returns></returns>
-        public Entity FindSubtree(Entity subtree)
+        public Entity? FindSubtree(Entity subtree)
         {
             if (this == subtree)
                 return this;
             else
                 foreach (var child in Children)
                 {
-                    Entity found = child.FindSubtree(subtree);
-                    if (found != null)
+                    var found = child.FindSubtree(subtree);
+                    if (!(found is null))
                         return found;
                 }
             return null;
