@@ -45,7 +45,7 @@ namespace AngouriMath
                     // If parentheses are required, they might be only required when complicated numbers are wrapped,
                     // such as fractions and complex but not a single i
                     NumberEntity { Value:var value } => value.Latexise(Priority != Const.PRIOR_NUM && parenthesesRequired),
-                    _ => throw new Core.Exceptions.SysException("Unknown entity")
+                    _ => throw new Core.Exceptions.UnknownEntityException()
                 };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
@@ -297,6 +297,7 @@ namespace AngouriMath
                             OperatorSet.OperatorType.INTERSECTION => @"\cap",
                             OperatorSet.OperatorType.COMPLEMENT => @"\setminus",
                             OperatorSet.OperatorType.INVERSION => @"^\complement",
+                            _ => throw new Exceptions.UnknownOperatorException()
                         };
                         for(int i = 0; i < op.Children.Length; i++)
                         {

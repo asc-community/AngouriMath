@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -258,31 +258,11 @@ namespace AngouriMath
         protected override Entity __copy()
             => new Pattern(this.PatternNumber, patType, Condition, Name);
 
-        protected override bool EqualsTo(Entity obj)
-        {
-            // Actually, no need to implement
-            throw new SysException("@");
-        }
-        public override int GetHashCode()
-        {
-            // Actually, no need to implement
-            throw new SysException("@");
-        }
-        internal override Entity InnerEval()
-        {
-            // Actually, no need to implement
-            throw new SysException("@");
-        }
-        internal override Entity InnerSimplify()
-        {
-            // Actually, no need to implement
-            throw new SysException("@");
-        }
-        internal override void Check()
-        {
-            // Actually, no need to implement
-            throw new SysException("@");
-        }
+        protected override bool EqualsTo(Entity obj) => throw new NoNeedToImplementException();
+        public override int GetHashCode() => throw new NoNeedToImplementException();
+        internal override Entity InnerEval() => throw new NoNeedToImplementException();
+        internal override Entity InnerSimplify() => throw new NoNeedToImplementException();
+        internal override void Check() => throw new NoNeedToImplementException();
 
         public static Pattern operator +(Pattern a, Pattern b) => Sumf.PHang(a, b);
         public static Pattern operator +(Pattern a, Entity b) => Sumf.PHang(a, b);
