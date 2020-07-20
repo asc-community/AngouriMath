@@ -167,12 +167,15 @@ namespace AngouriMath
         }
 
         /// <summary>
-        /// Simplification synonim. Recommended to use in case of computing a 
-        /// concrete number.
+        /// Simplification synonym. Recommended to use in case of computing a concrete number.
         /// </summary>
         /// <returns>
-        /// Number since new version
+        /// <see cref="ComplexNumber"/> since new version
         /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when this entity cannot be represented as a simple number.
+        /// <see cref="MathS.CanBeEvaluated(Entity)"/> should be used to check beforehand.
+        /// </exception>
         public ComplexNumber Eval() =>
             SubstituteConstants().InnerEval() is NumberEntity { Value:var value } ? value : 
                 throw new InvalidOperationException
