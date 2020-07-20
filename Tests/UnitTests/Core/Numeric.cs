@@ -1,4 +1,4 @@
-﻿using AngouriMath;
+using AngouriMath;
 using AngouriMath.Core.Numerix;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -135,6 +135,46 @@ namespace UnitTests.Core
         [TestMethod]
         public void TestWithUndefined14() =>
             Assert.AreEqual(RealNumber.NegativeInfinity, RealNumber.NegativeInfinity / 5);
+
+        [TestMethod]
+        public void TestWithUndefined15() =>
+            Assert.AreEqual(RealNumber.NaN, RealNumber.NegativeInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined16() =>
+            Assert.AreEqual(RealNumber.NaN, RealNumber.PositiveInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined17() =>
+            Assert.AreEqual(RealNumber.NaN, RealNumber.NaN / 0);
+
+        [TestMethod]
+        public void TestWithUndefined18() =>
+            Assert.AreEqual(RealNumber.NaN, RealNumber.Create(MathS.DecimalConst.pi) / 0);
+
+        [TestMethod]
+        public void TestWithUndefined19() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.PosPosInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined20() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.PosNegInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined21() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.NegPosInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined22() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.NegNegInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined23() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.ImaginaryOne / 0);
+
+        [TestMethod]
+        public void TestWithUndefined24() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.Create(2.13m, 4.21m) / 0);
 
         [TestMethod]
         public void TestComplexDowncasting()

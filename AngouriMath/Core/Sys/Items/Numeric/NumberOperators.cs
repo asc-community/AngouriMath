@@ -43,7 +43,7 @@ namespace AngouriMath.Core.Numerix
         internal static EDecimal CtxMultiply(EDecimal a, EDecimal b)
             => a.Multiply(b, MathS.Settings.DecimalPrecisionContext);
         internal static EDecimal CtxDivide(EDecimal a, EDecimal b)
-            => a.DivideToExponent(b, -MathS.Settings.DecimalPrecisionContext.Value.Precision);
+            => b.IsZero ? EDecimal.NaN : a.DivideToExponent(b, -MathS.Settings.DecimalPrecisionContext.Value.Precision);
         internal static EDecimal CtxMod(EDecimal a, EDecimal b)
             => a.Remainder(b, MathS.Settings.DecimalPrecisionContext);
         internal static EDecimal CtxPow(EDecimal a, EDecimal b)
