@@ -10,7 +10,6 @@ namespace AngouriMathPlot
     public class AMPlotter
     {
         private readonly FormsPlot destination;
-        private List<FastExpression>? functions;
         private double[] dataX = Array.Empty<double>();
         private double[] dataY = Array.Empty<double>();
         private int pointCount;
