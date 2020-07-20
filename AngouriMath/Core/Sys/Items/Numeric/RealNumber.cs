@@ -19,12 +19,12 @@ using PeterO.Numbers;
 [assembly: InternalsVisibleTo("DotnetBenchmark")]
 namespace AngouriMath.Core.Numerix
 {
-    public partial class RealNumber : ComplexNumber, System.IEquatable<RealNumber>
+    public partial class RealNumber : ComplexNumber, System.IEquatable<RealNumber>, System.IComparable<RealNumber>
     {
         /// <summary>
         /// The exact value of the number
         /// </summary>
-        public new EDecimal Value { get; }
+        public EDecimal Value { get; }
         /// <summary>
         /// Does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting
         /// </summary>
@@ -116,6 +116,7 @@ namespace AngouriMath.Core.Numerix
         public static bool operator >=(RealNumber a, RealNumber b) => EDecimalWrapper.IsGreaterOrEqual(a.Value, b.Value);
         public static bool operator <(RealNumber a, RealNumber b) => EDecimalWrapper.IsLess(a.Value, b.Value);
         public static bool operator <=(RealNumber a, RealNumber b) => EDecimalWrapper.IsLessOrEqual(a.Value, b.Value);
+        public int CompareTo(RealNumber other) => Value.CompareTo(other.Value);
         public static RealNumber operator +(RealNumber a, RealNumber b) => OpSum(a, b);
         public static RealNumber operator -(RealNumber a, RealNumber b) => OpSub(a, b);
         public static RealNumber operator *(RealNumber a, RealNumber b) => OpMul(a, b);

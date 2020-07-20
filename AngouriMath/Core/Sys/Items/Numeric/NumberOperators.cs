@@ -45,22 +45,11 @@ namespace AngouriMath.Core.Numerix
         internal static EDecimal CtxDivide(EDecimal a, EDecimal b)
             => a.DivideToExponent(b, -MathS.Settings.DecimalPrecisionContext.Value.Precision);
         internal static EDecimal CtxMod(EDecimal a, EDecimal b)
-            => a.RemainderNoRoundAfterDivide(b, MathS.Settings.DecimalPrecisionContext);
+            => a.Remainder(b, MathS.Settings.DecimalPrecisionContext);
         internal static EDecimal CtxPow(EDecimal a, EDecimal b)
             => a.Pow(b, MathS.Settings.DecimalPrecisionContext);
-
-        public static RealNumber Max(params RealNumber[] nums)
-            => nums.Length == 1 ? nums[0] : InternalMax(nums[0], Max(new ArraySegment<RealNumber>(nums, 1, nums.Length - 1).ToArray()));
-
-        public static RealNumber Min(params RealNumber[] nums)
-            => nums.Length == 1 ? nums[0] : InternalMin(nums[0], Min(new ArraySegment<RealNumber>(nums, 1, nums.Length - 1).ToArray()));
-
-        private static RealNumber InternalMax(RealNumber a, RealNumber b)
-            => a > b ? a : b;
-
-        private static RealNumber InternalMin(RealNumber a, RealNumber b)
-            => a < b ? a : b;
-
+        internal static T Min<T>(T a, T b) where T : RealNumber => a < b ? a : b;
+        internal static T Max<T>(T a, T b) where T : RealNumber => a > b ? a : b;
         internal static T OpSum<T>(T a, T b) where T : Number =>
             SuperSwitch(a, b,
                 (a, b) => IntegerNumber.Create(CtxAdd(a.Value, b.Value)),
