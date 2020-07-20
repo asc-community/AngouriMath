@@ -193,12 +193,16 @@ namespace AngouriMath
         ///               
         /// ( 1 2 ) x ( 1 3 ) => ( 1 6 ) Vectors pointwise
         /// </summary>
-        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when this entity cannot be represented as a tensor.
+        /// <see cref="IsTensoric"/> should be used to check beforehand.
+        /// </exception>
         public Tensor EvalTensor()
         {
             if (!IsTensoric())
-                throw new MathSException(
-                    "To eval an expression as a tensor, it should contain at least one tensor (matrix, vector)");
+                throw new InvalidOperationException(
+                    "To evaluate an expression as a tensor, it should contain at least one tensor (including matrices and vectors). " +
+                    $"Use {nameof(IsTensoric)} to check beforehand.");
             if (this is Tensor result)
             {
                 TensorFunctional.Apply(result, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
