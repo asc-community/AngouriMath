@@ -356,8 +356,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
             if (ReduceCommonPower(ref monomialsByPower)) // x5 + x3 + x2 - common power is 2, one root is 0, then x3 + x + 1
                 res.Add(0);
-            var powers = new List<EInteger>(monomialsByPower.Keys);
-            var gcdPower = Utils.GCD(powers.ToArray());
+            var powers = monomialsByPower.Keys.ToList();
+            var gcdPower = powers.Aggregate((accumulate, current) => accumulate.Gcd(current));
             // // //
 
 
