@@ -177,7 +177,7 @@ namespace AngouriMath
                 var str = @"\sqrt" + (denominator.Equals(2) ? "" : "[" + denominator + "]") + 
                   "{" + args[0].Latexise() + "}";
                 var abs = numerator.Abs();
-                if (!EDecimalWrapper.IsEqual(abs, EInteger.One))
+                if (!abs.Equals(EInteger.One))
                     str += "^{" + abs + "}";
                 if (numerator < 0)
                     str = @"\frac{1}{" + str + "}";

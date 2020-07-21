@@ -37,7 +37,7 @@ namespace AngouriMath
                 while (end - begin > 1)
                 {
                     var mid = (end + begin) / 2;
-                    if (EDecimalWrapper.IsGreater(table[mid].arg, dArg))
+                    if (table[mid].arg.GreaterThan(dArg))
                         begin = mid;
                     else
                         end = mid;

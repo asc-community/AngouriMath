@@ -43,7 +43,7 @@ namespace AngouriMath.Core.Numerix
         /// <returns></returns>
         public static bool IsZero(EDecimal num)
         {
-            return EDecimalWrapper.IsLess(num.Abs(), MathS.Settings.PrecisionErrorZeroRange);
+            return num.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange);
         }
 
         /// <summary>
@@ -62,7 +62,7 @@ namespace AngouriMath.Core.Numerix
         {
             internal static bool IsZero(EDecimal value)
             {
-                return EDecimalWrapper.IsLessOrEqual(value.Abs(), MathS.Settings.PrecisionErrorZeroRange);
+                return value.Abs().LessThanOrEquals(MathS.Settings.PrecisionErrorZeroRange);
             }
 
             public static ComplexNumber BinaryIntPow(ComplexNumber num, EInteger val)

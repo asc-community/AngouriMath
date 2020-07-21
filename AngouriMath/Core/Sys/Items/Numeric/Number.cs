@@ -200,22 +200,4 @@ namespace AngouriMath.Core.Numerix
     {
         public UniverseCollapseException() : base("Universe collapse!") { }
     }
-
-    internal static class EDecimalWrapper
-    {
-        internal static bool IsGreater(EDecimal a, EDecimal b)
-            => a.CompareTo(b) == 1;
-
-        internal static bool IsLess(EDecimal a, EDecimal b)
-            => a.CompareTo(b) == -1;
-
-        internal static bool IsEqual(EDecimal a, EDecimal b)
-            => a.CompareTo(b) == 0;
-
-        internal static bool IsGreaterOrEqual(EDecimal a, EDecimal b)
-            => IsGreater(a, b) || IsEqual(a, b);
-
-        internal static bool IsLessOrEqual(EDecimal a, EDecimal b)
-            => IsLess(a, b) || IsEqual(a, b);
-    }
 }
