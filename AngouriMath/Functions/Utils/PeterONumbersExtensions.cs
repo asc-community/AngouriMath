@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Based on https://github.com/raminrahimzada/CSharp-Helper-Classes/blob/ffbb33c1ee90ce12357c72fa65f2510a09834693/Math/DecimalMath/DecimalMath.cs
+
+using System;
 using System.Collections.Generic;
 using System.Text;
 using PeterO.Numbers;
@@ -8,7 +10,7 @@ namespace AngouriMath
     // Default visibility for classes is internal so we can use public for methods as we like
     static class PeterONumbersExtensions
     {
-        class ConstantCache
+        public class ConstantCache
         {
             public static ConstantCache Lookup(EContext context)
             {
@@ -22,28 +24,28 @@ namespace AngouriMath
             static Dictionary<EContext, ConstantCache> Constants { get; } = new Dictionary<EContext, ConstantCache>();
             ConstantCache(EContext context)
             {
+                Half = EDecimal.One.Divide(2, context);
                 Pi = EDecimal.PI(context);
                 TwoPi = Pi.Multiply(2, context);
-                HalfPi = Pi.Divide(2, context);
-                QuarterPi = HalfPi.Divide(2, context);
+                HalfPi = Pi.Multiply(Half, context);
+                QuarterPi = HalfPi.Multiply(Half, context);
                 E = EDecimal.One.Exp(context);
-                InvertedE = EDecimal.One.Divide(E, context);
-                Half = EDecimal.One.Divide(2, context);
+                Ln2 = EDecimal.FromInt32(2).Log(context);
             }
-            /// <summary>represents <see cref="Math.PI"/></summary>
+            /// <summary>Represents <see cref="Math.PI"/></summary>
             public EDecimal Pi { get; }
-            /// <summary>represents 2*<see cref="Math.PI"/></summary>
+            /// <summary>Represents 2 * <see cref="Math.PI"/></summary>
             public EDecimal TwoPi { get; }
-            /// <summary>represents <see cref="Math.PI"/>/2</summary>
+            /// <summary>Represents <see cref="Math.PI"/> / 2</summary>
             public EDecimal HalfPi { get; }
-            /// <summary>represents <see cref="Math.PI"/>/4</summary>
+            /// <summary>Represents <see cref="Math.PI"/> / 4</summary>
             public EDecimal QuarterPi { get; }
-            /// <summary>represents <see cref="Math.E"/></summary>
+            /// <summary>Represents <see cref="Math.E"/></summary>
             public EDecimal E { get; }
-            /// <summary>represents 1/<see cref="Math.E"/></summary>
-            public EDecimal InvertedE { get; }
-            /// <summary>represents 0.5</summary>
+            /// <summary>Represents 0.5</summary>
             public EDecimal Half { get; }
+            /// <summary>Represents ln(2)</summary>
+            public EDecimal Ln2 { get; }
         }
 
         // https://en.wikipedia.org/wiki/Least_common_multiple#Using_the_greatest_common_divisor
@@ -53,8 +55,12 @@ namespace AngouriMath
             return bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
         }
         /// <summary>Max iterations count in Taylor series</summary>
-        const int MaxIteration = 100;
+        /// <remarks>Defined as 100 originally, here we experimentally do not put a limit on the Taylor series</remarks>
+        const int MaxIteration = int.MaxValue;
 
+        /// <summary>Use until https://github.com/peteroupc/Numbers/issues/15 is fixed</summary>
+        public static bool EqualsBugFix(this EDecimal bigDecimalOne, EDecimal bigDecimalTwo) =>
+            bigDecimalOne.CompareTo(bigDecimalTwo) == 0;
         public static bool GreaterThan(this EDecimal bigDecimalOne, EDecimal bigDecimalTwo) =>
             bigDecimalOne.CompareTo(bigDecimalTwo) > 0;
         public static bool GreaterThanOrEquals(this EDecimal bigDecimalOne, EDecimal bigDecimalTwo) =>
@@ -87,7 +93,7 @@ namespace AngouriMath
             var xx = -x.Multiply(consts.Half, context);
             var y = xx.Increment();
             var cachedY = y.Decrement();//init cache  with different value
-            for (var i = 1; !cachedY.Equals(y) && i < MaxIteration; i++)
+            for (var i = 1; !cachedY.EqualsBugFix(y) && i < MaxIteration; i++)
             {
                 cachedY = y;
                 EDecimal factor = i * ((i << 1) + 3) + 1; //2i^2+2i+i+1=2i^2+3i+1
@@ -122,8 +128,7 @@ namespace AngouriMath
                 if (!x.IsNegative && x.LessThanOrEquals(consts.Pi)) return true;
                 if (x.GreaterThanOrEquals(consts.Pi) && x.LessThanOrEquals(consts.TwoPi)) return false;
 
-                //will not be reached
-                throw new ArgumentOutOfRangeException(nameof(x));
+                throw new Core.Exceptions.SysException("Should not be reached");
             }
             var moduleOfSin = cos.MultiplyAndAdd(-cos, EDecimal.One, context).Sqrt(context);
             var sineIsPositive = IsSignOfSinePositive(x, consts, context);
@@ -139,7 +144,7 @@ namespace AngouriMath
         }
 
 
-        /// <summary>Truncates <paramref name="x"/> to [-2*PI;2*PI] </summary>
+        /// <summary>Truncates <paramref name="x"/> to [-2*<see cref="Math.PI"/>, 2*<see cref="Math.PI"/>] </summary>
         private static void TruncateToPeriodicInterval(ref EDecimal x, ConstantCache consts, EContext context)
         {
             while (x.GreaterThanOrEquals(consts.TwoPi))
@@ -148,12 +153,92 @@ namespace AngouriMath
                 x = divide.MultiplyAndAdd(-consts.TwoPi, x, context);
             }
 
-            while (x.LessThanOrEquals(consts.TwoPi))
+            while (x.LessThanOrEquals(-consts.TwoPi))
             {
                 EDecimal divide = x.Divide(consts.TwoPi, context).ToEInteger().Abs();
                 x = divide.MultiplyAndAdd(consts.TwoPi, x, context);
             }
         }
+
+        /// <summary>Analogy of <see cref="Math.Asin(double)"/></summary>
+        public static EDecimal Asin(this EDecimal x, EContext context)
+        {
+            if (x.GreaterThan(EDecimal.One) || x.LessThan(-EDecimal.One))
+                throw new ArgumentException("x must be in [-1,1]", nameof(x));
+            var consts = ConstantCache.Lookup(context);
+
+            //known values
+            if (x.IsZero) return x;
+            if (x.EqualsBugFix(EDecimal.One)) return consts.HalfPi;
+            //asin function is odd function
+            if (x.IsNegative) return -Asin(-x, context);
+
+            //my optimize trick here
+
+            // used a math formula to speed up :
+            // asin(x)=0.5*(pi/2-asin(1-2*x*x)) 
+            // if x>=0 is true
+
+            var newX = x.Multiply(-2, context).MultiplyAndAdd(x, EDecimal.One, context);
+
+            //for calculating new value near to zero than current
+            //because we gain more speed with values near to zero
+            if (x.Abs().GreaterThan(newX.Abs()))
+            {
+                var t = Asin(newX, context);
+                return consts.Half.Multiply(consts.HalfPi.Subtract(t, context), context);
+            }
+            var result = x;
+            EDecimal cachedResult;
+            var i = 1;
+            var y = result;
+            var xx = x.Multiply(x, context);
+            do
+            {
+                cachedResult = result;
+                result = consts.Half.Divide(-i, context).Increment().Multiply(xx, context).Multiply(result, context);
+                y = result.Divide((i << 1) + 1, context).Add(y, context);
+                i++;
+            } while (!cachedResult.EqualsBugFix(result));
+            return y;
+        }
+
+        /// <summary>Analogy of <see cref="Math.Atan(double)"/></summary>
+        public static EDecimal Atan(this EDecimal x, EContext context)
+        {
+            var consts = ConstantCache.Lookup(context);
+            if (x.IsZero) return x;
+            if (x.EqualsBugFix(EDecimal.One)) return consts.QuarterPi;
+            return Asin(x.Divide(x.MultiplyAndAdd(x, EDecimal.One, context).Sqrt(context), context), context);
+        }
+        /// <summary>Analogy of <see cref="Math.Acos(double)"/></summary>
+        public static EDecimal Acos(this EDecimal x, EContext context)
+        {
+            var consts = ConstantCache.Lookup(context);
+            if (x.IsZero) return consts.HalfPi;
+            if (x.EqualsBugFix(EDecimal.One)) return EDecimal.Zero;
+            if (x.IsNegative) return consts.Pi.Subtract(Acos(-x, context), context);
+            return consts.HalfPi.Subtract(Asin(x, context), context);
+        }
+
+        /// <summary>
+        /// Analogy of <see cref="Math.Atan2(double, double)"/> for more see this
+        /// <seealso cref="http://i.imgur.com/TRLjs8R.png"/>
+        /// </summary>
+        public static EDecimal Atan2(this EDecimal y, EDecimal x, EContext context)
+        {
+            var consts = ConstantCache.Lookup(context);
+            return (x.Sign, y.Sign) switch
+            {
+                (1, _) => Atan(y.Divide(x, context), context),
+                (-1, -1) => Atan(y.Divide(x, context), context).Subtract(consts.Pi, context),
+                (-1, _) => Atan(y.Divide(x, context), context).Add(consts.Pi, context),
+                (0, 1) => consts.HalfPi,
+                (0, -1) => -consts.HalfPi,
+                _ => throw new ArgumentException("Invalid atan2 arguments"),
+            };
+        }
+
 
         /// <summary>Analogy of <see cref="Math.Sinh(double)"/></summary>
         public static EDecimal Sinh(this EDecimal x, EContext context)
@@ -177,91 +262,6 @@ namespace AngouriMath
             var y = x.Exp(context);
             var yy = EDecimal.One.Divide(y, context);
             return y.Subtract(yy, context).Divide(y.Add(yy, context), context);
-        }
-
-        /// <summary>Analogy of <see cref="Math.Asin(double)"/></summary>
-        public static EDecimal Asin(this EDecimal x, EContext context)
-        {
-            if (x.GreaterThan(EDecimal.One) || x.LessThan(-EDecimal.One))
-            {
-                throw new ArgumentException("x must be in [-1,1]", nameof(x));
-            }
-            var consts = ConstantCache.Lookup(context);
-
-            //known values
-            if (x.IsZero) return x;
-            if (x.Equals(EDecimal.One)) return consts.HalfPi;
-            //asin function is odd function
-            if (x.IsNegative) return -Asin(-x, context);
-
-            //my optimize trick here
-
-            // used a math formula to speed up :
-            // asin(x)=0.5*(pi/2-asin(1-2*x*x)) 
-            // if x>=0 is true
-
-            var newX = x.Multiply(-2, context).MultiplyAndAdd(x, EDecimal.One, context);
-
-            //for calculating new value near to zero than current
-            //because we gain more speed with values near to zero
-            if (x.Abs().LessThan(newX.Abs()))
-            {
-                var t = Asin(newX, context);
-                return consts.Half.Multiply(consts.HalfPi.Subtract(t, context), context);
-            }
-            var result = x;
-            EDecimal cachedResult;
-            var i = 1;
-            var y = result;
-            var xx = x.Multiply(x, context);
-            do
-            {
-                cachedResult = result;
-                result = consts.Half.Divide(-i, context).Increment().Multiply(xx, context).Multiply(result, context);
-                y = result.Divide((i << 1) + 1, context).Add(y, context);
-                i++;
-            } while (!cachedResult.Equals(result));
-            return y;
-        }
-
-        /// <summary>Analogy of <see cref="Math.Atan(double)"/></summary>
-        public static EDecimal Atan(this EDecimal x, EContext context)
-        {
-            var consts = ConstantCache.Lookup(context);
-            if (x.IsZero) return x;
-            if (x.Equals(EDecimal.One)) return consts.QuarterPi;
-            return Asin(x.Divide(x.MultiplyAndAdd(x, EDecimal.One, context).Sqrt(context), context), context);
-        }
-        /// <summary>
-        /// Analogy of Math.Acos
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        public static EDecimal Acos(this EDecimal x, EContext context)
-        {
-            var consts = ConstantCache.Lookup(context);
-            if (x.IsZero) return consts.HalfPi;
-            if (x.Equals(EDecimal.One)) return EDecimal.Zero;
-            if (x.IsNegative) return consts.Pi.Subtract(Acos(-x, context), context);
-            return consts.HalfPi.Subtract(Asin(x, context), context);
-        }
-
-        /// <summary>
-        /// Analogy of <see cref="Math.Atan2(double, double)"/> for more see this
-        /// <seealso cref="http://i.imgur.com/TRLjs8R.png"/>
-        /// </summary>
-        public static EDecimal Atan2(this EDecimal y, EDecimal x, EContext context)
-        {
-            var consts = ConstantCache.Lookup(context);
-            return (x.Sign, y.Sign) switch
-            {
-                (1, _) => Atan(y.Divide(x, context), context),
-                (-1, -1) => Atan(y.Divide(x, context), context).Subtract(consts.Pi, context),
-                (-1, _) => Atan(y.Divide(x, context), context).Add(consts.Pi, context),
-                (0, 1) => consts.HalfPi,
-                (0, -1) => -consts.HalfPi,
-                _ => throw new ArgumentException("Invalid atan2 arguments"),
-            };
         }
     }
 }

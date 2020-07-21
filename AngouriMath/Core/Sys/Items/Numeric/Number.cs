@@ -113,7 +113,7 @@ namespace AngouriMath.Core.Numerix
             var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
                 var res = new Set();
-                EDecimal phi = (Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Real.Value;
+                EDecimal phi = (Ln(value / value.Abs()) / MathS.i).Real.Value;
                 if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
                     phi = EDecimal.Zero;
 
@@ -124,7 +124,7 @@ namespace AngouriMath.Core.Numerix
                 {
                     EDecimal newPow = CtxAdd(CtxDivide(phi, rootPower),
                         CtxDivide(CtxMultiply(CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
-                    var root = newMod.ToNumber() * Pow(MathS.DecimalConst.e, i * newPow.ToNumber());
+                    var root = newMod * Exp(i * newPow);
                     res.Add(root);
                 }
                 return res;

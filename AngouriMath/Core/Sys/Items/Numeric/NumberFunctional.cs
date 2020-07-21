@@ -73,7 +73,8 @@ namespace AngouriMath.Core.Numerix
                     return num;
                 if (val.Equals(-1))
                     return 1 / num;
-                return BinaryIntPow(num, val / 2) * BinaryIntPow(num, val / 2) * BinaryIntPow(num, val % 2);
+                var divRem = val.DivRem(2); // divRem[0] == val / 2, divRem[1] == val % 2
+                return BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[1]);
             }
         }
     }
