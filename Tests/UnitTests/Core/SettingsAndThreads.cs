@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using AngouriMath;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
@@ -89,6 +90,31 @@ namespace UnitTests.Core
             }
             for (int i = 0; i < threads.Length; i++)
                 threads[i].Join();
+        }
+
+        [TestMethod]
+        public void WithExceptionInside()
+        {
+            MathS.Settings.MaxExpansionTermCount.As(500,
+                () =>
+                {
+                    Assert.AreEqual(MathS.Settings.MaxExpansionTermCount.Value, 500);
+                    try
+                    {
+                        MathS.Settings.MaxExpansionTermCount.As(300, () =>
+                        {
+                            // something happens
+                            throw new ArgumentNullException(); // some random exception
+                        });
+                        Assert.Fail("An exception should occur above");
+                    }
+                    catch
+                    {
+                        // should be kept as 500
+                        Assert.AreEqual(500, MathS.Settings.MaxExpansionTermCount.Value);
+                    }
+                }
+            );
         }
     }
 }
