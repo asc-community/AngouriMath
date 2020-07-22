@@ -61,7 +61,7 @@ namespace AngouriMath
             => EquationSolver.Solve(equation, var);
 
         /// <summary>
-        /// Will be soon!
+        /// Will be added soon!
         /// Solves an inequality numerically
         /// </summary>
         /// <param name="inequality">
@@ -590,8 +590,9 @@ namespace AngouriMath
             /// To return to
             /// </param>
             /// <returns>
-            /// true if success
-            /// false otherwise (do not access dst in this case, it's undefined)
+            /// <see langword="true"/> if success,
+            /// <see langword="false"/> otherwise
+            /// (do not access <paramref name="dst"/> in this case, it's undefined)
             /// </returns>
             public static bool TryPolynomial(Entity expr, VariableEntity variable,
                 [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
@@ -601,8 +602,9 @@ namespace AngouriMath
 
             /// <summary>
             /// Checks tree for some unexpected bad occasions
-            /// Throws SysException's children
+            /// Throws <see cref="Core.Exceptions.SysException"/>'s children
             /// If you need a message, it's better to write
+            /// <code>
             /// try
             /// {
             ///     MathS.CheckTree(a);
@@ -611,9 +613,8 @@ namespace AngouriMath
             /// {
             ///     Console.WriteLine(e.Message);
             /// }
+            /// </code>
             /// </summary>
-            /// <param name="expr"></param>
-            /// <returns></returns>
             public static void CheckTree(Entity expr) 
                 => TreeAnalyzer.CheckTree(expr);
 

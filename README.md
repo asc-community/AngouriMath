@@ -1,12 +1,16 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/1e172cdf699645b59567032dd1ae5cab)](https://www.codacy.com/manual/Angourisoft/MathS?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Angourisoft/MathS&amp;utm_campaign=Badge_Grade)
+![Test](https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg)
 ![Nuget](https://img.shields.io/nuget/dt/AngouriMath?color=blue&label=NuGet%20installs&logoColor=blue)
 ![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)
 
-[Nuget](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository")
+
+[NuGet](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository")
 
 ## AngouriMath
 AngouriMath is a cross-platform open-source library that enables to work with non-linear 
 multi-variable expressions. Written in C#.
+
+Reach the main contributor on discord: Oryp4ik#0120. 
 
 README navigation:
 - [Installation](#inst)

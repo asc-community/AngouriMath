@@ -20,13 +20,12 @@
 #pragma warning disable 419
 
 
-    using System;
-    using System.Linq;
-    using System.Collections;
-    using AngouriMath;
-    using AngouriMath.Core;
-    using AngouriMath.Core.Numerix;
-    using System.Globalization;
+using System.Linq;
+using System.Collections;
+using AngouriMath;
+using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
+using System.Globalization;
 
 using System;
 using System.IO;
@@ -88,6 +87,7 @@ public partial class AngourimathParser : Parser {
 	}
 
 
+	    // Nullable reference type analysis is disabled by default for generated code without '#nullable enable'
 	    public Entity Result = null;
 	    
 	    public void Parse() { this.statement(); }

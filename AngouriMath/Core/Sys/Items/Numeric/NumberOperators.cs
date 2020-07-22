@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -27,7 +27,7 @@ namespace AngouriMath.Core.Numerix
         internal static EInteger CtxSubtract(EInteger a, EInteger b) => a.Subtract(b);
         internal static EInteger CtxMultiply(EInteger a, EInteger b) => a.Multiply(b);
         internal static ERational? CtxDivide(EInteger a, EInteger b) =>
-            b.IsZero ? null : new ERational(a, b);
+            b.IsZero ? null : ERational.Create(a, b);
         internal static EInteger CtxMod(EInteger a, EInteger b) => a.Remainder(b);
         internal static EInteger CtxPow(EInteger a, EInteger b) => a.Pow(b);
         internal static ERational CtxAdd(ERational a, ERational b) => a.Add(b);

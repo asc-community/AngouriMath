@@ -173,7 +173,15 @@ namespace AngouriMath.Functions
             currValue = value;
             lock (currValue) // TODO: it is probably impossible to access currValue from another thread since it's ThreadStatic
             {
-                action();
+                try
+                {
+                    action();
+                }
+                catch (Exception)
+                {
+                    currValue = previousValue;
+                    throw;
+                }
             }
             currValue = previousValue;
         }
@@ -196,7 +204,15 @@ namespace AngouriMath.Functions
             TReturnType result;
             lock (currValue) // TODO: it is probably impossible to access currValue from another thread since it's ThreadStatic
             {
-                result = action();
+                try
+                {
+                    result = action();
+                }
+                catch
+                {
+                    currValue = previousValue;
+                    throw;
+                }
             }
             currValue = previousValue;
             return result;
