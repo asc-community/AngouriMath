@@ -148,13 +148,6 @@ namespace AngouriMath.Functions
                 i++;
             return new VariableEntity(prefix + "_" + i);
         }
-
-        // https://en.wikipedia.org/wiki/Least_common_multiple#Using_the_greatest_common_divisor
-        internal static EInteger Lcm(this EInteger bigintFirst, EInteger bigintSecond)
-        {
-            if (bigintFirst.IsZero && bigintSecond.IsZero) return EInteger.Zero;
-            return bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
-        }
     }
 
     public class Setting<T> where T : notnull

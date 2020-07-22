@@ -94,7 +94,8 @@ namespace AngouriMath.Core.Numerix
             else if (Real.IsFinite && Real == IntegerNumber.Zero)
                 return RenderNum(Imaginary) + "i";
             var (l, r) = Imaginary is RationalNumber && !(Imaginary is IntegerNumber) ? ("(", ")") : ("", "");
-            return Real.ToString() + " + " + l + RenderNum(Imaginary) + r + "i";
+            var (im, sign) = Imaginary > 0 ? (Imaginary, "+") : (-Imaginary, "-");
+            return Real.ToString() + " " + sign + " " + l + RenderNum(im) + r + "i";
         }
 
         protected internal override string InternalLatexise()
@@ -117,20 +118,21 @@ namespace AngouriMath.Core.Numerix
                 (im == 1 ? "" : im.Latexise(Imaginary is RationalNumber && !(Imaginary is IntegerNumber))) + "i";
         }
 
-        /// <summary>
-        /// Returns conjugate of a complex number
-        /// Given this = a + ib, Conjugate() -> a - ib
-        /// </summary>
-        /// <returns>
-        /// Conjugate of the number
-        /// </returns>
+        /// <summary>Returns conjugate of a complex number. Given this = a + ib, Conjugate() -> a - ib</summary>
+        /// <returns>Conjugate of the number</returns>
         public ComplexNumber Conjugate() => Create(Real, -Imaginary);
 
-        /// <summary>See <see cref="Number.Abs(ComplexNumber)"/></summary>
+        /// <summary>The magnitude of this <see cref="ComplexNumber"/>. See <see cref="Number.Abs(ComplexNumber)"/></summary>
         public virtual RealNumber Abs() =>
-            // We don't use RationalNumber.Create(1, 2) because in GetAllRoots, FloatToRationalIterCount is set to 0
-            // so that we don't recurse into the rational power case of Pow causing a stack overflow
-            (RealNumber)Pow(Real.Value * Real.Value + Imaginary.Value * Imaginary.Value, RealNumber.Create(0.5m));
+            (RealNumber)Sqrt(Real.Value * Real.Value + Imaginary.Value * Imaginary.Value);
+
+        public RealNumber Phase() => Imaginary.Value.Atan2(Real.Value, MathS.Settings.DecimalPrecisionContext);
+
+        public static ComplexNumber CreatePolar(EDecimal magnitude, EDecimal phase)
+        {
+            var context = MathS.Settings.DecimalPrecisionContext;
+            return Create(magnitude.Multiply(phase.Cos(context), context), magnitude.Multiply(phase.Sin(context), context));
+        }
 
         /// <summary>-oo + -ooi</summary>
         public static readonly ComplexNumber NegNegInfinity =

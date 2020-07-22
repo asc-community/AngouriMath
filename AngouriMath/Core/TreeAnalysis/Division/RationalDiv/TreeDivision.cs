@@ -96,10 +96,10 @@ namespace AngouriMath.Core.TreeAnalysis
 
             // TODO: add case where all powers are non-positive
             // for now just return polynomials unchanged
-            if (EDecimalWrapper.IsLess(maxpowP, maxpowQ)) return originalP / originalQ;
+            if (maxpowP.LessThan(maxpowQ)) return originalP / originalQ;
 
             // possibly very long process
-            while (EDecimalWrapper.IsGreaterOrEqual(maxpowP, maxpowQ))
+            while (maxpowP.GreaterThanOrEquals(maxpowQ))
             {
                 // KeyPair is ax^n with Key=n, Value=a
                 EDecimal deltapow = maxpowP - maxpowQ;

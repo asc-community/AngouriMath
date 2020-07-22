@@ -43,7 +43,7 @@ namespace AngouriMath.Core.Numerix
             var intPart = value.RoundToIntegerExact(MathS.Settings.DecimalPrecisionContext).ToEInteger();
             var intRest = CtxSubtract(value, intPart);
             // If the difference between value & round(value) is zero (see Number.IsZero), we consider value as an integer
-            if (EDecimalWrapper.IsLess(intRest.Abs(), MathS.Settings.PrecisionErrorZeroRange))
+            if (intRest.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
             {
                 return IntegerNumber.Create(intPart);
             }
@@ -112,10 +112,10 @@ namespace AngouriMath.Core.Numerix
         /// </summary>
         /// <returns></returns>
         public static readonly RealNumber NaN = new RealNumber(EDecimal.NaN);
-        public static bool operator >(RealNumber a, RealNumber b) => EDecimalWrapper.IsGreater(a.Value, b.Value);
-        public static bool operator >=(RealNumber a, RealNumber b) => EDecimalWrapper.IsGreaterOrEqual(a.Value, b.Value);
-        public static bool operator <(RealNumber a, RealNumber b) => EDecimalWrapper.IsLess(a.Value, b.Value);
-        public static bool operator <=(RealNumber a, RealNumber b) => EDecimalWrapper.IsLessOrEqual(a.Value, b.Value);
+        public static bool operator >(RealNumber a, RealNumber b) => a.Value.GreaterThan(b.Value);
+        public static bool operator >=(RealNumber a, RealNumber b) => a.Value.GreaterThanOrEquals(b.Value);
+        public static bool operator <(RealNumber a, RealNumber b) => a.Value.LessThan(b.Value);
+        public static bool operator <=(RealNumber a, RealNumber b) => a.Value.LessThanOrEquals(b.Value);
         public int CompareTo(RealNumber other) => Value.CompareTo(other.Value);
         public static RealNumber operator +(RealNumber a, RealNumber b) => OpSum(a, b);
         public static RealNumber operator -(RealNumber a, RealNumber b) => OpSub(a, b);

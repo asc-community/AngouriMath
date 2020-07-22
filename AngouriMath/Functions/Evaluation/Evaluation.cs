@@ -411,7 +411,7 @@ namespace AngouriMath
             var n = args[1].InnerEval();
             args = new List<Entity> { r, n };
             if (r is NumberEntity rn && n is NumberEntity nn)
-                return new NumberEntity(Number.Log(rn.Value.Real, nn.Value));
+                return new NumberEntity(Number.Log(rn.Value, nn.Value));
             else if (r == n)
                 return 1;
             else if (r == 1)
@@ -845,9 +845,9 @@ namespace AngouriMath
             var n = args[1].InnerSimplify();
 
             ComplexNumber? potentialResult = null;
-            if (!(r.__cachedEvaledValue is null) && !(n.__cachedEvaledValue is null) && r.__cachedEvaledValue is RealNumber real)
+            if (r.__cachedEvaledValue is { } && n.__cachedEvaledValue is { })
             {
-                potentialResult = Number.Log(real, n.__cachedEvaledValue);
+                potentialResult = Number.Log(r.__cachedEvaledValue, n.__cachedEvaledValue);
                 if (InnerSimplifyAdditionalFunctional.IsRationalComplex(potentialResult))
                     return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
             }
@@ -856,7 +856,7 @@ namespace AngouriMath
             args = new List<Entity> { r, n };
             if (r is NumberEntity { Value: var n1 } && n is NumberEntity { Value: var n2 })
             {
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Log(n1.Real, n2), MathS.Log(r, n), n1, n2);
+                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Log(n1, n2), MathS.Log(r, n), n1, n2);
             }
             else if (r == n)
                 result = 1;

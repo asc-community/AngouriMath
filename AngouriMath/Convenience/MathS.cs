@@ -292,9 +292,7 @@ namespace AngouriMath
         [Obsolete("Use Number.Create or implicit construction instead")]
         public static ComplexNumber Num(EDecimal a) => RealNumber.Create(a);
 
-        /// <summary>
-        /// List of public constants
-        /// </summary>
+        // List of public constants
         public static readonly VariableEntity e = "e";
         public static readonly ComplexNumber i = ComplexNumber.ImaginaryOne;
         public static readonly VariableEntity pi = "pi";
@@ -570,7 +568,8 @@ namespace AngouriMath
             /// <summary>
             /// Settings for EDecimal precisions of PeterO Numbers (https://github.com/peteroupc/Numbers)
             /// </summary>
-            public static Setting<EContext> DecimalPrecisionContext => GetCurrentOrDefault(ref decimalPrecisionContext,  new EContext(100, ERounding.HalfUp, -100, 100, false));
+            public static Setting<EContext> DecimalPrecisionContext =>
+                GetCurrentOrDefault(ref decimalPrecisionContext,  new EContext(100, ERounding.HalfUp, -100, 1000, false));
         }
 
         /// <summary>
@@ -717,17 +716,17 @@ namespace AngouriMath
                 => new OneElementPiece(element);
         }
 
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
+            Justification = "Lowercase constants as written in Mathamatics")]
         public static class DecimalConst
         {
-            /// <summary>
-            /// Pi constant
-            /// </summary>
-            public static readonly EDecimal pi = 3.14159_26535_89793_23846_26433m;
+            /// <summary>Pi constant</summary>
+            public static EDecimal pi =>
+                PeterONumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).Pi;
 
-            /// <summary>
-            /// E constant
-            /// </summary>
-            public static readonly EDecimal e  = 2.71828_18284_59045_23536_02874m;
+            /// <summary>E constant</summary>
+            public static EDecimal e =>
+                PeterONumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
         }
     }
 }

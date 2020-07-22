@@ -150,7 +150,7 @@ public class TestGenerator {
         return BuildTests(funcName, Arrays.asList(), Arrays.asList());
     }
 
-    public static String BuildTests(String funcName, List<Integer> areMoreImprecise, List<Integer> toIgnore)
+    public static String BuildTests(String funcName)
     {
         var sb = new StringBuilder();
 
@@ -165,16 +165,11 @@ public class TestGenerator {
             sb.append(tab2); sb.append("[TestMethod]\n");
             sb.append(tab2); sb.append("public void "); sb.append(funcName); sb.append(i); sb.append("Test()\n");
             sb.append(tab2); sb.append("{\n");
-            sb.append(tab3); sb.append("MathS.Settings.PrecisionErrorZeroRange.As(1e-");
-            if (areMoreImprecise.contains(i)) sb.append("11"); else sb.append("9");
-            sb.append("m, () =>\n");
-            sb.append(tab3); sb.append("{\n");
-            sb.append(tab4); sb.append("var toSimplify = MathS."); sb.append(funcName);
+            sb.append(tab3); sb.append("var toSimplify = MathS."); sb.append(funcName);
             sb.append("(2 * MathS.pi / "); sb.append(i); sb.append(");\n");
-            sb.append(tab4); sb.append("var expected = toSimplify.Eval();\n");
-            sb.append(tab4); sb.append("var real = toSimplify.Simplify().Eval();\n");
-            sb.append(tab4); sb.append("Assert.AreEqual(expected, real);\n");
-            sb.append(tab3); sb.append("});\n");
+            sb.append(tab3); sb.append("var expected = toSimplify.Eval();\n");
+            sb.append(tab3); sb.append("var real = toSimplify.Simplify().Eval();\n");
+            sb.append(tab3); sb.append("Assert.AreEqual(expected, real);\n");
             sb.append(tab2); sb.append("}\n\n");
         }
 
@@ -198,13 +193,13 @@ public class TestGenerator {
         sb.append("namespace UnitTests.Core.TrigTableConstTest\n");
         sb.append("{\n");
         // we exclude test #9 because its simplified expression is ambiguous due to cubic roots
-        sb.append(BuildTests("Sin", Arrays.asList(), Arrays.asList(9)));
+        sb.append(BuildTests("Sin"));
         sb.append("\n");
-        sb.append(BuildTests("Cos", Arrays.asList(), Arrays.asList(14)));
+        sb.append(BuildTests("Cos"));
         sb.append("\n");
-        sb.append(BuildTests("Tan", Arrays.asList(), Arrays.asList(4)));
+        sb.append(BuildTests("Tan"));
         sb.append("\n");
-        sb.append(BuildTests("Cotan", Arrays.asList(), Arrays.asList(1, 2, 4)));
+        sb.append(BuildTests("Cotan"));
         sb.append("}\n");
         var writer = new FileWriter(tableTrigTestsPath);
         writer.write(sb.toString());

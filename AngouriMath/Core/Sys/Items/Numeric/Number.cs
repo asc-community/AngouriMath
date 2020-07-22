@@ -113,7 +113,7 @@ namespace AngouriMath.Core.Numerix
             var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
                 var res = new Set();
-                EDecimal phi = (Log(MathS.DecimalConst.e, value / value.Abs()) / MathS.i).Real.Value;
+                EDecimal phi = (Ln(value / value.Abs()) / MathS.i).Real.Value;
                 if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
                     phi = EDecimal.Zero;
 
@@ -124,7 +124,7 @@ namespace AngouriMath.Core.Numerix
                 {
                     EDecimal newPow = CtxAdd(CtxDivide(phi, rootPower),
                         CtxDivide(CtxMultiply(CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
-                    var root = newMod.ToNumber() * Pow(MathS.DecimalConst.e, i * newPow.ToNumber());
+                    var root = newMod * Exp(i * newPow);
                     res.Add(root);
                 }
                 return res;
@@ -199,23 +199,5 @@ namespace AngouriMath.Core.Numerix
     public class UniverseCollapseException : Exceptions.SysException
     {
         public UniverseCollapseException() : base("Universe collapse!") { }
-    }
-
-    internal static class EDecimalWrapper
-    {
-        internal static bool IsGreater(EDecimal a, EDecimal b)
-            => a.CompareTo(b) == 1;
-
-        internal static bool IsLess(EDecimal a, EDecimal b)
-            => a.CompareTo(b) == -1;
-
-        internal static bool IsEqual(EDecimal a, EDecimal b)
-            => a.CompareTo(b) == 0;
-
-        internal static bool IsGreaterOrEqual(EDecimal a, EDecimal b)
-            => IsGreater(a, b) || IsEqual(a, b);
-
-        internal static bool IsLessOrEqual(EDecimal a, EDecimal b)
-            => IsLess(a, b) || IsEqual(a, b);
     }
 }

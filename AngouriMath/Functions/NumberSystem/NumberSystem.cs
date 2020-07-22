@@ -74,10 +74,10 @@ namespace AngouriMath.Functions.NumberSystem
         /// <returns></returns>
         internal static string FloatToBaseN(EDecimal num /*should be < 1*/, int N)
         {
-            if (EDecimalWrapper.IsGreater(num, 1) || EDecimalWrapper.IsLess(num, 0))
+            if (num.GreaterThan(EDecimal.One) || num.IsNegative)
                 throw new SysException("Error in FloatToBaseN");
             string res = "";
-            while (EDecimalWrapper.IsGreater(num, 0))
+            while (!num.IsZero)
             {
                 num = RealNumber.CtxMultiply(num, N);
 
@@ -101,12 +101,12 @@ namespace AngouriMath.Functions.NumberSystem
         {
             if (N > ALPHABET_TOCHAR.Length)
                 throw new MathSException("N should be <= than " + ALPHABET_TOCHAR.Length);
-            string sign = EDecimalWrapper.IsLess(num, 0) ? "-" : "";
+            string sign = num.IsNegative ? "-" : "";
             num = num.Abs();
             var intPart = num.RoundToIntegerExact(FloorContext).ToEInteger();
             EDecimal floatPart = RealNumber.CtxSubtract(num, intPart);
 
-            string rightPart = !EDecimalWrapper.IsEqual(floatPart, 0) ? "." + FloatToBaseN(floatPart, N) : "";
+            string rightPart = !floatPart.IsZero ? "." + FloatToBaseN(floatPart, N) : "";
             string leftPart = sign + IntToBaseN(intPart, N);
 
             return leftPart + rightPart;

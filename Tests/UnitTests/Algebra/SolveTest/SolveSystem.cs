@@ -82,7 +82,7 @@ namespace UnitTests.Algebra
                 "cos(x2 + 1)^2 + 3y",
                 "y * (-1) + 4cos(x2 + 1)"
                 );
-            AssertSystemSolvable(eqs, VA("x", "y"), 8);
+            AssertSystemSolvable(eqs, VA("x", "y"), 8); // TODO: Should be 6 solutions according to Wolfram Alpha
         }
 
         [TestMethod]

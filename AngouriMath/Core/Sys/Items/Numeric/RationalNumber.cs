@@ -32,13 +32,16 @@ namespace AngouriMath.Core.Numerix
         public static RationalNumber Create(EInteger numerator, EInteger denominator) =>
             Create(ERational.Create(numerator, denominator));
         public static RationalNumber Create(ERational value) {
+            if (!value.IsFinite)
+                throw new System.ArgumentException("Non-finite values are not rationals - use RealNumber.Create instead");
+
             if (!MathS.Settings.DowncastingEnabled)
                 return new RationalNumber(value);
 
             // Call ToLowestTerms() through new RationalNumber first
             // before determining whether the denominator equals one
             var @return = new RationalNumber(value);
-            if (value.IsFinite && @return.Value.Denominator.Equals(1))
+            if (@return.Value.Denominator.Equals(1))
                 return IntegerNumber.Create(@return.Value.Numerator);
             else
                 return @return;
@@ -117,7 +120,7 @@ namespace AngouriMath.Core.Numerix
         public static RationalNumber operator +(RationalNumber a, RationalNumber b) => OpSum(a, b);
         public static RationalNumber operator -(RationalNumber a, RationalNumber b) => OpSub(a, b);
         public static RationalNumber operator *(RationalNumber a, RationalNumber b) => OpMul(a, b);
-        public static RationalNumber operator /(RationalNumber a, RationalNumber b) => (RationalNumber)OpDiv(a, b);
+        public static RealNumber operator /(RationalNumber a, RationalNumber b) => (RealNumber)OpDiv(a, b);
         public static RationalNumber operator +(RationalNumber a) => a;
         public static RationalNumber operator -(RationalNumber a) => OpMul(IntegerNumber.MinusOne, a);
         public static bool operator ==(RationalNumber a, RationalNumber b) => AreEqual(a, b);
