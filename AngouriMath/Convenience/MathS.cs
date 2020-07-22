@@ -292,9 +292,7 @@ namespace AngouriMath
         [Obsolete("Use Number.Create or implicit construction instead")]
         public static ComplexNumber Num(EDecimal a) => RealNumber.Create(a);
 
-        /// <summary>
-        /// List of public constants
-        /// </summary>
+        // List of public constants
         public static readonly VariableEntity e = "e";
         public static readonly ComplexNumber i = ComplexNumber.ImaginaryOne;
         public static readonly VariableEntity pi = "pi";
