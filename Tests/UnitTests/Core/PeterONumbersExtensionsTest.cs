@@ -11,8 +11,9 @@ namespace UnitTests.Core
     [TestClass]
     public class PeterONumbersExtensionsTest
     {
-        static readonly EDecimal precision = 2e-16m;
-        static readonly EContext context = new EContext(32, ERounding.HalfUp, -324, 308, false);
+        // The precision of System.Math on non-Windows systems is a bit off
+        static readonly EDecimal precision = 9e-16m;
+        static readonly EContext context = new EContext(25, ERounding.HalfUp, -324, 308, false);
         static readonly int testCount = 1000;
         static readonly Random Random = new Random();
 
