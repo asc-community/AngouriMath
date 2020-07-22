@@ -450,7 +450,7 @@ namespace AngouriMath.Core.Numerix
         public static ComplexNumber Arccos(ComplexNumber num)
         {
             var context = MathS.Settings.DecimalPrecisionContext;
-            if (num is RealNumber { Value: var real })
+            if (num is RealNumber { Value: var real } && !(real.GreaterThan(EDecimal.One) || real.LessThan(-EDecimal.One)))
                 return real.Acos(context);
             var (beta, v) = ArcSinCosInner(num, context);
             return ComplexNumber.Create(beta.Acos(context), -v);
