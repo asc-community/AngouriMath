@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -149,93 +149,11 @@ namespace AngouriMath.Functions
             return new VariableEntity(prefix + "_" + i);
         }
 
-        /// <summary>
-        /// Finds greatest common divisor (with Euler's algorithm)
-        /// </summary>
-        /// <param name="a">
-        /// First number
-        /// </param>
-        /// <param name="b">
-        /// Second number
-        /// </param>
-        /// <returns>
-        /// Returns such c that all are true
-        /// a | c
-        /// b | c
-        /// !∃ d > c,
-        ///     a | d
-        ///     b | d
-        /// </returns>
-        private static EInteger _GCD(EInteger a, EInteger b)
+        // https://en.wikipedia.org/wiki/Least_common_multiple#Using_the_greatest_common_divisor
+        internal static EInteger Lcm(this EInteger bigintFirst, EInteger bigintSecond)
         {
-            a = a.Abs();
-            b = b.Abs();
-            while (a * b > 0)
-            {
-                if (a > b)
-                    a %= b;
-                else
-                    b %= a;
-            }
-
-            return a.IsZero ? b : a;
-        }
-
-        private static long _GCD(long a, long b)
-        {
-            a = Math.Abs(a);
-            b = Math.Abs(b);
-            while (a * b > 0)
-            {
-                if (a > b)
-                    a %= b;
-                else
-                    b %= a;
-            }
-
-            return a == 0 ? b : a;
-        }
-
-        /// <summary>
-        /// Finds greatest common divisors of natural numbers
-        /// </summary>
-        /// <param name="numbers">
-        /// Array of natural numbers
-        /// </param>
-        /// <returns>
-        /// Greatest common divisor of numbers if numbers doesn't only consist of 0
-        /// 1 otherwise
-        /// </returns>
-        internal static EInteger GCD(params EInteger[] numbers)
-        {
-            if (numbers.Length == 1)
-                return numbers[0].IsZero ? 1 : numbers[0]; // technically, if number[0] == 0, then gcd = +oo
-            if (numbers.Length == 2)
-                return _GCD(numbers[0], numbers[1]);
-            var rest = (new ArraySegment<EInteger>(numbers, 2, numbers.Length - 2)).ToList();
-            rest.Add(_GCD(numbers[0], numbers[1]));
-            return GCD(rest.ToArray());
-        }
-
-        internal static long GCD(params long[] numbers)
-        {
-            if (numbers.Length == 1)
-                return numbers[0] == 0 ? 1 : numbers[0]; // technically, if number[0] == 0, then gcd = +oo
-            if (numbers.Length == 2)
-                return _GCD(numbers[0], numbers[1]);
-            var rest = (new ArraySegment<long>(numbers, 2, numbers.Length - 2)).ToList();
-            rest.Add(_GCD(numbers[0], numbers[1]));
-            return GCD(rest.ToArray());
-        }
-
-        internal static EInteger LCM(params EInteger[] numbers)
-        {
-            if (numbers.Length == 1)
-                return numbers[0];
-            EInteger product = 1;
-            foreach (var num in numbers)
-                product = product.Multiply(num);
-            return product.Divide(GCD(numbers));
+            if (bigintFirst.IsZero && bigintSecond.IsZero) return EInteger.Zero;
+            return bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
         }
     }
 

@@ -70,6 +70,8 @@ namespace AngouriMath.Core.Numerix
         {
             if (!MathS.Settings.DowncastingEnabled)
                 return new ComplexNumber(real, imaginary);
+            if (real.IsNaN() || imaginary.IsNaN())
+                return RealNumber.NaN;
             if (imaginary.IsFinite && IsZero(imaginary)) // Momo's fix
                 return RealNumber.Create(real);
             else
@@ -124,40 +126,25 @@ namespace AngouriMath.Core.Numerix
         /// </returns>
         public ComplexNumber Conjugate() => Create(Real, -Imaginary);
 
-        /// <summary>
-        /// See Number.Abs(ComplexNumber)
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>See <see cref="Number.Abs(ComplexNumber)"/></summary>
         public virtual RealNumber Abs() =>
             // We don't use RationalNumber.Create(1, 2) because in GetAllRoots, FloatToRationalIterCount is set to 0
             // so that we don't recurse into the rational power case of Pow causing a stack overflow
             (RealNumber)Pow(Real.Value * Real.Value + Imaginary.Value * Imaginary.Value, RealNumber.Create(0.5m));
 
-        /// <summary>
-        /// Special case of Indefinite() (see ComplexNumber.Indefinite()), -oo + -ooi
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>-oo + -ooi</summary>
         public static readonly ComplexNumber NegNegInfinity =
             new ComplexNumber(RealNumber.NegativeInfinity, RealNumber.NegativeInfinity);
 
-        /// <summary>
-        /// Special case of Indefinite() (see ComplexNumber.Indefinite()), -oo + +ooi
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>-oo + +ooi</summary>
         public static readonly ComplexNumber NegPosInfinity =
             new ComplexNumber(RealNumber.NegativeInfinity, RealNumber.PositiveInfinity);
 
-        /// <summary>
-        /// Special case of Indefinite() (see ComplexNumber.Indefinite()), +oo + -ooi
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>+oo + -ooi</summary>
         public static readonly ComplexNumber PosNegInfinity =
             new ComplexNumber(RealNumber.PositiveInfinity, RealNumber.NegativeInfinity);
 
-        /// <summary>
-        /// Special case of Indefinite() (see ComplexNumber.Indefinite()), +oo + +ooi
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>+oo + +ooi</summary>
         public static readonly ComplexNumber PosPosInfinity =
             new ComplexNumber(RealNumber.PositiveInfinity, RealNumber.PositiveInfinity);
 

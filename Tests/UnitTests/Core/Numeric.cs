@@ -1,4 +1,4 @@
-﻿using AngouriMath;
+using AngouriMath;
 using AngouriMath.Core.Numerix;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -137,6 +137,46 @@ namespace UnitTests.Core
             Assert.AreEqual(RealNumber.NegativeInfinity, RealNumber.NegativeInfinity / 5);
 
         [TestMethod]
+        public void TestWithUndefined15() =>
+            Assert.AreEqual(RealNumber.NaN, RealNumber.NegativeInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined16() =>
+            Assert.AreEqual(RealNumber.NaN, RealNumber.PositiveInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined17() =>
+            Assert.AreEqual(RealNumber.NaN, RealNumber.NaN / 0);
+
+        [TestMethod]
+        public void TestWithUndefined18() =>
+            Assert.AreEqual(RealNumber.NaN, RealNumber.Create(MathS.DecimalConst.pi) / 0);
+
+        [TestMethod]
+        public void TestWithUndefined19() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.PosPosInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined20() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.PosNegInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined21() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.NegPosInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined22() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.NegNegInfinity / 0);
+
+        [TestMethod]
+        public void TestWithUndefined23() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.ImaginaryOne / 0);
+
+        [TestMethod]
+        public void TestWithUndefined24() =>
+            Assert.AreEqual(RealNumber.NaN, ComplexNumber.Create(2.13m, 4.21m) / 0);
+
+        [TestMethod]
         public void TestComplexDowncasting()
         {
             Entity x = "x2 + 1/9";
@@ -149,5 +189,69 @@ namespace UnitTests.Core
                 Assert.IsInstanceOfType(number.Value.Imaginary, typeof(RationalNumber));
             }
         }
+        [TestMethod]
+        public void TestImaginaryInfinity1() =>
+            Assert.AreEqual(ComplexNumber.Create(0, RealNumber.PositiveInfinity),
+                RealNumber.PositiveInfinity * ComplexNumber.ImaginaryOne);
+        [TestMethod]
+        public void TestImaginaryInfinity2() =>
+            Assert.AreEqual(ComplexNumber.Create(0, RealNumber.NegativeInfinity),
+                RealNumber.NegativeInfinity * ComplexNumber.ImaginaryOne);
+        [TestMethod]
+        public void TestImaginaryInfinity3() =>
+            Assert.AreEqual(RealNumber.NaN,
+                RealNumber.NaN * ComplexNumber.ImaginaryOne);
+        [TestMethod]
+        public void TestImaginaryInfinity4() =>
+            Assert.AreEqual(ComplexNumber.Create(0, RealNumber.PositiveInfinity),
+                ComplexNumber.ImaginaryOne * RealNumber.PositiveInfinity);
+        [TestMethod]
+        public void TestImaginaryInfinity5() =>
+            Assert.AreEqual(ComplexNumber.Create(0, RealNumber.NegativeInfinity),
+                ComplexNumber.ImaginaryOne * RealNumber.NegativeInfinity);
+        [TestMethod]
+        public void TestImaginaryInfinity6() =>
+            Assert.AreEqual(RealNumber.NaN,
+                ComplexNumber.ImaginaryOne * RealNumber.NaN);
+        [TestMethod]
+        public void TestImaginaryInfinity7() =>
+            Assert.AreEqual(ComplexNumber.Create(0, RealNumber.NegativeInfinity),
+                RealNumber.PositiveInfinity * ComplexNumber.MinusImaginaryOne);
+        [TestMethod]
+        public void TestImaginaryInfinity8() =>
+            Assert.AreEqual(ComplexNumber.Create(0, RealNumber.PositiveInfinity),
+                RealNumber.NegativeInfinity * ComplexNumber.MinusImaginaryOne);
+        [TestMethod]
+        public void TestImaginaryInfinity9() =>
+            Assert.AreEqual(RealNumber.NaN,
+                RealNumber.NaN * ComplexNumber.MinusImaginaryOne);
+        [TestMethod]
+        public void TestImaginaryInfinity10() =>
+            Assert.AreEqual(ComplexNumber.Create(0, RealNumber.NegativeInfinity),
+                ComplexNumber.MinusImaginaryOne * RealNumber.PositiveInfinity);
+        [TestMethod]
+        public void TestImaginaryInfinity11() =>
+            Assert.AreEqual(ComplexNumber.Create(0, RealNumber.PositiveInfinity),
+                ComplexNumber.MinusImaginaryOne * RealNumber.NegativeInfinity);
+        [TestMethod]
+        public void TestImaginaryInfinity12() =>
+            Assert.AreEqual(RealNumber.NaN,
+                ComplexNumber.MinusImaginaryOne * RealNumber.NaN);
+        [TestMethod]
+        public void TestImaginaryInfinity13() =>
+            Assert.AreEqual(RealNumber.NegativeInfinity,
+                ComplexNumber.Create(0, RealNumber.PositiveInfinity) * ComplexNumber.Create(0, RealNumber.PositiveInfinity));
+        [TestMethod]
+        public void TestImaginaryInfinity14() =>
+            Assert.AreEqual(RealNumber.PositiveInfinity,
+                ComplexNumber.Create(0, RealNumber.PositiveInfinity) * ComplexNumber.Create(0, RealNumber.NegativeInfinity));
+        [TestMethod]
+        public void TestImaginaryInfinity15() =>
+            Assert.AreEqual(RealNumber.PositiveInfinity,
+                ComplexNumber.Create(0, RealNumber.NegativeInfinity) * ComplexNumber.Create(0, RealNumber.PositiveInfinity));
+        [TestMethod]
+        public void TestImaginaryInfinity16() =>
+            Assert.AreEqual(RealNumber.NegativeInfinity,
+                ComplexNumber.Create(0, RealNumber.NegativeInfinity) * ComplexNumber.Create(0, RealNumber.NegativeInfinity));
     }
 }

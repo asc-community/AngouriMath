@@ -167,12 +167,15 @@ namespace AngouriMath
         }
 
         /// <summary>
-        /// Simplification synonim. Recommended to use in case of computing a 
-        /// concrete number.
+        /// Simplification synonym. Recommended to use in case of computing a concrete number.
         /// </summary>
         /// <returns>
-        /// Number since new version
+        /// <see cref="ComplexNumber"/> since new version
         /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when this entity cannot be represented as a simple number.
+        /// <see cref="MathS.CanBeEvaluated(Entity)"/> should be used to check beforehand.
+        /// </exception>
         public ComplexNumber Eval() =>
             SubstituteConstants().InnerEval() is NumberEntity { Value:var value } ? value : 
                 throw new InvalidOperationException
@@ -190,12 +193,16 @@ namespace AngouriMath
         ///               
         /// ( 1 2 ) x ( 1 3 ) => ( 1 6 ) Vectors pointwise
         /// </summary>
-        /// <returns></returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when this entity cannot be represented as a tensor.
+        /// <see cref="IsTensoric"/> should be used to check beforehand.
+        /// </exception>
         public Tensor EvalTensor()
         {
             if (!IsTensoric())
-                throw new MathSException(
-                    "To eval an expression as a tensor, it should contain at least one tensor (matrix, vector)");
+                throw new InvalidOperationException(
+                    "To evaluate an expression as a tensor, it should contain at least one tensor (including matrices and vectors). " +
+                    $"Use {nameof(IsTensoric)} to check beforehand.");
             if (this is Tensor result)
             {
                 TensorFunctional.Apply(result, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);

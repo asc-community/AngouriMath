@@ -43,24 +43,13 @@ namespace AngouriMath.Core.Numerix
         internal static EDecimal CtxMultiply(EDecimal a, EDecimal b)
             => a.Multiply(b, MathS.Settings.DecimalPrecisionContext);
         internal static EDecimal CtxDivide(EDecimal a, EDecimal b)
-            => a.DivideToExponent(b, -MathS.Settings.DecimalPrecisionContext.Value.Precision);
+            => b.IsZero ? EDecimal.NaN : a.DivideToExponent(b, -MathS.Settings.DecimalPrecisionContext.Value.Precision);
         internal static EDecimal CtxMod(EDecimal a, EDecimal b)
-            => a.RemainderNoRoundAfterDivide(b, MathS.Settings.DecimalPrecisionContext);
+            => a.Remainder(b, MathS.Settings.DecimalPrecisionContext);
         internal static EDecimal CtxPow(EDecimal a, EDecimal b)
             => a.Pow(b, MathS.Settings.DecimalPrecisionContext);
-
-        public static RealNumber Max(params RealNumber[] nums)
-            => nums.Length == 1 ? nums[0] : InternalMax(nums[0], Max(new ArraySegment<RealNumber>(nums, 1, nums.Length - 1).ToArray()));
-
-        public static RealNumber Min(params RealNumber[] nums)
-            => nums.Length == 1 ? nums[0] : InternalMin(nums[0], Min(new ArraySegment<RealNumber>(nums, 1, nums.Length - 1).ToArray()));
-
-        private static RealNumber InternalMax(RealNumber a, RealNumber b)
-            => a > b ? a : b;
-
-        private static RealNumber InternalMin(RealNumber a, RealNumber b)
-            => a < b ? a : b;
-
+        internal static T Min<T>(T a, T b) where T : RealNumber => a < b ? a : b;
+        internal static T Max<T>(T a, T b) where T : RealNumber => a > b ? a : b;
         internal static T OpSum<T>(T a, T b) where T : Number =>
             SuperSwitch(a, b,
                 (a, b) => IntegerNumber.Create(CtxAdd(a.Value, b.Value)),
@@ -80,9 +69,15 @@ namespace AngouriMath.Core.Numerix
                 (a, b) => IntegerNumber.Create(CtxMultiply(a.Value, b.Value)),
                 (a, b) => RationalNumber.Create(CtxMultiply(a.Value, b.Value)),
                 (a, b) => RealNumber.Create(CtxMultiply(a.Value, b.Value)),
-                (a, b) => ComplexNumber.Create(
-                    CtxSubtract(CtxMultiply(a.Real.Value, b.Real.Value), CtxMultiply(a.Imaginary.Value, b.Imaginary.Value)),
-                    CtxAdd(CtxMultiply(a.Real.Value, b.Imaginary.Value), CtxMultiply(a.Imaginary.Value, b.Real.Value)))
+                (a, b) =>
+                {
+                    // Define both (oo * i) and (i * oo) to be (oo i) which is (0 + oo i) instead of (NaN + oo i)
+                    static EDecimal ModifiedMultiply(EDecimal a, EDecimal b) =>
+                        a.IsInfinity() && b.IsZero || b.IsInfinity() && a.IsZero ? EDecimal.Zero : CtxMultiply(a, b);
+                    return ComplexNumber.Create(
+                        CtxSubtract(ModifiedMultiply(a.Real.Value, b.Real.Value), ModifiedMultiply(a.Imaginary.Value, b.Imaginary.Value)),
+                        CtxAdd(ModifiedMultiply(a.Real.Value, b.Imaginary.Value), ModifiedMultiply(a.Imaginary.Value, b.Real.Value)));
+                }
              );
         internal static ComplexNumber OpDiv<T>(T a, T b) where T : Number =>
             SuperSwitch(a, b,

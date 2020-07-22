@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -118,9 +118,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var (multiplier, fracs) = fractioned[0];
 
-            var lcm = Utils.LCM(fracs.Select(
-                c => c.pow.Value
-                ).ToArray());
+            var lcm = fracs.Select(c => c.pow.Value).Aggregate((aggregate, current) => aggregate.Lcm(current));
             var intLcm = IntegerNumber.Create(lcm);
 
             //                        "-" to compensate sum: x + sqrt(x + 1) = 0 => x = -sqrt(x+1)
