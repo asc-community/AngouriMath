@@ -59,7 +59,7 @@ namespace AngouriMath.Core.Numerix
         public static IntegerNumber operator +(IntegerNumber a, IntegerNumber b) => OpSum(a, b);
         public static IntegerNumber operator -(IntegerNumber a, IntegerNumber b) => OpSub(a, b);
         public static IntegerNumber operator *(IntegerNumber a, IntegerNumber b) => OpMul(a, b);
-        public static RationalNumber operator /(IntegerNumber a, IntegerNumber b) => (RationalNumber)OpDiv(a, b);
+        public static RealNumber operator /(IntegerNumber a, IntegerNumber b) => (RealNumber)OpDiv(a, b);
         public static IntegerNumber operator +(IntegerNumber a) => a;
         public static IntegerNumber operator -(IntegerNumber a) => OpMul(MinusOne, a);
         public static bool operator ==(IntegerNumber a, IntegerNumber b) => AreEqual(a, b);

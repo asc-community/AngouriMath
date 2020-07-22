@@ -12,7 +12,7 @@ namespace UnitTests.Core
     public class PeterONumbersExtensionsTest
     {
         static readonly EDecimal precision = 2e-16m;
-        static readonly EContext context = MathS.Settings.DecimalPrecisionContext;
+        static readonly EContext context = new EContext(25, ERounding.HalfUp, -324, 308, false);
         static readonly int testCount = 1000;
         static readonly Random Random = new Random();
 

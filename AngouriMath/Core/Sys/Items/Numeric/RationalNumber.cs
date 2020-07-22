@@ -120,7 +120,7 @@ namespace AngouriMath.Core.Numerix
         public static RationalNumber operator +(RationalNumber a, RationalNumber b) => OpSum(a, b);
         public static RationalNumber operator -(RationalNumber a, RationalNumber b) => OpSub(a, b);
         public static RationalNumber operator *(RationalNumber a, RationalNumber b) => OpMul(a, b);
-        public static RationalNumber operator /(RationalNumber a, RationalNumber b) => (RationalNumber)OpDiv(a, b);
+        public static RealNumber operator /(RationalNumber a, RationalNumber b) => (RealNumber)OpDiv(a, b);
         public static RationalNumber operator +(RationalNumber a) => a;
         public static RationalNumber operator -(RationalNumber a) => OpMul(IntegerNumber.MinusOne, a);
         public static bool operator ==(RationalNumber a, RationalNumber b) => AreEqual(a, b);

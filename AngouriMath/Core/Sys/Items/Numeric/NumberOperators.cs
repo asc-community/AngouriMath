@@ -397,7 +397,8 @@ namespace AngouriMath.Core.Numerix
         public static ComplexNumber Cotan(ComplexNumber num)
         {
             var cotan = IntegerNumber.One / Tan(num);
-            if (cotan.Real.Value.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
+            if (cotan.Real.Value.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange)
+                && cotan.Imaginary.Value.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
                 return IntegerNumber.Zero;
             else return cotan;
         }
