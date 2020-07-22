@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -51,25 +51,23 @@ namespace AngouriMath.Core
 
         public SetNode Eval()
         {
-            switch (this)
+            return this switch
             {
-                case Set _:
-                    return this;
-                case OperatorSet op:
-                    return op.ConnectionType switch
-                    {
-                        OperatorSet.OperatorType.UNION =>
-                            SetFunctions.Unite(op.Children[0], op.Children[1]),
-                        OperatorSet.OperatorType.INTERSECTION =>
-                            SetFunctions.Intersect(op.Children[0], op.Children[1]),
-                        OperatorSet.OperatorType.COMPLEMENT =>
-                            SetFunctions.Subtract(op.Children[0], op.Children[1]),
-                        OperatorSet.OperatorType.INVERSION =>
-                            SetFunctions.Invert(op.Children[0])
-                    };
-            }
-
-            throw new SysException("Unknown error");
+                Set _ => this,
+                OperatorSet op => op.ConnectionType switch
+                {
+                    OperatorSet.OperatorType.UNION =>
+                        SetFunctions.Unite(op.Children[0], op.Children[1]),
+                    OperatorSet.OperatorType.INTERSECTION =>
+                        SetFunctions.Intersect(op.Children[0], op.Children[1]),
+                    OperatorSet.OperatorType.COMPLEMENT =>
+                        SetFunctions.Subtract(op.Children[0], op.Children[1]),
+                    OperatorSet.OperatorType.INVERSION =>
+                        SetFunctions.Invert(op.Children[0]),
+                    _ => throw new UnknownOperatorException()
+                },
+                _ => throw new UnknownSetException()
+            };
         }
     }
 
@@ -100,7 +98,7 @@ namespace AngouriMath.Core
                 OperatorType.INTERSECTION => Children[0].Contains(piece) && Children[1].Contains(piece),
                 OperatorType.COMPLEMENT => Children[0].Contains(piece) && !Children[1].Contains(piece),
                 OperatorType.INVERSION => !Children[0].Contains(piece),
-                _ => throw new SysException("Not all operators considered")
+                _ => throw new UnknownOperatorException()
             };
 
         public override bool Contains(Set set)

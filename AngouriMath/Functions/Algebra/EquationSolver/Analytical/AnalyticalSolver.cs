@@ -197,7 +197,7 @@ namespace AngouriMath.Core.TreeAnalysis
                         // a ^ x = value => x = log(a, value)
                         return FindInvertExpression(un, MathS.Log(a, value) + 2 * MathS.i * n * MathS.pi, x);
                 default:
-                    throw new SysException("Unknown operator");
+                    throw new UnknownOperatorException();
             }
         }
 
@@ -309,7 +309,7 @@ namespace AngouriMath.Core.TreeAnalysis
                         // log(a, x) = value => a = x ^ value => x = a ^ (1 / value)
                         return GetNotNullEntites(FindInvertExpression(a, MathS.Pow(b, 1 / value), x));
                 default:
-                    throw new SysException("Unknown function");
+                    throw new UnknownFunctionException();
             }
         }
     }

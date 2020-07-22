@@ -13,7 +13,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
+using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Numerix;
@@ -44,23 +44,22 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
                 ">=" => val >= 0,
                 "<=" => val <= 0,
                 _ => throw new SysException("Uknown sign")
-            } && val is RealNumber;
+            };
 
             var compiled = expr.Compile(x);
             var roots = expr.SolveNt(x);
             var realRootsSet = roots.FiniteWhere(root => root.Eval() is RealNumber);
-            var realRoots = realRootsSet.FiniteSet().ToList();
-            realRoots.Sort((a, b) => a.Eval().Real.Value.CompareTo(b.Eval().Real.Value));
+            var realRoots = roots.FiniteSet().Select(root => root.Eval()).OfType<RealNumber>().OrderBy(n => n).ToList();
             if (realRoots.Count > 0)
             {
-                realRoots.Insert(0, realRoots[0].Eval() - 5);
-                realRoots.Insert(realRoots.Count, realRoots[realRoots.Count - 1].Eval() + 5);
+                realRoots.Insert(0, realRoots[0] - 5);
+                realRoots.Insert(realRoots.Count, realRoots[realRoots.Count - 1] + 5);
             }
             var result = new Set();
             for(int i = 0; i < realRoots.Count - 1; i++)
             {
-                var left = realRoots[i].Eval().Real;
-                var right = realRoots[i + 1].Eval().Real;
+                var left = realRoots[i];
+                var right = realRoots[i + 1];
                 var point = (left + right) / 2;
                 var val = compiled.Call(point.AsComplex());
                 //if (Corresponds(val.AsRealNumber()))

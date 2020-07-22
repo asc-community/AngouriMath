@@ -1,36 +1,44 @@
+/*
+
+Remember to run the "antlr_rerun.bat" file at the project root every time you modify this file so that other
+source files under the Antlr folder can update and be reflected in other parts of AngouriMath!
+It only consists of commands that are consistent across CMD and Bash so you should be able to run that file
+regardless of whether you are on Windows, Linux or Mac. You need to have an installed Java Runtime, however.
+
+*/
+
 grammar Angourimath;
 
-
-options 
+options
 {
-    language = CSharp2;
+    // Equivalent to passing "-Dlanguage=CSharp" into "antlr-4.8-complete.jar" in "antlr_rerun.bat"
+    language = CSharp;
 }
 
-@header
+@header // These items are unindented because they appear in the generated source code verbatim
 {
-    using System;
-    using System.Linq;
-    using System.Collections;
-    using AngouriMath;
-    using AngouriMath.Core;
-    using AngouriMath.Core.Numerix;
-    using System.Globalization;
+using System.Linq;
+using System.Collections;
+using AngouriMath;
+using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
+using System.Globalization;
 }
 
 @parser::members
 {
+    // Nullable reference type analysis is disabled by default for generated code without '#nullable enable'
     public Entity Result = null;
     
     public void Parse() { this.statement(); }
 }
 
-@parser::namespace { Antlr }
-@lexer::namespace { Antlr }
+@namespace { Antlr }
 
 NEWLINE  :  '\r'?'\n'
     ;
 
-ID  :	('a'..'z'|'A'..'Z'|'?'..'?'|'?'..'?')+ ('_' ('a'..'z'|'A'..'Z'|'?'..'?'|'?'..'?'|'0'..'9')+)?
+ID  :	('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)?
     ;
 
 NUMBER

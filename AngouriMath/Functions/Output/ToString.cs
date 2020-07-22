@@ -47,10 +47,10 @@ namespace AngouriMath
                     Pattern p => "{ " + PatternNumber + " : " + p.patType + " }",
                     Tensor t => t.ToString(),
                     VariableEntity _ => this.Name,
-                     // If parentheses are required, they might be only required when complicated numbers are wrapped,
-                     // such as fractions and complex but not a single i
-                     NumberEntity n => n.Value.ToString(Priority != Const.PRIOR_NUM && parenthesesRequired),
-                    _ => throw new SysException("Unexpected entity type")
+                    // If parentheses are required, they might be only required when complicated numbers are wrapped,
+                    // such as fractions and complex but not a single i
+                    NumberEntity n => n.Value.ToString(Priority != Const.PRIOR_NUM && parenthesesRequired),
+                    _ => throw new UnknownEntityException()
                 };
             else
                 return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeStringize(Name, Children), parenthesesRequired, latex: false);

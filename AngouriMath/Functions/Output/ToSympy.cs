@@ -48,7 +48,7 @@ namespace AngouriMath.Functions.Output
             OperatorEntity _ => "(" + ToSympyExpr(expr.Children[0]) + OperatorTable[expr.Name] + ToSympyExpr(expr.Children[1]) + ")",
             NumberEntity _ => expr.ToString().Replace("i", "j"),
             VariableEntity _ => expr.ToString(),
-            _ => throw new MathSException("Unexpected node type"),
+            _ => throw new Core.Exceptions.UnknownEntityException(),
         };
 
         /// <summary>

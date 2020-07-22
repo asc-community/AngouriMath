@@ -13,9 +13,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-﻿using System;
+using System;
 
 namespace AngouriMath.Core.Exceptions
 {
@@ -25,5 +23,25 @@ namespace AngouriMath.Core.Exceptions
     public class SysException : Exception
     {
         public SysException(string msg) : base(msg) { }
+    }
+    public class UnknownEntityException : SysException
+    {
+        public UnknownEntityException() : base("Unknown entity!") { }
+    }
+    public class UnknownOperatorException : SysException
+    {
+        public UnknownOperatorException() : base("Unknown operator!") { }
+    }
+    public class UnknownFunctionException : SysException
+    {
+        public UnknownFunctionException() : base("Unknown function!") { }
+    }
+    public class UnknownSetException : SysException
+    {
+        public UnknownSetException() : base("Unknown set!") { }
+    }
+    public class NoNeedToImplementException : SysException
+    {
+        public NoNeedToImplementException() : base("No need to implement") { }
     }
 }

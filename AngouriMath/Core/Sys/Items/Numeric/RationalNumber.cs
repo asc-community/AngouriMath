@@ -1,4 +1,4 @@
-﻿
+
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -30,7 +30,7 @@ namespace AngouriMath.Core.Numerix
             // Will throw if denominator is zero (zero denominators are not rational)
             : base(value.ToEDecimal(MathS.Settings.DecimalPrecisionContext)) => Value = value.ToLowestTerms();
         public static RationalNumber Create(EInteger numerator, EInteger denominator) =>
-            Create(new ERational(numerator, denominator));
+            Create(ERational.Create(numerator, denominator));
         public static RationalNumber Create(ERational value) {
             if (!MathS.Settings.DowncastingEnabled)
                 return new RationalNumber(value);

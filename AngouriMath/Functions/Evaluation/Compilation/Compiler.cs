@@ -96,7 +96,7 @@ namespace AngouriMath.Functions.Evaluation.Compilation
                     fe.instructions.AddPushVarInstruction(varNamespace[expr.Name]);
                     break;
                 default:
-                    throw new SysException("Unknown entity");
+                    throw new UnknownEntityException();
             }
 
             // If the function is used more than once AND complex enough, we put it in cache
