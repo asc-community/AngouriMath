@@ -271,32 +271,6 @@ namespace AngouriMath.Core.Numerix
 
             return ComplexNumber.Create(t.Multiply(newRho.Cos(context), context), t.Multiply(newRho.Sin(context), context));
         }
-        public static Complex Pow(Complex value, Complex power)
-        {
-            if (power == Complex.Zero)
-            {
-                return Complex.One;
-            }
-
-            if (value == Complex.Zero)
-            {
-                return Complex.Zero;
-            }
-
-            double valueReal = value.Real;
-            double valueImaginary = value.Imaginary;
-            double powerReal = power.Real;
-            double powerImaginary = power.Imaginary;
-
-            double rho = Complex.Abs(value);
-            double theta = Math.Atan2(valueImaginary, valueReal);
-            double newRho = powerReal * theta + powerImaginary * Math.Log(rho);
-
-            double t = Math.Pow(rho, powerReal) * Math.Pow(Math.E, -powerImaginary * theta);
-
-            return new Complex(t * Math.Cos(newRho), t * Math.Sin(newRho));
-        }
-
 
         /// <summary>e.g. Log(2, 32) = 5</summary>
         /// <param name="base">Log's base, log(base, x) is a number y such that base^y = x</param>
