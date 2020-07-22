@@ -571,7 +571,7 @@ namespace AngouriMath
             /// Settings for EDecimal precisions of PeterO Numbers (https://github.com/peteroupc/Numbers)
             /// </summary>
             public static Setting<EContext> DecimalPrecisionContext =>
-                GetCurrentOrDefault(ref decimalPrecisionContext,  new EContext(100, ERounding.HalfUp, -324, 308, false)); // Default to double range
+                GetCurrentOrDefault(ref decimalPrecisionContext,  new EContext(100, ERounding.HalfUp, -100, 1000, false));
         }
 
         /// <summary>

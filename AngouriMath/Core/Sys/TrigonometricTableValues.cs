@@ -147,9 +147,9 @@ namespace AngouriMath
                 (TwoPiOver(9), i / 2 * (Cbrt((-1 - Sqrt(-3)) / 2) - Cbrt((-1 + Sqrt(-3)) / 2))),
                 (TwoPiOver(10), f1_4 * Sqrt(10 - 2 * Sqrt(5))),
                 (TwoPiOver(12), f1_2),
-                (TwoPiOver(14), f1_24 * Sqrt(3 * 
-                                          (112 - Cbrt(14336 + Sqrt(-5549064193)) - Cbrt(14336 - Sqrt(-5549064193))
-                                          ))),
+                // (TwoPiOver(14), f1_24 * Sqrt(3 * (112 - Cbrt(14336 + Sqrt(-5549064193)) - Cbrt(14336 - Sqrt(-5549064193))))),
+                // Incorrect simplification! sin(2pi/14) = 0.433883739117558120475768332848358754609990727787459876444...
+                //                  Above simplification = 0.433883739105630062845060102366441172904921259133054243740...
                 (TwoPiOver(15), f1_8 * (Sqrt(15) + Sqrt(3) - Sqrt(10 - 2 * Sqrt(5)))),
                 (TwoPiOver(16), f1_2 * Sqrt(2 - Sqrt(2))),
                 (TwoPiOver(17), f1_4 * Sqrt(8 - Sqrt(2 * (
@@ -176,9 +176,9 @@ namespace AngouriMath
                 (TwoPiOver(9), f1_2 * (Cbrt((-1 + Sqrt(-3)) / 2) + Cbrt((-1 - Sqrt(-3)) / 2))),
                 (TwoPiOver(10), f1_4 * (Sqrt(5) + 1)),
                 (TwoPiOver(12), f1_2 * Sqrt(3)),
-                (TwoPiOver(14), f1_24 * Sqrt(3 *
-                                          (80 + Cbrt(14336 + Sqrt(-5549064193)) + Cbrt(14336 - Sqrt(-5549064193))
-                                          ))),
+                // (TwoPiOver(14), f1_24 * Sqrt(3 * (80 + Cbrt(14336 + Sqrt(-5549064193)) + Cbrt(14336 - Sqrt(-5549064193))))),
+                // Incorrect simplification! cos(2pi/14) = 0.900968867902419126236102319507445051165919162131857150053...
+                //                  Above simplification = 0.900968867908163376042627598612270994870357666484835165523...
                 (TwoPiOver(15), f1_8 * (1 + Sqrt(5) + Sqrt(30 - 6 * Sqrt(5)))),
                 (TwoPiOver(16), f1_2 * Sqrt(2 + Sqrt(2))),
                 (TwoPiOver(17), f1_16 * (-1 + Sqrt(17) + Sqrt(34 - 2 * Sqrt(17)) + 2 * Sqrt(
@@ -200,11 +200,13 @@ namespace AngouriMath
                 (TwoPiOver(8), 1),
                 (TwoPiOver(10), Sqrt(5 - 2 * Sqrt(5))),
                 (TwoPiOver(12), f1_3 * Sqrt(3)),
-                (TwoPiOver(14), Sqrt(
-                    (112 - Cbrt(14336 + Sqrt(-5549064193)) - Cbrt(14336 - Sqrt(-5549064193)))
-                    /
-                    (80 + Cbrt(14336 + Sqrt(-5549064193)) + Cbrt(14336 - Sqrt(-5549064193)))
-                    )),
+                // (TwoPiOver(14), Sqrt(
+                //     (112 - Cbrt(14336 + Sqrt(-5549064193)) - Cbrt(14336 - Sqrt(-5549064193)))
+                //     /
+                //     (80 + Cbrt(14336 + Sqrt(-5549064193)) + Cbrt(14336 - Sqrt(-5549064193)))
+                //     )),
+                // Incorrect simplification! tan(2pi/14) = 0.481574618807528644332162353056970575219078891752299935554...
+                //                  Above simplification = 0.231914113463908048843246525445639553891057785614708159332...
                 (TwoPiOver(15), f1_2 * (-3 * Sqrt(3) - Sqrt(15) + Sqrt(50 + 22 * Sqrt(5)))),
                 (TwoPiOver(16), Sqrt(2) - 1),
                 (TwoPiOver(20), f1_5 * Sqrt(25 - 10 * Sqrt(5))),

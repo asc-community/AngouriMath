@@ -32,13 +32,16 @@ namespace AngouriMath.Core.Numerix
         public static RationalNumber Create(EInteger numerator, EInteger denominator) =>
             Create(new ERational(numerator, denominator));
         public static RationalNumber Create(ERational value) {
+            if (!value.IsFinite)
+                throw new System.ArgumentException("Non-finite values are not rationals - use RealNumber.Create instead");
+
             if (!MathS.Settings.DowncastingEnabled)
                 return new RationalNumber(value);
 
             // Call ToLowestTerms() through new RationalNumber first
             // before determining whether the denominator equals one
             var @return = new RationalNumber(value);
-            if (value.IsFinite && @return.Value.Denominator.Equals(1))
+            if (@return.Value.Denominator.Equals(1))
                 return IntegerNumber.Create(@return.Value.Numerator);
             else
                 return @return;

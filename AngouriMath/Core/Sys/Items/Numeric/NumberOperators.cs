@@ -26,15 +26,15 @@ namespace AngouriMath.Core.Numerix
         internal static EInteger CtxAdd(EInteger a, EInteger b) => a.Add(b);
         internal static EInteger CtxSubtract(EInteger a, EInteger b) => a.Subtract(b);
         internal static EInteger CtxMultiply(EInteger a, EInteger b) => a.Multiply(b);
-        internal static ERational CtxDivide(EInteger a, EInteger b) =>
-            b.IsZero ? ERational.NaN : new ERational(a, b);
+        internal static ERational? CtxDivide(EInteger a, EInteger b) =>
+            b.IsZero ? null : new ERational(a, b);
         internal static EInteger CtxMod(EInteger a, EInteger b) => a.Remainder(b);
         internal static EInteger CtxPow(EInteger a, EInteger b) => a.Pow(b);
         internal static ERational CtxAdd(ERational a, ERational b) => a.Add(b);
         internal static ERational CtxSubtract(ERational a, ERational b) => a.Subtract(b);
         internal static ERational CtxMultiply(ERational a, ERational b) => a.Multiply(b);
-        internal static ERational CtxDivide(ERational a, ERational b) =>
-            b.IsZero ? ERational.NaN : a.Divide(b);
+        internal static ERational? CtxDivide(ERational a, ERational b) =>
+            b.IsZero ? null : a.Divide(b);
         internal static ERational CtxMod(ERational a, ERational b) => a.Remainder(b);
         internal static EDecimal CtxAdd(EDecimal a, EDecimal b)
             => a.Add(b, MathS.Settings.DecimalPrecisionContext);
@@ -81,8 +81,8 @@ namespace AngouriMath.Core.Numerix
              );
         internal static ComplexNumber OpDiv<T>(T a, T b) where T : Number =>
             SuperSwitch(a, b,
-                (a, b) => RationalNumber.Create(CtxDivide(a.Value, b.Value)),
-                (a, b) => RationalNumber.Create(CtxDivide(a.Value, b.Value)),
+                (a, b) => CtxDivide(a.Value, b.Value) is { } n ? RationalNumber.Create(n) : RealNumber.NaN,
+                (a, b) => CtxDivide(a.Value, b.Value) is { } n ? RationalNumber.Create(n) : RealNumber.NaN,
                 (a, b) => RealNumber.Create(CtxDivide(a.Value, b.Value)),
                 (a, b) =>
                 {
@@ -394,7 +394,13 @@ namespace AngouriMath.Core.Numerix
         }
 
         /// <summary>Calculates the exact value of cotangent of num</summary>
-        public static ComplexNumber Cotan(ComplexNumber num) => IntegerNumber.One / Tan(num);
+        public static ComplexNumber Cotan(ComplexNumber num)
+        {
+            var cotan = IntegerNumber.One / Tan(num);
+            if (cotan.Real.Value.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
+                return IntegerNumber.Zero;
+            else return cotan;
+        }
 
         // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
 

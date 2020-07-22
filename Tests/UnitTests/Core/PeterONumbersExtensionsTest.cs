@@ -19,9 +19,9 @@ namespace UnitTests.Core
         void AssertTest(object input, double e, EDecimal a) =>
             Assert.IsTrue(
                 double.IsNaN(e) && a.IsNaN()
-                || double.IsPositiveInfinity(e) && a.IsPositiveInfinity()
-                || double.IsNegativeInfinity(e) && a.IsNegativeInfinity()
-                || e == 0 && a.IsZero
+                || double.IsPositiveInfinity(e) && (a.IsPositiveInfinity() || a.GreaterThan(EDecimal.FromDouble(double.MaxValue)))
+                || double.IsNegativeInfinity(e) && (a.IsNegativeInfinity() || a.LessThan(EDecimal.FromDouble(double.MinValue)))
+                || e == 0 && (a.IsZero || a.Abs().LessThan(EDecimal.FromDouble(double.Epsilon)))
                 || (EDecimal.FromDouble(e) - a).Abs().LessThan(EDecimal.FromDouble(e).Abs() * precision),
                 $"\nInput: {input}\nExpected: {e}\nActual: {a}");
 

@@ -51,9 +51,6 @@ namespace AngouriMath
             if (bigintFirst.IsZero && bigintSecond.IsZero) return EInteger.Zero;
             return bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
         }
-        /// <summary>Max iterations count in Taylor series</summary>
-        /// <remarks>Defined as 100 originally, here we experimentally do not put a limit on the Taylor series</remarks>
-        const int MaxIteration = int.MaxValue;
 
         /// <summary>Use until https://github.com/peteroupc/Numbers/issues/15 is fixed</summary>
         public static bool EqualsBugFix(this EDecimal bigDecimalOne, EDecimal bigDecimalTwo) =>
@@ -90,7 +87,7 @@ namespace AngouriMath
             var xx = -x.Multiply(consts.Half, context);
             var y = xx.Increment();
             var cachedY = y.Decrement();//init cache  with different value
-            for (var i = 1; !cachedY.EqualsBugFix(y) && i < MaxIteration; i++)
+            for (var i = 1; !cachedY.EqualsBugFix(y); i++)
             {
                 cachedY = y;
                 EDecimal factor = i * ((i << 1) + 3) + 1; //2i^2+2i+i+1=2i^2+3i+1
@@ -106,7 +103,7 @@ namespace AngouriMath
         {
             var consts = ConstantCache.Lookup(context);
             var cos = Cos(x, context);
-            if (cos.IsZero) throw new ArgumentException(nameof(x));
+            if (cos.IsZero) return EDecimal.NaN;
             //calculate sin using cos
             var sin = CalculateSinFromCos(x, cos, consts, context);
             return sin.Divide(cos, context);
