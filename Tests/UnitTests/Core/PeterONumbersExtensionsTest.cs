@@ -66,6 +66,15 @@ namespace UnitTests.Core
             }
         }
         [TestMethod]
+        public void ImpreciseSin() // This is why we need a large precision
+        {
+            var input = 248.1858140380055601781350560486316680908203125;
+            var expected = Math.Sin(input);
+            var @decimal = EDecimal.FromDouble(input);
+            var actual = @decimal.Sin(context);
+            AssertTest(EDecimal.FromDouble(input), expected, actual);
+        }
+        [TestMethod]
         public void DebugWithMe()
         {
             var input = 248.1858140380055601781350560486316680908203125;
