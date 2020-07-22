@@ -507,7 +507,7 @@ namespace AngouriMath
             /// Amount of iterations allowed for attempting to cast to a rational
             /// The more iterations, the larger fraction could be calculated
             /// </summary>
-            public static Setting<int> FloatToRationalIterCount => GetCurrentOrDefault(ref floatToRationalIterCount, 5);
+            public static Setting<int> FloatToRationalIterCount => GetCurrentOrDefault(ref floatToRationalIterCount, 15);
 
             /// <summary>
             /// If a numerator or denominator is too large, it's suspended to better keep the real number instead of casting
