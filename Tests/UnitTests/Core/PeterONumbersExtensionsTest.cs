@@ -1,4 +1,4 @@
-﻿// Based on https://github.com/raminrahimzada/CSharp-Helper-Classes/blob/55a721db249768976de588ac4475c33caf7a0954/Math/DecimalMath/DecimalMathUnitTests.cs
+// Based on https://github.com/raminrahimzada/CSharp-Helper-Classes/blob/55a721db249768976de588ac4475c33caf7a0954/Math/DecimalMath/DecimalMathUnitTests.cs
 
 using System;
 using System.Diagnostics;
@@ -12,19 +12,23 @@ namespace UnitTests.Core
     public class PeterONumbersExtensionsTest
     {
         // The precision of System.Math on non-Windows systems is a bit off
-        static readonly EDecimal precision = 9e-16m;
+        static readonly EDecimal precision = 3e-14m;
         static readonly EContext context = new EContext(25, ERounding.HalfUp, -324, 308, false);
         static readonly int testCount = 1000;
         static readonly Random Random = new Random();
 
-        void AssertTest(object input, double e, EDecimal a) =>
+        void AssertTest(object input, double e, EDecimal a)
+        {
+            var relDiff = (EDecimal.FromDouble(e) - a).Divide(EDecimal.FromDouble(e), context).Abs();
+            var maxRelDiff = precision;
             Assert.IsTrue(
                 double.IsNaN(e) && a.IsNaN()
                 || double.IsPositiveInfinity(e) && (a.IsPositiveInfinity() || a.GreaterThan(EDecimal.FromDouble(double.MaxValue)))
                 || double.IsNegativeInfinity(e) && (a.IsNegativeInfinity() || a.LessThan(EDecimal.FromDouble(double.MinValue)))
                 || e == 0 && (a.IsZero || a.Abs().LessThan(EDecimal.FromDouble(double.Epsilon)))
-                || (EDecimal.FromDouble(e) - a).Abs().LessThan(EDecimal.FromDouble(e).Abs() * precision),
-                $"\nInput: {input}\nExpected: {e}\nActual: {a}");
+                || relDiff.CompareToTotal(maxRelDiff) < 0,
+                $"\nInput: {input}\nExpected: {e}\nActual: {a}\nRel Diff: {relDiff}\nMax Rel Diff: {maxRelDiff}");
+        }
 
         void Test(Func<double, double> expected, Func<EDecimal, EContext, EDecimal> actual)
         {
@@ -64,10 +68,10 @@ namespace UnitTests.Core
         [TestMethod]
         public void DebugWithMe()
         {
-            var input = 0.51036466588748841122225030630943365395069122314453125;
-            var expected = Math.Acos(input);
+            var input = 248.1858140380055601781350560486316680908203125;
+            var expected = Math.Sin(input);
             var @decimal = EDecimal.FromDouble(input);
-            var actual = @decimal.Acos(context);
+            var actual = @decimal.Sin(context);
             AssertTest(EDecimal.FromDouble(input), expected, actual);
         }
     }
