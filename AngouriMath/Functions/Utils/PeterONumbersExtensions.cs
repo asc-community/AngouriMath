@@ -30,7 +30,6 @@ namespace AngouriMath
                 HalfPi = Pi.Multiply(Half, context);
                 QuarterPi = HalfPi.Multiply(Half, context);
                 E = EDecimal.One.Exp(context);
-                Ln2 = EDecimal.FromInt32(2).Log(context);
             }
             /// <summary>Represents <see cref="Math.PI"/></summary>
             public EDecimal Pi { get; }
@@ -44,8 +43,6 @@ namespace AngouriMath
             public EDecimal E { get; }
             /// <summary>Represents 0.5</summary>
             public EDecimal Half { get; }
-            /// <summary>Represents ln(2)</summary>
-            public EDecimal Ln2 { get; }
         }
 
         // https://en.wikipedia.org/wiki/Least_common_multiple#Using_the_greatest_common_divisor
@@ -123,7 +120,7 @@ namespace AngouriMath
                 TruncateToPeriodicInterval(ref x, consts, context);
 
                 //now x in [-2*PI;2*PI]
-                if (x.GreaterThanOrEquals(-consts.TwoPi) && x.LessThanOrEquals(consts.Pi)) return true;
+                if (x.GreaterThanOrEquals(-consts.TwoPi) && x.LessThanOrEquals(-consts.Pi)) return true;
                 if (x.GreaterThanOrEquals(-consts.Pi) && (x.IsNegative || x.IsZero)) return false;
                 if (!x.IsNegative && x.LessThanOrEquals(consts.Pi)) return true;
                 if (x.GreaterThanOrEquals(consts.Pi) && x.LessThanOrEquals(consts.TwoPi)) return false;
@@ -164,7 +161,7 @@ namespace AngouriMath
         public static EDecimal Asin(this EDecimal x, EContext context)
         {
             if (x.GreaterThan(EDecimal.One) || x.LessThan(-EDecimal.One))
-                throw new ArgumentException("x must be in [-1,1]", nameof(x));
+                return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
 
             //known values

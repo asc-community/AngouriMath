@@ -11,21 +11,29 @@ namespace UnitTests.Core
     [TestClass]
     public class PeterONumbersExtensionsTest
     {
-        static readonly EDecimal epsilon = 3e-16m;
+        static readonly EDecimal precision = 2e-16m;
         static readonly EContext context = MathS.Settings.DecimalPrecisionContext;
         static readonly int testCount = 1000;
         static readonly Random Random = new Random();
+
+        void AssertTest(object input, double e, EDecimal a) =>
+            Assert.IsTrue(
+                double.IsNaN(e) && a.IsNaN()
+                || double.IsPositiveInfinity(e) && a.IsPositiveInfinity()
+                || double.IsNegativeInfinity(e) && a.IsNegativeInfinity()
+                || e == 0 && a.IsZero
+                || (EDecimal.FromDouble(e) - a).Abs().LessThan(EDecimal.FromDouble(e).Abs() * precision),
+                $"\nInput: {input}\nExpected: {e}\nActual: {a}");
 
         void Test(Func<double, double> expected, Func<EDecimal, EContext, EDecimal> actual)
         {
             for (int i = 0; i < testCount; i++)
             {
-                var d = Random.NextDouble();
-                var input = EDecimal.FromDouble(d);
-                d = expected(d);
-                var d1 = actual(input, context);
-                Assert.IsTrue((EDecimal.FromDouble(d) - d1).Abs().LessThan(epsilon),
-                    $"\nInput: {input}\nExpected: {d}\nActual: {d1}");
+                var e = Random.NextDouble() * Random.Next(-500, 501);
+                var input = EDecimal.FromDouble(e);
+                e = expected(e);
+                var a = actual(input, context);
+                AssertTest(input, e, a);
             }
         }
 
@@ -47,10 +55,9 @@ namespace UnitTests.Core
                 double y = Random.NextDouble();
                 EDecimal dx = EDecimal.FromDouble(x);
                 EDecimal dy = EDecimal.FromDouble(y);
-                var d = Math.Atan2(y, x);
-                var z = dy.Atan2(dx, context);
-                Assert.IsTrue((EDecimal.FromDouble(d) - z).Abs().LessThan(epsilon),
-                    $"\nInput y: {dy}\nInput x: {dx}\nExpected: {d}\nActual: {z}");
+                var e = Math.Atan2(y, x);
+                var a = dy.Atan2(dx, context);
+                AssertTest((y, x), e, a);
             }
         }
         [TestMethod]
@@ -58,8 +65,9 @@ namespace UnitTests.Core
         {
             var input = 0.51036466588748841122225030630943365395069122314453125;
             var expected = Math.Acos(input);
-            var actual = EDecimal.FromDouble(input).Acos(context);
-            Assert.IsTrue((EDecimal.FromDouble(expected) - actual).Abs().LessThan(epsilon));
+            var @decimal = EDecimal.FromDouble(input);
+            var actual = @decimal.Acos(context);
+            AssertTest(EDecimal.FromDouble(input), expected, actual);
         }
     }
 }

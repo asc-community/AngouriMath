@@ -570,7 +570,8 @@ namespace AngouriMath
             /// <summary>
             /// Settings for EDecimal precisions of PeterO Numbers (https://github.com/peteroupc/Numbers)
             /// </summary>
-            public static Setting<EContext> DecimalPrecisionContext => GetCurrentOrDefault(ref decimalPrecisionContext,  new EContext(100, ERounding.HalfUp, -100, 100, false));
+            public static Setting<EContext> DecimalPrecisionContext =>
+                GetCurrentOrDefault(ref decimalPrecisionContext,  new EContext(100, ERounding.HalfUp, -324, 308, false)); // Default to double range
         }
 
         /// <summary>

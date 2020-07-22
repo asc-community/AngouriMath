@@ -120,27 +120,26 @@ namespace AngouriMath.Core.Numerix
         public static bool operator ==(Number a, Number b) => AreEqual(a, b);
         public static bool operator !=(Number a, Number b) => !AreEqual(a, b);
 
-        internal static ComplexNumber FindGoodRoot(ComplexNumber @base, IntegerNumber power)
+        internal static RealNumber? FindGoodRoot(ComplexNumber @base, IntegerNumber power)
         {
-            var list = new List<ComplexNumber>();
+            RealNumber? positive = null, real = null;
             foreach (NumberEntity root in GetAllRoots(@base, power.Value).FiniteSet())
-            {
-                var downcasted = MathS.Settings.FloatToRationalIterCount.As(15, () =>
+                switch (MathS.Settings.FloatToRationalIterCount.As(15, () =>
                     MathS.Settings.PrecisionErrorZeroRange.As(1e-6m, () =>
                     {
                         return ComplexNumber.Create(root.Value.Real, root.Value.Imaginary);
-                    }));
-                if (downcasted is RationalNumber && IsZero(Pow(downcasted, power) - @base)) // To keep user's desired precision
-                    return downcasted;
-                list.Add(downcasted);
-            }
-            foreach (var el in list)
-                if (el is RealNumber r && r > 0)
-                    return el;
-            foreach (var el in list)
-                if (el is RealNumber)
-                    return el;
-            return list[0];
+                    })))
+                {
+                    case RationalNumber rational when IsZero(Pow(rational, power) - @base):  // To keep user's desired precision
+                        return rational;
+                    case RealNumber r when r > 0:
+                        positive ??= r;
+                        break;
+                    case RealNumber r:
+                        real ??= r;
+                        break;
+                }
+            return positive ?? real;
         }
         private static EDecimal Hypot(EDecimal a, EDecimal b, EContext context)
         {
@@ -247,8 +246,9 @@ namespace AngouriMath.Core.Numerix
             if (power is IntegerNumber { Value: var pow })
                 return Functional.BinaryIntPow(@base, pow);
 
-            if (power is RationalNumber r && r.Value.Denominator.Abs() < 10) // there should be a minimal threshold to avoid long searches 
-                return Pow(FindGoodRoot(@base, r.Value.Denominator), r.Value.Numerator);
+            if (power is RationalNumber r && r.Value.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches 
+                && FindGoodRoot(@base, r.Value.Denominator) is { } goodRoot)
+                return Pow(goodRoot, r.Value.Numerator);
 
             var context = MathS.Settings.DecimalPrecisionContext;
             if (@base is RealNumber { Value: { IsNegative:false } realBase } && power is RealNumber { Value: var realPower })
@@ -267,10 +267,36 @@ namespace AngouriMath.Core.Numerix
             var rho = @base.Abs().Value;
             var theta = baseImaginary.Atan2(baseReal, context);
             var newRho = powerReal.MultiplyAndAdd(theta, powerImaginary.Multiply(rho.Log(context), context), context);
-            var t = rho.Pow(powerReal, context).Multiply(powerImaginary.Multiply(-theta, context).Exp(context));
+            var t = rho.Pow(powerReal, context).Multiply(powerImaginary.Multiply(-theta, context).Exp(context), context);
 
             return ComplexNumber.Create(t.Multiply(newRho.Cos(context), context), t.Multiply(newRho.Sin(context), context));
         }
+        public static Complex Pow(Complex value, Complex power)
+        {
+            if (power == Complex.Zero)
+            {
+                return Complex.One;
+            }
+
+            if (value == Complex.Zero)
+            {
+                return Complex.Zero;
+            }
+
+            double valueReal = value.Real;
+            double valueImaginary = value.Imaginary;
+            double powerReal = power.Real;
+            double powerImaginary = power.Imaginary;
+
+            double rho = Complex.Abs(value);
+            double theta = Math.Atan2(valueImaginary, valueReal);
+            double newRho = powerReal * theta + powerImaginary * Math.Log(rho);
+
+            double t = Math.Pow(rho, powerReal) * Math.Pow(Math.E, -powerImaginary * theta);
+
+            return new Complex(t * Math.Cos(newRho), t * Math.Sin(newRho));
+        }
+
 
         /// <summary>e.g. Log(2, 32) = 5</summary>
         /// <param name="base">Log's base, log(base, x) is a number y such that base^y = x</param>
