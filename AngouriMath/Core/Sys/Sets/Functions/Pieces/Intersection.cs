@@ -15,8 +15,8 @@
 
 using System;
 using AngouriMath.Core.Numerix;
-using Edge1D = System.Tuple<AngouriMath.Core.Numerix.RealNumber, bool>;
-using Edge = System.Tuple<AngouriMath.Entity, bool, bool>;
+using Edge1D = System.ValueTuple<AngouriMath.Core.Numerix.RealNumber, bool>;
+using Edge = System.ValueTuple<AngouriMath.Entity, bool, bool>;
 
 
 /*
@@ -55,12 +55,12 @@ namespace AngouriMath.Core.Sets
             return new Edge1D(res, closed);
         }
 
-        internal static Tuple<Edge1D, Edge1D> IntersectAxis(
+        internal static (Edge1D, Edge1D) IntersectAxis(
             RealNumber min1, bool closedMin1,
             RealNumber max1, bool closedMax1,
             RealNumber min2, bool closedMin2,
             RealNumber max2, bool closedMax2)
-            => new Tuple<Edge1D, Edge1D>(
+            => (
                 IntersectEdge(
                     min1, closedMin1,
                     min2, closedMin2,
@@ -73,7 +73,7 @@ namespace AngouriMath.Core.Sets
                     )
                 );
 
-        private static Tuple<Edge, Edge> SortEdges(Edge A, Edge B)
+        private static (Edge, Edge) SortEdges(Edge A, Edge B)
         {
             var num1 = A.Item1.Eval();
             var num2 = B.Item1.Eval();
@@ -97,7 +97,7 @@ namespace AngouriMath.Core.Sets
                 Const.Swap(ref lowImClosed, ref upImClosed);
             }
 
-            return new Tuple<Edge, Edge>(
+            return (
                 new Edge(
                     ComplexNumber.Create(lowRe, lowIm),
                     lowReClosed,
@@ -156,7 +156,7 @@ namespace AngouriMath.Core.Sets
                 ComplexNumber.Create(realAxis.Item2.Item1, imaginaryAxis.Item2.Item1),
                 realAxis.Item2.Item2,
                 imaginaryAxis.Item2.Item2);
-            var res = Piece.Interval(edgeLeft, edgeRight);
+            var res = Piece.ElementOrInterval(edgeLeft, edgeRight);
             return res;
         }
     }

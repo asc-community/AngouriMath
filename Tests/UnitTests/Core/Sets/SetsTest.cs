@@ -38,10 +38,10 @@ namespace UnitTests.Core
         [TestMethod]
         public void InvididualNumbersInIntervalsOneSet()
         {
-            Assert.IsTrue(A.Contains(Piece.Interval(11, 13)));
-            Assert.IsTrue(A.Contains(Piece.Interval(11, 16)));
-            Assert.IsTrue(A.Contains(Piece.Interval(10, 13)));
-            Assert.IsTrue(A.Contains(Piece.Interval(10, 15)));
+            Assert.IsTrue(A.Contains(Piece.ElementOrInterval(11, 13)));
+            Assert.IsTrue(A.Contains(Piece.ElementOrInterval(11, 16)));
+            Assert.IsTrue(A.Contains(Piece.ElementOrInterval(10, 13)));
+            Assert.IsTrue(A.Contains(Piece.ElementOrInterval(10, 15)));
         }
 
         private readonly Set B = MathS.Sets.Empty();

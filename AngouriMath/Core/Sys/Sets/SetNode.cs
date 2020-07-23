@@ -281,7 +281,7 @@ namespace AngouriMath.Core
             {
                 if (!(Pieces[i] is OneElementPiece oneelem))
                     continue;
-                oneelem.entity = new Tuple<Entity, bool, bool>(
+                oneelem.entity = (
                     processor(oneelem.entity.Item1),
                     oneelem.entity.Item2,
                     oneelem.entity.Item3);
@@ -306,8 +306,8 @@ namespace AngouriMath.Core
                 {
                     Piece.Interval(
                         ComplexNumber.NegNegInfinity,
-                        ComplexNumber.PosPosInfinity
-                    ).AsInterval().SetLeftClosed(false, false).SetRightClosed(false, false)
+                        ComplexNumber.PosPosInfinity,
+                        false, false, false, false)
                 }
             };
 
@@ -321,7 +321,7 @@ namespace AngouriMath.Core
                 Pieces = new List<Piece>
                 {
                     Piece.Interval(RealNumber.NegativeInfinity, RealNumber.PositiveInfinity)
-                    .AsInterval().SetLeftClosed(false).SetRightClosed(false)
+                    .SetLeftClosed(false).SetRightClosed(false)
                 }
             };
 
