@@ -188,15 +188,16 @@ namespace AngouriMath.Functions
 
         /// <summary>
         /// For example,
+        /// <code>
         /// var res = MathS.Settings.Precision.As(100, () =>
         /// {
-        ///   // some code considering precision = 100
+        ///   /* some code considering precision = 100 */
         ///   return 4;
         /// });
+        /// </code>
         /// </summary>
         /// <param name="value">New value that will be automatically reverted after action is done</param>
         /// <param name="action">What should be done under this setting</param>
-        /// <returns></returns>
         public TReturnType As<TReturnType>(T value, Func<TReturnType> action)
         {
             var previousValue = currValue;

@@ -14,14 +14,16 @@ namespace AngouriMath
         {
             public static ConstantCache Lookup(EContext context)
             {
-                if (!Constants.TryGetValue(context, out var cache))
-                {
-                    cache = new ConstantCache(context);
-                    Constants.Add(context, cache);
-                }
+                if (!constants.TryGetValue(context, out var cache))
+                    lock (constants)
+                        if (!constants.TryGetValue(context, out cache))
+                        {
+                            cache = new ConstantCache(context);
+                            constants.Add(context, cache);
+                        }
                 return cache;
             }
-            static Dictionary<EContext, ConstantCache> Constants { get; } = new Dictionary<EContext, ConstantCache>();
+            static readonly Dictionary<EContext, ConstantCache> constants = new Dictionary<EContext, ConstantCache>();
             ConstantCache(EContext context)
             {
                 Half = EDecimal.One.Divide(2, context);
@@ -271,10 +273,8 @@ namespace AngouriMath
                 yield return result *= ++i;
         }
         static readonly IEnumerator<EInteger> factorialCacheGenerator = GenerateFactorials().GetEnumerator();
-        private static readonly List<EInteger> factorialCache = new List<EInteger>();
-
-        private static readonly Dictionary<int, EDecimal[]> spougeFactorialConstantsCache = new Dictionary<int, EDecimal[]>();
-        private static readonly object spougeFactorialConstantsCacheLock = new object();
+        static readonly List<EInteger> factorialCache = new List<EInteger>();
+        static readonly Dictionary<int, EDecimal[]> spougeFactorialConstantsCache = new Dictionary<int, EDecimal[]>();
 
         /**
             <summary>
@@ -291,13 +291,21 @@ namespace AngouriMath
                 throw new ArgumentOutOfRangeException(nameof(n), "Illegal factorial(n) for n < 0: n = " + n);
             if (n < factorialCache.Count)
                 return factorialCache[n];
-            for (var i = factorialCache.Count - 1; i < n; i++)
+            lock (factorialCache)
             {
-                factorialCacheGenerator.MoveNext();
-                factorialCache.Add(factorialCacheGenerator.Current);
+                if (n < factorialCache.Count)
+                    return factorialCache[n];
+                for (var i = factorialCache.Count - 1; i < n; i++)
+                {
+                    factorialCacheGenerator.MoveNext();
+                    factorialCache.Add(factorialCacheGenerator.Current);
+                }
             }
             return factorialCache[n];
         }
+
+        public static EInteger Factorial(this EInteger n) =>
+            n.CanFitInInt32() ? Factorial(n.ToInt32Checked()) : throw new OutOfMemoryException();
 
         /**
          * <summary>
@@ -359,12 +367,14 @@ namespace AngouriMath
             return result.RoundToPrecision(mathContext);
         }
 
-        static EDecimal[] GetSpougeFactorialConstants(int a)
+        internal static EDecimal[] GetSpougeFactorialConstants(int a)
         {
             if (spougeFactorialConstantsCache.TryGetValue(a, out var list))
                 return list;
-            lock (spougeFactorialConstantsCacheLock)
+            lock (spougeFactorialConstantsCache)
             {
+                if (spougeFactorialConstantsCache.TryGetValue(a, out list))
+                    return list;
                 var constants = new EDecimal[a];
                 var mc = EContext.ForPrecision(a * 15 / 10);
 
