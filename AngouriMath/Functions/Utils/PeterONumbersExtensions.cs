@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -257,5 +257,151 @@ namespace AngouriMath
             var yy = EDecimal.One.Divide(y, context);
             return y.Subtract(yy, context).Divide(y.Add(yy, context), context);
         }
+
+        // End of https://github.com/raminrahimzada/CSharp-Helper-Classes/blob/ffbb33c1ee90ce12357c72fa65f2510a09834693/Math/DecimalMath/DecimalMath.cs
+
+        // Based on https://github.com/eobermuhlner/big-math/blob/ba75e9a80f040224cfeef3c2ac06390179712443/ch.obermuhlner.math.big/src/main/java/ch/obermuhlner/math/big/BigDecimalMath.java
+
+        static IEnumerable<EInteger> GenerateFactorials()
+        {
+            var i = 0;
+            var result = EInteger.One;
+            yield return result;
+            while (true)
+                yield return result *= ++i;
+        }
+        static readonly IEnumerator<EInteger> factorialCacheGenerator = GenerateFactorials().GetEnumerator();
+        private static readonly List<EInteger> factorialCache = new List<EInteger>();
+
+        private static readonly Dictionary<int, EDecimal[]> spougeFactorialConstantsCache = new Dictionary<int, EDecimal[]>();
+        private static readonly object spougeFactorialConstantsCacheLock = new object();
+
+        /**
+            <summary>
+            Calculates the factorial of the specified integer argument.
+            <para>factorial = 1 * 2 * 3 * ... n</para>
+            </summary>
+            <param name="n">The <see cref="int"/>.</param>
+            <returns>The factorial <see cref="EInteger"/>.</returns>
+            <exception cref="ArgumentOutOfRangeException">Thrown if x &lt; 0</exception>
+        */
+        public static EInteger Factorial(int n)
+        {
+            if (n < 0)
+                throw new ArgumentOutOfRangeException(nameof(n), "Illegal factorial(n) for n < 0: n = " + n);
+            if (n < factorialCache.Count)
+                return factorialCache[n];
+            for (var i = factorialCache.Count - 1; i < n; i++)
+            {
+                factorialCacheGenerator.MoveNext();
+                factorialCache.Add(factorialCacheGenerator.Current);
+            }
+            return factorialCache[n];
+        }
+
+        /**
+         * <summary>
+         * Calculates the factorial of the specified <see cref="EDecimal"/>.
+         *
+         * <para>This implementation uses
+         * <a href="https://en.wikipedia.org/wiki/Spouge%27s_approximation">Spouge's approximation</a>
+         * to calculate the factorial for non-integer values.</para>
+         *
+         * <para>This involves calculating a series of constants that depend on the desired precision.
+         * Since this constant calculation is quite expensive (especially for higher precisions),
+         * the constants for a specific precision will be cached
+         * and subsequent calls to this method with the same precision will be much faster.</para>
+         *
+         * <para>It is therefore recommended to do one call to this method with the standard precision of your application during the startup phase
+         * and to avoid calling it with many different precisions.</para>
+         *
+         * <para>See: <a href="https://en.wikipedia.org/wiki/Factorial#Extension_of_factorial_to_non-integer_values_of_argument">Wikipedia: Factorial - Extension of factorial to non-integer values of argument</a></para>
+         * </summary>
+         *
+         * <param name="x">The <see cref="EDecimal"/></param>
+         * <param name="mathContext">The <see cref="EContext"/> used for the result</param>
+         * <returns>The factorial <see cref="EDecimal"/></returns>
+         * <exception cref="ArgumentOutOfRangeException">Thrown when the precision of the <paramref name="mathContext"/> is outside the int32 range</exception>
+         * <seealso cref="Factorial(int)"/>
+         * <seealso cref="Gamma(EDecimal, EContext)"/>
+         */
+        public static EDecimal Factorial(this EDecimal x, EContext mathContext)
+        {
+            try
+            {
+                var @int = x.ToInt32IfExact();
+                if (@int < 0) return EDecimal.NaN; // Will become ±∞ if we don't insert this line
+                return EDecimal.FromEInteger(Factorial(@int)).RoundToPrecision(mathContext);
+            }
+            catch { } // EDecimal does not fit in an int32
+
+            if (!mathContext.Precision.CanFitInInt32())
+                throw new ArgumentOutOfRangeException($"The precision of the {nameof(mathContext)} is outside the int32 range");
+
+            // https://en.wikipedia.org/wiki/Spouge%27s_approximation
+            var mc = mathContext.WithBigPrecision(mathContext.Precision << 1);
+
+            var a = mathContext.Precision.ToInt32Checked() * 13 / 10;
+            var constants = GetSpougeFactorialConstants(a);
+
+            var negative = false;
+            var factor = constants[0];
+            for (int k = 1; k < a; k++)
+            {
+                factor = factor.Add(constants[k].Divide(x.Add(k), mc));
+                negative = !negative;
+            }
+
+            var result = x.Add(a).Pow(x.Add(0.5m), mc);
+            result = result.Multiply(x.Negate().Subtract(a).Exp(mc));
+            result = result.Multiply(factor);
+
+            return result.RoundToPrecision(mathContext);
+        }
+
+        static EDecimal[] GetSpougeFactorialConstants(int a)
+        {
+            if (spougeFactorialConstantsCache.TryGetValue(a, out var list))
+                return list;
+            lock (spougeFactorialConstantsCacheLock)
+            {
+                var constants = new EDecimal[a];
+                var mc = EContext.ForPrecision(a * 15 / 10);
+
+                constants[0] = EDecimal.PI(mc).Multiply(2, mc).Sqrt(mc);
+
+                var negative = false;
+                for (int k = 1; k < a; k++)
+                {
+                    var deltaAK = EDecimal.FromInt32(a - k);
+                    var ck = deltaAK.Pow(EDecimal.FromInt32(k).Subtract(0.5m), mc);
+                    ck = deltaAK.Exp(mc).Multiply(ck, mc);
+                    ck = ck.Divide(Factorial(k - 1), mc);
+                    if (negative)
+                        ck = ck.Negate();
+                    constants[k] = ck;
+                    negative = !negative;
+                }
+
+                spougeFactorialConstantsCache.Add(a, constants);
+                return constants;
+            }
+        }
+        /**
+	     * <summary>
+	     * Calculates the gamma function of the specified {@link BigDecimal}.
+	     *
+	     * <para>This implementation uses {@link #factorial(BigDecimal, MathContext)} internally,
+	     * therefore the performance implications described there apply also for this method.
+	     *
+	     * <para>See: <a href="https://en.wikipedia.org/wiki/Gamma_function">Wikipedia: Gamma function</a></para>
+	     * </summary>
+	     *
+	     * <param name="x">The <see cref="EDecimal"/></param>
+	     * <param name="mathContext">The <see cref="EContext"/> used for the result</param>
+	     * <returns>The gamma <see cref="EDecimal"/></returns>
+         * <exception cref="ArgumentOutOfRangeException">Thrown when the precision of the <paramref name="mathContext"/> is outside the int32 range</exception>
+	     */
+        public static EDecimal Gamma(this EDecimal x, EContext mathContext) => Factorial(x.Subtract(EDecimal.One), mathContext);
     }
 }
