@@ -305,7 +305,5 @@ namespace UnitTests.Convenience
             Test(@"\begin{bmatrix}11 & 12 & 21 & 22 & 31 & 32\end{bmatrix}", MathS.Matrices.Vector(11, 12, 21, 22, 31, 32));
         [TestMethod] public void VectorSingle() =>
             Test(@"\begin{bmatrix}x\end{bmatrix}", MathS.Matrices.Vector(x));
-        [TestMethod] public void VectorEmpty() =>
-            Test(@"\begin{bmatrix}\end{bmatrix}", MathS.Matrices.Vector());
     }
 }
