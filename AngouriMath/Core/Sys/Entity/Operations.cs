@@ -33,10 +33,7 @@ namespace AngouriMath.Core
                 return false;
             if (!TensorFunctional.SameShape(this, t))
                 return false;
-            for (int i = 0; i < Data.Length; i++)
-                if (Data[i] != t.Data[i])
-                    return false;
-            return true;
+            return innerTensor.Equals(t.innerTensor);
         }
     }
 }

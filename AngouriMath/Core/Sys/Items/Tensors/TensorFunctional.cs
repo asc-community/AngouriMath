@@ -18,6 +18,8 @@
 ﻿using System;
 using System.Collections.Generic;
  using AngouriMath.Core.TreeAnalysis;
+ using GenericTensor.Core;
+ using GenericTensor.Functions;
 
 namespace AngouriMath.Core.Sys.Items.Tensors
 {
@@ -30,18 +32,7 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="b"></param>
         /// <returns></returns>
         internal static Entity ScalarProduct(Tensor a, Tensor b)
-        {
-            // TODO: Extend to tensors
-            if (!a.IsVector() || !b.IsVector())
-                throw new MathSException("Scalar product of non-vectors is not supported yet");
-            // TODO: allow different shapes
-            if (a.Shape[0] != b.Shape[0])
-                throw new MathSException("Vectors should be the same size");
-            var operands = new List<Entity>();
-            for (int i = 0; i < a.Shape[0]; i++)
-                operands.Add(a[i] * b[i]);
-            return TreeAnalyzer.MultiHangBinary(operands, "sumf", Const.PRIOR_SUM);
-        }
+            => GenTensor<Entity>.VectorDotProduct(a.innerTensor, b.innerTensor);
 
         /// <summary>
         /// Changes each tensor's data item -> app(item)
@@ -50,8 +41,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="app"></param>
         internal static void Apply(Tensor tensor, Func<Entity, Entity> app)
         {
-            for (int i = 0; i < tensor.Data.Length; i++)
-                tensor.Data[i] = app(tensor.Data[i]);
+            foreach (var (index, value) in tensor.innerTensor.Iterate())
+                tensor.innerTensor.SetValueNoCheck(app(value), index);
         }
 
         /// <summary>
@@ -61,15 +52,9 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="B"></param>
         /// <param name="app"></param>
         /// <returns></returns>
-        internal static Entity ApplyPointwise(Tensor A, Tensor B, Func<Entity, Entity, Entity> app)
-        {
-            if (!SameShape(A, B))
-                throw new MathSException("You need two same-shape tensors to perform pointwise operations");
-            var C = new Tensor(A.Shape.ToArray());
-            for (int i = 0; i < A.Data.Length; i++)
-                C.Data[i] = app(A.Data[i], B.Data[i]);
-            return C;
-        }
+        internal static Entity ApplyPointwise(Tensor A, Tensor B, Func<Entity, Entity, Entity> app) 
+            => new Tensor(GenTensor<Entity>.Zip(A.innerTensor, B.innerTensor, app));
+
 
         /// <summary>
         /// Finds out whether tensors are of the same shape
@@ -78,14 +63,7 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="B"></param>
         /// <returns></returns>
         internal static bool SameShape(Tensor A, Tensor B)
-        {
-            if (A.Dimensions != B.Dimensions)
-                return false;
-            for (int i = 0; i < A.Dimensions; i++)
-                if (A.Shape[i] != B.Shape[i])
-                    return false;
-            return true;
-        }
+            => A.Shape == B.Shape;
 
         /// <summary>
         /// Performs dot product operation on two matrices
@@ -95,22 +73,7 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="B"></param>
         /// <returns></returns>
         internal static Tensor DotProduct(Tensor A, Tensor B)
-        {
-            // TODO: Extend to tensors
-            if (!A.IsMatrix() || !B.IsMatrix())
-                throw new MathSException("Dot product is only applicable to matrices");
-            if (A.Shape[1] != B.Shape[0])
-                throw new MathSException("Matrices are incorrect for dot product");
-            var C = new Tensor(A.Shape[0], B.Shape[1]);
-            for (var x = 0; x < A.Shape[0]; x++)
-                for (var y = 0; y < B.Shape[1]; y++)
-                {
-                    C[x, y] = 0;
-                    for (var k = 0; k < A.Shape[1]; k++)
-                        C[x, y] += A[x, k] * B[k, y];
-                }
-            return C;
-        }
+            => new Tensor(GenTensor<Entity>.MatrixDotProduct(A.innerTensor, B.innerTensor));
 
         /// <summary>
         /// Collapses the entire expression into tensor
@@ -172,19 +135,24 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         }
 
         internal static Tensor Matrix(int rows, int columns, params Entity[] values)
-        {
-            if (values.Length != rows * columns)
-                throw new MathSException("Axes don't match data");
-            var r = new Tensor(rows, columns);
-            r.Assign(values);
-            return r;
-        }
+            => new Tensor(GenTensor<Entity>.CreateMatrix(rows, columns,
+                (x, y) => values[x * columns + y]));
 
-        internal static Tensor Vector(params Entity[] p)
+        internal static Tensor Vector(params Entity[] p) 
+            => new Tensor(GenTensor<Entity>.CreateVector(p));
+
+        static TensorFunctional()
         {
-            var r = new Tensor(p.Length);
-            r.Assign(p);
-            return r;
+            ConstantsAndFunctions<Entity>.Add = (a, b) => a + b;
+            ConstantsAndFunctions<Entity>.Subtract = (a, b) => a - b;
+            ConstantsAndFunctions<Entity>.Multiply = (a, b) => a * b;
+            ConstantsAndFunctions<Entity>.Divide = (a, b) => a / b;
+            ConstantsAndFunctions<Entity>.CreateZero = () => 0;
+            ConstantsAndFunctions<Entity>.CreateOne = () => 1;
+            ConstantsAndFunctions<Entity>.AreEqual = (a, b) => a == b;
+            ConstantsAndFunctions<Entity>.Negate = a => -a;
+            ConstantsAndFunctions<Entity>.IsZero = a => a == 0;
+            ConstantsAndFunctions<Entity>.Copy = a => a.DeepCopy();
         }
     }
 }

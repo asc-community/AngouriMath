@@ -75,10 +75,6 @@ namespace AngouriMath.Core
             TreeAnalyzer.AssertTree(Name == "tensort", "Tensors must have Name=tensort");
             // Tensor can't be scalar
             TreeAnalyzer.AssertTree(Dimensions > 0, "Dimensions can't be equal to 0");
-
-            // All elements are not null
-            for(int i = 0; i < Data.Length; i++)
-                TreeAnalyzer.AssertTree(Data[i] is { }, "One tensor's element is null");
         }
     }
 }
