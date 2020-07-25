@@ -671,47 +671,30 @@ namespace AngouriMath
             public static Set Empty()
                 => new Set();
 
-            /// <summary>
-            /// Returns a set of all complex numbers
-            /// </summary>
-            /// <returns></returns>
+            /// <returns>A set of all complex numbers</returns>
             public static Set C()
                 => Set.C();
 
-            /// <summary>
-            /// Returns a set of all real numbers
-            /// </summary>
-            /// <returns></returns>
+            /// <returns>A set of all real numbers</returns>
             public static Set R()
                 => Set.R();
 
             /// <summary>
             /// Creats a set that you can fill with elements
-            /// Later on, you may add an Interval if wish
+            /// Later on, you may add an Interval if you wish
             /// </summary>
-            /// <param name="entities"></param>
-            /// <returns></returns>
             public static Set Finite(params Entity[] entities)
                 => Set.Finite(entities);
 
             /// <summary>
-            /// Creates an interval
-            /// To modify it, use
-            /// Interval(3, 4).SetLeftClosed (see more alike functions in set documentation)
+            /// Creates an interval. To modify it, use e.g.
+            /// <see cref="IntervalPiece.SetLeftClosed(bool)"/> (see more alike functions in set documentation)
             /// </summary>
-            /// <param name="from"></param>
-            /// <param name="to"></param>
-            /// <returns></returns>
-            public static IntervalPiece Interval(Entity from, Entity to)
-                => Piece.Interval(from, to).AsInterval();
+            public static IntervalPiece Interval(Entity from, Entity to) => Piece.Interval(from, to);
 
             /// <summary>
-            /// Creates an element for set
-            /// One can be created implicitly,
-            /// Piece a = 3;
+            /// Creates an element for set. One can be created implicitly, <code>Piece a = 3;</code>
             /// </summary>
-            /// <param name="element"></param>
-            /// <returns></returns>
             public static OneElementPiece Element(Entity element)
                 => new OneElementPiece(element);
         }
