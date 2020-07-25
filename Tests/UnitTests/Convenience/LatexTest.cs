@@ -21,7 +21,6 @@ namespace UnitTests.Convenience
             Test(expected, actual.Simplify());
         [TestMethod] public void Num0() => TestSimplify("0", 0);
         [TestMethod] public void Num123() => TestSimplify("123", 123);
-        [TestMethod] public void NumNegReal() => Test(@"{\left(-123.2452\right)}^{4}", MathS.Pow("-123.2452", 4));
         [TestMethod] public void Float() => Test(@"\frac{15432}{125}", (Entity)123.456m);
         [TestMethod] public void FloatSimplify() => TestSimplify(@"\frac{15432}{125}", 123.456m);
         [TestMethod] public void FloatParse() => Test(@"3", ComplexNumber.Parse("3.000"));

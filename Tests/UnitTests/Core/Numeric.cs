@@ -30,13 +30,62 @@ namespace UnitTests.Core
         }
 
         [TestMethod]
-        public void TestComplex()
+        public void TestComplex1()
         {
             var x = ComplexNumber.Create(2, 0.0m);
             Assert.IsInstanceOfType(x, typeof(IntegerNumber));
             var res = x / 0;
             Assert.IsInstanceOfType(res, typeof(RealNumber));
             Assert.AreEqual(RealNumber.NaN, res);
+        }
+        [TestMethod]
+        public void TestComplex2()
+        {
+            ComplexNumber a = 3;
+            ComplexNumber b = MathS.i;
+            ComplexNumber c = a + b;
+            Assert.AreEqual(ComplexNumber.Create(3, 1), c);
+        }
+        [TestMethod]
+        public void TestRationalDowncasting()
+        {
+            var frac21_10 = RationalNumber.Create(21, 10);
+            Assert.IsNotInstanceOfType(frac21_10, typeof(IntegerNumber));
+            Assert.AreEqual(frac21_10, new NumberEntity(frac21_10).Eval());
+            Assert.AreEqual(frac21_10, new NumberEntity(frac21_10).Simplify().Eval());
+
+            var squared = Number.Pow(frac21_10, 2);
+            Assert.IsInstanceOfType(squared, typeof(RationalNumber));
+            Assert.IsNotInstanceOfType(squared, typeof(IntegerNumber));
+            Assert.AreEqual(RationalNumber.Create(441, 100), squared);
+            Assert.AreEqual(squared, new NumberEntity(squared).Eval());
+            Assert.AreEqual(squared, new NumberEntity(squared).Simplify().Eval());
+
+            var cubed = Number.Pow(squared, RationalNumber.Create(3, 2));
+            Assert.IsInstanceOfType(cubed, typeof(RationalNumber));
+            Assert.IsNotInstanceOfType(cubed, typeof(IntegerNumber));
+            Assert.AreEqual(RationalNumber.Create(9261, 1000), cubed);
+            Assert.AreEqual(cubed, new NumberEntity(cubed).Eval());
+            Assert.AreEqual(cubed, new NumberEntity(cubed).Simplify().Eval());
+
+            var ten = cubed + RationalNumber.Create(739, 1000);
+            Assert.IsInstanceOfType(ten, typeof(IntegerNumber));
+            Assert.AreEqual(IntegerNumber.Create(10), ten);
+            Assert.AreEqual(ten, new NumberEntity(ten).Eval());
+            Assert.AreEqual(ten, new NumberEntity(ten).Simplify().Eval());
+        }
+        [TestMethod]
+        public void TestComplexDowncasting()
+        {
+            Entity x = "x2 + 1/9";
+            var roots = x.SolveEquation("x");
+            foreach (var root in roots.FiniteSet())
+            {
+                Assert.IsInstanceOfType(root, typeof(NumberEntity));
+                var number = (NumberEntity)root;
+                Assert.IsInstanceOfType(number.Value.Real, typeof(RationalNumber));
+                Assert.IsInstanceOfType(number.Value.Imaginary, typeof(RationalNumber));
+            }
         }
 
         [TestMethod]
@@ -175,20 +224,6 @@ namespace UnitTests.Core
         [TestMethod]
         public void TestWithUndefined24() =>
             Assert.AreEqual(RealNumber.NaN, ComplexNumber.Create(2.13m, 4.21m) / 0);
-
-        [TestMethod]
-        public void TestComplexDowncasting()
-        {
-            Entity x = "x2 + 1/9";
-            var roots = x.SolveEquation("x");
-            foreach (var root in roots.FiniteSet())
-            {
-                Assert.IsInstanceOfType(root, typeof(NumberEntity));
-                var number = (NumberEntity)root;
-                Assert.IsInstanceOfType(number.Value.Real, typeof(RationalNumber));
-                Assert.IsInstanceOfType(number.Value.Imaginary, typeof(RationalNumber));
-            }
-        }
         [TestMethod]
         public void TestImaginaryInfinity1() =>
             Assert.AreEqual(ComplexNumber.Create(0, RealNumber.PositiveInfinity),
