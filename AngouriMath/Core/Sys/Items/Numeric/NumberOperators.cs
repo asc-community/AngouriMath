@@ -240,11 +240,22 @@ namespace AngouriMath.Core.Numerix
         /// <param name="power">The power of the exponential, base^power</param>
         public static ComplexNumber Pow(ComplexNumber @base, ComplexNumber power)
         {
+            static ComplexNumber BinaryIntPow(ComplexNumber num, EInteger val)
+            {
+                if (val.IsZero)
+                    return 1;
+                if (val.Equals(1))
+                    return num;
+                if (val.Equals(-1))
+                    return 1 / num;
+                var divRem = val.DivRem(2); // divRem[0] == val / 2, divRem[1] == val % 2
+                return BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[1]);
+            }
             // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
-            if (power is IntegerNumber { Value: var pow })
-                return Functional.BinaryIntPow(@base, pow);
+            if (@base.IsFinite && power is IntegerNumber { Value: var pow })
+                return BinaryIntPow(@base, pow);
 
-            if (power is RationalNumber r && r.Value.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches 
+            if (@base.IsFinite && power is RationalNumber r && r.Value.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches 
                 && FindGoodRoot(@base, r.Value.Denominator) is { } goodRoot)
                 return Pow(goodRoot, r.Value.Numerator);
 

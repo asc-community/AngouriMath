@@ -69,6 +69,7 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Cos(double)"/></summary>
         public static EDecimal Cos(this EDecimal x, EContext context)
         {
+            if (!x.IsFinite) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
 
             //truncating to  [-2*PI;2*PI]
@@ -103,6 +104,7 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Tan(double)"/></summary>
         public static EDecimal Tan(this EDecimal x, EContext context)
         {
+            if (!x.IsFinite) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
             var cos = Cos(x, context);
             if (cos.IsZero) return EDecimal.NaN;
@@ -134,6 +136,7 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Sin(double)"/></summary>
         public static EDecimal Sin(this EDecimal x, EContext context)
         {
+            if (!x.IsFinite) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
             var cos = Cos(x, context);
             return CalculateSinFromCos(x, cos, consts, context);
@@ -145,13 +148,13 @@ namespace AngouriMath
         {
             while (x.GreaterThanOrEquals(consts.TwoPi))
             {
-                EDecimal divide = x.Divide(consts.TwoPi, context).ToEInteger().Abs();
+                EDecimal divide = x.Divide(consts.TwoPi, context).Floor().Abs();
                 x = divide.MultiplyAndAdd(-consts.TwoPi, x, context);
             }
 
             while (x.LessThanOrEquals(-consts.TwoPi))
             {
-                EDecimal divide = x.Divide(consts.TwoPi, context).ToEInteger().Abs();
+                EDecimal divide = x.Divide(consts.TwoPi, context).Floor().Abs();
                 x = divide.MultiplyAndAdd(consts.TwoPi, x, context);
             }
         }
@@ -202,7 +205,9 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Atan(double)"/></summary>
         public static EDecimal Atan(this EDecimal x, EContext context)
         {
+            if (x.IsNaN()) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
+            if (x.IsInfinity()) return x.Sign * consts.HalfPi;
             if (x.IsZero) return x;
             if (x.EqualsBugFix(EDecimal.One)) return consts.QuarterPi;
             return Asin(x.Divide(x.MultiplyAndAdd(x, EDecimal.One, context).Sqrt(context), context), context);
@@ -223,15 +228,37 @@ namespace AngouriMath
         /// </summary>
         public static EDecimal Atan2(this EDecimal y, EDecimal x, EContext context)
         {
+            if (y.IsNaN() || x.IsNaN()) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
-            return (x.Sign, y.Sign) switch
+            const int inf = 100;
+
+            // Values for infinity: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2
+            return (x.Sign * (x.IsInfinity() ? inf : 1), y.Sign * (y.IsInfinity() ? inf : 1)) switch
             {
+                (inf, inf) => consts.QuarterPi,
+                (inf, -inf) => -consts.QuarterPi,
+                (-inf, inf) => consts.QuarterPi * 3,
+                (-inf, -inf) => -consts.QuarterPi * 3,
+                (_, inf) => consts.HalfPi,
+                (_, -inf) => -consts.HalfPi,
+                (-inf, -1) => -consts.Pi,
+                (-inf, 0) => y.IsNegative ? -consts.Pi : consts.Pi,
+                (-inf, 1) => consts.Pi,
+                (inf, _) => EDecimal.Zero,
                 (1, _) => Atan(y.Divide(x, context), context),
                 (-1, -1) => Atan(y.Divide(x, context), context).Subtract(consts.Pi, context),
-                (-1, _) => Atan(y.Divide(x, context), context).Add(consts.Pi, context),
+                (-1, 0) => y.IsNegative ? -consts.Pi : consts.Pi,
+                (-1, 1) => Atan(y.Divide(x, context), context).Add(consts.Pi, context),
                 (0, 1) => consts.HalfPi,
                 (0, -1) => -consts.HalfPi,
-                _ => throw new ArgumentException("Invalid atan2 arguments"),
+                (0, 0) => (x.IsNegative, y.IsNegative) switch
+                {
+                    (true, true) => -consts.Pi,
+                    (false, true) => EDecimal.NegativeZero,
+                    (true, false) => consts.Pi,
+                    (false, false) => EDecimal.Zero,
+                },
+                _ => throw new Core.Exceptions.SysException("Unexpected scenario"),
             };
         }
 
@@ -255,12 +282,31 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Tanh(double)"/></summary>
         public static EDecimal Tanh(this EDecimal x, EContext context)
         {
+            if (x.IsNaN())
+                return EDecimal.NaN;
+            if (x.IsInfinity())
+                return x.Sign;
             var y = x.Exp(context);
             var yy = EDecimal.One.Divide(y, context);
             return y.Subtract(yy, context).Divide(y.Add(yy, context), context);
         }
 
         // End of https://github.com/raminrahimzada/CSharp-Helper-Classes/blob/ffbb33c1ee90ce12357c72fa65f2510a09834693/Math/DecimalMath/DecimalMath.cs
+
+        /// <summary>Rounds half up to nearest integer</summary>
+        public static EDecimal Round(this EDecimal x) => x.RoundToExponent(0, ERounding.HalfUp);
+        /// <summary>Rounds towards zero to nearest integer</summary>
+        public static EDecimal Truncate(this EDecimal x) => x.RoundToExponent(0, ERounding.Down);
+        /// <summary>Splits decimal into integral part and fractional part</summary>
+        public static (EInteger Integral, EDecimal Fractional) SplitDecimal(this EDecimal x)
+        {
+            var integral = x.ToEInteger();
+            return (integral, x - integral);
+        }
+        /// <summary>If there is a fractional part, returns the next smallest integer</summary>
+        public static EDecimal Ceiling(this EDecimal x) => x.RoundToExponent(0, ERounding.Ceiling);
+        /// <summary>If there is a fractional part, returns the previous largest integer</summary>
+        public static EDecimal Floor(this EDecimal x) => x.RoundToExponent(0, ERounding.Floor);
 
         // Based on https://github.com/eobermuhlner/big-math/blob/ba75e9a80f040224cfeef3c2ac06390179712443/ch.obermuhlner.math.big/src/main/java/ch/obermuhlner/math/big/BigDecimalMath.java
 
@@ -335,6 +381,10 @@ namespace AngouriMath
          */
         public static EDecimal Factorial(this EDecimal x, EContext mathContext)
         {
+            if (x.IsPositiveInfinity())
+                return x;
+            if (!x.IsFinite)
+                return EDecimal.NaN;
             try
             {
                 var @int = x.ToInt32IfExact();

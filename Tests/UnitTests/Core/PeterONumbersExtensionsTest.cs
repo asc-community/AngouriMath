@@ -30,16 +30,20 @@ namespace UnitTests.Core
                 $"\nInput: {input}\nExpected: {e}\nActual: {a}\nRel Diff: {relDiff}\nMax Rel Diff: {maxRelDiff}");
         }
 
+        static readonly double[] mustTest = { 1.0, 0.0, -0.0, -1.0, double.PositiveInfinity, double.NegativeInfinity, double.NaN };
         void Test(Func<double, double> expected, Func<EDecimal, EContext, EDecimal> actual)
         {
-            for (int i = 0; i < testCount; i++)
+            void TestIteration(double e)
             {
-                var e = Random.NextDouble() * Random.Next(-500, 501);
                 var input = EDecimal.FromDouble(e);
                 e = expected(e);
                 var a = actual(input, context);
                 AssertTest(input, e, a);
             }
+            foreach (var x in mustTest)
+                TestIteration(x);
+            for (int i = 0; i < testCount; i++)
+                TestIteration(Random.NextDouble() * Random.Next(-500, 501));
         }
 
         [TestMethod] public void TestMethodAsin() => Test(Math.Asin, PeterONumbersExtensions.Asin);
@@ -54,16 +58,19 @@ namespace UnitTests.Core
         [TestMethod]
         public void TestMethodAtan2()
         {
-            for (int i = 0; i < testCount; i++)
+            void TestIteration(double x, double y)
             {
-                double x = Random.NextDouble();
-                double y = Random.NextDouble();
                 EDecimal dx = EDecimal.FromDouble(x);
                 EDecimal dy = EDecimal.FromDouble(y);
                 var e = Math.Atan2(y, x);
                 var a = dy.Atan2(dx, context);
                 AssertTest((y, x), e, a);
             }
+            for (int i = 0; i < testCount; i++)
+                TestIteration(Random.NextDouble() * Random.Next(-500, 501), Random.NextDouble() * Random.Next(-500, 501));
+            foreach (var x in mustTest)
+            foreach (var y in mustTest)
+                    TestIteration(x, y);
         }
         [TestMethod]
         public void ImpreciseSin() // This is why we need a large precision
@@ -147,6 +154,9 @@ namespace UnitTests.Core
         [DataRow("-1.5", 25, "-3.544907701811032054596335")]
         [DataRow("-1.5", 50, "-3.5449077018110320545963349666822903655950989122448")]
         [DataRow("-1.5", 100, "-3.544907701811032054596334966682290365595098912244774256427615579705822569182064362749901313477089331")]
+        [DataRow("Infinity", 100, "Infinity")]
+        [DataRow("-Infinity", 100, "NaN")]
+        [DataRow("NaN", 100, "NaN")]
         public void Factorial(string input, int precision, string output)
         {
             Assert.AreEqual(output, EDecimal.FromString(input).Factorial(EContext.ForPrecision(precision)).ToString());

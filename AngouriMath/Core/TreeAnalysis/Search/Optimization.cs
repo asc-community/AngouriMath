@@ -99,6 +99,10 @@ namespace AngouriMath.Core.TreeAnalysis
                 "powf"
                 // TODO: to add logarithm?
             };
+            internal static readonly FunctionCategory Factorial = new FunctionCategory { 
+                "factorialf"
+                // TODO: to add logarithm?
+            };
 
             /// <summary>
             /// Finds out a category of an expression
@@ -130,6 +134,13 @@ namespace AngouriMath.Core.TreeAnalysis
             /// <param name="expr"></param>
             /// <returns></returns>
             internal static bool ContainsPower(Entity expr) => Contains(expr, Power);
+
+            /// <summary>
+            /// Determines whether expr contains factorial
+            /// </summary>
+            /// <param name="expr"></param>
+            /// <returns></returns>
+            internal static bool ContainsFactorial(Entity expr) => Contains(expr, Factorial);
 
             /// <summary>
             /// Converts a tree into binary

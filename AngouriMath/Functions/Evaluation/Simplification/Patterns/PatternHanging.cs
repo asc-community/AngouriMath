@@ -154,4 +154,14 @@ namespace AngouriMath
             return res;
         }
     }
+
+    internal static partial class Factorialf
+    {
+        internal static Pattern PHang(Entity a)
+        {
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "factorialf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
 }

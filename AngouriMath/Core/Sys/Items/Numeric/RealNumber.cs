@@ -40,13 +40,11 @@ namespace AngouriMath.Core.Numerix
 
             if (!value.IsFinite)
                 return new RealNumber(value);
-            var intPart = value.RoundToIntegerExact(MathS.Settings.DecimalPrecisionContext).ToEInteger();
-            var intRest = CtxSubtract(value, intPart);
+            value = value.RoundToExponent(MathS.Settings.PrecisionErrorZeroRange.Value.Exponent - 1);
+            var (intPart, intRest) = value.SplitDecimal();
             // If the difference between value & round(value) is zero (see Number.IsZero), we consider value as an integer
             if (intRest.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
-            {
                 return IntegerNumber.Create(intPart);
-            }
 
             var attempt = RationalNumber.FindRational(value);
             if (attempt is null ||

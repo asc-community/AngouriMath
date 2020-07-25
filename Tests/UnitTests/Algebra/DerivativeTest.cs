@@ -92,5 +92,17 @@ namespace UnitTests.Algebra
             var func = MathS.Arccotan(2 * x);
             AssertEqEntity(func.Derive(x).Simplify(), -2 / (1 + 4 * MathS.Sqr(x)));
         }
+        [TestMethod]
+        public void TestNaN()
+        {
+            var func = new NumberEntity(MathS.Numbers.Create(double.NaN));
+            AssertEqEntity(func.Derive(x).Simplify(), MathS.Numbers.Create(double.NaN));
+        }
+        [TestMethod]
+        public void TestNaN2()
+        {
+            var func = MathS.Pow(21, MathS.Numbers.Create(double.NaN));
+            AssertEqEntity(func.Derive(x).Simplify(), MathS.Numbers.Create(double.NaN));
+        }
     }
 }

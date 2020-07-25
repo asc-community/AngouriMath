@@ -169,6 +169,16 @@ namespace AngouriMath
         }
     }
 
+    internal static partial class Factorialf
+    {
+        public static Entity Hang(Entity a)
+        {
+            var res = new FunctionEntity("factorialf");
+            res.Children.Add(a);
+            return res;
+        }
+    }
+
     internal static partial class MathFunctions
     {
         public static void AssertArgs(int a, int b)

@@ -133,6 +133,12 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     AddHistory(res1);
                     res = res.Complexity() > res1.Complexity() ? res1 : res;
                 }
+                if (TreeAnalyzer.Optimization.ContainsFactorial(res))
+                {
+                    TreeAnalyzer.ExpandFactorialDivisions(ref res);
+                    TreeAnalyzer.ReplaceInPlace(Patterns.FactorialRules, ref res);
+                    AddHistory(res);
+                }
                 if (TreeAnalyzer.Optimization.ContainsPower(res))
                 {
                     TreeAnalyzer.ReplaceInPlace(Patterns.PowerRules, ref res);

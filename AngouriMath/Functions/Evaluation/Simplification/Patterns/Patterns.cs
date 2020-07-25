@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -14,6 +14,7 @@
  */
 
 
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using PeterO.Numbers;
@@ -75,6 +76,20 @@ namespace AngouriMath
 
             { Powf.PHang(Sinf.PHang(any1), Num(2)) - Powf.PHang(Cosf.PHang(any1), Num(2)), -1 * (Powf.PHang(Cosf.PHang(any1), Num(2)) - Powf.PHang(Sinf.PHang(any1), Num(2))) },
             { Powf.PHang(Cosf.PHang(any1), Num(2)) - Powf.PHang(Sinf.PHang(any1), Num(2)), Cosf.PHang(2 * any1) },
+        };
+        internal static readonly RuleList FactorialRules = new RuleList
+        {
+            // z! -> Γ(z + 1) = z Γ(z) -> z (z-1)!
+            { Factorialf.PHang(any1 + Num(-1)) * any1, Factorialf.PHang(any1) },
+            { Factorialf.PHang(any1) * (any1 + Num(1)), Factorialf.PHang(any1 + 1) },
+
+            // (z-1)! (-z)! -> Γ(z) Γ(1 - z) = π/sin(π z), z ∉ ℤ // actually, when z ∈ ℤ, both sides include division by zero, so we can still replace
+            { Factorialf.PHang(any1 + Num(-1)) * Factorialf.PHang(-any1), MathS.pi / Sinf.PHang(MathS.pi * any1) },
+            { Factorialf.PHang(-any1) * Factorialf.PHang(any1 + Num(-1)), MathS.pi / Sinf.PHang(MathS.pi * any1) },
+
+            // (z-1)! (z-1/2)! -> Γ(z) Γ(z + 1/2) = 2^(1 - 2 z) sqrt(π) Γ(2 z) -> 2^(1 - 2 z) sqrt(π) (2 z - 1)!
+            { Factorialf.PHang(any1 + Num(-0.5m)) * Factorialf.PHang(any1 + Num(-1)), Powf.PHang(Num(2), Num(1)-2*any1) * Powf.Hang(MathS.pi, Num(1.0m/2)) * Factorialf.PHang(2 * any1 - 1) },
+            { Factorialf.PHang(any1 + Num(-1)) * Factorialf.PHang(any1+Num(-0.5m)), Powf.PHang(Num(2), Num(1)-2*any1) * Powf.Hang(MathS.pi, Num(1.0m/2)) * Factorialf.PHang(2 * any1 - 1) },
         };
 
         internal static readonly RuleList ExpandTrigonometricRules = new RuleList {

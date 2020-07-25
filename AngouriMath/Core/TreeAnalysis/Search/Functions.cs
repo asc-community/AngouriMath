@@ -15,23 +15,19 @@
 
 
 using AngouriMath.Core.Numerix;
+using System.Diagnostics;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
         /// <summary>
-        /// If an evaluable expression is equal to zero, true, otherwise, false
+        /// If an evaluable expression is equal to zero, <see langword="true"/>, otherwise, <see langword="false"/>
         /// For example, 1 - 1 is zero, but 1 + a is not
         /// </summary>
-        /// <param name="e"></param>
-        /// <returns></returns>
         internal static bool IsZero(Entity e) => MathS.CanBeEvaluated(e) && e.Eval() == 0;
 
-        /// <summary>
-        /// a ^ (-1) => 1 / a
-        /// </summary>
-        /// <param name="expr"></param>
+        /// <summary>a ^ (-1) => 1 / a</summary>
         internal static void InvertNegativePowers(ref Entity expr)
         {
             if (expr is OperatorEntity { Name: "powf" } &&
@@ -49,11 +45,7 @@ namespace AngouriMath.Core.TreeAnalysis
         }
 
         internal static readonly Pattern NegativeMultiplyerPattern = Patterns.any1 + Patterns.const1 * Patterns.any2;
-
-        /// <summary>
-        /// 1 + (-x) => 1 - x
-        /// </summary>
-        /// <param name="expr"></param>
+        /// <summary>1 + (-x) => 1 - x</summary>
         internal static void InvertNegativeMultipliers(ref Entity expr)
         {
             if (NegativeMultiplyerPattern.Match(expr)
@@ -69,6 +61,48 @@ namespace AngouriMath.Core.TreeAnalysis
                     expr.Children[i] = tmp;
                 }
             }
+        }
+
+        internal static readonly Pattern FactorialDivisionPatternCC =
+            Factorialf.PHang(Patterns.any1 + Patterns.const1) / Factorialf.PHang(Patterns.any1 + Patterns.const2);
+        internal static readonly Pattern FactorialDivisionPatternC0 =
+            Factorialf.PHang(Patterns.any1 + Patterns.const1) / Factorialf.PHang(Patterns.any1);
+        internal static readonly Pattern FactorialDivisionPattern0C =
+            Factorialf.PHang(Patterns.any1) / Factorialf.PHang(Patterns.any1 + Patterns.const2);
+
+        /// <summary>(x + a)! / (x + b)! -> (x+b+1)*(x+b+2)*...*(x+a)</summary>
+        internal static void ExpandFactorialDivisions(ref Entity expr)
+        {
+            (Entity any1, Entity const1, Entity const2)? consts = null;
+            if (FactorialDivisionPatternCC.Match(expr))
+                consts = (expr.Children[0].Children[0].Children[0],
+                          expr.Children[0].Children[0].Children[1],
+                          expr.Children[1].Children[0].Children[1]);
+            else if (FactorialDivisionPatternC0.Match(expr))
+                consts = (expr.Children[0].Children[0].Children[0],
+                          expr.Children[0].Children[0].Children[1],
+                          new NumberEntity(0));
+            else if (FactorialDivisionPattern0C.Match(expr))
+                consts = (expr.Children[1].Children[0].Children[0],
+                          new NumberEntity(0),
+                          expr.Children[1].Children[0].Children[1]);
+            if (consts is (var x,
+                           NumberEntity { Value: IntegerNumber { Value:var num } },
+                           NumberEntity { Value: IntegerNumber { Value:var den } })
+                && (num - den).Abs() < 20) // We don't want to expand (x+100)!/x!
+                if (num > den) // e.g. (x+3)!/x! = (x+1)(x+2)(x+3)
+                {
+                    expr = Add(den + 1, x);
+                    for (var i = den + 2; i <= num; i++)
+                        expr *= Add(i, x);
+                } else // e.g. x!/(x+3)! = 1/(x+1)/(x+2)/(x+3)
+                {
+                    expr = 1 / Add(num + 1, x);
+                    for (var i = num + 2; i <= den; i++)
+                        expr /= Add(i, x);
+                }
+            static Entity Add(PeterO.Numbers.EInteger a, Entity b) =>
+                a.IsZero ? b : new NumberEntity(a) + b;
         }
     }
 }

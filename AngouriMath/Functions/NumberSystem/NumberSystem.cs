@@ -57,13 +57,30 @@ namespace AngouriMath.Functions.NumberSystem
         {
             if (num < 0)
                 throw new SysException("Error in IntToBaseN");
-            string res = "";
+            var res = new System.Text.StringBuilder();
             while (num > 0)
             {
-                res = ALPHABET_TOCHAR[(num % N).ToInt32Checked()] + res;
+                res.Append(ALPHABET_TOCHAR[(num % N).ToInt32Checked()]);
                 num /= N;
             }
-            return res;
+            Reverse(res);
+            return res.ToString();
+            // https://stackoverflow.com/a/47944113/5429648
+            static void Reverse(System.Text.StringBuilder sb)
+            {
+                char t;
+                int end = sb.Length - 1;
+                int start = 0;
+
+                while (end - start > 0)
+                {
+                    t = sb[end];
+                    sb[end] = sb[start];
+                    sb[start] = t;
+                    start++;
+                    end--;
+                }
+            }
         }
 
         /// <summary>
@@ -76,19 +93,18 @@ namespace AngouriMath.Functions.NumberSystem
         {
             if (num.GreaterThan(EDecimal.One) || num.IsNegative)
                 throw new SysException("Error in FloatToBaseN");
-            string res = "";
+            var res = new System.Text.StringBuilder();
             while (!num.IsZero)
             {
                 num = RealNumber.CtxMultiply(num, N);
 
-                EInteger intPart = num.RoundToIntegerExact(FloorContext).ToEInteger();
-                res += ALPHABET_TOCHAR[intPart.ToInt32Checked()];
-                num -= intPart;
+                EInteger intPart;
+                (intPart, num) = num.SplitDecimal();
+                res.Append(ALPHABET_TOCHAR[intPart.ToInt32Checked()]);
             }
-            return res;
+            return res.ToString();
         }
 
-        internal static EContext FloorContext = new EContext(100, ERounding.Floor, -30, 30, false);
 
         /// <summary>
         /// if a number is A + B where A is integer and B is in [0; 1], it performs operations
@@ -103,8 +119,7 @@ namespace AngouriMath.Functions.NumberSystem
                 throw new MathSException("N should be <= than " + ALPHABET_TOCHAR.Length);
             string sign = num.IsNegative ? "-" : "";
             num = num.Abs();
-            var intPart = num.RoundToIntegerExact(FloorContext).ToEInteger();
-            EDecimal floatPart = RealNumber.CtxSubtract(num, intPart);
+            var (intPart, floatPart) = num.SplitDecimal();
 
             string rightPart = !floatPart.IsZero ? "." + FloatToBaseN(floatPart, N) : "";
             string leftPart = sign + IntToBaseN(intPart, N);

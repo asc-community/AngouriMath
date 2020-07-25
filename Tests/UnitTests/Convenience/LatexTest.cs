@@ -154,6 +154,17 @@ namespace UnitTests.Convenience
         [TestMethod] public void Ln() => Test(@"\ln\left(10\right)", MathS.Ln(10));
         [TestMethod] public void LnAlternate() => Test(@"\ln\left(10\right)", MathS.Log(MathS.e, 10));
         [TestMethod] public void Log() => Test(@"\log_{2}\left(10\right)", MathS.Log(2, 10));
+        [TestMethod] public void Factorial1() => Test(@"1!", MathS.Factorial(1));
+        [TestMethod] public void Factorial23() => Test(@"23!", MathS.Factorial(23));
+        [TestMethod] public void FactorialM23() => Test(@"\left(-23\right)!", MathS.Factorial(-23));
+        [TestMethod] public void FactorialI() => Test(@"i!", MathS.Factorial(MathS.i));
+        [TestMethod] public void FactorialMI() => Test(@"\left(-i\right)!", MathS.Factorial(-MathS.i));
+        [TestMethod] public void Factorial1MI() => Test(@"\left(1 - i\right)!", MathS.Factorial(1 - MathS.i));
+        [TestMethod] public void Factorial1PI() => Test(@"\left(1 + i\right)!", MathS.Factorial(1 + MathS.i));
+        [TestMethod] public void FactorialX() => Test(@"x!", MathS.Factorial(x));
+        [TestMethod] public void FactorialSinX() => Test(@"\left(\sin\left(x\right)\right)!", MathS.Factorial(MathS.Sin(x)));
+        // x!! is the double factorial, (x!)! is factorial appplied twice which is different
+        [TestMethod] public void FactorialFactorialX() => Test(@"\left(x!\right)!", MathS.Factorial(MathS.Factorial(x)));
         [TestMethod] public void OO() => Test(@"\infty ", RealNumber.PositiveInfinity);
         [TestMethod] public void MOO() => Test(@"-\infty ", RealNumber.NegativeInfinity);
         [TestMethod] public void MOOAlternate() => Test(@"-\infty ", -RealNumber.PositiveInfinity);

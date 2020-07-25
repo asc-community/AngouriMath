@@ -326,9 +326,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var preciseValue = root.Eval();
             var downcasted = MathS.Settings.FloatToRationalIterCount.As(20, () =>
                 MathS.Settings.PrecisionErrorZeroRange.As(1e-7m, () =>
-                {
-                    return ComplexNumber.Create(preciseValue.Real, preciseValue.Imaginary);
-                }));
+                    ComplexNumber.Create(preciseValue.Real, preciseValue.Imaginary)));
             var errorExpr = equation.Substitute(x, downcasted);
             if (!MathS.CanBeEvaluated(errorExpr))
                 return root;
@@ -539,6 +537,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
             // // //
 
+            // TODO: Solve factorials (Needs Lambert W function)
+            // https://mathoverflow.net/a/28977
 
             // if nothing has been found so far
             if (dst.IsEmpty() && MathS.Settings.AllowNewton)
