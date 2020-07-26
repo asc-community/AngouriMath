@@ -298,7 +298,7 @@ namespace AngouriMath
         /// <summary>Rounds towards zero to nearest integer</summary>
         public static EDecimal Truncate(this EDecimal x) => x.RoundToExponent(0, ERounding.Down);
         /// <summary>Splits decimal into integral part and fractional part.
-        /// The Fractional part is guaranteed to be positive.</summary>
+        /// The fractional part is guaranteed to be positive.</summary>
         public static (EInteger Integral, EDecimal Fractional) SplitDecimal(this EDecimal x)
         {
             var integral = x.Floor().ToEInteger();
