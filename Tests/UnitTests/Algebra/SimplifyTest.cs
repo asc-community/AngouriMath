@@ -78,7 +78,7 @@ namespace UnitTests.Algebra
         [TestMethod] public void FactorialXP1MultiplyXP2() => AssertSimplify(MathS.Factorial(x + 1) * (x + 2), MathS.Factorial(2 + x));
         [TestMethod] public void FactorialM22D5PXMultiplyM21D5PX() => AssertSimplify(MathS.Factorial(-22.5m + x) * (-21.5m + x), MathS.Factorial(-21.5m + x));
         [TestMethod] public void M21D5PXP5IMultiplyFactorial5IPXM22D5() => AssertSimplify((-21.5m + x + 5 * MathS.i) * MathS.Factorial(5 * MathS.i + x - 22.5m), MathS.Factorial(-21.5m + 5 * MathS.i + x));
-        [TestMethod] public void OOP1() => AssertSimplify(oo + 1, oo);
+        [TestMethod] public void OOP1() => AssertSimplify(oo + 1, oo); 
         [TestMethod] public void OO0() => AssertSimplify(oo * 0, nan);
         [TestMethod] public void OOPowOO() => AssertSimplify(MathS.Pow(oo, oo), oo);
         [TestMethod] public void MOO() => AssertSimplify(-oo, moo);

@@ -32,7 +32,7 @@ namespace UnitTests.Common
             var p = new Pattern(3, Entity.PatType.COMMON, Const.Patterns.AlwaysTrue);
             Assert.ThrowsException<NoNeedToImplementException>(p.Check, "No need to implement");
             Assert.ThrowsException<NoNeedToImplementException>(() => p == p + 1, "No need to implement");
-            Assert.ThrowsException<NoNeedToImplementException>(p.Simplify, "No need to implement");
+            Assert.ThrowsException<NoNeedToImplementException>(() => p.Simplify(), "No need to implement");
         }
     }
 }

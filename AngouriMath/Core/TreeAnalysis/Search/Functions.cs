@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -15,6 +15,7 @@
 
 
 using AngouriMath.Core.Numerix;
+using System;
 using System.Diagnostics;
 
 namespace AngouriMath.Core.TreeAnalysis
@@ -88,7 +89,7 @@ namespace AngouriMath.Core.TreeAnalysis
                           expr.Children[1].Children[0].Children[1]);
             if (consts is (var x, NumberEntity { Value: var num }, NumberEntity { Value: var den })
                 && num - den is IntegerNumber { Value: var diff }
-                && diff.Abs() < 20) // We don't want to expand (x+100)!/x!
+                && !diff.IsZero && diff.Abs() < 20) // We don't want to expand (x+100)!/x!
                 if (diff > 0) // e.g. (x+3)!/x! = (x+1)(x+2)(x+3)
                 {
                     expr = Add(x, den + 1);
@@ -104,25 +105,53 @@ namespace AngouriMath.Core.TreeAnalysis
             static Entity Add(Entity a, ComplexNumber b) =>
                 b == IntegerNumber.Zero ? a : a + new NumberEntity(b);
         }
-        internal static readonly Pattern FactorialMultiplcationPatternCC =
+        // (x-1)!*x = x!
+        // x!*(x+1) = (x+1)!
+        // etc.
+        internal static readonly Pattern FactorialMultiplicationPatternCC =
             Factorialf.PHang(Patterns.any1 + Patterns.const1) * (Patterns.any1 + Patterns.const2);
-        internal static readonly Pattern FactorialMultiplcationPatternC0 =
+        internal static readonly Pattern FactorialMultiplicationPatternC0 =
             Factorialf.PHang(Patterns.any1 + Patterns.const1) * Patterns.any1;
-        internal static readonly Pattern FactorialMultiplcationPattern0C =
+        internal static readonly Pattern FactorialMultiplicationPattern0C =
             Factorialf.PHang(Patterns.any1) * (Patterns.any1 + Patterns.const2);
-        /// <summary><para>(x-1)!*x -> x!</para><para>x!*(x+1) -> (x+1)!</para>etc.</summary>
+        // https://en.wikipedia.org/wiki/Reflection_formula
+        // (z-1)! (-z)! -> Γ(z) Γ(1 - z) = π/sin(π z), z ∉ ℤ // actually, when z ∈ ℤ, both sides include division by zero, so we can still replace
+        // Replace z with -z => z! (-z-1)! = π/sin(-π z)
+        // TODO: Modify the complexity criteria to rank non-elementary functions more complex than elementary functions
+        //       so that this formula can be used to simplify
+        internal static readonly Pattern FactorialReflectionFormula =
+            Factorialf.PHang(Patterns.any1) * Factorialf.PHang(Patterns.any2);
+        // TODO: Other than the reflection formula,
+        // (z-1)! (z-1/2)! -> Γ(z) Γ(z + 1/2) = 2^(1 - 2 z) sqrt(π) Γ(2 z) -> 2^(1 - 2 z) sqrt(π) (2 z - 1)!
+        // is also another possible simplification
+        /// <summary>(x-1)! x -> x!, x! (x+1) -> (x+1)!, etc.<para>as well as z! (-z-1)! -> -π/sin(π z)</para></summary>
         internal static void CollapseFactorialMultiplications(ref Entity expr)
         {
             (Entity newFact, Entity const1, Entity const2)? consts = null;
-            if (FactorialMultiplcationPatternCC.Match(expr))
+            if (FactorialMultiplicationPatternCC.Match(expr))
                 consts = (expr.Children[1], expr.Children[0].Children[0].Children[1], expr.Children[1].Children[1]);
-            else if (FactorialMultiplcationPatternC0.Match(expr))
+            else if (FactorialMultiplicationPatternC0.Match(expr))
                 consts = (expr.Children[1], expr.Children[0].Children[0].Children[1], new NumberEntity(0));
-            else if (FactorialMultiplcationPattern0C.Match(expr))
+            else if (FactorialMultiplicationPattern0C.Match(expr))
                 consts = (expr.Children[1], new NumberEntity(0), expr.Children[1].Children[1]);
-            if (consts is (var x, NumberEntity { Value:var factConst }, NumberEntity { Value:var @const })
+            if (consts is (var x, NumberEntity { Value: var factConst }, NumberEntity { Value: var @const })
                 && factConst + 1 == @const)
+            {
                 expr = Factorialf.Hang(x);
+                return;
+            }
+            // This currently makes formulae more complex with the current complexity criteria. See above note
+            // if (FactorialReflectionFormula.Match(expr))
+            // {
+            //     Entity? z = null;
+            //     // InnerSimplify() cannot simplify x + 1 - 1 -> x
+            //     if ((-expr.Children[0].Children[0] - 1).Simplify() == expr.Children[1].Children[0])
+            //         z = expr.Children[0].Children[0];
+            //     else if ((-expr.Children[1].Children[0] - 1).Simplify() == expr.Children[0].Children[0])
+            //         z = expr.Children[1].Children[0];
+            //     if (z is { })
+            //         expr = (MathS.pi / MathS.Sin(-MathS.pi * z)).Simplify();
+            // }
         }
     }
 }

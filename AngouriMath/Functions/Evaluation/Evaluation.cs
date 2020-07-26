@@ -68,26 +68,7 @@ namespace AngouriMath
     // Adding function Eval to Entity
     public abstract partial class Entity : ILatexiseable
     {
-        /// <summary>
-        /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
-        /// </summary>
-        /// <returns>
-        /// An expanded Entity
-        /// </returns>
-        public Entity Expand() => Expand(2);
-
-
-        /// <summary>
-        /// Collapses an equation trying to eliminate as many power-uses as possible ( e. g. x * 3 + x * y = x * (3 + y) )
-        /// </summary>
-        /// <returns></returns>
-        public Entity Collapse() => Collapse(2);
-
-        private Entity Expand_(int level)
-            => level <= 1
-                ? TreeAnalyzer.Replace(Patterns.ExpandRules, this)
-                : TreeAnalyzer.Replace(Patterns.ExpandRules, this).Expand_(level - 1);
-
+        const int DefaultLevel = 2;
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
         /// </summary>
@@ -99,19 +80,23 @@ namespace AngouriMath
         /// current entity otherwise
         /// To change the limit use MathS.Settings.MaxExpansionTermCount
         /// </returns>
-        public Entity Expand(int level)
+        public Entity Expand(int level = DefaultLevel)
         {
+            static Entity Expand_(Entity e, int level) =>
+                level <= 1
+                ? TreeAnalyzer.Replace(Patterns.ExpandRules, e)
+                : Expand_(TreeAnalyzer.Replace(Patterns.ExpandRules, e), level - 1);
             var expChildren = new List<Entity>();
             foreach (var linChild in TreeAnalyzer.LinearChildrenOverSum(this))
             {
                 var exp = TreeAnalyzer.SmartExpandOver(linChild, entity => true);
-                if (!(exp is null))
+                if (exp is { })
                     expChildren.AddRange(exp);
                 else
                     return this; // if one is too complicated, return the current one
             }
             var expanded = TreeAnalyzer.MultiHangBinary(expChildren, "sumf", Const.PRIOR_SUM);
-            return expanded.Expand_(level).InnerSimplify();
+            return Expand_(expanded, level).InnerSimplify();
         }
 
         /// <summary>
@@ -121,15 +106,9 @@ namespace AngouriMath
         /// The number of iterations (increase this argument if some collapse operations are still available)
         /// </param>
         /// <returns></returns>
-        public Entity Collapse(int level) => level <= 1
+        public Entity Collapse(int level = DefaultLevel) => level <= 1
             ? TreeAnalyzer.Replace(Patterns.CollapseRules, this)
             : TreeAnalyzer.Replace(Patterns.CollapseRules, this).Collapse(level - 1);
-
-        /// <summary>
-        /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
-        /// </summary>
-        /// <returns></returns>
-        public Entity Simplify() => Simplificator.Simplify(this);
 
         /// <summary>
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
@@ -138,7 +117,7 @@ namespace AngouriMath
         /// Increase this argument if you think the equation should be simplified better
         /// </param>
         /// <returns></returns>
-        public Entity Simplify(int level) => Simplificator.Simplify(this, level);
+        public Entity Simplify(int level = DefaultLevel) => Simplificator.Simplify(this, level);
 
         /// <summary>
         /// Finds all alternative forms of an expression sorted by their complexity
