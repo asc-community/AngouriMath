@@ -73,6 +73,26 @@ namespace UnitTests.Algebra
         [TestMethod]
         public void TestNSTo2()
         {
+            Assert.AreEqual("1000.001", MathS.ToBaseN(8.125m, 2));
+            Assert.AreEqual("20.02", MathS.ToBaseN(8.125m, 4));
+            Assert.AreEqual("12.043", MathS.ToBaseN(8.125m, 6));
+            Assert.AreEqual("10.1", MathS.ToBaseN(8.125m, 8));
+            Assert.AreEqual("8.125", MathS.ToBaseN(8.125m, 10));
+            Assert.AreEqual("8.16", MathS.ToBaseN(8.125m, 12));
+            Assert.AreEqual("8.1A7", MathS.ToBaseN(8.125m, 14));
+            Assert.AreEqual("8.2", MathS.ToBaseN(8.125m, 16));
+            Assert.AreEqual("1000.111", MathS.ToBaseN(8.875m, 2));
+            Assert.AreEqual("20.32", MathS.ToBaseN(8.875m, 4));
+            Assert.AreEqual("12.513", MathS.ToBaseN(8.875m, 6));
+            Assert.AreEqual("10.7", MathS.ToBaseN(8.875m, 8));
+            Assert.AreEqual("8.875", MathS.ToBaseN(8.875m, 10));
+            Assert.AreEqual("8.A6", MathS.ToBaseN(8.875m, 12));
+            Assert.AreEqual("8.C37", MathS.ToBaseN(8.875m, 14));
+            Assert.AreEqual("8.E", MathS.ToBaseN(8.875m, 16));
+        }
+        [TestMethod]
+        public void TestNSTo3()
+        {
             Assert.AreEqual("-1000.001", MathS.ToBaseN(-8.125m, 2));
             Assert.AreEqual("-20.02", MathS.ToBaseN(-8.125m, 4));
             Assert.AreEqual("-12.043", MathS.ToBaseN(-8.125m, 6));
@@ -81,6 +101,14 @@ namespace UnitTests.Algebra
             Assert.AreEqual("-8.16", MathS.ToBaseN(-8.125m, 12));
             Assert.AreEqual("-8.1A7", MathS.ToBaseN(-8.125m, 14));
             Assert.AreEqual("-8.2", MathS.ToBaseN(-8.125m, 16));
+            Assert.AreEqual("-1000.111", MathS.ToBaseN(-8.875m, 2));
+            Assert.AreEqual("-20.32", MathS.ToBaseN(-8.875m, 4));
+            Assert.AreEqual("-12.513", MathS.ToBaseN(-8.875m, 6));
+            Assert.AreEqual("-10.7", MathS.ToBaseN(-8.875m, 8));
+            Assert.AreEqual("-8.875", MathS.ToBaseN(-8.875m, 10));
+            Assert.AreEqual("-8.A6", MathS.ToBaseN(-8.875m, 12));
+            Assert.AreEqual("-8.C37", MathS.ToBaseN(-8.875m, 14));
+            Assert.AreEqual("-8.E", MathS.ToBaseN(-8.875m, 16));
         }
         [TestMethod]
         public void TestNSFrom0()
