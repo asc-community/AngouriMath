@@ -136,6 +136,9 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 if (TreeAnalyzer.Optimization.ContainsFactorial(res))
                 {
                     TreeAnalyzer.ExpandFactorialDivisions(ref res);
+                    AddHistory(res);
+                    TreeAnalyzer.CollapseFactorialMultiplications(ref res);
+                    AddHistory(res);
                     TreeAnalyzer.ReplaceInPlace(Patterns.FactorialRules, ref res);
                     AddHistory(res);
                 }

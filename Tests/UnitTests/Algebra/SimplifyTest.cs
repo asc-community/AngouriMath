@@ -68,11 +68,16 @@ namespace UnitTests.Algebra
         [TestMethod] public void FactorialXM1OverFactorialXM1() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(x - 1), 1);
         [TestMethod] public void FactorialXM1OverFactorialXM2() => AssertSimplify(MathS.Factorial(-1 + x) / MathS.Factorial(-2 + x), -1 + x);
         [TestMethod] public void FactorialXM1OverFactorialXM3() => AssertSimplify(MathS.Factorial(x - 1) / MathS.Factorial(-3 + x), (-2 + x) * (-1 + x));
+        [TestMethod] public void FactorialXM0D5OverFactorialXP0D5() => AssertSimplify(MathS.Factorial(x - 0.5m) / MathS.Factorial(x + 0.5m), 1 / (0.5m + x));
+        [TestMethod] public void FactorialXPIOverFactorialXPIM1() => AssertSimplify(MathS.Factorial(x + MathS.i) / MathS.Factorial(x + MathS.i - 1), MathS.i + x);
+        [TestMethod] public void FactorialXP0D5IP0D5OverFactorialXP0D5IM0D5() => AssertSimplify(MathS.Factorial(x + MathS.i * 0.5m + 0.5m) / MathS.Factorial(x + MathS.i * 0.5m - 0.5m), 0.5m + MathS.i * 0.5m + x);
         [TestMethod] public void XMultiplyFactorialXM1() => AssertSimplify(x * MathS.Factorial(x - 1), MathS.Factorial(x));
         [TestMethod] public void FactorialXM1MultiplyX() => AssertSimplify(MathS.Factorial(-1 + x) * x, MathS.Factorial(x));
         [TestMethod] public void XP1MultiplyFactorialX() => AssertSimplify((1 + x) * MathS.Factorial(x), MathS.Factorial(1 + x));
         [TestMethod] public void FactorialXMultiplyXP1() => AssertSimplify(MathS.Factorial(x) * (x + 1), MathS.Factorial(1 + x));
-        [TestMethod] public void FactorialXP1MultiplyXP2() => AssertSimplify(MathS.Factorial(x + 1) * (x + 2), MathS.Factorial(1 + x));
+        [TestMethod] public void FactorialXP1MultiplyXP2() => AssertSimplify(MathS.Factorial(x + 1) * (x + 2), MathS.Factorial(2 + x));
+        [TestMethod] public void FactorialM22D5PXMultiplyM21D5PX() => AssertSimplify(MathS.Factorial(-22.5m + x) * (-21.5m + x), MathS.Factorial(-21.5m + x));
+        [TestMethod] public void M21D5PXP5IMultiplyFactorial5IPXM22D5() => AssertSimplify((-21.5m + x + 5 * MathS.i) * MathS.Factorial(5 * MathS.i + x - 22.5m), MathS.Factorial(-21.5m + 5 * MathS.i + x));
         [TestMethod] public void OOP1() => AssertSimplify(oo + 1, oo);
         [TestMethod] public void OO0() => AssertSimplify(oo * 0, nan);
         [TestMethod] public void OOPowOO() => AssertSimplify(MathS.Pow(oo, oo), oo);

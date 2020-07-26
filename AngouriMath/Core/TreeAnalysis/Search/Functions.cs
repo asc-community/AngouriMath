@@ -62,7 +62,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 }
             }
         }
-
+        // C for Constant
         internal static readonly Pattern FactorialDivisionPatternCC =
             Factorialf.PHang(Patterns.any1 + Patterns.const1) / Factorialf.PHang(Patterns.any1 + Patterns.const2);
         internal static readonly Pattern FactorialDivisionPatternC0 =
@@ -86,23 +86,43 @@ namespace AngouriMath.Core.TreeAnalysis
                 consts = (expr.Children[1].Children[0].Children[0],
                           new NumberEntity(0),
                           expr.Children[1].Children[0].Children[1]);
-            if (consts is (var x,
-                           NumberEntity { Value: IntegerNumber { Value:var num } },
-                           NumberEntity { Value: IntegerNumber { Value:var den } })
-                && (num - den).Abs() < 20) // We don't want to expand (x+100)!/x!
-                if (num > den) // e.g. (x+3)!/x! = (x+1)(x+2)(x+3)
+            if (consts is (var x, NumberEntity { Value: var num }, NumberEntity { Value: var den })
+                && num - den is IntegerNumber { Value: var diff }
+                && diff.Abs() < 20) // We don't want to expand (x+100)!/x!
+                if (diff > 0) // e.g. (x+3)!/x! = (x+1)(x+2)(x+3)
                 {
-                    expr = Add(den + 1, x);
-                    for (var i = den + 2; i <= num; i++)
-                        expr *= Add(i, x);
+                    expr = Add(x, den + 1);
+                    for (var i = 2; i <= diff; i++)
+                        expr *= Add(x, den + i);
                 } else // e.g. x!/(x+3)! = 1/(x+1)/(x+2)/(x+3)
                 {
-                    expr = 1 / Add(num + 1, x);
-                    for (var i = num + 2; i <= den; i++)
-                        expr /= Add(i, x);
+                    diff = -diff;
+                    expr = 1 / Add(x, num + 1);
+                    for (var i = 2; i <= diff; i++)
+                        expr /= Add(x, num + i);
                 }
-            static Entity Add(PeterO.Numbers.EInteger a, Entity b) =>
-                a.IsZero ? b : new NumberEntity(a) + b;
+            static Entity Add(Entity a, ComplexNumber b) =>
+                b == IntegerNumber.Zero ? a : a + new NumberEntity(b);
+        }
+        internal static readonly Pattern FactorialMultiplcationPatternCC =
+            Factorialf.PHang(Patterns.any1 + Patterns.const1) * (Patterns.any1 + Patterns.const2);
+        internal static readonly Pattern FactorialMultiplcationPatternC0 =
+            Factorialf.PHang(Patterns.any1 + Patterns.const1) * Patterns.any1;
+        internal static readonly Pattern FactorialMultiplcationPattern0C =
+            Factorialf.PHang(Patterns.any1) * (Patterns.any1 + Patterns.const2);
+        /// <summary><para>(x-1)!*x -> x!</para><para>x!*(x+1) -> (x+1)!</para>etc.</summary>
+        internal static void CollapseFactorialMultiplications(ref Entity expr)
+        {
+            (Entity newFact, Entity const1, Entity const2)? consts = null;
+            if (FactorialMultiplcationPatternCC.Match(expr))
+                consts = (expr.Children[1], expr.Children[0].Children[0].Children[1], expr.Children[1].Children[1]);
+            else if (FactorialMultiplcationPatternC0.Match(expr))
+                consts = (expr.Children[1], expr.Children[0].Children[0].Children[1], new NumberEntity(0));
+            else if (FactorialMultiplcationPattern0C.Match(expr))
+                consts = (expr.Children[1], new NumberEntity(0), expr.Children[1].Children[1]);
+            if (consts is (var x, NumberEntity { Value:var factConst }, NumberEntity { Value:var @const })
+                && factConst + 1 == @const)
+                expr = Factorialf.Hang(x);
         }
     }
 }

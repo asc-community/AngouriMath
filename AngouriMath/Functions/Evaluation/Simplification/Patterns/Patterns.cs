@@ -79,10 +79,6 @@ namespace AngouriMath
         };
         internal static readonly RuleList FactorialRules = new RuleList
         {
-            // z! -> Γ(z + 1) = z Γ(z) -> z (z-1)!
-            { Factorialf.PHang(any1 + Num(-1)) * any1, Factorialf.PHang(any1) },
-            { Factorialf.PHang(any1) * (any1 + Num(1)), Factorialf.PHang(any1 + 1) },
-
             // (z-1)! (-z)! -> Γ(z) Γ(1 - z) = π/sin(π z), z ∉ ℤ // actually, when z ∈ ℤ, both sides include division by zero, so we can still replace
             { Factorialf.PHang(any1 + Num(-1)) * Factorialf.PHang(-any1), MathS.pi / Sinf.PHang(MathS.pi * any1) },
             { Factorialf.PHang(-any1) * Factorialf.PHang(any1 + Num(-1)), MathS.pi / Sinf.PHang(MathS.pi * any1) },
