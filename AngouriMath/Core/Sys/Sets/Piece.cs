@@ -22,7 +22,7 @@ namespace AngouriMath.Core
 {
     // First bool is whether the edge is closed for Re(Entity)
     // Second bool is whether the edge is closed for Im(Entity)
-    using Edge = Tuple<Entity, bool, bool>;
+    using Edge = ValueTuple<Entity, bool, bool>;
 
     public abstract class Piece
     {
@@ -154,7 +154,7 @@ namespace AngouriMath.Core
         internal static bool EdgeEqual(Edge A, Edge B)
             => Const.EvalIfCan(A.Item1) == Const.EvalIfCan(B.Item1) && A.Item2 == B.Item2 && A.Item3 == B.Item3;
 
-            internal static Piece Interval(Entity a, Entity b, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm)
+        internal static Piece ElementOrInterval(Entity a, Entity b, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm)
         {
             if (a == b)
                 return new OneElementPiece(a);
@@ -169,35 +169,30 @@ namespace AngouriMath.Core
         /// <param name="a"></param>
         /// <param name="b"></param>
         /// <returns></returns>
-        internal static Piece Interval(Entity a, Entity b)
-            => Interval(a, b, true, true, true, true);
+        internal static Piece ElementOrInterval(Entity a, Entity b)
+            => ElementOrInterval(a, b, true, true, true, true);
 
-        internal static Piece Interval(Edge A, Edge B)
-            => Interval(A.Item1, B.Item1, A.Item2, A.Item3, B.Item2, B.Item3);
+        internal static Piece ElementOrInterval(Edge A, Edge B)
+            => ElementOrInterval(A.Item1, B.Item1, A.Item2, A.Item3, B.Item2, B.Item3);
 
-        /// <summary>
-        /// Creates an instance of an element
-        /// See more in MathS.Sets.Element()
-        /// </summary>
-        /// <param name="a"></param>
-        /// <returns></returns>
-        internal static OneElementPiece Element(Entity a)
-        => new OneElementPiece(a);
+        /// <summary> Creates an instance of an element. See more in <see cref="MathS.Sets.Element(Entity)"/>.</summary>
+        internal static OneElementPiece Element(Entity a) => new OneElementPiece(a);
+
+        internal static IntervalPiece Interval(Entity a, Entity b) => new IntervalPiece(a, b, true, true, true, true);
+        internal static IntervalPiece Interval(Entity a, Entity b, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm) =>
+            new IntervalPiece(a, b, closedARe, closedAIm, closedBRe, closedBIm);
 
         internal static IntervalPiece CreateUniverse()
             => Piece.Interval(ComplexNumber.NegNegInfinity,
                 ComplexNumber.PosPosInfinity,
-                false, false, false, false).AsInterval();
-
-        // TODO: Is this really needed? Can't we improve type safety instead of using unsafe casts?
-        internal IntervalPiece AsInterval() => (IntervalPiece)this;
+                false, false, false, false);
 
         public static implicit operator Piece((Entity left, Entity right) tup)
-            => Interval(tup.left, tup.right);
+            => ElementOrInterval(tup.left, tup.right);
         public static implicit operator Piece((Entity left, Entity right, bool leftClosed, bool rightClosed) tup)
-            => Interval(tup.left, tup.right).AsInterval().SetLeftClosed(tup.leftClosed).SetRightClosed(tup.rightClosed);
+            => Interval(tup.left, tup.right).SetLeftClosed(tup.leftClosed).SetRightClosed(tup.rightClosed);
         public static implicit operator Piece((Entity left, Entity right, bool leftReClosed, bool leftImClosed, bool rightReClosed, bool rightImClosed) tup)
-            => Interval(tup.left, tup.right).AsInterval().SetLeftClosed(tup.leftReClosed, tup.leftImClosed).SetRightClosed(tup.rightReClosed, tup.rightImClosed);
+            => Interval(tup.left, tup.right).SetLeftClosed(tup.leftReClosed, tup.leftImClosed).SetRightClosed(tup.rightReClosed, tup.rightImClosed);
         public static implicit operator Piece(Entity element)
             => new OneElementPiece(element);
         public static implicit operator Piece(float element)
@@ -248,14 +243,10 @@ namespace AngouriMath.Core
 
         internal IntervalPiece(Entity left, Entity right, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm)
         {
+            if (left == right)
+                throw new ArgumentException($"{nameof(left)} and {nameof(right)} are equal. Create a {nameof(OneElementPiece)} instead.");
             leftEdge = new Edge(left, closedARe, closedAIm);
             rightEdge = new Edge(right, closedBRe, closedBIm);
-        }
-
-        internal IntervalPiece(Edge left, Edge right)
-        {
-            leftEdge = left;
-            rightEdge = right;
         }
 
         public override Edge LowerBound()
