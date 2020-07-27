@@ -10,7 +10,6 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-
         }
     }
 }

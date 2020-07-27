@@ -32,6 +32,7 @@ using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Functions.Algebra.InequalitySolver;
 using AngouriMath.Functions.DiscreteMath;
+using GenericTensor.Core;
 using Number = AngouriMath.Core.Numerix.Number;
 using PeterO.Numbers;
 
@@ -462,6 +463,18 @@ namespace AngouriMath
                 => TensorFunctional.Matrix(rows, columns, values);
 
             /// <summary>
+            /// Creates an instance of Matrix
+            /// </summary>
+            /// <param name="values">
+            /// 2-D array of values
+            /// </param>
+            /// <returns></returns>
+            public static Tensor Matrix(Entity[,] values)
+                => TensorFunctional.Matrix(values);
+
+            //public static Tensor Tensor()
+
+            /// <summary>
             /// Creates an instance of vector
             /// </summary>
             /// <param name="p"></param>
@@ -475,8 +488,18 @@ namespace AngouriMath
             /// <param name="A"></param>
             /// <param name="B"></param>
             /// <returns></returns>
+            [Obsolete("Use MatrixMultiplication instead")]
             public static Tensor DotProduct(Tensor A, Tensor B) =>
                 TensorFunctional.DotProduct(A, B);
+
+            /// <summary>
+            /// Returns multiplication of two matrices
+            /// </summary>
+            /// <param name="A"></param>
+            /// <param name="B"></param>
+            /// <returns></returns>
+            public static Tensor MatrixMultiplication(Tensor A, Tensor B) =>
+                new Tensor(GenTensor<Entity>.TensorMatrixMultiply(A.innerTensor, B.innerTensor));
 
             /// <summary>
             /// Returns scalar product of two matrices

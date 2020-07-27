@@ -136,5 +136,10 @@ namespace AngouriMath.Core
                 return this.ToString();
             }
         }
+
+        // We do not need to use Gaussian elimination here
+        // since we anyway get N! memory use
+        public Entity Determinant()
+            => innerTensor.DeterminantLaplace();
     }
 }

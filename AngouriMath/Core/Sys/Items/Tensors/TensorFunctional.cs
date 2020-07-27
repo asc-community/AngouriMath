@@ -73,7 +73,7 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="B"></param>
         /// <returns></returns>
         internal static Tensor DotProduct(Tensor A, Tensor B)
-            => new Tensor(GenTensor<Entity>.MatrixDotProduct(A.innerTensor, B.innerTensor));
+            => new Tensor(GenTensor<Entity>.MatrixMultiply(A.innerTensor, B.innerTensor));
 
         /// <summary>
         /// Collapses the entire expression into tensor
@@ -134,6 +134,9 @@ namespace AngouriMath.Core.Sys.Items.Tensors
             }
         }
 
+        internal static Tensor Matrix(Entity[,] values)
+            => new Tensor(GenTensor<Entity>.CreateMatrix(values));
+
         internal static Tensor Matrix(int rows, int columns, params Entity[] values)
             => new Tensor(GenTensor<Entity>.CreateMatrix(rows, columns,
                 (x, y) => values[x * columns + y]));
@@ -153,6 +156,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
             ConstantsAndFunctions<Entity>.Negate = a => -a;
             ConstantsAndFunctions<Entity>.IsZero = a => a == 0;
             ConstantsAndFunctions<Entity>.Copy = a => a.DeepCopy();
+            ConstantsAndFunctions<Entity>.Forward = a => a;
+            ConstantsAndFunctions<Entity>.ToString = a => a.ToString();
         }
     }
 }
