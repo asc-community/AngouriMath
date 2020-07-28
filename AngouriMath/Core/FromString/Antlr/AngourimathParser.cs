@@ -186,9 +186,7 @@ public partial class AngourimathParser : Parser {
 	public Power_listContext power_list() {
 		Power_listContext _localctx = new Power_listContext(Context, State);
 		EnterRule(_localctx, 2, RULE_power_list);
-
-				_localctx.value =  new List<Entity>();
-			
+		 _localctx.value =  new List<Entity>(); 
 		int _la;
 		try {
 			EnterOuterAlt(_localctx, 1);
@@ -263,13 +261,13 @@ public partial class AngourimathParser : Parser {
 				{
 				State = 39; _localctx._power_list = power_list();
 
-						var list = _localctx._power_list.value;
-						_localctx.value =  list.Last();
-						list.RemoveAt(list.Count - 1);
-						list.Reverse(); 
-						list.Add(_localctx._factorial_expression.value);
-						foreach(var p in list) { _localctx.value =  MathS.Pow(p, _localctx.value); }
-						
+				        var list = _localctx._power_list.value;
+				        _localctx.value =  list.Last();
+				        list.RemoveAt(list.Count - 1);
+				        list.Reverse(); 
+				        list.Add(_localctx._factorial_expression.value);
+				        foreach(var p in list) { _localctx.value =  MathS.Pow(p, _localctx.value); }
+				    
 				}
 			}
 
@@ -592,9 +590,7 @@ public partial class AngourimathParser : Parser {
 	public Function_argumentsContext function_arguments() {
 		Function_argumentsContext _localctx = new Function_argumentsContext(Context, State);
 		EnterRule(_localctx, 14, RULE_function_arguments);
-
-				_localctx.list =  new List<Entity>();
-			
+		 _localctx.list =  new List<Entity>(); 
 		int _la;
 		try {
 			EnterOuterAlt(_localctx, 1);

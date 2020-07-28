@@ -450,9 +450,9 @@ namespace AngouriMath
         }
         /**
 	     * <summary>
-	     * Calculates the gamma function of the specified {@link BigDecimal}.
+	     * Calculates the gamma function of the specified <see cref="EDecimal"/>.
 	     *
-	     * <para>This implementation uses {@link #factorial(BigDecimal, MathContext)} internally,
+	     * <para>This implementation uses <see cref="Factorial(EDecimal, EContext)"/> internally,
 	     * therefore the performance implications described there apply also for this method.
 	     *
 	     * <para>See: <a href="https://en.wikipedia.org/wiki/Gamma_function">Wikipedia: Gamma function</a></para>
@@ -461,7 +461,7 @@ namespace AngouriMath
 	     * <param name="x">The <see cref="EDecimal"/></param>
 	     * <param name="mathContext">The <see cref="EContext"/> used for the result</param>
 	     * <returns>The gamma <see cref="EDecimal"/></returns>
-         * <exception cref="ArgumentOutOfRangeException">Thrown when the precision of the <paramref name="mathContext"/> is outside the int32 range</exception>
+         * <exception cref="ArgumentOutOfRangeException">Thrown when the precision of the <paramref name="mathContext"/> is outside the <see cref="int"/> range</exception>
 	     */
         public static EDecimal Gamma(this EDecimal x, EContext mathContext) => Factorial(x.Subtract(EDecimal.One), mathContext);
     }

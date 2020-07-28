@@ -38,8 +38,9 @@ using System.Globalization;
 // Order of expressions do not affect parsing, but we put dependees first and dependents after to clarify logic 
 
 // But according to https://stackoverflow.com/a/16490720/5429648, 
-// You need to place parser rules (start with a lowercase letter) before lexer rules (start with an uppercase letter)
-// in your grammar. After encountering a lexer rule, the [ triggers a LEXER_CHAR_SET instead of ARG_ACTION,
+// You need to place parser rules (which start with a lowercase letter)
+// before lexer rules (which start with an uppercase letter) in your grammar
+// After encountering a lexer rule, the [ triggers a LEXER_CHAR_SET instead of ARG_ACTION,
 // so the token stream seen by the compiler looks like you're passing a set of characters where the
 // return value should be.
 
@@ -52,22 +53,19 @@ factorial_expression returns[Entity value]
     ;
 
 power_list returns[List<Entity> value]
-	@init
-	{
-		$value = new List<Entity>();
-	}
+    @init { $value = new List<Entity>(); }
     : ('^' factorial_expression { $value.Add($factorial_expression.value); })+ ;
 
 power_expression returns[Entity value]
-	: factorial_expression { $value = $factorial_expression.value; } (power_list {
-		var list = $power_list.value;
-		$value = list.Last();
-		list.RemoveAt(list.Count - 1);
-		list.Reverse(); 
-		list.Add($factorial_expression.value);
-		foreach(var p in list) { $value = MathS.Pow(p, $value); }
-		})?
-	;
+    : factorial_expression { $value = $factorial_expression.value; } (power_list {
+        var list = $power_list.value;
+        $value = list.Last();
+        list.RemoveAt(list.Count - 1);
+        list.Reverse(); 
+        list.Add($factorial_expression.value);
+        foreach(var p in list) { $value = MathS.Pow(p, $value); }
+    })?
+    ;
     
 unary_expression returns[Entity value]
     : ('-' p = power_expression { $value = -$p.value; } | 
@@ -88,15 +86,12 @@ sum_expression returns[Entity value]
    ;
 
 expression returns[Entity value]
-   	: s = sum_expression { $value = $s.value; }
-   	;
+    : s = sum_expression { $value = $s.value; }
+    ;
 
 function_arguments returns[List<Entity> list]
-	@init
-	{
-		$list = new List<Entity>();
-	}
-    : e = expression { $list.Add($e.value); } (',' e = expression	{ $list.Add($e.value); })*
+    @init { $list = new List<Entity>(); }
+    : e = expression { $list.Add($e.value); } (',' e = expression { $list.Add($e.value); })*
     ;
    
 atom returns[Entity value]
@@ -111,7 +106,7 @@ statement: expression EOF { Result = $expression.value; } ;
 
 NEWLINE: '\r'?'\n' ;
 
-ID:	('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
+ID: ('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
   
 // A fragment will never be counted as a token, it only serves to simplify a grammar.
 fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
