@@ -44,8 +44,8 @@ namespace AngouriMath.Functions.Output
         };
         private static string ToSympyExpr(Entity expr) => expr switch
         {
-            FunctionEntity _ => "sympy." + FuncTable[expr.Name] + "(" + ToSympyExpr(expr.Children[0]) + ")",
-            OperatorEntity _ => "(" + ToSympyExpr(expr.Children[0]) + OperatorTable[expr.Name] + ToSympyExpr(expr.Children[1]) + ")",
+            FunctionEntity _ => "sympy." + FuncTable[expr.Name] + "(" + ToSympyExpr(expr.GetChild(0)) + ")",
+            OperatorEntity _ => "(" + ToSympyExpr(expr.GetChild(0)) + OperatorTable[expr.Name] + ToSympyExpr(expr.GetChild(1)) + ")",
             NumberEntity _ => expr.ToString().Replace("i", "j"),
             VariableEntity _ => expr.ToString(),
             _ => throw new Core.Exceptions.UnknownEntityException(),

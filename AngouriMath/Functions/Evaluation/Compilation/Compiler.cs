@@ -81,13 +81,13 @@ namespace AngouriMath.Functions.Evaluation.Compilation
                 return;
             }
 
-            for (int i = expr.Children.Count - 1; i >= 0; i--)
-                InnerCompile(expr.Children[i], fe, variables, varNamespace);
+            for (int i = expr.ChildrenCount - 1; i >= 0; i--)
+                InnerCompile(expr.GetChild(i), fe, variables, varNamespace);
             switch (expr)
             {
                 case OperatorEntity _:
                 case FunctionEntity _:
-                    fe.instructions.AddCallInstruction(expr.Name, expr.Children.Count);
+                    fe.instructions.AddCallInstruction(expr.Name, expr.ChildrenCount);
                     break;
                 case NumberEntity { Value: var val }:
                     fe.instructions.AddPushNumInstruction(val.AsComplex());

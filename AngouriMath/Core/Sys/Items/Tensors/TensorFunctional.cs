@@ -83,33 +83,33 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         {
             if (!expr.IsLeaf)
             {
-                for (int i = 0; i < expr.Children.Count; i++)
+                for (int i = 0; i < expr.ChildrenCount; i++)
                 {
-                    var tmp = expr.Children[i];
+                    var tmp = expr.GetChild(i);
                     __EvalTensor(ref tmp);
-                    expr.Children[i] = tmp;
+                    expr.SetChild(i, tmp);
                 }
 
                 static Entity Wrap(Entity p, Entity op)
                 {
                     var cp = op.Copy();
-                    cp.Children.Add(p);
+                    cp.AddChild(p);
                     return cp;
                 }
 
-                switch (expr.Children.Count)
+                switch (expr.ChildrenCount)
                 {
                     case 1:
-                        if (expr.Children[0] is Tensor t)
+                        if (expr.GetChild(0) is Tensor t)
                         {
                             var ex1 = expr;
                             Apply(t, p => Wrap(p, ex1));
-                            expr = expr.Children[0];
+                            expr = expr.GetChild(0);
                         }
                         break;
                     case 2:
-                        var ch1 = expr.Children[0];
-                        var ch2 = expr.Children[1];
+                        var ch1 = expr.GetChild(0);
+                        var ch2 = expr.GetChild(1);
                         if (ch1 is Tensor t1 && ch2 is Tensor t2)
                         {
                             string name = expr.Name;

@@ -27,7 +27,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         internal static Set? Solve(Entity expr, VariableEntity x)
         {
             var childrenRaw = TreeAnalyzer.GatherLinearChildrenOverAndExpand(
-                expr, entity => entity.FindSubtree(x) is { }
+                expr, entity => entity.SubtreeIsFound(x)
             );
 
             if (childrenRaw is null)
@@ -63,12 +63,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         potentialFraction.multiplier *= mpChild;
                         continue;
                     }
-                    if (!(mpChild.Children[1] is NumberEntity { Value:var num }))
+                    if (!(mpChild.GetChild(1) is NumberEntity { Value:var num }))
                     {
                         potentialFraction.multiplier *= mpChild;
                         continue;
                     }
-                    if (mpChild.Children[0].FindSubtree(x) is null)
+                    if (!mpChild.GetChild(0).SubtreeIsFound(x))
                     {
                         potentialFraction.multiplier *= mpChild;
                         continue;
@@ -80,7 +80,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         potentialFraction.multiplier *= mpChild;
                         continue;
                     }
-                    var newChild = MathS.Pow(mpChild.Children[0], (IntegerNumber)fracNum.Value.Numerator).InnerSimplify();
+                    var newChild = MathS.Pow(mpChild.GetChild(0), (IntegerNumber)fracNum.Value.Numerator).InnerSimplify();
                     var den = fracNum.Value.Denominator;
                     potentialFraction.fracs.Add((newChild, den));
                 }

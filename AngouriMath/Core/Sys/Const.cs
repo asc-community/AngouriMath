@@ -47,13 +47,10 @@ namespace AngouriMath
         /// <returns></returns>
         internal static OperatorEntity FuncIfSum(Entity child)
         {
-            return new OperatorEntity("mulf", Const.PRIOR_MUL)
-            {
-                Children = new List<Entity> {
-                    -1,
-                    child
-                    }
-            };
+            var res = new OperatorEntity("mulf", Const.PRIOR_MUL);
+            res.AddChild(-1);
+            res.AddChild(child);
+            return res;
         }
 
         /// <summary>
@@ -63,13 +60,10 @@ namespace AngouriMath
         /// <returns></returns>
         internal static OperatorEntity FuncIfMul(Entity child)
         {
-            return new OperatorEntity("powf", Const.PRIOR_POW)
-            {
-                Children = new List<Entity> {
-                    child,
-                    -1
-                    }
-            };
+            var res = new OperatorEntity("powf", Const.PRIOR_POW);
+            res.AddChild(child);
+            res.AddChild(-1);
+            return res;
         }
 
 
@@ -208,7 +202,7 @@ namespace AngouriMath
             {
                 if (!(entity is OperatorEntity &&
                       entity.Name == "powf" &&
-                      entity.Children[1] is NumberEntity numEntity))
+                      entity.GetChild(1) is NumberEntity numEntity))
                     return false;
                 if (!(numEntity.Value is RealNumber realNumber))
                     return false;

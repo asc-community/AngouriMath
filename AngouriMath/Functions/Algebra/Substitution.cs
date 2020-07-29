@@ -64,8 +64,8 @@ namespace AngouriMath
                 res = DeepCopy();
             if (res == x)
                 return value;
-            for (int i = 0; i < res.Children.Count; i++)
-                res.Children[i] = res.Children[i].Substitute(x, value, true);
+            for (int i = 0; i < res.ChildrenCount; i++)
+                res.SetChild(i, res.GetChild(i).Substitute(x, value, true));
             return res;
         }
     }

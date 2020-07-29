@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Core.Sys.Interfaces;
@@ -10,6 +11,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
+            
         }
     }
 }

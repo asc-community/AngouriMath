@@ -50,7 +50,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 if (!(expr is OperatorEntity { Name: "powf" }))
                     return 1;
                 else
-                    return expr.Children[1] * GetPower(expr.Children[0]);
+                    return expr.GetChild(1) * GetPower(expr.GetChild(0));
             }
 
             static Entity GetBase(Entity expr)
@@ -58,7 +58,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 if (!(expr is OperatorEntity { Name: "powf" }))
                     return expr;
                 else
-                    return GetBase(expr.Children[0]);
+                    return GetBase(expr.GetChild(0));
             }
 
             (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) oneInfo;
@@ -69,7 +69,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var res = new FractionInfoList();
             foreach (var multiplier in multipliers)
             {
-                if (multiplier.FindSubtree(x) is null)
+                if (!multiplier.SubtreeIsFound(x))
                 {
                     oneInfo.numerator *= multiplier;
                     continue;

@@ -51,12 +51,12 @@ namespace AngouriMath
         /// <returns></returns>
         internal static Entity Synonymize(Entity tree)
         {
-            for (int i = 0; i < tree.Children.Count; i++)
+            for (int i = 0; i < tree.ChildrenCount; i++)
             {
-                tree.Children[i] = Synonymize(tree.Children[i]);
+                tree.SetChild(i, Synonymize(tree.GetChild(i)));
             }
             if (SynFunctions.ContainsKey(tree.Name))
-                return SynFunctions[tree.Name](tree.Children);
+                return SynFunctions[tree.Name](tree.ChildrenReadonly);
             else
                 return tree;
         }

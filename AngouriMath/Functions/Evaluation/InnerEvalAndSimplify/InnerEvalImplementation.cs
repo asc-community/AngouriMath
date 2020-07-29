@@ -23,14 +23,14 @@ namespace AngouriMath
     {
         internal override Entity InnerEval()
         {
-            return MathFunctions.InvokeEval(Name, Children);
+            return MathFunctions.InvokeEval(Name, ChildrenReadonly);
         }
     }
     public partial class OperatorEntity : Entity
     {
         internal override Entity InnerEval()
         {
-            return MathFunctions.InvokeEval(Name, Children);
+            return MathFunctions.InvokeEval(Name, ChildrenReadonly);
         }
     }
     public partial class NumberEntity : Entity

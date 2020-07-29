@@ -16,7 +16,9 @@ namespace UnitTests.Algebra
         {
             var func = MathS.Sqr(x) + 2 * x + 1;
             var derived = func.Derive(x);
-            AssertEqEntity(derived.Simplify(), (2 * x + 2).Simplify());
+            var derivedSimplified = derived.Simplify();
+            var targetSimplified = (2 * x + 2).Simplify();
+            AssertEqEntity(derivedSimplified, targetSimplified);
         }
         [TestMethod]
         public void TestSin()

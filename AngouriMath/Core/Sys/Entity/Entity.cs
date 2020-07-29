@@ -18,7 +18,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Numerics;
 using AngouriMath.Core.Numerix;
- using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Core.Sys;
+using AngouriMath.Core.Sys.Interfaces;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -44,11 +45,13 @@ namespace AngouriMath
         {
             Children = new List<Entity>();
             Name = name;
+            PropsReinit();
         }
+
         /// <summary>
         /// All children nodes of an expression
         /// </summary>
-        public List<Entity> Children { get; internal set; }
+        private List<Entity> Children { get; set; }
 
         /// <summary>
         /// Use this to copy one node (unsafe copy!)
@@ -67,7 +70,7 @@ namespace AngouriMath
             Entity res = Copy();
             foreach (var child in Children)
             {
-                res.Children.Add(child.DeepCopy());
+                res.AddChild(child.DeepCopy());
             }
             return res;
         }
@@ -95,7 +98,61 @@ namespace AngouriMath
         public static bool operator !=(Entity? a, Entity? b) => !(a == b);
         public override bool Equals(object obj) => obj is Entity e && EqualsTo(e);
         bool System.IEquatable<Entity>.Equals(Entity other) => EqualsTo(other);
-        public override int GetHashCode() => base.GetHashCode();
+
+        
+        internal List<Entity> ChildrenReadonly => Children;
+
+        public int ChildrenCount => Children.Count;
+
+        internal void PropsReinit()
+        {
+            properties = null; // will be reinitted by the first addressing to Properties
+        }
+
+        public void SetChild(int index, Entity child)
+        {
+            Children[index] = child;
+            PropsReinit();
+        }
+
+        public Entity GetChild(int index)
+            => Children[index];
+
+
+        public void AddChildrenRange(IEnumerable<Entity> children)
+        {
+            Children.AddRange(children);
+            PropsReinit();
+        }
+
+        public void AddChild(Entity child)
+        {
+            Children.Add(child);
+            PropsReinit();
+        }
+
+        private EntityProperties? properties;
+        internal EntityProperties Properties
+        {
+            get
+            {
+                if (properties is null)
+                    properties = new EntityProperties(this);
+                return properties;
+            }
+        }
+
+        public override int GetHashCode()
+        {
+            return Name.GetHashCode() + Properties.GetPropHashCode();
+        }
+
+        public bool HasVar(string name)
+        {
+            if (Name == name && this is VariableEntity)
+                return true;
+            return Properties.GetPropHasVar(name);
+        }
     }
 
     /// <summary>

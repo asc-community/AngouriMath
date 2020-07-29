@@ -35,15 +35,15 @@ namespace AngouriMath.Core.TreeAnalysis
         internal static void InvertNegativePowers(ref Entity expr)
         {
             if (expr is OperatorEntity { Name: "powf" } &&
-                expr.Children[1] is NumberEntity { Value:IntegerNumber pow } && pow < 0)
-                expr = 1 / MathS.Pow(expr.Children[0], -1 * pow);
+                expr.GetChild(1) is NumberEntity { Value:IntegerNumber pow } && pow < 0)
+                expr = 1 / MathS.Pow(expr.GetChild(0), -1 * pow);
             else
             {
-                for (int i = 0; i < expr.Children.Count; i++)
+                for (int i = 0; i < expr.ChildrenCount; i++)
                 {
-                    var tmp = expr.Children[i];
+                    var tmp = expr.GetChild(i);
                     InvertNegativePowers(ref tmp);
-                    expr.Children[i] = tmp;
+                    expr.SetChild(i, tmp);
                 }
             }
         }
@@ -57,16 +57,16 @@ namespace AngouriMath.Core.TreeAnalysis
         internal static void InvertNegativeMultipliers(ref Entity expr)
         {
             if (NegativeMultiplyerPattern.Match(expr)
-                && expr.Children[1].Children[0] is NumberEntity { Value:RealNumber { Value:var real } }
+                && expr.GetChild(1).GetChild(0) is NumberEntity { Value:RealNumber { Value:var real } }
                 && real > IntegerNumber.Zero)
-                expr = expr.Children[0] - (-1 * real) * expr.Children[1].Children[1];
+                expr = expr.GetChild(0) - (-1 * real) * expr.GetChild(1).GetChild(1);
             else
             {
-                for (int i = 0; i < expr.Children.Count; i++)
+                for (int i = 0; i < expr.ChildrenCount; i++)
                 {
-                    var tmp = expr.Children[i];
+                    var tmp = expr.GetChild(i);
                     InvertNegativePowers(ref tmp);
-                    expr.Children[i] = tmp;
+                    expr.SetChild(i, tmp);
                 }
             }
         }

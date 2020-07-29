@@ -64,10 +64,7 @@ namespace AngouriMath
         /// <returns></returns>
         public int Complexity()
         {
-            int res = 0;
-            foreach (var child in Children)
-                res += child.Complexity();
-            return res + 1;
+            return Properties.GetPropComplexity() + 1;
         }
 
         /// <summary>

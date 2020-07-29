@@ -32,7 +32,7 @@ namespace AngouriMath.Core.TreeAnalysis
             var result = 0;
             if (condition(tree))
                 result++;
-            foreach (var child in tree.Children)
+            foreach (var child in tree.ChildrenReadonly)
                 result += Count(child, condition);
             return result;
         }

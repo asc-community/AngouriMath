@@ -40,7 +40,7 @@ namespace AngouriMath.Core.TreeAnalysis
         public static void CheckTree(Entity tree)
         {
             tree.Check();
-            foreach (var child in tree.Children)
+            foreach (var child in tree.ChildrenReadonly)
                 CheckTree(child);
         }
 
@@ -60,7 +60,7 @@ namespace AngouriMath.Core.TreeAnalysis
             if (expr is NumberEntity { Value:var value })
                 return value.IsFinite;
             else
-                return expr.Children.All(IsFinite);
+                return expr.ChildrenReadonly.All(IsFinite);
         }
     }
 }
@@ -86,7 +86,7 @@ namespace AngouriMath
         internal override void Check()
         {
             // Number has no children
-            TreeAnalyzer.AssertTree(Children.Count == 0, "A number cannot have children");
+            TreeAnalyzer.AssertTree(ChildrenCount == 0, "A number cannot have children");
         }
     }
     public partial class VariableEntity
@@ -94,7 +94,7 @@ namespace AngouriMath
         internal override void Check()
         {
             // Var has no children
-            TreeAnalyzer.AssertTree(Children.Count == 0, "A variable cannot have children");
+            TreeAnalyzer.AssertTree(ChildrenCount == 0, "A variable cannot have children");
             // Reserved word (e. g. "sumf") can't be a var's name
             TreeAnalyzer.AssertTree(!Const.IsReservedName(Name), "`" + Name + "` is a reserved word");
         }
@@ -104,7 +104,7 @@ namespace AngouriMath
         internal override void Check()
         {
             // Number of children fits required number of args
-            TreeAnalyzer.AssertTree(Children.Count == SyntaxInfo.GetFuncArg(Name), "Wrong number of children");
+            TreeAnalyzer.AssertTree(ChildrenCount == SyntaxInfo.GetFuncArg(Name), "Wrong number of children");
             // Checks whether the function exist
             TreeAnalyzer.AssertTree(Const.IsReservedName(Name), "Unknown function");
         }
@@ -114,11 +114,11 @@ namespace AngouriMath
         internal override void Check()
         {
             // Only binary operators are available so far
-            TreeAnalyzer.AssertTree(Children.Count == 2, "Wrong number of children");
+            TreeAnalyzer.AssertTree(ChildrenCount == 2, "Wrong number of children");
             // If operator exists
             TreeAnalyzer.AssertTree(Const.IsReservedName(Name), "Unknown operator");
             // Detect division by 0
-            TreeAnalyzer.AssertTree(Name != "divf" || Children[1] != 0, "Division by zero");
+            TreeAnalyzer.AssertTree(Name != "divf" || GetChild(1) != 0, "Division by zero");
         }
     }
 }

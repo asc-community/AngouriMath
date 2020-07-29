@@ -617,7 +617,7 @@ public partial class AngourimathParser : Parser {
 				State = 95; Match(T__5);
 				State = 96; _localctx.args = function_arguments();
 				State = 97; Match(T__6);
-				 _localctx.value =  new FunctionEntity((_localctx._ID!=null?_localctx._ID.Text:null) + 'f'); foreach(var arg in _localctx.args.list) { _localctx.value.Children.Add(arg); } 
+				 _localctx.value =  new FunctionEntity((_localctx._ID!=null?_localctx._ID.Text:null) + 'f'); foreach(var arg in _localctx.args.list) { _localctx.value.AddChild(arg); } 
 				}
 				break;
 			case 5:

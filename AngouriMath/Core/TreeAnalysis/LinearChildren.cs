@@ -55,13 +55,13 @@ namespace AngouriMath.Core.TreeAnalysis
             var res = new List<Entity>();
             if (tree.Name == funcName || tree.Name == badFuncName)
             {
-                res.AddRange(LinearChildren(tree.Children[0], funcName, badFuncName, supCreator));
+                res.AddRange(LinearChildren(tree.GetChild(0), funcName, badFuncName, supCreator));
                 if (tree.Name == funcName)
-                    res.AddRange(LinearChildren(tree.Children[1], funcName, badFuncName, supCreator));
+                    res.AddRange(LinearChildren(tree.GetChild(1), funcName, badFuncName, supCreator));
                 else
                 {
                     // Here we need to inverse
-                    var badRes = LinearChildren(tree.Children[1], funcName, badFuncName, supCreator);
+                    var badRes = LinearChildren(tree.GetChild(1), funcName, badFuncName, supCreator);
                     var goodRes = new List<Entity>();
                     foreach (var child in badRes)
                         goodRes.Add(supCreator(child));
