@@ -15,7 +15,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-
+            var limit = Limit.ComputeLimit("log(1/x, x^(-2))", "x", 0, ApproachFrom.Right);
+            Console.WriteLine(limit?.Simplify());
         }
     }
 }

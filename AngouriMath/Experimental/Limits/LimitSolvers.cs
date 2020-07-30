@@ -18,16 +18,44 @@ namespace AngouriMath.Experimental.Limits
             if(MathS.CanBeEvaluated(res))
             {
                 var limit = res.Eval();
-                if (limit != RealNumber.NaN)
-                    return limit;
+                if (limit == RealNumber.NaN) return null;
+                if (!limit.IsFinite) return limit;
+
+                return res;
             }
             return null;
         }
 
+        internal static Entity? SolveAsPolynome(Entity expr, VariableEntity x)
+        {
+            var mono = TreeAnalyzer.ParseAsPolynomial<EDecimal>(expr, x);
+            if (mono is { })
+            {
+                var maxPower = mono.Keys.Max();
+                if (maxPower.IsZero)
+                {
+                    return mono[maxPower];
+                }
+                else if (maxPower.IsNegative)
+                {
+                    return 0;
+                }
+                else
+                {
+                    if (MathS.CanBeEvaluated(mono[maxPower]))
+                        return Infinity * mono[maxPower].Eval();
+                    else
+                        return Infinity * mono[maxPower];
+                }
+            }
+            else return null;
+        }
+
+
+        private static Pattern polynomDivisionPattern = Patterns.any1 / Patterns.any2;
         internal static Entity? SolvePolynomialDivision(Entity expr, VariableEntity x)
         {
-            var pattern = Patterns.any1 / Patterns.any2;
-            if(pattern.Match(expr))
+            if(polynomDivisionPattern.Match(expr))
             {
                 var P = expr.GetChild(0);
                 var Q = expr.GetChild(1);
@@ -35,8 +63,10 @@ namespace AngouriMath.Experimental.Limits
                 var monoP = TreeAnalyzer.ParseAsPolynomial<EDecimal>(P, x);
                 var monoQ = TreeAnalyzer.ParseAsPolynomial<EDecimal>(Q, x);
 
+                if (monoQ is null) monoQ = new Dictionary<EDecimal, Entity>() { { EDecimal.Zero, 1 } }; // P -> P / 1
+
                 Entity? result = null;
-                if(monoP is { } && monoQ is { })
+                if(monoP is { })
                 {
                     var maxPowerP = monoP.Keys.Max();
                     var maxPowerQ = monoQ.Keys.Max();
@@ -67,20 +97,35 @@ namespace AngouriMath.Experimental.Limits
                 }
                 return result;
             }
-            else
-            {
-                var pol = TreeAnalyzer.ParseAsPolynomial<EDecimal>(expr, x);
-                if (pol is null)
-                    return null;
-                var maxPower = pol.Keys.Max();
-                if (maxPower.CompareTo(EDecimal.Zero) > 0)
-                    return pol[maxPower] * Infinity;
-                else if (maxPower.CompareTo(EDecimal.Zero) == 0)
-                    return pol[maxPower];
-                else
-                    return 0;
-            }
             return null;
+        }
+
+        private static Pattern LogarithmPattern = Logf.PHang(Patterns.any1, Patterns.any2);
+        internal static Entity? SolveAsLogarithm(Entity expr, VariableEntity x)
+        {
+            if (LogarithmPattern.Match(expr))
+            {
+                var logBase = expr.GetChild(0);
+                var logArgument = expr.GetChild(1);
+
+                if (logBase.ContainsName("x"))
+                {
+                    // apply L'Hôpital's rule for lim(x -> +oo) log(f(x), g(x))
+                    var p = logArgument.Derive(x) / logArgument;
+                    var q = logBase.Derive(x) / logBase;
+                    return Limit.ComputeLimit(p / q, x, RealNumber.PositiveInfinity, ApproachFrom.Left);
+                }
+                else
+                {
+                    var innerLimit = Limit.ComputeLimitToInfinity(logArgument, x);
+                    if (innerLimit is null) return null;
+                    // do same as wolframalpha: https://www.wolframalpha.com/input/?i=ln%28-inf%29
+                    if (innerLimit == RealNumber.NegativeInfinity) return RealNumber.PositiveInfinity;
+                    if (innerLimit == RealNumber.PositiveInfinity) return RealNumber.PositiveInfinity;
+                    return MathS.Log(logBase, innerLimit);
+                }
+            }
+            else return null;
         }
     }
 }

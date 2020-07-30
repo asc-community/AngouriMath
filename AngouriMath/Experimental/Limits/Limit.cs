@@ -12,15 +12,24 @@ namespace AngouriMath.Experimental.Limits
     }
     public static class Limit
     {
-        internal static Entity? ComputeLimitToInfinity(Entity expr, VariableEntity x)
+        private static Entity? ComputeLimitToInfinityForwarder(Entity expr, VariableEntity x)
         {
             expr = expr.Simplify();
-
+            return ComputeLimitToInfinity(expr, x);
+        }
+        internal static Entity? ComputeLimitToInfinity(Entity expr, VariableEntity x)
+        {
             var substitutionResult = LimitSolvers.SolveBySubstitution(expr, x);
             if (substitutionResult != null) return substitutionResult;
 
-            var polynomialResult = LimitSolvers.SolvePolynomialDivision(expr, x);
+            var logarithmResult = LimitSolvers.SolveAsLogarithm(expr, x);
+            if (logarithmResult != null) return logarithmResult;
+
+            var polynomialResult = LimitSolvers.SolveAsPolynome(expr, x);
             if (polynomialResult != null) return polynomialResult;
+
+            var polynomialDivisionResult = LimitSolvers.SolvePolynomialDivision(expr, x);
+            if (polynomialDivisionResult != null) return polynomialDivisionResult;
 
             return null;
         }
@@ -43,7 +52,7 @@ namespace AngouriMath.Experimental.Limits
                             expr = expr.Substitute(x, -x);
                         }
                         // compute limit for x -> +oo
-                        return ComputeLimitToInfinity(expr, x);
+                        return ComputeLimitToInfinityForwarder(expr, x);
                     }
                 }
                 else if(!number.Value.IsFinite)
@@ -58,7 +67,7 @@ namespace AngouriMath.Experimental.Limits
                 expr = expr.Substitute(x, dist + 1 / x);
             // lim(x -> 3-) x <=> lim(x -> 0+) 3 - x <=> lim(x -> +oo) 3 - 1 / x
             // lim(x -> 3+) x <=> lim(x -> 0+) 3 + x <=> lim(x -> +oo) 3 + 1 / x
-            return ComputeLimitToInfinity(expr, x);
+            return ComputeLimitToInfinityForwarder(expr, x);
         }
 
         public static Entity? ComputeLimit(Entity expr, VariableEntity x, Entity dist)
