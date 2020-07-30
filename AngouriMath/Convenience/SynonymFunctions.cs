@@ -34,6 +34,7 @@ namespace AngouriMath
         /// </summary>
         internal static readonly FuncTable SynFunctions = new FuncTable
         {
+            { "gammaf", args => MathS.Gamma(args[0]) },
             { "sqrtf", args => MathS.Pow(args[0], 0.5) },
             { "sqrf", args => MathS.Pow(args[0], 2) },
             { "lnf", args => MathS.Log(MathS.e, args[0]) },

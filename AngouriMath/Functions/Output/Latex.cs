@@ -221,6 +221,14 @@ namespace AngouriMath
             return @"\arccot\left(" + args[0].Latexise() + @"\right)";
         }
     }
+    internal static partial class Factorialf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            return args[0].Latexise(args[0].Priority < Const.PRIOR_NUM) + "!";
+        }
+    }
     namespace Core
     {
         partial class SetNode : ILatexiseable

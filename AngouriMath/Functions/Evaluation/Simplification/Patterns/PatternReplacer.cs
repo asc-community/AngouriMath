@@ -64,10 +64,13 @@ namespace AngouriMath
             if (!(this is Pattern p))
                 return this == tree;
             var PatternType = p.patType;
-            if (PatternType == PatType.COMMON)
-                return p.EqFits(tree) != null;
+
             if (!PatternMatches(this, tree))
                 return false;
+
+            if (PatternType == PatType.COMMON)
+                return p.EqFits(tree) != null;
+            
             if (PatternType == PatType.FUNCTION && PatternNumber != -1)
                 return p.EqFits(tree) != null;
             if (Children.Count != tree.ChildrenCount)

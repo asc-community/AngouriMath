@@ -31,13 +31,6 @@ namespace AngouriMath.Functions.Evaluation.Simplification
         /// </summary>
         /// <param name="expr"></param>
         /// <returns></returns>
-        internal static Entity Simplify(Entity expr) => Simplify(expr, 2);
-
-        /// <summary>
-        /// See more details in Entity.Simplify
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
         internal static Entity Simplify(Entity expr, int level) => ((Entity)Alternate(expr, level).Pieces[0]).InnerSimplify();
 
         /// <summary>
@@ -132,6 +125,13 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     TreeAnalyzer.ReplaceInPlace(Patterns.ExpandTrigonometricRules, ref res1);
                     AddHistory(res1);
                     res = res.Complexity() > res1.Complexity() ? res1 : res;
+                }
+                if (TreeAnalyzer.Optimization.ContainsFactorial(res))
+                {
+                    TreeAnalyzer.ExpandFactorialDivisions(ref res);
+                    AddHistory(res);
+                    TreeAnalyzer.CollapseFactorialMultiplications(ref res);
+                    AddHistory(res);
                 }
                 if (TreeAnalyzer.Optimization.ContainsPower(res))
                 {

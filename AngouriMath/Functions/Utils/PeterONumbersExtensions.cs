@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -14,14 +14,16 @@ namespace AngouriMath
         {
             public static ConstantCache Lookup(EContext context)
             {
-                if (!Constants.TryGetValue(context, out var cache))
-                {
-                    cache = new ConstantCache(context);
-                    Constants.Add(context, cache);
-                }
+                if (!constants.TryGetValue(context, out var cache))
+                    lock (constants)
+                        if (!constants.TryGetValue(context, out cache))
+                        {
+                            cache = new ConstantCache(context);
+                            constants.Add(context, cache);
+                        }
                 return cache;
             }
-            static Dictionary<EContext, ConstantCache> Constants { get; } = new Dictionary<EContext, ConstantCache>();
+            static readonly Dictionary<EContext, ConstantCache> constants = new Dictionary<EContext, ConstantCache>();
             ConstantCache(EContext context)
             {
                 Half = EDecimal.One.Divide(2, context);
@@ -67,6 +69,7 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Cos(double)"/></summary>
         public static EDecimal Cos(this EDecimal x, EContext context)
         {
+            if (!x.IsFinite) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
 
             //truncating to  [-2*PI;2*PI]
@@ -101,6 +104,7 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Tan(double)"/></summary>
         public static EDecimal Tan(this EDecimal x, EContext context)
         {
+            if (!x.IsFinite) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
             var cos = Cos(x, context);
             if (cos.IsZero) return EDecimal.NaN;
@@ -132,6 +136,7 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Sin(double)"/></summary>
         public static EDecimal Sin(this EDecimal x, EContext context)
         {
+            if (!x.IsFinite) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
             var cos = Cos(x, context);
             return CalculateSinFromCos(x, cos, consts, context);
@@ -143,13 +148,13 @@ namespace AngouriMath
         {
             while (x.GreaterThanOrEquals(consts.TwoPi))
             {
-                EDecimal divide = x.Divide(consts.TwoPi, context).ToEInteger().Abs();
+                EDecimal divide = x.Divide(consts.TwoPi, context).Floor().Abs();
                 x = divide.MultiplyAndAdd(-consts.TwoPi, x, context);
             }
 
             while (x.LessThanOrEquals(-consts.TwoPi))
             {
-                EDecimal divide = x.Divide(consts.TwoPi, context).ToEInteger().Abs();
+                EDecimal divide = x.Divide(consts.TwoPi, context).Floor().Abs();
                 x = divide.MultiplyAndAdd(consts.TwoPi, x, context);
             }
         }
@@ -200,7 +205,9 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Atan(double)"/></summary>
         public static EDecimal Atan(this EDecimal x, EContext context)
         {
+            if (x.IsNaN()) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
+            if (x.IsInfinity()) return x.Sign * consts.HalfPi;
             if (x.IsZero) return x;
             if (x.EqualsBugFix(EDecimal.One)) return consts.QuarterPi;
             return Asin(x.Divide(x.MultiplyAndAdd(x, EDecimal.One, context).Sqrt(context), context), context);
@@ -221,15 +228,37 @@ namespace AngouriMath
         /// </summary>
         public static EDecimal Atan2(this EDecimal y, EDecimal x, EContext context)
         {
+            if (y.IsNaN() || x.IsNaN()) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
-            return (x.Sign, y.Sign) switch
+            const int inf = 100;
+
+            // Values for infinity: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/atan2
+            return (x.Sign * (x.IsInfinity() ? inf : 1), y.Sign * (y.IsInfinity() ? inf : 1)) switch
             {
+                (inf, inf) => consts.QuarterPi,
+                (inf, -inf) => -consts.QuarterPi,
+                (-inf, inf) => consts.QuarterPi * 3,
+                (-inf, -inf) => -consts.QuarterPi * 3,
+                (_, inf) => consts.HalfPi,
+                (_, -inf) => -consts.HalfPi,
+                (-inf, -1) => -consts.Pi,
+                (-inf, 0) => y.IsNegative ? -consts.Pi : consts.Pi,
+                (-inf, 1) => consts.Pi,
+                (inf, _) => EDecimal.Zero,
                 (1, _) => Atan(y.Divide(x, context), context),
                 (-1, -1) => Atan(y.Divide(x, context), context).Subtract(consts.Pi, context),
-                (-1, _) => Atan(y.Divide(x, context), context).Add(consts.Pi, context),
+                (-1, 0) => y.IsNegative ? -consts.Pi : consts.Pi,
+                (-1, 1) => Atan(y.Divide(x, context), context).Add(consts.Pi, context),
                 (0, 1) => consts.HalfPi,
                 (0, -1) => -consts.HalfPi,
-                _ => throw new ArgumentException("Invalid atan2 arguments"),
+                (0, 0) => (x.IsNegative, y.IsNegative) switch
+                {
+                    (true, true) => -consts.Pi,
+                    (false, true) => EDecimal.NegativeZero,
+                    (true, false) => consts.Pi,
+                    (false, false) => EDecimal.Zero,
+                },
+                _ => throw new Core.Exceptions.SysException("Unexpected scenario"),
             };
         }
 
@@ -253,9 +282,187 @@ namespace AngouriMath
         /// <summary>Analogy of <see cref="Math.Tanh(double)"/></summary>
         public static EDecimal Tanh(this EDecimal x, EContext context)
         {
+            if (x.IsNaN())
+                return EDecimal.NaN;
+            if (x.IsInfinity())
+                return x.Sign;
             var y = x.Exp(context);
             var yy = EDecimal.One.Divide(y, context);
             return y.Subtract(yy, context).Divide(y.Add(yy, context), context);
         }
+
+        // End of https://github.com/raminrahimzada/CSharp-Helper-Classes/blob/ffbb33c1ee90ce12357c72fa65f2510a09834693/Math/DecimalMath/DecimalMath.cs
+
+        /// <summary>Rounds half up to nearest integer</summary>
+        public static EDecimal Round(this EDecimal x) => x.RoundToExponent(0, ERounding.HalfUp);
+        /// <summary>Rounds towards zero to nearest integer</summary>
+        public static EDecimal Truncate(this EDecimal x) => x.RoundToExponent(0, ERounding.Down);
+        /// <summary>Splits decimal into integral part and fractional part.
+        /// The fractional part is guaranteed to be positive.</summary>
+        public static (EInteger Integral, EDecimal Fractional) SplitDecimal(this EDecimal x)
+        {
+            var integral = x.Floor().ToEInteger();
+            return (integral, x - integral);
+        }
+        /// <summary>If there is a fractional part, returns the next smallest integer</summary>
+        public static EDecimal Ceiling(this EDecimal x) => x.RoundToExponent(0, ERounding.Ceiling);
+        /// <summary>If there is a fractional part, returns the previous largest integer</summary>
+        public static EDecimal Floor(this EDecimal x) => x.RoundToExponent(0, ERounding.Floor);
+
+        // Based on https://github.com/eobermuhlner/big-math/blob/ba75e9a80f040224cfeef3c2ac06390179712443/ch.obermuhlner.math.big/src/main/java/ch/obermuhlner/math/big/BigDecimalMath.java
+
+        static IEnumerable<EInteger> GenerateFactorials()
+        {
+            var i = 0;
+            var result = EInteger.One;
+            yield return result;
+            while (true)
+                yield return result *= ++i;
+        }
+        static readonly IEnumerator<EInteger> factorialCacheGenerator = GenerateFactorials().GetEnumerator();
+        static readonly List<EInteger> factorialCache = new List<EInteger>();
+        static readonly Dictionary<int, EDecimal[]> spougeFactorialConstantsCache = new Dictionary<int, EDecimal[]>();
+
+        /**
+            <summary>
+            Calculates the factorial of the specified integer argument.
+            <para>factorial = 1 * 2 * 3 * ... n</para>
+            </summary>
+            <param name="n">The <see cref="int"/>.</param>
+            <returns>The factorial <see cref="EInteger"/>.</returns>
+            <exception cref="ArgumentOutOfRangeException">Thrown if x &lt; 0</exception>
+        */
+        public static EInteger Factorial(int n)
+        {
+            if (n < 0)
+                throw new ArgumentOutOfRangeException(nameof(n), "Illegal factorial(n) for n < 0: n = " + n);
+            if (n < factorialCache.Count)
+                return factorialCache[n];
+            lock (factorialCache)
+            {
+                if (n < factorialCache.Count)
+                    return factorialCache[n];
+                for (var i = factorialCache.Count - 1; i < n; i++)
+                {
+                    factorialCacheGenerator.MoveNext();
+                    factorialCache.Add(factorialCacheGenerator.Current);
+                }
+            }
+            return factorialCache[n];
+        }
+
+        public static EInteger Factorial(this EInteger n) =>
+            n.CanFitInInt32() ? Factorial(n.ToInt32Checked()) : throw new OutOfMemoryException();
+
+        /**
+         * <summary>
+         * Calculates the factorial of the specified <see cref="EDecimal"/>.
+         *
+         * <para>This implementation uses
+         * <a href="https://en.wikipedia.org/wiki/Spouge%27s_approximation">Spouge's approximation</a>
+         * to calculate the factorial for non-integer values.</para>
+         *
+         * <para>This involves calculating a series of constants that depend on the desired precision.
+         * Since this constant calculation is quite expensive (especially for higher precisions),
+         * the constants for a specific precision will be cached
+         * and subsequent calls to this method with the same precision will be much faster.</para>
+         *
+         * <para>It is therefore recommended to do one call to this method with the standard precision of your application during the startup phase
+         * and to avoid calling it with many different precisions.</para>
+         *
+         * <para>See: <a href="https://en.wikipedia.org/wiki/Factorial#Extension_of_factorial_to_non-integer_values_of_argument">Wikipedia: Factorial - Extension of factorial to non-integer values of argument</a></para>
+         * </summary>
+         *
+         * <param name="x">The <see cref="EDecimal"/></param>
+         * <param name="mathContext">The <see cref="EContext"/> used for the result</param>
+         * <returns>The factorial <see cref="EDecimal"/></returns>
+         * <exception cref="ArgumentOutOfRangeException">Thrown when the precision of the <paramref name="mathContext"/> is outside the int32 range</exception>
+         * <seealso cref="Factorial(int)"/>
+         * <seealso cref="Gamma(EDecimal, EContext)"/>
+         */
+        public static EDecimal Factorial(this EDecimal x, EContext mathContext)
+        {
+            if (x.IsPositiveInfinity())
+                return x;
+            if (!x.IsFinite)
+                return EDecimal.NaN;
+            try
+            {
+                var @int = x.ToInt32IfExact();
+                if (@int < 0) return EDecimal.NaN; // Will become ±∞ if we don't insert this line
+                return EDecimal.FromEInteger(Factorial(@int)).RoundToPrecision(mathContext);
+            }
+            catch { } // EDecimal does not fit in an int32
+
+            if (!mathContext.Precision.CanFitInInt32())
+                throw new ArgumentOutOfRangeException($"The precision of the {nameof(mathContext)} is outside the int32 range");
+
+            // https://en.wikipedia.org/wiki/Spouge%27s_approximation
+            var mc = mathContext.WithBigPrecision(mathContext.Precision << 1);
+
+            var a = mathContext.Precision.ToInt32Checked() * 13 / 10;
+            var constants = GetSpougeFactorialConstants(a);
+
+            var negative = false;
+            var factor = constants[0];
+            for (int k = 1; k < a; k++)
+            {
+                factor = factor.Add(constants[k].Divide(x.Add(k), mc));
+                negative = !negative;
+            }
+
+            var result = x.Add(a).Pow(x.Add(0.5m), mc);
+            result = result.Multiply(x.Negate().Subtract(a).Exp(mc));
+            result = result.Multiply(factor);
+
+            return result.RoundToPrecision(mathContext);
+        }
+
+        internal static EDecimal[] GetSpougeFactorialConstants(int a)
+        {
+            if (spougeFactorialConstantsCache.TryGetValue(a, out var list))
+                return list;
+            lock (spougeFactorialConstantsCache)
+            {
+                if (spougeFactorialConstantsCache.TryGetValue(a, out list))
+                    return list;
+                var constants = new EDecimal[a];
+                var mc = EContext.ForPrecision(a * 15 / 10);
+
+                constants[0] = EDecimal.PI(mc).Multiply(2, mc).Sqrt(mc);
+
+                var negative = false;
+                for (int k = 1; k < a; k++)
+                {
+                    var deltaAK = EDecimal.FromInt32(a - k);
+                    var ck = deltaAK.Pow(EDecimal.FromInt32(k).Subtract(0.5m), mc);
+                    ck = deltaAK.Exp(mc).Multiply(ck, mc);
+                    ck = ck.Divide(Factorial(k - 1), mc);
+                    if (negative)
+                        ck = ck.Negate();
+                    constants[k] = ck;
+                    negative = !negative;
+                }
+
+                spougeFactorialConstantsCache.Add(a, constants);
+                return constants;
+            }
+        }
+        /**
+	     * <summary>
+	     * Calculates the gamma function of the specified <see cref="EDecimal"/>.
+	     *
+	     * <para>This implementation uses <see cref="Factorial(EDecimal, EContext)"/> internally,
+	     * therefore the performance implications described there apply also for this method.
+	     *
+	     * <para>See: <a href="https://en.wikipedia.org/wiki/Gamma_function">Wikipedia: Gamma function</a></para>
+	     * </summary>
+	     *
+	     * <param name="x">The <see cref="EDecimal"/></param>
+	     * <param name="mathContext">The <see cref="EContext"/> used for the result</param>
+	     * <returns>The gamma <see cref="EDecimal"/></returns>
+         * <exception cref="ArgumentOutOfRangeException">Thrown when the precision of the <paramref name="mathContext"/> is outside the <see cref="int"/> range</exception>
+	     */
+        public static EDecimal Gamma(this EDecimal x, EContext mathContext) => Factorial(x.Subtract(EDecimal.One), mathContext);
     }
 }

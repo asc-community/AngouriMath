@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -14,8 +14,10 @@
  */
 
 
+using System;
 using System.Collections.Generic;
 using System.Globalization;
+using AngouriMath.Core.Numerix;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -29,6 +31,7 @@ namespace AngouriMath
         internal static readonly Pattern any2 = new Pattern(101, Entity.PatType.COMMON, tree => true);
         internal static readonly Pattern any3 = new Pattern(102, Entity.PatType.COMMON, tree => true);
         internal static readonly Pattern any4 = new Pattern(103, Entity.PatType.COMMON, tree => true);
+        internal static readonly Pattern anyButNot1 = new Pattern(104, Entity.PatType.COMMON, tree => tree != IntegerNumber.One);
         internal static readonly Pattern const1 = new Pattern(200, Entity.PatType.NUMBER, tree => tree is NumberEntity);
         internal static readonly Pattern const2 = new Pattern(201, Entity.PatType.NUMBER, tree => tree is NumberEntity);
         internal static readonly Pattern const3 = new Pattern(202, Entity.PatType.NUMBER, tree => tree is NumberEntity);
@@ -205,8 +208,8 @@ namespace AngouriMath
             { any1 / any2 + any3 * any1, any1 * (Num(1) / any2 + any3) },
             { any2 * any1 + any1 / any3, any1 * (any2 + Num(1) / any3) },
             { any1 * any2 + any1 / any3, any1 * (any2 + Num(1) / any3) },
-            { any1 + any1 / any2, any1 * (Num(1) + Num(1) / any2) },
-            { any1 / any2 + any1, any1 * (Num(1) + Num(1) / any2) },
+            { anyButNot1 + anyButNot1 / any2, anyButNot1 * (Num(1) + Num(1) / any2) },
+            { anyButNot1 / any2 + anyButNot1, anyButNot1 * (Num(1) + Num(1) / any2) },
 
             // {1} * {2} - {1} * {3} = {1} * ({2} - {3})
             { any1 * any2 - any1 * any3, any1 * (any2 - any3) },

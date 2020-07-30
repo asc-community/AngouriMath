@@ -65,7 +65,7 @@ namespace AngouriMath.Core.FromString
         }
         public static Entity Parse(string source)
         {
-            AngouriMathTokenStream GetTokenStream(string source)
+            static AngouriMathTokenStream GetTokenStream(string source)
             {
                 var stream = new AntlrInputStream(source);
                 // TODO: can output stream be null or not?
