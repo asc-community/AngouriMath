@@ -1,6 +1,7 @@
 ﻿using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -30,33 +31,46 @@ namespace AngouriMath.Experimental.Limits
             {
                 var P = expr.GetChild(0);
                 var Q = expr.GetChild(1);
-                var monoP = TreeAnalyzer.GatherAllPossiblePolynomials(P, replaceVars: false).monoInfo;
-                var monoQ = TreeAnalyzer.GatherAllPossiblePolynomials(Q, replaceVars: false).monoInfo;
+                //var monoP = TreeAnalyzer.GatherAllPossiblePolynomials(P, replaceVars: false).monoInfo;
+                //var monoQ = TreeAnalyzer.GatherAllPossiblePolynomials(Q, replaceVars: false).monoInfo;
+                var monoP = TreeAnalyzer.ParseAsPolynomial<EDecimal>(P, x);
+                var monoQ = TreeAnalyzer.ParseAsPolynomial<EDecimal>(Q, x);
 
-                if(monoP.ContainsKey(x.Name) && monoQ.ContainsKey(x.Name))
+                Entity? result = null;
+                //if(monoP.ContainsKey(x.Name) && monoQ.ContainsKey(x.Name))
+                //{
+                //    var maxTermP = monoP[x.Name].First();
+                //    var maxTermQ = monoQ[x.Name].First();
+                if(monoP is { } && monoQ is { })
                 {
-                    var maxTermP = monoP[x.Name].First();
-                    var maxTermQ = monoQ[x.Name].First();
-                    if (maxTermP.Key.CompareTo(maxTermQ.Key) > 0)
+                    var maxPowerP = monoP.Keys.Max();
+                    var maxPowerQ = monoQ.Keys.Max();
+
+                    var maxTermP = monoP[maxPowerP];
+                    var maxTermQ = monoQ[maxPowerQ];
+                    if (maxPowerP.CompareTo(maxPowerQ) > 0)
                     {
-                        if (MathS.CanBeEvaluated(maxTermP.Value))
-                            return Infinity * maxTermP.Value.Eval();
+                        var term = maxTermP / maxTermQ;
+                        if (MathS.CanBeEvaluated(term))
+                        {
+                            result = Infinity * term.Eval();
+                        }
                         else
-                            return (Infinity * maxTermP.Value).Simplify();
+                            result = Infinity * term;
                     }
-                    else if (maxTermP.Key.CompareTo(maxTermQ.Key) < 0)
+                    else if (maxPowerP.CompareTo(maxPowerQ) == 0)
                     {
-                        return 0;
+                        var termPSimplified = maxTermP.InnerSimplify();
+                        var termQSimplified = maxTermQ.InnerSimplify();
+                        return termPSimplified / termQSimplified;
                     }
                     else
                     {
-                        var term = maxTermP.Value / maxTermQ.Value;
-                        if (MathS.CanBeEvaluated(term))
-                            return Infinity * term.Eval();
-                        else
-                            return (Infinity * term).Simplify();
+                        return 0;
                     }
-                }   
+                    if (result == RealNumber.NaN) result = null; // avoid returning NaN
+                }
+                return result;
             }
             return null;
         }
