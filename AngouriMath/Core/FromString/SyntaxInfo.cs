@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -41,6 +41,7 @@ namespace AngouriMath.Core.FromString
             { "arccotan", 1 },
             { "arcsec", 1 },
             { "arccosec", 1 },
+            { "gamma", 1 },
         };
         internal static readonly Dictionary<char, string> operatorNames = new Dictionary<char, string>
         {

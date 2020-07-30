@@ -26,5 +26,13 @@ namespace UnitTests.Common
             var expr = x * y + x;
             Assert.AreEqual(x * (1 + y), expr.Collapse());
         }
+        [TestMethod]
+        public void Factorial() 
+        {
+            var expr = MathS.Factorial(x + 3) / MathS.Factorial(x + 1);
+            Assert.AreEqual(x * x + x * 3 + 2 * x + 6, expr.Expand());
+            expr = MathS.Factorial(x + -3) / MathS.Factorial(x + -1);
+            Assert.AreEqual(1 / (x + -2) / (x + -1), expr.Expand());
+        }
     }
 }

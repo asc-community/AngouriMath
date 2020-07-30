@@ -36,6 +36,7 @@ namespace AngouriMath
             { "arccosf", 11 },
             { "arctanf", 12 },
             { "arccotanf", 13 },
+            { "factorialf", 14 },
         };
     }
 }

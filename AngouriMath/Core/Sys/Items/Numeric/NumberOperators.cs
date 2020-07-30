@@ -126,9 +126,7 @@ namespace AngouriMath.Core.Numerix
             foreach (NumberEntity root in GetAllRoots(@base, power.Value).FiniteSet())
                 switch (MathS.Settings.FloatToRationalIterCount.As(15, () =>
                     MathS.Settings.PrecisionErrorZeroRange.As(1e-6m, () =>
-                    {
-                        return ComplexNumber.Create(root.Value.Real, root.Value.Imaginary);
-                    })))
+                        ComplexNumber.Create(root.Value.Real, root.Value.Imaginary))))
                 {
                     case RationalNumber rational when IsZero(Pow(rational, power) - @base):  // To keep user's desired precision
                         return rational;
@@ -242,11 +240,22 @@ namespace AngouriMath.Core.Numerix
         /// <param name="power">The power of the exponential, base^power</param>
         public static ComplexNumber Pow(ComplexNumber @base, ComplexNumber power)
         {
+            static ComplexNumber BinaryIntPow(ComplexNumber num, EInteger val)
+            {
+                if (val.IsZero)
+                    return 1;
+                if (val.Equals(1))
+                    return num;
+                if (val.Equals(-1))
+                    return 1 / num;
+                var divRem = val.DivRem(2); // divRem[0] == val / 2, divRem[1] == val % 2
+                return BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[1]);
+            }
             // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
-            if (power is IntegerNumber { Value: var pow })
-                return Functional.BinaryIntPow(@base, pow);
+            if (@base.IsFinite && power is IntegerNumber { Value: var pow })
+                return BinaryIntPow(@base, pow);
 
-            if (power is RationalNumber r && r.Value.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches 
+            if (@base.IsFinite && power is RationalNumber r && r.Value.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches 
                 && FindGoodRoot(@base, r.Value.Denominator) is { } goodRoot)
                 return Pow(goodRoot, r.Value.Numerator);
 
@@ -445,5 +454,82 @@ namespace AngouriMath.Core.Numerix
 
         /// <summary>Calculates the exact value of arccotangent of num</summary>
         public static ComplexNumber Arccotan(ComplexNumber num) => Arctan(1 / num);
+
+        // From https://github.com/eobermuhlner/big-math/blob/ba75e9a80f040224cfeef3c2ac06390179712443/ch.obermuhlner.math.big/src/main/java/ch/obermuhlner/math/big/BigComplexMath.java
+        /**
+         * <summary>
+         * Calculates the factorial of the specified <see cref="ComplexNumber"/>.
+         *
+         * <para>This implementation uses
+         * <a href="https://en.wikipedia.org/wiki/Spouge%27s_approximation">Spouge's approximation</a>
+         * to calculate the factorial for non-integer values.</para>
+         *
+         * <para>This involves calculating a series of constants that depend on the desired precision.
+         * Since this constant calculation is quite expensive (especially for higher precisions),
+         * the constants for a specific precision will be cached
+         * and subsequent calls to this method with the same precision will be much faster.</para>
+         *
+         * <para>It is therefore recommended to do one call to this method with the standard precision of your application during the startup phase
+         * and to avoid calling it with many different precisions.</para>
+         *
+         * <para>See: <a href="https://en.wikipedia.org/wiki/Factorial#Extension_of_factorial_to_non-integer_values_of_argument">Wikipedia: Factorial - Extension of factorial to non-integer values of argument</a></para>
+         * </summary>
+         * <param name="x">The <see cref="ComplexNumber"/></param>
+         * <returns>The factorial <see cref="ComplexNumber"/></returns>
+         * <seealso cref="PeterONumbersExtensions.Factorial(EDecimal, EContext)"/>
+         * <seealso cref="Gamma(ComplexNumber)"/>
+         */
+        public static ComplexNumber Factorial(ComplexNumber x)
+        {
+            var mathContext = MathS.Settings.DecimalPrecisionContext.Value;
+            switch (x)
+            {
+                case IntegerNumber { Value: var value } when value.Sign >= 0:
+                    return value.Factorial();
+                case RealNumber { Value: var value }:
+                    return value.Factorial(mathContext);
+            }
+
+            if (!mathContext.Precision.CanFitInInt32())
+                throw new ArgumentOutOfRangeException($"The precision of the {nameof(mathContext)} is outside the int32 range");
+
+            ComplexNumber result = RealNumber.NaN;
+
+            MathS.Settings.DowncastingEnabled.As(false, () =>
+            MathS.Settings.DecimalPrecisionContext.As(mathContext.WithBigPrecision(mathContext.Precision << 1), () =>
+            {
+                // https://en.wikipedia.org/wiki/Spouge%27s_approximation
+                int a = mathContext.Precision.ToInt32Checked() * 13 / 10;
+
+                var constants = PeterONumbersExtensions.GetSpougeFactorialConstants(a);
+
+                var negative = false;
+                var factor = ComplexNumber.Create(constants[0], 0);
+                for (int k = 1; k < a; k++)
+                {
+                    factor += constants[k] / (x + k);
+                    negative = !negative;
+                }
+
+                result = Pow(x + a, x + 0.5m) * Exp(-x - a) * factor;
+            }));
+            return ComplexNumber.Create(result.Real.Value.RoundToPrecision(mathContext),
+                                        result.Imaginary.Value.RoundToPrecision(mathContext));
+        }
+
+        /**<summary>
+         * Calculates the gamma function of the specified <see cref="ComplexNumber"/>.
+         *
+         * <para>This implementation uses {@link #factorial(ComplexNumber, MathContext)} internally,
+         * therefore the performance implications described there apply also for this method.</para>
+         *
+         * <para>See: <a href="https://en.wikipedia.org/wiki/Gamma_function">Wikipedia: Gamma function</a></para>
+         * </summary>
+         * <param name="x">The <see cref="ComplexNumber"/></param>
+         * <returns>The gamma <see cref="ComplexNumber"/></returns>
+         * <seealso cref="PeterONumbersExtensions.Gamma(EDecimal, EContext)"/>
+         * <seealso cref="Factorial(ComplexNumber)"/>
+         */
+        public static ComplexNumber Gamma(ComplexNumber x) => Factorial(x - IntegerNumber.One);
     }
 }

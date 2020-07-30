@@ -20,21 +20,40 @@ using AngouriMath.Core.Sys.Interfaces;
 namespace AngouriMath
 {
     /// <summary>
-    /// If I need to add a function or operator, I first do it here.
-    /// Next,
-    /// .Hang
-    /// .PHang
-    /// .ToString
-    /// .Latex
-    /// .Derive
-    /// .Simplify
-    /// To compilation
-    /// To From String Syntax Info goodStrings
+    /// If I need to add a function or operator (e.g. sin), I first pin this tab for reference :)
+    /// To start, implement real number evaluation
+    /// (Press F12 -> <see cref="PeterONumbersExtensions.Sin(PeterO.Numbers.EDecimal, PeterO.Numbers.EContext)"/>)
+    /// then complex number evaluation
+    /// (Press F12 -> <see cref="Core.Numerix.Number.Sin(Core.Numerix.ComplexNumber)"/>)
+    ///
+    /// Next, Add Wakeup to static ctor below
+    ///  -> Copy static function class (Press F12 -> <see cref="Sinf.Wakeup()"/>)
+    ///  -> Add instance method to Entity (Press F12 -> <see cref="Entity.Sin()"/>)).
+    /// 
+    /// After that,
+    /// .Eval (Press F12 -> <see cref="Sinf.Eval(System.Collections.Generic.List{Entity})"/>)
+    /// .Hang (Press F12 -> <see cref="Sinf.Hang(Entity)"/>)
+    /// .PHang (Press F12 -> <see cref="Sinf.PHang(Entity)"/>)
+    /// .ToString (Press F12 -> <see cref="Sinf.Stringize(System.Collections.Generic.List{Entity})"/>)
+    /// .Latex (Press F12 -> <see cref="Sinf.Latex(System.Collections.Generic.List{Entity})"/>)
+    /// .Derive (Press F12 -> <see cref="Sinf.Derive(System.Collections.Generic.List{Entity}, VariableEntity)"/>)
+    /// .Simplify (Press F12 -> <see cref="Sinf.Simplify(System.Collections.Generic.List{Entity})"/>)
+    /// To compilation (Press F12 -> <see cref="CompiledMathFunctions.func2Num"/>
+    ///                                       ^ TODO: Replace numbers with enum ^
+    ///                          and <see cref="FastExpression.Substitute(System.Numerics.Complex[])"/>)
+    /// To From String Syntax Info goodStrings (Press F12 -> <see cref="Core.FromString.SyntaxInfo.goodStringsForFunctions"/>)
     /// To Pattern Replacer
-    /// To static MathS()
-    /// To Analytical Solver
-    /// To TreeAnalyzer Optimization
-    /// To ToSympyCode
+    ///     (Press F12 -> <see cref="Patterns.TrigonometricRules"/>
+    ///               and <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.Trigonometry"/>
+    ///               and <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.ContainsTrigonometric(Entity)"/>
+    ///               and <see cref="Functions.Evaluation.Simplification.Simplificator.Alternate(Entity, int)"/>)
+    /// To static MathS() (Press F12 -> <see cref="Sin(Entity)"/>)
+    /// To Analytical Solver (Press F12 -> <see cref="Functions.Algebra.Solver.Analytical.TrigonometricSolver"/>
+    ///                                and <see cref="Functions.Algebra.AnalyticalSolving.AnalyticalSolver.Solve(Entity, VariableEntity, Core.Set, bool)"/>)
+    /// To TreeAnalyzer Optimization (Press F12 -> <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.OptimizeTree(ref Entity)"/>)
+    /// To ToSympyCode (Press F12 -> <see cref="Functions.Output.ToSympy.FuncTable"/>)
+    /// 
+    /// And finally, remember to add tests for all the new functionality!
     /// </summary>
     public static partial class MathS
     {
@@ -58,6 +77,7 @@ namespace AngouriMath
             Arccosf.Wakeup();
             Arctanf.Wakeup();
             Arccotanf.Wakeup();
+            Factorialf.Wakeup();
         }
     }
     internal static partial class Sumf
@@ -227,6 +247,18 @@ namespace AngouriMath
             MathFunctions.stringTable["arccotanf"] = Stringize;
         }
     }
+    internal static partial class Factorialf
+    {
+        public static void Wakeup() { }
+        static Factorialf()
+        {
+            MathFunctions.evalTable["factorialf"] = Eval;
+            MathFunctions.simplifyTable["factorialf"] = Simplify;
+            MathFunctions.deriveTable["factorialf"] = Derive;
+            MathFunctions.latexTable["factorialf"] = Latex;
+            MathFunctions.stringTable["factorialf"] = Stringize;
+        }
+    }
 
     public abstract partial class Entity : ILatexiseable
     {
@@ -246,6 +278,7 @@ namespace AngouriMath
         public Entity Arccos() => Arccosf.Hang(this);
         public Entity Arctan() => Arctanf.Hang(this);
         public Entity Arccotan() => Arccotanf.Hang(this);
+        public Entity Factorial() => Factorialf.Hang(this);
         public Entity Log(Entity n) => Logf.Hang(this, n);
         public bool IsLowerThan(Entity a)
         {

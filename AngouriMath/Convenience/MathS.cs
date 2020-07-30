@@ -82,7 +82,7 @@ namespace AngouriMath
         }
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -92,7 +92,7 @@ namespace AngouriMath
         public static Entity Sin(Entity a) => Sinf.Hang(a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -102,7 +102,7 @@ namespace AngouriMath
         public static Entity Cos(Entity a) => Cosf.Hang(a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Logarithm
+        /// <a href="https://en.wikipedia.org/wiki/Logarithm"/>
         /// </summary>
         /// <param name="@base"></param>
         /// <param name="x"></param>
@@ -111,7 +111,7 @@ namespace AngouriMath
         public static Entity Log(Entity @base, Entity x) => Logf.Hang(@base, x);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Power_function
+        /// <a href="https://en.wikipedia.org/wiki/Power_function"/>
         /// </summary>
         /// <param name="base_"></param>
         /// <param name="power"></param>
@@ -140,7 +140,7 @@ namespace AngouriMath
         public static Entity Sqr(Entity a) => Powf.Hang(a, 2);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -150,7 +150,7 @@ namespace AngouriMath
         public static Entity Tan(Entity a) => Tanf.Hang(a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -160,7 +160,7 @@ namespace AngouriMath
         public static Entity Cotan(Entity a) => Cotanf.Hang(a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -170,7 +170,7 @@ namespace AngouriMath
         public static Entity Sec(Entity a) => 1 / Cos(a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -180,7 +180,7 @@ namespace AngouriMath
         public static Entity Cosec(Entity a) => 1 / Sin(a);
 
         /// <summary>
-        /// This function is every interesting for ASC (https://asc-community.org)
+        /// This function is very interesting for ASC (<a href="https://asc-community.org"/>)
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -190,7 +190,7 @@ namespace AngouriMath
         public static Entity B(Entity a) => a * Sin(a);
 
         /// <summary>
-        /// This function is every interesting for ASC (https://asc-community.org)
+        /// This function is very interesting for ASC (<a href="https://asc-community.org"/>)
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -200,7 +200,7 @@ namespace AngouriMath
         public static Entity TB(Entity a) => a * Cos(a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -210,7 +210,7 @@ namespace AngouriMath
         public static Entity Arcsin(Entity a) => Arcsinf.Hang(a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -220,7 +220,7 @@ namespace AngouriMath
         public static Entity Arccos(Entity a) => Arccosf.Hang(a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -230,7 +230,7 @@ namespace AngouriMath
         public static Entity Arctan(Entity a) => Arctanf.Hang(a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -240,7 +240,7 @@ namespace AngouriMath
         public static Entity Arccotan(Entity a) => Arccotanf.Hang(a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -250,7 +250,7 @@ namespace AngouriMath
         public static Entity Arcsec(Entity a) => Arccosf.Hang(1 / a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Inverse_trigonometric_functions
+        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns>
@@ -260,12 +260,28 @@ namespace AngouriMath
         public static Entity Arccosec(Entity a) => Arcsinf.Hang(1 / a);
 
         /// <summary>
-        /// https://en.wikipedia.org/wiki/Natural_logarithm
+        /// <a href="https://en.wikipedia.org/wiki/Natural_logarithm"/>
         /// </summary>
         /// <param name="a"></param>
         /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Ln(Entity a) => Logf.Hang(e, a);
+
+        /// <summary>
+        /// <a href="https://en.wikipedia.org/wiki/Factorial"/>
+        /// </summary>
+        /// <param name="a"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Factorial(Entity a) => Factorialf.Hang(a);
+
+        /// <summary>
+        /// <a href="https://en.wikipedia.org/wiki/Gamma_function"/>
+        /// </summary>
+        /// <param name="a"></param>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Gamma(Entity a) => Factorialf.Hang(a + 1);
 
         /// <summary>
         /// Creates an instance of variable entity.

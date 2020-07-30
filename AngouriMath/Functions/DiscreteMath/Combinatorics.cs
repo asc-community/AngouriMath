@@ -12,8 +12,7 @@ namespace AngouriMath.Functions.DiscreteMath
 {
     internal static class Combinatorics
     {
-        internal static EInteger Factorial(EInteger t) => t.IsZero ? 1 : t * Factorial(t - 1);
-        internal static EInteger C(EInteger n, EInteger k) => Factorial(n) / (Factorial(n - k) * Factorial(k));
+        internal static EInteger C(EInteger n, EInteger k) => n.Factorial() / ((n - k).Factorial() * k.Factorial());
         internal static IEnumerable<List<EInteger>> Combinations(EInteger min, EInteger max, EInteger cellCount)
         {
             for (EInteger i = min; i <= max; i++)

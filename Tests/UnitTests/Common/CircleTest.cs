@@ -55,6 +55,10 @@ namespace UnitTests.Common
 
         [TestMethod]
         public void Test8() => Assert.AreEqual(3 * x, MathS.Arccotan(MathS.Cotan(x * 3)).Simplify());
+        public void Test9() => Assert.AreEqual("x!", MathS.FromString("x!").ToString());
+        public void Test10() => Assert.AreEqual("(-1)!", MathS.FromString("(-1)!").ToString());
+        public void Test11() => Assert.AreEqual("-1!", MathS.FromString("-1!").ToString());
+        public void Test12() => Assert.AreEqual("(3i)!", MathS.FromString("(3i)!").ToString());
 
         public bool FunctionsAreEqualHack(Entity eq1, Entity eq2)
         {
