@@ -62,9 +62,13 @@ namespace UnitTests.Convenience
         public void Test20() => Assert.AreEqual(MathS.Factorial(MathS.Sin(x)), MathS.FromString("sin(x)!"));
         [TestMethod]
         public void Test21() => Assert.AreEqual(MathS.Pow(2, MathS.Factorial(3)), MathS.FromString("2^3!"));
+        [TestMethod]
         public void Test22() => Assert.AreEqual(MathS.Pow(MathS.Factorial(2), MathS.Factorial(3)), MathS.FromString("2!^3!"));
+        [TestMethod]
         public void Test23() => Assert.AreEqual(MathS.Pow(MathS.Factorial(2), MathS.Factorial(x + 2)), MathS.FromString("2!^(x+2)!"));
+        [TestMethod]
         public void Test24() => Assert.AreEqual(-MathS.Factorial(1), MathS.FromString("-1!"));
+        [TestMethod]
         public void Test25() => Assert.AreEqual(MathS.Factorial(-1), MathS.FromString("(-1)!"));
         [TestMethod]
         public void TestSys()
