@@ -34,5 +34,6 @@ namespace UnitTests.Algebra
         [TestMethod] public void Test12() => TestLimit("a x", RealNumber.PositiveInfinity, ApproachFrom.Left, RealNumber.PositiveInfinity * (Entity)"a");
         [TestMethod] public void Test13() => TestLimit("a x2 + b / x", RealNumber.PositiveInfinity, ApproachFrom.Left, RealNumber.PositiveInfinity * (Entity)"a");
         [TestMethod] public void Test14() => TestLimit("a x ^ (-2) + b / x", RealNumber.PositiveInfinity, ApproachFrom.Left, "0");
+        [TestMethod] public void Test15() => TestLimit("1 / (x^2 + x)", "-1", ApproachFrom.Left, RealNumber.PositiveInfinity);
     }
 }

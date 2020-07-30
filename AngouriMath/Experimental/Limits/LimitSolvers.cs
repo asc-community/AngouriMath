@@ -12,7 +12,7 @@ namespace AngouriMath.Experimental.Limits
     class LimitSolvers
     {
         private static RealNumber Infinity = RealNumber.PositiveInfinity;
-        static internal Entity? SolveBySubstitution(Entity expr, VariableEntity x)
+        internal static Entity? SolveBySubstitution(Entity expr, VariableEntity x)
         {
             var res = expr.Substitute(x, Infinity);
             if(MathS.CanBeEvaluated(res))
@@ -31,16 +31,11 @@ namespace AngouriMath.Experimental.Limits
             {
                 var P = expr.GetChild(0);
                 var Q = expr.GetChild(1);
-                //var monoP = TreeAnalyzer.GatherAllPossiblePolynomials(P, replaceVars: false).monoInfo;
-                //var monoQ = TreeAnalyzer.GatherAllPossiblePolynomials(Q, replaceVars: false).monoInfo;
+                
                 var monoP = TreeAnalyzer.ParseAsPolynomial<EDecimal>(P, x);
                 var monoQ = TreeAnalyzer.ParseAsPolynomial<EDecimal>(Q, x);
 
                 Entity? result = null;
-                //if(monoP.ContainsKey(x.Name) && monoQ.ContainsKey(x.Name))
-                //{
-                //    var maxTermP = monoP[x.Name].First();
-                //    var maxTermQ = monoQ[x.Name].First();
                 if(monoP is { } && monoQ is { })
                 {
                     var maxPowerP = monoP.Keys.Max();
