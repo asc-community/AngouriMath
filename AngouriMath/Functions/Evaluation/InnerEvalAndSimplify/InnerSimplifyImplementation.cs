@@ -23,14 +23,14 @@ namespace AngouriMath
     {
         internal override Entity InnerSimplify()
         {
-            return MathFunctions.InvokeSimplify(Name, Children);
+            return MathFunctions.InvokeSimplify(Name, ChildrenReadonly);
         }
     }
     public partial class OperatorEntity : Entity
     {
         internal override Entity InnerSimplify()
         {
-            return MathFunctions.InvokeSimplify(Name, Children);
+            return MathFunctions.InvokeSimplify(Name, ChildrenReadonly);
         }
     }
     public partial class NumberEntity : Entity

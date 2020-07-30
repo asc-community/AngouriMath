@@ -77,7 +77,7 @@ namespace AngouriMath.Core.TreeAnalysis
             Entity? best = null;
             while ((subtree = GetTreeByDepth(expr, ent, depth)) != ent)
             {
-                if (subtree.Children.Count == 0) return subtree;
+                if (subtree.ChildrenCount == 0) return subtree;
 
                 depth++;
                 if (GoodSub(subtree))
@@ -90,10 +90,10 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             while (depth > 0)
             {
-                foreach (var child in expr.Children)
+                foreach (var child in expr.ChildrenReadonly)
                     // We don't care about the order as once we encounter mention of `ent`,
                     // we need ALL subtrees be equal
-                    if (child.FindSubtree(ent) is { })
+                    if (child.SubtreeIsFound(ent))
                     {
                         expr = child;
                         break;
@@ -144,16 +144,16 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             Entity a, un;
             int arg;
-            if (func.Children[0].FindSubtree(x) is { })
+            if (func.GetChild(0).SubtreeIsFound(x))
             {
-                a = func.Children[1];
-                un = func.Children[0];
+                a = func.GetChild(1);
+                un = func.GetChild(0);
                 arg = 0;
             }
             else
             {
-                a = func.Children[0];
-                un = func.Children[1];
+                a = func.GetChild(0);
+                un = func.GetChild(1);
                 arg = 1;
             }
             var n = Utils.FindNextIndex(func + value, "n");
@@ -238,8 +238,8 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <returns></returns>
         public static Set InvertFunctionEntity(FunctionEntity func, Entity value, Entity x)
         {
-            Entity a = func.Children[0];
-            int arg = func.Children.Count == 2 && func.Children[1].FindSubtree(x) is { } ? 1 : 0;
+            Entity a = func.GetChild(0);
+            int arg = func.ChildrenCount == 2 && func.GetChild(1).SubtreeIsFound(x) ? 1 : 0;
             var n = Utils.FindNextIndex(func + value, "n");
             var res = new Set();
             var pi = MathS.pi;
@@ -301,7 +301,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     // arccotan(x) = value => x = cotan(value)
                     return GetNotNullEntites(FindInvertExpression(a, MathS.Cotan(value), x));
                 case "logf":
-                    Entity b = func.Children[1];
+                    Entity b = func.GetChild(1);
                     if (arg != 0)
                         // log(x, a) = value => x = a ^ value
                         return GetNotNullEntites(FindInvertExpression(b, MathS.Pow(a, value), x));
@@ -377,8 +377,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 switch (expr.Name)
                 {
                     case "mulf":
-                        Solve(expr.Children[0], x, dst);
-                        Solve(expr.Children[1], x, dst);
+                        Solve(expr.GetChild(0), x, dst);
+                        Solve(expr.GetChild(1), x, dst);
                         return;
                     case "divf":
 
@@ -386,14 +386,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             => a.Select(piece => piece.LowerBound().Item1).All(MathS.CanBeEvaluated);
 
                         var zeroNumerators = new Set();
-                        Solve(expr.Children[0], x, zeroNumerators);
+                        Solve(expr.GetChild(0), x, zeroNumerators);
                         if (!IsSetNumeric(zeroNumerators))
                         {
                             dst.AddRange(zeroNumerators);
                             return;
                         }
                         var zeroDenominators = new Set();
-                        Solve(expr.Children[1], x, zeroDenominators);
+                        Solve(expr.GetChild(1), x, zeroDenominators);
                         if (!IsSetNumeric(zeroDenominators))
                         {
                             dst.AddRange(zeroNumerators);
@@ -402,21 +402,21 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         dst.AddRange((Set)(zeroNumerators & !zeroDenominators));
                         return;
                     case "powf":
-                        Solve(expr.Children[0], x, dst);
+                        Solve(expr.GetChild(0), x, dst);
                         return;
                     case "minusf":
-                        if (expr.Children[1].FindSubtree(x) is null && compensateSolving)
+                        if (!expr.GetChild(1).SubtreeIsFound(x) && compensateSolving)
                         {
-                            if (expr.Children[0] == x)
+                            if (expr.GetChild(0) == x)
                             {
-                                dst.Add(expr.Children[1]);
+                                dst.Add(expr.GetChild(1));
                                 return;
                             }
                             var subs = 0;
                             Entity? lastChild = null;
-                            foreach (var child in expr.Children[0].Children)
+                            foreach (var child in expr.GetChild(0).ChildrenReadonly)
                             {
-                                if (child.FindSubtree(x) is { })
+                                if (child.SubtreeIsFound(x))
                                 {
                                     subs += 1;
                                     lastChild = child;
@@ -424,7 +424,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             }
                             if (subs != 1 || lastChild is null)
                                 break;
-                            var resInverted = TreeAnalyzer.FindInvertExpression(expr.Children[0], expr.Children[1], lastChild);
+                            var resInverted = TreeAnalyzer.FindInvertExpression(expr.GetChild(0), expr.GetChild(1), lastChild);
                             foreach (var result in resInverted.FiniteSet())
                                 Solve(lastChild - result, x, dst, compensateSolving: true);
                             return;
@@ -457,7 +457,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 };
                 foreach (var alt in expr.Alternate(4).FiniteSet())
                 {
-                    if (alt.FindSubtree(x) is null)
+                    if (!alt.SubtreeIsFound(x))
                         return; // in this case there is either 0 or +oo solutions
                     replacements.Add((TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
                 }

@@ -33,16 +33,16 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="cond"></param>
         internal static void FindDivisors(ref Entity expr, Func<Entity, Entity, bool> cond)
         {
-            for (int i = 0; i < expr.Children.Count; i++)
+            for (int i = 0; i < expr.ChildrenCount; i++)
             {
                 // TODO
-                var temporaryElement = expr.Children[i];
+                var temporaryElement = expr.GetChild(i);
                 FindDivisors(ref temporaryElement, cond);
-                expr.Children[i] = temporaryElement;
+                expr.SetChild(i, temporaryElement);
             }
             if (expr is OperatorEntity { Name: "divf" })
-                if (cond(expr.Children[0], expr.Children[1]))
-                    expr = DividePolynoms(expr.Children[0], expr.Children[1]);
+                if (cond(expr.GetChild(0), expr.GetChild(1)))
+                    expr = DividePolynoms(expr.GetChild(0), expr.GetChild(1));
         }
 
         /// <summary>
@@ -143,7 +143,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 res += pair.Value.Simplify(5) * MathS.Pow(new VariableEntity(polyvar), pair.Key);
             }
             // TODO: we know that variable is the same but with suffux '_r'. This foreach loop can be speeded-up
-            while (replacementInfo.Any(rep => res.FindSubtree(new VariableEntity(PolyInfo.NewVarName(rep.Key))) is { }))
+            while (replacementInfo.Any(rep => res.SubtreeIsFound(new VariableEntity(PolyInfo.NewVarName(rep.Key)))))
                 foreach (var subst in replacementInfo)
                 {
                     FindAndReplace(ref res, new VariableEntity(PolyInfo.NewVarName(subst.Key)), subst.Value);

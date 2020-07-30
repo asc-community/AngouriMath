@@ -9,14 +9,6 @@ namespace UnitTests.Common
     public class NonStrictTest
     {
         [TestMethod]
-        public void TensorPrintOut()
-        {
-            var tens = MathS.Matrices.Matrix(2, 2, 1342, 2123, 1423, 1122);
-            Assert.IsTrue(tens.PrintOut(1).Length < 35);
-            Assert.IsTrue(tens.PrintOut(4).Length > 35);
-        }
-
-        [TestMethod]
         public void TensorLatex()
         {
             var tens = MathS.Matrices.Matrix(2, 2, 1342, 2123, 1423, 1122);
@@ -31,7 +23,7 @@ namespace UnitTests.Common
             for (int j = 0; j < 4; j++)
             for (int k = 0; k < 5; k++)
                 tens[i, j, k] = i * j * k; 
-            Assert.IsTrue(tens.PrintOut().Length > 16);
+            Assert.IsTrue(tens.ToString().Length > 16);
         }
 
         [TestMethod]

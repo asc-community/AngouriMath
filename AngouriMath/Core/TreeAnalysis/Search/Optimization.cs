@@ -115,7 +115,7 @@ namespace AngouriMath.Core.TreeAnalysis
             {
                 if (cat.Contains(expr.Name))
                     return true;
-                foreach (var child in expr.Children)
+                foreach (var child in expr.ChildrenReadonly)
                     if (Contains(child, cat))
                         return true;
                 return false;
@@ -162,11 +162,11 @@ namespace AngouriMath.Core.TreeAnalysis
                     }
                 }
 
-                for (int i = 0; i < expr.Children.Count; i++)
+                for (int i = 0; i < expr.ChildrenCount; i++)
                 {
-                    var tmp = expr.Children[i];
+                    var tmp = expr.GetChild(i);
                     OptimizeTree(ref tmp);
-                    expr.Children[i] = tmp;
+                    expr.SetChild(i, tmp);
                 }
             }
 
@@ -176,7 +176,7 @@ namespace AngouriMath.Core.TreeAnalysis
             /// <param name="expr"></param>
             /// <returns></returns>
             internal static int CountDepth(Entity expr)
-                => 1 + (expr.Children.Count == 0 ? 0 : expr.Children.Select(CountDepth).Max());
+                => 1 + (expr.ChildrenCount == 0 ? 0 : expr.ChildrenReadonly.Select(CountDepth).Max());
 
             internal static Entity OptimizeTree(Entity tree)
             {

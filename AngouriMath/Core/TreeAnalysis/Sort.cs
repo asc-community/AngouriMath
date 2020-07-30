@@ -102,8 +102,8 @@ namespace AngouriMath.Core.TreeAnalysis
             if (children.Count == 1)
                 return children[0];
             Entity res = new OperatorEntity(opName, opPrior);
-            res.Children.Add(children[0]);
-            res.Children.Add(MultiHangLinear(children.GetRange(1, children.Count - 1), opName, opPrior));
+            res.AddChild(children[0]);
+            res.AddChild(MultiHangLinear(children.GetRange(1, children.Count - 1), opName, opPrior));
             return res;
         }
 
@@ -122,12 +122,12 @@ namespace AngouriMath.Core.TreeAnalysis
             if (children.Count == 1)
                 return children[0];
             Entity res = new OperatorEntity(opName, opPrior);
-            res.Children.Add(
+            res.AddChild(
                 MultiHangBinary(
                     children.GetRange(0, children.Count / 2)
                     , opName, opPrior)
                 );
-            res.Children.Add(
+            res.AddChild(
                 MultiHangBinary(
                     children.GetRange(children.Count / 2, children.Count - (children.Count / 2))
                 , opName, opPrior)
@@ -144,11 +144,11 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             Func<Entity, OperatorEntity> funcIfSum = Const.FuncIfSum;
             Func<Entity, OperatorEntity> funcIfMul = Const.FuncIfMul;
-            for (int i = 0; i < tree.Children.Count; i++)
+            for (int i = 0; i < tree.ChildrenCount; i++)
             {
-                Entity tmp = tree.Children[i];
+                Entity tmp = tree.GetChild(i);
                 Sort(ref tmp, level);
-                tree.Children[i] = tmp;
+                tree.SetChild(i, tmp);
             }
             if (tree.Name != "sumf" && tree.Name != "mulf" && tree.Name != "minusf" && tree.Name != "divf")
                 return;

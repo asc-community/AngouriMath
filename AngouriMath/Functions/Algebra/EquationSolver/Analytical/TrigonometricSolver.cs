@@ -86,7 +86,7 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             {
                 while (expr.FindPatternSubtree(p) is { } found)
                 {
-                    (Entity x, Entity a, Entity b) = variableGetter(found.Children[0]);
+                    (Entity x, Entity a, Entity b) = variableGetter(found.GetChild(0));
                     if (CheckIfReplacementIsSuitable(ref expr, found, x, variable))
                     {
                         ReplaceSinSubExpression(ref expr, found, a, b, replacement);
@@ -98,7 +98,7 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             {
                 while (expr.FindPatternSubtree(p) is { } found)
                 {
-                    (Entity x, Entity a, Entity b) = variableGetter(found.Children[0]);
+                    (Entity x, Entity a, Entity b) = variableGetter(found.GetChild(0));
                     if (CheckIfReplacementIsSuitable(ref expr, found, x, variable))
                     {
                         ReplaceCosSubExpression(ref expr, found, a, b, replacement);
@@ -111,42 +111,42 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             var variablePattern = new Pattern(1000, Entity.PatType.VARIABLE, 
                 tree => tree is VariableEntity && tree.Name == variable.Name);
             var pattern1 = Sinf.PHang(Patterns.const1 * variablePattern + Patterns.any1);
-            MatchSinUntil(pattern1, arg => (arg.Children[0].Children[1], arg.Children[0].Children[0], arg.Children[1]));
+            MatchSinUntil(pattern1, arg => (arg.GetChild(0).GetChild(1), arg.GetChild(0).GetChild(0), arg.GetChild(1)));
             var pattern2 = Sinf.PHang(variablePattern * Patterns.const1 + Patterns.any1);
-            MatchSinUntil(pattern2, arg => (arg.Children[0].Children[0], arg.Children[0].Children[1], arg.Children[1]));
+            MatchSinUntil(pattern2, arg => (arg.GetChild(0).GetChild(0), arg.GetChild(0).GetChild(1), arg.GetChild(1)));
 
             var pattern3 = Sinf.PHang(Patterns.any1 + Patterns.const1 * variablePattern);
-            MatchSinUntil(pattern3, arg => (arg.Children[1].Children[1], arg.Children[1].Children[0], arg.Children[0]));
+            MatchSinUntil(pattern3, arg => (arg.GetChild(1).GetChild(1), arg.GetChild(1).GetChild(0), arg.GetChild(0)));
             var pattern4 = Sinf.PHang(Patterns.any1 + variablePattern * Patterns.const1);
-            MatchSinUntil(pattern4, arg => (arg.Children[1].Children[0], arg.Children[1].Children[1], arg.Children[0]));
+            MatchSinUntil(pattern4, arg => (arg.GetChild(1).GetChild(0), arg.GetChild(1).GetChild(1), arg.GetChild(0)));
 
             var pattern5 = Sinf.PHang(Patterns.const1 * variablePattern);
-            MatchSinUntil(pattern5, arg => (arg.Children[1], arg.Children[0], 0));
+            MatchSinUntil(pattern5, arg => (arg.GetChild(1), arg.GetChild(0), 0));
             var pattern6 = Sinf.PHang(variablePattern * Patterns.const1);
-            MatchSinUntil(pattern6, arg => (arg.Children[0], arg.Children[1], 0));
+            MatchSinUntil(pattern6, arg => (arg.GetChild(0), arg.GetChild(1), 0));
             var pattern7 = Sinf.PHang(Patterns.any1 + variablePattern);
-            MatchSinUntil(pattern7, arg => (arg.Children[1], 1, arg.Children[0]));
+            MatchSinUntil(pattern7, arg => (arg.GetChild(1), 1, arg.GetChild(0)));
             var pattern8 = Sinf.PHang(variablePattern + Patterns.any1);
-            MatchSinUntil(pattern8, arg => (arg.Children[0], 1, arg.Children[1]));
+            MatchSinUntil(pattern8, arg => (arg.GetChild(0), 1, arg.GetChild(1)));
 
             var pattern9 = Cosf.PHang(Patterns.const1 * variablePattern + Patterns.any1);
-            MatchCosUntil(pattern9, arg => (arg.Children[0].Children[1], arg.Children[0].Children[0], arg.Children[1]));
+            MatchCosUntil(pattern9, arg => (arg.GetChild(0).GetChild(1), arg.GetChild(0).GetChild(0), arg.GetChild(1)));
             var pattern10 = Cosf.PHang(variablePattern * Patterns.const1 + Patterns.any1);
-            MatchCosUntil(pattern10, arg => (arg.Children[0].Children[0], arg.Children[0].Children[1], arg.Children[1]));
+            MatchCosUntil(pattern10, arg => (arg.GetChild(0).GetChild(0), arg.GetChild(0).GetChild(1), arg.GetChild(1)));
 
             var pattern11 = Cosf.PHang(Patterns.any1 + Patterns.const1 * variablePattern);
-            MatchCosUntil(pattern11, arg => (arg.Children[1].Children[1], arg.Children[1].Children[0], arg.Children[0]));
+            MatchCosUntil(pattern11, arg => (arg.GetChild(1).GetChild(1), arg.GetChild(1).GetChild(0), arg.GetChild(0)));
             var pattern12 = Cosf.PHang(Patterns.any1 + variablePattern * Patterns.const1);
-            MatchCosUntil(pattern12, arg => (arg.Children[1].Children[0], arg.Children[1].Children[1], arg.Children[0]));
+            MatchCosUntil(pattern12, arg => (arg.GetChild(1).GetChild(0), arg.GetChild(1).GetChild(1), arg.GetChild(0)));
 
             var pattern13 = Cosf.PHang(Patterns.const1 * variablePattern);
-            MatchCosUntil(pattern13, arg => (arg.Children[1], arg.Children[0], 0));
+            MatchCosUntil(pattern13, arg => (arg.GetChild(1), arg.GetChild(0), 0));
             var pattern14 = Cosf.PHang(variablePattern * Patterns.const1);
-            MatchCosUntil(pattern14, arg => (arg.Children[0], arg.Children[1], 0));
+            MatchCosUntil(pattern14, arg => (arg.GetChild(0), arg.GetChild(1), 0));
             var pattern15 = Cosf.PHang(Patterns.any1 + variablePattern);
-            MatchCosUntil(pattern15, arg => (arg.Children[1], 1, arg.Children[0]));
+            MatchCosUntil(pattern15, arg => (arg.GetChild(1), 1, arg.GetChild(0)));
             var pattern16 = Cosf.PHang(variablePattern + Patterns.any1);
-            MatchCosUntil(pattern16, arg => (arg.Children[0], 1, arg.Children[1]));
+            MatchCosUntil(pattern16, arg => (arg.GetChild(0), 1, arg.GetChild(1)));
 
             // re-substitute all false replacement to return expression to normal
             foreach (var repl in falseReplacements)
@@ -165,7 +165,7 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
 
             // if there is still original variable after replacements,
             // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
-            if (expr.FindSubtree(variable) is { })
+            if (expr.SubtreeIsFound(variable))
             {
                 return null;
             }

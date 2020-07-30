@@ -45,7 +45,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 // Replace all variables we can
                 foreach (var varMentioned in mentionedVarList.FiniteSet())
                 {
-                    if (expr.FindSubtree(varMentioned) is null)
+                    if (!expr.SubtreeIsFound(varMentioned))
                         continue;
                     var replacement = TreeAnalyzer.GetMinimumSubtree(expr, varMentioned);
                     res.replacementInfo[varMentioned.Name] = replacement;

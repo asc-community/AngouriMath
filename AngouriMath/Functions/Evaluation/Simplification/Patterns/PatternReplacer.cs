@@ -70,10 +70,10 @@ namespace AngouriMath
                 return false;
             if (PatternType == PatType.FUNCTION && PatternNumber != -1)
                 return p.EqFits(tree) != null;
-            if (Children.Count != tree.Children.Count)
+            if (Children.Count != tree.ChildrenCount)
                 return false;
             for (int i = 0; i < Children.Count; i++)
-                if (!Children[i].Match(tree.Children[i]))
+                if (!Children[i].Match(tree.GetChild(i)))
                     return false;
             return p.EqFits(tree) != null;
         }
@@ -163,11 +163,11 @@ namespace AngouriMath
         {
             if (pattern.PatternNumber == -1)
             {
-                if (pattern.Children.Count != Children.Count)
+                if (pattern.ChildrenCount != Children.Count)
                     return false;
                 for (int i = 0; i < Children.Count; i++)
                 {
-                    if (!(pattern.Children[i] is Pattern p))
+                    if (!(pattern.GetChild(i) is Pattern p))
                         throw new SysException("Numbers in pattern should look like Num(3)");
                     if (!Children[i].PatternMakeMatch(p, matchings))
                         return false;
@@ -310,7 +310,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 var parent = source.FindParent(sub)
                     ?? throw new SysException($"{nameof(sub)} from {nameof(source.FindPatternSubtree)} has no parent");
                 var number = source.FindChildrenNumber(sub);
-                parent.Children[number] = newNode;
+                parent.SetChild(number, newNode);
             }
         }
 

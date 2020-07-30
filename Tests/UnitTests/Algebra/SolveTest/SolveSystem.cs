@@ -42,89 +42,68 @@ namespace UnitTests.Algebra
         public List<VariableEntity> VA(params VariableEntity[] vars)
             => new List<VariableEntity>(vars);
 
+        public void TestSystem(List<Entity> eqs, List<VariableEntity> vars, int numberOfRoots, int toSub = 3)
+            => AssertSystemSolvable(eqs, vars, numberOfRoots, toSub);
+
         [TestMethod]
         public void TestLinSystem2()
-        {
-            var eqs = EQ(
+            => TestSystem(EQ(
                 "x + y - 3",
                 "x + 2y - 4"
-                );
-            AssertSystemSolvable(eqs, VA("x", "y"), 1);
-        }
+            ), VA("x", "y"), 1);
 
         [TestMethod]
         public void TestLinSystem3()
-        {
-            var eqs = EQ(
+            => TestSystem(EQ(
                 "x + y - 3",
                 "x + 2y - 4z",
                 "z + 3x - 0.1y - 1"
-            );
-            AssertSystemSolvable(eqs, VA("x", "y", "z"), 1);
-        }
+            ), VA("x", "y", "z"), 1);
 
         [TestMethod]
         public void TestPolySystem3()
-        {
-            var eqs = EQ(
+            => TestSystem(EQ(
                 "x2 + y3 + z + 4",
                 "3y3 - z - 2",
                 "x2 - 0.1z + 4x2 + 4y3"
-                );
-            var vars = VA("x", "y", "z");
-            AssertSystemSolvable(eqs, vars, 6, ToSub: 5);
-        }
+            ), VA("x", "y", "z"), 6, 5);
 
         [TestMethod]
         public void TestTrigSystem2()
-        {
-            var eqs = EQ(
+            => TestSystem(EQ(
                 "cos(x2 + 1)^2 + 3y",
                 "y * (-1) + 4cos(x2 + 1)"
-                );
-            AssertSystemSolvable(eqs, VA("x", "y"), 8); // TODO: Should be 6 solutions according to Wolfram Alpha
-        }
+                ), VA("x", "y"), 8); // TODO: Should be 6 solutions according to Wolfram Alpha
 
         [TestMethod]
         public void TestTrigSystem3()
-        {
-            var eqs = EQ(
+            => TestSystem(EQ(
                 "a+b-c",
                 "3a+3b-2c",
                 "3a+4b-4c"
-            );
-            AssertSystemSolvable(eqs, VA("a", "b", "c"), 1);
-        }
+            ), VA("a", "b", "c"), 1);
 
         [TestMethod]
         public void TestTrigSystem4()
-        {
-            var eqs = EQ(
+            => TestSystem(EQ(
                 "a - 1",
                 "b * 0"
-            );
-            AssertSystemSolvable(eqs, VA("a", "b"), 0);
-        }
+            ), VA("a", "b"), 0);
 
+
+        // https://www.youtube.com/watch?v=dVs26SSUJSA
         [TestMethod]
         public void TestSystemFromGermanOlympiad()
-        {
-            // https://www.youtube.com/watch?v=dVs26SSUJSA
-            var eqs = EQ(
+            => TestSystem(EQ(
                 "x3 + 9 x2 y - 10",
                 "y3 + x y2 - 2"
-            );
-            AssertSystemSolvable(eqs, VA("x", "y"), 9);
-        }
+            ), VA("x", "y"), 9);
 
         [TestMethod]
         public void TestSystemFromSomewhereHmmAnalytical()
-        {
-            var eqs = EQ(
+            => TestSystem(EQ(
                 "x3 - 9 x2 y - f",
                 "y3 + x y2 - a"
-            );
-            AssertSystemSolvable(eqs, VA("x", "y"), 9);
-        }
+            ), VA("x", "y"), 9);
     }
 }

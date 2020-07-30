@@ -22,7 +22,7 @@ namespace UnitTests.Common
             => Assert.ThrowsException<TreeException>(() =>
             {
                 Entity expr = "x2 + x3 / 0";
-                expr.Children.Add(expr);
+                expr.AddChild(expr);
                 MathS.Utils.CheckTree(expr);
             }, "division by zero");
 

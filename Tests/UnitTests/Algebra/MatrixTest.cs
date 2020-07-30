@@ -31,7 +31,7 @@ namespace UnitTests.Algebra
                 50, 60,
                 114, 140
             );
-            Assert.AreEqual(R, MathS.Matrices.DotProduct(C, B).EvalTensor());
+            Assert.AreEqual(R, MathS.Matrices.MatrixMultiplication(C, B).EvalTensor());
         }
         [TestMethod]
         public void DotPointwiseProduct1()
@@ -54,6 +54,21 @@ namespace UnitTests.Algebra
             var a = MathS.Matrices.Vector(1, 2, 3);
             var b = MathS.Matrices.Vector(1, 2, 4);
             Assert.AreEqual(17, MathS.Matrices.ScalarProduct(a, b).Eval());
+        }
+
+        [TestMethod]
+        public void Determ()
+        {
+            var A = MathS.Matrices.Matrix(new Entity[,]
+            {
+                {"A", "B"},
+                {"C", "D"}
+            });
+            var v = A.Determinant().Substitute("A", 1)
+                .Substitute("B", 2)
+                .Substitute("C", 3)
+                .Substitute("D", 4);
+            Assert.AreEqual(-2, v.Eval());
         }
     }
 }

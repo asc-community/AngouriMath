@@ -29,8 +29,8 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("sumf", Const.PRIOR_SUM);
-            res.Children.Add(a);
-            res.Children.Add(b);
+            res.AddChild(a);
+            res.AddChild(b);
             return res;
         }
     }
@@ -40,8 +40,8 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("minusf", Const.PRIOR_MINUS);
-            res.Children.Add(a);
-            res.Children.Add(b);
+            res.AddChild(a);
+            res.AddChild(b);
             return res;
         }
     }
@@ -51,8 +51,8 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("mulf", Const.PRIOR_MUL);
-            res.Children.Add(a);
-            res.Children.Add(b);
+            res.AddChild(a);
+            res.AddChild(b);
             return res;
         }
     }
@@ -61,8 +61,8 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("divf", Const.PRIOR_DIV);
-            res.Children.Add(a);
-            res.Children.Add(b);
+            res.AddChild(a);
+            res.AddChild(b);
             return res;
         }
     }
@@ -71,8 +71,8 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity b)
         {
             var res = new OperatorEntity("powf", Const.PRIOR_POW);
-            res.Children.Add(a);
-            res.Children.Add(b);
+            res.AddChild(a);
+            res.AddChild(b);
             return res;
         }
     }
@@ -82,7 +82,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("sinf");
-            res.Children.Add(a);
+            res.AddChild(a);
             return res;
         }
     }
@@ -92,7 +92,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("cosf");
-            res.Children.Add(a);
+            res.AddChild(a);
             return res;
         }
     }
@@ -102,7 +102,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("tanf");
-            res.Children.Add(a);
+            res.AddChild(a);
             return res;
         }
     }
@@ -112,7 +112,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("cotanf");
-            res.Children.Add(a);
+            res.AddChild(a);
             return res;
         }
     }
@@ -123,8 +123,8 @@ namespace AngouriMath
         public static Entity Hang(Entity a, Entity n)
         {
             var res = new FunctionEntity("logf");
-            res.Children.Add(a);
-            res.Children.Add(n);
+            res.AddChild(a);
+            res.AddChild(n);
             return res;
         }
     }
@@ -134,7 +134,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("arcsinf");
-            res.Children.Add(a);
+            res.AddChild(a);
             return res;
         }
     }
@@ -144,7 +144,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("arccosf");
-            res.Children.Add(a);
+            res.AddChild(a);
             return res;
         }
     }
@@ -154,7 +154,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("arctanf");
-            res.Children.Add(a);
+            res.AddChild(a);
             return res;
         }
     }
@@ -164,7 +164,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("arccotanf");
-            res.Children.Add(a);
+            res.AddChild(a);
             return res;
         }
     }

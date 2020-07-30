@@ -32,6 +32,7 @@ using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Functions.Algebra.InequalitySolver;
 using AngouriMath.Functions.DiscreteMath;
+using GenericTensor.Core;
 using Number = AngouriMath.Core.Numerix.Number;
 using PeterO.Numbers;
 
@@ -478,6 +479,18 @@ namespace AngouriMath
                 => TensorFunctional.Matrix(rows, columns, values);
 
             /// <summary>
+            /// Creates an instance of Matrix
+            /// </summary>
+            /// <param name="values">
+            /// 2-D array of values
+            /// </param>
+            /// <returns></returns>
+            public static Tensor Matrix(Entity[,] values)
+                => TensorFunctional.Matrix(values);
+
+            //public static Tensor Tensor()
+
+            /// <summary>
             /// Creates an instance of vector
             /// </summary>
             /// <param name="p"></param>
@@ -491,8 +504,18 @@ namespace AngouriMath
             /// <param name="A"></param>
             /// <param name="B"></param>
             /// <returns></returns>
+            [Obsolete("Use MatrixMultiplication instead")]
             public static Tensor DotProduct(Tensor A, Tensor B) =>
                 TensorFunctional.DotProduct(A, B);
+
+            /// <summary>
+            /// Returns multiplication of two matrices
+            /// </summary>
+            /// <param name="A"></param>
+            /// <param name="B"></param>
+            /// <returns></returns>
+            public static Tensor MatrixMultiplication(Tensor A, Tensor B) =>
+                new Tensor(GenTensor<Entity>.TensorMatrixMultiply(A.innerTensor, B.innerTensor));
 
             /// <summary>
             /// Returns scalar product of two matrices
@@ -523,7 +546,7 @@ namespace AngouriMath
             /// Amount of iterations allowed for attempting to cast to a rational
             /// The more iterations, the larger fraction could be calculated
             /// </summary>
-            public static Setting<int> FloatToRationalIterCount => GetCurrentOrDefault(ref floatToRationalIterCount, 5);
+            public static Setting<int> FloatToRationalIterCount => GetCurrentOrDefault(ref floatToRationalIterCount, 15);
 
             /// <summary>
             /// If a numerator or denominator is too large, it's suspended to better keep the real number instead of casting
@@ -687,47 +710,30 @@ namespace AngouriMath
             public static Set Empty()
                 => new Set();
 
-            /// <summary>
-            /// Returns a set of all complex numbers
-            /// </summary>
-            /// <returns></returns>
+            /// <returns>A set of all complex numbers</returns>
             public static Set C()
                 => Set.C();
 
-            /// <summary>
-            /// Returns a set of all real numbers
-            /// </summary>
-            /// <returns></returns>
+            /// <returns>A set of all real numbers</returns>
             public static Set R()
                 => Set.R();
 
             /// <summary>
             /// Creats a set that you can fill with elements
-            /// Later on, you may add an Interval if wish
+            /// Later on, you may add an Interval if you wish
             /// </summary>
-            /// <param name="entities"></param>
-            /// <returns></returns>
             public static Set Finite(params Entity[] entities)
                 => Set.Finite(entities);
 
             /// <summary>
-            /// Creates an interval
-            /// To modify it, use
-            /// Interval(3, 4).SetLeftClosed (see more alike functions in set documentation)
+            /// Creates an interval. To modify it, use e.g.
+            /// <see cref="IntervalPiece.SetLeftClosed(bool)"/> (see more alike functions in set documentation)
             /// </summary>
-            /// <param name="from"></param>
-            /// <param name="to"></param>
-            /// <returns></returns>
-            public static IntervalPiece Interval(Entity from, Entity to)
-                => Piece.Interval(from, to).AsInterval();
+            public static IntervalPiece Interval(Entity from, Entity to) => Piece.Interval(from, to);
 
             /// <summary>
-            /// Creates an element for set
-            /// One can be created implicitly,
-            /// Piece a = 3;
+            /// Creates an element for set. One can be created implicitly, <code>Piece a = 3;</code>
             /// </summary>
-            /// <param name="element"></param>
-            /// <returns></returns>
             public static OneElementPiece Element(Entity element)
                 => new OneElementPiece(element);
         }

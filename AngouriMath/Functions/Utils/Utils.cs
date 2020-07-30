@@ -77,9 +77,9 @@ namespace AngouriMath.Functions
             dst = terms[0];
             for (int i = 1; i < terms.Count; i++)
                 if (terms[i].Name == "mulf" &&
-                    terms[i].Children[0] is NumberEntity { Value:RealNumber r }
+                    terms[i].GetChild(0) is NumberEntity { Value:RealNumber r }
                     && r < 0)
-                    dst -= -r * terms[i].Children[1];
+                    dst -= -r * terms[i].GetChild(1);
                 else
                     dst += terms[i];
             dst = dst.InnerSimplify();

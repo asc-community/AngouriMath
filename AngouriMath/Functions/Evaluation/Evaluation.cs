@@ -53,8 +53,8 @@ namespace AngouriMath
                 return false;
             if (expr is VariableEntity)
                 return IsConstant(expr);
-            for (int i = 0; i < expr.Children.Count; i++)
-                if (!CanBeEvaluated(expr.Children[i]))
+            for (int i = 0; i < expr.ChildrenCount; i++)
+                if (!CanBeEvaluated(expr.GetChild(i)))
                     return false;
             return true;
         }

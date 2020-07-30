@@ -22,7 +22,7 @@ namespace UnitTests.Algebra
         {
             var expanded = MathS.Settings.MaxExpansionTermCount.As(3000, () =>
             {
-                var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.FindSubtree("x") is { });
+                var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.SubtreeIsFound("x"));
                 if (expandOver is null)
                     throw new AssertFailedException("expandOver is null");
                 return TreeAnalyzer.MultiHangBinary(expandOver, "sumf", Const.PRIOR_SUM);

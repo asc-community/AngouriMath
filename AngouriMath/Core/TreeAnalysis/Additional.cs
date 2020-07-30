@@ -106,15 +106,15 @@ namespace AngouriMath.Core.TreeAnalysis
                 case "divf":
                     ExpandFactorialDivisions(ref expr);
                     if (expr.Name != "divf") return SmartExpandOver(expr, conditionForUniqueTerms);
-                    var numChildren = GatherLinearChildrenOverAndExpand(expr.Children[0], conditionForUniqueTerms);
+                    var numChildren = GatherLinearChildrenOverAndExpand(expr.GetChild(0), conditionForUniqueTerms);
                     if (numChildren is null)
                         return null;
                     if (numChildren.Count > MathS.Settings.MaxExpansionTermCount)
                         return null;
-                    return numChildren.Select(c => c / expr.Children[1]).ToList();
+                    return numChildren.Select(c => c / expr.GetChild(1)).ToList();
                 case "mulf":
-                    var oneChildren = GatherLinearChildrenOverAndExpand(expr.Children[0], conditionForUniqueTerms);
-                    var twoChildren = GatherLinearChildrenOverAndExpand(expr.Children[1], conditionForUniqueTerms);
+                    var oneChildren = GatherLinearChildrenOverAndExpand(expr.GetChild(0), conditionForUniqueTerms);
+                    var twoChildren = GatherLinearChildrenOverAndExpand(expr.GetChild(1), conditionForUniqueTerms);
                     if (oneChildren is null || twoChildren is null)
                         return null;
                     if (oneChildren.Count * twoChildren.Count > MathS.Settings.MaxExpansionTermCount)
@@ -124,9 +124,9 @@ namespace AngouriMath.Core.TreeAnalysis
                         newChildren.Add(one * two);
                     return newChildren;
                 case "powf":
-                    if (!(expr.Children[1] is NumberEntity { Value:IntegerNumber { Value: var power } } && power >= 1))
+                    if (!(expr.GetChild(1) is NumberEntity { Value:IntegerNumber { Value: var power } } && power >= 1))
                         return keepResult;
-                    var linBaseChildren = GatherLinearChildrenOverAndExpand(expr.Children[0], conditionForUniqueTerms);
+                    var linBaseChildren = GatherLinearChildrenOverAndExpand(expr.GetChild(0), conditionForUniqueTerms);
                     if (linBaseChildren is null)
                         return null;
                     if (linBaseChildren.Count == 1)
@@ -137,8 +137,8 @@ namespace AngouriMath.Core.TreeAnalysis
                         if (baseChild.Name != "divf" && baseChild.Name != "mulf")
                             return new List<Entity> { expr };
                         // (a / b)^2 = a^2 / b^2
-                        baseChild.Children[0] = baseChild.Children[0].Pow(expr.Children[1]);
-                        baseChild.Children[1] = baseChild.Children[1].Pow(expr.Children[1]);
+                        baseChild.SetChild(0, baseChild.GetChild(0).Pow(expr.GetChild(1)));
+                        baseChild.SetChild(1, baseChild.GetChild(1).Pow(expr.GetChild(1)));
                         return new List<Entity> {baseChild};
                     }
                     if (power > 20 && linBaseChildren.Count > 1 ||

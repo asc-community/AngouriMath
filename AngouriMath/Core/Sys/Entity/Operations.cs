@@ -33,10 +33,7 @@ namespace AngouriMath.Core
                 return false;
             if (!TensorFunctional.SameShape(this, t))
                 return false;
-            for (int i = 0; i < Data.Length; i++)
-                if (Data[i] != t.Data[i])
-                    return false;
-            return true;
+            return innerTensor.Equals(t.innerTensor);
         }
     }
 }
@@ -51,11 +48,11 @@ namespace AngouriMath
                 return false;
             if (obj.Name != Name)
                 return false;
-            if (Children.Count != obj.Children.Count)
+            if (ChildrenCount != obj.ChildrenCount)
                 return false;
-            for (int i = 0; i < obj.Children.Count; i++)
+            for (int i = 0; i < obj.ChildrenCount; i++)
             {
-                if (Children[i] != obj.Children[i])
+                if (GetChild(i) != obj.GetChild(i))
                     return false;
             }
             return true;
@@ -70,16 +67,15 @@ namespace AngouriMath
                 return false;
             if (obj.Name != Name)
                 return false;
-            if (Children.Count != obj.Children.Count)
+            if (ChildrenCount != obj.ChildrenCount)
                 return false;
-            for (int i = 0; i < obj.Children.Count; i++)
+            for (int i = 0; i < obj.ChildrenCount; i++)
             {
-                if (!(Children[i] == obj.Children[i]))
+                if (!(GetChild(i) == obj.GetChild(i)))
                     return false;
             }
             return true;
         }
-        public override int GetHashCode() => Children.GetHashCode();
     }
 
     public partial class NumberEntity

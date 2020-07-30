@@ -47,7 +47,7 @@ namespace AngouriMath.Core.TreeAnalysis
             }
             else
                 // Otherwise, we will try to find unique variables from its children
-                foreach (var child in expr.Children)
+                foreach (var child in expr.ChildrenReadonly)
                     _GetUniqueVariables(child, dst);
         }
         
@@ -66,11 +66,11 @@ namespace AngouriMath.Core.TreeAnalysis
                 originTree = newSubtree;
                 return;
             }
-            for (int i = 0; i < originTree.Children.Count; i++)
+            for (int i = 0; i < originTree.ChildrenCount; i++)
             {
-                var child = originTree.Children[i];
+                var child = originTree.GetChild(i);
                 FindAndReplace(ref child, oldSubtree, newSubtree);
-                originTree.Children[i] = child;
+                originTree.SetChild(i, child);
             }
         }
 
@@ -78,7 +78,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             if (name == expr.Name)
                 return true;
-            foreach (var child in expr.Children)
+            foreach (var child in expr.ChildrenReadonly)
                 if (ContainsName(child, name))
                     return true;
             return false;
@@ -89,9 +89,9 @@ namespace AngouriMath.Core.TreeAnalysis
             if (p.Match(expr) && p.EqFits(expr) != null)
                 yield return expr;
 
-            for (int i = 0; i < expr.Children.Count; i++)
+            for (int i = 0; i < expr.ChildrenCount; i++)
             {
-                foreach(var res in GetPatternEnumerator(expr.Children[i], p))
+                foreach(var res in GetPatternEnumerator(expr.GetChild(i), p))
                 {
                     yield return res;
                 }
@@ -104,6 +104,16 @@ namespace AngouriMath
 {
     public abstract partial class Entity : ILatexiseable
     {
+        /// <summary>
+        /// Checks whether a subtree can be found in a tree
+        /// </summary>
+        public bool SubtreeIsFound(Entity subtree)
+        {
+            if (subtree is VariableEntity)
+                return HasVar(subtree.Name);
+            return FindSubtree(subtree) is {};
+        }
+
         /// <summary>
         /// Finds a subtree in the tree
         /// </summary>

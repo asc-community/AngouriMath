@@ -144,7 +144,7 @@ namespace AngouriMath.Functions.Algebra.Solver
             else
                 result = new List<List<Entity>>();
             for (int i = 0; i < equations.Count; i++)
-                if (equations[i].FindSubtree(var) is { })
+                if (equations[i].SubtreeIsFound(var))
                 {
                     var solutionsOverVar = equations[i].SolveEquation(var);
                     equations.RemoveAt(i);
