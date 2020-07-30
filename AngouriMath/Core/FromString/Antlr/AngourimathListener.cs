@@ -39,35 +39,15 @@ using IToken = Antlr4.Runtime.IToken;
 [System.CLSCompliant(false)]
 public interface IAngourimathListener : IParseTreeListener {
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.statement"/>.
+	/// Enter a parse tree produced by <see cref="AngourimathParser.factorial_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterStatement([NotNull] AngourimathParser.StatementContext context);
+	void EnterFactorial_expression([NotNull] AngourimathParser.Factorial_expressionContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.statement"/>.
+	/// Exit a parse tree produced by <see cref="AngourimathParser.factorial_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitStatement([NotNull] AngourimathParser.StatementContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.expression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterExpression([NotNull] AngourimathParser.ExpressionContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.expression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitExpression([NotNull] AngourimathParser.ExpressionContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.power_expression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterPower_expression([NotNull] AngourimathParser.Power_expressionContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.power_expression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitPower_expression([NotNull] AngourimathParser.Power_expressionContext context);
+	void ExitFactorial_expression([NotNull] AngourimathParser.Factorial_expressionContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngourimathParser.power_list"/>.
 	/// </summary>
@@ -78,6 +58,16 @@ public interface IAngourimathListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitPower_list([NotNull] AngourimathParser.Power_listContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngourimathParser.power_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterPower_expression([NotNull] AngourimathParser.Power_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngourimathParser.power_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitPower_expression([NotNull] AngourimathParser.Power_expressionContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngourimathParser.unary_expression"/>.
 	/// </summary>
@@ -109,15 +99,15 @@ public interface IAngourimathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitSum_expression([NotNull] AngourimathParser.Sum_expressionContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.atom"/>.
+	/// Enter a parse tree produced by <see cref="AngourimathParser.expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterAtom([NotNull] AngourimathParser.AtomContext context);
+	void EnterExpression([NotNull] AngourimathParser.ExpressionContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.atom"/>.
+	/// Exit a parse tree produced by <see cref="AngourimathParser.expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitAtom([NotNull] AngourimathParser.AtomContext context);
+	void ExitExpression([NotNull] AngourimathParser.ExpressionContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngourimathParser.function_arguments"/>.
 	/// </summary>
@@ -128,4 +118,24 @@ public interface IAngourimathListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitFunction_arguments([NotNull] AngourimathParser.Function_argumentsContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngourimathParser.atom"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAtom([NotNull] AngourimathParser.AtomContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngourimathParser.atom"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAtom([NotNull] AngourimathParser.AtomContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngourimathParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterStatement([NotNull] AngourimathParser.StatementContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngourimathParser.statement"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitStatement([NotNull] AngourimathParser.StatementContext context);
 }

@@ -104,6 +104,8 @@ namespace AngouriMath.Core.TreeAnalysis
                 case "minusf":
                     throw new SysException("SmartExpandOver must be only called of non-sum expression");
                 case "divf":
+                    ExpandFactorialDivisions(ref expr);
+                    if (expr.Name != "divf") return SmartExpandOver(expr, conditionForUniqueTerms);
                     var numChildren = GatherLinearChildrenOverAndExpand(expr.GetChild(0), conditionForUniqueTerms);
                     if (numChildren is null)
                         return null;
@@ -163,7 +165,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     return newChildren;
             }
 
-            return new List<Entity>{expr};
+            return new List<Entity> { expr };
         }
     }
 }

@@ -79,10 +79,9 @@ namespace AngouriMath.Core.Numerix
                 return null;
             var sign = num.Sign;
             num *= sign;
-            var intPart = num.ToEInteger();
+            var (intPart, rest) = num.SplitDecimal();
             if (intPart > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                 return null;
-            var rest = CtxSubtract(num, intPart);
             if (IsZero(rest))
                 return IntegerNumber.Create(sign * intPart);
             else

@@ -17,20 +17,15 @@ namespace UnitTests.Convenience
         [TestMethod]
         public void Test4() => Assert.AreEqual(MathS.Cos(MathS.Var("x")), MathS.FromString("sin(x)").Derive(MathS.Var("x")).Simplify());
         [TestMethod]
-        public void Test5()
-        {
-            Assert.IsTrue(MathS.FromString("3 ^ 3 ^ 3").Eval().Real > 10000);
-        }
+        public void Test5() => Assert.AreEqual(7625597484987L, MathS.FromString("3 ^ 3 ^ 3").Eval());
         [TestMethod]
         public void Test6() => Assert.AreEqual(6, MathS.FromString("2 + 2 * 2").Eval());
         [TestMethod]
-        public void Test7()
-        {
+        public void Test7() =>
             // Only needed for Mac
             MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () =>
                 Assert.AreEqual(MathS.i, MathS.FromString("x^2+1").SolveNt(MathS.Var("x")).Pieces[0])
             );
-        }
         [TestMethod]
         public void Test8() => Assert.AreEqual(1, MathS.FromString("cos(sin(0))").Eval());
         [TestMethod]
@@ -59,6 +54,24 @@ namespace UnitTests.Convenience
         }
         [TestMethod]
         public void Test17() => Assert.AreEqual(x * MathS.Sqrt(3), MathS.FromString("x sqrt(3)"));
+        [TestMethod]
+        public void Test18() => Assert.AreEqual(MathS.Factorial(x), MathS.FromString("x!"));
+        [TestMethod]
+        public void Test19() => Assert.ThrowsException<AngouriMath.Core.FromString.ParseException>(() => MathS.FromString("x!!"));
+        [TestMethod]
+        public void Test20() => Assert.AreEqual(MathS.Factorial(MathS.Sin(x)), MathS.FromString("sin(x)!"));
+        [TestMethod]
+        public void Test21() => Assert.AreEqual(MathS.Pow(2, MathS.Factorial(3)), MathS.FromString("2^3!"));
+        [TestMethod]
+        public void Test22() => Assert.AreEqual(MathS.Pow(MathS.Factorial(2), MathS.Factorial(3)), MathS.FromString("2!^3!"));
+        [TestMethod]
+        public void Test23() => Assert.AreEqual(MathS.Pow(MathS.Factorial(2), MathS.Factorial(x + 2)), MathS.FromString("2!^(x+2)!"));
+        [TestMethod]
+        public void Test24() => Assert.AreEqual(-MathS.Factorial(1), MathS.FromString("-1!"));
+
+        // TODO: "-" inverts an expression instead of parsing it as a number
+        [TestMethod]
+        public void Test25() => Assert.AreEqual(MathS.Factorial(-1).ToString(), "(-1)!");
         [TestMethod]
         public void TestSys()
         {

@@ -36,12 +36,15 @@ namespace AngouriMath
         public Entity Derive(VariableEntity x)
         {
             if (IsLeaf)
-            {
-                if (this is VariableEntity && Name == x.Name)
-                    return new NumberEntity(1);
-                else
-                    return new NumberEntity(0);
-            }
+                switch (this)
+                {
+                    case VariableEntity _ when Name == x.Name:
+                        return new NumberEntity(1);
+                    case NumberEntity { Value: var value } when value == Core.Numerix.RealNumber.NaN:
+                        return this;
+                    default:
+                        return new NumberEntity(0);
+                }
             else
                 return MathFunctions.InvokeDerive(Name, Children, x);
         }
@@ -218,6 +221,17 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 1);
             var a = args[0];
             return -1 / (1 + MathS.Sqr(a)) * a.Derive(variable);
+        }
+    }
+    internal static partial class Factorialf
+    {
+        // (x!)' = Γ(x + 1) polygamma(0, x + 1)
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 1);
+            var a = args[0];
+            // TODO: Implementation of symbolic gamma function and polygamma functions needed
+            return Core.Numerix.RealNumber.NaN;
         }
     }
 }

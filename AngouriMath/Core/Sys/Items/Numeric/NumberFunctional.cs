@@ -64,18 +64,6 @@ namespace AngouriMath.Core.Numerix
             {
                 return value.Abs().LessThanOrEquals(MathS.Settings.PrecisionErrorZeroRange);
             }
-
-            public static ComplexNumber BinaryIntPow(ComplexNumber num, EInteger val)
-            {
-                if (val.IsZero)
-                    return 1;
-                if (val.Equals(1))
-                    return num;
-                if (val.Equals(-1))
-                    return 1 / num;
-                var divRem = val.DivRem(2); // divRem[0] == val / 2, divRem[1] == val % 2
-                return BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[1]);
-            }
         }
     }
 }
