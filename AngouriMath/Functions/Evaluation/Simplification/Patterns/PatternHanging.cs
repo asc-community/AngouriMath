@@ -160,7 +160,7 @@ namespace AngouriMath
         internal static Pattern PHang(Entity a)
         {
             var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "factorialf");
-            res.Children.Add(a);
+            res.AddChild(a);
             return res;
         }
     }

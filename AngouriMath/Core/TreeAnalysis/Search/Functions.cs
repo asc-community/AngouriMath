@@ -76,17 +76,17 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             (Entity any1, Entity const1, Entity const2)? consts = null;
             if (FactorialDivisionPatternCC.Match(expr))
-                consts = (expr.Children[0].Children[0].Children[0],
-                          expr.Children[0].Children[0].Children[1],
-                          expr.Children[1].Children[0].Children[1]);
+                consts = (expr.GetChild(0).GetChild(0).GetChild(0),
+                          expr.GetChild(0).GetChild(0).GetChild(1),
+                          expr.GetChild(1).GetChild(0).GetChild(1));
             else if (FactorialDivisionPatternC0.Match(expr))
-                consts = (expr.Children[0].Children[0].Children[0],
-                          expr.Children[0].Children[0].Children[1],
+                consts = (expr.GetChild(0).GetChild(0).GetChild(0),
+                          expr.GetChild(0).GetChild(0).GetChild(1),
                           new NumberEntity(0));
             else if (FactorialDivisionPattern0C.Match(expr))
-                consts = (expr.Children[1].Children[0].Children[0],
+                consts = (expr.GetChild(1).GetChild(0).GetChild(0),
                           new NumberEntity(0),
-                          expr.Children[1].Children[0].Children[1]);
+                          expr.GetChild(1).GetChild(0).GetChild(1));
             if (consts is (var x, NumberEntity { Value: var num }, NumberEntity { Value: var den })
                 && num - den is IntegerNumber { Value: var diff }
                 && !diff.IsZero && diff.Abs() < 20) // We don't want to expand (x+100)!/x!
@@ -129,11 +129,11 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             (Entity newFact, Entity const1, Entity const2)? consts = null;
             if (FactorialMultiplicationPatternCC.Match(expr))
-                consts = (expr.Children[1], expr.Children[0].Children[0].Children[1], expr.Children[1].Children[1]);
+                consts = (expr.GetChild(1), expr.GetChild(0).GetChild(0).GetChild(1), expr.GetChild(1).GetChild(1));
             else if (FactorialMultiplicationPatternC0.Match(expr))
-                consts = (expr.Children[1], expr.Children[0].Children[0].Children[1], new NumberEntity(0));
+                consts = (expr.GetChild(1), expr.GetChild(0).GetChild(0).GetChild(1), new NumberEntity(0));
             else if (FactorialMultiplicationPattern0C.Match(expr))
-                consts = (expr.Children[1], new NumberEntity(0), expr.Children[1].Children[1]);
+                consts = (expr.GetChild(1), new NumberEntity(0), expr.GetChild(1).GetChild(1));
             if (consts is (var x, NumberEntity { Value: var factConst }, NumberEntity { Value: var @const })
                 && factConst + 1 == @const)
             {

@@ -174,7 +174,7 @@ namespace AngouriMath
         public static Entity Hang(Entity a)
         {
             var res = new FunctionEntity("factorialf");
-            res.Children.Add(a);
+            res.AddChild(a);
             return res;
         }
     }
