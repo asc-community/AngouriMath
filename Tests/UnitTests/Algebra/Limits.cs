@@ -35,5 +35,27 @@ namespace UnitTests.Algebra
         [TestMethod] public void Test13() => TestLimit("a x2 + b / x", RealNumber.PositiveInfinity, ApproachFrom.Left, RealNumber.PositiveInfinity * (Entity)"a");
         [TestMethod] public void Test14() => TestLimit("a x ^ (-2) + b / x", RealNumber.PositiveInfinity, ApproachFrom.Left, "0");
         [TestMethod] public void Test15() => TestLimit("1 / (x^2 + x)", "-1", ApproachFrom.Left, RealNumber.PositiveInfinity);
+        [TestMethod] public void Test16() => TestLimit("1 / x", "0", ApproachFrom.Left, RealNumber.NegativeInfinity);
+        [TestMethod] public void Test17() => TestLimit("1 / x", "0", ApproachFrom.Right, RealNumber.PositiveInfinity);
+        [TestMethod] public void Test18() => TestLimit("ln(x)", "0", ApproachFrom.Right, RealNumber.NegativeInfinity);
+        [TestMethod] public void Test19() => TestLimit("ln(x)", "0", ApproachFrom.Left, RealNumber.NegativeInfinity);
+        [TestMethod] public void Test20() => TestLimit("ln(x)", RealNumber.PositiveInfinity, ApproachFrom.Left, RealNumber.PositiveInfinity);
+        [TestMethod] public void Test21() => TestLimit("ln(x)", RealNumber.NegativeInfinity, ApproachFrom.Right, RealNumber.PositiveInfinity);
+        [TestMethod] public void Test22() => TestLimit("ln(1 / (x - a))", "a", ApproachFrom.Right, RealNumber.PositiveInfinity);
+        [TestMethod] public void Test23() => TestLimit("log(b, x)", 0, ApproachFrom.Right, RealNumber.NegativeInfinity);
+        [TestMethod] public void Test24() => TestLimit("ln(x^4 - x^2)", RealNumber.PositiveInfinity, ApproachFrom.Left, RealNumber.PositiveInfinity);
+        [TestMethod] public void Test25() => TestLimit("ln((x - 1) / (2x + 1))", RealNumber.PositiveInfinity, ApproachFrom.Right, MathS.Ln(0.5));
+        [TestMethod] public void Test26() => TestLimit("log(x, x^2)", 0, ApproachFrom.Right, 2);
+        [TestMethod] public void Test27() => TestLimit("log(1/x, x^2)", 0, ApproachFrom.Right, -2);
+        [TestMethod] public void Test28() => TestLimit("log(x, x^(-2))", 0, ApproachFrom.Right, -2);
+        [TestMethod] public void Test29() => TestLimit("log(1/x, x^(-2))", 0, ApproachFrom.Right, 2);
+        [TestMethod] public void Test30() => TestLimit("log(x, x)", 0, ApproachFrom.Right, 1);
+        [TestMethod] public void Test31() => TestLimit("ln(ln((e^2*x + t) / (x + 1)))", RealNumber.PositiveInfinity, ApproachFrom.Right, MathS.Ln(2));
+        [TestMethod]
+        public void Test32()
+        {
+            Assert.Inconclusive("cannot be computed due to expression simplification to NaN");
+            TestLimit("ln(1 / (log(x, x) - 1))", 0, ApproachFrom.Right, RealNumber.PositiveInfinity);
+        }
     }
 }

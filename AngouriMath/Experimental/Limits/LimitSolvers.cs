@@ -19,7 +19,9 @@ namespace AngouriMath.Experimental.Limits
             {
                 var limit = res.Eval();
                 if (limit == RealNumber.NaN) return null;
-                if (!limit.IsFinite) return limit;
+                if (limit.Real == RealNumber.PositiveInfinity || limit.Real == RealNumber.NegativeInfinity)
+                    limit = limit.Real; // sometimes we get { oo + value * i } so we assume it is just infinity
+                if (!limit.IsFinite || limit == IntegerNumber.Zero) return limit;
 
                 return res;
             }
@@ -122,6 +124,7 @@ namespace AngouriMath.Experimental.Limits
                     // do same as wolframalpha: https://www.wolframalpha.com/input/?i=ln%28-inf%29
                     if (innerLimit == RealNumber.NegativeInfinity) return RealNumber.PositiveInfinity;
                     if (innerLimit == RealNumber.PositiveInfinity) return RealNumber.PositiveInfinity;
+                    if (innerLimit == IntegerNumber.Zero) return RealNumber.NegativeInfinity;
                     return MathS.Log(logBase, innerLimit);
                 }
             }
