@@ -28,6 +28,7 @@ using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sys;
  using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Core.Sys.Items.Tensors;
+using AngouriMath.Experimental.Limits;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Functions.Algebra.InequalitySolver;
@@ -738,8 +739,30 @@ namespace AngouriMath
                 => new OneElementPiece(element);
         }
 
+        /// <summary>
+        /// Implements necessary functions for symbolic computation of limits
+        /// </summary>
+        public static class Limits
+        {
+            /// <summary>
+            /// If possible, analytically computes limit of expr if var approaches to approachDestination
+            /// from one of two sides (left and right)
+            /// returns null otherwise
+            /// </summary>
+            public static Entity? Compute(Entity expr, VariableEntity var, Entity approachDestination,
+                ApproachFrom direction)
+                => Limit.ComputeLimit(expr, var, approachDestination, direction);
+
+            /// <summary>
+            /// If possible, analytically computes limit of expr if var approaches to approachDestination
+            /// returns null otherwise or if limits from right and left differ
+            /// </summary>
+            public static Entity? Compute(Entity expr, VariableEntity var, Entity approachDestination)
+                => Limit.ComputeLimit(expr, var, approachDestination);
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
-            Justification = "Lowercase constants as written in Mathamatics")]
+            Justification = "Lowercase constants as written in Mathematics")]
         public static class DecimalConst
         {
             /// <summary>Pi constant</summary>
