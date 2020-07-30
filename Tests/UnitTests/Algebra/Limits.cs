@@ -30,5 +30,9 @@ namespace UnitTests.Algebra
             Assert.Inconclusive("Under work");
             TestLimit("a * sin(x) / x", "0", ApproachFrom.Left, "1");
         }
+
+        [TestMethod] public void Test12() => TestLimit("a x", RealNumber.PositiveInfinity, ApproachFrom.Left, RealNumber.PositiveInfinity * (Entity)"a");
+        [TestMethod] public void Test13() => TestLimit("a x2 + b / x", RealNumber.PositiveInfinity, ApproachFrom.Left, RealNumber.PositiveInfinity * (Entity)"a");
+        [TestMethod] public void Test14() => TestLimit("a x ^ (-2) + b / x", RealNumber.PositiveInfinity, ApproachFrom.Left, "0");
     }
 }

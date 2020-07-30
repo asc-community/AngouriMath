@@ -24,7 +24,7 @@ namespace AngouriMath.Experimental.Limits
             return null;
         }
 
-        static internal Entity? SolvePolynomialDivision(Entity expr, VariableEntity x)
+        internal static Entity? SolvePolynomialDivision(Entity expr, VariableEntity x)
         {
             var pattern = Patterns.any1 / Patterns.any2;
             if(pattern.Match(expr))
@@ -71,6 +71,19 @@ namespace AngouriMath.Experimental.Limits
                     if (result == RealNumber.NaN) result = null; // avoid returning NaN
                 }
                 return result;
+            }
+            else
+            {
+                var pol = TreeAnalyzer.ParseAsPolynomial<EDecimal>(expr, x);
+                if (pol is null)
+                    return null;
+                var maxPower = pol.Keys.Max();
+                if (maxPower.CompareTo(EDecimal.Zero) > 0)
+                    return pol[maxPower] * Infinity;
+                else if (maxPower.CompareTo(EDecimal.Zero) == 0)
+                    return pol[maxPower];
+                else
+                    return 0;
             }
             return null;
         }
