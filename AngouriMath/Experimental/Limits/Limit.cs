@@ -49,6 +49,9 @@ namespace AngouriMath.Experimental.Limits
             var lim = _ComputeLimit(expr, x, dist, side);
             if (!(lim.result is null))
                 return lim;
+            // theoretically, for cases such limit (x -> -1) 1 / (x + 1)
+            // this method will return NaN, but thanks to replacement of x to an non-definite expression,
+            // it is somehow compensated
 
             for (int i = 0; i < expr.ChildrenCount; i++)
             {
