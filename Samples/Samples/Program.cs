@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Core.Sys.Interfaces;
@@ -15,8 +16,12 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            var limit = Limit.ComputeLimit("log((2x - 1)/(x + 1), (x - 1)/(2x - 1))", "x", RealNumber.PositiveInfinity);
-            Console.WriteLine(limit);
+            //Entity expr = "1 / (sin(a) + e ^ (sin(x) / x))";
+            Entity expr = "1 / (x - a)";
+            VariableEntity x = "x";
+            Entity dest = "a";
+            Console.WriteLine(expr);
+            Console.WriteLine(Limit.ComputeLimit(expr, x, dest, ApproachFrom.Left));
         }
     }
 }

@@ -52,11 +52,17 @@ namespace UnitTests.Algebra
         [TestMethod] public void Test30() => TestLimit("log(x, x)", 0, ApproachFrom.Right, 1);
         [TestMethod] public void Test31() => TestLimit("ln(ln((e^2*x + t) / (x + 1)))", RealNumber.PositiveInfinity, ApproachFrom.Left, MathS.Ln(2));
         [TestMethod] public void Test32() => TestLimit("log((2x - 1)/(x + 1), (x - 1)/(2x - 1))", RealNumber.PositiveInfinity, ApproachFrom.Left, -1);
+
         [TestMethod]
-        public void Test33()
+        public void TestComplicated()
         {
-            Assert.Inconclusive("cannot be computed due to expression simplification to NaN");
-            TestLimit("ln(1 / (log(x, x) - 1))", 0, ApproachFrom.Right, RealNumber.PositiveInfinity);
+            Entity subExpr = "(a * x2 + b x) / (c x2 - 3)";
+            Entity expr = MathS.Sqrt(subExpr * 3 / MathS.Sin(subExpr) + MathS.Sin("d"));
+            VariableEntity x = "x";
+            Entity dest = RealNumber.PositiveInfinity;
+            var limit = Limit.ComputeLimit(expr, x, dest, ApproachFrom.Left);
+            Assert.IsFalse(limit is null);
+            Assert.AreEqual("sqrt(a / c * 3 / sin(a / c) + sin(d))", limit?.ToString());
         }
     }
 }
