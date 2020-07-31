@@ -15,7 +15,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Console.WriteLine(MathS.FromString("sin(x, y, t)"));
+            var limit = Limit.ComputeLimit("log((2x - 1)/(x + 1), (x - 1)/(2x - 1))", "x", RealNumber.PositiveInfinity);
+            Console.WriteLine(limit);
         }
     }
 }

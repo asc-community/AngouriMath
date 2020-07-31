@@ -31,6 +31,9 @@ namespace AngouriMath.Experimental.Limits
             var polynomialDivisionResult = LimitSolvers.SolvePolynomialDivision(expr, x);
             if (polynomialDivisionResult != null) return polynomialDivisionResult;
 
+            var logarithmDivisionResult = LimitSolvers.SolveAsLogarithmDivision(expr, x);
+            if (logarithmDivisionResult != null) return logarithmDivisionResult;
+
             return null;
         }
         public static Entity? ComputeLimit(Entity expr, VariableEntity x, Entity dist, ApproachFrom side)

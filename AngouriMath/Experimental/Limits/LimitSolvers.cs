@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace AngouriMath.Experimental.Limits
 {
@@ -68,7 +69,7 @@ namespace AngouriMath.Experimental.Limits
                 if (monoQ is null) monoQ = new Dictionary<EDecimal, Entity>() { { EDecimal.Zero, 1 } }; // P -> P / 1
 
                 Entity? result = null;
-                if(monoP is { })
+                if(monoP is { } && monoQ is { })
                 {
                     var maxPowerP = monoP.Keys.Max();
                     var maxPowerQ = monoQ.Keys.Max();
@@ -110,12 +111,9 @@ namespace AngouriMath.Experimental.Limits
                 var logBase = expr.GetChild(0);
                 var logArgument = expr.GetChild(1);
 
-                if (logBase.ContainsName("x"))
+                if (logBase.SubtreeIsFound(x))
                 {
-                    // apply L'Hôpital's rule for lim(x -> +oo) log(f(x), g(x))
-                    var p = logArgument.Derive(x) / logArgument;
-                    var q = logBase.Derive(x) / logBase;
-                    return Limit.ComputeLimit(p / q, x, RealNumber.PositiveInfinity, ApproachFrom.Left);
+                    return SolveAsLogarithmDivision(MathS.Ln(logArgument) / MathS.Ln(logBase), x);
                 }
                 else
                 {
@@ -127,6 +125,52 @@ namespace AngouriMath.Experimental.Limits
                     if (innerLimit == IntegerNumber.Zero) return RealNumber.NegativeInfinity;
                     return MathS.Log(logBase, innerLimit);
                 }
+            }
+            else return null;
+        }
+
+        private static Pattern LogarithmDivisionPattern = Logf.PHang(Patterns.any1, Patterns.any2) / Logf.PHang(Patterns.any3, Patterns.any2);
+        internal static Entity? SolveAsLogarithmDivision(Entity expr, VariableEntity x)
+        {
+            if (LogarithmDivisionPattern.Match(expr))
+            {
+                var upperLogArgument = expr.GetChild(0).GetChild(1);
+                var lowerLogArgument = expr.GetChild(1).GetChild(1);
+                var upperLogBase = expr.GetChild(0).GetChild(0);
+                var lowerLogBase = expr.GetChild(1).GetChild(0);
+                if (lowerLogBase.SubtreeIsFound(x) || upperLogBase.SubtreeIsFound(x)) return null;
+
+                var upperLogLimit = Limit.ComputeLimitToInfinity(upperLogArgument, x);
+                var lowerLogLimit = Limit.ComputeLimitToInfinity(lowerLogArgument, x);
+                if (upperLogLimit is null || lowerLogLimit is null) return null;
+
+                if ((upperLogLimit.SubtreeIsFound(RealNumber.PositiveInfinity) ||
+                     upperLogLimit.SubtreeIsFound(RealNumber.NegativeInfinity)  ||
+                     upperLogLimit == IntegerNumber.Zero)
+                    &&
+                    (lowerLogLimit.SubtreeIsFound(RealNumber.PositiveInfinity) ||
+                     lowerLogLimit.SubtreeIsFound(RealNumber.NegativeInfinity)  ||
+                     lowerLogLimit == IntegerNumber.Zero))
+                {
+                    // apply L'Hôpital's rule for lim(x -> +oo) log(f(x), g(x))
+                    var p = upperLogArgument.Derive(x) / upperLogArgument;
+                    var q = lowerLogArgument.Derive(x) / lowerLogArgument;
+                    return Limit.ComputeLimit(p / q, x, RealNumber.PositiveInfinity, ApproachFrom.Left);
+                }
+                else
+                {
+                    var limit = MathS.Ln(upperLogLimit) / MathS.Ln(lowerLogLimit);
+                    if(MathS.CanBeEvaluated(limit))
+                    {
+                        var res = limit.Eval();
+                        if (res == RealNumber.NaN) return null;
+                        if (!res.IsFinite || res == IntegerNumber.Zero) return res;
+                        return limit;
+                    }
+                    return upperLogLimit / lowerLogLimit;
+                }
+
+                return null;
             }
             else return null;
         }

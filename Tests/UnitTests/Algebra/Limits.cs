@@ -50,9 +50,10 @@ namespace UnitTests.Algebra
         [TestMethod] public void Test28() => TestLimit("log(x, x^(-2))", 0, ApproachFrom.Right, -2);
         [TestMethod] public void Test29() => TestLimit("log(1/x, x^(-2))", 0, ApproachFrom.Right, 2);
         [TestMethod] public void Test30() => TestLimit("log(x, x)", 0, ApproachFrom.Right, 1);
-        [TestMethod] public void Test31() => TestLimit("ln(ln((e^2*x + t) / (x + 1)))", RealNumber.PositiveInfinity, ApproachFrom.Right, MathS.Ln(2));
+        [TestMethod] public void Test31() => TestLimit("ln(ln((e^2*x + t) / (x + 1)))", RealNumber.PositiveInfinity, ApproachFrom.Left, MathS.Ln(2));
+        [TestMethod] public void Test32() => TestLimit("log((2x - 1)/(x + 1), (x - 1)/(2x - 1))", RealNumber.PositiveInfinity, ApproachFrom.Left, -1);
         [TestMethod]
-        public void Test32()
+        public void Test33()
         {
             Assert.Inconclusive("cannot be computed due to expression simplification to NaN");
             TestLimit("ln(1 / (log(x, x) - 1))", 0, ApproachFrom.Right, RealNumber.PositiveInfinity);
