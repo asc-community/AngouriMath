@@ -321,5 +321,11 @@ namespace UnitTests.Convenience
             Test(@"\frac{d\left[x + y\right]}{d\left[quack\right]}", MathS.Derivative("x + y", "quack"));
         [TestMethod] public void Derivative3() =>
             Test(@"\frac{d^{3}\left[x + 1\right]}{dx^{3}}", MathS.Derivative("x + 1", "x", 3));
+        [TestMethod] public void Integral1() =>
+            Test(@"\int \left[x+1\right] dx", MathS.Integral("x + 1", "x"));
+        [TestMethod] public void Integral2() =>
+            Test(@"\int \int \left[x+1\right] dx dx", MathS.Integral("x + 1", "x", 2));
+        [TestMethod] public void Integral3() =>
+            Test(@"\int \left[x+1\right] d\left[xf\right]", MathS.Integral("x + 1", "xf"));
     }
 }

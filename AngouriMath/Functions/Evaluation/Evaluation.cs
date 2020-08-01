@@ -481,6 +481,24 @@ namespace AngouriMath
                 return MathS.Derivative(args[0], x, p);
         }
     }
+
+    internal static partial class Integralf
+    {
+        public static Entity Eval(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            var x = args[1].InnerEval();
+            var p = args[2].InnerEval();
+            if (x is VariableEntity var && p is NumberEntity { Value: var value } && value is IntegerNumber asInt)
+            {
+                if (asInt == 0)
+                    return args[0].InnerEval();
+                throw new NotImplementedException("Integration is not implemented yet");
+            }
+            else
+                return MathS.Integral(args[0], x, p);
+        }
+    }
 }
 
 namespace AngouriMath
@@ -1049,6 +1067,28 @@ namespace AngouriMath
                 return def;
 
             return ent.Derive(var, asInt.Value);
+        }
+    }
+
+    internal static partial class Integralf
+    {
+        public static Entity Simplify(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            var ent = args[0].InnerSimplify();
+            var x = args[1].InnerSimplify();
+            var pow = args[2].InnerSimplify();
+            var def = MathS.Integral(ent, x, pow);
+            if (!(x is VariableEntity var))
+                return def;
+            if (!(pow is NumberEntity {Value: var val}))
+                return def;
+            if (!(val is IntegerNumber asInt))
+                return def;
+
+            if (asInt == IntegerNumber.Zero)
+                return ent;
+            throw new NotImplementedException("Integration is not implemented yet");
         }
     }
 }

@@ -191,6 +191,18 @@ namespace AngouriMath
         }
     }
 
+    internal static partial class Integralf
+    {
+        public static Entity Hang(Entity a, Entity x, Entity power)
+        {
+            var res = new FunctionEntity("integralf");
+            res.AddChild(a);
+            res.AddChild(x);
+            res.AddChild(power);
+            return res;
+        }
+    }
+
     internal static partial class MathFunctions
     {
         public static void AssertArgs(int a, int b)

@@ -237,7 +237,7 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 3);
             var pow = args[2];
-            var powerIfNeeded = pow == 1 ? "" : "^{" + pow.Latexise() + "}";
+            var powerIfNeeded = pow == IntegerNumber.One ? "" : "^{" + pow.Latexise() + "}";
 
             var varOverDeriv = (args[1] is VariableEntity && args[1].Name.Length == 1
                 ? args[1].Name
@@ -245,6 +245,51 @@ namespace AngouriMath
 
             return @"\frac{d" + powerIfNeeded +
             @"\left[" + args[0].Stringize(false) + @"\right]}{d" + varOverDeriv + powerIfNeeded + "}";
+        }
+    }
+
+    internal static partial class Integralf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            var pow = args[2];
+
+            // Unlike derivatives, integrals do not have "power" that would be equal
+            // to sequential applying integration to a function
+            if (!(pow is NumberEntity nent))
+                return "Error";
+
+            if (!(nent.Value is IntegerNumber asInt))
+                return "Error";
+
+            if (asInt < 0)
+                return "Error";
+
+            if (asInt == 0)
+                return args[0].Latexise(false);
+
+            var sb = new StringBuilder();
+            for (int i = 0; i < asInt; i++)
+                sb.Append(@"\int ");
+            sb.Append(@"\left[");
+            sb.Append(args[0].Latexise(false));
+            sb.Append(@"\right]");
+
+            // TODO: can we write d^2 x or (dx)^2 instead of dx dx?
+            for (int i = 0; i < asInt; i++)
+            {
+                sb.Append(" d");
+                if (args[1] is VariableEntity var && var.Name.Length == 1)
+                    sb.Append(var.Name);
+                else
+                {
+                    sb.Append(@"\left[");
+                    sb.Append(args[1].Latexise(false));
+                    sb.Append(@"\right]");
+                }
+            }
+            return sb.ToString();
         }
     }
 

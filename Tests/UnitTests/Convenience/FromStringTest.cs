@@ -79,9 +79,13 @@ namespace UnitTests.Convenience
             Assert.AreEqual(MathS.Sqr(x), expr);
         }
 
-        [TestMethod]
-        public void Test26() => Assert.AreEqual(MathS.Derivative("x + 1", "x"), (Entity)"derive(x + 1, x, 1)");
-        [TestMethod]
-        public void Test27() => Assert.AreEqual(MathS.Derivative("x + 1", "x", 5), (Entity)"derive(x + 1, x, 5)");
+        [TestMethod] public void Test26() 
+            => Assert.AreEqual(MathS.Derivative("x + 1", "x"), (Entity)"derive(x + 1, x, 1)");
+        [TestMethod] public void Test27() 
+            => Assert.AreEqual(MathS.Derivative("x + 1", "x", 5), (Entity)"derive(x + 1, x, 5)");
+        [TestMethod] public void Test28()
+            => Assert.AreEqual(MathS.Integral("x + 1", "x"), (Entity)"integrate(x + 1, x, 1)");
+        [TestMethod] public void Test29()
+            => Assert.AreEqual(MathS.Integral("x + y", "x", 3), (Entity)"integrate(x + y, x, 3)");
     }
 }

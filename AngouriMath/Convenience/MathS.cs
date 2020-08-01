@@ -745,6 +745,12 @@ namespace AngouriMath
         public static Entity Derivative(Entity expr, Entity var, Entity power)
             => Derivativef.Hang(expr, var, power);
 
+        public static Entity Integral(Entity expr, Entity var)
+            => Integralf.Hang(expr, var, 1);
+
+        public static Entity Integral(Entity expr, Entity var, Entity power)
+            => Integralf.Hang(expr, var, power);
+
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
             Justification = "Lowercase constants as written in Mathamatics")]

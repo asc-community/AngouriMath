@@ -274,6 +274,19 @@ namespace AngouriMath
         }
     }
 
+    internal static partial class Integralf
+    {
+        public static void Wakeup() { }
+        static Integralf()
+        {
+            MathFunctions.evalTable["integralf"] = Eval;
+            MathFunctions.simplifyTable["integralf"] = Simplify;
+            MathFunctions.deriveTable["integralf"] = Derive;
+            MathFunctions.latexTable["integralf"] = Latex;
+            MathFunctions.stringTable["integralf"] = Stringize;
+        }
+    }
+
     public abstract partial class Entity : ILatexiseable
     {
         public int Priority { get; internal set; }
@@ -294,8 +307,6 @@ namespace AngouriMath
         public Entity Arccotan() => Arccotanf.Hang(this);
         public Entity Factorial() => Factorialf.Hang(this);
         public Entity Log(Entity n) => Logf.Hang(this, n);
-        public Entity Derivative(Entity x, Entity power) => Derivativef.Hang(this, x, power);
-
         public bool IsLowerThan(Entity a)
         {
             return Priority < a.Priority;

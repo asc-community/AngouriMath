@@ -205,6 +205,15 @@ namespace AngouriMath
         }
     }
 
+    internal static partial class Integralf
+    {
+        public static string Stringize(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            return $"integrate({args[0].Stringize(false)}, {args[1].Stringize(false)}, {args[2].Stringize(false)})";
+        }
+    }
+
     internal static class SetToString
     {
         static readonly List<string> Operators = new List<string>
