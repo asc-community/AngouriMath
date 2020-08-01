@@ -499,6 +499,27 @@ namespace AngouriMath
                 return MathS.Integral(args[0], x, p);
         }
     }
+
+    internal static partial class Limitf
+    {
+        public static Entity Eval(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 4);
+            var expr = args[0].InnerEval();
+            var x = args[1].InnerEval();
+            var dest = args[2].InnerEval();
+            var appr = args[3].InnerEval();
+            Entity? lim = null;
+            if (appr == IntegerNumber.MinusOne)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else if (appr == IntegerNumber.Zero)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else if (appr == IntegerNumber.One)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else
+                return Limitf.Hang(expr, x, dest, appr);
+        }
+    }
 }
 
 namespace AngouriMath
@@ -1089,6 +1110,27 @@ namespace AngouriMath
             if (asInt == IntegerNumber.Zero)
                 return ent;
             throw new NotImplementedException("Integration is not implemented yet");
+        }
+    }
+
+    internal static partial class Limitf
+    {
+        public static Entity Simplify(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 4);
+            var expr = args[0].InnerSimplify();
+            var x = args[1].InnerSimplify();
+            var dest = args[2].InnerSimplify();
+            var appr = args[3].InnerSimplify();
+            Entity? lim = null;
+            if (appr == IntegerNumber.MinusOne)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else if (appr == IntegerNumber.Zero)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else if (appr == IntegerNumber.One)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else
+                return Limitf.Hang(expr, x, dest, appr);
         }
     }
 }

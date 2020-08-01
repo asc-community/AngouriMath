@@ -270,4 +270,16 @@ namespace AngouriMath
                 return MathS.Integral(MathS.Derivative(args[0], args[1], args[2]), variable, 1);
         }
     }
+
+    internal static partial class Limitf
+    {
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 4);
+            // TODO: What is a derivative of a limit?
+            return MathS.Derivative(
+                Limitf.Hang(args[0], args[1], args[2], args[3])
+                , variable);
+        }
+    }
 }

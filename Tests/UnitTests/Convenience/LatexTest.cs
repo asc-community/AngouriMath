@@ -327,5 +327,11 @@ namespace UnitTests.Convenience
             Test(@"\int \int \left[x+1\right] dx dx", MathS.Integral("x + 1", "x", 2));
         [TestMethod] public void Integral3() =>
             Test(@"\int \left[x+1\right] d\left[xf\right]", MathS.Integral("x + 1", "xf"));
+        [TestMethod] public void Limit1() =>
+            Test(@"\lim_{x\to 0^-} \left[x+y\right]", (Entity)"limitleft(x + y, x, 0)");
+        [TestMethod] public void Limit2() =>
+            Test(@"\lim_{x\to 0^+} {a}^{5}", (Entity)"limitright(a^5, x, 0)");
+        [TestMethod] public void Limit3() =>
+            Test(@"\lim_{x\to \infty } \left[x+y\right]", MathS.Limit("x + y", "x", RealNumber.PositiveInfinity));
     }
 }

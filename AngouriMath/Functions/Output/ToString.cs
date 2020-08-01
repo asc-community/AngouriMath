@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
  using System.Linq;
  using AngouriMath.Core.Exceptions;
+ using AngouriMath.Core.Numerix;
  using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
@@ -210,7 +211,23 @@ namespace AngouriMath
         public static string Stringize(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 3);
-            return $"integrate({args[0].Stringize(false)}, {args[1].Stringize(false)}, {args[2].Stringize(false)})";
+            return $"integrate({args[0].Stringize()}, {args[1].Stringize()}, {args[2].Stringize()})";
+        }
+    }
+
+    internal static partial class Limitf
+    {
+        public static string Stringize(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 4);
+            if (args[3] == IntegerNumber.MinusOne)
+                return $"limitleft({args[0].Stringize()}, {args[1].Stringize()}, {args[2].Stringize()}, {args[3].Stringize()})";
+            else if (args[3] == IntegerNumber.Zero)
+                return $"limit({args[0].Stringize()}, {args[1].Stringize()}, {args[2].Stringize()}, {args[3].Stringize()})";
+            else if (args[3] == IntegerNumber.One)
+                return $"limitright({args[0].Stringize()}, {args[1].Stringize()}, {args[2].Stringize()}, {args[3].Stringize()})";
+            else
+                return $"limitinternal({args[0].Stringize()}, {args[1].Stringize()}, {args[2].Stringize()}, {args[3].Stringize()}, {args[4].Stringize()})";
         }
     }
 

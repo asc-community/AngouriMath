@@ -751,6 +751,11 @@ namespace AngouriMath
         public static Entity Integral(Entity expr, Entity var, Entity power)
             => Integralf.Hang(expr, var, power);
 
+        public static Entity Limit(Entity expr, Entity var, Entity dest)
+            => Limitf.Hang(expr, var, dest, 0);
+
+        public static Entity Limit(Entity expr, Entity var, Entity dest, int approach)
+            => Limitf.Hang(expr, var, dest, approach); // FromRight +1, Any 0, FromLeft -1 TODO: 1.1.0.4 limits
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
             Justification = "Lowercase constants as written in Mathamatics")]

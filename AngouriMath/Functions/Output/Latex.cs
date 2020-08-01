@@ -293,6 +293,39 @@ namespace AngouriMath
         }
     }
 
+    internal static partial class Limitf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 4);
+
+            var sb = new StringBuilder();
+            sb.Append(@"\lim_{");
+
+            sb.Append(args[1].Latexise(false));
+
+            sb.Append(@"\to ");
+
+            sb.Append(args[2].Latexise(false));
+
+            if (args[3] == IntegerNumber.MinusOne)
+                sb.Append("^-");
+            else if (args[3] == IntegerNumber.One)
+                sb.Append("^+");
+            else if (args[3] != IntegerNumber.Zero)
+                return "Error";
+
+            sb.Append("} ");
+            if (args[0].Priority < Const.PRIOR_POW)
+                sb.Append(@"\left[");
+            sb.Append(args[0].Latexise(false));
+            if (args[0].Priority < Const.PRIOR_POW)
+                sb.Append(@"\right]");
+
+            return sb.ToString();
+        }
+    }
+
     namespace Core
     {
         partial class SetNode : ILatexiseable

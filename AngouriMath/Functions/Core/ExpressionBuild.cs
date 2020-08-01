@@ -203,6 +203,19 @@ namespace AngouriMath
         }
     }
 
+    internal static partial class Limitf
+    {
+        public static Entity Hang(Entity expr, Entity x, Entity dest, Entity appr)
+        {
+            var res = new FunctionEntity("limitf");
+            res.AddChild(expr);
+            res.AddChild(x);
+            res.AddChild(dest);
+            res.AddChild(appr);
+            return res;
+        }
+    }
+
     internal static partial class MathFunctions
     {
         public static void AssertArgs(int a, int b)

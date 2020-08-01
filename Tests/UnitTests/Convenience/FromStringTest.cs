@@ -87,5 +87,9 @@ namespace UnitTests.Convenience
             => Assert.AreEqual(MathS.Integral("x + 1", "x"), (Entity)"integrate(x + 1, x, 1)");
         [TestMethod] public void Test29()
             => Assert.AreEqual(MathS.Integral("x + y", "x", 3), (Entity)"integrate(x + y, x, 3)");
+        [TestMethod] public void Test30()
+            => Assert.AreEqual(MathS.Limit("x + y", "x", 3), (Entity)"limit(x + y, x, 3)");
+        [TestMethod] public void Test31()
+            => Assert.AreEqual(MathS.Limit("x + y", "x", 3, -1), (Entity)"limitleft(x + y, x, 3)");
     }
 }

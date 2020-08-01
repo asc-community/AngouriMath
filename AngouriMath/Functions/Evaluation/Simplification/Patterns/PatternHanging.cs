@@ -188,4 +188,17 @@ namespace AngouriMath
             return res;
         }
     }
+
+    internal static partial class Limitf
+    {
+        internal static Pattern PHang(Entity expr, Entity x, Entity dest, Entity appr)
+        {
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "limitf");
+            res.AddChild(expr);
+            res.AddChild(x);
+            res.AddChild(dest);
+            res.AddChild(appr);
+            return res;
+        }
+    }
 }

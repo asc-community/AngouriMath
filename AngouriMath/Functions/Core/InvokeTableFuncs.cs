@@ -79,6 +79,7 @@ namespace AngouriMath
             Arccotanf.Wakeup();
             Factorialf.Wakeup();
             Derivativef.Wakeup();
+            Integralf.Wakeup();
         }
     }
     internal static partial class Sumf
@@ -284,6 +285,19 @@ namespace AngouriMath
             MathFunctions.deriveTable["integralf"] = Derive;
             MathFunctions.latexTable["integralf"] = Latex;
             MathFunctions.stringTable["integralf"] = Stringize;
+        }
+    }
+
+    internal static partial class Limitf
+    {
+        public static void Wakeup() { }
+        static Limitf()
+        {
+            MathFunctions.evalTable["limitf"] = Eval;
+            MathFunctions.simplifyTable["limitf"] = Simplify;
+            MathFunctions.deriveTable["limitf"] = Derive;
+            MathFunctions.latexTable["limitf"] = Latex;
+            MathFunctions.stringTable["limitf"] = Stringize;
         }
     }
 
