@@ -692,7 +692,14 @@ public partial class AngourimathParser : Parser {
 				State = 113; Match(T__7);
 				State = 114; _localctx.args = function_arguments();
 				State = 115; Match(T__8);
-				 _localctx.value =  new FunctionEntity((_localctx._ID!=null?_localctx._ID.Text:null) + 'f'); foreach(var arg in _localctx.args.list) { _localctx.value.AddChild(arg); } 
+				 
+				        if (_localctx.args.list.Count != AngouriMath.Core.FromString.SyntaxInfo.goodStringsForFunctions[(_localctx._ID!=null?_localctx._ID.Text:null)])
+				            throw new AngouriMath.Core.FromString.ParseException("Wrong amount of arguments for " + (_localctx._ID!=null?_localctx._ID.Text:null) + ": " + _localctx.args.list.Count.ToString());
+				        _localctx.value =  new FunctionEntity((_localctx._ID!=null?_localctx._ID.Text:null) + 'f'); 
+				        foreach(var arg in _localctx.args.list) { 
+				            _localctx.value.AddChild(arg); 
+				        } 
+				    
 				}
 				break;
 			case 5:
