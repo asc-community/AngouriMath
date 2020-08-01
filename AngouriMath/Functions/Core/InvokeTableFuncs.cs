@@ -78,6 +78,7 @@ namespace AngouriMath
             Arctanf.Wakeup();
             Arccotanf.Wakeup();
             Factorialf.Wakeup();
+            Derivativef.Wakeup();
         }
     }
     internal static partial class Sumf
@@ -260,6 +261,19 @@ namespace AngouriMath
         }
     }
 
+    internal static partial class Derivativef
+    {
+        public static void Wakeup() { }
+        static Derivativef()
+        {
+            MathFunctions.evalTable["derivativef"] = Eval;
+            MathFunctions.simplifyTable["derivativef"] = Simplify;
+            MathFunctions.deriveTable["derivativef"] = Derive;
+            MathFunctions.latexTable["derivativef"] = Latex;
+            MathFunctions.stringTable["derivativef"] = Stringize;
+        }
+    }
+
     public abstract partial class Entity : ILatexiseable
     {
         public int Priority { get; internal set; }
@@ -280,6 +294,8 @@ namespace AngouriMath
         public Entity Arccotan() => Arccotanf.Hang(this);
         public Entity Factorial() => Factorialf.Hang(this);
         public Entity Log(Entity n) => Logf.Hang(this, n);
+        public Entity Derivative(Entity x, Entity power) => Derivativef.Hang(this, x, power);
+
         public bool IsLowerThan(Entity a)
         {
             return Priority < a.Priority;

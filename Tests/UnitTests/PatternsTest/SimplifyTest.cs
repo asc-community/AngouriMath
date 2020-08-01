@@ -2,7 +2,7 @@ using AngouriMath;
 using AngouriMath.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTests.Algebra
+namespace UnitTests.PatternsTest
 {
     [TestClass]
     public class SimplifyTest
@@ -88,5 +88,8 @@ namespace UnitTests.Algebra
         [TestMethod] public void NaNP1() => AssertSimplify(nan + 1, nan);
         [TestMethod] public void NaN0() => AssertSimplify(nan * 0, nan);
         [TestMethod] public void NaNPow0() => AssertSimplify(MathS.Pow(nan, 0), nan);
+        [TestMethod] public void Derive1() => AssertSimplify(MathS.Derivative("x + 2", "x"), 1);
+        [TestMethod] public void Derive2() => AssertSimplify(MathS.Derivative("7x2 - x + 2", "x", 2), 14);
     }
 }
+

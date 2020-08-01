@@ -186,12 +186,22 @@ namespace AngouriMath
             return "arccotan(" + args[0].Stringize() + ")";
         }
     }
+
     internal static partial class Factorialf
     {
         public static string Stringize(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 1);
             return args[0].Stringize(args[0].Priority < Const.PRIOR_NUM) + "!";
+        }
+    }
+
+    internal static partial class Derivativef
+    {
+        public static string Stringize(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            return $"derive({args[0].Stringize(false)}, {args[1].Stringize(false)}, {args[2].Stringize(false)})";
         }
     }
 

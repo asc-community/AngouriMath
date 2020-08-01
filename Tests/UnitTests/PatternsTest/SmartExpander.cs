@@ -3,7 +3,7 @@ using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTests.Algebra
+namespace UnitTests.PatternsTest
 {
     [TestClass]
     public class SmartExpander

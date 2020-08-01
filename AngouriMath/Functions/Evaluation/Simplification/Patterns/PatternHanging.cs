@@ -164,4 +164,16 @@ namespace AngouriMath
             return res;
         }
     }
+
+    internal static partial class Derivativef
+    {
+        internal static Pattern PHang(Entity a, Entity x, Entity pow)
+        {
+            var res = new Pattern(-1, Entity.PatType.FUNCTION, Const.Patterns.AlwaysTrue, "derivativef");
+            res.AddChild(a);
+            res.AddChild(x);
+            res.AddChild(pow);
+            return res;
+        }
+    }
 }

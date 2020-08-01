@@ -315,5 +315,11 @@ namespace UnitTests.Convenience
             Test(@"\begin{bmatrix}11 & 12 & 21 & 22 & 31 & 32\end{bmatrix}", MathS.Matrices.Vector(11, 12, 21, 22, 31, 32));
         [TestMethod] public void VectorSingle() =>
             Test(@"\begin{bmatrix}x\end{bmatrix}", MathS.Matrices.Vector(x));
+        [TestMethod] public void Derivative1() =>
+            Test(@"\frac{d\left[x + 1\right]}{dx}", MathS.Derivative("x + 1", "x"));
+        [TestMethod] public void Derivative2() =>
+            Test(@"\frac{d\left[x + y\right]}{d\left[quack\right]}", MathS.Derivative("x + y", "quack"));
+        [TestMethod] public void Derivative3() =>
+            Test(@"\frac{d^{3}\left[x + 1\right]}{dx^{3}}", MathS.Derivative("x + 1", "x", 3));
     }
 }

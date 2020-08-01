@@ -42,6 +42,7 @@ namespace AngouriMath
             { "cosecf", args => MathS.Cosec(args[0]) },
             { "arcsecf", args => MathS.Arcsec(args[0]) },
             { "arccosecf", args => MathS.Arccosec(args[0]) },
+            { "derivef", args => MathS.Derivative(args[0], args[1], args[2]) }
         };
 
         /// <summary>

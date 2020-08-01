@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Algebra
+namespace UnitTests.PatternsTest
 {
     [TestClass]
     public class PatternTest

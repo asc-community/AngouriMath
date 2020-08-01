@@ -32,7 +32,8 @@ namespace AngouriMath.Functions.Output
             { "arctanf", "atan" },
             { "arccotanf", "acotan" },
             { "logf", "log" },
-            { "factorialf", "factorial" }
+            { "factorialf", "factorial" },
+            { "derivativef", "derivative" }
         };
 
         private static readonly Dictionary<string, string> OperatorTable = new Dictionary<string, string>

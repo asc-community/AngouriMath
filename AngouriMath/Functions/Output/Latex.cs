@@ -221,6 +221,7 @@ namespace AngouriMath
             return @"\arccot\left(" + args[0].Latexise() + @"\right)";
         }
     }
+
     internal static partial class Factorialf
     {
         internal static string Latex(List<Entity> args)
@@ -229,6 +230,24 @@ namespace AngouriMath
             return args[0].Latexise(args[0].Priority < Const.PRIOR_NUM) + "!";
         }
     }
+
+    internal static partial class Derivativef
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            var pow = args[2];
+            var powerIfNeeded = pow == 1 ? "" : "^{" + pow.Latexise() + "}";
+
+            var varOverDeriv = (args[1] is VariableEntity && args[1].Name.Length == 1
+                ? args[1].Name
+                : @"\left[" + args[1].Stringize(false) + @"\right]");
+
+            return @"\frac{d" + powerIfNeeded +
+            @"\left[" + args[0].Stringize(false) + @"\right]}{d" + varOverDeriv + powerIfNeeded + "}";
+        }
+    }
+
     namespace Core
     {
         partial class SetNode : ILatexiseable
