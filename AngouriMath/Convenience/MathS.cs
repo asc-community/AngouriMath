@@ -751,14 +751,14 @@ namespace AngouriMath
             /// </summary>
             public static Entity? Compute(Entity expr, VariableEntity var, Entity approachDestination,
                 ApproachFrom direction)
-                => Limit.ComputeLimit(expr, var, approachDestination, direction);
+                => Experimental.Limits.Limits.ComputeLimit(expr, var, approachDestination, direction);
 
             /// <summary>
             /// If possible, analytically computes limit of expr if var approaches to approachDestination
             /// returns null otherwise or if limits from right and left differ
             /// </summary>
             public static Entity? Compute(Entity expr, VariableEntity var, Entity approachDestination)
-                => Limit.ComputeLimit(expr, var, approachDestination);
+                => Experimental.Limits.Limits.ComputeLimit(expr, var, approachDestination);
         }
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",

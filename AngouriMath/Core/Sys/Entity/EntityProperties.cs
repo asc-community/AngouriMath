@@ -30,6 +30,13 @@ namespace AngouriMath.Core.Sys
             return (T)properties[name];
         }
 
+        public bool GetPropIsFinite()
+        {
+            var res = GetProperty("IsFinite",
+                enf => enf.ChildrenReadonly.All(c => !(c is NumberEntity num && !num.Value.IsFinite)));
+            return res;
+        }
+
         public int GetPropComplexity()
         {
             var res = GetProperty("Complexity", 

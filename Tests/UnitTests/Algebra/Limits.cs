@@ -60,8 +60,8 @@ namespace UnitTests.Algebra
             Entity expr = MathS.Sqrt(subExpr * 3 / MathS.Sin(subExpr) + MathS.Sin("d"));
             VariableEntity x = "x";
             Entity dest = RealNumber.PositiveInfinity;
-            var limit = Limit.ComputeLimit(expr, x, dest, ApproachFrom.Left);
-            Assert.IsFalse(limit is null);
+            var limit = MathS.Limits.Compute(expr, x, dest, ApproachFrom.Left);
+            Assert.IsNotNull(limit);
             Assert.AreEqual("sqrt(a / c * 3 / sin(a / c) + sin(d))", limit?.ToString());
         }
     }

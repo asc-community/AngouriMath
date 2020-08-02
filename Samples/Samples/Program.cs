@@ -21,7 +21,7 @@ namespace Samples
             VariableEntity x = "x";
             Entity dest = "a";
             Console.WriteLine(expr);
-            Console.WriteLine(Limit.ComputeLimit(expr, x, dest, ApproachFrom.Left));
+            Console.WriteLine(MathS.Limits.Compute(expr, x, dest, ApproachFrom.Left));
         }
     }
 }
