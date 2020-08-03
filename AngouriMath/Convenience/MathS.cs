@@ -28,6 +28,7 @@ using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sys;
  using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Core.Sys.Items.Tensors;
+using AngouriMath.Limits;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using AngouriMath.Functions.Algebra.InequalitySolver;
@@ -891,7 +892,28 @@ namespace AngouriMath
                 => new OneElementPiece(element);
         }
 
+        // TODO: how do we make the difference between Limits and Limit obvious?
         /// <summary>
+        /// Implements necessary functions for symbolic computation of limits
+        /// </summary>
+        public static class Limits
+        {
+            /// <summary>
+            /// If possible, analytically computes limit of expr if var approaches to approachDestination
+            /// from one of two sides (left and right)
+            /// returns null otherwise
+            /// </summary>
+            public static Entity? Compute(Entity expr, VariableEntity var, Entity approachDestination,
+                ApproachFrom direction)
+                => LimitFunctional.ComputeLimit(expr, var, approachDestination, direction);
+
+            /// <summary>
+            /// If possible, analytically computes limit of expr if var approaches to approachDestination
+            /// returns null otherwise or if limits from right and left differ
+            /// </summary>
+            public static Entity? Compute(Entity expr, VariableEntity var, Entity approachDestination)
+                => LimitFunctional.ComputeLimit(expr, var, approachDestination);
+        }
         /// Hangs your entity to a derivative node
         /// (to evaluate instead use <see cref="Entity.Derive(VariableEntity)">Derive</see>)
         /// </summary>
@@ -987,7 +1009,7 @@ namespace AngouriMath
             => Limitf.Hang(expr, var, dest, approach); // FromRight +1, Any 0, FromLeft -1 TODO: 1.1.0.4 limits
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
-            Justification = "Lowercase constants as written in Mathamatics")]
+            Justification = "Lowercase constants as written in Mathematics")]
         public static class DecimalConst
         {
             /// <summary>Pi constant</summary>

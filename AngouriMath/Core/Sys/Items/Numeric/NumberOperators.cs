@@ -286,8 +286,8 @@ namespace AngouriMath.Core.Numerix
         /// <param name="x">The number of which we want to get its base power</param>
         public static ComplexNumber Log(ComplexNumber @base, ComplexNumber x)
         {
-            if (x is RealNumber { Value: { IsNegative: false } real } && @base is RealNumber { Value: { IsNegative: false } realBase })
-                return real.LogN(realBase, MathS.Settings.DecimalPrecisionContext);
+            if (x is RealNumber real && real.Value.CompareTo(EDecimal.Zero) > 0 && @base is RealNumber realBase && realBase.Value.CompareTo(EDecimal.Zero) > 0)
+                return real.Value.LogN(realBase.Value, MathS.Settings.DecimalPrecisionContext);
             // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
             return Ln(x) / Ln(@base);
         }

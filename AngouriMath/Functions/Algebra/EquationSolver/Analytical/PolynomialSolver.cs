@@ -333,7 +333,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     children.AddRange(expanded);
                 }
                 */
-            var children = TreeAnalyzer.GatherLinearChildrenOverAndExpand(
+            var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
                 expr, entity => entity.SubtreeIsFound(subtree)
             );
 

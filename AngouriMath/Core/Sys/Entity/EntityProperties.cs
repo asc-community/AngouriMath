@@ -5,7 +5,6 @@ using System.Text;
 
 namespace AngouriMath.Core.Sys
 {
-
     internal class EntityProperties
     {
         private readonly Dictionary<string, object> properties = new Dictionary<string, object>();
@@ -28,6 +27,13 @@ namespace AngouriMath.Core.Sys
             if (!properties.ContainsKey(name))
                 properties[name] = definition[0](parent);
             return (T)properties[name];
+        }
+
+        public bool GetPropIsFinite()
+        {
+            var res = GetProperty("IsFinite",
+                enf => enf.ChildrenReadonly.All(c => !(c is NumberEntity { Value: { IsFinite: false } })));
+            return res;
         }
 
         public int GetPropComplexity()

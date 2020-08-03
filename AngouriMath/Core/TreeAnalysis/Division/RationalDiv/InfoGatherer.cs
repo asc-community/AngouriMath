@@ -15,6 +15,8 @@
 
 
 using System.Collections.Generic;
+using System.Linq;
+using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis.Division.RationalDiv;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using PeterO.Numbers;
@@ -23,6 +25,29 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer 
     {   
+        internal static Dictionary<T, Entity>? ParseAsPolynomial<T>(Entity expr, Entity x)
+        {
+            var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
+                 expr, entity => entity.SubtreeIsFound(x)
+            );
+
+            if (children is null)
+                return null;
+
+            var monomials = PolynomialSolver.GatherMonomialInformation<T>(children, x);
+            if (monomials is null) return null;
+            var filteredDictionary = new Dictionary<T, Entity>();
+            foreach(var monomial in monomials)
+            {
+                var simplified = monomial.Value.InnerSimplify();
+                if (simplified != IntegerNumber.Zero)
+                {
+                    filteredDictionary.Add(monomial.Key, simplified);
+                }
+            }
+            return filteredDictionary;
+        }
+
         /// <summary>
         /// Returns information about all monomials of an expression
         /// </summary>
