@@ -1,3 +1,4 @@
+|                          |               |
 |:-------------------------|:-------------:|
 | Safe to clone right now? | ![Test](https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg) |
 | Installation from NuGet  | [![Nuget](https://img.shields.io/nuget/dt/AngouriMath?color=blue&label=NuGet%20installs&logoColor=blue)](https://www.nuget.org/packages/AngouriMath) |
