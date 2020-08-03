@@ -7,7 +7,7 @@ namespace AngouriMath.Limits
         Left,
         Right,
     }
-    internal static class Limits
+    internal static class LimitFunctional
     {
         private static Entity? SimplifyAndComputeLimitToInfinity(Entity expr, VariableEntity x)
         {

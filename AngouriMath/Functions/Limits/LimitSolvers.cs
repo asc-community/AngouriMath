@@ -114,7 +114,7 @@ namespace AngouriMath.Limits
                 }
                 else
                 {
-                    var innerLimit = Limits.ComputeLimit(logArgument, x, RealNumber.PositiveInfinity);
+                    var innerLimit = LimitFunctional.ComputeLimit(logArgument, x, RealNumber.PositiveInfinity);
                     if (innerLimit is null) return null;
                     // do same as wolframalpha: https://www.wolframalpha.com/input/?i=ln%28-inf%29
                     if (innerLimit == RealNumber.NegativeInfinity) return RealNumber.PositiveInfinity;
@@ -137,8 +137,8 @@ namespace AngouriMath.Limits
                 var lowerLogBase = expr.GetChild(1).GetChild(0);
                 if (lowerLogBase.SubtreeIsFound(x) || upperLogBase.SubtreeIsFound(x)) return null;
 
-                var upperLogLimit = Limits.ComputeLimit(upperLogArgument, x, RealNumber.PositiveInfinity);
-                var lowerLogLimit = Limits.ComputeLimit(lowerLogArgument, x, RealNumber.PositiveInfinity);
+                var upperLogLimit = LimitFunctional.ComputeLimit(upperLogArgument, x, RealNumber.PositiveInfinity);
+                var lowerLogLimit = LimitFunctional.ComputeLimit(lowerLogArgument, x, RealNumber.PositiveInfinity);
                 if (upperLogLimit is null || lowerLogLimit is null) return null;
 
                 if ((upperLogLimit.SubtreeIsFound(RealNumber.PositiveInfinity) ||
@@ -152,7 +152,7 @@ namespace AngouriMath.Limits
                     // apply L'Hôpital's rule for lim(x -> +oo) log(f(x), g(x))
                     var p = upperLogArgument.Derive(x) / upperLogArgument;
                     var q = lowerLogArgument.Derive(x) / lowerLogArgument;
-                    return Limits.ComputeLimit(p / q, x, RealNumber.PositiveInfinity);
+                    return LimitFunctional.ComputeLimit(p / q, x, RealNumber.PositiveInfinity);
                 }
                 else
                 {
