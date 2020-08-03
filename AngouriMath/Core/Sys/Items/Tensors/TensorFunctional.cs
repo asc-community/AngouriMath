@@ -32,7 +32,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="b"></param>
         /// <returns></returns>
         internal static Entity ScalarProduct(Tensor a, Tensor b)
-            => GenTensor<Entity, EntityTensorWrapperOperations>.VectorDotProduct(a.innerTensor, b.innerTensor);
+            => (a.innerTensor is null || b.innerTensor is null) ? throw new IndexOutOfRangeException() :
+                GenTensor<Entity, EntityTensorWrapperOperations>.VectorDotProduct(a.innerTensor, b.innerTensor);
 
         /// <summary>
         /// Changes each tensor's data item -> app(item)
@@ -41,6 +42,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="app"></param>
         internal static void Apply(Tensor tensor, Func<Entity, Entity> app)
         {
+            if (tensor.innerTensor is null)
+                throw new IndexOutOfRangeException();
             foreach (var (index, value) in tensor.innerTensor.Iterate())
                 tensor.innerTensor.SetValueNoCheck(app(value), index);
         }
@@ -67,6 +70,7 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         internal static Entity ApplyPointwise(Tensor A, Tensor B, Func<Entity, Entity, Entity> app)
 
         {
+            if (A.innerTensor is null || B.innerTensor is null) throw new IndexOutOfRangeException();
             CustomZip.op = app;
             return new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.Zip<CustomZip>(A.innerTensor, B.innerTensor));
         }
@@ -89,7 +93,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="B"></param>
         /// <returns></returns>
         internal static Tensor DotProduct(Tensor A, Tensor B)
-            => new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.MatrixMultiply(A.innerTensor, B.innerTensor));
+            => (A.innerTensor is null || B.innerTensor is null) ? throw new IndexOutOfRangeException() :
+                new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.MatrixMultiply(A.innerTensor, B.innerTensor));
 
         /// <summary>
         /// Collapses the entire expression into tensor

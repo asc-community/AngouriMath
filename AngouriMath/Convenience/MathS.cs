@@ -641,6 +641,7 @@ namespace AngouriMath
             /// Two-dimensional Tensor (matrix) as a result of symbolic multiplication
             /// </returns>
             public static Tensor MatrixMultiplication(Tensor A, Tensor B) =>
+            (A.innerTensor is null || B.innerTensor is null) ? throw new IndexOutOfRangeException() :
                 new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.TensorMatrixMultiply(A.innerTensor, B.innerTensor));
 
             /// <summary>

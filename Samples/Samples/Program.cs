@@ -11,7 +11,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            
+            var f = ("a - 1", "b * 0").SolveSystem("a", "b");
         }
     }
 }

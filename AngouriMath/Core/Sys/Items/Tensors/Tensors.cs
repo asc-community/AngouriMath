@@ -52,14 +52,14 @@ namespace AngouriMath.Core
         /// <summary>
         /// List of ints that stand for dimensions
         /// </summary>
-        public TensorShape Shape => innerTensor.Shape;
+        public TensorShape Shape => innerTensor is null ? new TensorShape(0) : innerTensor.Shape;
 
         /// <summary>
         /// Numbere of dimensions. 2 for matrix, 1 for vector
         /// </summary>
         public int Dimensions => Shape.Count;
 
-        internal GenTensor<Entity, EntityTensorWrapperOperations> innerTensor;
+        internal GenTensor<Entity, EntityTensorWrapperOperations>? innerTensor;
 
         /// <summary>
         /// List of dimensions
@@ -75,15 +75,21 @@ namespace AngouriMath.Core
 
         public Entity this[params int[] dims]
         {
-            get => innerTensor[dims];
-            set => innerTensor[dims] = value;
+            get => innerTensor is null ? throw new IndexOutOfRangeException() : innerTensor[dims];
+            set
+            {
+                if (innerTensor is null)
+                    throw new IndexOutOfRangeException();
+                else
+                    innerTensor[dims] = value;
+            }
         }
 
         public override string ToString()
-            => innerTensor.ToString(); // TODO
+            => innerTensor is null ? "Empty" : innerTensor.ToString(); // TODO
 
-        public bool IsVector => innerTensor.IsVector;
-        public bool IsMatrix => innerTensor.IsMatrix;
+        public bool IsVector => innerTensor is {} && innerTensor.IsVector;
+        public bool IsMatrix => innerTensor is {} && innerTensor.IsMatrix;
 
         /// <summary>
         /// Changes the order of axes
@@ -92,7 +98,7 @@ namespace AngouriMath.Core
         /// <param name="b"></param>
         public void Transpose(int a, int b)
         {
-            innerTensor.Transpose(a, b);
+            innerTensor?.Transpose(a, b);
         }
 
         /// <summary>
@@ -101,18 +107,18 @@ namespace AngouriMath.Core
         public void Transpose()
         {
             if (IsMatrix)
-                innerTensor.TransposeMatrix();
+                innerTensor?.TransposeMatrix();
             else
                 throw new MathSException("Specify axes numbers for non-matrices");
         }
 
-        internal Tensor(GenTensor<Entity, EntityTensorWrapperOperations> inner) : base("tensort")
+        internal Tensor(GenTensor<Entity, EntityTensorWrapperOperations>? inner) : base("tensort")
         {
             innerTensor = inner;
         }
 
         protected override Entity __copy()
-            => new Tensor(innerTensor.Copy(copyElements: true));
+            => new Tensor(innerTensor is null ? null : innerTensor.Copy(copyElements: true));
 
         /// <summary>
         /// Converts into LaTeX format
@@ -143,7 +149,7 @@ namespace AngouriMath.Core
             {
                 var sb = new StringBuilder();
                 sb.Append(@"\begin{bmatrix}");
-                sb.Append(string.Join(" & ", innerTensor.Iterate().Select(k => k.Value.Latexise())));
+                sb.Append(string.Join(" & ", innerTensor?.Iterate().Select(k => k.Value.Latexise())));
                 sb.Append(@"\end{bmatrix}");
                 return sb.ToString();
             }
@@ -156,15 +162,15 @@ namespace AngouriMath.Core
         // We do not need to use Gaussian elimination here
         // since we anyway get N! memory use
         public Entity Determinant()
-            => innerTensor.DeterminantLaplace();
+            => innerTensor is null ? throw new IndexOutOfRangeException() : innerTensor.DeterminantLaplace();
 
         /// <summary>
         /// Inverts all matrices in a tensor
         /// </summary>
         public Tensor Inverse()
         {
-            var cp = innerTensor.Copy(copyElements: true);
-            cp.TensorMatrixInvert();
+            var cp = innerTensor?.Copy(copyElements: true);
+            cp?.TensorMatrixInvert();
             return new Tensor(cp);
         }
     }
