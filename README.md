@@ -1,15 +1,18 @@
+## AngouriMath
+
 |                          |               |
 |:-------------------------|:-------------:|
 | Safe to clone right now? | ![Test](https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg) |
-| Installation from NuGet  | [![Nuget](https://img.shields.io/nuget/dt/AngouriMath?color=blue&label=NuGet%20installs&logoColor=blue)](https://www.nuget.org/packages/AngouriMath) |
+| Installation from NuGet  | [![NuGet](https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet)](https://www.nuget.org/packages/AngouriMath) |
 | License                  | [![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)](https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md) |
 | Contact us               | [![Discord](https://img.shields.io/discord/642350046213439489?color=orange&label=Discord)](https://discord.gg/YWJEX7a) |
 
-## AngouriMath
-AngouriMath is a cross-platform open-source library that enables to work with non-linear 
-multi-variable expressions. Written in C#.
+### What is it about?
 
-README navigation:
+AngouriMath is a cross-platform open-source library that enables to work with non-linear 
+multi-variable expressions. Written in C#. Free and distributed under MIT license.
+
+#### README navigation:
 - [Installation](#inst)
 - [Examples](#exam)
   - [Evaluation](#eval)
