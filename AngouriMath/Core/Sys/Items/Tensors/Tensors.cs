@@ -20,13 +20,29 @@ using System.Collections.Generic;
 using System.Linq;
  using System.Runtime.CompilerServices;
  using System.Text;
-using AngouriMath.Core.TreeAnalysis;
+ using AngouriMath.Core.Numerix;
+ using AngouriMath.Core.TreeAnalysis;
 using GenericTensor.Core;
 
 [assembly: InternalsVisibleTo("AngouriMath.Core.Sys.Items.Tensors")]
 namespace AngouriMath.Core
 {
-    
+    internal struct EntityTensorWrapperOperations : IOperations<Entity>
+    {
+        public Entity Add(Entity a, Entity b) => a + b;
+        public Entity Subtract(Entity a, Entity b) => a - b;
+        public Entity Multiply(Entity a, Entity b) => a * b;
+        public Entity Negate(Entity a) => -a;
+        public Entity Divide(Entity a, Entity b) => a / b;
+        public Entity CreateOne() => IntegerNumber.One;
+        public Entity CreateZero() => IntegerNumber.Zero;
+        public Entity Copy(Entity a) => a.DeepCopy();
+        public Entity Forward(Entity a) => a;
+        public bool AreEqual(Entity a, Entity b) => a == b;
+        public bool IsZero(Entity a) => a == 0;
+        public string ToString(Entity a) => a.ToString();
+    }
+
     /// <summary>
     /// Basic tensor implementation
     /// https://en.wikipedia.org/wiki/Tensor
@@ -43,7 +59,7 @@ namespace AngouriMath.Core
         /// </summary>
         public int Dimensions => Shape.Count;
 
-        internal GenTensor<Entity> innerTensor;
+        internal GenTensor<Entity, EntityTensorWrapperOperations> innerTensor;
 
         /// <summary>
         /// List of dimensions
@@ -54,7 +70,7 @@ namespace AngouriMath.Core
         /// <param name="dims"></param>
         public Tensor(params int[] dims) : base("tensort")
         {
-            innerTensor = new GenTensor<Entity>(dims);
+            innerTensor = GenTensor<Entity, EntityTensorWrapperOperations>.CreateTensor(new TensorShape(dims), inds => 0);
         }
 
         public Entity this[params int[] dims]
@@ -90,7 +106,7 @@ namespace AngouriMath.Core
                 throw new MathSException("Specify axes numbers for non-matrices");
         }
 
-        internal Tensor(GenTensor<Entity> inner) : base("tensort")
+        internal Tensor(GenTensor<Entity, EntityTensorWrapperOperations> inner) : base("tensort")
         {
             innerTensor = inner;
         }
@@ -127,7 +143,7 @@ namespace AngouriMath.Core
             {
                 var sb = new StringBuilder();
                 sb.Append(@"\begin{bmatrix}");
-                sb.Append(string.Join(" & ", innerTensor.Iterate().Select(k => k.value.Latexise())));
+                sb.Append(string.Join(" & ", innerTensor.Iterate().Select(k => k.Value.Latexise())));
                 sb.Append(@"\end{bmatrix}");
                 return sb.ToString();
             }
@@ -141,5 +157,15 @@ namespace AngouriMath.Core
         // since we anyway get N! memory use
         public Entity Determinant()
             => innerTensor.DeterminantLaplace();
+
+        /// <summary>
+        /// Inverts all matrices in a tensor
+        /// </summary>
+        public Tensor Inverse()
+        {
+            var cp = innerTensor.Copy(copyElements: true);
+            cp.TensorMatrixInvert();
+            return new Tensor(cp);
+        }
     }
 }

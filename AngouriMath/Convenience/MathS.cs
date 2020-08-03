@@ -641,7 +641,7 @@ namespace AngouriMath
             /// Two-dimensional Tensor (matrix) as a result of symbolic multiplication
             /// </returns>
             public static Tensor MatrixMultiplication(Tensor A, Tensor B) =>
-                new Tensor(GenTensor<Entity>.TensorMatrixMultiply(A.innerTensor, B.innerTensor));
+                new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.TensorMatrixMultiply(A.innerTensor, B.innerTensor));
 
             /// <summary>
             /// Returns scalar product of two vectors
