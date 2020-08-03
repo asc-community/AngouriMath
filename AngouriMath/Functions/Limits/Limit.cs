@@ -1,17 +1,13 @@
 ﻿using AngouriMath.Core.Numerix;
-using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Text;
 
-namespace AngouriMath.Experimental.Limits
+namespace AngouriMath.Limits
 {
     public enum ApproachFrom
     {
         Left,
         Right,
     }
-    public static class Limits
+    internal static class Limits
     {
         private static Entity? SimplifyAndComputeLimitToInfinity(Entity expr, VariableEntity x)
         {
@@ -107,7 +103,7 @@ namespace AngouriMath.Experimental.Limits
 
         public static Entity? ComputeLimit(Entity expr, VariableEntity x, Entity dist)
         {
-            if(dist is NumberEntity num && !num.Value.IsFinite)
+            if(dist is NumberEntity { Value:{ IsFinite: false } })
             {
                 // just compute limit with no check for left/right equality
                 // here approach left will be ignored anyways, as dist is infinite number

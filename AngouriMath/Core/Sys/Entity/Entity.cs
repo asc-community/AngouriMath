@@ -149,7 +149,7 @@ namespace AngouriMath
 
         public bool IsFinite()
         {
-            bool isFinite = !(this is NumberEntity num && !num.Value.IsFinite);
+            bool isFinite = !(this is NumberEntity { Value: { IsFinite: false } });
             return isFinite && Properties.GetPropIsFinite();
         }
 

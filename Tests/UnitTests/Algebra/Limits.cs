@@ -1,12 +1,12 @@
 ﻿using AngouriMath;
 using AngouriMath.Core.Numerix;
-using AngouriMath.Experimental.Limits;
+using AngouriMath.Limits;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Algebra
 {
     [TestClass]
-    public class Limits
+    internal class LimitFunctional
     {
         public void TestLimit(Entity expr, Entity where, ApproachFrom appr, Entity desiredOutput)
             => Assert.AreEqual(desiredOutput.Simplify(), MathS.Limits.Compute(expr, "x", where, appr)?.Simplify());
