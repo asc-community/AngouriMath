@@ -3,6 +3,7 @@ using AngouriMath;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.FromString;
 
 namespace UnitTests.Common
 {
@@ -34,5 +35,18 @@ namespace UnitTests.Common
             Assert.ThrowsException<NoNeedToImplementException>(() => p == p + 1, "No need to implement");
             Assert.ThrowsException<NoNeedToImplementException>(() => p.Simplify(), "No need to implement");
         }
+
+        [TestMethod]
+        public void WrongNumbersOfArgs1()
+            => Assert.ThrowsException<ParseException>(() => (Entity) "log(3)");
+
+        [TestMethod]
+        public void WrongNumbersOfArgs2()
+            => Assert.ThrowsException<ParseException>(() => (Entity) "ln(3, 5)");
+
+        [TestMethod]
+        public void WrongNumbersOfArgs3()
+            => Assert.ThrowsException<ParseException>(() => (Entity) "sin(3, 5, 8)");
+
     }
 }

@@ -17,7 +17,7 @@
 
 ﻿using System;
 using System.Collections.Generic;
- using AngouriMath.Core.TreeAnalysis;
+ using AngouriMath.Core.Exceptions;
  using GenericTensor.Core;
  using GenericTensor.Functions;
 
@@ -32,7 +32,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="b"></param>
         /// <returns></returns>
         internal static Entity ScalarProduct(Tensor a, Tensor b)
-            => GenTensor<Entity>.VectorDotProduct(a.innerTensor, b.innerTensor);
+            => (a.innerTensor is null || b.innerTensor is null) ? throw new IndexOutOfRangeException() :
+                GenTensor<Entity, EntityTensorWrapperOperations>.VectorDotProduct(a.innerTensor, b.innerTensor);
 
         /// <summary>
         /// Changes each tensor's data item -> app(item)
@@ -41,8 +42,22 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="app"></param>
         internal static void Apply(Tensor tensor, Func<Entity, Entity> app)
         {
+            if (tensor.innerTensor is null)
+                throw new IndexOutOfRangeException();
             foreach (var (index, value) in tensor.innerTensor.Iterate())
                 tensor.innerTensor.SetValueNoCheck(app(value), index);
+        }
+
+        internal struct CustomZip : IZipOperator<Entity>
+        {
+            [ThreadStatic] internal static Func<Entity, Entity, Entity>? op;
+
+            public Entity Operation(Entity a, Entity b)
+            {
+                if (op is null)
+                    throw new SysException("op can't be null");
+                return op(a, b);
+            }
         }
 
         /// <summary>
@@ -52,8 +67,13 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="B"></param>
         /// <param name="app"></param>
         /// <returns></returns>
-        internal static Entity ApplyPointwise(Tensor A, Tensor B, Func<Entity, Entity, Entity> app) 
-            => new Tensor(GenTensor<Entity>.Zip(A.innerTensor, B.innerTensor, app));
+        internal static Entity ApplyPointwise(Tensor A, Tensor B, Func<Entity, Entity, Entity> app)
+
+        {
+            if (A.innerTensor is null || B.innerTensor is null) throw new IndexOutOfRangeException();
+            CustomZip.op = app;
+            return new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.Zip<CustomZip>(A.innerTensor, B.innerTensor));
+        }
 
 
         /// <summary>
@@ -73,7 +93,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="B"></param>
         /// <returns></returns>
         internal static Tensor DotProduct(Tensor A, Tensor B)
-            => new Tensor(GenTensor<Entity>.MatrixMultiply(A.innerTensor, B.innerTensor));
+            => (A.innerTensor is null || B.innerTensor is null) ? throw new IndexOutOfRangeException() :
+                new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.MatrixMultiply(A.innerTensor, B.innerTensor));
 
         /// <summary>
         /// Collapses the entire expression into tensor
@@ -135,29 +156,13 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         }
 
         internal static Tensor Matrix(Entity[,] values)
-            => new Tensor(GenTensor<Entity>.CreateMatrix(values));
+            => new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.CreateMatrix(values));
 
         internal static Tensor Matrix(int rows, int columns, params Entity[] values)
-            => new Tensor(GenTensor<Entity>.CreateMatrix(rows, columns,
+            => new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.CreateMatrix(rows, columns,
                 (x, y) => values[x * columns + y]));
 
         internal static Tensor Vector(params Entity[] p) 
-            => new Tensor(GenTensor<Entity>.CreateVector(p));
-
-        static TensorFunctional()
-        {
-            ConstantsAndFunctions<Entity>.Add = (a, b) => a + b;
-            ConstantsAndFunctions<Entity>.Subtract = (a, b) => a - b;
-            ConstantsAndFunctions<Entity>.Multiply = (a, b) => a * b;
-            ConstantsAndFunctions<Entity>.Divide = (a, b) => a / b;
-            ConstantsAndFunctions<Entity>.CreateZero = () => 0;
-            ConstantsAndFunctions<Entity>.CreateOne = () => 1;
-            ConstantsAndFunctions<Entity>.AreEqual = (a, b) => a == b;
-            ConstantsAndFunctions<Entity>.Negate = a => -a;
-            ConstantsAndFunctions<Entity>.IsZero = a => a == 0;
-            ConstantsAndFunctions<Entity>.Copy = a => a.DeepCopy();
-            ConstantsAndFunctions<Entity>.Forward = a => a;
-            ConstantsAndFunctions<Entity>.ToString = a => a.ToString();
-        }
+            => new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.CreateVector(p));
     }
 }

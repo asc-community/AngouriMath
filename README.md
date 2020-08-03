@@ -1,18 +1,18 @@
-[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1e172cdf699645b59567032dd1ae5cab)](https://www.codacy.com/manual/Angourisoft/MathS?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Angourisoft/MathS&amp;utm_campaign=Badge_Grade)
-![Test](https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg)
-![Nuget](https://img.shields.io/nuget/dt/AngouriMath?color=blue&label=NuGet%20installs&logoColor=blue)
-![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)
-
-
-[NuGet](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository")
-
 ## AngouriMath
+
+|                          |               |
+|:-------------------------|:-------------:|
+| Safe to clone right now? | ![Test](https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg) |
+| Installation from NuGet  | [![NuGet](https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet)](https://www.nuget.org/packages/AngouriMath) |
+| License                  | [![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)](https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md) |
+| Contact us               | [![Discord](https://img.shields.io/discord/642350046213439489?color=orange&label=Discord)](https://discord.gg/YWJEX7a) |
+
+### What is it about?
+
 AngouriMath is a cross-platform open-source library that enables to work with non-linear 
-multi-variable expressions. Written in C#.
+multi-variable expressions. Written in C#. Free and distributed under MIT license.
 
-Reach the main contributor on discord: Oryp4ik#0120. 
-
-README navigation:
+#### README navigation:
 - [Installation](#inst)
 - [Examples](#exam)
   - [Evaluation](#eval)

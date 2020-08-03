@@ -98,7 +98,14 @@ atom returns[Entity value]
     : NUMBER { $value = ComplexNumber.Parse($NUMBER.text); }
     | ID { $value = new VariableEntity($ID.text); }
     | '(' expression ')' { $value = $expression.value; }
-    | ID '(' args = function_arguments ')' { $value = new FunctionEntity($ID.text + 'f'); foreach(var arg in $args.list) { $value.AddChild(arg); } }
+    | ID '(' args = function_arguments ')' { 
+        if ($args.list.Count != AngouriMath.Core.FromString.SyntaxInfo.goodStringsForFunctions[$ID.text])
+            throw new AngouriMath.Core.FromString.ParseException("Wrong amount of arguments for " + $ID.text + ": " + $args.list.Count.ToString());
+        $value = new FunctionEntity($ID.text + 'f'); 
+        foreach(var arg in $args.list) { 
+            $value.AddChild(arg); 
+        } 
+    }
     | ID '(' ')' { $value = new FunctionEntity($ID.text + 'f'); }
     ;
 

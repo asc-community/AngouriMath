@@ -21,11 +21,14 @@ using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Evaluation.Simplification;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using AngouriMath.Convenience;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Functions.Output;
 using EvalTable = System.Collections.Generic.Dictionary<string, System.Func<System.Collections.Generic.List<AngouriMath.Entity>, AngouriMath.Entity>>;
 namespace AngouriMath
 {
@@ -458,6 +461,63 @@ namespace AngouriMath
                 return new NumberEntity(Number.Factorial(n.Value));
             else
                 return r.Sin();
+        }
+    }
+
+    internal static partial class Derivativef
+    {
+        public static Entity Eval(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            var x = args[1].InnerEval();
+            var p = args[2].InnerEval();
+            if (x is VariableEntity var && p is NumberEntity { Value: var value } && value is IntegerNumber asInt)
+            {
+                // TODO: consider Integral for negative cases
+                var derived = args[0].Derive(var, asInt.Value);
+                return derived;
+            }
+            else
+                return MathS.Derivative(args[0], x, p);
+        }
+    }
+
+    internal static partial class Integralf
+    {
+        public static Entity Eval(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            var x = args[1].InnerEval();
+            var p = args[2].InnerEval();
+            if (x is VariableEntity var && p is NumberEntity { Value: var value } && value is IntegerNumber asInt)
+            {
+                if (asInt == 0)
+                    return args[0].InnerEval();
+                throw new NotImplementedException("Integration is not implemented yet");
+            }
+            else
+                return MathS.Integral(args[0], x, p);
+        }
+    }
+
+    internal static partial class Limitf
+    {
+        public static Entity Eval(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 4);
+            var expr = args[0].InnerEval();
+            var x = args[1].InnerEval();
+            var dest = args[2].InnerEval();
+            var appr = args[3].InnerEval();
+            Entity? lim = null;
+            if (appr == IntegerNumber.MinusOne)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else if (appr == IntegerNumber.Zero)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else if (appr == IntegerNumber.One)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else
+                return Limitf.Hang(expr, x, dest, appr);
         }
     }
 }
@@ -1008,6 +1068,69 @@ namespace AngouriMath
                 result = arg.Factorial();
             result.__cachedEvaledValue = potentialResult;
             return result;
+        }
+    }
+
+    internal static partial class Derivativef
+    {
+        public static Entity Simplify(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            var ent = args[0].InnerSimplify();
+            var x = args[1].InnerSimplify();
+            var pow = args[2].InnerSimplify();
+            var def = MathS.Derivative(ent, x, pow);
+            if (!(x is VariableEntity var))
+                return def;
+            if (!(pow is NumberEntity {Value: var val}))
+                return def;
+            if (!(val is IntegerNumber asInt))
+                return def;
+
+            return ent.Derive(var, asInt.Value);
+        }
+    }
+
+    internal static partial class Integralf
+    {
+        public static Entity Simplify(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            var ent = args[0].InnerSimplify();
+            var x = args[1].InnerSimplify();
+            var pow = args[2].InnerSimplify();
+            var def = MathS.Integral(ent, x, pow);
+            if (!(x is VariableEntity var))
+                return def;
+            if (!(pow is NumberEntity {Value: var val}))
+                return def;
+            if (!(val is IntegerNumber asInt))
+                return def;
+
+            if (asInt == IntegerNumber.Zero)
+                return ent;
+            throw new NotImplementedException("Integration is not implemented yet");
+        }
+    }
+
+    internal static partial class Limitf
+    {
+        public static Entity Simplify(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 4);
+            var expr = args[0].InnerSimplify();
+            var x = args[1].InnerSimplify();
+            var dest = args[2].InnerSimplify();
+            var appr = args[3].InnerSimplify();
+            Entity? lim = null;
+            if (appr == IntegerNumber.MinusOne)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else if (appr == IntegerNumber.Zero)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else if (appr == IntegerNumber.One)
+                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
+            else
+                return Limitf.Hang(expr, x, dest, appr);
         }
     }
 }

@@ -18,6 +18,7 @@
  using System;
 using System.Collections.Generic;
  using AngouriMath.Core.Sys.Interfaces;
+ using PeterO.Numbers;
 
 namespace AngouriMath
 {
@@ -26,6 +27,17 @@ namespace AngouriMath
     // Adding function Derive to Entity
     public abstract partial class Entity : ILatexiseable
     {
+        /// <summary>
+        /// Derives over x power times
+        /// </summary>
+        public Entity Derive(VariableEntity x, EInteger power)
+        {
+            var ent = this;
+            for (var _ = 0; _ < power; _++)
+                ent = ent.Derive(x);
+            return ent;
+        }
+
         /// <summary>
         /// Derivation over a variable (without simplification)
         /// </summary>
@@ -232,6 +244,42 @@ namespace AngouriMath
             var a = args[0];
             // TODO: Implementation of symbolic gamma function and polygamma functions needed
             return Core.Numerix.RealNumber.NaN;
+        }
+    }
+
+    internal static partial class Derivativef
+    {
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            if (args[1] == variable)
+                return MathS.Derivative(args[0], args[1], args[2] + 1);
+            else
+                return MathS.Derivative(MathS.Derivative(args[0], args[1], args[2]), variable, 1);
+        }
+    }
+
+    internal static partial class Integralf
+    {
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            if (args[1] == variable)
+                return MathS.Integral(args[0], args[1], args[2] - 1);
+            else
+                return MathS.Integral(MathS.Derivative(args[0], args[1], args[2]), variable, 1);
+        }
+    }
+
+    internal static partial class Limitf
+    {
+        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        {
+            MathFunctions.AssertArgs(args.Count, 4);
+            // TODO: What is a derivative of a limit?
+            return MathS.Derivative(
+                Limitf.Hang(args[0], args[1], args[2], args[3])
+                , variable);
         }
     }
 }

@@ -1,8 +1,9 @@
 using AngouriMath;
+using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTests.Algebra
+namespace UnitTests.PatternsTest
 {
     [TestClass]
     public class SimplifyTest
@@ -88,5 +89,21 @@ namespace UnitTests.Algebra
         [TestMethod] public void NaNP1() => AssertSimplify(nan + 1, nan);
         [TestMethod] public void NaN0() => AssertSimplify(nan * 0, nan);
         [TestMethod] public void NaNPow0() => AssertSimplify(MathS.Pow(nan, 0), nan);
+        [TestMethod] public void Derive1() => AssertSimplify(MathS.Derivative("x + 2", "x"), 1);
+        [TestMethod] public void Derive2() => AssertSimplify(MathS.Derivative("7x2 - x + 2", "x", 2), 14);
+        [TestMethod] public void Integral1() => AssertSimplify(MathS.Integral("x + y", "x", 0), "x + y");
+
+        [TestMethod] public void Limit1()
+        {
+            Assert.Inconclusive("1.1.0.4 to bring limits");
+            AssertSimplify(MathS.Limit("x", "x", RealNumber.PositiveInfinity), RealNumber.PositiveInfinity);
+        }
+
+        [TestMethod] public void Limit2()
+        {
+            Assert.Inconclusive("1.1.0.4 to bring limits");
+            AssertSimplify(MathS.Limit("(a x2 + c) / (b x2 + d)", "x", RealNumber.PositiveInfinity), "b / d");
+        }
     }
 }
+
