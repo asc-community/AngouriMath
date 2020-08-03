@@ -147,6 +147,12 @@ namespace AngouriMath
             return Name.GetHashCode() + Properties.GetPropHashCode();
         }
 
+        public bool IsFinite()
+        {
+            bool isFinite = !(this is NumberEntity { Value: { IsFinite: false } });
+            return isFinite && Properties.GetPropIsFinite();
+        }
+
         public bool HasVar(string name)
         {
             if (Name == name && this is VariableEntity)

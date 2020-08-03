@@ -26,7 +26,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     {
         internal static Set? Solve(Entity expr, VariableEntity x)
         {
-            var childrenRaw = TreeAnalyzer.GatherLinearChildrenOverAndExpand(
+            var childrenRaw = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
                 expr, entity => entity.SubtreeIsFound(x)
             );
 
