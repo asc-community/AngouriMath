@@ -92,18 +92,9 @@ namespace UnitTests.PatternsTest
         [TestMethod] public void Derive1() => AssertSimplify(MathS.Derivative("x + 2", "x"), 1);
         [TestMethod] public void Derive2() => AssertSimplify(MathS.Derivative("7x2 - x + 2", "x", 2), 14);
         [TestMethod] public void Integral1() => AssertSimplify(MathS.Integral("x + y", "x", 0), "x + y");
-
-        [TestMethod] public void Limit1()
-        {
-            Assert.Inconclusive("1.1.0.4 to bring limits");
-            AssertSimplify(MathS.Limit("x", "x", RealNumber.PositiveInfinity), RealNumber.PositiveInfinity);
-        }
-
-        [TestMethod] public void Limit2()
-        {
-            Assert.Inconclusive("1.1.0.4 to bring limits");
-            AssertSimplify(MathS.Limit("(a x2 + c) / (b x2 + d)", "x", RealNumber.PositiveInfinity), "b / d");
-        }
+        [TestMethod] public void Divide1() => AssertSimplify("(x2 + 2 x y + y2) / (x + y)", "x + y");
+        [TestMethod] public void Divide2() => AssertSimplify("(x3 + 3 x 2 y + 3 x y 2 + y3) / (x + y)", "x2 + 2 x y + y2".Simplify());
+        [TestMethod] public void Divide3() => AssertSimplify("(x2 + 2 x y + y2 + 1) / (x + y)", "x + 1 / (x + y) + y".Simplify());
     }
 }
 
