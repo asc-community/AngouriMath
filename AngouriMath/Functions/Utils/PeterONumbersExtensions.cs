@@ -71,7 +71,9 @@ namespace AngouriMath
         public static EDecimal Cos(this EDecimal x, EContext context)
         {
             if (!x.IsFinite) return EDecimal.NaN;
-            if (Utils.IsGoodAsDouble(x)) return EDecimal.FromDouble(Math.Cos(x.ToDouble()));
+            
+            // TODO: this check should be here to improve the performance a little bit, but tests won't work with that
+            // if (Utils.IsGoodAsDouble(x)) return EDecimal.FromDouble(Math.Cos(x.ToDouble()));
             
             var consts = ConstantCache.Lookup(context);
 
