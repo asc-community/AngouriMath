@@ -1,5 +1,6 @@
 ﻿
 using System;
+using System.Diagnostics;
 using AngouriMath;
 using AngouriMath.Extensions;
 
@@ -9,12 +10,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity ent = "3 * sin(2 * x + 1) - sin(x) - a";
-            VariableEntity x = "x";
-            for (int i = 0; i < 1000; i++)
-            {
-                ent.SolveEquation(x);
-            }
+            Entity expr = "(x - b) / (x + a) + c / (x + a)";
+            var roots = expr.SolveEquation("x");
         }
     }
 }

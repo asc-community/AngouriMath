@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AngouriMath.Functions;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -70,6 +71,8 @@ namespace AngouriMath
         public static EDecimal Cos(this EDecimal x, EContext context)
         {
             if (!x.IsFinite) return EDecimal.NaN;
+            if (Utils.IsGoodAsDouble(x)) return EDecimal.FromDouble(Math.Cos(x.ToDouble()));
+            
             var consts = ConstantCache.Lookup(context);
 
             //truncating to  [-2*PI;2*PI]
