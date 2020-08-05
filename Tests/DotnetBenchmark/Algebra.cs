@@ -21,7 +21,7 @@ namespace DotnetBenchmark
             exprSolvable = MathS.FromString("3arccos(2x + a)3 + 6arccos(2x + a)2 - a3 + 3");
         }
 
-        /*
+        
         [Benchmark]
         public void SolveEasy() => exprEasy.SolveNt(x);
         [Benchmark]
@@ -30,16 +30,18 @@ namespace DotnetBenchmark
         public void SolveHard() => exprHard.SolveNt(x);
         [Benchmark]
         public void SolveAnal() => exprSolvable.SolveEquation(x);
-        */
+        
 
         private EDecimal dec = 3;
+        private EDecimal coef = EDecimal.FromDecimal(0.2m) ?? 0;
 
         [Benchmark]
         public void Cos()
         {
-            dec = -dec;
-            dec *= 1 / 5.0m * dec;
-            dec.Cos(MathS.Settings.DecimalPrecisionContext);
+            dec = dec.Negate(MathS.Settings.DecimalPrecisionContext) ?? 0;
+            dec = dec.Multiply(dec, MathS.Settings.DecimalPrecisionContext) ?? 0;
+            dec = dec.Multiply(coef) ?? 0;
+            dec = dec.Cos(MathS.Settings.DecimalPrecisionContext) ?? 0;
         }
     }
 }
