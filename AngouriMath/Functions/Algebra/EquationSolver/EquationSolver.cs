@@ -21,6 +21,7 @@ using AngouriMath.Core.Exceptions;
  using System.Collections.Generic;
 using System.Linq;
  using AngouriMath.Core.TreeAnalysis;
+using GenericTensor.Core;
 
 
 namespace AngouriMath.Functions.Algebra.Solver
@@ -98,6 +99,8 @@ namespace AngouriMath.Functions.Algebra.Solver
             foreach (var tuple in res)
                 if (tuple.Count != initVarCount)
                     throw new SysException("InSolveSystem incorrect output");
+            if (res.Count == 0)
+                return new Tensor((GenTensor<Entity, EntityTensorWrapperOperations>?)null);
             var result = new Tensor(res.Count, initVarCount);
             for (int i = 0; i < res.Count; i++)
                 for (int j = 0; j < initVarCount; j++)

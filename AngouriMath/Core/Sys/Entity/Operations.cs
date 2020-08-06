@@ -33,7 +33,9 @@ namespace AngouriMath.Core
                 return false;
             if (!TensorFunctional.SameShape(this, t))
                 return false;
-            return innerTensor.Equals(t.innerTensor);
+#pragma warning disable CS8604 // Possible null reference argument.
+            return innerTensor == t.innerTensor;
+#pragma warning restore CS8604 // Possible null reference argument.
         }
     }
 }

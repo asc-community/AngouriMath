@@ -179,6 +179,43 @@ namespace AngouriMath
         }
     }
 
+    internal static partial class Derivativef
+    {
+        public static Entity Hang(Entity a, Entity x, Entity power)
+        {
+            var res = new FunctionEntity("derivativef");
+            res.AddChild(a);
+            res.AddChild(x);
+            res.AddChild(power);
+            return res;
+        }
+    }
+
+    internal static partial class Integralf
+    {
+        public static Entity Hang(Entity a, Entity x, Entity power)
+        {
+            var res = new FunctionEntity("integralf");
+            res.AddChild(a);
+            res.AddChild(x);
+            res.AddChild(power);
+            return res;
+        }
+    }
+
+    internal static partial class Limitf
+    {
+        public static Entity Hang(Entity expr, Entity x, Entity dest, Entity appr)
+        {
+            var res = new FunctionEntity("limitf");
+            res.AddChild(expr);
+            res.AddChild(x);
+            res.AddChild(dest);
+            res.AddChild(appr);
+            return res;
+        }
+    }
+
     internal static partial class MathFunctions
     {
         public static void AssertArgs(int a, int b)

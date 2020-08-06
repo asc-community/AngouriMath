@@ -1,5 +1,6 @@
 ﻿using AngouriMath;
 using BenchmarkDotNet.Attributes;
+using PeterO.Numbers;
 
 namespace DotnetBenchmark
 {
@@ -19,6 +20,8 @@ namespace DotnetBenchmark
             exprHard = MathS.Sin(x + MathS.Arcsin(x)) / (MathS.Sqr(x) + MathS.Cos(x)) * MathS.Arccos(x / 1200 + 0.00032 / MathS.Cotan(x + 43));
             exprSolvable = MathS.FromString("3arccos(2x + a)3 + 6arccos(2x + a)2 - a3 + 3");
         }
+
+        
         [Benchmark]
         public void SolveEasy() => exprEasy.SolveNt(x);
         [Benchmark]
@@ -27,6 +30,18 @@ namespace DotnetBenchmark
         public void SolveHard() => exprHard.SolveNt(x);
         [Benchmark]
         public void SolveAnal() => exprSolvable.SolveEquation(x);
+        
 
+        private EDecimal dec = 3;
+        private EDecimal coef = EDecimal.FromDecimal(0.2m) ?? 0;
+
+        [Benchmark]
+        public void Cos()
+        {
+            dec = dec.Negate(MathS.Settings.DecimalPrecisionContext) ?? 0;
+            dec = dec.Multiply(dec, MathS.Settings.DecimalPrecisionContext) ?? 0;
+            dec = dec.Multiply(coef) ?? 0;
+            dec = dec.Cos(MathS.Settings.DecimalPrecisionContext) ?? 0;
+        }
     }
 }

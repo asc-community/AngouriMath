@@ -78,6 +78,8 @@ namespace AngouriMath
             Arctanf.Wakeup();
             Arccotanf.Wakeup();
             Factorialf.Wakeup();
+            Derivativef.Wakeup();
+            Integralf.Wakeup();
         }
     }
     internal static partial class Sumf
@@ -257,6 +259,45 @@ namespace AngouriMath
             MathFunctions.deriveTable["factorialf"] = Derive;
             MathFunctions.latexTable["factorialf"] = Latex;
             MathFunctions.stringTable["factorialf"] = Stringize;
+        }
+    }
+
+    internal static partial class Derivativef
+    {
+        public static void Wakeup() { }
+        static Derivativef()
+        {
+            MathFunctions.evalTable["derivativef"] = Eval;
+            MathFunctions.simplifyTable["derivativef"] = Simplify;
+            MathFunctions.deriveTable["derivativef"] = Derive;
+            MathFunctions.latexTable["derivativef"] = Latex;
+            MathFunctions.stringTable["derivativef"] = Stringize;
+        }
+    }
+
+    internal static partial class Integralf
+    {
+        public static void Wakeup() { }
+        static Integralf()
+        {
+            MathFunctions.evalTable["integralf"] = Eval;
+            MathFunctions.simplifyTable["integralf"] = Simplify;
+            MathFunctions.deriveTable["integralf"] = Derive;
+            MathFunctions.latexTable["integralf"] = Latex;
+            MathFunctions.stringTable["integralf"] = Stringize;
+        }
+    }
+
+    internal static partial class Limitf
+    {
+        public static void Wakeup() { }
+        static Limitf()
+        {
+            MathFunctions.evalTable["limitf"] = Eval;
+            MathFunctions.simplifyTable["limitf"] = Simplify;
+            MathFunctions.deriveTable["limitf"] = Derive;
+            MathFunctions.latexTable["limitf"] = Latex;
+            MathFunctions.stringTable["limitf"] = Stringize;
         }
     }
 

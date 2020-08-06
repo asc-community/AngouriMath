@@ -360,6 +360,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var gcdPower = powers.Aggregate((accumulate, current) => accumulate.Gcd(current));
             // // //
 
+            if (gcdPower.IsZero)
+                gcdPower = 1;
 
 
             // Change all replacements, x6 + x3 + 1 => x2 + x + 1

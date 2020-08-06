@@ -42,6 +42,12 @@ namespace AngouriMath
             { "cosecf", args => MathS.Cosec(args[0]) },
             { "arcsecf", args => MathS.Arcsec(args[0]) },
             { "arccosecf", args => MathS.Arccosec(args[0]) },
+            { "derivef", args => MathS.Derivative(args[0], args[1], args[2]) },
+            { "integratef", args => MathS.Integral(args[0], args[1], args[2]) },
+            { "limitf", args => MathS.Limit(args[0], args[1], args[2]) },
+            { "limitleftf", args => MathS.Limit(args[0], args[1], args[2], -1) },
+            { "limitrightf", args => MathS.Limit(args[0], args[1], args[2], +1) },
+            { "limitinternalf", args => Limitf.Hang(args[0], args[1], args[2], args[3]) },
         };
 
         /// <summary>

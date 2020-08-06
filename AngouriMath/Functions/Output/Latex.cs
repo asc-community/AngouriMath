@@ -221,6 +221,7 @@ namespace AngouriMath
             return @"\arccot\left(" + args[0].Latexise() + @"\right)";
         }
     }
+
     internal static partial class Factorialf
     {
         internal static string Latex(List<Entity> args)
@@ -229,6 +230,102 @@ namespace AngouriMath
             return args[0].Latexise(args[0].Priority < Const.PRIOR_NUM) + "!";
         }
     }
+
+    internal static partial class Derivativef
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            var pow = args[2];
+            var powerIfNeeded = pow == IntegerNumber.One ? "" : "^{" + pow.Latexise() + "}";
+
+            var varOverDeriv = (args[1] is VariableEntity && args[1].Name.Length == 1
+                ? args[1].Name
+                : @"\left[" + args[1].Stringize(false) + @"\right]");
+
+            return @"\frac{d" + powerIfNeeded +
+            @"\left[" + args[0].Stringize(false) + @"\right]}{d" + varOverDeriv + powerIfNeeded + "}";
+        }
+    }
+
+    internal static partial class Integralf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 3);
+            var pow = args[2];
+
+            // Unlike derivatives, integrals do not have "power" that would be equal
+            // to sequential applying integration to a function
+            if (!(pow is NumberEntity nent))
+                return "Error";
+
+            if (!(nent.Value is IntegerNumber asInt))
+                return "Error";
+
+            if (asInt < 0)
+                return "Error";
+
+            if (asInt == 0)
+                return args[0].Latexise(false);
+
+            var sb = new StringBuilder();
+            for (int i = 0; i < asInt; i++)
+                sb.Append(@"\int ");
+            sb.Append(@"\left[");
+            sb.Append(args[0].Latexise(false));
+            sb.Append(@"\right]");
+
+            // TODO: can we write d^2 x or (dx)^2 instead of dx dx?
+            for (int i = 0; i < asInt; i++)
+            {
+                sb.Append(" d");
+                if (args[1] is VariableEntity var && var.Name.Length == 1)
+                    sb.Append(var.Name);
+                else
+                {
+                    sb.Append(@"\left[");
+                    sb.Append(args[1].Latexise(false));
+                    sb.Append(@"\right]");
+                }
+            }
+            return sb.ToString();
+        }
+    }
+
+    internal static partial class Limitf
+    {
+        internal static string Latex(List<Entity> args)
+        {
+            MathFunctions.AssertArgs(args.Count, 4);
+
+            var sb = new StringBuilder();
+            sb.Append(@"\lim_{");
+
+            sb.Append(args[1].Latexise(false));
+
+            sb.Append(@"\to ");
+
+            sb.Append(args[2].Latexise(false));
+
+            if (args[3] == IntegerNumber.MinusOne)
+                sb.Append("^-");
+            else if (args[3] == IntegerNumber.One)
+                sb.Append("^+");
+            else if (args[3] != IntegerNumber.Zero)
+                return "Error";
+
+            sb.Append("} ");
+            if (args[0].Priority < Const.PRIOR_POW)
+                sb.Append(@"\left[");
+            sb.Append(args[0].Latexise(false));
+            if (args[0].Priority < Const.PRIOR_POW)
+                sb.Append(@"\right]");
+
+            return sb.ToString();
+        }
+    }
+
     namespace Core
     {
         partial class SetNode : ILatexiseable

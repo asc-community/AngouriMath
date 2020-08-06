@@ -1,8 +1,9 @@
 using AngouriMath;
+using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace UnitTests.Algebra
+namespace UnitTests.PatternsTest
 {
     [TestClass]
     public class SimplifyTest
@@ -55,8 +56,8 @@ namespace UnitTests.Algebra
         [TestMethod] public void FactorialM2() => AssertSimplify(MathS.Factorial(-2), double.NaN);
         [TestMethod] public void FactorialXP1OverFactorialXP1() => AssertSimplify(MathS.Factorial(x + 1) / MathS.Factorial(x + 1), 1);
         [TestMethod] public void FactorialXP1OverFactorialX() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(x), 1 + x);
+        [TestMethod] public void FactorialXP1OverFactorialXM2() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(-2 + x), "x3 - x");
         [TestMethod] public void FactorialXP1OverFactorialXM1() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(-1 + x), x * (1 + x));
-        [TestMethod] public void FactorialXP1OverFactorialXM2() => AssertSimplifyIdentical(MathS.Factorial(1 + x) / MathS.Factorial(-2 + x));
         [TestMethod] public void FactorialXP1OverFactorialXM3() => AssertSimplifyIdentical(MathS.Factorial(x + 1) / MathS.Factorial(x - 3));
         [TestMethod] public void FactorialXOverFactorialXP1() => AssertSimplify(MathS.Factorial(x) / MathS.Factorial(x + 1), 1 / (1 + x));
         [TestMethod] public void FactorialXOverFactorialX() => AssertSimplify(MathS.Factorial(x) / MathS.Factorial(x), 1);
@@ -88,5 +89,18 @@ namespace UnitTests.Algebra
         [TestMethod] public void NaNP1() => AssertSimplify(nan + 1, nan);
         [TestMethod] public void NaN0() => AssertSimplify(nan * 0, nan);
         [TestMethod] public void NaNPow0() => AssertSimplify(MathS.Pow(nan, 0), nan);
+        [TestMethod] public void Derive1() => AssertSimplify(MathS.Derivative("x + 2", "x"), 1);
+        [TestMethod] public void Derive2() => AssertSimplify(MathS.Derivative("7x2 - x + 2", "x", 2), 14);
+        [TestMethod] public void Integral1() => AssertSimplify(MathS.Integral("x + y", "x", 0), "x + y");
+        [TestMethod] public void Divide1() => AssertSimplify("(x2 + 2 x y + y2) / (x + y)", "x + y");
+        [TestMethod] public void Divide2() => AssertSimplify("(x3 + 3 x 2 y + 3 x y 2 + y3) / (x + y)", "x2 + 2 x y + y2".Simplify());
+        [TestMethod] public void Divide3() => AssertSimplify("(x2 + 2 x y + y2 + 1) / (x + y)", "x + 1 / (x + y) + y".Simplify());
+
+        [TestMethod]
+        public void BigSimple1() =>
+            AssertSimplify(
+                "1+2x*-1+2x*2+x^2+2x+2x*-4+2x*4+2x*2x*-1+2x*2x*2+2x*x^2+x^2+x^2*-4+x^2*4+x^2*2*x*-1+x^2*2x*2+x^2*x^2",
+                "1 + x ^ 4 + 4 * x ^ 3 + 6 * x ^ 2 + 4 * x".Simplify());
     }
 }
+

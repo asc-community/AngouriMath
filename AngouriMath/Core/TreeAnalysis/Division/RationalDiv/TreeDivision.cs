@@ -45,13 +45,16 @@ namespace AngouriMath.Core.TreeAnalysis
                     expr = DividePolynoms(expr.GetChild(0), expr.GetChild(1));
         }
 
+        internal static Entity DividePolynoms(Entity p, Entity q)
+        {
+            var (divided, remainder) = DivideAndRemainderPolynoms(p, q);
+            return divided + remainder;
+        }
+
         /// <summary>
         /// Divides one polynom over another one
         /// </summary>
-        /// <param name="p"></param>
-        /// <param name="q"></param>
-        /// <returns></returns>
-        internal static Entity DividePolynoms(Entity p, Entity q)
+        internal static (Entity divided, Entity remainder) DivideAndRemainderPolynoms(Entity p, Entity q)
         {
             // ---> (x^0.6 + 2x^0.3 + 1) / (x^0.3 + 1)
             var replacementInfo = GatherAllPossiblePolynomials(p + q, replaceVars: true).replacementInfo;
@@ -85,7 +88,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 }
             }
             // cannot divide, return unchanged
-            if (polyvar is null || polyvar is "") return originalP / originalQ;
+            if (polyvar is null || polyvar is "") return (divided: originalP / originalQ, remainder: 0);
 
             var maxpowQ = monoinfoQ[polyvar].Keys.Max();
             var maxpowP = monoinfoP[polyvar].Keys.Max();
@@ -96,7 +99,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
             // TODO: add case where all powers are non-positive
             // for now just return polynomials unchanged
-            if (maxpowP.LessThan(maxpowQ)) return originalP / originalQ;
+            if (maxpowP.LessThan(maxpowQ)) return (divided: originalP / originalQ, remainder: 0);
 
             // possibly very long process
             while (maxpowP.GreaterThanOrEquals(maxpowQ))
@@ -129,15 +132,20 @@ namespace AngouriMath.Core.TreeAnalysis
             }
 
             // check if all left in P is zero. If something left, division is impossible => return P / Q
-            var Zero = new NumberEntity(0);
+
+            Entity rest = 0;
+            Entity Zero = 0;
             foreach(var coef in monoinfoP[polyvar])
             {
                 var simplified = coef.Value.Simplify();
                 if (simplified != Zero)
-                    return originalP / originalQ;
+                    rest += simplified * MathS.Pow(polyvar, coef.Key);
             }
 
+            rest /= q;
+
             Entity res = IntegerNumber.Create(0);
+
             foreach(var pair in result)
             {
                 res += pair.Value.Simplify(5) * MathS.Pow(new VariableEntity(polyvar), pair.Key);
@@ -147,8 +155,9 @@ namespace AngouriMath.Core.TreeAnalysis
                 foreach (var subst in replacementInfo)
                 {
                     FindAndReplace(ref res, new VariableEntity(PolyInfo.NewVarName(subst.Key)), subst.Value);
+                    FindAndReplace(ref rest, new VariableEntity(PolyInfo.NewVarName(subst.Key)), subst.Value);
                 }
-            return res;
+            return (res, rest);
         }
     }
 }

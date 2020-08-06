@@ -28,6 +28,11 @@ namespace AngouriMath.Functions
 {
     internal static class Utils
     {
+        private static readonly EDecimal LowerForGood = EDecimal.FromDecimal(1e-6m);
+        private static readonly EDecimal UpperForGood = EDecimal.FromDecimal(1e+8m);
+        internal static bool IsGoodAsDouble(EDecimal num)
+            => num.CompareTo(LowerForGood) > 0 && num.CompareTo(UpperForGood) < 0;
+
         /// <summary>
         /// Sorts an expression into a polynomial.
         /// See more MathS.Utils.TryPolynomial

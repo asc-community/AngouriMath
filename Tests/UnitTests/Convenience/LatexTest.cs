@@ -315,5 +315,23 @@ namespace UnitTests.Convenience
             Test(@"\begin{bmatrix}11 & 12 & 21 & 22 & 31 & 32\end{bmatrix}", MathS.Matrices.Vector(11, 12, 21, 22, 31, 32));
         [TestMethod] public void VectorSingle() =>
             Test(@"\begin{bmatrix}x\end{bmatrix}", MathS.Matrices.Vector(x));
+        [TestMethod] public void Derivative1() =>
+            Test(@"\frac{d\left[x + 1\right]}{dx}", MathS.Derivative("x + 1", "x"));
+        [TestMethod] public void Derivative2() =>
+            Test(@"\frac{d\left[x + y\right]}{d\left[quack\right]}", MathS.Derivative("x + y", "quack"));
+        [TestMethod] public void Derivative3() =>
+            Test(@"\frac{d^{3}\left[x + 1\right]}{dx^{3}}", MathS.Derivative("x + 1", "x", 3));
+        [TestMethod] public void Integral1() =>
+            Test(@"\int \left[x+1\right] dx", MathS.Integral("x + 1", "x"));
+        [TestMethod] public void Integral2() =>
+            Test(@"\int \int \left[x+1\right] dx dx", MathS.Integral("x + 1", "x", 2));
+        [TestMethod] public void Integral3() =>
+            Test(@"\int \left[x+1\right] d\left[xf\right]", MathS.Integral("x + 1", "xf"));
+        [TestMethod] public void Limit1() =>
+            Test(@"\lim_{x\to 0^-} \left[x+y\right]", (Entity)"limitleft(x + y, x, 0)");
+        [TestMethod] public void Limit2() =>
+            Test(@"\lim_{x\to 0^+} {a}^{5}", (Entity)"limitright(a^5, x, 0)");
+        [TestMethod] public void Limit3() =>
+            Test(@"\lim_{x\to \infty } \left[x+y\right]", MathS.Limit("x + y", "x", RealNumber.PositiveInfinity));
     }
 }

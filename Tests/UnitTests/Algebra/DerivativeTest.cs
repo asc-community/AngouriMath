@@ -106,5 +106,21 @@ namespace UnitTests.Algebra
             var func = MathS.Pow(21, MathS.Numbers.Create(double.NaN));
             AssertEqEntity(func.Derive(x).Simplify(), MathS.Numbers.Create(double.NaN));
         }
+
+        [TestMethod]
+        public void TestDerOverDer1()
+        {
+            var func = MathS.Derivative("x + 2", "x");
+            var derFunc = func.Derive("x");
+            Assert.AreEqual(MathS.Derivative("x + 2", "x", "1 + 1"), derFunc);
+        }
+
+        [TestMethod]
+        public void TestDerOverDer2()
+        {
+            var func = MathS.Derivative("x + 2", "y");
+            var derFunc = func.Derive("x");
+            Assert.AreEqual(MathS.Derivative(func, "x"), derFunc);
+        }
     }
 }
