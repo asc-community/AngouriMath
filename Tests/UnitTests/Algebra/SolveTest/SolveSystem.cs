@@ -15,7 +15,9 @@ namespace UnitTests.Algebra
             var sys = MathS.Equations(equations.ToArray());
             var sol = sys.Solve(vars.ToArray());
             if (sol is null)
-                throw new AssertFailedException($"{nameof(sol)} is null");
+                if (rootCount == 0)
+                    return;
+                else throw new AssertFailedException($"{nameof(sol)} is null");
             if (rootCount != -1)
                 Assert.AreEqual(rootCount, sol.Shape[0]);
             for (int i = 0; i < sol.Shape[0]; i++)
