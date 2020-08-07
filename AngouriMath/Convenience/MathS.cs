@@ -43,6 +43,7 @@ namespace AngouriMath
     /// </summary>
     public static partial class MathS
     {
+        public static bool Test(int k) => k is 1 or 2;
         /// <summary>
         /// Use it to solve equations
         /// </summary>

@@ -2,6 +2,7 @@
 <!--Info: https://docs.microsoft.com/en-us/visualstudio/msbuild/customize-your-build?view=vs-2019#directorybuildprops-and-directorybuildtargets-->
 <Project>
   <PropertyGroup>
+    <!--NOTE! If the .csproj defines a <LangVersion>, then it will override this value! Please don't do so.-->
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <WarningsAsErrors>nullable</WarningsAsErrors>
