@@ -9,7 +9,7 @@ namespace UnitTests.Algebra
     internal class LimitFunctional
     {
         public void TestLimit(Entity expr, Entity where, ApproachFrom appr, Entity desiredOutput)
-            => Assert.AreEqual(desiredOutput.Simplify(), MathS.Limits.Compute(expr, "x", where, appr)?.Simplify());
+            => Assert.AreEqual(desiredOutput.Simplify(), MathS.Compute.Limit(expr, "x", where, appr)?.Simplify());
 
         [TestMethod] public void Test1() => TestLimit("x", RealNumber.PositiveInfinity, ApproachFrom.Left, RealNumber.PositiveInfinity);
         [TestMethod] public void Test2() => TestLimit("-x", RealNumber.PositiveInfinity, ApproachFrom.Left, RealNumber.NegativeInfinity);
@@ -60,7 +60,7 @@ namespace UnitTests.Algebra
             Entity expr = MathS.Sqrt(subExpr * 3 / MathS.Sin(subExpr) + MathS.Sin("d"));
             VariableEntity x = "x";
             Entity dest = RealNumber.PositiveInfinity;
-            var limit = MathS.Limits.Compute(expr, x, dest, ApproachFrom.Left);
+            var limit = MathS.Compute.Limit(expr, x, dest, ApproachFrom.Left);
             Assert.IsNotNull(limit);
             Assert.AreEqual("sqrt(a / c * 3 / sin(a / c) + sin(d))", limit?.ToString());
         }

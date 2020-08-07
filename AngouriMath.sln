@@ -23,10 +23,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMathPlot", "AngouriM
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{9C4C2000-D0E3-45FE-A9D3-1B489ACA4594}"
 	ProjectSection(SolutionItems) = preProject
+		.codedocs = .codedocs
 		.editorconfig = .editorconfig
+		.gitignore = .gitignore
 		.github\workflows\Build.yml = .github\workflows\Build.yml
+		CHANGELOG.md = CHANGELOG.md
 		Directory.Build.props = Directory.Build.props
+		LICENSE.md = LICENSE.md
+		README.md = README.md
 		.github\workflows\Test.yml = .github\workflows\Test.yml
+		version_performance_control.md = version_performance_control.md
 	EndProjectSection
 EndProject
 Global

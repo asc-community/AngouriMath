@@ -27,16 +27,8 @@ namespace AngouriMath.Core
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        protected override bool EqualsTo(Entity obj)
-        {
-            if (!(obj is Tensor t))
-                return false;
-            if (!TensorFunctional.SameShape(this, t))
-                return false;
-#pragma warning disable CS8604 // Possible null reference argument.
-            return innerTensor == t.innerTensor;
-#pragma warning restore CS8604 // Possible null reference argument.
-        }
+        protected override bool EqualsTo(Entity obj) =>
+             obj is Tensor t && TensorFunctional.SameShape(this, t) && innerTensor == t.innerTensor;
     }
 }
 

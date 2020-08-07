@@ -316,22 +316,34 @@ namespace UnitTests.Convenience
         [TestMethod] public void VectorSingle() =>
             Test(@"\begin{bmatrix}x\end{bmatrix}", MathS.Matrices.Vector(x));
         [TestMethod] public void Derivative1() =>
-            Test(@"\frac{d\left[x + 1\right]}{dx}", MathS.Derivative("x + 1", "x"));
+            Test(@"\frac{d\left[x+1\right]}{dx}", MathS.Derivative("x + 1", "x"));
         [TestMethod] public void Derivative2() =>
-            Test(@"\frac{d\left[x + y\right]}{d\left[quack\right]}", MathS.Derivative("x + y", "quack"));
+            Test(@"\frac{d\left[x+y\right]}{d\left[quack\right]}", MathS.Derivative("x + y", "quack"));
         [TestMethod] public void Derivative3() =>
-            Test(@"\frac{d^{3}\left[x + 1\right]}{dx^{3}}", MathS.Derivative("x + 1", "x", 3));
+            Test(@"\frac{d^{3}\left[x+1\right]}{dx^{3}}", MathS.Derivative("x + 1", "x", 3));
+        [TestMethod] public void Derivative4() =>
+            Test(@"\frac{d\left[\frac{1}{x}\right]}{d\left[xf\right]}", MathS.Derivative("1/x", "xf"));
+        [TestMethod] public void Derivative5() =>
+            Test(@"\frac{d\left[{x}^{23}-x_{16}\right]}{d\left[xf\right]}", MathS.Derivative("x^23-x_16", "xf"));
         [TestMethod] public void Integral1() =>
             Test(@"\int \left[x+1\right] dx", MathS.Integral("x + 1", "x"));
         [TestMethod] public void Integral2() =>
             Test(@"\int \int \left[x+1\right] dx dx", MathS.Integral("x + 1", "x", 2));
         [TestMethod] public void Integral3() =>
             Test(@"\int \left[x+1\right] d\left[xf\right]", MathS.Integral("x + 1", "xf"));
+        [TestMethod] public void Integral4() =>
+            Test(@"\int \left[\frac{1}{x}\right] d\left[xf\right]", MathS.Integral("1/x", "xf"));
+        [TestMethod] public void Integral5() =>
+            Test(@"\int \left[{x}^{23}-x_{16}\right] d\left[xf\right]", MathS.Integral("x^23-x_16", "xf"));
         [TestMethod] public void Limit1() =>
             Test(@"\lim_{x\to 0^-} \left[x+y\right]", (Entity)"limitleft(x + y, x, 0)");
         [TestMethod] public void Limit2() =>
             Test(@"\lim_{x\to 0^+} {a}^{5}", (Entity)"limitright(a^5, x, 0)");
         [TestMethod] public void Limit3() =>
             Test(@"\lim_{x\to \infty } \left[x+y\right]", MathS.Limit("x + y", "x", RealNumber.PositiveInfinity));
+        [TestMethod] public void Limit4() =>
+            Test(@"\lim_{xf\to 1+x} \left[\frac{1}{x}\right]", MathS.Limit("1/x", "xf", "1+x"));
+        [TestMethod] public void Limit5() =>
+            Test(@"\lim_{xf\to {x_{2}}^{3}} \left[{x}^{23}-x_{16}\right]", MathS.Limit("x^23-x_16", "xf", "x_2^3"));
     }
 }

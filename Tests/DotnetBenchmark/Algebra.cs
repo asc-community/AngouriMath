@@ -33,15 +33,15 @@ namespace DotnetBenchmark
         
 
         private EDecimal dec = 3;
-        private EDecimal coef = EDecimal.FromDecimal(0.2m) ?? 0;
+        private readonly EDecimal coef = EDecimal.FromDecimal(0.2m);
 
         [Benchmark]
         public void Cos()
         {
-            dec = dec.Negate(MathS.Settings.DecimalPrecisionContext) ?? 0;
-            dec = dec.Multiply(dec, MathS.Settings.DecimalPrecisionContext) ?? 0;
-            dec = dec.Multiply(coef) ?? 0;
-            dec = dec.Cos(MathS.Settings.DecimalPrecisionContext) ?? 0;
+            dec = dec.Negate(MathS.Settings.DecimalPrecisionContext);
+            dec = dec.Multiply(dec, MathS.Settings.DecimalPrecisionContext);
+            dec = dec.Multiply(coef);
+            dec = dec.Cos(MathS.Settings.DecimalPrecisionContext);
         }
     }
 }

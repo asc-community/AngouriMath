@@ -39,7 +39,7 @@ namespace UnitTests.Algebra
             var allVars = MathS.Utils.GetUniqueVariables(equation);
 
             var offset = 0;
-            foreach (var vr in allVars.FiniteSet())
+            foreach (var vr in allVars)
             {
                 equation = equation.Substitute(vr.Name, subValue + offset
                     /* MUST be integer to correspond to integer coefficient of periodic roots*/);

@@ -64,18 +64,13 @@ namespace UnitTests.Common
         {
             var vars1 = MathS.Utils.GetUniqueVariables(eq1);
             var vars2 = MathS.Utils.GetUniqueVariables(eq2);
-            vars1.Pieces.Sort((entity, entity1) => ((Entity)entity).Name.CompareTo(((Entity)entity1).Name));
-            vars2.Pieces.Sort((entity, entity1) => ((Entity)entity).Name.CompareTo(((Entity)entity1).Name));
-            if (vars1.Count != vars2.Count)
+            if (!vars1.SetEquals(vars2))
                 return false;
-            for(int i = 0; i < vars1.Count; i++)
-                if (vars1.Pieces[i] != vars2.Pieces[i])
-                    return false;
             for (int i = 1; i < 10; i++)
             {
                 var a = eq1.DeepCopy();
                 var b = eq2.DeepCopy();
-                foreach (VariableEntity var in vars1.FiniteSet())
+                foreach (var var in vars1)
                 {
                     a = a.Substitute(var, i);
                     b = b.Substitute(var, i);

@@ -14,6 +14,8 @@ namespace UnitTests.Algebra
             ToSub ??= 3;
             var sys = MathS.Equations(equations.ToArray());
             var sol = sys.Solve(vars.ToArray());
+            if (sol is null)
+                throw new AssertFailedException($"{nameof(sol)} is null");
             if (rootCount != -1)
                 Assert.AreEqual(rootCount, sol.Shape[0]);
             for (int i = 0; i < sol.Shape[0]; i++)
@@ -27,7 +29,7 @@ namespace UnitTests.Algebra
                         eqCopy = eqCopy.Substitute(vars[rootid], sol[i, rootid]);
                     }
 
-                    foreach (var uniqvar in MathS.Utils.GetUniqueVariables(eqCopy).FiniteSet())
+                    foreach (var uniqvar in MathS.Utils.GetUniqueVariables(eqCopy))
                         eqCopy = eqCopy.Substitute(uniqvar.Name, new NumberEntity(ToSub));
                     var E = Number.Abs(eqCopy.Eval());
                     Assert.IsTrue(E.IsFinite && E < 0.0001,

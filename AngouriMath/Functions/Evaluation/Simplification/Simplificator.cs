@@ -112,8 +112,8 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 {
                     TreeAnalyzer.InvertNegativePowers(ref res);
                     TreeAnalyzer.ReplaceInPlace(Patterns.DivisionPreparingRules, ref res);
-                    AddHistory(res);
                     res = res.InnerSimplify();
+                    AddHistory(res);
                     TreeAnalyzer.FindDivisors(ref res, (num, denom) => !MathS.CanBeEvaluated(num) && !MathS.CanBeEvaluated(denom));
                     res = res.InnerSimplify();
                     AddHistory(res);
@@ -147,14 +147,14 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     // It is quite slow at this point
                     var listOfPossiblePolys = new List<Entity>();
                     // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop
-                    foreach (VariableEntity variableEntity in MathS.Utils.GetUniqueVariables(res).FiniteSet())
+                    foreach (var variableEntity in MathS.Utils.GetUniqueVariables(res))
                     {
                         if (MathS.Utils.TryPolynomial(res, variableEntity, out var resPoly))
                             listOfPossiblePolys.Add(resPoly);
                     }
                     if (listOfPossiblePolys.Count != 0)
                     {
-                        var min = listOfPossiblePolys.Select(c => c.Complexity()).Min();
+                        var min = listOfPossiblePolys.Min(c => c.Complexity());
                         var minPoly = listOfPossiblePolys.First(c => c.Complexity() == min);
                         AddHistory(minPoly);
                         if (min < res.Complexity())

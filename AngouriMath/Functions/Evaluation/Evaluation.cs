@@ -471,10 +471,10 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 3);
             var x = args[1].InnerEval();
             var p = args[2].InnerEval();
-            if (x is VariableEntity var && p is NumberEntity { Value: var value } && value is IntegerNumber asInt)
+            if (x is VariableEntity var && p is NumberEntity { Value: IntegerNumber { Value:var asInt } })
             {
                 // TODO: consider Integral for negative cases
-                var derived = args[0].Derive(var, asInt.Value);
+                var derived = args[0].Derive(var, asInt);
                 return derived;
             }
             else
@@ -489,9 +489,9 @@ namespace AngouriMath
             MathFunctions.AssertArgs(args.Count, 3);
             var x = args[1].InnerEval();
             var p = args[2].InnerEval();
-            if (x is VariableEntity var && p is NumberEntity { Value: var value } && value is IntegerNumber asInt)
+            if (x is VariableEntity var && p is NumberEntity { Value: IntegerNumber { Value:var asInt } })
             {
-                if (asInt == 0)
+                if (asInt.IsZero)
                     return args[0].InnerEval();
                 throw new NotImplementedException("Integration is not implemented yet");
             }
@@ -1080,14 +1080,8 @@ namespace AngouriMath
             var x = args[1].InnerSimplify();
             var pow = args[2].InnerSimplify();
             var def = MathS.Derivative(ent, x, pow);
-            if (!(x is VariableEntity var))
-                return def;
-            if (!(pow is NumberEntity {Value: var val}))
-                return def;
-            if (!(val is IntegerNumber asInt))
-                return def;
-
-            return ent.Derive(var, asInt.Value);
+            return x is VariableEntity var && pow is NumberEntity { Value: IntegerNumber { Value:var asInt } }
+                   ? ent.Derive(var, asInt) : def;
         }
     }
 
@@ -1100,16 +1094,11 @@ namespace AngouriMath
             var x = args[1].InnerSimplify();
             var pow = args[2].InnerSimplify();
             var def = MathS.Integral(ent, x, pow);
-            if (!(x is VariableEntity var))
-                return def;
-            if (!(pow is NumberEntity {Value: var val}))
-                return def;
-            if (!(val is IntegerNumber asInt))
-                return def;
-
-            if (asInt == IntegerNumber.Zero)
-                return ent;
-            throw new NotImplementedException("Integration is not implemented yet");
+            return x is VariableEntity var && pow is NumberEntity { Value: IntegerNumber { Value: var asInt } }
+                   ? asInt.IsZero
+                     ? ent
+                     : throw new NotImplementedException("Integration is not implemented yet")
+                   : def;
         }
     }
 

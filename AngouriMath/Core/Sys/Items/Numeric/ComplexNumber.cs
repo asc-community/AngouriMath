@@ -51,8 +51,8 @@ namespace AngouriMath.Core.Numerix
         /// Checks whether both parts of the complex number are finite
         /// meaning that it could be safely used for calculations
         /// </summary>
-        /// <returns></returns>
         public bool IsFinite => Real.Value.IsFinite && Imaginary.Value.IsFinite;
+        public bool IsNaN => this == RealNumber.NaN;
         /// <summary>Only for the <see cref="RealNumber(EDecimal)"/> constructor</summary>
         private protected ComplexNumber() { }
         /// <summary>

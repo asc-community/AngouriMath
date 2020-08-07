@@ -277,6 +277,9 @@ namespace AngouriMath
         {
             MathFunctions.AssertArgs(args.Count, 4);
             // TODO: What is a derivative of a limit?
+
+            // See https://math.stackexchange.com/a/1048570/627798:
+            // The derivative itself is a limit, so we can exchange limits if possible. -- Happypig375
             return MathS.Derivative(
                 Limitf.Hang(args[0], args[1], args[2], args[3])
                 , variable);

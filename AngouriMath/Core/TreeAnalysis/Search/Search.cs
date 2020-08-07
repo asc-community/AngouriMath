@@ -28,22 +28,22 @@ namespace AngouriMath.Core.TreeAnalysis
         /// </summary>
         /// <param name="expr"></param>
         /// <param name="dst"></param>
-        internal static Set GetUniqueVariables(Entity expr)
+        internal static HashSet<VariableEntity> GetUniqueVariables(Entity expr)
         {
-            var res = new Set();
+            var res = new HashSet<VariableEntity>();
             _GetUniqueVariables(expr, res);
             return res;
         }
     
-        internal static void _GetUniqueVariables(Entity expr, Set dst)
+        internal static void _GetUniqueVariables(Entity expr, HashSet<VariableEntity> dst)
         {
             // If it is a variable, we will add it
             // 1 2 1 1 1 2 1
-            if (expr is VariableEntity)
+            if (expr is VariableEntity v)
             {
                 // But if it is a constant, we ignore it
-                if (!MathS.ConstantList.ContainsKey(expr.Name))
-                    dst.Add(expr);
+                if (!MathS.ConstantList.ContainsKey(v.Name))
+                    dst.Add(v);
             }
             else
                 // Otherwise, we will try to find unique variables from its children

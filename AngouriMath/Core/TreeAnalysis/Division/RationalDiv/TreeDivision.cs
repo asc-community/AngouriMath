@@ -54,7 +54,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <summary>
         /// Divides one polynom over another one
         /// </summary>
-        internal static (Entity divided, Entity remainder) DivideAndRemainderPolynoms(Entity p, Entity q)
+        internal static (Entity Divided, Entity Remainder) DivideAndRemainderPolynoms(Entity p, Entity q)
         {
             // ---> (x^0.6 + 2x^0.3 + 1) / (x^0.3 + 1)
             var replacementInfo = GatherAllPossiblePolynomials(p + q, replaceVars: true).replacementInfo;
@@ -88,7 +88,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 }
             }
             // cannot divide, return unchanged
-            if (polyvar is null || polyvar is "") return (divided: originalP / originalQ, remainder: 0);
+            if (polyvar is null || polyvar is "") return (Divided: originalP / originalQ, Remainder: 0);
 
             var maxpowQ = monoinfoQ[polyvar].Keys.Max();
             var maxpowP = monoinfoP[polyvar].Keys.Max();
@@ -99,7 +99,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
             // TODO: add case where all powers are non-positive
             // for now just return polynomials unchanged
-            if (maxpowP.LessThan(maxpowQ)) return (divided: originalP / originalQ, remainder: 0);
+            if (maxpowP.LessThan(maxpowQ)) return (Divided: originalP / originalQ, Remainder: 0);
 
             // possibly very long process
             while (maxpowP.GreaterThanOrEquals(maxpowQ))

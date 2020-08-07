@@ -63,7 +63,7 @@ namespace AngouriMath.Functions.Output
             var sb = new StringBuilder();
             var vars = MathS.Utils.GetUniqueVariables(expr);
             sb.Append("import sympy\n\n");
-            foreach (var f in vars.FiniteSet())
+            foreach (var f in vars)
                 sb.Append(f.ToString() + " = sympy.Symbol('" + f.ToString() + "')\n");
             sb.Append("\n");
             sb.Append("expr = " + ToSympyExpr(expr));

@@ -84,7 +84,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         /// <param name="equations"></param>
         /// <param name="vars"></param>
         /// <returns></returns>
-        internal static Tensor SolveSystem(List<Entity> equations, List<VariableEntity> vars)
+        internal static Tensor? SolveSystem(List<Entity> equations, List<VariableEntity> vars)
         {
             if (equations.Count != vars.Count)
                 throw new MathSException("Amount of equations must be equal to that of vars");
@@ -100,7 +100,7 @@ namespace AngouriMath.Functions.Algebra.Solver
                 if (tuple.Count != initVarCount)
                     throw new SysException("InSolveSystem incorrect output");
             if (res.Count == 0)
-                return new Tensor((GenTensor<Entity, EntityTensorWrapperOperations>?)null);
+                return null;
             var result = new Tensor(res.Count, initVarCount);
             for (int i = 0; i < res.Count; i++)
                 for (int j = 0; j < initVarCount; j++)

@@ -239,12 +239,13 @@ namespace AngouriMath
             var pow = args[2];
             var powerIfNeeded = pow == IntegerNumber.One ? "" : "^{" + pow.Latexise() + "}";
 
-            var varOverDeriv = (args[1] is VariableEntity && args[1].Name.Length == 1
-                ? args[1].Name
-                : @"\left[" + args[1].Stringize(false) + @"\right]");
+            var varOverDeriv =
+                args[1] is VariableEntity { Name: { Length: 1 } name }
+                ? name
+                : @"\left[" + args[1].Latexise(false) + @"\right]";
 
             return @"\frac{d" + powerIfNeeded +
-            @"\left[" + args[0].Stringize(false) + @"\right]}{d" + varOverDeriv + powerIfNeeded + "}";
+            @"\left[" + args[0].Latexise(false) + @"\right]}{d" + varOverDeriv + powerIfNeeded + "}";
         }
     }
 
@@ -257,13 +258,8 @@ namespace AngouriMath
 
             // Unlike derivatives, integrals do not have "power" that would be equal
             // to sequential applying integration to a function
-            if (!(pow is NumberEntity nent))
-                return "Error";
 
-            if (!(nent.Value is IntegerNumber asInt))
-                return "Error";
-
-            if (asInt < 0)
+            if (!(pow is NumberEntity { Value: IntegerNumber asInt } && asInt >= 0))
                 return "Error";
 
             if (asInt == 0)
@@ -280,8 +276,8 @@ namespace AngouriMath
             for (int i = 0; i < asInt; i++)
             {
                 sb.Append(" d");
-                if (args[1] is VariableEntity var && var.Name.Length == 1)
-                    sb.Append(var.Name);
+                if (args[1] is VariableEntity { Name: { Length: 1 } name })
+                    sb.Append(name);
                 else
                 {
                     sb.Append(@"\left[");

@@ -28,12 +28,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <summary>
         /// Performs scalar product operation on two vectors
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        internal static Entity ScalarProduct(Tensor a, Tensor b)
-            => (a.innerTensor is null || b.innerTensor is null) ? throw new IndexOutOfRangeException() :
-                GenTensor<Entity, EntityTensorWrapperOperations>.VectorDotProduct(a.innerTensor, b.innerTensor);
+        internal static Entity ScalarProduct(Tensor a, Tensor b) =>
+            GenTensor<Entity, EntityTensorWrapperOperations>.VectorDotProduct(a.innerTensor, b.innerTensor);
 
         /// <summary>
         /// Changes each tensor's data item -> app(item)
@@ -42,8 +38,6 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="app"></param>
         internal static void Apply(Tensor tensor, Func<Entity, Entity> app)
         {
-            if (tensor.innerTensor is null)
-                throw new IndexOutOfRangeException();
             foreach (var (index, value) in tensor.innerTensor.Iterate())
                 tensor.innerTensor.SetValueNoCheck(app(value), index);
         }
@@ -68,9 +62,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="app"></param>
         /// <returns></returns>
         internal static Entity ApplyPointwise(Tensor A, Tensor B, Func<Entity, Entity, Entity> app)
-
         {
-            if (A.innerTensor is null || B.innerTensor is null) throw new IndexOutOfRangeException();
+            // TODO: Make GenericTensor accept a Func<Entity, Entity, Entity> instead of a type argument
             CustomZip.op = app;
             return new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.Zip<CustomZip>(A.innerTensor, B.innerTensor));
         }
@@ -92,9 +85,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="A"></param>
         /// <param name="B"></param>
         /// <returns></returns>
-        internal static Tensor DotProduct(Tensor A, Tensor B)
-            => (A.innerTensor is null || B.innerTensor is null) ? throw new IndexOutOfRangeException() :
-                new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.MatrixMultiply(A.innerTensor, B.innerTensor));
+        internal static Tensor DotProduct(Tensor A, Tensor B) =>
+            new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.MatrixMultiply(A.innerTensor, B.innerTensor));
 
         /// <summary>
         /// Collapses the entire expression into tensor

@@ -444,9 +444,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (!compensateSolving)
             {
                 // Here we generate a unique variable name
-                var uniqVars = MathS.Utils.GetUniqueVariables(expr);
-                uniqVars.Pieces.Sort((a, b) => ((Entity)b).Name.Length.CompareTo(((Entity)a).Name.Length));
-                VariableEntity newVar = ((Entity)uniqVars.Pieces[0]).Name + "quack";
+                var newVar =
+                    MathS.Utils.GetUniqueVariables(expr)
+                    .OrderByDescending(v => v.Name)
+                    .First().Name + "quack";
                 // // //
 
 
@@ -543,7 +544,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // if nothing has been found so far
             if (dst.IsEmpty() && MathS.Settings.AllowNewton)
             {
-                Set allVars = new Set();
+                var allVars = new HashSet<VariableEntity>();
                 TreeAnalyzer._GetUniqueVariables(expr, allVars);
                 if (allVars.Count == 1)
                     DestinationAddRange(expr.SolveNt(x));

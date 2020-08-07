@@ -23,27 +23,29 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
     internal static class NumericalInequalitySolver
     {
         /// <summary>
-        /// expr must contain only VariableEntity x as a variable
+        /// <paramref name="expr"/> must contain only
+        /// <see cref="VariableEntity"/> <paramref name="x"/> as the variable
         /// </summary>
-        /// <param name="expr"></param>
-        /// <param name="x"></param>
+        /// <param name="expr">
+        /// This must only contain one variable, which is <paramref name="x"/>
+        /// </param>
+        /// <param name="x">
+        /// The only variable
+        /// </param>
         /// <param name="sign">
-        /// ">"
-        /// "<"
-        /// ">="
-        /// "<="
+        /// The relation of the expression to zero.
         /// </param>
         /// <returns></returns>
-        internal static Set _Solve(Entity expr, VariableEntity x, string sign)
+        internal static Set _Solve(Entity expr, VariableEntity x, MathS.Inequality sign)
         {
             bool Corresponds(RealNumber val)
             => sign switch
             {
-                ">" => val > 0,
-                "<" => val < 0,
-                ">=" => val >= 0,
-                "<=" => val <= 0,
-                _ => throw new SysException("Uknown sign")
+                MathS.Inequality.GreaterThan   => val >  0,
+                MathS.Inequality.LessThan      => val <  0,
+                MathS.Inequality.GreaterEquals => val >= 0,
+                MathS.Inequality.LessEquals    => val <= 0,
+                _ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(sign), (int)sign, typeof(MathS.Inequality))
             };
 
             var compiled = expr.Compile(x);
@@ -66,18 +68,13 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
                 if (Corresponds(val.Real))
                     result.Add((left, right, false, false));
             }
-            if (sign.Contains("="))
-                return (Set)(realRootsSet | result);
-            else
-                return result;
+            return (sign & MathS.Inequality.EqualsFlag) != 0 ? (Set)(realRootsSet | result) : result;
         }
 
-        internal static Set Solve(Entity expr, VariableEntity x, string sign)
+        internal static Set Solve(Entity expr, VariableEntity x, MathS.Inequality sign)
         {
             var uv = MathS.Utils.GetUniqueVariables(expr);
-            if (uv.Count != 1 || 
-                !(uv.Pieces[0] is OneElementPiece oneelem) || 
-                oneelem.entity.Item1 != x)
+            if (uv.Count != 1 || uv.Single() != x)
                 throw new MathSException("expr should only contain VariableEntity x");
             return _Solve(expr, x, sign);
         }

@@ -10,9 +10,9 @@ namespace UnitTests.PatternsTest
     {
         public (bool equal, ComplexNumber eval1, ComplexNumber eval2, RealNumber err) AreEqual(Entity expr1, Entity expr2, ComplexNumber toSub)
         {
-            foreach (var var in MathS.Utils.GetUniqueVariables(expr1).FiniteSet())
+            foreach (var var in MathS.Utils.GetUniqueVariables(expr1))
                 expr1 = expr1.Substitute(var.Name, toSub);
-            foreach (var var in MathS.Utils.GetUniqueVariables(expr2).FiniteSet())
+            foreach (var var in MathS.Utils.GetUniqueVariables(expr2))
                 expr2 = expr2.Substitute(var.Name, toSub);
             var evaled1 = expr1.Eval();
             var evaled2 = expr2.Eval();

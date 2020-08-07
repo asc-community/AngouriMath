@@ -51,7 +51,7 @@ namespace AngouriMath
         /// <summary>
         /// All children nodes of an expression
         /// </summary>
-        private List<Entity> Children { get; set; }
+        internal List<Entity> Children { get; set; }
 
         /// <summary>
         /// Use this to copy one node (unsafe copy!)

@@ -38,10 +38,24 @@ namespace AngouriMath.Limits
         public static Entity? ComputeLimit(Entity expr, VariableEntity x, Entity dist, ApproachFrom side)
         {
             expr = expr.DeepCopy(); // create a copy as algorithm below affects entity
-            return ComputeLimitDivideEtEmpera(expr, x, dist, side);
+            return ComputeLimitDivideEtImpera(expr, x, dist, side);
         }
 
-        private static Entity? ComputeLimitDivideEtEmpera(Entity expr, VariableEntity x,
+        /// <summary>
+        /// https://en.wikipedia.org/wiki/Divide_and_rule
+        /// Divide and rule (Latin: divide et impera), or divide and conquer,
+        /// in politics and sociology is gaining and maintaining power by
+        /// breaking up larger concentrations of power into pieces that
+        /// individually have less power than the one implementing the strategy.
+        /// 
+        /// In computer science, divide and conquer is an algorithm design paradigm
+        /// based on multi-branched recursion. A divide-and-conquer algorithm works
+        /// by recursively breaking down a problem into two or more sub-problems of
+        /// the same or related type, until these become simple enough to be solved
+        /// directly. The solutions to the sub-problems are then combined to give a
+        /// solution to the original problem.
+        /// </summary>
+        private static Entity? ComputeLimitDivideEtImpera(Entity expr, VariableEntity x,
             Entity dist, ApproachFrom side)
         {
             // here we try to compute limit for each children and then merge them into limit of whole expression
@@ -54,7 +68,7 @@ namespace AngouriMath.Limits
             for (int i = 0; i < expr.ChildrenCount; i++)
             {
                 var child = expr.GetChild(i);
-                var limit = ComputeLimitDivideEtEmpera(child, x, dist, side);
+                var limit = ComputeLimitDivideEtImpera(child, x, dist, side);
                 if (limit is {} && limit.IsFinite())
                     expr.SetChild(i, limit);
             }

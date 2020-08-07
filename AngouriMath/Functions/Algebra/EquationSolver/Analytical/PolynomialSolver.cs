@@ -361,7 +361,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // // //
 
             if (gcdPower.IsZero)
-                gcdPower = 1;
+                gcdPower = EInteger.One;
 
 
             // Change all replacements, x6 + x3 + 1 => x2 + x + 1

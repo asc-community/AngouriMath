@@ -142,7 +142,7 @@ namespace AngouriMath.Functions
         internal static VariableEntity FindNextIndex(Entity expr, string prefix)
         {
             var indices = new HashSet<int>();
-            foreach (var var in MathS.Utils.GetUniqueVariables(expr).FiniteSet())
+            foreach (var var in MathS.Utils.GetUniqueVariables(expr))
             {
                 var index = ParseIndexNumeric(var.Name);
                 if (index.prefix == prefix)
