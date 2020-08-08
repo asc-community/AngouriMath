@@ -31,7 +31,7 @@ namespace AngouriMath.Core.Numerix
         private protected IntegerNumber(EInteger value) : base(value) => Value = value;
         public static IntegerNumber Create(EInteger value) => new IntegerNumber(value);
 
-        // TODO: Use C# 9 Covariant return types
+        // TODO: When we target .NET 5, remember to use covariant return types
         public override RealNumber Abs() => Create(Value.Abs());
 
         protected internal override string InternalToString() => InternalToStringDefinition(Value.ToString());

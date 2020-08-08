@@ -43,7 +43,6 @@ namespace AngouriMath
     /// </summary>
     public static partial class MathS
     {
-        public static bool Test(int k) => k is 1 or 2;
         /// <summary>
         /// Use it to solve equations
         /// </summary>
@@ -974,7 +973,7 @@ namespace AngouriMath
             public static Entity? Derivative(Entity expr, VariableEntity x) =>
                 expr switch
                 {
-                    VariableEntity _ when expr.Name == x.Name => new NumberEntity(1),
+                    VariableEntity when expr.Name == x.Name => new NumberEntity(1),
                     NumberEntity { Value: { IsNaN: true } } => expr,
                     { IsLeaf: true } => new NumberEntity(0),
                     _ => MathFunctions.InvokeDerive(expr.Name, expr.Children, x)

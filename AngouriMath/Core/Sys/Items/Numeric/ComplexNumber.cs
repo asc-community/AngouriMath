@@ -93,7 +93,7 @@ namespace AngouriMath.Core.Numerix
                 return Real.ToString();
             else if (Real.IsFinite && Real == IntegerNumber.Zero)
                 return RenderNum(Imaginary) + "i";
-            var (l, r) = Imaginary is RationalNumber && !(Imaginary is IntegerNumber) ? ("(", ")") : ("", "");
+            var (l, r) = Imaginary is RationalNumber and not IntegerNumber ? ("(", ")") : ("", "");
             var (im, sign) = Imaginary > 0 ? (Imaginary, "+") : (-Imaginary, "-");
             return Real.ToString() + " " + sign + " " + l + RenderNum(im) + r + "i";
         }
@@ -115,7 +115,7 @@ namespace AngouriMath.Core.Numerix
                 return RenderNum(Imaginary) + "i";
             var (im, sign) = Imaginary > 0 ? (Imaginary, "+") : (-Imaginary, "-");
             return Real.Latexise() + " " + sign + " " +
-                (im == 1 ? "" : im.Latexise(Imaginary is RationalNumber && !(Imaginary is IntegerNumber))) + "i";
+                (im == 1 ? "" : im.Latexise(Imaginary is RationalNumber and not IntegerNumber)) + "i";
         }
 
         /// <summary>Returns conjugate of a complex number. Given this = a + ib, Conjugate() -> a - ib</summary>

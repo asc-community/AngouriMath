@@ -47,7 +47,7 @@ namespace AngouriMath.Core.Numerix
                 return @return;
         }
 
-        // TODO: Use C# 9 Covariant return types
+        // TODO: When we target .NET 5, remember to use covariant return types
         public override RealNumber Abs() => Create(Value.Abs());
 
         /// <summary>

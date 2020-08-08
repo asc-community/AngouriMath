@@ -168,7 +168,7 @@ namespace AngouriMath
     {
         public NumberEntity(ComplexNumber value) : base(value.ToString())
         {
-            if (value is RationalNumber && !(value is IntegerNumber))
+            if (value is RationalNumber and not IntegerNumber)
                 Priority = Const.PRIOR_DIV;
             else if (!value.Real.Value.IsZero && !value.Imaginary.Value.IsZero)
                 Priority = Const.PRIOR_SUM;
@@ -182,7 +182,7 @@ namespace AngouriMath
         /// <summary>
         /// NumberEntity is a node, not a number. To get the number, use either Eval or direct access Value.
         /// </summary>
-        public ComplexNumber Value { get; internal set; }
+        public ComplexNumber Value { get; }
         public new string Name => Value.ToString();
         public static implicit operator NumberEntity(sbyte num) => new NumberEntity(num);
         public static implicit operator NumberEntity(byte num) => new NumberEntity(num);

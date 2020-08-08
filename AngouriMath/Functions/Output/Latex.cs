@@ -170,8 +170,7 @@ namespace AngouriMath
         internal static string Latex(List<Entity> args)
         {
             MathFunctions.AssertArgs(args.Count, 2);
-            if (args[1] is NumberEntity { Value:RationalNumber { IsFinite:true } rational }
-                && !(rational is IntegerNumber))
+            if (args[1] is NumberEntity { Value:RationalNumber { IsFinite:true } rational and not IntegerNumber })
             {
                 var (numerator, denominator) = (rational.Value.Numerator, rational.Value.Denominator);
                 var str = @"\sqrt" + (denominator.Equals(2) ? "" : "[" + denominator + "]") + 

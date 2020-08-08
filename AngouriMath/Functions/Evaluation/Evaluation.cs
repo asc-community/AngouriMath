@@ -586,7 +586,7 @@ namespace AngouriMath
             var minLevel = nums.Select(GetRank).Min();
             return cand is RationalNumber ||
                    (GetRank(cand) <= minLevel && !disableIrrational) ||
-                (cand is RealNumber && !(cand is RationalNumber) && cand.Value.IsZero); // TODO: make im:0 downcastable
+                (cand is RealNumber and not RationalNumber && cand.Value.IsZero); // TODO: make im:0 downcastable
         }
 
         /// <summary>Test for exact value</summary>
