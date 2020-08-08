@@ -28,6 +28,7 @@ namespace AngouriMath.Functions
 {
     internal static class Utils
     {
+        // TODO: Using double for operations loses precision from 100 digits to 15 digits. This won't work.
         private static readonly EDecimal LowerForGood = EDecimal.FromDecimal(1e-6m);
         private static readonly EDecimal UpperForGood = EDecimal.FromDecimal(1e+8m);
         internal static bool IsGoodAsDouble(EDecimal num)

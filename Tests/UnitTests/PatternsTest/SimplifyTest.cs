@@ -101,6 +101,9 @@ namespace UnitTests.PatternsTest
             AssertSimplify(
                 "1+2x*-1+2x*2+x^2+2x+2x*-4+2x*4+2x*2x*-1+2x*2x*2+2x*x^2+x^2+x^2*-4+x^2*4+x^2*2*x*-1+x^2*2x*2+x^2*x^2",
                 "1 + x ^ 4 + 4 * x ^ 3 + 6 * x ^ 2 + 4 * x".Simplify());
+        // TODO: Simplify being called on both sides does not ensure that the simplified result is acceptable
+        // - we should maintain an expected result that does not change with the implementation and
+        // update it when needed. Test should be more restrictive to actually catch bugs.
     }
 }
 

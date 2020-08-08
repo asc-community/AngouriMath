@@ -71,10 +71,15 @@ namespace AngouriMath
         public static EDecimal Cos(this EDecimal x, EContext context)
         {
             if (!x.IsFinite) return EDecimal.NaN;
-            
+
             // TODO: this check should be here to improve the performance a little bit, but tests won't work with that
             // if (Utils.IsGoodAsDouble(x)) return EDecimal.FromDouble(Math.Cos(x.ToDouble()));
-            
+
+            // Of course this will fail! Math.Cos works with double - only ~15 digits of accuracy.
+            // We have precision of 100 by default - which is over 95 digits of accuracy,
+            // albeit the last few digits are off. You have rejected the use of double early on
+            // - as well as the entirety of System.Math.                        -- Happypig375
+
             var consts = ConstantCache.Lookup(context);
 
             //truncating to  [-2*PI;2*PI]

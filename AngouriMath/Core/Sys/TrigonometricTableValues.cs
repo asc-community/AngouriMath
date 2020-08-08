@@ -144,6 +144,8 @@ namespace AngouriMath
                 (TwoPiOver(6), f1_2 * Sqrt(3)),
                 (TwoPiOver(7), Sqrt(1 - MathS.Pow(f1_6 * (-1 + Cbrt((7 + 21 * Sqrt(-3)) / 2) + Cbrt((7 - 21 * Sqrt(-3)) / 2)), 2))),
                 (TwoPiOver(8), f1_2 * Sqrt(2)),
+                // TODO: Why was this removed but not other TwoPiOver(9) values?
+                // (TwoPiOver(9), i / 2 * (Cbrt((-1 - Sqrt(-3)) / 2) - Cbrt((-1 + Sqrt(-3)) / 2))),
                 (TwoPiOver(10), f1_4 * Sqrt(10 - 2 * Sqrt(5))),
                 (TwoPiOver(12), f1_2),
                 // (TwoPiOver(14), f1_24 * Sqrt(3 * (112 - Cbrt(14336 + Sqrt(-5549064193)) - Cbrt(14336 - Sqrt(-5549064193))))),

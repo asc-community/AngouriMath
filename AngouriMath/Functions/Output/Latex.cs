@@ -244,6 +244,8 @@ namespace AngouriMath
                 ? name
                 : @"\left[" + args[1].Latexise(false) + @"\right]";
 
+            // TODO: Should we display the d upright using \mathrm?
+            // Differentiation is an operation, just like sin, cos, etc.
             return @"\frac{d" + powerIfNeeded +
             @"\left[" + args[0].Latexise(false) + @"\right]}{d" + varOverDeriv + powerIfNeeded + "}";
         }
@@ -273,6 +275,7 @@ namespace AngouriMath
             sb.Append(@"\right]");
 
             // TODO: can we write d^2 x or (dx)^2 instead of dx dx?
+            // I don't think I have ever seen the same variable being integrated more than one time. -- Happypig375
             for (int i = 0; i < asInt; i++)
             {
                 sb.Append(" d");
