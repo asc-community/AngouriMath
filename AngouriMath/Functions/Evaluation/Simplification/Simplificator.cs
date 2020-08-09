@@ -144,22 +144,8 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 AddHistory(res);
 
                 {
-                    // It is quite slow at this point
-                    var listOfPossiblePolys = new List<Entity>();
-                    // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop
-                    foreach (VariableEntity variableEntity in MathS.Utils.GetUniqueVariables(res).FiniteSet())
-                    {
-                        if (MathS.Utils.TryPolynomial(res, variableEntity, out var resPoly))
-                            listOfPossiblePolys.Add(resPoly);
-                    }
-                    if (listOfPossiblePolys.Count != 0)
-                    {
-                        var min = listOfPossiblePolys.Select(c => c.Complexity()).Min();
-                        var minPoly = listOfPossiblePolys.First(c => c.Complexity() == min);
-                        AddHistory(minPoly);
-                        if (min < res.Complexity())
-                            res = minPoly;
-                    }
+                    res = res.DeepCopy();
+                    SmartPolynomialCollapser.Collapse(ref res);
                 }
 
                 res = history[history.Keys.Min()][0].DeepCopy();

@@ -452,11 +452,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     
         /// <summary>
         /// Finds all terms of a polynomial
+        /// Returns null if polynomial is bad
         /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="terms"></param>
-        /// <param name="subtree"></param>
-        /// <returns></returns>
         internal static Dictionary<T, Entity>? GatherMonomialInformation<T>(List<Entity> terms, Entity subtree)
         {
             var monomialsByPower = new Dictionary<T, Entity>();
@@ -478,8 +475,39 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     monomialsByPower[q.GetValue()] = 0;
                 monomialsByPower[q.GetValue()] += free;
             }
-            // TODO: do we need to simplify all values of monomialsByPower?
             return monomialsByPower;
+        }
+
+        /// <summary>
+        /// Finds all terms of a polynomial
+        /// </summary>
+        internal static (Dictionary<T, Entity> poly, Entity rem) GatherMonomialInformationAllowingBad<T>(List<Entity> terms, Entity subtree)
+        {
+            var monomialsByPower = new Dictionary<T, Entity>();
+            Entity rem = 0;
+            // here we fill the dictionary with information about monomials' coefficiants
+            foreach (var child in terms)
+            {
+                // TODO
+                TreeAnalyzer.IPrimitive<T> q;
+                if (typeof(T) == typeof(EDecimal))
+                    q = (TreeAnalyzer.IPrimitive<T>)new TreeAnalyzer.PrimitiveDecimal();
+                else if (typeof(T) == typeof(EInteger))
+                    q = (TreeAnalyzer.IPrimitive<T>)new TreeAnalyzer.PrimitiveInteger();
+                else throw new ArgumentException("Unsupported type: " + typeof(T), nameof(T));
+                
+                ParseMonomial(subtree, child, out var free, ref q);
+                if (free is null)
+                    rem += child;
+                else
+                {
+                    if (!monomialsByPower.ContainsKey(q.GetValue()))
+                        monomialsByPower[q.GetValue()] = 0;
+                    monomialsByPower[q.GetValue()] += free;
+                }
+            }
+
+            return (monomialsByPower, rem);
         }
 
 
