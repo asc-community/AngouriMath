@@ -71,8 +71,15 @@ namespace AngouriMath.Core.Sys.Items.Tensors
 
         {
             if (A.innerTensor is null || B.innerTensor is null) throw new IndexOutOfRangeException();
+            if (!SameShape(A, B)) throw new MathSException("Tensors should be of the same shape to apply pointwise operation");
+            
             CustomZip.op = app;
-            return new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.Zip<CustomZip>(A.innerTensor, B.innerTensor));
+
+            var newInner = new GenTensor<Entity, EntityTensorWrapperOperations>(A.innerTensor.Shape);
+            foreach (var indices in newInner.IterateOver(0))
+                newInner[indices] = app(A[indices], B[indices]);
+
+            return new Tensor(newInner);
         }
 
 
