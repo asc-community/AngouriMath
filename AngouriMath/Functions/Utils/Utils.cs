@@ -33,6 +33,48 @@ namespace AngouriMath.Functions
         internal static bool IsGoodAsDouble(EDecimal num)
             => num.CompareTo(LowerForGood) > 0 && num.CompareTo(UpperForGood) < 0;
 
+        internal static Entity? BuildPoly(Dictionary<EInteger, Entity> monomialsByPower, VariableEntity x)
+        {
+            var keys = monomialsByPower.Keys.ToList();
+            keys.Sort((i, i1) => (i < i1 ? 1 : (i > i1 ? -1 : 0)));
+            var terms = new List<Entity>();
+            foreach (var index in keys)
+            {
+                var pair = new KeyValuePair<EInteger, Entity>(index, monomialsByPower[index]);
+                Entity px;
+                if (pair.Key.IsZero)
+                {
+                    terms.Add(pair.Value.Simplify());
+                    continue;
+                }
+
+                if (pair.Key.Equals(EInteger.One))
+                    px = x;
+                else
+                    px = MathS.Pow(x, IntegerNumber.Create(pair.Key));
+                if (pair.Value == 1)
+                {
+                    terms.Add(px);
+                    continue;
+                }
+                else
+                    terms.Add(pair.Value.Simplify() * px);
+            }
+
+            if (terms.Count == 0)
+                return null;
+            var dst = terms[0];
+            for (int i = 1; i < terms.Count; i++)
+                if (terms[i].Name == "mulf" &&
+                    terms[i].GetChild(0) is NumberEntity { Value:RealNumber r }
+                    && r < 0)
+                    dst -= -r * terms[i].GetChild(1);
+                else
+                    dst += terms[i];
+            dst = dst.InnerSimplify();
+            return dst;
+        }
+
         /// <summary>
         /// Sorts an expression into a polynomial.
         /// See more MathS.Utils.TryPolynomial
@@ -50,44 +92,10 @@ namespace AngouriMath.Functions
             var monomialsByPower = PolynomialSolver.GatherMonomialInformation<EInteger>(children, variable);
             if (monomialsByPower == null)
                 return false;
-            var newMonomialsByPower = new Dictionary<int, Entity>();
-            var keys = monomialsByPower.Keys.ToList();
-            keys.Sort((i, i1) => (i < i1 ? 1 : (i > i1 ? -1 : 0)));
-            var terms = new List<Entity>();
-            foreach (var index in keys)
-            {
-                var pair = new KeyValuePair<EInteger, Entity>(index, monomialsByPower[index]);
-                Entity px;
-                if (pair.Key.IsZero)
-                {
-                    terms.Add(pair.Value.Simplify());
-                    continue;
-                }
-
-                if (pair.Key.Equals(EInteger.One))
-                    px = variable;
-                else
-                    px = MathS.Pow(variable, IntegerNumber.Create(pair.Key));
-                if (pair.Value == 1)
-                {
-                    terms.Add(px);
-                    continue;
-                }
-                else
-                    terms.Add(pair.Value.Simplify() * px);
-            }
-
-            if (terms.Count == 0)
+            var res = BuildPoly(monomialsByPower, variable);
+            if (res is null)
                 return false;
-            dst = terms[0];
-            for (int i = 1; i < terms.Count; i++)
-                if (terms[i].Name == "mulf" &&
-                    terms[i].GetChild(0) is NumberEntity { Value:RealNumber r }
-                    && r < 0)
-                    dst -= -r * terms[i].GetChild(1);
-                else
-                    dst += terms[i];
-            dst = dst.InnerSimplify();
+            dst = res;
             return true;
         }
 
@@ -152,6 +160,26 @@ namespace AngouriMath.Functions
             while (indices.Contains(i))
                 i++;
             return new VariableEntity(prefix + "_" + i);
+        }
+
+        /// <summary>
+        /// Finds next var index name starting with 1, e. g.
+        /// x + n_0 + n_a + n_3 + n_1
+        /// will find n_2
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <param name="prefix"></param>
+        /// <returns></returns>
+        internal static int FindMaxIndex(Entity expr, string prefix)
+        {
+            var indices = new List<int>();
+            foreach (var var in MathS.Utils.GetUniqueVariables(expr).FiniteSet())
+            {
+                var index = ParseIndexNumeric(var.Name);
+                if (index.prefix == prefix)
+                    indices.Add(index.num);
+            }
+            return indices.Count == 0 ? 0 : indices.Max();
         }
     }
 

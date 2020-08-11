@@ -36,6 +36,7 @@ namespace AngouriMath
         internal abstract void Check();
         
         public readonly string Name = string.Empty;
+        public Entity? Parent { get; set; } = null;
 
         /// <summary>
         /// Usually IsLeaf <=> number, variable, tensor
@@ -109,24 +110,34 @@ namespace AngouriMath
             properties = null; // will be reinitted by the first addressing to Properties
         }
 
-        public void SetChild(int index, Entity child)
+        internal void SetChild(int index, Entity child)
         {
+            SetParent(ref child, this);
             Children[index] = child;
             PropsReinit();
         }
 
-        public Entity GetChild(int index)
+        internal Entity GetChild(int index)
             => Children[index];
 
 
-        public void AddChildrenRange(IEnumerable<Entity> children)
+        internal static void SetParent(ref Entity ent, Entity possibleParent)
         {
-            Children.AddRange(children);
-            PropsReinit();
+            if (ent.Parent is {})
+                ent = ent.DeepCopy();
+            ent.Parent = possibleParent;
         }
 
-        public void AddChild(Entity child)
+        internal void AddChildrenRange(IEnumerable<Entity> children)
         {
+            foreach (var ch in children)
+                AddChild(ch);
+        }
+
+        internal void AddChild(Entity child)
+        {
+            var ch = child;
+            SetParent(ref ch, this);
             Children.Add(child);
             PropsReinit();
         }
