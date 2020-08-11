@@ -143,7 +143,23 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 }
                 AddHistory(res);
 
-                {/*
+                {
+                    var listOfPossiblePolys = new List<Entity>();
+                    // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop
+                    foreach (VariableEntity variableEntity in MathS.Utils.GetUniqueVariables(res).FiniteSet())
+                    {
+                        if (MathS.Utils.TryPolynomial(res, variableEntity, out var resPoly))
+                            listOfPossiblePolys.Add(resPoly);
+                    }
+                    if (listOfPossiblePolys.Count != 0)
+                    {
+                        var min = listOfPossiblePolys.Select(c => c.Complexity()).Min();
+                        var minPoly = listOfPossiblePolys.First(c => c.Complexity() == min);
+                        AddHistory(minPoly);
+                        if (min < res.Complexity())
+                            res = minPoly;
+                    }
+                    /*
                     This was intended to simplify expressions as polynomials over nodes, some kind of
                     greatest common node and simplifying over it. However, the current algorithm does
                     not solve this issue completely and yet too slow to be accepted. 
