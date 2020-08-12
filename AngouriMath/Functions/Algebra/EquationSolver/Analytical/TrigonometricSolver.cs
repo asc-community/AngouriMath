@@ -17,158 +17,22 @@ using AngouriMath.Core;
 using AngouriMath.Core.TreeAnalysis;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AngouriMath.Functions.Algebra.Solver.Analytical
 {
     internal static class TrigonometricSolver
     {
-        // sin(x) -> sin(1 * x)
-        // sin(x) + sin(a * x)
-
-
-        // if x * a
-        //     x * a => a * x
-        // if ! a * x
-        //     x => 1 * x
-        // if ! a * x + b
-        //     a * x => a * x + 0
-        private static Entity ReplaceTrigonometry(Entity expr, VariableEntity variable, VariableEntity replacement)
-        {
-            // SolveLinear should also solve tan and cotan equations, but currently Polynomial solver cannot handle big powers
-            // uncomment lines above when it will be fixed (TODO)
-
-            var sin = expr.FindSubtree(MathS.Sin(variable));
-            var cos = expr.FindSubtree(MathS.Cos(variable));
-            //var tan = expr.FindSubtree(MathS.Tan  (variable));
-            //var cot = expr.FindSubtree(MathS.Cotan(variable));
-            var sinReplacement = replacement / (2 * MathS.i) - MathS.Pow(replacement, -1) / (2 * MathS.i);
-            var cosReplacement = replacement / 2 + MathS.Pow(replacement, -1) / 2;
-            // var tanReplacement = (1 - MathS.Sqr(replacement)) * MathS.i * MathS.Pow(MathS.Sqr(replacement) + 1, -1);
-            // var cotReplacement = (MathS.Sqr(replacement) + 1) * MathS.i * MathS.Pow(MathS.Sqr(replacement) - 1, -1);
-            TreeAnalyzer.FindAndReplace(ref expr, sin, sinReplacement);
-            TreeAnalyzer.FindAndReplace(ref expr, cos, cosReplacement);
-            // TreeAnalyzer.FindAndReplace(ref expr, tan, tanReplacement);
-            // TreeAnalyzer.FindAndReplace(ref expr, cot, cotReplacement);
-
-            // workaround for missing Patterns.Variable(x), replace all expressions, false-matching pattern to variables
-            // which will be returned back after all actual replacements
-            var falseReplacements = new List<KeyValuePair<VariableEntity, Entity>>();
-            string falseReplacementName = "trig";
-
-            static void ReplaceSinSubExpression(ref Entity expr, Entity toReplace, Entity a, Entity b, VariableEntity replacement)
-            {
-                // sin(ax + b) = (t^a * e^(i*b) - t^(-a) * e^(-i*b)) / (2i)
-                var resultReplacement = (MathS.Pow(replacement, a) * (MathS.Pow(MathS.e, b * MathS.i) / (2 * MathS.i)) - MathS.Pow(replacement, -a) * (MathS.Pow(MathS.e, -b * MathS.i)) / (2 * MathS.i));
-                TreeAnalyzer.FindAndReplace(ref expr, toReplace, resultReplacement);
-            }
-
-            static void ReplaceCosSubExpression(ref Entity expr, Entity toReplace, Entity a, Entity b, VariableEntity replacement)
-            {
-                // cos(ax + b) = (t^a * e^(i*b) + t^(-a) * e^(-i*b)) / 2
-                var resultReplacement = (MathS.Pow(replacement, a) * (MathS.Pow(MathS.e, b * MathS.i) / 2) + MathS.Pow(replacement, -a) * (MathS.Pow(MathS.e, -b * MathS.i)) / 2);
-                TreeAnalyzer.FindAndReplace(ref expr, toReplace, resultReplacement);
-            }
-
-            // checks if pattern-matching succeeded. If not, replace subexpression with some variable
-            bool CheckIfReplacementIsSuitable(ref Entity expr, Entity found, Entity variable, Entity variableToCheckFor)
-            {
-                if(variable != variableToCheckFor)
-                {
-                    var repl = Utils.FindNextIndex(expr, falseReplacementName);
-                    falseReplacements.Add(new KeyValuePair<VariableEntity, Entity>(repl, found));
-                    TreeAnalyzer.FindAndReplace(ref expr, found, repl);
-                    return false;
-                }
-                return true;
-            }
-
-            void MatchSinUntil(Pattern p, Func<Entity, (Entity, Entity, Entity)> variableGetter)
-            {
-                while (expr.FindPatternSubtree(p) is { } found)
-                {
-                    (Entity x, Entity a, Entity b) = variableGetter(found.GetChild(0));
-                    if (CheckIfReplacementIsSuitable(ref expr, found, x, variable))
-                    {
-                        ReplaceSinSubExpression(ref expr, found, a, b, replacement);
-                    }
-                }    
-            }
-
-            void MatchCosUntil(Pattern p, Func<Entity, (Entity, Entity, Entity)> variableGetter)
-            {
-                while (expr.FindPatternSubtree(p) is { } found)
-                {
-                    (Entity x, Entity a, Entity b) = variableGetter(found.GetChild(0));
-                    if (CheckIfReplacementIsSuitable(ref expr, found, x, variable))
-                    {
-                        ReplaceCosSubExpression(ref expr, found, a, b, replacement);
-                    }
-                }
-            }
-
-            // arg => (x, a, b)
-            // TODO: refactor this. Move to a list
-            var variablePattern = new Pattern(1000, Entity.PatType.VARIABLE, 
-                tree => tree is VariableEntity && tree.Name == variable.Name);
-            var pattern1 = Sinf.PHang(Patterns.const1 * variablePattern + Patterns.any1);
-            MatchSinUntil(pattern1, arg => (arg.GetChild(0).GetChild(1), arg.GetChild(0).GetChild(0), arg.GetChild(1)));
-            var pattern2 = Sinf.PHang(variablePattern * Patterns.const1 + Patterns.any1);
-            MatchSinUntil(pattern2, arg => (arg.GetChild(0).GetChild(0), arg.GetChild(0).GetChild(1), arg.GetChild(1)));
-
-            var pattern3 = Sinf.PHang(Patterns.any1 + Patterns.const1 * variablePattern);
-            MatchSinUntil(pattern3, arg => (arg.GetChild(1).GetChild(1), arg.GetChild(1).GetChild(0), arg.GetChild(0)));
-            var pattern4 = Sinf.PHang(Patterns.any1 + variablePattern * Patterns.const1);
-            MatchSinUntil(pattern4, arg => (arg.GetChild(1).GetChild(0), arg.GetChild(1).GetChild(1), arg.GetChild(0)));
-
-            var pattern5 = Sinf.PHang(Patterns.const1 * variablePattern);
-            MatchSinUntil(pattern5, arg => (arg.GetChild(1), arg.GetChild(0), 0));
-            var pattern6 = Sinf.PHang(variablePattern * Patterns.const1);
-            MatchSinUntil(pattern6, arg => (arg.GetChild(0), arg.GetChild(1), 0));
-            var pattern7 = Sinf.PHang(Patterns.any1 + variablePattern);
-            MatchSinUntil(pattern7, arg => (arg.GetChild(1), 1, arg.GetChild(0)));
-            var pattern8 = Sinf.PHang(variablePattern + Patterns.any1);
-            MatchSinUntil(pattern8, arg => (arg.GetChild(0), 1, arg.GetChild(1)));
-
-            var pattern9 = Cosf.PHang(Patterns.const1 * variablePattern + Patterns.any1);
-            MatchCosUntil(pattern9, arg => (arg.GetChild(0).GetChild(1), arg.GetChild(0).GetChild(0), arg.GetChild(1)));
-            var pattern10 = Cosf.PHang(variablePattern * Patterns.const1 + Patterns.any1);
-            MatchCosUntil(pattern10, arg => (arg.GetChild(0).GetChild(0), arg.GetChild(0).GetChild(1), arg.GetChild(1)));
-
-            var pattern11 = Cosf.PHang(Patterns.any1 + Patterns.const1 * variablePattern);
-            MatchCosUntil(pattern11, arg => (arg.GetChild(1).GetChild(1), arg.GetChild(1).GetChild(0), arg.GetChild(0)));
-            var pattern12 = Cosf.PHang(Patterns.any1 + variablePattern * Patterns.const1);
-            MatchCosUntil(pattern12, arg => (arg.GetChild(1).GetChild(0), arg.GetChild(1).GetChild(1), arg.GetChild(0)));
-
-            var pattern13 = Cosf.PHang(Patterns.const1 * variablePattern);
-            MatchCosUntil(pattern13, arg => (arg.GetChild(1), arg.GetChild(0), 0));
-            var pattern14 = Cosf.PHang(variablePattern * Patterns.const1);
-            MatchCosUntil(pattern14, arg => (arg.GetChild(0), arg.GetChild(1), 0));
-            var pattern15 = Cosf.PHang(Patterns.any1 + variablePattern);
-            MatchCosUntil(pattern15, arg => (arg.GetChild(1), 1, arg.GetChild(0)));
-            var pattern16 = Cosf.PHang(variablePattern + Patterns.any1);
-            MatchCosUntil(pattern16, arg => (arg.GetChild(0), 1, arg.GetChild(1)));
-
-            // re-substitute all false replacement to return expression to normal
-            foreach (var repl in falseReplacements)
-            {
-                TreeAnalyzer.FindAndReplace(ref expr, repl.Key, repl.Value);
-            }
-
-            return expr;
-        }
-
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
         internal static Set? SolveLinear(Entity expr, VariableEntity variable)
         {
             var replacement = Utils.FindNextIndex(expr, variable.Name);
-            expr = ReplaceTrigonometry(expr, variable, replacement);
+            expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
 
             // if there is still original variable after replacements,
             // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
-            if (expr.SubtreeIsFound(variable))
-            {
+            if (expr.Vars.Contains(variable))
                 return null;
-            }
 
             var solutions = EquationSolver.Solve(expr, replacement);
             if (solutions == null) return null;
@@ -178,9 +42,8 @@ namespace AngouriMath.Functions.Algebra.Solver.Analytical
             foreach(var solution in solutions.FiniteSet())
             {
                 var func = MathS.Pow(MathS.e, MathS.i * variable);
-                var sol = TreeAnalyzer.FindInvertExpression(func, solution, variable);
-                if (sol != null)
-                    actualSolutions.AddRange(sol);
+                foreach (var sol in func.Invert(solution, variable))
+                    actualSolutions.AddPiece(sol);
             }
             return actualSolutions;
         }

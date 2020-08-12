@@ -132,8 +132,6 @@ namespace AngouriMath.Core
 
         internal List<Piece> Pieces = new List<Piece>();
 
-
-
         internal void AddPiece(Piece piece)
         {
             if (FastAddingMode)

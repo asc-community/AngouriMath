@@ -37,8 +37,6 @@ namespace AngouriMath.Functions.Algebra.Solver
         internal static Set Solve(Entity equation, VariableEntity x)
         {
             var res = new Set();
-            equation = equation.DeepCopy();
-
 
             MathS.Settings.PrecisionErrorZeroRange.As(1e-12m, () =>
             MathS.Settings.FloatToRationalIterCount.As(0, () => 
@@ -94,7 +92,7 @@ namespace AngouriMath.Functions.Algebra.Solver
 
             foreach (var tuple in res)
                 if (tuple.Count != initVarCount)
-                    throw new SysException("InSolveSystem incorrect output");
+                    throw new AngouriBugException("InSolveSystem incorrect output");
             if (res.Count == 0)
                 return null;
             var result = new Tensor(res.Count, initVarCount);
@@ -133,7 +131,7 @@ namespace AngouriMath.Functions.Algebra.Solver
             if (equations.Count == 1)
                 return InSolveSystemOne(equations[0], var);
             var result = Enumerable.Empty<List<Entity>>();
-            var replacements = new Dictionary<Entity, Entity>();
+            var replacements = new Dictionary<VariableEntity, Entity>();
             for (int i = 0; i < equations.Count; i++)
                 if (equations[i].Vars.Contains(var))
                 {

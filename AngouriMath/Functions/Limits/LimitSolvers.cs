@@ -12,7 +12,29 @@ namespace AngouriMath.Limits
 {
     class LimitSolvers
     {
-        private static RealNumber Infinity = RealNumber.PositiveInfinity;
+        internal static Dictionary<EDecimal, Entity>? ParseAsPolynomial(Entity expr, VariableEntity x)
+        {
+            var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
+                 expr, entity => entity.Vars.Contains(x)
+            );
+
+            if (children is null)
+                return null;
+
+            var monomials = PolynomialSolver.GatherMonomialInformation<EDecimal>(children, x);
+            if (monomials is null) return null;
+            var filteredDictionary = new Dictionary<EDecimal, Entity>();
+            foreach (var monomial in monomials)
+            {
+                var simplified = monomial.Value.InnerSimplify();
+                if (simplified != IntegerNumber.Zero)
+                {
+                    filteredDictionary.Add(monomial.Key, simplified);
+                }
+            }
+            return filteredDictionary;
+        }
+        private static readonly RealNumber Infinity = RealNumber.PositiveInfinity;
         internal static Entity? SolveBySubstitution(Entity expr, VariableEntity x)
         {
             var res = expr.Substitute(x, Infinity);
@@ -31,7 +53,7 @@ namespace AngouriMath.Limits
 
         internal static Entity? SolveAsPolynomial(Entity expr, VariableEntity x)
         {
-            var mono = TreeAnalyzer.ParseAsPolynomial<EDecimal>(expr, x);
+            var mono = ParseAsPolynomial(expr, x);
             if (mono is { })
             {
                 var maxPower = mono.Keys.Max();
@@ -59,8 +81,8 @@ namespace AngouriMath.Limits
         {
             if (expr is Divf(var P, var Q))
             {
-                var monoP = TreeAnalyzer.ParseAsPolynomial<EDecimal>(P, x);
-                var monoQ = TreeAnalyzer.ParseAsPolynomial<EDecimal>(Q, x);
+                var monoP = ParseAsPolynomial(P, x);
+                var monoQ = ParseAsPolynomial(Q, x);
 
                 if (monoP is { } && monoQ is { })
                 {

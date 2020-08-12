@@ -20,28 +20,26 @@ namespace AngouriMath.Core.Exceptions
     /// <summary>
     /// If one was thrown, the exception is probably not foreseen by AM. Repost it is an issue
     /// </summary>
-    public class SysException : Exception
+    public class AngouriBugException : Exception
     {
-        public SysException(string msg) : base(msg) { }
+        public AngouriBugException(string msg) : base(msg) { }
     }
-    public class UnknownEntityException : SysException
+    public class UnknownEntityException : AngouriBugException
     {
         public UnknownEntityException() : base("Unknown entity!") { }
     }
-    public class UnknownOperatorException : SysException
+    public class UnknownOperatorException : AngouriBugException
     {
         public UnknownOperatorException() : base("Unknown operator!") { }
     }
-    public class UnknownFunctionException : SysException
+    public class UnknownFunctionException : AngouriBugException
     {
         public UnknownFunctionException() : base("Unknown function!") { }
     }
-    public class UnknownSetException : SysException
+    public class UnknownSetException : AngouriBugException
     {
         public UnknownSetException() : base("Unknown set!") { }
     }
-    public class NoNeedToImplementException : SysException
-    {
-        public NoNeedToImplementException() : base("No need to implement") { }
-    }
+    public class MathSException : AngouriBugException { public MathSException(string message) : base(message) { } }
+    public class SolvingException : MathSException { public SolvingException(string message) : base(message) { } }
 }

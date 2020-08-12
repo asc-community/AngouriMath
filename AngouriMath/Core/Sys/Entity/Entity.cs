@@ -37,7 +37,7 @@ namespace AngouriMath
     public abstract partial record Entity : IEnumerable<Entity>, ILatexiseable
     {
         Entity[]? _directChildren;
-        protected Entity[] DirectChildren => _directChildren ??= InitDirectChildren();
+        protected internal IReadOnlyList<Entity> DirectChildren => _directChildren ??= InitDirectChildren();
         protected abstract Entity[] InitDirectChildren();
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="Core.TreeAnalysis.TreeAnalyzer.GetMinimumSubtree(Entity, VariableEntity)"/></remarks>
@@ -54,8 +54,9 @@ namespace AngouriMath
         /// <summary>Replaces all <see cref="x"/> with <see cref="value"/></summary>
         public Entity Substitute(Entity x, Entity value) => Replace(e => e == x ? value : e);
         /// <summary>Replaces all <see cref="replacements"/></summary>
-        public Entity Substitute<T>(IReadOnlyDictionary<Entity, T> replacements) where T : Entity =>
-            Replace(e => replacements.TryGetValue(e, out var value) ? value : e);
+        public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements)
+            where TFrom : Entity where TTo : Entity =>
+            Replace(e => e is TFrom from && replacements.TryGetValue(from, out var value) ? value : e);
 
         public abstract Const.Priority Priority { get; }
 
@@ -121,6 +122,10 @@ namespace AngouriMath
             new HashSet<VariableEntity>(this is VariableEntity v ? Enumerable.Repeat(v, 1) : DirectChildren.SelectMany(x => x.Vars));
         HashSet<VariableEntity>? _vars;
 
+        /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
+        /// Optimized for <see cref="VariableEntity"/>.</summary>
+        public bool Contains(Entity x) => x is VariableEntity v ? Vars.Contains(v) : Enumerable.Contains(this, x);
+
         public static implicit operator Entity(sbyte value) => IntegerNumber.Create(value);
         public static implicit operator Entity(byte value) => IntegerNumber.Create(value);
         public static implicit operator Entity(short value) => IntegerNumber.Create(value);
@@ -163,19 +168,18 @@ namespace AngouriMath
             ComplexNumber.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
     }
 
-    /// <summary>
-    /// Variable node. It only has a name
-    /// </summary>
+    /// <summary>Variable node. It only has a name</summary>
     public partial record VariableEntity(string Name) : Entity
     {
         public override Const.Priority Priority => Const.Priority.Var;
         public override Entity Replace(Func<Entity, Entity> func) => func(this);
         protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
-        internal static readonly Dictionary<Entity, ComplexNumber> ConstantList = new()
-        {
-            { new VariableEntity(nameof(MathS.DecimalConst.pi)), MathS.DecimalConst.pi },
-            { new VariableEntity(nameof(MathS.DecimalConst.e)), MathS.DecimalConst.e }
-        };
+        internal static readonly IReadOnlyDictionary<VariableEntity, ComplexNumber> ConstantList =
+            new Dictionary<VariableEntity, ComplexNumber>
+            {
+                { nameof(MathS.DecimalConst.pi), MathS.DecimalConst.pi },
+                { nameof(MathS.DecimalConst.e), MathS.DecimalConst.e }
+            };
         /// <summary>
         /// Determines whether something is a variable or contant, e. g.
         /// <list type="table">
@@ -262,7 +266,7 @@ namespace AngouriMath
             if (IsMatrix)
                 InnerTensor.TransposeMatrix();
             else
-                throw new MathSException("Specify axes numbers for non-matrices");
+                throw new Core.Exceptions.MathSException("Specify axes numbers for non-matrices");
         }
 
         // We do not need to use Gaussian elimination here

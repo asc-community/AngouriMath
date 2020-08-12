@@ -95,7 +95,9 @@ namespace AngouriMath
         /// <returns></returns>
         public Set Alternate(int level) => Simplificator.Alternate(this, level);
 
-        internal abstract Entity InnerEval();
+        public Entity EvaledValue => _evaledValue ??= InnerEval();
+        Entity? _evaledValue;
+        protected abstract Entity InnerEval();
         internal abstract Entity InnerSimplify();
 
         /// <summary>
@@ -160,7 +162,7 @@ namespace AngouriMath
                 return t;
             }
             else
-                throw new SysException("Unexpected behaviour");
+                throw new AngouriBugException("Unexpected behaviour");
         }
     }
 
@@ -182,9 +184,7 @@ namespace AngouriMath
         internal override Entity InnerEval() => (Augend.InnerEval(), Addend.InnerEval()) switch
         {
             (ComplexNumber n1, ComplexNumber n2) => n1 + n2,
-            (IntegerNumber(0), var n) => n,
-            (var n, IntegerNumber(0)) => n,
-            (var n1, var n2) => n1 == n2 ? 2 * n1 : n1 + n2
+            (var n1, var n2) => n1 + n2
         };
     }
     public partial record Minusf
@@ -192,9 +192,7 @@ namespace AngouriMath
         internal override Entity InnerEval() => (Subtrahend.InnerEval(), Minuend.InnerEval()) switch
         {
             (ComplexNumber n1, ComplexNumber n2) => n1 - n2,
-            (IntegerNumber(0), var n) => -n,
-            (var n, IntegerNumber(0)) => n,
-            (var n1, var n2) => n1 == n2 ? 0 : n1 - n2
+            (var n1, var n2) => n1 - n2
         };
     }
     public partial record Mulf
@@ -202,10 +200,7 @@ namespace AngouriMath
         internal override Entity InnerEval() => (Multiplier.InnerEval(), Multiplicand.InnerEval()) switch
         {
             (ComplexNumber n1, ComplexNumber n2) => n1 * n2,
-            (IntegerNumber(0), _) or (_, IntegerNumber(0)) => 0,
-            (IntegerNumber(1), var n) => n,
-            (var n, IntegerNumber(1)) => n,
-            (var n1, var n2) => n1 == n2 ? new Powf(n1, 2) : n1 * n2
+            (var n1, var n2) => n1 * n2
         };
     }
     public partial record Divf
@@ -213,9 +208,7 @@ namespace AngouriMath
         internal override Entity InnerEval() => (Dividend.InnerEval(), Divisor.InnerEval()) switch
         {
             (ComplexNumber n1, ComplexNumber n2) => n1 / n2,
-            (IntegerNumber(0), _) => 0,
-            (var n, IntegerNumber(1)) => n,
-            (var n1, var n2) => n1 == n2 ? 1 : n1 / n2
+            (var n1, var n2) => n1 / n2
         };
     }
     public partial record Powf
@@ -223,9 +216,6 @@ namespace AngouriMath
         internal override Entity InnerEval() => (Base.InnerEval(), Exponent.InnerEval()) switch
         {
             (ComplexNumber n1, ComplexNumber n2) => NumberEntity.Pow(n1, n2),
-            (IntegerNumber(0 or 1) n1, _) => n1,
-            (var n, IntegerNumber(1)) => n,
-            (_, IntegerNumber(0)) => 1,
             (var n1, var n2) => new Powf(n1, n2)
         };
     }
@@ -267,8 +257,7 @@ namespace AngouriMath
         internal override Entity InnerEval() => (Base.InnerEval(), Antilogarithm.InnerEval()) switch
         {
             (ComplexNumber n1, ComplexNumber n2) => NumberEntity.Log(n1, n2),
-            (IntegerNumber(1), _) => 0,
-            (var n1, var n2) => n1 == n2 ? 1 : (Entity)new Logf(n1, n2)
+            (var n1, var n2) => new Logf(n1, n2)
         };
     }
 
@@ -345,14 +334,6 @@ namespace AngouriMath
             Limits.ApproachFrom.Right => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
             _ => this,
         };
-    }
-}
-
-namespace AngouriMath
-{
-    public abstract partial record Entity
-    {
-        internal ComplexNumber? __cachedEvaledValue = null;
     }
 }
 

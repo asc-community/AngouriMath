@@ -15,14 +15,14 @@
 
 
 
- using AngouriMath.Core;
-using AngouriMath.Functions.Algebra.NumbericalSolving;
 using System;
- using System.Numerics;
- using AngouriMath.Core.Numerix;
- using AngouriMath.Core.Sys.Interfaces;
- using AngouriMath.Extensions;
- using PeterO.Numbers;
+using System.Numerics;
+using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Extensions;
+using AngouriMath.Functions.Algebra.NumbericalSolving;
+using PeterO.Numbers;
 
 namespace AngouriMath.Functions.Algebra.NumbericalSolving
 {
@@ -55,7 +55,7 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
                     prev = value;//.Copy();
                 try // TODO: remove try catch in for
                 {
-                    
+
                     var dfv = df.Substitute(value);
                     if (dfv == 0)
                         return ChooseGood();
@@ -90,29 +90,29 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         /// How many approximations we need to do before we reach the most precise result.
         /// </param>
         /// <returns></returns>
-        internal static Set SolveNt(Entity expr, VariableEntity v, 
+        internal static Set SolveNt(Entity expr, VariableEntity v,
             NewtonSetting settings)
         {
             if (expr.Vars.Count != 1)
-                throw new MathSException("Two or more or less than one variables in SolveNt is prohibited");
+                throw new Core.Exceptions.MathSException("Two or more or less than one variables in SolveNt is prohibited");
             var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
                 var res = new Set();
                 var df = expr.Derive(v).Simplify().Compile(v);
                 var f = expr.Simplify().Compile(v);
                 for (int x = 0; x < settings.StepCount.Re; x++)
-                for (int y = 0; y < settings.StepCount.Im; y++)
-                {
-                    var xShare = ((EDecimal) x) / settings.StepCount.Re;
-                    var yShare = ((EDecimal) y) / settings.StepCount.Im;
-                    var value = ComplexNumber.Create(
-                        settings.From.Re * xShare + settings.To.Re * (1 - xShare),
-                        settings.From.Im * yShare + settings.To.Im * (1 - yShare));
-                    var root = NewtonIter(f, df, value.AsComplex(), settings.Precision);
-                    if (root.IsFinite && f.Call(root.AsComplex()).ToComplexNumber().Abs() <
-                        MathS.Settings.PrecisionErrorCommon.Value)
-                        res.Add(root);
-                }
+                    for (int y = 0; y < settings.StepCount.Im; y++)
+                    {
+                        var xShare = ((EDecimal)x) / settings.StepCount.Re;
+                        var yShare = ((EDecimal)y) / settings.StepCount.Im;
+                        var value = ComplexNumber.Create(
+                            settings.From.Re * xShare + settings.To.Re * (1 - xShare),
+                            settings.From.Im * yShare + settings.To.Im * (1 - yShare));
+                        var root = NewtonIter(f, df, value.AsComplex(), settings.Precision);
+                        if (root.IsFinite && f.Call(root.AsComplex()).ToComplexNumber().Abs() <
+                            MathS.Settings.PrecisionErrorCommon.Value)
+                            res.Add(root);
+                    }
                 return res;
             });
             return res;
@@ -145,7 +145,6 @@ namespace AngouriMath
         /// To change parameters see MathS.Settings.NewtonSolver
         /// </summary>
         /// <returns></returns>
-        public Set SolveNt(VariableEntity v)
-        => NumericalEquationSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
+        public Set SolveNt(VariableEntity v) => NumericalEquationSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
     }
 }

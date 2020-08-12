@@ -18,17 +18,12 @@ using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
-    public class MathSException : SysException
+    public class TreeException : MathSException
     {
-        public MathSException(string message) : base(message)
-        {
-        }
+        public TreeException(string message) : base(message) { }
     }
-
-    public class SolvingException : MathSException
+    public class UncompilableNodeException : TreeException
     {
-        public SolvingException(string message) : base(message)
-        {
-        }
+        public UncompilableNodeException(string message) : base(message) { }
     }
 }

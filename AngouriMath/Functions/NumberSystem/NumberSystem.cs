@@ -56,7 +56,7 @@ namespace AngouriMath.Functions.NumberSystem
         internal static string IntToBaseN(EInteger num, int N)
         {
             if (num < 0)
-                throw new SysException("Error in IntToBaseN");
+                throw new AngouriBugException("Error in IntToBaseN");
             var res = new System.Text.StringBuilder();
             while (num > 0)
             {
@@ -92,7 +92,7 @@ namespace AngouriMath.Functions.NumberSystem
         internal static string FloatToBaseN(EDecimal num /*should be < 1*/, int N)
         {
             if (num.GreaterThan(EDecimal.One) || num.IsNegative)
-                throw new SysException("Error in FloatToBaseN");
+                throw new AngouriBugException("Error in FloatToBaseN");
             var res = new System.Text.StringBuilder();
             while (!num.IsZero)
             {

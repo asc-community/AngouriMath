@@ -49,7 +49,7 @@ namespace AngouriMath
             public Entity Operation(Entity a, Entity b)
             {
                 if (op is null)
-                    throw new SysException("op can't be null");
+                    throw new AngouriBugException("op can't be null");
                 return op(a, b);
             }
         }

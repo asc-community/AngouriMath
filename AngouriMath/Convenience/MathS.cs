@@ -841,23 +841,6 @@ namespace AngouriMath
                 => Functions.Utils.TryPolynomial(expr, variable, out dst);
 
             /// <summary>
-            /// Checks tree for some unexpected bad occasions
-            /// Throws <see cref="Core.Exceptions.SysException"/>'s children
-            /// If you need a message, it's better to write
-            /// <code>
-            /// try
-            /// {
-            ///     MathS.CheckTree(a);
-            /// }
-            /// catch (SysException e)
-            /// {
-            ///     Console.WriteLine(e.Message);
-            /// }
-            /// </code>
-            /// </summary>
-            public static void CheckTree(Entity expr) => TreeAnalyzer.CheckTree(expr);
-
-            /// <summary>
             /// Optimizes <paramref name="tree"/> to a binary tree.
             /// This might boost some operations but is not necessary to use
             /// </summary>
@@ -876,8 +859,7 @@ namespace AngouriMath
             /// An <see cref="Entity"/> representing an expression
             /// </param>
             /// <returns></returns>
-            public static string ToSympyCode(Entity expr)
-                => ToSympy.GenerateCode(expr);
+            public static string ToSympyCode(Entity expr) => ToSympy.GenerateCode(expr);
 
             /// <summary>
             /// Counts all nodes & subnodes that match <paramref name="criteria"/>

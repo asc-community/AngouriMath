@@ -153,6 +153,63 @@ namespace AngouriMath
 
             _ => x
         };
+        /// <summary>
+        /// Here, we replace x with t which represents e^(ix).
+        /// <list type="table">
+        /// <item>sin(ax + b) = (t^a * e^(i*b) - t^(-a) * e^(-i*b)) / (2i)</item>
+        /// <item>cos(ax + b) = (t^a * e^(i*b) + t^(-a) * e^(-i*b)) / 2</item>
+        /// </list>
+        /// </summary>
+        internal static Func<Entity, Entity> TrigonometricToExponentialRules(VariableEntity from, VariableEntity to) => tree =>
+        {
+            // sin(ax + b) = (t^a * e^(i*b) - t^(-a) * e^(-i*b)) / (2i)
+            Entity SinResult(VariableEntity x, NumberEntity a, Entity b) =>
+                x == from
+                ? MathS.Pow(to, a) * (MathS.Pow(MathS.e, b * MathS.i) / (2 * MathS.i)) - MathS.Pow(to, -a) * MathS.Pow(MathS.e, -b * MathS.i) / (2 * MathS.i)
+                : tree;
+            // cos(ax + b) = (t^a * e^(i*b) + t^(-a) * e^(-i*b)) / 2
+            Entity CosResult(VariableEntity x, NumberEntity a, Entity b) =>
+                x == from
+                ? MathS.Pow(to, a) * (MathS.Pow(MathS.e, b * MathS.i) / 2) + MathS.Pow(to, -a) * MathS.Pow(MathS.e, -b * MathS.i) / 2
+                : tree;
+            // SolveLinear should also solve tan and cotan equations, but currently Polynomial solver cannot handle big powers
+            // uncomment lines above when it will be fixed (TODO)
+            // e.g. tan(ax + b) = -i + (2i)/(1 + e^(2i*b) t^(2a))
+            return tree switch
+            {
+                Sinf(VariableEntity x) => SinResult(x, 1, 0),
+                Sinf(Mulf(VariableEntity x, NumberEntity a)) => SinResult(x, a, 0),
+                Sinf(Mulf(NumberEntity a, VariableEntity x)) => SinResult(x, a, 0),
+                Sinf(Sumf(VariableEntity x, var b)) => SinResult(x, 1, b),
+                Sinf(Sumf(var b, VariableEntity x)) => SinResult(x, 1, b),
+                Sinf(Sumf(Mulf(VariableEntity x, NumberEntity a), var b)) => SinResult(x, a, b),
+                Sinf(Sumf(Mulf(NumberEntity a, VariableEntity x), var b)) => SinResult(x, a, b),
+                Sinf(Sumf(var b, Mulf(VariableEntity x, NumberEntity a))) => SinResult(x, a, b),
+                Sinf(Sumf(var b, Mulf(NumberEntity a, VariableEntity x))) => SinResult(x, a, b),
+                Sinf(Minusf(VariableEntity x, var b)) => SinResult(x, 1, -b),
+                Sinf(Minusf(var b, VariableEntity x)) => SinResult(x, -1, b),
+                Sinf(Minusf(Mulf(VariableEntity x, NumberEntity a), var b)) => SinResult(x, a, -b),
+                Sinf(Minusf(Mulf(NumberEntity a, VariableEntity x), var b)) => SinResult(x, a, -b),
+                Sinf(Minusf(var b, Mulf(VariableEntity x, NumberEntity a))) => SinResult(x, -a, b),
+                Sinf(Minusf(var b, Mulf(NumberEntity a, VariableEntity x))) => SinResult(x, -a, b),
+                Cosf(VariableEntity x) => CosResult(x, 1, 0),
+                Cosf(Mulf(VariableEntity x, NumberEntity a)) => CosResult(x, a, 0),
+                Cosf(Mulf(NumberEntity a, VariableEntity x)) => CosResult(x, a, 0),
+                Cosf(Sumf(VariableEntity x, var b)) => CosResult(x, 1, b),
+                Cosf(Sumf(var b, VariableEntity x)) => CosResult(x, 1, b),
+                Cosf(Sumf(Mulf(VariableEntity x, NumberEntity a), var b)) => CosResult(x, a, b),
+                Cosf(Sumf(Mulf(NumberEntity a, VariableEntity x), var b)) => CosResult(x, a, b),
+                Cosf(Sumf(var b, Mulf(VariableEntity x, NumberEntity a))) => CosResult(x, a, b),
+                Cosf(Sumf(var b, Mulf(NumberEntity a, VariableEntity x))) => CosResult(x, a, b),
+                Cosf(Minusf(VariableEntity x, var b)) => CosResult(x, 1, -b),
+                Cosf(Minusf(var b, VariableEntity x)) => CosResult(x, -1, b),
+                Cosf(Minusf(Mulf(VariableEntity x, NumberEntity a), var b)) => CosResult(x, a, -b),
+                Cosf(Minusf(Mulf(NumberEntity a, VariableEntity x), var b)) => CosResult(x, a, -b),
+                Cosf(Minusf(var b, Mulf(VariableEntity x, NumberEntity a))) => CosResult(x, -a, b),
+                Cosf(Minusf(var b, Mulf(NumberEntity a, VariableEntity x))) => CosResult(x, -a, b),
+                _ => tree
+            };
+        };
 
         internal static Entity PowerRules(Entity x) => x switch
         {
@@ -433,6 +490,13 @@ namespace AngouriMath
                     return tree;
             }
         };
+        internal static Entity AlgebraicLongDivision(Entity x) =>
+            x is Divf(var num, var denom)
+            && !MathS.CanBeEvaluated(num)
+            && !MathS.CanBeEvaluated(denom)
+            && TreeAnalyzer.DivideAndRemainderPolynoms(num, denom) is var (divided, remainder)
+            ? divided + remainder
+            : x;
         internal static Entity OptimizeRules(Entity x) => x switch
         {
             Sumf or Minusf => TreeAnalyzer.MultiHangBinary(Sumf.LinearChildren(x).ToList(), (a, b) => new Sumf(a, b)),

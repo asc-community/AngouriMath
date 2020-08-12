@@ -100,8 +100,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 {
                     res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules).InnerSimplify();
                     AddHistory(res);
-                    TreeAnalyzer.FindDivisors(ref res, (num, denom) => !MathS.CanBeEvaluated(num) && !MathS.CanBeEvaluated(denom));
-                    res = res.InnerSimplify();
+                    res = res.Replace(Patterns.AlgebraicLongDivision).InnerSimplify();
                     AddHistory(res);
                 }
 

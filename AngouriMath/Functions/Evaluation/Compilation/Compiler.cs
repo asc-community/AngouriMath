@@ -13,93 +13,227 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using AngouriMath.Core.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
+using static AngouriMath.Instruction;
 
-namespace AngouriMath.Functions.Evaluation.Compilation
+namespace AngouriMath
 {
-    internal static class Compiler
+    public partial record Entity
     {
+        private protected abstract void InnerCompile_(Compiler compiler);
         /// <summary>
-        /// Returns a compiled expression
-        /// Allows to boost substitution a lot
+        /// Recursive compilation that pushes intructions to the stack (<see cref="Compiler.Instructions"/>)
         /// </summary>
-        /// <param name="func"></param>
-        /// <param name="variables">
-        /// Must be equal to func's variables (ignoring constants)
-        /// </param>
-        /// <returns></returns>
-        internal static FastExpression Compile(Entity func, params VariableEntity[] variables) =>
-            Compile(func, variables.Where(varEnt => !varEnt.IsConstant).Select(varEnt => varEnt.Name).ToArray());
-
-        /// <summary>
-        /// Compiles from strings (see Compile for more details)
-        /// </summary>
-        /// <param name="func"></param>
-        /// <param name="variables"></param>
-        /// <returns></returns>
-        internal static FastExpression Compile(Entity func, params string[] variables)
-        {
-            var varNamespace = new Dictionary<string, int>();
-            int id = 0;
-            foreach (var varName in variables)
-            {
-                varNamespace[varName] = id;
-                id++;
-            }
-            func = func.SubstituteConstants();
-            var res = new FastExpression(variables.Length, func);
-            func.UpdateHash(); // Count hash for O(N)
-            Entity.HashOccurancesUpdate(func); // Update occurances for each node for O(N) instead of O(N^2)
-            InnerCompile(func, res, variables, varNamespace);
-            res.Seal(); // Creates stack
-            return res;
-        }
-
-        /// <summary>
-        /// Recursive compilation that pushes intructions to the stack (fe.instructions)
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <param name="fe"></param>
-        /// <param name="variables"></param>
-        /// <param name="varNamespace"></param>
-        private static void InnerCompile(Entity expr, FastExpression fe, string[] variables, Dictionary<string, int> varNamespace)
+        internal void InnerCompile(Compiler compiler)
         {
             // Check whether it's better to pull from cache or not
-            string hash = expr.Hash;
-            if (fe.HashToNum.ContainsKey(hash))
+            if (compiler.Cache.TryGetValue(this, out var cacheLine) && cacheLine > -1)
             {
-                fe.instructions.AddPullCacheInstruction(fe.HashToNum[hash]);
+                compiler.Instructions.Add(new(InstructionType.PULLCACHE, cacheLine));
                 return;
             }
-
-            for (int i = expr.ChildrenCount - 1; i >= 0; i--)
-                InnerCompile(expr.GetChild(i), fe, variables, varNamespace);
-            switch (expr)
+            InnerCompile_(compiler);
+            if (cacheLine == -1)
             {
-                case OperatorEntity _:
-                case FunctionEntity _:
-                    fe.instructions.AddCallInstruction(expr.Name, expr.ChildrenCount);
-                    break;
-                case NumberEntity { Value: var val }:
-                    fe.instructions.AddPushNumInstruction(val.AsComplex());
-                    break;
-                case VariableEntity _:
-                    fe.instructions.AddPushVarInstruction(varNamespace[expr.Name]);
-                    break;
-                default:
-                    throw new UnknownEntityException();
+                cacheLine = compiler.Cache.Count;
+                compiler.Cache[this] = cacheLine;
+                compiler.Instructions.Add(new(InstructionType.TOCACHE, cacheLine));
             }
+        }
+    }
+    public partial record NumberEntity : Entity
+    {
+        private protected override void InnerCompile_(Compiler compiler) =>
+            compiler.Instructions.Add(new(InstructionType.PUSHCONST, Value: AsComplex()));
+    }
+    public partial record VariableEntity : Entity
+    {
+        private protected override void InnerCompile_(Compiler compiler) =>
+            compiler.Instructions.Add(new(InstructionType.PUSHVAR, compiler.VarNamespace[Name]));
+    }
+    public partial record Tensor : Entity
+    {
+        private protected override void InnerCompile_(Compiler compiler) =>
+            throw new UncompilableNodeException($"Tensors cannot be compiled");
+    }
+    // Each function and operator processing
+    public partial record Sumf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Augend.InnerCompile(compiler);
+            Addend.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_SUM));
+        }
+    }
+    public partial record Minusf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Subtrahend.InnerCompile(compiler);
+            Minuend.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_MINUS));
+        }
+    }
+    public partial record Mulf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Multiplier.InnerCompile(compiler);
+            Multiplicand.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_MUL));
+        }
+    }
+    public partial record Divf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Dividend.InnerCompile(compiler);
+            Divisor.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_DIV));
+        }
+    }
+    public partial record Powf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Base.InnerCompile(compiler);
+            Exponent.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_POW));
+        }
+    }
+    public partial record Sinf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Argument.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_SIN));
+        }
+    }
+    public partial record Cosf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Argument.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_COS));
+        }
+    }
+    public partial record Tanf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Argument.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_TAN));
+        }
+    }
+    public partial record Cotanf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Argument.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_COTAN));
+        }
+    }
 
-            // If the function is used more than once AND complex enough, we put it in cache
-            if (expr.HashOccurances > 1 /*expr.HashOccurances is the number of this expression being replicated*/
-                && !expr.IsLeaf /* we don't check if it is already in cache as in this case it will pull from cache*/)
+    public partial record Logf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            // Unlike AngouriMath which accepts Base as the first parameter,
+            // Complex.Log accepts it as the second parameter
+            Antilogarithm.InnerCompile(compiler);
+            Base.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_LOG));
+        }
+    }
+
+    public partial record Arcsinf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Argument.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_ARCSIN));
+        }
+    }
+    public partial record Arccosf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Argument.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_ARCCOS));
+        }
+    }
+    public partial record Arctanf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Argument.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_ARCTAN));
+        }
+    }
+    public partial record Arccotanf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Argument.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_ARCCOTAN));
+        }
+    }
+    public partial record Factorialf
+    {
+        private protected override void InnerCompile_(Compiler compiler)
+        {
+            Argument.InnerCompile(compiler);
+            compiler.Instructions.Add(new(InstructionType.CALL_FACTORIAL));
+        }
+    }
+
+    public partial record Derivativef
+    {
+        private protected override void InnerCompile_(Compiler compiler) =>
+            throw new UncompilableNodeException($"Derivatives cannot be compiled");
+    }
+
+    public partial record Integralf
+    {
+        private protected override void InnerCompile_(Compiler compiler) =>
+            throw new UncompilableNodeException($"Integrals cannot be compiled");
+    }
+
+    public partial record Limitf
+    {
+        private protected override void InnerCompile_(Compiler compiler) =>
+            throw new UncompilableNodeException($"Limits cannot be compiled");
+    }
+    internal partial record Instruction
+    {
+        internal record Compiler(List<Instruction> Instructions, Dictionary<VariableEntity, int> VarNamespace, Dictionary<Entity, int> Cache)
+        {
+            /// <summary>Returns a compiled expression. Allows to boost substitution a lot</summary>
+            /// <param name="variables">Must be equal to func's variables (ignoring constants)</param>
+            internal static FastExpression Compile(Entity func, IEnumerable<VariableEntity> variables)
             {
-                fe.HashToNum[hash] = fe.HashToNum.Count;
-                fe.instructions.AddPushCacheInstruction(fe.HashToNum[hash]);
+                var varNamespace = new Dictionary<VariableEntity, int>();
+                int id = 0;
+                foreach (var varName in variables)
+                    if (!varName.IsConstant)
+                        varNamespace[varName] = id++;
+                func = func.SubstituteConstants();
+                var visited = new HashSet<Entity>();
+                var cache = new Dictionary<Entity, int>();
+                foreach (var node in func)
+                {
+                    if (node is NumberEntity or VariableEntity)
+                        continue; // Don't store simple nodes in cache
+                    if (visited.Contains(node))
+                        cache[node] = -1;
+                    else visited.Add(node);
+                }
+                var compiler = new Compiler(new(), varNamespace, cache);
+                func.InnerCompile(compiler);
+                return new(id, compiler.Instructions, compiler.Cache.Count);
             }
         }
     }

@@ -165,7 +165,7 @@ namespace AngouriMath
         public InvalidNumberCastException(Type typeFrom, Type typeTo)
             : base("Cannot cast from " + typeFrom + " to " + typeTo) { }
     }
-    public class UniverseCollapseException : Core.Exceptions.SysException
+    public class UniverseCollapseException : Core.Exceptions.AngouriBugException
     {
         public UniverseCollapseException() : base("Universe collapse!") { }
     }

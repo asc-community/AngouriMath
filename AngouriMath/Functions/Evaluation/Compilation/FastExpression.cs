@@ -15,17 +15,45 @@
 
 
 using AngouriMath.Core.Exceptions;
-using AngouriMath.Functions.Evaluation.Compilation;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
- using AngouriMath.Core.Numerix;
- using AngouriMath.Core.Sys.Interfaces;
+using static AngouriMath.Instruction;
+using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
+    internal partial record Instruction(Instruction.InstructionType Type, int Reference = -1, Complex Value = default)
+    {
+        internal enum InstructionType
+        {
+            PUSHVAR,
+            PUSHCONST,
+            PULLCACHE,
+            TOCACHE,
+            // 1-arg functions
+            CALL_SIN = 50,
+            CALL_COS,
+            CALL_TAN,
+            CALL_COTAN,
+            CALL_ARCSIN,
+            CALL_ARCCOS,
+            CALL_ARCTAN,
+            CALL_ARCCOTAN,
+            CALL_FACTORIAL,
+            // 2-arg functions
+            CALL_SUM = 100,
+            CALL_MINUS,
+            CALL_MUL,
+            CALL_DIV,
+            CALL_POW,
+            CALL_LOG,
+        }
+        public override string ToString() =>
+            $"{Type} {(Reference == -1 ? Value.ToString() : Reference.ToString())}";
+    }
     public abstract partial record Entity : ILatexiseable
     {
         /// <summary>
@@ -33,8 +61,8 @@ namespace AngouriMath
         /// than subsitution
         /// </summary>
         /// <param name="variables">
-        /// List string names of variables in the same order
-        /// as you will list them when evaluating
+        /// List string names of variables in the same order as you will list them when evaluating.
+        /// Constants, i.e. <see cref="MathS.pi"/> and <see cref="MathS.e"/> will be ignored.
         /// </param>
         /// <returns></returns>
         public FastExpression Compile(params VariableEntity[] variables) => Compiler.Compile(this, variables);
@@ -44,170 +72,137 @@ namespace AngouriMath
         /// than subsitution
         /// </summary>
         /// <param name="variables">
-        /// List string names of variables in the same order
-        /// as you will list them when evaluating
+        /// List string names of variables in the same order as you will list them when evaluating.
+        /// Constants, i.e. <see cref="MathS.pi"/> and <see cref="MathS.e"/> will be ignored.
         /// </param>
         /// <returns></returns>
-        public FastExpression Compile(params string[] variables) => Compiler.Compile(this, variables);
-    } 
+        public FastExpression Compile(params string[] variables) =>
+            Compiler.Compile(this, variables.Select(x => new VariableEntity(x)));
+    }
 }
 
 namespace AngouriMath
 {
-    public abstract partial record Entity : ILatexiseable
-    {
-
-        /// <summary>
-        /// Obviouosly, returns number of subtrees having exact same stringName
-        /// </summary>
-        /// <returns></returns>
-        internal int CountOccurances(string stringName)
-        {
-            int res = this.ToString() == stringName ? 1 : 0;
-            foreach (var child in Children)
-                res += child.CountOccurances(stringName);
-            return res;
-        }
-    }
     public class FastExpression
     {
-        private (Stack<Complex> Stack, Complex[] Cache)? @sealed;
-        internal readonly InstructionSet instructions;
+        private readonly Stack<Complex> stack;
+        private readonly Complex[] cache;
+        private readonly List<Instruction> instructions;
         private readonly int varCount;
-
-        internal readonly Dictionary<string, int> HashToNum = new Dictionary<string, int>();
-
-        internal Entity RawExpr { get; }
-
-        internal FastExpression(int varCount, Entity rawExpr)
-        {
-            this.varCount = varCount;
-            this.instructions = new InstructionSet();
-            RawExpr = rawExpr;
-        }
 
         /// <summary>
         /// You cannot modify this function once it is sealed. The final user will never access to its
         /// direct instructions
         /// </summary>
-        internal void Seal()
+        internal FastExpression(int varCount, List<Instruction> instructions, int cacheCount) 
         {
-            @sealed = (new Stack<Complex>(instructions.Count), new Complex[HashToNum.Count]);
+            this.varCount = varCount;
+            this.instructions = instructions;
+            stack = new Stack<Complex>(instructions.Count);
+            cache = new Complex[cacheCount];
         }
 
         /// <summary>
-        /// Calls the compiled function (synonim to Substitute)
+        /// Calls the compiled function (synonym to <see cref="Substitute(Complex[])"/>)
         /// </summary>
         /// <param name="values">
         /// List arguments in the same order in which you compiled the function
         /// </param>
-        /// <returns></returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Complex Call(params Complex[] values)
-            => Substitute(values);
+        public Complex Call(params Complex[] values) => Substitute(values);
 
         /// <summary>
-        /// Calls the compiled function (synonim to Call)
+        /// Calls the compiled function (synonym to <see cref="Call(Complex[])"/>)
         /// </summary>
         /// <param name="values">
         /// List arguments in the same order in which you compiled the function
         /// </param>
-        /// <returns></returns>
         // TODO: Optimization
         public Complex Substitute(params Complex[] values)
         {
             if (values.Length != varCount)
-                throw new SysException("Wrong amount of parameters");
-            if (!(@sealed is var (stack, cache)))
-                throw new SysException($"Not sealed. Call {nameof(Seal)} before calling {nameof(Substitute)}.");
-            Instruction instruction;
+                throw new AngouriBugException("Wrong amount of parameters");
             for (int i = 0; i < instructions.Count; i++)
             {
-                instruction = instructions[i];
+                var instruction = instructions[i];
                 switch (instruction.Type)
                 {
-                    case Instruction.InstructionType.PUSHVAR:
-                        stack.Push(values[instruction.VarNumber]);
+                    case InstructionType.PUSHVAR:
+                        stack.Push(values[instruction.Reference]);
                         break;
-                    case Instruction.InstructionType.PUSHCONST:
+                    case InstructionType.PUSHCONST:
                         stack.Push(instruction.Value);
                         break;
-                    case Instruction.InstructionType.CALL:
-                        switch (instruction.FuncNumber)
+                    case InstructionType.PULLCACHE:
+                        stack.Push(cache[instruction.Reference]);
+                        break;
+                    case InstructionType.TOCACHE:
+                        cache[instruction.Reference] = stack.Peek();
+                        break;
+                    case InstructionType.CALL_SUM:
+                        stack.Push(stack.Pop() + stack.Pop());
+                        break;
+                    case InstructionType.CALL_MINUS:
+                        stack.Push(stack.Pop() - stack.Pop());
+                        break;
+                    case InstructionType.CALL_MUL:
+                        stack.Push(stack.Pop() * stack.Pop());
+                        break;
+                    case InstructionType.CALL_DIV:
+                        stack.Push(stack.Pop() / stack.Pop());
+                        break;
+                    case InstructionType.CALL_POW:
+                        stack.Push(Complex.Pow(stack.Pop(), stack.Pop()));
+                        break;
+                    case InstructionType.CALL_SIN:
+                        stack.Push(Complex.Sin(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_COS:
+                        stack.Push(Complex.Cos(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_TAN:
+                        stack.Push(Complex.Tan(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_COTAN:
+                        stack.Push(1 / Complex.Tan(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_LOG:
+                        stack.Push(Complex.Log(stack.Pop(), stack.Pop().Real));
+                        break;
+                    case InstructionType.CALL_ARCSIN:
+                        stack.Push(Complex.Asin(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_ARCCOS:
+                        stack.Push(Complex.Acos(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_ARCTAN:
+                        stack.Push(Complex.Atan(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_ARCCOTAN:
+                        stack.Push(Complex.Atan(1 / stack.Pop()));
+                        break;
+                    case InstructionType.CALL_FACTORIAL:
+                        // https://stackoverflow.com/a/15454784/5429648
+                        const int g = 7;
+                        static Complex Gamma(Complex z)
                         {
-                            case 0:
-                                stack.Push(stack.Pop() + stack.Pop());
-                                break;
-                            case 1:
-                                stack.Push(stack.Pop() - stack.Pop());
-                                break;
-                            case 2:
-                                stack.Push(stack.Pop() * stack.Pop());
-                                break;
-                            case 3:
-                                stack.Push(stack.Pop() / stack.Pop());
-                                break;
-                            case 4:
-                                stack.Push(Complex.Pow(stack.Pop(), stack.Pop()));
-                                break;
-                            case 5:
-                                stack.Push(Complex.Sin(stack.Pop()));
-                                break;
-                            case 6:
-                                stack.Push(Complex.Cos(stack.Pop()));
-                                break;
-                            case 7:
-                                stack.Push(Complex.Tan(stack.Pop()));
-                                break;
-                            case 8:
-                                stack.Push(1 / Complex.Tan(stack.Pop()));
-                                break;
-                            case 9:
-                                stack.Push(Complex.Log(stack.Pop(), stack.Pop().Real));
-                                break;
-                            case 10:
-                                stack.Push(Complex.Asin(stack.Pop()));
-                                break;
-                            case 11:
-                                stack.Push(Complex.Acos(stack.Pop()));
-                                break;
-                            case 12:
-                                stack.Push(Complex.Atan(stack.Pop()));
-                                break;
-                            case 13:
-                                stack.Push(Complex.Atan(1 / stack.Pop()));
-                                break;
-                            case 14:
-                                // https://stackoverflow.com/a/15454784/5429648
-                                const int g = 7;
-                                static Complex Gamma(Complex z)
-                                {
-                                    if (z.Real < 0.5) return System.Math.PI / (Complex.Sin(System.Math.PI * z) * Gamma(1 - z));
-                                    else
-                                    {
-                                        z -= 1;
+                            if (z.Real < 0.5) return System.Math.PI / (Complex.Sin(System.Math.PI * z) * Gamma(1 - z));
+                            else
+                            {
+                                z -= 1;
 
-                                        Complex x = gammaCoeffs[0];
-                                        for (var i = 1; i < g + 2; i++)
-                                            x += gammaCoeffs[i] / (z + i);
+                                Complex x = gammaCoeffs[0];
+                                for (var i = 1; i < g + 2; i++)
+                                    x += gammaCoeffs[i] / (z + i);
 
-                                        var t = z + g + 0.5;
-                                        return System.Math.Sqrt(2 * System.Math.PI) * Complex.Pow(t, z + 0.5) * Complex.Exp(-t) * x;
-                                    }
-                                }
-                                stack.Push(Gamma(stack.Pop() + 1));
-                                break;
+                                var t = z + g + 0.5;
+                                return System.Math.Sqrt(2 * System.Math.PI) * Complex.Pow(t, z + 0.5) * Complex.Exp(-t) * x;
+                            }
                         }
-                        break;
-                    case Instruction.InstructionType.PULLCACHE:
-                        stack.Push(cache[instruction.CacheNumber]);
-                        break;
-                    default:
-                        cache[instruction.CacheNumber] = stack.Peek();
+                        stack.Push(Gamma(stack.Pop() + 1));
                         break;
                 }
             }
-
             return stack.Pop();
         }
 
@@ -221,7 +216,7 @@ namespace AngouriMath
         {
             var sb = new StringBuilder();
             foreach (var instruction in instructions)
-                sb.Append(instruction.ToString()).Append("\n");
+                sb.Append(instruction).Append("\n");
             return sb.ToString();
         }
     }

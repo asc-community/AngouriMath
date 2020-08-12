@@ -13,75 +13,80 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-﻿using AngouriMath.Core.TreeAnalysis.Division.RationalDiv;
-using System;
 using System.Collections.Generic;
 using System.Linq;
- using AngouriMath.Core.Numerix;
- using PeterO.Numbers;
+using AngouriMath.Core.Numerix;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
-        /// <summary>
-        /// Finds all possible divisions to perform DividePolynoms
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <param name="cond"></param>
-        internal static void FindDivisors(ref Entity expr, Func<Entity, Entity, bool> cond)
+        /// <summary>Returns information about all monomials of an expression</summary>
+        internal static PolyInfo GatherAllPossiblePolynomials(Entity expr, bool replaceVars)
         {
-            for (int i = 0; i < expr.ChildrenCount; i++)
+            // Init
+            var res = new PolyInfo();
+
+            if (replaceVars)
             {
-                // TODO
-                var temporaryElement = expr.GetChild(i);
-                FindDivisors(ref temporaryElement, cond);
-                expr.SetChild(i, temporaryElement);
+                // Replace all variables we can
+                foreach (var varMentioned in expr.Vars)
+                    res.AddReplacement(varMentioned, GetMinimumSubtree(expr, varMentioned));
+                expr = expr.Substitute(res.Replacements);
             }
-            if (expr is Divf(var dividend, var divisor))
-                if (cond(dividend, divisor))
-                    expr = DividePolynoms(dividend, divisor);
-        }
 
-        internal static Entity DividePolynoms(Entity p, Entity q)
+            // Gather info about each var as if this var was the only argument of the polynomial P(x)
+            var children = Sumf.LinearChildren(expr);
+            foreach (var varMentioned in expr.Vars)
+                res.AddMonoInfo(varMentioned,
+                    Functions.Algebra.AnalyticalSolving.PolynomialSolver.GatherMonomialInformation<EDecimal>(children, varMentioned));
+            return res;
+        }
+        internal class PolyInfo
         {
-            var (divided, remainder) = DivideAndRemainderPolynoms(p, q);
-            return divided + remainder;
+            readonly Dictionary<VariableEntity, Dictionary<EDecimal, Entity>> monoInfo = new();
+            readonly Dictionary<VariableEntity, Entity> revertReplacements = new();
+            readonly Dictionary<Entity, VariableEntity> replacements = new();
+            public IReadOnlyDictionary<VariableEntity, Dictionary<EDecimal, Entity>> MonoInfo => monoInfo;
+            public IReadOnlyDictionary<Entity, VariableEntity> Replacements => replacements;
+            public IReadOnlyDictionary<VariableEntity, Entity> RevertReplacements => revertReplacements;
+            public void AddReplacement(VariableEntity variable, Entity value)
+            {
+                variable = new(variable.Name + "_r");
+                replacements.Add(value, variable);
+                revertReplacements.Add(variable, value);
+            }
+            public void AddMonoInfo(VariableEntity variable, Dictionary<EDecimal, Entity>? powers)
+            {
+                if (powers is { }) monoInfo.Add(variable, powers);
+            }
         }
-
         /// <summary>
         /// Divides one polynom over another one
         /// </summary>
         internal static (Entity Divided, Entity Remainder) DivideAndRemainderPolynoms(Entity p, Entity q)
         {
             // ---> (x^0.6 + 2x^0.3 + 1) / (x^0.3 + 1)
-            var replacementInfo = GatherAllPossiblePolynomials(p + q, replaceVars: true).replacementInfo;
+            var replacementInfo = GatherAllPossiblePolynomials(p + q, replaceVars: true);
 
             var originalP = p;
             var originalQ = q;
 
-            // TODO remove extra copy
-            p = p.DeepCopy();
-            q = q.DeepCopy();
+            // TODO remove extra copy by making GatherAllPossiblePolynomials accept multiple polynomials
+            p = p.Substitute(replacementInfo.Replacements);
+            q = q.Substitute(replacementInfo.Replacements);
 
-            foreach (var pair in replacementInfo)
-            {
-                FindAndReplace(ref p, pair.Value, PolyInfo.NewVarName(pair.Key));
-                FindAndReplace(ref q, pair.Value, PolyInfo.NewVarName(pair.Key));
-            }
-
-            var monoinfoQ = GatherAllPossiblePolynomials(q.Expand(), replaceVars: false).monoInfo;
-            var monoinfoP = GatherAllPossiblePolynomials(p.Expand(), replaceVars: false).monoInfo;
+            var monoinfoQ = GatherAllPossiblePolynomials(q.Expand(), replaceVars: false).MonoInfo;
+            var monoinfoP = GatherAllPossiblePolynomials(p.Expand(), replaceVars: false).MonoInfo;
 
             VariableEntity? polyvar = null;
 
             // TODO use Linq to find polyvar
             // First attempt to find polynoms
-            foreach(var pair in monoinfoQ)
+            foreach (var pair in monoinfoQ)
             {
-                if(pair.Value != null && monoinfoP.ContainsKey(pair.Key) && monoinfoP[pair.Key] != null)
+                if (pair.Value != null && monoinfoP.ContainsKey(pair.Key) && monoinfoP[pair.Key] != null)
                 {
                     polyvar = pair.Key;
                     break;
@@ -118,7 +123,7 @@ namespace AngouriMath.Core.TreeAnalysis
                         monoinfoP[polyvar][newpow] = -deltamul * n.Value;
                     }
                     else
-                    { 
+                    {
                         monoinfoP[polyvar][newpow] -= deltamul * n.Value;
                     }
                 }
@@ -135,7 +140,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
             Entity rest = 0;
             Entity Zero = 0;
-            foreach(var coef in monoinfoP[polyvar])
+            foreach (var coef in monoinfoP[polyvar])
             {
                 var simplified = coef.Value.Simplify();
                 if (simplified != Zero)
@@ -146,17 +151,12 @@ namespace AngouriMath.Core.TreeAnalysis
 
             Entity res = IntegerNumber.Create(0);
 
-            foreach(var pair in result)
+            foreach (var pair in result)
             {
                 res += pair.Value.Simplify(5) * MathS.Pow(polyvar, pair.Key);
             }
-            // TODO: we know that variable is the same but with suffix '_r'. This foreach loop can be speeded-up
-            while (replacementInfo.Any(rep => res.SubtreeIsFound(PolyInfo.NewVarName(rep.Key))))
-                foreach (var subst in replacementInfo)
-                {
-                    FindAndReplace(ref res, PolyInfo.NewVarName(subst.Key), subst.Value);
-                    FindAndReplace(ref rest, PolyInfo.NewVarName(subst.Key), subst.Value);
-                }
+            res = res.Substitute(replacementInfo.RevertReplacements);
+            rest = rest.Substitute(replacementInfo.RevertReplacements);
             return (res, rest);
         }
     }

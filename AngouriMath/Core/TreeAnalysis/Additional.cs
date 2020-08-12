@@ -98,7 +98,7 @@ namespace AngouriMath.Core.TreeAnalysis
             switch (expr)
             {
                 case Sumf or Minusf:
-                    throw new SysException("SmartExpandOver must be only called of non-sum expression");
+                    throw new AngouriBugException("SmartExpandOver must be only called of non-sum expression");
                 case Divf:
                     expr = expr.Replace(Patterns.ExpandFactorialDivisions);
                     if (!(expr is Divf(var dividend, var divisor)))

@@ -136,7 +136,7 @@ namespace AngouriMath
                 if (!x.IsNegative && x.LessThanOrEquals(consts.Pi)) return true;
                 if (x.GreaterThanOrEquals(consts.Pi) && x.LessThanOrEquals(consts.TwoPi)) return false;
 
-                throw new Core.Exceptions.SysException("Should not be reached");
+                throw new Core.Exceptions.AngouriBugException("Should not be reached");
             }
             var moduleOfSin = cos.MultiplyAndAdd(-cos, EDecimal.One, context).Sqrt(context);
             var sineIsPositive = IsSignOfSinePositive(x, consts, context);
@@ -268,7 +268,7 @@ namespace AngouriMath
                     (true, false) => consts.Pi,
                     (false, false) => EDecimal.Zero,
                 },
-                _ => throw new Core.Exceptions.SysException("Unexpected scenario"),
+                _ => throw new Core.Exceptions.AngouriBugException("Unexpected scenario"),
             };
         }
 

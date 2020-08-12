@@ -52,10 +52,8 @@ namespace AngouriMath.Functions
             if (monomialsByPower == null)
                 return false;
             var newMonomialsByPower = new Dictionary<int, Entity>();
-            var keys = monomialsByPower.Keys.ToList();
-            keys.Sort((i, i1) => (i < i1 ? 1 : (i > i1 ? -1 : 0)));
             var terms = new List<Entity>();
-            foreach (var index in keys)
+            foreach (var index in monomialsByPower.Keys.OrderByDescending(x => x))
             {
                 var pair = new KeyValuePair<EInteger, Entity>(index, monomialsByPower[index]);
                 Entity px;

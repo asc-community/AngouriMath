@@ -47,10 +47,6 @@ namespace AngouriMath.Core.TreeAnalysis
             public void AddMp(EDecimal a, ComplexNumber b) => Add(a * b.Real.Value);
             public void Assign(EDecimal val) => value = val;
             public static implicit operator EDecimal(PrimitiveDecimal obj) => obj.value;
-            internal static IPrimitive<EDecimal> Create()
-            {
-                return new PrimitiveDecimal();
-            }
             public EDecimal GetValue() => value;
         }
         internal class PrimitiveInteger : IPrimitive<EInteger>
@@ -60,12 +56,13 @@ namespace AngouriMath.Core.TreeAnalysis
             public void AddMp(EInteger a, ComplexNumber b) => Add((a * b.Real.Value).ToEInteger());
             public void Assign(EInteger val) => value = val;
             public static implicit operator EInteger(PrimitiveInteger obj) => obj.value;
-            internal static IPrimitive<EInteger> Create()
-            {
-                return new PrimitiveInteger();
-            }
             public EInteger GetValue() => value;
         }
+        /// <summary>
+        /// If an evaluable expression is equal to zero, <see langword="true"/>, otherwise, <see langword="false"/>
+        /// For example, 1 - 1 is zero, but 1 + a is not
+        /// </summary>
+        internal static bool IsZero(Entity e) => MathS.CanBeEvaluated(e) && e.Eval() == 0;
     }
 }
 
@@ -412,7 +409,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // (- a / b) ^ (1 / n) = x
                 // x ^ n = (-a / b)
                 var value = (-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).InnerSimplify();
-                res.AddRange(TreeAnalyzer.FindInvertExpression(MathS.Pow(subtree, IntegerNumber.Create(powers[1])), value, subtree));
+                foreach (var sol in MathS.Pow(subtree, IntegerNumber.Create(powers[1])).Invert(value, subtree))
+                    res.AddPiece(sol);
                 return FinalPostProcess(res);
             }
             // By this moment we know for sure that expr's power is <= 4, that expr is not a monomial,
@@ -450,13 +448,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             return null;
         }
     
-        /// <summary>
-        /// Finds all terms of a polynomial
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="terms"></param>
-        /// <param name="subtree"></param>
-        /// <returns></returns>
+        /// <summary>Finds all terms of a polynomial</summary>
         internal static Dictionary<T, Entity>? GatherMonomialInformation<T>(IEnumerable<Entity> terms, Entity subtree)
         {
             var monomialsByPower = new Dictionary<T, Entity>();
