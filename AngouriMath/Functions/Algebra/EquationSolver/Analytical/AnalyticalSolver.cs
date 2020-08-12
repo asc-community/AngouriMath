@@ -75,15 +75,12 @@ namespace AngouriMath.Core.TreeAnalysis
             int depth = 1;
             Entity subtree;
             Entity? best = null;
-            while ((subtree = GetTreeByDepth(expr, ent, depth)) != ent)
-            {
-                if (subtree.ChildrenCount == 0) return subtree;
-
-                depth++;
-                if (GoodSub(subtree))
-                    best = subtree;
-            }
-            return best ?? ent;
+            var sub = expr.FindSubtree(ent);
+            best = sub?.Parent;
+            if (best is null || !GoodSub(best))
+                return ent;
+            else
+                return best;
         }
 
         private static Entity GetTreeByDepth(Entity expr, Entity ent, int depth)

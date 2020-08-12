@@ -34,11 +34,22 @@ namespace AngouriMath.Core.TreeAnalysis
             _GetUniqueVariables(expr, res);
             return res;
         }
+
+        /// <summary>
+        /// Finds all entries of variables including constants and moves them to dst
+        /// </summary>
+        /// <param name="expr"></param>
+        /// <param name="dst"></param>
+        internal static Set GetUniqueVariablesAndConsts(Entity expr)
+        {
+            var res = new Set();
+            _GetUniqueVariablesAndConsts(expr, res);
+            return res;
+        }
     
         internal static void _GetUniqueVariables(Entity expr, Set dst)
         {
             // If it is a variable, we will add it
-            // 1 2 1 1 1 2 1
             if (expr is VariableEntity)
             {
                 // But if it is a constant, we ignore it
@@ -49,6 +60,19 @@ namespace AngouriMath.Core.TreeAnalysis
                 // Otherwise, we will try to find unique variables from its children
                 foreach (var child in expr.ChildrenReadonly)
                     _GetUniqueVariables(child, dst);
+        }
+
+        internal static void _GetUniqueVariablesAndConsts(Entity expr, Set dst)
+        {
+            // If it is a variable, we will add it
+            if (expr is VariableEntity)
+            {
+                dst.Add(expr);
+            }
+            else
+                // Otherwise, we will try to find unique variables from its children
+                foreach (var child in expr.ChildrenReadonly)
+                    _GetUniqueVariablesAndConsts(child, dst);
         }
         
         /// <summary>

@@ -144,7 +144,6 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 AddHistory(res);
 
                 {
-                    // It is quite slow at this point
                     var listOfPossiblePolys = new List<Entity>();
                     // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop
                     foreach (VariableEntity variableEntity in MathS.Utils.GetUniqueVariables(res).FiniteSet())
@@ -160,6 +159,15 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                         if (min < res.Complexity())
                             res = minPoly;
                     }
+                    /*
+                    This was intended to simplify expressions as polynomials over nodes, some kind of
+                    greatest common node and simplifying over it. However, the current algorithm does
+                    not solve this issue completely and yet too slow to be accepted. 
+
+
+                    res = res.DeepCopy();
+                    SmartPolynomialCollapser.Collapse(ref res);
+                 */
                 }
 
                 res = history[history.Keys.Min()][0].DeepCopy();

@@ -96,6 +96,8 @@ namespace AngouriMath.Extensions
         public static string Latexise(this string str) => str.ToEntity().Latexise();
         public static FastExpression Compile(this string str, params VariableEntity[] variables)
             => str.ToEntity().Compile(variables);
+        public static Entity Derive(this string str, VariableEntity x)
+            => str.ToEntity().Derive(x);
 
         // C# can't into templates :(
         /*
