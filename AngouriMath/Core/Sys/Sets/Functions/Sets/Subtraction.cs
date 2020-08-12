@@ -17,7 +17,7 @@ using System.Collections.Generic;
 
 namespace AngouriMath.Core.Sets
 {
-    static partial class SetFunctions
+    partial record Setfunctions
     {
         internal static SetNode Subtract(SetNode A, SetNode B)
         {

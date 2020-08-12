@@ -17,7 +17,7 @@ using System.Collections.Generic;
 
 namespace AngouriMath.Core.Sets
 {
-    internal static partial class SetFunctions
+    public partial record Setfunctions
     {
         public static SetNode Unite(SetNode A, SetNode B)
         {

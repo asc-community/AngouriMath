@@ -93,7 +93,7 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         internal static Set SolveNt(Entity expr, VariableEntity v, 
             NewtonSetting settings)
         {
-            if (MathS.Utils.GetUniqueVariables(expr).Count != 1)
+            if (expr.Vars.Count != 1)
                 throw new MathSException("Two or more or less than one variables in SolveNt is prohibited");
             var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
@@ -138,7 +138,7 @@ namespace AngouriMath
         }
     }
 
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity : ILatexiseable
     {
         /// <summary>
         /// Searches for numerical solutions via Newton's method https://en.wikipedia.org/wiki/Newton%27s_method

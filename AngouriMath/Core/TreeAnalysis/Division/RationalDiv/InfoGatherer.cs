@@ -17,7 +17,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core.Numerix;
-using AngouriMath.Core.TreeAnalysis.Division.RationalDiv;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using PeterO.Numbers;
 
@@ -25,10 +24,10 @@ namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer 
     {   
-        internal static Dictionary<T, Entity>? ParseAsPolynomial<T>(Entity expr, Entity x)
+        internal static Dictionary<T, Entity>? ParseAsPolynomial<T>(Entity expr, VariableEntity x)
         {
             var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
-                 expr, entity => entity.SubtreeIsFound(x)
+                 expr, entity => entity.Vars.Contains(x)
             );
 
             if (children is null)
@@ -62,57 +61,40 @@ namespace AngouriMath.Core.TreeAnalysis
 
             // Init
             var res = new PolyInfo();
-            var mentionedVarList = MathS.Utils.GetUniqueVariables(expr);
-            var newList = new List<string>();
+            var mentionedVarList = expr.Vars;
+            var newList = new List<VariableEntity>();
 
             if (replaceVars)
             {
+                var initialReplacements = new Dictionary<Entity, VariableEntity>();
                 // Replace all variables we can
                 foreach (var varMentioned in mentionedVarList)
                 {
-                    if (!expr.SubtreeIsFound(varMentioned))
-                        continue;
-                    var replacement = TreeAnalyzer.GetMinimumSubtree(expr, varMentioned);
-                    res.replacementInfo[varMentioned.Name] = replacement;
-                    FindAndReplace(ref expr, replacement, new VariableEntity(PolyInfo.NewVarName(varMentioned.Name)));
-                    newList.Add(PolyInfo.NewVarName(varMentioned.Name));
+                    var replacement = GetMinimumSubtree(expr, varMentioned);
+                    res.replacementInfo[varMentioned] = replacement;
+                    FindAndReplace(ref expr, replacement, PolyInfo.NewVarName(varMentioned));
+                    newList.Add(PolyInfo.NewVarName(varMentioned));
                 }
             }
             else
-            {
                 foreach(var v in mentionedVarList)
-                {
                     newList.Add(v.Name);
-                }
-            }
 
             // Gather info about each var as if this var was the only argument of the polynomial P(x)
             foreach (var varMentioned in newList)
             {
-                List<Entity> children;
-                if (expr is OperatorEntity && expr.Name == "sumf" || expr.Name == "minusf")
-                    children = LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
-                else
-                    children = new List<Entity> { expr };
-                if (PolynomialSolver.GatherMonomialInformation<EDecimal>(children, MathS.Var(varMentioned)) is { } info)
+                var children = Sumf.LinearChildren(expr);
+                if (PolynomialSolver.GatherMonomialInformation<EDecimal>(children, varMentioned) is { } info)
                     res.monoInfo[varMentioned] = info;
             }
 
             return res;
         }
-    }
-}
-
-
-namespace AngouriMath.Core.TreeAnalysis.Division.RationalDiv
-{
-    using MonomialInfo = Dictionary<string, Dictionary<EDecimal, Entity>>;
-    using ReplacementInfo = Dictionary<string, Entity>;
-    internal class PolyInfo
-    {
-        internal MonomialInfo monoInfo = new MonomialInfo();
-        internal ReplacementInfo replacementInfo = new ReplacementInfo();
-        internal static string NewVarName(string oldName) => oldName + "_r";
-        internal static string OldVarName(string newName) => newName.Substring(0, newName.Length - 2);
+        internal class PolyInfo
+        {
+            internal Dictionary<VariableEntity, Dictionary<EDecimal, Entity>> monoInfo = new();
+            internal Dictionary<VariableEntity, Entity> replacementInfo = new();
+            internal static VariableEntity NewVarName(VariableEntity oldName) => new(oldName.Name + "_r");
+        }
     }
 }

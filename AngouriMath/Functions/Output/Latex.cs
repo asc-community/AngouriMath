@@ -15,166 +15,161 @@
 
 
 
-﻿using System;
+using System;
 using System.Collections.Generic;
- using System.Numerics;
- using System.Text;
+using System.Linq;
+using System.Text;
 using AngouriMath.Core;
 using AngouriMath.Core.Numerix;
- using AngouriMath.Core.Sys.Interfaces;
- using PeterO.Numbers;
+using AngouriMath.Core.Sys.Interfaces;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
-    using LatexTable = Dictionary<string, Func<List<Entity>, string>>;
+    public abstract partial record Entity : ILatexiseable
+    {
+        /// <summary>Returns the expression in LaTeX (for example, a / b -> \frac{a}{b})</summary>
+        public abstract string Latexise();
+        protected internal string Latexise(bool parenthesesRequired) =>
+            parenthesesRequired ? @$"\left({Latexise()}\right)" : Latexise();
+    }
+    public partial record NumberEntity
+    {
+        public override string Latexise() => Value.Latexise();
+    }
 
-    public abstract partial class Entity : ILatexiseable
+    public partial record VariableEntity
     {
         /// <summary>
-        /// Returns the expression in format of latex (for example, a / b -> \frac{a}{b})
+        /// List of constants LaTeX will correctly display
+        /// Yet to be extended
+        /// Case does matter, not all letters have both displays in LaTeX
         /// </summary>
-        /// <returns></returns>
-        public string Latexise() => Latexise(false);
-        internal string Latexise(bool parenthesesRequired)
+        private static readonly HashSet<string> LatexisableConstants = new HashSet<string>
         {
-            if (IsLeaf)
-                return this switch
-                {
-                    VariableEntity _ => Const.LatexiseConst(Name),
-                    Tensor t => t.Latexise(),
-                    // If parentheses are required, they might be only required when complicated numbers are wrapped,
-                    // such as fractions and complex but not a single i
-                    NumberEntity { Value:var value } => value.Latexise(Priority != Const.PRIOR_NUM && parenthesesRequired),
-                    _ => throw new Core.Exceptions.UnknownEntityException()
-                };
-            else
-                return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeLatex(Name, Children), parenthesesRequired, latex: true);
-        }
-    }
+            "alpha", "beta", "gamma", "delta", "epsilon", "varepsilon", "zeta", "eta", "theta", "vartheta",
+            "iota", "kappa", "varkappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "varpi", "rho",
+            "varrho", "sigma", "varsigma", "tau", "upsilon", "phi", "varphi", "chi", "psi", "omega",
 
-    internal static partial class MathFunctions
-    {
-        internal static readonly LatexTable latexTable = new LatexTable();
+            "Gamma", "Delta", "Theta", "Lambda", "Xi", "Pi", "Sigma", "Upsilon", "Phi", "Psi", "Omega",
+        };
 
         /// <summary>
-        /// Finds an appropriate function to call latex
+        /// Returns latexised const if it is possible to latexise it,
+        /// or its original name otherwise
         /// </summary>
-        /// <param name="typeName"></param>
-        /// <param name="args"></param>
-        /// <returns></returns>
-        internal static string InvokeLatex(string typeName, List<Entity> args)
+        public override string Latexise()
         {
-            return latexTable[typeName](args);
-        }
-
-        /// <summary>
-        /// Wraps a string with parentheses
-        /// </summary>
-        /// <param name="s"></param>
-        /// <param name="need"></param>
-        /// <param name="latex"></param>
-        /// <returns></returns>
-        internal static string ParenthesesOnNeed(string s, bool need, bool latex)
-        {
-            if (latex)
-                return need ? @"\left(" + s + @"\right)" : s;
-            else
-                return need ? @"(" + s + @")" : s;
+            var constName = Name;
+            var index = Functions.Utils.ParseIndex(constName);
+            constName = index.prefix ?? constName;
+            constName = LatexisableConstants.Contains(constName) ? @"\" + constName : constName;
+            return index.prefix is null ? constName : (constName + "_{" + index.index + "}");
         }
     }
 
-    internal static partial class Sumf
+    public partial record Tensor
     {
-        internal static string Latex(List<Entity> args)
+        public override string Latexise()
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var arg1latex = args[1].Latexise(args[1].Priority < Const.PRIOR_SUM);
-            return args[0].Latexise(args[0].Priority < Const.PRIOR_SUM) +
-                (arg1latex.StartsWith("-") ? arg1latex : "+" + arg1latex);
-        }
-    }
-    internal static partial class Minusf
-    {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Latexise(args[0].Priority < Const.PRIOR_MINUS) + "-" + args[1].Latexise(args[1].Priority <= Const.PRIOR_MINUS);
-        }
-    }
-    internal static partial class Mulf
-    {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            if (args[0] == -1)
-                return "-" + args[1].Latexise(args[1].Priority < Const.PRIOR_MUL);
-            else
-                return args[0].Latexise(args[0].Priority < Const.PRIOR_MUL) + @"\times " + args[1].Latexise(args[1].Priority < Const.PRIOR_MUL);
-        }
-    }
-    internal static partial class Divf
-    {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            return @"\frac{" + args[0].Latexise() + "}{" + args[1].Latexise() + "}";
-        }
-    }
-    internal static partial class Sinf
-    {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return @"\sin\left(" + args[0].Latexise() + @"\right)";
-        }
-    }
-    internal static partial class Cosf
-    {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return @"\cos\left(" + args[0].Latexise() + @"\right)";
-        }
-    }
-    internal static partial class Tanf
-    {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return @"\tan\left(" + args[0].Latexise() + @"\right)";
-        }
-    }
-    internal static partial class Cotanf
-    {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return @"\cot\left(" + args[0].Latexise() + @"\right)";
-        }
-    }
-    internal static partial class Logf
-    {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            if (args[0] == 10)
-                return @"\log\left(" + args[1].Latexise() + @"\right)";
-            else if (args[0] == MathS.e)
-                return @"\ln\left(" + args[1].Latexise() + @"\right)";
-            else
-                return @"\log_{" + args[0].Latexise() + @"}\left(" + args[1].Latexise() + @"\right)";
-        }
-    }
-    internal static partial class Powf
-    {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            if (args[1] is NumberEntity { Value:RationalNumber { IsFinite:true } rational and not IntegerNumber })
+            if (IsMatrix)
             {
-                var (numerator, denominator) = (rational.Value.Numerator, rational.Value.Denominator);
-                var str = @"\sqrt" + (denominator.Equals(2) ? "" : "[" + denominator + "]") + 
-                  "{" + args[0].Latexise() + "}";
+                var sb = new StringBuilder();
+                sb.Append(@"\begin{pmatrix}");
+                var lines = new List<string>();
+                for (int x = 0; x < Shape[0]; x++)
+                {
+                    var items = new List<string>();
+
+                    for (int y = 0; y < Shape[1]; y++)
+                        items.Add(this[x, y].Latexise());
+
+                    var line = string.Join(" & ", items);
+                    lines.Add(line);
+                }
+                sb.Append(string.Join(@"\\", lines));
+                sb.Append(@"\end{pmatrix}");
+                return sb.ToString();
+            }
+            else if (IsVector)
+            {
+                var sb = new StringBuilder();
+                sb.Append(@"\begin{bmatrix}");
+                sb.Append(string.Join(" & ", innerTensor.Iterate().Select(k => k.Value.Latexise())));
+                sb.Append(@"\end{bmatrix}");
+                return sb.ToString();
+            }
+            else
+            {
+                return this.ToString();
+            }
+        }
+    }
+
+    public partial record Sumf
+    {
+        public override string Latexise() =>
+            Augend.Latexise(Augend.Priority < Const.Priority.Sum)
+            + (Addend.Latexise(Addend.Priority < Const.Priority.Sum) is var addend && addend.StartsWith("-")
+               ? addend : "+" + addend);
+    }
+    public partial record Minusf
+    {
+        public override string Latexise() =>
+            Subtrahend.Latexise(Subtrahend.Priority < Const.Priority.Minus)
+            + "-" + Minuend.Latexise(Minuend.Priority <= Const.Priority.Minus);
+    }
+    public partial record Mulf
+    {
+        public override string Latexise() =>
+            (Multiplier == -1 ? "-" : Multiplier.Latexise(Multiplier.Priority < Const.Priority.Mul) + @"\times ")
+            + Multiplicand.Latexise(Multiplicand.Priority < Const.Priority.Mul);
+    }
+    public partial record Divf
+    {
+        public override string Latexise() =>
+            @"\frac{" + Dividend.Latexise() + "}{" + Divisor.Latexise() + "}";
+    }
+    public partial record Sinf
+    {
+        public override string Latexise() =>
+            @"\sin\left(" + Argument.Latexise() + @"\right)";
+    }
+    public partial record Cosf
+    {
+        public override string Latexise() =>
+            @"\cos\left(" + Argument.Latexise() + @"\right)";
+    }
+    public partial record Tanf
+    {
+        public override string Latexise() =>
+            @"\tan\left(" + Argument.Latexise() + @"\right)";
+    }
+    public partial record Cotanf
+    {
+        public override string Latexise() =>
+            @"\cot\left(" + Argument.Latexise() + @"\right)";
+    }
+    public partial record Logf
+    {
+        public override string Latexise() =>
+            Base == 10
+            ? @"\log\left(" + Antilogarithm.Latexise() + @"\right)"
+            : Base == MathS.e
+            ? @"\ln\left(" + Antilogarithm.Latexise() + @"\right)"
+            : @"\log_{" + Base.Latexise() + @"}\left(" + Antilogarithm.Latexise() + @"\right)";
+    }
+    public partial record Powf
+    {
+        public override string Latexise()
+        {
+            if (Exponent is NumberEntity { Value: RationalNumber {
+                Value: { Numerator:var numerator, Denominator:var denominator }
+            } and not IntegerNumber })
+            {
+                var str =
+                    @"\sqrt" + (denominator.Equals(2) ? "" : "[" + denominator + "]")
+                    + "{" + Base.Latexise() + "}";
                 var abs = numerator.Abs();
                 if (!abs.Equals(EInteger.One))
                     str += "^{" + abs + "}";
@@ -184,93 +179,73 @@ namespace AngouriMath
             }
             else
             {
-                return "{" + args[0].Latexise(args[0].Priority <= Const.PRIOR_POW) + "}^{" + args[1].Latexise() + "}";
+                return "{" + Base.Latexise(Base.Priority <= Const.Priority.Pow) + "}^{" + Exponent.Latexise() + "}";
             }
         }
     }
-    internal static partial class Arcsinf
+    public partial record Arcsinf
     {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return @"\arcsin\left(" + args[0].Latexise() + @"\right)";
-        }
+        public override string Latexise() =>
+            @"\arcsin\left(" + Argument.Latexise() + @"\right)";
     }
-    internal static partial class Arccosf
+    public partial record Arccosf
     {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return @"\arccos\left(" + args[0].Latexise() + @"\right)";
-        }
+        public override string Latexise() =>
+            @"\arccos\left(" + Argument.Latexise() + @"\right)";
     }
-    internal static partial class Arctanf
+    public partial record Arctanf
     {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return @"\arctan\left(" + args[0].Latexise() + @"\right)";
-        }
+        public override string Latexise() =>
+            @"\arctan\left(" + Argument.Latexise() + @"\right)";
     }
-    internal static partial class Arccotanf
+    public partial record Arccotanf
     {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return @"\arccot\left(" + args[0].Latexise() + @"\right)";
-        }
+        public override string Latexise() =>
+            @"\arccot\left(" + Argument.Latexise() + @"\right)";
     }
 
-    internal static partial class Factorialf
+    public partial record Factorialf
     {
-        internal static string Latex(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return args[0].Latexise(args[0].Priority < Const.PRIOR_NUM) + "!";
-        }
+        public override string Latexise() =>
+            Argument.Latexise(Argument.Priority < Const.Priority.Num) + "!";
     }
 
-    internal static partial class Derivativef
+    public partial record Derivativef
     {
-        internal static string Latex(List<Entity> args)
+        public override string Latexise()
         {
-            MathFunctions.AssertArgs(args.Count, 3);
-            var pow = args[2];
-            var powerIfNeeded = pow == IntegerNumber.One ? "" : "^{" + pow.Latexise() + "}";
+            var powerIfNeeded = Iterations == IntegerNumber.One ? "" : "^{" + Iterations.Latexise() + "}";
 
             var varOverDeriv =
-                args[1] is VariableEntity { Name: { Length: 1 } name }
+                Variable is VariableEntity { Name: { Length: 1 } name }
                 ? name
-                : @"\left[" + args[1].Latexise(false) + @"\right]";
+                : @"\left[" + Variable.Latexise(false) + @"\right]";
 
             // TODO: Should we display the d upright using \mathrm?
             // Differentiation is an operation, just like sin, cos, etc.
             return @"\frac{d" + powerIfNeeded +
-            @"\left[" + args[0].Latexise(false) + @"\right]}{d" + varOverDeriv + powerIfNeeded + "}";
+            @"\left[" + Expression.Latexise(false) + @"\right]}{d" + varOverDeriv + powerIfNeeded + "}";
         }
     }
 
-    internal static partial class Integralf
+    public partial record Integralf
     {
-        internal static string Latex(List<Entity> args)
+        public override string Latexise()
         {
-            MathFunctions.AssertArgs(args.Count, 3);
-            var pow = args[2];
-
             // Unlike derivatives, integrals do not have "power" that would be equal
             // to sequential applying integration to a function
 
-            if (!(pow is NumberEntity { Value: IntegerNumber asInt } && asInt >= 0))
+            if (!(Iterations is NumberEntity { Value: IntegerNumber asInt } && asInt >= 0))
                 return "Error";
 
             if (asInt == 0)
-                return args[0].Latexise(false);
+                return Expression.Latexise(false);
 
             var sb = new StringBuilder();
             for (int i = 0; i < asInt; i++)
                 sb.Append(@"\int ");
             sb.Append(@"\left[");
-            sb.Append(args[0].Latexise(false));
+            sb.Append(Expression.Latexise(false));
             sb.Append(@"\right]");
 
             // TODO: can we write d^2 x or (dx)^2 instead of dx dx?
@@ -278,12 +253,12 @@ namespace AngouriMath
             for (int i = 0; i < asInt; i++)
             {
                 sb.Append(" d");
-                if (args[1] is VariableEntity { Name: { Length: 1 } name })
+                if (Variable is VariableEntity { Name: { Length: 1 } name })
                     sb.Append(name);
                 else
                 {
                     sb.Append(@"\left[");
-                    sb.Append(args[1].Latexise(false));
+                    sb.Append(Variable.Latexise(false));
                     sb.Append(@"\right]");
                 }
             }
@@ -291,33 +266,29 @@ namespace AngouriMath
         }
     }
 
-    internal static partial class Limitf
+    public partial record Limitf
     {
-        internal static string Latex(List<Entity> args)
+        public override string Latexise()
         {
-            MathFunctions.AssertArgs(args.Count, 4);
-
             var sb = new StringBuilder();
-            sb.Append(@"\lim_{");
+            sb.Append(@"\lim_{").Append(Variable.Latexise())
+              .Append(@"\to ").Append(Destination.Latexise());
 
-            sb.Append(args[1].Latexise(false));
-
-            sb.Append(@"\to ");
-
-            sb.Append(args[2].Latexise(false));
-
-            if (args[3] == IntegerNumber.MinusOne)
-                sb.Append("^-");
-            else if (args[3] == IntegerNumber.One)
-                sb.Append("^+");
-            else if (args[3] != IntegerNumber.Zero)
-                return "Error";
+            switch (ApproachFrom)
+            {
+                case Limits.ApproachFrom.Left:
+                    sb.Append("^-");
+                    break;
+                case Limits.ApproachFrom.Right:
+                    sb.Append("^+");
+                    break;
+            }
 
             sb.Append("} ");
-            if (args[0].Priority < Const.PRIOR_POW)
+            if (Expression.Priority < Const.Priority.Pow)
                 sb.Append(@"\left[");
-            sb.Append(args[0].Latexise(false));
-            if (args[0].Priority < Const.PRIOR_POW)
+            sb.Append(Expression.Latexise());
+            if (Expression.Priority < Const.Priority.Pow)
                 sb.Append(@"\right]");
 
             return sb.ToString();
@@ -339,9 +310,9 @@ namespace AngouriMath
                             sb.Append(@"\emptyset");
                             break;
                         }
-                        
+
                         sb.Append(@"\left\{");
-                        foreach(var p in set)
+                        foreach (var p in set)
                         {
                             switch (p)
                             {
@@ -402,7 +373,7 @@ namespace AngouriMath
                             OperatorSet.OperatorType.INVERSION => @"^\complement",
                             _ => throw new Exceptions.UnknownOperatorException()
                         };
-                        for(int i = 0; i < op.Children.Length; i++)
+                        for (int i = 0; i < op.Children.Length; i++)
                         {
                             sb.Append(@"\left(").Append(op.Children[i].Latexise());
                             if (op.Children.Length == 1 || i < op.Children.Length - 1)

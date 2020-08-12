@@ -1,4 +1,4 @@
-
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -29,7 +29,7 @@ using AngouriMath.Functions.Algebra.Solver.Analytical;
 
 namespace AngouriMath
 {
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity : ILatexiseable
     {
         /// <summary>
         /// Attempt to find analytical roots of a custom equation
@@ -39,6 +39,191 @@ namespace AngouriMath
         /// Returns Set. Work with it as with a list
         /// </returns>
         public Set SolveEquation(VariableEntity x) => EquationSolver.Solve(this, x);
+
+        /// <summary><para>This <see cref="Entity"/> MUST contain exactly ONE occurance of <paramref name="x"/>,
+        /// otherwise this function won't work correctly.</para>
+        /// 
+        /// This function inverts an expression and returns a <see cref="Set"/>. Here, a represents <paramref name="value"/>.
+        /// <list type="table">
+        /// <item>x^2 = a ⇒ x = { sqrt(a), -sqrt(a) }</item>
+        /// <item>sin(x) = a ⇒ x = { arcsin(a) + 2 pi n, pi - arcsin(a) + 2 pi n }</item>
+        /// </list>
+        /// </summary>
+        /// <returns>A set of possible roots of the expression.</returns>
+        internal IEnumerable<Entity> Invert(Entity value, VariableEntity x) =>
+            Invert_(value.InnerSimplify(), x).Where(el => el.IsFinite);
+        /// <summary>Use <see cref="Invert(Entity, VariableEntity)"/> instead which auto-simplifies <paramref name="value"/></summary>
+        private protected abstract IEnumerable<Entity> Invert_(Entity value, VariableEntity x);
+        /// <summary>
+        /// Returns true if <paramref name="a"/> is inside a rect with corners <paramref name="from"/>
+        /// and <paramref name="to"/>, OR <paramref name="a"/> is an unevaluable expression
+        /// </summary>
+        private protected static bool EntityInBounds(Entity a, ComplexNumber from, ComplexNumber to)
+        {
+            if (!MathS.CanBeEvaluated(a))
+                return true;
+            var r = a.Eval();
+            return r.Real >= from.Real &&
+                   r.Imaginary >= from.Imaginary &&
+                   r.Real <= to.Real &&
+                   r.Imaginary <= to.Imaginary;
+        }
+    }
+    public partial record NumberEntity : Entity
+    {
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
+    }
+    public partial record VariableEntity : Entity
+    {
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) => Enumerable.Repeat(this, 1);
+    }
+    public partial record Tensor : Entity
+    {
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) => Enumerable.Repeat(this, 1);
+    }
+    // Each function and operator processing
+    public partial record Sumf
+    {
+        // x + a = value => x = value - a
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Augend.Vars.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
+    }
+    public partial record Minusf
+    {
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Subtrahend.Vars.Contains(x)
+            // x - a = value => x = value + a
+            ? Subtrahend.Invert(value + Minuend, x)
+            // a - x = value => x = a - value
+            : Minuend.Invert(value - Subtrahend, x);
+    }
+    public partial record Mulf
+    {
+        // x * a = value => x = value / a
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Multiplier.Vars.Contains(x)
+            ? Multiplier.Invert(value / Multiplicand, x)
+            : Multiplicand.Invert(value / Multiplier, x);
+    }
+    public partial record Divf
+    {
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Dividend.Vars.Contains(x)
+            // x / a = value => x = a * value
+            ? Dividend.Invert(value * Divisor, x)
+            // a / x = value => x = a / value
+            : Divisor.Invert(value / Dividend, x);
+    }
+    public partial record Powf
+    {
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Base.Vars.Contains(x)
+            ? Exponent is IntegerNumber { Integer: var pow }
+              ? NumberEntity.GetAllRoots(1, pow)
+                .SelectMany(root => Base.Invert(root * MathS.Pow(value, 1 / Exponent), x))
+              : Base.Invert(MathS.Pow(value, 1 / Exponent), x)
+            // a ^ x = value => x = log(a, value)
+            : Exponent.Invert(MathS.Log(Base, value) + 2 * MathS.i * Utils.FindNextIndex(this + value, "n") * MathS.pi, x);
+    }
+    // TODO: Consider case when sin(sin(x)) where double-mention of n occures
+    public partial record Sinf
+    {
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            // sin(x) = value => x = arcsin(value) + 2pi * n
+            Argument.Invert(MathS.Arcsin(value) + 2 * MathS.pi * Utils.FindNextIndex(this + value, "n"), x)
+            // sin(x) = value => x = pi - arcsin(value) + 2pi * n
+            .Concat(Argument.Invert(MathS.pi - MathS.Arcsin(value) + 2 * MathS.pi * Utils.FindNextIndex(this + value, "n"), x));
+    }
+    public partial record Cosf
+    {
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            // cos(x) = value => x = arccos(value) + 2pi * n
+            Argument.Invert(MathS.Arccos(value) + 2 * MathS.pi * Utils.FindNextIndex(this + value, "n"), x)
+            // cos(x) = value => x = -arccos(value) + 2pi * n
+            .Concat(Argument.Invert(-MathS.Arccos(value) + 2 * MathS.pi * Utils.FindNextIndex(this + value, "n"), x));
+    }
+    public partial record Tanf
+    {
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            // tan(x) = value => x = arctan(value) + pi * n
+            Argument.Invert(MathS.Arctan(value) + MathS.pi * Utils.FindNextIndex(this + value, "n"), x);
+    }
+    public partial record Cotanf
+    {
+        // cotan(x) = value => x = arccotan(value) + pi * n
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Argument.Invert(MathS.Arccotan(value) + MathS.pi * Utils.FindNextIndex(this + value, "n"), x);
+    }
+
+    public partial record Logf
+    {
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Base.Vars.Contains(x)
+            // log(x, a) = value => x = a ^ value
+            ? Base.Invert(MathS.Pow(Antilogarithm, value), x)
+            // log(a, x) = value => a = x ^ value => x = a ^ (1 / value)
+            : Antilogarithm.Invert(MathS.Pow(Base, 1 / value), x);
+    }
+
+    public partial record Arcsinf
+    {
+        private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
+        private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
+        // arcsin(x) = value => x = sin(value)
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            EntityInBounds(value, From, To)
+            ? Argument.Invert(MathS.Sin(value), x)
+            : Enumerable.Empty<Entity>();
+    }
+    public partial record Arccosf
+    {
+        private static readonly ComplexNumber From = ComplexNumber.Create(0, RealNumber.NegativeInfinity.Value);
+        private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi, RealNumber.PositiveInfinity.Value);
+        // arccos(x) = value => x = cos(value)
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            EntityInBounds(value, From, To)
+            ? Argument.Invert(MathS.Cos(value), x)
+            : Enumerable.Empty<Entity>();
+    }
+    public partial record Arctanf
+    {
+        // x + a = value => x = value - a
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Augend.Vars.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
+    }
+    public partial record Arccotanf
+    {
+        // x + a = value => x = value - a
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Augend.Vars.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
+    }
+    public partial record Factorialf
+    {
+        // x + a = value => x = value - a
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Augend.Vars.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
+    }
+
+    public partial record Derivativef
+    {
+        // x + a = value => x = value - a
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Augend.Vars.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
+    }
+
+    public partial record Integralf
+    {
+        // x + a = value => x = value - a
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Augend.Vars.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
+    }
+
+    public partial record Limitf
+    {
+        // x + a = value => x = value - a
+        private protected override IEnumerable<Entity> Invert_(Entity value, VariableEntity x) =>
+            Augend.Vars.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
     }
 }
 
@@ -54,66 +239,28 @@ namespace AngouriMath.Core.TreeAnalysis
         /// there's no pattern for solving equation like sin(x)^2 + sin(x) + 1 = 0,
         /// but we can first solve t^2 + t + 1 = 0, and then root = sin(x).
         /// </summary>
-        /// <param name="tree"></param>
-        /// <returns></returns>
-        public static Entity GetMinimumSubtree(Entity expr, Entity ent)
+        public static Entity GetMinimumSubtree(Entity expr, VariableEntity x)
         {
-            // TODO: this function requires a lot of refactoring
+            if (!expr.Vars.Contains(x))
+                throw new ArgumentException($"{nameof(expr)} must contain {nameof(x)}", nameof(expr));
 
             // The idea is the following:
             // We must get a subtree that has more occurances than 1,
             // But at the same time it should cover all references to `ent`
 
-            bool GoodSub(Entity sub)
-            {
-                return expr.CountOccurances(sub.ToString()) * sub.CountOccurances(ent.ToString()) == expr.CountOccurances(ent.ToString());
-                /* if found subtree contains 3 mentions of `ent` and expression consists of 2 such substress, 
-                then number of mentions of `ent` in expression should be 6*/
-            }
-
-
-            int depth = 1;
-            Entity subtree;
-            Entity? best = null;
-            while ((subtree = GetTreeByDepth(expr, ent, depth)) != ent)
-            {
-                if (subtree.ChildrenCount == 0) return subtree;
-
-                depth++;
-                if (GoodSub(subtree))
-                    best = subtree;
-            }
-            return best ?? ent;
+            var xs = expr.Count(child => child == x);
+            return
+                expr
+                .TakeWhile(e => e != x) // Requires Entity enumeration to be depth-first!!
+                .Where(e => e.Vars.Contains(x))
+                .Reverse() // e.g. when expr is sin((x+1)^2)+3, this step results in [x+1, (x+1)^2, sin((x+1)^2), sin((x+1)^2)+3]
+                .FirstOrDefault(sub => expr.Count(child => child == sub) * sub.Count(child => child == x) == xs)
+                // if `expr` contains 2 `sub`s and `sub` contains 3 `x`s, then there should be 6 `x`s in `expr` (6 == `xs`)
+                ?? x;
         }
 
-        private static Entity GetTreeByDepth(Entity expr, Entity ent, int depth)
-        {
-            while (depth > 0)
-            {
-                foreach (var child in expr.ChildrenReadonly)
-                    // We don't care about the order as once we encounter mention of `ent`,
-                    // we need ALL subtrees be equal
-                    if (child.SubtreeIsFound(ent))
-                    {
-                        expr = child;
-                        break;
-                    }
-                depth -= 1;
-                if (expr == ent)
-                    return expr;
-            }
-            return expr;
-        }
-
-        /// <summary>
-        /// Func MUST contain exactly ONE occurance of x,
-        /// otherwise it won't work correctly
-        /// </summary>
-        /// <param name="func"></param>
-        /// <param name="value"></param>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        public static Set FindInvertExpression(Entity func, Entity value, Entity x)
+        /// <summary>Func MUST contain exactly ONE occurance of x, otherwise it won't work correctly</summary>
+        public static Set FindInvertExpression(Entity func, Entity value, VariableEntity x)
         {
             value = value.InnerSimplify();
             if (func == x)
@@ -130,112 +277,9 @@ namespace AngouriMath.Core.TreeAnalysis
             return new Set(value);
         }
 
-        /// <summary>
-        /// Inverts operator and returns a set
-        /// x^2 = a
-        /// => x = sqrt(a)
-        /// x = -sqrt(a)
-        /// </summary>
-        /// <param name="func"></param>
-        /// <param name="value"></param>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        public static Set InvertOperatorEntity(OperatorEntity func, Entity value, Entity x)
-        {
-            Entity a, un;
-            int arg;
-            if (func.GetChild(0).SubtreeIsFound(x))
-            {
-                a = func.GetChild(1);
-                un = func.GetChild(0);
-                arg = 0;
-            }
-            else
-            {
-                a = func.GetChild(0);
-                un = func.GetChild(1);
-                arg = 1;
-            }
-            var n = Utils.FindNextIndex(func + value, "n");
-            switch (func.Name)
-            {
-                case "sumf":
-                    // x + a = value => x = value - a
-                    return FindInvertExpression(un, value - a, x);
-                case "minusf":
-                    if (arg == 0)
-                        // x - a = value => x = value + a
-                        return FindInvertExpression(un, value + a, x);
-                    else
-                        // a - x = value => x = a - value
-                        return FindInvertExpression(un, a - value, x);
-                case "mulf":
-                    // x * a = value => x = value / a
-                    return FindInvertExpression(un, value / a, x);
-                case "divf":
-                    if (arg == 0)
-                        // x / a = value => x = a * value
-                        return FindInvertExpression(un, value * a, x);
-                    else
-                        // a / x = value => x = a / value
-                        return FindInvertExpression(un, a / value, x);
-                case "powf":
-                    if (arg == 0)
-                    {
-                        // x ^ a = value => x = value ^ (1/a)
-                        if (a is NumberEntity { Value:IntegerNumber { Value: var pow } })
-                        {
-                            var res = new Set();
-                            foreach (var root in Number.GetAllRoots(1, pow).FiniteSet())
-                                res.AddRange(FindInvertExpression(un, root * MathS.Pow(value, 1 / a), x));
-                            return res;
-                        }
-                        else
-                            return FindInvertExpression(un, MathS.Pow(value, 1 / a), x);
-                    }
-                    else
-                        // a ^ x = value => x = log(a, value)
-                        return FindInvertExpression(un, MathS.Log(a, value) + 2 * MathS.i * n * MathS.pi, x);
-                default:
-                    throw new UnknownOperatorException();
-            }
-        }
 
-        /// <summary>
-        /// Returns true if a is inside a rect with corners from and to,
-        /// OR a is an unevaluable expression
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="from"></param>
-        /// <param name="to"></param>
-        /// <returns></returns>
-        private static bool EntityInBounds(Entity a, ComplexNumber from, ComplexNumber to)
-        {
-            if (!MathS.CanBeEvaluated(a))
-                return true;
-            var r = a.Eval();
-            return r.Real >= from.Real &&
-                   r.Imaginary >= from.Imaginary &&
-                   r.Real <= to.Real &&
-                   r.Imaginary <= to.Imaginary;
-        }
-
-        private static readonly ComplexNumber ArcsinFrom = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
-        private static readonly ComplexNumber ArcsinTo = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
-        private static readonly ComplexNumber ArccosFrom = ComplexNumber.Create(0, RealNumber.NegativeInfinity.Value);
-        private static readonly ComplexNumber ArccosTo = ComplexNumber.Create(MathS.DecimalConst.pi, RealNumber.PositiveInfinity.Value);
         private static readonly Set Empty = new Set();
 
-        /// <summary>
-        /// Returns a set of possible roots of a function, e. g.
-        /// sin(x) = a =>
-        /// x = arcsin(a) + 2 pi n
-        /// x = pi - arcsin(a) + 2 pi n
-        /// </summary>
-        /// <param name="func"></param>
-        /// <param name="value"></param>
-        /// <param name="x"></param>
-        /// <returns></returns>
         public static Set InvertFunctionEntity(FunctionEntity func, Entity value, Entity x)
         {
             Entity a = func.GetChild(0);
@@ -244,14 +288,9 @@ namespace AngouriMath.Core.TreeAnalysis
             var res = new Set();
             var pi = MathS.pi;
 
-            static Set GetNotNullEntites(Set set)
-            {
-                return set.FiniteWhere(el => !(el is NumberEntity e) || e.Value.IsFinite);
-            }
 
             switch (func.Name)
             {
-                // Consider case when sin(sin(x)) where double-mention of n occures
                 case "sinf":
                     {
                         // sin(x) = value => x = arcsin(value) + 2pi * n
@@ -270,7 +309,7 @@ namespace AngouriMath.Core.TreeAnalysis
                     }
                 case "tanf":
                     {
-                        var inverted = FindInvertExpression(a, MathS.Arctan(value) + pi * n, x);
+                        var inverted = FindInvertExpression(a, );
                         // tan(x) = value => x = arctan(value) + pi * n
                         res.AddRange(GetNotNullEntites(inverted));
                         return res;
@@ -337,7 +376,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var innerSimplified = root.InnerSimplify();
 
-            return Number.IsZero(error) && ComplexRational(downcasted) ? downcasted : innerSimplified;
+            return NumberEntity.IsZero(error) && ComplexRational(downcasted) ? downcasted : innerSimplified;
         }
 
 
@@ -445,7 +484,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             {
                 // Here we generate a unique variable name
                 var newVar =
-                    MathS.Utils.GetUniqueVariables(expr)
+                    expr.Vars
                     .OrderByDescending(v => v.Name)
                     .First().Name + "quack";
                 // // //
@@ -458,7 +497,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 };
                 foreach (var alt in expr.Alternate(4).FiniteSet())
                 {
-                    if (!alt.SubtreeIsFound(x))
+                    if (!alt.Vars.Contains(x))
                         return; // in this case there is either 0 or +oo solutions
                     replacements.Add((TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
                 }

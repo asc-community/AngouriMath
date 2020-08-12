@@ -15,220 +15,130 @@
 
 
 
- using AngouriMath.Core;
+using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
- using System.Linq;
- using AngouriMath.Core.Exceptions;
- using AngouriMath.Core.Numerix;
- using AngouriMath.Core.Sys.Interfaces;
+using System.Linq;
+using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
-    using StringTable = Dictionary<string, Func<List<Entity>, string>>;
-
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity : ILatexiseable
     {
-        /// <summary>
-        /// An expression into a string
-        /// </summary>
-        /// <returns></returns>
-        public override string ToString()
-        {
-            return Stringize();
-        }
-        internal string Stringize()
-        {
-            return Stringize(false);
-        }
-        internal string Stringize(bool parenthesesRequired)
-        {
-            if (IsLeaf)
-                return this switch {
-                    Pattern p => "{ " + PatternNumber + " : " + p.patType + " }",
-                    Tensor t => t.ToString(),
-                    VariableEntity _ => this.Name,
-                    // If parentheses are required, they might be only required when complicated numbers are wrapped,
-                    // such as fractions and complex but not a single i
-                    NumberEntity n => n.Value.ToString(Priority != Const.PRIOR_NUM && parenthesesRequired),
-                    _ => throw new UnknownEntityException()
-                };
-            else
-                return MathFunctions.ParenthesesOnNeed(MathFunctions.InvokeStringize(Name, Children), parenthesesRequired, latex: false);
-        }
+        /// <summary>Converts an expression into a string</summary>
+        public override string ToString() => Stringize();
+        internal abstract string Stringize();
+        protected internal string Stringize(bool parenthesesRequired) =>
+            parenthesesRequired ? @$"({Stringize()})" : Stringize();
     }
 
-    internal static partial class MathFunctions
+    public partial record NumberEntity
     {
-        internal static readonly StringTable stringTable = new StringTable();
+        internal override string Stringize() => Value.ToString();
+    }
 
-        public static string InvokeStringize(string typeName, List<Entity> args)
-        {
-            return stringTable[typeName](args);
-        }
-    }
-    
-    internal static partial class Sumf
+    public partial record VariableEntity
     {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_SUM) + " + " + args[1].Stringize(args[1].Priority < Const.PRIOR_SUM);
-        }
+        internal override string Stringize() => Name;
     }
-    internal static partial class Minusf
+
+    public partial record Tensor
     {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_MINUS) + " - " + args[1].Stringize(args[1].Priority <= Const.PRIOR_MINUS);
-        }
+        internal override string Stringize() => innerTensor.ToString();
     }
-    internal static partial class Mulf
+
+    public partial record Sumf
     {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_MUL) + " * " + args[1].Stringize(args[1].Priority < Const.PRIOR_MUL);
-        }
+        internal override string Stringize() =>
+            Augend.Stringize(Augend.Priority < Const.Priority.Sum) + " + " + Addend.Stringize(Addend.Priority < Const.Priority.Sum);
     }
-    internal static partial class Divf
+    public partial record Minusf
     {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_DIV) + " / " + args[1].Stringize(args[1] is OperatorEntity && args[1].Priority <= Const.PRIOR_DIV);
-        }
+        internal override string Stringize() =>
+            Subtrahend.Stringize(Subtrahend.Priority < Const.Priority.Minus) + " - " + Minuend.Stringize(Minuend.Priority <= Const.Priority.Minus);
     }
-    internal static partial class Sinf
+    public partial record Mulf
     {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return "sin(" + args[0].Stringize() + ")";
-        }
+        internal override string Stringize() =>
+            Multiplier.Stringize(Multiplier.Priority < Const.Priority.Mul) + " * " + Multiplicand.Stringize(Multiplicand.Priority < Const.Priority.Mul);
     }
-    internal static partial class Cosf
+    public partial record Divf
     {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return "cos(" + args[0].Stringize() + ")";
-        }
+        internal override string Stringize() =>
+            Dividend.Stringize(Dividend.Priority < Const.Priority.Div) + " / " + Divisor.Stringize(Divisor.Priority <= Const.Priority.Div);
     }
-    internal static partial class Tanf
+    public partial record Sinf
     {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return "tan(" + args[0].Stringize() + ")";
-        }
+        internal override string Stringize() => "sin(" + Argument.Stringize() + ")";
     }
-    internal static partial class Cotanf
+    public partial record Cosf
     {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return "cotan(" + args[0].Stringize() + ")";
-        }
+        internal override string Stringize() => "cos(" + Argument.Stringize() + ")";
     }
-    internal static partial class Logf
+    public partial record Tanf
     {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            return "log(" + args[0].Stringize() + ", " + args[1].Stringize() + ")";
-        }
+        internal override string Stringize() => "tan(" + Argument.Stringize() + ")";
     }
-    internal static partial class Powf
+    public partial record Cotanf
     {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            if (args[1] == 0.5)
+        internal override string Stringize() => "cotan(" + Argument.Stringize() + ")";
+    }
+    public partial record Logf
+    {
+        internal override string Stringize() => "log(" + Base.Stringize() + ", " + Antilogarithm.Stringize() + ")";
+    }
+    public partial record Powf
+    {
+        internal override string Stringize() =>
+            Exponent == 0.5m
+            ? "sqrt(" + Base.Stringize() + ")"
+            : Base.Stringize(Base.Priority < Const.Priority.Pow) + " ^ " + Exponent.Stringize(Exponent.Priority < Const.Priority.Pow);
+    }
+    public partial record Arcsinf
+    {
+        internal override string Stringize() => "arcsin(" + Argument.Stringize() + ")";
+    }
+    public partial record Arccosf
+    {
+        internal override string Stringize() => "arccos(" + Argument.Stringize() + ")";
+    }
+    public partial record Arctanf
+    {
+        internal override string Stringize() => "arctan(" + Argument.Stringize() + ")";
+    }
+    public partial record Arccotanf
+    {
+        internal override string Stringize() => "arccotan(" + Argument.Stringize() + ")";
+    }
+
+    public partial record Factorialf
+    {
+        internal override string Stringize() => Argument.Stringize(Argument.Priority < Const.Priority.Num) + "!";
+    }
+
+    public partial record Derivativef
+    {
+        internal override string Stringize() => $"derive({Expression}, {Variable}, {Iterations})";
+    }
+
+    public partial record Integralf
+    {
+        internal override string Stringize() => $"integrate({Expression}, {Variable}, {Iterations})";
+    }
+
+    public partial record Limitf
+    {
+        internal override string Stringize() =>
+            ApproachFrom switch
             {
-                return "sqrt(" + args[0].Stringize() + ")";
-            }
-            else
-            {
-                return args[0].Stringize(args[0].Priority < Const.PRIOR_POW) + " ^ " + args[1].Stringize(args[1].Priority < Const.PRIOR_POW);
-            }
-        }
-    }
-    internal static partial class Arcsinf
-    {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return "arcsin(" + args[0].Stringize() + ")";
-        }
-    }
-    internal static partial class Arccosf
-    {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return "arccos(" + args[0].Stringize() + ")";
-        }
-    }
-    internal static partial class Arctanf
-    {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return "arctan(" + args[0].Stringize() + ")";
-        }
-    }
-    internal static partial class Arccotanf
-    {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return "arccotan(" + args[0].Stringize() + ")";
-        }
-    }
-
-    internal static partial class Factorialf
-    {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            return args[0].Stringize(args[0].Priority < Const.PRIOR_NUM) + "!";
-        }
-    }
-
-    internal static partial class Derivativef
-    {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 3);
-            return $"derive({args[0].Stringize(false)}, {args[1].Stringize(false)}, {args[2].Stringize(false)})";
-        }
-    }
-
-    internal static partial class Integralf
-    {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 3);
-            return $"integrate({args[0].Stringize()}, {args[1].Stringize()}, {args[2].Stringize()})";
-        }
-    }
-
-    internal static partial class Limitf
-    {
-        public static string Stringize(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 4);
-            if (args[3] == IntegerNumber.MinusOne)
-                return $"limitleft({args[0].Stringize()}, {args[1].Stringize()}, {args[2].Stringize()}, {args[3].Stringize()})";
-            else if (args[3] == IntegerNumber.Zero)
-                return $"limit({args[0].Stringize()}, {args[1].Stringize()}, {args[2].Stringize()}, {args[3].Stringize()})";
-            else if (args[3] == IntegerNumber.One)
-                return $"limitright({args[0].Stringize()}, {args[1].Stringize()}, {args[2].Stringize()}, {args[3].Stringize()})";
-            else
-                return $"limitinternal({args[0].Stringize()}, {args[1].Stringize()}, {args[2].Stringize()}, {args[3].Stringize()}, {args[4].Stringize()})";
-        }
+                Limits.ApproachFrom.Left => "limitleft",
+                Limits.ApproachFrom.BothSides => "limit",
+                Limits.ApproachFrom.Right => "limitright",
+                _ => throw new System.ComponentModel.InvalidEnumArgumentException
+                  (nameof(ApproachFrom), (int)ApproachFrom, typeof(Limits.ApproachFrom))
+            } + $"({Expression}, {Variable}, {Destination})";
     }
 
     internal static class SetToString

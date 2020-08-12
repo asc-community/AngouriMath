@@ -22,7 +22,7 @@ using PeterO.Numbers;
 
 namespace AngouriMath
 {
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity : ILatexiseable
     {
         /// <summary>
         /// Returns a value of a definite integral of a function. Only works for one-variable functions
@@ -63,10 +63,8 @@ namespace AngouriMath
         /// Accuracy (initially, amount of iterations)
         /// </param>
         /// <returns></returns>
-        public Number DefiniteIntegral(VariableEntity x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount)
-        {
-            return Integration.Integrate(this, x, from, to, stepCount);
-        }
+        public ComplexNumber DefiniteIntegral(VariableEntity x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
+            Integration.Integrate(this, x, from, to, stepCount);
     }
     internal static class Integration
     {

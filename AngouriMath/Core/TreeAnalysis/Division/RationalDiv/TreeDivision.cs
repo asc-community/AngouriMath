@@ -40,9 +40,9 @@ namespace AngouriMath.Core.TreeAnalysis
                 FindDivisors(ref temporaryElement, cond);
                 expr.SetChild(i, temporaryElement);
             }
-            if (expr is OperatorEntity { Name: "divf" })
-                if (cond(expr.GetChild(0), expr.GetChild(1)))
-                    expr = DividePolynoms(expr.GetChild(0), expr.GetChild(1));
+            if (expr is Divf(var dividend, var divisor))
+                if (cond(dividend, divisor))
+                    expr = DividePolynoms(dividend, divisor);
         }
 
         internal static Entity DividePolynoms(Entity p, Entity q)
@@ -68,14 +68,14 @@ namespace AngouriMath.Core.TreeAnalysis
 
             foreach (var pair in replacementInfo)
             {
-                FindAndReplace(ref p, pair.Value, new VariableEntity(PolyInfo.NewVarName(pair.Key)));
-                FindAndReplace(ref q, pair.Value, new VariableEntity(PolyInfo.NewVarName(pair.Key)));
+                FindAndReplace(ref p, pair.Value, PolyInfo.NewVarName(pair.Key));
+                FindAndReplace(ref q, pair.Value, PolyInfo.NewVarName(pair.Key));
             }
 
             var monoinfoQ = GatherAllPossiblePolynomials(q.Expand(), replaceVars: false).monoInfo;
             var monoinfoP = GatherAllPossiblePolynomials(p.Expand(), replaceVars: false).monoInfo;
 
-            string? polyvar = null;
+            VariableEntity? polyvar = null;
 
             // TODO use Linq to find polyvar
             // First attempt to find polynoms
@@ -88,7 +88,7 @@ namespace AngouriMath.Core.TreeAnalysis
                 }
             }
             // cannot divide, return unchanged
-            if (polyvar is null || polyvar is "") return (Divided: originalP / originalQ, Remainder: 0);
+            if (polyvar is null) return (Divided: originalP / originalQ, Remainder: 0);
 
             var maxpowQ = monoinfoQ[polyvar].Keys.Max();
             var maxpowP = monoinfoP[polyvar].Keys.Max();
@@ -148,14 +148,14 @@ namespace AngouriMath.Core.TreeAnalysis
 
             foreach(var pair in result)
             {
-                res += pair.Value.Simplify(5) * MathS.Pow(new VariableEntity(polyvar), pair.Key);
+                res += pair.Value.Simplify(5) * MathS.Pow(polyvar, pair.Key);
             }
-            // TODO: we know that variable is the same but with suffux '_r'. This foreach loop can be speeded-up
-            while (replacementInfo.Any(rep => res.SubtreeIsFound(new VariableEntity(PolyInfo.NewVarName(rep.Key)))))
+            // TODO: we know that variable is the same but with suffix '_r'. This foreach loop can be speeded-up
+            while (replacementInfo.Any(rep => res.SubtreeIsFound(PolyInfo.NewVarName(rep.Key))))
                 foreach (var subst in replacementInfo)
                 {
-                    FindAndReplace(ref res, new VariableEntity(PolyInfo.NewVarName(subst.Key)), subst.Value);
-                    FindAndReplace(ref rest, new VariableEntity(PolyInfo.NewVarName(subst.Key)), subst.Value);
+                    FindAndReplace(ref res, PolyInfo.NewVarName(subst.Key), subst.Value);
+                    FindAndReplace(ref rest, PolyInfo.NewVarName(subst.Key), subst.Value);
                 }
             return (res, rest);
         }

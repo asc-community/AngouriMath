@@ -26,7 +26,7 @@ using Edge = System.ValueTuple<AngouriMath.Entity, bool, bool>;
  */
 namespace AngouriMath.Core.Sets
 {
-    static partial class PieceFunctions
+    partial record Piecefunctions
     {
         internal static Edge1D IntersectEdge(
             RealNumber num1, bool closed1,
@@ -77,24 +77,24 @@ namespace AngouriMath.Core.Sets
         {
             var num1 = A.Item1.Eval();
             var num2 = B.Item1.Eval();
-            RealNumber lowRe = num1.Real;
-            RealNumber upRe = num2.Real;
-            RealNumber lowIm = num1.Imaginary;
-            RealNumber upIm = num2.Imaginary;
-            bool lowReClosed = A.Item2;
-            bool upReClosed = B.Item2;
-            bool lowImClosed = A.Item3;
-            bool upImClosed = B.Item3;
+            var lowRe = num1.Real;
+            var upRe = num2.Real;
+            var lowIm = num1.Imaginary;
+            var upIm = num2.Imaginary;
+            var lowReClosed = A.Item2;
+            var upReClosed = B.Item2;
+            var lowImClosed = A.Item3;
+            var upImClosed = B.Item3;
             if (lowRe > upRe)
             {
-                Const.Swap(ref lowRe, ref upRe);
-                Const.Swap(ref lowReClosed, ref upReClosed);
+                (lowRe, upRe) = (upRe, lowRe);
+                (lowReClosed, upReClosed) = (upReClosed, lowReClosed);
             }
 
             if (lowIm > upIm)
             {
-                Const.Swap(ref lowIm, ref upIm);
-                Const.Swap(ref lowImClosed, ref upImClosed);
+                (lowIm, upIm) = (upIm, lowIm);
+                (lowImClosed, upImClosed) = (upImClosed, lowImClosed);
             }
 
             return (

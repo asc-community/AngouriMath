@@ -22,7 +22,7 @@ using System.Collections.Generic;
  */
 namespace AngouriMath.Core.Sets
 {
-    internal static partial class PieceFunctions
+    public partial record Piecefunctions
     {
         public static List<Piece> Unite(Piece A, Piece B)
         {

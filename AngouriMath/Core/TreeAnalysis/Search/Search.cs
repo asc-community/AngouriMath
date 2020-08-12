@@ -16,41 +16,15 @@
 
 
 ﻿using AngouriMath.Core.TreeAnalysis;
- using AngouriMath.Core.Sys.Interfaces;
+using AngouriMath.Core.Sys.Interfaces;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
-        /// <summary>
-        /// Finds all entries of variables ignoring constants and moves them to dst
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <param name="dst"></param>
-        internal static HashSet<VariableEntity> GetUniqueVariables(Entity expr)
-        {
-            var res = new HashSet<VariableEntity>();
-            _GetUniqueVariables(expr, res);
-            return res;
-        }
-    
-        internal static void _GetUniqueVariables(Entity expr, HashSet<VariableEntity> dst)
-        {
-            // If it is a variable, we will add it
-            // 1 2 1 1 1 2 1
-            if (expr is VariableEntity v)
-            {
-                // But if it is a constant, we ignore it
-                if (!MathS.ConstantList.ContainsKey(v.Name))
-                    dst.Add(v);
-            }
-            else
-                // Otherwise, we will try to find unique variables from its children
-                foreach (var child in expr.ChildrenReadonly)
-                    _GetUniqueVariables(child, dst);
-        }
-        
+        [System.Obsolete("NO", true)]
         /// <summary>
         /// Replaces all entries of oldsubtree with newsubtree
         /// </summary>
@@ -74,6 +48,7 @@ namespace AngouriMath.Core.TreeAnalysis
             }
         }
 
+        [System.Obsolete("NO", true)]
         internal static bool ContainsName(Entity expr, string name)
         {
             if (name == expr.Name)
@@ -84,6 +59,7 @@ namespace AngouriMath.Core.TreeAnalysis
             return false;
         }
 
+        [System.Obsolete("NO", true)]
         internal static IEnumerable<Entity> GetPatternEnumerator(Entity expr, Pattern p)
         {
             if (p.Match(expr) && p.EqFits(expr) != null)
@@ -102,8 +78,9 @@ namespace AngouriMath.Core.TreeAnalysis
 
 namespace AngouriMath
 {
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity : ILatexiseable
     {
+        [System.Obsolete("NO", true)]
         /// <summary>
         /// Checks whether a subtree can be found in a tree
         /// </summary>
@@ -114,6 +91,7 @@ namespace AngouriMath
             return FindSubtree(subtree) is {};
         }
 
+        [System.Obsolete("NO", true)]
         /// <summary>
         /// Finds a subtree in the tree
         /// </summary>
@@ -126,12 +104,13 @@ namespace AngouriMath
                 foreach (var child in Children)
                 {
                     var found = child.FindSubtree(subtree);
-                    if (!(found is null))
+                    if (found is { })
                         return found;
                 }
             return null;
         }
 
+        [System.Obsolete("NO", true)]
         /// <summary>
         /// Finds out whether "name" is mentioned at least once
         /// </summary>
@@ -139,10 +118,5 @@ namespace AngouriMath
         /// <returns></returns>
         internal bool ContainsName(string name) => TreeAnalyzer.ContainsName(this, name);
 
-        /// <summary>
-        /// Finds out whether an expression contains at least one tensor
-        /// </summary>
-        /// <returns></returns>
-        public bool IsTensoric() => ContainsName("tensort");
     }
 }

@@ -24,16 +24,14 @@ namespace UnitTests.Algebra
             {
                 foreach (var eq in equations)
                 {
-                    var eqCopy = eq.DeepCopy();
+                    var eqCopy = eq;
                     Assert.AreEqual(sol.Shape[1], vars.Count, "Incorrect output of Solve");
                     for (int rootid = 0; rootid < sol.Shape[1]; rootid++)
-                    {
                         eqCopy = eqCopy.Substitute(vars[rootid], sol[i, rootid]);
-                    }
 
-                    foreach (var uniqvar in MathS.Utils.GetUniqueVariables(eqCopy))
-                        eqCopy = eqCopy.Substitute(uniqvar.Name, new NumberEntity(ToSub));
-                    var E = Number.Abs(eqCopy.Eval());
+                    foreach (var uniqvar in eqCopy.Vars)
+                        eqCopy = eqCopy.Substitute(uniqvar, ToSub);
+                    var E = NumberEntity.Abs(eqCopy.Eval());
                     Assert.IsTrue(E.IsFinite && E < 0.0001,
                         "i: " + i + "  eq: " + eq.ToString() + "  E: " + E.ToString());
                 }

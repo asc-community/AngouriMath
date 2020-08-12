@@ -17,18 +17,15 @@ using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
-    public partial class RationalNumber : RealNumber, System.IEquatable<RationalNumber>, System.IComparable<RationalNumber>
+	/// <summary>
+	/// Constructor does not downcast automatically.
+	/// Use <see cref="Create(EInteger, EInteger)"/> or <see cref="Create(ERational)"/> for automatic downcasting.
+	/// The denominator cannot be zero as the resulting value will not be a rational
+	/// </summary>
+    public partial record RationalNumber(ERational Rational)
+	    : RealNumber(Rational.ToEDecimal(MathS.Settings.DecimalPrecisionContext)), System.IComparable<RationalNumber>
     {
-        /// <summary>Exact value of the number</summary>
-        public new ERational Value { get; }
-
-        /// <summary>
-        /// Does not downcast automatically.
-        /// Use <see cref="Create(EInteger, EInteger)"/> or <see cref="Create(ERational)"/> for automatic downcasting
-        /// </summary>
-        private protected RationalNumber(ERational value)
-            // Will throw if denominator is zero (zero denominators are not rational)
-            : base(value.ToEDecimal(MathS.Settings.DecimalPrecisionContext)) => Value = value.ToLowestTerms();
+        public override Const.Priority Priority => Const.Priority.Div;
         public static RationalNumber Create(EInteger numerator, EInteger denominator) =>
             Create(ERational.Create(numerator, denominator));
         public static RationalNumber Create(ERational value) {
@@ -36,19 +33,24 @@ namespace AngouriMath.Core.Numerix
                 throw new System.ArgumentException("Non-finite values are not rationals - use RealNumber.Create instead");
 
             if (!MathS.Settings.DowncastingEnabled)
-                return new RationalNumber(value);
+                return new RationalNumber(value.ToLowestTerms());
 
             // Call ToLowestTerms() through new RationalNumber first
             // before determining whether the denominator equals one
-            var @return = new RationalNumber(value);
-            if (@return.Value.Denominator.Equals(1))
-                return IntegerNumber.Create(@return.Value.Numerator);
+            var @return = new RationalNumber(value.ToLowestTerms());
+            if (@return.Rational.Denominator.Equals(1))
+                return IntegerNumber.Create(@return.Rational.Numerator);
             else
                 return @return;
         }
+        public void Deconstruct(out int? numerator, out int? denominator)
+        {
+            numerator = Rational.Numerator.CanFitInInt32() ? Rational.Numerator.ToInt32Unchecked() : new int?();
+            denominator = Rational.Denominator.CanFitInInt32() ? Rational.Denominator.ToInt32Unchecked() : new int?();
+        }
 
         // TODO: When we target .NET 5, remember to use covariant return types
-        public override RealNumber Abs() => Create(Value.Abs());
+        public override RealNumber Abs() => Create(Rational.Abs());
 
         /// <summary>
         /// Tries to find a pair of two <see cref="IntegerNumber"/>s
@@ -90,12 +92,11 @@ namespace AngouriMath.Core.Numerix
                 var rat = FindRational(inv, iterCount - 1);
                 if (rat is null)
                     return null;
-                return new RationalNumber(intPart * sign + sign / rat.Value);
+                return new RationalNumber((intPart * sign + sign / rat.Rational).ToLowestTerms());
             }
         }
-        protected internal override string InternalToString() => InternalToStringDefinition(Value.ToString());
-        protected internal override string InternalLatexise()
-            => InternalLatexiseDefinition($@"\frac{{{Value.Numerator}}}{{{Value.Denominator}}}");
+        internal override string Stringize() => Rational.ToString();
+        public override string Latexise() => $@"\frac{{{Rational.Numerator}}}{{{Rational.Denominator}}}";
         internal static bool TryParse(string s,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out RationalNumber? dst)
         {
@@ -111,11 +112,11 @@ namespace AngouriMath.Core.Numerix
             }
         }
 
-        public static bool operator >(RationalNumber a, RationalNumber b) => a.Value.CompareTo(b.Value) > 0;
-        public static bool operator >=(RationalNumber a, RationalNumber b) => a.Value.CompareTo(b.Value) >= 0;
-        public static bool operator <(RationalNumber a, RationalNumber b) => a.Value.CompareTo(b.Value) < 0;
-        public static bool operator <=(RationalNumber a, RationalNumber b) => a.Value.CompareTo(b.Value) <= 0;
-        public int CompareTo(RationalNumber other) => Value.CompareTo(other.Value);
+        public static bool operator >(RationalNumber a, RationalNumber b) => a.Rational.CompareTo(b.Rational) > 0;
+        public static bool operator >=(RationalNumber a, RationalNumber b) => a.Rational.CompareTo(b.Rational) >= 0;
+        public static bool operator <(RationalNumber a, RationalNumber b) => a.Rational.CompareTo(b.Rational) < 0;
+        public static bool operator <=(RationalNumber a, RationalNumber b) => a.Rational.CompareTo(b.Rational) <= 0;
+        public int CompareTo(RationalNumber other) => Rational.CompareTo(other.Rational);
         public static RationalNumber operator +(RationalNumber a, RationalNumber b) => OpSum(a, b);
         public static RationalNumber operator -(RationalNumber a, RationalNumber b) => OpSub(a, b);
         public static RationalNumber operator *(RationalNumber a, RationalNumber b) => OpMul(a, b);
@@ -124,9 +125,6 @@ namespace AngouriMath.Core.Numerix
         public static RationalNumber operator -(RationalNumber a) => OpMul(IntegerNumber.MinusOne, a);
         public static bool operator ==(RationalNumber a, RationalNumber b) => AreEqual(a, b);
         public static bool operator !=(RationalNumber a, RationalNumber b) => !AreEqual(a, b);
-        public override bool Equals(object other) => other is RationalNumber num && Equals(num);
-        public bool Equals(RationalNumber other) => AreEqual(this, other);
-        public override int GetHashCode() => Value.GetHashCode();
         public static implicit operator RationalNumber(sbyte value) => IntegerNumber.Create(value);
         public static implicit operator RationalNumber(byte value) => IntegerNumber.Create(value);
         public static implicit operator RationalNumber(short value) => IntegerNumber.Create(value);

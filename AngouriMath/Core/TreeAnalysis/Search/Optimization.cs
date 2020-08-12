@@ -22,7 +22,7 @@ using System.Collections.Generic;
 
 namespace AngouriMath
 {
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity : ILatexiseable
     {
         /// <summary>
         /// Static hash. It won't recount automatically, to recount it call
@@ -34,7 +34,7 @@ namespace AngouriMath
         /// <summary>
         /// Occurances of this exact subtree.
         /// To recount it, call
-        /// <see cref="CountOccurances(string)"/>
+        /// <see cref="HashOccurancesUpdate(string)"/>
         /// </summary>
         internal int HashOccurances { get; set; }
 
@@ -74,116 +74,6 @@ namespace AngouriMath
             // Second, we assign those numbers to each node
             foreach (var node in unfolded)
                 node.HashOccurances = counts[node.Hash];
-        }
-    }
-}
-
-namespace AngouriMath.Core.TreeAnalysis
-{
-    using FunctionCategory = HashSet<string>;
-    internal static partial class TreeAnalyzer
-    {
-        internal static class Optimization
-        {
-            internal static readonly FunctionCategory Trigonometry = new FunctionCategory { 
-                "sinf",
-                "cosf",
-                "tanf",
-                "cotanf",
-                "arcsinf",
-                "arccosf",
-                "arctanf",
-                "arccotanf"
-            };
-            internal static readonly FunctionCategory Power = new FunctionCategory { 
-                "powf"
-                // TODO: to add logarithm?
-            };
-            internal static readonly FunctionCategory Factorial = new FunctionCategory { 
-                "factorialf"
-                // TODO: to add logarithm?
-            };
-
-            /// <summary>
-            /// Finds out a category of an expression
-            /// To be precise, finds out whether expr belongs to cat
-            /// </summary>
-            /// <param name="expr"></param>
-            /// <param name="cat"></param>
-            /// <returns></returns>
-            private static bool Contains(Entity expr, FunctionCategory cat)
-            {
-                if (cat.Contains(expr.Name))
-                    return true;
-                foreach (var child in expr.ChildrenReadonly)
-                    if (Contains(child, cat))
-                        return true;
-                return false;
-            }
-
-            /// <summary>
-            /// Determines whether expr is trigonometric
-            /// </summary>
-            /// <param name="expr"></param>
-            /// <returns></returns>
-            internal static bool ContainsTrigonometric(Entity expr) => Contains(expr, Trigonometry);
-
-            /// <summary>
-            /// Determines whether expr is exponential
-            /// </summary>
-            /// <param name="expr"></param>
-            /// <returns></returns>
-            internal static bool ContainsPower(Entity expr) => Contains(expr, Power);
-
-            /// <summary>
-            /// Determines whether expr contains factorial
-            /// </summary>
-            /// <param name="expr"></param>
-            /// <returns></returns>
-            internal static bool ContainsFactorial(Entity expr) => Contains(expr, Factorial);
-
-            /// <summary>
-            /// Converts a tree into binary
-            /// </summary>
-            /// <param name="expr"></param>
-            internal static void OptimizeTree(ref Entity expr)
-            {
-                if (expr is OperatorEntity)
-                {
-                    if (expr.Name == "sumf" || expr.Name == "minusf")
-                    {
-                        var children = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
-                        expr = TreeAnalyzer.MultiHangBinary(children, "sumf", expr.Priority);
-                    }
-                    if (expr.Name == "mulf" || expr.Name == "divf")
-                    {
-                        var children = TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul);
-                        expr = TreeAnalyzer.MultiHangBinary(children, "mulf", expr.Priority);
-                    }
-                }
-
-                for (int i = 0; i < expr.ChildrenCount; i++)
-                {
-                    var tmp = expr.GetChild(i);
-                    OptimizeTree(ref tmp);
-                    expr.SetChild(i, tmp);
-                }
-            }
-
-            /// <summary>
-            /// Used to analyze tree's complexity
-            /// </summary>
-            /// <param name="expr"></param>
-            /// <returns></returns>
-            internal static int CountDepth(Entity expr)
-                => 1 + (expr.ChildrenCount == 0 ? 0 : expr.ChildrenReadonly.Select(CountDepth).Max());
-
-            internal static Entity OptimizeTree(Entity tree)
-            {
-                tree = tree.DeepCopy();
-                TreeAnalyzer.Optimization.OptimizeTree(ref tree);
-                return tree;
-            }
         }
     }
 }

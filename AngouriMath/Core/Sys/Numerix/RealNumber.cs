@@ -19,20 +19,14 @@ using PeterO.Numbers;
 [assembly: InternalsVisibleTo("DotnetBenchmark")]
 namespace AngouriMath.Core.Numerix
 {
-    public partial class RealNumber : ComplexNumber, System.IEquatable<RealNumber>, System.IComparable<RealNumber>
+    /// <summary>
+    /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
+    /// </summary>
+    public partial record RealNumber(EDecimal Value) : ComplexNumber(null, null), System.IComparable<RealNumber>
     {
-        /// <summary>
-        /// The exact value of the number
-        /// </summary>
-        public EDecimal Value { get; }
-        /// <summary>
-        /// Does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting
-        /// </summary>
-        private protected RealNumber(EDecimal value)
-        {
-            Value = value;
-            Real = this;
-        }
+        public override Const.Priority Priority => Value.IsNegative ? Const.Priority.Mul : Const.Priority.Num;
+        public bool IsNegative => Value.IsNegative;
+        public bool IsPositive => !Value.IsNegative && !Value.IsZero;
         public static RealNumber Create(EDecimal value)
         {
             if (!MathS.Settings.DowncastingEnabled)
@@ -49,8 +43,8 @@ namespace AngouriMath.Core.Numerix
 
             var attempt = RationalNumber.FindRational(value);
             if (attempt is null ||
-                attempt.Value.Numerator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue ||
-                attempt.Value.Denominator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
+                attempt.Rational.Numerator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue ||
+                attempt.Rational.Denominator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
                 return new RealNumber(value);
             else
                 return attempt;
@@ -58,26 +52,19 @@ namespace AngouriMath.Core.Numerix
 
         public override RealNumber Abs() => Create(Value.Abs());
 
-        protected internal string InternalToStringDefinition(string str) =>
-            Value.IsFinite ? str
+        internal override string Stringize() =>
+            Value.IsFinite ? Value.ToString()
             : Value.IsPositiveInfinity() ? "+oo"
             : Value.IsNegativeInfinity() ? "-oo"
             : Value.IsNaN() ? "NaN"
             : throw new UniverseCollapseException();
 
-        protected internal string InternalLatexiseDefinition(string str) =>
-            Value.IsFinite ? str
+        public override string Latexise() =>
+            Value.IsFinite ? Value.ToString()
             : Value.IsPositiveInfinity() ? @"\infty "
             : Value.IsNegativeInfinity() ? @"-\infty "
             : Value.IsNaN() ? @"\mathrm{undefined}"
             : throw new UniverseCollapseException();
-
-        protected internal override string InternalToString()
-            => InternalToStringDefinition(Value.ToString());
-
-        protected internal override string InternalLatexise()
-            => InternalLatexiseDefinition(Value.ToString());
-
 
         internal static bool TryParse(string s,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out RealNumber? dst)
@@ -124,9 +111,6 @@ namespace AngouriMath.Core.Numerix
         public static RealNumber operator -(RealNumber a) => OpMul(IntegerNumber.MinusOne, a);
         public static bool operator ==(RealNumber a, RealNumber b) => AreEqual(a, b);
         public static bool operator !=(RealNumber a, RealNumber b) => !AreEqual(a, b);
-        public override bool Equals(object other) => other is RealNumber num && Equals(num);
-        public bool Equals(RealNumber other) => AreEqual(this, other);
-        public override int GetHashCode() => Value.GetHashCode();
         public static implicit operator RealNumber(sbyte value) => IntegerNumber.Create(value);
         public static implicit operator RealNumber(byte value) => IntegerNumber.Create(value);
         public static implicit operator RealNumber(short value) => IntegerNumber.Create(value);

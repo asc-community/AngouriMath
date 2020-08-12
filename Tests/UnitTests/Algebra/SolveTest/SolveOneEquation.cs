@@ -30,23 +30,23 @@ namespace UnitTests.Algebra
             }
             string eqNormal = equation.ToString();
             var err = CheckRoots(equation, toSub, varValue, subValue);
-            Assert.IsTrue(err < 0.001m, "Error is : " + err + "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
+            Assert.IsTrue(err < 0.001m, $"Error is: {err}\n{LimitString(eqNormal)}\nwrong root is {toSub} = {LimitString(varValue.ToString())}");
         }
 
         public static RealNumber CheckRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber subValue)
         {
             equation = equation.Substitute(toSub, varValue);
-            var allVars = MathS.Utils.GetUniqueVariables(equation);
+            var allVars = equation.Vars;
 
             var offset = 0;
             foreach (var vr in allVars)
             {
-                equation = equation.Substitute(vr.Name, subValue + offset
+                equation = equation.Substitute(vr, subValue + offset
                     /* MUST be integer to correspond to integer coefficient of periodic roots*/);
                 offset++;
             }
 
-            return Number.Abs(equation.Eval());
+            return NumberEntity.Abs(equation.Eval());
         }
 
         public static void AssertRootCount(Set roots, int target)
@@ -264,7 +264,7 @@ namespace UnitTests.Algebra
             => InvertedFunctionTests("arccotan", 4);
 
 
-        private readonly List<Number> KeyPoints = new List<Number>
+        private readonly List<ComplexNumber> KeyPoints = new List<ComplexNumber>
         {
             ComplexNumber.Create(0, 1),
             ComplexNumber.Create(1, 0),

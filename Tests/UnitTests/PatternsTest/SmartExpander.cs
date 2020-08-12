@@ -10,10 +10,10 @@ namespace UnitTests.PatternsTest
     {
         public (bool equal, ComplexNumber eval1, ComplexNumber eval2, RealNumber err) AreEqual(Entity expr1, Entity expr2, ComplexNumber toSub)
         {
-            foreach (var var in MathS.Utils.GetUniqueVariables(expr1))
-                expr1 = expr1.Substitute(var.Name, toSub);
-            foreach (var var in MathS.Utils.GetUniqueVariables(expr2))
-                expr2 = expr2.Substitute(var.Name, toSub);
+            foreach (var var in expr1.Vars)
+                expr1 = expr1.Substitute(var, toSub);
+            foreach (var var in expr2.Vars)
+                expr2 = expr2.Substitute(var, toSub);
             var evaled1 = expr1.Eval();
             var evaled2 = expr2.Eval();
             return (evaled1 == evaled2, evaled1, evaled2, (evaled1 - evaled2).Abs());
@@ -25,7 +25,7 @@ namespace UnitTests.PatternsTest
                 var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.SubtreeIsFound("x"));
                 if (expandOver is null)
                     throw new AssertFailedException("expandOver is null");
-                return TreeAnalyzer.MultiHangBinary(expandOver, "sumf", Const.PRIOR_SUM);
+                return TreeAnalyzer.MultiHangBinary(expandOver, "sumf", Const.Priority.Sum);
             });
             foreach (var toSub in toSubs)
             {

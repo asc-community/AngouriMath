@@ -59,11 +59,11 @@ namespace AngouriMath.Core.FromString
         };
         internal static readonly Dictionary<char, int> operatorPriorities = new Dictionary<char, int>
         {
-            { '+', Const.PRIOR_SUM },
-            { '-', Const.PRIOR_MINUS },
-            { '*', Const.PRIOR_MUL },
-            { '/', Const.PRIOR_DIV },
-            { '^', Const.PRIOR_POW }
+            { '+', Const.Priority.Sum },
+            { '-', Const.Priority.Minus },
+            { '*', Const.Priority.Mul },
+            { '/', Const.Priority.Div },
+            { '^', Const.Priority.Pow }
         };
     }
 }

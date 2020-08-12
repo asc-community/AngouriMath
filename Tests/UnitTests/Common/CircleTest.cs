@@ -1,5 +1,6 @@
 ﻿using AngouriMath;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace UnitTests.Common
 {
@@ -62,19 +63,15 @@ namespace UnitTests.Common
 
         public bool FunctionsAreEqualHack(Entity eq1, Entity eq2)
         {
-            var vars1 = MathS.Utils.GetUniqueVariables(eq1);
-            var vars2 = MathS.Utils.GetUniqueVariables(eq2);
-            if (!vars1.SetEquals(vars2))
+            var vars1 = eq1.Vars;
+            var vars2 = eq2.Vars;
+            if (!vars1.SequenceEqual(vars2))
                 return false;
             for (int i = 1; i < 10; i++)
             {
-                var a = eq1.DeepCopy();
-                var b = eq2.DeepCopy();
-                foreach (var var in vars1)
-                {
-                    a = a.Substitute(var, i);
-                    b = b.Substitute(var, i);
-                }
+                var replacements = vars1.ToDictionary(var => (Entity)var, _ => (Entity)i);
+                var a = eq1.Substitute(replacements);
+                var b = eq2.Substitute(replacements);
 
                 if (a.Eval() != b.Eval())
                     return false;

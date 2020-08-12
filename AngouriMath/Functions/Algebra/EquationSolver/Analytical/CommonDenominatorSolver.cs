@@ -15,6 +15,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
@@ -45,31 +46,21 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         internal static (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) FindFractions(Entity term, VariableEntity x)
         {
             // TODO: consider cases where we should NOT gather all powers in row
-            static Entity GetPower(Entity expr)
-            {
-                if (!(expr is OperatorEntity { Name: "powf" }))
-                    return 1;
-                else
-                    return expr.GetChild(1) * GetPower(expr.GetChild(0));
-            }
+            static Entity GetPower(Entity expr) =>
+                expr is Powf(var @base, var exponent) ? exponent * GetPower(@base) : 1;
 
-            static Entity GetBase(Entity expr)
-            {
-                if (!(expr is OperatorEntity { Name: "powf" }))
-                    return expr;
-                else
-                    return GetBase(expr.GetChild(0));
-            }
+            static Entity GetBase(Entity expr) =>
+                expr is Powf(var @base, _) ? GetBase(@base) : expr;
 
             (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) oneInfo;
             oneInfo.numerator = 1; // Once InnerSimplify is called, we get rid of 1 *
             oneInfo.denominatorMultipliers = new List<(Entity den, RealNumber pow)>();
 
-            var multipliers = TreeAnalyzer.LinearChildren(term, "mulf", "divf", Const.FuncIfMul);
+            var multipliers = Mulf.LinearChildren(term);
             var res = new FractionInfoList();
             foreach (var multiplier in multipliers)
             {
-                if (!multiplier.SubtreeIsFound(x))
+                if (!multiplier.Vars.Contains(x))
                 {
                     oneInfo.numerator *= multiplier;
                     continue;
@@ -112,7 +103,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
         internal static Entity? FindCD(Entity expr, VariableEntity x)
         {
-            var terms = TreeAnalyzer.LinearChildren(expr, "sumf", "minusf", Const.FuncIfSum);
+            var terms = Sumf.LinearChildren(expr);
             var denominators = new Dictionary<string, (Entity den, RealNumber pow)>();
             var fracs = new List<(Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers)>();
             foreach (var term in terms)
@@ -124,7 +115,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var name = den.ToString(); // TODO: Replace with faster hashing
                     if (!denominators.ContainsKey(name))
                         denominators[name] = (den, 0);
-                    denominators[name] = (den, Number.Max(denominators[name].pow, -pow));
+                    denominators[name] = (den, NumberEntity.Max(denominators[name].pow, -pow));
                 }
                 fracs.Add(oneInfo);
             }
@@ -156,7 +147,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 newTerms.Add(invertDenominator * num);
             }
 
-            return TreeAnalyzer.MultiHangBinary(newTerms, "sumf", Const.PRIOR_SUM).InnerSimplify();
+            return TreeAnalyzer.MultiHangBinary(newTerms, (a, b) => new Sumf(a, b)).InnerSimplify();
         }
     }
 }

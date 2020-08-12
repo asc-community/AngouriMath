@@ -15,8 +15,10 @@
 
 using System.Linq;
 using System.Numerics;
+using AngouriMath;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.FromString;
+using AngouriMath.Core.Numerix;
 using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
@@ -24,45 +26,25 @@ namespace AngouriMath.Core.Numerix
     /// <summary>
     /// Extension for RealNumbers
     /// https://en.wikipedia.org/wiki/Complex_number
+    /// Constructor does not downcast automatically. Use <see cref="Create(RealNumber, RealNumber)"/> for automatic downcasting
     /// </summary>
-    public partial class ComplexNumber : Number, System.IEquatable<ComplexNumber>
+    public partial record ComplexNumber(RealNumber? Real_, RealNumber? Imaginary_) : NumberEntity
     {
+        public virtual RealNumber Real => Real_ ?? IntegerNumber.Zero;
+        public RealNumber Imaginary => Imaginary_ ?? IntegerNumber.Zero;
+        public override Const.Priority Priority =>
+            (Real, Imaginary) switch
+            {
+                ({ IsZero: false }, { IsZero: false }) => Const.Priority.Sum,
+                (_, { IsNegative: true }) => Const.Priority.Mul,
+                _ => Const.Priority.Num
+            };
         public static readonly ComplexNumber ImaginaryOne = new ComplexNumber(0, 1);
         public static readonly ComplexNumber MinusImaginaryOne = new ComplexNumber(0, -1);
-        /// <summary>
-        /// Real part of the complex number
-        /// </summary>
-        public RealNumber Real {
-            get => _real ?? IntegerNumber.Zero;
-            private protected set => _real = value;
-        }
-        RealNumber? _real;
 
-        /// <summary>
-        /// Imaginary part of the complex number
-        /// </summary>
-        public RealNumber Imaginary {
-            get => _imaginary ?? IntegerNumber.Zero;
-            private protected set => _imaginary = value;
-        }
-        RealNumber? _imaginary;
-
-        /// <summary>
-        /// Checks whether both parts of the complex number are finite
-        /// meaning that it could be safely used for calculations
-        /// </summary>
-        public bool IsFinite => Real.Value.IsFinite && Imaginary.Value.IsFinite;
+        protected override bool ThisIsFinite => Real.Value.IsFinite && Imaginary.Value.IsFinite;
+        public bool IsZero => Real.Value.IsZero && Imaginary.Value.IsZero;
         public bool IsNaN => this == RealNumber.NaN;
-        /// <summary>Only for the <see cref="RealNumber(EDecimal)"/> constructor</summary>
-        private protected ComplexNumber() { }
-        /// <summary>
-        /// Does not downcast automatically. Use <see cref="Create(RealNumber, RealNumber)"/> for automatic downcasting
-        /// </summary>
-        private ComplexNumber(RealNumber realPart, RealNumber imaginaryPart)
-        {
-            Real = realPart;
-            Imaginary = imaginaryPart;
-        }
 
         public static ComplexNumber Create(RealNumber real, RealNumber imaginary) =>
             Create(real.Value, imaginary.Value);
@@ -77,8 +59,9 @@ namespace AngouriMath.Core.Numerix
             else
                 return new ComplexNumber(RealNumber.Create(real), RealNumber.Create(imaginary));
         }
+        public void Deconstruct(out RealNumber real, out RealNumber imaginary) => (real, imaginary) = (Real, Imaginary);
 
-        protected internal override string InternalToString()
+        internal override string Stringize()
         {
             static string RenderNum(RealNumber number)
             {
@@ -98,7 +81,7 @@ namespace AngouriMath.Core.Numerix
             return Real.ToString() + " " + sign + " " + l + RenderNum(im) + r + "i";
         }
 
-        protected internal override string InternalLatexise()
+        public override string Latexise()
         {
             static string RenderNum(RealNumber number)
             {
@@ -212,9 +195,6 @@ namespace AngouriMath.Core.Numerix
         public static ComplexNumber operator -(ComplexNumber a) => OpMul(IntegerNumber.MinusOne, a);
         public static bool operator ==(ComplexNumber a, ComplexNumber b) => AreEqual(a, b);
         public static bool operator !=(ComplexNumber a, ComplexNumber b) => !AreEqual(a, b);
-        public override bool Equals(object other) => other is ComplexNumber num && Equals(num);
-        public bool Equals(ComplexNumber other) => AreEqual(this, other);
-        public override int GetHashCode() => (Real, Imaginary).GetHashCode();
         public static implicit operator ComplexNumber(sbyte value) => IntegerNumber.Create(value);
         public static implicit operator ComplexNumber(byte value) => IntegerNumber.Create(value);
         public static implicit operator ComplexNumber(short value) => IntegerNumber.Create(value);

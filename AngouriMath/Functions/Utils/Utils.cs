@@ -47,7 +47,7 @@ namespace AngouriMath.Functions
             out Entity? dst)
         {
             dst = null;
-            var children = TreeAnalyzer.LinearChildren(expr.Expand(), "sumf", "minusf", Const.FuncIfSum);
+            var children = Sumf.LinearChildren(expr);
             var monomialsByPower = PolynomialSolver.GatherMonomialInformation<EInteger>(children, variable);
             if (monomialsByPower == null)
                 return false;
@@ -82,10 +82,8 @@ namespace AngouriMath.Functions
                 return false;
             dst = terms[0];
             for (int i = 1; i < terms.Count; i++)
-                if (terms[i].Name == "mulf" &&
-                    terms[i].GetChild(0) is NumberEntity { Value:RealNumber r }
-                    && r < 0)
-                    dst -= -r * terms[i].GetChild(1);
+                if (terms[i] is Mulf(RealNumber { IsNegative:true } r, var m))
+                    dst -= -r * m;
                 else
                     dst += terms[i];
             dst = dst.InnerSimplify();
@@ -137,13 +135,10 @@ namespace AngouriMath.Functions
         /// x + n_0 + n_a + n_3 + n_1
         /// will find n_2
         /// </summary>
-        /// <param name="expr"></param>
-        /// <param name="prefix"></param>
-        /// <returns></returns>
         internal static VariableEntity FindNextIndex(Entity expr, string prefix)
         {
             var indices = new HashSet<int>();
-            foreach (var var in MathS.Utils.GetUniqueVariables(expr))
+            foreach (var var in expr.Vars)
             {
                 var index = ParseIndexNumeric(var.Name);
                 if (index.prefix == prefix)

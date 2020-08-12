@@ -19,21 +19,21 @@ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath
 {
-    public partial class FunctionEntity : Entity
+    public partial record FunctionEntity : Entity
     {
         internal override Entity InnerSimplify()
         {
             return MathFunctions.InvokeSimplify(Name, ChildrenReadonly);
         }
     }
-    public partial class OperatorEntity : Entity
+    public partial record OperatorEntity : Entity
     {
         internal override Entity InnerSimplify()
         {
             return MathFunctions.InvokeSimplify(Name, ChildrenReadonly);
         }
     }
-    public partial class NumberEntity : Entity
+    public partial record NumberEntity : Entity
     {
         internal override Entity InnerSimplify()
         {
@@ -41,7 +41,7 @@ namespace AngouriMath
             return new NumberEntity(downcasted) { __cachedEvaledValue = downcasted };
         }
     }
-    public partial class VariableEntity : Entity
+    public partial record VariableEntity : Entity
     {
         internal override Entity InnerSimplify()
         {
@@ -50,11 +50,7 @@ namespace AngouriMath
             return this;
         }
     }
-}
-
-namespace AngouriMath.Core
-{
-    public partial class Tensor : Entity
+    public partial record Tensor : Entity
     {
         internal override Entity InnerSimplify()
         {

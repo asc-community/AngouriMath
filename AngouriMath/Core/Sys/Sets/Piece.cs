@@ -86,7 +86,7 @@ namespace AngouriMath.Core
             if (num == b && (closedB || !closedNum))
                 return true;
             if (a > b)
-                Const.Swap(ref a, ref b);
+                (a, b) = (b, a);
             return num > a && num < b;
         }
 

@@ -18,10 +18,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using PeterO.Numbers;
+using AngouriMath.Core.Numerix;
 
-namespace AngouriMath.Core.Numerix
+namespace AngouriMath
 {
-    public abstract partial class Number : IEquatable<Number>
+    public abstract partial record NumberEntity
     {
         internal static EInteger CtxAdd(EInteger a, EInteger b) => a.Add(b);
         internal static EInteger CtxSubtract(EInteger a, EInteger b) => a.Subtract(b);
@@ -50,24 +51,24 @@ namespace AngouriMath.Core.Numerix
             => a.Pow(b, MathS.Settings.DecimalPrecisionContext);
         internal static T Min<T>(T a, T b) where T : RealNumber => a < b ? a : b;
         internal static T Max<T>(T a, T b) where T : RealNumber => a > b ? a : b;
-        internal static T OpSum<T>(T a, T b) where T : Number =>
+        internal static T OpSum<T>(T a, T b) where T : NumberEntity =>
             SuperSwitch(a, b,
-                (a, b) => IntegerNumber.Create(CtxAdd(a.Value, b.Value)),
-                (a, b) => RationalNumber.Create(CtxAdd(a.Value, b.Value)),
+                (a, b) => IntegerNumber.Create(CtxAdd(a.Integer, b.Integer)),
+                (a, b) => RationalNumber.Create(CtxAdd(a.Rational, b.Rational)),
                 (a, b) => RealNumber.Create(CtxAdd(a.Value, b.Value)),
                 (a, b) => ComplexNumber.Create(CtxAdd(a.Real.Value, b.Real.Value), CtxAdd(a.Imaginary.Value, b.Imaginary.Value))
              );
-        internal static T OpSub<T>(T a, T b) where T : Number =>
+        internal static T OpSub<T>(T a, T b) where T : NumberEntity =>
             SuperSwitch(a, b,
-                (a, b) => IntegerNumber.Create(CtxSubtract(a.Value, b.Value)),
-                (a, b) => RationalNumber.Create(CtxSubtract(a.Value, b.Value)),
+                (a, b) => IntegerNumber.Create(CtxSubtract(a.Integer, b.Integer)),
+                (a, b) => RationalNumber.Create(CtxSubtract(a.Rational, b.Rational)),
                 (a, b) => RealNumber.Create(CtxSubtract(a.Value, b.Value)),
                 (a, b) => ComplexNumber.Create(CtxSubtract(a.Real.Value, b.Real.Value), CtxSubtract(a.Imaginary.Value, b.Imaginary.Value))
              );
-        internal static T OpMul<T>(T a, T b) where T : Number =>
+        internal static T OpMul<T>(T a, T b) where T : NumberEntity =>
             SuperSwitch(a, b,
-                (a, b) => IntegerNumber.Create(CtxMultiply(a.Value, b.Value)),
-                (a, b) => RationalNumber.Create(CtxMultiply(a.Value, b.Value)),
+                (a, b) => IntegerNumber.Create(CtxMultiply(a.Integer, b.Integer)),
+                (a, b) => RationalNumber.Create(CtxMultiply(a.Rational, b.Rational)),
                 (a, b) => RealNumber.Create(CtxMultiply(a.Value, b.Value)),
                 (a, b) =>
                 {
@@ -79,10 +80,10 @@ namespace AngouriMath.Core.Numerix
                         CtxAdd(ModifiedMultiply(a.Real.Value, b.Imaginary.Value), ModifiedMultiply(a.Imaginary.Value, b.Real.Value)));
                 }
              );
-        internal static ComplexNumber OpDiv<T>(T a, T b) where T : Number =>
+        internal static ComplexNumber OpDiv<T>(T a, T b) where T : NumberEntity =>
             SuperSwitch(a, b,
-                (a, b) => CtxDivide(a.Value, b.Value) is { } n ? RationalNumber.Create(n) : RealNumber.NaN,
-                (a, b) => CtxDivide(a.Value, b.Value) is { } n ? RationalNumber.Create(n) : RealNumber.NaN,
+                (a, b) => CtxDivide(a.Rational, b.Rational) is { } n ? RationalNumber.Create(n) : RealNumber.NaN,
+                (a, b) => CtxDivide(a.Rational, b.Rational) is { } n ? RationalNumber.Create(n) : RealNumber.NaN,
                 (a, b) => RealNumber.Create(CtxDivide(a.Value, b.Value)),
                 (a, b) =>
                 {
@@ -100,33 +101,31 @@ namespace AngouriMath.Core.Numerix
                     return a * c;
                 }
              );
-        internal static bool AreEqual<T>(T a, T b) where T : Number =>
+        internal static bool AreEqual<T>(T a, T b) where T : NumberEntity =>
             SuperSwitch(a, b,
-                (a, b) => a.Value.Equals(b.Value),
-                (a, b) => a.Value.Equals(b.Value),
+                (a, b) => a.Integer.Equals(b.Integer),
+                (a, b) => a.Rational.Equals(b.Rational),
                 (a, b) => a.IsFinite && b.IsFinite && IsZero(CtxSubtract(a.Value, b.Value)) ||
                          !a.IsFinite && !b.IsFinite && a.Value.EqualsBugFix(b.Value),
                 (a, b) => AreEqual(a.Real, b.Real) && AreEqual(a.Imaginary, b.Imaginary)
              );
-        public override bool Equals(object other) => other is Number n && Equals(n);
-        public bool Equals(Number n) => AreEqual(this, n);
-        public abstract override int GetHashCode();
-        public static Number operator +(Number a, Number b) => OpSum(a, b);
-        public static Number operator -(Number a, Number b) => OpSub(a, b);
-        public static Number operator *(Number a, Number b) => OpMul(a, b);
-        public static Number operator /(Number a, Number b) => OpDiv(a, b);
-        public static Number operator +(Number a) => a;
-        public static Number operator -(Number a) => OpMul(-1, a);
-        public static bool operator ==(Number a, Number b) => AreEqual(a, b);
-        public static bool operator !=(Number a, Number b) => !AreEqual(a, b);
+
+        public static NumberEntity operator +(NumberEntity a, NumberEntity b) => OpSum(a, b);
+        public static NumberEntity operator -(NumberEntity a, NumberEntity b) => OpSub(a, b);
+        public static NumberEntity operator *(NumberEntity a, NumberEntity b) => OpMul(a, b);
+        public static NumberEntity operator /(NumberEntity a, NumberEntity b) => OpDiv(a, b);
+        public static NumberEntity operator +(NumberEntity a) => a;
+        public static NumberEntity operator -(NumberEntity a) => OpMul(-1, a);
+        public static bool operator ==(NumberEntity a, NumberEntity b) => AreEqual(a, b);
+        public static bool operator !=(NumberEntity a, NumberEntity b) => !AreEqual(a, b);
 
         internal static RealNumber? FindGoodRoot(ComplexNumber @base, IntegerNumber power)
         {
             RealNumber? positive = null, real = null;
-            foreach (NumberEntity root in GetAllRoots(@base, power.Value).FiniteSet())
+            foreach (var root in GetAllRoots(@base, power.Integer))
                 switch (MathS.Settings.FloatToRationalIterCount.As(15, () =>
                     MathS.Settings.PrecisionErrorZeroRange.As(1e-6m, () =>
-                        ComplexNumber.Create(root.Value.Real, root.Value.Imaginary))))
+                        ComplexNumber.Create(root.Real, root.Imaginary))))
                 {
                     case RationalNumber rational when IsZero(Pow(rational, power) - @base):  // To keep user's desired precision
                         return rational;
@@ -252,12 +251,12 @@ namespace AngouriMath.Core.Numerix
                 return BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[1]);
             }
             // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
-            if (@base.IsFinite && power is IntegerNumber { Value: var pow })
+            if (@base.IsFinite && power is IntegerNumber { Integer: var pow })
                 return BinaryIntPow(@base, pow);
 
-            if (@base.IsFinite && power is RationalNumber r && r.Value.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches 
-                && FindGoodRoot(@base, r.Value.Denominator) is { } goodRoot)
-                return Pow(goodRoot, r.Value.Numerator);
+            if (@base.IsFinite && power is RationalNumber r && r.Rational.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches 
+                && FindGoodRoot(@base, r.Rational.Denominator) is { } goodRoot)
+                return Pow(goodRoot, r.Rational.Numerator);
 
             var context = MathS.Settings.DecimalPrecisionContext;
             if (@base is RealNumber { Value: { IsNegative:false } realBase } && power is RealNumber { Value: var realPower })
@@ -484,7 +483,7 @@ namespace AngouriMath.Core.Numerix
             var mathContext = MathS.Settings.DecimalPrecisionContext.Value;
             switch (x)
             {
-                case IntegerNumber { Value: var value } when value.Sign >= 0:
+                case IntegerNumber { Integer: var value } when value.Sign >= 0:
                     return value.Factorial();
                 case RealNumber { Value: var value }:
                     return value.Factorial(mathContext);

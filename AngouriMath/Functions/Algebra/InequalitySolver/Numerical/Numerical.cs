@@ -73,9 +73,8 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
 
         internal static Set Solve(Entity expr, VariableEntity x, MathS.Inequality sign)
         {
-            var uv = MathS.Utils.GetUniqueVariables(expr);
-            if (uv.Count != 1 || uv.Single() != x)
-                throw new MathSException("expr should only contain VariableEntity x");
+            if (expr.Vars.Count != 1 || expr.Vars.Single() != x)
+                throw new MathSException($"{nameof(expr)} should only contain {nameof(VariableEntity)} {nameof(x)}");
             return _Solve(expr, x, sign);
         }
     }

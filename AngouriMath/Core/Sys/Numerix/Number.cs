@@ -20,14 +20,16 @@ using System.ComponentModel;
 using System.Linq;
 using System.Numerics;
 using AngouriMath.Extensions;
+using AngouriMath.Core;
+using AngouriMath.Core.Numerix;
 using PeterO.Numbers;
 
-namespace AngouriMath.Core.Numerix
+namespace AngouriMath
 {
     /// <summary>
     /// This class represents all possible numerical values as a hierarchy,
     /// <list>
-    ///   Number
+    ///   NumberEntity
     ///   <list type="bullet">
     ///     ComplexNumber
     ///       <list type="bullet">
@@ -42,26 +44,26 @@ namespace AngouriMath.Core.Numerix
     ///     </list>
     ///   </list>
     /// </summary>
-    public abstract partial class Number : Sys.Interfaces.ILatexiseable
+    public abstract partial record NumberEntity
     {
         /// <summary>
         /// This function serves not only convenience but also protects from unexpected cases, for example,
         /// if a new type added
         /// </summary>
         protected static T SuperSwitch<T>(
-            Number num1, Number num2,
+            NumberEntity num1, NumberEntity num2,
             Func<IntegerNumber, IntegerNumber, T> ifInt,
             Func<RationalNumber, RationalNumber, T> ifRat,
             Func<RealNumber, RealNumber, T> ifReal,
             Func<ComplexNumber, ComplexNumber, T> ifCom
         ) => (num1, num2) switch
-            {
-                (IntegerNumber n1, IntegerNumber n2) => ifInt(n1, n2),
-                (RationalNumber r1, RationalNumber r2) => ifRat(r1, r2),
-                (RealNumber r1, RealNumber r2) => ifReal(r1, r2),
-                (ComplexNumber c1, ComplexNumber c2) => ifCom(c1, c2),
-                _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
-            };
+        {
+            (IntegerNumber n1, IntegerNumber n2) => ifInt(n1, n2),
+            (RationalNumber r1, RationalNumber r2) => ifRat(r1, r2),
+            (RealNumber r1, RealNumber r2) => ifReal(r1, r2),
+            (ComplexNumber c1, ComplexNumber c2) => ifCom(c1, c2),
+            _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
+        };
         /// <summary>
         /// This function serves not only convenience but also protects from unexpected cases, for example,
         /// if a new type added
@@ -72,8 +74,8 @@ namespace AngouriMath.Core.Numerix
             Func<RationalNumber, RationalNumber, RationalNumber> ifRat,
             Func<RealNumber, RealNumber, RealNumber> ifReal,
             Func<ComplexNumber, ComplexNumber, ComplexNumber> ifCom
-        ) where T : Number
-            => (T)(Number)((num1, num2) switch
+        ) where T : NumberEntity
+            => (T)(NumberEntity)((num1, num2) switch
             {
                 (IntegerNumber n1, IntegerNumber n2) => ifInt(n1, n2),
                 (RationalNumber r1, RationalNumber r2) => ifRat(r1, r2),
@@ -83,23 +85,6 @@ namespace AngouriMath.Core.Numerix
             });
 
         /// <summary>
-        /// Gets a latexised version of a number
-        /// </summary>
-        /// <returns></returns>
-        public string Latexise() => Latexise(false);
-
-        internal protected abstract string InternalLatexise();
-        internal string Latexise(bool needParentheses) =>
-            needParentheses ? @$"\left({InternalLatexise()}\right)" : InternalLatexise();
-
-        public override string ToString()
-            => ToString(false);
-
-        internal protected abstract string InternalToString();
-        internal string ToString(bool needParentheses) =>
-            needParentheses ? $"({InternalToString()})" : InternalToString();
-
-        /// <summary>
         /// Finds all complex roots of a number
         /// e. g. sqrt(1) = { -1, 1 }
         /// root(1, 4) = { -i, i, -1, 1 }
@@ -107,12 +92,12 @@ namespace AngouriMath.Core.Numerix
         /// <param name="value"></param>
         /// <param name="rootPower"></param>
         /// <returns></returns>
-        public static Set GetAllRoots(ComplexNumber value, EInteger rootPower)
+        public static HashSet<ComplexNumber> GetAllRoots(ComplexNumber value, EInteger rootPower)
         {
             // Avoid infinite recursion from Abs to GetAllRoots again
             var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
-                var res = new Set();
+                var res = new HashSet<ComplexNumber>();
                 EDecimal phi = (Ln(value / value.Abs()) / MathS.i).Real.Value;
                 if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
                     phi = EDecimal.Zero;
@@ -173,22 +158,6 @@ namespace AngouriMath.Core.Numerix
             this is RealNumber r
             ? r.Value.ToDouble()
             : throw new InvalidNumberCastException(GetType(), typeof(RealNumber));
-        public static implicit operator Number(sbyte value) => IntegerNumber.Create(value);
-        public static implicit operator Number(byte value) => IntegerNumber.Create(value);
-        public static implicit operator Number(short value) => IntegerNumber.Create(value);
-        public static implicit operator Number(ushort value) => IntegerNumber.Create(value);
-        public static implicit operator Number(int value) => IntegerNumber.Create(value);
-        public static implicit operator Number(uint value) => IntegerNumber.Create(value);
-        public static implicit operator Number(long value) => IntegerNumber.Create(value);
-        public static implicit operator Number(ulong value) => IntegerNumber.Create(value);
-        public static implicit operator Number(EInteger value) => IntegerNumber.Create(value);
-        public static implicit operator Number(ERational value) => RationalNumber.Create(value);
-        public static implicit operator Number(EDecimal value) => RealNumber.Create(value);
-        public static implicit operator Number(float value) => RealNumber.Create(EDecimal.FromSingle(value));
-        public static implicit operator Number(double value) => RealNumber.Create(EDecimal.FromDouble(value));
-        public static implicit operator Number(decimal value) => RealNumber.Create(EDecimal.FromDecimal(value));
-        public static implicit operator Number(Complex value) =>
-            ComplexNumber.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
     }
 
     public class InvalidNumberCastException : InvalidCastException
@@ -196,7 +165,7 @@ namespace AngouriMath.Core.Numerix
         public InvalidNumberCastException(Type typeFrom, Type typeTo)
             : base("Cannot cast from " + typeFrom + " to " + typeTo) { }
     }
-    public class UniverseCollapseException : Exceptions.SysException
+    public class UniverseCollapseException : Core.Exceptions.SysException
     {
         public UniverseCollapseException() : base("Universe collapse!") { }
     }

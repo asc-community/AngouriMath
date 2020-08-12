@@ -172,7 +172,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var coeff = MathS.i * MathS.Sqrt(3) / 2;
 
-            var u1 = new NumberEntity(1);
+            var u1 = (Entity)1;
             var u2 = SySyn.Rational(-1, 2) + coeff;
             var u3 = SySyn.Rational(-1, 2) - coeff;
             var D0 = MathS.Sqr(b) - 3 * a * c;
@@ -334,7 +334,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 }
                 */
             var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
-                expr, entity => entity.SubtreeIsFound(subtree)
+                expr, entity => entity.Vars.Contains(subtree)
             );
 
             if (children is null)
@@ -386,7 +386,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 {
                     var newSet = new Set();
                     foreach (var root in set.FiniteSet())
-                    foreach (var coef in Number.GetAllRootsOf1(gcdPower).FiniteSet())
+                    foreach (var coef in NumberEntity.GetAllRootsOf1(gcdPower).FiniteSet())
                         newSet.Add(coef * MathS.Pow(root, RationalNumber.Create(1, gcdPower)));
                     set = newSet;
                 }
@@ -457,7 +457,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <param name="terms"></param>
         /// <param name="subtree"></param>
         /// <returns></returns>
-        internal static Dictionary<T, Entity>? GatherMonomialInformation<T>(List<Entity> terms, Entity subtree)
+        internal static Dictionary<T, Entity>? GatherMonomialInformation<T>(IEnumerable<Entity> terms, Entity subtree)
         {
             var monomialsByPower = new Dictionary<T, Entity>();
             // here we fill the dictionary with information about monomials' coefficiants
@@ -485,7 +485,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
         internal static void ParseMonomial<T>(Entity aVar, Entity expr, out Entity? freeMono, ref TreeAnalyzer.IPrimitive<T> power)
         {
-            if (!expr.SubtreeIsFound(aVar))
+            if (!expr.Contains(aVar))
             {
                 freeMono = expr;
                 return;
@@ -494,17 +494,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             freeMono = 1; // a * b
 
             bool allowFloat = typeof(T) == typeof(EDecimal);
-            foreach (var mp in TreeAnalyzer.LinearChildren(expr, "mulf", "divf", Const.FuncIfMul))
-                if (!mp.SubtreeIsFound(aVar))
+            foreach (var mp in Mulf.LinearChildren(expr))
+                if (!mp.Contains(aVar))
                 {
                     freeMono *= mp;
                 }
-                else if (mp is OperatorEntity { Name:"powf" })
+                else if (mp is Powf(var @base, var pow_num))
                 {
-                    var pow_num = MathS.CanBeEvaluated(mp.GetChild(1)) ? mp.GetChild(1).Eval() : mp.GetChild(1);
+                    var pow_num_evaled = MathS.CanBeEvaluated(pow_num);
+                    pow_num = pow_num_evaled ? pow_num.Eval() : pow_num;
 
                      // x ^ a is bad
-                    if (!(pow_num is NumberEntity { Value:var value }))
+                    if (!(pow_num is ComplexNumber value))
                     {
                         freeMono = null;
                         return;
@@ -526,7 +527,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     }
                     else
                     {
-                        if (!MathS.CanBeEvaluated(mp.GetChild(1)))
+                        if (!pow_num_evaled)
                         {
                             freeMono = null;
                             return;
@@ -538,7 +539,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         else if (typeof(T) == typeof(EInteger))
                             q = (TreeAnalyzer.IPrimitive<T>)new TreeAnalyzer.PrimitiveInteger();
                         else throw new ArgumentException("Unsupported type: " + typeof(T), nameof(T));
-                        ParseMonomial(aVar, mp.GetChild(0), out var tmpFree, ref q);
+                        ParseMonomial(aVar, @base, out var tmpFree, ref q);
                         if (tmpFree is null)
                         {
                             freeMono = null;
@@ -547,9 +548,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         else
                         {
                             // Can we eval it right here?
-                            var eval = mp.GetChild(1).Eval();
-                            mp.SetChild(1, eval);
-                            freeMono *= MathS.Pow(tmpFree, mp.GetChild(1));
+                            var eval = pow_num.Eval();
+                            freeMono *= MathS.Pow(tmpFree, eval);
                             power.AddMp(q.GetValue(), eval);
                         }
                     }
@@ -564,7 +564,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 else
                 {
                     // a ^ x, (a + x) etc. are bad
-                    if (mp.SubtreeIsFound(aVar))
+                    if (mp.Contains(aVar))
                     {
                         freeMono = null;
                         return;

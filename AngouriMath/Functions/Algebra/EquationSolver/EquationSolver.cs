@@ -49,15 +49,12 @@ namespace AngouriMath.Functions.Algebra.Solver
             {
                 static Entity simplifier(Entity entity) => entity.InnerSimplify();
                 static Entity evaluator(Entity entity) => entity.InnerEval();
-                Entity collapser(Entity expr) =>
-                    MathS.Utils.GetUniqueVariables(equation).Count == 1 ? evaluator(expr) : simplifier(expr);
+                Entity collapser(Entity expr) => equation.Vars.Count == 1 ? evaluator(expr) : simplifier(expr);
 
                 res.FiniteApply(simplifier);
                 var finalSet = new Set { FastAddingMode = true };
                 foreach (var elem in res.FiniteSet())
-                    if (TreeAnalyzer.IsFinite(elem) &&
-                        TreeAnalyzer.IsFinite(collapser(equation.Substitute(x, elem)))
-                        )
+                    if (elem.IsFinite && collapser(equation.Substitute(x, elem)).IsFinite)
                         finalSet.Add(elem);
                 finalSet.FastAddingMode = false;
                 res = finalSet;
@@ -84,17 +81,16 @@ namespace AngouriMath.Functions.Algebra.Solver
         /// <param name="equations"></param>
         /// <param name="vars"></param>
         /// <returns></returns>
-        internal static Tensor? SolveSystem(List<Entity> equations, List<VariableEntity> vars)
+        internal static Tensor? SolveSystem(List<Entity> equations, ReadOnlySpan<VariableEntity> vars)
         {
-            if (equations.Count != vars.Count)
+            if (equations.Count != vars.Length)
                 throw new MathSException("Amount of equations must be equal to that of vars");
             equations = new List<Entity>(equations.Select(c => c));
-            vars = new List<VariableEntity>(vars.Select(c => c));
-            int initVarCount = vars.Count;
+            int initVarCount = vars.Length;
             for (int i = 0; i < equations.Count; i++)
                 equations[i] = equations[i].InnerSimplify();
 
-            var res = EquationSolver.InSolveSystem(equations, vars);
+            var res = InSolveSystem(equations, vars).ToList();
 
             foreach (var tuple in res)
                 if (tuple.Count != initVarCount)
@@ -118,14 +114,8 @@ namespace AngouriMath.Functions.Algebra.Solver
         /// Variable to solve for
         /// </param>
         /// <returns></returns>
-        internal static List<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var)
-        {
-            var result = new List<List<Entity>>();
-            eq = eq.InnerSimplify();
-            foreach (var sol in eq.SolveEquation(var).FiniteSet())
-                result.Add(new List<Entity>() { sol });
-            return result;
-        }
+        internal static IEnumerable<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var) =>
+            eq.InnerSimplify().SolveEquation(var).FiniteSet().Select(sol => new List<Entity> { sol });
 
         /// <summary>
         /// Solves system of equations
@@ -137,41 +127,38 @@ namespace AngouriMath.Functions.Algebra.Solver
         /// List of variables, where each of them must be mentioned in at least one entity from equations
         /// </param>
         /// <returns></returns>
-        internal static List<List<Entity>> InSolveSystem(List<Entity> equations, List<VariableEntity> vars)
+        internal static IEnumerable<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<VariableEntity> vars)
         {
-            var var = vars.Last();
-            vars = new List<VariableEntity>(vars); // copying
-            List<List<Entity>> result;
+            var var = vars[vars.Length - 1];
             if (equations.Count == 1)
                 return InSolveSystemOne(equations[0], var);
-            else
-                result = new List<List<Entity>>();
+            var result = Enumerable.Empty<List<Entity>>();
+            var replacements = new Dictionary<Entity, Entity>();
             for (int i = 0; i < equations.Count; i++)
-                if (equations[i].SubtreeIsFound(var))
+                if (equations[i].Vars.Contains(var))
                 {
                     var solutionsOverVar = equations[i].SolveEquation(var);
                     equations.RemoveAt(i);
-                    vars.RemoveAt(vars.Count - 1);
+                    vars = vars.Slice(0, vars.Length - 2);
                     
                     foreach (var sol in solutionsOverVar.FiniteSet())
                     {
                         var newequations = new List<Entity>();
                         for (int eqid = 0; eqid < equations.Count; eqid++)
                             newequations.Add(equations[eqid].Substitute(var, sol));
-                        var newvars = new List<VariableEntity>();
-                        for (int vrid = 0; vrid < vars.Count; vrid++)
-                            newvars.Add(vars[vrid]);
-                        var inSol = InSolveSystem(newequations, newvars);
-                        for(int j = 0; j < inSol.Count; j++)
+                        var inSol = InSolveSystem(newequations, vars);
+                        foreach (var j in inSol)
                         {
-                            var Z = sol.DeepCopy();
-                            for (int varid = 0; varid < newvars.Count; varid++)
-                                Z = Z.Substitute(newvars[varid], inSol[j][varid]);
+                            replacements.Clear();
+                            for (int varid = 0; varid < vars.Length; varid++)
+                                replacements.Add(vars[varid], j[varid]);
+
+                            var Z = sol.Substitute(replacements);
 
                             Z = Z.InnerSimplify();
-                            inSol[j].Add(Z);
+                            j.Add(Z);
                         }
-                        result.AddRange(inSol);
+                        result = result.Concat(inSol);
                     }
                     break;
                 }

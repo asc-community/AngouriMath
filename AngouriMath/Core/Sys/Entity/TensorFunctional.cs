@@ -21,15 +21,15 @@ using System.Collections.Generic;
  using GenericTensor.Core;
  using GenericTensor.Functions;
 
-namespace AngouriMath.Core.Sys.Items.Tensors
+namespace AngouriMath
 {
-    internal static class TensorFunctional
+    public partial record Tensor
     {
         /// <summary>
         /// Performs scalar product operation on two vectors
         /// </summary>
         internal static Entity ScalarProduct(Tensor a, Tensor b) =>
-            GenTensor<Entity, EntityTensorWrapperOperations>.VectorDotProduct(a.innerTensor, b.innerTensor);
+            GenTensor<Entity, EntityTensorWrapperOperations>.VectorDotProduct(a.InnerTensor, b.InnerTensor);
 
         /// <summary>
         /// Changes each tensor's data item -> app(item)
@@ -38,8 +38,8 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="app"></param>
         internal static void Apply(Tensor tensor, Func<Entity, Entity> app)
         {
-            foreach (var (index, value) in tensor.innerTensor.Iterate())
-                tensor.innerTensor.SetValueNoCheck(app(value), index);
+            foreach (var (index, value) in tensor.InnerTensor.Iterate())
+                tensor.InnerTensor.SetValueNoCheck(app(value), index);
         }
 
         internal struct CustomZip : IZipOperator<Entity>
@@ -65,7 +65,7 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         {
             // TODO: Make GenericTensor accept a Func<Entity, Entity, Entity> instead of a type argument
             CustomZip.op = app;
-            return new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.Zip<CustomZip>(A.innerTensor, B.innerTensor));
+            return new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.Zip<CustomZip>(A.InnerTensor, B.InnerTensor));
         }
 
 
@@ -86,7 +86,7 @@ namespace AngouriMath.Core.Sys.Items.Tensors
         /// <param name="B"></param>
         /// <returns></returns>
         internal static Tensor DotProduct(Tensor A, Tensor B) =>
-            new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.MatrixMultiply(A.innerTensor, B.innerTensor));
+            new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.MatrixMultiply(A.InnerTensor, B.InnerTensor));
 
         /// <summary>
         /// Collapses the entire expression into tensor

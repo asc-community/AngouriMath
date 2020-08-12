@@ -26,7 +26,7 @@ using System.Text;
 
 namespace AngouriMath
 {
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity : ILatexiseable
     {
         /// <summary>
         /// Compile function so you can evaluate numerical value 15x faster,
@@ -54,18 +54,8 @@ namespace AngouriMath
 
 namespace AngouriMath
 {
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity : ILatexiseable
     {
-        /// <summary>
-        /// Returns number of nodes in tree
-        /// TODO: improve measurement of Entity complexity, for example
-        /// (1 / x ^ 2).Complexity() < (x ^ (-0.5)).Complexity()
-        /// </summary>
-        /// <returns></returns>
-        public int Complexity()
-        {
-            return Properties.GetPropComplexity() + 1;
-        }
 
         /// <summary>
         /// Obviouosly, returns number of subtrees having exact same stringName

@@ -15,8 +15,9 @@
 
 
 
-﻿using AngouriMath.Core.Exceptions;
- using System.Collections.Generic;
+using AngouriMath.Core.Exceptions;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AngouriMath.Functions.Evaluation.Compilation
 {
@@ -31,14 +32,8 @@ namespace AngouriMath.Functions.Evaluation.Compilation
         /// Must be equal to func's variables (ignoring constants)
         /// </param>
         /// <returns></returns>
-        internal static FastExpression Compile(Entity func, params VariableEntity[] variables)
-        {
-            var strings = new List<string>();
-            foreach (var varEnt in variables)
-                if (!MathS.IsConstant(varEnt))
-                    strings.Add(varEnt.Name);
-            return Compile(func, strings.ToArray());
-        }
+        internal static FastExpression Compile(Entity func, params VariableEntity[] variables) =>
+            Compile(func, variables.Where(varEnt => !varEnt.IsConstant).Select(varEnt => varEnt.Name).ToArray());
 
         /// <summary>
         /// Compiles from strings (see Compile for more details)

@@ -13,11 +13,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Evaluation.Simplification;
 using System;
@@ -28,48 +25,17 @@ using System.Numerics;
 using AngouriMath.Convenience;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sys.Interfaces;
-using AngouriMath.Functions.Output;
-using EvalTable = System.Collections.Generic.Dictionary<string, System.Func<System.Collections.Generic.List<AngouriMath.Entity>, AngouriMath.Entity>>;
+
 namespace AngouriMath
 {
     public static partial class MathS
     {
-        internal static readonly Dictionary<string, ComplexNumber> ConstantList = new Dictionary<string, ComplexNumber>
-        {
-            { "pi", MathS.DecimalConst.pi },
-            { "e", MathS.DecimalConst.e },
-        };
-
-        /// <summary>
-        /// Determines whether something is a variable or contant, e. g.
-        /// x + 3 - is not a constant
-        /// e - is a constant
-        /// x - is not a constant
-        /// pi + 4 - is not a constant (but pi is)
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        public static bool IsConstant(Entity expr) => (expr is VariableEntity && MathS.ConstantList.ContainsKey(expr.Name));
-        public static bool CanBeEvaluated(Entity expr)
-        {
-            if (expr.IsTensoric())
-                return false;
-            if (expr is VariableEntity)
-                return IsConstant(expr);
-            for (int i = 0; i < expr.ChildrenCount; i++)
-                if (!CanBeEvaluated(expr.GetChild(i)))
-                    return false;
-            return true;
-        }
+        public static bool CanBeEvaluated(Entity expr) =>
+            expr.All(e => e is not (Tensor or VariableEntity { IsConstant: false }));
     }
-}
-
-namespace AngouriMath
-{
-    using EvalTable = Dictionary<string, Func<List<Entity>, Entity>>;
 
     // Adding function Eval to Entity
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity : ILatexiseable
     {
         const int DefaultLevel = 2;
         /// <summary>
@@ -81,16 +47,16 @@ namespace AngouriMath
         /// <returns>
         /// An expanded Entity if it wasn't too complicated,
         /// current entity otherwise
-        /// To change the limit use MathS.Settings.MaxExpansionTermCount
+        /// To change the limit use <see cref="MathS.Settings.MaxExpansionTermCount"/>
         /// </returns>
         public Entity Expand(int level = DefaultLevel)
         {
             static Entity Expand_(Entity e, int level) =>
                 level <= 1
-                ? TreeAnalyzer.Replace(Patterns.ExpandRules, e)
-                : Expand_(TreeAnalyzer.Replace(Patterns.ExpandRules, e), level - 1);
+                ? e.Replace(Patterns.ExpandRules)
+                : Expand_(e.Replace(Patterns.ExpandRules), level - 1);
             var expChildren = new List<Entity>();
-            foreach (var linChild in TreeAnalyzer.LinearChildrenOverSum(this))
+            foreach (var linChild in Sumf.LinearChildren(this))
             {
                 var exp = TreeAnalyzer.SmartExpandOver(linChild, entity => true);
                 if (exp is { })
@@ -98,7 +64,7 @@ namespace AngouriMath
                 else
                     return this; // if one is too complicated, return the current one
             }
-            var expanded = TreeAnalyzer.MultiHangBinary(expChildren, "sumf", Const.PRIOR_SUM);
+            var expanded = TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b));
             return Expand_(expanded, level).InnerSimplify();
         }
 
@@ -110,8 +76,8 @@ namespace AngouriMath
         /// </param>
         /// <returns></returns>
         public Entity Collapse(int level = DefaultLevel) => level <= 1
-            ? TreeAnalyzer.Replace(Patterns.CollapseRules, this)
-            : TreeAnalyzer.Replace(Patterns.CollapseRules, this).Collapse(level - 1);
+            ? this.Replace(Patterns.CollapseRules)
+            : this.Replace(Patterns.CollapseRules).Collapse(level - 1);
 
         /// <summary>
         /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
@@ -134,19 +100,9 @@ namespace AngouriMath
 
         /// <summary>
         /// Fast substitution of some mathematical constants,
-        /// e. g. pi * e + 3 => 3.1415 * 2.718 + 3
+        /// e.g. pi * e + 3 => 3.1415 * 2.718 + 3
         /// </summary>
-        /// <returns></returns>
-        public Entity SubstituteConstants()
-        {
-            if (MathS.IsConstant(this))
-                return MathS.ConstantList[this.Name];
-            Entity curr = this.DeepCopy(); // Instead of copying in substitute, 
-            // we better copy first and then do inPlace substitute
-            foreach (var pair in MathS.ConstantList)
-                curr.Substitute(pair.Key, pair.Value, inPlace: true);
-            return curr;
-        }
+        public Entity SubstituteConstants() => Substitute(VariableEntity.ConstantList);
 
         /// <summary>
         /// Simplification synonym. Recommended to use in case of computing a concrete number.
@@ -159,9 +115,15 @@ namespace AngouriMath
         /// <see cref="MathS.CanBeEvaluated(Entity)"/> should be used to check beforehand.
         /// </exception>
         public ComplexNumber Eval() =>
-            SubstituteConstants().InnerEval() is NumberEntity { Value: var value } ? value :
+            SubstituteConstants().InnerEval() is ComplexNumber value ? value :
                 throw new InvalidOperationException
                     ($"Result cannot be represented as a simple number! Use {nameof(MathS.CanBeEvaluated)} to check beforehand.");
+
+        /// <summary>
+        /// Finds out whether an expression contains at least one tensor
+        /// </summary>
+        /// <returns></returns>
+        public bool IsTensoric() => this.OfType<Tensor>().Any();
 
         /// <summary>
         /// Collapses the entire expression into a tensor if possible
@@ -187,14 +149,14 @@ namespace AngouriMath
                     $"Use {nameof(IsTensoric)} to check beforehand.");
             if (this is Tensor result)
             {
-                TensorFunctional.Apply(result, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
+                Tensor.Apply(result, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
                 return result;
             }
             var r = DeepCopy();
-            TensorFunctional.__EvalTensor(ref r);
+            Tensor.__EvalTensor(ref r);
             if (r is Tensor t)
             {
-                TensorFunctional.Apply(t, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
+                Tensor.Apply(t, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
                 return t;
             }
             else
@@ -202,329 +164,193 @@ namespace AngouriMath
         }
     }
 
-    // Adding invoke table for eval & simplify
-    internal static partial class MathFunctions
+    public partial record NumberEntity : Entity
     {
-        internal static readonly EvalTable evalTable = new EvalTable();
-        internal static readonly EvalTable simplifyTable = new EvalTable();
-
-        internal static Entity InvokeSimplify(string typeName, List<Entity> args)
-        {
-            return simplifyTable[typeName](args);
-        }
-
-        internal static Entity InvokeEval(string typeName, List<Entity> args)
-        {
-            return evalTable[typeName](args);
-        }
-
-        internal static bool IsOneNumber(List<Entity> args, NumberEntity e)
-        {
-            return args[0] is NumberEntity n0 && n0.Value == e.Value ||
-                   args[1] is NumberEntity n1 && n1.Value == e.Value;
-
-        }
-
-        internal static Entity GetAnotherEntity(List<Entity> args, NumberEntity e)
-        {
-            if (args[0] is NumberEntity n && n.Value == e.Value)
-                return args[1];
-            else
-                return args[0];
-        }
+        internal override Entity InnerEval() => this;
     }
-}
-
-
-/*
- *
- * This class contains implementation for evaluation for all operators and functions
- *
- */
-
-
-namespace AngouriMath
-{
+    public partial record VariableEntity : Entity
+    {
+        internal override Entity InnerEval() => this;
+    }
+    public partial record Tensor : Entity
+    {
+        internal override Entity InnerEval() => Elementwise(e => e.InnerEval());
+    }
     // Each function and operator processing
-    internal static partial class Sumf
+    public partial record Sumf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => (Augend.InnerEval(), Addend.InnerEval()) switch
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerEval();
-            var r2 = args[1].InnerEval();
-            args = new List<Entity> { r1, r2 };
-            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
-                return new NumberEntity(n1.Value + n2.Value);
-            else
-                if (MathFunctions.IsOneNumber(args, 0))
-                return MathFunctions.GetAnotherEntity(args, 0);
-            else
-                return r1 + r2;
-        }
+            (ComplexNumber n1, ComplexNumber n2) => n1 + n2,
+            (IntegerNumber(0), var n) => n,
+            (var n, IntegerNumber(0)) => n,
+            (var n1, var n2) => n1 == n2 ? 2 * n1 : n1 + n2
+        };
     }
-    internal static partial class Minusf
+    public partial record Minusf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => (Subtrahend.InnerEval(), Minuend.InnerEval()) switch
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerEval();
-            var r2 = args[1].InnerEval();
-            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
-                return new NumberEntity(n1.Value - n2.Value);
-            else if (r1 == r2)
-                return 0;
-            else if (r2 == 0)
-                return r1;
-            else
-                return r1 - r2;
-        }
+            (ComplexNumber n1, ComplexNumber n2) => n1 - n2,
+            (IntegerNumber(0), var n) => -n,
+            (var n, IntegerNumber(0)) => n,
+            (var n1, var n2) => n1 == n2 ? 0 : n1 - n2
+        };
     }
-    internal static partial class Mulf
+    public partial record Mulf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => (Multiplier.InnerEval(), Multiplicand.InnerEval()) switch
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerEval();
-            var r2 = args[1].InnerEval();
-            args = new List<Entity> { r1, r2 };
-            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
-                return new NumberEntity(n1.Value * n2.Value);
-            else if (MathFunctions.IsOneNumber(args, 1))
-                return MathFunctions.GetAnotherEntity(args, 1);
-            else if (MathFunctions.IsOneNumber(args, 0))
-                return 0;
-            else
-                return r1 * r2;
-
-        }
+            (ComplexNumber n1, ComplexNumber n2) => n1 * n2,
+            (IntegerNumber(0), _) or (_, IntegerNumber(0)) => 0,
+            (IntegerNumber(1), var n) => n,
+            (var n, IntegerNumber(1)) => n,
+            (var n1, var n2) => n1 == n2 ? new Powf(n1, 2) : n1 * n2
+        };
     }
-    internal static partial class Divf
+    public partial record Divf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => (Dividend.InnerEval(), Divisor.InnerEval()) switch
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerEval();
-            var r2 = args[1].InnerEval();
-            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
-                return new NumberEntity(n1.Value / n2.Value);
-            else if (r1 == 0)
-                return 0;
-            else if (r2 == 1)
-                return r1;
-            else
-                return r1 / r2;
-        }
+            (ComplexNumber n1, ComplexNumber n2) => n1 / n2,
+            (IntegerNumber(0), _) => 0,
+            (var n, IntegerNumber(1)) => n,
+            (var n1, var n2) => n1 == n2 ? 1 : n1 / n2
+        };
     }
-    internal static partial class Powf
+    public partial record Powf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => (Base.InnerEval(), Exponent.InnerEval()) switch
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerEval();
-            var r2 = args[1].InnerEval();
-            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
-                return new NumberEntity(Number.Pow(n1.Value, n2.Value));
-            else if (r1 == 0 || r1 == 1)
-                return r1;
-            else if (r2 == 1)
-                return r1;
-            else if (r2 == 0)
-                return 1;
-            else
-                return r1.Pow(r2);
-        }
+            (ComplexNumber n1, ComplexNumber n2) => NumberEntity.Pow(n1, n2),
+            (IntegerNumber(0 or 1) n1, _) => n1,
+            (var n, IntegerNumber(1)) => n,
+            (_, IntegerNumber(0)) => 1,
+            (var n1, var n2) => new Powf(n1, n2)
+        };
     }
-    internal static partial class Sinf
+    public partial record Sinf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => Argument.InnerEval() switch
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerEval();
-            if (r is NumberEntity n)
-                return new NumberEntity(Number.Sin(n.Value));
-            else
-                return r.Sin();
-        }
+            ComplexNumber n => NumberEntity.Sin(n),
+            var n => new Sinf(n)
+        };
     }
-    internal static partial class Cosf
+    public partial record Cosf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => Argument.InnerEval() switch
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerEval();
-            if (r is NumberEntity n)
-                return new NumberEntity(Number.Cos(n.Value));
-            else
-                return r.Cos();
-        }
+            ComplexNumber n => NumberEntity.Cos(n),
+            var n => new Cosf(n)
+        };
     }
-    internal static partial class Tanf
+    public partial record Tanf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => Argument.InnerEval() switch
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerEval();
-            if (r is NumberEntity n)
-                return new NumberEntity(Number.Tan(n.Value));
-            else
-                return r.Tan();
-        }
+            ComplexNumber n => NumberEntity.Tan(n),
+            var n => new Tanf(n)
+        };
     }
-    internal static partial class Cotanf
+    public partial record Cotanf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => Argument.InnerEval() switch
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerEval();
-            if (r is NumberEntity n)
-                return new NumberEntity(Number.Cotan(n.Value));
-            else
-                return r.Cotan();
-        }
+            ComplexNumber n => NumberEntity.Cotan(n),
+            var n => new Cotanf(n)
+        };
     }
 
-    internal static partial class Logf
+    public partial record Logf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => (Base.InnerEval(), Antilogarithm.InnerEval()) switch
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r = args[0].InnerEval();
-            var n = args[1].InnerEval();
-            args = new List<Entity> { r, n };
-            if (r is NumberEntity rn && n is NumberEntity nn)
-                return new NumberEntity(Number.Log(rn.Value, nn.Value));
-            else if (r == n)
-                return 1;
-            else if (r == 1)
-                return 0;
-            else
-                return r.Log(args[1]);
-        }
+            (ComplexNumber n1, ComplexNumber n2) => NumberEntity.Log(n1, n2),
+            (IntegerNumber(1), _) => 0,
+            (var n1, var n2) => n1 == n2 ? 1 : (Entity)new Logf(n1, n2)
+        };
     }
 
-    internal static partial class Arcsinf
+    public partial record Arcsinf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => Argument.InnerEval() switch
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerEval();
-            if (arg is NumberEntity n)
-                return new NumberEntity(Number.Arcsin(n.Value));
-            else
-                return Arcsinf.Hang(arg);
-        }
+            ComplexNumber n => NumberEntity.Arcsin(n),
+            var n => new Arcsinf(n)
+        };
     }
-    internal static partial class Arccosf
+    public partial record Arccosf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => Argument.InnerEval() switch
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerEval();
-            if (arg is NumberEntity n)
-                return new NumberEntity(Number.Arccos(n.Value));
-            else
-                return Arccosf.Hang(arg);
-        }
+            ComplexNumber n => NumberEntity.Arccos(n),
+            var n => new Arccosf(n)
+        };
     }
-    internal static partial class Arctanf
+    public partial record Arctanf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => Argument.InnerEval() switch
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerEval();
-            if (arg is NumberEntity n)
-                return new NumberEntity(Number.Arctan(n.Value));
-            else
-                return Arctanf.Hang(arg);
-        }
+            ComplexNumber n => NumberEntity.Arctan(n),
+            var n => new Arctanf(n)
+        };
+}
+    public partial record Arccotanf
+    {
+        internal override Entity InnerEval() => Argument.InnerEval() switch
+        {
+            ComplexNumber n => NumberEntity.Arccotan(n),
+            var n => new Arccotanf(n)
+        };
     }
-    internal static partial class Arccotanf
+    public partial record Factorialf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => Argument.InnerEval() switch
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerEval();
-            if (arg is NumberEntity n)
-                return new NumberEntity(Number.Arccotan(n.Value));
-            else
-                return Arccotanf.Hang(arg);
-        }
-    }
-    internal static partial class Factorialf
+            ComplexNumber n => NumberEntity.Factorial(n),
+            var n => new Factorialf(n)
+        };
+}
+
+    public partial record Derivativef
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => (Expression.InnerEval(), Variable.InnerEval(), Iterations.InnerEval()) switch
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerEval();
-            if (r is NumberEntity n)
-                return new NumberEntity(Number.Factorial(n.Value));
-            else
-                return r.Sin();
-        }
+            (var expr, _, IntegerNumber(0)) => expr,
+            // TODO: consider Integral for negative cases
+            (var expr, VariableEntity var, IntegerNumber(var asInt, _)) => expr.Derive(var, asInt),
+            _ => this
+        };
     }
 
-    internal static partial class Derivativef
+    public partial record Integralf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => (Expression.InnerEval(), Variable.InnerEval(), Iterations.InnerEval()) switch
         {
-            MathFunctions.AssertArgs(args.Count, 3);
-            var x = args[1].InnerEval();
-            var p = args[2].InnerEval();
-            if (x is VariableEntity var && p is NumberEntity { Value: IntegerNumber { Value:var asInt } })
-            {
-                // TODO: consider Integral for negative cases
-                var derived = args[0].Derive(var, asInt);
-                return derived;
-            }
-            else
-                return MathS.Derivative(args[0], x, p);
-        }
+            (var expr, _, IntegerNumber(0)) => expr,
+            // TODO: consider Derivative for negative cases
+            (var expr, VariableEntity var, IntegerNumber(var asInt, _)) =>
+                throw new NotImplementedException("Integration is not implemented yet"),
+            _ => this
+        };
     }
 
-    internal static partial class Integralf
+    public partial record Limitf
     {
-        public static Entity Eval(List<Entity> args)
+        internal override Entity InnerEval() => ApproachFrom switch
         {
-            MathFunctions.AssertArgs(args.Count, 3);
-            var x = args[1].InnerEval();
-            var p = args[2].InnerEval();
-            if (x is VariableEntity var && p is NumberEntity { Value: IntegerNumber { Value:var asInt } })
-            {
-                if (asInt.IsZero)
-                    return args[0].InnerEval();
-                throw new NotImplementedException("Integration is not implemented yet");
-            }
-            else
-                return MathS.Integral(args[0], x, p);
-        }
-    }
-
-    internal static partial class Limitf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 4);
-            var expr = args[0].InnerEval();
-            var x = args[1].InnerEval();
-            var dest = args[2].InnerEval();
-            var appr = args[3].InnerEval();
-            Entity? lim = null;
-            if (appr == IntegerNumber.MinusOne)
-                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
-            else if (appr == IntegerNumber.Zero)
-                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
-            else if (appr == IntegerNumber.One)
-                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
-            else
-                return Limitf.Hang(expr, x, dest, appr);
-        }
+            Limits.ApproachFrom.Left => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+            Limits.ApproachFrom.BothSides => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+            Limits.ApproachFrom.Right => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+            _ => this,
+        };
     }
 }
 
 namespace AngouriMath
 {
-    public abstract partial class Entity
+    public abstract partial record Entity
     {
         internal ComplexNumber? __cachedEvaledValue = null;
     }
@@ -577,13 +403,8 @@ namespace AngouriMath
         static bool IsGood(RealNumber cand, RealNumber[] nums, bool disableIrrational)
         {
             static int GetRank(RealNumber num) =>
-                num == 0 ? 0 : num switch
-                {
-                    IntegerNumber _ => 0,
-                    RationalNumber _ => 1,
-                    RealNumber _ => 2
-                };
-            var minLevel = nums.Select(GetRank).Min();
+                num switch { IntegerNumber => 0, RationalNumber => 1, RealNumber => 2 };
+            var minLevel = nums.Min(GetRank);
             return cand is RationalNumber ||
                    (GetRank(cand) <= minLevel && !disableIrrational) ||
                 (cand is RealNumber and not RationalNumber && cand.Value.IsZero); // TODO: make im:0 downcastable
@@ -597,7 +418,7 @@ namespace AngouriMath
     }
 
     // Each function and operator processing
-    internal static partial class Sumf
+    public partial record Sumf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -626,7 +447,7 @@ namespace AngouriMath
             return result;
         }
     }
-    internal static partial class Minusf
+    public partial record Minusf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -657,7 +478,7 @@ namespace AngouriMath
             return result;
         }
     }
-    internal static partial class Mulf
+    public partial record Mulf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -690,7 +511,7 @@ namespace AngouriMath
 
         }
     }
-    internal static partial class Divf
+    public partial record Divf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -721,7 +542,7 @@ namespace AngouriMath
             return result;
         }
     }
-    internal static partial class Powf
+    public partial record Powf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -757,7 +578,7 @@ namespace AngouriMath
             return result;
         }
     }
-    internal static partial class Sinf
+    public partial record Sinf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -790,7 +611,7 @@ namespace AngouriMath
             return result;
         }
     }
-    internal static partial class Cosf
+    public partial record Cosf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -823,7 +644,7 @@ namespace AngouriMath
             return result;
         }
     }
-    internal static partial class Tanf
+    public partial record Tanf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -856,7 +677,7 @@ namespace AngouriMath
             return result;
         }
     }
-    internal static partial class Cotanf
+    public partial record Cotanf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -890,7 +711,7 @@ namespace AngouriMath
         }
     }
 
-    internal static partial class Logf
+    public partial record Logf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -923,7 +744,7 @@ namespace AngouriMath
         }
     }
 
-    internal static partial class Arcsinf
+    public partial record Arcsinf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -944,12 +765,12 @@ namespace AngouriMath
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arcsin(n), MathS.Arcsin(arg), n);
             }
             else
-                result = Arcsinf.Hang(arg);
+                result = new Arcsinf(arg);
             result.__cachedEvaledValue = potentialResult;
             return result;
         }
     }
-    internal static partial class Arccosf
+    public partial record Arccosf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -970,12 +791,12 @@ namespace AngouriMath
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arccos(n), MathS.Arccos(arg), n);
             }
             else
-                result = Arccosf.Hang(arg);
+                result = new Arccosf(arg);
             result.__cachedEvaledValue = potentialResult;
             return result;
         }
     }
-    internal static partial class Arctanf
+    public partial record Arctanf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -996,12 +817,12 @@ namespace AngouriMath
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arctan(n), MathS.Arctan(arg), n);
             }
             else
-                result = Arctanf.Hang(arg);
+                result = new Arctanf(arg);
             result.__cachedEvaledValue = potentialResult;
             return result;
         }
     }
-    internal static partial class Arccotanf
+    public partial record Arccotanf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -1022,12 +843,12 @@ namespace AngouriMath
                 result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arccotan(n), MathS.Arccotan(arg), n);
             }
             else
-                result = Arccotanf.Hang(arg);
+                result = new Arccotanf(arg);
             result.__cachedEvaledValue = potentialResult;
             return result;
         }
     }
-    internal static partial class Factorialf
+    public partial record Factorialf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -1071,7 +892,7 @@ namespace AngouriMath
         }
     }
 
-    internal static partial class Derivativef
+    public partial record Derivativef
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -1080,12 +901,12 @@ namespace AngouriMath
             var x = args[1].InnerSimplify();
             var pow = args[2].InnerSimplify();
             var def = MathS.Derivative(ent, x, pow);
-            return x is VariableEntity var && pow is NumberEntity { Value: IntegerNumber { Value:var asInt } }
+            return x is VariableEntity var && pow is NumberEntity { Value: IntegerNumber { Value: var asInt } }
                    ? ent.Derive(var, asInt) : def;
         }
     }
 
-    internal static partial class Integralf
+    public partial record Integralf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -1102,7 +923,7 @@ namespace AngouriMath
         }
     }
 
-    internal static partial class Limitf
+    public partial record Limitf
     {
         public static Entity Simplify(List<Entity> args)
         {
@@ -1119,7 +940,7 @@ namespace AngouriMath
             else if (appr == IntegerNumber.One)
                 throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
             else
-                return Limitf.Hang(expr, x, dest, appr);
+                return new Limitf(expr, x, dest, appr);
         }
     }
 }

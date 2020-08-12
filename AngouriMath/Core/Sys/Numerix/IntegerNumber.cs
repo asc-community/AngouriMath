@@ -17,26 +17,26 @@ using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
-    public partial class IntegerNumber : RationalNumber, System.IEquatable<IntegerNumber>, System.IComparable<IntegerNumber>
+	/// <summary>Use <see cref="Create(EInteger)"/> instead of the constructor for consistency with
+	/// <see cref="RationalNumber"/>, <see cref="RealNumber"/> and <see cref="ComplexNumber"/>.</summary>
+    /// <param name="_">Ignored. It is here to disamiguate the <see cref="Deconstruct(out int)"/> method.</param>
+    public partial record IntegerNumber(EInteger Integer, bool _ = false) : RationalNumber(Integer), System.IComparable<IntegerNumber>
     {
-
+        public override Const.Priority Priority => Const.Priority.Num;
         public static readonly IntegerNumber Zero = new IntegerNumber(EInteger.Zero);
         public static readonly IntegerNumber One = new IntegerNumber(EInteger.One);
         public static readonly IntegerNumber MinusOne = new IntegerNumber(-EInteger.One);
-        /// <summary>Exact value of the number</summary>
-        public new EInteger Value { get; }
 
-        /// <summary>Use <see cref="Create(EInteger)"/> for consistency with
-        /// <see cref="RationalNumber"/>, <see cref="RealNumber"/> and <see cref="ComplexNumber"/>.</summary>
-        private protected IntegerNumber(EInteger value) : base(value) => Value = value;
         public static IntegerNumber Create(EInteger value) => new IntegerNumber(value);
 
-        // TODO: When we target .NET 5, remember to use covariant return types
-        public override RealNumber Abs() => Create(Value.Abs());
+        public void Deconstruct(out int? value) =>
+            value = Integer.CanFitInInt32() ? Integer.ToInt32Unchecked() : new int?();
 
-        protected internal override string InternalToString() => InternalToStringDefinition(Value.ToString());
-        protected internal override string InternalLatexise()
-            => InternalLatexiseDefinition(Value.ToString());
+        // TODO: When we target .NET 5, remember to use covariant return types
+        public override RealNumber Abs() => Create(Integer.Abs());
+
+        internal override string Stringize() => Integer.ToString();
+        public override string Latexise() => Integer.ToString();
         internal static bool TryParse(string s,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out IntegerNumber? dst)
         {
@@ -51,11 +51,11 @@ namespace AngouriMath.Core.Numerix
                 return false;
             }
         }
-        public static bool operator >(IntegerNumber a, IntegerNumber b) => a.Value.CompareTo(b.Value) > 0;
-        public static bool operator >=(IntegerNumber a, IntegerNumber b) => a.Value.CompareTo(b.Value) >= 0;
-        public static bool operator <(IntegerNumber a, IntegerNumber b) => a.Value.CompareTo(b.Value) < 0;
-        public static bool operator <=(IntegerNumber a, IntegerNumber b) => a.Value.CompareTo(b.Value) <= 0;
-        public int CompareTo(IntegerNumber other) => Value.CompareTo(other.Value);
+        public static bool operator >(IntegerNumber a, IntegerNumber b) => a.Integer.CompareTo(b.Integer) > 0;
+        public static bool operator >=(IntegerNumber a, IntegerNumber b) => a.Integer.CompareTo(b.Integer) >= 0;
+        public static bool operator <(IntegerNumber a, IntegerNumber b) => a.Integer.CompareTo(b.Integer) < 0;
+        public static bool operator <=(IntegerNumber a, IntegerNumber b) => a.Integer.CompareTo(b.Integer) <= 0;
+        public int CompareTo(IntegerNumber other) => Integer.CompareTo(other.Integer);
         public static IntegerNumber operator +(IntegerNumber a, IntegerNumber b) => OpSum(a, b);
         public static IntegerNumber operator -(IntegerNumber a, IntegerNumber b) => OpSub(a, b);
         public static IntegerNumber operator *(IntegerNumber a, IntegerNumber b) => OpMul(a, b);
@@ -64,9 +64,6 @@ namespace AngouriMath.Core.Numerix
         public static IntegerNumber operator -(IntegerNumber a) => OpMul(MinusOne, a);
         public static bool operator ==(IntegerNumber a, IntegerNumber b) => AreEqual(a, b);
         public static bool operator !=(IntegerNumber a, IntegerNumber b) => !AreEqual(a, b);
-        public override bool Equals(object other) => other is IntegerNumber num && Equals(num);
-        public bool Equals(IntegerNumber other) => AreEqual(this, other);
-        public override int GetHashCode() => Value.GetHashCode();
         public static implicit operator IntegerNumber(sbyte value) => Create(value);
         public static implicit operator IntegerNumber(byte value) => Create(value);
         public static implicit operator IntegerNumber(short value) => Create(value);

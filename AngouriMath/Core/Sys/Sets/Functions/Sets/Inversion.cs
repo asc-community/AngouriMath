@@ -17,7 +17,7 @@ using System.Collections.Generic;
 
 namespace AngouriMath.Core.Sets
 {
-    static partial class SetFunctions
+    partial record Setfunctions
     {
         public static SetNode Invert(SetNode A)
         {

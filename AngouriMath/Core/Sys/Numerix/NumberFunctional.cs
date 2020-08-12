@@ -17,12 +17,13 @@
 using System;
 using System.Numerics;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Numerix;
 using AngouriMath.Functions;
 using PeterO.Numbers;
 
-namespace AngouriMath.Core.Numerix
+namespace AngouriMath
 {
-    public abstract partial class Number
+    public abstract partial record NumberEntity
     {
         /// <summary>
         /// Checks whether a number is zero

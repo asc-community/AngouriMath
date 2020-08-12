@@ -15,20 +15,20 @@
 
 
 
-﻿using System;
- using System.Collections.Generic;
- using System.Linq;
- using AngouriMath.Core.Exceptions;
- using AngouriMath.Core.Numerix;
- using AngouriMath.Functions.DiscreteMath;
- using PeterO.Numbers;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Numerix;
+using AngouriMath.Functions.DiscreteMath;
+using PeterO.Numbers;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
         // TODO: realize all methods
-        
+
         /// <summary>
         /// Counts all combinations of roots, for example
         /// 3 ^ 0.5 + 4 ^ 0.25 will return a set of 8 different numbers
@@ -39,7 +39,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             throw new NotImplementedException();
         }
-        
+
         internal static void EvalCombs(Entity expr, Set set)
         {
             throw new NotImplementedException();
@@ -67,11 +67,11 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <returns></returns>
         internal static List<Entity>? GatherLinearChildrenOverSumAndExpand(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
         {
-            if (expr.Name != "sumf" && expr.Name != "minusf")
+            if (expr is not (Sumf or Minusf))
                 return SmartExpandOver(expr, conditionForUniqueTerms);
             var res = new List<Entity>();
             Entity freeTerm = 0;
-            foreach (var child in TreeAnalyzer.LinearChildrenOverSum(expr))
+            foreach (var child in Sumf.LinearChildren(expr))
                 if (conditionForUniqueTerms(child))
                 {
                     var expanded = SmartExpandOver(child, conditionForUniqueTerms);
@@ -93,54 +93,46 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <returns></returns>
         internal static List<Entity>? SmartExpandOver(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
         {
-            var keepResult = new List<Entity> { expr };
-            if (!(expr is OperatorEntity || expr is FunctionEntity))
-                return keepResult;
             var newChildren = new List<Entity>();
             var result = new List<Entity>();
-            switch (expr.Name)
+            switch (expr)
             {
-                case "sumf":
-                case "minusf":
+                case Sumf or Minusf:
                     throw new SysException("SmartExpandOver must be only called of non-sum expression");
-                case "divf":
-                    ExpandFactorialDivisions(ref expr);
-                    if (expr.Name != "divf") return SmartExpandOver(expr, conditionForUniqueTerms);
-                    var numChildren = GatherLinearChildrenOverSumAndExpand(expr.GetChild(0), conditionForUniqueTerms);
-                    if (numChildren is null)
+                case Divf:
+                    expr = expr.Replace(Patterns.ExpandFactorialDivisions);
+                    if (!(expr is Divf(var dividend, var divisor)))
+                        return SmartExpandOver(expr, conditionForUniqueTerms);
+                    var numChildren = GatherLinearChildrenOverSumAndExpand(dividend, conditionForUniqueTerms);
+                    if (numChildren is null || numChildren.Count > MathS.Settings.MaxExpansionTermCount)
                         return null;
-                    if (numChildren.Count > MathS.Settings.MaxExpansionTermCount)
-                        return null;
-                    return numChildren.Select(c => c / expr.GetChild(1)).ToList();
-                case "mulf":
-                    var oneChildren = GatherLinearChildrenOverSumAndExpand(expr.GetChild(0), conditionForUniqueTerms);
-                    var twoChildren = GatherLinearChildrenOverSumAndExpand(expr.GetChild(1), conditionForUniqueTerms);
+                    return numChildren.Select(c => c / divisor).ToList();
+                case Mulf(var multiplier, var multiplicand):
+                    var oneChildren = GatherLinearChildrenOverSumAndExpand(multiplier, conditionForUniqueTerms);
+                    var twoChildren = GatherLinearChildrenOverSumAndExpand(multiplicand, conditionForUniqueTerms);
                     if (oneChildren is null || twoChildren is null)
                         return null;
                     if (oneChildren.Count * twoChildren.Count > MathS.Settings.MaxExpansionTermCount)
                         return null;
                     foreach (var one in oneChildren)
-                    foreach (var two in twoChildren)
-                        newChildren.Add(one * two);
+                        foreach (var two in twoChildren)
+                            newChildren.Add(one * two);
                     return newChildren;
-                case "powf":
-                    if (!(expr.GetChild(1) is NumberEntity { Value:IntegerNumber { Value: var power } } && power >= 1))
-                        return keepResult;
-                    var linBaseChildren = GatherLinearChildrenOverSumAndExpand(expr.GetChild(0), conditionForUniqueTerms);
+                case Powf(var @base, IntegerNumber { Integer: var power }) when power >= 1:
+                    var linBaseChildren = GatherLinearChildrenOverSumAndExpand(@base, conditionForUniqueTerms);
                     if (linBaseChildren is null)
                         return null;
                     if (linBaseChildren.Count == 1)
-                    {
-                        var baseChild = linBaseChildren[0];
-                        if (!(baseChild is OperatorEntity))
-                            return new List<Entity> { expr };
-                        if (baseChild.Name != "divf" && baseChild.Name != "mulf")
-                            return new List<Entity> { expr };
-                        // (a / b)^2 = a^2 / b^2
-                        baseChild.SetChild(0, baseChild.GetChild(0).Pow(expr.GetChild(1)));
-                        baseChild.SetChild(1, baseChild.GetChild(1).Pow(expr.GetChild(1)));
-                        return new List<Entity> {baseChild};
-                    }
+                        return linBaseChildren[0] switch
+                        {
+                            // (a * b)^2 = a^2 * b^2
+                            Mulf(var multiplier, var multiplicand) =>
+                                new List<Entity> { new Powf(multiplier, power) * new Powf(multiplicand, power) },
+                            // (a / b)^2 = a^2 / b^2
+                            Divf(var baseDividend, var baseDivisor) =>
+                                new List<Entity> { new Powf(baseDividend, power) / new Powf(baseDivisor, power) },
+                            var baseChild => new List<Entity> { baseChild }
+                        };
                     if (power > 20 && linBaseChildren.Count > 1 ||
                         EstimateTermCount(linBaseChildren.Count, power) >
                         EInteger.FromInt32(MathS.Settings.MaxExpansionTermCount))

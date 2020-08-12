@@ -24,7 +24,7 @@ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Core.Sets
 {
-    static partial class PieceFunctions
+    partial record Piecefunctions
     {
         public static List<Piece> Invert(Piece A)
         {

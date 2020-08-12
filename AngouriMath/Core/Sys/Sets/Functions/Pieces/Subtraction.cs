@@ -24,7 +24,7 @@ using System.Linq;
 
 namespace AngouriMath.Core.Sets
 {
-    static partial class PieceFunctions
+    partial record Piecefunctions
     {
         /// <summary>
         /// Subtracts B from A

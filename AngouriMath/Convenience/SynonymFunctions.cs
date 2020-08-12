@@ -47,7 +47,7 @@ namespace AngouriMath
             { "limitf", args => MathS.Limit(args[0], args[1], args[2]) },
             { "limitleftf", args => MathS.Limit(args[0], args[1], args[2], -1) },
             { "limitrightf", args => MathS.Limit(args[0], args[1], args[2], +1) },
-            { "limitinternalf", args => Limitf.Hang(args[0], args[1], args[2], args[3]) },
+            { "limitinternalf", args => new Limitf(args[0], args[1], args[2], args[3]) },
         };
 
         /// <summary>

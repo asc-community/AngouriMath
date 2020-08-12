@@ -16,7 +16,7 @@ namespace AngouriMath.Limits
         internal static Entity? SolveBySubstitution(Entity expr, VariableEntity x)
         {
             var res = expr.Substitute(x, Infinity);
-            if(MathS.CanBeEvaluated(res))
+            if (MathS.CanBeEvaluated(res))
             {
                 var limit = res.Eval();
                 if (limit == RealNumber.NaN) return null;
@@ -48,27 +48,21 @@ namespace AngouriMath.Limits
                     return Infinity * mono[maxPower].Eval();
                 }
                 else
-                { 
+                {
                     return Infinity * mono[maxPower];
                 }
             }
             else return null;
         }
 
-
-        private static Pattern polynomialDivisionPattern = Patterns.any1 / Patterns.any2;
         internal static Entity? SolvePolynomialDivision(Entity expr, VariableEntity x)
         {
-            if(polynomialDivisionPattern.Match(expr))
+            if (expr is Divf(var P, var Q))
             {
-                var P = expr.GetChild(0);
-                var Q = expr.GetChild(1);
-                
                 var monoP = TreeAnalyzer.ParseAsPolynomial<EDecimal>(P, x);
                 var monoQ = TreeAnalyzer.ParseAsPolynomial<EDecimal>(Q, x);
 
-                
-                if(monoP is { } && monoQ is { })
+                if (monoP is { } && monoQ is { })
                 {
                     var maxPowerP = monoP.Keys.Max();
                     var maxPowerQ = monoQ.Keys.Max();
@@ -93,22 +87,18 @@ namespace AngouriMath.Limits
                         var termPSimplified = maxTermP.InnerSimplify();
                         var termQSimplified = maxTermQ.InnerSimplify();
                         return termPSimplified / termQSimplified;
-                    } 
+                    }
                     else return 0;
                 }
             }
             return null;
         }
 
-        private static Pattern LogarithmPattern = Logf.PHang(Patterns.any1, Patterns.any2);
         internal static Entity? SolveAsLogarithm(Entity expr, VariableEntity x)
         {
-            if (LogarithmPattern.Match(expr))
+            if (expr is Logf(var logBase, var logArgument))
             {
-                var logBase = expr.GetChild(0);
-                var logArgument = expr.GetChild(1);
-
-                if (logBase.SubtreeIsFound(x))
+                if (logBase.Vars.Contains(x))
                 {
                     return SolveAsLogarithmDivision(MathS.Ln(logArgument) / MathS.Ln(logBase), x);
                 }
@@ -126,28 +116,20 @@ namespace AngouriMath.Limits
             else return null;
         }
 
-        private static Pattern LogarithmDivisionPattern = Logf.PHang(Patterns.any1, Patterns.any2) / Logf.PHang(Patterns.any3, Patterns.any2);
         internal static Entity? SolveAsLogarithmDivision(Entity expr, VariableEntity x)
         {
-            if (LogarithmDivisionPattern.Match(expr))
+            if (expr is Divf(Logf(var upperLogBase, var upperLogArgument), Logf(var lowerLogBase, var lowerLogArgument)))
             {
-                var upperLogArgument = expr.GetChild(0).GetChild(1);
-                var lowerLogArgument = expr.GetChild(1).GetChild(1);
-                var upperLogBase = expr.GetChild(0).GetChild(0);
-                var lowerLogBase = expr.GetChild(1).GetChild(0);
-                if (lowerLogBase.SubtreeIsFound(x) || upperLogBase.SubtreeIsFound(x)) return null;
+                if (lowerLogBase.Vars.Contains(x) || upperLogBase.Vars.Contains(x)) return null;
 
                 var upperLogLimit = LimitFunctional.ComputeLimit(upperLogArgument, x, RealNumber.PositiveInfinity);
                 var lowerLogLimit = LimitFunctional.ComputeLimit(lowerLogArgument, x, RealNumber.PositiveInfinity);
                 if (upperLogLimit is null || lowerLogLimit is null) return null;
 
-                if ((upperLogLimit.SubtreeIsFound(RealNumber.PositiveInfinity) ||
-                     upperLogLimit.SubtreeIsFound(RealNumber.NegativeInfinity)  ||
-                     upperLogLimit == IntegerNumber.Zero)
-                    &&
-                    (lowerLogLimit.SubtreeIsFound(RealNumber.PositiveInfinity) ||
-                     lowerLogLimit.SubtreeIsFound(RealNumber.NegativeInfinity)  ||
-                     lowerLogLimit == IntegerNumber.Zero))
+                if ((upperLogLimit.Any(child => child == RealNumber.PositiveInfinity || child == RealNumber.NegativeInfinity)
+                     || upperLogLimit == IntegerNumber.Zero)
+                    && (lowerLogLimit.Any(child => child == RealNumber.PositiveInfinity || child == RealNumber.NegativeInfinity)
+                     || lowerLogLimit == IntegerNumber.Zero))
                 {
                     // apply L'Hôpital's rule for lim(x -> +oo) log(f(x), g(x))
                     var p = upperLogArgument.Derive(x) / upperLogArgument;
@@ -157,7 +139,7 @@ namespace AngouriMath.Limits
                 else
                 {
                     var limit = MathS.Ln(upperLogLimit) / MathS.Ln(lowerLogLimit);
-                    if(MathS.CanBeEvaluated(limit))
+                    if (MathS.CanBeEvaluated(limit))
                     {
                         var res = limit.Eval();
                         if (res == RealNumber.NaN) return null;

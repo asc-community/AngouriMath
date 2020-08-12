@@ -21,13 +21,11 @@ using AngouriMath.Core;
 using AngouriMath.Core.FromString;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.NumberSystem;
-using AngouriMath.Functions.Output;
 using AngouriMath.Functions.Algebra.Solver;
 using System.Runtime.CompilerServices;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sys;
  using AngouriMath.Core.Sys.Interfaces;
-using AngouriMath.Core.Sys.Items.Tensors;
 using AngouriMath.Limits;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
@@ -35,12 +33,47 @@ using AngouriMath.Functions.Algebra.InequalitySolver;
 using AngouriMath.Functions.DiscreteMath;
 using GenericTensor.Core;
 using PeterO.Numbers;
+using System.Linq;
 
 namespace AngouriMath
 {
     /// <summary>
     /// Use functions from this class
     /// </summary>
+    /// If I need to add a function or operator (e.g. sin), I first pin this tab for reference :)
+    /// To start, implement real number evaluation
+    /// (Press F12 -> <see cref="PeterONumbersExtensions.Sin(PeterO.Numbers.EDecimal, PeterO.Numbers.EContext)"/>)
+    /// then complex number evaluation
+    /// (Press F12 -> <see cref="Core.Numerix.Number.Sin(Core.Numerix.ComplexNumber)"/>)
+    ///
+    /// Next, Add Wakeup to static ctor below
+    ///  -> Copy static function class (Press F12 -> <see cref="Sinf.Wakeup()"/>)
+    ///  -> Add instance method to Entity (Press F12 -> <see cref="Entity.Sin()"/>)).
+    /// 
+    /// After that,
+    /// .Eval (Press F12 -> <see cref="Sinf.Eval(System.Collections.Generic.List{Entity})"/>)
+    /// .Hang (Press F12 -> <see cref="new Sinf(Entity)"/>)
+    /// .PHang (Press F12 -> <see cref="Sinf.PHang(Entity)"/>)
+    /// .ToString (Press F12 -> <see cref="Sinf.Stringize(System.Collections.Generic.List{Entity})"/>)
+    /// .Latex (Press F12 -> <see cref="Sinf.Latex(System.Collections.Generic.List{Entity})"/>)
+    /// .Derive (Press F12 -> <see cref="Sinf.Derive(System.Collections.Generic.List{Entity}, VariableEntity)"/>)
+    /// .Simplify (Press F12 -> <see cref="Sinf.Simplify(System.Collections.Generic.List{Entity})"/>)
+    /// To compilation (Press F12 -> <see cref="CompiledMathFunctions.func2Num"/>
+    ///                                       ^ TODO: Replace numbers with enum ^
+    ///                          and <see cref="FastExpression.Substitute(System.Numerics.Complex[])"/>)
+    /// To From String Syntax Info goodStrings (Press F12 -> <see cref="Core.FromString.SyntaxInfo.goodStringsForFunctions"/>)
+    /// To Pattern Replacer
+    ///     (Press F12 -> <see cref="Patterns.TrigonometricRules"/>
+    ///               and <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.Trigonometry"/>
+    ///               and <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.ContainsTrigonometric(Entity)"/>
+    ///               and <see cref="Functions.Evaluation.Simplification.Simplificator.Alternate(Entity, int)"/>)
+    /// To static MathS() (Press F12 -> <see cref="Sin(Entity)"/>)
+    /// To Analytical Solver (Press F12 -> <see cref="Functions.Algebra.Solver.Analytical.TrigonometricSolver"/>
+    ///                                and <see cref="Functions.Algebra.AnalyticalSolving.AnalyticalSolver.Solve(Entity, VariableEntity, Core.Set, bool)"/>)
+    /// To TreeAnalyzer Optimization (Press F12 -> <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.OptimizeTree(ref Entity)"/>)
+    /// To ToSympyCode (Press F12 -> <see cref="Functions.Output.ToSympy.FuncTable"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
+    /// 
+    /// And finally, remember to add tests for all the new functionality!
     public static partial class MathS
     {
         /// <summary>
@@ -115,7 +148,7 @@ namespace AngouriMath
         /// Sine node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Sin(Entity a) => Sinf.Hang(a);
+        public static Entity Sin(Entity a) => new Sinf(a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
@@ -127,7 +160,7 @@ namespace AngouriMath
         /// Cosine node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Cos(Entity a) => Cosf.Hang(a);
+        public static Entity Cos(Entity a) => new Cosf(a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Logarithm"/>
@@ -142,7 +175,7 @@ namespace AngouriMath
         /// Logarithm node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Log(Entity @base, Entity x) => Logf.Hang(@base, x);
+        public static Entity Log(Entity @base, Entity x) => new Logf(@base, x);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Power_function"/>
@@ -157,7 +190,7 @@ namespace AngouriMath
         /// Power node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Pow(Entity @base, Entity power) => Powf.Hang(@base, power);
+        public static Entity Pow(Entity @base, Entity power) => new Powf(@base, power);
 
         /// <summary>
         /// Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/>
@@ -169,7 +202,7 @@ namespace AngouriMath
         /// Power node with (1/2) as the power
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Sqrt(Entity a) => Powf.Hang(a, RationalNumber.Create(1, 2));
+        public static Entity Sqrt(Entity a) => new Powf(a, RationalNumber.Create(1, 2));
 
         /// <summary>
         /// Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/>
@@ -181,7 +214,7 @@ namespace AngouriMath
         /// Power node with (1/3) as the power
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Cbrt(Entity a) => Powf.Hang(a, RationalNumber.Create(1, 3));
+        public static Entity Cbrt(Entity a) => new Powf(a, RationalNumber.Create(1, 3));
 
         /// <summary>
         /// Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/>
@@ -193,7 +226,7 @@ namespace AngouriMath
         /// Power node with 2 as the power
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Sqr(Entity a) => Powf.Hang(a, 2);
+        public static Entity Sqr(Entity a) => new Powf(a, 2);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
@@ -205,7 +238,7 @@ namespace AngouriMath
         /// Tangent node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Tan(Entity a) => Tanf.Hang(a);
+        public static Entity Tan(Entity a) => new Tanf(a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
@@ -217,7 +250,7 @@ namespace AngouriMath
         /// Cotangent node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Cotan(Entity a) => Cotanf.Hang(a);
+        public static Entity Cotan(Entity a) => new Cotanf(a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
@@ -253,7 +286,7 @@ namespace AngouriMath
         /// Arcsine node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Arcsin(Entity a) => Arcsinf.Hang(a);
+        public static Entity Arcsin(Entity a) => new Arcsinf(a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
@@ -265,7 +298,7 @@ namespace AngouriMath
         /// Arccosine node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Arccos(Entity a) => Arccosf.Hang(a);
+        public static Entity Arccos(Entity a) => new Arccosf(a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
@@ -277,7 +310,7 @@ namespace AngouriMath
         /// Arctangent node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Arctan(Entity a) => Arctanf.Hang(a);
+        public static Entity Arctan(Entity a) => new Arctanf(a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
@@ -289,7 +322,7 @@ namespace AngouriMath
         /// Arccotangent node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Arccotan(Entity a) => Arccotanf.Hang(a);
+        public static Entity Arccotan(Entity a) => new Arccotanf(a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
@@ -301,7 +334,7 @@ namespace AngouriMath
         /// Arccosine node with the reciprocal of the argument
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Arcsec(Entity a) => Arccosf.Hang(1 / a);
+        public static Entity Arcsec(Entity a) => new Arccosf(1 / a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
@@ -313,7 +346,7 @@ namespace AngouriMath
         /// Arcsine node with the reciprocal of the argument
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Arccosec(Entity a) => Arcsinf.Hang(1 / a);
+        public static Entity Arccosec(Entity a) => new Arcsinf(1 / a);
 
         /// <summary>
         /// Is a special case of logarithm where the base equals
@@ -327,7 +360,7 @@ namespace AngouriMath
         /// Logarithm node with base equal to e
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Ln(Entity a) => Logf.Hang(e, a);
+        public static Entity Ln(Entity a) => new Logf(e, a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Factorial"/>
@@ -339,7 +372,7 @@ namespace AngouriMath
         /// Factorial node
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Factorial(Entity a) => Factorialf.Hang(a);
+        public static Entity Factorial(Entity a) => new Factorialf(a);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Gamma_function"/>
@@ -351,7 +384,7 @@ namespace AngouriMath
         /// Factorial node with one added to the argument
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Gamma(Entity a) => Factorialf.Hang(a + 1);
+        public static Entity Gamma(Entity a) => new Factorialf(a + 1);
 
         /// <summary>
         /// Creates an instance of <see cref="VariableEntity"/>.
@@ -370,7 +403,7 @@ namespace AngouriMath
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Obsolete("Use Number.Create or implicit construction instead")]
-        public static Number Num(EDecimal a, EDecimal b) => ComplexNumber.Create(a, b);
+        public static NumberEntity Num(EDecimal a, EDecimal b) => ComplexNumber.Create(a, b);
 
         /// <summary>
         /// Creates a real instance of <see cref="Number"/> (not <see cref="NumberEntity"/>!)
@@ -598,7 +631,7 @@ namespace AngouriMath
             /// A two-dimensional <see cref="Tensor"/> which is a matrix
             /// </returns>
             public static Tensor Matrix(int rows, int columns, params Entity[] values)
-                => TensorFunctional.Matrix(rows, columns, values);
+                => Tensor.Matrix(rows, columns, values);
 
             /// <summary>
             /// Creates an instance of <see cref="Tensor"/> that is a matrix.
@@ -610,7 +643,7 @@ namespace AngouriMath
             /// A two-dimensional <see cref="Tensor"/> which is a matrix
             /// </returns>
             public static Tensor Matrix(Entity[,] values)
-                => TensorFunctional.Matrix(values);
+                => Tensor.Matrix(values);
 
             /// <summary>
             /// Creates an instance of <see cref="Tensor"/> that is a vector.
@@ -622,7 +655,7 @@ namespace AngouriMath
             /// A one-dimensional <see cref="Tensor"/> which is a vector
             /// </returns>
             public static Tensor Vector(params Entity[] values)
-                => TensorFunctional.Vector(values);
+                => Tensor.Vector(values);
 
             /// <summary>
             /// Returns the dot product of two <see cref="Tensor"/>s that are matrices.
@@ -638,7 +671,7 @@ namespace AngouriMath
             /// </returns>
             [Obsolete("Use MatrixMultiplication instead")]
             public static Tensor DotProduct(Tensor A, Tensor B) =>
-                TensorFunctional.DotProduct(A, B);
+                Tensor.DotProduct(A, B);
 
             /// <summary>
             /// Returns the dot product of two <see cref="Tensor"/>s that are matrices.
@@ -653,7 +686,7 @@ namespace AngouriMath
             /// A two-dimensional <see cref="Tensor"/> (matrix) as a result of symbolic multiplication
             /// </returns>
             public static Tensor MatrixMultiplication(Tensor A, Tensor B) =>
-                new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.TensorMatrixMultiply(A.innerTensor, B.innerTensor));
+                new Tensor(GenTensor<Entity, Tensor.EntityTensorWrapperOperations>.TensorMatrixMultiply(A.InnerTensor, B.InnerTensor));
 
             /// <summary>
             /// Returns the scalar product of two <see cref="Tensor"/>s that are vectors
@@ -669,7 +702,7 @@ namespace AngouriMath
             /// The resulting scalar which is an <see cref="Entity"/> and not a <see cref="Tensor"/>
             /// </returns>
             public static Entity ScalarProduct(Tensor A, Tensor B) =>
-                TensorFunctional.ScalarProduct(A, B);
+                Tensor.ScalarProduct(A, B);
         }
 
         /// <summary>
@@ -822,8 +855,7 @@ namespace AngouriMath
             /// }
             /// </code>
             /// </summary>
-            public static void CheckTree(Entity expr) 
-                => TreeAnalyzer.CheckTree(expr);
+            public static void CheckTree(Entity expr) => TreeAnalyzer.CheckTree(expr);
 
             /// <summary>
             /// Optimizes <paramref name="tree"/> to a binary tree.
@@ -835,8 +867,7 @@ namespace AngouriMath
             /// <returns>
             /// An optimized but logically equal tree
             /// </returns>
-            public static Entity OptimizeTree(Entity tree)
-                => TreeAnalyzer.Optimization.OptimizeTree(tree);
+            public static Entity OptimizeTree(Entity tree) => tree.Replace(Patterns.OptimizeRules);
 
             /// <summary>
             /// Returns sympy interpretable format
@@ -847,20 +878,6 @@ namespace AngouriMath
             /// <returns></returns>
             public static string ToSympyCode(Entity expr)
                 => ToSympy.GenerateCode(expr);
-
-            /// <summary>
-            /// Returns list of unique variables, for example 
-            /// it extracts <c>`x`</c>, <c>`goose`</c> from <c>(x + 2 * goose) - pi * x</c>
-            /// </summary>
-            /// <param name="expr">
-            /// An expression to extract variables from
-            /// </param>
-            /// <returns>
-            /// <see cref="Set"/> of unique variables excluding mathematical constants
-            /// such as <see cref="pi"/>, <see cref="e"/> and <see cref="i"/>
-            /// </returns>
-            public static HashSet<VariableEntity> GetUniqueVariables(Entity expr)
-                => TreeAnalyzer.GetUniqueVariables(expr);
 
             /// <summary>
             /// Counts all nodes & subnodes that match <paramref name="criteria"/>
@@ -874,8 +891,7 @@ namespace AngouriMath
             /// <returns>
             /// Number of hits
             /// </returns>
-            public static int Count(Entity expr, Predicate<Entity> criteria)
-                => TreeAnalyzer.Count(expr, criteria);
+            public static int Count(Entity expr, Func<Entity, bool> criteria) => expr.Count(criteria);
         }
 
         /// <summary>
@@ -970,14 +986,8 @@ namespace AngouriMath
             /// The variable to derive over
             /// </param>
             /// <returns>The derived result</returns>
-            public static Entity? Derivative(Entity expr, VariableEntity x) =>
-                expr switch
-                {
-                    VariableEntity when expr.Name == x.Name => new NumberEntity(1),
-                    NumberEntity { Value: { IsNaN: true } } => expr,
-                    { IsLeaf: true } => new NumberEntity(0),
-                    _ => MathFunctions.InvokeDerive(expr.Name, expr.Children, x)
-                };
+            public static Entity? Derivative(Entity expr, VariableEntity x) => expr.Derive(x);
+
             /// <summary>
             /// Integrates over <paramref name="x"/> <paramref name="power"/> times
             /// </summary>
@@ -1010,7 +1020,7 @@ namespace AngouriMath
         /// Variable over which derivative is taken
         /// </param>
         public static Entity Derivative(Entity expr, Entity var)
-            => Derivativef.Hang(expr, var, 1);
+            => new Derivativef(expr, var, 1);
 
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
@@ -1027,7 +1037,7 @@ namespace AngouriMath
         /// Only integers will be simplified or evaluated
         /// </param>
         public static Entity Derivative(Entity expr, Entity var, Entity power)
-            => Derivativef.Hang(expr, var, power);
+            => new Derivativef(expr, var, power);
 
         /// <summary>
         /// Hangs your entity to an integral node
@@ -1040,7 +1050,7 @@ namespace AngouriMath
         /// Variable over which integral is taken
         /// </param>
         public static Entity Integral(Entity expr, Entity var)
-            => Integralf.Hang(expr, var, 1);
+            => new Integralf(expr, var, 1);
 
         /// <summary>
         /// Hangs your entity to an integral node
@@ -1057,23 +1067,7 @@ namespace AngouriMath
         /// Only integers will be simplified or evaluated
         /// </param>
         public static Entity Integral(Entity expr, Entity var, Entity power)
-            => Integralf.Hang(expr, var, power);
-
-        /// <summary>
-        /// Hangs your entity to a limit node
-        /// (to evaluate instead use <see cref="Compute.Limit(Entity, VariableEntity, Entity)"/>)
-        /// </summary>
-        /// <param name="expr">
-        /// Expression to be hung
-        /// </param>
-        /// <param name="var">
-        /// Variable over which limit is taken
-        /// </param>
-        /// <param name="dest">
-        /// Where <paramref name="var"/> approaches (could be finite or infinite)
-        /// </param>
-        public static Entity Limit(Entity expr, Entity var, Entity dest)
-            => Limitf.Hang(expr, var, dest, 0);
+            => new Integralf(expr, var, power);
 
         /// <summary>
         /// Hangs your entity to a limit node
@@ -1089,10 +1083,10 @@ namespace AngouriMath
         /// Where <paramref name="var"/> approaches (could be finite or infinite)
         /// </param>
         /// <param name="approach">
-        /// From where it approaches (-1: left, 0: both sides, 1: right)
+        /// From where it approaches
         /// </param>
-        public static Entity Limit(Entity expr, Entity var, Entity dest, int approach)
-            => Limitf.Hang(expr, var, dest, approach);
+        public static Entity Limit(Entity expr, Entity var, Entity dest, ApproachFrom approach = ApproachFrom.BothSides)
+            => new Limitf(expr, var, dest, approach);
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
             Justification = "Lowercase constants as written in Mathematics")]
