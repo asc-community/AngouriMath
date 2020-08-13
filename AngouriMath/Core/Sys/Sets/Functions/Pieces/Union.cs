@@ -20,9 +20,9 @@ using System.Collections.Generic;
  * UNION
  *
  */
-namespace AngouriMath.Core.Sets
+namespace AngouriMath.Core
 {
-    public partial record Piecefunctions
+    static partial class PieceFunctions
     {
         public static List<Piece> Unite(Piece A, Piece B)
         {

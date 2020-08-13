@@ -28,21 +28,22 @@ namespace AngouriMath.Core.Numerix
     /// https://en.wikipedia.org/wiki/Complex_number
     /// Constructor does not downcast automatically. Use <see cref="Create(RealNumber, RealNumber)"/> for automatic downcasting
     /// </summary>
-    public partial record ComplexNumber(RealNumber? Real_, RealNumber? Imaginary_) : NumberEntity
+    public record ComplexNumber(RealNumber? Real_, RealNumber? Imaginary_) : Entity.Num
     {
         public virtual RealNumber Real => Real_ ?? IntegerNumber.Zero;
         public RealNumber Imaginary => Imaginary_ ?? IntegerNumber.Zero;
-        public override Const.Priority Priority =>
+        public override Priority Priority =>
             (Real, Imaginary) switch
             {
-                ({ IsZero: false }, { IsZero: false }) => Const.Priority.Sum,
-                (_, { IsNegative: true }) => Const.Priority.Mul,
-                _ => Const.Priority.Num
+                ({ IsZero: false }, { IsZero: false }) => Priority.Sum,
+                (_, { IsNegative: true }) => Priority.Mul,
+                _ => Priority.Num
             };
         public static readonly ComplexNumber ImaginaryOne = new ComplexNumber(0, 1);
         public static readonly ComplexNumber MinusImaginaryOne = new ComplexNumber(0, -1);
 
         protected override bool ThisIsFinite => Real.Value.IsFinite && Imaginary.Value.IsFinite;
+        public override bool IsExact => Real.IsExact && Imaginary.IsExact;
         public bool IsZero => Real.Value.IsZero && Imaginary.Value.IsZero;
         public bool IsNaN => this == RealNumber.NaN;
 

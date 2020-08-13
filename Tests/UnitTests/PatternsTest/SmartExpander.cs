@@ -2,6 +2,7 @@
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace UnitTests.PatternsTest
 {
@@ -22,10 +23,10 @@ namespace UnitTests.PatternsTest
         {
             var expanded = MathS.Settings.MaxExpansionTermCount.As(3000, () =>
             {
-                var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.SubtreeIsFound("x"));
+                var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.Vars.Contains("x"));
                 if (expandOver is null)
                     throw new AssertFailedException("expandOver is null");
-                return TreeAnalyzer.MultiHangBinary(expandOver, "sumf", Const.Priority.Sum);
+                return TreeAnalyzer.MultiHangBinary(expandOver, (a, b) => new Entity.Sumf(a, b));
             });
             foreach (var toSub in toSubs)
             {

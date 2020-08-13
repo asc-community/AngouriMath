@@ -13,44 +13,43 @@ namespace UnitTests.Algebra
         {
             var num = 3;
             var pow = 3;
-            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
-                Assert.AreEqual(num, Number.Pow(root, pow));
+            foreach (var root in Entity.Num.GetAllRoots(num, pow))
+                Assert.AreEqual(num, Entity.Num.Pow(root, pow));
         }
         [TestMethod]
         public void TestRoots1()
         {
             var num = 5 + MathS.i * 5;
             var pow = 4;
-            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
-                Assert.AreEqual(num, Number.Pow(root, pow));
+            foreach (var root in Entity.Num.GetAllRoots(num, pow))
+                Assert.AreEqual(num, Entity.Num.Pow(root, pow));
         }
         [TestMethod]
         public void TestRoots2()
         {
             var num = -3 + MathS.i * 8;
             var pow = 5;
-            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
-                Assert.AreEqual(num, Number.Pow(root, pow));
+            foreach (var root in Entity.Num.GetAllRoots(num, pow))
+                Assert.AreEqual(num, Entity.Num.Pow(root, pow));
         }
         [TestMethod]
         public void TestRoots3()
         {
             var num = -3 + MathS.i * 8;
             var pow = 8;
-            foreach (var root in Number.GetAllRoots(num, pow).Select(piece => ((NumberEntity)piece).Value))
-                Assert.AreEqual(num, Number.Pow(root, pow));
+            foreach (var root in Entity.Num.GetAllRoots(num, pow))
+                Assert.AreEqual(num, Entity.Num.Pow(root, pow));
         }
 
-
-        // Testing functions of Number System
+        // Testing functions of Base Convert
         [TestMethod]
-        public void TestNSTo0()
+        public void TestBaseConvertTo0()
         {
             Assert.AreEqual("101", MathS.ToBaseN(5, 2));
             Assert.AreEqual("F", MathS.ToBaseN(15, 16));
         }
         [TestMethod]
-        public void TestNSTo1()
+        public void TestBaseConvertTo1()
         {
             Assert.AreEqual("-101", MathS.ToBaseN(-5, 2));
             Assert.AreEqual("-F", MathS.ToBaseN(-15, 16));
@@ -71,7 +70,7 @@ namespace UnitTests.Algebra
             Assert.AreEqual("-8C", MathS.ToBaseN(-140, 16));
         }
         [TestMethod]
-        public void TestNSTo2()
+        public void TestBaseConvertTo2()
         {
             Assert.AreEqual("1000.001", MathS.ToBaseN(8.125m, 2));
             Assert.AreEqual("20.02", MathS.ToBaseN(8.125m, 4));
@@ -91,7 +90,7 @@ namespace UnitTests.Algebra
             Assert.AreEqual("8.E", MathS.ToBaseN(8.875m, 16));
         }
         [TestMethod]
-        public void TestNSTo3()
+        public void TestBaseConvertTo3()
         {
             Assert.AreEqual("-1000.001", MathS.ToBaseN(-8.125m, 2));
             Assert.AreEqual("-20.02", MathS.ToBaseN(-8.125m, 4));
@@ -111,19 +110,19 @@ namespace UnitTests.Algebra
             Assert.AreEqual("-8.E", MathS.ToBaseN(-8.875m, 16));
         }
         [TestMethod]
-        public void TestNSFrom0()
+        public void TestBaseConvertFrom0()
         {
             Assert.AreEqual(10, MathS.FromBaseN("A", 16));
             Assert.AreEqual(10, MathS.FromBaseN("1010", 2));
         }
         [TestMethod]
-        public void TestNSFrom1()
+        public void TestBaseConvertFrom1()
         {
             Assert.AreEqual(-10.25m, MathS.FromBaseN("-A.4", 16));
             Assert.AreEqual(-140, MathS.FromBaseN("-A0", 14));
         }
         [TestMethod]
-        public void TestNSFrom2()
+        public void TestBaseConvertFrom2()
         {
             Assert.AreEqual(-0.125m, MathS.FromBaseN("-0.125", 10));
             Assert.AreEqual(0.25m, MathS.FromBaseN("0.3", 12));

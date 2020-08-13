@@ -17,6 +17,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static AngouriMath.Entity;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 
@@ -39,9 +40,9 @@ namespace AngouriMath
         /// <summary>(x + a)! / (x + b)! -> (x+b+1)*(x+b+2)*...*(x+a)</summary>
         internal static Entity ExpandFactorialDivisions(Entity expr)
         {
-            Entity ExpandFactorialDivisions(Entity x, Entity x2, NumberEntity num, NumberEntity den)
+            Entity ExpandFactorialDivisions(Entity x, Entity x2, Num num, Num den)
             {
-                static Entity Add(Entity a, NumberEntity b) =>
+                static Entity Add(Entity a, Num b) =>
                     b is IntegerNumber(0) ? a : a + b;
                 if (x == x2
                     && num - den is IntegerNumber { Integer: var diff }
@@ -65,11 +66,11 @@ namespace AngouriMath
             }
             return expr switch
             {
-                Divf(Factorialf(Sumf(var any1, NumberEntity const1)), Factorialf(Sumf(var any1a, NumberEntity const2)))
+                Divf(Factorialf(Sumf(var any1, Num const1)), Factorialf(Sumf(var any1a, Num const2)))
                     => ExpandFactorialDivisions(any1, any1a, const1, const2),
-                Divf(Factorialf(var any1), Factorialf(Sumf(var any1a, NumberEntity const2)))
+                Divf(Factorialf(var any1), Factorialf(Sumf(var any1a, Num const2)))
                     => ExpandFactorialDivisions(any1, any1a, 0, const2),
-                Divf(Factorialf(Sumf(var any1, NumberEntity const1)), Factorialf(var any1a))
+                Divf(Factorialf(Sumf(var any1, Num const1)), Factorialf(var any1a))
                     => ExpandFactorialDivisions(any1, any1a, const1, 0),
                 _ => expr
             };
@@ -86,15 +87,15 @@ namespace AngouriMath
         /// <summary>(x-1)! x -> x!, x! (x+1) -> (x+1)!, etc. <!--as well as z! (-z-1)! -> -π/sin(π z)--></summary>
         internal static Entity CollapseFactorialMultiplications(Entity expr)
         {
-            Entity CollapseFactorialMultiplications(Entity x, Entity x2, NumberEntity factConst, NumberEntity @const) =>
+            Entity CollapseFactorialMultiplications(Entity x, Entity x2, Num factConst, Num @const) =>
                 x == x2 && factConst + 1 == @const ? new Factorialf(x) : expr;
             return expr switch
             {
-                Mulf(Factorialf(Sumf(var any1, NumberEntity const1)), Sumf(var any1a, NumberEntity const2)) =>
+                Mulf(Factorialf(Sumf(var any1, Num const1)), Sumf(var any1a, Num const2)) =>
                     CollapseFactorialMultiplications(any1, any1a, const1, const2),
-                Mulf(Factorialf(var any1), Sumf(var any1a, NumberEntity const2)) =>
+                Mulf(Factorialf(var any1), Sumf(var any1a, Num const2)) =>
                     CollapseFactorialMultiplications(any1, any1a, 0, const2),
-                Mulf(Factorialf(Sumf(var any1, NumberEntity const1)), var any1a) =>
+                Mulf(Factorialf(Sumf(var any1, Num const1)), var any1a) =>
                     CollapseFactorialMultiplications(any1, any1a, const1, 0),
                 _ => expr
             };
@@ -102,8 +103,8 @@ namespace AngouriMath
         internal static Entity DivisionPreparingRules(Entity x) => x switch
         {
             Mulf(var any1, Divf(IntegerNumber(1), var any2)) => any1 / any2,
-            Divf(Mulf(NumberEntity const1, var any1), var any2) => const1 * (any1 / any2),
-            Mulf(Divf(NumberEntity const1, var any1), var any2) => const1 * (any2 / any1),
+            Divf(Mulf(Num const1, var any1), var any2) => const1 * (any1 / any2),
+            Mulf(Divf(Num const1, var any1), var any2) => const1 * (any2 / any1),
             _ => x
         };
         internal static Entity TrigonometricRules(Entity x) => x switch
@@ -160,15 +161,15 @@ namespace AngouriMath
         /// <item>cos(ax + b) = (t^a * e^(i*b) + t^(-a) * e^(-i*b)) / 2</item>
         /// </list>
         /// </summary>
-        internal static Func<Entity, Entity> TrigonometricToExponentialRules(VariableEntity from, VariableEntity to) => tree =>
+        internal static Func<Entity, Entity> TrigonometricToExponentialRules(Var from, Var to) => tree =>
         {
             // sin(ax + b) = (t^a * e^(i*b) - t^(-a) * e^(-i*b)) / (2i)
-            Entity SinResult(VariableEntity x, NumberEntity a, Entity b) =>
+            Entity SinResult(Var x, Num a, Entity b) =>
                 x == from
                 ? MathS.Pow(to, a) * (MathS.Pow(MathS.e, b * MathS.i) / (2 * MathS.i)) - MathS.Pow(to, -a) * MathS.Pow(MathS.e, -b * MathS.i) / (2 * MathS.i)
                 : tree;
             // cos(ax + b) = (t^a * e^(i*b) + t^(-a) * e^(-i*b)) / 2
-            Entity CosResult(VariableEntity x, NumberEntity a, Entity b) =>
+            Entity CosResult(Var x, Num a, Entity b) =>
                 x == from
                 ? MathS.Pow(to, a) * (MathS.Pow(MathS.e, b * MathS.i) / 2) + MathS.Pow(to, -a) * MathS.Pow(MathS.e, -b * MathS.i) / 2
                 : tree;
@@ -177,36 +178,36 @@ namespace AngouriMath
             // e.g. tan(ax + b) = -i + (2i)/(1 + e^(2i*b) t^(2a))
             return tree switch
             {
-                Sinf(VariableEntity x) => SinResult(x, 1, 0),
-                Sinf(Mulf(VariableEntity x, NumberEntity a)) => SinResult(x, a, 0),
-                Sinf(Mulf(NumberEntity a, VariableEntity x)) => SinResult(x, a, 0),
-                Sinf(Sumf(VariableEntity x, var b)) => SinResult(x, 1, b),
-                Sinf(Sumf(var b, VariableEntity x)) => SinResult(x, 1, b),
-                Sinf(Sumf(Mulf(VariableEntity x, NumberEntity a), var b)) => SinResult(x, a, b),
-                Sinf(Sumf(Mulf(NumberEntity a, VariableEntity x), var b)) => SinResult(x, a, b),
-                Sinf(Sumf(var b, Mulf(VariableEntity x, NumberEntity a))) => SinResult(x, a, b),
-                Sinf(Sumf(var b, Mulf(NumberEntity a, VariableEntity x))) => SinResult(x, a, b),
-                Sinf(Minusf(VariableEntity x, var b)) => SinResult(x, 1, -b),
-                Sinf(Minusf(var b, VariableEntity x)) => SinResult(x, -1, b),
-                Sinf(Minusf(Mulf(VariableEntity x, NumberEntity a), var b)) => SinResult(x, a, -b),
-                Sinf(Minusf(Mulf(NumberEntity a, VariableEntity x), var b)) => SinResult(x, a, -b),
-                Sinf(Minusf(var b, Mulf(VariableEntity x, NumberEntity a))) => SinResult(x, -a, b),
-                Sinf(Minusf(var b, Mulf(NumberEntity a, VariableEntity x))) => SinResult(x, -a, b),
-                Cosf(VariableEntity x) => CosResult(x, 1, 0),
-                Cosf(Mulf(VariableEntity x, NumberEntity a)) => CosResult(x, a, 0),
-                Cosf(Mulf(NumberEntity a, VariableEntity x)) => CosResult(x, a, 0),
-                Cosf(Sumf(VariableEntity x, var b)) => CosResult(x, 1, b),
-                Cosf(Sumf(var b, VariableEntity x)) => CosResult(x, 1, b),
-                Cosf(Sumf(Mulf(VariableEntity x, NumberEntity a), var b)) => CosResult(x, a, b),
-                Cosf(Sumf(Mulf(NumberEntity a, VariableEntity x), var b)) => CosResult(x, a, b),
-                Cosf(Sumf(var b, Mulf(VariableEntity x, NumberEntity a))) => CosResult(x, a, b),
-                Cosf(Sumf(var b, Mulf(NumberEntity a, VariableEntity x))) => CosResult(x, a, b),
-                Cosf(Minusf(VariableEntity x, var b)) => CosResult(x, 1, -b),
-                Cosf(Minusf(var b, VariableEntity x)) => CosResult(x, -1, b),
-                Cosf(Minusf(Mulf(VariableEntity x, NumberEntity a), var b)) => CosResult(x, a, -b),
-                Cosf(Minusf(Mulf(NumberEntity a, VariableEntity x), var b)) => CosResult(x, a, -b),
-                Cosf(Minusf(var b, Mulf(VariableEntity x, NumberEntity a))) => CosResult(x, -a, b),
-                Cosf(Minusf(var b, Mulf(NumberEntity a, VariableEntity x))) => CosResult(x, -a, b),
+                Sinf(Var x) => SinResult(x, 1, 0),
+                Sinf(Mulf(Var x, Num a)) => SinResult(x, a, 0),
+                Sinf(Mulf(Num a, Var x)) => SinResult(x, a, 0),
+                Sinf(Sumf(Var x, var b)) => SinResult(x, 1, b),
+                Sinf(Sumf(var b, Var x)) => SinResult(x, 1, b),
+                Sinf(Sumf(Mulf(Var x, Num a), var b)) => SinResult(x, a, b),
+                Sinf(Sumf(Mulf(Num a, Var x), var b)) => SinResult(x, a, b),
+                Sinf(Sumf(var b, Mulf(Var x, Num a))) => SinResult(x, a, b),
+                Sinf(Sumf(var b, Mulf(Num a, Var x))) => SinResult(x, a, b),
+                Sinf(Minusf(Var x, var b)) => SinResult(x, 1, -b),
+                Sinf(Minusf(var b, Var x)) => SinResult(x, -1, b),
+                Sinf(Minusf(Mulf(Var x, Num a), var b)) => SinResult(x, a, -b),
+                Sinf(Minusf(Mulf(Num a, Var x), var b)) => SinResult(x, a, -b),
+                Sinf(Minusf(var b, Mulf(Var x, Num a))) => SinResult(x, -a, b),
+                Sinf(Minusf(var b, Mulf(Num a, Var x))) => SinResult(x, -a, b),
+                Cosf(Var x) => CosResult(x, 1, 0),
+                Cosf(Mulf(Var x, Num a)) => CosResult(x, a, 0),
+                Cosf(Mulf(Num a, Var x)) => CosResult(x, a, 0),
+                Cosf(Sumf(Var x, var b)) => CosResult(x, 1, b),
+                Cosf(Sumf(var b, Var x)) => CosResult(x, 1, b),
+                Cosf(Sumf(Mulf(Var x, Num a), var b)) => CosResult(x, a, b),
+                Cosf(Sumf(Mulf(Num a, Var x), var b)) => CosResult(x, a, b),
+                Cosf(Sumf(var b, Mulf(Var x, Num a))) => CosResult(x, a, b),
+                Cosf(Sumf(var b, Mulf(Num a, Var x))) => CosResult(x, a, b),
+                Cosf(Minusf(Var x, var b)) => CosResult(x, 1, -b),
+                Cosf(Minusf(var b, Var x)) => CosResult(x, -1, b),
+                Cosf(Minusf(Mulf(Var x, Num a), var b)) => CosResult(x, a, -b),
+                Cosf(Minusf(Mulf(Num a, Var x), var b)) => CosResult(x, a, -b),
+                Cosf(Minusf(var b, Mulf(Var x, Num a))) => CosResult(x, -a, b),
+                Cosf(Minusf(var b, Mulf(Num a, Var x))) => CosResult(x, -a, b),
                 _ => tree
             };
         };
@@ -214,7 +215,7 @@ namespace AngouriMath
         internal static Entity PowerRules(Entity x) => x switch
         {
             // x * {} ^ {} = {} ^ {} * x
-            Mulf(VariableEntity var1, Powf(var any1, var any2)) => new Powf(any1, any2) * var1,
+            Mulf(Var var1, Powf(var any1, var any2)) => new Powf(any1, any2) * var1,
 
             // {} ^ n * {}
             Mulf(Powf(var any1, var any2), var any1a) when any1 == any1a => new Powf(any1, any2 + 1),
@@ -243,7 +244,7 @@ namespace AngouriMath
             Divf(Powf(var any1, var any2), Powf(var any1a, var any3)) when any1 == any1a => new Powf(any1, any2 - any3),
 
             // c ^ log(c, a) = a
-            Powf(NumberEntity const1, Logf(NumberEntity const1a, var any1)) when const1 == const1a => any1,
+            Powf(Num const1, Logf(Num const1a, var any1)) when const1 == const1a => any1,
 
             Mulf(Powf(var any1, var any3), Mulf(var any1a, var any2)) when any1 == any1a => new Powf(any1, any3 + 1) * any2,
             Mulf(Powf(var any1, var any3), Mulf(var any2, var any1a)) when any1 == any1a => new Powf(any1, any3 + 1) * any2,
@@ -251,16 +252,16 @@ namespace AngouriMath
             Mulf(Mulf(var any2, var any1), Powf(var any1a, var any3)) when any1 == any1a => new Powf(any1, any3 + 1) * any2,
 
             // (a * x) ^ c = a^c * x^c
-            Powf(Mulf(NumberEntity const1, var any1), NumberEntity const2) =>
+            Powf(Mulf(Num const1, var any1), Num const2) =>
                 new Powf(const1, const2) * new Powf(any1, const2),
 
             // {1} ^ (-1) = 1 / {1}
             Powf(var any1, IntegerNumber(-1)) => 1 / any1,
 
             // (a / {})^b * {} = a^b * {}^(1-b)
-            Mulf(Powf(Divf(NumberEntity const1, var any1), NumberEntity const2), var any1a) when any1 == any1a =>
+            Mulf(Powf(Divf(Num const1, var any1), Num const2), var any1a) when any1 == any1a =>
                 new Powf(const1, const2) * new Powf(any1, 1 - const2),
-            Mulf(Powf(Divf(NumberEntity const1, var any1), NumberEntity const2), Powf(var any1a, NumberEntity const3))
+            Mulf(Powf(Divf(Num const1, var any1), Num const2), Powf(var any1a, Num const3))
                 when any1 == any1a => new Powf(const1, const2) * new Powf(any1, const3 - const2),
 
             // {1} / {2} / {2}
@@ -279,7 +280,7 @@ namespace AngouriMath
         internal static Entity CommonRules(Entity x) => x switch
         {
             // (a * f(x)) * g(x) = a * (f(x) * g(x))
-            Mulf(Mulf(NumberEntity const1, FunctionEntity func1), FunctionEntity func2) => func1 * func2 * const1,
+            Mulf(Mulf(Num const1, Function func1), Function func2) => func1 * func2 * const1,
 
             // a / (b / c) = a * c / b
             Divf(var any1, Divf(var any2, var any3)) => any1 * any3 / any2,
@@ -291,37 +292,37 @@ namespace AngouriMath
             Mulf(var any1, Divf(var any2, var any3)) => any1 * any2 / any3,
 
             // (a * f(x)) * b = (a * b) * f(x)
-            Mulf(Mulf(NumberEntity const1, FunctionEntity func1), NumberEntity const2) => const1 * const2 * func1,
-            Mulf(NumberEntity const2, Mulf(NumberEntity const1, FunctionEntity func1)) => const1 * const2 * func1,
+            Mulf(Mulf(Num const1, Function func1), Num const2) => const1 * const2 * func1,
+            Mulf(Num const2, Mulf(Num const1, Function func1)) => const1 * const2 * func1,
 
             // (a * f(x)) * (b * g(x)) = (a * b) * (f(x) * g(x))
-            Mulf(Mulf(NumberEntity const1, FunctionEntity func1), Mulf(NumberEntity const2, FunctionEntity func2)) =>
+            Mulf(Mulf(Num const1, Function func1), Mulf(Num const2, Function func2)) =>
                 func1 * func2 * (const1 * const2),
 
             // (f(x) + {}) + g(x) = (f(x) + g(x)) + {}
-            Sumf(Sumf(FunctionEntity func1, var any1), FunctionEntity func2) => func1 + func2 + any1,
+            Sumf(Sumf(Function func1, var any1), Function func2) => func1 + func2 + any1,
 
             // g(x) + (f(x) + {}) = (f(x) + g(x)) + {}
-            Sumf(FunctionEntity func2, Sumf(FunctionEntity func1, var any1)) => func1 + func2 + any1,
+            Sumf(Function func2, Sumf(Function func1, var any1)) => func1 + func2 + any1,
 
             // x * a = a * x
-            Mulf(VariableEntity var1, NumberEntity const1) => const1 * var1,
+            Mulf(Var var1, Num const1) => const1 * var1,
 
             // a + x = x + a
-            Sumf(NumberEntity const1, VariableEntity var1) => var1 + const1,
+            Sumf(Num const1, Var var1) => var1 + const1,
 
             // f(x) * a = a * f(x)
-            Mulf(FunctionEntity func1, NumberEntity const1) => const1 * func1,
+            Mulf(Function func1, Num const1) => const1 * func1,
 
             // a + f(x) = f(x) + a
-            Sumf(NumberEntity const1, FunctionEntity func1) => func1 + const1,
+            Sumf(Num const1, Function func1) => func1 + const1,
 
             // a * x + b * x = (a + b) * x
-            Sumf(Mulf(NumberEntity const1, VariableEntity var1), Mulf(NumberEntity const2, VariableEntity var1a))
+            Sumf(Mulf(Num const1, Var var1), Mulf(Num const2, Var var1a))
                 when var1 == var1a => (const1 + const2) * var1,
 
             // a * x - b * x = (a - b) * x
-            Minusf(Mulf(NumberEntity const1, VariableEntity var1), Mulf(NumberEntity const2, VariableEntity var1a))
+            Minusf(Mulf(Num const1, Var var1), Mulf(Num const2, Var var1a))
                 when var1 == var1a => (const1 - const2) * var1,
 
             // {1} * {2} + {1} * {3} = {1} * ({2} + {3})
@@ -362,14 +363,14 @@ namespace AngouriMath
             Mulf(var any1, var any1a) when any1 == any1a => new Powf(any1, 2),
 
             // (a * x) * b
-            Mulf(Mulf(NumberEntity const1, VariableEntity var1), NumberEntity const2) => const1 * const2 * var1,
-            Mulf(NumberEntity const2, Mulf(NumberEntity const1, VariableEntity var1)) => const1 * const2 * var1,
+            Mulf(Mulf(Num const1, Var var1), Num const2) => const1 * const2 * var1,
+            Mulf(Num const2, Mulf(Num const1, Var var1)) => const1 * const2 * var1,
 
             // (x + a) + b
-            Sumf(Sumf(VariableEntity var1, NumberEntity const1), NumberEntity const2) => var1 + (const1 + const2),
+            Sumf(Sumf(Var var1, Num const1), Num const2) => var1 + (const1 + const2),
 
             // b + (x + a)
-            Sumf(NumberEntity const2, Sumf(VariableEntity var1, NumberEntity const1)) => var1 + (const1 + const2),
+            Sumf(Num const2, Sumf(Var var1, Num const1)) => var1 + (const1 + const2),
 
             // x * a * x
             Mulf(var any1, Mulf(var any1a, var any2)) when any1 == any1a => new Powf(any1, 2) * any2,
@@ -382,9 +383,9 @@ namespace AngouriMath
             Sumf(var any1, Mulf(IntegerNumber(-1), var any2)) => any1 - any2,
 
             // (x - {}) (x + {}) = x2 - {}2
-            Mulf(Minusf(VariableEntity var1, var any1), Sumf(VariableEntity var1a, var any1a))
+            Mulf(Minusf(Var var1, var any1), Sumf(Var var1a, var any1a))
                 when var1 == var1a && any1 == any1a => new Powf(var1, 2) - new Powf(any1, 2),
-            Mulf(Sumf(VariableEntity var1, var any1), Minusf(VariableEntity var1a, var any1a))
+            Mulf(Sumf(Var var1, var any1), Minusf(Var var1a, var any1a))
                 when var1 == var1a && any1 == any1a => new Powf(var1, 2) - new Powf(any1, 2),
 
             // a / a
@@ -405,11 +406,11 @@ namespace AngouriMath
             Divf(Sumf(var any1, var any2), Sumf(var any2a, var any1a)) when (any1, any2) == (any1a, any2a) => 1,
 
             // a / (b * {1})
-            Divf(NumberEntity const1, Mulf(NumberEntity const2, var any1)) => const1 / const2 / any1,
-            Divf(NumberEntity const1, Mulf(var any1, NumberEntity const2)) => const1 / const2 / any1,
+            Divf(Num const1, Mulf(Num const2, var any1)) => const1 / const2 / any1,
+            Divf(Num const1, Mulf(var any1, Num const2)) => const1 / const2 / any1,
 
             // a * (b * {}) = (a * b) * {}
-            Mulf(NumberEntity const1, Mulf(NumberEntity const2, var any1)) => const1 * const2 * any1,
+            Mulf(Num const1, Mulf(Num const2, var any1)) => const1 * const2 * any1,
 
             // {1} - {2} * {1}
             Minusf(var any1, Mulf(var any2, var any1a)) when any1 == any1a => any1 * (1 - any2),
@@ -419,7 +420,7 @@ namespace AngouriMath
             Mulf(Divf(var any1, var any2), var any3) => any1 * any3 / any2,
 
             // a * {1} / b
-            Divf(Mulf(NumberEntity const1, var any1), NumberEntity const2) => const1 / const2 * any1,
+            Divf(Mulf(Num const1, var any1), Num const2) => const1 / const2 * any1,
 
             _ => x
         };
@@ -435,11 +436,11 @@ namespace AngouriMath
         internal static Entity CollapseRules(Entity x) => x switch
         {
             // {1}2 - {2}2
-            Minusf(Powf(var any1, NumberEntity const1), Powf(var any2, NumberEntity const2)) =>
+            Minusf(Powf(var any1, Num const1), Powf(var any2, Num const2)) =>
                 (new Powf(any1, const1 / 2) - new Powf(any2, const2 / 2)) *
                 (new Powf(any1, const1 / 2) + new Powf(any2, const2 / 2)),
 
-            Minusf(Powf(var any1, IntegerNumber(2)), NumberEntity const1) =>
+            Minusf(Powf(var any1, IntegerNumber(2)), Num const1) =>
                 (any1 - new Powf(const1, RationalNumber.Create(1, 2))) *
                 (any1 + new Powf(const1, RationalNumber.Create(1, 2))),
 

@@ -15,44 +15,23 @@
 
 
 
-﻿using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
- using System.Numerics;
- using AngouriMath.Core.Numerix;
- using PeterO.Numbers;
+using AngouriMath.Core.Numerix;
+using PeterO.Numbers;
+using System.Linq;
 
-namespace AngouriMath.Functions.NumberSystem
+namespace AngouriMath.Functions
 {
-    internal static class NumberSystem
+    internal static class BaseConversion
     {
         // TODO: add more digits
         internal static readonly string ALPHABET_TOCHAR = "0123456789ABCDEF";
-        internal static readonly Dictionary<char, int> ALPHABET_FROMCHAR = new Dictionary<char, int> {
-            { '0', 0 },
-            { '1', 1 },
-            { '2', 2 },
-            { '3', 3 },
-            { '4', 4 },
-            { '5', 5 },
-            { '6', 6 },
-            { '7', 7 },
-            { '8', 8 },
-            { '9', 9 },
-            { 'A', 10 },
-            { 'B', 11 },
-            { 'C', 12 },
-            { 'D', 13 },
-            { 'E', 14 },
-            { 'F', 15 },
-        };
+        internal static readonly Dictionary<char, int> ALPHABET_FROMCHAR =
+            ALPHABET_TOCHAR.ToDictionary(c => c, ALPHABET_TOCHAR.IndexOf);
 
-        /// <summary>
-        /// Transforms an integer to the corresponding base (in string)
-        /// </summary>
-        /// <param name="num"></param>
-        /// <param name="N"></param>
-        /// <returns></returns>
+        /// <summary>Transforms an integer to the corresponding base (in string)</summary>
         internal static string IntToBaseN(EInteger num, int N)
         {
             if (num < 0)

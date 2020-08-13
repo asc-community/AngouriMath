@@ -22,10 +22,11 @@ namespace AngouriMath.Core.Numerix
 	/// Use <see cref="Create(EInteger, EInteger)"/> or <see cref="Create(ERational)"/> for automatic downcasting.
 	/// The denominator cannot be zero as the resulting value will not be a rational
 	/// </summary>
-    public partial record RationalNumber(ERational Rational)
+    public record RationalNumber(ERational Rational)
 	    : RealNumber(Rational.ToEDecimal(MathS.Settings.DecimalPrecisionContext)), System.IComparable<RationalNumber>
     {
-        public override Const.Priority Priority => Const.Priority.Div;
+        public override Priority Priority => Priority.Div;
+        public override bool IsExact => true;
         public static RationalNumber Create(EInteger numerator, EInteger denominator) =>
             Create(ERational.Create(numerator, denominator));
         public static RationalNumber Create(ERational value) {

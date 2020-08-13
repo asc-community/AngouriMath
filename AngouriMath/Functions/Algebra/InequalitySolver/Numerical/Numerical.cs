@@ -1,4 +1,3 @@
-
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -20,11 +19,12 @@ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Functions.Algebra.InequalitySolver
 {
+    using static Entity;
     internal static class NumericalInequalitySolver
     {
         /// <summary>
         /// <paramref name="expr"/> must contain only
-        /// <see cref="VariableEntity"/> <paramref name="x"/> as the variable
+        /// <see cref="Var"/> <paramref name="x"/> as the variable
         /// </summary>
         /// <param name="expr">
         /// This must only contain one variable, which is <paramref name="x"/>
@@ -36,10 +36,11 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
         /// The relation of the expression to zero.
         /// </param>
         /// <returns></returns>
-        internal static Set _Solve(Entity expr, VariableEntity x, MathS.Inequality sign)
+        internal static Set Solve(Entity expr, Var x, MathS.Inequality sign)
         {
-            bool Corresponds(RealNumber val)
-            => sign switch
+            if (expr.Vars.Count != 1 || expr.Vars.Single() != x)
+                throw new MathSException($"{nameof(expr)} should only contain {nameof(Var)} {nameof(x)}");
+            bool Corresponds(RealNumber val) => sign switch
             {
                 MathS.Inequality.GreaterThan   => val >  0,
                 MathS.Inequality.LessThan      => val <  0,
@@ -69,13 +70,6 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
                     result.Add((left, right, false, false));
             }
             return (sign & MathS.Inequality.EqualsFlag) != 0 ? (Set)(realRootsSet | result) : result;
-        }
-
-        internal static Set Solve(Entity expr, VariableEntity x, MathS.Inequality sign)
-        {
-            if (expr.Vars.Count != 1 || expr.Vars.Single() != x)
-                throw new MathSException($"{nameof(expr)} should only contain {nameof(VariableEntity)} {nameof(x)}");
-            return _Solve(expr, x, sign);
         }
     }
 }

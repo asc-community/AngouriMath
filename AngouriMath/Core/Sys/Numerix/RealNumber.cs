@@ -22,9 +22,10 @@ namespace AngouriMath.Core.Numerix
     /// <summary>
     /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
     /// </summary>
-    public partial record RealNumber(EDecimal Value) : ComplexNumber(null, null), System.IComparable<RealNumber>
+    public record RealNumber(EDecimal Value) : ComplexNumber(null, null), System.IComparable<RealNumber>
     {
-        public override Const.Priority Priority => Value.IsNegative ? Const.Priority.Mul : Const.Priority.Num;
+        public override Priority Priority => Value.IsNegative ? Priority.Mul : Priority.Num;
+        public override bool IsExact => !Value.IsFinite;
         public bool IsNegative => Value.IsNegative;
         public bool IsPositive => !Value.IsNegative && !Value.IsZero;
         public static RealNumber Create(EDecimal value)

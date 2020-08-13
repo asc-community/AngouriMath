@@ -20,9 +20,9 @@ namespace AngouriMath.Core.Numerix
 	/// <summary>Use <see cref="Create(EInteger)"/> instead of the constructor for consistency with
 	/// <see cref="RationalNumber"/>, <see cref="RealNumber"/> and <see cref="ComplexNumber"/>.</summary>
     /// <param name="_">Ignored. It is here to disamiguate the <see cref="Deconstruct(out int)"/> method.</param>
-    public partial record IntegerNumber(EInteger Integer, bool _ = false) : RationalNumber(Integer), System.IComparable<IntegerNumber>
+    public record IntegerNumber(EInteger Integer, bool _ = false) : RationalNumber(Integer), System.IComparable<IntegerNumber>
     {
-        public override Const.Priority Priority => Const.Priority.Num;
+        public override Priority Priority => Priority.Num;
         public static readonly IntegerNumber Zero = new IntegerNumber(EInteger.Zero);
         public static readonly IntegerNumber One = new IntegerNumber(EInteger.One);
         public static readonly IntegerNumber MinusOne = new IntegerNumber(-EInteger.One);

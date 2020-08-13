@@ -6,8 +6,8 @@ namespace UnitTests.Convenience
     [TestClass]
     public class CompilationTest
     {
-        private static readonly VariableEntity x = MathS.Var("x");
-        private static readonly VariableEntity y = MathS.Var("y");
+        private static readonly Entity.Var x = MathS.Var("x");
+        private static readonly Entity.Var y = MathS.Var("y");
         [TestMethod]
         public void Test1()
         {

@@ -22,12 +22,13 @@ using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
+    using static Entity;
     internal static class FractionedPolynoms
     {
-        internal static Set? Solve(Entity expr, VariableEntity x)
+        internal static Set? Solve(Entity expr, Var x)
         {
             var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
-                expr, entity => entity.SubtreeIsFound(x)
+                expr, entity => entity.Vars.Contains(x)
             );
 
             if (children is null)
@@ -44,7 +45,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 potentialFraction.fracs = new List<(Entity main, IntegerNumber pow)>();
                 foreach (var mpChild in Mulf.LinearChildren(child))
                 {
-                    if (!(mpChild is Powf(var @base, NumberEntity num and not IntegerNumber))) // (x + 3) ^ 3
+                    if (!(mpChild is Powf(var @base, Num num and not IntegerNumber))) // (x + 3) ^ 3
                     {
                         potentialFraction.multiplier *= mpChild;
                         continue;

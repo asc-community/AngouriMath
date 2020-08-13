@@ -13,16 +13,10 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using AngouriMath.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AngouriMath.Core.Exceptions;
-using AngouriMath.Core.Numerix;
-using AngouriMath.Core.Sys.Interfaces;
-
 namespace AngouriMath
 {
     public abstract partial record Entity : ILatexiseable
@@ -32,133 +26,101 @@ namespace AngouriMath
         internal abstract string Stringize();
         protected internal string Stringize(bool parenthesesRequired) =>
             parenthesesRequired ? @$"({Stringize()})" : Stringize();
-    }
-
-    public partial record NumberEntity
-    {
-        internal override string Stringize() => Value.ToString();
-    }
-
-    public partial record VariableEntity
-    {
-        internal override string Stringize() => Name;
-    }
-
-    public partial record Tensor
-    {
-        internal override string Stringize() => innerTensor.ToString();
-    }
-
-    public partial record Sumf
-    {
-        internal override string Stringize() =>
-            Augend.Stringize(Augend.Priority < Const.Priority.Sum) + " + " + Addend.Stringize(Addend.Priority < Const.Priority.Sum);
-    }
-    public partial record Minusf
-    {
-        internal override string Stringize() =>
-            Subtrahend.Stringize(Subtrahend.Priority < Const.Priority.Minus) + " - " + Minuend.Stringize(Minuend.Priority <= Const.Priority.Minus);
-    }
-    public partial record Mulf
-    {
-        internal override string Stringize() =>
-            Multiplier.Stringize(Multiplier.Priority < Const.Priority.Mul) + " * " + Multiplicand.Stringize(Multiplicand.Priority < Const.Priority.Mul);
-    }
-    public partial record Divf
-    {
-        internal override string Stringize() =>
-            Dividend.Stringize(Dividend.Priority < Const.Priority.Div) + " / " + Divisor.Stringize(Divisor.Priority <= Const.Priority.Div);
-    }
-    public partial record Sinf
-    {
-        internal override string Stringize() => "sin(" + Argument.Stringize() + ")";
-    }
-    public partial record Cosf
-    {
-        internal override string Stringize() => "cos(" + Argument.Stringize() + ")";
-    }
-    public partial record Tanf
-    {
-        internal override string Stringize() => "tan(" + Argument.Stringize() + ")";
-    }
-    public partial record Cotanf
-    {
-        internal override string Stringize() => "cotan(" + Argument.Stringize() + ")";
-    }
-    public partial record Logf
-    {
-        internal override string Stringize() => "log(" + Base.Stringize() + ", " + Antilogarithm.Stringize() + ")";
-    }
-    public partial record Powf
-    {
-        internal override string Stringize() =>
-            Exponent == 0.5m
-            ? "sqrt(" + Base.Stringize() + ")"
-            : Base.Stringize(Base.Priority < Const.Priority.Pow) + " ^ " + Exponent.Stringize(Exponent.Priority < Const.Priority.Pow);
-    }
-    public partial record Arcsinf
-    {
-        internal override string Stringize() => "arcsin(" + Argument.Stringize() + ")";
-    }
-    public partial record Arccosf
-    {
-        internal override string Stringize() => "arccos(" + Argument.Stringize() + ")";
-    }
-    public partial record Arctanf
-    {
-        internal override string Stringize() => "arctan(" + Argument.Stringize() + ")";
-    }
-    public partial record Arccotanf
-    {
-        internal override string Stringize() => "arccotan(" + Argument.Stringize() + ")";
-    }
-
-    public partial record Factorialf
-    {
-        internal override string Stringize() => Argument.Stringize(Argument.Priority < Const.Priority.Num) + "!";
-    }
-
-    public partial record Derivativef
-    {
-        internal override string Stringize() => $"derive({Expression}, {Variable}, {Iterations})";
-    }
-
-    public partial record Integralf
-    {
-        internal override string Stringize() => $"integrate({Expression}, {Variable}, {Iterations})";
-    }
-
-    public partial record Limitf
-    {
-        internal override string Stringize() =>
-            ApproachFrom switch
-            {
-                Limits.ApproachFrom.Left => "limitleft",
-                Limits.ApproachFrom.BothSides => "limit",
-                Limits.ApproachFrom.Right => "limitright",
-                _ => throw new System.ComponentModel.InvalidEnumArgumentException
-                  (nameof(ApproachFrom), (int)ApproachFrom, typeof(Limits.ApproachFrom))
-            } + $"({Expression}, {Variable}, {Destination})";
-    }
-
-    internal static class SetToString
-    {
-        static readonly List<string> Operators = new List<string>
+        public partial record Num { }
+        public partial record Var
         {
-            "|",
-            "&",
-            @"\"
-        };
-        internal static string OperatorToString(OperatorSet set)
-        {
-            // TODO: add check whether set is correct (add TreeAnalyzer.CheckSet)
-            if (set.ConnectionType == OperatorSet.OperatorType.INVERSION)
-                return "!" + set.Children[0].ToString();
-            return "(" + set.Children[0].ToString() + ")" + Operators[(int)set.ConnectionType] + "(" + set.Children[1].ToString() + ")";
+            internal override string Stringize() => Name;
         }
-
-        internal static string LinearSetToString(Set set)
-        => set.IsEmpty() ? "{}" :
-            string.Join("|", set.Pieces.Select(c => c.ToString()));
+        public partial record Tensor
+        {
+            internal override string Stringize() => InnerTensor.ToString();
+        }
+        public partial record Sumf
+        {
+            internal override string Stringize() =>
+                Augend.Stringize(Augend.Priority < Priority.Sum) + " + " + Addend.Stringize(Addend.Priority < Priority.Sum);
+        }
+        public partial record Minusf
+        {
+            internal override string Stringize() =>
+                Subtrahend.Stringize(Subtrahend.Priority < Priority.Minus) + " - " + Minuend.Stringize(Minuend.Priority <= Priority.Minus);
+        }
+        public partial record Mulf
+        {
+            internal override string Stringize() =>
+                Multiplier.Stringize(Multiplier.Priority < Priority.Mul) + " * " + Multiplicand.Stringize(Multiplicand.Priority < Priority.Mul);
+        }
+        public partial record Divf
+        {
+            internal override string Stringize() =>
+                Dividend.Stringize(Dividend.Priority < Priority.Div) + " / " + Divisor.Stringize(Divisor.Priority <= Priority.Div);
+        }
+        public partial record Sinf
+        {
+            internal override string Stringize() => "sin(" + Argument.Stringize() + ")";
+        }
+        public partial record Cosf
+        {
+            internal override string Stringize() => "cos(" + Argument.Stringize() + ")";
+        }
+        public partial record Tanf
+        {
+            internal override string Stringize() => "tan(" + Argument.Stringize() + ")";
+        }
+        public partial record Cotanf
+        {
+            internal override string Stringize() => "cotan(" + Argument.Stringize() + ")";
+        }
+        public partial record Logf
+        {
+            internal override string Stringize() => "log(" + Base.Stringize() + ", " + Antilogarithm.Stringize() + ")";
+        }
+        public partial record Powf
+        {
+            internal override string Stringize() =>
+                Exponent == 0.5m
+                ? "sqrt(" + Base.Stringize() + ")"
+                : Base.Stringize(Base.Priority < Priority.Pow) + " ^ " + Exponent.Stringize(Exponent.Priority < Priority.Pow);
+        }
+        public partial record Arcsinf
+        {
+            internal override string Stringize() => "arcsin(" + Argument.Stringize() + ")";
+        }
+        public partial record Arccosf
+        {
+            internal override string Stringize() => "arccos(" + Argument.Stringize() + ")";
+        }
+        public partial record Arctanf
+        {
+            internal override string Stringize() => "arctan(" + Argument.Stringize() + ")";
+        }
+        public partial record Arccotanf
+        {
+            internal override string Stringize() => "arccotan(" + Argument.Stringize() + ")";
+        }
+        public partial record Factorialf
+        {
+            internal override string Stringize() => Argument.Stringize(Argument.Priority < Priority.Num) + "!";
+        }
+        public partial record Derivativef
+        {
+            internal override string Stringize() => $"derive({Expression}, {Variable}, {Iterations})";
+        }
+        public partial record Integralf
+        {
+            internal override string Stringize() => $"integrate({Expression}, {Variable}, {Iterations})";
+        }
+        public partial record Limitf
+        {
+            internal override string Stringize() =>
+                ApproachFrom switch
+                {
+                    Limits.ApproachFrom.Left => "limitleft",
+                    Limits.ApproachFrom.BothSides => "limit",
+                    Limits.ApproachFrom.Right => "limitright",
+                    _ => throw new System.ComponentModel.InvalidEnumArgumentException
+                      (nameof(ApproachFrom), (int)ApproachFrom, typeof(Limits.ApproachFrom))
+                } + $"({Expression}, {Variable}, {Destination})";
+        }
     }
 }

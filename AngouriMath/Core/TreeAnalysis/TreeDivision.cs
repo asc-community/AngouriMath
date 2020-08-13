@@ -20,6 +20,7 @@ using PeterO.Numbers;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
+    using static Entity;
     internal static partial class TreeAnalyzer
     {
         /// <summary>Returns information about all monomials of an expression</summary>
@@ -45,19 +46,19 @@ namespace AngouriMath.Core.TreeAnalysis
         }
         internal class PolyInfo
         {
-            readonly Dictionary<VariableEntity, Dictionary<EDecimal, Entity>> monoInfo = new();
-            readonly Dictionary<VariableEntity, Entity> revertReplacements = new();
-            readonly Dictionary<Entity, VariableEntity> replacements = new();
-            public IReadOnlyDictionary<VariableEntity, Dictionary<EDecimal, Entity>> MonoInfo => monoInfo;
-            public IReadOnlyDictionary<Entity, VariableEntity> Replacements => replacements;
-            public IReadOnlyDictionary<VariableEntity, Entity> RevertReplacements => revertReplacements;
-            public void AddReplacement(VariableEntity variable, Entity value)
+            readonly Dictionary<Var, Dictionary<EDecimal, Entity>> monoInfo = new();
+            readonly Dictionary<Var, Entity> revertReplacements = new();
+            readonly Dictionary<Entity, Var> replacements = new();
+            public IReadOnlyDictionary<Var, Dictionary<EDecimal, Entity>> MonoInfo => monoInfo;
+            public IReadOnlyDictionary<Entity, Var> Replacements => replacements;
+            public IReadOnlyDictionary<Var, Entity> RevertReplacements => revertReplacements;
+            public void AddReplacement(Var variable, Entity value)
             {
                 variable = new(variable.Name + "_r");
                 replacements.Add(value, variable);
                 revertReplacements.Add(variable, value);
             }
-            public void AddMonoInfo(VariableEntity variable, Dictionary<EDecimal, Entity>? powers)
+            public void AddMonoInfo(Var variable, Dictionary<EDecimal, Entity>? powers)
             {
                 if (powers is { }) monoInfo.Add(variable, powers);
             }
@@ -80,7 +81,7 @@ namespace AngouriMath.Core.TreeAnalysis
             var monoinfoQ = GatherAllPossiblePolynomials(q.Expand(), replaceVars: false).MonoInfo;
             var monoinfoP = GatherAllPossiblePolynomials(p.Expand(), replaceVars: false).MonoInfo;
 
-            VariableEntity? polyvar = null;
+            Var? polyvar = null;
 
             // TODO use Linq to find polyvar
             // First attempt to find polynoms

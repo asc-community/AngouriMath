@@ -13,19 +13,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-using System;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
- using AngouriMath.Functions.Algebra.AnalyticalSolving;
- using System.Collections.Generic;
+using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using System;
+using System.Collections.Generic;
 using System.Linq;
- using AngouriMath.Core.TreeAnalysis;
-using GenericTensor.Core;
 
-
-namespace AngouriMath.Functions.Algebra.Solver
+namespace AngouriMath.Functions.Algebra
 {
+    using static Entity;
     internal static class EquationSolver
     {
         /// <summary>
@@ -34,19 +31,19 @@ namespace AngouriMath.Functions.Algebra.Solver
         /// <param name="equation"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        internal static Set Solve(Entity equation, VariableEntity x)
+        internal static Set Solve(Entity equation, Entity.Var x)
         {
             var res = new Set();
 
             MathS.Settings.PrecisionErrorZeroRange.As(1e-12m, () =>
-            MathS.Settings.FloatToRationalIterCount.As(0, () => 
+            MathS.Settings.FloatToRationalIterCount.As(0, () =>
                 AnalyticalSolver.Solve(equation, x, res)
             ));
 
             if (res.Power == Set.PowerLevel.FINITE)
             {
                 static Entity simplifier(Entity entity) => entity.InnerSimplify();
-                static Entity evaluator(Entity entity) => entity.InnerEval();
+                static Entity evaluator(Entity entity) => entity.Evaled;
                 Entity collapser(Entity expr) => equation.Vars.Count == 1 ? evaluator(expr) : simplifier(expr);
 
                 res.FiniteApply(simplifier);
@@ -60,7 +57,7 @@ namespace AngouriMath.Functions.Algebra.Solver
 
             return res;
         }
-        
+
         /// <summary>
         /// Solves a system of equations by solving one after another with substitution, e. g.
         /// let 
@@ -79,7 +76,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         /// <param name="equations"></param>
         /// <param name="vars"></param>
         /// <returns></returns>
-        internal static Tensor? SolveSystem(List<Entity> equations, ReadOnlySpan<VariableEntity> vars)
+        internal static Tensor? SolveSystem(List<Entity> equations, ReadOnlySpan<Var> vars)
         {
             if (equations.Count != vars.Length)
                 throw new MathSException("Amount of equations must be equal to that of vars");
@@ -112,7 +109,7 @@ namespace AngouriMath.Functions.Algebra.Solver
         /// Variable to solve for
         /// </param>
         /// <returns></returns>
-        internal static IEnumerable<List<Entity>> InSolveSystemOne(Entity eq, VariableEntity var) =>
+        internal static IEnumerable<List<Entity>> InSolveSystemOne(Entity eq, Var var) =>
             eq.InnerSimplify().SolveEquation(var).FiniteSet().Select(sol => new List<Entity> { sol });
 
         /// <summary>
@@ -125,20 +122,20 @@ namespace AngouriMath.Functions.Algebra.Solver
         /// List of variables, where each of them must be mentioned in at least one entity from equations
         /// </param>
         /// <returns></returns>
-        internal static IEnumerable<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<VariableEntity> vars)
+        internal static IEnumerable<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Var> vars)
         {
             var var = vars[vars.Length - 1];
             if (equations.Count == 1)
                 return InSolveSystemOne(equations[0], var);
             var result = Enumerable.Empty<List<Entity>>();
-            var replacements = new Dictionary<VariableEntity, Entity>();
+            var replacements = new Dictionary<Var, Entity>();
             for (int i = 0; i < equations.Count; i++)
                 if (equations[i].Vars.Contains(var))
                 {
                     var solutionsOverVar = equations[i].SolveEquation(var);
                     equations.RemoveAt(i);
                     vars = vars.Slice(0, vars.Length - 2);
-                    
+
                     foreach (var sol in solutionsOverVar.FiniteSet())
                     {
                         var newequations = new List<Entity>();

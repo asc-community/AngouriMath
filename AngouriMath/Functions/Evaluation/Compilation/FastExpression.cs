@@ -21,11 +21,10 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using static AngouriMath.Instruction;
-using AngouriMath.Core.Sys.Interfaces;
 
 namespace AngouriMath
 {
-    internal partial record Instruction(Instruction.InstructionType Type, int Reference = -1, Complex Value = default)
+    internal partial record Instruction(InstructionType Type, int Reference = -1, Complex Value = default)
     {
         internal enum InstructionType
         {
@@ -65,7 +64,7 @@ namespace AngouriMath
         /// Constants, i.e. <see cref="MathS.pi"/> and <see cref="MathS.e"/> will be ignored.
         /// </param>
         /// <returns></returns>
-        public FastExpression Compile(params VariableEntity[] variables) => Compiler.Compile(this, variables);
+        public FastExpression Compile(params Var[] variables) => Compiler.Compile(this, variables);
 
         /// <summary>
         /// Compile function so you can evaluate numerical value 15x faster,
@@ -77,7 +76,7 @@ namespace AngouriMath
         /// </param>
         /// <returns></returns>
         public FastExpression Compile(params string[] variables) =>
-            Compiler.Compile(this, variables.Select(x => new VariableEntity(x)));
+            Compiler.Compile(this, variables.Select(x => new Var(x)));
     }
 }
 
@@ -212,12 +211,6 @@ namespace AngouriMath
         /// Might be useful for debug if a function works too slowly
         /// </summary>
         /// <returns></returns>
-        public override string ToString()
-        {
-            var sb = new StringBuilder();
-            foreach (var instruction in instructions)
-                sb.Append(instruction).Append("\n");
-            return sb.ToString();
-        }
+        public override string ToString() => string.Join("\n", instructions);
     }
 }

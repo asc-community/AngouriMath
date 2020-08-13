@@ -13,38 +13,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System.Collections.Generic;
-
-namespace AngouriMath.Core.Sets
+namespace AngouriMath.Core
 {
-    public partial record Setfunctions
+    partial record SetNode
     {
-        public static SetNode Unite(SetNode A, SetNode B)
+        partial record Union
         {
-            if (!(A is Set a && B is Set b))
-                return A & B;
-            var newSet = new Set();
-            foreach (var piece in a)
-                newSet.AddPiece(piece);
-            foreach (var piece in b)
-                newSet.AddPiece(piece);
-            return newSet;
-        }
-
-        internal static List<Piece> UniteList(List<Piece> pieces)
-        {
-            if (pieces.Count == 0)
-                return new List<Piece>();
-            var remainders = new List<Piece> { pieces[0] };
-            for (int i = 1; i < pieces.Count; i++)
+            public override SetNode Eval()
             {
-                var newRemainders = new List<Piece>();
-                foreach (var rem in remainders)
-                    newRemainders.AddRange(PieceFunctions.Unite(rem, pieces[i]));
-                remainders = newRemainders;
+                if (!(A is Set a && B is Set b))
+                    return A & B;
+                var newSet = new Set();
+                foreach (var piece in a)
+                    newSet.AddPiece(piece);
+                foreach (var piece in b)
+                    newSet.AddPiece(piece);
+                return newSet;
             }
-
-            return remainders;
         }
     }
 }

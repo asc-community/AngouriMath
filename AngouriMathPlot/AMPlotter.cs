@@ -51,7 +51,7 @@ namespace AngouriMathPlot
         /// <param name="to">
         /// High bound
         /// </param>
-        public void PlotScatter(Entity expr, VariableEntity x, ComplexNumber from, ComplexNumber to)
+        public void PlotScatter(Entity expr, Entity.Var x, ComplexNumber from, ComplexNumber to)
             => PlotScatter(expr.Compile(x), from, to);
 
         /// <summary>

@@ -6,8 +6,8 @@ namespace UnitTests.Common
     [TestClass]
     public class ExpandCollapseTest
     {
-        public static readonly VariableEntity x = MathS.Var("x");
-        public static readonly VariableEntity y = MathS.Var("y");
+        public static readonly Entity.Var x = MathS.Var("x");
+        public static readonly Entity.Var y = MathS.Var("y");
         [TestMethod]
         public void Test1()
         {

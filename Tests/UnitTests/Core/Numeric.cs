@@ -51,28 +51,28 @@ namespace UnitTests.Core
         {
             var frac21_10 = RationalNumber.Create(21, 10);
             Assert.IsNotInstanceOfType(frac21_10, typeof(IntegerNumber));
-            Assert.AreEqual(frac21_10, new NumberEntity(frac21_10).Eval());
-            Assert.AreEqual(frac21_10, new NumberEntity(frac21_10).Simplify().Eval());
+            Assert.AreEqual(frac21_10, frac21_10.Eval());
+            Assert.AreEqual(frac21_10, frac21_10.Simplify().Eval());
 
-            var squared = Number.Pow(frac21_10, 2);
+            var squared = Entity.Num.Pow(frac21_10, 2);
             Assert.IsInstanceOfType(squared, typeof(RationalNumber));
             Assert.IsNotInstanceOfType(squared, typeof(IntegerNumber));
             Assert.AreEqual(RationalNumber.Create(441, 100), squared);
-            Assert.AreEqual(squared, new NumberEntity(squared).Eval());
-            Assert.AreEqual(squared, new NumberEntity(squared).Simplify().Eval());
+            Assert.AreEqual(squared, squared.Eval());
+            Assert.AreEqual(squared, squared.Simplify().Eval());
 
-            var cubed = Number.Pow(squared, RationalNumber.Create(3, 2));
+            var cubed = Entity.Num.Pow(squared, RationalNumber.Create(3, 2));
             Assert.IsInstanceOfType(cubed, typeof(RationalNumber));
             Assert.IsNotInstanceOfType(cubed, typeof(IntegerNumber));
             Assert.AreEqual(RationalNumber.Create(9261, 1000), cubed);
-            Assert.AreEqual(cubed, new NumberEntity(cubed).Eval());
-            Assert.AreEqual(cubed, new NumberEntity(cubed).Simplify().Eval());
+            Assert.AreEqual(cubed, cubed.Eval());
+            Assert.AreEqual(cubed, cubed.Simplify().Eval());
 
             var ten = cubed + RationalNumber.Create(739, 1000);
             Assert.IsInstanceOfType(ten, typeof(IntegerNumber));
             Assert.AreEqual(IntegerNumber.Create(10), ten);
-            Assert.AreEqual(ten, new NumberEntity(ten).Eval());
-            Assert.AreEqual(ten, new NumberEntity(ten).Simplify().Eval());
+            Assert.AreEqual(ten, ten.Eval());
+            Assert.AreEqual(ten, ten.Simplify().Eval());
         }
         [TestMethod]
         public void TestComplexDowncasting()
@@ -81,10 +81,10 @@ namespace UnitTests.Core
             var roots = x.SolveEquation("x");
             foreach (var root in roots.FiniteSet())
             {
-                Assert.IsInstanceOfType(root, typeof(NumberEntity));
-                var number = (NumberEntity)root;
-                Assert.IsInstanceOfType(number.Value.Real, typeof(RationalNumber));
-                Assert.IsInstanceOfType(number.Value.Imaginary, typeof(RationalNumber));
+                Assert.IsInstanceOfType(root, typeof(ComplexNumber));
+                var number = (ComplexNumber)root;
+                Assert.IsInstanceOfType(number.Real, typeof(RationalNumber));
+                Assert.IsInstanceOfType(number.Imaginary, typeof(RationalNumber));
             }
         }
 

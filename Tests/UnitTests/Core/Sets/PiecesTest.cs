@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using AngouriMath.Core;
 using AngouriMath.Core.Numerix;
-using AngouriMath.Core.Sets;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace UnitTests.Core
@@ -9,13 +8,10 @@ namespace UnitTests.Core
     [TestClass]
     public class PiecesTest
     {
-        public bool In(ComplexNumber num, Piece list)
-            => In(num, new List<Piece>{list});
-
-        public bool In(ComplexNumber num, List<Piece> list)
+        public bool In(ComplexNumber num, Piece list) => In(num, new List<Piece>{list});
+        public bool In(ComplexNumber num, List<Piece> list) => new Set {Pieces = list}.Contains(num);
             //=> list.Any(c => c.Contains(new OneElementPiece(num)));
-            => new Set {Pieces = list}.Contains(num);
-
+           
         [TestMethod]
         public void PieceInversion()
         {

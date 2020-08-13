@@ -1,4 +1,3 @@
-
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -14,19 +13,18 @@
  */
 
 using AngouriMath.Core;
-using AngouriMath.Core.TreeAnalysis;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
-namespace AngouriMath.Functions.Algebra.Solver.Analytical
+namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
+    using static Entity;
     internal static class TrigonometricSolver
     {
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
-        internal static Set? SolveLinear(Entity expr, VariableEntity variable)
+        internal static Set? SolveLinear(Entity expr, Var variable)
         {
-            var replacement = Utils.FindNextIndex(expr, variable.Name);
+            var replacement = Var.CreateUnique(expr, variable.Name);
             expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
 
             // if there is still original variable after replacements,

@@ -13,30 +13,24 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 using System;
-using System.Collections.Generic;
 using System.Numerics;
+using System.Linq;
+using System.Runtime.CompilerServices;
+using PeterO.Numbers;
 using AngouriMath.Core;
 using AngouriMath.Core.FromString;
-using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.NumberSystem;
-using AngouriMath.Functions.Algebra.Solver;
-using System.Runtime.CompilerServices;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sys;
- using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Limits;
 using AngouriMath.Functions;
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Algebra.InequalitySolver;
-using AngouriMath.Functions.DiscreteMath;
-using GenericTensor.Core;
-using PeterO.Numbers;
-using System.Linq;
 
 namespace AngouriMath
 {
+    using static Entity;
+    using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
     /// <summary>
     /// Use functions from this class
     /// </summary>
@@ -56,7 +50,7 @@ namespace AngouriMath
     /// .PHang (Press F12 -> <see cref="Sinf.PHang(Entity)"/>)
     /// .ToString (Press F12 -> <see cref="Sinf.Stringize(System.Collections.Generic.List{Entity})"/>)
     /// .Latex (Press F12 -> <see cref="Sinf.Latex(System.Collections.Generic.List{Entity})"/>)
-    /// .Derive (Press F12 -> <see cref="Sinf.Derive(System.Collections.Generic.List{Entity}, VariableEntity)"/>)
+    /// .Derive (Press F12 -> <see cref="Sinf.Derive(System.Collections.Generic.List{Entity}, Var)"/>)
     /// .Simplify (Press F12 -> <see cref="Sinf.Simplify(System.Collections.Generic.List{Entity})"/>)
     /// To compilation (Press F12 -> <see cref="CompiledMathFunctions.func2Num"/>
     ///                                       ^ TODO: Replace numbers with enum ^
@@ -69,7 +63,7 @@ namespace AngouriMath
     ///               and <see cref="Functions.Evaluation.Simplification.Simplificator.Alternate(Entity, int)"/>)
     /// To static MathS() (Press F12 -> <see cref="Sin(Entity)"/>)
     /// To Analytical Solver (Press F12 -> <see cref="Functions.Algebra.Solver.Analytical.TrigonometricSolver"/>
-    ///                                and <see cref="Functions.Algebra.AnalyticalSolving.AnalyticalSolver.Solve(Entity, VariableEntity, Core.Set, bool)"/>)
+    ///                                and <see cref="Functions.Algebra.AnalyticalSolving.AnalyticalSolver.Solve(Entity, Var, Core.Set, bool)"/>)
     /// To TreeAnalyzer Optimization (Press F12 -> <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.OptimizeTree(ref Entity)"/>)
     /// To ToSympyCode (Press F12 -> <see cref="Functions.Output.ToSympy.FuncTable"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
     /// 
@@ -86,9 +80,7 @@ namespace AngouriMath
         /// <returns>
         /// An <see cref="EquationSystem"/> which can then be solved
         /// </returns>
-        public static EquationSystem Equations(params Entity[] equations)
-        => new EquationSystem(equations);
-
+        public static EquationSystem Equations(params Entity[] equations) => new EquationSystem(equations);
 
         /// <summary>
         /// Solves one equation over one variable
@@ -102,17 +94,17 @@ namespace AngouriMath
         /// <returns>
         /// Returns a <see cref="Set"/> of possible values or intervals of values
         /// </returns>
-        public static Set SolveEquation(Entity equation, VariableEntity var)
+        public static Set SolveEquation(Entity equation, Var var)
             => EquationSolver.Solve(equation, var);
 
         // Marking small enums with ": byte" is premature optimization and shouldn't be done: https://stackoverflow.com/q/648823/5429648
         [Flags]
         public enum Inequality
         {
-            LessThan      = 0b00,
-            GreaterThan   = 0b01,
-            EqualsFlag    = 0b10,
-            LessEquals    = 0b10,
+            LessThan = 0b00,
+            GreaterThan = 0b01,
+            EqualsFlag = 0b10,
+            LessEquals = 0b10,
             GreaterEquals = 0b11,
         }
 
@@ -130,7 +122,7 @@ namespace AngouriMath
         /// The relation of the expression to zero.
         /// </param>
         /// <returns></returns>
-        public static Set SolveInequalityNumerically(Entity inequality, VariableEntity var, Inequality sign)
+        public static Set SolveInequalityNumerically(Entity inequality, Var var, Inequality sign)
         {
             throw new NotSupportedException("Will be added soon");
 #pragma warning disable 162
@@ -387,7 +379,7 @@ namespace AngouriMath
         public static Entity Gamma(Entity a) => new Factorialf(a + 1);
 
         /// <summary>
-        /// Creates an instance of <see cref="VariableEntity"/>.
+        /// Creates an instance of <see cref="Var"/>.
         /// </summary>
         /// <param name="name">
         /// The name of the variable.
@@ -396,17 +388,17 @@ namespace AngouriMath
         /// <returns>
         /// Variable node
         /// </returns>
-        public static VariableEntity Var(string name) => new VariableEntity(name);
+        public static Var Var(string name) => new Var(name);
 
         /// <summary>
-        /// Creates a complex instance of <see cref="Number"/> (not <see cref="NumberEntity"/>!)
+        /// Creates a complex instance of <see cref="Number"/> (not <see cref="Num"/>!)
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Obsolete("Use Number.Create or implicit construction instead")]
-        public static NumberEntity Num(EDecimal a, EDecimal b) => ComplexNumber.Create(a, b);
+        public static Num Num(EDecimal a, EDecimal b) => ComplexNumber.Create(a, b);
 
         /// <summary>
-        /// Creates a real instance of <see cref="Number"/> (not <see cref="NumberEntity"/>!)
+        /// Creates a real instance of <see cref="Number"/> (not <see cref="Num"/>!)
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Obsolete("Use Number.Create or implicit construction instead")]
@@ -414,11 +406,11 @@ namespace AngouriMath
 
         // List of public constants
         // ReSharper disable once InconsistentNaming
-        public static readonly VariableEntity e = nameof(e);
+        public static readonly Var e = nameof(e);
         // ReSharper disable once InconsistentNaming
         public static readonly ComplexNumber i = ComplexNumber.ImaginaryOne;
         // ReSharper disable once InconsistentNaming
-        public static readonly VariableEntity pi = nameof(pi);
+        public static readonly Var pi = nameof(pi);
 
         /// <summary>
         /// Converts a <see cref="string"/> to an expression
@@ -430,8 +422,7 @@ namespace AngouriMath
         /// The parsed expression
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity FromString(string expr)
-            => Parser.Parse(expr);
+        public static Entity FromString(string expr) => Parser.Parse(expr);
 
         /// <summary>
         /// Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/>
@@ -446,8 +437,7 @@ namespace AngouriMath
         /// A <see cref="string"/> with the number in the required base
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToBaseN(RealNumber num, int N) 
-            => NumberSystem.ToBaseN(num.Value, N);
+        public static string ToBaseN(RealNumber num, int N) => BaseConversion.ToBaseN(num.Value, N);
 
         /// <summary>
         /// Translates a number in base <paramref name="N"/> into base 10
@@ -462,8 +452,7 @@ namespace AngouriMath
         /// The <see cref="RealNumber"/> in base 10
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static RealNumber FromBaseN(string num, int N)
-            => NumberSystem.FromBaseN(num, N);
+        public static RealNumber FromBaseN(string num, int N) => BaseConversion.FromBaseN(num, N);
 
         /// <summary>
         /// Returns the <a href="https://en.wikipedia.org/wiki/LaTeX">LaTeX</a> representation of the argument
@@ -630,8 +619,8 @@ namespace AngouriMath
             /// <returns>
             /// A two-dimensional <see cref="Tensor"/> which is a matrix
             /// </returns>
-            public static Tensor Matrix(int rows, int columns, params Entity[] values)
-                => Tensor.Matrix(rows, columns, values);
+            public static Tensor Matrix(int rows, int columns, params Entity[] values) =>
+                new(GenTensor.CreateMatrix(rows, columns, (x, y) => values[x * columns + y]));
 
             /// <summary>
             /// Creates an instance of <see cref="Tensor"/> that is a matrix.
@@ -642,8 +631,7 @@ namespace AngouriMath
             /// <returns>
             /// A two-dimensional <see cref="Tensor"/> which is a matrix
             /// </returns>
-            public static Tensor Matrix(Entity[,] values)
-                => Tensor.Matrix(values);
+            public static Tensor Matrix(Entity[,] values) => new(GenTensor.CreateMatrix(values));
 
             /// <summary>
             /// Creates an instance of <see cref="Tensor"/> that is a vector.
@@ -654,8 +642,7 @@ namespace AngouriMath
             /// <returns>
             /// A one-dimensional <see cref="Tensor"/> which is a vector
             /// </returns>
-            public static Tensor Vector(params Entity[] values)
-                => Tensor.Vector(values);
+            public static Tensor Vector(params Entity[] values) => new(GenTensor.CreateVector(values));
 
             /// <summary>
             /// Returns the dot product of two <see cref="Tensor"/>s that are matrices.
@@ -670,8 +657,7 @@ namespace AngouriMath
             /// A two-dimensional <see cref="Tensor"/> (matrix) as a result of symbolic multiplication
             /// </returns>
             [Obsolete("Use MatrixMultiplication instead")]
-            public static Tensor DotProduct(Tensor A, Tensor B) =>
-                Tensor.DotProduct(A, B);
+            public static Tensor DotProduct(Tensor A, Tensor B) => new(GenTensor.MatrixMultiply(A.InnerTensor, B.InnerTensor));
 
             /// <summary>
             /// Returns the dot product of two <see cref="Tensor"/>s that are matrices.
@@ -685,24 +671,22 @@ namespace AngouriMath
             /// <returns>
             /// A two-dimensional <see cref="Tensor"/> (matrix) as a result of symbolic multiplication
             /// </returns>
-            public static Tensor MatrixMultiplication(Tensor A, Tensor B) =>
-                new Tensor(GenTensor<Entity, Tensor.EntityTensorWrapperOperations>.TensorMatrixMultiply(A.InnerTensor, B.InnerTensor));
+            public static Tensor MatrixMultiplication(Tensor A, Tensor B) => new(GenTensor.TensorMatrixMultiply(A.InnerTensor, B.InnerTensor));
 
             /// <summary>
             /// Returns the scalar product of two <see cref="Tensor"/>s that are vectors
             /// with the same length.
             /// </summary>
-            /// <param name="A">
+            /// <param name="a">
             /// First vector (order does not matter)
             /// </param>
-            /// <param name="B">
+            /// <param name="b">
             /// Second vector
             /// </param>
             /// <returns>
             /// The resulting scalar which is an <see cref="Entity"/> and not a <see cref="Tensor"/>
             /// </returns>
-            public static Entity ScalarProduct(Tensor A, Tensor B) =>
-                Tensor.ScalarProduct(A, B);
+            public static Entity ScalarProduct(Tensor a, Tensor b) => GenTensor.VectorDotProduct(a.InnerTensor, b.InnerTensor);
         }
 
         /// <summary>
@@ -756,7 +740,25 @@ namespace AngouriMath
             /// <summary>
             /// Criteria for simplifier so you could control which expressions are considered easier by you
             /// </summary>
-            public static Setting<Func<Entity, int>> ComplexityCriteria => GetCurrentOrDefault(ref complexityCriteria, Const.DefaultComplexityCriteria);
+            public static Setting<Func<Entity, int>> ComplexityCriteria =>
+                GetCurrentOrDefault(ref complexityCriteria, expr =>
+                {
+                    var res = 0;
+
+                    // Number of nodes
+                    res += expr.Complexity;
+
+                    // Number of variables
+                    res += expr.Count(entity => entity is Var);
+
+                    // Number of divides
+                    res += expr.Count(entity => entity is Divf) / 2;
+
+                    // Number of negative powers
+                    res += expr.Count(entity => entity is Powf(_, RealNumber { IsNegative: true }));
+
+                    return res;
+                });
 
             /// <summary>
             /// Settings for the Newton-Raphson's root-search method
@@ -810,7 +812,7 @@ namespace AngouriMath
             /// Settings for <see cref="EDecimal"/> precisions of <a href="https://github.com/peteroupc/Numbers">PeterO.Numbers</a>
             /// </summary>
             public static Setting<EContext> DecimalPrecisionContext =>
-                GetCurrentOrDefault(ref decimalPrecisionContext,  new EContext(100, ERounding.HalfUp, -100, 1000, false));
+                GetCurrentOrDefault(ref decimalPrecisionContext, new EContext(100, ERounding.HalfUp, -100, 1000, false));
         }
 
         /// <summary>
@@ -835,10 +837,9 @@ namespace AngouriMath
             /// <see langword="false"/> otherwise
             /// (do not access <paramref name="dst"/> in this case, it's undefined)
             /// </returns>
-            public static bool TryPolynomial(Entity expr, VariableEntity variable,
+            public static bool TryPolynomial(Entity expr, Var variable,
                 [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
-                out Entity? dst)
-                => Functions.Utils.TryPolynomial(expr, variable, out dst);
+                out Entity? dst) => Functions.Utils.TryPolynomial(expr, variable, out dst);
 
             /// <summary>
             /// Optimizes <paramref name="tree"/> to a binary tree.
@@ -859,21 +860,17 @@ namespace AngouriMath
             /// An <see cref="Entity"/> representing an expression
             /// </param>
             /// <returns></returns>
-            public static string ToSympyCode(Entity expr) => ToSympy.GenerateCode(expr);
-
-            /// <summary>
-            /// Counts all nodes & subnodes that match <paramref name="criteria"/>
-            /// </summary>
-            /// <param name="expr">
-            /// <see cref="Entity"/> which all subnodes will be processed
-            /// </param>
-            /// <param name="criteria">
-            /// A condition a subtree should match to be counted
-            /// </param>
-            /// <returns>
-            /// Number of hits
-            /// </returns>
-            public static int Count(Entity expr, Func<Entity, bool> criteria) => expr.Count(criteria);
+            public static string ToSympyCode(Entity expr)
+            {
+                var sb = new System.Text.StringBuilder();
+                var vars = expr.Vars;
+                sb.Append("import sympy\n\n");
+                foreach (var f in vars)
+                    sb.Append($"{f} = sympy.Symbol('{f}')\n");
+                sb.Append("\n");
+                sb.Append("expr = " + expr.ToSymPy());
+                return sb.ToString();
+            }
         }
 
         /// <summary>
@@ -938,7 +935,7 @@ namespace AngouriMath
             /// from one of two sides (left and right).
             /// Returns <see langword="null"/> otherwise.
             /// </summary>
-            public static Entity? Limit(Entity expr, VariableEntity var, Entity approachDestination,
+            public static Entity? Limit(Entity expr, Var var, Entity approachDestination,
                 ApproachFrom direction)
                 => LimitFunctional.ComputeLimit(expr, var, approachDestination, direction);
 
@@ -947,13 +944,13 @@ namespace AngouriMath
             /// if <paramref name="var"/> approaches to <paramref name="approachDestination"/>.
             /// Returns <see langword="null"/> otherwise or if limits from left and right sides differ.
             /// </summary>
-            public static Entity? Limit(Entity expr, VariableEntity var, Entity approachDestination)
+            public static Entity? Limit(Entity expr, Var var, Entity approachDestination)
                 => LimitFunctional.ComputeLimit(expr, var, approachDestination);
 
             /// <summary>
             /// Derives over <paramref name="x"/> <paramref name="power"/> times
             /// </summary>
-            public static Entity? Derivative(Entity expr, VariableEntity x, EInteger power)
+            public static Entity? Derivative(Entity expr, Var x, EInteger power)
             {
                 var ent = expr;
                 for (var _ = 0; _ < power; _++)
@@ -968,12 +965,12 @@ namespace AngouriMath
             /// The variable to derive over
             /// </param>
             /// <returns>The derived result</returns>
-            public static Entity? Derivative(Entity expr, VariableEntity x) => expr.Derive(x);
+            public static Entity? Derivative(Entity expr, Var x) => expr.Derive(x);
 
             /// <summary>
             /// Integrates over <paramref name="x"/> <paramref name="power"/> times
             /// </summary>
-            public static Entity? Integral(Entity expr, VariableEntity x, EInteger power)
+            public static Entity? Integral(Entity expr, Var x, EInteger power)
             {
                 var ent = expr;
                 for (var _ = 0; _ < power; _++)
@@ -988,12 +985,12 @@ namespace AngouriMath
             /// The variable to integrate over
             /// </param>
             /// <returns>The integrated result</returns>
-            public static Entity? Integral(Entity expr, VariableEntity x) =>
+            public static Entity? Integral(Entity expr, Var x) =>
                 throw new NotImplementedException("Integrals not implemented yet");
         }
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
-        /// (to evaluate instead use <see cref="Compute.Derivative(Entity, VariableEntity)"/>)
+        /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Var)"/>)
         /// </summary>
         /// <param name="expr">
         /// Expression to be hung
@@ -1006,7 +1003,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
-        /// (to evaluate instead use <see cref="Compute.Derivative(Entity, VariableEntity)"/>)
+        /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Var)"/>)
         /// </summary>
         /// <param name="expr">
         /// Expression to be hung
@@ -1023,7 +1020,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your entity to an integral node
-        /// (to evaluate instead use <see cref="Compute.Integral(Entity, VariableEntity)"/>)
+        /// (to evaluate instead use <see cref="Compute.Integral(Entity, Var)"/>)
         /// </summary>
         /// <param name="expr">
         /// Expression to be hung
@@ -1036,7 +1033,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your entity to an integral node
-        /// (to evaluate instead use <see cref="Compute.Integral(Entity, VariableEntity)"/>)
+        /// (to evaluate instead use <see cref="Compute.Integral(Entity, Var)"/>)
         /// </summary>
         /// <param name="expr">
         /// Expression to be hung
@@ -1053,7 +1050,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your entity to a limit node
-        /// (to evaluate instead use <see cref="Compute.Limit(Entity, VariableEntity, Entity)"/>)
+        /// (to evaluate instead use <see cref="Compute.Limit(Entity, Var, Entity)"/>)
         /// </summary>
         /// <param name="expr">
         /// Expression to be hung

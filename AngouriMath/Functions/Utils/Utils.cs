@@ -26,6 +26,7 @@ using PeterO.Numbers;
 
 namespace AngouriMath.Functions
 {
+    using static Entity;
     internal static class Utils
     {
         // TODO: Using double for operations loses precision from 100 digits to 15 digits. This won't work.
@@ -42,7 +43,7 @@ namespace AngouriMath.Functions
         /// <param name="variable"></param>
         /// <param name="dst"></param>
         /// <returns></returns>
-        internal static bool TryPolynomial(Entity expr, VariableEntity variable,
+        internal static bool TryPolynomial(Entity expr, Var variable,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
             out Entity? dst)
         {
@@ -87,102 +88,36 @@ namespace AngouriMath.Functions
             dst = dst.InnerSimplify();
             return true;
         }
-
-
-        /// <summary>
-        /// Alike to ParseIndex, but strict on index: it should be a number
-        /// </summary>
-        /// <param name="name">
-        /// Common name (e. g. "qua" or "phi_3")
-        /// </param>
-        /// <returns>
-        /// (null, 0) if it's not a valid indexed-name with numeric index,
-        /// (string prefix, int num) otherwise
-        /// </returns>
-        internal static (string? prefix, int num) ParseIndexNumeric(string name)
-        {
-            var (prefix, index) = ParseIndex(name);
-            if (!(prefix is null) && int.TryParse(index, out var num))
-                return (prefix, num);
-            return (null, 0);
-        }
-
-        /// <summary>
-        /// Extracts a variable's name and  index from its Name
-        /// </summary>
-        /// <param name="name">
-        /// Common name (e. g. "qua" or "phi_3" or "qu_q")
-        /// </param>
-        /// <returns>
-        /// If it contains _ and valid name and index, returns a pair of (string prefix, string index)
-        /// (null, null) otherwise
-        /// </returns>
-        internal static (string? prefix, string? index) ParseIndex(string name)
-        {
-            var pos_ = name.IndexOf('_');
-            if (pos_ != -1)
-            {
-                var varName = name.Substring(0, pos_);
-                return (varName, name.Substring(pos_ + 1));
-            }
-            return (null, null);
-        }
-
-        /// <summary>
-        /// Finds next var index name starting with 1, e. g.
-        /// x + n_0 + n_a + n_3 + n_1
-        /// will find n_2
-        /// </summary>
-        internal static VariableEntity FindNextIndex(Entity expr, string prefix)
-        {
-            var indices = new HashSet<int>();
-            foreach (var var in expr.Vars)
-            {
-                var index = ParseIndexNumeric(var.Name);
-                if (index.prefix == prefix)
-                    indices.Add(index.num);
-            }
-            var i = 1;
-            while (indices.Contains(i))
-                i++;
-            return new VariableEntity(prefix + "_" + i);
-        }
     }
 
     public class Setting<T> where T : notnull
     {
-        private T currValue;
-        internal Setting(T defaultValue)
-        {
-            currValue = defaultValue;
-        }
+        internal Setting(T defaultValue) { Value = defaultValue; Default = defaultValue; }
 
         /// <summary>
         /// For example,
+        /// <code>
         /// MathS.Settings.Precision.As(100, () =>
         /// {
-        /// // some code considering precision = 100
+        /// /* some code considering precision = 100 */
         /// });
+        /// </code>
         /// </summary>
         /// <param name="value">New value that will be automatically reverted after action is done</param>
         /// <param name="action">What should be done under this setting</param>
         public void As(T value, Action action)
         {
-            var previousValue = currValue;
-            currValue = value;
-            lock (currValue) // TODO: it is probably impossible to access currValue from another thread since it's ThreadStatic
-            {
+            var previousValue = Value;
+            Value = value;
+            lock (Value) // TODO: it is probably impossible to access currValue from another thread since it's ThreadStatic
                 try
                 {
                     action();
                 }
-                catch (Exception)
+                finally
                 {
-                    currValue = previousValue;
-                    throw;
+                    Value = previousValue;
                 }
-            }
-            currValue = previousValue;
         }
 
         /// <summary>
@@ -199,41 +134,24 @@ namespace AngouriMath.Functions
         /// <param name="action">What should be done under this setting</param>
         public TReturnType As<TReturnType>(T value, Func<TReturnType> action)
         {
-            var previousValue = currValue;
-            currValue = value;
-            TReturnType result;
-            lock (currValue) // TODO: it is probably impossible to access currValue from another thread since it's ThreadStatic
-            {
+            var previousValue = Value;
+            Value = value;
+            lock (Value) // TODO: it is probably impossible to access currValue from another thread since it's ThreadStatic
                 try
                 {
-                    result = action();
+                    return action();
                 }
-                catch
+                finally
                 {
-                    currValue = previousValue;
-                    throw;
+                    Value = previousValue;
                 }
-            }
-            currValue = previousValue;
-            return result;
         }
 
-        public static implicit operator T(Setting<T> s)
-        {
-            return s.currValue;
-        }
-
-        public static implicit operator Setting<T>(T a)
-        {
-            return new Setting<T>(a);
-        }
-
-        public override string ToString()
-        {
-            return Value.ToString();
-        }
-
-        public T Value => currValue;
+        public static implicit operator T(Setting<T> s) => s.Value;
+        public static implicit operator Setting<T>(T a) => new(a);
+        public override string ToString() => Value.ToString();
+        public T Value { get; private set; }
+        public T Default { get; }
     }
 }
 

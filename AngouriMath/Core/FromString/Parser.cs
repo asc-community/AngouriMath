@@ -21,179 +21,83 @@ Any modifications to other source files will be overwritten when the parser is r
 
 */
 
-using AngouriMath.Core.Exceptions;
 using Antlr4.Runtime;
-using Antlr4.Runtime.Misc;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 
-[assembly:System.CLSCompliant(false)]
-
+[assembly: System.CLSCompliant(false)]
 namespace AngouriMath.Core.FromString
 {
-    class AngouriMathTokenStream : CommonTokenStream
-    {
-        public AngouriMathTokenStream(ITokenSource source)
-            : base(source) { }
-    }
-
     // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
     class AngourimathTextWriter : TextWriter
     {
         public override Encoding Encoding => Encoding.UTF8;
-
-        public override void WriteLine(string s)
-        {
-            throw new ParseException("parsing error: " + s);
-        }
+        public override void WriteLine(string s) => throw new ParseException("parsing error: " + s);
     }
-
     static class Parser
     {
-        static readonly Dictionary<string, int> antlrDict =
-            new Dictionary<string, int>();
-        static Parser()
-        {
-            var tokenReader = new StreamReader(typeof(Parser).Assembly.GetManifestResourceStream("AngouriMath.Core.FromString.Antlr.Angourimath.tokens"));
-            while (!tokenReader.EndOfStream)
-            {
-                var t = tokenReader.ReadLine().Split('=');
-                antlrDict.Add(t[0], int.Parse(t[1], System.Globalization.CultureInfo.InvariantCulture));
-            }
-        }
         public static Entity Parse(string source)
         {
-            static AngouriMathTokenStream GetTokenStream(string source)
-            {
-                var stream = new AntlrInputStream(source);
-                // TODO: can output stream be null or not?
-                var lexer = new AngourimathLexer(stream, null, new AngourimathTextWriter());
-
-                return new AngouriMathTokenStream(lexer);
-            }
-
-            var tokenStream = GetTokenStream(source);
+            var lexer = new AngourimathLexer(new AntlrInputStream(source), null, new AngourimathTextWriter());
+            var tokenStream = new CommonTokenStream(lexer);
             tokenStream.Fill();
             var tokenList = tokenStream.GetTokens();
+
+            const string NUMBER = nameof(NUMBER);
+            const string PARENTHESIS_OPEN = "'('";
+            const string PARENTHESIS_CLOSE = "')'";
+            const string FUNCTION = "\x1"; // Hopefully never appears as a real token name
+            const string VARIABLE = "\x2"; // Hopefully never appears as a real token name
+
+            static string GetType(IToken token) =>
+                AngourimathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type && type is "ID"
+                ? type.Length > 1 && type.EndsWith("(") ? FUNCTION : VARIABLE : type;
+
             if (tokenList.Count == 0)
-                throw new ParseException("input string is invalid");
-            source = Parser.PreProcess(tokenList);
-            var tokens = GetTokenStream(source);
-            
-            // TODO: can output stream be null or not?
-            var parser = new AngourimathParser(tokens, null, new AngourimathTextWriter());
+                throw new ParseException("Input string is invalid");
+            int i = 0;
+            while (tokenList[i].Channel != 0)
+                if (++i >= tokenList.Count)
+                    goto endTokenInsertion;
+            for (int j = i + 1; j < tokenList.Count; i = j++)
+            {
+                while (tokenList[j].Channel != 0)
+                    if (++j >= tokenList.Count)
+                        goto endTokenInsertion;
+                switch (GetType(tokenList[i]), GetType(tokenList[j]))
+                {
+                    // Insert at j because we need to keep the first one behind
+                    // 2x -> 2 * x
+                    case (NUMBER, VARIABLE): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    // x y -> x * y
+                    case (VARIABLE, VARIABLE): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    // 2( -> 2 * (
+                    case (NUMBER, PARENTHESIS_OPEN): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    // )2 -> ) ^ 2
+                    case (PARENTHESIS_CLOSE, NUMBER): tokenList.Insert(j, AngourimathLexer.Power); break;
+                    // x( -> x * (
+                    case (VARIABLE, PARENTHESIS_OPEN): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    // )x -> ) * x
+                    case (PARENTHESIS_CLOSE, VARIABLE): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    // x2 -> x ^ 2
+                    case (VARIABLE, NUMBER): tokenList.Insert(j, AngourimathLexer.Power); break;
+                    // 3 2 -> 3 ^ 2
+                    case (NUMBER, NUMBER): tokenList.Insert(j, AngourimathLexer.Power); break;
+                    // 2sqrt -> 2 * sqrt
+                    case (NUMBER, FUNCTION): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    // x sqrt -> x * sqrt
+                    case (VARIABLE, FUNCTION): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    // )sqrt -> ) * sqrt
+                    case (PARENTHESIS_CLOSE, FUNCTION): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    // )( -> ) * (
+                    case (PARENTHESIS_CLOSE, PARENTHESIS_OPEN): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                }
+            }
+            endTokenInsertion:
+
+            var parser = new AngourimathParser(tokenStream, null, new AngourimathTextWriter());
             parser.Parse();
-            var result = Parser.PostProcess(parser.Result);
-            return result;
-        }
-
-        static string PreProcess(IList<IToken> tokens)
-        {
-            int NUMBER = antlrDict[nameof(NUMBER)];
-            int ID = antlrDict[nameof(ID)];
-            int PARENTHESIS_OPEN = antlrDict["'('"];
-            int PARENTHESIS_CLOSE = antlrDict["')'"];
-            int MULTIPLY = antlrDict["'*'"];
-            int POWER = antlrDict["'^'"];
-
-            const int FUNCTION = -0xFF;
-            const int VARIABLE = -0xEE;
-
-            tokens = tokens.Where(token => token.Channel == 0).ToList();
-
-            bool IsTypeEqual(IToken token, int type)
-            {
-                if (token.Type == ID)
-                {
-                    if (SyntaxInfo.goodStringsForFunctions.ContainsKey(token.Text))
-                        return type == FUNCTION;
-                    else
-                        return type == VARIABLE;
-                }
-                else return token.Type == type;
-            }
-
-            /// <summary>
-            /// Provided two types of tokens, returns position of first token if
-            /// the pair if found, -1 otherwisely.
-            /// </summary> 
-
-            int FindSubPair(int type1, int type2)
-            {
-                for (int i = 0; i < tokens.Count - 1; i++)
-                    if (IsTypeEqual(tokens[i], type1) && IsTypeEqual(tokens[i + 1], type2))
-                        return i;
-                return -1;
-            }
-
-            /// <summary>
-            /// Finds all occurances of [t1, t2] and inserts token in between each of them
-            /// </summary>
-            void InsertIntoPair(int type1, int type2, IToken token)
-            {
-                int pos;
-                while ((pos = FindSubPair(type1, type2)) != -1)
-                {
-                    tokens.Insert(pos + 1 /* we need to keep the first one behind*/, token);
-                }
-            }
-
-            IToken multiplyer = new CommonToken(MULTIPLY, "*");
-            IToken power = new CommonToken(POWER, "^");
-
-            // 2x -> 2 * x
-            InsertIntoPair(NUMBER, VARIABLE, multiplyer);
-
-            // x y -> x * y
-            InsertIntoPair(VARIABLE, VARIABLE, multiplyer);
-
-            // 2( -> 2 * (
-            InsertIntoPair(NUMBER, PARENTHESIS_OPEN, multiplyer);
-
-            // )2 -> ) ^ 2
-            InsertIntoPair(PARENTHESIS_CLOSE, NUMBER, power);
-
-            // x( -> x * (
-            InsertIntoPair(VARIABLE, PARENTHESIS_OPEN, multiplyer);
-
-            // )x -> ) * x
-            InsertIntoPair(PARENTHESIS_CLOSE, VARIABLE, multiplyer);
-
-            // x2 -> x ^ 2
-            InsertIntoPair(VARIABLE, NUMBER, power);
-
-            // 3 2 -> 3 ^ 2
-            InsertIntoPair(NUMBER, NUMBER, power);
-
-            // 2sqrt -> 2 * sqrt
-            InsertIntoPair(NUMBER, FUNCTION, multiplyer);
-
-            // x sqrt -> x * sqrt
-            InsertIntoPair(VARIABLE, FUNCTION, multiplyer);
-
-            // )sqrt -> ) * sqrt
-            InsertIntoPair(PARENTHESIS_CLOSE, FUNCTION, multiplyer);
-
-            // )( -> ) * (
-            // )sqrt -> ) * sqrt
-            InsertIntoPair(PARENTHESIS_CLOSE, PARENTHESIS_OPEN, multiplyer);
-
-            var builder = new StringBuilder();
-            tokens.RemoveAt(tokens.Count - 1); // remove <EOF> token
-            foreach (var token in tokens)
-            {
-                builder.Append(token.Text);
-            }
-            return builder.ToString();
-        }
-
-        static Entity PostProcess(Entity result)
-        {
-            result = result.Substitute("i", MathS.i);
-            result = SynonymFunctions.Synonymize(result);
-            return result;
+            return parser.Result;
         }
     }
 }

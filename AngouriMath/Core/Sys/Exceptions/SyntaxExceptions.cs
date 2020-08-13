@@ -13,10 +13,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 ﻿using System;
-
 namespace AngouriMath.Core.FromString
 {
     public abstract class SyntaxException : Exception
@@ -27,8 +24,13 @@ namespace AngouriMath.Core.FromString
     {
         public ParseException(string msg) : base(msg) { }
     }
-    public class LexicException : SyntaxException
+    public class FunctionArgumentCountException : SyntaxException
     {
-        public LexicException(string msg) : base(msg) { }
+        public FunctionArgumentCountException(string function, int expected, int actual)
+            : base($"{function} should have exactly {expected} arguments but {actual} are provided") { }
+        public static void Assert(string function, int expected, int actual)
+        {
+            if (expected != actual) throw new FunctionArgumentCountException(function, expected, actual);
+        }
     }
 }

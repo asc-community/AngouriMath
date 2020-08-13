@@ -2,14 +2,13 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using AngouriMath;
 using AngouriMath.Core.Numerix;
-using UnitTests.Algebra.PolynomialSolverTests;
 
 namespace UnitTests.Algebra
 {
     [TestClass]
     public class SolveSystem
     {
-        public void AssertSystemSolvable(List<Entity> equations, List<VariableEntity> vars, int rootCount = -1, ComplexNumber? ToSub = null)
+        public void AssertSystemSolvable(List<Entity> equations, List<Entity.Var> vars, int rootCount = -1, ComplexNumber? ToSub = null)
         {
             ToSub ??= 3;
             var sys = MathS.Equations(equations.ToArray());
@@ -31,7 +30,7 @@ namespace UnitTests.Algebra
 
                     foreach (var uniqvar in eqCopy.Vars)
                         eqCopy = eqCopy.Substitute(uniqvar, ToSub);
-                    var E = NumberEntity.Abs(eqCopy.Eval());
+                    var E = Entity.Num.Abs(eqCopy.Eval());
                     Assert.IsTrue(E.IsFinite && E < 0.0001,
                         "i: " + i + "  eq: " + eq.ToString() + "  E: " + E.ToString());
                 }
@@ -41,10 +40,10 @@ namespace UnitTests.Algebra
         public List<Entity> EQ(params Entity[] equations)
             => new List<Entity>(equations);
 
-        public List<VariableEntity> VA(params VariableEntity[] vars)
-            => new List<VariableEntity>(vars);
+        public List<Entity.Var> VA(params Entity.Var[] vars)
+            => new List<Entity.Var>(vars);
 
-        public void TestSystem(List<Entity> eqs, List<VariableEntity> vars, int numberOfRoots, int toSub = 3)
+        public void TestSystem(List<Entity> eqs, List<Entity.Var> vars, int numberOfRoots, int toSub = 3)
             => AssertSystemSolvable(eqs, vars, numberOfRoots, toSub);
 
         [TestMethod]

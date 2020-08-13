@@ -2,9 +2,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using AngouriMath.Functions;
 using PeterO.Numbers;
+[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests")]
 
 namespace AngouriMath
 {
@@ -48,12 +47,18 @@ namespace AngouriMath
             public EDecimal Half { get; }
         }
 
-        // https://en.wikipedia.org/wiki/Least_common_multiple#Using_the_greatest_common_divisor
+        /// <summary>
+        /// <a href="https://en.wikipedia.org/wiki/Least_common_multiple#Using_the_greatest_common_divisor"/>
+        /// </summary>
         public static EInteger Lcm(this EInteger bigintFirst, EInteger bigintSecond)
         {
             if (bigintFirst.IsZero && bigintSecond.IsZero) return EInteger.Zero;
             return bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
         }
+        /// <summary><a href="https://en.wikipedia.org/wiki/Combination"/>, equivalent to nCr
+        /// or <a href="https://en.wikipedia.org/wiki/Binomial_coefficient"/></summary>
+        public static EInteger Combinations(this EInteger n, EInteger k) =>
+            n.Factorial() / ((n - k).Factorial() * k.Factorial());
 
         /// <summary>Use until https://github.com/peteroupc/Numbers/issues/15 is fixed</summary>
         public static bool EqualsBugFix(this EDecimal bigDecimalOne, EDecimal bigDecimalTwo) =>

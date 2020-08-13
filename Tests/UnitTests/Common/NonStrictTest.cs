@@ -18,7 +18,7 @@ namespace UnitTests.Common
         [TestMethod]
         public void TensorFull()
         {
-            var tens = new Tensor(3, 4, 5);
+            var tens = new Entity.Tensor(3, 4, 5);
             for (int i = 0; i < 3; i++)
             for (int j = 0; j < 4; j++)
             for (int k = 0; k < 5; k++)

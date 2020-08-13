@@ -18,33 +18,23 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
-using AngouriMath.Core.Exceptions;
-using AngouriMath.Core.Numerix;
 
 
 namespace AngouriMath.Functions.Evaluation.Simplification
 {
+    using static Entity;
     internal static class Simplificator
     {
-        /// <summary>
-        /// See more details in Entity.Simplify
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
+        /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
         internal static Entity Simplify(Entity expr, int level) => ((Entity)Alternate(expr, level).Pieces[0]).InnerSimplify();
 
-        /// <summary>
-        /// Finds all alternative forms of an expression
-        /// </summary>
-        /// <param name="src"></param>
-        /// <param name="level"></param>
-        /// <returns></returns>
+        /// <summary>Finds all alternative forms of an expression</summary>
         internal static Set Alternate(Entity src, int level)
         {
-            if (src is NumberEntity || src is VariableEntity)
+            if (src is Num || src is Var)
                 return new Set(src);
             var stage1 = src.InnerSimplify();
-            if (stage1 is NumberEntity)
+            if (stage1 is Num)
                 return new Set(stage1);
 
             var history = new SortedDictionary<int, List<Entity>>();
@@ -130,12 +120,10 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 {
                     // It is quite slow at this point
                     var listOfPossiblePolys = new List<Entity>();
-                    // ReSharper disable once PossibleInvalidCastExceptionInForeachLoop
-                    foreach (var variableEntity in res.Vars)
-                    {
-                        if (MathS.Utils.TryPolynomial(res, variableEntity, out var resPoly))
+
+                    foreach (var var in res.Vars)
+                        if (MathS.Utils.TryPolynomial(res, var, out var resPoly))
                             listOfPossiblePolys.Add(resPoly);
-                    }
                     if (listOfPossiblePolys.Count != 0)
                     {
                         var min = listOfPossiblePolys.Min(c => c.Complexity);

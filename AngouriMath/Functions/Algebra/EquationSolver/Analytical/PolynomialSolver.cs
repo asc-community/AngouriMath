@@ -17,12 +17,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AngouriMath.Convenience;
 using AngouriMath.Core;
-using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Numerix;
- using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Core.TreeAnalysis;
 using PeterO.Numbers;
+using static AngouriMath.Entity;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
@@ -73,18 +72,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     /// </summary>
     internal static class PolynomialSolver
     {
-        /// <summary>
-        /// Solves ax + b
-        /// </summary>
-        /// <param name="a">
-        /// Coefficient of x
-        /// </param>
-        /// <param name="b">
-        /// Free coefficient
-        /// </param>
-        /// <returns>
-        /// Set of roots
-        /// </returns>
+        /// <summary>Solves ax + b</summary>
+        /// <param name="a">Coefficient of x</param>
+        /// <param name="b">Free coefficient</param>
+        /// <returns>Set of roots</returns>
         internal static Set SolveLinear(Entity a, Entity b)
         {
             // ax + b = 0
@@ -93,21 +84,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             return new Set((-b / a).InnerSimplify());
         }
 
-        /// <summary>
-        /// solves ax2 + bx + c
-        /// </summary>
-        /// <param name="a">
-        /// Coefficient of x^2
-        /// </param>
-        /// <param name="b">
-        /// Coefficient of x
-        /// </param>
-        /// <param name="c">
-        /// Free coefficient
-        /// </param>
-        /// <returns>
-        /// Set of roots
-        /// </returns>
+        /// <summary>Solves ax^2 + bx + c</summary>
+        /// <param name="a">Coefficient of x^2</param>
+        /// <param name="b">Coefficient of x</param>
+        /// <param name="c">Free coefficient</param>
+        /// <returns>Set of roots</returns>
         internal static Set SolveQuadratic(Entity a, Entity b, Entity c)
         {
             Set res;
@@ -128,24 +109,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             return res;
         }
 
-        /// <summary>
-        /// solves ax3 + bx2 + cx + d
-        /// </summary>
-        /// <param name="a">
-        /// Coefficient of x^3
-        /// </param>
-        /// <param name="b">
-        /// Coefficient of x^2
-        /// </param>
-        /// <param name="c">
-        /// Coefficient of x
-        /// </param>
-        /// <param name="d">
-        /// Free coefficient
-        /// </param>
-        /// <returns>
-        /// Set of roots
-        /// </returns>
+        /// <summary>Solves ax^3 + bx^2 + cx + d</summary>
+        /// <param name="a">Coefficient of x^3</param>
+        /// <param name="b">Coefficient of x^2</param>
+        /// <param name="c">Coefficient of x</param>
+        /// <param name="d">Free coefficient</param>
+        /// <returns>Set of roots</returns>
         internal static Set SolveCubic(Entity a, Entity b, Entity c, Entity d)
         {
             // en: https://en.wikipedia.org/wiki/Cubic_equation
@@ -169,17 +138,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var coeff = MathS.i * MathS.Sqrt(3) / 2;
 
-            var u1 = (Entity)1;
-            var u2 = SySyn.Rational(-1, 2) + coeff;
-            var u3 = SySyn.Rational(-1, 2) - coeff;
+            var u1 = IntegerNumber.Create(1);
+            var u2 = RationalNumber.Create(-1, 2) + coeff;
+            var u3 = RationalNumber.Create(-1, 2) - coeff;
             var D0 = MathS.Sqr(b) - 3 * a * c;
             var D1 = (2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d).InnerSimplify();
             var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, RationalNumber.Create(1, 3));
 
-            foreach (var uk in new List<Entity> {u1, u2, u3})
+            foreach (var uk in new[] { u1, u2, u3 })
             {
                 Entity r;
-                if (Const.EvalIfCan(C) == 0 && Const.EvalIfCan(D0) == 0)
+                if (C.Evaled == 0 && D0.Evaled == 0)
                     r = -(b + uk * C) / 3 / a;
                 else
                     r = -(b + uk * C + D0 / C / uk) / 3 / a;
@@ -188,27 +157,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             return res;
         }
 
-        /// <summary>
-        /// solves ax4 + bx3 + cx2 + dx + e
-        /// </summary>
-        /// <param name="a">
-        /// Coefficient of x^4
-        /// </param>
-        /// <param name="b">
-        /// Coefficient of x^3
-        /// </param>
-        /// <param name="c">
-        /// Coefficient of x^2
-        /// </param>
-        /// <param name="d">
-        /// Coefficient of x
-        /// </param>
-        /// <param name="e">
-        /// Free coefficient
-        /// </param>
-        /// <returns>
-        /// Set of roots
-        /// </returns>
+        /// <summary>Solves ax^4 + bx^3 + cx^2 + dx + e</summary>
+        /// <param name="a">Coefficient of x^4</param>
+        /// <param name="b">Coefficient of x^3</param>
+        /// <param name="c">Coefficient of x^2</param>
+        /// <param name="d">Coefficient of x</param>
+        /// <param name="e">Free coefficient</param>
+        /// <returns>Set of roots</returns>
         internal static Set SolveQuartic(Entity a, Entity b, Entity c, Entity d, Entity e)
         {
             // en: https://en.wikipedia.org/wiki/Quartic_function
@@ -226,7 +181,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (TreeAnalyzer.IsZero(a))
                 return SolveCubic(b, c, d, e);
 
-            
+
             res = new Set();
 
             var alpha = (-3 * MathS.Sqr(b) / (8 * MathS.Sqr(a)) + c / a)
@@ -236,15 +191,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var gamma = (-3 * MathS.Pow(b, 4) / (256 * MathS.Pow(a, 4)) + MathS.Sqr(b) * c / (16 * MathS.Pow(a, 3)) - (b * d) / (4 * MathS.Sqr(a)) + e / a)
                 .InnerSimplify();
 
-            if (Const.EvalIfCan(beta) == 0)
+            if (beta.Evaled == 0)
             {
                 res.FastAddingMode = true;
                 for (int s = -1; s <= 1; s += 2)
-                for (int t = -1; t <= 1; t += 2)
-                {
-                    var x = -b / 4 * a + s * MathS.Sqrt((-alpha + t * MathS.Sqrt(MathS.Sqr(alpha) - 4 * gamma)) / 2);
-                    res.Add(x);
-                }
+                    for (int t = -1; t <= 1; t += 2)
+                    {
+                        var x = -b / 4 * a + s * MathS.Sqrt((-alpha + t * MathS.Sqrt(MathS.Sqr(alpha) - 4 * gamma)) / 2);
+                        res.Add(x);
+                    }
                 res.FastAddingMode = false;
                 return res;
             }
@@ -257,11 +212,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var R = -Q / 2 + MathS.Sqrt(MathS.Sqr(Q) / 4 + MathS.Pow(P, 3) / 27);
             var U = MathS.Pow(R, oneThird)
                 .InnerSimplify();
-            var y = (RationalNumber.Create(-5, 6) * alpha + U + (Const.EvalIfCan(U) == 0 ? -MathS.Pow(Q, oneThird) : -P / (3 * U)))
+            var y = (RationalNumber.Create(-5, 6) * alpha + U + (U.Evaled == 0 ? -MathS.Pow(Q, oneThird) : -P / (3 * U)))
                 .InnerSimplify();
             var W = MathS.Sqrt(alpha + 2 * y)
                 .InnerSimplify();
-           
+
             // Now we need to permutate all four combinations
             res.FastAddingMode = true;  /* we are sure that there's no such root yet */
             for (int s = -1; s <= 1; s += 2)
@@ -298,20 +253,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             return commonPower > 0;
         }
 
-        /// <summary>
-        /// Tries to solve as polynomial
-        /// </summary>
-        /// <param name="expr">
-        /// Polynomial of an expression
-        /// </param>
+        /// <summary>Tries to solve as polynomial</summary>
+        /// <param name="expr">Polynomial of an expression</param>
         /// <param name="subtree">
         /// The expression the polynomial of (e. g. cos(x)^2 + cos(x) + 1 is a polynomial of cos(x))
         /// </param>
-        /// <returns>
-        /// a finite Set if successful,
-        /// null otherwise
-        /// </returns>
-        internal static Set? SolveAsPolynomial(Entity expr, VariableEntity subtree)
+        /// <returns>A finite <see cref="Set"/> if successful, <see langword="null"/> otherwise</returns>
+        internal static Set? SolveAsPolynomial(Entity expr, Var subtree)
         {
             // Safely expand the expression
             // Here we find all terms
@@ -336,7 +284,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             if (children is null)
                 return null;
-                
+
             // // //
 
             var res = new Set();
@@ -347,10 +295,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (monomialsByPower == null)
                 return null; // meaning that the given equation is not polynomial
 
-            Entity GetMonomialByPower(EInteger power)
-            {
-                return monomialsByPower.ContainsKey(power) ? monomialsByPower[power].InnerSimplify() : 0;
-            }
+            Entity GetMonomialByPower(EInteger power) =>
+                monomialsByPower.ContainsKey(power) ? monomialsByPower[power].InnerSimplify() : 0;
             if (ReduceCommonPower(ref monomialsByPower)) // x5 + x3 + x2 - common power is 2, one root is 0, then x3 + x + 1
                 res.Add(0);
             var powers = monomialsByPower.Keys.ToList();
@@ -383,8 +329,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 {
                     var newSet = new Set();
                     foreach (var root in set.FiniteSet())
-                    foreach (var coef in NumberEntity.GetAllRootsOf1(gcdPower).FiniteSet())
-                        newSet.Add(coef * MathS.Pow(root, RationalNumber.Create(1, gcdPower)));
+                        foreach (var coef in Num.GetAllRootsOf1(gcdPower).FiniteSet())
+                            newSet.Add(coef * MathS.Pow(root, RationalNumber.Create(1, gcdPower)));
                     set = newSet;
                 }
                 return set;
@@ -447,7 +393,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
             return null;
         }
-    
+
         /// <summary>Finds all terms of a polynomial</summary>
         internal static Dictionary<T, Entity>? GatherMonomialInformation<T>(IEnumerable<Entity> terms, Entity subtree)
         {
@@ -462,7 +408,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 else if (typeof(T) == typeof(EInteger))
                     q = (TreeAnalyzer.IPrimitive<T>)new TreeAnalyzer.PrimitiveInteger();
                 else throw new ArgumentException("Unsupported type: " + typeof(T), nameof(T));
-                
+
                 ParseMonomial(subtree, child, out var free, ref q);
                 if (free is null)
                     return null;
@@ -496,7 +442,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var pow_num_evaled = MathS.CanBeEvaluated(pow_num);
                     pow_num = pow_num_evaled ? pow_num.Eval() : pow_num;
 
-                     // x ^ a is bad
+                    // x ^ a is bad
                     if (!(pow_num is ComplexNumber value))
                     {
                         freeMono = null;
@@ -504,7 +450,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     }
 
                     // x ^ 0.3 is bad
-                    if (!allowFloat && !(pow_num.Eval() is IntegerNumber))
+                    if (!allowFloat && pow_num.Eval() is not IntegerNumber)
                     {
                         freeMono = null;
                         return;

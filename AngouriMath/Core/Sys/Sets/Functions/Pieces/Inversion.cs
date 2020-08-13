@@ -22,9 +22,9 @@ using AngouriMath.Core.Numerix;
  *
  */
 
-namespace AngouriMath.Core.Sets
+namespace AngouriMath.Core
 {
-    partial record Piecefunctions
+    static partial class PieceFunctions
     {
         public static List<Piece> Invert(Piece A)
         {

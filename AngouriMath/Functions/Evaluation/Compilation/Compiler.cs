@@ -13,9 +13,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath.Core.Exceptions;
 using System.Collections.Generic;
-using System.Linq;
+using static AngouriMath.Entity;
 using static AngouriMath.Instruction;
 
 namespace AngouriMath
@@ -42,190 +41,186 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.TOCACHE, cacheLine));
             }
         }
-    }
-    public partial record NumberEntity : Entity
-    {
-        private protected override void InnerCompile_(Compiler compiler) =>
-            compiler.Instructions.Add(new(InstructionType.PUSHCONST, Value: AsComplex()));
-    }
-    public partial record VariableEntity : Entity
-    {
-        private protected override void InnerCompile_(Compiler compiler) =>
-            compiler.Instructions.Add(new(InstructionType.PUSHVAR, compiler.VarNamespace[Name]));
-    }
-    public partial record Tensor : Entity
-    {
-        private protected override void InnerCompile_(Compiler compiler) =>
-            throw new UncompilableNodeException($"Tensors cannot be compiled");
-    }
-    // Each function and operator processing
-    public partial record Sumf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Num : Entity
         {
-            Augend.InnerCompile(compiler);
-            Addend.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_SUM));
+            private protected override void InnerCompile_(Compiler compiler) =>
+                compiler.Instructions.Add(new(InstructionType.PUSHCONST, Value: AsComplex()));
         }
-    }
-    public partial record Minusf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Var : Entity
         {
-            Subtrahend.InnerCompile(compiler);
-            Minuend.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_MINUS));
+            private protected override void InnerCompile_(Compiler compiler) =>
+                compiler.Instructions.Add(new(InstructionType.PUSHVAR, compiler.VarNamespace[Name]));
         }
-    }
-    public partial record Mulf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Tensor : Entity
         {
-            Multiplier.InnerCompile(compiler);
-            Multiplicand.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_MUL));
+            private protected override void InnerCompile_(Compiler compiler) =>
+                throw new UncompilableNodeException($"Tensors cannot be compiled");
         }
-    }
-    public partial record Divf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        // Each function and operator processing
+        public partial record Sumf
         {
-            Dividend.InnerCompile(compiler);
-            Divisor.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_DIV));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Augend.InnerCompile(compiler);
+                Addend.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_SUM));
+            }
         }
-    }
-    public partial record Powf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Minusf
         {
-            Base.InnerCompile(compiler);
-            Exponent.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_POW));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Subtrahend.InnerCompile(compiler);
+                Minuend.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_MINUS));
+            }
         }
-    }
-    public partial record Sinf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Mulf
         {
-            Argument.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_SIN));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Multiplier.InnerCompile(compiler);
+                Multiplicand.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_MUL));
+            }
         }
-    }
-    public partial record Cosf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Divf
         {
-            Argument.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_COS));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Dividend.InnerCompile(compiler);
+                Divisor.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_DIV));
+            }
         }
-    }
-    public partial record Tanf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Powf
         {
-            Argument.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_TAN));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Base.InnerCompile(compiler);
+                Exponent.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_POW));
+            }
         }
-    }
-    public partial record Cotanf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Sinf
         {
-            Argument.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_COTAN));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_SIN));
+            }
         }
-    }
+        public partial record Cosf
+        {
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_COS));
+            }
+        }
+        public partial record Tanf
+        {
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_TAN));
+            }
+        }
+        public partial record Cotanf
+        {
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_COTAN));
+            }
+        }
+        public partial record Logf
+        {
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                // Unlike AngouriMath which accepts Base as the first parameter,
+                // Complex.Log accepts it as the second parameter
+                Antilogarithm.InnerCompile(compiler);
+                Base.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_LOG));
+            }
+        }
 
-    public partial record Logf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Arcsinf
         {
-            // Unlike AngouriMath which accepts Base as the first parameter,
-            // Complex.Log accepts it as the second parameter
-            Antilogarithm.InnerCompile(compiler);
-            Base.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_LOG));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_ARCSIN));
+            }
         }
-    }
-
-    public partial record Arcsinf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Arccosf
         {
-            Argument.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_ARCSIN));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_ARCCOS));
+            }
         }
-    }
-    public partial record Arccosf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Arctanf
         {
-            Argument.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_ARCCOS));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_ARCTAN));
+            }
         }
-    }
-    public partial record Arctanf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Arccotanf
         {
-            Argument.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_ARCTAN));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_ARCCOTAN));
+            }
         }
-    }
-    public partial record Arccotanf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Factorialf
         {
-            Argument.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_ARCCOTAN));
+            private protected override void InnerCompile_(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_FACTORIAL));
+            }
         }
-    }
-    public partial record Factorialf
-    {
-        private protected override void InnerCompile_(Compiler compiler)
+        public partial record Derivativef
         {
-            Argument.InnerCompile(compiler);
-            compiler.Instructions.Add(new(InstructionType.CALL_FACTORIAL));
+            private protected override void InnerCompile_(Compiler compiler) =>
+                throw new UncompilableNodeException($"Derivatives cannot be compiled");
         }
-    }
-
-    public partial record Derivativef
-    {
-        private protected override void InnerCompile_(Compiler compiler) =>
-            throw new UncompilableNodeException($"Derivatives cannot be compiled");
-    }
-
-    public partial record Integralf
-    {
-        private protected override void InnerCompile_(Compiler compiler) =>
-            throw new UncompilableNodeException($"Integrals cannot be compiled");
-    }
-
-    public partial record Limitf
-    {
-        private protected override void InnerCompile_(Compiler compiler) =>
-            throw new UncompilableNodeException($"Limits cannot be compiled");
+        public partial record Integralf
+        {
+            private protected override void InnerCompile_(Compiler compiler) =>
+                throw new UncompilableNodeException($"Integrals cannot be compiled");
+        }
+        public partial record Limitf
+        {
+            private protected override void InnerCompile_(Compiler compiler) =>
+                throw new UncompilableNodeException($"Limits cannot be compiled");
+        }
     }
     internal partial record Instruction
     {
-        internal record Compiler(List<Instruction> Instructions, Dictionary<VariableEntity, int> VarNamespace, Dictionary<Entity, int> Cache)
+        internal record Compiler(List<Instruction> Instructions, Dictionary<Var, int> VarNamespace, Dictionary<Entity, int> Cache)
         {
             /// <summary>Returns a compiled expression. Allows to boost substitution a lot</summary>
             /// <param name="variables">Must be equal to func's variables (ignoring constants)</param>
-            internal static FastExpression Compile(Entity func, IEnumerable<VariableEntity> variables)
+            internal static FastExpression Compile(Entity func, IEnumerable<Var> variables)
             {
-                var varNamespace = new Dictionary<VariableEntity, int>();
+                var varNamespace = new Dictionary<Var, int>();
                 int id = 0;
                 foreach (var varName in variables)
                     if (!varName.IsConstant)
                         varNamespace[varName] = id++;
-                func = func.SubstituteConstants();
+                func = func.Substitute(Var.ConstantList);
                 var visited = new HashSet<Entity>();
                 var cache = new Dictionary<Entity, int>();
                 foreach (var node in func)
                 {
-                    if (node is NumberEntity or VariableEntity)
+                    if (node is Num or Var)
                         continue; // Don't store simple nodes in cache
                     if (visited.Contains(node))
                         cache[node] = -1;

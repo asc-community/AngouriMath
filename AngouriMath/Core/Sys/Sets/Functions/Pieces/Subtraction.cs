@@ -22,9 +22,9 @@ using System.Linq;
  *
  */
 
-namespace AngouriMath.Core.Sets
+namespace AngouriMath.Core
 {
-    partial record Piecefunctions
+    static partial class PieceFunctions
     {
         /// <summary>
         /// Subtracts B from A

@@ -13,14 +13,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-﻿using System.Linq;
+using System.Linq;
 using AngouriMath.Core;
- using AngouriMath.Core.Numerix;
+using AngouriMath.Core.Numerix;
 
-namespace AngouriMath.Convenience
+namespace AngouriMath
 {
+    using static Entity;
     /// <summary>
     /// Sympy - is a super-powerful library for algebra cumputation,
     /// multi-variable expressions, physics, matrices, etc.
@@ -41,7 +40,7 @@ namespace AngouriMath.Convenience
         /// specify as many variables as you need
         /// </param>
         /// <returns></returns>
-        public static Entity Diff(Entity expr, params VariableEntity[] vars)
+        public static Entity Diff(Entity expr, params Var[] vars)
         {
             expr = vars.Aggregate(expr, (current, v) => current.Derive(v));
             return expr.Simplify();
@@ -61,7 +60,7 @@ namespace AngouriMath.Convenience
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        public static Set Solve(Entity expr, VariableEntity x) => expr.SolveEquation(x);
+        public static Set Solve(Entity expr, Var x) => expr.SolveEquation(x);
 
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
@@ -83,7 +82,7 @@ namespace AngouriMath.Convenience
         /// any other symbols but numbers and functions.
         /// </summary>
         /// <returns></returns>
-        public static Number Evalf(Entity expr) => expr.Eval();
+        public static ComplexNumber Evalf(Entity expr) => expr.Eval();
 
         /// <summary>
         /// Returns the expression in format of latex (for example, a / b -> \frac{a}{b})
@@ -96,7 +95,7 @@ namespace AngouriMath.Convenience
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static VariableEntity Symbol(string name) => new VariableEntity(name);
+        public static Var Symbol(string name) => new Var(name);
 
         /// <summary>
         /// e ^ power
@@ -115,6 +114,6 @@ namespace AngouriMath.Convenience
         /// Denominator
         /// </param>
         /// <returns></returns>
-        public static Entity Rational(ComplexNumber a, ComplexNumber b) => new NumberEntity(a) / new NumberEntity(b);
+        public static Entity Rational(ComplexNumber a, ComplexNumber b) => a / b;
     }
 }

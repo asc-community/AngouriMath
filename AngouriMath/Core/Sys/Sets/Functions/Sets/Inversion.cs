@@ -15,29 +15,32 @@
 
 using System.Collections.Generic;
 
-namespace AngouriMath.Core.Sets
+namespace AngouriMath.Core
 {
-    partial record Setfunctions
+    partial record SetNode
     {
-        public static SetNode Invert(SetNode A)
+        partial record Inversion
         {
-            if (!(A is Set s))
-                return new OperatorSet(OperatorSet.OperatorType.INVERSION, A);
-            var (goodAPieces, badAPieces) = GatherEvaluablePieces(s);
-            var remainders = new List<Piece>{ Piece.CreateUniverse() };
-            foreach (var good in goodAPieces)
+            public override SetNode Eval()
             {
-                var newRemainders = new List<Piece>();
-                foreach (var rem in remainders)
-                    newRemainders.AddRange(PieceFunctions.Subtract(rem, good));
-                remainders = newRemainders;
-            }
+                if (!(A is Set s))
+                    return new Inversion(A);
+                var (goodAPieces, badAPieces) = GatherEvaluablePieces(s);
+                var remainders = new List<Piece> { Piece.CreateUniverse() };
+                foreach (var good in goodAPieces)
+                {
+                    var newRemainders = new List<Piece>();
+                    foreach (var rem in remainders)
+                        newRemainders.AddRange(PieceFunctions.Subtract(rem, good));
+                    remainders = newRemainders;
+                }
 
-            var newSet = new Set{ Pieces = remainders };
-            if (badAPieces.Count == 0)
-                return newSet;
-            else
-                return new OperatorSet(OperatorSet.OperatorType.COMPLEMENT, newSet, new Set {Pieces = badAPieces});
+                var newSet = new Set { Pieces = remainders };
+                if (badAPieces.Count == 0)
+                    return newSet;
+                else
+                    return new Complement(newSet, new Set { Pieces = badAPieces });
+            }
         }
     }
 }

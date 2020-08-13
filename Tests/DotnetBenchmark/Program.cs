@@ -12,7 +12,7 @@ namespace DotnetBenchmark
 {
     public class CompiledFuncTest
     {
-        private readonly VariableEntity x;
+        private readonly Entity.Var x;
         private readonly FastExpression multiFunc;
         private readonly Entity multiFuncNotCompiled;
         private readonly Func<Complex, Complex> linqFunc;

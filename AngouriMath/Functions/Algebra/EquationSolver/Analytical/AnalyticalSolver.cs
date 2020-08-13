@@ -15,17 +15,15 @@
 
 
 
-using AngouriMath.Core.Exceptions;
+using static AngouriMath.Entity;
 using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.Solver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Numerix;
-using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Functions;
-using AngouriMath.Functions.Algebra.Solver.Analytical;
+using AngouriMath.Functions.Algebra;
 
 namespace AngouriMath
 {
@@ -38,7 +36,7 @@ namespace AngouriMath
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        public Set SolveEquation(VariableEntity x) => EquationSolver.Solve(this, x);
+        public Set SolveEquation(Var x) => EquationSolver.Solve(this, x);
 
         /// <summary><para>This <see cref="Entity"/> MUST contain exactly ONE occurance of <paramref name="x"/>,
         /// otherwise this function won't work correctly.</para>
@@ -68,165 +66,165 @@ namespace AngouriMath
                    r.Real <= to.Real &&
                    r.Imaginary <= to.Imaginary;
         }
-    }
-    public partial record NumberEntity : Entity
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
-    }
-    public partial record VariableEntity : Entity
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) => Enumerable.Repeat(this, 1);
-    }
-    public partial record Tensor : Entity
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) => Enumerable.Repeat(this, 1);
-    }
-    // Each function and operator processing
-    public partial record Sumf
-    {
-        // x + a = value => x = value - a
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Augend.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
-    }
-    public partial record Minusf
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Subtrahend.Contains(x)
-            // x - a = value => x = value + a
-            ? Subtrahend.Invert(value + Minuend, x)
-            // a - x = value => x = a - value
-            : Minuend.Invert(value - Subtrahend, x);
-    }
-    public partial record Mulf
-    {
-        // x * a = value => x = value / a
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Multiplier.Contains(x)
-            ? Multiplier.Invert(value / Multiplicand, x)
-            : Multiplicand.Invert(value / Multiplier, x);
-    }
-    public partial record Divf
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Dividend.Contains(x)
-            // x / a = value => x = a * value
-            ? Dividend.Invert(value * Divisor, x)
-            // a / x = value => x = a / value
-            : Divisor.Invert(value / Dividend, x);
-    }
-    public partial record Powf
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Base.Contains(x)
-            ? Exponent is IntegerNumber { Integer: var pow }
-              ? NumberEntity.GetAllRoots(1, pow)
-                .SelectMany(root => Base.Invert(root * MathS.Pow(value, 1 / Exponent), x))
-              : Base.Invert(MathS.Pow(value, 1 / Exponent), x)
-            // a ^ x = value => x = log(a, value)
-            : Exponent.Invert(MathS.Log(Base, value) + 2 * MathS.i * Utils.FindNextIndex(this + value, "n") * MathS.pi, x);
-    }
-    // TODO: Consider case when sin(sin(x)) where double-mention of n occures
-    public partial record Sinf
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            // sin(x) = value => x = arcsin(value) + 2pi * n
-            Argument.Invert(MathS.Arcsin(value) + 2 * MathS.pi * Utils.FindNextIndex(this + value, "n"), x)
-            // sin(x) = value => x = pi - arcsin(value) + 2pi * n
-            .Concat(Argument.Invert(MathS.pi - MathS.Arcsin(value) + 2 * MathS.pi * Utils.FindNextIndex(this + value, "n"), x));
-    }
-    public partial record Cosf
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            // cos(x) = value => x = arccos(value) + 2pi * n
-            Argument.Invert(MathS.Arccos(value) + 2 * MathS.pi * Utils.FindNextIndex(this + value, "n"), x)
-            // cos(x) = value => x = -arccos(value) + 2pi * n
-            .Concat(Argument.Invert(-MathS.Arccos(value) + 2 * MathS.pi * Utils.FindNextIndex(this + value, "n"), x));
-    }
-    public partial record Tanf
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            // tan(x) = value => x = arctan(value) + pi * n
-            Argument.Invert(MathS.Arctan(value) + MathS.pi * Utils.FindNextIndex(this + value, "n"), x);
-    }
-    public partial record Cotanf
-    {
-        // cotan(x) = value => x = arccotan(value) + pi * n
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Argument.Invert(MathS.Arccotan(value) + MathS.pi * Utils.FindNextIndex(this + value, "n"), x);
-    }
+        public partial record Num : Entity
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
+        }
+        public partial record Var : Entity
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) => Enumerable.Repeat(this, 1);
+        }
+        public partial record Tensor : Entity
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) => Enumerable.Repeat(this, 1);
+        }
+        // Each function and operator processing
+        public partial record Sumf
+        {
+            // x + a = value => x = value - a
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Augend.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
+        }
+        public partial record Minusf
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Subtrahend.Contains(x)
+                // x - a = value => x = value + a
+                ? Subtrahend.Invert(value + Minuend, x)
+                // a - x = value => x = a - value
+                : Minuend.Invert(value - Subtrahend, x);
+        }
+        public partial record Mulf
+        {
+            // x * a = value => x = value / a
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Multiplier.Contains(x)
+                ? Multiplier.Invert(value / Multiplicand, x)
+                : Multiplicand.Invert(value / Multiplier, x);
+        }
+        public partial record Divf
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Dividend.Contains(x)
+                // x / a = value => x = a * value
+                ? Dividend.Invert(value * Divisor, x)
+                // a / x = value => x = a / value
+                : Divisor.Invert(value / Dividend, x);
+        }
+        public partial record Powf
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Base.Contains(x)
+                ? Exponent is IntegerNumber { Integer: var pow }
+                  ? Num.GetAllRoots(1, pow)
+                    .SelectMany(root => Base.Invert(root * MathS.Pow(value, 1 / Exponent), x))
+                  : Base.Invert(MathS.Pow(value, 1 / Exponent), x)
+                // a ^ x = value => x = log(a, value)
+                : Exponent.Invert(MathS.Log(Base, value) + 2 * MathS.i * Var.CreateUnique(this + value, "n") * MathS.pi, x);
+        }
+        // TODO: Consider case when sin(sin(x)) where double-mention of n occures
+        public partial record Sinf
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                // sin(x) = value => x = arcsin(value) + 2pi * n
+                Argument.Invert(MathS.Arcsin(value) + 2 * MathS.pi * Var.CreateUnique(this + value, "n"), x)
+                // sin(x) = value => x = pi - arcsin(value) + 2pi * n
+                .Concat(Argument.Invert(MathS.pi - MathS.Arcsin(value) + 2 * MathS.pi * Var.CreateUnique(this + value, "n"), x));
+        }
+        public partial record Cosf
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                // cos(x) = value => x = arccos(value) + 2pi * n
+                Argument.Invert(MathS.Arccos(value) + 2 * MathS.pi * Var.CreateUnique(this + value, "n"), x)
+                // cos(x) = value => x = -arccos(value) + 2pi * n
+                .Concat(Argument.Invert(-MathS.Arccos(value) + 2 * MathS.pi * Var.CreateUnique(this + value, "n"), x));
+        }
+        public partial record Tanf
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                // tan(x) = value => x = arctan(value) + pi * n
+                Argument.Invert(MathS.Arctan(value) + MathS.pi * Var.CreateUnique(this + value, "n"), x);
+        }
+        public partial record Cotanf
+        {
+            // cotan(x) = value => x = arccotan(value) + pi * n
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Argument.Invert(MathS.Arccotan(value) + MathS.pi * Var.CreateUnique(this + value, "n"), x);
+        }
 
-    public partial record Logf
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Base.Contains(x)
-            // log(x, a) = value => x = a ^ value
-            ? Base.Invert(MathS.Pow(Antilogarithm, value), x)
-            // log(a, x) = value => a = x ^ value => x = a ^ (1 / value)
-            : Antilogarithm.Invert(MathS.Pow(Base, 1 / value), x);
-    }
+        public partial record Logf
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Base.Contains(x)
+                // log(x, a) = value => x = a ^ value
+                ? Base.Invert(MathS.Pow(Antilogarithm, value), x)
+                // log(a, x) = value => a = x ^ value => x = a ^ (1 / value)
+                : Antilogarithm.Invert(MathS.Pow(Base, 1 / value), x);
+        }
 
-    public partial record Arcsinf
-    {
-        private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
-        private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
-        // arcsin(x) = value => x = sin(value)
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            EntityInBounds(value, From, To) ? Argument.Invert(MathS.Sin(value), x) : Enumerable.Empty<Entity>();
-    }
-    public partial record Arccosf
-    {
-        private static readonly ComplexNumber From = ComplexNumber.Create(0, RealNumber.NegativeInfinity.Value);
-        private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi, RealNumber.PositiveInfinity.Value);
-        // arccos(x) = value => x = cos(value)
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cos(value), x) : Enumerable.Empty<Entity>();
-    }
-    public partial record Arctanf
-    {
-        private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
-        private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
-        // arctan(x) = value => x = tan(value)
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            EntityInBounds(value, From, To) ? Argument.Invert(MathS.Tan(value), x) : Enumerable.Empty<Entity>();
-    }
-    public partial record Arccotanf
-    {
-        // TODO: Range should exclude Re(z) = 0
-        private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
-        private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
-        // arccotan(x) = value => x = cotan(value)
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cotan(value), x) : Enumerable.Empty<Entity>();
-    }
-    public partial record Factorialf
-    {
-        // TODO: Inverse of factorial not implemented yet
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Enumerable.Empty<Entity>();
-    }
+        public partial record Arcsinf
+        {
+            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
+            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
+            // arcsin(x) = value => x = sin(value)
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                EntityInBounds(value, From, To) ? Argument.Invert(MathS.Sin(value), x) : Enumerable.Empty<Entity>();
+        }
+        public partial record Arccosf
+        {
+            private static readonly ComplexNumber From = ComplexNumber.Create(0, RealNumber.NegativeInfinity.Value);
+            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi, RealNumber.PositiveInfinity.Value);
+            // arccos(x) = value => x = cos(value)
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cos(value), x) : Enumerable.Empty<Entity>();
+        }
+        public partial record Arctanf
+        {
+            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
+            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
+            // arctan(x) = value => x = tan(value)
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                EntityInBounds(value, From, To) ? Argument.Invert(MathS.Tan(value), x) : Enumerable.Empty<Entity>();
+        }
+        public partial record Arccotanf
+        {
+            // TODO: Range should exclude Re(z) = 0
+            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
+            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
+            // arccotan(x) = value => x = cotan(value)
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cotan(value), x) : Enumerable.Empty<Entity>();
+        }
+        public partial record Factorialf
+        {
+            // TODO: Inverse of factorial not implemented yet
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Enumerable.Empty<Entity>();
+        }
 
-    public partial record Derivativef
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Expression.Contains(x)
-            ? Expression.Invert(MathS.Integral(value, Variable, Iterations), x)
-            : Enumerable.Empty<Entity>();
-    }
+        public partial record Derivativef
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Expression.Contains(x)
+                ? Expression.Invert(MathS.Integral(value, Variable, Iterations), x)
+                : Enumerable.Empty<Entity>();
+        }
 
-    public partial record Integralf
-    {
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Expression.Contains(x)
-            ? Expression.Invert(MathS.Derivative(value, Variable, Iterations), x)
-            : Enumerable.Empty<Entity>();
-    }
+        public partial record Integralf
+        {
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Expression.Contains(x)
+                ? Expression.Invert(MathS.Derivative(value, Variable, Iterations), x)
+                : Enumerable.Empty<Entity>();
+        }
 
-    public partial record Limitf
-    {
-        // TODO: We can't just do a limit on the inverse function: https://math.stackexchange.com/q/3397326/627798
-        private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-            Enumerable.Empty<Entity>();
+        public partial record Limitf
+        {
+            // TODO: We can't just do a limit on the inverse function: https://math.stackexchange.com/q/3397326/627798
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
+                Enumerable.Empty<Entity>();
+        }
     }
 }
 
@@ -242,7 +240,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// there's no pattern for solving equation like sin(x)^2 + sin(x) + 1 = 0,
         /// but we can first solve t^2 + t + 1 = 0, and then root = sin(x).
         /// </summary>
-        public static Entity GetMinimumSubtree(Entity expr, VariableEntity x)
+        public static Entity GetMinimumSubtree(Entity expr, Var x)
         {
             if (!expr.Vars.Contains(x))
                 throw new ArgumentException($"{nameof(expr)} must contain {nameof(x)}", nameof(expr));
@@ -268,7 +266,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     internal static class AnalyticalSolver
     {
-        private static Entity TryDowncast(Entity equation, VariableEntity x, Entity root)
+        private static Entity TryDowncast(Entity equation, Var x, Entity root)
         {
             if (!MathS.CanBeEvaluated(root))
                 return root;
@@ -286,14 +284,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var innerSimplified = root.InnerSimplify();
 
-            return NumberEntity.IsZero(error) && ComplexRational(downcasted) ? downcasted : innerSimplified;
+            return Num.IsZero(error) && ComplexRational(downcasted) ? downcasted : innerSimplified;
         }
 
 
         /// <summary>Equation solver</summary>
-        internal static void Solve(Entity expr, VariableEntity x, Set dst)
+        internal static void Solve(Entity expr, Var x, Set dst)
             => Solve(expr, x, dst, compensateSolving: false);
-        internal static void Solve(Entity expr, VariableEntity x, Set dst, bool compensateSolving)
+        internal static void Solve(Entity expr, Var x, Set dst, bool compensateSolving)
         {
             if (expr == x)
             {
@@ -371,7 +369,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         return;
                     }
                     break;
-                case FunctionEntity:
+                case Function:
                     DestinationAddRange(expr.Invert(0, x).Aggregate(new Set(), (set, e) => { set.Add(e); return set; }));
                     return;
             }

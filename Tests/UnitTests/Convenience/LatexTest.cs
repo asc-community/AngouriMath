@@ -8,14 +8,14 @@ namespace UnitTests.Convenience
     [TestClass]
     public class LatexTests
     {
-        private static readonly VariableEntity x = MathS.Var("x");
-        private static readonly NumberEntity frac34 = RationalNumber.Create(3, 4);
-        private static readonly NumberEntity m1 = -1;
-        private static readonly NumberEntity im1 = MathS.i - 1;
-        private static readonly NumberEntity m2i = -2 * MathS.i;
-        private static readonly NumberEntity numPi = MathS.DecimalConst.pi;
-        private static readonly NumberEntity mNumPi = -MathS.DecimalConst.pi;
-        void Test(string expected, AngouriMath.Core.Sys.Interfaces.ILatexiseable actual) =>
+        private static readonly Entity.Var x = MathS.Var("x");
+        private static readonly Entity.Num frac34 = RationalNumber.Create(3, 4);
+        private static readonly Entity.Num m1 = -1;
+        private static readonly Entity.Num im1 = MathS.i - 1;
+        private static readonly Entity.Num m2i = -2 * MathS.i;
+        private static readonly Entity.Num numPi = MathS.DecimalConst.pi;
+        private static readonly Entity.Num mNumPi = -MathS.DecimalConst.pi;
+        void Test(string expected, ILatexiseable actual) =>
             Assert.AreEqual(expected, actual.Latexise());
         void TestSimplify(string expected, Entity actual) =>
             Test(expected, actual.Simplify());
@@ -72,7 +72,7 @@ namespace UnitTests.Convenience
         [TestMethod] public void XSquaredMinusX() => TestSimplify(@"{x}^{2}-x", "x^2-x");
         [TestMethod] public void XSquaredMinusXAlternate() => TestSimplify(@"{x}^{2}-x", "-x+x^2");
         [TestMethod] public void XSquaredMinusXAlternate2() => TestSimplify(@"{x}^{2}-x", "x^2+(-1)*x");
-        [TestMethod] public void M1() => Test("-1", (Number)(-1));
+        [TestMethod] public void M1() => Test("-1", (ComplexNumber)(-1));
         [TestMethod] public void M1Entity() => Test("-1", m1);
         [TestMethod] public void M1Add() => Test(@"-1-1", m1 + m1);
         [TestMethod] public void M1Subtract() => Test(@"-1--1", m1 - m1);

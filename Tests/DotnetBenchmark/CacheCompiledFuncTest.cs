@@ -12,7 +12,7 @@ namespace DotnetBenchmark
         private readonly FastExpression complexFunc;
         private readonly Func<Complex, Complex> linqComp;
         private readonly Entity notCompiled;
-        private readonly VariableEntity x = MathS.Var("x");
+        private readonly Entity.Var x = MathS.Var("x");
         private readonly ComplexNumber ComNumToSub = 3;
         private readonly Complex ComToSub = 3;
         public CacheCompiledFuncTest()

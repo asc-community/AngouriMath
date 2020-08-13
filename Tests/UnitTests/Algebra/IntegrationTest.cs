@@ -12,7 +12,7 @@ namespace UnitTests.Algebra
         {
             var x = MathS.Var("x");
             var expr = x;
-            Assert.IsTrue(Number.Abs(expr.DefiniteIntegral(x, 0, 1).Real - 1.0/2) < 0.1);
+            Assert.IsTrue(Entity.Num.Abs(expr.DefiniteIntegral(x, 0, 1).Real - 1.0/2) < 0.1);
         }
         [TestMethod]
         public void Test2()

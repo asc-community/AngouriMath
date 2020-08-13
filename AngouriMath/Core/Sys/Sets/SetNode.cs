@@ -18,9 +18,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Numerix;
-using AngouriMath.Core.Sets;
 
 [assembly: InternalsVisibleTo("UnitTests.Core")]
 namespace AngouriMath.Core
@@ -31,97 +29,83 @@ namespace AngouriMath.Core
     /// It supports intersection (with & operator), union (with | operator), subtracting (with - operator)
     /// TODO: To make sets work faster
     /// </summary>
-    public abstract partial class SetNode
+    public abstract partial record SetNode
     {
+        public abstract override string ToString();
         public abstract bool Contains(Piece piece);
         public abstract bool Contains(Set piece);
         public abstract bool Contains(Entity piece);
 
-        public static SetNode operator &(SetNode A, SetNode B)
-            => OperatorSet.And(A, B).Eval();
-
-        public static SetNode operator |(SetNode A, SetNode B)
-            => OperatorSet.Or(A, B).Eval();
-
-        public static SetNode operator -(SetNode A, SetNode B)
-            => OperatorSet.Minus(A, B).Eval();
-
-        public static SetNode operator !(SetNode A)
-            => OperatorSet.Inverse(A).Eval();
-
-        public SetNode Eval()
+        public static SetNode operator &(SetNode A, SetNode B) => new Intersection(A, B).Eval();
+        public static SetNode operator |(SetNode A, SetNode B) => new Union(A, B).Eval();
+        public static SetNode operator -(SetNode A, SetNode B) => new Complement(A, B).Eval();
+        public static SetNode operator !(SetNode A) => new Inversion(A).Eval();
+        public abstract SetNode Eval();
+        internal abstract record OperatorSet : SetNode
         {
-            return this switch
+            public override bool Contains(Set set)
+                => set.Pieces.All(Contains);
+
+            public override bool Contains(Entity entity)
+                => Contains(new OneElementPiece(entity));
+        }
+        /// <summary>A or B</summary>
+        internal partial record Union(SetNode A, SetNode B) : OperatorSet
+        {
+            public override bool Contains(Piece piece) => A.Contains(piece) || B.Contains(piece);
+            public override string ToString() => $"({A})&({B})";
+        }
+        /// <summary>A and B</summary>
+        internal partial record Intersection(SetNode A, SetNode B) : OperatorSet
+        {
+            public override bool Contains(Piece piece) => A.Contains(piece) && B.Contains(piece);
+            public override string ToString() => $"({A})|({B})";
+        }
+        /// <summary>A and not B</summary>
+        internal partial record Complement(SetNode A, SetNode B) : OperatorSet
+        {
+            public override bool Contains(Piece piece) => A.Contains(piece) && !B.Contains(piece);
+            public override string ToString() => $@"({A})\({B})";
+        }
+        /// <summary>not A</summary>
+        internal partial record Inversion(SetNode A) : OperatorSet
+        {
+            public override bool Contains(Piece piece) => !A.Contains(piece);
+            public override string ToString() => $"!({A})";
+        }
+        static (List<Piece> Good, List<Piece> Bad) GatherEvaluablePieces(Set A)
+        {
+            var goodPieces = new List<Piece>(); // Those we can eval, e. g. [3; 4]
+            var badPieces = new List<Piece>();  // Those we cannot, e. g. [x + 3; -3]
+            foreach (var piece in A)
+                if (piece.IsNumeric())
+                    goodPieces.Add(piece);
+                else
+                    badPieces.Add(piece);
+            return (goodPieces, badPieces);
+        }
+        static List<Piece> UniteList(List<Piece> pieces)
+        {
+            if (pieces.Count == 0)
+                return new List<Piece>();
+            var remainders = new List<Piece> { pieces[0] };
+            for (int i = 1; i < pieces.Count; i++)
             {
-                Set _ => this,
-                OperatorSet op => op.ConnectionType switch
-                {
-                    OperatorSet.OperatorType.UNION =>
-                        SetFunctions.Unite(op.Children[0], op.Children[1]),
-                    OperatorSet.OperatorType.INTERSECTION =>
-                        SetFunctions.Intersect(op.Children[0], op.Children[1]),
-                    OperatorSet.OperatorType.COMPLEMENT =>
-                        SetFunctions.Subtract(op.Children[0], op.Children[1]),
-                    OperatorSet.OperatorType.INVERSION =>
-                        SetFunctions.Invert(op.Children[0]),
-                    _ => throw new UnknownOperatorException()
-                },
-                _ => throw new UnknownSetException()
-            };
+                var newRemainders = new List<Piece>();
+                foreach (var rem in remainders)
+                    newRemainders.AddRange(PieceFunctions.Unite(rem, pieces[i]));
+                remainders = newRemainders;
+            }
+
+            return remainders;
         }
     }
 
-    public class OperatorSet : SetNode
+
+    public partial record Set : SetNode, ICollection<Piece>
     {
-        public enum OperatorType
-        {
-            UNION,           // OR
-            INTERSECTION,    // AND
-            COMPLEMENT,      // SUBTRACT
-            INVERSION,       // NOT
-        }
-        internal SetNode[] Children { get; }
-        internal readonly OperatorType ConnectionType;
-        internal OperatorSet(OperatorType type, params SetNode[] children)
-        {
-            Children = children;
-            ConnectionType = type;
-        }
+        public override SetNode Eval() => this;
 
-        public override string ToString()
-            => SetToString.OperatorToString(this);
-
-        public override bool Contains(Piece piece)
-            => ConnectionType switch
-            {
-                OperatorType.UNION => Children[0].Contains(piece) || Children[1].Contains(piece),
-                OperatorType.INTERSECTION => Children[0].Contains(piece) && Children[1].Contains(piece),
-                OperatorType.COMPLEMENT => Children[0].Contains(piece) && !Children[1].Contains(piece),
-                OperatorType.INVERSION => !Children[0].Contains(piece),
-                _ => throw new UnknownOperatorException()
-            };
-
-        public override bool Contains(Set set)
-            => set.Pieces.All(Contains);
-
-        public override bool Contains(Entity entity)
-            => Contains(new OneElementPiece(entity));
-
-        internal static SetNode And(SetNode A, SetNode B)
-        => new OperatorSet(OperatorSet.OperatorType.INTERSECTION, A, B);
-
-        internal static SetNode Or(SetNode A, SetNode B)
-            => new OperatorSet(OperatorSet.OperatorType.UNION, A, B);
-
-        internal static SetNode Minus(SetNode A, SetNode B)
-        => new OperatorSet(OperatorSet.OperatorType.COMPLEMENT, A, B);
-
-        internal static SetNode Inverse(SetNode A)
-        => new OperatorSet(OperatorSet.OperatorType.INVERSION, A);
-    }
-
-    public class Set : SetNode, ICollection<Piece>
-    {
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         public IEnumerator<Piece> GetEnumerator() => Pieces.GetEnumerator();
@@ -223,8 +207,7 @@ namespace AngouriMath.Core
         public void AddInterval(IntervalPiece interval) 
             => AddPiece(interval);
 
-        public override string ToString()
-            => SetToString.LinearSetToString(this);
+        public override string ToString() => IsEmpty() ? "{}" : string.Join("|", Pieces);
 
         public bool IsEmpty() => Pieces.Count == 0;
 
@@ -239,18 +222,9 @@ namespace AngouriMath.Core
             INFINITE
         }
 
-        public PowerLevel Power
-        {
-            get
-            {
-                if (Pieces.Count == 0)
-                    return 0;
-                if (Pieces.Any(p => p is IntervalPiece))
-                    return PowerLevel.INFINITE;
-                else
-                    return PowerLevel.FINITE;
-            }
-        }
+        public PowerLevel Power =>
+            Pieces.Count == 0 ? PowerLevel.EMPTY
+            : Pieces.Any(p => p is IntervalPiece) ? PowerLevel.INFINITE : PowerLevel.FINITE;
 
         public int Count
             => Power == PowerLevel.INFINITE ? -1 : Pieces.Count;
@@ -348,8 +322,8 @@ namespace AngouriMath.Core
         private readonly Entity[] entities;
         public int Count => ((IReadOnlyCollection<Entity>)entities).Count;
         public Entity this[int index] => ((IReadOnlyList<Entity>)entities)[index];
-        internal FiniteSet(Piece[] pieces)
-            => this.entities = pieces.OfType<OneElementPiece>().Select(p => p.entity.Item1).ToArray();
+        internal FiniteSet(IEnumerable<Piece> pieces) =>
+            entities = pieces.OfType<OneElementPiece>().Select(p => p.entity.Item1).ToArray();
         public List<Entity> ToList() => entities.ToList();
         public IEnumerator<Entity> GetEnumerator() => ((IEnumerable<Entity>)entities).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

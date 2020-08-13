@@ -15,16 +15,22 @@ options
     language = CSharp;
 }
 
-@header // These items are unindented because they appear in the generated source code verbatim
+@header
 {
-using System.Linq;
-using System.Collections;
-using AngouriMath;
-using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
-using System.Globalization;
+    using System.Linq;
+    using System.Collections;
+    using AngouriMath;
+    using AngouriMath.Core;
+    using static AngouriMath.Core.FromString.FunctionArgumentCountException;
+    using AngouriMath.Core.Numerix;
+    using System.Globalization;
 }
 
+@lexer::members
+{
+    public static readonly IToken Multiply = new CommonToken(Array.IndexOf(_LiteralNames, "'*'"), "*");
+    public static readonly IToken Power = new CommonToken(Array.IndexOf(_LiteralNames, "'^'"), "^");
+}
 @parser::members
 {
     // Nullable reference type analysis is disabled by default for generated code without '#nullable enable'
@@ -91,35 +97,49 @@ expression returns[Entity value]
 
 function_arguments returns[List<Entity> list]
     @init { $list = new List<Entity>(); }
-    : e = expression { $list.Add($e.value); } (',' e = expression { $list.Add($e.value); })*
+    : (e = expression { $list.Add($e.value); } (',' e = expression { $list.Add($e.value); })*)?
     ;
    
 atom returns[Entity value]
     : NUMBER { $value = ComplexNumber.Parse($NUMBER.text); }
-    | ID { $value = new VariableEntity($ID.text); }
+    | ID { $value = new Entity.Var($ID.text); }
     | '(' expression ')' { $value = $expression.value; }
-    | ID '(' args = function_arguments ')' { 
-        if ($args.list.Count != AngouriMath.Core.FromString.SyntaxInfo.goodStringsForFunctions[$ID.text])
-            throw new AngouriMath.Core.FromString.ParseException("Wrong amount of arguments for " + $ID.text + ": " + $args.list.Count.ToString());
-        $value = new FunctionEntity($ID.text + 'f'); 
-        foreach(var arg in $args.list) { 
-            $value.AddChild(arg); 
-        } 
-    }
-    | ID '(' ')' { $value = new FunctionEntity($ID.text + 'f'); }
+    | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
+    | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
+    | 'log(' args = function_arguments ')' { Assert("log", 2, $args.list.Count); $value = MathS.Log($args.list[0], $args.list[1]); }
+    | 'sqrt(' args = function_arguments ')' { Assert("sqrt", 1, $args.list.Count); $value = MathS.Sqrt($args.list[0]); }
+    | 'cbrt(' args = function_arguments ')' { Assert("cbrt", 1, $args.list.Count); $value = MathS.Cbrt($args.list[0]); }
+    | 'sqr(' args = function_arguments ')' { Assert("sqr", 1, $args.list.Count); $value = MathS.Sqr($args.list[0]); }
+    | 'ln(' args = function_arguments ')' { Assert("ln", 1, $args.list.Count); $value = MathS.Ln($args.list[0]); }
+    | 'tan(' args = function_arguments ')' { Assert("tan", 1, $args.list.Count); $value = MathS.Tan($args.list[0]); }
+    | 'cotan(' args = function_arguments ')' { Assert("cotan", 1, $args.list.Count); $value = MathS.Cotan($args.list[0]); }
+    | 'sec(' args = function_arguments ')' { Assert("sec", 1, $args.list.Count); $value = MathS.Sec($args.list[0]); }
+    | 'cosec(' args = function_arguments ')' { Assert("cosec", 1, $args.list.Count); $value = MathS.Cosec($args.list[0]); }
+    | 'arcsin(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.Arcsin($args.list[0]); }
+    | 'arccos(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.Arccos($args.list[0]); }
+    | 'arctan(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.Arctan($args.list[0]); }
+    | 'arccotan(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Arccotan($args.list[0]); }
+    | 'arcsec(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Arcsec($args.list[0]); }
+    | 'arccosec(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Arccosec($args.list[0]); }
+    | 'gamma(' args = function_arguments ')' { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); }
+    | 'derive(' args = function_arguments ')' { Assert("derive", 3, $args.list.Count); $value = MathS.Derivative($args.list[0], $args.list[1], $args.list[2]); }
+    | 'integrate(' args = function_arguments ')' { Assert("integrate", 3, $args.list.Count); $value = MathS.Integral($args.list[0], $args.list[1], $args.list[2]); }
+    | 'limit(' args = function_arguments ')' { Assert("limit", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2]); }
+    | 'limitleft(' args = function_arguments ')' { Assert("limitleft", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Limits.ApproachFrom.Left); }
+    | 'limitright(' args = function_arguments ')' { Assert("limitright", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Limits.ApproachFrom.Right); }
     ;
 
 statement: expression EOF { Result = $expression.value; } ;
 
 NEWLINE: '\r'?'\n' ;
 
-ID: ('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
-  
 // A fragment will never be counted as a token, it only serves to simplify a grammar.
 fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
 
-NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 'i'? ;
+NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 'i'? | 'i' ;
 
+ID: ('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
+  
 COMMENT: ('//' ~[\r\n]* '\r'? '\n' | '/*' .*? '*/') -> skip ;
     
 WS : (' ' | '\t')+ -> skip ;

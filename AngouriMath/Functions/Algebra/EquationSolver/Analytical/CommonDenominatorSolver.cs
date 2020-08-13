@@ -22,11 +22,9 @@ using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
-    using FractionInfoList = List<(Entity numerator, List<Entity> denominatorMultipliers)>;
+    using static Entity;
     internal static class CommonDenominatorSolver
     {
-        
-
         /// <summary>
         /// All constants, no matter multiplied or divided, are numerator's coefficients:
         /// 2 * x / 3 => num: 2 / 3
@@ -43,7 +41,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// </summary>
         /// <param name="term"></param>
         /// <returns></returns>
-        internal static (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) FindFractions(Entity term, VariableEntity x)
+        private static (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) FindFractions(Entity term, Var x)
         {
             // TODO: consider cases where we should NOT gather all powers in row
             static Entity GetPower(Entity expr) =>
@@ -52,12 +50,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             static Entity GetBase(Entity expr) =>
                 expr is Powf(var @base, _) ? GetBase(@base) : expr;
 
-            (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) oneInfo;
-            oneInfo.numerator = 1; // Once InnerSimplify is called, we get rid of 1 *
-            oneInfo.denominatorMultipliers = new List<(Entity den, RealNumber pow)>();
+            // We init numerator with 1, but once InnerSimplify is called, we get rid of 1 *
+            var oneInfo = (numerator: (Entity)1, denominatorMultipliers: new List<(Entity den, RealNumber pow)>());
 
             var multipliers = Mulf.LinearChildren(term);
-            var res = new FractionInfoList();
             foreach (var multiplier in multipliers)
             {
                 if (!multiplier.Vars.Contains(x))
@@ -92,16 +88,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// Finds the best common denominator, multiplies the whole expression by that, and
         /// tries solving if the found denominator is not 1
         /// </summary>
-        /// <param name="expr"></param>
-        /// <param name="x"></param>
-        /// <returns></returns>
-        internal static Set? Solve(Entity expr, VariableEntity x)
+        internal static Set? Solve(Entity expr, Var x)
         {
             var res = FindCD(expr, x);
             return res?.SolveEquation(x);
         }
 
-        internal static Entity? FindCD(Entity expr, VariableEntity x)
+        private static Entity? FindCD(Entity expr, Var x)
         {
             var terms = Sumf.LinearChildren(expr);
             var denominators = new Dictionary<string, (Entity den, RealNumber pow)>();
@@ -115,7 +108,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var name = den.ToString(); // TODO: Replace with faster hashing
                     if (!denominators.ContainsKey(name))
                         denominators[name] = (den, 0);
-                    denominators[name] = (den, NumberEntity.Max(denominators[name].pow, -pow));
+                    denominators[name] = (den, Num.Max(denominators[name].pow, -pow));
                 }
                 fracs.Add(oneInfo);
             }
@@ -132,9 +125,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
 
             var newTerms = new List<Entity>();
-            foreach (var frac in fracs)
+            foreach (var (num, dens) in fracs)
             {
-                var (num, dens) = frac;
                 var denDict = ToDict(dens);
                 Entity invertDenominator = 1;
                 foreach (var mp in denominators)

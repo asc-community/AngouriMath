@@ -23,47 +23,50 @@ using PeterO.Numbers;
 
 namespace AngouriMath
 {
-    public abstract partial record NumberEntity
+    partial record Entity
     {
-        /// <summary>
-        /// Checks whether a number is zero
-        /// </summary>
-        /// <param name="num"></param>
-        /// <returns></returns>
-        public static bool IsZero(RealNumber num)
+        public abstract partial record Num
         {
-            if (!num.IsFinite)
-                return false;
-            return Functional.IsZero(num.Value);
-        }
-
-        /// <summary>
-        /// Checks whether a number is zero
-        /// </summary>
-        /// <param name="num"></param>
-        /// <returns></returns>
-        public static bool IsZero(EDecimal num)
-        {
-            return num.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange);
-        }
-
-        /// <summary>
-        /// Checks whether a number is zero
-        /// </summary>
-        /// <param name="num"></param>
-        /// <returns></returns>
-        public static bool IsZero(ComplexNumber num)
-            => IsZero(num.Real) && IsZero(num.Imaginary);
-
-        /// <summary>
-        /// This class is developed for some additional functions
-        /// Some functions are public
-        /// </summary>
-        public static class Functional
-        {
-            internal static bool IsZero(EDecimal value)
+            /// <summary>
+            /// Checks whether a number is zero
+            /// </summary>
+            /// <param name="num"></param>
+            /// <returns></returns>
+            public static bool IsZero(RealNumber num)
             {
-                return value.Abs().LessThanOrEquals(MathS.Settings.PrecisionErrorZeroRange);
+                if (!num.IsFinite)
+                    return false;
+                return Functional.IsZero(num.Value);
+            }
+
+            /// <summary>
+            /// Checks whether a number is zero
+            /// </summary>
+            /// <param name="num"></param>
+            /// <returns></returns>
+            public static bool IsZero(EDecimal num)
+            {
+                return num.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange);
+            }
+
+            /// <summary>
+            /// Checks whether a number is zero
+            /// </summary>
+            /// <param name="num"></param>
+            /// <returns></returns>
+            public static bool IsZero(ComplexNumber num)
+                => IsZero(num.Real) && IsZero(num.Imaginary);
+
+            /// <summary>
+            /// This class is developed for some additional functions
+            /// Some functions are public
+            /// </summary>
+            public static class Functional
+            {
+                internal static bool IsZero(EDecimal value)
+                {
+                    return value.Abs().LessThanOrEquals(MathS.Settings.PrecisionErrorZeroRange);
+                }
             }
         }
     }

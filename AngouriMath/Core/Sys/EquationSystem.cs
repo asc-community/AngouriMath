@@ -17,11 +17,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using AngouriMath.Core.Sys.Interfaces;
-using AngouriMath.Functions.Algebra.Solver;
+using AngouriMath.Functions.Algebra;
 
 namespace AngouriMath.Core.Sys
 {
+    using static Entity;
     public class EquationSystem : ILatexiseable
     {
         private readonly List<Entity> equations;
@@ -31,10 +31,7 @@ namespace AngouriMath.Core.Sys
         /// you may solve or latexise it
         /// </summary>
         /// <param name="equations"></param>
-        public EquationSystem(params Entity[] equations)
-        {
-            this.equations = equations.ToList();
-        }
+        public EquationSystem(params Entity[] equations) => this.equations = equations.ToList();
 
         /// <summary>
         /// Returns a solution matrix
@@ -45,7 +42,7 @@ namespace AngouriMath.Core.Sys
         /// Number of variables must match number of equations
         /// </param>
         /// <returns></returns>
-        public Tensor? Solve(params VariableEntity[] vars) => EquationSolver.SolveSystem(equations, vars);
+        public Tensor? Solve(params Var[] vars) => EquationSolver.SolveSystem(equations, vars);
 
         /// <summary>
         /// Returns latexised version of the system

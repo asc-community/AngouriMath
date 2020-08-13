@@ -15,32 +15,35 @@
 
 using System.Collections.Generic;
 
-namespace AngouriMath.Core.Sets
+namespace AngouriMath.Core
 {
-    partial record Setfunctions
+    partial record SetNode
     {
-        internal static SetNode Subtract(SetNode A, SetNode B)
+        partial record Complement
         {
-            if (!(A is Set a && B is Set b))
-                return A - B;
-            var (goodAPieces, badAPieces) = GatherEvaluablePieces(a);
-            var (goodBPieces, badBPieces) = GatherEvaluablePieces(b);
-            var newGoodPieces = new List<Piece>();
-            newGoodPieces.AddRange(goodAPieces);
-            foreach (var goodB in goodBPieces)
+            public override SetNode Eval()
             {
-                var newNewGoodPieces = new List<Piece>();
-                foreach (var newGoodPiece in newGoodPieces)
-                    newNewGoodPieces.AddRange(PieceFunctions.Subtract(newGoodPiece, goodB));
-                newGoodPieces = newNewGoodPieces;
-            }
+                if (!(A is Set a && B is Set b))
+                    return A - B;
+                var (goodAPieces, badAPieces) = GatherEvaluablePieces(a);
+                var (goodBPieces, badBPieces) = GatherEvaluablePieces(b);
+                var newGoodPieces = new List<Piece>();
+                newGoodPieces.AddRange(goodAPieces);
+                foreach (var goodB in goodBPieces)
+                {
+                    var newNewGoodPieces = new List<Piece>();
+                    foreach (var newGoodPiece in newGoodPieces)
+                        newNewGoodPieces.AddRange(PieceFunctions.Subtract(newGoodPiece, goodB));
+                    newGoodPieces = newNewGoodPieces;
+                }
 
-            newGoodPieces.AddRange(badAPieces);
-            var newSet = new Set{ Pieces = newGoodPieces };
-            if (badBPieces.Count == 0)
-                return newSet;
-            else
-                return new OperatorSet(OperatorSet.OperatorType.COMPLEMENT, newSet, new Set { Pieces = badBPieces });
+                newGoodPieces.AddRange(badAPieces);
+                var newSet = new Set { Pieces = newGoodPieces };
+                if (badBPieces.Count == 0)
+                    return newSet;
+                else
+                    return new Complement(newSet, new Set { Pieces = badBPieces });
+            }
         }
     }
 }

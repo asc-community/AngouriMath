@@ -1,17 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using System.Collections.Generic;
 using AngouriMath.Core.Numerix;
 using PeterO.Numbers;
 
 namespace AngouriMath
 {
+    using static Entity;
     using TrigTable = List<(EDecimal arg, Entity res)>;
     public static partial class Const
     {
         internal static class TrigonometryTableValues
         {
-            internal static bool TryPulling(TrigTable table, ComplexNumber arg,
+            private static bool TryPulling(TrigTable table, ComplexNumber arg,
                 [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
                 out Entity? res)
             {
@@ -21,10 +20,10 @@ namespace AngouriMath
                     return false;
                 }
                 // arg in [0; 2pi]
-                var twoPi = Number.CtxMultiply(2, MathS.DecimalConst.pi);
-                dArg = Number.CtxMod(
-                    Number.CtxAdd(           // (
-                        Number.CtxMod(dArg, twoPi)         //     dArg % 2pi
+                var twoPi = Num.CtxMultiply(2, MathS.DecimalConst.pi);
+                dArg = Num.CtxMod(
+                    Num.CtxAdd(           // (
+                        Num.CtxMod(dArg, twoPi)         //     dArg % 2pi
                         ,                          //   +
                         twoPi                    //   2pi
                         )                          // )
@@ -50,7 +49,7 @@ namespace AngouriMath
 
                 for (var j = begin; j <= end; j++)
                 {
-                    if (Number.Functional.IsZero(table[j].arg - dArg))
+                    if (Num.Functional.IsZero(table[j].arg - dArg))
                     {
                         res = table[j].res;
                         return true;
@@ -70,7 +69,7 @@ namespace AngouriMath
                 if (TryPulling(TableCos, arg * 2, out res))
                 {
                     res = MathS.Sqrt((1 - res) / 2);
-                    if (Number.Sin(arg) is RealNumber real && real < 0)
+                    if (Num.Sin(arg) is RealNumber real && real < 0)
                         res *= -1;
                     return true;
                 }
@@ -87,7 +86,7 @@ namespace AngouriMath
                 if (TryPulling(TableCos, arg * 2, out res))
                 {
                     res = MathS.Sqrt((1 + res) / 2);
-                    if (Number.Cos(arg) is RealNumber real && real < 0)
+                    if (Num.Cos(arg) is RealNumber real && real < 0)
                         res *= -1;
                     return true;
                 }
@@ -112,9 +111,8 @@ namespace AngouriMath
                 return false;
             }
 
-            private static Entity Cbrt(Entity a) => MathS.Pow(a, f1_3);
             private static Entity Sqrt(Entity a) => MathS.Pow(a, f1_2);
-
+            private static Entity Cbrt(Entity a) => MathS.Pow(a, f1_3);
             private static readonly Entity f1_2 = RationalNumber.Create(1, 2);
             private static readonly Entity f1_3 = RationalNumber.Create(1, 3);
             private static readonly Entity f1_4 = RationalNumber.Create(1, 4);
@@ -126,7 +124,7 @@ namespace AngouriMath
             private static readonly Entity i = MathS.i;
 
             private static EDecimal TwoPiOver(int a)
-                => Number.CtxDivide(Number.CtxMultiply(2, MathS.DecimalConst.pi), a);
+                => Num.CtxDivide(Num.CtxMultiply(2, MathS.DecimalConst.pi), a);
 
 
             /// <summary>

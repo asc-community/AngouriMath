@@ -26,140 +26,126 @@ using PeterO.Numbers;
 
 namespace AngouriMath
 {
-    /// <summary>
-    /// This class represents all possible numerical values as a hierarchy,
-    /// <list>
-    ///   NumberEntity
-    ///   <list type="bullet">
-    ///     ComplexNumber
-    ///       <list type="bullet">
-    ///         RealNumber
-    ///         <list type="bullet">
-    ///           RationalNumber
-    ///           <list type="bullet">
-    ///             IntegerNumber
-    ///           </list>
-    ///         </list>
-    ///       </list>
-    ///     </list>
-    ///   </list>
-    /// </summary>
-    public abstract partial record NumberEntity
+    partial record Entity
     {
-        /// <summary>
-        /// This function serves not only convenience but also protects from unexpected cases, for example,
-        /// if a new type added
-        /// </summary>
-        protected static T SuperSwitch<T>(
-            NumberEntity num1, NumberEntity num2,
-            Func<IntegerNumber, IntegerNumber, T> ifInt,
-            Func<RationalNumber, RationalNumber, T> ifRat,
-            Func<RealNumber, RealNumber, T> ifReal,
-            Func<ComplexNumber, ComplexNumber, T> ifCom
-        ) => (num1, num2) switch
+        public abstract partial record Num
         {
-            (IntegerNumber n1, IntegerNumber n2) => ifInt(n1, n2),
-            (RationalNumber r1, RationalNumber r2) => ifRat(r1, r2),
-            (RealNumber r1, RealNumber r2) => ifReal(r1, r2),
-            (ComplexNumber c1, ComplexNumber c2) => ifCom(c1, c2),
-            _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
-        };
-        /// <summary>
-        /// This function serves not only convenience but also protects from unexpected cases, for example,
-        /// if a new type added
-        /// </summary>
-        protected static T SuperSwitch<T>(
-            T num1, T num2,
-            Func<IntegerNumber, IntegerNumber, IntegerNumber> ifInt,
-            Func<RationalNumber, RationalNumber, RationalNumber> ifRat,
-            Func<RealNumber, RealNumber, RealNumber> ifReal,
-            Func<ComplexNumber, ComplexNumber, ComplexNumber> ifCom
-        ) where T : NumberEntity
-            => (T)(NumberEntity)((num1, num2) switch
+            /// <summary>
+            /// This function serves not only convenience but also protects from unexpected cases, for example,
+            /// if a new type added
+            /// </summary>
+            protected static T SuperSwitch<T>(
+                Num num1, Num num2,
+                Func<IntegerNumber, IntegerNumber, T> ifInt,
+                Func<RationalNumber, RationalNumber, T> ifRat,
+                Func<RealNumber, RealNumber, T> ifReal,
+                Func<ComplexNumber, ComplexNumber, T> ifCom
+            ) => (num1, num2) switch
             {
                 (IntegerNumber n1, IntegerNumber n2) => ifInt(n1, n2),
                 (RationalNumber r1, RationalNumber r2) => ifRat(r1, r2),
                 (RealNumber r1, RealNumber r2) => ifReal(r1, r2),
                 (ComplexNumber c1, ComplexNumber c2) => ifCom(c1, c2),
                 _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
-            });
+            };
+            /// <summary>
+            /// This function serves not only convenience but also protects from unexpected cases, for example,
+            /// if a new type added
+            /// </summary>
+            protected static T SuperSwitch<T>(
+                T num1, T num2,
+                Func<IntegerNumber, IntegerNumber, IntegerNumber> ifInt,
+                Func<RationalNumber, RationalNumber, RationalNumber> ifRat,
+                Func<RealNumber, RealNumber, RealNumber> ifReal,
+                Func<ComplexNumber, ComplexNumber, ComplexNumber> ifCom
+            ) where T : Num
+                => (T)(Num)((num1, num2) switch
+                {
+                    (IntegerNumber n1, IntegerNumber n2) => ifInt(n1, n2),
+                    (RationalNumber r1, RationalNumber r2) => ifRat(r1, r2),
+                    (RealNumber r1, RealNumber r2) => ifReal(r1, r2),
+                    (ComplexNumber c1, ComplexNumber c2) => ifCom(c1, c2),
+                    _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
+                });
 
-        /// <summary>
-        /// Finds all complex roots of a number
-        /// e. g. sqrt(1) = { -1, 1 }
-        /// root(1, 4) = { -i, i, -1, 1 }
-        /// </summary>
-        /// <param name="value"></param>
-        /// <param name="rootPower"></param>
-        /// <returns></returns>
-        public static HashSet<ComplexNumber> GetAllRoots(ComplexNumber value, EInteger rootPower)
-        {
-            // Avoid infinite recursion from Abs to GetAllRoots again
-            var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
+            /// <summary>
+            /// Finds all complex roots of a number
+            /// e. g. sqrt(1) = { -1, 1 }
+            /// root(1, 4) = { -i, i, -1, 1 }
+            /// </summary>
+            /// <param name="value"></param>
+            /// <param name="rootPower"></param>
+            /// <returns></returns>
+            public static HashSet<ComplexNumber> GetAllRoots(ComplexNumber value, EInteger rootPower)
             {
-                var res = new HashSet<ComplexNumber>();
-                EDecimal phi = (Ln(value / value.Abs()) / MathS.i).Real.Value;
-                if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
+                // Avoid infinite recursion from Abs to GetAllRoots again
+                var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
+                {
+                    var res = new HashSet<ComplexNumber>();
+                    EDecimal phi = (Ln(value / value.Abs()) / MathS.i).Real.Value;
+                    if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
                     phi = EDecimal.Zero;
 
-                EDecimal newMod = Pow(Abs(value), CtxDivide(EDecimal.One, rootPower)).Real.Value;
+                    EDecimal newMod = Pow(Abs(value), CtxDivide(EDecimal.One, rootPower)).Real.Value;
 
-                var i = ComplexNumber.ImaginaryOne;
-                for (int n = 0; n < rootPower; n++)
-                {
-                    EDecimal newPow = CtxAdd(CtxDivide(phi, rootPower),
-                        CtxDivide(CtxMultiply(CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
-                    var root = newMod * Exp(i * newPow);
-                    res.Add(root);
-                }
+                    var i = ComplexNumber.ImaginaryOne;
+                    for (int n = 0; n < rootPower; n++)
+                    {
+                        EDecimal newPow = CtxAdd(CtxDivide(phi, rootPower),
+                            CtxDivide(CtxMultiply(CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
+                        var root = newMod * Exp(i * newPow);
+                        res.Add(root);
+                    }
+                    return res;
+                });
                 return res;
-            });
-            return res;
-        }
-
-        public static Set GetAllRootsOf1(EInteger rootPower)
-        {
-            var res = new Set();
-            res.FastAddingMode = true;
-            for (int i = 0; i < rootPower; i++)
-            {
-                var angle = RationalNumber.Create(i * 2, rootPower) * MathS.pi;
-                res.Add((MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplify());
             }
-            res.FastAddingMode = false;
-            return res;
+
+            public static Set GetAllRootsOf1(EInteger rootPower)
+            {
+                var res = new Set();
+                res.FastAddingMode = true;
+                for (int i = 0; i < rootPower; i++)
+                {
+                    var angle = RationalNumber.Create(i * 2, rootPower) * MathS.pi;
+                    res.Add((MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplify());
+                }
+                res.FastAddingMode = false;
+                return res;
+            }
+
+            /// <summary>
+            /// Returns the absolute value of a complex number num, to be precise,
+            /// if num = a + ib, num.Abs() -> sqrt(a^2 + b^2)
+            /// </summary>
+            /// <param name="num">
+            /// RealNumber
+            /// </param>
+            /// <returns></returns>
+            public static RealNumber Abs(ComplexNumber num)
+                => num.Abs();
+
+            /// <summary>
+            /// Forcefully casts one to Complex with downcasting
+            /// </summary>
+            /// <returns></returns>
+            public Complex AsComplex() =>
+                this is ComplexNumber c
+                ? new Complex(c.Real.Value.ToDouble(), c.Imaginary.Value.ToDouble())
+                : throw new InvalidNumberCastException(GetType(), typeof(ComplexNumber));
+
+            /// <summary>
+            /// Forcefully casts one to double with downcasting
+            /// </summary>
+            /// <returns></returns>
+            public double AsDouble() =>
+                this is RealNumber r
+                ? r.Value.ToDouble()
+                : throw new InvalidNumberCastException(GetType(), typeof(RealNumber));
+
+            public abstract bool IsExact { get; }
         }
-
-        /// <summary>
-        /// Returns the absolute value of a complex number num, to be precise,
-        /// if num = a + ib, num.Abs() -> sqrt(a^2 + b^2)
-        /// </summary>
-        /// <param name="num">
-        /// RealNumber
-        /// </param>
-        /// <returns></returns>
-        public static RealNumber Abs(ComplexNumber num)
-            => num.Abs();
-
-        /// <summary>
-        /// Forcefully casts one to Complex with downcasting
-        /// </summary>
-        /// <returns></returns>
-        public Complex AsComplex() =>
-            this is ComplexNumber c
-            ? new Complex(c.Real.Value.ToDouble(), c.Imaginary.Value.ToDouble())
-            : throw new InvalidNumberCastException(GetType(), typeof(ComplexNumber));
-
-        /// <summary>
-        /// Forcefully casts one to double with downcasting
-        /// </summary>
-        /// <returns></returns>
-        public double AsDouble() =>
-            this is RealNumber r
-            ? r.Value.ToDouble()
-            : throw new InvalidNumberCastException(GetType(), typeof(RealNumber));
     }
-
     public class InvalidNumberCastException : InvalidCastException
     {
         public InvalidNumberCastException(Type typeFrom, Type typeTo)

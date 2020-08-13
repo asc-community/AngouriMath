@@ -20,11 +20,11 @@ using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Numerix;
-using AngouriMath.Functions.DiscreteMath;
 using PeterO.Numbers;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
+    using static Entity;
     internal static partial class TreeAnalyzer
     {
         // TODO: realize all methods
@@ -52,8 +52,8 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <param name="numberOfTerms"></param>
         /// <param name="power"></param>
         /// <returns></returns>
-        internal static EInteger EstimateTermCount(EInteger numberOfTerms, EInteger power)
-            => Combinatorics.C(power + numberOfTerms - 1, power);
+        internal static EInteger EstimateTermCount(EInteger numberOfTerms, EInteger power) =>
+            (power + numberOfTerms - 1).Combinations(power);
 
         /// <summary>
         /// Returns a list of linear children over sum
@@ -85,6 +85,45 @@ namespace AngouriMath.Core.TreeAnalysis
             return res;
         }
 
+        /// <summary>
+        /// CombinateSums(3, 5) ->
+        /// { 0, 0, 5 }, { 0, 1, 4 }, { 0, 2, 3 }, { 0, 3, 2 }, { 0, 4, 1 },
+        /// { 0, 5, 0 }, { 1, 0, 4 }, { 1, 1, 3 }, { 1, 2, 2 }, { 1, 3, 1 },
+        /// { 1, 4, 0 }, { 2, 0, 3 }, { 2, 1, 2 }, { 2, 2, 1 }, { 2, 3, 0 },
+        /// { 3, 0, 2 }, { 3, 1, 1 }, { 3, 2, 0 }, { 4, 0, 1 }, { 4, 1, 0 }, { 5, 0, 0 }
+        /// </summary>
+        internal static IEnumerable<List<EInteger>> CombinateSums(EInteger itemCount, EInteger targetSum)
+        {
+            /// <summary>
+            /// Combinations(2, 6, 3) ->
+            /// { 4, 3, 2 }, { 5, 3, 2 }, { 6, 3, 2 }, { 5, 4, 2 }, { 6, 4, 2 },
+            /// { 6, 5, 2 }, { 5, 4, 3 }, { 6, 4, 3 }, { 6, 5, 3 }, { 6, 5, 4 }
+            /// </summary>
+            static IEnumerable<List<EInteger>> Combinations(EInteger min, EInteger max, EInteger cellCount)
+            {
+                for (EInteger i = min; i <= max; i++)
+                    if (!cellCount.Equals(EInteger.One))
+                        foreach (var l in Combinations(i + 1, max, cellCount - 1))
+                        {
+                            l.Add(i);
+                            yield return l;
+                        }
+                    else
+                        yield return new List<EInteger> { i };
+            }
+            foreach (var comb in Combinations(1, targetSum + itemCount - 1, itemCount - 1))
+            {
+                var newComb = new List<EInteger> { 0 };
+                comb.Reverse();
+                newComb.AddRange(comb);
+                newComb.Add(targetSum + itemCount);
+
+                var item = new List<EInteger>();
+                for (int i = 0; i < itemCount; i++)
+                    item.Add(newComb[i + 1] - newComb[i] - 1);
+                yield return item;
+            }
+        }
         /// <summary>
         /// expr is NEITHER + NOR -
         /// </summary>
@@ -137,13 +176,13 @@ namespace AngouriMath.Core.TreeAnalysis
                         EstimateTermCount(linBaseChildren.Count, power) >
                         EInteger.FromInt32(MathS.Settings.MaxExpansionTermCount))
                         return null;
-                    foreach (var powerListForTerm in Combinatorics.CombinateSums(linBaseChildren.Count, power))
+                    foreach (var powerListForTerm in CombinateSums(linBaseChildren.Count, power))
                     {
                         EInteger biCoef = 1;
                         EInteger sumPow = power;
                         foreach (var pow in powerListForTerm)
                         {
-                            biCoef *= Combinatorics.C(sumPow, pow);
+                            biCoef *= sumPow.Combinations(pow);
                             sumPow -= pow;
                         }
                         Entity term = IntegerNumber.Create(biCoef);

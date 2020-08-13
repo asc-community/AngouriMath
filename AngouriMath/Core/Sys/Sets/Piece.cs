@@ -90,37 +90,18 @@ namespace AngouriMath.Core
             return num > a && num < b;
         }
 
-        /// <summary>
-        /// Performs InBetween on both Re and Im parts of the number
-        /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <param name="closedARe"></param>
-        /// <param name="closedAIm"></param>
-        /// <param name="closedBRe"></param>
-        /// <param name="closedBIm"></param>
-        /// <param name="num"></param>
-        /// <param name="closedRe"></param>
-        /// <param name="closedIm"></param>
-        /// <returns></returns>
+        /// <summary>Performs InBetween on both Re and Im parts of the number</summary>
         private static bool ComplexInBetween(ComplexNumber a, ComplexNumber b, bool closedARe, bool closedAIm,
             bool closedBRe,
             bool closedBIm, ComplexNumber num, bool closedRe, bool closedIm)
             => InBetween(a.Real, b.Real, closedARe, closedBRe, num.Real, closedRe) &&
                InBetween(a.Imaginary, b.Imaginary, closedAIm, closedBIm, num.Imaginary, closedIm);
 
-        /// <summary>
-        /// So that any numerical operations could be performed
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>So that any numerical operations could be performed</summary>
         internal bool IsNumeric()
             => (MathS.CanBeEvaluated(LowerBound().Item1) && MathS.CanBeEvaluated(UpperBound().Item1));
 
-        /// <summary>
-        /// Determines whether interval or element of piece is in this
-        /// </summary>
-        /// <param name="piece"></param>
-        /// <returns></returns>
+        /// <summary>Determines whether interval or element of piece is in this</summary>
         public bool Contains(Piece piece)
         {
             if (!piece.IsNumeric() || !this.IsNumeric())
@@ -152,7 +133,7 @@ namespace AngouriMath.Core
             => new Edge(edge.Item1, edge.Item2, edge.Item3);
 
         internal static bool EdgeEqual(Edge A, Edge B)
-            => Const.EvalIfCan(A.Item1) == Const.EvalIfCan(B.Item1) && A.Item2 == B.Item2 && A.Item3 == B.Item3;
+            => A.Item1.Evaled == B.Item1.Evaled && A.Item2 == B.Item2 && A.Item3 == B.Item3;
 
         internal static Piece ElementOrInterval(Entity a, Entity b, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm)
         {
@@ -164,18 +145,15 @@ namespace AngouriMath.Core
 
         /// <summary>
         /// Creates an instance of A closed interval (use SetNode-functions to change it,
-        /// see more in MathS.Sets.Interval() )
+        /// see more in <see cref="MathS.Sets.Interval(Entity, Entity)"/>)
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
         internal static Piece ElementOrInterval(Entity a, Entity b)
             => ElementOrInterval(a, b, true, true, true, true);
 
         internal static Piece ElementOrInterval(Edge A, Edge B)
             => ElementOrInterval(A.Item1, B.Item1, A.Item2, A.Item3, B.Item2, B.Item3);
 
-        /// <summary> Creates an instance of an element. See more in <see cref="MathS.Sets.Element(Entity)"/>.</summary>
+        /// <summary>Creates an instance of an element. See more in <see cref="MathS.Sets.Element(Entity)"/>.</summary>
         internal static OneElementPiece Element(Entity a) => new OneElementPiece(a);
 
         internal static IntervalPiece Interval(Entity a, Entity b) => new IntervalPiece(a, b, true, true, true, true);

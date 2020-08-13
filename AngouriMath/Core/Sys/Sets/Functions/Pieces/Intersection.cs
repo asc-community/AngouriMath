@@ -24,9 +24,9 @@ using Edge = System.ValueTuple<AngouriMath.Entity, bool, bool>;
  * INTERSECTION
  *
  */
-namespace AngouriMath.Core.Sets
+namespace AngouriMath.Core
 {
-    partial record Piecefunctions
+    static partial class PieceFunctions
     {
         internal static Edge1D IntersectEdge(
             RealNumber num1, bool closed1,

@@ -1,5 +1,4 @@
-﻿
-/* Copyright (c) 2019-2020 Angourisoft
+﻿/* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
@@ -13,64 +12,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System;
 using System.Numerics;
 using AngouriMath.Core;
 using AngouriMath.Core.Numerix;
-using AngouriMath.Core.Sys.Interfaces;
 using AngouriMath.Extensions;
-using AngouriMath.Functions.Algebra.NumbericalSolving;
+using AngouriMath.Functions.Algebra.NumericalSolving;
 using PeterO.Numbers;
 
-namespace AngouriMath.Functions.Algebra.NumbericalSolving
+namespace AngouriMath.Functions.Algebra.NumericalSolving
 {
-    internal static class NumericalEquationSolver
+    internal static class NewtonSolver
     {
-        /// <summary>
-        /// Perform one iteration of searching for a root with Newton-Raphson method
-        /// </summary>
-        /// <param name="f"></param>
-        /// <param name="df"></param>
-        /// <param name="value"></param>
-        /// <param name="precision"></param>
-        /// <returns></returns>
-        private static ComplexNumber NewtonIter(FastExpression f, FastExpression df, Complex value, int precision)
-        {
-            Complex prev = value;
-
-            Complex ChooseGood()
-            {
-                if (Complex.Abs(prev - value) > (double)MathS.Settings.PrecisionErrorCommon.Value)
-                    return double.NaN;
-                else
-                    return value;
-            }
-
-            int minCheckIters = (int)Math.Sqrt(precision);
-            for (int i = 0; i < precision; i++)
-            {
-                if (i == precision - 1)
-                    prev = value;//.Copy();
-                try // TODO: remove try catch in for
-                {
-
-                    var dfv = df.Substitute(value);
-                    if (dfv == 0)
-                        return ChooseGood();
-                    value -= f.Substitute(value) / dfv;
-                }
-                catch (OverflowException)
-                {
-                    return ChooseGood();
-                }
-                if (i > minCheckIters && prev == value)
-                    return value;
-            }
-            return ChooseGood();
-        }
-
         /// <summary>
         /// Performs a grid search with each iteration done by NewtonIter
         /// </summary>
@@ -90,9 +43,46 @@ namespace AngouriMath.Functions.Algebra.NumbericalSolving
         /// How many approximations we need to do before we reach the most precise result.
         /// </param>
         /// <returns></returns>
-        internal static Set SolveNt(Entity expr, VariableEntity v,
+        internal static Set SolveNt(Entity expr, Entity.Var v,
             NewtonSetting settings)
         {
+            /// <summary>
+            /// Perform one iteration of searching for a root with Newton-Raphson method
+            /// </summary>
+            static ComplexNumber NewtonIter(FastExpression f, FastExpression df, Complex value, int precision)
+            {
+                Complex prev = value;
+
+                Complex ChooseGood()
+                {
+                    if (Complex.Abs(prev - value) > (double)MathS.Settings.PrecisionErrorCommon.Value)
+                        return double.NaN;
+                    else
+                        return value;
+                }
+
+                int minCheckIters = (int)Math.Sqrt(precision);
+                for (int i = 0; i < precision; i++)
+                {
+                    if (i == precision - 1)
+                        prev = value;//.Copy();
+                    try // TODO: remove try catch in for
+                    {
+
+                        var dfv = df.Substitute(value);
+                        if (dfv == 0)
+                            return ChooseGood();
+                        value -= f.Substitute(value) / dfv;
+                    }
+                    catch (OverflowException)
+                    {
+                        return ChooseGood();
+                    }
+                    if (i > minCheckIters && prev == value)
+                        return value;
+                }
+                return ChooseGood();
+            }
             if (expr.Vars.Count != 1)
                 throw new Core.Exceptions.MathSException("Two or more or less than one variables in SolveNt is prohibited");
             var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
@@ -145,6 +135,6 @@ namespace AngouriMath
         /// To change parameters see MathS.Settings.NewtonSolver
         /// </summary>
         /// <returns></returns>
-        public Set SolveNt(VariableEntity v) => NumericalEquationSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
+        public Set SolveNt(Var v) => NewtonSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
     }
 }
