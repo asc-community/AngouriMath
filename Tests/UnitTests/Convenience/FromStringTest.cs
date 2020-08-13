@@ -7,7 +7,7 @@ namespace UnitTests.Convenience
     [TestClass]
     public class FromStringTest
     {
-        public static readonly Entity.Var x = MathS.Var("x");
+        public static readonly Entity.Var x = MathS.Var(nameof(x));
         [TestMethod]
         public void Test1() => Assert.AreEqual(2, MathS.FromString("1 + 1").Eval());
         [TestMethod]
@@ -15,7 +15,7 @@ namespace UnitTests.Convenience
         [TestMethod]
         public void Test3() => Assert.AreEqual(2, MathS.FromString("log(2, 4)").Eval());
         [TestMethod]
-        public void Test4() => Assert.AreEqual(MathS.Cos(MathS.Var("x")), MathS.FromString("sin(x)").Derive(MathS.Var("x")).Simplify());
+        public void Test4() => Assert.AreEqual(MathS.Cos(x), MathS.FromString("sin(x)").Derive(x).Simplify());
         [TestMethod]
         public void Test5() => Assert.AreEqual(7625597484987L, MathS.FromString("3 ^ 3 ^ 3").Eval());
         [TestMethod]
@@ -24,7 +24,7 @@ namespace UnitTests.Convenience
         public void Test7() =>
             // Only needed for Mac
             MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () =>
-                Assert.AreEqual(MathS.i, MathS.FromString("x^2+1").SolveNt(MathS.Var("x")).Pieces[0])
+                Assert.AreEqual(MathS.i, MathS.FromString("x^2+1").SolveNt(x).Pieces[0])
             );
         [TestMethod]
         public void Test8() => Assert.AreEqual(1, MathS.FromString("cos(sin(0))").Eval());
@@ -33,9 +33,9 @@ namespace UnitTests.Convenience
         [TestMethod]
         public void Test10() => Assert.AreEqual(-1, MathS.FromString("i^2").Eval());
         [TestMethod]
-        public void Test11() => Assert.AreEqual(3, MathS.FromString("x^2-1").Substitute(MathS.Var("x"), 2).Eval());
+        public void Test11() => Assert.AreEqual(3, MathS.FromString("x^2-1").Substitute(x, 2).Eval());
         [TestMethod]
-        public void Test12() => Assert.AreEqual((MathS.pi / 2).Eval(), MathS.FromString("arcsin(x)").Substitute(MathS.Var("x"), 1.0).Eval());
+        public void Test12() => Assert.AreEqual((MathS.pi / 2).Eval(), MathS.FromString("arcsin(x)").Substitute(x, 1.0).Eval());
         [TestMethod]
         public void Test13()
         {
@@ -80,16 +80,16 @@ namespace UnitTests.Convenience
         }
 
         [TestMethod] public void Test26() 
-            => Assert.AreEqual(MathS.Derivative("x + 1", "x"), "derive(x + 1, x, 1)");
+            => Assert.AreEqual(MathS.Derivative("x + 1", x), "derive(x + 1, x, 1)");
         [TestMethod] public void Test27() 
-            => Assert.AreEqual(MathS.Derivative("x + 1", "x", 5), "derive(x + 1, x, 5)");
+            => Assert.AreEqual(MathS.Derivative("x + 1", x, 5), "derive(x + 1, x, 5)");
         [TestMethod] public void Test28()
-            => Assert.AreEqual(MathS.Integral("x + 1", "x"), "integrate(x + 1, x, 1)");
+            => Assert.AreEqual(MathS.Integral("x + 1", x), "integrate(x + 1, x, 1)");
         [TestMethod] public void Test29()
-            => Assert.AreEqual(MathS.Integral("x + y", "x", 3), "integrate(x + y, x, 3)");
+            => Assert.AreEqual(MathS.Integral("x + y", x, 3), "integrate(x + y, x, 3)");
         [TestMethod] public void Test30()
-            => Assert.AreEqual(MathS.Limit("x + y", "x", 3), "limit(x + y, x, 3)");
+            => Assert.AreEqual(MathS.Limit("x + y", x, 3), "limit(x + y, x, 3)");
         [TestMethod] public void Test31()
-            => Assert.AreEqual(MathS.Limit("x + y", "x", 3, AngouriMath.Limits.ApproachFrom.Left), "limitleft(x + y, x, 3)");
+            => Assert.AreEqual(MathS.Limit("x + y", x, 3, AngouriMath.Limits.ApproachFrom.Left), "limitleft(x + y, x, 3)");
     }
 }

@@ -8,7 +8,7 @@ namespace UnitTests.Common
     public class PerformanceTest
     {
         private readonly int ITERATIONS = 10;
-        private readonly Entity.Var x = MathS.Var("x");
+        private readonly Entity.Var x = MathS.Var(nameof(x));
         public long Measure(Func<object> func)
         {
             long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;

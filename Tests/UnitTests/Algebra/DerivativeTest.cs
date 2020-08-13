@@ -6,7 +6,7 @@ namespace UnitTests.Algebra
     [TestClass]
     public class DerivativeTest
     {
-        static readonly Entity.Var x = MathS.Var("x");
+        static readonly Entity.Var x = MathS.Var(nameof(x));
         public void AssertEqEntity(Entity actual, Entity target) => Assert.AreEqual(target, actual);
 
         [TestMethod]
@@ -114,17 +114,17 @@ namespace UnitTests.Algebra
         [TestMethod]
         public void TestDerOverDer1()
         {
-            var func = MathS.Derivative("x + 2", "x");
-            var derFunc = func.Derive("x");
-            Assert.AreEqual(MathS.Derivative("x + 2", "x", "1 + 1"), derFunc);
+            var func = MathS.Derivative("x + 2", x);
+            var derFunc = func.Derive(x);
+            Assert.AreEqual(MathS.Derivative("x + 2", x, "1 + 1"), derFunc);
         }
 
         [TestMethod]
         public void TestDerOverDer2()
         {
             var func = MathS.Derivative("x + 2", "y");
-            var derFunc = func.Derive("x");
-            Assert.AreEqual(MathS.Derivative(func, "x"), derFunc);
+            var derFunc = func.Derive(x);
+            Assert.AreEqual(MathS.Derivative(func, x), derFunc);
         }
     }
 }

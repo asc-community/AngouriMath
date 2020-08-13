@@ -10,7 +10,7 @@ namespace UnitTests.Algebra
     [TestClass]
     public class SolveOneEquation
     {
-        public static Entity.Var x = "x";
+        public static Entity.Var x = nameof(x);
 
         /// <summary>
         /// Numerically checks if a root fits an equation
@@ -103,7 +103,7 @@ namespace UnitTests.Algebra
         {
             // solve x2 + 2x + 2
             var eq = x.Pow(2) + 2 * x + 2;
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             var r1 = MathS.FromString("-1 + 1i").Simplify();
             var r2 = MathS.FromString("-1 - 1i").Simplify();
             AssertRootCount(roots, 2);
@@ -117,7 +117,7 @@ namespace UnitTests.Algebra
         {
             // solve 2x2 + 4x + 2
             var eq = 2 * x.Pow(2) + 4 * x + 2;
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
@@ -128,7 +128,7 @@ namespace UnitTests.Algebra
         {
             // solve x2 - 3x + 2
             var eq = x.Pow(2) - 3 * x + 2;
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             AssertRootCount(roots, 2);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
@@ -139,7 +139,7 @@ namespace UnitTests.Algebra
         {
             // solve x3 + 3x2 + 3x + 1
             var eq = x.Pow(3) + 3 * x.Pow(2) + 3 * x + 1;
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
@@ -150,7 +150,7 @@ namespace UnitTests.Algebra
         {
             // solve x3 - 6x2 + 11x - 6
             var eq = x.Pow(3) - 6 * x.Pow(2) + 11 * x - 6;
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eq, x, root);
         }
@@ -177,7 +177,7 @@ namespace UnitTests.Algebra
         public void MomoTest()
         {
             Entity expr = "1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4";
-            var sols = expr.SolveEquation("x");
+            var sols = expr.SolveEquation(x);
             AssertRootCount(sols, 4);
             foreach (var root in sols.FiniteSet())
                 AssertRoots(expr, x, root);
@@ -220,7 +220,7 @@ namespace UnitTests.Algebra
         public void TestReduce()
         {
             Entity expr = "3x5 + 5x3";
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 3);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);
@@ -280,7 +280,7 @@ namespace UnitTests.Algebra
         public void TestLogs()
         {
             Entity eqs = "log(x, 32) - 5";
-            var roots = eqs.SolveEquation("x");
+            var roots = eqs.SolveEquation(x);
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(eqs, x, root);
@@ -290,81 +290,81 @@ namespace UnitTests.Algebra
         public void TestFerrari1()
         {
             Entity eq = "x4 - x2 + 1";
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             AssertRootCount(roots, 4);
             foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
+                AssertRoots(eq, x, root);
         }
 
         [TestMethod]
         public void TestFerrari2()
         {
             Entity eq = "x4 - x + 1";
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             AssertRootCount(roots, 4);
             foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
+                AssertRoots(eq, x, root);
         }
         [TestMethod]
         public void TestFerrari3()
         {
             Entity eq = "x4 - x3 + 1";
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             AssertRootCount(roots, 4);
             foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
+                AssertRoots(eq, x, root);
         }
         [TestMethod]
         public void TestFerrari4()
         {
             Entity eq = "x4 - x2 + x - x3 + 1";
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             AssertRootCount(roots, 4);
             foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
+                AssertRoots(eq, x, root);
         }
         [TestMethod]
         public void TestFerrari5()
         {
             Entity eq = "(x2 - 1)2 - 2";
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             AssertRootCount(roots, 4);
             foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
+                AssertRoots(eq, x, root);
         }
 
         [TestMethod]
         public void TestFerrari6()
         {
             Entity eq = "x4 - 2x2 - 1";
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             AssertRootCount(roots, 4);
             foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
+                AssertRoots(eq, x, root);
         }
 
         [TestMethod]
         public void TestFerrari7()
         {
             Entity eq = "x4 - 2x2 - 2";
-            var roots = eq.SolveEquation("x");
+            var roots = eq.SolveEquation(x);
             AssertRootCount(roots, 4);
             foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
+                AssertRoots(eq, x, root);
         }
 
         [TestMethod]
         public void Test1px()
         {
             Entity expr = "pi - 1^x";
-            expr.SolveEquation("x"); // Check if it doesn't hang
+            expr.SolveEquation(x); // Check if it doesn't hang
         }
 
         [TestMethod]
         public void ExpSimpl()
         {
             Entity expr = "x^4 * x^y - 2";
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);
@@ -374,7 +374,7 @@ namespace UnitTests.Algebra
         public void TestLinearTrigRoots1()
         {
             Entity expr = "sin(x) + cos(x) - 1";
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 2);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);
@@ -384,7 +384,7 @@ namespace UnitTests.Algebra
         public void TestLinearTrigRoots2()
         {
             Entity expr = "sin(x) + cos(x) - 0.5";
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 2);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);
@@ -394,7 +394,7 @@ namespace UnitTests.Algebra
         public void TestLinearTrigRoots3()
         {
             Entity expr = "sin(x) + cos(x) - 2";
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 2);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);
@@ -404,7 +404,7 @@ namespace UnitTests.Algebra
         public void TestLinearTrigRoots4()
         {
             Entity expr = "sin(x)^2 + cos(x) - 1";
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 3);
             
             foreach (var root in roots.FiniteSet())
@@ -414,7 +414,7 @@ namespace UnitTests.Algebra
 
         public void TestLinearTrig5Func(Entity expr)
         {
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 4);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);
@@ -470,7 +470,7 @@ namespace UnitTests.Algebra
             };
             foreach (var expr in exprs)
             {
-                var roots = expr.SolveEquation("x");
+                var roots = expr.SolveEquation(x);
                 foreach (var root in roots.FiniteSet())
                     AssertRoots(expr, x, root);
             }
@@ -480,7 +480,7 @@ namespace UnitTests.Algebra
         public void TestLinearTrigRoots6()
         {
             Entity expr = "sin(2*x + 1) - sin(x) - 1";
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 4);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);
@@ -490,7 +490,7 @@ namespace UnitTests.Algebra
         public void TestCDSolver1()
         {
             Entity expr = "(x - b) / (x + a) + c";
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);
@@ -500,7 +500,7 @@ namespace UnitTests.Algebra
         public void TestCDSolver2()
         {
             Entity expr = "(x - b) / (x + a) + c / (x + a)";
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 1);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);
@@ -510,7 +510,7 @@ namespace UnitTests.Algebra
         public void TestCDSolver3()
         {
             Entity expr = "(x - b) / (x + a) + c / (x + a)2";
-            var roots = expr.SolveEquation("x");
+            var roots = expr.SolveEquation(x);
             AssertRootCount(roots, 2);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root);

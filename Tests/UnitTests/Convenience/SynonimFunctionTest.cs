@@ -6,7 +6,7 @@ namespace UnitTests.Convenience
     [TestClass]
     public class SynonimFunctionTest
     {
-        private readonly Entity x = MathS.Var("x");
+        private readonly Entity x = MathS.Var(nameof(x));
         [TestMethod]
         public void TestSqrt()
         {

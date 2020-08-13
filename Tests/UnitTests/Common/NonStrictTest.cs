@@ -8,6 +8,7 @@ namespace UnitTests.Common
     [TestClass]
     public class NonStrictTest
     {
+        static readonly Entity.Var x = nameof(x);
         [TestMethod]
         public void TensorLatex()
         {
@@ -47,7 +48,7 @@ namespace UnitTests.Common
         public void TryPoly1()
         {
             Entity expr = "x + x2";
-            if (Utils.TryPolynomial(expr, "x", out var dst))
+            if (Utils.TryPolynomial(expr, x, out var dst))
                 Assert.AreEqual(MathS.FromString("x2 + x"), dst);
             else
                 Assert.Fail(expr.ToString() + " is polynomial");
@@ -57,7 +58,7 @@ namespace UnitTests.Common
         public void TryPoly2()
         {
             Entity expr = "x * (x + x2)";
-            if (Utils.TryPolynomial(expr, "x", out var dst))
+            if (Utils.TryPolynomial(expr, x, out var dst))
                 Assert.AreEqual(MathS.FromString("x3 + x2"), dst);
             else
                 Assert.Fail(expr.ToString() + " is polynomial");
@@ -67,7 +68,7 @@ namespace UnitTests.Common
         public void TryPoly3()
         {
             Entity expr = "x * (x + x2 + z) + y * x";
-            if (Utils.TryPolynomial(expr, "x", out var dst))
+            if (Utils.TryPolynomial(expr, x, out var dst))
                 Assert.AreEqual(MathS.FromString("x3 + x2 + (y + z) * x"), dst);
             else
                 Assert.Fail(expr.ToString() + " is polynomial");
