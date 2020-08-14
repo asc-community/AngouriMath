@@ -50,7 +50,7 @@ namespace AngouriMath
     /// .PHang (Press F12 -> <see cref="Sinf.PHang(Entity)"/>)
     /// .ToString (Press F12 -> <see cref="Sinf.Stringize(System.Collections.Generic.List{Entity})"/>)
     /// .Latex (Press F12 -> <see cref="Sinf.Latex(System.Collections.Generic.List{Entity})"/>)
-    /// .Derive (Press F12 -> <see cref="Sinf.Derive(System.Collections.Generic.List{Entity}, Var)"/>)
+    /// .Derive (Press F12 -> <see cref="Sinf.Derive(System.Collections.Generic.List{Entity}, Variable)"/>)
     /// .Simplify (Press F12 -> <see cref="Sinf.Simplify(System.Collections.Generic.List{Entity})"/>)
     /// To compilation (Press F12 -> <see cref="CompiledMathFunctions.func2Num"/>
     ///                                       ^ TODO: Replace numbers with enum ^
@@ -63,7 +63,7 @@ namespace AngouriMath
     ///               and <see cref="Functions.Evaluation.Simplification.Simplificator.Alternate(Entity, int)"/>)
     /// To static MathS() (Press F12 -> <see cref="Sin(Entity)"/>)
     /// To Analytical Solver (Press F12 -> <see cref="Functions.Algebra.Solver.Analytical.TrigonometricSolver"/>
-    ///                                and <see cref="Functions.Algebra.AnalyticalSolving.AnalyticalSolver.Solve(Entity, Var, Core.Set, bool)"/>)
+    ///                                and <see cref="Functions.Algebra.AnalyticalSolving.AnalyticalSolver.Solve(Entity, Variable, Core.Set, bool)"/>)
     /// To TreeAnalyzer Optimization (Press F12 -> <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.OptimizeTree(ref Entity)"/>)
     /// To ToSympyCode (Press F12 -> <see cref="Functions.Output.ToSympy.FuncTable"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
     /// 
@@ -94,7 +94,7 @@ namespace AngouriMath
         /// <returns>
         /// Returns a <see cref="Set"/> of possible values or intervals of values
         /// </returns>
-        public static Set SolveEquation(Entity equation, Var var)
+        public static Set SolveEquation(Entity equation, Variable var)
             => EquationSolver.Solve(equation, var);
 
         // Marking small enums with ": byte" is premature optimization and shouldn't be done: https://stackoverflow.com/q/648823/5429648
@@ -122,7 +122,7 @@ namespace AngouriMath
         /// The relation of the expression to zero.
         /// </param>
         /// <returns></returns>
-        public static Set SolveInequalityNumerically(Entity inequality, Var var, Inequality sign)
+        public static Set SolveInequalityNumerically(Entity inequality, Variable var, Inequality sign)
         {
             throw new NotSupportedException("Will be added soon");
 #pragma warning disable 162
@@ -379,7 +379,7 @@ namespace AngouriMath
         public static Entity Gamma(Entity a) => new Factorialf(a + 1);
 
         /// <summary>
-        /// Creates an instance of <see cref="Var"/>.
+        /// Creates an instance of <see cref="Variable"/>.
         /// </summary>
         /// <param name="name">
         /// The name of the variable.
@@ -388,29 +388,29 @@ namespace AngouriMath
         /// <returns>
         /// Variable node
         /// </returns>
-        public static Var Var(string name) => new Var(name);
+        public static Variable Var(string name) => new Variable(name);
 
         /// <summary>
-        /// Creates a complex instance of <see cref="Number"/> (not <see cref="Num"/>!)
+        /// Creates a complex instance of <see cref="Number"/> (not <see cref="Number"/>!)
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Obsolete("Use Number.Create or implicit construction instead")]
-        public static Num Num(EDecimal a, EDecimal b) => ComplexNumber.Create(a, b);
+        public static Number Number(EDecimal a, EDecimal b) => ComplexNumber.Create(a, b);
 
         /// <summary>
-        /// Creates a real instance of <see cref="Number"/> (not <see cref="Num"/>!)
+        /// Creates a real instance of <see cref="Number"/> (not <see cref="Number"/>!)
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         [Obsolete("Use Number.Create or implicit construction instead")]
-        public static ComplexNumber Num(EDecimal a) => RealNumber.Create(a);
+        public static ComplexNumber Number(EDecimal a) => RealNumber.Create(a);
 
         // List of public constants
         // ReSharper disable once InconsistentNaming
-        public static readonly Var e = nameof(e);
+        public static readonly Variable e = nameof(e);
         // ReSharper disable once InconsistentNaming
         public static readonly ComplexNumber i = ComplexNumber.ImaginaryOne;
         // ReSharper disable once InconsistentNaming
-        public static readonly Var pi = nameof(pi);
+        public static readonly Variable pi = nameof(pi);
 
         /// <summary>
         /// Converts a <see cref="string"/> to an expression
@@ -749,7 +749,7 @@ namespace AngouriMath
                     res += expr.Complexity;
 
                     // Number of variables
-                    res += expr.Count(entity => entity is Var);
+                    res += expr.Count(entity => entity is Variable);
 
                     // Number of divides
                     res += expr.Count(entity => entity is Divf) / 2;
@@ -837,7 +837,7 @@ namespace AngouriMath
             /// <see langword="false"/> otherwise
             /// (do not access <paramref name="dst"/> in this case, it's undefined)
             /// </returns>
-            public static bool TryPolynomial(Entity expr, Var variable,
+            public static bool TryPolynomial(Entity expr, Variable variable,
                 [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
                 out Entity? dst) => Functions.Utils.TryPolynomial(expr, variable, out dst);
 
@@ -935,7 +935,7 @@ namespace AngouriMath
             /// from one of two sides (left and right).
             /// Returns <see langword="null"/> otherwise.
             /// </summary>
-            public static Entity? Limit(Entity expr, Var var, Entity approachDestination,
+            public static Entity? Limit(Entity expr, Variable var, Entity approachDestination,
                 ApproachFrom direction)
                 => LimitFunctional.ComputeLimit(expr, var, approachDestination, direction);
 
@@ -944,13 +944,13 @@ namespace AngouriMath
             /// if <paramref name="var"/> approaches to <paramref name="approachDestination"/>.
             /// Returns <see langword="null"/> otherwise or if limits from left and right sides differ.
             /// </summary>
-            public static Entity? Limit(Entity expr, Var var, Entity approachDestination)
+            public static Entity? Limit(Entity expr, Variable var, Entity approachDestination)
                 => LimitFunctional.ComputeLimit(expr, var, approachDestination);
 
             /// <summary>
             /// Derives over <paramref name="x"/> <paramref name="power"/> times
             /// </summary>
-            public static Entity? Derivative(Entity expr, Var x, EInteger power)
+            public static Entity? Derivative(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
                 for (var _ = 0; _ < power; _++)
@@ -965,12 +965,12 @@ namespace AngouriMath
             /// The variable to derive over
             /// </param>
             /// <returns>The derived result</returns>
-            public static Entity? Derivative(Entity expr, Var x) => expr.Derive(x);
+            public static Entity? Derivative(Entity expr, Variable x) => expr.Derive(x);
 
             /// <summary>
             /// Integrates over <paramref name="x"/> <paramref name="power"/> times
             /// </summary>
-            public static Entity? Integral(Entity expr, Var x, EInteger power)
+            public static Entity? Integral(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
                 for (var _ = 0; _ < power; _++)
@@ -985,12 +985,12 @@ namespace AngouriMath
             /// The variable to integrate over
             /// </param>
             /// <returns>The integrated result</returns>
-            public static Entity? Integral(Entity expr, Var x) =>
+            public static Entity? Integral(Entity expr, Variable x) =>
                 throw new NotImplementedException("Integrals not implemented yet");
         }
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
-        /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Var)"/>)
+        /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Variable)"/>)
         /// </summary>
         /// <param name="expr">
         /// Expression to be hung
@@ -1003,7 +1003,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
-        /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Var)"/>)
+        /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Variable)"/>)
         /// </summary>
         /// <param name="expr">
         /// Expression to be hung
@@ -1020,7 +1020,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your entity to an integral node
-        /// (to evaluate instead use <see cref="Compute.Integral(Entity, Var)"/>)
+        /// (to evaluate instead use <see cref="Compute.Integral(Entity, Variable)"/>)
         /// </summary>
         /// <param name="expr">
         /// Expression to be hung
@@ -1033,7 +1033,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your entity to an integral node
-        /// (to evaluate instead use <see cref="Compute.Integral(Entity, Var)"/>)
+        /// (to evaluate instead use <see cref="Compute.Integral(Entity, Variable)"/>)
         /// </summary>
         /// <param name="expr">
         /// Expression to be hung
@@ -1050,7 +1050,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Hangs your entity to a limit node
-        /// (to evaluate instead use <see cref="Compute.Limit(Entity, Var, Entity)"/>)
+        /// (to evaluate instead use <see cref="Compute.Limit(Entity, Variable, Entity)"/>)
         /// </summary>
         /// <param name="expr">
         /// Expression to be hung

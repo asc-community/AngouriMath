@@ -13,32 +13,32 @@ namespace UnitTests.Algebra
         {
             var num = 3;
             var pow = 3;
-            foreach (var root in Entity.Num.GetAllRoots(num, pow))
-                Assert.AreEqual(num, Entity.Num.Pow(root, pow));
+            foreach (var root in Entity.Number.GetAllRoots(num, pow))
+                Assert.AreEqual(num, Entity.Number.Pow(root, pow));
         }
         [TestMethod]
         public void TestRoots1()
         {
             var num = 5 + MathS.i * 5;
             var pow = 4;
-            foreach (var root in Entity.Num.GetAllRoots(num, pow))
-                Assert.AreEqual(num, Entity.Num.Pow(root, pow));
+            foreach (var root in Entity.Number.GetAllRoots(num, pow))
+                Assert.AreEqual(num, Entity.Number.Pow(root, pow));
         }
         [TestMethod]
         public void TestRoots2()
         {
             var num = -3 + MathS.i * 8;
             var pow = 5;
-            foreach (var root in Entity.Num.GetAllRoots(num, pow))
-                Assert.AreEqual(num, Entity.Num.Pow(root, pow));
+            foreach (var root in Entity.Number.GetAllRoots(num, pow))
+                Assert.AreEqual(num, Entity.Number.Pow(root, pow));
         }
         [TestMethod]
         public void TestRoots3()
         {
             var num = -3 + MathS.i * 8;
             var pow = 8;
-            foreach (var root in Entity.Num.GetAllRoots(num, pow))
-                Assert.AreEqual(num, Entity.Num.Pow(root, pow));
+            foreach (var root in Entity.Number.GetAllRoots(num, pow))
+                Assert.AreEqual(num, Entity.Number.Pow(root, pow));
         }
 
         // Testing functions of Base Convert

@@ -10,9 +10,9 @@ namespace PerformanceBenchmark.Tests
     {
         protected List<Func<object>> tests;
         readonly int iterCount;
-        protected static readonly Entity.Var x = MathS.Var("x");
-        protected static readonly Entity.Var y = MathS.Var("y");
-        protected static readonly Entity.Var z = MathS.Var("z");
+        protected static readonly Entity.Variable x = MathS.Var("x");
+        protected static readonly Entity.Variable y = MathS.Var("y");
+        protected static readonly Entity.Variable z = MathS.Var("z");
 
         protected CommonTest(int iterCount, List<Func<object>> tests) =>
             (this.tests, this.iterCount) = (tests, iterCount);

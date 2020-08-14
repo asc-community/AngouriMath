@@ -12,7 +12,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
     [TestClass]
     public class ClassRealCardanoNumericRoots
     {
-        public static Entity.Var x = nameof(x);
+        public static Entity.Variable x = nameof(x);
 
         [TestMethod]
         public void TestAllcomplexNumeric1_3()
@@ -182,7 +182,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
     [TestClass]
     public class ClassComplexCardanoNumericRoots
     {
-        public static Entity.Var x = nameof(x);
+        public static Entity.Variable x = nameof(x);
 
         [TestMethod]
         public void TestAllcomplexNumeric1_3()
@@ -432,7 +432,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
     [TestClass]
     public class ClassRealFerrariNumericRoots
     {
-        public static Entity.Var x = nameof(x);
+        public static Entity.Variable x = nameof(x);
 
         [TestMethod]
         public void TestAllcomplexNumeric1_4()
@@ -538,7 +538,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
     [TestClass]
     public class ClassComplexFerrariNumericRoots
     {
-        public static Entity.Var x = nameof(x);
+        public static Entity.Variable x = nameof(x);
 
         [TestMethod]
         public void TestAllcomplexNumeric1_4()

@@ -58,7 +58,7 @@ namespace UnitTests.Algebra
         {
             Entity subExpr = "(a * x2 + b x) / (c x2 - 3)";
             Entity expr = MathS.Sqrt(subExpr * 3 / MathS.Sin(subExpr) + MathS.Sin("d"));
-            Entity.Var x = nameof(x);
+            Entity.Variable x = nameof(x);
             Entity dest = RealNumber.PositiveInfinity;
             var limit = MathS.Compute.Limit(expr, x, dest, ApproachFrom.Left);
             Assert.IsNotNull(limit);

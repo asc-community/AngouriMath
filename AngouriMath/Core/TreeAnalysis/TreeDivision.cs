@@ -46,19 +46,19 @@ namespace AngouriMath.Core.TreeAnalysis
         }
         internal class PolyInfo
         {
-            readonly Dictionary<Var, Dictionary<EDecimal, Entity>> monoInfo = new();
-            readonly Dictionary<Var, Entity> revertReplacements = new();
-            readonly Dictionary<Entity, Var> replacements = new();
-            public IReadOnlyDictionary<Var, Dictionary<EDecimal, Entity>> MonoInfo => monoInfo;
-            public IReadOnlyDictionary<Entity, Var> Replacements => replacements;
-            public IReadOnlyDictionary<Var, Entity> RevertReplacements => revertReplacements;
-            public void AddReplacement(Var variable, Entity value)
+            readonly Dictionary<Variable, Dictionary<EDecimal, Entity>> monoInfo = new();
+            readonly Dictionary<Variable, Entity> revertReplacements = new();
+            readonly Dictionary<Entity, Variable> replacements = new();
+            public IReadOnlyDictionary<Variable, Dictionary<EDecimal, Entity>> MonoInfo => monoInfo;
+            public IReadOnlyDictionary<Entity, Variable> Replacements => replacements;
+            public IReadOnlyDictionary<Variable, Entity> RevertReplacements => revertReplacements;
+            public void AddReplacement(Variable variable, Entity value)
             {
                 variable = new(variable.Name + "_r");
                 replacements.Add(value, variable);
                 revertReplacements.Add(variable, value);
             }
-            public void AddMonoInfo(Var variable, Dictionary<EDecimal, Entity>? powers)
+            public void AddMonoInfo(Variable variable, Dictionary<EDecimal, Entity>? powers)
             {
                 if (powers is { }) monoInfo.Add(variable, powers);
             }
@@ -81,7 +81,7 @@ namespace AngouriMath.Core.TreeAnalysis
             var monoinfoQ = GatherAllPossiblePolynomials(q.Expand(), replaceVars: false).MonoInfo;
             var monoinfoP = GatherAllPossiblePolynomials(p.Expand(), replaceVars: false).MonoInfo;
 
-            Var? polyvar = null;
+            Variable? polyvar = null;
 
             // TODO use Linq to find polyvar
             // First attempt to find polynoms

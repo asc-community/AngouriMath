@@ -28,14 +28,14 @@ namespace AngouriMath
 {
     partial record Entity
     {
-        public abstract partial record Num
+        public abstract partial record Number
         {
             /// <summary>
             /// This function serves not only convenience but also protects from unexpected cases, for example,
             /// if a new type added
             /// </summary>
             protected static T SuperSwitch<T>(
-                Num num1, Num num2,
+                Number num1, Number num2,
                 Func<IntegerNumber, IntegerNumber, T> ifInt,
                 Func<RationalNumber, RationalNumber, T> ifRat,
                 Func<RealNumber, RealNumber, T> ifReal,
@@ -58,8 +58,8 @@ namespace AngouriMath
                 Func<RationalNumber, RationalNumber, RationalNumber> ifRat,
                 Func<RealNumber, RealNumber, RealNumber> ifReal,
                 Func<ComplexNumber, ComplexNumber, ComplexNumber> ifCom
-            ) where T : Num
-                => (T)(Num)((num1, num2) switch
+            ) where T : Number
+                => (T)(Number)((num1, num2) switch
                 {
                     (IntegerNumber n1, IntegerNumber n2) => ifInt(n1, n2),
                     (RationalNumber r1, RationalNumber r2) => ifRat(r1, r2),

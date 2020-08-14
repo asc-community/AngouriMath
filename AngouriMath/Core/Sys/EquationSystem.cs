@@ -42,7 +42,7 @@ namespace AngouriMath.Core.Sys
         /// Number of variables must match number of equations
         /// </param>
         /// <returns></returns>
-        public Tensor? Solve(params Var[] vars) => EquationSolver.SolveSystem(equations, vars);
+        public Tensor? Solve(params Variable[] vars) => EquationSolver.SolveSystem(equations, vars);
 
         /// <summary>
         /// Returns latexised version of the system

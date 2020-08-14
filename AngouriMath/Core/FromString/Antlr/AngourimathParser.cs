@@ -714,7 +714,7 @@ public partial class AngourimathParser : Parser {
 				EnterOuterAlt(_localctx, 2);
 				{
 				State = 107; _localctx._ID = Match(ID);
-				 _localctx.value =  new Entity.Var((_localctx._ID!=null?_localctx._ID.Text:null)); 
+				 _localctx.value =  new Entity.Variable((_localctx._ID!=null?_localctx._ID.Text:null)); 
 				}
 				break;
 			case T__7:

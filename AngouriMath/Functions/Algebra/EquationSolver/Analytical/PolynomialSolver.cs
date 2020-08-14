@@ -259,7 +259,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// The expression the polynomial of (e. g. cos(x)^2 + cos(x) + 1 is a polynomial of cos(x))
         /// </param>
         /// <returns>A finite <see cref="Set"/> if successful, <see langword="null"/> otherwise</returns>
-        internal static Set? SolveAsPolynomial(Entity expr, Var subtree)
+        internal static Set? SolveAsPolynomial(Entity expr, Variable subtree)
         {
             // Safely expand the expression
             // Here we find all terms
@@ -329,7 +329,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 {
                     var newSet = new Set();
                     foreach (var root in set.FiniteSet())
-                        foreach (var coef in Num.GetAllRootsOf1(gcdPower).FiniteSet())
+                        foreach (var coef in Number.GetAllRootsOf1(gcdPower).FiniteSet())
                             newSet.Add(coef * MathS.Pow(root, RationalNumber.Create(1, gcdPower)));
                     set = newSet;
                 }

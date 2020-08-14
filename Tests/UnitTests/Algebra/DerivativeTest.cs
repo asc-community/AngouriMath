@@ -6,14 +6,15 @@ namespace UnitTests.Algebra
     [TestClass]
     public class DerivativeTest
     {
-        static readonly Entity.Var x = MathS.Var(nameof(x));
+        static readonly Entity.Variable x = MathS.Var(nameof(x));
         public void AssertEqEntity(Entity actual, Entity target) => Assert.AreEqual(target, actual);
 
         [TestMethod]
         public void Test0()
         {
-            var func = 2 * (x + 2);
-            var a = func.Simplify();
+            var a = new Entity.Variable("x");
+            var b = a.Evaled;
+            var c = a.IsConstant;
         }
         [TestMethod]
         public void Test1()

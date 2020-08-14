@@ -24,7 +24,7 @@ namespace AngouriMath.Core.Numerix
     /// </summary>
     public record RealNumber(EDecimal Value) : ComplexNumber(null, null), System.IComparable<RealNumber>
     {
-        public override Priority Priority => Value.IsNegative ? Priority.Mul : Priority.Num;
+        public override Priority Priority => Value.IsNegative ? Priority.Mul : Priority.Number;
         public override bool IsExact => !Value.IsFinite;
         public bool IsNegative => Value.IsNegative;
         public bool IsPositive => !Value.IsNegative && !Value.IsZero;

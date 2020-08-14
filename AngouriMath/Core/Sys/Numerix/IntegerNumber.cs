@@ -22,7 +22,7 @@ namespace AngouriMath.Core.Numerix
     /// <param name="_">Ignored. It is here to disamiguate the <see cref="Deconstruct(out int)"/> method.</param>
     public record IntegerNumber(EInteger Integer, bool _ = false) : RationalNumber(Integer), System.IComparable<IntegerNumber>
     {
-        public override Priority Priority => Priority.Num;
+        public override Priority Priority => Priority.Number;
         public static readonly IntegerNumber Zero = new IntegerNumber(EInteger.Zero);
         public static readonly IntegerNumber One = new IntegerNumber(EInteger.One);
         public static readonly IntegerNumber MinusOne = new IntegerNumber(-EInteger.One);

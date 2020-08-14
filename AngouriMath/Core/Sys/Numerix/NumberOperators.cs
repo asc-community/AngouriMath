@@ -24,7 +24,7 @@ namespace AngouriMath
 {
     partial record Entity
     {
-        public abstract partial record Num
+        public abstract partial record Number
         {
             internal static EInteger CtxAdd(EInteger a, EInteger b) => a.Add(b);
             internal static EInteger CtxSubtract(EInteger a, EInteger b) => a.Subtract(b);
@@ -53,21 +53,21 @@ namespace AngouriMath
                 => a.Pow(b, MathS.Settings.DecimalPrecisionContext);
             internal static T Min<T>(T a, T b) where T : RealNumber => a < b ? a : b;
             internal static T Max<T>(T a, T b) where T : RealNumber => a > b ? a : b;
-            internal static T OpSum<T>(T a, T b) where T : Num =>
+            internal static T OpSum<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
                     (a, b) => IntegerNumber.Create(CtxAdd(a.Integer, b.Integer)),
                     (a, b) => RationalNumber.Create(CtxAdd(a.Rational, b.Rational)),
                     (a, b) => RealNumber.Create(CtxAdd(a.Value, b.Value)),
                     (a, b) => ComplexNumber.Create(CtxAdd(a.Real.Value, b.Real.Value), CtxAdd(a.Imaginary.Value, b.Imaginary.Value))
                  );
-            internal static T OpSub<T>(T a, T b) where T : Num =>
+            internal static T OpSub<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
                     (a, b) => IntegerNumber.Create(CtxSubtract(a.Integer, b.Integer)),
                     (a, b) => RationalNumber.Create(CtxSubtract(a.Rational, b.Rational)),
                     (a, b) => RealNumber.Create(CtxSubtract(a.Value, b.Value)),
                     (a, b) => ComplexNumber.Create(CtxSubtract(a.Real.Value, b.Real.Value), CtxSubtract(a.Imaginary.Value, b.Imaginary.Value))
                  );
-            internal static T OpMul<T>(T a, T b) where T : Num =>
+            internal static T OpMul<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
                     (a, b) => IntegerNumber.Create(CtxMultiply(a.Integer, b.Integer)),
                     (a, b) => RationalNumber.Create(CtxMultiply(a.Rational, b.Rational)),
@@ -82,7 +82,7 @@ namespace AngouriMath
                             CtxAdd(ModifiedMultiply(a.Real.Value, b.Imaginary.Value), ModifiedMultiply(a.Imaginary.Value, b.Real.Value)));
                     }
                  );
-            internal static ComplexNumber OpDiv<T>(T a, T b) where T : Num =>
+            internal static ComplexNumber OpDiv<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
                     (a, b) => CtxDivide(a.Rational, b.Rational) is { } n ? RationalNumber.Create(n) : RealNumber.NaN,
                     (a, b) => CtxDivide(a.Rational, b.Rational) is { } n ? RationalNumber.Create(n) : RealNumber.NaN,
@@ -103,7 +103,7 @@ namespace AngouriMath
                         return a * c;
                     }
                  );
-            internal static bool AreEqual<T>(T a, T b) where T : Num =>
+            internal static bool AreEqual<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
                     (a, b) => a.Integer.Equals(b.Integer),
                     (a, b) => a.Rational.Equals(b.Rational),
@@ -112,14 +112,14 @@ namespace AngouriMath
                     (a, b) => AreEqual(a.Real, b.Real) && AreEqual(a.Imaginary, b.Imaginary)
                  );
 
-            public static Num operator +(Num a, Num b) => OpSum(a, b);
-            public static Num operator -(Num a, Num b) => OpSub(a, b);
-            public static Num operator *(Num a, Num b) => OpMul(a, b);
-            public static Num operator /(Num a, Num b) => OpDiv(a, b);
-            public static Num operator +(Num a) => a;
-            public static Num operator -(Num a) => OpMul(-1, a);
-            public static bool operator ==(Num a, Num b) => AreEqual(a, b);
-            public static bool operator !=(Num a, Num b) => !AreEqual(a, b);
+            public static Number operator +(Number a, Number b) => OpSum(a, b);
+            public static Number operator -(Number a, Number b) => OpSub(a, b);
+            public static Number operator *(Number a, Number b) => OpMul(a, b);
+            public static Number operator /(Number a, Number b) => OpDiv(a, b);
+            public static Number operator +(Number a) => a;
+            public static Number operator -(Number a) => OpMul(-1, a);
+            public static bool operator ==(Number a, Number b) => AreEqual(a, b);
+            public static bool operator !=(Number a, Number b) => !AreEqual(a, b);
 
             internal static RealNumber? FindGoodRoot(ComplexNumber @base, IntegerNumber power)
             {

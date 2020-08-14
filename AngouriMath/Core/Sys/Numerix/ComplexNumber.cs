@@ -28,7 +28,7 @@ namespace AngouriMath.Core.Numerix
     /// https://en.wikipedia.org/wiki/Complex_number
     /// Constructor does not downcast automatically. Use <see cref="Create(RealNumber, RealNumber)"/> for automatic downcasting
     /// </summary>
-    public record ComplexNumber(RealNumber? Real_, RealNumber? Imaginary_) : Entity.Num
+    public record ComplexNumber(RealNumber? Real_, RealNumber? Imaginary_) : Entity.Number
     {
         public virtual RealNumber Real => Real_ ?? IntegerNumber.Zero;
         public RealNumber Imaginary => Imaginary_ ?? IntegerNumber.Zero;
@@ -37,7 +37,7 @@ namespace AngouriMath.Core.Numerix
             {
                 ({ IsZero: false }, { IsZero: false }) => Priority.Sum,
                 (_, { IsNegative: true }) => Priority.Mul,
-                _ => Priority.Num
+                _ => Priority.Number
             };
         public static readonly ComplexNumber ImaginaryOne = new ComplexNumber(0, 1);
         public static readonly ComplexNumber MinusImaginaryOne = new ComplexNumber(0, -1);

@@ -31,7 +31,7 @@ namespace AngouriMath.Functions.Algebra
         /// <param name="equation"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        internal static Set Solve(Entity equation, Entity.Var x)
+        internal static Set Solve(Entity equation, Entity.Variable x)
         {
             var res = new Set();
 
@@ -76,7 +76,7 @@ namespace AngouriMath.Functions.Algebra
         /// <param name="equations"></param>
         /// <param name="vars"></param>
         /// <returns></returns>
-        internal static Tensor? SolveSystem(List<Entity> equations, ReadOnlySpan<Var> vars)
+        internal static Tensor? SolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars)
         {
             if (equations.Count != vars.Length)
                 throw new MathSException("Amount of equations must be equal to that of vars");
@@ -109,7 +109,7 @@ namespace AngouriMath.Functions.Algebra
         /// Variable to solve for
         /// </param>
         /// <returns></returns>
-        internal static IEnumerable<List<Entity>> InSolveSystemOne(Entity eq, Var var) =>
+        internal static IEnumerable<List<Entity>> InSolveSystemOne(Entity eq, Variable var) =>
             eq.InnerSimplify().SolveEquation(var).FiniteSet().Select(sol => new List<Entity> { sol });
 
         /// <summary>
@@ -122,13 +122,13 @@ namespace AngouriMath.Functions.Algebra
         /// List of variables, where each of them must be mentioned in at least one entity from equations
         /// </param>
         /// <returns></returns>
-        internal static IEnumerable<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Var> vars)
+        internal static IEnumerable<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars)
         {
             var var = vars[vars.Length - 1];
             if (equations.Count == 1)
                 return InSolveSystemOne(equations[0], var);
             var result = Enumerable.Empty<List<Entity>>();
-            var replacements = new Dictionary<Var, Entity>();
+            var replacements = new Dictionary<Variable, Entity>();
             for (int i = 0; i < equations.Count; i++)
                 if (equations[i].Vars.Contains(var))
                 {

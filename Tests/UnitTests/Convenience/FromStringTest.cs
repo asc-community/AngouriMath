@@ -7,7 +7,7 @@ namespace UnitTests.Convenience
     [TestClass]
     public class FromStringTest
     {
-        public static readonly Entity.Var x = MathS.Var(nameof(x));
+        public static readonly Entity.Variable x = MathS.Var(nameof(x));
         [TestMethod]
         public void Test1() => Assert.AreEqual(2, MathS.FromString("1 + 1").Eval());
         [TestMethod]
@@ -80,13 +80,13 @@ namespace UnitTests.Convenience
         }
 
         [TestMethod] public void Test26() 
-            => Assert.AreEqual(MathS.Derivative("x + 1", x), "derive(x + 1, x, 1)");
+            => Assert.AreEqual(MathS.Derivative("x + 1", x), "derivative(x + 1, x, 1)");
         [TestMethod] public void Test27() 
-            => Assert.AreEqual(MathS.Derivative("x + 1", x, 5), "derive(x + 1, x, 5)");
+            => Assert.AreEqual(MathS.Derivative("x + 1", x, 5), "derivative(x + 1, x, 5)");
         [TestMethod] public void Test28()
-            => Assert.AreEqual(MathS.Integral("x + 1", x), "integrate(x + 1, x, 1)");
+            => Assert.AreEqual(MathS.Integral("x + 1", x), "integral(x + 1, x, 1)");
         [TestMethod] public void Test29()
-            => Assert.AreEqual(MathS.Integral("x + y", x, 3), "integrate(x + y, x, 3)");
+            => Assert.AreEqual(MathS.Integral("x + y", x, 3), "integral(x + y, x, 3)");
         [TestMethod] public void Test30()
             => Assert.AreEqual(MathS.Limit("x + y", x, 3), "limit(x + y, x, 3)");
         [TestMethod] public void Test31()

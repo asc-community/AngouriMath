@@ -31,8 +31,8 @@ namespace AngouriMath
         public abstract string Latexise();
         protected internal string Latexise(bool parenthesesRequired) =>
             parenthesesRequired ? @$"\left({Latexise()}\right)" : Latexise();
-        public partial record Num { }
-        public partial record Var
+        public partial record Number { }
+        public partial record Variable
         {
             /// <summary>
             /// List of constants LaTeX will correctly display
@@ -197,7 +197,7 @@ namespace AngouriMath
         public partial record Factorialf
         {
             public override string Latexise() =>
-                Argument.Latexise(Argument.Priority < Priority.Num) + "!";
+                Argument.Latexise(Argument.Priority < Priority.Number) + "!";
         }
 
         public partial record Derivativef
@@ -207,9 +207,9 @@ namespace AngouriMath
                 var powerIfNeeded = Iterations == IntegerNumber.One ? "" : "^{" + Iterations.Latexise() + "}";
 
                 var varOverDeriv =
-                    Variable is Var { Name: { Length: 1 } name }
+                    Var is Variable { Name: { Length: 1 } name }
                     ? name
-                    : @"\left[" + Variable.Latexise(false) + @"\right]";
+                    : @"\left[" + Var.Latexise(false) + @"\right]";
 
                 // TODO: Should we display the d upright using \mathrm?
                 // Differentiation is an operation, just like sin, cos, etc.
@@ -243,12 +243,12 @@ namespace AngouriMath
                 for (int i = 0; i < asInt; i++)
                 {
                     sb.Append(" d");
-                    if (Variable is Var { Name: { Length: 1 } name })
+                    if (Var is Variable { Name: { Length: 1 } name })
                         sb.Append(name);
                     else
                     {
                         sb.Append(@"\left[");
-                        sb.Append(Variable.Latexise(false));
+                        sb.Append(Var.Latexise(false));
                         sb.Append(@"\right]");
                     }
                 }
@@ -261,7 +261,7 @@ namespace AngouriMath
             public override string Latexise()
             {
                 var sb = new StringBuilder();
-                sb.Append(@"\lim_{").Append(Variable.Latexise())
+                sb.Append(@"\lim_{").Append(Var.Latexise())
                   .Append(@"\to ").Append(Destination.Latexise());
 
                 switch (ApproachFrom)

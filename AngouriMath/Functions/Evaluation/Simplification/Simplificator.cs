@@ -31,10 +31,10 @@ namespace AngouriMath.Functions.Evaluation.Simplification
         /// <summary>Finds all alternative forms of an expression</summary>
         internal static Set Alternate(Entity src, int level)
         {
-            if (src is Num || src is Var)
+            if (src is Number || src is Variable)
                 return new Set(src);
             var stage1 = src.InnerSimplify();
-            if (stage1 is Num)
+            if (stage1 is Number)
                 return new Set(stage1);
 
             var history = new SortedDictionary<int, List<Entity>>();

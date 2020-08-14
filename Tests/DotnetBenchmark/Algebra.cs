@@ -6,7 +6,7 @@ namespace DotnetBenchmark
 {
     public class AlgebraTest
     {
-        private readonly Entity.Var x = MathS.Var("x");
+        private readonly Entity.Variable x = MathS.Var("x");
         private readonly Entity exprEasy;
         private readonly Entity exprMedium;
         private readonly Entity exprHard;

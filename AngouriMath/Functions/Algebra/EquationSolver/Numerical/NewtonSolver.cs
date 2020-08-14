@@ -43,7 +43,7 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
         /// How many approximations we need to do before we reach the most precise result.
         /// </param>
         /// <returns></returns>
-        internal static Set SolveNt(Entity expr, Entity.Var v,
+        internal static Set SolveNt(Entity expr, Entity.Variable v,
             NewtonSetting settings)
         {
             /// <summary>
@@ -135,6 +135,6 @@ namespace AngouriMath
         /// To change parameters see MathS.Settings.NewtonSolver
         /// </summary>
         /// <returns></returns>
-        public Set SolveNt(Var v) => NewtonSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
+        public Set SolveNt(Variable v) => NewtonSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
     }
 }

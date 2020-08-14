@@ -40,7 +40,7 @@ namespace AngouriMath
         /// specify as many variables as you need
         /// </param>
         /// <returns></returns>
-        public static Entity Diff(Entity expr, params Var[] vars)
+        public static Entity Diff(Entity expr, params Variable[] vars)
         {
             expr = vars.Aggregate(expr, (current, v) => current.Derive(v));
             return expr.Simplify();
@@ -60,7 +60,7 @@ namespace AngouriMath
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        public static Set Solve(Entity expr, Var x) => expr.SolveEquation(x);
+        public static Set Solve(Entity expr, Variable x) => expr.SolveEquation(x);
 
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
@@ -95,7 +95,7 @@ namespace AngouriMath
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static Var Symbol(string name) => new Var(name);
+        public static Variable Symbol(string name) => new Variable(name);
 
         /// <summary>
         /// e ^ power

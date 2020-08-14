@@ -41,12 +41,12 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.TOCACHE, cacheLine));
             }
         }
-        public partial record Num : Entity
+        public partial record Number : Entity
         {
             private protected override void InnerCompile_(Compiler compiler) =>
                 compiler.Instructions.Add(new(InstructionType.PUSHCONST, Value: AsComplex()));
         }
-        public partial record Var : Entity
+        public partial record Variable : Entity
         {
             private protected override void InnerCompile_(Compiler compiler) =>
                 compiler.Instructions.Add(new(InstructionType.PUSHVAR, compiler.VarNamespace[Name]));
@@ -204,23 +204,23 @@ namespace AngouriMath
     }
     internal partial record Instruction
     {
-        internal record Compiler(List<Instruction> Instructions, Dictionary<Var, int> VarNamespace, Dictionary<Entity, int> Cache)
+        internal record Compiler(List<Instruction> Instructions, Dictionary<Variable, int> VarNamespace, Dictionary<Entity, int> Cache)
         {
             /// <summary>Returns a compiled expression. Allows to boost substitution a lot</summary>
             /// <param name="variables">Must be equal to func's variables (ignoring constants)</param>
-            internal static FastExpression Compile(Entity func, IEnumerable<Var> variables)
+            internal static FastExpression Compile(Entity func, IEnumerable<Variable> variables)
             {
-                var varNamespace = new Dictionary<Var, int>();
+                var varNamespace = new Dictionary<Variable, int>();
                 int id = 0;
                 foreach (var varName in variables)
                     if (!varName.IsConstant)
                         varNamespace[varName] = id++;
-                func = func.Substitute(Var.ConstantList);
+                func = func.Substitute(Variable.ConstantList);
                 var visited = new HashSet<Entity>();
                 var cache = new Dictionary<Entity, int>();
                 foreach (var node in func)
                 {
-                    if (node is Num or Var)
+                    if (node is Number or Variable)
                         continue; // Don't store simple nodes in cache
                     if (visited.Contains(node))
                         cache[node] = -1;

@@ -102,7 +102,7 @@ function_arguments returns[List<Entity> list]
    
 atom returns[Entity value]
     : NUMBER { $value = ComplexNumber.Parse($NUMBER.text); }
-    | ID { $value = new Entity.Var($ID.text); }
+    | ID { $value = new Entity.Variable($ID.text); }
     | '(' expression ')' { $value = $expression.value; }
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
     | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
@@ -122,8 +122,8 @@ atom returns[Entity value]
     | 'arcsec(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Arcsec($args.list[0]); }
     | 'arccosec(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Arccosec($args.list[0]); }
     | 'gamma(' args = function_arguments ')' { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); }
-    | 'derive(' args = function_arguments ')' { Assert("derive", 3, $args.list.Count); $value = MathS.Derivative($args.list[0], $args.list[1], $args.list[2]); }
-    | 'integrate(' args = function_arguments ')' { Assert("integrate", 3, $args.list.Count); $value = MathS.Integral($args.list[0], $args.list[1], $args.list[2]); }
+    | 'derivative(' args = function_arguments ')' { Assert("derivative", 3, $args.list.Count); $value = MathS.Derivative($args.list[0], $args.list[1], $args.list[2]); }
+    | 'integral(' args = function_arguments ')' { Assert("integral", 3, $args.list.Count); $value = MathS.Integral($args.list[0], $args.list[1], $args.list[2]); }
     | 'limit(' args = function_arguments ')' { Assert("limit", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2]); }
     | 'limitleft(' args = function_arguments ')' { Assert("limitleft", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Limits.ApproachFrom.Left); }
     | 'limitright(' args = function_arguments ')' { Assert("limitright", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Limits.ApproachFrom.Right); }

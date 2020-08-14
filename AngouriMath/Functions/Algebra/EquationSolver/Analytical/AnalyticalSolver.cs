@@ -36,7 +36,7 @@ namespace AngouriMath
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        public Set SolveEquation(Var x) => EquationSolver.Solve(this, x);
+        public Set SolveEquation(Variable x) => EquationSolver.Solve(this, x);
 
         /// <summary><para>This <see cref="Entity"/> MUST contain exactly ONE occurance of <paramref name="x"/>,
         /// otherwise this function won't work correctly.</para>
@@ -66,12 +66,12 @@ namespace AngouriMath
                    r.Real <= to.Real &&
                    r.Imaginary <= to.Imaginary;
         }
-        public partial record Num : Entity
+        public partial record Number : Entity
         {
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
         }
-        public partial record Var : Entity
+        public partial record Variable : Entity
         {
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) => Enumerable.Repeat(this, 1);
         }
@@ -117,40 +117,40 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 Base.Contains(x)
                 ? Exponent is IntegerNumber { Integer: var pow }
-                  ? Num.GetAllRoots(1, pow)
+                  ? Number.GetAllRoots(1, pow)
                     .SelectMany(root => Base.Invert(root * MathS.Pow(value, 1 / Exponent), x))
                   : Base.Invert(MathS.Pow(value, 1 / Exponent), x)
                 // a ^ x = value => x = log(a, value)
-                : Exponent.Invert(MathS.Log(Base, value) + 2 * MathS.i * Var.CreateUnique(this + value, "n") * MathS.pi, x);
+                : Exponent.Invert(MathS.Log(Base, value) + 2 * MathS.i * Variable.CreateUnique(this + value, "n") * MathS.pi, x);
         }
         // TODO: Consider case when sin(sin(x)) where double-mention of n occures
         public partial record Sinf
         {
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 // sin(x) = value => x = arcsin(value) + 2pi * n
-                Argument.Invert(MathS.Arcsin(value) + 2 * MathS.pi * Var.CreateUnique(this + value, "n"), x)
+                Argument.Invert(MathS.Arcsin(value) + 2 * MathS.pi * Variable.CreateUnique(this + value, "n"), x)
                 // sin(x) = value => x = pi - arcsin(value) + 2pi * n
-                .Concat(Argument.Invert(MathS.pi - MathS.Arcsin(value) + 2 * MathS.pi * Var.CreateUnique(this + value, "n"), x));
+                .Concat(Argument.Invert(MathS.pi - MathS.Arcsin(value) + 2 * MathS.pi * Variable.CreateUnique(this + value, "n"), x));
         }
         public partial record Cosf
         {
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 // cos(x) = value => x = arccos(value) + 2pi * n
-                Argument.Invert(MathS.Arccos(value) + 2 * MathS.pi * Var.CreateUnique(this + value, "n"), x)
+                Argument.Invert(MathS.Arccos(value) + 2 * MathS.pi * Variable.CreateUnique(this + value, "n"), x)
                 // cos(x) = value => x = -arccos(value) + 2pi * n
-                .Concat(Argument.Invert(-MathS.Arccos(value) + 2 * MathS.pi * Var.CreateUnique(this + value, "n"), x));
+                .Concat(Argument.Invert(-MathS.Arccos(value) + 2 * MathS.pi * Variable.CreateUnique(this + value, "n"), x));
         }
         public partial record Tanf
         {
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 // tan(x) = value => x = arctan(value) + pi * n
-                Argument.Invert(MathS.Arctan(value) + MathS.pi * Var.CreateUnique(this + value, "n"), x);
+                Argument.Invert(MathS.Arctan(value) + MathS.pi * Variable.CreateUnique(this + value, "n"), x);
         }
         public partial record Cotanf
         {
             // cotan(x) = value => x = arccotan(value) + pi * n
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
-                Argument.Invert(MathS.Arccotan(value) + MathS.pi * Var.CreateUnique(this + value, "n"), x);
+                Argument.Invert(MathS.Arccotan(value) + MathS.pi * Variable.CreateUnique(this + value, "n"), x);
         }
 
         public partial record Logf
@@ -207,7 +207,7 @@ namespace AngouriMath
         {
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 Expression.Contains(x)
-                ? Expression.Invert(MathS.Integral(value, Variable, Iterations), x)
+                ? Expression.Invert(MathS.Integral(value, Var, Iterations), x)
                 : Enumerable.Empty<Entity>();
         }
 
@@ -215,7 +215,7 @@ namespace AngouriMath
         {
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 Expression.Contains(x)
-                ? Expression.Invert(MathS.Derivative(value, Variable, Iterations), x)
+                ? Expression.Invert(MathS.Derivative(value, Var, Iterations), x)
                 : Enumerable.Empty<Entity>();
         }
 
@@ -240,7 +240,7 @@ namespace AngouriMath.Core.TreeAnalysis
         /// there's no pattern for solving equation like sin(x)^2 + sin(x) + 1 = 0,
         /// but we can first solve t^2 + t + 1 = 0, and then root = sin(x).
         /// </summary>
-        public static Entity GetMinimumSubtree(Entity expr, Var x)
+        public static Entity GetMinimumSubtree(Entity expr, Variable x)
         {
             if (!expr.Vars.Contains(x))
                 throw new ArgumentException($"{nameof(expr)} must contain {nameof(x)}", nameof(expr));
@@ -266,7 +266,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     internal static class AnalyticalSolver
     {
-        private static Entity TryDowncast(Entity equation, Var x, Entity root)
+        private static Entity TryDowncast(Entity equation, Variable x, Entity root)
         {
             if (!MathS.CanBeEvaluated(root))
                 return root;
@@ -284,14 +284,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var innerSimplified = root.InnerSimplify();
 
-            return Num.IsZero(error) && ComplexRational(downcasted) ? downcasted : innerSimplified;
+            return Number.IsZero(error) && ComplexRational(downcasted) ? downcasted : innerSimplified;
         }
 
 
         /// <summary>Equation solver</summary>
-        internal static void Solve(Entity expr, Var x, Set dst)
+        internal static void Solve(Entity expr, Variable x, Set dst)
             => Solve(expr, x, dst, compensateSolving: false);
-        internal static void Solve(Entity expr, Var x, Set dst, bool compensateSolving)
+        internal static void Solve(Entity expr, Variable x, Set dst, bool compensateSolving)
         {
             if (expr == x)
             {

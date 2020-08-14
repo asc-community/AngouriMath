@@ -25,7 +25,7 @@ namespace AngouriMath
 {
     partial record Entity
     {
-        public abstract partial record Num
+        public abstract partial record Number
         {
             /// <summary>
             /// Checks whether a number is zero

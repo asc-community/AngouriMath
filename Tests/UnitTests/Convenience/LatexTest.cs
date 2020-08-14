@@ -8,13 +8,13 @@ namespace UnitTests.Convenience
     [TestClass]
     public class LatexTests
     {
-        private static readonly Entity.Var x = MathS.Var(nameof(x));
-        private static readonly Entity.Num frac34 = RationalNumber.Create(3, 4);
-        private static readonly Entity.Num m1 = -1;
-        private static readonly Entity.Num im1 = MathS.i - 1;
-        private static readonly Entity.Num m2i = -2 * MathS.i;
-        private static readonly Entity.Num numPi = MathS.DecimalConst.pi;
-        private static readonly Entity.Num mNumPi = -MathS.DecimalConst.pi;
+        private static readonly Entity.Variable x = MathS.Var(nameof(x));
+        private static readonly Entity.Number frac34 = RationalNumber.Create(3, 4);
+        private static readonly Entity.Number m1 = -1;
+        private static readonly Entity.Number im1 = MathS.i - 1;
+        private static readonly Entity.Number m2i = -2 * MathS.i;
+        private static readonly Entity.Number numPi = MathS.DecimalConst.pi;
+        private static readonly Entity.Number mNumPi = -MathS.DecimalConst.pi;
         void Test(string expected, ILatexiseable actual) =>
             Assert.AreEqual(expected, actual.Latexise());
         void TestSimplify(string expected, Entity actual) =>
@@ -28,7 +28,7 @@ namespace UnitTests.Convenience
         [TestMethod] public void Pi() => Test(@"\pi", MathS.pi);
         [TestMethod] public void E() => Test(@"e", MathS.e);
         [TestMethod] public void I() => TestSimplify("i", MathS.Sqrt(-1));
-        [TestMethod] public void Var() => Test("x", x);
+        [TestMethod] public void Variable() => Test("x", x);
         [TestMethod] public void Add() => Test("x+x", x + x);
         [TestMethod] public void AddAdd() => Test("x+x+x", x + x + x);
         [TestMethod] public void AddSimplify() => TestSimplify(@"2\times x", x + x);

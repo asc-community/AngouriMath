@@ -41,7 +41,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// </summary>
         /// <param name="term"></param>
         /// <returns></returns>
-        private static (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) FindFractions(Entity term, Var x)
+        private static (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) FindFractions(Entity term, Variable x)
         {
             // TODO: consider cases where we should NOT gather all powers in row
             static Entity GetPower(Entity expr) =>
@@ -88,13 +88,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// Finds the best common denominator, multiplies the whole expression by that, and
         /// tries solving if the found denominator is not 1
         /// </summary>
-        internal static Set? Solve(Entity expr, Var x)
+        internal static Set? Solve(Entity expr, Variable x)
         {
             var res = FindCD(expr, x);
             return res?.SolveEquation(x);
         }
 
-        private static Entity? FindCD(Entity expr, Var x)
+        private static Entity? FindCD(Entity expr, Variable x)
         {
             var terms = Sumf.LinearChildren(expr);
             var denominators = new Dictionary<string, (Entity den, RealNumber pow)>();
@@ -108,7 +108,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var name = den.ToString(); // TODO: Replace with faster hashing
                     if (!denominators.ContainsKey(name))
                         denominators[name] = (den, 0);
-                    denominators[name] = (den, Num.Max(denominators[name].pow, -pow));
+                    denominators[name] = (den, Number.Max(denominators[name].pow, -pow));
                 }
                 fracs.Add(oneInfo);
             }

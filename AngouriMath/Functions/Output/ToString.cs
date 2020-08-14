@@ -26,8 +26,8 @@ namespace AngouriMath
         internal abstract string Stringize();
         protected internal string Stringize(bool parenthesesRequired) =>
             parenthesesRequired ? @$"({Stringize()})" : Stringize();
-        public partial record Num { }
-        public partial record Var
+        public partial record Number { }
+        public partial record Variable
         {
             internal override string Stringize() => Name;
         }
@@ -100,15 +100,15 @@ namespace AngouriMath
         }
         public partial record Factorialf
         {
-            internal override string Stringize() => Argument.Stringize(Argument.Priority < Priority.Num) + "!";
+            internal override string Stringize() => Argument.Stringize(Argument.Priority < Priority.Number) + "!";
         }
         public partial record Derivativef
         {
-            internal override string Stringize() => $"derive({Expression}, {Variable}, {Iterations})";
+            internal override string Stringize() => $"derive({Expression}, {Var}, {Iterations})";
         }
         public partial record Integralf
         {
-            internal override string Stringize() => $"integrate({Expression}, {Variable}, {Iterations})";
+            internal override string Stringize() => $"integrate({Expression}, {Var}, {Iterations})";
         }
         public partial record Limitf
         {
@@ -120,7 +120,7 @@ namespace AngouriMath
                     Limits.ApproachFrom.Right => "limitright",
                     _ => throw new System.ComponentModel.InvalidEnumArgumentException
                       (nameof(ApproachFrom), (int)ApproachFrom, typeof(Limits.ApproachFrom))
-                } + $"({Expression}, {Variable}, {Destination})";
+                } + $"({Expression}, {Var}, {Destination})";
         }
     }
 }

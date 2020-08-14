@@ -30,7 +30,7 @@ namespace AngouriMath
             SortHashName(level) + string.Join("_", DirectChildren.Select(child => child.SortHash(level)));
         private protected abstract string SortHashName(SortLevel level);
 
-        public partial record Num : Entity
+        public partial record Number : Entity
         {
             private protected override string SortHashName(SortLevel level) => level switch
             {
@@ -39,7 +39,7 @@ namespace AngouriMath
                 _ => ToString() + " "
             };
         }
-        public partial record Var : Entity
+        public partial record Variable : Entity
         {
             private protected override string SortHashName(SortLevel level) => "v_" + Name;
         }

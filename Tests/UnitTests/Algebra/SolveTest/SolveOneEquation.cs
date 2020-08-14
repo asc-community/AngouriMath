@@ -10,7 +10,7 @@ namespace UnitTests.Algebra
     [TestClass]
     public class SolveOneEquation
     {
-        public static Entity.Var x = nameof(x);
+        public static Entity.Variable x = nameof(x);
 
         /// <summary>
         /// Numerically checks if a root fits an equation
@@ -18,7 +18,7 @@ namespace UnitTests.Algebra
         /// <param name="equation"></param>
         /// <param name="toSub"></param>
         /// <param name="varValue"></param>
-        public static void AssertRoots(Entity equation, Entity.Var toSub, Entity varValue, ComplexNumber? subValue = null)
+        public static void AssertRoots(Entity equation, Entity.Variable toSub, Entity varValue, ComplexNumber? subValue = null)
         {
             subValue ??= 3;
             static string LimitString(string s)
@@ -33,7 +33,7 @@ namespace UnitTests.Algebra
             Assert.IsTrue(err < 0.001m, $"Error is: {err}\n{LimitString(eqNormal)}\nwrong root is {toSub} = {LimitString(varValue.ToString())}");
         }
 
-        public static RealNumber CheckRoots(Entity equation, Entity.Var toSub, Entity varValue, ComplexNumber subValue)
+        public static RealNumber CheckRoots(Entity equation, Entity.Variable toSub, Entity varValue, ComplexNumber subValue)
         {
             equation = equation.Substitute(toSub, varValue);
             var allVars = equation.Vars;
@@ -46,7 +46,7 @@ namespace UnitTests.Algebra
                 offset++;
             }
 
-            return Entity.Num.Abs(equation.Eval());
+            return Entity.Number.Abs(equation.Eval());
         }
 
         public static void AssertRootCount(Set roots, int target)

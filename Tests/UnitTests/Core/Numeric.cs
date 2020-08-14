@@ -54,14 +54,14 @@ namespace UnitTests.Core
             Assert.AreEqual(frac21_10, frac21_10.Eval());
             Assert.AreEqual(frac21_10, frac21_10.Simplify().Eval());
 
-            var squared = Entity.Num.Pow(frac21_10, 2);
+            var squared = Entity.Number.Pow(frac21_10, 2);
             Assert.IsInstanceOfType(squared, typeof(RationalNumber));
             Assert.IsNotInstanceOfType(squared, typeof(IntegerNumber));
             Assert.AreEqual(RationalNumber.Create(441, 100), squared);
             Assert.AreEqual(squared, squared.Eval());
             Assert.AreEqual(squared, squared.Simplify().Eval());
 
-            var cubed = Entity.Num.Pow(squared, RationalNumber.Create(3, 2));
+            var cubed = Entity.Number.Pow(squared, RationalNumber.Create(3, 2));
             Assert.IsInstanceOfType(cubed, typeof(RationalNumber));
             Assert.IsNotInstanceOfType(cubed, typeof(IntegerNumber));
             Assert.AreEqual(RationalNumber.Create(9261, 1000), cubed);

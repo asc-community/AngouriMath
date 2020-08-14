@@ -12,13 +12,13 @@ namespace AngouriMath.Limits
     }
     internal static class LimitFunctional
     {
-        private static Entity? SimplifyAndComputeLimitToInfinity(Entity expr, Var x)
+        private static Entity? SimplifyAndComputeLimitToInfinity(Entity expr, Variable x)
         {
             expr = expr.Simplify();
             return ComputeLimitToInfinity(expr, x);
         }
 
-        private static Entity? ComputeLimitToInfinity(Entity expr, Var x)
+        private static Entity? ComputeLimitToInfinity(Entity expr, Variable x)
         {
             var substitutionResult = LimitSolvers.SolveBySubstitution(expr, x);
             if (substitutionResult is { }) return substitutionResult;
@@ -38,7 +38,7 @@ namespace AngouriMath.Limits
             return null;
         }
 
-        public static Entity? ComputeLimit(Entity expr, Var x, Entity dist, ApproachFrom side = ApproachFrom.BothSides) => side switch
+        public static Entity? ComputeLimit(Entity expr, Variable x, Entity dist, ApproachFrom side = ApproachFrom.BothSides) => side switch
         {
             ApproachFrom.Left or ApproachFrom.Right => expr.ComputeLimitDivideEtImpera(x, dist, side),
             ApproachFrom.BothSides =>
@@ -53,7 +53,7 @@ namespace AngouriMath.Limits
             _ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(side), (int)side, typeof(ApproachFrom))
         };
 
-        internal static Entity? ComputeLimitImpl(Entity expr, Var x, Entity dist, ApproachFrom side)
+        internal static Entity? ComputeLimitImpl(Entity expr, Variable x, Entity dist, ApproachFrom side)
         {
             if (!expr.Vars.Contains(x)) return expr;
 
@@ -112,24 +112,24 @@ namespace AngouriMath
         // theoretically, for cases such limit (x -> -1) 1 / (x + 1)
         // this method will return NaN, but thanks to replacement of x to an non-definite expression,
         // it is somehow compensated
-        internal abstract Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side);
-        public partial record Num
+        internal abstract Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side);
+        public partial record Number
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) => this;
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) => this;
         }
-        public partial record Var
+        public partial record Variable
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side);
         }
         public partial record Tensor
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 null; // TODO
         }
         public partial record Sumf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Sumf(
                     Augend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Augend,
@@ -138,7 +138,7 @@ namespace AngouriMath
         }
         public partial record Minusf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Minusf(
                     Subtrahend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Subtrahend,
@@ -147,7 +147,7 @@ namespace AngouriMath
         }
         public partial record Mulf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Mulf(
                     Multiplier.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Multiplier,
@@ -156,7 +156,7 @@ namespace AngouriMath
         }
         public partial record Divf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Divf(
                     Dividend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Dividend,
@@ -165,7 +165,7 @@ namespace AngouriMath
         }
         public partial record Sinf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Sinf(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
@@ -173,7 +173,7 @@ namespace AngouriMath
         }
         public partial record Cosf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Cosf(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
@@ -181,7 +181,7 @@ namespace AngouriMath
         }
         public partial record Tanf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Tanf(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
@@ -189,7 +189,7 @@ namespace AngouriMath
         }
         public partial record Cotanf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Cotanf(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
@@ -197,7 +197,7 @@ namespace AngouriMath
         }
         public partial record Logf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Logf(
                     Base.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Base,
@@ -206,7 +206,7 @@ namespace AngouriMath
         }
         public partial record Powf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Powf(
                     Base.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Base,
@@ -215,7 +215,7 @@ namespace AngouriMath
         }
         public partial record Arcsinf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Arcsinf(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
@@ -223,7 +223,7 @@ namespace AngouriMath
         }
         public partial record Arccosf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Arccosf(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
@@ -231,7 +231,7 @@ namespace AngouriMath
         }
         public partial record Arctanf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Arctanf(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
@@ -239,7 +239,7 @@ namespace AngouriMath
         }
         public partial record Arccotanf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Arccotanf(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
@@ -247,7 +247,7 @@ namespace AngouriMath
         }
         public partial record Factorialf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Factorialf(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
@@ -255,31 +255,31 @@ namespace AngouriMath
         }
         public partial record Derivativef
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Derivativef(
                     Expression.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Expression,
-                    Variable.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Variable,
+                    Var.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Var,
                     Iterations.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim3 ? lim3 : Iterations),
                     x, dist, side);
         }
         public partial record Integralf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Integralf(
                     Expression.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Expression,
-                    Variable.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Variable,
+                    Var.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Var,
                     Iterations.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim3 ? lim3 : Iterations),
                     x, dist, side);
         }
         public partial record Limitf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Var x, Entity dist, Limits.ApproachFrom side) =>
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
                 : ComputeLimitImpl(new Integralf(
                     Expression.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Expression,
-                    Variable.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Variable,
+                    Var.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Var,
                     Destination.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim3 ? lim3 : Destination),
                     x, dist, side);
         }

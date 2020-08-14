@@ -7,12 +7,12 @@ namespace UnitTests.Algebra
     [TestClass]
     public class IntegrationTest
     {
-        static readonly Entity.Var x = nameof(x);
+        static readonly Entity.Variable x = nameof(x);
         [TestMethod]
         public void Test1()
         {
             var expr = x;
-            Assert.IsTrue(Entity.Num.Abs(expr.DefiniteIntegral(x, 0, 1).Real - 1.0/2) < 0.1);
+            Assert.IsTrue(Entity.Number.Abs(expr.DefiniteIntegral(x, 0, 1).Real - 1.0/2) < 0.1);
         }
         [TestMethod]
         public void Test2()

@@ -21,11 +21,11 @@ namespace AngouriMath
         internal abstract string ToSymPy();
         protected string ToSymPy(bool parenthesesRequired) =>
             parenthesesRequired ? @$"({ToSymPy()})" : ToSymPy();
-        public partial record Num
+        public partial record Number
         {
             internal override string ToSymPy() => ToString().Replace("i", "sympy.I");
         }
-        public partial record Var
+        public partial record Variable
         {
             internal override string ToSymPy() => Name;
         }
@@ -102,18 +102,18 @@ namespace AngouriMath
         }
         public partial record Derivativef
         {
-            internal override string ToSymPy() => $"sympy.diff({Expression.ToSymPy()}, {Variable.ToSymPy()}, {Iterations.ToSymPy()})";
+            internal override string ToSymPy() => $"sympy.diff({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations.ToSymPy()})";
         }
         public partial record Integralf
         {
             // TODO: The 3rd parameter of sympy.integrate is not interpreted as iterations, unlike sympy.diff
             // which allows both sympy.diff(expr, var, iterations) and sympy.diff(expr, var1, var2, var3...)
-            internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {Variable.ToSymPy()}, {Iterations.ToSymPy()})";
+            internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations.ToSymPy()})";
         }
         public partial record Limitf
         {
             internal override string ToSymPy() =>
-                @$"sympy.limit({Expression.ToSymPy()}, {Variable.ToSymPy()}, {Destination.ToSymPy()}{ApproachFrom switch
+                @$"sympy.limit({Expression.ToSymPy()}, {Var.ToSymPy()}, {Destination.ToSymPy()}{ApproachFrom switch
                 {
                     Limits.ApproachFrom.Left => ", '-'",
                     Limits.ApproachFrom.BothSides => "",

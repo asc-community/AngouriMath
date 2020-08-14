@@ -22,9 +22,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     internal static class TrigonometricSolver
     {
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
-        internal static Set? SolveLinear(Entity expr, Var variable)
+        internal static Set? SolveLinear(Entity expr, Variable variable)
         {
-            var replacement = Var.CreateUnique(expr, variable.Name);
+            var replacement = Variable.CreateUnique(expr, variable.Name);
             expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
 
             // if there is still original variable after replacements,

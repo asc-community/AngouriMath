@@ -13,7 +13,7 @@ namespace AngouriMath.Limits
     using static Entity;
     class LimitSolvers
     {
-        internal static Dictionary<EDecimal, Entity>? ParseAsPolynomial(Entity expr, Var x)
+        internal static Dictionary<EDecimal, Entity>? ParseAsPolynomial(Entity expr, Variable x)
         {
             var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
                  expr, entity => entity.Vars.Contains(x)
@@ -36,7 +36,7 @@ namespace AngouriMath.Limits
             return filteredDictionary;
         }
         private static readonly RealNumber Infinity = RealNumber.PositiveInfinity;
-        internal static Entity? SolveBySubstitution(Entity expr, Var x)
+        internal static Entity? SolveBySubstitution(Entity expr, Variable x)
         {
             var res = expr.Substitute(x, Infinity);
             if (MathS.CanBeEvaluated(res))
@@ -52,7 +52,7 @@ namespace AngouriMath.Limits
             return null;
         }
 
-        internal static Entity? SolveAsPolynomial(Entity expr, Var x)
+        internal static Entity? SolveAsPolynomial(Entity expr, Variable x)
         {
             var mono = ParseAsPolynomial(expr, x);
             if (mono is { })
@@ -78,7 +78,7 @@ namespace AngouriMath.Limits
             else return null;
         }
 
-        internal static Entity? SolvePolynomialDivision(Entity expr, Var x)
+        internal static Entity? SolvePolynomialDivision(Entity expr, Variable x)
         {
             if (expr is Divf(var P, var Q))
             {
@@ -117,7 +117,7 @@ namespace AngouriMath.Limits
             return null;
         }
 
-        internal static Entity? SolveAsLogarithm(Entity expr, Var x)
+        internal static Entity? SolveAsLogarithm(Entity expr, Variable x)
         {
             if (expr is Logf(var logBase, var logArgument))
             {
@@ -139,7 +139,7 @@ namespace AngouriMath.Limits
             else return null;
         }
 
-        internal static Entity? SolveAsLogarithmDivision(Entity expr, Var x)
+        internal static Entity? SolveAsLogarithmDivision(Entity expr, Variable x)
         {
             if (expr is Divf(Logf(var upperLogBase, var upperLogArgument), Logf(var lowerLogBase, var lowerLogArgument)))
             {

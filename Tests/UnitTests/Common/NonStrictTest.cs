@@ -8,7 +8,7 @@ namespace UnitTests.Common
     [TestClass]
     public class NonStrictTest
     {
-        static readonly Entity.Var x = nameof(x);
+        static readonly Entity.Variable x = nameof(x);
         [TestMethod]
         public void TensorLatex()
         {

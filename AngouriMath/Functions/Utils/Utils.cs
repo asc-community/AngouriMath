@@ -43,7 +43,7 @@ namespace AngouriMath.Functions
         /// <param name="variable"></param>
         /// <param name="dst"></param>
         /// <returns></returns>
-        internal static bool TryPolynomial(Entity expr, Var variable,
+        internal static bool TryPolynomial(Entity expr, Variable variable,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
             out Entity? dst)
         {

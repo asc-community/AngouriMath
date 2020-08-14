@@ -152,7 +152,7 @@ Console.WriteLine(solutions);
 #### <a name="comp"></a>Compile functions
 Compiled functions work 15x+ faster
 ```cs
-var x = MathS.Var("x");
+var x = MathS.Variable("x");
 var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
 var func = expr.Compile(x);
 Console.WriteLine(func.Substitute(3));

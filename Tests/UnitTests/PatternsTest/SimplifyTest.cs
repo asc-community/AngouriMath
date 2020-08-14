@@ -8,14 +8,14 @@ namespace UnitTests.PatternsTest
     [TestClass]
     public class SimplifyTest
     {
-        static readonly Entity.Var a = MathS.Var(nameof(a));
-        static readonly Entity.Var b = MathS.Var(nameof(b));
-        static readonly Entity.Var c = MathS.Var(nameof(c));
-        static readonly Entity.Var x = MathS.Var(nameof(x));
-        static readonly Entity.Var y = MathS.Var(nameof(y));
-        static readonly Entity.Num nan = double.NaN;
-        static readonly Entity.Num oo = double.PositiveInfinity;
-        static readonly Entity.Num moo = double.NegativeInfinity;
+        static readonly Entity.Variable a = MathS.Var(nameof(a));
+        static readonly Entity.Variable b = MathS.Var(nameof(b));
+        static readonly Entity.Variable c = MathS.Var(nameof(c));
+        static readonly Entity.Variable x = MathS.Var(nameof(x));
+        static readonly Entity.Variable y = MathS.Var(nameof(y));
+        static readonly Entity.Number nan = double.NaN;
+        static readonly Entity.Number oo = double.PositiveInfinity;
+        static readonly Entity.Number moo = double.NegativeInfinity;
         void AssertSimplify(Entity original, Entity simplified, int? level = null)
         {
             Assert.AreNotEqual(simplified, original);

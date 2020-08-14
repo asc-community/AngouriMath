@@ -27,7 +27,7 @@ using PeterO.Numbers;
 namespace AngouriMath
 {
     public interface ILatexiseable { public string Latexise(); }
-    public enum Priority { Sum = 2, Minus = 2, Mul = 4, Div = 4, Pow = 6, Func = 8, Var = 10, Num = 10 }
+    public enum Priority { Sum = 2, Minus = 2, Mul = 4, Div = 4, Pow = 6, Func = 8, Variable = 10, Number = 10 }
     /// <summary>
     /// The main class in AngouriMath
     /// Every node, expression, or number is an <see cref="Entity"/>
@@ -42,7 +42,7 @@ namespace AngouriMath
         protected internal IReadOnlyList<Entity> DirectChildren => _directChildren ??= InitDirectChildren();
         protected abstract Entity[] InitDirectChildren();
         /// <remarks>A depth-first enumeration is required by
-        /// <see cref="Core.TreeAnalysis.TreeAnalyzer.GetMinimumSubtree(Entity, Var)"/></remarks>
+        /// <see cref="Core.TreeAnalysis.TreeAnalyzer.GetMinimumSubtree(Entity, Variable)"/></remarks>
         public IEnumerator<Entity> GetEnumerator() =>
             Enumerable.Repeat(this, 1).Concat(DirectChildren.SelectMany(c => c)).GetEnumerator();
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
@@ -120,13 +120,13 @@ namespace AngouriMath
         /// use <see cref="ICollection{T}.Contains(T)"/> which in this case is <see cref="HashSet{T}.Contains(T)"/>
         /// so it is O(1)
         /// </remarks>
-        public IReadOnlyCollection<Var> Vars => _vars ??=
-            new HashSet<Var>(this is Var v ? Enumerable.Repeat(v, 1) : DirectChildren.SelectMany(x => x.Vars));
-        HashSet<Var>? _vars;
+        public IReadOnlyCollection<Variable> Vars => _vars ??=
+            new HashSet<Variable>(this is Variable v ? Enumerable.Repeat(v, 1) : DirectChildren.SelectMany(x => x.Vars));
+        HashSet<Variable>? _vars;
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
-        /// Optimized for <see cref="Var"/>.</summary>
-        public bool Contains(Entity x) => x is Var v ? Vars.Contains(v) : Enumerable.Contains(this, x);
+        /// Optimized for <see cref="Variable"/>.</summary>
+        public bool Contains(Entity x) => x is Variable v ? Vars.Contains(v) : Enumerable.Contains(this, x);
 
         public static implicit operator Entity(sbyte value) => IntegerNumber.Create(value);
         public static implicit operator Entity(byte value) => IntegerNumber.Create(value);
@@ -149,7 +149,7 @@ namespace AngouriMath
         /// <summary>Number node.
         /// This class represents all possible numerical values as a hierarchy,
         /// <list>
-        ///   <see cref="Num"/>
+        ///   <see cref="Number"/>
         ///   <list type="bullet">
         ///     <see cref="ComplexNumber"/>
         ///       <list type="bullet">
@@ -164,36 +164,36 @@ namespace AngouriMath
         ///     </list>
         ///   </list>
         /// </summary>
-        public abstract partial record Num : Entity
+        public abstract partial record Number : Entity
         {
             public override Entity Replace(Func<Entity, Entity> func) => func(this);
             protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
-            public static implicit operator Num(sbyte value) => IntegerNumber.Create(value);
-            public static implicit operator Num(byte value) => IntegerNumber.Create(value);
-            public static implicit operator Num(short value) => IntegerNumber.Create(value);
-            public static implicit operator Num(ushort value) => IntegerNumber.Create(value);
-            public static implicit operator Num(int value) => IntegerNumber.Create(value);
-            public static implicit operator Num(uint value) => IntegerNumber.Create(value);
-            public static implicit operator Num(long value) => IntegerNumber.Create(value);
-            public static implicit operator Num(ulong value) => IntegerNumber.Create(value);
-            public static implicit operator Num(EInteger value) => IntegerNumber.Create(value);
-            public static implicit operator Num(ERational value) => RationalNumber.Create(value);
-            public static implicit operator Num(EDecimal value) => RealNumber.Create(value);
-            public static implicit operator Num(float value) => RealNumber.Create(EDecimal.FromSingle(value));
-            public static implicit operator Num(double value) => RealNumber.Create(EDecimal.FromDouble(value));
-            public static implicit operator Num(decimal value) => RealNumber.Create(EDecimal.FromDecimal(value));
-            public static implicit operator Num(Complex value) =>
+            public static implicit operator Number(sbyte value) => IntegerNumber.Create(value);
+            public static implicit operator Number(byte value) => IntegerNumber.Create(value);
+            public static implicit operator Number(short value) => IntegerNumber.Create(value);
+            public static implicit operator Number(ushort value) => IntegerNumber.Create(value);
+            public static implicit operator Number(int value) => IntegerNumber.Create(value);
+            public static implicit operator Number(uint value) => IntegerNumber.Create(value);
+            public static implicit operator Number(long value) => IntegerNumber.Create(value);
+            public static implicit operator Number(ulong value) => IntegerNumber.Create(value);
+            public static implicit operator Number(EInteger value) => IntegerNumber.Create(value);
+            public static implicit operator Number(ERational value) => RationalNumber.Create(value);
+            public static implicit operator Number(EDecimal value) => RealNumber.Create(value);
+            public static implicit operator Number(float value) => RealNumber.Create(EDecimal.FromSingle(value));
+            public static implicit operator Number(double value) => RealNumber.Create(EDecimal.FromDouble(value));
+            public static implicit operator Number(decimal value) => RealNumber.Create(EDecimal.FromDecimal(value));
+            public static implicit operator Number(Complex value) =>
                 ComplexNumber.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
         }
 
         /// <summary>Variable node. It only has a name</summary>
-        public partial record Var(string Name) : Entity
+        public partial record Variable(string Name) : Entity
         {
-            public override Priority Priority => Priority.Var;
+            public override Priority Priority => Priority.Variable;
             public override Entity Replace(Func<Entity, Entity> func) => func(this);
             protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
-            internal static readonly IReadOnlyDictionary<Var, ComplexNumber> ConstantList =
-                new Dictionary<Var, ComplexNumber>
+            internal static readonly IReadOnlyDictionary<Variable, ComplexNumber> ConstantList =
+                new Dictionary<Variable, ComplexNumber>
                 {
                     { nameof(MathS.DecimalConst.pi), MathS.DecimalConst.pi },
                     { nameof(MathS.DecimalConst.e), MathS.DecimalConst.e }
@@ -211,7 +211,7 @@ namespace AngouriMath
             /// </summary>
             public bool IsConstant => ConstantList.ContainsKey(this);
             /// <summary>
-            /// Extracts this <see cref="Var"/>'s name and index
+            /// Extracts this <see cref="Variable"/>'s name and index
             /// from its <see cref="Name"/> (e. g. "qua" or "phi_3" or "qu_q")
             /// </summary>
             /// <returns>
@@ -234,7 +234,7 @@ namespace AngouriMath
             /// x + n_0 + n_a + n_3 + n_1
             /// will find n_2
             /// </summary>
-            internal static Var CreateUnique(Entity expr, string prefix)
+            internal static Variable CreateUnique(Entity expr, string prefix)
             {
                 var indices = new HashSet<int>();
                 foreach (var var in expr.Vars)
@@ -245,9 +245,9 @@ namespace AngouriMath
                 var i = 1;
                 while (indices.Contains(i))
                     i++;
-                return new Var(prefix + "_" + i);
+                return new Variable(prefix + "_" + i);
             }
-            public static implicit operator Var(string name) => new(name);
+            public static implicit operator Variable(string name) => new(name);
         }
         /// <summary>
         /// Basic tensor implementation
@@ -255,7 +255,7 @@ namespace AngouriMath
         /// </summary>
         public partial record Tensor(GenTensor<Entity, Tensor.EntityTensorWrapperOperations> InnerTensor) : Entity
         {
-            public override Priority Priority => Priority.Num;
+            public override Priority Priority => Priority.Number;
             internal Tensor Elementwise(Func<Entity, Entity> operation) =>
                 new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.CreateTensor(
                     InnerTensor.Shape, indices => operation(InnerTensor.GetValueNoCheck(indices))));
@@ -454,23 +454,23 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(new Factorialf(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-        public partial record Derivativef(Entity Expression, Entity Variable, Entity Iterations) : Function
+        public partial record Derivativef(Entity Expression, Entity Var, Entity Iterations) : Function
         {
             public override Entity Replace(Func<Entity, Entity> func) =>
-                func(new Derivativef(Expression.Replace(func), Variable.Replace(func), Iterations.Replace(func)));
-            protected override Entity[] InitDirectChildren() => new[] { Expression, Variable, Iterations };
+                func(new Derivativef(Expression.Replace(func), Var.Replace(func), Iterations.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
-        public partial record Integralf(Entity Expression, Entity Variable, Entity Iterations) : Function
+        public partial record Integralf(Entity Expression, Entity Var, Entity Iterations) : Function
         {
             public override Entity Replace(Func<Entity, Entity> func) =>
-                func(new Integralf(Expression.Replace(func), Variable.Replace(func), Iterations.Replace(func)));
-            protected override Entity[] InitDirectChildren() => new[] { Expression, Variable, Iterations };
+                func(new Integralf(Expression.Replace(func), Var.Replace(func), Iterations.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
-        public partial record Limitf(Entity Expression, Entity Variable, Entity Destination, Limits.ApproachFrom ApproachFrom) : Function
+        public partial record Limitf(Entity Expression, Entity Var, Entity Destination, Limits.ApproachFrom ApproachFrom) : Function
         {
             public override Entity Replace(Func<Entity, Entity> func) =>
-                func(new Limitf(Expression.Replace(func), Variable.Replace(func), Destination.Replace(func), ApproachFrom));
-            protected override Entity[] InitDirectChildren() => new[] { Expression, Variable, Destination };
+                func(new Limitf(Expression.Replace(func), Var.Replace(func), Destination.Replace(func), ApproachFrom));
+            protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Destination };
         }
     }
 }

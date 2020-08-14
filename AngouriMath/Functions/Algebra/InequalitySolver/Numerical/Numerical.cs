@@ -24,7 +24,7 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
     {
         /// <summary>
         /// <paramref name="expr"/> must contain only
-        /// <see cref="Var"/> <paramref name="x"/> as the variable
+        /// <see cref="Variable"/> <paramref name="x"/> as the variable
         /// </summary>
         /// <param name="expr">
         /// This must only contain one variable, which is <paramref name="x"/>
@@ -36,10 +36,10 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
         /// The relation of the expression to zero.
         /// </param>
         /// <returns></returns>
-        internal static Set Solve(Entity expr, Var x, MathS.Inequality sign)
+        internal static Set Solve(Entity expr, Variable x, MathS.Inequality sign)
         {
             if (expr.Vars.Count != 1 || expr.Vars.Single() != x)
-                throw new MathSException($"{nameof(expr)} should only contain {nameof(Var)} {nameof(x)}");
+                throw new MathSException($"{nameof(expr)} should only contain {nameof(Variable)} {nameof(x)}");
             bool Corresponds(RealNumber val) => sign switch
             {
                 MathS.Inequality.GreaterThan   => val >  0,

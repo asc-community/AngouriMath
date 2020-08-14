@@ -20,10 +20,10 @@ namespace AngouriMath
                     return false;
                 }
                 // arg in [0; 2pi]
-                var twoPi = Num.CtxMultiply(2, MathS.DecimalConst.pi);
-                dArg = Num.CtxMod(
-                    Num.CtxAdd(           // (
-                        Num.CtxMod(dArg, twoPi)         //     dArg % 2pi
+                var twoPi = Number.CtxMultiply(2, MathS.DecimalConst.pi);
+                dArg = Number.CtxMod(
+                    Number.CtxAdd(           // (
+                        Number.CtxMod(dArg, twoPi)         //     dArg % 2pi
                         ,                          //   +
                         twoPi                    //   2pi
                         )                          // )
@@ -49,7 +49,7 @@ namespace AngouriMath
 
                 for (var j = begin; j <= end; j++)
                 {
-                    if (Num.Functional.IsZero(table[j].arg - dArg))
+                    if (Number.Functional.IsZero(table[j].arg - dArg))
                     {
                         res = table[j].res;
                         return true;
@@ -69,7 +69,7 @@ namespace AngouriMath
                 if (TryPulling(TableCos, arg * 2, out res))
                 {
                     res = MathS.Sqrt((1 - res) / 2);
-                    if (Num.Sin(arg) is RealNumber real && real < 0)
+                    if (Number.Sin(arg) is RealNumber real && real < 0)
                         res *= -1;
                     return true;
                 }
@@ -86,7 +86,7 @@ namespace AngouriMath
                 if (TryPulling(TableCos, arg * 2, out res))
                 {
                     res = MathS.Sqrt((1 + res) / 2);
-                    if (Num.Cos(arg) is RealNumber real && real < 0)
+                    if (Number.Cos(arg) is RealNumber real && real < 0)
                         res *= -1;
                     return true;
                 }
@@ -124,7 +124,7 @@ namespace AngouriMath
             private static readonly Entity i = MathS.i;
 
             private static EDecimal TwoPiOver(int a)
-                => Num.CtxDivide(Num.CtxMultiply(2, MathS.DecimalConst.pi), a);
+                => Number.CtxDivide(Number.CtxMultiply(2, MathS.DecimalConst.pi), a);
 
 
             /// <summary>

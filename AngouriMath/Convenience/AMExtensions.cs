@@ -31,9 +31,9 @@ namespace AngouriMath.Extensions
         public static ComplexNumber Eval(this string expr) => expr.ToEntity().Eval();
         public static Entity Expand(this string expr) => expr.ToEntity().Expand();
         public static Entity Collapse(this string expr) => expr.ToEntity().Collapse();
-        public static Entity Substitute(this string expr, Var var, Entity value)
+        public static Entity Substitute(this string expr, Variable var, Entity value)
             => expr.ToEntity().Substitute(var, value);
-        public static Set SolveEquation(this string expr, Var x)
+        public static Set SolveEquation(this string expr, Variable x)
             => expr.ToEntity().SolveEquation(x);
         public static RealNumber ToNumber(this EDecimal value) => RealNumber.Create(value);
         public static RealNumber ToNumber(this decimal value) => RealNumber.Create(EDecimal.FromDecimal(value));
@@ -43,7 +43,7 @@ namespace AngouriMath.Extensions
         public static IntegerNumber ToNumber(this int value) => IntegerNumber.Create(value);
         public static IntegerNumber ToNumber(this long value) => IntegerNumber.Create(value);
         public static string Latexise(this string str) => str.ToEntity().Latexise();
-        public static FastExpression Compile(this string str, params Var[] variables)
+        public static FastExpression Compile(this string str, params Variable[] variables)
             => str.ToEntity().Compile(variables);
 
         // C# can't into templates :(
@@ -90,7 +90,7 @@ namespace AngouriMath.Extensions
         public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7, string eq8, string eq9) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7, string var8, string var9)
             => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7, eqs.eq8, eqs.eq9).Solve(var1, var2, var3, var4, var5, var6, var7, var8, var9);
 
-        public static Tensor? SolveSystem(this Entity[] equations, params Var[] vars)
+        public static Tensor? SolveSystem(this Entity[] equations, params Variable[] vars)
             => MathS.Equations(equations).Solve(vars);
     }
 }

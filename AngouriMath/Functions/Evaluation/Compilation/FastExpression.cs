@@ -64,7 +64,7 @@ namespace AngouriMath
         /// Constants, i.e. <see cref="MathS.pi"/> and <see cref="MathS.e"/> will be ignored.
         /// </param>
         /// <returns></returns>
-        public FastExpression Compile(params Var[] variables) => Compiler.Compile(this, variables);
+        public FastExpression Compile(params Variable[] variables) => Compiler.Compile(this, variables);
 
         /// <summary>
         /// Compile function so you can evaluate numerical value 15x faster,
@@ -76,7 +76,7 @@ namespace AngouriMath
         /// </param>
         /// <returns></returns>
         public FastExpression Compile(params string[] variables) =>
-            Compiler.Compile(this, variables.Select(x => new Var(x)));
+            Compiler.Compile(this, variables.Select(x => new Variable(x)));
     }
 }
 
