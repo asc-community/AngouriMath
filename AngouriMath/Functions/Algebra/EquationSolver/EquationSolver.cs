@@ -31,7 +31,7 @@ namespace AngouriMath.Functions.Algebra
         /// <param name="equation"></param>
         /// <param name="x"></param>
         /// <returns></returns>
-        internal static Set Solve(Entity equation, Entity.Variable x)
+        internal static Set Solve(Entity equation, Variable x)
         {
             var res = new Set();
 
@@ -85,7 +85,7 @@ namespace AngouriMath.Functions.Algebra
             for (int i = 0; i < equations.Count; i++)
                 equations[i] = equations[i].InnerSimplify();
 
-            var res = InSolveSystem(equations, vars).ToList();
+            var res = InSolveSystem(equations, vars);
 
             foreach (var tuple in res)
                 if (tuple.Count != initVarCount)
@@ -100,19 +100,6 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// Solves an equation, useful once InSolveSystem reaches equations.Count == 1
-        /// </summary>
-        /// <param name="eq">
-        /// The equation to solve
-        /// </param>
-        /// <param name="var">
-        /// Variable to solve for
-        /// </param>
-        /// <returns></returns>
-        internal static IEnumerable<List<Entity>> InSolveSystemOne(Entity eq, Variable var) =>
-            eq.InnerSimplify().SolveEquation(var).FiniteSet().Select(sol => new List<Entity> { sol });
-
-        /// <summary>
         /// Solves system of equations
         /// </summary>
         /// <param name="equations">
@@ -122,39 +109,31 @@ namespace AngouriMath.Functions.Algebra
         /// List of variables, where each of them must be mentioned in at least one entity from equations
         /// </param>
         /// <returns></returns>
-        internal static IEnumerable<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars)
+        internal static List<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars)
         {
             var var = vars[vars.Length - 1];
             if (equations.Count == 1)
-                return InSolveSystemOne(equations[0], var);
-            var result = Enumerable.Empty<List<Entity>>();
+                return equations[0].InnerSimplify().SolveEquation(var).FiniteSet()
+                       .Select(sol => new List<Entity> { sol }).ToList();
+            var result = new List<List<Entity>>();
             var replacements = new Dictionary<Variable, Entity>();
             for (int i = 0; i < equations.Count; i++)
                 if (equations[i].Vars.Contains(var))
                 {
                     var solutionsOverVar = equations[i].SolveEquation(var);
                     equations.RemoveAt(i);
-                    vars = vars.Slice(0, vars.Length - 2);
+                    vars = vars.Slice(0, vars.Length - 1);
 
                     foreach (var sol in solutionsOverVar.FiniteSet())
-                    {
-                        var newequations = new List<Entity>();
-                        for (int eqid = 0; eqid < equations.Count; eqid++)
-                            newequations.Add(equations[eqid].Substitute(var, sol));
-                        var inSol = InSolveSystem(newequations, vars);
-                        foreach (var j in inSol)
+                        foreach (var j in
+                            InSolveSystem(equations.Select(eq => eq.Substitute(var, sol)).ToList(), vars))
                         {
                             replacements.Clear();
                             for (int varid = 0; varid < vars.Length; varid++)
                                 replacements.Add(vars[varid], j[varid]);
-
-                            var Z = sol.Substitute(replacements);
-
-                            Z = Z.InnerSimplify();
-                            j.Add(Z);
+                            j.Add(sol.Substitute(replacements).InnerSimplify());
+                            result.Add(j);
                         }
-                        result = result.Concat(inSol);
-                    }
                     break;
                 }
             return result;

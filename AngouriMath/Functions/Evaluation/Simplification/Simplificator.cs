@@ -51,6 +51,8 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     var compl2 = CountExpressionComplexity(expr);
                     var n = compl1 > compl2 ? expr : refexpr;
                     var ncompl = Math.Min(compl2, compl1);
+                    System.Diagnostics.Debug.WriteLine($"{ncompl}: {n}");
+                    if (ncompl == 10) System.Diagnostics.Debugger.Break();
                     if (history.TryGetValue(ncompl, out var ncomplList))
                         ncomplList.Add(n);
                     history[ncompl] = new List<Entity> { n };
@@ -88,9 +90,9 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 }
 
                 {
-                    res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules).InnerSimplify();
+                    res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules);
                     AddHistory(res);
-                    res = res.Replace(Patterns.AlgebraicLongDivision).InnerSimplify();
+                    res = res.InnerSimplify().Replace(Patterns.AlgebraicLongDivision).InnerSimplify();
                     AddHistory(res);
                 }
 

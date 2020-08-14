@@ -27,8 +27,8 @@ null
 'arcsec('
 'arccosec('
 'gamma('
-'derive('
-'integrate('
+'derivative('
+'integral('
 'limit('
 'limitleft('
 'limitright('
@@ -74,7 +74,7 @@ null
 null
 NEWLINE
 NUMBER
-ID
+VARIABLE
 COMMENT
 WS
 

@@ -30,7 +30,7 @@ namespace UnitTests.Common
         public void Factorial() 
         {
             var expr = MathS.Factorial(x + 3) / MathS.Factorial(x + 1);
-            Assert.AreEqual(x * x + x * 3 + 2 * x + 6, expr.Expand());
+            Assert.AreEqual(MathS.Pow(x, 2) + x * 3 + 2 * x + 6, expr.Expand());
             expr = MathS.Factorial(x + -3) / MathS.Factorial(x + -1);
             Assert.AreEqual(1 / (x + -2) / (x + -1), expr.Expand());
         }

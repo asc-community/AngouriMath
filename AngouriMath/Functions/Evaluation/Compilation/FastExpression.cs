@@ -51,7 +51,9 @@ namespace AngouriMath
             CALL_LOG,
         }
         public override string ToString() =>
-            $"{Type} {(Reference == -1 ? Value.ToString() : Reference.ToString())}";
+            Type
+            + (Reference == -1 ? "" : Reference.ToString())
+            + (Type != InstructionType.PUSHCONST ? "" : Value.ToString());
     }
     public abstract partial record Entity : ILatexiseable
     {
@@ -211,6 +213,6 @@ namespace AngouriMath
         /// Might be useful for debug if a function works too slowly
         /// </summary>
         /// <returns></returns>
-        public override string ToString() => string.Join("\n", instructions);
+        public override string ToString() => string.Join(" \n| ", instructions);
     }
 }

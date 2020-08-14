@@ -26,11 +26,20 @@ namespace AngouriMath.Core.FromString
     }
     public class FunctionArgumentCountException : SyntaxException
     {
-        public FunctionArgumentCountException(string function, int expected, int actual)
-            : base($"{function} should have exactly {expected} arguments but {actual} are provided") { }
+        private FunctionArgumentCountException(string msg) : base(msg) { }
+        static string CountArguments(int count, bool isAre) =>
+            $"{count} argument{(count == 1 ? "" : "s")}{(isAre ? count == 1 ? " is" : " are" : "")}";
         public static void Assert(string function, int expected, int actual)
         {
-            if (expected != actual) throw new FunctionArgumentCountException(function, expected, actual);
+            if (expected != actual) throw new FunctionArgumentCountException(
+                $"{function} should have exactly {CountArguments(expected, false)} but {CountArguments(actual, true)} provided");
+        }
+        public static bool Assert(string function, (int, int) expected, int actual)
+        {
+            if (expected.Item1 == actual) return true;
+            if (expected.Item2 == actual) return false;
+            throw new FunctionArgumentCountException(
+                $"{function} should have exactly {CountArguments(expected.Item1, false)} or {CountArguments(expected.Item2, false)} but {CountArguments(actual, true)} provided");
         }
     }
 }

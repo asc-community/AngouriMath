@@ -43,7 +43,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             private EDecimal value = 0;
             public void Add(EDecimal a) => value += a;
-            public void AddMp(EDecimal a, ComplexNumber b) => Add(a * b.Real.Value);
+            public void AddMp(EDecimal a, ComplexNumber b) => Add(a * b.Real.Decimal);
             public void Assign(EDecimal val) => value = val;
             public static implicit operator EDecimal(PrimitiveDecimal obj) => obj.value;
             public EDecimal GetValue() => value;
@@ -52,7 +52,7 @@ namespace AngouriMath.Core.TreeAnalysis
         {
             private EInteger value = 0;
             public void Add(EInteger a) => value += a;
-            public void AddMp(EInteger a, ComplexNumber b) => Add((a * b.Real.Value).ToEInteger());
+            public void AddMp(EInteger a, ComplexNumber b) => Add((a * b.Real.Decimal).ToEInteger());
             public void Assign(EInteger val) => value = val;
             public static implicit operator EInteger(PrimitiveInteger obj) => obj.value;
             public EInteger GetValue() => value;
@@ -459,9 +459,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     if (mp == aVar)
                     {
                         if (allowFloat)
-                            ((TreeAnalyzer.PrimitiveDecimal)power).Add(value.Real.Value);
+                            ((TreeAnalyzer.PrimitiveDecimal)power).Add(value.Real.Decimal);
                         else
-                            ((TreeAnalyzer.PrimitiveInteger)power).Add(value.Real.Value.ToEInteger());
+                            ((TreeAnalyzer.PrimitiveInteger)power).Add(value.Real.Decimal.ToEInteger());
                     }
                     else
                     {

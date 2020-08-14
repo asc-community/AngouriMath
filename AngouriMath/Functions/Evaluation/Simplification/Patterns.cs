@@ -103,8 +103,8 @@ namespace AngouriMath
         internal static Entity DivisionPreparingRules(Entity x) => x switch
         {
             Mulf(var any1, Divf(IntegerNumber(1), var any2)) => any1 / any2,
-            Divf(Mulf(Number const1, var any1), var any2) => const1 * (any1 / any2),
-            Mulf(Divf(Number const1, var any1), var any2) => const1 * (any2 / any1),
+            Divf(Mulf(Number const1, not Number and var notnum1), var any2) => const1 * (notnum1 / any2),
+            Mulf(Divf(Number const1, not Number and var notnum1), var any2) => const1 * (any2 / notnum1),
             _ => x
         };
         internal static Entity TrigonometricRules(Entity x) => x switch

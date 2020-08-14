@@ -38,9 +38,11 @@ namespace AngouriMath
     // Workaround is to use Notepad for editing.
     public abstract partial record Entity : IEnumerable<Entity>, ILatexiseable
     {
-        Entity[]? _directChildren;
-        protected internal IReadOnlyList<Entity> DirectChildren => _directChildren ??= InitDirectChildren();
+        static readonly ConditionalWeakTable<Entity, Entity[]> _directChildren = new();
+        protected internal IReadOnlyList<Entity> DirectChildren =>
+            _directChildren.GetValue(this, e => e.InitDirectChildren());
         protected abstract Entity[] InitDirectChildren();
+
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="Core.TreeAnalysis.TreeAnalyzer.GetMinimumSubtree(Entity, Variable)"/></remarks>
         public IEnumerator<Entity> GetEnumerator() =>
@@ -95,17 +97,20 @@ namespace AngouriMath
         /// Checks whether both parts of the complex number are finite
         /// meaning that it could be safely used for calculations
         /// </summary>
-        public bool IsFinite => _isFinite ??= ThisIsFinite && DirectChildren.All(x => x.IsFinite);
+        public bool IsFinite =>
+            _isFinite.GetValue(this, e => new(e.ThisIsFinite && e.DirectChildren.All(x => x.IsFinite))).Value;
         protected virtual bool ThisIsFinite => true;
-        bool? _isFinite;
+        static readonly ConditionalWeakTable<Entity, Wrapper<bool>> _isFinite = new();
+        record Wrapper<T>(T Value) where T : struct { }
 
         /// <returns>
         /// Number of nodes in tree
         /// TODO: improve measurement of Entity complexity, for example
         /// (1 / x ^ 2).Complexity() < (x ^ (-0.5)).Complexity()
         /// </returns>
-        public int Complexity => _complexity ??= 1 + DirectChildren.Sum(x => x.Complexity);
-        int? _complexity;
+        public int Complexity =>
+            _complexity.GetValue(this, e => new(1 + e.DirectChildren.Sum(x => x.Complexity))).Value;
+        static readonly ConditionalWeakTable<Entity, Wrapper<int>> _complexity = new();
 
         /// <summary>
         /// Returns list of unique variables, for example 
@@ -120,9 +125,9 @@ namespace AngouriMath
         /// use <see cref="ICollection{T}.Contains(T)"/> which in this case is <see cref="HashSet{T}.Contains(T)"/>
         /// so it is O(1)
         /// </remarks>
-        public IReadOnlyCollection<Variable> Vars => _vars ??=
-            new HashSet<Variable>(this is Variable v ? Enumerable.Repeat(v, 1) : DirectChildren.SelectMany(x => x.Vars));
-        HashSet<Variable>? _vars;
+        public IReadOnlyCollection<Variable> Vars => _vars.GetValue(this, e =>
+            new(e is Variable v ? Enumerable.Repeat(v, 1) : DirectChildren.SelectMany(x => x.Vars)));
+        static readonly ConditionalWeakTable<Entity, HashSet<Variable>> _vars = new();
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>

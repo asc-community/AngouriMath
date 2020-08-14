@@ -14,6 +14,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using AngouriMath.Core;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
@@ -81,8 +82,8 @@ namespace AngouriMath
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         public Set Alternate(int level) => Simplificator.Alternate(this, level);
 
-        public Entity Evaled => _evaledValue ??= InnerEval();
-        Entity? _evaledValue;
+        public Entity Evaled => _evaled.GetValue(this, e => e.InnerEval());
+        static readonly ConditionalWeakTable<Entity, Entity> _evaled = new();
         protected abstract Entity InnerEval();
         internal abstract Entity InnerSimplify();
 
@@ -423,11 +424,11 @@ namespace AngouriMath
                 (Tensor expr, var var, var iters) => expr.Elementwise(n => new Derivativef(n, var, iters).Evaled),
                 (var expr, _, IntegerNumber(0)) => expr,
                 // TODO: consider Integral for negative cases
-                (var expr, Variable var, IntegerNumber(var asInt, _)) => expr.Derive(var, asInt),
+                (var expr, Variable var, IntegerNumber { Integer: var asInt }) => expr.Derive(var, asInt),
                 _ => this
             };
             internal override Entity InnerSimplify() =>
-                Var.InnerSimplify() is Variable var && Iterations.InnerSimplify() is IntegerNumber(var asInt, _)
+                Var.InnerSimplify() is Variable var && Iterations.InnerSimplify() is IntegerNumber { Integer: var asInt }
                 ? asInt.IsZero
                   ? Expression.InnerSimplify()
                   : Expression.Derive(var, asInt)
@@ -440,12 +441,12 @@ namespace AngouriMath
                 (Tensor expr, var var, var iters) => expr.Elementwise(n => new Integralf(n, var, iters).Evaled),
                 (var expr, _, IntegerNumber(0)) => expr,
                 // TODO: consider Derivative for negative cases
-                (var expr, Variable var, IntegerNumber(var asInt, _)) =>
+                (var expr, Variable var, IntegerNumber { Integer: var asInt }) =>
                     throw new NotImplementedException("Integration is not implemented yet"),
                 _ => this
             };
             internal override Entity InnerSimplify() =>
-                Var.InnerSimplify() is Variable var && Iterations.InnerSimplify() is IntegerNumber(var asInt, _)
+                Var.InnerSimplify() is Variable var && Iterations.InnerSimplify() is IntegerNumber { Integer: var asInt }
                 ? asInt.IsZero
                   ? Expression.InnerSimplify()
                   : throw new NotImplementedException("Integration is not implemented yet")

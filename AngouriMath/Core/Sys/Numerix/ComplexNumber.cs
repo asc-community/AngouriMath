@@ -15,23 +15,26 @@
 
 using System.Linq;
 using System.Numerics;
-using AngouriMath;
-using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.FromString;
-using AngouriMath.Core.Numerix;
 using PeterO.Numbers;
 
 namespace AngouriMath.Core.Numerix
 {
     /// <summary>
-    /// Extension for RealNumbers
-    /// https://en.wikipedia.org/wiki/Complex_number
-    /// Constructor does not downcast automatically. Use <see cref="Create(RealNumber, RealNumber)"/> for automatic downcasting
+    /// Extension for <see cref="RealNumber"/>s
+    /// <a href="https://en.wikipedia.org/wiki/Complex_number"/>
     /// </summary>
-    public record ComplexNumber(RealNumber? Real_, RealNumber? Imaginary_) : Entity.Number
+    public record ComplexNumber : Entity.Number
     {
-        public virtual RealNumber Real => Real_ ?? IntegerNumber.Zero;
-        public RealNumber Imaginary => Imaginary_ ?? IntegerNumber.Zero;
+        /// <summary>
+        /// Constructor does not downcast automatically. Use <see cref="Create(RealNumber, RealNumber)"/> for automatic downcasting
+        /// </summary>
+        private protected ComplexNumber(RealNumber? real, RealNumber? imaginary) =>
+            (_real, _imaginary) = (real, imaginary);
+        private readonly RealNumber? _real;
+        private readonly RealNumber? _imaginary;
+        public virtual RealNumber Real => _real ?? IntegerNumber.Zero;
+        public RealNumber Imaginary => _imaginary ?? IntegerNumber.Zero;
         public override Priority Priority =>
             (Real, Imaginary) switch
             {
@@ -42,13 +45,13 @@ namespace AngouriMath.Core.Numerix
         public static readonly ComplexNumber ImaginaryOne = new ComplexNumber(0, 1);
         public static readonly ComplexNumber MinusImaginaryOne = new ComplexNumber(0, -1);
 
-        protected override bool ThisIsFinite => Real.Value.IsFinite && Imaginary.Value.IsFinite;
+        protected override bool ThisIsFinite => Real.Decimal.IsFinite && Imaginary.Decimal.IsFinite;
         public override bool IsExact => Real.IsExact && Imaginary.IsExact;
-        public bool IsZero => Real.Value.IsZero && Imaginary.Value.IsZero;
+        public bool IsZero => Real.Decimal.IsZero && Imaginary.Decimal.IsZero;
         public bool IsNaN => this == RealNumber.NaN;
 
         public static ComplexNumber Create(RealNumber real, RealNumber imaginary) =>
-            Create(real.Value, imaginary.Value);
+            Create(real.Decimal, imaginary.Decimal);
         public static ComplexNumber Create(EDecimal real, EDecimal imaginary)
         {
             if (!MathS.Settings.DowncastingEnabled)
@@ -108,9 +111,9 @@ namespace AngouriMath.Core.Numerix
 
         /// <summary>The magnitude of this <see cref="ComplexNumber"/>. See <see cref="Number.Abs(ComplexNumber)"/></summary>
         public virtual RealNumber Abs() =>
-            (RealNumber)Sqrt(Real.Value * Real.Value + Imaginary.Value * Imaginary.Value);
+            (RealNumber)Sqrt(Real.Decimal * Real.Decimal + Imaginary.Decimal * Imaginary.Decimal);
 
-        public RealNumber Phase() => Imaginary.Value.Atan2(Real.Value, MathS.Settings.DecimalPrecisionContext);
+        public RealNumber Phase() => Imaginary.Decimal.Atan2(Real.Decimal, MathS.Settings.DecimalPrecisionContext);
 
         public static ComplexNumber CreatePolar(EDecimal magnitude, EDecimal phase)
         {

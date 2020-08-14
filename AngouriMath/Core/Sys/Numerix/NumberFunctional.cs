@@ -36,7 +36,7 @@ namespace AngouriMath
             {
                 if (!num.IsFinite)
                     return false;
-                return Functional.IsZero(num.Value);
+                return Functional.IsZero(num.Decimal);
             }
 
             /// <summary>

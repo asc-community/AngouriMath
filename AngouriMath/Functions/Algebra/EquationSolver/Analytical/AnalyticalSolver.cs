@@ -49,7 +49,9 @@ namespace AngouriMath
         /// </summary>
         /// <returns>A set of possible roots of the expression.</returns>
         internal IEnumerable<Entity> Invert(Entity value, Entity x) =>
-            Invert_(value.InnerSimplify(), x).Where(el => el.IsFinite);
+            value.InnerSimplify() is var simplified && this == x
+            ? Enumerable.Repeat(simplified, 1)
+            : Invert_(simplified, x).Where(el => el.IsFinite);
         /// <summary>Use <see cref="Invert(Entity, Entity)"/> instead which auto-simplifies <paramref name="value"/></summary>
         private protected abstract IEnumerable<Entity> Invert_(Entity value, Entity x);
         /// <summary>
@@ -165,24 +167,24 @@ namespace AngouriMath
 
         public partial record Arcsinf
         {
-            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
-            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
+            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Decimal);
+            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Decimal);
             // arcsin(x) = value => x = sin(value)
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Sin(value), x) : Enumerable.Empty<Entity>();
         }
         public partial record Arccosf
         {
-            private static readonly ComplexNumber From = ComplexNumber.Create(0, RealNumber.NegativeInfinity.Value);
-            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi, RealNumber.PositiveInfinity.Value);
+            private static readonly ComplexNumber From = ComplexNumber.Create(0, RealNumber.NegativeInfinity.Decimal);
+            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi, RealNumber.PositiveInfinity.Decimal);
             // arccos(x) = value => x = cos(value)
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cos(value), x) : Enumerable.Empty<Entity>();
         }
         public partial record Arctanf
         {
-            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
-            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
+            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Decimal);
+            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Decimal);
             // arctan(x) = value => x = tan(value)
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Tan(value), x) : Enumerable.Empty<Entity>();
@@ -190,8 +192,8 @@ namespace AngouriMath
         public partial record Arccotanf
         {
             // TODO: Range should exclude Re(z) = 0
-            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Value);
-            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Value);
+            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Decimal);
+            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Decimal);
             // arccotan(x) = value => x = cotan(value)
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cotan(value), x) : Enumerable.Empty<Entity>();
@@ -253,9 +255,8 @@ namespace AngouriMath.Core.TreeAnalysis
             return
                 expr
                 .TakeWhile(e => e != x) // Requires Entity enumeration to be depth-first!!
-                .Where(e => e.Vars.Contains(x))
-                .Reverse() // e.g. when expr is sin((x+1)^2)+3, this step results in [x+1, (x+1)^2, sin((x+1)^2), sin((x+1)^2)+3]
-                .FirstOrDefault(sub => expr.Count(child => child == sub) * sub.Count(child => child == x) == xs)
+                .Where(e => e.Vars.Contains(x)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
+                .LastOrDefault(sub => expr.Count(child => child == sub) * sub.Count(child => child == x) == xs)
                 // if `expr` contains 2 `sub`s and `sub` contains 3 `x`s, then there should be 6 `x`s in `expr` (6 == `xs`)
                 ?? x;
         }
@@ -382,7 +383,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // Here we generate a unique variable name
                 var newVar =
                     expr.Vars
-                    .OrderByDescending(v => v.Name)
+                    .OrderByDescending(v => v.Name.Length)
                     .First().Name + "quack";
                 // // //
 

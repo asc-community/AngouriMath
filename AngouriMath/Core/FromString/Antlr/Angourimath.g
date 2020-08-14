@@ -7,7 +7,7 @@ regardless of whether you are on Windows, Linux or Mac. You need to have an inst
 
 */
 
-grammar Angourimath;
+grammar AngouriMath; // Should be identical to the file name or ANTLR will complain
 
 options
 {
@@ -28,8 +28,11 @@ options
 
 @lexer::members
 {
-    public static readonly IToken Multiply = new CommonToken(Array.IndexOf(_LiteralNames, "'*'"), "*");
-    public static readonly IToken Power = new CommonToken(Array.IndexOf(_LiteralNames, "'^'"), "^");
+    // As the declaration order of static fields is the initialization order
+    // We will get null if we access the private static field _LiteralNames from static fields defined here
+    // So these are instance fields
+    public readonly CommonToken Multiply = new(Array.IndexOf(_LiteralNames, "'*'"), "*");
+    public readonly CommonToken Power = new(Array.IndexOf(_LiteralNames, "'^'"), "^");
 }
 @parser::members
 {
@@ -102,11 +105,11 @@ function_arguments returns[List<Entity> list]
    
 atom returns[Entity value]
     : NUMBER { $value = ComplexNumber.Parse($NUMBER.text); }
-    | ID { $value = new Entity.Variable($ID.text); }
+    | VARIABLE { $value = MathS.Var($VARIABLE.text); }
     | '(' expression ')' { $value = $expression.value; }
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
     | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
-    | 'log(' args = function_arguments ')' { Assert("log", 2, $args.list.Count); $value = MathS.Log($args.list[0], $args.list[1]); }
+    | 'log(' args = function_arguments ')' { $value = Assert("log", (1, 2), $args.list.Count) ? MathS.Log(10, $args.list[0]) : MathS.Log($args.list[0], $args.list[1]); }
     | 'sqrt(' args = function_arguments ')' { Assert("sqrt", 1, $args.list.Count); $value = MathS.Sqrt($args.list[0]); }
     | 'cbrt(' args = function_arguments ')' { Assert("cbrt", 1, $args.list.Count); $value = MathS.Cbrt($args.list[0]); }
     | 'sqr(' args = function_arguments ')' { Assert("sqr", 1, $args.list.Count); $value = MathS.Sqr($args.list[0]); }
@@ -138,7 +141,7 @@ fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
 
 NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 'i'? | 'i' ;
 
-ID: ('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
+VARIABLE: ('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
   
 COMMENT: ('//' ~[\r\n]* '\r'? '\n' | '/*' .*? '*/') -> skip ;
     

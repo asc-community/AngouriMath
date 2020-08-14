@@ -437,7 +437,7 @@ namespace AngouriMath
         /// A <see cref="string"/> with the number in the required base
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToBaseN(RealNumber num, int N) => BaseConversion.ToBaseN(num.Value, N);
+        public static string ToBaseN(RealNumber num, int N) => BaseConversion.ToBaseN(num.Decimal, N);
 
         /// <summary>
         /// Translates a number in base <paramref name="N"/> into base 10

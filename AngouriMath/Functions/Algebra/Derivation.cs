@@ -72,11 +72,11 @@ namespace AngouriMath
         public partial record Powf
         {
             // (a ^ b)' = e ^ (ln(a) * b) * (a' * b / a + ln(a) * b')
-            // (a ^ const)' = const * a ^ (const - 1)
+            // (a ^ const)' = const * a ^ (const - 1) * a'
             // (const ^ b)' = e^b * b'
             public override Entity Derive(Variable variable) =>
-                Exponent is Core.Numerix.ComplexNumber value
-                ? Exponent * Base.Pow(value - 1) * Base.Derive(variable)
+                Exponent is Number exp
+                ? exp * Base.Pow(exp - 1) * Base.Derive(variable)
                 : Base is Number
                 ? Base.Pow(Exponent) * MathS.Ln(Base) * Exponent.Derive(variable)
                 : Base.Pow(Exponent) * (Base.Derive(variable) * Exponent / Base + MathS.Ln(Base) * Exponent.Derive(variable));
@@ -91,7 +91,7 @@ namespace AngouriMath
         {
             // cos(a)' = -sin(a) * a'
             public override Entity Derive(Variable variable) =>
-                -1 * Argument.Sin() * Argument.Derive(variable);
+                -Argument.Sin() * Argument.Derive(variable);
         }
         public partial record Tanf
         {

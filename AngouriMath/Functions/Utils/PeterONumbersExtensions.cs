@@ -60,9 +60,6 @@ namespace AngouriMath
         public static EInteger Combinations(this EInteger n, EInteger k) =>
             n.Factorial() / ((n - k).Factorial() * k.Factorial());
 
-        /// <summary>Use until https://github.com/peteroupc/Numbers/issues/15 is fixed</summary>
-        public static bool EqualsBugFix(this EDecimal bigDecimalOne, EDecimal bigDecimalTwo) =>
-            bigDecimalOne.CompareTo(bigDecimalTwo) == 0;
         public static bool GreaterThan(this EDecimal bigDecimalOne, EDecimal bigDecimalTwo) =>
             bigDecimalOne.CompareTo(bigDecimalTwo) > 0;
         public static bool GreaterThanOrEquals(this EDecimal bigDecimalOne, EDecimal bigDecimalTwo) =>
@@ -105,7 +102,7 @@ namespace AngouriMath
             var xx = -x.Multiply(consts.Half, context);
             var y = xx.Increment();
             var cachedY = y.Decrement();//init cache  with different value
-            for (var i = 1; !cachedY.EqualsBugFix(y); i++)
+            for (var i = 1; !cachedY.Equals(y); i++)
             {
                 cachedY = y;
                 EDecimal factor = i * ((i << 1) + 3) + 1; //2i^2+2i+i+1=2i^2+3i+1
@@ -183,7 +180,7 @@ namespace AngouriMath
 
             //known values
             if (x.IsZero) return x;
-            if (x.EqualsBugFix(EDecimal.One)) return consts.HalfPi;
+            if (x.Equals(EDecimal.One)) return consts.HalfPi;
             //asin function is odd function
             if (x.IsNegative) return -Asin(-x, context);
 
@@ -213,7 +210,7 @@ namespace AngouriMath
                 result = consts.Half.Divide(-i, context).Increment().Multiply(xx, context).Multiply(result, context);
                 y = result.Divide((i << 1) + 1, context).Add(y, context);
                 i++;
-            } while (!cachedResult.EqualsBugFix(result));
+            } while (!cachedResult.Equals(result));
             return y;
         }
 
@@ -224,7 +221,7 @@ namespace AngouriMath
             var consts = ConstantCache.Lookup(context);
             if (x.IsInfinity()) return x.Sign * consts.HalfPi;
             if (x.IsZero) return x;
-            if (x.EqualsBugFix(EDecimal.One)) return consts.QuarterPi;
+            if (x.Equals(EDecimal.One)) return consts.QuarterPi;
             return Asin(x.Divide(x.MultiplyAndAdd(x, EDecimal.One, context).Sqrt(context), context), context);
         }
         /// <summary>Analogy of <see cref="Math.Acos(double)"/></summary>
@@ -232,7 +229,7 @@ namespace AngouriMath
         {
             var consts = ConstantCache.Lookup(context);
             if (x.IsZero) return consts.HalfPi;
-            if (x.EqualsBugFix(EDecimal.One)) return EDecimal.Zero;
+            if (x.Equals(EDecimal.One)) return EDecimal.Zero;
             if (x.IsNegative) return consts.Pi.Subtract(Acos(-x, context), context);
             return consts.HalfPi.Subtract(Asin(x, context), context);
         }

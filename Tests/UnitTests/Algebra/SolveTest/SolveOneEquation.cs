@@ -21,16 +21,9 @@ namespace UnitTests.Algebra
         public static void AssertRoots(Entity equation, Entity.Variable toSub, Entity varValue, ComplexNumber? subValue = null)
         {
             subValue ??= 3;
-            static string LimitString(string s)
-            {
-                if (s.Length < 30)
-                    return s;
-                else
-                    return s.Substring(0, 10) + "..." + s.Substring(s.Length - 10, 10);
-            }
             string eqNormal = equation.ToString();
             var err = CheckRoots(equation, toSub, varValue, subValue);
-            Assert.IsTrue(err < 0.001m, $"Error is: {err}\n{LimitString(eqNormal)}\nwrong root is {toSub} = {LimitString(varValue.ToString())}");
+            Assert.IsTrue(err < 0.001m, $"\nError = {err}\n{eqNormal}\nWrong root: {toSub} = {varValue}");
         }
 
         public static RealNumber CheckRoots(Entity equation, Entity.Variable toSub, Entity varValue, ComplexNumber subValue)

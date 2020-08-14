@@ -14,7 +14,7 @@ namespace AngouriMath
                 [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
                 out Entity? res)
             {
-                if (!(arg is RealNumber { Value:var dArg }))
+                if (!(arg is RealNumber { Decimal:var dArg }))
                 {
                     res = null;
                     return false;

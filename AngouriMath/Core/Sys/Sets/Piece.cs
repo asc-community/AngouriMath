@@ -188,8 +188,7 @@ namespace AngouriMath.Core
     public class OneElementPiece : Piece
     {
         internal Edge entity;
-        private ComplexNumber? evaled;
-        internal ComplexNumber Evaluated => evaled ??= entity.Item1.Eval();
+        internal Entity Evaled => entity.Item1.Evaled;
 
         internal OneElementPiece(Entity element)
         {

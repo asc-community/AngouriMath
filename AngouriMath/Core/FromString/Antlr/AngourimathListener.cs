@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from ./Angourimath.g by ANTLR 4.8
+// Generated from ./AngouriMath.g by ANTLR 4.8
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -34,109 +34,109 @@ using IToken = Antlr4.Runtime.IToken;
 
 /// <summary>
 /// This interface defines a complete listener for a parse tree produced by
-/// <see cref="AngourimathParser"/>.
+/// <see cref="AngouriMathParser"/>.
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.8")]
 [System.CLSCompliant(false)]
-public interface IAngourimathListener : IParseTreeListener {
+public interface IAngouriMathListener : IParseTreeListener {
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.factorial_expression"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.factorial_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterFactorial_expression([NotNull] AngourimathParser.Factorial_expressionContext context);
+	void EnterFactorial_expression([NotNull] AngouriMathParser.Factorial_expressionContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.factorial_expression"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.factorial_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitFactorial_expression([NotNull] AngourimathParser.Factorial_expressionContext context);
+	void ExitFactorial_expression([NotNull] AngouriMathParser.Factorial_expressionContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.power_list"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.power_list"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterPower_list([NotNull] AngourimathParser.Power_listContext context);
+	void EnterPower_list([NotNull] AngouriMathParser.Power_listContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.power_list"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.power_list"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitPower_list([NotNull] AngourimathParser.Power_listContext context);
+	void ExitPower_list([NotNull] AngouriMathParser.Power_listContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.power_expression"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.power_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterPower_expression([NotNull] AngourimathParser.Power_expressionContext context);
+	void EnterPower_expression([NotNull] AngouriMathParser.Power_expressionContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.power_expression"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.power_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitPower_expression([NotNull] AngourimathParser.Power_expressionContext context);
+	void ExitPower_expression([NotNull] AngouriMathParser.Power_expressionContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.unary_expression"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.unary_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterUnary_expression([NotNull] AngourimathParser.Unary_expressionContext context);
+	void EnterUnary_expression([NotNull] AngouriMathParser.Unary_expressionContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.unary_expression"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.unary_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitUnary_expression([NotNull] AngourimathParser.Unary_expressionContext context);
+	void ExitUnary_expression([NotNull] AngouriMathParser.Unary_expressionContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.mult_expression"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.mult_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterMult_expression([NotNull] AngourimathParser.Mult_expressionContext context);
+	void EnterMult_expression([NotNull] AngouriMathParser.Mult_expressionContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.mult_expression"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.mult_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitMult_expression([NotNull] AngourimathParser.Mult_expressionContext context);
+	void ExitMult_expression([NotNull] AngouriMathParser.Mult_expressionContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.sum_expression"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.sum_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterSum_expression([NotNull] AngourimathParser.Sum_expressionContext context);
+	void EnterSum_expression([NotNull] AngouriMathParser.Sum_expressionContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.sum_expression"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.sum_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitSum_expression([NotNull] AngourimathParser.Sum_expressionContext context);
+	void ExitSum_expression([NotNull] AngouriMathParser.Sum_expressionContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.expression"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterExpression([NotNull] AngourimathParser.ExpressionContext context);
+	void EnterExpression([NotNull] AngouriMathParser.ExpressionContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.expression"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitExpression([NotNull] AngourimathParser.ExpressionContext context);
+	void ExitExpression([NotNull] AngouriMathParser.ExpressionContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.function_arguments"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.function_arguments"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterFunction_arguments([NotNull] AngourimathParser.Function_argumentsContext context);
+	void EnterFunction_arguments([NotNull] AngouriMathParser.Function_argumentsContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.function_arguments"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.function_arguments"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitFunction_arguments([NotNull] AngourimathParser.Function_argumentsContext context);
+	void ExitFunction_arguments([NotNull] AngouriMathParser.Function_argumentsContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.atom"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.atom"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterAtom([NotNull] AngourimathParser.AtomContext context);
+	void EnterAtom([NotNull] AngouriMathParser.AtomContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.atom"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.atom"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitAtom([NotNull] AngourimathParser.AtomContext context);
+	void ExitAtom([NotNull] AngouriMathParser.AtomContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngourimathParser.statement"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterStatement([NotNull] AngourimathParser.StatementContext context);
+	void EnterStatement([NotNull] AngouriMathParser.StatementContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngourimathParser.statement"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.statement"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitStatement([NotNull] AngourimathParser.StatementContext context);
+	void ExitStatement([NotNull] AngouriMathParser.StatementContext context);
 }

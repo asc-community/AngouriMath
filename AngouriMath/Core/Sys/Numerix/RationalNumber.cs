@@ -18,13 +18,23 @@ using PeterO.Numbers;
 namespace AngouriMath.Core.Numerix
 {
 	/// <summary>
-	/// Constructor does not downcast automatically.
-	/// Use <see cref="Create(EInteger, EInteger)"/> or <see cref="Create(ERational)"/> for automatic downcasting.
 	/// The denominator cannot be zero as the resulting value will not be a rational
 	/// </summary>
-    public record RationalNumber(ERational Rational)
-	    : RealNumber(Rational.ToEDecimal(MathS.Settings.DecimalPrecisionContext)), System.IComparable<RationalNumber>
+    public record RationalNumber : RealNumber, System.IComparable<RationalNumber>
     {
+        /// <summary>
+        /// Constructor does not downcast automatically.
+        /// Use <see cref="Create(EInteger, EInteger)"/> or <see cref="Create(ERational)"/> for automatic downcasting.
+        /// </summary>
+        private protected RationalNumber(ERational value)
+            : base(value.ToEDecimal(MathS.Settings.DecimalPrecisionContext)) => Rational = value;
+        public ERational Rational { get; }
+        public void Deconstruct(out ERational rational) => rational = Rational;
+        public void Deconstruct(out int? numerator, out int? denominator)
+        {
+            numerator = Rational.Numerator.CanFitInInt32() ? Rational.Numerator.ToInt32Unchecked() : new int?();
+            denominator = Rational.Denominator.CanFitInInt32() ? Rational.Denominator.ToInt32Unchecked() : new int?();
+        }
         public override Priority Priority => Priority.Div;
         public override bool IsExact => true;
         public static RationalNumber Create(EInteger numerator, EInteger denominator) =>
@@ -43,11 +53,6 @@ namespace AngouriMath.Core.Numerix
                 return IntegerNumber.Create(@return.Rational.Numerator);
             else
                 return @return;
-        }
-        public void Deconstruct(out int? numerator, out int? denominator)
-        {
-            numerator = Rational.Numerator.CanFitInInt32() ? Rational.Numerator.ToInt32Unchecked() : new int?();
-            denominator = Rational.Denominator.CanFitInInt32() ? Rational.Denominator.ToInt32Unchecked() : new int?();
         }
 
         // TODO: When we target .NET 5, remember to use covariant return types

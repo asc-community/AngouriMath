@@ -19,15 +19,19 @@ using PeterO.Numbers;
 [assembly: InternalsVisibleTo("DotnetBenchmark")]
 namespace AngouriMath.Core.Numerix
 {
-    /// <summary>
-    /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
-    /// </summary>
-    public record RealNumber(EDecimal Value) : ComplexNumber(null, null), System.IComparable<RealNumber>
+    public record RealNumber : ComplexNumber, System.IComparable<RealNumber>
     {
-        public override Priority Priority => Value.IsNegative ? Priority.Mul : Priority.Number;
-        public override bool IsExact => !Value.IsFinite;
-        public bool IsNegative => Value.IsNegative;
-        public bool IsPositive => !Value.IsNegative && !Value.IsZero;
+        /// <summary>
+        /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
+        /// </summary>
+        private protected RealNumber(EDecimal @decimal) : base(null, null) => Decimal = @decimal;
+        public EDecimal Decimal { get; }
+        public void Deconstruct(out EDecimal @decimal) => @decimal = Decimal;
+        public override RealNumber Real => this;
+        public override Priority Priority => Decimal.IsNegative ? Priority.Mul : Priority.Number;
+        public override bool IsExact => !Decimal.IsFinite;
+        public bool IsNegative => Decimal.IsNegative;
+        public bool IsPositive => !Decimal.IsNegative && !Decimal.IsZero;
         public static RealNumber Create(EDecimal value)
         {
             if (!MathS.Settings.DowncastingEnabled)
@@ -51,20 +55,20 @@ namespace AngouriMath.Core.Numerix
                 return attempt;
         }
 
-        public override RealNumber Abs() => Create(Value.Abs());
+        public override RealNumber Abs() => Create(Decimal.Abs());
 
         internal override string Stringize() =>
-            Value.IsFinite ? Value.ToString()
-            : Value.IsPositiveInfinity() ? "+oo"
-            : Value.IsNegativeInfinity() ? "-oo"
-            : Value.IsNaN() ? "NaN"
+            Decimal.IsFinite ? Decimal.ToString()
+            : Decimal.IsPositiveInfinity() ? "+oo"
+            : Decimal.IsNegativeInfinity() ? "-oo"
+            : Decimal.IsNaN() ? "NaN"
             : throw new UniverseCollapseException();
 
         public override string Latexise() =>
-            Value.IsFinite ? Value.ToString()
-            : Value.IsPositiveInfinity() ? @"\infty "
-            : Value.IsNegativeInfinity() ? @"-\infty "
-            : Value.IsNaN() ? @"\mathrm{undefined}"
+            Decimal.IsFinite ? Decimal.ToString()
+            : Decimal.IsPositiveInfinity() ? @"\infty "
+            : Decimal.IsNegativeInfinity() ? @"-\infty "
+            : Decimal.IsNaN() ? @"\mathrm{undefined}"
             : throw new UniverseCollapseException();
 
         internal static bool TryParse(string s,
@@ -99,11 +103,11 @@ namespace AngouriMath.Core.Numerix
         /// </summary>
         /// <returns></returns>
         public static readonly RealNumber NaN = new RealNumber(EDecimal.NaN);
-        public static bool operator >(RealNumber a, RealNumber b) => a.Value.GreaterThan(b.Value);
-        public static bool operator >=(RealNumber a, RealNumber b) => a.Value.GreaterThanOrEquals(b.Value);
-        public static bool operator <(RealNumber a, RealNumber b) => a.Value.LessThan(b.Value);
-        public static bool operator <=(RealNumber a, RealNumber b) => a.Value.LessThanOrEquals(b.Value);
-        public int CompareTo(RealNumber other) => Value.CompareTo(other.Value);
+        public static bool operator >(RealNumber a, RealNumber b) => a.Decimal.GreaterThan(b.Decimal);
+        public static bool operator >=(RealNumber a, RealNumber b) => a.Decimal.GreaterThanOrEquals(b.Decimal);
+        public static bool operator <(RealNumber a, RealNumber b) => a.Decimal.LessThan(b.Decimal);
+        public static bool operator <=(RealNumber a, RealNumber b) => a.Decimal.LessThanOrEquals(b.Decimal);
+        public int CompareTo(RealNumber other) => Decimal.CompareTo(other.Decimal);
         public static RealNumber operator +(RealNumber a, RealNumber b) => OpSum(a, b);
         public static RealNumber operator -(RealNumber a, RealNumber b) => OpSub(a, b);
         public static RealNumber operator *(RealNumber a, RealNumber b) => OpMul(a, b);

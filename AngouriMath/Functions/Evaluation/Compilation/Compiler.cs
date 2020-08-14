@@ -57,12 +57,13 @@ namespace AngouriMath
                 throw new UncompilableNodeException($"Tensors cannot be compiled");
         }
         // Each function and operator processing
+        // Note: We pop values when executing instructions, so we add instructions in reverse child order
         public partial record Sumf
         {
             private protected override void InnerCompile_(Compiler compiler)
             {
-                Augend.InnerCompile(compiler);
                 Addend.InnerCompile(compiler);
+                Augend.InnerCompile(compiler);
                 compiler.Instructions.Add(new(InstructionType.CALL_SUM));
             }
         }
@@ -70,8 +71,8 @@ namespace AngouriMath
         {
             private protected override void InnerCompile_(Compiler compiler)
             {
-                Subtrahend.InnerCompile(compiler);
                 Minuend.InnerCompile(compiler);
+                Subtrahend.InnerCompile(compiler);
                 compiler.Instructions.Add(new(InstructionType.CALL_MINUS));
             }
         }
@@ -79,8 +80,8 @@ namespace AngouriMath
         {
             private protected override void InnerCompile_(Compiler compiler)
             {
-                Multiplier.InnerCompile(compiler);
                 Multiplicand.InnerCompile(compiler);
+                Multiplier.InnerCompile(compiler);
                 compiler.Instructions.Add(new(InstructionType.CALL_MUL));
             }
         }
@@ -88,8 +89,8 @@ namespace AngouriMath
         {
             private protected override void InnerCompile_(Compiler compiler)
             {
-                Dividend.InnerCompile(compiler);
                 Divisor.InnerCompile(compiler);
+                Dividend.InnerCompile(compiler);
                 compiler.Instructions.Add(new(InstructionType.CALL_DIV));
             }
         }
@@ -97,8 +98,8 @@ namespace AngouriMath
         {
             private protected override void InnerCompile_(Compiler compiler)
             {
-                Base.InnerCompile(compiler);
                 Exponent.InnerCompile(compiler);
+                Base.InnerCompile(compiler);
                 compiler.Instructions.Add(new(InstructionType.CALL_POW));
             }
         }
@@ -140,8 +141,9 @@ namespace AngouriMath
             {
                 // Unlike AngouriMath which accepts Base as the first parameter,
                 // Complex.Log accepts it as the second parameter
-                Antilogarithm.InnerCompile(compiler);
+                // So we reverse reverse the child order -> same as child order
                 Base.InnerCompile(compiler);
+                Antilogarithm.InnerCompile(compiler);
                 compiler.Instructions.Add(new(InstructionType.CALL_LOG));
             }
         }

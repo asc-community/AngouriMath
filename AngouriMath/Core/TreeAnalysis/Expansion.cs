@@ -170,7 +170,7 @@ namespace AngouriMath.Core.TreeAnalysis
                             // (a / b)^2 = a^2 / b^2
                             Divf(var baseDividend, var baseDivisor) =>
                                 new List<Entity> { new Powf(baseDividend, power) / new Powf(baseDivisor, power) },
-                            var baseChild => new List<Entity> { baseChild }
+                            _ => new List<Entity> { expr }
                         };
                     if (power > 20 && linBaseChildren.Count > 1 ||
                         EstimateTermCount(linBaseChildren.Count, power) >

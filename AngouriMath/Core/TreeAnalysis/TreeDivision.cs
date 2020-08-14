@@ -55,8 +55,8 @@ namespace AngouriMath.Core.TreeAnalysis
             public void AddReplacement(Variable variable, Entity value)
             {
                 variable = new(variable.Name + "_r");
-                replacements.Add(value, variable);
-                revertReplacements.Add(variable, value);
+                replacements[value] = variable;
+                revertReplacements[variable] = value;
             }
             public void AddMonoInfo(Variable variable, Dictionary<EDecimal, Entity>? powers)
             {

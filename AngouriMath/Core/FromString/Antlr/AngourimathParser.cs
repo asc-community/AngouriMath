@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-// Generated from ./Angourimath.g by ANTLR 4.8
+// Generated from ./AngouriMath.g by ANTLR 4.8
 
 // Unreachable code detected
 #pragma warning disable 0162
@@ -41,7 +41,7 @@ using DFA = Antlr4.Runtime.Dfa.DFA;
 
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.8")]
 [System.CLSCompliant(false)]
-public partial class AngourimathParser : Parser {
+public partial class AngouriMathParser : Parser {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
@@ -49,7 +49,7 @@ public partial class AngourimathParser : Parser {
 		T__9=10, T__10=11, T__11=12, T__12=13, T__13=14, T__14=15, T__15=16, T__16=17, 
 		T__17=18, T__18=19, T__19=20, T__20=21, T__21=22, T__22=23, T__23=24, 
 		T__24=25, T__25=26, T__26=27, T__27=28, T__28=29, T__29=30, T__30=31, 
-		T__31=32, NEWLINE=33, NUMBER=34, ID=35, COMMENT=36, WS=37;
+		T__31=32, NEWLINE=33, NUMBER=34, VARIABLE=35, COMMENT=36, WS=37;
 	public const int
 		RULE_factorial_expression = 0, RULE_power_list = 1, RULE_power_expression = 2, 
 		RULE_unary_expression = 3, RULE_mult_expression = 4, RULE_sum_expression = 5, 
@@ -64,14 +64,14 @@ public partial class AngourimathParser : Parser {
 		null, "'!'", "'^'", "'-'", "'+'", "'*'", "'/'", "','", "'('", "')'", "'sin('", 
 		"'cos('", "'log('", "'sqrt('", "'cbrt('", "'sqr('", "'ln('", "'tan('", 
 		"'cotan('", "'sec('", "'cosec('", "'arcsin('", "'arccos('", "'arctan('", 
-		"'arccotan('", "'arcsec('", "'arccosec('", "'gamma('", "'derive('", "'integrate('", 
-		"'limit('", "'limitleft('", "'limitright('"
+		"'arccotan('", "'arcsec('", "'arccosec('", "'gamma('", "'derivative('", 
+		"'integral('", "'limit('", "'limitleft('", "'limitright('"
 	};
 	private static readonly string[] _SymbolicNames = {
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, "NEWLINE", "NUMBER", 
-		"ID", "COMMENT", "WS"
+		"VARIABLE", "COMMENT", "WS"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -84,13 +84,13 @@ public partial class AngourimathParser : Parser {
 		}
 	}
 
-	public override string GrammarFileName { get { return "Angourimath.g"; } }
+	public override string GrammarFileName { get { return "AngouriMath.g"; } }
 
 	public override string[] RuleNames { get { return ruleNames; } }
 
 	public override string SerializedAtn { get { return new string(_serializedATN); } }
 
-	static AngourimathParser() {
+	static AngouriMathParser() {
 		decisionToDFA = new DFA[_ATN.NumberOfDecisions];
 		for (int i = 0; i < _ATN.NumberOfDecisions; i++) {
 			decisionToDFA[i] = new DFA(_ATN.GetDecisionState(i), i);
@@ -103,9 +103,9 @@ public partial class AngourimathParser : Parser {
 	    
 	    public void Parse() { this.statement(); }
 
-		public AngourimathParser(ITokenStream input) : this(input, Console.Out, Console.Error) { }
+		public AngouriMathParser(ITokenStream input) : this(input, Console.Out, Console.Error) { }
 
-		public AngourimathParser(ITokenStream input, TextWriter output, TextWriter errorOutput)
+		public AngouriMathParser(ITokenStream input, TextWriter output, TextWriter errorOutput)
 		: base(input, output, errorOutput)
 	{
 		Interpreter = new ParserATNSimulator(this, _ATN, decisionToDFA, sharedContextCache);
@@ -123,11 +123,11 @@ public partial class AngourimathParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_factorial_expression; } }
 		public override void EnterRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.EnterFactorial_expression(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.ExitFactorial_expression(this);
 		}
 	}
@@ -183,11 +183,11 @@ public partial class AngourimathParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_power_list; } }
 		public override void EnterRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.EnterPower_list(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.ExitPower_list(this);
 		}
 	}
@@ -245,11 +245,11 @@ public partial class AngourimathParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_power_expression; } }
 		public override void EnterRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.EnterPower_expression(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.ExitPower_expression(this);
 		}
 	}
@@ -306,11 +306,11 @@ public partial class AngourimathParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_unary_expression; } }
 		public override void EnterRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.EnterUnary_expression(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.ExitUnary_expression(this);
 		}
 	}
@@ -374,7 +374,7 @@ public partial class AngourimathParser : Parser {
 			case T__30:
 			case T__31:
 			case NUMBER:
-			case ID:
+			case VARIABLE:
 				EnterOuterAlt(_localctx, 2);
 				{
 				State = 54; _localctx.p = power_expression();
@@ -412,11 +412,11 @@ public partial class AngourimathParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_mult_expression; } }
 		public override void EnterRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.EnterMult_expression(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.ExitMult_expression(this);
 		}
 	}
@@ -490,11 +490,11 @@ public partial class AngourimathParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_sum_expression; } }
 		public override void EnterRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.EnterSum_expression(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.ExitSum_expression(this);
 		}
 	}
@@ -564,11 +564,11 @@ public partial class AngourimathParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_expression; } }
 		public override void EnterRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.EnterExpression(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.ExitExpression(this);
 		}
 	}
@@ -610,11 +610,11 @@ public partial class AngourimathParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_function_arguments; } }
 		public override void EnterRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.EnterFunction_arguments(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.ExitFunction_arguments(this);
 		}
 	}
@@ -631,7 +631,7 @@ public partial class AngourimathParser : Parser {
 			State = 103;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__3) | (1L << T__7) | (1L << T__9) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << T__16) | (1L << T__17) | (1L << T__18) | (1L << T__19) | (1L << T__20) | (1L << T__21) | (1L << T__22) | (1L << T__23) | (1L << T__24) | (1L << T__25) | (1L << T__26) | (1L << T__27) | (1L << T__28) | (1L << T__29) | (1L << T__30) | (1L << T__31) | (1L << NUMBER) | (1L << ID))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__3) | (1L << T__7) | (1L << T__9) | (1L << T__10) | (1L << T__11) | (1L << T__12) | (1L << T__13) | (1L << T__14) | (1L << T__15) | (1L << T__16) | (1L << T__17) | (1L << T__18) | (1L << T__19) | (1L << T__20) | (1L << T__21) | (1L << T__22) | (1L << T__23) | (1L << T__24) | (1L << T__25) | (1L << T__26) | (1L << T__27) | (1L << T__28) | (1L << T__29) | (1L << T__30) | (1L << T__31) | (1L << NUMBER) | (1L << VARIABLE))) != 0)) {
 				{
 				State = 92; _localctx.e = expression();
 				 _localctx.list.Add(_localctx.e.value); 
@@ -669,11 +669,11 @@ public partial class AngourimathParser : Parser {
 	public partial class AtomContext : ParserRuleContext {
 		public Entity value;
 		public IToken _NUMBER;
-		public IToken _ID;
+		public IToken _VARIABLE;
 		public ExpressionContext _expression;
 		public Function_argumentsContext args;
-		public ITerminalNode NUMBER() { return GetToken(AngourimathParser.NUMBER, 0); }
-		public ITerminalNode ID() { return GetToken(AngourimathParser.ID, 0); }
+		public ITerminalNode NUMBER() { return GetToken(AngouriMathParser.NUMBER, 0); }
+		public ITerminalNode VARIABLE() { return GetToken(AngouriMathParser.VARIABLE, 0); }
 		public ExpressionContext expression() {
 			return GetRuleContext<ExpressionContext>(0);
 		}
@@ -686,11 +686,11 @@ public partial class AngourimathParser : Parser {
 		}
 		public override int RuleIndex { get { return RULE_atom; } }
 		public override void EnterRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.EnterAtom(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.ExitAtom(this);
 		}
 	}
@@ -710,11 +710,11 @@ public partial class AngourimathParser : Parser {
 				 _localctx.value =  ComplexNumber.Parse((_localctx._NUMBER!=null?_localctx._NUMBER.Text:null)); 
 				}
 				break;
-			case ID:
+			case VARIABLE:
 				EnterOuterAlt(_localctx, 2);
 				{
-				State = 107; _localctx._ID = Match(ID);
-				 _localctx.value =  new Entity.Variable((_localctx._ID!=null?_localctx._ID.Text:null)); 
+				State = 107; _localctx._VARIABLE = Match(VARIABLE);
+				 _localctx.value =  MathS.Var((_localctx._VARIABLE!=null?_localctx._VARIABLE.Text:null)); 
 				}
 				break;
 			case T__7:
@@ -750,7 +750,7 @@ public partial class AngourimathParser : Parser {
 				State = 124; Match(T__11);
 				State = 125; _localctx.args = function_arguments();
 				State = 126; Match(T__8);
-				 Assert("log", 2, _localctx.args.list.Count); _localctx.value =  MathS.Log(_localctx.args.list[0], _localctx.args.list[1]); 
+				 _localctx.value =  Assert("log", (1, 2), _localctx.args.list.Count) ? MathS.Log(10, _localctx.args.list[0]) : MathS.Log(_localctx.args.list[0], _localctx.args.list[1]); 
 				}
 				break;
 			case T__12:
@@ -894,7 +894,7 @@ public partial class AngourimathParser : Parser {
 				State = 204; Match(T__27);
 				State = 205; _localctx.args = function_arguments();
 				State = 206; Match(T__8);
-				 Assert("derive", 3, _localctx.args.list.Count); _localctx.value =  MathS.Derivative(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
+				 Assert("derivative", 3, _localctx.args.list.Count); _localctx.value =  MathS.Derivative(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
 				}
 				break;
 			case T__28:
@@ -903,7 +903,7 @@ public partial class AngourimathParser : Parser {
 				State = 209; Match(T__28);
 				State = 210; _localctx.args = function_arguments();
 				State = 211; Match(T__8);
-				 Assert("integrate", 3, _localctx.args.list.Count); _localctx.value =  MathS.Integral(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
+				 Assert("integral", 3, _localctx.args.list.Count); _localctx.value =  MathS.Integral(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
 				}
 				break;
 			case T__29:
@@ -953,18 +953,18 @@ public partial class AngourimathParser : Parser {
 		public ExpressionContext expression() {
 			return GetRuleContext<ExpressionContext>(0);
 		}
-		public ITerminalNode Eof() { return GetToken(AngourimathParser.Eof, 0); }
+		public ITerminalNode Eof() { return GetToken(AngouriMathParser.Eof, 0); }
 		public StatementContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
 		public override int RuleIndex { get { return RULE_statement; } }
 		public override void EnterRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.EnterStatement(this);
 		}
 		public override void ExitRule(IParseTreeListener listener) {
-			IAngourimathListener typedListener = listener as IAngourimathListener;
+			IAngouriMathListener typedListener = listener as IAngouriMathListener;
 			if (typedListener != null) typedListener.ExitStatement(this);
 		}
 	}

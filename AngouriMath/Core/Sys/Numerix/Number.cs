@@ -82,11 +82,11 @@ namespace AngouriMath
                 var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
                 {
                     var res = new HashSet<ComplexNumber>();
-                    EDecimal phi = (Ln(value / value.Abs()) / MathS.i).Real.Value;
+                    EDecimal phi = (Ln(value / value.Abs()) / MathS.i).Real.Decimal;
                     if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
                     phi = EDecimal.Zero;
 
-                    EDecimal newMod = Pow(Abs(value), CtxDivide(EDecimal.One, rootPower)).Real.Value;
+                    EDecimal newMod = Pow(Abs(value), CtxDivide(EDecimal.One, rootPower)).Real.Decimal;
 
                     var i = ComplexNumber.ImaginaryOne;
                     for (int n = 0; n < rootPower; n++)
@@ -131,7 +131,7 @@ namespace AngouriMath
             /// <returns></returns>
             public Complex AsComplex() =>
                 this is ComplexNumber c
-                ? new Complex(c.Real.Value.ToDouble(), c.Imaginary.Value.ToDouble())
+                ? new Complex(c.Real.Decimal.ToDouble(), c.Imaginary.Decimal.ToDouble())
                 : throw new InvalidNumberCastException(GetType(), typeof(ComplexNumber));
 
             /// <summary>
@@ -140,7 +140,7 @@ namespace AngouriMath
             /// <returns></returns>
             public double AsDouble() =>
                 this is RealNumber r
-                ? r.Value.ToDouble()
+                ? r.Decimal.ToDouble()
                 : throw new InvalidNumberCastException(GetType(), typeof(RealNumber));
 
             public abstract bool IsExact { get; }

@@ -68,7 +68,7 @@ namespace AngouriMathPlot
         /// </param>
         public void PlotScatter(FastExpression func, ComplexNumber from, ComplexNumber to)
         {
-            double inner(int it) => ((to - from) / (pointCount - 1) * it).Real.Value.ToDouble();
+            double inner(int it) => ((to - from) / (pointCount - 1) * it).Real.Decimal.ToDouble();
             Clear();
             BuildData(inner,
                         it => func.Call(new Complex((double)inner(it), 0)).Real);

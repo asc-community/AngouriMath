@@ -29,7 +29,7 @@ using System.Text;
 namespace AngouriMath.Core.FromString
 {
     // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
-    class AngourimathTextWriter : TextWriter
+    class AngouriMathTextWriter : TextWriter
     {
         public override Encoding Encoding => Encoding.UTF8;
         public override void WriteLine(string s) => throw new ParseException("parsing error: " + s);
@@ -38,20 +38,20 @@ namespace AngouriMath.Core.FromString
     {
         public static Entity Parse(string source)
         {
-            var lexer = new AngourimathLexer(new AntlrInputStream(source), null, new AngourimathTextWriter());
+            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, new AngouriMathTextWriter());
             var tokenStream = new CommonTokenStream(lexer);
             tokenStream.Fill();
             var tokenList = tokenStream.GetTokens();
 
             const string NUMBER = nameof(NUMBER);
+            const string VARIABLE = nameof(VARIABLE);
             const string PARENTHESIS_OPEN = "'('";
             const string PARENTHESIS_CLOSE = "')'";
-            const string FUNCTION = "\x1"; // Hopefully never appears as a real token name
-            const string VARIABLE = "\x2"; // Hopefully never appears as a real token name
+            const string FUNCTION = "\x1"; // Fake display name for all function tokens e.g. "'sin('"
 
             static string GetType(IToken token) =>
-                AngourimathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type && type is "ID"
-                ? type.Length > 1 && type.EndsWith("(") ? FUNCTION : VARIABLE : type;
+                AngouriMathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type
+                && type.Length > 1 && type.EndsWith("('") ? FUNCTION : type;
 
             if (tokenList.Count == 0)
                 throw new ParseException("Input string is invalid");
@@ -68,34 +68,34 @@ namespace AngouriMath.Core.FromString
                 {
                     // Insert at j because we need to keep the first one behind
                     // 2x -> 2 * x
-                    case (NUMBER, VARIABLE): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    case (NUMBER, VARIABLE): tokenList.Insert(j, lexer.Multiply); break;
                     // x y -> x * y
-                    case (VARIABLE, VARIABLE): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    case (VARIABLE, VARIABLE): tokenList.Insert(j, lexer.Multiply); break;
                     // 2( -> 2 * (
-                    case (NUMBER, PARENTHESIS_OPEN): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    case (NUMBER, PARENTHESIS_OPEN): tokenList.Insert(j, lexer.Multiply); break;
                     // )2 -> ) ^ 2
-                    case (PARENTHESIS_CLOSE, NUMBER): tokenList.Insert(j, AngourimathLexer.Power); break;
+                    case (PARENTHESIS_CLOSE, NUMBER): tokenList.Insert(j, lexer.Power); break;
                     // x( -> x * (
-                    case (VARIABLE, PARENTHESIS_OPEN): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    case (VARIABLE, PARENTHESIS_OPEN): tokenList.Insert(j, lexer.Multiply); break;
                     // )x -> ) * x
-                    case (PARENTHESIS_CLOSE, VARIABLE): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    case (PARENTHESIS_CLOSE, VARIABLE): tokenList.Insert(j, lexer.Multiply); break;
                     // x2 -> x ^ 2
-                    case (VARIABLE, NUMBER): tokenList.Insert(j, AngourimathLexer.Power); break;
+                    case (VARIABLE, NUMBER): tokenList.Insert(j, lexer.Power); break;
                     // 3 2 -> 3 ^ 2
-                    case (NUMBER, NUMBER): tokenList.Insert(j, AngourimathLexer.Power); break;
+                    case (NUMBER, NUMBER): tokenList.Insert(j, lexer.Power); break;
                     // 2sqrt -> 2 * sqrt
-                    case (NUMBER, FUNCTION): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    case (NUMBER, FUNCTION): tokenList.Insert(j, lexer.Multiply); break;
                     // x sqrt -> x * sqrt
-                    case (VARIABLE, FUNCTION): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    case (VARIABLE, FUNCTION): tokenList.Insert(j, lexer.Multiply); break;
                     // )sqrt -> ) * sqrt
-                    case (PARENTHESIS_CLOSE, FUNCTION): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    case (PARENTHESIS_CLOSE, FUNCTION): tokenList.Insert(j, lexer.Multiply); break;
                     // )( -> ) * (
-                    case (PARENTHESIS_CLOSE, PARENTHESIS_OPEN): tokenList.Insert(j, AngourimathLexer.Multiply); break;
+                    case (PARENTHESIS_CLOSE, PARENTHESIS_OPEN): tokenList.Insert(j, lexer.Multiply); break;
                 }
             }
             endTokenInsertion:
 
-            var parser = new AngourimathParser(tokenStream, null, new AngourimathTextWriter());
+            var parser = new AngouriMathParser(tokenStream, null, new AngouriMathTextWriter());
             parser.Parse();
             return parser.Result;
         }
