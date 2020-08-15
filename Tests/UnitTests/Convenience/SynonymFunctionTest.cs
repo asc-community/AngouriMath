@@ -4,7 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 namespace UnitTests.Convenience
 {
     [TestClass]
-    public class SynonimFunctionTest
+    public class SynonymFunctionTest
     {
         private readonly Entity x = MathS.Var(nameof(x));
         [TestMethod]

@@ -12,7 +12,7 @@ namespace UnitTests.Algebra
         {
             var func = MathS.Sqr(x) + 2 * x + 1;
             var derived = func.Derive(x);
-            Assert.AreEqual(2 * (1 + x), derived.Simplify());
+            Assert.AreEqual(2 + 2 * x, derived.Simplify());
         }
         [TestMethod]
         public void TestSin()

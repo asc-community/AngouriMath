@@ -8,14 +8,14 @@ namespace UnitTests.PatternsTest
     [TestClass]
     public class SimplifyTest
     {
-        static readonly Entity.Variable a = MathS.Var(nameof(a));
-        static readonly Entity.Variable b = MathS.Var(nameof(b));
-        static readonly Entity.Variable c = MathS.Var(nameof(c));
-        static readonly Entity.Variable x = MathS.Var(nameof(x));
-        static readonly Entity.Variable y = MathS.Var(nameof(y));
-        static readonly Entity.Number nan = double.NaN;
-        static readonly Entity.Number oo = double.PositiveInfinity;
-        static readonly Entity.Number moo = double.NegativeInfinity;
+        static readonly Entity a = MathS.Var(nameof(a));
+        static readonly Entity b = MathS.Var(nameof(b));
+        static readonly Entity c = MathS.Var(nameof(c));
+        static readonly Entity x = MathS.Var(nameof(x));
+        static readonly Entity y = MathS.Var(nameof(y));
+        static readonly Entity nan = double.NaN;
+        static readonly Entity oo = double.PositiveInfinity;
+        static readonly Entity moo = double.NegativeInfinity;
         void AssertSimplify(Entity original, Entity simplified, int? level = null)
         {
             Assert.AreNotEqual(simplified, original);
@@ -57,7 +57,7 @@ namespace UnitTests.PatternsTest
         [TestMethod] public void FactorialXP1OverFactorialXP1() => AssertSimplify(MathS.Factorial(x + 1) / MathS.Factorial(x + 1), 1);
         [TestMethod] public void FactorialXP1OverFactorialX() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(x), 1 + x);
         [TestMethod] public void FactorialXP1OverFactorialXM2() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(-2 + x), "x3 - x");
-        [TestMethod] public void FactorialXP1OverFactorialXM1() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(-1 + x), x * (1 + x));
+        [TestMethod] public void FactorialXP1OverFactorialXM1() => AssertSimplify(MathS.Factorial(1 + x) / MathS.Factorial(-1 + x), (1 + x) * x);
         [TestMethod] public void FactorialXP1OverFactorialXM3() => AssertSimplifyIdentical(MathS.Factorial(x + 1) / MathS.Factorial(x - 3));
         [TestMethod] public void FactorialXOverFactorialXP1() => AssertSimplify(MathS.Factorial(x) / MathS.Factorial(x + 1), 1 / (1 + x));
         [TestMethod] public void FactorialXOverFactorialX() => AssertSimplify(MathS.Factorial(x) / MathS.Factorial(x), 1);
@@ -93,17 +93,18 @@ namespace UnitTests.PatternsTest
         [TestMethod] public void Derive2() => AssertSimplify(MathS.Derivative("7x2 - x + 2", x, 2), 14);
         [TestMethod] public void Integral1() => AssertSimplify(MathS.Integral("x + y", x, 0), "x + y");
         [TestMethod] public void Divide1() => AssertSimplify("(x2 + 2 x y + y2) / (x + y)", "x + y");
-        [TestMethod] public void Divide2() => AssertSimplify("(x3 + 3 x 2 y + 3 x y 2 + y3) / (x + y)", "x2 + 2 x y + y2".Simplify());
-        [TestMethod] public void Divide3() => AssertSimplify("(x2 + 2 x y + y2 + 1) / (x + y)", "x + 1 / (x + y) + y".Simplify());
+        // TODO: Smart collapser
+        [TestMethod] public void Divide2() => AssertSimplify("(x3 + 3 x 2 y + 3 x y 2 + y3) / (x + y)", "2 * (x * y) + (x ^ 2 + y ^ 2)");
+        [TestMethod] public void Divide3() => AssertSimplify("(x2 + 2 x y + y2 + 1) / (x + y)", "1 / (x + y) + (x + y)");
 
-        [TestMethod]
-        public void BigSimple1() =>
-            AssertSimplify(
-                "1+2x*-1+2x*2+x^2+2x+2x*-4+2x*4+2x*2x*-1+2x*2x*2+2x*x^2+x^2+x^2*-4+x^2*4+x^2*2*x*-1+x^2*2x*2+x^2*x^2",
-                "1 + x ^ 4 + 4 * x ^ 3 + 6 * x ^ 2 + 4 * x".Simplify());
-        // TODO: Simplify being called on both sides does not ensure that the simplified result is acceptable
-        // - we should maintain an expected result that does not change with the implementation and
-        // update it when needed. Test should be more restrictive to actually catch bugs.
+        [TestMethod] public void BigSimple1() => AssertSimplify(
+            "1+2x*-1+2x*2+x^2+2x+2x*-4+2x*4+2x*2x*-1+2x*2x*2+2x*x^2+x^2+x^2*-4+x^2*4+x^2*2*x*-1+x^2*2x*2+x^2*x^2",
+            "1 + (4 * x + (4 * x ^ 3 + 6 * x ^ 2 + x ^ 4))");
+        // NOTE: Simplify should not be called both sides since does not ensure that the simplified result
+        // is acceptable - we should maintain an expected result that does not change with the implementation
+        // and update it when needed. Test should be more restrictive to actually catch bugs.
+        // When both sides have the same string result - check object structure and add parentheses.
+        // Using DirectChildren inside the Immediate Window can help.
     }
 }
 

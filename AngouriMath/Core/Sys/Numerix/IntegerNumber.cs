@@ -23,7 +23,7 @@ namespace AngouriMath.Core.Numerix
     {
         private IntegerNumber(EInteger value) : base(value) => Integer = value;
         public EInteger Integer { get; }
-        public override Priority Priority => Priority.Number;
+        public override Priority Priority => IsNegative ? Priority.Mul : Priority.Number;
         public static readonly IntegerNumber Zero = new IntegerNumber(EInteger.Zero);
         public static readonly IntegerNumber One = new IntegerNumber(EInteger.One);
         public static readonly IntegerNumber MinusOne = new IntegerNumber(-EInteger.One);

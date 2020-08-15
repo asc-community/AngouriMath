@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using AngouriMath.Core.Numerix;
+using System.Linq;
 
 namespace UnitTests.Algebra
 {
@@ -18,28 +19,18 @@ namespace UnitTests.Algebra
         /// <param name="equation"></param>
         /// <param name="toSub"></param>
         /// <param name="varValue"></param>
-        public static void AssertRoots(Entity equation, Entity.Variable toSub, Entity varValue, ComplexNumber? subValue = null)
+        public static void AssertRoots(Entity equation, Entity.Variable toSub, Entity varValue, IntegerNumber? subValue = null)
         {
             subValue ??= 3;
             string eqNormal = equation.ToString();
-            var err = CheckRoots(equation, toSub, varValue, subValue);
-            Assert.IsTrue(err < 0.001m, $"\nError = {err}\n{eqNormal}\nWrong root: {toSub} = {varValue}");
-        }
-
-        public static RealNumber CheckRoots(Entity equation, Entity.Variable toSub, Entity varValue, ComplexNumber subValue)
-        {
             equation = equation.Substitute(toSub, varValue);
-            var allVars = equation.Vars;
-
-            var offset = 0;
-            foreach (var vr in allVars)
-            {
-                equation = equation.Substitute(vr, subValue + offset
-                    /* MUST be integer to correspond to integer coefficient of periodic roots*/);
-                offset++;
-            }
-
-            return Entity.Number.Abs(equation.Eval());
+            // MUST be integer to correspond to integer coefficient of periodic roots
+            var substitutions = new Dictionary<Entity.Variable, IntegerNumber>();
+            foreach (var vr in equation.Vars)
+                substitutions.Add(vr, subValue + substitutions.Count);
+            equation = equation.Substitute(substitutions);
+            var err = Entity.Number.Abs(equation.Eval());
+            Assert.IsTrue(err < 0.001m, $"\nError = {err}\n{eqNormal}\nWrong root: {toSub} = {varValue}");
         }
 
         public static void AssertRootCount(Set roots, int target)
@@ -48,7 +39,7 @@ namespace UnitTests.Algebra
             Assert.AreEqual(target, roots.Count);
         }
 
-        public void TestSolver(Entity expr, int rootCount, ComplexNumber? toSub = null)
+        public void TestSolver(Entity expr, int rootCount, IntegerNumber? toSub = null)
         {
             var roots = expr.SolveEquation(x);
             AssertRootCount(roots, rootCount);

@@ -40,13 +40,13 @@ namespace AngouriMath
             /// Case does matter, not all letters have both displays in LaTeX
             /// </summary>
             private static readonly HashSet<string> LatexisableConstants = new HashSet<string>
-        {
-            "alpha", "beta", "gamma", "delta", "epsilon", "varepsilon", "zeta", "eta", "theta", "vartheta",
-            "iota", "kappa", "varkappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "varpi", "rho",
-            "varrho", "sigma", "varsigma", "tau", "upsilon", "phi", "varphi", "chi", "psi", "omega",
+            {
+                "alpha", "beta", "gamma", "delta", "epsilon", "varepsilon", "zeta", "eta", "theta", "vartheta",
+                "iota", "kappa", "varkappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "varpi", "rho",
+                "varrho", "sigma", "varsigma", "tau", "upsilon", "phi", "varphi", "chi", "psi", "omega",
 
-            "Gamma", "Delta", "Theta", "Lambda", "Xi", "Pi", "Sigma", "Upsilon", "Phi", "Psi", "Omega",
-        };
+                "Gamma", "Delta", "Theta", "Lambda", "Xi", "Pi", "Sigma", "Upsilon", "Phi", "Psi", "Omega",
+            };
 
             /// <summary>
             /// Returns latexised const if it is possible to latexise it,
@@ -56,7 +56,7 @@ namespace AngouriMath
                 SplitIndex() is var (prefix, index)
                 ? (LatexisableConstants.Contains(prefix) ? @"\" + prefix : prefix)
                   + "_{" + index + "}"
-                : LatexisableConstants.Contains(Name)? @"\" + Name : Name;
+                : LatexisableConstants.Contains(Name) ? @"\" + Name : Name;
         }
 
         public partial record Tensor
@@ -154,7 +154,7 @@ namespace AngouriMath
         {
             public override string Latexise()
             {
-                if (Exponent is RationalNumber { Rational:{ Numerator: var numerator, Denominator: var denominator } }
+                if (Exponent is RationalNumber { Rational: { Numerator: var numerator, Denominator: var denominator } }
                     and not IntegerNumber)
                 {
                     var str =
@@ -197,7 +197,7 @@ namespace AngouriMath
         public partial record Factorialf
         {
             public override string Latexise() =>
-                Argument.Latexise(Argument.Priority < Priority.Number) + "!";
+                Argument.Latexise(Argument.Priority < Priority.Func) + "!";
         }
 
         public partial record Derivativef

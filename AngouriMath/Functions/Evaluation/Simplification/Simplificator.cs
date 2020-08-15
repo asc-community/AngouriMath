@@ -37,25 +37,21 @@ namespace AngouriMath.Functions.Evaluation.Simplification
             if (stage1 is Number)
                 return new Set(stage1);
 
+            // List of criteria for expr's complexity
             var history = new SortedDictionary<int, List<Entity>>();
-
-            // List of criterians of expr's complexity
-            static int CountExpressionComplexity(Entity expr) => MathS.Settings.ComplexityCriteria.Value(expr);
-            
             void AddHistory(Entity expr)
             {
                 void __IterAddHistory(Entity expr)
                 {
+                    static int CountExpressionComplexity(Entity expr) => MathS.Settings.ComplexityCriteria.Value(expr);
                     var refexpr = expr.Replace(Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL)).InnerSimplify();
                     var compl1 = CountExpressionComplexity(refexpr);
                     var compl2 = CountExpressionComplexity(expr);
                     var n = compl1 > compl2 ? expr : refexpr;
                     var ncompl = Math.Min(compl2, compl1);
-                    System.Diagnostics.Debug.WriteLine($"{ncompl}: {n}");
-                    if (ncompl == 10) System.Diagnostics.Debugger.Break();
                     if (history.TryGetValue(ncompl, out var ncomplList))
                         ncomplList.Add(n);
-                    history[ncompl] = new List<Entity> { n };
+                    else history[ncompl] = new List<Entity> { n };
                 }
                 __IterAddHistory(expr);
                 __IterAddHistory(expr.Replace(Patterns.InvertNegativePowers));
@@ -73,86 +69,59 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     _ => TreeAnalyzer.SortLevel.HIGH_LEVEL
                 })).InnerSimplify();
                 if (res.Any(child => child is Powf))
-                {
-                    res = res.Replace(Patterns.PowerRules);
-                    AddHistory(res);
-                }
+                    AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
 
-                {
-                    res = res.Replace(
-                        Patterns.InvertNegativePowers,
-                        Patterns.InvertNegativeMultipliers,
-                        Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL));
-                    AddHistory(res);
-                    res = res.InnerSimplify().Replace(Patterns.CommonRules);
-                    AddHistory(res);
-                    res = res.Replace(Patterns.InvertNegativePowers);
-                }
+                AddHistory(res = res.Replace(
+                    Patterns.InvertNegativePowers,
+                    Patterns.InvertNegativeMultipliers,
+                    Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL)).InnerSimplify());
+                AddHistory(res = res.Replace(Patterns.CommonRules).InnerSimplify());
 
-                {
-                    res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules);
-                    AddHistory(res);
-                    res = res.InnerSimplify().Replace(Patterns.AlgebraicLongDivision).InnerSimplify();
-                    AddHistory(res);
-                }
+                AddHistory(res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules).InnerSimplify());
+                AddHistory(res = res.Replace(Patterns.AlgebraicLongDivision).InnerSimplify());
 
                 if (res.Any(child => child is
                     Sinf or Cosf or Tanf or Cotanf or Arcsinf or Arccosf or Arctanf or Arccotanf))
                 {
-                    var res1 = res.Replace(Patterns.ExpandTrigonometricRules);
-                    res = res.Replace(Patterns.TrigonometricRules);
-                    AddHistory(res);
+                    var res1 = res.Replace(Patterns.ExpandTrigonometricRules).InnerSimplify();
+                    AddHistory(res = res.Replace(Patterns.TrigonometricRules).InnerSimplify());
                     AddHistory(res1);
                     res = res.Complexity > res1.Complexity ? res1 : res;
                 }
                 if (res.Any(child => child is Factorialf))
                 {
-                    res = res.Replace(Patterns.ExpandFactorialDivisions);
-                    AddHistory(res);
-                    res = res.Replace(Patterns.CollapseFactorialMultiplications);
-                    AddHistory(res);
+                    AddHistory(res = res.Replace(Patterns.ExpandFactorialDivisions).InnerSimplify());
+                    AddHistory(res = res.Replace(Patterns.CollapseFactorialMultiplications).InnerSimplify());
                 }
                 if (res.Any(child => child is Powf))
-                {
-                    res = res.Replace(Patterns.PowerRules);
-                    AddHistory(res);
-                }
-                AddHistory(res);
+                    AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
 
+                // It is quite slow at this point
+                var listOfPossiblePolys = new List<Entity>();
+                foreach (var var in res.Vars)
+                    if (MathS.Utils.TryPolynomial(res, var, out var resPoly))
+                        listOfPossiblePolys.Add(resPoly);
+                if (listOfPossiblePolys.Count != 0)
                 {
-                    // It is quite slow at this point
-                    var listOfPossiblePolys = new List<Entity>();
-
-                    foreach (var var in res.Vars)
-                        if (MathS.Utils.TryPolynomial(res, var, out var resPoly))
-                            listOfPossiblePolys.Add(resPoly);
-                    if (listOfPossiblePolys.Count != 0)
-                    {
-                        var min = listOfPossiblePolys.Min(c => c.Complexity);
-                        var minPoly = listOfPossiblePolys.First(c => c.Complexity == min);
-                        AddHistory(minPoly);
-                        if (min < res.Complexity)
-                            res = minPoly;
-                    }
+                    var min = listOfPossiblePolys.Min(c => c.Complexity);
+                    var minPoly = listOfPossiblePolys.First(c => c.Complexity == min);
+                    AddHistory(minPoly);
+                    if (min < res.Complexity)
+                        res = minPoly;
                 }
 
                 res = history[history.Keys.Min()][0];
             }
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
-                var expandedRaw = res.Expand();
-                var expanded = expandedRaw.Simplify(-level);
-                AddHistory(expanded);
-                var collapsed = res.Collapse().Simplify(-level);
-                AddHistory(collapsed);
+                AddHistory(res.Expand().Simplify(-level));
+                AddHistory(res.Collapse().Simplify(-level));
             }
 
             var result = new Set();
-            
             foreach (var pair in history)
                 foreach (var el in pair.Value)
                     result.Add(el);
-            
             return result;
         }
     }

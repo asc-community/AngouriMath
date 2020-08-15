@@ -27,18 +27,17 @@ namespace AngouriMath
         /// </summary>
         internal void InnerCompile(Compiler compiler)
         {
-            // Check whether it's better to pull from cache or not
-            if (compiler.Cache.TryGetValue(this, out var cacheLine) && cacheLine > -1)
-            {
+            if (compiler.Cache.TryGetValue(this, out var cacheLine) && cacheLine >= 0)
                 compiler.Instructions.Add(new(InstructionType.PULLCACHE, cacheLine));
-                return;
-            }
-            InnerCompile_(compiler);
-            if (cacheLine == -1)
+            else
             {
-                cacheLine = compiler.Cache.Count;
-                compiler.Cache[this] = cacheLine;
-                compiler.Instructions.Add(new(InstructionType.TOCACHE, cacheLine));
+                InnerCompile_(compiler);
+                if (cacheLine < 0) // If cache doesn't store this entity, cacheLine will be uninitialized = 0
+                {
+                    cacheLine = ~cacheLine;
+                    compiler.Cache[this] = cacheLine;
+                    compiler.Instructions.Add(new(InstructionType.TOCACHE, cacheLine));
+                }
             }
         }
         public partial record Number : Entity
@@ -206,6 +205,8 @@ namespace AngouriMath
     }
     internal partial record Instruction
     {
+        /// <summary>The <paramref name="Cache"/> stores the saved cache number if zero/positive,
+        /// or the bitwise complement of the unsaved cache number if negative.</summary>
         internal record Compiler(List<Instruction> Instructions, Dictionary<Variable, int> VarNamespace, Dictionary<Entity, int> Cache)
         {
             /// <summary>Returns a compiled expression. Allows to boost substitution a lot</summary>
@@ -225,7 +226,8 @@ namespace AngouriMath
                     if (node is Number or Variable)
                         continue; // Don't store simple nodes in cache
                     if (visited.Contains(node))
-                        cache[node] = -1;
+                        if (cache.ContainsKey(node)) { }
+                        else cache.Add(node, ~cache.Count); // Unsaved by default
                     else visited.Add(node);
                 }
                 var compiler = new Compiler(new(), varNamespace, cache);

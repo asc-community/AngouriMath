@@ -51,7 +51,7 @@ namespace AngouriMath.Core.FromString
 
             static string GetType(IToken token) =>
                 AngouriMathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type
-                && type.Length > 1 && type.EndsWith("('") ? FUNCTION : type;
+                && type is not PARENTHESIS_OPEN && type.EndsWith("('") ? FUNCTION : type;
 
             if (tokenList.Count == 0)
                 throw new ParseException("Input string is invalid");

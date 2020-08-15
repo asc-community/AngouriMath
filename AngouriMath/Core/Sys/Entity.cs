@@ -27,7 +27,7 @@ using PeterO.Numbers;
 namespace AngouriMath
 {
     public interface ILatexiseable { public string Latexise(); }
-    public enum Priority { Sum = 2, Minus = 2, Mul = 4, Div = 4, Pow = 6, Func = 8, Variable = 10, Number = 10 }
+    public enum Priority { Sum = 20, Minus = 20, Mul = 40, Div = 40, Pow = 60, Factorial = 70, Func = 80, Variable = 100, Number = 100 }
     /// <summary>
     /// The main class in AngouriMath
     /// Every node, expression, or number is an <see cref="Entity"/>
@@ -456,6 +456,8 @@ namespace AngouriMath
         }
         public partial record Factorialf(Entity Argument) : Function
         {
+            // This is still a function for pattern replacement
+            public override Priority Priority => Priority.Factorial;
             public override Entity Replace(Func<Entity, Entity> func) => func(new Factorialf(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }

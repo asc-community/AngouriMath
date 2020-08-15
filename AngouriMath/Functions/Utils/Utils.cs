@@ -37,19 +37,16 @@ namespace AngouriMath.Functions
 
         /// <summary>
         /// Sorts an expression into a polynomial.
-        /// See more MathS.Utils.TryPolynomial
+        /// See more at <see cref="MathS.Utils.TryPolynomial"/>
         /// </summary>
-        /// <param name="expr"></param>
-        /// <param name="variable"></param>
-        /// <param name="dst"></param>
-        /// <returns></returns>
         internal static bool TryPolynomial(Entity expr, Variable variable,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
             out Entity? dst)
         {
             dst = null;
-            var children = Sumf.LinearChildren(expr);
-            var monomialsByPower = PolynomialSolver.GatherMonomialInformation<EInteger>(children, variable);
+            var children = Sumf.LinearChildren(expr.Expand());
+            var monomialsByPower = PolynomialSolver.GatherMonomialInformation
+                <EInteger, TreeAnalyzer.PrimitiveInteger>(children, variable);
             if (monomialsByPower == null)
                 return false;
             var newMonomialsByPower = new Dictionary<int, Entity>();
@@ -57,17 +54,13 @@ namespace AngouriMath.Functions
             foreach (var index in monomialsByPower.Keys.OrderByDescending(x => x))
             {
                 var pair = new KeyValuePair<EInteger, Entity>(index, monomialsByPower[index]);
-                Entity px;
                 if (pair.Key.IsZero)
                 {
                     terms.Add(pair.Value.Simplify());
                     continue;
                 }
 
-                if (pair.Key.Equals(EInteger.One))
-                    px = variable;
-                else
-                    px = MathS.Pow(variable, IntegerNumber.Create(pair.Key));
+                var px = pair.Key.Equals(EInteger.One) ? variable : MathS.Pow(variable, pair.Key);
                 if (pair.Value == 1)
                 {
                     terms.Add(px);

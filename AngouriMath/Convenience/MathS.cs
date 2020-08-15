@@ -743,10 +743,8 @@ namespace AngouriMath
             public static Setting<Func<Entity, int>> ComplexityCriteria =>
                 GetCurrentOrDefault(ref complexityCriteria, expr =>
                 {
-                    var res = 0;
-
                     // Number of nodes
-                    res += expr.Complexity;
+                    var res = expr.Complexity;
 
                     // Number of variables
                     res += expr.Count(entity => entity is Variable);
@@ -774,7 +772,7 @@ namespace AngouriMath
             /// );
             /// </code>
             /// </summary>
-            public static Setting<NewtonSetting> NewtonSolver => GetCurrentOrDefault(ref newtonSolver, new NewtonSetting());
+            public static Setting<NewtonSetting> NewtonSolver => GetCurrentOrDefault(ref newtonSolver, new());
 
             /// <summary>
             /// The maximum number of linear children of an expression in polynomial solver

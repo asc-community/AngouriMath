@@ -159,10 +159,10 @@ namespace AngouriMath
         {
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 Base.Contains(x)
-                // log(x, a) = value => x = a ^ value
-                ? Base.Invert(MathS.Pow(Antilogarithm, value), x)
-                // log(a, x) = value => a = x ^ value => x = a ^ (1 / value)
-                : Antilogarithm.Invert(MathS.Pow(Base, 1 / value), x);
+                // log_x(a) = value => a = x ^ value => x = a ^ (1 / value)
+                ? Base.Invert(MathS.Pow(Antilogarithm, 1 / value), x)
+                // log_a(x) = value => x = a ^ value
+                : Antilogarithm.Invert(MathS.Pow(Base, value), x);
         }
 
         public partial record Arcsinf
@@ -306,12 +306,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 toAdd.FiniteApply(ent => TryDowncast(expr, x, ent));
                 dst.AddRange(toAdd);
             }
-
-            Set? res = PolynomialSolver.SolveAsPolynomial(expr, x);
-            if (res is { })
+            if (PolynomialSolver.SolveAsPolynomial(expr, x) is { } poly)
             {
-                res.FiniteApply(e => e.InnerSimplify());
-                DestinationAddRange(res);
+                poly.FiniteApply(e => e.InnerSimplify());
+                DestinationAddRange(poly);
                 return;
             }
 
@@ -355,13 +353,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         var subs = 0;
                         Entity? lastChild = null;
                         foreach (var child in subtrahend.DirectChildren)
-                        {
                             if (child.Vars.Contains(x))
                             {
                                 subs += 1;
                                 lastChild = child;
                             }
-                        }
                         if (subs != 1 || lastChild is null)
                             break;
                         var resInverted = subtrahend.Invert(minuend, lastChild);
@@ -416,7 +412,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         Set newDst = new Set();
                         foreach (var solution in solutions.FiniteSet())
                         {
-                            var str = bestReplacement.ToString();
                             // TODO: make a smarter comparison than just comparison of complexities of two expressions
                             // The idea is  
                             // similarToPrevious = ((bestReplacement - solution) - expr).Simplify() == 0
@@ -436,48 +431,38 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             // if no replacement worked, try trigonometry solver
             if (dst.IsEmpty())
-            {
-                res = TrigonometricSolver.SolveLinear(expr, x);
-                if (res != null)
+                if (TrigonometricSolver.SolveLinear(expr, x) is { } res)
                 {
                     DestinationAddRange(res);
                     return;
                 }
-            }
             // // //
 
             // if no trigonometric rules helped, common denominator might help
             if (dst.IsEmpty())
-            {
-                res = CommonDenominatorSolver.Solve(expr, x);
-                if (res != null)
+                if (CommonDenominatorSolver.Solve(expr, x) is { } res)
                 {
                     DestinationAddRange(res);
                     return;
                 }
-            }
             // // //
 
 
             // if we have fractioned polynomials
             if (dst.IsEmpty())
-            {
-                res = FractionedPolynoms.Solve(expr, x);
-                if (res != null)
+                if (FractionedPolynoms.Solve(expr, x) is { } res)
                 {
                     DestinationAddRange(res);
                     return;
                 }
-            }
             // // //
 
             // TODO: Solve factorials (Needs Lambert W function)
             // https://mathoverflow.net/a/28977
 
             // if nothing has been found so far
-            if (dst.IsEmpty() && MathS.Settings.AllowNewton)
-                if (expr.Vars.Count == 1)
-                    DestinationAddRange(expr.SolveNt(x));
+            if (dst.IsEmpty() && MathS.Settings.AllowNewton && expr.Vars.Count == 1)
+                DestinationAddRange(expr.SolveNt(x));
         }
     }
 }

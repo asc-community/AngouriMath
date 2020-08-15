@@ -261,7 +261,7 @@ namespace AngouriMath
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
                 {
                     Tensor n => n.Elementwise(n => new Sinf(n).InnerSimplify()),
-                    { Evaled: ComplexNumber n } when Const.TrigonometryTableValues.PullSin(n, out var res) => res,
+                    { Evaled: ComplexNumber n } when TrigonometryTableValues.PullSin(n, out var res) => res,
                     var n => new Sinf(n)
                 };
         }
@@ -277,7 +277,7 @@ namespace AngouriMath
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
                 {
                     Tensor n => n.Elementwise(n => new Cosf(n).InnerSimplify()),
-                    { Evaled: ComplexNumber n } when Const.TrigonometryTableValues.PullCos(n, out var res) => res,
+                    { Evaled: ComplexNumber n } when TrigonometryTableValues.PullCos(n, out var res) => res,
                     var n => new Cosf(n)
                 };
         }
@@ -293,7 +293,7 @@ namespace AngouriMath
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
                 {
                     Tensor n => n.Elementwise(n => new Tanf(n).InnerSimplify()),
-                    { Evaled: ComplexNumber n } when Const.TrigonometryTableValues.PullTan(n, out var res) => res,
+                    { Evaled: ComplexNumber n } when TrigonometryTableValues.PullTan(n, out var res) => res,
                     var n => new Tanf(n)
                 };
         }
@@ -309,7 +309,7 @@ namespace AngouriMath
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
                 {
                     Tensor n => n.Elementwise(n => new Cotanf(n).InnerSimplify()),
-                    { Evaled: ComplexNumber n } when Const.TrigonometryTableValues.PullTan(n, out var res) => 1 / res,
+                    { Evaled: ComplexNumber n } when TrigonometryTableValues.PullTan(n, out var res) => 1 / res,
                     var n => new Cotanf(n)
                 };
         }

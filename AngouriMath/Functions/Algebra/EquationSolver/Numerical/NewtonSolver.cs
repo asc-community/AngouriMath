@@ -114,27 +114,18 @@ namespace AngouriMath
 {
     public class NewtonSetting
     {
-        public (EDecimal Re, EDecimal Im) From;
-        public (EDecimal Re, EDecimal Im) To;
-        public (int Re, int Im) StepCount;
-        public int Precision;
-
-        public NewtonSetting()
-        {
-            From = (-10, -10);
-            To = (10, 10);
-            StepCount = (10, 10);
-            Precision = 30;
-        }
+        public (EDecimal Re, EDecimal Im) From = (-10, -10);
+        public (EDecimal Re, EDecimal Im) To = (10, 10);
+        public (int Re, int Im) StepCount = (10, 10);
+        public int Precision = 30;
     }
-
     public abstract partial record Entity : ILatexiseable
     {
         /// <summary>
-        /// Searches for numerical solutions via Newton's method https://en.wikipedia.org/wiki/Newton%27s_method
-        /// To change parameters see MathS.Settings.NewtonSolver
+        /// Searches for numerical solutions via Newton's method
+        /// <a href="https://en.wikipedia.org/wiki/Newton%27s_method"/>
+        /// To change parameters see <see cref="MathS.Settings.NewtonSolver"/>
         /// </summary>
-        /// <returns></returns>
         public Set SolveNt(Variable v) => NewtonSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
     }
 }

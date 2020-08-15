@@ -22,7 +22,8 @@ namespace AngouriMath.Limits
             if (children is null)
                 return null;
 
-            var monomials = PolynomialSolver.GatherMonomialInformation<EDecimal>(children, x);
+            var monomials = PolynomialSolver.GatherMonomialInformation
+                <EDecimal, TreeAnalyzer.PrimitiveDecimal>(children, x);
             if (monomials is null) return null;
             var filteredDictionary = new Dictionary<EDecimal, Entity>();
             foreach (var monomial in monomials)

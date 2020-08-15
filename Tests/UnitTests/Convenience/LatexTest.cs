@@ -8,13 +8,13 @@ namespace UnitTests.Convenience
     [TestClass]
     public class LatexTests
     {
-        private static readonly Entity.Variable x = MathS.Var(nameof(x));
-        private static readonly Entity.Number frac34 = RationalNumber.Create(3, 4);
-        private static readonly Entity.Number m1 = -1;
-        private static readonly Entity.Number im1 = MathS.i - 1;
-        private static readonly Entity.Number m2i = -2 * MathS.i;
-        private static readonly Entity.Number numPi = MathS.DecimalConst.pi;
-        private static readonly Entity.Number mNumPi = -MathS.DecimalConst.pi;
+        private static readonly Entity x = MathS.Var(nameof(x));
+        private static readonly Entity frac34 = RationalNumber.Create(3, 4);
+        private static readonly Entity m1 = -1;
+        private static readonly Entity im1 = MathS.i - 1;
+        private static readonly Entity m2i = -2 * MathS.i;
+        private static readonly Entity numPi = MathS.DecimalConst.pi;
+        private static readonly Entity mNumPi = -MathS.DecimalConst.pi;
         void Test(string expected, ILatexiseable actual) =>
             Assert.AreEqual(expected, actual.Latexise());
         void TestSimplify(string expected, Entity actual) =>
@@ -161,7 +161,7 @@ namespace UnitTests.Convenience
         [TestMethod] public void Factorial1MI() => Test(@"\left(1 - i\right)!", MathS.Factorial(1 - MathS.i));
         [TestMethod] public void Factorial1PI() => Test(@"\left(1 + i\right)!", MathS.Factorial(1 + MathS.i));
         [TestMethod] public void FactorialX() => Test(@"x!", MathS.Factorial(x));
-        [TestMethod] public void FactorialSinX() => Test(@"\left(\sin\left(x\right)\right)!", MathS.Factorial(MathS.Sin(x)));
+        [TestMethod] public void FactorialSinX() => Test(@"\sin\left(x\right)!", MathS.Factorial(MathS.Sin(x)));
         // x!! is the double factorial, (x!)! is factorial appplied twice which is different
         [TestMethod] public void FactorialFactorialX() => Test(@"\left(x!\right)!", MathS.Factorial(MathS.Factorial(x)));
         [TestMethod] public void OO() => Test(@"\infty ", RealNumber.PositiveInfinity);

@@ -68,9 +68,19 @@ namespace AngouriMath
             {
                 Divf(Factorialf(Sumf(var any1, Number const1)), Factorialf(Sumf(var any1a, Number const2)))
                     => ExpandFactorialDivisions(any1, any1a, const1, const2),
+                Divf(Factorialf(Sumf(var any1, Number const1)), Factorialf(Sumf(Number const2, var any1a)))
+                    => ExpandFactorialDivisions(any1, any1a, const1, const2),
+                Divf(Factorialf(Sumf(Number const1, var any1)), Factorialf(Sumf(var any1a, Number const2)))
+                    => ExpandFactorialDivisions(any1, any1a, const1, const2),
+                Divf(Factorialf(Sumf(Number const1, var any1)), Factorialf(Sumf(Number const2, var any1a)))
+                    => ExpandFactorialDivisions(any1, any1a, const1, const2),
                 Divf(Factorialf(var any1), Factorialf(Sumf(var any1a, Number const2)))
                     => ExpandFactorialDivisions(any1, any1a, 0, const2),
+                Divf(Factorialf(var any1), Factorialf(Sumf(Number const2, var any1a)))
+                    => ExpandFactorialDivisions(any1, any1a, 0, const2),
                 Divf(Factorialf(Sumf(var any1, Number const1)), Factorialf(var any1a))
+                    => ExpandFactorialDivisions(any1, any1a, const1, 0),
+                Divf(Factorialf(Sumf(Number const1, var any1)), Factorialf(var any1a))
                     => ExpandFactorialDivisions(any1, any1a, const1, 0),
                 _ => expr
             };
@@ -88,14 +98,24 @@ namespace AngouriMath
         internal static Entity CollapseFactorialMultiplications(Entity expr)
         {
             Entity CollapseFactorialMultiplications(Entity x, Entity x2, Number factConst, Number @const) =>
-                x == x2 && factConst + 1 == @const ? new Factorialf(x) : expr;
+                x == x2 && factConst + 1 == @const ? new Factorialf(x + @const) : expr;
             return expr switch
             {
                 Mulf(Factorialf(Sumf(var any1, Number const1)), Sumf(var any1a, Number const2)) =>
                     CollapseFactorialMultiplications(any1, any1a, const1, const2),
+                Mulf(Factorialf(Sumf(Number const1, var any1)), Sumf(var any1a, Number const2)) =>
+                    CollapseFactorialMultiplications(any1, any1a, const1, const2),
+                Mulf(Factorialf(Sumf(var any1, Number const1)), Sumf(Number const2, var any1a)) =>
+                    CollapseFactorialMultiplications(any1, any1a, const1, const2),
+                Mulf(Factorialf(Sumf(Number const1, var any1)), Sumf(Number const2, var any1a)) =>
+                    CollapseFactorialMultiplications(any1, any1a, const1, const2),
                 Mulf(Factorialf(var any1), Sumf(var any1a, Number const2)) =>
                     CollapseFactorialMultiplications(any1, any1a, 0, const2),
+                Mulf(Factorialf(var any1), Sumf(Number const2, var any1a)) =>
+                    CollapseFactorialMultiplications(any1, any1a, 0, const2),
                 Mulf(Factorialf(Sumf(var any1, Number const1)), var any1a) =>
+                    CollapseFactorialMultiplications(any1, any1a, const1, 0),
+                Mulf(Factorialf(Sumf(Number const1, var any1)), var any1a) =>
                     CollapseFactorialMultiplications(any1, any1a, const1, 0),
                 _ => expr
             };
@@ -103,8 +123,8 @@ namespace AngouriMath
         internal static Entity DivisionPreparingRules(Entity x) => x switch
         {
             Mulf(var any1, Divf(IntegerNumber(1), var any2)) => any1 / any2,
-            Divf(Mulf(Number const1, not Number and var notnum1), var any2) => const1 * (notnum1 / any2),
-            Mulf(Divf(Number const1, not Number and var notnum1), var any2) => const1 * (any2 / notnum1),
+            Divf(Mulf(Number const1, var any1), var any2) => const1 * (any1 / any2),
+            Mulf(Divf(Number const1, var any1), var any2) => const1 * (any2 / any1),
             _ => x
         };
         internal static Entity TrigonometricRules(Entity x) => x switch
@@ -282,8 +302,17 @@ namespace AngouriMath
             // (a * f(x)) * g(x) = a * (f(x) * g(x))
             Mulf(Mulf(Number const1, Function func1), Function func2) => func1 * func2 * const1,
 
+            // (a/b) * (c/d) = (a*c)/(b*d)
+            Mulf(Divf(var any1, var any2), Divf(var any3, var any4)) => any1 * any3 / (any2 * any4),
+
             // a / (b / c) = a * c / b
             Divf(var any1, Divf(var any2, var any3)) => any1 * any3 / any2,
+
+            // a / b * c = a * c / b
+            Mulf(Divf(var any1, var any2), var any3) => any1 * any3 / any2,
+
+            // a * {1} / b
+            Divf(Mulf(Number const1, var any1), Number const2) => const1 / const2 * any1,
 
             // a / b / c = a / (b * c)
             Divf(Divf(var any1, var any2), var any3) => any1 / (any2 * any3),
@@ -416,12 +445,6 @@ namespace AngouriMath
             Minusf(var any1, Mulf(var any2, var any1a)) when any1 == any1a => any1 * (1 - any2),
             Minusf(var any1, Mulf(var any1a, var any2)) when any1 == any1a => any1 * (1 - any2),
 
-            // a / {} * b
-            Mulf(Divf(var any1, var any2), var any3) => any1 * any3 / any2,
-
-            // a * {1} / b
-            Divf(Mulf(Number const1, var any1), Number const2) => const1 / const2 * any1,
-
             _ => x
         };
 
@@ -495,7 +518,7 @@ namespace AngouriMath
             x is Divf(var num, var denom)
             && !MathS.CanBeEvaluated(num)
             && !MathS.CanBeEvaluated(denom)
-            && TreeAnalyzer.DivideAndRemainderPolynoms(num, denom) is var (divided, remainder)
+            && TreeAnalyzer.DivideAndRemainderPolynomials(num, denom) is var (divided, remainder)
             ? divided + remainder
             : x;
         internal static Entity OptimizeRules(Entity x) => x switch

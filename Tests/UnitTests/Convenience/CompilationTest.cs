@@ -41,12 +41,22 @@ namespace UnitTests.Convenience
         [TestMethod]
         public void Test6()
         {
+            // Caching with one value
             var expr = (MathS.Sqr(x) + MathS.Sqr(x)) / MathS.Sqr(x) + MathS.Sqrt(x);
             var func = expr.Compile(x);
             Assert.AreEqual(4, func.Call(4));
         }
         [TestMethod]
         public void Test7()
+        {
+            // Caching with multiple values
+            var expr = (MathS.Sqr(x) + MathS.Sqr(x)) / MathS.Sqr(x)
+                       + MathS.Sqrt(x) + MathS.Cbrt(x) * MathS.Cbrt(x) + MathS.Sqrt(x);
+            var func = expr.Compile(x);
+            Assert.AreEqual(34, func.Call(64));
+        }
+        [TestMethod]
+        public void Test8()
         {
             var expr = MathS.pi + MathS.e + x;
             var func = expr.Compile(x);

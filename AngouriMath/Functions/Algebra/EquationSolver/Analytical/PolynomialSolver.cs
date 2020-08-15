@@ -34,28 +34,27 @@ namespace AngouriMath.Core.TreeAnalysis
         /// <typeparam name="T"></typeparam>
         internal interface IPrimitive<T>
         {
-            void Add(T a);
+            void Add(ComplexNumber a);
             void AddMp(T a, ComplexNumber b);
-            void Assign(T val);
-            T GetValue();
+            void Clear();
+            T Value { get; }
+            bool AllowFloat { get; }
         }
         internal class PrimitiveDecimal : IPrimitive<EDecimal>
         {
-            private EDecimal value = 0;
-            public void Add(EDecimal a) => value += a;
-            public void AddMp(EDecimal a, ComplexNumber b) => Add(a * b.Real.Decimal);
-            public void Assign(EDecimal val) => value = val;
-            public static implicit operator EDecimal(PrimitiveDecimal obj) => obj.value;
-            public EDecimal GetValue() => value;
+            public void Add(ComplexNumber a) => Value += a.Real.Decimal;
+            public void AddMp(EDecimal a, ComplexNumber b) => Value += a * b.Real.Decimal;
+            public void Clear() => Value = 0;
+            public EDecimal Value { get; private set; } = 0;
+            public bool AllowFloat => true;
         }
         internal class PrimitiveInteger : IPrimitive<EInteger>
         {
-            private EInteger value = 0;
-            public void Add(EInteger a) => value += a;
-            public void AddMp(EInteger a, ComplexNumber b) => Add((a * b.Real.Decimal).ToEInteger());
-            public void Assign(EInteger val) => value = val;
-            public static implicit operator EInteger(PrimitiveInteger obj) => obj.value;
-            public EInteger GetValue() => value;
+            public void Add(ComplexNumber a) => Value += a.Real.Decimal.ToEInteger();
+            public void AddMp(EInteger a, ComplexNumber b) => Value += (a * b.Real.Decimal).ToEInteger();
+            public void Clear() => Value = 0;
+            public EInteger Value { get; private set; } = 0;
+            public bool AllowFloat => false;
         }
         /// <summary>
         /// If an evaluable expression is equal to zero, <see langword="true"/>, otherwise, <see langword="false"/>
@@ -290,7 +289,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var res = new Set();
 
             // Check if all are like {1} * x^n & gather information about them
-            var monomialsByPower = GatherMonomialInformation<EInteger>(children, subtree);
+            var monomialsByPower = GatherMonomialInformation
+                <EInteger, TreeAnalyzer.PrimitiveInteger>(children, subtree);
 
             if (monomialsByPower == null)
                 return null; // meaning that the given equation is not polynomial
@@ -395,121 +395,68 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
 
         /// <summary>Finds all terms of a polynomial</summary>
-        internal static Dictionary<T, Entity>? GatherMonomialInformation<T>(IEnumerable<Entity> terms, Entity subtree)
+        internal static Dictionary<T, Entity>? GatherMonomialInformation<T, TPrimitive>(IEnumerable<Entity> terms, Variable subtree)
+            where TPrimitive : TreeAnalyzer.IPrimitive<T>, new()
         {
             var monomialsByPower = new Dictionary<T, Entity>();
             // here we fill the dictionary with information about monomials' coefficiants
             foreach (var child in terms)
             {
-                // TODO
-                TreeAnalyzer.IPrimitive<T> q;
-                if (typeof(T) == typeof(EDecimal))
-                    q = (TreeAnalyzer.IPrimitive<T>)new TreeAnalyzer.PrimitiveDecimal();
-                else if (typeof(T) == typeof(EInteger))
-                    q = (TreeAnalyzer.IPrimitive<T>)new TreeAnalyzer.PrimitiveInteger();
-                else throw new ArgumentException("Unsupported type: " + typeof(T), nameof(T));
-
-                ParseMonomial(subtree, child, out var free, ref q);
+                var (free, q) = ParseMonomial(subtree, child);
                 if (free is null)
                     return null;
-                if (!monomialsByPower.ContainsKey(q.GetValue()))
-                    monomialsByPower[q.GetValue()] = 0;
-                monomialsByPower[q.GetValue()] += free;
+                if (!monomialsByPower.ContainsKey(q.Value))
+                    monomialsByPower[q.Value] = 0;
+                monomialsByPower[q.Value] += free;
             }
             // TODO: do we need to simplify all values of monomialsByPower?
             return monomialsByPower;
-        }
 
-
-        internal static void ParseMonomial<T>(Entity aVar, Entity expr, out Entity? freeMono, ref TreeAnalyzer.IPrimitive<T> power)
-        {
-            if (!expr.Contains(aVar))
+            static (Entity? FreeMono, TPrimitive Power) ParseMonomial(Variable aVar, Entity expr)
             {
-                freeMono = expr;
-                return;
-            }
+                var power = new TPrimitive();
+                if (!expr.Vars.Contains(aVar))
+                    return (expr, power);
 
-            freeMono = 1; // a * b
-
-            bool allowFloat = typeof(T) == typeof(EDecimal);
-            foreach (var mp in Mulf.LinearChildren(expr))
-                if (!mp.Contains(aVar))
-                {
-                    freeMono *= mp;
-                }
-                else if (mp is Powf(var @base, var pow_num))
-                {
-                    var pow_num_evaled = MathS.CanBeEvaluated(pow_num);
-                    pow_num = pow_num_evaled ? pow_num.Eval() : pow_num;
-
-                    // x ^ a is bad
-                    if (!(pow_num is ComplexNumber value))
+                Entity freeMono = 1; // a * b
+                foreach (var mp in Mulf.LinearChildren(expr))
+                    if (!mp.Vars.Contains(aVar))
+                        freeMono *= mp;
+                    else if (mp is Powf(var @base, var pow_num))
                     {
-                        freeMono = null;
-                        return;
-                    }
+                        var pow_num_evaled = MathS.CanBeEvaluated(pow_num);
+                        pow_num = pow_num_evaled ? pow_num.Eval() : pow_num;
 
-                    // x ^ 0.3 is bad
-                    if (!allowFloat && pow_num.Eval() is not IntegerNumber)
-                    {
-                        freeMono = null;
-                        return;
-                    }
-
-                    if (mp == aVar)
-                    {
-                        if (allowFloat)
-                            ((TreeAnalyzer.PrimitiveDecimal)power).Add(value.Real.Decimal);
-                        else
-                            ((TreeAnalyzer.PrimitiveInteger)power).Add(value.Real.Decimal.ToEInteger());
-                    }
-                    else
-                    {
-                        if (!pow_num_evaled)
-                        {
-                            freeMono = null;
-                            return;
-                        }
-                        // TODO
-                        TreeAnalyzer.IPrimitive<T> q;
-                        if (typeof(T) == typeof(EDecimal))
-                            q = (TreeAnalyzer.IPrimitive<T>)new TreeAnalyzer.PrimitiveDecimal();
-                        else if (typeof(T) == typeof(EInteger))
-                            q = (TreeAnalyzer.IPrimitive<T>)new TreeAnalyzer.PrimitiveInteger();
-                        else throw new ArgumentException("Unsupported type: " + typeof(T), nameof(T));
-                        ParseMonomial(aVar, @base, out var tmpFree, ref q);
-                        if (tmpFree is null)
-                        {
-                            freeMono = null;
-                            return;
-                        }
+                        // x ^ a is bad
+                        if (!(pow_num is ComplexNumber value))
+                            return (null, power);
+                        // x ^ 0.3 is bad
+                        if (!power.AllowFloat && pow_num.Eval() is not IntegerNumber)
+                            return (null, power);
+                        if (mp == aVar)
+                            power.Add(value);
+                        else if (!pow_num_evaled)
+                            return (null, power);
                         else
                         {
+                            var (tmpFree, q) = ParseMonomial(aVar, @base);
+                            if (tmpFree is null)
+                                return (null, power);
                             // Can we eval it right here?
                             var eval = pow_num.Eval();
                             freeMono *= MathS.Pow(tmpFree, eval);
-                            power.AddMp(q.GetValue(), eval);
+                            power.AddMp(q.Value, eval);
                         }
                     }
-                }
-                else if (mp == aVar)
-                {
-                    if (allowFloat)
-                        ((TreeAnalyzer.PrimitiveDecimal)power).Add(1);
-                    else
-                        ((TreeAnalyzer.PrimitiveInteger)power).Add(1);
-                }
-                else
-                {
+                    else if (mp == aVar)
+                        power.Add(1);
                     // a ^ x, (a + x) etc. are bad
-                    if (mp.Contains(aVar))
-                    {
-                        freeMono = null;
-                        return;
-                    }
-                    freeMono *= mp;
-                }
-            // TODO: do we need to simplify freeMono?
+                    else if (mp.Vars.Contains(aVar))
+                        return (null, power);
+                    else freeMono *= mp;
+                // TODO: do we need to simplify freeMono?
+                return (freeMono, power);
+            }
         }
     }
 }
