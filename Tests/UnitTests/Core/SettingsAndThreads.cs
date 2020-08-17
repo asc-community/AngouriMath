@@ -3,60 +3,57 @@ using System.Threading;
 using AngouriMath;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using PeterO.Numbers;
 
 namespace UnitTests.Core
 {
-    [TestClass]
     public class SettingsAndThreads
     {
-        [TestMethod]
+        [Fact]
         public void SettingValue1()
         {
             MathS.Settings.MaxExpansionTermCount.As(27, () =>
                 {
-                    Assert.AreEqual(27, MathS.Settings.MaxExpansionTermCount.Value);
+                    Assert.Equal(27, MathS.Settings.MaxExpansionTermCount.Value);
                     MathS.Settings.MaxExpansionTermCount.As(134,
                         () =>
                         {
-                            Assert.AreEqual(134, MathS.Settings.MaxExpansionTermCount.Value);
+                            Assert.Equal(134, MathS.Settings.MaxExpansionTermCount.Value);
                         });
-                    Assert.AreEqual(27, MathS.Settings.MaxExpansionTermCount.Value);
+                    Assert.Equal(27, MathS.Settings.MaxExpansionTermCount.Value);
                 }
             );
         }
 
-        [TestMethod]
+        [Fact]
         public void SettingValue2()
         {
             MathS.Settings.PrecisionErrorCommon.As(27.4m, () =>
                 {
-                    Assert.AreEqual(27.4m, MathS.Settings.PrecisionErrorCommon.Value);
+                    Assert.Equal(27.4m, MathS.Settings.PrecisionErrorCommon.Value);
                     MathS.Settings.PrecisionErrorCommon.As(134.5m,
                         () =>
                         {
-                            Assert.AreEqual(134.5m, MathS.Settings.PrecisionErrorCommon.Value);
+                            Assert.Equal(134.5m, MathS.Settings.PrecisionErrorCommon.Value);
                         });
-                    Assert.AreEqual(27.4m, MathS.Settings.PrecisionErrorCommon.Value);
+                    Assert.Equal(27.4m, MathS.Settings.PrecisionErrorCommon.Value);
                 }
             );
         }
 
-        public void Solve(int num)
-        {
-            MathS.Settings.AllowNewton.As(num % 2 == 0, () =>
-                {
-                    var roots = "x2 + e^x + sin(x)".SolveEquation("x");
-                    Assert.IsTrue((num % 2 == 0) == roots.Count > 0, 
-                        $"Considering that allow Newton is {num % 2 == 0}, root count shouldn't be {roots.Count}");
-                }
-            );
-        }
-
-        [TestMethod]
+        [Fact]
         public void SettingThreadsSolve()
         {
+            static void Solve(int num)
+            {
+                MathS.Settings.AllowNewton.As(num % 2 == 0, () =>
+                {
+                    var roots = "x2 + e^x + sin(x)".SolveEquation("x");
+                    Assert.True((num % 2 == 0) == roots.Count > 0,
+                        $"Considering that allow Newton is {num % 2 == 0}, root count shouldn't be {roots.Count}");
+                });
+            }
             var th1 = new Thread(() => Solve(0));
             var th2 = new Thread(() => Solve(1));
             var th3 = new Thread(() => Solve(2));
@@ -71,17 +68,17 @@ namespace UnitTests.Core
             th4.Join();
         }
 
-        public void Checker(int num)
-        {
-            MathS.Settings.MaxExpansionTermCount.As(num, () =>
-            {
-                for (int i = 0; i < 100000; i++)
-                    Assert.AreEqual(num, MathS.Settings.MaxExpansionTermCount.Value);
-            });
-        }
-        [TestMethod]
+        [Fact]
         public void SettingThreadsSeparateUse()
         {
+            static void Checker(int num)
+            {
+                MathS.Settings.MaxExpansionTermCount.As(num, () =>
+                {
+                    for (int i = 0; i < 100000; i++)
+                        Assert.Equal(num, MathS.Settings.MaxExpansionTermCount.Value);
+                });
+            }
             var threads = new Thread[3];
             for (int i = 0; i < threads.Length; i++)
             {
@@ -92,27 +89,19 @@ namespace UnitTests.Core
                 threads[i].Join();
         }
 
-        [TestMethod]
+        [Fact]
         public void WithExceptionInside()
         {
-            MathS.Settings.MaxExpansionTermCount.As(500,
-                () =>
+            MathS.Settings.MaxExpansionTermCount.As(500, () =>
                 {
-                    Assert.AreEqual(MathS.Settings.MaxExpansionTermCount.Value, 500);
-                    try
-                    {
+                    Assert.Equal(500, MathS.Settings.MaxExpansionTermCount.Value);
+                    Assert.Throws<ArgumentException>(() =>
                         MathS.Settings.MaxExpansionTermCount.As(300, () =>
-                        {
                             // something happens
-                            throw new ArgumentNullException(); // some random exception
-                        });
-                        Assert.Fail("An exception should occur above");
-                    }
-                    catch
-                    {
-                        // should be kept as 500
-                        Assert.AreEqual(500, MathS.Settings.MaxExpansionTermCount.Value);
-                    }
+                            throw new ArgumentNullException() // some random exception
+                        ));
+                    // should be kept as 500
+                    Assert.Equal(500, MathS.Settings.MaxExpansionTermCount.Value);
                 }
             );
         }

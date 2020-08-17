@@ -1,77 +1,72 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Functions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace UnitTests.Common
 {
-    [TestClass]
     public class NonStrictTest
     {
         static readonly Entity.Variable x = nameof(x);
-        [TestMethod]
+        [Fact]
         public void TensorLatex()
         {
             var tens = MathS.Matrices.Matrix(2, 2, 1342, 2123, 1423, 1122);
-            Assert.IsTrue(tens.Latexise().Length > 16);
+            Assert.True(tens.Latexise().Length > 16);
         }
 
-        [TestMethod]
+        [Fact]
         public void TensorFull()
         {
-            var tens = new Entity.Tensor(3, 4, 5);
-            for (int i = 0; i < 3; i++)
-            for (int j = 0; j < 4; j++)
-            for (int k = 0; k < 5; k++)
-                tens[i, j, k] = i * j * k; 
-            Assert.IsTrue(tens.ToString().Length > 16);
+            var tens = new Entity.Tensor(indices => indices[0] * indices[1] * indices[2], 3, 4, 5);
+            Assert.True(tens.ToString().Length > 16);
         }
 
-        [TestMethod]
+        [Fact]
         public void EqSysLatex()
         {
             var eq = MathS.Equations(
                 "x + 3",
                 "y + x + 5"
             );
-            Assert.IsTrue(eq.Latexise().Length > 10);
+            Assert.True(eq.Latexise().Length > 10);
         }
 
-        [TestMethod]
+        [Fact]
         public void SympySyntax()
         {
             Entity expr = "x + 4 + e";
-            Assert.IsTrue(MathS.Utils.ToSympyCode(expr).Length > 10);
+            Assert.True(MathS.Utils.ToSympyCode(expr).Length > 10);
         }
 
-        [TestMethod]
+        [Fact]
         public void TryPoly1()
         {
             Entity expr = "x + x2";
             if (Utils.TryPolynomial(expr, x, out var dst))
-                Assert.AreEqual(MathS.FromString("x2 + x"), dst);
+                Assert.Equal(MathS.FromString("x2 + x"), dst);
             else
-                Assert.Fail(expr.ToString() + " is polynomial");
+                throw new Xunit.Sdk.XunitException($"{expr} is polynomial");
         }
 
-        [TestMethod]
+        [Fact]
         public void TryPoly2()
         {
             Entity expr = "x * (x + x2)";
             if (Utils.TryPolynomial(expr, x, out var dst))
-                Assert.AreEqual(MathS.FromString("x3 + x2"), dst);
+                Assert.Equal(MathS.FromString("x3 + x2"), dst);
             else
-                Assert.Fail(expr.ToString() + " is polynomial");
+                throw new Xunit.Sdk.XunitException($"{expr} is polynomial");
         }
 
-        [TestMethod]
+        [Fact]
         public void TryPoly3()
         {
             Entity expr = "x * (x + x2 + z) + y * x";
             if (Utils.TryPolynomial(expr, x, out var dst))
-                Assert.AreEqual(MathS.FromString("x3 + x2 + (y + z) * x"), dst);
+                Assert.Equal(MathS.FromString("x3 + x2 + (y + z) * x"), dst);
             else
-                Assert.Fail(expr.ToString() + " is polynomial");
+                throw new Xunit.Sdk.XunitException($"{expr} is polynomial");
         }
     }
 }

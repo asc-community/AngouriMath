@@ -50,11 +50,9 @@ namespace AngouriMath
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Least_common_multiple#Using_the_greatest_common_divisor"/>
         /// </summary>
-        public static EInteger Lcm(this EInteger bigintFirst, EInteger bigintSecond)
-        {
-            if (bigintFirst.IsZero && bigintSecond.IsZero) return EInteger.Zero;
-            return bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
-        }
+        public static EInteger Lcm(this EInteger bigintFirst, EInteger bigintSecond) =>
+            bigintFirst.IsZero && bigintSecond.IsZero ? EInteger.Zero
+            : bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
         /// <summary><a href="https://en.wikipedia.org/wiki/Combination"/>, equivalent to nCr
         /// or <a href="https://en.wikipedia.org/wiki/Binomial_coefficient"/></summary>
         public static EInteger Combinations(this EInteger n, EInteger k) =>
@@ -89,13 +87,9 @@ namespace AngouriMath
 
             // now x in (-2pi,2pi)
             if (x.GreaterThanOrEquals(consts.Pi) && x.LessThanOrEquals(consts.TwoPi))
-            {
                 return -Cos(x.Subtract(consts.Pi, context), context);
-            }
             if (x.GreaterThanOrEquals(-consts.TwoPi) && x.LessThanOrEquals(-consts.Pi))
-            {
                 return -Cos(x.Add(consts.Pi, context), context);
-            }
 
             x = x.Multiply(x, context);
             //y=1-x/2!+x^2/4!-x^3/6!...
@@ -154,19 +148,18 @@ namespace AngouriMath
             return CalculateSinFromCos(x, cos, consts, context);
         }
 
-
         /// <summary>Truncates <paramref name="x"/> to [-2*<see cref="Math.PI"/>, 2*<see cref="Math.PI"/>] </summary>
         private static void TruncateToPeriodicInterval(ref EDecimal x, ConstantCache consts, EContext context)
         {
             while (x.GreaterThanOrEquals(consts.TwoPi))
             {
-                EDecimal divide = x.Divide(consts.TwoPi, context).Floor().Abs();
+                var divide = x.Divide(consts.TwoPi, context).Floor().Abs();
                 x = divide.MultiplyAndAdd(-consts.TwoPi, x, context);
             }
 
             while (x.LessThanOrEquals(-consts.TwoPi))
             {
-                EDecimal divide = x.Divide(consts.TwoPi, context).Floor().Abs();
+                var divide = x.Divide(consts.TwoPi, context).Floor().Abs();
                 x = divide.MultiplyAndAdd(consts.TwoPi, x, context);
             }
         }

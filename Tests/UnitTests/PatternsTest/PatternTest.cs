@@ -2,7 +2,7 @@
 using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Core.TreeAnalysis;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -12,7 +12,6 @@ using System.Linq;
 
 namespace UnitTests.PatternsTest
 {
-    [TestClass]
     public class PatternTest
     {
         public bool BeingCompletedForLessThan(Action action, long timeoutMs)
@@ -34,35 +33,31 @@ namespace UnitTests.PatternsTest
         private const int GithubIssue170Timeout = 1600; // we don't know the target machines
 
         // GitHub issue #170
-        [TestMethod]
-        public void TestSimplifyHangs1()
-            =>
-                Assert.IsTrue(
-                    BeingCompletedForLessThan(
-                        () => "1 + 1 / x".Simplify(), GithubIssue170Timeout));
+        [Fact]
+        public void TestSimplifyHangs1() =>
+            Assert.True(
+                BeingCompletedForLessThan(
+                    () => "1 + 1 / x".Simplify(), GithubIssue170Timeout));
 
-        [TestMethod]
-        public void TestSimplifyHangs2()
-            =>
-                Assert.IsTrue(
-                    BeingCompletedForLessThan(
-                        () => "1 + 1 / (a + b)".Simplify(), GithubIssue170Timeout));
+        [Fact]
+        public void TestSimplifyHangs2() =>
+            Assert.True(
+                BeingCompletedForLessThan(
+                    () => "1 + 1 / (a + b)".Simplify(), GithubIssue170Timeout));
 
-        [TestMethod]
-        public void TestSimplifyHangs3()
-            =>
-                Assert.IsTrue(
-                    BeingCompletedForLessThan(
-                        () => "1 / x + 1".Simplify(), GithubIssue170Timeout));
+        [Fact]
+        public void TestSimplifyHangs3() =>
+            Assert.True(
+                BeingCompletedForLessThan(
+                    () => "1 / x + 1".Simplify(), GithubIssue170Timeout));
 
-        [TestMethod]
-        public void TestSimplifyHangs4()
-            =>
-                Assert.IsTrue(
-                    BeingCompletedForLessThan(
-                        () => "(1 + 1 / x)^2 / (1 + 1 / x)".Simplify(), GithubIssue170Timeout));
+        [Fact]
+        public void TestSimplifyHangs4() =>
+            Assert.True(
+                BeingCompletedForLessThan(
+                    () => "(1 + 1 / x)^2 / (1 + 1 / x)".Simplify(), GithubIssue170Timeout));
 
-                [TestMethod]
+                [Fact]
         public void TestEnumerator1()
         {
             Entity expr = "a^x + b^y + c^z";
@@ -70,12 +65,12 @@ namespace UnitTests.PatternsTest
             var matches = new Set();
             foreach(var match in expr.Where(x => x is Entity.Powf))
                 matches.Add(match);
-            Assert.AreEqual(3, matches.Count);
+            Assert.Equal(3, matches.Count);
             foreach(var match in matches.FiniteSet())
-                Assert.IsNotNull(expr.Contains(match), "match is not in expression");
+                Assert.True(expr.Contains(match));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestEnumerator2()
         {
             Entity expr = "a^x + ((b^y + c^z)^2)^x";
@@ -83,12 +78,12 @@ namespace UnitTests.PatternsTest
             var matches = new Set();
             foreach (var match in expr.Where(x => x is Entity.Powf))
                 matches.Add(match);
-            Assert.AreEqual(5, matches.Count);
+            Assert.Equal(5, matches.Count);
             foreach (var match in matches.FiniteSet())
-                Assert.IsNotNull(expr.Contains(match), "match is not in expression");
+                Assert.True(expr.Contains(match));
         }
 
-        [TestMethod]
+        [Fact]
         public void TestEnumerator3()
         {
             Entity expr = "2 + 3 + x";
@@ -96,7 +91,7 @@ namespace UnitTests.PatternsTest
             var matches = new Set();
             foreach (var match in expr.Where(x => x is Entity.Powf))
                 matches.Add(match);
-            Assert.AreEqual(0, matches.Count);
+            Assert.Empty(matches);
         }
     }
 }

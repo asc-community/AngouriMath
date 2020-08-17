@@ -5,16 +5,15 @@
 
 
 using AngouriMath;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace UnitTests.Algebra.PolynomialSolverTests
 {
-    [TestClass]
     public class ClassRealCardanoNumericRoots
     {
         public static Entity.Variable x = nameof(x);
 
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric1_3()
         {
             var expr = (x - 4) * (x - 3) * (x - 2);
@@ -22,7 +21,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric2_3()
         {
             var expr = (x - 5) * (x - 8) * (x - 0);
@@ -30,7 +29,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric3_3()
         {
             var expr = (x - 8) * (x - 5) * (x - 2);
@@ -38,7 +37,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric4_3()
         {
             var expr = (x - 0) * (x - 8) * (x - 3);
@@ -46,7 +45,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric5_3()
         {
             var expr = (x - 4) * (x - 8) * (x - 6);
@@ -54,7 +53,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric6_3()
         {
             var expr = (x - 8) * (x - 6) * (x - 9);
@@ -62,7 +61,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric7_3()
         {
             var expr = (x - 5) * (x - 6) * (x - 9);
@@ -70,7 +69,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric8_3()
         {
             var expr = (x - 5) * (x - 7) * (x - 4);
@@ -78,7 +77,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric9_3()
         {
             var expr = (x - 6) * (x - 0) * (x - 3);
@@ -86,7 +85,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric10_3()
         {
             var expr = (x - 7) * (x - 3) * (x - 3);
@@ -94,7 +93,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric11_3()
         {
             var expr = (x - 3) * (x - 3) * (x - 5);
@@ -102,7 +101,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric12_3()
         {
             var expr = (x - 3) * (x - 4) * (x - 1);
@@ -110,7 +109,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric13_3()
         {
             var expr = (x - 5) * (x - 1) * (x - 9);
@@ -118,7 +117,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric14_3()
         {
             var expr = (x - 0) * (x - 6) * (x - 7);
@@ -126,7 +125,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric15_3()
         {
             var expr = (x - 0) * (x - 7) * (x - 6);
@@ -134,7 +133,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric16_3()
         {
             var expr = (x - 0) * (x - 1) * (x - 3);
@@ -142,7 +141,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric17_3()
         {
             var expr = (x - 4) * (x - 4) * (x - 9);
@@ -150,7 +149,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric18_3()
         {
             var expr = (x - 4) * (x - 3) * (x - 5);
@@ -158,7 +157,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric19_3()
         {
             var expr = (x - 4) * (x - 3) * (x - 5);
@@ -166,7 +165,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric20_3()
         {
             var expr = (x - 3) * (x - 7) * (x - 6);
@@ -179,12 +178,11 @@ namespace UnitTests.Algebra.PolynomialSolverTests
 
 namespace UnitTests.Algebra.PolynomialSolverTests
 {
-    [TestClass]
     public class ClassComplexCardanoNumericRoots
     {
         public static Entity.Variable x = nameof(x);
 
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric1_3()
         {
             var expr = (x - 4 + MathS.i * 3) * (x - 2 + MathS.i * 5) * (x - 8 + MathS.i * 0);
@@ -192,7 +190,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric2_3()
         {
             var expr = (x - 8 + MathS.i * 5) * (x - 2 + MathS.i * 0) * (x - 8 + MathS.i * 3);
@@ -200,7 +198,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric3_3()
         {
             var expr = (x - 4 + MathS.i * 8) * (x - 6 + MathS.i * 8) * (x - 6 + MathS.i * 9);
@@ -208,7 +206,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric4_3()
         {
             var expr = (x - 5 + MathS.i * 6) * (x - 9 + MathS.i * 5) * (x - 7 + MathS.i * 4);
@@ -216,7 +214,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric5_3()
         {
             var expr = (x - 6 + MathS.i * 0) * (x - 3 + MathS.i * 7) * (x - 3 + MathS.i * 3);
@@ -224,7 +222,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric6_3()
         {
             var expr = (x - 3 + MathS.i * 3) * (x - 5 + MathS.i * 3) * (x - 4 + MathS.i * 1);
@@ -232,7 +230,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric7_3()
         {
             var expr = (x - 5 + MathS.i * 1) * (x - 9 + MathS.i * 0) * (x - 6 + MathS.i * 7);
@@ -240,7 +238,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric8_3()
         {
             var expr = (x - 0 + MathS.i * 7) * (x - 6 + MathS.i * 0) * (x - 1 + MathS.i * 3);
@@ -248,7 +246,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric9_3()
         {
             var expr = (x - 4 + MathS.i * 4) * (x - 9 + MathS.i * 4) * (x - 3 + MathS.i * 5);
@@ -256,7 +254,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric10_3()
         {
             var expr = (x - 4 + MathS.i * 3) * (x - 5 + MathS.i * 3) * (x - 7 + MathS.i * 6);
@@ -264,7 +262,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric11_3()
         {
             var expr = (x - 0 + MathS.i * 7) * (x - 4 + MathS.i * 1) * (x - 1 + MathS.i * 3);
@@ -272,7 +270,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric12_3()
         {
             var expr = (x - 7 + MathS.i * 4) * (x - 7 + MathS.i * 9) * (x - 4 + MathS.i * 7);
@@ -280,7 +278,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric13_3()
         {
             var expr = (x - 4 + MathS.i * 6) * (x - 8 + MathS.i * 4) * (x - 2 + MathS.i * 0);
@@ -288,7 +286,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric14_3()
         {
             var expr = (x - 8 + MathS.i * 7) * (x - 6 + MathS.i * 4) * (x - 4 + MathS.i * 3);
@@ -296,7 +294,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric15_3()
         {
             var expr = (x - 7 + MathS.i * 2) * (x - 9 + MathS.i * 1) * (x - 5 + MathS.i * 7);
@@ -304,7 +302,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric16_3()
         {
             var expr = (x - 2 + MathS.i * 5) * (x - 2 + MathS.i * 8) * (x - 7 + MathS.i * 9);
@@ -312,7 +310,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric17_3()
         {
             var expr = (x - 5 + MathS.i * 0) * (x - 3 + MathS.i * 3) * (x - 7 + MathS.i * 5);
@@ -320,7 +318,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric18_3()
         {
             var expr = (x - 6 + MathS.i * 8) * (x - 6 + MathS.i * 0) * (x - 8 + MathS.i * 3);
@@ -328,7 +326,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric19_3()
         {
             var expr = (x - 9 + MathS.i * 0) * (x - 9 + MathS.i * 9) * (x - 3 + MathS.i * 9);
@@ -336,7 +334,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric20_3()
         {
             var expr = (x - 3 + MathS.i * 7) * (x - 6 + MathS.i * 0) * (x - 2 + MathS.i * 4);
@@ -344,7 +342,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric21_3()
         {
             var expr = (x - 4 + MathS.i * 6) * (x - 1 + MathS.i * 8) * (x - 5 + MathS.i * 9);
@@ -352,7 +350,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric22_3()
         {
             var expr = (x - 9 + MathS.i * 8) * (x - 5 + MathS.i * 4) * (x - 7 + MathS.i * 8);
@@ -360,7 +358,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric23_3()
         {
             var expr = (x - 3 + MathS.i * 3) * (x - 2 + MathS.i * 9) * (x - 5 + MathS.i * 4);
@@ -368,7 +366,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric24_3()
         {
             var expr = (x - 9 + MathS.i * 3) * (x - 0 + MathS.i * 3) * (x - 4 + MathS.i * 2);
@@ -376,7 +374,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric25_3()
         {
             var expr = (x - 1 + MathS.i * 6) * (x - 6 + MathS.i * 7) * (x - 1 + MathS.i * 3);
@@ -384,7 +382,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric26_3()
         {
             var expr = (x - 7 + MathS.i * 4) * (x - 8 + MathS.i * 8) * (x - 4 + MathS.i * 2);
@@ -392,7 +390,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric27_3()
         {
             var expr = (x - 2 + MathS.i * 2) * (x - 4 + MathS.i * 3) * (x - 2 + MathS.i * 8);
@@ -400,7 +398,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric28_3()
         {
             var expr = (x - 0 + MathS.i * 5) * (x - 6 + MathS.i * 3) * (x - 4 + MathS.i * 8);
@@ -408,7 +406,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric29_3()
         {
             var expr = (x - 9 + MathS.i * 2) * (x - 2 + MathS.i * 4) * (x - 2 + MathS.i * 3);
@@ -416,7 +414,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric30_3()
         {
             var expr = (x - 4 + MathS.i * 9) * (x - 7 + MathS.i * 8) * (x - 4 + MathS.i * 9);
@@ -429,12 +427,11 @@ namespace UnitTests.Algebra.PolynomialSolverTests
 
 namespace UnitTests.Algebra.PolynomialSolverTests
 {
-    [TestClass]
     public class ClassRealFerrariNumericRoots
     {
         public static Entity.Variable x = nameof(x);
 
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric1_4()
         {
             var expr = (x - 4) * (x - 3) * (x - 2) * (x - 5);
@@ -442,7 +439,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric2_4()
         {
             var expr = (x - 8) * (x - 0) * (x - 8) * (x - 5);
@@ -450,7 +447,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric3_4()
         {
             var expr = (x - 2) * (x - 0) * (x - 8) * (x - 3);
@@ -458,7 +455,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric4_4()
         {
             var expr = (x - 4) * (x - 8) * (x - 6) * (x - 8);
@@ -466,7 +463,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric5_4()
         {
             var expr = (x - 6) * (x - 9) * (x - 5) * (x - 6);
@@ -474,7 +471,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric6_4()
         {
             var expr = (x - 9) * (x - 5) * (x - 7) * (x - 4);
@@ -482,7 +479,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric7_4()
         {
             var expr = (x - 6) * (x - 0) * (x - 3) * (x - 7);
@@ -490,7 +487,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric8_4()
         {
             var expr = (x - 3) * (x - 3) * (x - 3) * (x - 3);
@@ -498,7 +495,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric9_4()
         {
             var expr = (x - 5) * (x - 3) * (x - 4) * (x - 1);
@@ -506,7 +503,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric10_4()
         {
             var expr = (x - 5) * (x - 1) * (x - 9) * (x - 0);
@@ -514,7 +511,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric11_4()
         {
             var expr = (x - 6) * (x - 7) * (x - 0) * (x - 7);
@@ -522,7 +519,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric12_4()
         {
             var expr = (x - 6) * (x - 0) * (x - 1) * (x - 3);
@@ -535,12 +532,11 @@ namespace UnitTests.Algebra.PolynomialSolverTests
 
 namespace UnitTests.Algebra.PolynomialSolverTests
 {
-    [TestClass]
     public class ClassComplexFerrariNumericRoots
     {
         public static Entity.Variable x = nameof(x);
 
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric1_4()
         {
             var expr = (x - 4 + MathS.i * 3) * (x - 2 + MathS.i * 5) * (x - 8 + MathS.i * 0) * (x - 8 + MathS.i * 5);
@@ -548,7 +544,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric2_4()
         {
             var expr = (x - 2 + MathS.i * 0) * (x - 8 + MathS.i * 3) * (x - 4 + MathS.i * 8) * (x - 6 + MathS.i * 8);
@@ -556,7 +552,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric3_4()
         {
             var expr = (x - 6 + MathS.i * 9) * (x - 5 + MathS.i * 6) * (x - 9 + MathS.i * 5) * (x - 7 + MathS.i * 4);
@@ -564,7 +560,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric4_4()
         {
             var expr = (x - 6 + MathS.i * 0) * (x - 3 + MathS.i * 7) * (x - 3 + MathS.i * 3) * (x - 3 + MathS.i * 3);
@@ -572,7 +568,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric5_4()
         {
             var expr = (x - 5 + MathS.i * 3) * (x - 4 + MathS.i * 1) * (x - 5 + MathS.i * 1) * (x - 9 + MathS.i * 0);
@@ -580,7 +576,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric6_4()
         {
             var expr = (x - 6 + MathS.i * 7) * (x - 0 + MathS.i * 7) * (x - 6 + MathS.i * 0) * (x - 1 + MathS.i * 3);
@@ -588,7 +584,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric7_4()
         {
             var expr = (x - 4 + MathS.i * 4) * (x - 9 + MathS.i * 4) * (x - 3 + MathS.i * 5) * (x - 4 + MathS.i * 3);
@@ -596,7 +592,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-        [TestMethod]
+        [Fact]
         public void TestAllcomplexNumeric8_4()
         {
             var expr = (x - 5 + MathS.i * 3) * (x - 7 + MathS.i * 6) * (x - 0 + MathS.i * 7) * (x - 4 + MathS.i * 1);

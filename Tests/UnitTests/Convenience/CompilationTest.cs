@@ -1,66 +1,65 @@
 ﻿using AngouriMath;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace UnitTests.Convenience
 {
-    [TestClass]
     public class CompilationTest
     {
         private static readonly Entity.Variable x = MathS.Var(nameof(x));
         private static readonly Entity.Variable y = MathS.Var(nameof(y));
-        [TestMethod]
+        [Fact]
         public void Test1()
         {
             var func = (x + MathS.Sqrt(x)).Compile(x);
-            Assert.AreEqual(6, func.Substitute(4));
+            Assert.Equal(6, func.Substitute(4));
         }
-        [TestMethod]
+        [Fact]
         public void Test2()
         {
             var func = (MathS.Sin(x) + MathS.Cos(x)).Compile(x);
-            Assert.AreEqual(1, func.Substitute(0));
+            Assert.Equal(1, func.Substitute(0));
         }
-        [TestMethod]
+        [Fact]
         public void Test3()
         {
             var func = (x / y).Compile(x, y);
-            Assert.AreEqual(0.5, func.Substitute(1, 2));
+            Assert.Equal(0.5, func.Substitute(1, 2));
         }
-        [TestMethod]
+        [Fact]
         public void Test4()
         {
             var func = (x / y).Compile(y, x);
-            Assert.AreEqual(2.0, func.Substitute(1, 2));
+            Assert.Equal(2.0, func.Substitute(1, 2));
         }
-        [TestMethod]
+        [Fact]
         public void Test5()
         {
             var func = ((x + y) / (x - 3)).Compile(x, y);
-            Assert.AreEqual(7.0, func.Substitute(4, 3));
+            Assert.Equal(7.0, func.Substitute(4, 3));
         }
-        [TestMethod]
+        [Fact]
         public void Test6()
         {
             // Caching with one value
             var expr = (MathS.Sqr(x) + MathS.Sqr(x)) / MathS.Sqr(x) + MathS.Sqrt(x);
             var func = expr.Compile(x);
-            Assert.AreEqual(4, func.Call(4));
+            Assert.Equal(4, func.Call(4));
         }
-        [TestMethod]
+        [Fact]
         public void Test7()
         {
             // Caching with multiple values
             var expr = (MathS.Sqr(x) + MathS.Sqr(x)) / MathS.Sqr(x)
                        + MathS.Sqrt(x) + MathS.Cbrt(x) * MathS.Cbrt(x) + MathS.Sqrt(x);
             var func = expr.Compile(x);
-            Assert.AreEqual(34, func.Call(64));
+            Assert.Equal(34, func.Call(64));
         }
-        [TestMethod]
+        [Fact]
         public void Test8()
         {
             var expr = MathS.pi + MathS.e + x;
             var func = expr.Compile(x);
-            Assert.IsTrue(func.Call(3).Real > 7 && func.Call(3).Real < 10);
+            Assert.True(func.Call(3).Real > 7 && func.Call(3).Real < 10);
         }
     }
 }

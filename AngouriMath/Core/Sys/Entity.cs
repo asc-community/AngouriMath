@@ -15,17 +15,16 @@
 
 using System;
 using System.Collections.Generic;
-using System.Data.Common;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using AngouriMath.Core.Numerix;
-using AngouriMath.Core.Sys;
 using GenericTensor.Core;
 using PeterO.Numbers;
 
 namespace AngouriMath
 {
+    using GenTensor = GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
     public interface ILatexiseable { public string Latexise(); }
     public enum Priority { Sum = 20, Minus = 20, Mul = 40, Div = 40, Pow = 60, Factorial = 70, Func = 80, Variable = 100, Number = 100 }
     /// <summary>
@@ -254,21 +253,16 @@ namespace AngouriMath
             }
             public static implicit operator Variable(string name) => new(name);
         }
-        /// <summary>
-        /// Basic tensor implementation
-        /// https://en.wikipedia.org/wiki/Tensor
-        /// </summary>
-        public partial record Tensor(GenTensor<Entity, Tensor.EntityTensorWrapperOperations> InnerTensor) : Entity
+        /// <summary>Basic tensor implementation: <a href="https://en.wikipedia.org/wiki/Tensor"/></summary>
+        public partial record Tensor(GenTensor InnerTensor) : Entity
         {
             public override Priority Priority => Priority.Number;
             internal Tensor Elementwise(Func<Entity, Entity> operation) =>
-                new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.CreateTensor(
-                    InnerTensor.Shape, indices => operation(InnerTensor.GetValueNoCheck(indices))));
+                new Tensor(GenTensor.CreateTensor(InnerTensor.Shape, indices => operation(InnerTensor.GetValueNoCheck(indices))));
             internal Tensor Elementwise(Tensor other, Func<Entity, Entity, Entity> operation) =>
                 Shape != other.Shape
                 ? throw new InvalidShapeException("Arguments should be of the same shape")
-                : new Tensor(GenTensor<Entity, EntityTensorWrapperOperations>.CreateTensor(
-                    InnerTensor.Shape, indices =>
+                : new Tensor(GenTensor.CreateTensor(InnerTensor.Shape, indices =>
                         operation(InnerTensor.GetValueNoCheck(indices), other.InnerTensor.GetValueNoCheck(indices))));
             public override Entity Replace(Func<Entity, Entity> func) => Elementwise(element => element.Replace(func));
             protected override Entity[] InitDirectChildren() => InnerTensor.Iterate().Select(tup => tup.Value).ToArray();
@@ -288,14 +282,10 @@ namespace AngouriMath
                 public bool IsZero(Entity a) => a == 0;
                 public string ToString(Entity a) => a.ToString();
             }
-            /// <summary>
-            /// List of ints that stand for dimensions
-            /// </summary>
+            /// <summary>List of <see cref="int"/>s that stand for dimensions</summary>
             public TensorShape Shape => InnerTensor.Shape;
 
-            /// <summary>
-            /// Numbere of dimensions. 2 for matrix, 1 for vector
-            /// </summary>
+            /// <summary>Number of dimensions: 2 for matrix, 1 for vector</summary>
             public int Dimensions => Shape.Count;
 
             /// <summary>
@@ -304,47 +294,33 @@ namespace AngouriMath
             /// If you need vector, list 1 dimension (length of the vector)
             /// You can't list 0 dimensions
             /// </summary>
-            /// <param name="dims"></param>
-            public Tensor(params int[] dims)
-                : this(GenTensor<Entity, EntityTensorWrapperOperations>.CreateTensor(new(dims), inds => 0)) { }
+            public Tensor(Func<int[], Entity> operation, params int[] dims) : this(GenTensor.CreateTensor(new(dims), operation)) { }
 
-            public Entity this[params int[] dims]
-            {
-                get => InnerTensor[dims];
-                set => InnerTensor[dims] = value;
-            }
-
+            public Entity this[int i] => InnerTensor[i];
+            public Entity this[int x, int y] => InnerTensor[x, y];
+            public Entity this[int x, int y, int z] => InnerTensor[x, y, z];
+            public Entity this[params int[] dims] => InnerTensor[dims];
             public bool IsVector => InnerTensor.IsVector;
             public bool IsMatrix => InnerTensor.IsMatrix;
 
-            /// <summary>
-            /// Changes the order of axes
-            /// </summary>
-            /// <param name="a"></param>
-            /// <param name="b"></param>
+            /// <summary>Changes the order of axes</summary>
             public void Transpose(int a, int b) => InnerTensor.Transpose(a, b);
 
-            /// <summary>
-            /// Changes the order of axes in matrix
-            /// </summary>
+            /// <summary>Changes the order of axes in matrix</summary>
             public void Transpose()
             {
-                if (IsMatrix)
-                    InnerTensor.TransposeMatrix();
-                else
-                    throw new Core.Exceptions.MathSException("Specify axes numbers for non-matrices");
+                if (IsMatrix) InnerTensor.TransposeMatrix();
+                else throw new Core.Exceptions.MathSException("Specify axes numbers for non-matrices");
             }
 
             // We do not need to use Gaussian elimination here
             // since we anyway get N! memory use
             public Entity Determinant() => InnerTensor.DeterminantLaplace();
 
-            /// <summary>
-            /// Inverts all matrices in a tensor
-            /// </summary>
+            /// <summary>Inverts all matrices in a tensor</summary>
             public Tensor Inverse()
             {
-                var cp = InnerTensor.Copy(copyElements: true);
+                var cp = InnerTensor.Copy(false);
                 cp.TensorMatrixInvert();
                 return new Tensor(cp);
             }

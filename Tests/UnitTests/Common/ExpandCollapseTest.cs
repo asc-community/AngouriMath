@@ -1,38 +1,37 @@
 ﻿using AngouriMath;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace UnitTests.Common
 {
-    [TestClass]
     public class ExpandCollapseTest
     {
         public static readonly Entity.Variable x = MathS.Var(nameof(x));
         public static readonly Entity.Variable y = MathS.Var(nameof(y));
-        [TestMethod]
+        [Fact]
         public void Test1()
         {
             var expr = (x + y) * (x - y);
-            Assert.AreEqual(16, expr.Expand().Substitute(x, 5).Substitute(y, 3).Eval());
+            Assert.Equal(16, expr.Expand().Substitute(x, 5).Substitute(y, 3).Eval());
         }
-        [TestMethod]
+        [Fact]
         public void Test2()
         {
             var expr = (x + y + x + y) * (x - y + x - y);
-            Assert.AreEqual(64, expr.Expand().Substitute(x, 5).Substitute(y, 3).Eval());
+            Assert.Equal(64, expr.Expand().Substitute(x, 5).Substitute(y, 3).Eval());
         }
-        [TestMethod]
+        [Fact]
         public void Test3()
         {
             var expr = x * y + x;
-            Assert.AreEqual(x * (1 + y), expr.Collapse());
+            Assert.Equal(x * (1 + y), expr.Collapse());
         }
-        [TestMethod]
+        [Fact]
         public void Factorial() 
         {
             var expr = MathS.Factorial(x + 3) / MathS.Factorial(x + 1);
-            Assert.AreEqual(MathS.Pow(x, 2) + x * 3 + 2 * x + 6, expr.Expand());
+            Assert.Equal(MathS.Pow(x, 2) + x * 3 + 2 * x + 6, expr.Expand());
             expr = MathS.Factorial(x + -3) / MathS.Factorial(x + -1);
-            Assert.AreEqual(1 / (x + -2) / (x + -1), expr.Expand());
+            Assert.Equal(1 / (x + -2) / (x + -1), expr.Expand());
         }
     }
 }

@@ -1,10 +1,9 @@
 ﻿using AngouriMath;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using System;
 
 namespace UnitTests.Common
 {
-    [TestClass]
     public class PerformanceTest
     {
         private readonly int ITERATIONS = 10;
@@ -18,15 +17,15 @@ namespace UnitTests.Common
             }
             return (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - milliseconds) / ITERATIONS;
         }
-        [TestMethod]
-        public void Test1() => Assert.IsTrue(Measure(() => MathS.FromString("x + x^2 + x^3")) < 4);
-        [TestMethod]
-        public void Test2() => Assert.IsTrue(Measure(() => MathS.FromString("x + log(2, 4)^2 * sin(cos(sin(cos(5)))) + x^3")) < 10);
-        [TestMethod]
-        public void Test4() => Assert.IsTrue(Measure(() => x / x) < 1);
-        [TestMethod]
-        public void Test5() => Assert.IsTrue(Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x)) < 30);
-        [TestMethod]
-        public void Test6() => Assert.IsTrue(Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x).Substitute(x, 3).Eval()) < 50);
+        [Fact]
+        public void Test1() => Assert.True(Measure(() => MathS.FromString("x + x^2 + x^3")) < 4);
+        [Fact]
+        public void Test2() => Assert.True(Measure(() => MathS.FromString("x + log(2, 4)^2 * sin(cos(sin(cos(5)))) + x^3")) < 10);
+        [Fact]
+        public void Test4() => Assert.True(Measure(() => x / x) < 1);
+        [Fact]
+        public void Test5() => Assert.True(Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x)) < 30);
+        [Fact]
+        public void Test6() => Assert.True(Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x).Substitute(x, 3).Eval()) < 50);
     }
 }

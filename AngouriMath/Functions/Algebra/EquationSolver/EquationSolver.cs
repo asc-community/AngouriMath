@@ -92,11 +92,7 @@ namespace AngouriMath.Functions.Algebra
                     throw new AngouriBugException("InSolveSystem incorrect output");
             if (res.Count == 0)
                 return null;
-            var result = new Tensor(res.Count, initVarCount);
-            for (int i = 0; i < res.Count; i++)
-                for (int j = 0; j < initVarCount; j++)
-                    result[i, j] = res[i][j];
-            return result;
+            return new Tensor(indices => res[indices[0]][indices[1]], res.Count, initVarCount);
         }
 
         /// <summary>

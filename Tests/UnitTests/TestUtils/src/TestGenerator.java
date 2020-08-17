@@ -16,44 +16,44 @@
  /*
  TODO:
  Why is this even a thing? Why use a different language as a generator!?
- Using [DataTestMethod] and [DataRow] not only simplifies these tests greatly,
+ Using [Theory] and [InlineData] not only simplifies these tests greatly,
  but also makes contributing tests much more straight-forward.
 
  For example, instead of repeating
 
-        [TestMethod]
+        [Fact]
         public void Sin1Test()
         {
             MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
             var toSimplify = MathS.Sin(2 * MathS.pi / 1);
             var expected = toSimplify.Eval();
             var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
+            Assert.Equal(expected, real);
             MathS.Settings.PrecisionErrorZeroRange.Unset();
         }
 
  24 times, we can have
 
-        [DataTestMethod]
-        [DataRow(1)]
-        [DataRow(2)]
-        [DataRow(3)]
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        [InlineData(3)]
         // ...
-        [DataRow(23)]
-        [DataRow(24)]
+        [InlineData(23)]
+        [InlineData(24)]
         public void SinTests(int i)
         {
             MathS.Settings.PrecisionErrorZeroRange.Set(1e-11m);
             var toSimplify = MathS.Sin(2 * MathS.pi / i);
             var expected = toSimplify.Eval();
             var real = toSimplify.Simplify().Eval();
-            Assert.AreEqual(expected, real);
+            Assert.Equal(expected, real);
             MathS.Settings.PrecisionErrorZeroRange.Unset();
         }
 
  which acts as individual tests.
 
- I know that these DataRows show up as one test case with multiple results instead of multiple test cases
+ I know that these InlineDatas show up as one test case with multiple results instead of multiple test cases
  each with a singular result, but this is a shortcoming of MSTest - NUnit and xUnit both handle parameterized tests
  beautifully by displaying individual test cases, where each case can be debugged individually, unlike in MSTest.
 
@@ -97,7 +97,7 @@ public class TestGenerator {
         var rand = new Random(44);
         for(var i = 0; i < iterCount; i++)
         {
-            sb.append(tab2); sb.append("[TestMethod]\n");
+            sb.append(tab2); sb.append("[Fact]\n");
             sb.append(tab2); sb.append("public void TestAll");
             sb.append("complexNumeric"); sb.append(i + 1); sb.append("_"); sb.append(power); sb.append("()\n");
             sb.append(tab2); sb.append("{\n");
@@ -132,7 +132,7 @@ public class TestGenerator {
         sb.append(" * Do not modify it; modify TestGenerator.java and rerun it instead.\n");
         sb.append(" */\n\n\n");
         sb.append("using AngouriMath;\n");
-        sb.append("using Microsoft.VisualStudio.TestTools.UnitTesting;\n\n");
+        sb.append("using Xunit;\n\n");
         sb.append(generatePolynomial("ClassRealCardanoNumericRoots", 20, 3, false));
         sb.append("\n\n");
         sb.append(generatePolynomial("ClassComplexCardanoNumericRoots", 30, 3, true));
@@ -162,14 +162,14 @@ public class TestGenerator {
         {
             if (toIgnore.contains(i))
                 continue;
-            sb.append(tab2); sb.append("[TestMethod]\n");
+            sb.append(tab2); sb.append("[Fact]\n");
             sb.append(tab2); sb.append("public void "); sb.append(funcName); sb.append(i); sb.append("Test()\n");
             sb.append(tab2); sb.append("{\n");
             sb.append(tab3); sb.append("var toSimplify = MathS."); sb.append(funcName);
             sb.append("(2 * MathS.pi / "); sb.append(i); sb.append(");\n");
             sb.append(tab3); sb.append("var expected = toSimplify.Eval();\n");
             sb.append(tab3); sb.append("var real = toSimplify.Simplify().Eval();\n");
-            sb.append(tab3); sb.append("Assert.AreEqual(expected, real);\n");
+            sb.append(tab3); sb.append("Assert.Equal(expected, real);\n");
             sb.append(tab2); sb.append("}\n\n");
         }
 
@@ -189,7 +189,7 @@ public class TestGenerator {
         sb.append(" * so if one is wrong your result might be wrong at all\n");
         sb.append(" */\n\n\n");
         sb.append("using AngouriMath;\n");
-        sb.append("using Microsoft.VisualStudio.TestTools.UnitTesting;\n\n");
+        sb.append("using Xunit;\n\n");
         sb.append("namespace UnitTests.Core.TrigTableConstTest\n");
         sb.append("{\n");
         // we exclude test #9 because its simplified expression is ambiguous due to cubic roots
