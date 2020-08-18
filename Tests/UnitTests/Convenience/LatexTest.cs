@@ -1,6 +1,6 @@
 using AngouriMath;
 using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
+using static AngouriMath.Entity.Number;
 using Xunit;
 
 namespace UnitTests.Convenience
@@ -8,7 +8,7 @@ namespace UnitTests.Convenience
     public class LatexTests
     {
         private static readonly Entity x = MathS.Var(nameof(x));
-        private static readonly Entity frac34 = RationalNumber.Create(3, 4);
+        private static readonly Entity frac34 = Rational.Create(3, 4);
         private static readonly Entity m1 = -1;
         private static readonly Entity im1 = MathS.i - 1;
         private static readonly Entity m2i = -2 * MathS.i;
@@ -22,8 +22,8 @@ namespace UnitTests.Convenience
         [Fact] public void Num123() => TestSimplify("123", 123);
         [Fact] public void Float() => Test(@"\frac{15432}{125}", (Entity)123.456m);
         [Fact] public void FloatSimplify() => TestSimplify(@"\frac{15432}{125}", 123.456m);
-        [Fact] public void FloatParse() => Test(@"3", ComplexNumber.Parse("3.000"));
-        [Fact] public void FloatZero() => Test(@"123.4561234567890", ComplexNumber.Parse("123.4561234567890"));
+        [Fact] public void FloatParse() => Test(@"3", Complex.Parse("3.000"));
+        [Fact] public void FloatZero() => Test(@"123.4561234567890", Complex.Parse("123.4561234567890"));
         [Fact] public void Pi() => Test(@"\pi", MathS.pi);
         [Fact] public void E() => Test(@"e", MathS.e);
         [Fact] public void I() => TestSimplify("i", MathS.Sqrt(-1));
@@ -71,7 +71,7 @@ namespace UnitTests.Convenience
         [Fact] public void XSquaredMinusX() => TestSimplify(@"{x}^{2}-x", "x^2-x");
         [Fact] public void XSquaredMinusXAlternate() => TestSimplify(@"{x}^{2}-x", "-x+x^2");
         [Fact] public void XSquaredMinusXAlternate2() => TestSimplify(@"{x}^{2}-x", "x^2+(-1)*x");
-        [Fact] public void M1() => Test("-1", (ComplexNumber)(-1));
+        [Fact] public void M1() => Test("-1", (Complex)(-1));
         [Fact] public void M1Entity() => Test("-1", m1);
         [Fact] public void M1Add() => Test(@"-1-1", m1 + m1);
         [Fact] public void M1Subtract() => Test(@"-1--1", m1 - m1);
@@ -163,16 +163,16 @@ namespace UnitTests.Convenience
         [Fact] public void FactorialSinX() => Test(@"\sin\left(x\right)!", MathS.Factorial(MathS.Sin(x)));
         // x!! is the double factorial, (x!)! is factorial appplied twice which is different
         [Fact] public void FactorialFactorialX() => Test(@"\left(x!\right)!", MathS.Factorial(MathS.Factorial(x)));
-        [Fact] public void OO() => Test(@"\infty ", RealNumber.PositiveInfinity);
-        [Fact] public void MOO() => Test(@"-\infty ", RealNumber.NegativeInfinity);
-        [Fact] public void MOOAlternate() => Test(@"-\infty ", -RealNumber.PositiveInfinity);
-        [Fact] public void OOPI() => Test(@"\infty  + i", RealNumber.PositiveInfinity + MathS.i);
-        [Fact] public void OOMI() => Test(@"\infty  - i", RealNumber.PositiveInfinity - MathS.i);
-        [Fact] public void OOPOOI() => Test(@"\infty  + \infty i", RealNumber.PositiveInfinity * (1 + MathS.i));
-        [Fact] public void OOMOOI() => Test(@"\infty  - \infty i", RealNumber.PositiveInfinity * (1 - MathS.i));
-        [Fact] public void MOOPOOI() => Test(@"-\infty  + \infty i", RealNumber.PositiveInfinity * (-1 + MathS.i));
-        [Fact] public void MOOMOOI() => Test(@"-\infty  - \infty i", RealNumber.PositiveInfinity * (-1 - MathS.i));
-        [Fact] public void Undefined() => TestSimplify(@"\mathrm{undefined}", RealNumber.PositiveInfinity / RealNumber.PositiveInfinity);
+        [Fact] public void OO() => Test(@"\infty ", Real.PositiveInfinity);
+        [Fact] public void MOO() => Test(@"-\infty ", Real.NegativeInfinity);
+        [Fact] public void MOOAlternate() => Test(@"-\infty ", -Real.PositiveInfinity);
+        [Fact] public void OOPI() => Test(@"\infty  + i", Real.PositiveInfinity + MathS.i);
+        [Fact] public void OOMI() => Test(@"\infty  - i", Real.PositiveInfinity - MathS.i);
+        [Fact] public void OOPOOI() => Test(@"\infty  + \infty i", Real.PositiveInfinity * (1 + MathS.i));
+        [Fact] public void OOMOOI() => Test(@"\infty  - \infty i", Real.PositiveInfinity * (1 - MathS.i));
+        [Fact] public void MOOPOOI() => Test(@"-\infty  + \infty i", Real.PositiveInfinity * (-1 + MathS.i));
+        [Fact] public void MOOMOOI() => Test(@"-\infty  - \infty i", Real.PositiveInfinity * (-1 - MathS.i));
+        [Fact] public void Undefined() => TestSimplify(@"\mathrm{undefined}", Real.PositiveInfinity / Real.PositiveInfinity);
         [Fact] public void Set0() => Test(@"\emptyset", MathS.Sets.Empty());
         [Fact] public void Set0Alternate() => Test(@"\emptyset", MathS.Sets.Finite());
         [Fact] public void Set1() => Test(@"\left\{1\right\}", MathS.Sets.Finite(1));
@@ -339,7 +339,7 @@ namespace UnitTests.Convenience
         [Fact] public void Limit2() =>
             Test(@"\lim_{x\to 0^+} {a}^{5}", (Entity)"limitright(a^5, x, 0)");
         [Fact] public void Limit3() =>
-            Test(@"\lim_{x\to \infty } \left[x+y\right]", MathS.Limit("x + y", x, RealNumber.PositiveInfinity));
+            Test(@"\lim_{x\to \infty } \left[x+y\right]", MathS.Limit("x + y", x, Real.PositiveInfinity));
         [Fact] public void Limit4() =>
             Test(@"\lim_{xf\to 1+x} \left[\frac{1}{x}\right]", MathS.Limit("1/x", "xf", "1+x"));
         [Fact] public void Limit5() =>

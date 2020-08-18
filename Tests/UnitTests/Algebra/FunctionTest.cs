@@ -1,5 +1,4 @@
 ﻿using AngouriMath;
-using AngouriMath.Core.Numerix;
 using Xunit;
 
 namespace UnitTests.Algebra

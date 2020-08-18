@@ -1,5 +1,4 @@
-﻿using AngouriMath.Core.Numerix;
-using AngouriMath.Core.TreeAnalysis;
+﻿using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using PeterO.Numbers;
 using System;
@@ -11,6 +10,7 @@ using System.Threading;
 namespace AngouriMath.Limits
 {
     using static Entity;
+    using static Entity.Number;
     class LimitSolvers
     {
         internal static Dictionary<EDecimal, Entity>? ParseAsPolynomial(Entity expr, Variable x)
@@ -29,24 +29,24 @@ namespace AngouriMath.Limits
             foreach (var monomial in monomials)
             {
                 var simplified = monomial.Value.InnerSimplify();
-                if (simplified != IntegerNumber.Zero)
+                if (simplified != Integer.Zero)
                 {
                     filteredDictionary.Add(monomial.Key, simplified);
                 }
             }
             return filteredDictionary;
         }
-        private static readonly RealNumber Infinity = RealNumber.PositiveInfinity;
+        private static readonly Real Infinity = Real.PositiveInfinity;
         internal static Entity? SolveBySubstitution(Entity expr, Variable x)
         {
             var res = expr.Substitute(x, Infinity);
             if (MathS.CanBeEvaluated(res))
             {
                 var limit = res.Eval();
-                if (limit == RealNumber.NaN) return null;
-                if (!limit.Real.IsFinite)
-                    return limit.Real; // TODO: sometimes we get { oo + value * i } so we assume it is just infinity
-                if (limit == IntegerNumber.Zero) return limit;
+                if (limit == Real.NaN) return null;
+                if (!limit.RealPart.IsFinite)
+                    return limit.RealPart; // TODO: sometimes we get { oo + value * i } so we assume it is just infinity
+                if (limit == Integer.Zero) return limit;
 
                 return res;
             }
@@ -99,7 +99,7 @@ namespace AngouriMath.Limits
                         if (MathS.CanBeEvaluated(term))
                         {
                             var result = Infinity * term.Eval();
-                            if (result == RealNumber.NaN)
+                            if (result == Real.NaN)
                                 return null;
                             else
                                 return result;
@@ -128,12 +128,12 @@ namespace AngouriMath.Limits
                 }
                 else
                 {
-                    var innerLimit = LimitFunctional.ComputeLimit(logArgument, x, RealNumber.PositiveInfinity);
+                    var innerLimit = LimitFunctional.ComputeLimit(logArgument, x, Real.PositiveInfinity);
                     if (innerLimit is null) return null;
                     // do same as wolframalpha: https://www.wolframalpha.com/input/?i=ln%28-inf%29
-                    if (innerLimit == RealNumber.NegativeInfinity) return RealNumber.PositiveInfinity;
-                    if (innerLimit == RealNumber.PositiveInfinity) return RealNumber.PositiveInfinity;
-                    if (innerLimit == IntegerNumber.Zero) return RealNumber.NegativeInfinity;
+                    if (innerLimit == Real.NegativeInfinity) return Real.PositiveInfinity;
+                    if (innerLimit == Real.PositiveInfinity) return Real.PositiveInfinity;
+                    if (innerLimit == Integer.Zero) return Real.NegativeInfinity;
                     return MathS.Log(logBase, innerLimit);
                 }
             }
@@ -146,19 +146,19 @@ namespace AngouriMath.Limits
             {
                 if (lowerLogBase.Vars.Contains(x) || upperLogBase.Vars.Contains(x)) return null;
 
-                var upperLogLimit = LimitFunctional.ComputeLimit(upperLogArgument, x, RealNumber.PositiveInfinity);
-                var lowerLogLimit = LimitFunctional.ComputeLimit(lowerLogArgument, x, RealNumber.PositiveInfinity);
+                var upperLogLimit = LimitFunctional.ComputeLimit(upperLogArgument, x, Real.PositiveInfinity);
+                var lowerLogLimit = LimitFunctional.ComputeLimit(lowerLogArgument, x, Real.PositiveInfinity);
                 if (upperLogLimit is null || lowerLogLimit is null) return null;
 
-                if ((upperLogLimit.Any(child => child == RealNumber.PositiveInfinity || child == RealNumber.NegativeInfinity)
-                     || upperLogLimit == IntegerNumber.Zero)
-                    && (lowerLogLimit.Any(child => child == RealNumber.PositiveInfinity || child == RealNumber.NegativeInfinity)
-                     || lowerLogLimit == IntegerNumber.Zero))
+                if ((upperLogLimit.Any(child => child == Real.PositiveInfinity || child == Real.NegativeInfinity)
+                     || upperLogLimit == Integer.Zero)
+                    && (lowerLogLimit.Any(child => child == Real.PositiveInfinity || child == Real.NegativeInfinity)
+                     || lowerLogLimit == Integer.Zero))
                 {
                     // apply L'Hôpital's rule for lim(x -> +oo) log(f(x), g(x))
                     var p = upperLogArgument.Derive(x) / upperLogArgument;
                     var q = lowerLogArgument.Derive(x) / lowerLogArgument;
-                    return LimitFunctional.ComputeLimit(p / q, x, RealNumber.PositiveInfinity);
+                    return LimitFunctional.ComputeLimit(p / q, x, Real.PositiveInfinity);
                 }
                 else
                 {
@@ -166,8 +166,8 @@ namespace AngouriMath.Limits
                     if (MathS.CanBeEvaluated(limit))
                     {
                         var res = limit.Eval();
-                        if (res == RealNumber.NaN) return null;
-                        if (!res.IsFinite || res == IntegerNumber.Zero) return res;
+                        if (res == Real.NaN) return null;
+                        if (!res.IsFinite || res == Integer.Zero) return res;
                         return limit;
                     }
                     return upperLogLimit / lowerLogLimit;

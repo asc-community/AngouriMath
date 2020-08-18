@@ -1,6 +1,5 @@
 ﻿using AngouriMath;
 using Xunit;
-using AngouriMath.Core.Numerix;
 
 namespace UnitTests.Algebra
 {
@@ -11,7 +10,7 @@ namespace UnitTests.Algebra
         public void Test1()
         {
             var expr = x;
-            Assert.True(Entity.Number.Abs(expr.DefiniteIntegral(x, 0, 1).Real - 1.0/2) < 0.1);
+            Assert.True((expr.DefiniteIntegral(x, 0, 1).RealPart - 1.0/2).Abs() < 0.1);
         }
         [Fact]
         public void Test2()
@@ -23,7 +22,7 @@ namespace UnitTests.Algebra
         public void Test3()
         {
             var expr = MathS.Sin(x);
-            Assert.True(expr.DefiniteIntegral(x, 0, 3).Real > 1.5);
+            Assert.True(expr.DefiniteIntegral(x, 0, 3).RealPart > 1.5);
         }
     }
 }

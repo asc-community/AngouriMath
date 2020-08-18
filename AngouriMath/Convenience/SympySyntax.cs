@@ -15,7 +15,6 @@
 
 using System.Linq;
 using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
 
 namespace AngouriMath
 {
@@ -82,7 +81,7 @@ namespace AngouriMath
         /// any other symbols but numbers and functions.
         /// </summary>
         /// <returns></returns>
-        public static ComplexNumber Evalf(Entity expr) => expr.Eval();
+        public static Number.Complex Evalf(Entity expr) => expr.Eval();
 
         /// <summary>
         /// Returns the expression in format of latex (for example, a / b -> \frac{a}{b})
@@ -114,6 +113,6 @@ namespace AngouriMath
         /// Denominator
         /// </param>
         /// <returns></returns>
-        public static Entity Rational(ComplexNumber a, ComplexNumber b) => a / b;
+        public static Entity Rational(Number.Complex a, Number.Complex b) => a / b;
     }
 }

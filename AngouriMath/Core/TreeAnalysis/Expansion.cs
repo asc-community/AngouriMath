@@ -19,12 +19,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core.Exceptions;
-using AngouriMath.Core.Numerix;
 using PeterO.Numbers;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
     using static Entity;
+    using static Entity.Number;
     internal static partial class TreeAnalyzer
     {
         // TODO: realize all methods
@@ -157,7 +157,7 @@ namespace AngouriMath.Core.TreeAnalysis
                         foreach (var two in twoChildren)
                             newChildren.Add(one * two);
                     return newChildren;
-                case Powf(var @base, IntegerNumber { Integer: var power }) when power >= 1:
+                case Powf(var @base, Integer { EInteger: var power }) when power >= 1:
                     var linBaseChildren = GatherLinearChildrenOverSumAndExpand(@base, conditionForUniqueTerms);
                     if (linBaseChildren is null)
                         return null;
@@ -185,12 +185,12 @@ namespace AngouriMath.Core.TreeAnalysis
                             biCoef *= sumPow.Combinations(pow);
                             sumPow -= pow;
                         }
-                        Entity term = IntegerNumber.Create(biCoef);
+                        Entity term = Integer.Create(biCoef);
                         for (int i = 0; i < powerListForTerm.Count; i++)
                             if (powerListForTerm[i].Equals(1))
                                 term *= linBaseChildren[i];
                             else if (powerListForTerm[i] > 1)
-                                term *= MathS.Pow(linBaseChildren[i], IntegerNumber.Create(powerListForTerm[i]));
+                                term *= MathS.Pow(linBaseChildren[i], Integer.Create(powerListForTerm[i]));
                         newChildren.AddRange(SmartExpandOver(term, conditionForUniqueTerms));
                     }
                     return newChildren;

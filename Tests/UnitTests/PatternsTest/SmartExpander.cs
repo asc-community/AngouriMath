@@ -1,5 +1,5 @@
 ﻿using AngouriMath;
-using AngouriMath.Core.Numerix;
+using static AngouriMath.Entity.Number;
 using AngouriMath.Core.TreeAnalysis;
 using Xunit;
 using System.Linq;
@@ -8,7 +8,7 @@ namespace UnitTests.PatternsTest
 {
     public class SmartExpander
     {
-        public (bool equal, ComplexNumber eval1, ComplexNumber eval2, RealNumber err) AreEqual(Entity expr1, Entity expr2, ComplexNumber toSub)
+        public (bool equal, Complex eval1, Complex eval2, Real err) AreEqual(Entity expr1, Entity expr2, Complex toSub)
         {
             foreach (var var in expr1.Vars)
                 expr1 = expr1.Substitute(var, toSub);
@@ -19,7 +19,7 @@ namespace UnitTests.PatternsTest
             return (evaled1 == evaled2, evaled1, evaled2, (evaled1 - evaled2).Abs());
         }
 
-        void AssertExpander(Entity expr, ComplexNumber[] toSubs, bool nullExpansion = false)
+        void AssertExpander(Entity expr, Complex[] toSubs, bool nullExpansion = false)
         {
             var expanded = MathS.Settings.MaxExpansionTermCount.As(3000, () =>
             {
@@ -38,7 +38,7 @@ namespace UnitTests.PatternsTest
         }
         
 
-        private readonly ComplexNumber[] TestSet1 = { 3, 6, 8, -3, MathS.i * 2 };
+        private readonly Complex[] TestSet1 = { 3, 6, 8, -3, MathS.i * 2 };
 
         [Fact] public void TestCorner1() => AssertExpander("x", TestSet1, true);
         [Fact] public void TestCorner2() => AssertExpander("3", TestSet1, true);

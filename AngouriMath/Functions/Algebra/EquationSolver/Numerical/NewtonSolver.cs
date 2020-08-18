@@ -15,7 +15,6 @@
 using System;
 using System.Numerics;
 using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
 using AngouriMath.Functions.Algebra.NumericalSolving;
 using PeterO.Numbers;
@@ -49,7 +48,7 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
             /// <summary>
             /// Perform one iteration of searching for a root with Newton-Raphson method
             /// </summary>
-            static ComplexNumber NewtonIter(FastExpression f, FastExpression df, Complex value, int precision)
+            static Entity.Number.Complex NewtonIter(FastExpression f, FastExpression df, Complex value, int precision)
             {
                 Complex prev = value;
 
@@ -95,11 +94,11 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                     {
                         var xShare = ((EDecimal)x) / settings.StepCount.Re;
                         var yShare = ((EDecimal)y) / settings.StepCount.Im;
-                        var value = ComplexNumber.Create(
+                        var value = Entity.Number.Complex.Create(
                             settings.From.Re * xShare + settings.To.Re * (1 - xShare),
                             settings.From.Im * yShare + settings.To.Im * (1 - yShare));
-                        var root = NewtonIter(f, df, value.AsComplex(), settings.Precision);
-                        if (root.IsFinite && f.Call(root.AsComplex()).ToComplexNumber().Abs() <
+                        var root = NewtonIter(f, df, value.ToNumerics(), settings.Precision);
+                        if (root.IsFinite && f.Call(root.ToNumerics()).ToNumber().Abs() <
                             MathS.Settings.PrecisionErrorCommon.Value)
                             res.Add(root);
                     }

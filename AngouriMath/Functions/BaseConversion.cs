@@ -18,12 +18,12 @@
 using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
-using AngouriMath.Core.Numerix;
 using PeterO.Numbers;
 using System.Linq;
 
 namespace AngouriMath.Functions
 {
+    using static Entity;
     internal static class BaseConversion
     {
         // TODO: add more digits
@@ -75,7 +75,7 @@ namespace AngouriMath.Functions
             var res = new System.Text.StringBuilder();
             while (!num.IsZero)
             {
-                num = RealNumber.CtxMultiply(num, N);
+                num = Number.CtxMultiply(num, N);
 
                 EInteger intPart;
                 (intPart, num) = num.SplitDecimal();
@@ -136,7 +136,7 @@ namespace AngouriMath.Functions
             for (int i = 0; i < num.Length; i++)
             {
                 char digit = num[i];
-                res = RealNumber.CtxAdd(res, RealNumber.CtxDivide(ALPHABET_FROMCHAR[digit], EDecimal.FromInt32(N).Pow(i + 1)));
+                res = Number.CtxAdd(res, Number.CtxDivide(ALPHABET_FROMCHAR[digit], EDecimal.FromInt32(N).Pow(i + 1)));
             }
             return res;
         }

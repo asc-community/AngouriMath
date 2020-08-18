@@ -25,12 +25,7 @@ namespace AngouriMath.Functions.Algebra
     using static Entity;
     internal static class EquationSolver
     {
-        /// <summary>
-        /// Solves one equation
-        /// </summary>
-        /// <param name="equation"></param>
-        /// <param name="x"></param>
-        /// <returns></returns>
+        /// <summary>Solves one equation</summary>
         internal static Set Solve(Entity equation, Variable x)
         {
             var res = new Set();
@@ -59,23 +54,17 @@ namespace AngouriMath.Functions.Algebra
         }
 
         /// <summary>
-        /// Solves a system of equations by solving one after another with substitution, e. g.
-        /// let 
-        /// x - y + a = 0
-        /// y + 2a = 0
-        /// be a system of equations for variables { x, y }
-        /// Then we first find y from the first equation,
-        /// y = x + a
-        /// then we substitute it to all others
-        /// x + a + 2a = 0
-        /// then we find x
-        /// x = -3a
-        /// Then we substitute back
-        /// y = -3a + a = -2a
+        /// Solves a system of equations by solving one after another with substitution, e.g. <br/>
+        /// let { x - y + a = 0, y + 2a = 0 } be a system of equations for variables { x, y } <br/>
+        /// Then we first find y from the first equation, <br/>
+        /// y = x + a <br/>
+        /// then we substitute it to all others <br/>
+        /// x + a + 2a = 0 <br/>
+        /// then we find x <br/>
+        /// x = -3a <br/>
+        /// Then we substitute back <br/>
+        /// y = -3a + a = -2a <br/>
         /// </summary>
-        /// <param name="equations"></param>
-        /// <param name="vars"></param>
-        /// <returns></returns>
         internal static Tensor? SolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars)
         {
             if (equations.Count != vars.Length)
@@ -95,16 +84,12 @@ namespace AngouriMath.Functions.Algebra
             return new Tensor(indices => res[indices[0]][indices[1]], res.Count, initVarCount);
         }
 
-        /// <summary>
-        /// Solves system of equations
-        /// </summary>
-        /// <param name="equations">
-        /// List of Entities
-        /// </param>
+        /// <summary>Solves system of equations</summary>
+        /// <param name="equations"><see cref="List{T}"/> of <see cref="Entity"/></param>
         /// <param name="vars">
-        /// List of variables, where each of them must be mentioned in at least one entity from equations
+        /// <see cref="List{T}"/> of <see cref="Variable"/>s,
+        /// where each of them must be mentioned in at least one entity from equations
         /// </param>
-        /// <returns></returns>
         internal static List<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars)
         {
             var var = vars[vars.Length - 1];

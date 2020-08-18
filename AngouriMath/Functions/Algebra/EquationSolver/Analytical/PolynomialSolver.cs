@@ -18,40 +18,35 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
     internal static partial class TreeAnalyzer
     {
-        /// <summary>
-        /// That is realized SO badly...
-        /// TODO
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
         internal interface IPrimitive<T>
         {
-            void Add(ComplexNumber a);
-            void AddMp(T a, ComplexNumber b);
+            void Add(Complex a);
+            void AddMp(T a, Complex b);
             void Clear();
             T Value { get; }
             bool AllowFloat { get; }
         }
         internal class PrimitiveDecimal : IPrimitive<EDecimal>
         {
-            public void Add(ComplexNumber a) => Value += a.Real.Decimal;
-            public void AddMp(EDecimal a, ComplexNumber b) => Value += a * b.Real.Decimal;
+            public void Add(Complex a) => Value += a.RealPart.EDecimal;
+            public void AddMp(EDecimal a, Complex b) => Value += a * b.RealPart.EDecimal;
             public void Clear() => Value = 0;
             public EDecimal Value { get; private set; } = 0;
             public bool AllowFloat => true;
         }
         internal class PrimitiveInteger : IPrimitive<EInteger>
         {
-            public void Add(ComplexNumber a) => Value += a.Real.Decimal.ToEInteger();
-            public void AddMp(EInteger a, ComplexNumber b) => Value += (a * b.Real.Decimal).ToEInteger();
+            public void Add(Complex a) => Value += a.RealPart.EDecimal.ToEInteger();
+            public void AddMp(EInteger a, Complex b) => Value += (a * b.RealPart.EDecimal).ToEInteger();
             public void Clear() => Value = 0;
             public EInteger Value { get; private set; } = 0;
             public bool AllowFloat => false;
@@ -66,9 +61,7 @@ namespace AngouriMath.Core.TreeAnalysis
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
-    /// <summary>
-    /// Solves all forms of Polynomials that are trivially solved
-    /// </summary>
+    /// <summary>Solves all forms of Polynomials that are trivially solved</summary>
     internal static class PolynomialSolver
     {
         /// <summary>Solves ax + b</summary>
@@ -119,10 +112,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // en: https://en.wikipedia.org/wiki/Cubic_equation
             // ru: https://ru.wikipedia.org/wiki/%D0%A4%D0%BE%D1%80%D0%BC%D1%83%D0%BB%D0%B0_%D0%9A%D0%B0%D1%80%D0%B4%D0%B0%D0%BD%D0%BE
 
-            // TODO (to remove sympy code!)
-
             Set res;
-
             if (TreeAnalyzer.IsZero(d))
             {
                 res = SolveQuadratic(a, b, c);
@@ -137,12 +127,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var coeff = MathS.i * MathS.Sqrt(3) / 2;
 
-            var u1 = IntegerNumber.Create(1);
-            var u2 = RationalNumber.Create(-1, 2) + coeff;
-            var u3 = RationalNumber.Create(-1, 2) - coeff;
+            var u1 = Integer.Create(1);
+            var u2 = Rational.Create(-1, 2) + coeff;
+            var u3 = Rational.Create(-1, 2) - coeff;
             var D0 = MathS.Sqr(b) - 3 * a * c;
             var D1 = (2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d).InnerSimplify();
-            var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, RationalNumber.Create(1, 3));
+            var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, Rational.Create(1, 3));
 
             foreach (var uk in new[] { u1, u2, u3 })
             {
@@ -203,7 +193,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return res;
             }
 
-            var oneThird = RationalNumber.Create(1, 3);
+            var oneThird = Rational.Create(1, 3);
             var P = (-MathS.Sqr(alpha) / 12 - gamma)
                 .InnerSimplify();
             var Q = (-MathS.Pow(alpha, 3) / 108 + alpha * gamma / 3 - MathS.Sqr(beta) / 8)
@@ -211,7 +201,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var R = -Q / 2 + MathS.Sqrt(MathS.Sqr(Q) / 4 + MathS.Pow(P, 3) / 27);
             var U = MathS.Pow(R, oneThird)
                 .InnerSimplify();
-            var y = (RationalNumber.Create(-5, 6) * alpha + U + (U.Evaled == 0 ? -MathS.Pow(Q, oneThird) : -P / (3 * U)))
+            var y = (Rational.Create(-5, 6) * alpha + U + (U.Evaled == 0 ? -MathS.Pow(Q, oneThird) : -P / (3 * U)))
                 .InnerSimplify();
             var W = MathS.Sqrt(alpha + 2 * y)
                 .InnerSimplify();
@@ -238,7 +228,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// Dictionary to process. Key - power, value - coefficient of the corresponding term
         /// </param>
         /// <returns>
-        /// Returns whether all initial powers where > 0 (if so, x = 0 is a root)
+        /// Whether all initial powers where > 0 (if so, x = 0 is a root)
         /// </returns>
         internal static bool ReduceCommonPower(ref Dictionary<EInteger, Entity> monomials)
         {
@@ -329,8 +319,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 {
                     var newSet = new Set();
                     foreach (var root in set.FiniteSet())
-                        foreach (var coef in Number.GetAllRootsOf1(gcdPower).FiniteSet())
-                            newSet.Add(coef * MathS.Pow(root, RationalNumber.Create(1, gcdPower)));
+                        foreach (var coef in Number.GetAllRootsOf1(gcdPower))
+                            newSet.Add(coef * MathS.Pow(root, Rational.Create(1, gcdPower)));
                     set = newSet;
                 }
                 return set;
@@ -355,7 +345,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // (- a / b) ^ (1 / n) = x
                 // x ^ n = (-a / b)
                 var value = (-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).InnerSimplify();
-                foreach (var sol in MathS.Pow(subtree, IntegerNumber.Create(powers[1])).Invert(value, subtree))
+                foreach (var sol in MathS.Pow(subtree, Integer.Create(powers[1])).Invert(value, subtree))
                     res.AddPiece(sol);
                 return FinalPostProcess(res);
             }
@@ -428,10 +418,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         pow_num = pow_num_evaled ? pow_num.Eval() : pow_num;
 
                         // x ^ a is bad
-                        if (!(pow_num is ComplexNumber value))
+                        if (!(pow_num is Complex value))
                             return (null, power);
                         // x ^ 0.3 is bad
-                        if (!power.AllowFloat && pow_num.Eval() is not IntegerNumber)
+                        if (!power.AllowFloat && pow_num.Eval() is not Integer)
                             return (null, power);
                         if (mp == aVar)
                             power.Add(value);

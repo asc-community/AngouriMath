@@ -13,9 +13,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System.Collections.Generic;
-using AngouriMath.Core.Numerix;
-
 /*
  *
  * INVERSTION
@@ -24,6 +21,8 @@ using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Core
 {
+    using System.Collections.Generic;
+    using static Entity.Number;
     static partial class PieceFunctions
     {
         public static List<Piece> Invert(Piece A)
@@ -56,49 +55,49 @@ namespace AngouriMath.Core
             * for each of 4 Pieces we close only one side or zero (so there's no intersection between Pieces)
             *
             */
-           var numLeftDown = ComplexNumber.Create(edgeLowerNum.Real, edgeLowerNum.Imaginary);
-           var numLeftUp = ComplexNumber.Create(edgeLowerNum.Real, edgeUpperNum.Imaginary);
-           var numRightUp = ComplexNumber.Create(edgeUpperNum.Real, edgeUpperNum.Imaginary);
-           var numRightDown = ComplexNumber.Create(edgeUpperNum.Real, edgeLowerNum.Imaginary);
+           var numLeftDown = Complex.Create(edgeLowerNum.RealPart, edgeLowerNum.ImaginaryPart);
+           var numLeftUp = Complex.Create(edgeLowerNum.RealPart, edgeUpperNum.ImaginaryPart);
+           var numRightUp = Complex.Create(edgeUpperNum.RealPart, edgeUpperNum.ImaginaryPart);
+           var numRightDown = Complex.Create(edgeUpperNum.RealPart, edgeLowerNum.ImaginaryPart);
            var pieceDown = Piece.ElementOrInterval(
-               numRightDown, ComplexNumber.NegNegInfinity, 
+               numRightDown, Complex.NegNegInfinity, 
                true, false, false, false);
            var pieceLeft = Piece.ElementOrInterval(
-               numLeftDown, ComplexNumber.NegPosInfinity,
+               numLeftDown, Complex.NegPosInfinity,
                false, true, false, false);
            var pieceUp = Piece.ElementOrInterval(
-               numLeftUp, ComplexNumber.PosPosInfinity,
+               numLeftUp, Complex.PosPosInfinity,
                true, false, false, false);
            var pieceRight = Piece.ElementOrInterval(
-               numRightUp, ComplexNumber.PosNegInfinity,
+               numRightUp, Complex.PosNegInfinity,
                false, true, false, false);
            var res = new List<Piece> { pieceDown, pieceLeft, pieceUp, pieceRight };
 
            if (!edgeLower.Item2)
                res.Add(Piece.ElementOrInterval(
-                   ComplexNumber.Create(numLeftDown.Real, numLeftDown.Imaginary),
-                   ComplexNumber.Create(numLeftDown.Real, numLeftUp.Imaginary), // Re part is the same
+                   Complex.Create(numLeftDown.RealPart, numLeftDown.ImaginaryPart),
+                   Complex.Create(numLeftDown.RealPart, numLeftUp.ImaginaryPart), // Re part is the same
                    true, true, true, true
                    ));
 
            if (!edgeLower.Item3)
                res.Add(Piece.ElementOrInterval(
-                   ComplexNumber.Create(numLeftUp.Real, numLeftDown.Imaginary),
-                   ComplexNumber.Create(numRightUp.Real, numLeftDown.Imaginary), // Im part is the same
+                   Complex.Create(numLeftUp.RealPart, numLeftDown.ImaginaryPart),
+                   Complex.Create(numRightUp.RealPart, numLeftDown.ImaginaryPart), // Im part is the same
                    true, true, true, true
                ));
 
            if (!edgeUpper.Item2)
                res.Add(Piece.ElementOrInterval(
-                   ComplexNumber.Create(numRightUp.Real, numRightDown.Imaginary),
-                   ComplexNumber.Create(numRightUp.Real, numRightUp.Imaginary), // Re part is the same
+                   Complex.Create(numRightUp.RealPart, numRightDown.ImaginaryPart),
+                   Complex.Create(numRightUp.RealPart, numRightUp.ImaginaryPart), // Re part is the same
                    true, true, true, true
                ));
 
            if (!edgeLower.Item3)
                res.Add(Piece.ElementOrInterval(
-                   ComplexNumber.Create(numLeftDown.Real, numRightDown.Imaginary),
-                   ComplexNumber.Create(numRightDown.Real, numRightDown.Imaginary), // Im part is the same
+                   Complex.Create(numLeftDown.RealPart, numRightDown.ImaginaryPart),
+                   Complex.Create(numRightDown.RealPart, numRightDown.ImaginaryPart), // Im part is the same
                    true, true, true, true
                ));
 
@@ -112,8 +111,8 @@ namespace AngouriMath.Core
             var upper = piece.UpperBound();
             var num1 = lower.Item1.Eval();
             var num2 = upper.Item1.Eval();
-            return (num1.Real != num2.Real || lower.Item2 && upper.Item2) &&
-                   (num1.Imaginary != num2.Imaginary || lower.Item3 && upper.Item3);
+            return (num1.RealPart != num2.RealPart || lower.Item2 && upper.Item2) &&
+                   (num1.ImaginaryPart != num2.ImaginaryPart || lower.Item3 && upper.Item3);
         }
     }
 }

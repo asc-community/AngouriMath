@@ -1,5 +1,5 @@
 using AngouriMath;
-using AngouriMath.Core.Numerix;
+using static AngouriMath.Entity.Number;
 using Xunit;
 
 namespace UnitTests.Core
@@ -8,66 +8,66 @@ namespace UnitTests.Core
     {
         [Fact]
         public void TestRational1() =>
-            Assert.Equal(RationalNumber.Create(19, 12),
-                RationalNumber.Create(3, 4) + RationalNumber.Create(5, 6));
+            Assert.Equal(Rational.Create(19, 12),
+                Rational.Create(3, 4) + Rational.Create(5, 6));
 
         [Fact]
         public void TestRational2() =>
-            Assert.Equal(RationalNumber.Create(7, 4), RationalNumber.Create(3, 4) + 1);
+            Assert.Equal(Rational.Create(7, 4), Rational.Create(3, 4) + 1);
 
         [Fact]
         public void TestRational3() =>
-            Assert.Equal(RationalNumber.Create(15, 4),
-                RationalNumber.Create(7, 4) + RationalNumber.Create(8, 4));
+            Assert.Equal(Rational.Create(15, 4),
+                Rational.Create(7, 4) + Rational.Create(8, 4));
 
         [Fact]
         public void TestInteger()
         {
-            var actual = RationalNumber.Create(3);
-            Assert.IsType<IntegerNumber>(actual);
-            Assert.Equal(IntegerNumber.Create(3), actual);
+            var actual = Rational.Create(3);
+            Assert.IsType<Integer>(actual);
+            Assert.Equal(Integer.Create(3), actual);
         }
 
         [Fact]
         public void TestComplex1()
         {
-            var x = ComplexNumber.Create(2, 0.0m);
-            Assert.IsType<IntegerNumber>(x);
+            var x = Complex.Create(2, 0.0m);
+            Assert.IsType<Integer>(x);
             var res = x / 0;
-            Assert.IsType<RealNumber>(res);
-            Assert.Equal(RealNumber.NaN, res);
+            Assert.IsType<Real>(res);
+            Assert.Equal(Real.NaN, res);
         }
         [Fact]
         public void TestComplex2()
         {
-            ComplexNumber a = 3;
-            ComplexNumber b = MathS.i;
-            ComplexNumber c = a + b;
-            Assert.Equal(ComplexNumber.Create(3, 1), c);
+            Complex a = 3;
+            Complex b = MathS.i;
+            Complex c = a + b;
+            Assert.Equal(Complex.Create(3, 1), c);
         }
         [Fact]
         public void TestRationalDowncasting()
         {
-            var frac21_10 = RationalNumber.Create(21, 10);
-            Assert.IsType<RationalNumber>(frac21_10);
+            var frac21_10 = Rational.Create(21, 10);
+            Assert.IsType<Rational>(frac21_10);
             Assert.Equal(frac21_10, frac21_10.Eval());
             Assert.Equal(frac21_10, frac21_10.Simplify().Eval());
 
             var squared = Entity.Number.Pow(frac21_10, 2);
-            Assert.IsType<RationalNumber>(squared);
-            Assert.Equal(RationalNumber.Create(441, 100), squared);
+            Assert.IsType<Rational>(squared);
+            Assert.Equal(Rational.Create(441, 100), squared);
             Assert.Equal(squared, squared.Eval());
             Assert.Equal(squared, squared.Simplify().Eval());
 
-            var cubed = Entity.Number.Pow(squared, RationalNumber.Create(3, 2));
-            Assert.IsType<RationalNumber>(cubed);
-            Assert.Equal(RationalNumber.Create(9261, 1000), cubed);
+            var cubed = Entity.Number.Pow(squared, Rational.Create(3, 2));
+            Assert.IsType<Rational>(cubed);
+            Assert.Equal(Rational.Create(9261, 1000), cubed);
             Assert.Equal(cubed, cubed.Eval());
             Assert.Equal(cubed, cubed.Simplify().Eval());
 
-            var ten = cubed + RationalNumber.Create(739, 1000);
-            Assert.IsType<IntegerNumber>(ten);
-            Assert.Equal(IntegerNumber.Create(10), ten);
+            var ten = cubed + Rational.Create(739, 1000);
+            Assert.IsType<Integer>(ten);
+            Assert.Equal(Integer.Create(10), ten);
             Assert.Equal(ten, ten.Eval());
             Assert.Equal(ten, ten.Simplify().Eval());
         }
@@ -78,211 +78,212 @@ namespace UnitTests.Core
             var roots = x.SolveEquation("x");
             foreach (var root in roots.FiniteSet())
             {
-                Assert.IsType<ComplexNumber>(root);
-                var number = (ComplexNumber)root;
-                Assert.IsType<RationalNumber>(number.Real);
-                Assert.IsType<RationalNumber>(number.Imaginary);
+                var number = Assert.IsType<Complex>(root);
+                Assert.True(Assert.IsType<Integer>(number.RealPart).EInteger.IsZero);
+                var im = Assert.IsType<Rational>(number.ImaginaryPart).ERational;
+                Assert.Equal(1, im.UnsignedNumerator);
+                Assert.Equal(3, im.Denominator);
             }
         }
 
         [Fact]
         public void TestWithUndefined1()
         {
-            var a = RealNumber.NegativeInfinity;
-            var b = RealNumber.PositiveInfinity;
-            Assert.Equal(RealNumber.NaN, a + b);
+            var a = Real.NegativeInfinity;
+            var b = Real.PositiveInfinity;
+            Assert.Equal(Real.NaN, a + b);
         }
 
         [Fact]
         public void TestWithUndefined2()
         {
-            var a = RealNumber.NegativeInfinity;
-            var b = RealNumber.NegativeInfinity;
-            Assert.Equal(RealNumber.NegativeInfinity, a + b);
+            var a = Real.NegativeInfinity;
+            var b = Real.NegativeInfinity;
+            Assert.Equal(Real.NegativeInfinity, a + b);
         }
 
         [Fact]
         public void TestWithUndefined3()
         {
-            var a = RealNumber.NegativeInfinity;
-            var b = RealNumber.NegativeInfinity;
-            Assert.Equal(RealNumber.PositiveInfinity, a * b);
+            var a = Real.NegativeInfinity;
+            var b = Real.NegativeInfinity;
+            Assert.Equal(Real.PositiveInfinity, a * b);
         }
 
         [Fact]
         public void TestWithUndefined4()
         {
-            var a = RealNumber.NegativeInfinity;
-            var b = RealNumber.NaN;
-            Assert.Equal(RealNumber.NaN, a * b);
+            var a = Real.NegativeInfinity;
+            var b = Real.NaN;
+            Assert.Equal(Real.NaN, a * b);
         }
 
         [Fact]
         public void TestWithUndefined5()
         {
-            var a = RealNumber.Create(4);
-            var b = RealNumber.Create(0.0m);
-            Assert.Equal(RealNumber.NaN, a / b);
+            var a = Real.Create(4);
+            var b = Real.Create(0.0m);
+            Assert.Equal(Real.NaN, a / b);
         }
         [Fact]
         public void TestWithUndefined6()
         {
-            var a = RealNumber.Create(4);
-            var b = RationalNumber.Create(0, 6);
-            Assert.IsType<IntegerNumber>(b);
-            Assert.Equal(RealNumber.NaN, a / b);
+            var a = Real.Create(4);
+            var b = Rational.Create(0, 6);
+            Assert.IsType<Integer>(b);
+            Assert.Equal(Real.NaN, a / b);
         }
         [Fact]
         public void TestWithUndefined7()
         {
-            var a = IntegerNumber.Create(4);
-            var b = RealNumber.Create(0);
-            Assert.Equal(RealNumber.NaN, a / b);
+            var a = Integer.Create(4);
+            var b = Real.Create(0);
+            Assert.Equal(Real.NaN, a / b);
         }
 
         [Fact]
         public void TestWithUndefined8()
         {
-            var x = RationalNumber.Create(-1, 2);
-            Assert.IsType<RationalNumber>(x);
-            Assert.Equal(RealNumber.NaN, x / 0);
+            var x = Rational.Create(-1, 2);
+            Assert.IsType<Rational>(x);
+            Assert.Equal(Real.NaN, x / 0);
         }
 
         [Fact]
         public void TestWithUndefined9()
         {
-            var x = RationalNumber.Create(-1, 2);
-            var result = x / RealNumber.PositiveInfinity;
-            Assert.IsType<IntegerNumber>(result);
+            var x = Rational.Create(-1, 2);
+            var result = x / Real.PositiveInfinity;
+            Assert.IsType<Integer>(result);
             Assert.Equal(0, result);
         }
 
         [Fact]
         public void TestWithUndefined10()
         {
-            var x = RealNumber.Create(PeterO.Numbers.EDecimal.FromDouble(0.5));
-            Assert.IsType<RationalNumber>(x);
-            var result = x / RealNumber.PositiveInfinity;
-            Assert.IsType<IntegerNumber>(result);
+            var x = Real.Create(PeterO.Numbers.EDecimal.FromDouble(0.5));
+            Assert.IsType<Rational>(x);
+            var result = x / Real.PositiveInfinity;
+            Assert.IsType<Integer>(result);
             Assert.Equal(0, result);
         }
 
         [Fact]
         public void TestWithUndefined11() =>
-            Assert.Equal(RealNumber.PositiveInfinity, RealNumber.PositiveInfinity / 5);
+            Assert.Equal(Real.PositiveInfinity, Real.PositiveInfinity / 5);
         [Fact]
         public void TestWithUndefined12() =>
-            Assert.Equal(RealNumber.NegativeInfinity, RealNumber.PositiveInfinity / -5);
+            Assert.Equal(Real.NegativeInfinity, Real.PositiveInfinity / -5);
         [Fact]
         public void TestWithUndefined13() =>
-            Assert.Equal(RealNumber.NaN, RealNumber.PositiveInfinity / RealNumber.NegativeInfinity);
+            Assert.Equal(Real.NaN, Real.PositiveInfinity / Real.NegativeInfinity);
 
         [Fact]
         public void TestWithUndefined14() =>
-            Assert.Equal(RealNumber.NegativeInfinity, RealNumber.NegativeInfinity / 5);
+            Assert.Equal(Real.NegativeInfinity, Real.NegativeInfinity / 5);
 
         [Fact]
         public void TestWithUndefined15() =>
-            Assert.Equal(RealNumber.NaN, RealNumber.NegativeInfinity / 0);
+            Assert.Equal(Real.NaN, Real.NegativeInfinity / 0);
 
         [Fact]
         public void TestWithUndefined16() =>
-            Assert.Equal(RealNumber.NaN, RealNumber.PositiveInfinity / 0);
+            Assert.Equal(Real.NaN, Real.PositiveInfinity / 0);
 
         [Fact]
         public void TestWithUndefined17() =>
-            Assert.Equal(RealNumber.NaN, RealNumber.NaN / 0);
+            Assert.Equal(Real.NaN, Real.NaN / 0);
 
         [Fact]
         public void TestWithUndefined18() =>
-            Assert.Equal(RealNumber.NaN, RealNumber.Create(MathS.DecimalConst.pi) / 0);
+            Assert.Equal(Real.NaN, Real.Create(MathS.DecimalConst.pi) / 0);
 
         [Fact]
         public void TestWithUndefined19() =>
-            Assert.Equal(RealNumber.NaN, ComplexNumber.PosPosInfinity / 0);
+            Assert.Equal(Real.NaN, Complex.PosPosInfinity / 0);
 
         [Fact]
         public void TestWithUndefined20() =>
-            Assert.Equal(RealNumber.NaN, ComplexNumber.PosNegInfinity / 0);
+            Assert.Equal(Real.NaN, Complex.PosNegInfinity / 0);
 
         [Fact]
         public void TestWithUndefined21() =>
-            Assert.Equal(RealNumber.NaN, ComplexNumber.NegPosInfinity / 0);
+            Assert.Equal(Real.NaN, Complex.NegPosInfinity / 0);
 
         [Fact]
         public void TestWithUndefined22() =>
-            Assert.Equal(RealNumber.NaN, ComplexNumber.NegNegInfinity / 0);
+            Assert.Equal(Real.NaN, Complex.NegNegInfinity / 0);
 
         [Fact]
         public void TestWithUndefined23() =>
-            Assert.Equal(RealNumber.NaN, ComplexNumber.ImaginaryOne / 0);
+            Assert.Equal(Real.NaN, Complex.ImaginaryOne / 0);
 
         [Fact]
         public void TestWithUndefined24() =>
-            Assert.Equal(RealNumber.NaN, ComplexNumber.Create(2.13m, 4.21m) / 0);
+            Assert.Equal(Real.NaN, Complex.Create(2.13m, 4.21m) / 0);
         [Fact]
         public void TestImaginaryInfinity1() =>
-            Assert.Equal(ComplexNumber.Create(0, RealNumber.PositiveInfinity),
-                RealNumber.PositiveInfinity * ComplexNumber.ImaginaryOne);
+            Assert.Equal(Complex.Create(0, Real.PositiveInfinity),
+                Real.PositiveInfinity * Complex.ImaginaryOne);
         [Fact]
         public void TestImaginaryInfinity2() =>
-            Assert.Equal(ComplexNumber.Create(0, RealNumber.NegativeInfinity),
-                RealNumber.NegativeInfinity * ComplexNumber.ImaginaryOne);
+            Assert.Equal(Complex.Create(0, Real.NegativeInfinity),
+                Real.NegativeInfinity * Complex.ImaginaryOne);
         [Fact]
         public void TestImaginaryInfinity3() =>
-            Assert.Equal(RealNumber.NaN,
-                RealNumber.NaN * ComplexNumber.ImaginaryOne);
+            Assert.Equal(Real.NaN,
+                Real.NaN * Complex.ImaginaryOne);
         [Fact]
         public void TestImaginaryInfinity4() =>
-            Assert.Equal(ComplexNumber.Create(0, RealNumber.PositiveInfinity),
-                ComplexNumber.ImaginaryOne * RealNumber.PositiveInfinity);
+            Assert.Equal(Complex.Create(0, Real.PositiveInfinity),
+                Complex.ImaginaryOne * Real.PositiveInfinity);
         [Fact]
         public void TestImaginaryInfinity5() =>
-            Assert.Equal(ComplexNumber.Create(0, RealNumber.NegativeInfinity),
-                ComplexNumber.ImaginaryOne * RealNumber.NegativeInfinity);
+            Assert.Equal(Complex.Create(0, Real.NegativeInfinity),
+                Complex.ImaginaryOne * Real.NegativeInfinity);
         [Fact]
         public void TestImaginaryInfinity6() =>
-            Assert.Equal(RealNumber.NaN,
-                ComplexNumber.ImaginaryOne * RealNumber.NaN);
+            Assert.Equal(Real.NaN,
+                Complex.ImaginaryOne * Real.NaN);
         [Fact]
         public void TestImaginaryInfinity7() =>
-            Assert.Equal(ComplexNumber.Create(0, RealNumber.NegativeInfinity),
-                RealNumber.PositiveInfinity * ComplexNumber.MinusImaginaryOne);
+            Assert.Equal(Complex.Create(0, Real.NegativeInfinity),
+                Real.PositiveInfinity * Complex.MinusImaginaryOne);
         [Fact]
         public void TestImaginaryInfinity8() =>
-            Assert.Equal(ComplexNumber.Create(0, RealNumber.PositiveInfinity),
-                RealNumber.NegativeInfinity * ComplexNumber.MinusImaginaryOne);
+            Assert.Equal(Complex.Create(0, Real.PositiveInfinity),
+                Real.NegativeInfinity * Complex.MinusImaginaryOne);
         [Fact]
         public void TestImaginaryInfinity9() =>
-            Assert.Equal(RealNumber.NaN,
-                RealNumber.NaN * ComplexNumber.MinusImaginaryOne);
+            Assert.Equal(Real.NaN,
+                Real.NaN * Complex.MinusImaginaryOne);
         [Fact]
         public void TestImaginaryInfinity10() =>
-            Assert.Equal(ComplexNumber.Create(0, RealNumber.NegativeInfinity),
-                ComplexNumber.MinusImaginaryOne * RealNumber.PositiveInfinity);
+            Assert.Equal(Complex.Create(0, Real.NegativeInfinity),
+                Complex.MinusImaginaryOne * Real.PositiveInfinity);
         [Fact]
         public void TestImaginaryInfinity11() =>
-            Assert.Equal(ComplexNumber.Create(0, RealNumber.PositiveInfinity),
-                ComplexNumber.MinusImaginaryOne * RealNumber.NegativeInfinity);
+            Assert.Equal(Complex.Create(0, Real.PositiveInfinity),
+                Complex.MinusImaginaryOne * Real.NegativeInfinity);
         [Fact]
         public void TestImaginaryInfinity12() =>
-            Assert.Equal(RealNumber.NaN,
-                ComplexNumber.MinusImaginaryOne * RealNumber.NaN);
+            Assert.Equal(Real.NaN,
+                Complex.MinusImaginaryOne * Real.NaN);
         [Fact]
         public void TestImaginaryInfinity13() =>
-            Assert.Equal(RealNumber.NegativeInfinity,
-                ComplexNumber.Create(0, RealNumber.PositiveInfinity) * ComplexNumber.Create(0, RealNumber.PositiveInfinity));
+            Assert.Equal(Real.NegativeInfinity,
+                Complex.Create(0, Real.PositiveInfinity) * Complex.Create(0, Real.PositiveInfinity));
         [Fact]
         public void TestImaginaryInfinity14() =>
-            Assert.Equal(RealNumber.PositiveInfinity,
-                ComplexNumber.Create(0, RealNumber.PositiveInfinity) * ComplexNumber.Create(0, RealNumber.NegativeInfinity));
+            Assert.Equal(Real.PositiveInfinity,
+                Complex.Create(0, Real.PositiveInfinity) * Complex.Create(0, Real.NegativeInfinity));
         [Fact]
         public void TestImaginaryInfinity15() =>
-            Assert.Equal(RealNumber.PositiveInfinity,
-                ComplexNumber.Create(0, RealNumber.NegativeInfinity) * ComplexNumber.Create(0, RealNumber.PositiveInfinity));
+            Assert.Equal(Real.PositiveInfinity,
+                Complex.Create(0, Real.NegativeInfinity) * Complex.Create(0, Real.PositiveInfinity));
         [Fact]
         public void TestImaginaryInfinity16() =>
-            Assert.Equal(RealNumber.NegativeInfinity,
-                ComplexNumber.Create(0, RealNumber.NegativeInfinity) * ComplexNumber.Create(0, RealNumber.NegativeInfinity));
+            Assert.Equal(Real.NegativeInfinity,
+                Complex.Create(0, Real.NegativeInfinity) * Complex.Create(0, Real.NegativeInfinity));
     }
 }

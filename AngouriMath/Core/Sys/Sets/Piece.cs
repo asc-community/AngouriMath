@@ -14,12 +14,11 @@
  */
 
 using System;
-using System.Numerics;
 using System.Text;
-using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Core
 {
+    using static Entity.Number;
     // First bool is whether the edge is closed for Re(Entity)
     // Second bool is whether the edge is closed for Im(Entity)
     using Edge = ValueTuple<Entity, bool, bool>;
@@ -28,9 +27,7 @@ namespace AngouriMath.Core
     {
         public abstract override int GetHashCode();
         public abstract override bool Equals(object obj);
-        public bool In(Set set)
-            => set.Contains(this);
-
+        public bool In(Set set) => set.Contains(this);
         public static bool operator ==(Piece? a, Piece? b) =>
             (a, b) switch
             {
@@ -41,45 +38,21 @@ namespace AngouriMath.Core
                 (IntervalPiece aa, IntervalPiece bb) => aa == bb,
                 _ => false
             };
+        public static bool operator !=(Piece a, Piece b) => !(a == b);
 
-        public static bool operator !=(Piece a, Piece b)
-            => !(a == b);
-
-        /// <summary>
-        /// See Edge definition above in this file
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>See Edge definition above in this file</summary>
         public abstract Edge UpperBound();
 
-        /// <summary>
-        /// See Edge definition above in this file
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>See Edge definition above in this file</summary>
         public abstract Edge LowerBound();
 
-        /// <summary>
-        /// True if num is in between A, B
-        /// </summary>
-        /// <param name="a">
-        /// one bound
-        /// </param>
-        /// <param name="b">
-        /// another bound (if A > B, they swap)
-        /// </param>
-        /// <param name="closedA">
-        /// whether A inclusive
-        /// </param>
-        /// <param name="closedB">
-        /// whether B inclusive
-        /// </param>
-        /// <param name="closedNum">
-        /// if false, then
-        /// (2 is in (2; 3)
-        /// </param>
-        /// <param name="num"></param>
-        /// <returns></returns>
-        private static bool InBetween(RealNumber a, RealNumber b, bool closedA, bool closedB, RealNumber num,
-            bool closedNum)
+        /// <summary><see langword="true"/> if num is in between A, B</summary>
+        /// <param name="a">one bound</param>
+        /// <param name="b">another bound (if A > B, they swap)</param>
+        /// <param name="closedA">whether A inclusive</param>
+        /// <param name="closedB">whether B inclusive</param>
+        /// <param name="closedNum">if false, then (2 is in (2; 3)</param>
+        private static bool InBetween(Real a, Real b, bool closedA, bool closedB, Real num, bool closedNum)
         {
             if (num == a && (closedA || !closedNum))
                 return true;
@@ -91,11 +64,11 @@ namespace AngouriMath.Core
         }
 
         /// <summary>Performs InBetween on both Re and Im parts of the number</summary>
-        private static bool ComplexInBetween(ComplexNumber a, ComplexNumber b, bool closedARe, bool closedAIm,
+        private static bool ComplexInBetween(Complex a, Complex b, bool closedARe, bool closedAIm,
             bool closedBRe,
-            bool closedBIm, ComplexNumber num, bool closedRe, bool closedIm)
-            => InBetween(a.Real, b.Real, closedARe, closedBRe, num.Real, closedRe) &&
-               InBetween(a.Imaginary, b.Imaginary, closedAIm, closedBIm, num.Imaginary, closedIm);
+            bool closedBIm, Complex num, bool closedRe, bool closedIm)
+            => InBetween(a.RealPart, b.RealPart, closedARe, closedBRe, num.RealPart, closedRe) &&
+               InBetween(a.ImaginaryPart, b.ImaginaryPart, closedAIm, closedBIm, num.ImaginaryPart, closedIm);
 
         /// <summary>So that any numerical operations could be performed</summary>
         internal bool IsNumeric()
@@ -161,10 +134,7 @@ namespace AngouriMath.Core
             new IntervalPiece(a, b, closedARe, closedAIm, closedBRe, closedBIm);
 
         internal static IntervalPiece CreateUniverse()
-            => Piece.Interval(ComplexNumber.NegNegInfinity,
-                ComplexNumber.PosPosInfinity,
-                false, false, false, false);
-
+            => Interval(Complex.NegNegInfinity, Complex.PosPosInfinity, false, false, false, false);
         public static implicit operator Piece((Entity left, Entity right) tup)
             => ElementOrInterval(tup.left, tup.right);
         public static implicit operator Piece((Entity left, Entity right, bool leftClosed, bool rightClosed) tup)
@@ -177,10 +147,10 @@ namespace AngouriMath.Core
             => new OneElementPiece(element);
         public static implicit operator Piece(int element)
             => new OneElementPiece(element);
-        public static implicit operator Piece(ComplexNumber element)
-            => new OneElementPiece(element);
         public static implicit operator Piece(Complex element)
-            => new OneElementPiece((ComplexNumber)element);
+            => new OneElementPiece(element);
+        public static implicit operator Piece(System.Numerics.Complex element)
+            => new OneElementPiece((Complex)element);
         public static explicit operator Entity(Piece piece)
             => ((OneElementPiece)piece).entity.Item1;
     }
@@ -189,26 +159,12 @@ namespace AngouriMath.Core
     {
         internal Edge entity;
         internal Entity Evaled => entity.Item1.Evaled;
-
-        internal OneElementPiece(Entity element)
-        {
-            entity = new Edge(element, true, true);
-        }
-
-        public override Edge UpperBound()
-            => CopyEdge(entity);
-
-        public override Edge LowerBound()
-            => CopyEdge(entity);
-
-        public override string ToString()
-            => "{" + entity.Item1.ToString() + "}";
-
-        public static bool operator ==(OneElementPiece A, OneElementPiece B)
-            => EdgeEqual(A.entity, B.entity);
-
-        public static bool operator !=(OneElementPiece A, OneElementPiece B)
-            => !(A == B);
+        internal OneElementPiece(Entity element) => entity = new Edge(element, true, true);
+        public override Edge UpperBound() => CopyEdge(entity);
+        public override Edge LowerBound() => CopyEdge(entity);
+        public override string ToString() => $"{{{entity.Item1}}}";
+        public static bool operator ==(OneElementPiece A, OneElementPiece B) => EdgeEqual(A.entity, B.entity);
+        public static bool operator !=(OneElementPiece A, OneElementPiece B) => !(A == B);
         public override bool Equals(object obj) => obj is OneElementPiece p && entity.Equals(p.entity);
         public override int GetHashCode() => entity.GetHashCode();
     }
@@ -226,39 +182,27 @@ namespace AngouriMath.Core
             rightEdge = new Edge(right, closedBRe, closedBIm);
         }
 
-        public override Edge LowerBound()
-            => CopyEdge(leftEdge);
-
-        public override Edge UpperBound()
-            => CopyEdge(rightEdge);
+        public override Edge LowerBound() => CopyEdge(leftEdge);
+        public override Edge UpperBound() => CopyEdge(rightEdge);
 
         /// <summary>
         /// Used for real intervals only.
-        /// true: [
-        /// false: (
+        /// <see langword="true"/>: [
+        /// <see langword="false"/>: (
         /// </summary>
-        /// <param name="isClosed"></param>
-        /// <returns></returns>
-        public IntervalPiece SetLeftClosed(bool isClosed)
-            => SetLeftClosed(isClosed, true);
+        public IntervalPiece SetLeftClosed(bool isClosed) => SetLeftClosed(isClosed, true);
 
         /// <summary>
         /// Used for real intervals only.
-        /// true: ]
-        /// false: )
+        /// <see langword="true"/>: ]
+        /// <see langword="false"/>: )
         /// </summary>
-        /// <param name="isClosed"></param>
-        /// <returns></returns>
-        public IntervalPiece SetRightClosed(bool isClosed)
-            => SetRightClosed(isClosed, true);
+        public IntervalPiece SetRightClosed(bool isClosed) => SetRightClosed(isClosed, true);
 
         /// <summary>
         /// Used for any type of interval
         /// sets [ or ( for real and [ or ( for imaginary part of the number
         /// </summary>
-        /// <param name="Re"></param>
-        /// <param name="Im"></param>
-        /// <returns></returns>
         public IntervalPiece SetLeftClosed(bool Re, bool Im)
         {
             leftEdge = new Edge(leftEdge.Item1, Re, Im);
@@ -269,45 +213,24 @@ namespace AngouriMath.Core
         /// Used for any type of interval
         /// sets ] or ) for real and ] or ) for imaginary part of the number
         /// </summary>
-        /// <param name="Re"></param>
-        /// <param name="Im"></param>
-        /// <returns></returns>
         public IntervalPiece SetRightClosed(bool Re, bool Im)
         {
             rightEdge = new Edge(rightEdge.Item1, Re, Im);
             return this;
         }
 
-        public override string ToString()
-        {
-            var sb = new StringBuilder();
-            if (leftEdge.Item3)
-                sb.Append("[");
-            else
-                sb.Append("(");
-            if (leftEdge.Item2)
-                sb.Append("[");
-            else
-                sb.Append("(");
-            sb.Append(leftEdge.Item1.ToString());
-            sb.Append("; ");
-            sb.Append(rightEdge.Item1.ToString());
-            if (rightEdge.Item2)
-                sb.Append("]");
-            else
-                sb.Append(")");
-            if (rightEdge.Item3)
-                sb.Append("]");
-            else
-                sb.Append(")");
-            return sb.ToString();
-        }
-
+        public override string ToString() =>
+            new StringBuilder(leftEdge.Item3 ? "[" : "(")
+            .Append(leftEdge.Item2 ? "[" : "(")
+            .Append(leftEdge.Item1)
+            .Append("; ")
+            .Append(rightEdge.Item1)
+            .Append(rightEdge.Item2 ? "]" : ")")
+            .Append(rightEdge.Item3 ? "]" : ")")
+            .ToString();
         public static bool operator ==(IntervalPiece A, IntervalPiece B)
             => EdgeEqual(A.leftEdge, B.leftEdge) && EdgeEqual(A.rightEdge, B.rightEdge);
-
-        public static bool operator !=(IntervalPiece A, IntervalPiece B)
-            => !(A == B);
+        public static bool operator !=(IntervalPiece A, IntervalPiece B) => !(A == B);
         public override bool Equals(object obj) => obj is IntervalPiece p && leftEdge.Equals(p.leftEdge) && rightEdge.Equals(p.rightEdge);
         public override int GetHashCode() => (leftEdge, rightEdge).GetHashCode();
     }

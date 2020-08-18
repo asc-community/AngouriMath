@@ -1,5 +1,5 @@
 ﻿using AngouriMath;
-using AngouriMath.Core.Numerix;
+using static AngouriMath.Entity.Number;
 using Xunit;
 
 namespace UnitTests.Common
@@ -10,8 +10,8 @@ namespace UnitTests.Common
         [Fact] public void TestIneq() => Assert.NotEqual(MathS.Var("x"), MathS.Var("y"));
         [Fact]
         public void TestR() =>
-            Assert.Equal(ComplexNumber.Create(0, 1),
-                ComplexNumber.Create(0, PeterO.Numbers.EDecimal.FromInt32(1).NextPlus(MathS.Settings.DecimalPrecisionContext)));
+            Assert.Equal(Complex.Create(0, 1),
+                Complex.Create(0, PeterO.Numbers.EDecimal.FromInt32(1).NextPlus(MathS.Settings.DecimalPrecisionContext)));
         [Fact] public void TestDP() => Assert.Equal(-23, MathS.FromString("-23").Eval());
         [Fact] public void TestDM() => Assert.Equal(0, MathS.FromString("1 + -1").Eval());
         [Fact] public void TestB() => Assert.Equal(0, MathS.FromString("1 + (-1)").Eval());

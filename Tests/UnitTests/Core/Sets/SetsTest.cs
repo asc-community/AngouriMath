@@ -1,6 +1,6 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
+using static AngouriMath.Entity.Number;
 using Xunit;
 
 namespace UnitTests.Core
@@ -14,8 +14,8 @@ namespace UnitTests.Core
             A.AddElements(3, 4, 5);
             A.AddInterval(MathS.Sets.Interval(10, 15).SetLeftClosed(true).SetRightClosed(false));
             A.AddInterval(MathS.Sets.Interval(14, 19).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(ComplexNumber.Create(8, 3), ComplexNumber.Create(11, 5)).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(ComplexNumber.Create(3, 51), ComplexNumber.Create(3, 61)));
+            A.AddInterval(MathS.Sets.Interval(Complex.Create(8, 3), Complex.Create(11, 5)).SetLeftClosed(true).SetRightClosed(false));
+            A.AddInterval(MathS.Sets.Interval(Complex.Create(3, 51), Complex.Create(3, 61)));
 
             B.AddElements(11);
 
@@ -98,8 +98,8 @@ namespace UnitTests.Core
         private readonly Set Bf = MathS.Sets.Finite(1, 2, 4);
         private readonly Set Cf = MathS.Sets.Finite(-7);
         private readonly Set Df = MathS.Sets.Finite();
-        private readonly Set Ef = MathS.Sets.Finite(ComplexNumber.Create(-1, -1));
-        private readonly Set Gf = MathS.Sets.Finite(ComplexNumber.Create(-1, -1));
+        private readonly Set Ef = MathS.Sets.Finite(Complex.Create(-1, -1));
+        private readonly Set Gf = MathS.Sets.Finite(Complex.Create(-1, -1));
 
         [Fact]
         public void SetsFiniteTestDisj()

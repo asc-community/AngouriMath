@@ -21,12 +21,8 @@
 
 
     using System.Linq;
-    using System.Collections;
     using AngouriMath;
-    using AngouriMath.Core;
     using static AngouriMath.Core.FromString.FunctionArgumentCountException;
-    using AngouriMath.Core.Numerix;
-    using System.Globalization;
 
 using System;
 using System.IO;
@@ -707,7 +703,7 @@ public partial class AngouriMathParser : Parser {
 				EnterOuterAlt(_localctx, 1);
 				{
 				State = 105; _localctx._NUMBER = Match(NUMBER);
-				 _localctx.value =  ComplexNumber.Parse((_localctx._NUMBER!=null?_localctx._NUMBER.Text:null)); 
+				 _localctx.value =  Entity.Number.Complex.Parse((_localctx._NUMBER!=null?_localctx._NUMBER.Text:null)); 
 				}
 				break;
 			case VARIABLE:

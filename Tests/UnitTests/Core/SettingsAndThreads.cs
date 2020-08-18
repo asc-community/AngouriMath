@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Threading;
 using AngouriMath;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
 using Xunit;
-using PeterO.Numbers;
 
 namespace UnitTests.Core
 {

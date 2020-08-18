@@ -18,7 +18,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static AngouriMath.Entity;
-using AngouriMath.Core.Numerix;
+using static AngouriMath.Entity.Number;
 using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath
@@ -29,12 +29,12 @@ namespace AngouriMath
         // Currently they fail with error CS8780: A variable may not be declared within a 'not' or 'or' pattern.
         /// <summary>a ^ (-1) => 1 / a</summary>
         internal static Entity InvertNegativePowers(Entity expr) =>
-            expr is Powf(var @base, IntegerNumber { IsNegative: true } pow)
+            expr is Powf(var @base, Integer { IsNegative: true } pow)
             ? 1 / MathS.Pow(@base, -1 * pow)
             : expr;
         /// <summary>1 + (-x) => 1 - x</summary>
         internal static Entity InvertNegativeMultipliers(Entity expr) =>
-            expr is Sumf(var any1, Mulf(RealNumber { IsNegative: true } const1, var any2))
+            expr is Sumf(var any1, Mulf(Real { IsNegative: true } const1, var any2))
             ? any1 - (-1 * const1) * any2
             : expr;
         /// <summary>(x + a)! / (x + b)! -> (x+b+1)*(x+b+2)*...*(x+a)</summary>
@@ -43,9 +43,9 @@ namespace AngouriMath
             Entity ExpandFactorialDivisions(Entity x, Entity x2, Number num, Number den)
             {
                 static Entity Add(Entity a, Number b) =>
-                    b is IntegerNumber(0) ? a : a + b;
+                    b is Integer(0) ? a : a + b;
                 if (x == x2
-                    && num - den is IntegerNumber { Integer: var diff }
+                    && num - den is Integer { EInteger: var diff }
                     && !diff.IsZero && diff.Abs() < 20) // We don't want to expand (x+100)!/x!
                     if (diff > 0) // e.g. (x+3)!/x! = (x+1)(x+2)(x+3)
                     {
@@ -122,7 +122,7 @@ namespace AngouriMath
         }
         internal static Entity DivisionPreparingRules(Entity x) => x switch
         {
-            Mulf(var any1, Divf(IntegerNumber(1), var any2)) => any1 / any2,
+            Mulf(var any1, Divf(Integer(1), var any2)) => any1 / any2,
             Divf(Mulf(Number const1, var any1), var any2) => const1 * (any1 / any2),
             Mulf(Divf(Number const1, var any1), var any2) => const1 * (any2 / any1),
             _ => x
@@ -131,9 +131,9 @@ namespace AngouriMath
         {
             // sin({}) * cos({}) = 1/2 * sin(2{})
             Mulf(Sinf(var any1), Cosf(var any1a)) when any1 == any1a =>
-                RationalNumber.Create(1, 2) * new Sinf(2 * any1),
+                Rational.Create(1, 2) * new Sinf(2 * any1),
             Mulf(Cosf(var any1), Sinf(var any1a)) when any1 == any1a =>
-                RationalNumber.Create(1, 2) * new Sinf(2 * any1),
+                Rational.Create(1, 2) * new Sinf(2 * any1),
 
             // arc1({}) + arc2({}) = pi/2
             Sumf(Arcsinf(var any1), Arccosf(var any1a)) when any1 == any1a => MathS.pi / 2,
@@ -154,23 +154,23 @@ namespace AngouriMath
             Cotanf(Arccotanf(var any1)) => any1,
 
             // sin(:)^2 + cos(:)^2 = 1
-            Sumf(Powf(Sinf(var any1), IntegerNumber(2)),
-                 Powf(Cosf(var any1a), IntegerNumber(2))) when any1 == any1a => 1,
-            Sumf(Powf(Cosf(var any1), IntegerNumber(2)),
-                 Powf(Sinf(var any1a), IntegerNumber(2))) when any1 == any1a => 1,
+            Sumf(Powf(Sinf(var any1), Integer(2)),
+                 Powf(Cosf(var any1a), Integer(2))) when any1 == any1a => 1,
+            Sumf(Powf(Cosf(var any1), Integer(2)),
+                 Powf(Sinf(var any1a), Integer(2))) when any1 == any1a => 1,
 
-            Minusf(Powf(Sinf(var any1), IntegerNumber(2)), Powf(Cosf(var any1a), IntegerNumber(2))) when any1 == any1a =>
+            Minusf(Powf(Sinf(var any1), Integer(2)), Powf(Cosf(var any1a), Integer(2))) when any1 == any1a =>
                 -1 * (new Powf(new Cosf(any1), 2) - new Powf(new Sinf(any1), 2)),
-            Minusf(Powf(Cosf(var any1), IntegerNumber(2)), Powf(Sinf(var any1a), IntegerNumber(2))) when any1 == any1a =>
+            Minusf(Powf(Cosf(var any1), Integer(2)), Powf(Sinf(var any1a), Integer(2))) when any1 == any1a =>
                 new Cosf(2 * any1),
             _ => x
         };
         internal static Entity ExpandTrigonometricRules(Entity x) => x switch
         {
-            Mulf(RationalNumber(1, 2), Sinf(Mulf(IntegerNumber(2), var any1))) => new Sinf(any1) * new Cosf(any1),
+            Mulf(Rational(1, 2), Sinf(Mulf(Integer(2), var any1))) => new Sinf(any1) * new Cosf(any1),
 
-            Cosf(Mulf(IntegerNumber(2), var any1)) =>
-                new Powf(new Cosf(any1), IntegerNumber.Create(2)) - new Powf(new Sinf(any1), 2),
+            Cosf(Mulf(Integer(2), var any1)) =>
+                new Powf(new Cosf(any1), Integer.Create(2)) - new Powf(new Sinf(any1), 2),
 
             _ => x
         };
@@ -234,9 +234,6 @@ namespace AngouriMath
 
         internal static Entity PowerRules(Entity x) => x switch
         {
-            // x * {} ^ {} = {} ^ {} * x
-            Mulf(Variable var1, Powf(var any1, var any2)) => new Powf(any1, any2) * var1,
-
             // {} ^ n * {}
             Mulf(Powf(var any1, var any2), var any1a) when any1 == any1a => new Powf(any1, any2 + 1),
             Mulf(var any1, Powf(var any1a, var any2)) when any1 == any1a => new Powf(any1, any2 + 1),
@@ -276,7 +273,7 @@ namespace AngouriMath
                 new Powf(const1, const2) * new Powf(any1, const2),
 
             // {1} ^ (-1) = 1 / {1}
-            Powf(var any1, IntegerNumber(-1)) => 1 / any1,
+            Powf(var any1, Integer(-1)) => 1 / any1,
 
             // (a / {})^b * {} = a^b * {}^(1-b)
             Mulf(Powf(Divf(Number const1, var any1), Number const2), var any1a) when any1 == any1a =>
@@ -293,6 +290,9 @@ namespace AngouriMath
                 any1 / new Powf(any2, any3 + 1),
             Divf(Divf(var any1, Powf(var any2, var any4)), Powf(var any2a, var any3)) when any2 == any2a =>
                 any1 / new Powf(any2, any3 + any4),
+
+            // x * {} ^ {} = {} ^ {} * x
+            Mulf(Variable var1, Powf(var any1, var any2)) => new Powf(any1, any2) * var1,
 
             _ => x
         };
@@ -381,9 +381,9 @@ namespace AngouriMath
             Sumf(Mulf(var any2, var any1), Divf(var any1a, var any3)) when any1 == any1a => any1 * (any2 + 1 / any3),
             Sumf(Mulf(var any1, var any2), Divf(var any1a, var any3)) when any1 == any1a => any1 * (any2 + 1 / any3),
             Sumf(var anyButNot1, Divf(var anyButNot1a, var any2))
-                when anyButNot1 == anyButNot1a && anyButNot1 is not IntegerNumber(1) => anyButNot1 * (1 + 1 / any2),
+                when anyButNot1 == anyButNot1a && anyButNot1 is not Integer(1) => anyButNot1 * (1 + 1 / any2),
             Sumf(Divf(var anyButNot1, var any2), var anyButNot1a)
-                when anyButNot1 == anyButNot1a && anyButNot1 is not IntegerNumber(1) => anyButNot1 * (1 + 1 / any2),
+                when anyButNot1 == anyButNot1a && anyButNot1 is not Integer(1) => anyButNot1 * (1 + 1 / any2),
 
             // {1} * {2} - {1} * {3} = {1} * ({2} - {3})
             Minusf(Mulf(var any1, var any2), Mulf(var any1a, var any3)) when any1 == any1a => any1 * (any2 - any3),
@@ -408,8 +408,8 @@ namespace AngouriMath
             Mulf(Mulf(var any2, var any1), var any1a) when any1 == any1a => new Powf(any1, 2) * any2,
 
             // -1 * {1} + {2} = {2} - {1}
-            Sumf(Mulf(IntegerNumber(-1), var any1), var any2) => any2 - any1,
-            Sumf(var any1, Mulf(IntegerNumber(-1), var any2)) => any1 - any2,
+            Sumf(Mulf(Integer(-1), var any1), var any2) => any2 - any1,
+            Sumf(var any1, Mulf(Integer(-1), var any2)) => any1 - any2,
 
             // (x - {}) (x + {}) = x2 - {}2
             Mulf(Minusf(Variable var1, var any1), Sumf(Variable var1a, var any1a))
@@ -463,9 +463,9 @@ namespace AngouriMath
                 (new Powf(any1, const1 / 2) - new Powf(any2, const2 / 2)) *
                 (new Powf(any1, const1 / 2) + new Powf(any2, const2 / 2)),
 
-            Minusf(Powf(var any1, IntegerNumber(2)), Number const1) =>
-                (any1 - new Powf(const1, RationalNumber.Create(1, 2))) *
-                (any1 + new Powf(const1, RationalNumber.Create(1, 2))),
+            Minusf(Powf(var any1, Integer(2)), Number const1) =>
+                (any1 - new Powf(const1, Rational.Create(1, 2))) *
+                (any1 + new Powf(const1, Rational.Create(1, 2))),
 
             // {1} * {2} + {1} * {3} = {1} * ({2} + {3})
             Sumf(Mulf(var any1, var any2), Mulf(var any1a, var any3)) when any1 == any1a => any1 * (any2 + any3),
@@ -514,11 +514,11 @@ namespace AngouriMath
                     return tree;
             }
         };
-        internal static Entity AlgebraicLongDivision(Entity x) =>
+        internal static Entity PolynomialLongDivision(Entity x) =>
             x is Divf(var num, var denom)
             && !MathS.CanBeEvaluated(num)
             && !MathS.CanBeEvaluated(denom)
-            && TreeAnalyzer.DivideAndRemainderPolynomials(num, denom) is var (divided, remainder)
+            && TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
             ? divided + remainder
             : x;
         internal static Entity OptimizeRules(Entity x) => x switch

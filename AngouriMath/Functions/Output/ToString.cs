@@ -13,12 +13,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath.Core;
 using System;
-using System.Collections.Generic;
-using System.Linq;
+
 namespace AngouriMath
 {
+    using static Entity.Number;
     public abstract partial record Entity : ILatexiseable
     {
         /// <summary>Converts an expression into a string</summary>
@@ -48,7 +47,9 @@ namespace AngouriMath
         public partial record Mulf
         {
             internal override string Stringize() =>
-                Multiplier.Stringize(Multiplier.Priority < Priority.Mul) + " * " + Multiplicand.Stringize(Multiplicand.Priority < Priority.Mul);
+                (Multiplier is Integer(-1) ? "-"
+                 : Multiplier.Stringize(Multiplier.Priority < Priority.Mul) + " * ")
+                + Multiplicand.Stringize(Multiplicand.Priority < Priority.Mul);
         }
         public partial record Divf
         {

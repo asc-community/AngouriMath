@@ -13,35 +13,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System.Numerics;
 using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
+using NumericsComplex = System.Numerics.Complex;
 using PeterO.Numbers;
 
 namespace AngouriMath.Extensions
 {
     using static Entity;
+    using static Entity.Number;
     public static class AMExtensions
     {
-        public static ComplexNumber ToComplexNumber(this Complex complex)
-            => ComplexNumber.Create(EDecimal.FromDouble(complex.Real), EDecimal.FromDouble(complex.Imaginary));
-
         public static Entity ToEntity(this string expr) => MathS.FromString(expr);
         public static Entity Simplify(this string expr) => expr.ToEntity().Simplify();
-        public static ComplexNumber Eval(this string expr) => expr.ToEntity().Eval();
+        public static Complex Eval(this string expr) => expr.ToEntity().Eval();
         public static Entity Expand(this string expr) => expr.ToEntity().Expand();
         public static Entity Collapse(this string expr) => expr.ToEntity().Collapse();
         public static Entity Substitute(this string expr, Variable var, Entity value)
             => expr.ToEntity().Substitute(var, value);
         public static Set SolveEquation(this string expr, Variable x)
             => expr.ToEntity().SolveEquation(x);
-        public static RealNumber ToNumber(this EDecimal value) => RealNumber.Create(value);
-        public static RealNumber ToNumber(this decimal value) => RealNumber.Create(EDecimal.FromDecimal(value));
-        public static RealNumber ToNumber(this double value) => RealNumber.Create(EDecimal.FromDouble(value));
-        public static RealNumber ToNumber(this float value) => RealNumber.Create(EDecimal.FromSingle(value));
-        public static IntegerNumber ToNumber(this EInteger value) => IntegerNumber.Create(value);
-        public static IntegerNumber ToNumber(this int value) => IntegerNumber.Create(value);
-        public static IntegerNumber ToNumber(this long value) => IntegerNumber.Create(value);
+        public static Integer ToNumber(this int value) => Integer.Create(value);
+        public static Integer ToNumber(this long value) => Integer.Create(value);
+        public static Integer ToNumber(this EInteger value) => Integer.Create(value);
+        public static Real ToNumber(this float value) => Real.Create(EDecimal.FromSingle(value));
+        public static Real ToNumber(this double value) => Real.Create(EDecimal.FromDouble(value));
+        public static Real ToNumber(this decimal value) => Real.Create(EDecimal.FromDecimal(value));
+        public static Real ToNumber(this EDecimal value) => Real.Create(value);
+        public static Complex ToNumber(this NumericsComplex complex)
+            => Complex.Create(EDecimal.FromDouble(complex.Real), EDecimal.FromDouble(complex.Imaginary));
         public static string Latexise(this string str) => str.ToEntity().Latexise();
         public static FastExpression Compile(this string str, params Variable[] variables)
             => str.ToEntity().Compile(variables);
@@ -66,6 +65,8 @@ namespace AngouriMath.Extensions
         print(res)
 
         */
+        // Wait until you see https://source.dot.net/#System.Private.CoreLib/TupleExtensions.cs,a4f5075cbaf3a80e
+        // - Happypig375
         public static Tensor? SolveSystem(this (string eq1, string eq2) eqs, string var1, string var2)
             => MathS.Equations(eqs.eq1, eqs.eq2).Solve(var1, var2);
 

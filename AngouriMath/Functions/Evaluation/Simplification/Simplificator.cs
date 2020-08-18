@@ -78,7 +78,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 AddHistory(res = res.Replace(Patterns.CommonRules).InnerSimplify());
 
                 AddHistory(res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules).InnerSimplify());
-                AddHistory(res = res.Replace(Patterns.AlgebraicLongDivision).InnerSimplify());
+                AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplify());
 
                 if (res.Any(child => child is
                     Sinf or Cosf or Tanf or Cotanf or Arcsinf or Arccosf or Arctanf or Arccotanf))

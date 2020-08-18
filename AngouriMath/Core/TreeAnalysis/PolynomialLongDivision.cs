@@ -15,19 +15,19 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using AngouriMath.Core.Numerix;
 using PeterO.Numbers;
 
 namespace AngouriMath.Core.TreeAnalysis
 {
     using static Entity;
+    using static Entity.Number;
     internal static partial class TreeAnalyzer
     {
-        class PolyInfo
+        class PolynomialInformation
         {
             readonly Dictionary<Variable, Dictionary<EDecimal, Entity>> monoInfo = new();
-            readonly Dictionary<Variable, Entity> revertReplacements = new();
             readonly Dictionary<Entity, Variable> replacements = new();
+            readonly Dictionary<Variable, Entity> revertReplacements = new();
             public IReadOnlyDictionary<Variable, Dictionary<EDecimal, Entity>> MonoInfo => monoInfo;
             public IReadOnlyDictionary<Entity, Variable> Replacements => replacements;
             public IReadOnlyDictionary<Variable, Entity> RevertReplacements => revertReplacements;
@@ -42,13 +42,16 @@ namespace AngouriMath.Core.TreeAnalysis
                 if (powers is { }) monoInfo.Add(variable, powers);
             }
         }
-        /// <summary>Divides one polynomial over another one</summary>
-        internal static (Entity Divided, Entity Remainder) DivideAndRemainderPolynomials(Entity p, Entity q)
+        /// <summary>
+        /// Divides one polynomial over another one:
+        /// <a href="https://en.wikipedia.org/wiki/Polynomial_long_division"/>
+        /// </summary>
+        internal static (Entity Divided, Entity Remainder) PolynomialLongDivision(Entity p, Entity q)
         {
-            static PolyInfo GatherAllPossiblePolynomials(Entity expr, bool replaceVars)
+            static PolynomialInformation GatherAllPossiblePolynomials(Entity expr, bool replaceVars)
             {
                 // Init
-                var res = new PolyInfo();
+                var res = new PolynomialInformation();
 
                 if (replaceVars)
                 {
@@ -79,7 +82,6 @@ namespace AngouriMath.Core.TreeAnalysis
             var monoinfoP = GatherAllPossiblePolynomials(p.Expand(), replaceVars: false).MonoInfo;
             var monoinfoQ = GatherAllPossiblePolynomials(q.Expand(), replaceVars: false).MonoInfo;
 
-            // TODO use Linq to find polyvar
             // First attempt to find polynoms
             var polyvar = monoinfoP.Keys.FirstOrDefault(monoinfoQ.ContainsKey);
             // cannot divide, return unchanged
@@ -98,14 +100,14 @@ namespace AngouriMath.Core.TreeAnalysis
             while (maxpowP.GreaterThanOrEquals(maxpowQ))
             {
                 // KeyPair is ax^n with Key=n, Value=a
-                EDecimal deltapow = maxpowP - maxpowQ;
-                Entity deltamul = maxvalP / maxvalQ;
+                var deltapow = maxpowP - maxpowQ;
+                var deltamul = maxvalP / maxvalQ;
                 result[deltapow] = deltamul;
 
                 foreach (var n in monoinfoQ[polyvar])
                 {
                     // TODO: precision loss can happen here. MUST be fixed somehow
-                    EDecimal newpow = deltapow + n.Key;
+                    var newpow = deltapow + n.Key;
                     if (monoinfoP[polyvar].TryGetValue(newpow, out var existing))
                         monoinfoP[polyvar][newpow] = existing - deltamul * n.Value;
                     else
@@ -122,7 +124,7 @@ namespace AngouriMath.Core.TreeAnalysis
             // check if all left in P is zero. If something left, division is impossible => return P / Q
             Entity rest = 0;
             foreach (var coef in monoinfoP[polyvar])
-                if (coef.Value.Simplify() is not IntegerNumber(0) and var simplified)
+                if (coef.Value.Simplify() is not Integer(0) and var simplified)
                     rest += simplified * MathS.Pow(polyvar, coef.Key);
             rest /= q;
 

@@ -18,12 +18,8 @@ options
 @header
 {
     using System.Linq;
-    using System.Collections;
     using AngouriMath;
-    using AngouriMath.Core;
     using static AngouriMath.Core.FromString.FunctionArgumentCountException;
-    using AngouriMath.Core.Numerix;
-    using System.Globalization;
 }
 
 @lexer::members
@@ -104,7 +100,7 @@ function_arguments returns[List<Entity> list]
     ;
    
 atom returns[Entity value]
-    : NUMBER { $value = ComplexNumber.Parse($NUMBER.text); }
+    : NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | VARIABLE { $value = MathS.Var($VARIABLE.text); }
     | '(' expression ')' { $value = $expression.value; }
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }

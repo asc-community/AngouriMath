@@ -17,12 +17,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     using static Entity;
+    using static Entity.Number;
     internal static class CommonDenominatorSolver
     {
         /// <summary>
@@ -41,7 +41,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// </summary>
         /// <param name="term"></param>
         /// <returns></returns>
-        private static (Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers) FindFractions(Entity term, Variable x)
+        private static (Entity numerator, List<(Entity den, Real pow)> denominatorMultipliers) FindFractions(Entity term, Variable x)
         {
             // TODO: consider cases where we should NOT gather all powers in row
             static Entity GetPower(Entity expr) =>
@@ -51,7 +51,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 expr is Powf(var @base, _) ? GetBase(@base) : expr;
 
             // We init numerator with 1, but once InnerSimplify is called, we get rid of 1 *
-            var oneInfo = (numerator: (Entity)1, denominatorMultipliers: new List<(Entity den, RealNumber pow)>());
+            var oneInfo = (numerator: (Entity)1, denominatorMultipliers: new List<(Entity den, Real pow)>());
 
             var multipliers = Mulf.LinearChildren(term);
             foreach (var multiplier in multipliers)
@@ -68,7 +68,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     continue;
                 }
                 var preciseValue = power.Eval();
-                if (!(preciseValue is RealNumber realPart))
+                if (!(preciseValue is Real realPart))
                 {
                     oneInfo.numerator *= multiplier;
                     continue;
@@ -97,8 +97,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         private static Entity? FindCD(Entity expr, Variable x)
         {
             var terms = Sumf.LinearChildren(expr);
-            var denominators = new Dictionary<string, (Entity den, RealNumber pow)>();
-            var fracs = new List<(Entity numerator, List<(Entity den, RealNumber pow)> denominatorMultipliers)>();
+            var denominators = new Dictionary<string, (Entity den, Real pow)>();
+            var fracs = new List<(Entity numerator, List<(Entity den, Real pow)> denominatorMultipliers)>();
             foreach (var term in terms)
             {
                 var oneInfo = FindFractions(term, x);
@@ -116,9 +116,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (denominators.Count == 0)
                 return null; // If there's no denominators or it's equal to 1, then we don't have to try to solve yet anymore
 
-            static Dictionary<string, (Entity den, RealNumber pow)> ToDict(List<(Entity den, RealNumber pow)> list)
+            static Dictionary<string, (Entity den, Real pow)> ToDict(List<(Entity den, Real pow)> list)
             {
-                var res = new Dictionary<string, (Entity den, RealNumber pow)>();
+                var res = new Dictionary<string, (Entity den, Real pow)>();
                 foreach (var (den, pow) in list)
                     res[den.ToString()] = (den, -pow);
                 return res;

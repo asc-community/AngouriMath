@@ -143,7 +143,7 @@ namespace AngouriMath
             public override Entity Derive(Variable variable)
             {
                 // TODO: Implementation of symbolic gamma function and polygamma functions needed
-                return Core.Numerix.RealNumber.NaN;
+                return Number.Real.NaN;
             }
         }
         public partial record Derivativef

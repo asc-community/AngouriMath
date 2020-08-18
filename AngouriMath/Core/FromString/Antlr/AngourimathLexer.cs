@@ -21,12 +21,8 @@
 
 
     using System.Linq;
-    using System.Collections;
     using AngouriMath;
-    using AngouriMath.Core;
     using static AngouriMath.Core.FromString.FunctionArgumentCountException;
-    using AngouriMath.Core.Numerix;
-    using System.Globalization;
 
 using System;
 using System.IO;

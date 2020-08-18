@@ -1,9 +1,9 @@
-﻿using AngouriMath.Core.Numerix;
-using System.Linq;
+﻿using System.Linq;
 
 namespace AngouriMath.Limits
 {
     using static Entity;
+    using static Entity.Number;
     public enum ApproachFrom
     {
         BothSides,
@@ -48,45 +48,32 @@ namespace AngouriMath.Limits
                 ? expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Left)
                 : expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Left) is { } fromLeft
                   && expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Right) is { } fromRight
-                ? fromLeft == fromRight ? fromLeft : RealNumber.NaN
+                ? fromLeft == fromRight ? fromLeft : Real.NaN
                 : null,
             _ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(side), (int)side, typeof(ApproachFrom))
         };
 
-        internal static Entity? ComputeLimitImpl(Entity expr, Variable x, Entity dist, ApproachFrom side)
+        internal static Entity? ComputeLimitImpl(Entity expr, Variable x, Entity dist, ApproachFrom side) => dist switch
         {
-            if (!expr.Vars.Contains(x)) return expr;
-
-            switch (dist)
+            _ when !expr.Vars.Contains(x) => expr,
+            // avoid NaN values as non finite numbers
+            Real { IsNaN: true } => Real.NaN,
+            // if x -> -oo just make -x -> +oo
+            Real { IsFinite: false, IsNegative: true } => SimplifyAndComputeLimitToInfinity(expr.Substitute(x, -x), x),
+            // compute limit for x -> +oo
+            Real { IsFinite: false, IsNegative: false } => SimplifyAndComputeLimitToInfinity(expr, x),
+            Complex { IsFinite: false } =>
+                throw new Core.Exceptions.MathSException($"complex infinities are not supported in limits: lim({x} -> {dist}) {expr}"),
+            _ => SimplifyAndComputeLimitToInfinity(side switch
             {
-                case RealNumber real when !real.IsFinite:
-                    // avoid NaN values as non finite numbers
-                    if (real == RealNumber.NaN)
-                    {
-                        return RealNumber.NaN;
-                    }
-                    // if x -> -oo just make -x -> +oo
-                    if (real == RealNumber.NegativeInfinity)
-                    {
-                        expr = expr.Substitute(x, -x);
-                    }
-                    // compute limit for x -> +oo
-                    return SimplifyAndComputeLimitToInfinity(expr, x);
-                case ComplexNumber complex when !complex.IsFinite:
-                    throw new Core.Exceptions.MathSException($"complex infinities are not supported in limits: lim({x} -> {dist}) {expr}");
-            }
-            // handle side from which the limit is approached
-            expr = side switch
-            {
+                // lim(x -> 3-) x <=> lim(x -> 0+) 3 - x <=> lim(x -> +oo) 3 - 1 / x
                 ApproachFrom.Left => expr.Substitute(x, dist - 1 / x),
+                // lim(x -> 3+) x <=> lim(x -> 0+) 3 + x <=> lim(x -> +oo) 3 + 1 / x
                 ApproachFrom.Right => expr.Substitute(x, dist + 1 / x),
                 _ => throw new System.ArgumentOutOfRangeException(nameof(side), side,
                     $"Only {ApproachFrom.Left} and {ApproachFrom.Right} are supported.")
-            };
-            // lim(x -> 3-) x <=> lim(x -> 0+) 3 - x <=> lim(x -> +oo) 3 - 1 / x
-            // lim(x -> 3+) x <=> lim(x -> 0+) 3 + x <=> lim(x -> +oo) 3 + 1 / x
-            return SimplifyAndComputeLimitToInfinity(expr, x);
-        }
+            }, x)
+        };
     }
 }
 namespace AngouriMath
@@ -131,7 +118,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Sumf(
+                : ComputeLimitImpl(New(
                     Augend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Augend,
                     Addend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Addend),
                     x, dist, side);
@@ -140,7 +127,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Minusf(
+                : ComputeLimitImpl(New(
                     Subtrahend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Subtrahend,
                     Minuend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Minuend),
                     x, dist, side);
@@ -149,7 +136,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Mulf(
+                : ComputeLimitImpl(New(
                     Multiplier.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Multiplier,
                     Multiplicand.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Multiplicand),
                     x, dist, side);
@@ -158,7 +145,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Divf(
+                : ComputeLimitImpl(New(
                     Dividend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Dividend,
                     Divisor.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Divisor),
                     x, dist, side);
@@ -167,7 +154,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Sinf(
+                : ComputeLimitImpl(New(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
                     x, dist, side);
         }
@@ -175,7 +162,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Cosf(
+                : ComputeLimitImpl(New(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
                     x, dist, side);
         }
@@ -183,7 +170,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Tanf(
+                : ComputeLimitImpl(New(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
                     x, dist, side);
         }
@@ -191,7 +178,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Cotanf(
+                : ComputeLimitImpl(New(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
                     x, dist, side);
         }
@@ -199,7 +186,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Logf(
+                : ComputeLimitImpl(New(
                     Base.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Base,
                     Antilogarithm.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Antilogarithm),
                     x, dist, side);
@@ -208,7 +195,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Powf(
+                : ComputeLimitImpl(New(
                     Base.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Base,
                     Exponent.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Exponent),
                     x, dist, side);
@@ -217,7 +204,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Arcsinf(
+                : ComputeLimitImpl(New(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
                     x, dist, side);
         }
@@ -225,7 +212,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Arccosf(
+                : ComputeLimitImpl(New(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
                     x, dist, side);
         }
@@ -233,7 +220,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Arctanf(
+                : ComputeLimitImpl(New(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
                     x, dist, side);
         }
@@ -241,7 +228,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Arccotanf(
+                : ComputeLimitImpl(New(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
                     x, dist, side);
         }
@@ -249,7 +236,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Factorialf(
+                : ComputeLimitImpl(New(
                     Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
                     x, dist, side);
         }
@@ -257,7 +244,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Derivativef(
+                : ComputeLimitImpl(New(
                     Expression.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Expression,
                     Var.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Var,
                     Iterations.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim3 ? lim3 : Iterations),
@@ -267,7 +254,7 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Integralf(
+                : ComputeLimitImpl(New(
                     Expression.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Expression,
                     Var.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Var,
                     Iterations.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim3 ? lim3 : Iterations),
@@ -277,11 +264,12 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, Limits.ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(new Integralf(
+                : ComputeLimitImpl(New(
                     Expression.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Expression,
                     Var.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Var,
-                    Destination.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim3 ? lim3 : Destination),
-                    x, dist, side);
+                    Destination.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim3 ? lim3 : Destination,
+                    ApproachFrom),
+                x, dist, side);
         }
     }
 }

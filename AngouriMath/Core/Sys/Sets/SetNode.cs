@@ -18,11 +18,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using AngouriMath.Core.Numerix;
 
 [assembly: InternalsVisibleTo("UnitTests.Core")]
 namespace AngouriMath.Core
 {
+    using static Entity.Number;
     /// <summary>
     /// Class defines true mathematical sets
     /// It can be empty, it can contain numbers, it can contain intervals etc. It also maybe an operator (|, &, -)
@@ -261,47 +261,37 @@ namespace AngouriMath.Core
         }
 
         /// <summary>
-        /// Without check whether entity is already in the set
+        /// Adding to this <see cref="Set"/> will not check whether <see cref="Entity"/> is already added
         /// </summary>
         public bool FastAddingMode { get; set; } = false;
 
         public bool IsReadOnly => false;
 
-        /// <summary>
-        /// Returns a set of all complex numbers
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>Returns a set of all <see cref="Complex"/>es</summary>
         internal static Set C()
             => new Set
             {
-                Pieces = new List<Piece>
+                Pieces =
                 {
                     Piece.Interval(
-                        ComplexNumber.NegNegInfinity,
-                        ComplexNumber.PosPosInfinity,
+                        Complex.NegNegInfinity,
+                        Complex.PosPosInfinity,
                         false, false, false, false)
                 }
             };
 
-        /// <summary>
-        /// Returns a set of all real numbers
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>Returns a set of all <see cref="Real"/>s</summary>
         internal static Set R()
             => new Set
             {
-                Pieces = new List<Piece>
+                Pieces =
                 {
-                    Piece.Interval(RealNumber.NegativeInfinity, RealNumber.PositiveInfinity)
+                    Piece.Interval(Real.NegativeInfinity, Real.PositiveInfinity)
                     .SetLeftClosed(false).SetRightClosed(false)
                 }
             };
 
-        /// <summary>
-        /// Creates a finite set
-        /// </summary>
-        /// <param name="entities"></param>
-        /// <returns></returns>
+        /// <summary>Creates a finite set</summary>
         internal static Set Finite(params Entity[] entities)
         {
             var res = new Set();

@@ -1,14 +1,14 @@
 ﻿using System.Collections.Generic;
 using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
+using static AngouriMath.Entity.Number;
 using Xunit;
 
 namespace UnitTests.Core
 {
     public class PiecesTest
     {
-        public bool In(ComplexNumber num, Piece list) => In(num, new List<Piece>{list});
-        public bool In(ComplexNumber num, List<Piece> list) => new Set {Pieces = list}.Contains(num);
+        public bool In(Complex num, Piece list) => In(num, new List<Piece>{list});
+        public bool In(Complex num, List<Piece> list) => new Set {Pieces = list}.Contains(num);
             //=> list.Any(c => c.Contains(new OneElementPiece(num)));
            
         [Fact]
@@ -31,16 +31,16 @@ namespace UnitTests.Core
         [Fact]
         public void PieceInversion2()
         {
-            var p = Piece.Interval(ComplexNumber.Create(1, 1), ComplexNumber.Create(2, 2)).SetLeftClosed(true, true).SetRightClosed(true, true);
+            var p = Piece.Interval(Complex.Create(1, 1), Complex.Create(2, 2)).SetLeftClosed(true, true).SetRightClosed(true, true);
             var inverted = PieceFunctions.Invert(p);
             Assert.True(In(120, inverted));
-            Assert.True(In(ComplexNumber.Create(320, -13), inverted));
+            Assert.True(In(Complex.Create(320, -13), inverted));
         }
 
         [Fact]
         public void PieceSubtraction1()
         {
-            var p = Piece.Interval(ComplexNumber.Create(-1, -1), ComplexNumber.Create(2, 2)).SetLeftClosed(true, true).SetRightClosed(true, true);
+            var p = Piece.Interval(Complex.Create(-1, -1), Complex.Create(2, 2)).SetLeftClosed(true, true).SetRightClosed(true, true);
             var left = PieceFunctions.Subtract(p, new OneElementPiece(0));
             Assert.False(In(0, left));
         }
@@ -73,10 +73,10 @@ namespace UnitTests.Core
         public void PieceIntersection2()
         {
 
-            var U = Piece.Interval(ComplexNumber.NegNegInfinity, ComplexNumber.PosPosInfinity);
+            var U = Piece.Interval(Complex.NegNegInfinity, Complex.PosPosInfinity);
             var p = Piece.Interval(3, 4).SetLeftClosed(true).SetRightClosed(true);
-            var p1 = Piece.Interval(ComplexNumber.Create(3, 5), ComplexNumber.Create(1, 6)).SetLeftClosed(true).SetRightClosed(true);
-            var p2 = Piece.Interval(3, ComplexNumber.Create(1, 6)).SetLeftClosed(false).SetRightClosed(true);
+            var p1 = Piece.Interval(Complex.Create(3, 5), Complex.Create(1, 6)).SetLeftClosed(true).SetRightClosed(true);
+            var p2 = Piece.Interval(3, Complex.Create(1, 6)).SetLeftClosed(false).SetRightClosed(true);
             var p3 = Piece.Element(3);
             Assert.True(U.Contains(p));
             Assert.True(U.Contains(p1));

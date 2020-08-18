@@ -13,14 +13,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-using System.Numerics;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
 using PeterO.Numbers;
 
 namespace AngouriMath
 {
+    using static Entity.Number;
     public abstract partial record Entity : ILatexiseable
     {
         /// <summary>
@@ -29,7 +27,7 @@ namespace AngouriMath
         /// <param name="x">Variable to integrate over</param>
         /// <param name="from">The complex lower bound for integrating</param>
         /// <param name="to">The complex upper bound for integrating</param>
-        public ComplexNumber DefiniteIntegral(Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to) =>
+        public Complex DefiniteIntegral(Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to) =>
             Integration.Integrate(this, x, from, to, 100);
 
         /// <summary>
@@ -38,7 +36,7 @@ namespace AngouriMath
         /// <param name="x">Variable to integrate over</param>
         /// <param name="from">The real lower bound for integrating</param>
         /// <param name="to">The real upper bound for integrating</param>
-        public ComplexNumber DefiniteIntegral(Variable x, EDecimal from, EDecimal to) =>
+        public Complex DefiniteIntegral(Variable x, EDecimal from, EDecimal to) =>
             Integration.Integrate(this, x, (from, 0), (to, 0), 100);
 
         /// <summary>
@@ -48,23 +46,23 @@ namespace AngouriMath
         /// <param name="from">The complex lower bound for integrating</param>
         /// <param name="to">The complex upper bound for integrating</param>
         /// <param name="stepCount">Accuracy (initially, amount of iterations)</param>
-        public ComplexNumber DefiniteIntegral(Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
+        public Complex DefiniteIntegral(Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
             Integration.Integrate(this, x, from, to, stepCount);
     }
     internal static class Integration
     {
         /// <summary>Numerical definite integration, see more in <see cref="Entity.DefiniteIntegral(Entity.Variable, EDecimal, EDecimal)"/></summary>
-        internal static ComplexNumber Integrate(Entity func, Entity.Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount)
+        internal static Complex Integrate(Entity func, Entity.Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount)
         {
-            Complex res = 0;
+            System.Numerics.Complex res = 0;
             var cfunc = func.Compile(x);
             for(int i = 0; i <= stepCount; i++)
             {
                 var share = ((EDecimal)i) / stepCount;
-                var tmp = ComplexNumber.Create(from.Re * share + to.Re * (1 - share), from.Im * share + to.Im * (1 - share));
-                res += cfunc.Substitute(tmp.AsComplex());
+                var tmp = Complex.Create(from.Re * share + to.Re * (1 - share), from.Im * share + to.Im * (1 - share));
+                res += cfunc.Substitute(tmp.ToNumerics());
             }
-            return res.ToComplexNumber() / (stepCount + 1) * (ComplexNumber.Create(to.Re, to.Im) - ComplexNumber.Create(from.Re, from.Im));
+            return res.ToNumber() / (stepCount + 1) * (Complex.Create(to.Re, to.Im) - Complex.Create(from.Re, from.Im));
         }
     }
 }

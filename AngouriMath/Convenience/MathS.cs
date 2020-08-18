@@ -20,7 +20,6 @@ using System.Runtime.CompilerServices;
 using PeterO.Numbers;
 using AngouriMath.Core;
 using AngouriMath.Core.FromString;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Core.Sys;
 using AngouriMath.Limits;
 using AngouriMath.Functions;
@@ -194,7 +193,7 @@ namespace AngouriMath
         /// Power node with (1/2) as the power
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Sqrt(Entity a) => new Powf(a, RationalNumber.Create(1, 2));
+        public static Entity Sqrt(Entity a) => new Powf(a, Number.Rational.Create(1, 2));
 
         /// <summary>
         /// Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/>
@@ -206,7 +205,7 @@ namespace AngouriMath
         /// Power node with (1/3) as the power
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Cbrt(Entity a) => new Powf(a, RationalNumber.Create(1, 3));
+        public static Entity Cbrt(Entity a) => new Powf(a, Number.Rational.Create(1, 3));
 
         /// <summary>
         /// Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/>
@@ -390,25 +389,11 @@ namespace AngouriMath
         /// </returns>
         public static Variable Var(string name) => new Variable(name);
 
-        /// <summary>
-        /// Creates a complex instance of <see cref="Number"/> (not <see cref="Number"/>!)
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [Obsolete("Use Number.Create or implicit construction instead")]
-        public static Number Number(EDecimal a, EDecimal b) => ComplexNumber.Create(a, b);
-
-        /// <summary>
-        /// Creates a real instance of <see cref="Number"/> (not <see cref="Number"/>!)
-        /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        [Obsolete("Use Number.Create or implicit construction instead")]
-        public static ComplexNumber Number(EDecimal a) => RealNumber.Create(a);
-
         // List of public constants
         // ReSharper disable once InconsistentNaming
         public static readonly Variable e = nameof(e);
         // ReSharper disable once InconsistentNaming
-        public static readonly ComplexNumber i = ComplexNumber.ImaginaryOne;
+        public static readonly Number.Complex i = Number.Complex.ImaginaryOne;
         // ReSharper disable once InconsistentNaming
         public static readonly Variable pi = nameof(pi);
 
@@ -437,7 +422,7 @@ namespace AngouriMath
         /// A <see cref="string"/> with the number in the required base
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToBaseN(RealNumber num, int N) => BaseConversion.ToBaseN(num.Decimal, N);
+        public static string ToBaseN(Number.Real num, int N) => BaseConversion.ToBaseN(num.EDecimal, N);
 
         /// <summary>
         /// Translates a number in base <paramref name="N"/> into base 10
@@ -452,7 +437,7 @@ namespace AngouriMath
         /// The <see cref="RealNumber"/> in base 10
         /// </returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static RealNumber FromBaseN(string num, int N) => BaseConversion.FromBaseN(num, N);
+        public static Number.Real FromBaseN(string num, int N) => BaseConversion.FromBaseN(num, N);
 
         /// <summary>
         /// Returns the <a href="https://en.wikipedia.org/wiki/LaTeX">LaTeX</a> representation of the argument
@@ -489,7 +474,7 @@ namespace AngouriMath
             /// <returns>
             /// The resulting <see cref="ComplexNumber"/>
             /// </returns>
-            public static ComplexNumber Create(Complex value) =>
+            public static Number.Complex Create(Complex value) =>
                 Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
 
             /// <summary>
@@ -501,7 +486,7 @@ namespace AngouriMath
             /// <returns>
             /// The resulting <see cref="IntegerNumber"/>
             /// </returns>
-            public static IntegerNumber Create(long value) => IntegerNumber.Create(value);
+            public static Number.Integer Create(long value) => Number.Integer.Create(value);
 
             /// <summary>
             /// Creates an instance of <see cref="IntegerNumber"/> from an <see cref="EInteger"/>
@@ -512,7 +497,7 @@ namespace AngouriMath
             /// <returns>
             /// The resulting <see cref="IntegerNumber"/>
             /// </returns>
-            public static IntegerNumber Create(EInteger value) => IntegerNumber.Create(value);
+            public static Number.Integer Create(EInteger value) => Number.Integer.Create(value);
 
             /// <summary>
             /// Creates an instance of <see cref="IntegerNumber"/> from an <see cref="int"/>
@@ -523,7 +508,7 @@ namespace AngouriMath
             /// <returns>
             /// The resulting <see cref="IntegerNumber"/>
             /// </returns>
-            public static IntegerNumber Create(int value) => IntegerNumber.Create(value);
+            public static Number.Integer Create(int value) => Number.Integer.Create(value);
 
             /// <summary>
             /// Creates an instance of <see cref="RationalNumber"/> from two <see cref="EInteger"/>s
@@ -537,8 +522,8 @@ namespace AngouriMath
             /// <returns>
             /// The resulting <see cref="RationalNumber"/>
             /// </returns>
-            public static RationalNumber CreateRational(EInteger numerator, EInteger denominator)
-                => RationalNumber.Create(numerator, denominator);
+            public static Number.Rational CreateRational(EInteger numerator, EInteger denominator)
+                => Number.Rational.Create(numerator, denominator);
 
             /// <summary>
             /// Creates an instance of <see cref="RationalNumber"/> from an <see cref="ERational"/>
@@ -549,7 +534,7 @@ namespace AngouriMath
             /// <returns>
             /// The resulting <see cref="RationalNumber"/>
             /// </returns>
-            public static RationalNumber Create(ERational rational) => RationalNumber.Create(rational);
+            public static Number.Rational Create(ERational rational) => Number.Rational.Create(rational);
 
             /// <summary>
             /// Creates an instance of <see cref="RealNumber"/> from an <see cref="EDecimal"/>
@@ -560,7 +545,7 @@ namespace AngouriMath
             /// <returns>
             /// The resulting <see cref="RealNumber"/>
             /// </returns>
-            public static RealNumber Create(EDecimal value) => RealNumber.Create(value);
+            public static Number.Real Create(EDecimal value) => Number.Real.Create(value);
 
             /// <summary>
             /// Creates an instance of <see cref="RealNumber"/> from a <see cref="double"/>
@@ -571,7 +556,7 @@ namespace AngouriMath
             /// <returns>
             /// The resulting <see cref="RealNumber"/>
             /// </returns>
-            public static RealNumber Create(double value) => RealNumber.Create(EDecimal.FromDouble(value));
+            public static Number.Real Create(double value) => Number.Real.Create(EDecimal.FromDouble(value));
 
             /// <summary>
             /// Creates an instance of <see cref="ComplexNumber"/> from two <see cref="RealNumber"/>s
@@ -585,7 +570,7 @@ namespace AngouriMath
             /// <returns>
             /// The resulting <see cref="ComplexNumber"/>
             /// </returns>
-            public static ComplexNumber Create(EDecimal re, EDecimal im) => ComplexNumber.Create(re, im);
+            public static Number.Complex Create(EDecimal re, EDecimal im) => Number.Complex.Create(re, im);
         }
 
         /// <summary>
@@ -753,7 +738,7 @@ namespace AngouriMath
                     res += expr.Count(entity => entity is Divf) / 2;
 
                     // Number of negative powers
-                    res += expr.Count(entity => entity is Powf(_, RealNumber { IsNegative: true }));
+                    res += expr.Count(entity => entity is Powf(_, Number.Real { IsNegative: true }));
 
                     return res;
                 });

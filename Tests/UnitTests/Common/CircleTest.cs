@@ -1,4 +1,5 @@
 ﻿using AngouriMath;
+using static AngouriMath.Entity.Number;
 using Xunit;
 using System.Linq;
 
@@ -12,86 +13,91 @@ namespace UnitTests.Common
         [InlineData("1 + 2 * log(2, 3)")]
         [InlineData("2 ^ 3 + sin(3)")]
         [InlineData("x!")]
-        [InlineData("(-1)!")]
-        [InlineData("-1!")]
+        [InlineData("(-x)!")]
+        [InlineData("-x!")]
         [InlineData("(3i)!")]
         public void Circle(string inputIsOutput) =>
             Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).ToString());
-
-        [Fact]
-        public void Test3()
+        [Theory]
+        [InlineData("0")]
+        [InlineData("1")]
+        [InlineData("-1")]
+        [InlineData("i")]
+        [InlineData("2i")]
+        [InlineData("233i")]
+        [InlineData("-i")]
+        [InlineData("-2i")]
+        [InlineData("-4i")]
+        public void Number(string inputIsOutput)
         {
-            const string expr = "23.3 + 3 / 3 + i";
+            Assert.Equal(inputIsOutput, Complex.Parse(inputIsOutput).ToString());
+            Assert.True(Complex.TryParse(inputIsOutput, out var output));
+            Assert.Equal(inputIsOutput, output?.ToString());
+        }
+        [Theory]
+        [InlineData("0i", "0")]
+        [InlineData("1i", "i")]
+        [InlineData("-1i", "-i")]
+        public void NumberSimplify(string input, string output)
+        {
+            Assert.Equal(output, Complex.Parse(input).ToString());
+            Assert.True(Complex.TryParse(input, out var o));
+            Assert.Equal(output, o?.ToString());
+        }
+        [Theory]
+        [InlineData("quack")]
+        [InlineData("i1")]
+        [InlineData("ii")]
+        [InlineData("")]
+        public void NotNumber(string input)
+        {
+            Assert.Equal($"Cannot parse number from {input}",
+                Assert.Throws<AngouriMath.Core.FromString.ParseException>(() => Complex.Parse(input).ToString()).Message);
+            Assert.False(Complex.TryParse(input, out var output));
+            Assert.Null(output);
+        }
+
+        [Theory]
+        [InlineData("23.3", "233/10")]
+        [InlineData("5.3", "53/10")]
+        [InlineData("-5.3i", "-53/10i")]
+        public void DecimalToRational(string @decimal, string rational)
+        {
+            string expr = $"{@decimal} + 3 / 3 + {@decimal} + i";
             var exprActual = MathS.FromString(expr);
-            Assert.Equal("233/10 + 3 / 3 + i", exprActual.ToString());
+            Assert.Equal($"{rational} + 3 / 3 + {rational} + i", exprActual.ToString());
         }
 
         [Fact]
-        public void Test4()
-        {
-            MathS.FromString((MathS.Sin(x) / MathS.Cos(x)).Derive(x).ToString());
-        }
-
-        [Fact]
-        public void Test5()
-        {
-            Assert.Equal("1", MathS.Numbers.Create(1).ToString());
-            Assert.Equal("-1", MathS.Numbers.Create(-1).ToString());
-        }
-
-        [Fact]
-        public void Test6()
-        {
-            Assert.Equal("i", MathS.i.ToString());
-            Assert.Equal("-i", (-1 * MathS.i).ToString());
-        }
+        public void Test4() => MathS.FromString((MathS.Sin(x) / MathS.Cos(x)).Derive(x).ToString());
 
         [Fact]
         public void Test7() => Assert.Equal(3 * x, MathS.Sin(MathS.Arcsin(x * 3)).Simplify());
 
         [Fact]
         public void Test8() => Assert.Equal(3 * x, MathS.Arccotan(MathS.Cotan(x * 3)).Simplify());
-        public bool FunctionsAreEqualHack(Entity eq1, Entity eq2)
+        
+        [Theory]
+        [InlineData("x / y + x * x * y")]
+        [InlineData("x / 1 + 2")]
+        [InlineData("(x + y + x + 1 / (x + 4 + 4 + sin(x))) / (x + x + 3 / y) + 3")]
+        public void TestLinch(string input)
         {
-            var vars1 = eq1.Vars;
-            var vars2 = eq2.Vars;
-            if (!vars1.SequenceEqual(vars2))
-                return false;
+            var expr = MathS.FromString(input);
+            var exprOptimized = MathS.Utils.OptimizeTree(expr);
+
+            var vars1 = (System.Collections.Generic.ISet<Entity.Variable>)expr.Vars;
+            var vars2 = (System.Collections.Generic.ISet<Entity.Variable>)exprOptimized.Vars;
+            Assert.Subset(vars1, vars2);
+            Assert.Subset(vars2, vars1);
             for (int i = 1; i < 10; i++)
             {
                 var replacements = vars1.ToDictionary(var => (Entity)var, _ => (Entity)i);
-                var a = eq1.Substitute(replacements);
-                var b = eq2.Substitute(replacements);
+                var a = expr.Substitute(replacements);
+                var b = exprOptimized.Substitute(replacements);
 
-                if (a.Eval() != b.Eval())
-                    return false;
+                Assert.Equal(a.Eval(), b.Eval());
             }
-
-            return true;
-        }
-
-        [Fact]
-        public void TestLinch()
-        {
-            Entity expr = "x / y + x * x * y";
-            Entity exprOptimized = MathS.Utils.OptimizeTree(expr);
-            Assert.True(FunctionsAreEqualHack(expr, exprOptimized), "Expressions " + expr.ToString() + " and " + exprOptimized.ToString() + " are not equal");
-        }
-
-        [Fact]
-        public void TestLinch1()
-        {
-            Entity expr = "x / 1 + 2";
-            Entity exprOptimized = MathS.Utils.OptimizeTree(expr);
-            Assert.True(FunctionsAreEqualHack(expr, exprOptimized), "Expressions " + expr.ToString() + " and " + exprOptimized.ToString() + " are not equal");
-        }
-
-        [Fact]
-        public void TestLinch2()
-        {
-            Entity expr = "(x + y + x + 1 / (x + 4 + 4 + sin(x))) / (x + x + 3 / y) + 3";
-            Entity exprOptimized = MathS.Utils.OptimizeTree(expr);
-            Assert.True(FunctionsAreEqualHack(expr, exprOptimized), "Expressions " + expr.ToString() + " and " + exprOptimized.ToString() + " are not equal");
         }
     }
 }

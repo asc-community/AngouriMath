@@ -15,32 +15,24 @@
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using AngouriMath.Core.Numerix;
 
 namespace AngouriMath.Functions.Algebra.InequalitySolver
 {
     using static Entity;
+    using static Entity.Number;
     internal static class NumericalInequalitySolver
     {
         /// <summary>
-        /// <paramref name="expr"/> must contain only
-        /// <see cref="Variable"/> <paramref name="x"/> as the variable
+        /// <paramref name="expr"/> must contain only<see cref="Variable"/> <paramref name="x"/> as the variable
         /// </summary>
-        /// <param name="expr">
-        /// This must only contain one variable, which is <paramref name="x"/>
-        /// </param>
-        /// <param name="x">
-        /// The only variable
-        /// </param>
-        /// <param name="sign">
-        /// The relation of the expression to zero.
-        /// </param>
-        /// <returns></returns>
+        /// <param name="expr">This must only contain one variable, which is <paramref name="x"/></param>
+        /// <param name="x">The only variable</param>
+        /// <param name="sign">The relation of the expression to zero.</param>
         internal static Set Solve(Entity expr, Variable x, MathS.Inequality sign)
         {
             if (expr.Vars.Count != 1 || expr.Vars.Single() != x)
                 throw new MathSException($"{nameof(expr)} should only contain {nameof(Variable)} {nameof(x)}");
-            bool Corresponds(RealNumber val) => sign switch
+            bool Corresponds(Real val) => sign switch
             {
                 MathS.Inequality.GreaterThan   => val >  0,
                 MathS.Inequality.LessThan      => val <  0,
@@ -51,8 +43,8 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
 
             var compiled = expr.Compile(x);
             var roots = expr.SolveNt(x);
-            var realRootsSet = roots.FiniteWhere(root => root.Eval() is RealNumber);
-            var realRoots = roots.FiniteSet().Select(root => root.Eval()).OfType<RealNumber>().OrderBy(n => n).ToList();
+            var realRootsSet = roots.FiniteWhere(root => root.Eval() is Real);
+            var realRoots = roots.FiniteSet().Select(root => root.Eval()).OfType<Real>().OrderBy(n => n).ToList();
             if (realRoots.Count > 0)
             {
                 realRoots.Insert(0, realRoots[0] - 5);
@@ -64,7 +56,7 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
                 var left = realRoots[i];
                 var right = realRoots[i + 1];
                 var point = (left + right) / 2;
-                var val = compiled.Call(point.AsComplex());
+                var val = compiled.Call(point.ToNumerics());
                 //if (Corresponds(val.AsRealNumber()))
                 if (Corresponds(val.Real))
                     result.Add((left, right, false, false));

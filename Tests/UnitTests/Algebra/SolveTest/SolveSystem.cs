@@ -1,13 +1,13 @@
 ﻿using System.Collections.Generic;
 using Xunit;
 using AngouriMath;
-using AngouriMath.Core.Numerix;
+using static AngouriMath.Entity.Number;
 
 namespace UnitTests.Algebra
 {
     public class SolveSystem
     {
-        void AssertSystemSolvable(Entity[] equations, Entity.Variable[] vars, int rootCount, IntegerNumber? ToSub = null)
+        void AssertSystemSolvable(Entity[] equations, Entity.Variable[] vars, int rootCount, Integer? ToSub = null)
         {
             ToSub ??= 3;
             var sol = MathS.Equations(equations).Solve(vars);
@@ -32,7 +32,7 @@ namespace UnitTests.Algebra
                     foreach (var uniqvar in eqCopy.Vars)
                         substitutions.Add(uniqvar, ToSub);
                     eqCopy = eqCopy.Substitute(substitutions);
-                    var error = Entity.Number.Abs(eqCopy.Eval());
+                    var error = eqCopy.Eval().Abs();
                     Assert.True(error.IsFinite && error < 0.0001,
                         $"\n{nameof(equation)}: {equation.InnerSimplify()}\n{nameof(i)}: {i}\n{nameof(error)}: {error}\n{nameof(sol)}: {sol}");
                 }

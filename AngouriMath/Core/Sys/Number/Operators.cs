@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using PeterO.Numbers;
-using AngouriMath.Core.Numerix;
 
 namespace AngouriMath
 {
@@ -51,42 +50,82 @@ namespace AngouriMath
                 => a.Remainder(b, MathS.Settings.DecimalPrecisionContext);
             internal static EDecimal CtxPow(EDecimal a, EDecimal b)
                 => a.Pow(b, MathS.Settings.DecimalPrecisionContext);
-            internal static T Min<T>(T a, T b) where T : RealNumber => a < b ? a : b;
-            internal static T Max<T>(T a, T b) where T : RealNumber => a > b ? a : b;
+            internal static T Min<T>(T a, T b) where T : Real => a < b ? a : b;
+            internal static T Max<T>(T a, T b) where T : Real => a > b ? a : b;
+
+            /// <summary>
+            /// This function serves not only convenience but also protects from unexpected cases, for example,
+            /// if a new type added
+            /// </summary>
+            protected static T SuperSwitch<T>(
+                Number num1, Number num2,
+                Func<Integer, Integer, T> ifInt,
+                Func<Rational, Rational, T> ifRat,
+                Func<Real, Real, T> ifReal,
+                Func<Complex, Complex, T> ifCom
+            ) => (num1, num2) switch
+            {
+                (Integer n1, Integer n2) => ifInt(n1, n2),
+                (Rational r1, Rational r2) => ifRat(r1, r2),
+                (Real r1, Real r2) => ifReal(r1, r2),
+                (Complex c1, Complex c2) => ifCom(c1, c2),
+                _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
+            };
+            /// <summary>
+            /// This function serves not only convenience but also protects from unexpected cases, for example,
+            /// if a new type added
+            /// </summary>
+            protected static T SuperSwitch<T>(
+                T num1, T num2,
+                Func<Integer, Integer, Integer> ifInt,
+                Func<Rational, Rational, Rational> ifRat,
+                Func<Real, Real, Real> ifReal,
+                Func<Complex, Complex, Complex> ifCom
+            ) where T : Number
+                => (T)(Number)((num1, num2) switch
+                {
+                    (Integer n1, Integer n2) => ifInt(n1, n2),
+                    (Rational r1, Rational r2) => ifRat(r1, r2),
+                    (Real r1, Real r2) => ifReal(r1, r2),
+                    (Complex c1, Complex c2) => ifCom(c1, c2),
+                    _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
+                });
             internal static T OpSum<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
-                    (a, b) => IntegerNumber.Create(CtxAdd(a.Integer, b.Integer)),
-                    (a, b) => RationalNumber.Create(CtxAdd(a.Rational, b.Rational)),
-                    (a, b) => RealNumber.Create(CtxAdd(a.Decimal, b.Decimal)),
-                    (a, b) => ComplexNumber.Create(CtxAdd(a.Real.Decimal, b.Real.Decimal), CtxAdd(a.Imaginary.Decimal, b.Imaginary.Decimal))
+                    (a, b) => Integer.Create(CtxAdd(a.EInteger, b.EInteger)),
+                    (a, b) => Rational.Create(CtxAdd(a.ERational, b.ERational)),
+                    (a, b) => Real.Create(CtxAdd(a.EDecimal, b.EDecimal)),
+                    (a, b) => Complex.Create(CtxAdd(a.RealPart.EDecimal, b.RealPart.EDecimal),
+                                             CtxAdd(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
                  );
             internal static T OpSub<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
-                    (a, b) => IntegerNumber.Create(CtxSubtract(a.Integer, b.Integer)),
-                    (a, b) => RationalNumber.Create(CtxSubtract(a.Rational, b.Rational)),
-                    (a, b) => RealNumber.Create(CtxSubtract(a.Decimal, b.Decimal)),
-                    (a, b) => ComplexNumber.Create(CtxSubtract(a.Real.Decimal, b.Real.Decimal), CtxSubtract(a.Imaginary.Decimal, b.Imaginary.Decimal))
+                    (a, b) => Integer.Create(CtxSubtract(a.EInteger, b.EInteger)),
+                    (a, b) => Rational.Create(CtxSubtract(a.ERational, b.ERational)),
+                    (a, b) => Real.Create(CtxSubtract(a.EDecimal, b.EDecimal)),
+                    (a, b) => Complex.Create(CtxSubtract(a.RealPart.EDecimal, b.RealPart.EDecimal),
+                                             CtxSubtract(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
                  );
             internal static T OpMul<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
-                    (a, b) => IntegerNumber.Create(CtxMultiply(a.Integer, b.Integer)),
-                    (a, b) => RationalNumber.Create(CtxMultiply(a.Rational, b.Rational)),
-                    (a, b) => RealNumber.Create(CtxMultiply(a.Decimal, b.Decimal)),
+                    (a, b) => Integer.Create(CtxMultiply(a.EInteger, b.EInteger)),
+                    (a, b) => Rational.Create(CtxMultiply(a.ERational, b.ERational)),
+                    (a, b) => Real.Create(CtxMultiply(a.EDecimal, b.EDecimal)),
                     (a, b) =>
                     {
                     // Define both (oo * i) and (i * oo) to be (oo i) which is (0 + oo i) instead of (NaN + oo i)
                     static EDecimal ModifiedMultiply(EDecimal a, EDecimal b) =>
                             a.IsInfinity() && b.IsZero || b.IsInfinity() && a.IsZero ? EDecimal.Zero : CtxMultiply(a, b);
-                        return ComplexNumber.Create(
-                            CtxSubtract(ModifiedMultiply(a.Real.Decimal, b.Real.Decimal), ModifiedMultiply(a.Imaginary.Decimal, b.Imaginary.Decimal)),
-                            CtxAdd(ModifiedMultiply(a.Real.Decimal, b.Imaginary.Decimal), ModifiedMultiply(a.Imaginary.Decimal, b.Real.Decimal)));
+                        return Complex.Create(
+                            CtxSubtract(ModifiedMultiply(a.RealPart.EDecimal, b.RealPart.EDecimal), ModifiedMultiply(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal)),
+                            CtxAdd(ModifiedMultiply(a.RealPart.EDecimal, b.ImaginaryPart.EDecimal), ModifiedMultiply(a.ImaginaryPart.EDecimal, b.RealPart.EDecimal)));
                     }
                  );
-            internal static ComplexNumber OpDiv<T>(T a, T b) where T : Number =>
+            internal static Complex OpDiv<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
-                    (a, b) => CtxDivide(a.Rational, b.Rational) is { } n ? RationalNumber.Create(n) : RealNumber.NaN,
-                    (a, b) => CtxDivide(a.Rational, b.Rational) is { } n ? RationalNumber.Create(n) : RealNumber.NaN,
-                    (a, b) => RealNumber.Create(CtxDivide(a.Decimal, b.Decimal)),
+                    (a, b) => CtxDivide(a.ERational, b.ERational) is { } n ? Rational.Create(n) : Real.NaN,
+                    (a, b) => CtxDivide(a.ERational, b.ERational) is { } n ? Rational.Create(n) : Real.NaN,
+                    (a, b) => Real.Create(CtxDivide(a.EDecimal, b.EDecimal)),
                     (a, b) =>
                     {
                     /*
@@ -95,21 +134,51 @@ namespace AngouriMath
                      * => ans = (a + ib) * (c - id) / (c2 + d2)
                      */
                         var conj = b.Conjugate();
-                        var bAbs = b.Abs().Decimal;
+                        var bAbs = b.Abs().EDecimal;
                         var abs2 = CtxMultiply(bAbs, bAbs);
-                        var Re = CtxDivide(conj.Real.Decimal, abs2);
-                        var Im = CtxDivide(conj.Imaginary.Decimal, abs2);
-                        var c = ComplexNumber.Create(Re, Im);
+                        var Re = CtxDivide(conj.RealPart.EDecimal, abs2);
+                        var Im = CtxDivide(conj.ImaginaryPart.EDecimal, abs2);
+                        var c = Complex.Create(Re, Im);
                         return a * c;
                     }
                  );
+            /// <summary>
+            /// Checks whether a number is zero
+            /// </summary>
+            /// <param name="num"></param>
+            /// <returns></returns>
+            public static bool IsZero(Real num)
+            {
+                if (!num.IsFinite)
+                    return false;
+                return IsZero(num.EDecimal);
+            }
+
+            /// <summary>
+            /// Checks whether a number is zero
+            /// </summary>
+            /// <param name="num"></param>
+            /// <returns></returns>
+            public static bool IsZero(EDecimal num)
+            {
+                return num.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange);
+            }
+
+            /// <summary>
+            /// Checks whether a number is zero
+            /// </summary>
+            /// <param name="num"></param>
+            /// <returns></returns>
+            public static bool IsZero(Complex num) => IsZero(num.RealPart) && IsZero(num.ImaginaryPart);
+
             internal static bool AreEqual<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
-                    (a, b) => a.Integer.Equals(b.Integer),
-                    (a, b) => a.Rational.Equals(b.Rational),
-                    (a, b) => a.IsFinite && b.IsFinite && IsZero(CtxSubtract(a.Decimal, b.Decimal)) ||
-                             !a.IsFinite && !b.IsFinite && a.Decimal.Equals(b.Decimal),
-                    (a, b) => AreEqual(a.Real, b.Real) && AreEqual(a.Imaginary, b.Imaginary)
+                    (a, b) => a.EInteger.Equals(b.EInteger),
+                    (a, b) => a.ERational.Equals(b.ERational),
+                    (a, b) => a.IsFinite && b.IsFinite
+                              && CtxSubtract(a.EDecimal, b.EDecimal).Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange)
+                              || !a.IsFinite && !b.IsFinite && a.EDecimal.Equals(b.EDecimal),
+                    (a, b) => AreEqual(a.RealPart, b.RealPart) && AreEqual(a.ImaginaryPart, b.ImaginaryPart)
                  );
 
             public static Number operator +(Number a, Number b) => OpSum(a, b);
@@ -121,20 +190,58 @@ namespace AngouriMath
             public static bool operator ==(Number a, Number b) => AreEqual(a, b);
             public static bool operator !=(Number a, Number b) => !AreEqual(a, b);
 
-            internal static RealNumber? FindGoodRoot(ComplexNumber @base, IntegerNumber power)
+            public static IEnumerable<Entity> GetAllRootsOf1(EInteger rootPower)
             {
-                RealNumber? positive = null, real = null;
-                foreach (var root in GetAllRoots(@base, power.Integer))
+                for (int i = 0; i < rootPower; i++)
+                {
+                    var angle = Rational.Create(i * 2, rootPower) * MathS.pi;
+                    yield return (MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplify();
+                }
+            }
+            /// <summary>
+            /// Finds all complex roots of a number
+            /// e. g. sqrt(1) = { -1, 1 }
+            /// root(1, 4) = { -i, i, -1, 1 }
+            /// </summary>
+            public static HashSet<Complex> GetAllRoots(Complex value, EInteger rootPower)
+            {
+                // Avoid infinite recursion from Abs to GetAllRoots again
+                var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
+                {
+                    var res = new HashSet<Complex>();
+                    EDecimal phi = (Ln(value / value.Abs()) / MathS.i).RealPart.EDecimal;
+                    if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
+                        phi = EDecimal.Zero;
+
+                    EDecimal newMod = Pow(value.Abs(), CtxDivide(EDecimal.One, rootPower)).RealPart.EDecimal;
+
+                    var i = Complex.ImaginaryOne;
+                    for (int n = 0; n < rootPower; n++)
+                    {
+                        EDecimal newPow = CtxAdd(CtxDivide(phi, rootPower),
+                            CtxDivide(CtxMultiply(CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
+                        var root = newMod * Exp(i * newPow);
+                        res.Add(root);
+                    }
+                    return res;
+                });
+                return res;
+            }
+
+            internal static Real? FindGoodRoot(Complex @base, Integer power)
+            {
+                Real? positive = null, real = null;
+                foreach (var root in GetAllRoots(@base, power.EInteger))
                     switch (MathS.Settings.FloatToRationalIterCount.As(15, () =>
                         MathS.Settings.PrecisionErrorZeroRange.As(1e-6m, () =>
-                            ComplexNumber.Create(root.Real, root.Imaginary))))
+                            Complex.Create(root.RealPart, root.ImaginaryPart))))
                     {
-                        case RationalNumber rational when IsZero(Pow(rational, power) - @base):  // To keep user's desired precision
+                        case Rational rational when IsZero(Pow(rational, power) - @base):  // To keep user's desired precision
                             return rational;
-                        case RealNumber r when r > 0:
+                        case Real r when r > 0:
                             positive ??= r;
                             break;
-                        case RealNumber r:
+                        case Real r:
                             real ??= r;
                             break;
                     }
@@ -165,15 +272,15 @@ namespace AngouriMath
             }
 
             /// <summary>Calculates the exact value of square root of num</summary>
-            public static ComplexNumber Sqrt(ComplexNumber num)
+            public static Complex Sqrt(Complex num)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
 
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,7dc9c2ee4f99814a
-                if (num is RealNumber { Decimal: var real })
+                if (num is Real { EDecimal: var real })
                     if (real.IsNegative)
-                        return ComplexNumber.Create(0, real.Negate().Sqrt(context));
-                    else return RealNumber.Create(real.Sqrt(context));
+                        return Complex.Create(0, real.Negate().Sqrt(context));
+                    else return Real.Create(real.Sqrt(context));
                 else
                 {
 
@@ -204,7 +311,7 @@ namespace AngouriMath
 
                     // This is the core of the algorithm. Everything else is special case handling.
 
-                    var (re, im) = (num.Real.Decimal, num.Imaginary.Decimal);
+                    var (re, im) = (num.RealPart.EDecimal, num.ImaginaryPart.EDecimal);
 
                     EDecimal x, y;
                     if (!re.IsNegative)
@@ -218,30 +325,30 @@ namespace AngouriMath
                         if (im.IsNegative) y = -y;
                         x = im.Divide(y.Multiply(2, context), context);
                     }
-                    return ComplexNumber.Create(x, y);
+                    return Complex.Create(x, y);
                 }
             }
 
             /// <summary>exp(x) = e^x</summary>
-            public static ComplexNumber Exp(ComplexNumber x)
+            public static Complex Exp(Complex x)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
-                var expReal = x.Real.Decimal.Exp(context);
-                var imaginary = x.Imaginary.Decimal;
+                var expReal = x.RealPart.EDecimal.Exp(context);
+                var imaginary = x.ImaginaryPart.EDecimal;
                 if (imaginary.IsZero)
                     return expReal;
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,7dc9c2ee4f99814a
                 var cosImaginary = expReal.Multiply(imaginary.Cos(context), context);
                 var sinImaginary = expReal.Multiply(imaginary.Sin(context), context);
-                return ComplexNumber.Create(cosImaginary, sinImaginary);
+                return Complex.Create(cosImaginary, sinImaginary);
             }
 
             /// <summary>e.g. Pow(2, 5) = 32</summary>
             /// <param name="base">The base of the exponential, base^power</param>
             /// <param name="power">The power of the exponential, base^power</param>
-            public static ComplexNumber Pow(ComplexNumber @base, ComplexNumber power)
+            public static Complex Pow(Complex @base, Complex power)
             {
-                static ComplexNumber BinaryIntPow(ComplexNumber num, EInteger val)
+                static Complex BinaryIntPow(Complex num, EInteger val)
                 {
                     if (val.IsZero)
                         return 1;
@@ -253,64 +360,64 @@ namespace AngouriMath
                     return BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[0]) * BinaryIntPow(num, divRem[1]);
                 }
                 // TODO: make it more detailed (e. g. +oo ^ +oo = +oo)
-                if (@base.IsFinite && power is IntegerNumber { Integer: var pow })
+                if (@base.IsFinite && power is Integer { EInteger: var pow })
                     return BinaryIntPow(@base, pow);
 
-                if (@base.IsFinite && power is RationalNumber r && r.Rational.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches 
-                    && FindGoodRoot(@base, r.Rational.Denominator) is { } goodRoot)
-                    return Pow(goodRoot, r.Rational.Numerator);
+                if (@base.IsFinite && power is Rational r && r.ERational.Denominator.Abs() < 10 // there should be a minimal threshold to avoid long searches 
+                    && FindGoodRoot(@base, r.ERational.Denominator) is { } goodRoot)
+                    return Pow(goodRoot, r.ERational.Numerator);
 
                 var context = MathS.Settings.DecimalPrecisionContext;
-                if (@base is RealNumber { Decimal: { IsNegative: false } realBase } && power is RealNumber { Decimal: var realPower })
+                if (@base is Real { EDecimal: { IsNegative: false } realBase } && power is Real { EDecimal: var realPower })
                     return realBase.Pow(realPower, context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,7dc9c2ee4f99814a
-                var baseReal = @base.Real.Decimal;
-                var baseImaginary = @base.Imaginary.Decimal;
-                var powerReal = power.Real.Decimal;
-                var powerImaginary = power.Imaginary.Decimal;
+                var baseReal = @base.RealPart.EDecimal;
+                var baseImaginary = @base.ImaginaryPart.EDecimal;
+                var powerReal = power.RealPart.EDecimal;
+                var powerImaginary = power.ImaginaryPart.EDecimal;
 
                 if (powerReal.IsZero && powerImaginary.IsZero)
-                    return IntegerNumber.One;
+                    return Integer.One;
                 if (baseReal.IsZero && baseImaginary.IsZero)
-                    return IntegerNumber.Zero;
+                    return Integer.Zero;
 
-                var rho = @base.Abs().Decimal;
+                var rho = @base.Abs().EDecimal;
                 var theta = baseImaginary.Atan2(baseReal, context);
                 var newRho = powerReal.MultiplyAndAdd(theta, powerImaginary.Multiply(rho.Log(context), context), context);
                 var t = rho.Pow(powerReal, context).Multiply(powerImaginary.Multiply(-theta, context).Exp(context), context);
 
-                return ComplexNumber.Create(t.Multiply(newRho.Cos(context), context), t.Multiply(newRho.Sin(context), context));
+                return Complex.Create(t.Multiply(newRho.Cos(context), context), t.Multiply(newRho.Sin(context), context));
             }
 
             /// <summary>e.g. Log(2, 32) = 5</summary>
             /// <param name="base">Log's base, log(base, x) is a number y such that base^y = x</param>
             /// <param name="x">The number of which we want to get its base power</param>
-            public static ComplexNumber Log(ComplexNumber @base, ComplexNumber x)
+            public static Complex Log(Complex @base, Complex x)
             {
-                if (x is RealNumber real && real.Decimal.CompareTo(EDecimal.Zero) > 0 && @base is RealNumber realBase && realBase.Decimal.CompareTo(EDecimal.Zero) > 0)
-                    return real.Decimal.LogN(realBase.Decimal, MathS.Settings.DecimalPrecisionContext);
+                if (x is Real real && real.EDecimal.CompareTo(EDecimal.Zero) > 0 && @base is Real realBase && realBase.EDecimal.CompareTo(EDecimal.Zero) > 0)
+                    return real.EDecimal.LogN(realBase.EDecimal, MathS.Settings.DecimalPrecisionContext);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
                 return Ln(x) / Ln(@base);
             }
 
             /// <summary>ln(x) = log(e, x)</summary>
-            public static ComplexNumber Ln(ComplexNumber x)
+            public static Complex Ln(Complex x)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
-                if (x is RealNumber { Decimal: { IsNegative: false } real })
+                if (x is Real { EDecimal: { IsNegative: false } real })
                     return real.Log(context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
-                return ComplexNumber.Create(x.Abs().Decimal.Log(context), x.Imaginary.Decimal.Atan2(x.Real.Decimal, context));
+                return Complex.Create(x.Abs().EDecimal.Log(context), x.ImaginaryPart.EDecimal.Atan2(x.RealPart.EDecimal, context));
             }
 
             /// <summary>Calculates the exact value of sine of num</summary>
-            public static ComplexNumber Sin(ComplexNumber num)
+            public static Complex Sin(Complex num)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
-                if (num is RealNumber { Decimal: var real })
+                if (num is Real { EDecimal: var real })
                     return real.Sin(context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
-                var (re, im) = (num.Real.Decimal, num.Imaginary.Decimal);
+                var (re, im) = (num.RealPart.EDecimal, num.ImaginaryPart.EDecimal);
                 // We need both sinh and cosh of imaginary part.
                 // To avoid multiple calls to Exp with the same value,
                 // we compute them both here from a single call to Exp.
@@ -318,33 +425,33 @@ namespace AngouriMath
                 var q = EDecimal.One.Divide(p, context);
                 var sinh = p.Subtract(q, context).Divide(2, context);
                 var cosh = p.Add(q, context).Divide(2, context);
-                return ComplexNumber.Create(
+                return Complex.Create(
                     re.Sin(context).Multiply(cosh, context),
                     re.Cos(context).Multiply(sinh, context));
             }
 
             /// <summary>Calculates the exact value of cosine of num</summary>
-            public static ComplexNumber Cos(ComplexNumber num)
+            public static Complex Cos(Complex num)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
-                if (num is RealNumber { Decimal: var real })
+                if (num is Real { EDecimal: var real })
                     return real.Cos(context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
-                var (re, im) = (num.Real.Decimal, num.Imaginary.Decimal);
+                var (re, im) = (num.RealPart.EDecimal, num.ImaginaryPart.EDecimal);
                 var p = im.Exp(context);
                 var q = EDecimal.One.Divide(p, context);
                 var sinh = p.Subtract(q, context).Divide(2, context);
                 var cosh = p.Add(q, context).Divide(2, context);
-                return ComplexNumber.Create(
+                return Complex.Create(
                     re.Cos(context).Multiply(cosh, context),
                     -re.Sin(context).Multiply(sinh, context));
             }
 
             /// <summary>Calculates the exact value of tangent of num</summary>
-            public static ComplexNumber Tan(ComplexNumber num)
+            public static Complex Tan(Complex num)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
-                if (num is RealNumber { Decimal: var real })
+                if (num is Real { EDecimal: var real })
                     return real.Tan(context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
 
@@ -357,33 +464,33 @@ namespace AngouriMath
                 //   tan z = (sin(2x) / cosh(2y) + i \tanh(2y)) / (1 + cos(2x) / cosh(2y))
                 // which correctly computes the (tiny) real part and the (normal-sized) imaginary part.
 
-                var x2 = num.Real.Decimal.Multiply(2, context);
-                var y2 = num.Imaginary.Decimal.Multiply(2, context);
+                var x2 = num.RealPart.EDecimal.Multiply(2, context);
+                var y2 = num.ImaginaryPart.EDecimal.Multiply(2, context);
                 var p = y2.Exp(context);
                 var q = EDecimal.One.Divide(p, context);
                 var cosh = p.Add(q, context).Divide(2, context);
-                if (num.Imaginary.Decimal.Abs().LessThanOrEquals(4))
+                if (num.ImaginaryPart.EDecimal.Abs().LessThanOrEquals(4))
                 {
                     var sinh = p.Subtract(q, context).Divide(2, context);
                     var D = x2.Cos(context).Add(cosh, context);
-                    return ComplexNumber.Create(x2.Sin(context).Divide(D, context), sinh.Divide(D, context));
+                    return Complex.Create(x2.Sin(context).Divide(D, context), sinh.Divide(D, context));
                 }
                 else
                 {
                     var D = x2.Cos(context).Divide(cosh, context).Increment();
-                    return ComplexNumber.Create(
+                    return Complex.Create(
                         x2.Sin(context).Divide(cosh, context).Divide(D, context),
                         y2.Tanh(context).Divide(D, context));
                 }
             }
 
             /// <summary>Calculates the exact value of cotangent of num</summary>
-            public static ComplexNumber Cotan(ComplexNumber num)
+            public static Complex Cotan(Complex num)
             {
-                var cotan = IntegerNumber.One / Tan(num);
-                if (cotan.Real.Decimal.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange)
-                    && cotan.Imaginary.Decimal.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
-                    return IntegerNumber.Zero;
+                var cotan = Integer.One / Tan(num);
+                if (cotan.RealPart.EDecimal.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange)
+                    && cotan.ImaginaryPart.EDecimal.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
+                    return Integer.Zero;
                 else return cotan;
             }
 
@@ -408,9 +515,9 @@ namespace AngouriMath
             //   arccos(w) = arccos(beta) - i sign(y) log(alpha + sqrt(alpha^2 - 1))
             // So alpha and beta together give us arcsin(w) and arccos(w).
 
-            static (EDecimal beta, EDecimal v) ArcSinCosInner(ComplexNumber num, EContext context)
+            static (EDecimal beta, EDecimal v) ArcSinCosInner(Complex num, EContext context)
             {
-                var (x, y) = (num.Real.Decimal, num.Imaginary.Decimal);
+                var (x, y) = (num.RealPart.EDecimal, num.ImaginaryPart.EDecimal);
                 var xp1 = x.Increment();
                 var xm1 = x.Decrement();
                 var rho = xp1.MultiplyAndAdd(xp1, y.Multiply(y, context), context).Sqrt(context);
@@ -421,45 +528,45 @@ namespace AngouriMath
             }
 
             /// <summary>Calculates the exact value of arcsine of num</summary>
-            public static ComplexNumber Arcsin(ComplexNumber num)
+            public static Complex Arcsin(Complex num)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
-                if (num is RealNumber { Decimal: var real } && !(real.GreaterThan(EDecimal.One) || real.LessThan(-EDecimal.One)))
+                if (num is Real { EDecimal: var real } && !(real.GreaterThan(EDecimal.One) || real.LessThan(-EDecimal.One)))
                     return real.Asin(context);
                 var (beta, v) = ArcSinCosInner(num, context);
-                return ComplexNumber.Create(beta.Asin(context), v);
+                return Complex.Create(beta.Asin(context), v);
             }
 
             /// <summary>Calculates the exact value of arccosine of num</summary>
-            public static ComplexNumber Arccos(ComplexNumber num)
+            public static Complex Arccos(Complex num)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
-                if (num is RealNumber { Decimal: var real } && !(real.GreaterThan(EDecimal.One) || real.LessThan(-EDecimal.One)))
+                if (num is Real { EDecimal: var real } && !(real.GreaterThan(EDecimal.One) || real.LessThan(-EDecimal.One)))
                     return real.Acos(context);
                 var (beta, v) = ArcSinCosInner(num, context);
-                return ComplexNumber.Create(beta.Acos(context), -v);
+                return Complex.Create(beta.Acos(context), -v);
             }
 
             /// <summary>Calculates the exact value of arctangent of num</summary>
-            public static ComplexNumber Arctan(ComplexNumber num)
+            public static Complex Arctan(Complex num)
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
-                if (num is RealNumber { Decimal: var real })
+                if (num is Real { EDecimal: var real })
                     return real.Atan(context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
-                var one = IntegerNumber.One;
-                var two = IntegerNumber.Create(2);
-                var i = ComplexNumber.ImaginaryOne;
+                var one = Integer.One;
+                var two = Integer.Create(2);
+                var i = Complex.ImaginaryOne;
                 return i / two * (Ln(one - i * num) - Ln(one + i * num));
             }
 
             /// <summary>Calculates the exact value of arccotangent of num</summary>
-            public static ComplexNumber Arccotan(ComplexNumber num) => Arctan(1 / num);
+            public static Complex Arccotan(Complex num) => Arctan(1 / num);
 
             // From https://github.com/eobermuhlner/big-math/blob/ba75e9a80f040224cfeef3c2ac06390179712443/ch.obermuhlner.math.big/src/main/java/ch/obermuhlner/math/big/BigComplexMath.java
             /**
              * <summary>
-             * Calculates the factorial of the specified <see cref="ComplexNumber"/>.
+             * Calculates the factorial of the specified <see cref="Complex"/>.
              *
              * <para>This implementation uses
              * <a href="https://en.wikipedia.org/wiki/Spouge%27s_approximation">Spouge's approximation</a>
@@ -475,26 +582,26 @@ namespace AngouriMath
              *
              * <para>See: <a href="https://en.wikipedia.org/wiki/Factorial#Extension_of_factorial_to_non-integer_values_of_argument">Wikipedia: Factorial - Extension of factorial to non-integer values of argument</a></para>
              * </summary>
-             * <param name="x">The <see cref="ComplexNumber"/></param>
-             * <returns>The factorial <see cref="ComplexNumber"/></returns>
+             * <param name="x">The <see cref="Complex"/></param>
+             * <returns>The factorial <see cref="Complex"/></returns>
              * <seealso cref="PeterONumbersExtensions.Factorial(EDecimal, EContext)"/>
-             * <seealso cref="Gamma(ComplexNumber)"/>
+             * <seealso cref="Gamma(Complex)"/>
              */
-            public static ComplexNumber Factorial(ComplexNumber x)
+            public static Complex Factorial(Complex x)
             {
                 var mathContext = MathS.Settings.DecimalPrecisionContext.Value;
                 switch (x)
                 {
-                    case IntegerNumber { Integer: var value } when value.Sign >= 0:
+                    case Integer { EInteger: var value } when value.Sign >= 0:
                         return value.Factorial();
-                    case RealNumber { Decimal: var value }:
+                    case Real { EDecimal: var value }:
                         return value.Factorial(mathContext);
                 }
 
                 if (!mathContext.Precision.CanFitInInt32())
                     throw new ArgumentOutOfRangeException($"The precision of the {nameof(mathContext)} is outside the int32 range");
 
-                ComplexNumber result = RealNumber.NaN;
+                Complex result = Real.NaN;
 
                 MathS.Settings.DowncastingEnabled.As(false, () =>
                 MathS.Settings.DecimalPrecisionContext.As(mathContext.WithBigPrecision(mathContext.Precision << 1), () =>
@@ -505,7 +612,7 @@ namespace AngouriMath
                     var constants = PeterONumbersExtensions.GetSpougeFactorialConstants(a);
 
                     var negative = false;
-                    var factor = ComplexNumber.Create(constants[0], 0);
+                    var factor = Complex.Create(constants[0], 0);
                     for (int k = 1; k < a; k++)
                     {
                         factor += constants[k] / (x + k);
@@ -514,24 +621,24 @@ namespace AngouriMath
 
                     result = Pow(x + a, x + 0.5m) * Exp(-x - a) * factor;
                 }));
-                return ComplexNumber.Create(result.Real.Decimal.RoundToPrecision(mathContext),
-                                            result.Imaginary.Decimal.RoundToPrecision(mathContext));
+                return Complex.Create(result.RealPart.EDecimal.RoundToPrecision(mathContext),
+                                      result.ImaginaryPart.EDecimal.RoundToPrecision(mathContext));
             }
 
             /**<summary>
-             * Calculates the gamma function of the specified <see cref="ComplexNumber"/>.
+             * Calculates the gamma function of the specified <see cref="Complex"/>.
              *
              * <para>This implementation uses {@link #factorial(ComplexNumber, MathContext)} internally,
              * therefore the performance implications described there apply also for this method.</para>
              *
              * <para>See: <a href="https://en.wikipedia.org/wiki/Gamma_function">Wikipedia: Gamma function</a></para>
              * </summary>
-             * <param name="x">The <see cref="ComplexNumber"/></param>
-             * <returns>The gamma <see cref="ComplexNumber"/></returns>
+             * <param name="x">The <see cref="Complex"/></param>
+             * <returns>The gamma <see cref="Complex"/></returns>
              * <seealso cref="PeterONumbersExtensions.Gamma(EDecimal, EContext)"/>
-             * <seealso cref="Factorial(ComplexNumber)"/>
+             * <seealso cref="Factorial(Complex)"/>
              */
-            public static ComplexNumber Gamma(ComplexNumber x) => Factorial(x - IntegerNumber.One);
+            public static Complex Gamma(Complex x) => Factorial(x - Integer.One);
         }
     }
 }

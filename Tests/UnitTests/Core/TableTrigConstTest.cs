@@ -10,15 +10,20 @@
 
 
 using AngouriMath;
+using static AngouriMath.Entity.Number;
 using System;
 using System.Linq;
 using Xunit;
-using Xunit.Abstractions;
 
 namespace UnitTests.Core
 {
     public class TestTrigTableConsts
     {
+        // TODO: Remove when we implement extra precision for rounding
+        internal static void AssertEqualWithoutLast3Digits(Real expected, Real actual) =>
+            Assert.Equal(expected.EDecimal.RoundToExponent(expected.EDecimal.Ulp().Exponent + 3),
+                         actual.EDecimal.RoundToExponent(expected.EDecimal.Ulp().Exponent + 3));
+
         // For MemberData to show up as individual test cases, all arguments must be serializable:
         // https://github.com/xunit/xunit/issues/1473#issuecomment-333226539
         public static readonly System.Collections.Generic.IEnumerable<object[]> TrigTestData =
@@ -31,9 +36,9 @@ namespace UnitTests.Core
             var toSimplify =
                 (Entity?)typeof(MathS).GetMethod(trigFunc)?.Invoke(null, new object[] { 2 * MathS.pi / twoPiOver })
                 ?? throw new ArgumentException($"{trigFunc} not found.", nameof(trigFunc));
-            var expected = toSimplify.Eval();
-            var real = toSimplify.Simplify().Eval();
-            Assert.Equal(expected, real);
+            var expected = Assert.IsAssignableFrom<Real>(toSimplify.Eval());
+            var actual = Assert.IsAssignableFrom<Real>(toSimplify.Simplify().Eval());
+            AssertEqualWithoutLast3Digits(expected, actual);
         }
     }
 }

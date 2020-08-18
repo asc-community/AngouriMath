@@ -19,12 +19,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
 using PeterO.Numbers;
 
 namespace AngouriMath
 {
+    using static Entity.Number;
     public abstract partial record Entity : ILatexiseable
     {
         /// <summary>Returns the expression in LaTeX (for example, a / b -> \frac{a}{b})</summary>
@@ -154,8 +153,8 @@ namespace AngouriMath
         {
             public override string Latexise()
             {
-                if (Exponent is RationalNumber { Rational: { Numerator: var numerator, Denominator: var denominator } }
-                    and not IntegerNumber)
+                if (Exponent is Rational { ERational: { Numerator: var numerator, Denominator: var denominator } }
+                    and not Integer)
                 {
                     var str =
                         @"\sqrt" + (denominator.Equals(2) ? "" : "[" + denominator + "]")
@@ -204,7 +203,7 @@ namespace AngouriMath
         {
             public override string Latexise()
             {
-                var powerIfNeeded = Iterations == IntegerNumber.One ? "" : "^{" + Iterations.Latexise() + "}";
+                var powerIfNeeded = Iterations == Integer.One ? "" : "^{" + Iterations.Latexise() + "}";
 
                 var varOverDeriv =
                     Var is Variable { Name: { Length: 1 } name }
@@ -225,7 +224,7 @@ namespace AngouriMath
                 // Unlike derivatives, integrals do not have "power" that would be equal
                 // to sequential applying integration to a function
 
-                if (!(Iterations is IntegerNumber asInt && asInt >= 0))
+                if (!(Iterations is Integer asInt && asInt >= 0))
                     return "Error";
 
                 if (asInt == 0)
@@ -327,8 +326,8 @@ namespace AngouriMath
                                     static string Extract(Entity entity, bool takeReal) =>
                                         (entity, takeReal) switch
                                         {
-                                            (ComplexNumber num, true) => num.Real.Latexise(),
-                                            (ComplexNumber num, false) => num.Imaginary.Latexise(),
+                                            (Complex num, true) => num.RealPart.Latexise(),
+                                            (Complex num, false) => num.ImaginaryPart.Latexise(),
                                             (_, true) => @"\Re\left(" + entity.Latexise() + @"\right)",
                                             (_, false) => @"\Im\left(" + entity.Latexise() + @"\right)",
                                         };

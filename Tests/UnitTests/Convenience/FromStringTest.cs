@@ -1,7 +1,6 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Core.FromString;
-using AngouriMath.Core.Numerix;
 using Xunit;
 
 namespace UnitTests.Convenience
@@ -16,8 +15,8 @@ namespace UnitTests.Convenience
         [InlineData("derivative(3)", "derivative should have exactly 3 arguments but 1 argument is provided")]
         [InlineData("ln(3, 5)", "ln should have exactly 1 argument but 2 arguments are provided")]
         [InlineData("sin(3, 5, 8)", "sin should have exactly 1 argument but 3 arguments are provided")]
-        [InlineData("log()", "log should have 1 argument or 2 arguments but 0 arguments are provided")]
-        [InlineData("log(1, 1, 1)", "log should have 1 argument or 2 arguments but 3 arguments are provided")]
+        [InlineData("log()", "log should have exactly 1 argument or 2 arguments but 0 arguments are provided")]
+        [InlineData("log(1, 1, 1)", "log should have exactly 1 argument or 2 arguments but 3 arguments are provided")]
         public void WrongNumbersOfArgs0(string input, string message) =>
             Assert.Equal(message, Assert.Throws<FunctionArgumentCountException>(() => (Entity)input).Message);
         [Fact] public void Test1() => Assert.Equal(2, MathS.FromString("1 + 1").Eval());
@@ -33,7 +32,7 @@ namespace UnitTests.Convenience
                 Assert.Equal(MathS.i, MathS.FromString("x^2+1").SolveNt(x).Pieces[0])
             );
         [Fact] public void Test9() => Assert.Equal(1, MathS.FromString("cos(sin(0))").Eval());
-        [Fact] public void Test10() => Assert.Equal(ComplexNumber.Create(4, 1), MathS.FromString("2i + 2 * 2 - 1i").Eval());
+        [Fact] public void Test10() => Assert.Equal(Entity.Number.Complex.Create(4, 1), MathS.FromString("2i + 2 * 2 - 1i").Eval());
         [Fact] public void Test11() => Assert.Equal(-1, MathS.FromString("i^2").Eval());
         [Fact] public void Test12() => Assert.Equal(3, MathS.FromString("x^2-1").Substitute(x, 2).Eval());
         [Fact] public void Test13() => Assert.Equal(MathS.DecimalConst.pi / 2, MathS.FromString("arcsin(x)").Substitute(x, 1).Eval());
@@ -50,7 +49,6 @@ namespace UnitTests.Convenience
         [Fact] public void Test24() => Assert.Equal(MathS.Pow(MathS.Factorial(2), MathS.Factorial(3)), MathS.FromString("2!^3!"));
         [Fact] public void Test25() => Assert.Equal(MathS.Pow(MathS.Factorial(2), MathS.Factorial(x + 2)), MathS.FromString("2!^(x+2)!"));
         [Fact] public void Test26() => Assert.Equal(-MathS.Factorial(1), MathS.FromString("-1!"));
-        // TODO: "-" inverts an expression instead of parsing it as a number
         [Fact] public void Test27() => Assert.Equal(MathS.Factorial(-1).ToString(), MathS.FromString("(-1)!"));
         [Fact] public void TestSys() => Assert.Equal(MathS.Sqr(x), MathS.FromString("x2"));
         [Fact] public void Test28() 

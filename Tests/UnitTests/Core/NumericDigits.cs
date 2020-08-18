@@ -1,5 +1,5 @@
 ﻿using AngouriMath;
-using AngouriMath.Core.Numerix;
+using static AngouriMath.Entity.Number;
 using Xunit;
 
 namespace UnitTests.Core
@@ -7,9 +7,9 @@ namespace UnitTests.Core
     public class NumericDigits
     {
         void Test(Entity.Number n, string expected) => Assert.Equal(expected, n.ToString());
-        static readonly ComplexNumber i = ComplexNumber.ImaginaryOne;
-        static readonly ComplexNumber pi = MathS.DecimalConst.pi;
-        static readonly ComplexNumber e = MathS.DecimalConst.e;
+        static readonly Complex i = Complex.ImaginaryOne;
+        static readonly Complex pi = MathS.DecimalConst.pi;
+        static readonly Complex e = MathS.DecimalConst.e;
 
         // Values are checked with Wolfram Alpha
         // Default precision is 100 digits

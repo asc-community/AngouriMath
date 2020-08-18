@@ -1,17 +1,17 @@
 ﻿using System.Collections.Generic;
-using AngouriMath.Core.Numerix;
 using PeterO.Numbers;
 
 namespace AngouriMath
 {
     using static Entity;
+    using static Entity.Number;
     using TrigTable = List<(EDecimal arg, Entity res)>;
     internal static class TrigonometryTableValues
     {
-        private static bool TryPulling(TrigTable table, ComplexNumber arg,
+        private static bool TryPulling(TrigTable table, Complex arg,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? res)
         {
-            if (!(arg is RealNumber { Decimal: var dArg }))
+            if (!(arg is Real { EDecimal: var dArg }))
             {
                 res = null;
                 return false;
@@ -46,7 +46,7 @@ namespace AngouriMath
 
             for (var j = begin; j <= end; j++)
             {
-                if (Number.Functional.IsZero(table[j].arg - dArg))
+                if (Number.IsZero(table[j].arg - dArg))
                 {
                     res = table[j].res;
                     return true;
@@ -56,24 +56,24 @@ namespace AngouriMath
             return false;
         }
 
-        internal static bool PullSin(ComplexNumber arg,
+        internal static bool PullSin(Complex arg,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? res)
         {
             if (TryPulling(TableSin, arg, out res))
                 return true;
-            if (TryPulling(TableSin, (RealNumber)MathS.DecimalConst.pi - arg, out res))
+            if (TryPulling(TableSin, (Real)MathS.DecimalConst.pi - arg, out res))
                 return true;
             if (TryPulling(TableCos, arg * 2, out res))
             {
                 res = MathS.Sqrt((1 - res) / 2);
-                if (Number.Sin(arg) is RealNumber real && real < 0)
+                if (Number.Sin(arg) is Real real && real < 0)
                     res *= -1;
                 return true;
             }
             return false;
         }
 
-        internal static bool PullCos(ComplexNumber arg,
+        internal static bool PullCos(Complex arg,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? res)
         {
             if (TryPulling(TableCos, arg, out res))
@@ -83,19 +83,19 @@ namespace AngouriMath
             if (TryPulling(TableCos, arg * 2, out res))
             {
                 res = MathS.Sqrt((1 + res) / 2);
-                if (Number.Cos(arg) is RealNumber real && real < 0)
+                if (Number.Cos(arg) is Real real && real < 0)
                     res *= -1;
                 return true;
             }
             return false;
         }
 
-        internal static bool PullTan(ComplexNumber arg,
+        internal static bool PullTan(Complex arg,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Entity? res)
         {
             if (TryPulling(TableTan, arg, out res))
                 return true;
-            if (TryPulling(TableTan, (RealNumber)MathS.DecimalConst.pi - arg, out res))
+            if (TryPulling(TableTan, (Real)MathS.DecimalConst.pi - arg, out res))
             {
                 res *= -1;
                 return true;
@@ -110,14 +110,14 @@ namespace AngouriMath
 
         private static Entity Sqrt(Entity a) => MathS.Pow(a, f1_2);
         private static Entity Cbrt(Entity a) => MathS.Pow(a, f1_3);
-        private static readonly Entity f1_2 = RationalNumber.Create(1, 2);
-        private static readonly Entity f1_3 = RationalNumber.Create(1, 3);
-        private static readonly Entity f1_4 = RationalNumber.Create(1, 4);
-        private static readonly Entity f1_5 = RationalNumber.Create(1, 5);
-        private static readonly Entity f1_6 = RationalNumber.Create(1, 6);
-        private static readonly Entity f1_8 = RationalNumber.Create(1, 8);
-        private static readonly Entity f1_16 = RationalNumber.Create(1, 16);
-        private static readonly Entity f1_24 = RationalNumber.Create(1, 24);
+        private static readonly Entity f1_2 = Rational.Create(1, 2);
+        private static readonly Entity f1_3 = Rational.Create(1, 3);
+        private static readonly Entity f1_4 = Rational.Create(1, 4);
+        private static readonly Entity f1_5 = Rational.Create(1, 5);
+        private static readonly Entity f1_6 = Rational.Create(1, 6);
+        private static readonly Entity f1_8 = Rational.Create(1, 8);
+        private static readonly Entity f1_16 = Rational.Create(1, 16);
+        private static readonly Entity f1_24 = Rational.Create(1, 24);
         private static readonly Entity i = MathS.i;
         private static EDecimal TwoPiOver(int a)
             => Number.CtxDivide(Number.CtxMultiply(2, MathS.DecimalConst.pi), a);
@@ -187,7 +187,7 @@ namespace AngouriMath
             (TwoPiOver(1), 0),
             (TwoPiOver(2), 0),
             (TwoPiOver(3), -Sqrt(3)),
-            (TwoPiOver(4), RealNumber.NaN), // tan (pi / 2) is undefined
+            (TwoPiOver(4), Real.NaN), // tan (pi / 2) is undefined
             (TwoPiOver(5), Sqrt(5 + 2 * Sqrt(5))),
             (TwoPiOver(6), Sqrt(3)),
             (TwoPiOver(8), 1),

@@ -16,12 +16,12 @@
 
 
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 using AngouriMath.Core.TreeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 
@@ -58,15 +58,15 @@ namespace AngouriMath
         /// Returns true if <paramref name="a"/> is inside a rect with corners <paramref name="from"/>
         /// and <paramref name="to"/>, OR <paramref name="a"/> is an unevaluable expression
         /// </summary>
-        private protected static bool EntityInBounds(Entity a, ComplexNumber from, ComplexNumber to)
+        private protected static bool EntityInBounds(Entity a, Complex from, Complex to)
         {
             if (!MathS.CanBeEvaluated(a))
                 return true;
             var r = a.Eval();
-            return r.Real >= from.Real &&
-                   r.Imaginary >= from.Imaginary &&
-                   r.Real <= to.Real &&
-                   r.Imaginary <= to.Imaginary;
+            return r.RealPart >= from.RealPart &&
+                   r.ImaginaryPart >= from.ImaginaryPart &&
+                   r.RealPart <= to.RealPart &&
+                   r.ImaginaryPart <= to.ImaginaryPart;
         }
         public partial record Number : Entity
         {
@@ -118,8 +118,8 @@ namespace AngouriMath
         {
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 Base.Contains(x)
-                ? Exponent is IntegerNumber { Integer: var pow }
-                  ? Number.GetAllRoots(1, pow)
+                ? Exponent is Integer { EInteger: var pow }
+                  ? Number.GetAllRootsOf1(pow)
                     .SelectMany(root => Base.Invert(root * MathS.Pow(value, 1 / Exponent), x))
                   : Base.Invert(MathS.Pow(value, 1 / Exponent), x)
                 // a ^ x = value => x = log(a, value)
@@ -167,24 +167,24 @@ namespace AngouriMath
 
         public partial record Arcsinf
         {
-            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Decimal);
-            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Decimal);
+            private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
+            private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
             // arcsin(x) = value => x = sin(value)
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Sin(value), x) : Enumerable.Empty<Entity>();
         }
         public partial record Arccosf
         {
-            private static readonly ComplexNumber From = ComplexNumber.Create(0, RealNumber.NegativeInfinity.Decimal);
-            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi, RealNumber.PositiveInfinity.Decimal);
+            private static readonly Complex From = Complex.Create(0, Real.NegativeInfinity.EDecimal);
+            private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi, Real.PositiveInfinity.EDecimal);
             // arccos(x) = value => x = cos(value)
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cos(value), x) : Enumerable.Empty<Entity>();
         }
         public partial record Arctanf
         {
-            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Decimal);
-            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Decimal);
+            private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
+            private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
             // arctan(x) = value => x = tan(value)
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Tan(value), x) : Enumerable.Empty<Entity>();
@@ -192,8 +192,8 @@ namespace AngouriMath
         public partial record Arccotanf
         {
             // TODO: Range should exclude Re(z) = 0
-            private static readonly ComplexNumber From = ComplexNumber.Create(-MathS.DecimalConst.pi / 2, RealNumber.NegativeInfinity.Decimal);
-            private static readonly ComplexNumber To = ComplexNumber.Create(MathS.DecimalConst.pi / 2, RealNumber.PositiveInfinity.Decimal);
+            private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
+            private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
             // arccotan(x) = value => x = cotan(value)
             private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cotan(value), x) : Enumerable.Empty<Entity>();
@@ -274,14 +274,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var preciseValue = root.Eval();
             var downcasted = MathS.Settings.FloatToRationalIterCount.As(20, () =>
                 MathS.Settings.PrecisionErrorZeroRange.As(1e-7m, () =>
-                    ComplexNumber.Create(preciseValue.Real, preciseValue.Imaginary)));
+                    Complex.Create(preciseValue.RealPart, preciseValue.ImaginaryPart)));
             var errorExpr = equation.Substitute(x, downcasted);
             if (!MathS.CanBeEvaluated(errorExpr))
                 return root;
             var error = errorExpr.Eval();
 
-            static bool ComplexRational(ComplexNumber a)
-                => a.Real is RationalNumber && a.Imaginary is RationalNumber;
+            static bool ComplexRational(Complex a)
+                => a.RealPart is Rational && a.ImaginaryPart is Rational;
 
             var innerSimplified = root.InnerSimplify();
 

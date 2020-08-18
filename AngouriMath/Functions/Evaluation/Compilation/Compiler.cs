@@ -43,7 +43,7 @@ namespace AngouriMath
         public partial record Number : Entity
         {
             private protected override void InnerCompile_(Compiler compiler) =>
-                compiler.Instructions.Add(new(InstructionType.PUSHCONST, Value: AsComplex()));
+                compiler.Instructions.Add(new(InstructionType.PUSHCONST, Value: ((Complex)this).ToNumerics()));
         }
         public partial record Variable : Entity
         {

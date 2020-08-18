@@ -18,7 +18,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using AngouriMath.Core.Exceptions;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Core.TreeAnalysis;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
@@ -27,6 +26,7 @@ using PeterO.Numbers;
 namespace AngouriMath.Functions
 {
     using static Entity;
+    using static Entity.Number;
     internal static class Utils
     {
         // TODO: Using double for operations loses precision from 100 digits to 15 digits. This won't work.
@@ -74,7 +74,7 @@ namespace AngouriMath.Functions
                 return false;
             dst = terms[0];
             for (int i = 1; i < terms.Count; i++)
-                if (terms[i] is Mulf(RealNumber { IsNegative:true } r, var m))
+                if (terms[i] is Mulf(Real { IsNegative:true } r, var m))
                     dst -= -r * m;
                 else
                     dst += terms[i];
