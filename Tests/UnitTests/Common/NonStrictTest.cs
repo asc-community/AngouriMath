@@ -68,7 +68,7 @@ namespace UnitTests.Common
         {
             Entity expr = "x * (x + x2 + z) + y * x";
             if (Utils.TryPolynomial(expr, "x", out var dst))
-                Assert.AreEqual(MathS.FromString("x3 + x2 + (y + z) * x"), dst);
+                Assert.AreEqual(MathS.FromString("x3 + x2 + (z + y) * x"), dst);
             else
                 Assert.Fail(expr.ToString() + " is polynomial");
         }

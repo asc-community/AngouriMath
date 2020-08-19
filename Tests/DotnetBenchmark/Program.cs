@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using AngouriMath;
 using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
@@ -84,7 +85,7 @@ namespace DotnetBenchmark
     {
         public static void Main(string[] _)
         {
-            BenchmarkRunner.Run<AlgebraTest>();
+            BenchmarkRunner.Run<CommonFunctionsInterVersionTest>();
         }
     }
 }

@@ -44,7 +44,7 @@ namespace AngouriMath.Functions
                 Entity px;
                 if (pair.Key.IsZero)
                 {
-                    terms.Add(pair.Value.Simplify());
+                    terms.Add(pair.Value.InnerSimplify());
                     continue;
                 }
 
@@ -58,7 +58,7 @@ namespace AngouriMath.Functions
                     continue;
                 }
                 else
-                    terms.Add(pair.Value.Simplify() * px);
+                    terms.Add(pair.Value.InnerSimplify() * px);
             }
 
             if (terms.Count == 0)
@@ -206,6 +206,10 @@ namespace AngouriMath.Functions
             currValue = value;
             lock (currValue) // TODO: it is probably impossible to access currValue from another thread since it's ThreadStatic
             {
+                #if DEBUG
+                action();
+                currValue = previousValue;
+                #else
                 try
                 {
                     action();
@@ -215,6 +219,7 @@ namespace AngouriMath.Functions
                     currValue = previousValue;
                     throw;
                 }
+                #endif
             }
             currValue = previousValue;
         }
@@ -238,6 +243,10 @@ namespace AngouriMath.Functions
             TReturnType result;
             lock (currValue) // TODO: it is probably impossible to access currValue from another thread since it's ThreadStatic
             {
+                #if DEBUG
+                result = action();
+                currValue = previousValue;
+                #else
                 try
                 {
                     result = action();
@@ -247,6 +256,7 @@ namespace AngouriMath.Functions
                     currValue = previousValue;
                     throw;
                 }
+                #endif
             }
             currValue = previousValue;
             return result;

@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 using AngouriMath;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Exporters.Csv;
@@ -101,7 +97,7 @@ namespace DotnetBenchmark
         public void SolveMediumHard()
             => toSolveMediumHard.SolveEquation("x");
 
-        private static Entity toSolveHard = "(sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a)4 + (sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a) + b";
+        public static Entity toSolveHard = "(sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a)4 + (sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a) + b";
 
         [Benchmark]
         public void SolveHard()

@@ -149,9 +149,9 @@ namespace AngouriMath.Core
                 return;
             }
             else if (this.Power == PowerLevel.FINITE && piece is OneElementPiece oneelem)
-            {
+            {                
                 var evaled = oneelem.Evaluated;
-                if (Pieces.OfType<OneElementPiece>().Select(o => o.Evaluated).All(p => p != evaled))
+                if (Pieces.OfType<OneElementPiece>().Where(o => MathS.CanBeEvaluated(o.entity.Item1)).Select(o => o.Evaluated).All(p => p != evaled))
                     Pieces.Add(piece);
                 return;
             }

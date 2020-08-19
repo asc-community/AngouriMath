@@ -4,6 +4,6 @@
   <PropertyGroup>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
-    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <!--<WarningsAsErrors>nullable</WarningsAsErrors>-->
   </PropertyGroup>
 </Project>
