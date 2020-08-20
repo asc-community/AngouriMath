@@ -23,17 +23,9 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
 {
     internal static class NewtonSolver
     {
-        /// <summary>
-        /// Performs a grid search with each iteration done by NewtonIter
-        /// </summary>
-        /// <param name="expr">
-        /// The equation with one variable to be solved
-        /// </param>
-        /// <param name="v">
-        /// The variable to solve over
-        /// </param>
-        /// <param name="from"></param>
-        /// <param name="to"></param>
+        /// <summary>Performs a grid search with each iteration done by NewtonIter</summary>
+        /// <param name="expr">The equation with one variable to be solved</param>
+        /// <param name="v">The variable to solve over</param>
         /// <param name="stepCount">
         /// A complex number, thus, if stepCount.Im == 0, no operations will be performed at all. If you
         /// need to iterate over real numbers only, set it to 1, i. e. new Number(your_number, 1)
@@ -41,24 +33,17 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
         /// <param name="precision">
         /// How many approximations we need to do before we reach the most precise result.
         /// </param>
-        /// <returns></returns>
-        internal static Set SolveNt(Entity expr, Entity.Variable v,
-            NewtonSetting settings)
+        internal static Set SolveNt(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings)
         {
-            /// <summary>
-            /// Perform one iteration of searching for a root with Newton-Raphson method
-            /// </summary>
+            /// <summary>Perform one iteration of searching for a root with Newton-Raphson method</summary>
             static Entity.Number.Complex NewtonIter(FastExpression f, FastExpression df, Complex value, int precision)
             {
                 Complex prev = value;
 
-                Complex ChooseGood()
-                {
-                    if (Complex.Abs(prev - value) > (double)MathS.Settings.PrecisionErrorCommon.Value)
-                        return double.NaN;
-                    else
-                        return value;
-                }
+                Complex ChooseGood() =>
+                    Complex.Abs(prev - value) > (double)MathS.Settings.PrecisionErrorCommon.Value
+                    ? double.NaN
+                    : value; 
 
                 int minCheckIters = (int)Math.Sqrt(precision);
                 for (int i = 0; i < precision; i++)
@@ -111,13 +96,6 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
 
 namespace AngouriMath
 {
-    public class NewtonSetting
-    {
-        public (EDecimal Re, EDecimal Im) From = (-10, -10);
-        public (EDecimal Re, EDecimal Im) To = (10, 10);
-        public (int Re, int Im) StepCount = (10, 10);
-        public int Precision = 30;
-    }
     public abstract partial record Entity : ILatexiseable
     {
         /// <summary>

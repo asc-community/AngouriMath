@@ -19,7 +19,7 @@ using System.Linq;
 using System.Text;
 using AngouriMath.Functions.Algebra;
 
-namespace AngouriMath.Core.Sys
+namespace AngouriMath.Core
 {
     using static Entity;
     public class EquationSystem : ILatexiseable

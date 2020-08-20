@@ -15,9 +15,7 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AngouriMath.Core;
-using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Evaluation.Simplification;
+using AngouriMath.Functions;
 
 namespace AngouriMath
 {
@@ -50,13 +48,13 @@ namespace AngouriMath
             var expChildren = new List<Entity>();
             foreach (var linChild in Sumf.LinearChildren(this))
             {
-                var exp = TreeAnalyzer.SmartExpandOver(linChild, entity => true);
+                var exp = Core.TreeAnalyzer.SmartExpandOver(linChild, entity => true);
                 if (exp is { })
                     expChildren.AddRange(exp);
                 else
                     return this; // if one is too complicated, return the current one
             }
-            var expanded = TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b));
+            var expanded = Core.TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b));
             return Expand_(expanded, level).InnerSimplify();
         }
 
@@ -80,7 +78,7 @@ namespace AngouriMath
         public Entity Simplify(int level = 2) => Simplificator.Simplify(this, level);
 
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
-        public Set Alternate(int level) => Simplificator.Alternate(this, level);
+        public IEnumerable<Entity> Alternate(int level) => Simplificator.Alternate(this, level);
 
         public Entity Evaled => _evaled.GetValue(this, e => e.InnerEval());
         static readonly ConditionalWeakTable<Entity, Entity> _evaled = new();

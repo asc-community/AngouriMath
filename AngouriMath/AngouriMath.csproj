@@ -28,8 +28,8 @@
   </PropertyGroup>
   
   <ItemGroup>
-    <None Include="../icon.png" Pack="True" PackagePath=""/>
-    <None Include="../LICENSE.md" Pack="True" PackagePath=""/>
+    <None Include="../icon.png" Pack="True" PackagePath="" />
+    <None Include="../LICENSE.md" Pack="True" PackagePath="" />
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
     <PackageReference Include="GenericTensor" Version="0.1.0-beta" />
     <PackageReference Include="PeterO.Numbers" Version="1.7.4" />

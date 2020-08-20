@@ -33,42 +33,35 @@ namespace AngouriMath.Core
     {
         public abstract override string ToString();
         public abstract bool Contains(Piece piece);
-        public abstract bool Contains(Set piece);
-        public abstract bool Contains(Entity piece);
+        public bool Contains(Set set) => set.Pieces.All(Contains);
+        public bool Contains(Entity entity) => Contains(new OneElementPiece(entity));
 
         public static SetNode operator &(SetNode A, SetNode B) => new Intersection(A, B).Eval();
         public static SetNode operator |(SetNode A, SetNode B) => new Union(A, B).Eval();
         public static SetNode operator -(SetNode A, SetNode B) => new Complement(A, B).Eval();
         public static SetNode operator !(SetNode A) => new Inversion(A).Eval();
         public abstract SetNode Eval();
-        internal abstract record OperatorSet : SetNode
-        {
-            public override bool Contains(Set set)
-                => set.Pieces.All(Contains);
 
-            public override bool Contains(Entity entity)
-                => Contains(new OneElementPiece(entity));
-        }
         /// <summary>A or B</summary>
-        internal partial record Union(SetNode A, SetNode B) : OperatorSet
+        internal partial record Union(SetNode A, SetNode B) : SetNode
         {
             public override bool Contains(Piece piece) => A.Contains(piece) || B.Contains(piece);
             public override string ToString() => $"({A})&({B})";
         }
         /// <summary>A and B</summary>
-        internal partial record Intersection(SetNode A, SetNode B) : OperatorSet
+        internal partial record Intersection(SetNode A, SetNode B) : SetNode
         {
             public override bool Contains(Piece piece) => A.Contains(piece) && B.Contains(piece);
             public override string ToString() => $"({A})|({B})";
         }
         /// <summary>A and not B</summary>
-        internal partial record Complement(SetNode A, SetNode B) : OperatorSet
+        internal partial record Complement(SetNode A, SetNode B) : SetNode
         {
             public override bool Contains(Piece piece) => A.Contains(piece) && !B.Contains(piece);
             public override string ToString() => $@"({A})\({B})";
         }
         /// <summary>not A</summary>
-        internal partial record Inversion(SetNode A) : OperatorSet
+        internal partial record Inversion(SetNode A) : SetNode
         {
             public override bool Contains(Piece piece) => !A.Contains(piece);
             public override string ToString() => $"!({A})";
@@ -101,13 +94,11 @@ namespace AngouriMath.Core
         }
     }
 
-
     public partial record Set : SetNode, ICollection<Piece>
     {
         public override SetNode Eval() => this;
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
         public IEnumerator<Piece> GetEnumerator() => Pieces.GetEnumerator();
 
         // TODO: exception
@@ -137,7 +128,7 @@ namespace AngouriMath.Core
                     Pieces.Add(piece);
                 return;
             }
-            var remainders = new List<Piece>{ piece };
+            var remainders = new List<Piece> { piece };
             foreach (var p in Pieces)
             {
                 if (!p.IsNumeric())
@@ -172,12 +163,6 @@ namespace AngouriMath.Core
             return remainders.Count == 0;
         }
 
-        public override bool Contains(Set set)
-            => set.Pieces.All(Contains);
-
-        public override bool Contains(Entity entity)
-            => Contains(new OneElementPiece(entity));
-
         public Set(params Piece[] elements)
         {
             foreach (var el in elements)
@@ -196,16 +181,11 @@ namespace AngouriMath.Core
                 AddPiece(Piece.Element(el));
         }
 
-
         /// <summary>
         /// Creates an interval, for example
-        /// AddInterval(MathS.Sets.Interval(3, 4).SetLeftClosed(true).SetRightClosed(true, true)
+        /// <code>AddInterval(MathS.Sets.Interval(3, 4).SetLeftClosed(true).SetRightClosed(true, true)</code>
         /// </summary>
-        /// <param name="a"></param>
-        /// <param name="b"></param>
-        /// <returns></returns>
-        public void AddInterval(IntervalPiece interval) 
-            => AddPiece(interval);
+        public void AddInterval(IntervalPiece interval) => AddPiece(interval);
 
         public override string ToString() => IsEmpty() ? "{}" : string.Join("|", Pieces);
 

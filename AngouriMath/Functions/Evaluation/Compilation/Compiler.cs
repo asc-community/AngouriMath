@@ -14,6 +14,7 @@
  */
 
 using System.Collections.Generic;
+using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity;
 using static AngouriMath.Instruction;
 
@@ -28,7 +29,7 @@ namespace AngouriMath
         internal void InnerCompile(Compiler compiler)
         {
             if (compiler.Cache.TryGetValue(this, out var cacheLine) && cacheLine >= 0)
-                compiler.Instructions.Add(new(InstructionType.PULLCACHE, cacheLine));
+                compiler.Instructions.Add(new(InstructionType.LOAD_CACHE, cacheLine));
             else
             {
                 InnerCompile_(compiler);
@@ -36,19 +37,19 @@ namespace AngouriMath
                 {
                     cacheLine = ~cacheLine;
                     compiler.Cache[this] = cacheLine;
-                    compiler.Instructions.Add(new(InstructionType.TOCACHE, cacheLine));
+                    compiler.Instructions.Add(new(InstructionType.SAVE_CACHE, cacheLine));
                 }
             }
         }
         public partial record Number : Entity
         {
             private protected override void InnerCompile_(Compiler compiler) =>
-                compiler.Instructions.Add(new(InstructionType.PUSHCONST, Value: ((Complex)this).ToNumerics()));
+                compiler.Instructions.Add(new(InstructionType.PUSH_CONST, Value: ((Complex)this).ToNumerics()));
         }
         public partial record Variable : Entity
         {
             private protected override void InnerCompile_(Compiler compiler) =>
-                compiler.Instructions.Add(new(InstructionType.PUSHVAR, compiler.VarNamespace[Name]));
+                compiler.Instructions.Add(new(InstructionType.PUSH_VAR, compiler.VarNamespace[Name]));
         }
         public partial record Tensor : Entity
         {
@@ -207,7 +208,8 @@ namespace AngouriMath
     {
         /// <summary>The <paramref name="Cache"/> stores the saved cache number if zero/positive,
         /// or the bitwise complement of the unsaved cache number if negative.</summary>
-        internal record Compiler(List<Instruction> Instructions, Dictionary<Variable, int> VarNamespace, Dictionary<Entity, int> Cache)
+        internal record Compiler(List<Instruction> Instructions,
+            IReadOnlyDictionary<Variable, int> VarNamespace, IDictionary<Entity, int> Cache)
         {
             /// <summary>Returns a compiled expression. Allows to boost substitution a lot</summary>
             /// <param name="variables">Must be equal to func's variables (ignoring constants)</param>
@@ -221,15 +223,13 @@ namespace AngouriMath
                 func = func.Substitute(Variable.ConstantList);
                 var visited = new HashSet<Entity>();
                 var cache = new Dictionary<Entity, int>();
-                foreach (var node in func)
-                {
+                foreach (var node in func.Nodes)
                     if (node is Number or Variable)
                         continue; // Don't store simple nodes in cache
-                    if (visited.Contains(node))
+                    else if (visited.Contains(node))
                         if (cache.ContainsKey(node)) { }
                         else cache.Add(node, ~cache.Count); // Unsaved by default
                     else visited.Add(node);
-                }
                 var compiler = new Compiler(new(), varNamespace, cache);
                 func.InnerCompile(compiler);
                 return new(id, compiler.Instructions, compiler.Cache.Count);

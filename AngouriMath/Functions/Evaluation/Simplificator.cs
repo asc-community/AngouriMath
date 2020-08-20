@@ -13,32 +13,32 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath.Core.TreeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
+using PeterO.Numbers;
 
-
-namespace AngouriMath.Functions.Evaluation.Simplification
+namespace AngouriMath.Functions
 {
     using static Entity;
+    using static Entity.Number;
     internal static class Simplificator
     {
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
-        internal static Entity Simplify(Entity expr, int level) => ((Entity)Alternate(expr, level).Pieces[0]).InnerSimplify();
+        internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level).First().InnerSimplify();
 
         /// <summary>Finds all alternative forms of an expression</summary>
-        internal static Set Alternate(Entity src, int level)
+        internal static IEnumerable<Entity> Alternate(Entity src, int level)
         {
             if (src is Number || src is Variable)
-                return new Set(src);
+                return new[] { src };
             var stage1 = src.InnerSimplify();
             if (stage1 is Number)
-                return new Set(stage1);
+                return new[] { stage1 };
 
             // List of criteria for expr's complexity
-            var history = new SortedDictionary<int, List<Entity>>();
+            var history = new SortedDictionary<int, HashSet<Entity>>();
             void AddHistory(Entity expr)
             {
                 void __IterAddHistory(Entity expr)
@@ -51,7 +51,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     var ncompl = Math.Min(compl2, compl1);
                     if (history.TryGetValue(ncompl, out var ncomplList))
                         ncomplList.Add(n);
-                    else history[ncompl] = new List<Entity> { n };
+                    else history[ncompl] = new HashSet<Entity> { n };
                 }
                 __IterAddHistory(expr);
                 __IterAddHistory(expr.Replace(Patterns.InvertNegativePowers));
@@ -68,7 +68,7 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                     2 => TreeAnalyzer.SortLevel.LOW_LEVEL,
                     _ => TreeAnalyzer.SortLevel.HIGH_LEVEL
                 })).InnerSimplify();
-                if (res.Any(child => child is Powf))
+                if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
 
                 AddHistory(res = res.Replace(
@@ -80,37 +80,32 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 AddHistory(res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules).InnerSimplify());
                 AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplify());
 
-                if (res.Any(child => child is
+                if (res.Nodes.Any(child => child is
                     Sinf or Cosf or Tanf or Cotanf or Arcsinf or Arccosf or Arctanf or Arccotanf))
                 {
                     var res1 = res.Replace(Patterns.ExpandTrigonometricRules).InnerSimplify();
-                    AddHistory(res = res.Replace(Patterns.TrigonometricRules).InnerSimplify());
+                    AddHistory(res = res.Replace(Patterns.TrigonometricRules, Patterns.CommonRules).InnerSimplify());
                     AddHistory(res1);
                     res = res.Complexity > res1.Complexity ? res1 : res;
                 }
-                if (res.Any(child => child is Factorialf))
+                if (res.Nodes.Any(child => child is Factorialf))
                 {
                     AddHistory(res = res.Replace(Patterns.ExpandFactorialDivisions).InnerSimplify());
                     AddHistory(res = res.Replace(Patterns.CollapseFactorialMultiplications).InnerSimplify());
                 }
-                if (res.Any(child => child is Powf))
+                if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
 
                 // It is quite slow at this point
-                var listOfPossiblePolys = new List<Entity>();
+                Entity? possiblePoly = null;
                 foreach (var var in res.Vars)
-                    if (MathS.Utils.TryPolynomial(res, var, out var resPoly))
-                        listOfPossiblePolys.Add(resPoly);
-                if (listOfPossiblePolys.Count != 0)
-                {
-                    var min = listOfPossiblePolys.Min(c => c.Complexity);
-                    var minPoly = listOfPossiblePolys.First(c => c.Complexity == min);
-                    AddHistory(minPoly);
-                    if (min < res.Complexity)
-                        res = minPoly;
-                }
+                    if (MathS.Utils.TryPolynomial(res, var, out var resPoly)
+                        && (possiblePoly is null || resPoly.Complexity < possiblePoly.Complexity))
+                        AddHistory(possiblePoly = resPoly);
+                if (possiblePoly is { } && possiblePoly.Complexity < res.Complexity)
+                    res = possiblePoly;
 
-                res = history[history.Keys.Min()][0];
+                res = history[history.Keys.Min()].First();
             }
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
@@ -118,11 +113,48 @@ namespace AngouriMath.Functions.Evaluation.Simplification
                 AddHistory(res.Collapse().Simplify(-level));
             }
 
-            var result = new Set();
-            foreach (var pair in history)
-                foreach (var el in pair.Value)
-                    result.Add(el);
-            return result;
+            return history.Values.SelectMany(x => x);
+        }
+
+        /// <summary>
+        /// Sorts an expression into a polynomial.
+        /// See more at <see cref="MathS.Utils.TryPolynomial"/>
+        /// </summary>
+        internal static bool TryPolynomial(Entity expr, Variable variable,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
+            out Entity? dst)
+        {
+            dst = null;
+            var children = Sumf.LinearChildren(expr.Expand());
+            var monomialsByPower = Algebra.AnalyticalSolving.PolynomialSolver.GatherMonomialInformation
+                <EInteger, TreeAnalyzer.PrimitiveInteger>(children, variable);
+            if (monomialsByPower == null)
+                return false;
+            var newMonomialsByPower = new Dictionary<int, Entity>();
+            var terms = new List<Entity>();
+            foreach (var index in monomialsByPower.Keys.OrderByDescending(x => x))
+            {
+                var pair = new KeyValuePair<EInteger, Entity>(index, monomialsByPower[index]);
+                if (pair.Key.IsZero)
+                {
+                    terms.Add(pair.Value.InnerSimplify());
+                    continue;
+                }
+
+                var px = pair.Key.Equals(EInteger.One) ? variable : MathS.Pow(variable, pair.Key);
+                terms.Add(pair.Value == 1 ? px : pair.Value.InnerSimplify() * px);
+            }
+
+            if (terms.Count == 0)
+                return false;
+            dst = terms[0];
+            for (int i = 1; i < terms.Count; i++)
+                if (terms[i] is Mulf(Real { IsNegative: true } r, var m))
+                    dst -= -r * m;
+                else
+                    dst += terms[i];
+            dst = dst.InnerSimplify();
+            return true;
         }
     }
 }

@@ -67,7 +67,7 @@ namespace AngouriMath
                     { IsFinite: true } => EDecimal.ToString(),
                     { IsNaN: true } => "NaN",
                     { IsNegative: true } => "-oo",
-                    _ => "oo",
+                    _ => "+oo",
                 };
 
                 public override string Latexise() => this switch

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Numerics;
 using AngouriMath;
 using ScottPlot;
-using AngouriMath.Core.Numerix;
 
 namespace AngouriMathPlot
 {
@@ -51,7 +50,7 @@ namespace AngouriMathPlot
         /// <param name="to">
         /// High bound
         /// </param>
-        public void PlotScatter(Entity expr, Entity.Variable x, ComplexNumber from, ComplexNumber to)
+        public void PlotScatter(Entity expr, Entity.Variable x, Entity.Number.Complex from, Entity.Number.Complex to)
             => PlotScatter(expr.Compile(x), from, to);
 
         /// <summary>
@@ -66,9 +65,9 @@ namespace AngouriMathPlot
         /// <param name="to">
         /// High bound
         /// </param>
-        public void PlotScatter(FastExpression func, ComplexNumber from, ComplexNumber to)
+        public void PlotScatter(FastExpression func, Entity.Number.Complex from, Entity.Number.Complex to)
         {
-            double inner(int it) => ((to - from) / (pointCount - 1) * it).Real.Decimal.ToDouble();
+            double inner(int it) => ((to - from) / (pointCount - 1) * it).RealPart.EDecimal.ToDouble();
             Clear();
             BuildData(inner,
                         it => func.Call(new Complex((double)inner(it), 0)).Real);
@@ -83,10 +82,10 @@ namespace AngouriMathPlot
         /// <param name="func"></param>
         /// <param name="from"></param>
         /// <param name="to"></param>
-        public void PlotIterativeComplex(FastExpression func, ComplexNumber from, ComplexNumber to)
+        public void PlotIterativeComplex(FastExpression func, Entity.Number.Complex from, Entity.Number.Complex to)
         {
-            double X(int it) => func.Call(((from + to) / (pointCount - 1) * it).AsComplex()).Real;
-            double Y(int it) => func.Call(((from + to) / (pointCount - 1) * it).AsComplex()).Imaginary;
+            double X(int it) => func.Call(((from + to) / (pointCount - 1) * it).ToNumerics()).Real;
+            double Y(int it) => func.Call(((from + to) / (pointCount - 1) * it).ToNumerics()).Imaginary;
             BuildData(X, Y);
             destination.plt.PlotScatter(dataX, dataY);
         }

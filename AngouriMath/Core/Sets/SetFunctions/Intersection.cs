@@ -32,11 +32,9 @@ namespace AngouriMath.Core
                 var newPieces = new List<Piece>();
                 foreach (var goodAPiece in goodAPieces)
                     foreach (var goodBPiece in goodBPieces)
-                    {
-                        var piece = PieceFunctions.Intersect(goodAPiece, goodBPiece);
-                        if (piece is { } && PieceFunctions.IsPieceCorrect(piece))
+                        if (PieceFunctions.Intersect(goodAPiece, goodBPiece) is { } piece
+                            && PieceFunctions.IsPieceCorrect(piece))
                             newPieces.Add(piece);
-                    }
                 var union = UniteList(newPieces);
                 var badA = new Set { Pieces = badAPieces };
                 var badB = new Set { Pieces = badBPieces };

@@ -15,11 +15,11 @@ options
     language = CSharp;
 }
 
-@header
+@parser::header
 {
     using System.Linq;
     using AngouriMath;
-    using static AngouriMath.Core.FromString.FunctionArgumentCountException;
+    using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
 }
 
 @lexer::members

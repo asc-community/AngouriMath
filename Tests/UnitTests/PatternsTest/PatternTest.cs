@@ -1,11 +1,8 @@
 ﻿using System;
 using AngouriMath;
 using AngouriMath.Core;
-using AngouriMath.Core.TreeAnalysis;
 using Xunit;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using System.Threading;
 using AngouriMath.Extensions;
 using System.Linq;
@@ -63,7 +60,7 @@ namespace UnitTests.PatternsTest
             Entity expr = "a^x + b^y + c^z";
 
             var matches = new Set();
-            foreach(var match in expr.Where(x => x is Entity.Powf))
+            foreach(var match in expr.Nodes.OfType<Entity.Powf>())
                 matches.Add(match);
             Assert.Equal(3, matches.Count);
             foreach(var match in matches.FiniteSet())
@@ -76,7 +73,7 @@ namespace UnitTests.PatternsTest
             Entity expr = "a^x + ((b^y + c^z)^2)^x";
 
             var matches = new Set();
-            foreach (var match in expr.Where(x => x is Entity.Powf))
+            foreach (var match in expr.Nodes.OfType<Entity.Powf>())
                 matches.Add(match);
             Assert.Equal(5, matches.Count);
             foreach (var match in matches.FiniteSet())
@@ -89,7 +86,7 @@ namespace UnitTests.PatternsTest
             Entity expr = "2 + 3 + x";
 
             var matches = new Set();
-            foreach (var match in expr.Where(x => x is Entity.Powf))
+            foreach (var match in expr.Nodes.OfType<Entity.Powf>())
                 matches.Add(match);
             Assert.Empty(matches);
         }

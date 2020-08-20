@@ -1,6 +1,6 @@
 ﻿using AngouriMath;
 using static AngouriMath.Entity.Number;
-using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Core;
 using Xunit;
 using System.Linq;
 

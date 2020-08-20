@@ -14,10 +14,8 @@
  */
 
 using System.Linq;
-using System.Numerics;
-using AngouriMath.Core.FromString;
 using PeterO.Numbers;
-
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {

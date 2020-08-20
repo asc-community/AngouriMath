@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PeterO.Numbers;
 
-namespace AngouriMath.Core.TreeAnalysis
+namespace AngouriMath.Core
 {
     using static Entity;
     using static Entity.Number;

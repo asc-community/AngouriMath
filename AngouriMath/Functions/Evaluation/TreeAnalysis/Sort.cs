@@ -13,16 +13,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-using AngouriMath.Core.TreeAnalysis;
+using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace AngouriMath
 {
-    using SortLevel = TreeAnalyzer.SortLevel;
+    using SortLevel = Core.TreeAnalyzer.SortLevel;
     public abstract partial record Entity : ILatexiseable
     {
         /// <summary>Hash that is convenient to sort with</summary>
@@ -128,33 +126,10 @@ namespace AngouriMath
     }
 }
 
-namespace AngouriMath.Core.TreeAnalysis
+namespace AngouriMath.Core
 {
     internal static partial class TreeAnalyzer
     {
-        /// <summary>One group - one hash, Different hashes - different groups</summary>
-        internal static IReadOnlyCollection<List<Entity>> GroupByHash(IEnumerable<Entity> entities, SortLevel level)
-        {
-            var dict = new SortedDictionary<string, List<Entity>>();
-            foreach (var ent in entities)
-            {
-                var hash = ent.SortHash(level);
-                if (dict.TryGetValue(hash, out var values))
-                    values.Add(ent);
-                else dict.Add(hash, new List<Entity> { ent });
-            }
-            return dict.Values;
-        }
-
-        /// <summary>Linear multi hanging: (1 + (1 + (1 + 1)))</summary>
-        internal static Entity MultiHangLinear(IReadOnlyList<Entity> children, Func<Entity, Entity, Entity> op)
-        {
-            var entity = children.Count == 0 ? throw new TreeException("At least 1 child required") : children.Last();
-            for (int i = children.Count - 2; i >= 0; i--)
-                entity = op(children[i], entity);
-            return entity;
-        }
-
         /// <summary>Binary multi hanging: ((1 + 1) + (1 + 1))</summary>
         internal static Entity MultiHangBinary(IReadOnlyList<Entity> children, Func<Entity, Entity, Entity> op)
         {

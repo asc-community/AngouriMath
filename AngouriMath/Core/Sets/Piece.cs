@@ -72,28 +72,20 @@ namespace AngouriMath.Core
 
         /// <summary>So that any numerical operations could be performed</summary>
         internal bool IsNumeric()
-            => (MathS.CanBeEvaluated(LowerBound().Item1) && MathS.CanBeEvaluated(UpperBound().Item1));
+            => MathS.CanBeEvaluated(LowerBound().Item1) && MathS.CanBeEvaluated(UpperBound().Item1);
 
         /// <summary>Determines whether interval or element of piece is in this</summary>
         public bool Contains(Piece piece)
         {
-            if (!piece.IsNumeric() || !this.IsNumeric())
-                return false;
-
             // Gather all information
             var up = UpperBound();
             var low = LowerBound();
             var up_l = piece.LowerBound();
             var low_l = piece.UpperBound();
-            // If still running the function, all entities are numbers now
 
-            // Evaluate them
-            var num1 = up.Item1.Eval();
-            var num2 = low.Item1.Eval();
-            var num_up = up_l.Item1.Eval();
-            var num_low = low_l.Item1.Eval();
-            // // //
-
+            if (!(up.Item1.Evaled is Complex num1 && low.Item1.Evaled is Complex num2
+                && up_l.Item1.Evaled is Complex num_up && low_l.Item1.Evaled is Complex num_low))
+                return false;
             return ComplexInBetween(num1, num2, up.Item2, up.Item3,
                        low.Item2, low.Item3, num_low, low_l.Item2,
                        low_l.Item3) &&

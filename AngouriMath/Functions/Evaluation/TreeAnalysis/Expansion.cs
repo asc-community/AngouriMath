@@ -13,15 +13,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 
-namespace AngouriMath.Core.TreeAnalysis
+namespace AngouriMath.Core
 {
     using static Entity;
     using static Entity.Number;
@@ -81,7 +79,8 @@ namespace AngouriMath.Core.TreeAnalysis
                 }
                 else
                     freeTerm += child;
-            res.Add(freeTerm);
+            if (freeTerm is not Integer(0))
+                res.Add(freeTerm);
             return res;
         }
 

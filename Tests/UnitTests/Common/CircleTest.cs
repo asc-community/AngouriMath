@@ -1,7 +1,6 @@
 ﻿using AngouriMath;
 using static AngouriMath.Entity.Number;
 using Xunit;
-using System.Linq;
 
 namespace UnitTests.Common
 {
@@ -52,7 +51,7 @@ namespace UnitTests.Common
         public void NotNumber(string input)
         {
             Assert.Equal($"Cannot parse number from {input}",
-                Assert.Throws<AngouriMath.Core.FromString.ParseException>(() => Complex.Parse(input).ToString()).Message);
+                Assert.Throws<AngouriMath.Core.Exceptions.ParseException>(() => Complex.Parse(input).ToString()).Message);
             Assert.False(Complex.TryParse(input, out var output));
             Assert.Null(output);
         }
@@ -76,28 +75,12 @@ namespace UnitTests.Common
 
         [Fact]
         public void Test8() => Assert.Equal(3 * x, MathS.Arccotan(MathS.Cotan(x * 3)).Simplify());
-        
+
         [Theory]
         [InlineData("x / y + x * x * y")]
         [InlineData("x / 1 + 2")]
         [InlineData("(x + y + x + 1 / (x + 4 + 4 + sin(x))) / (x + x + 3 / y) + 3")]
-        public void TestLinch(string input)
-        {
-            var expr = MathS.FromString(input);
-            var exprOptimized = MathS.Utils.OptimizeTree(expr);
-
-            var vars1 = (System.Collections.Generic.ISet<Entity.Variable>)expr.Vars;
-            var vars2 = (System.Collections.Generic.ISet<Entity.Variable>)exprOptimized.Vars;
-            Assert.Subset(vars1, vars2);
-            Assert.Subset(vars2, vars1);
-            for (int i = 1; i < 10; i++)
-            {
-                var replacements = vars1.ToDictionary(var => (Entity)var, _ => (Entity)i);
-                var a = expr.Substitute(replacements);
-                var b = exprOptimized.Substitute(replacements);
-
-                Assert.Equal(a.Eval(), b.Eval());
-            }
-        }
+        public void TestLinch(string inputIsOutput) =>
+            Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).ToString());
     }
 }

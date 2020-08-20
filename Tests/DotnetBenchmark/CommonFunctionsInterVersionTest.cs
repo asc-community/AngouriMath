@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 using AngouriMath;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Exporters.Csv;
@@ -37,7 +36,7 @@ namespace DotnetBenchmark
          */
 
 
-        private static Entity simplifyEasy = "x + 3 / 3 + x ^ 0 - log(e, e2)";
+        private static readonly Entity simplifyEasy = "x + 3 / 3 + x ^ 0 - log(e, e2)";
 
         [Benchmark]
         public void SimplifyEasy()
@@ -64,7 +63,7 @@ namespace DotnetBenchmark
          *
          */
 
-        private static Entity toDerive = "x + 3 + arccos(x + 2) / sqrt(x2 + 1)";
+        private static readonly Entity toDerive = "x + 3 + arccos(x + 2) / sqrt(x2 + 1)";
 
         [Benchmark]
         public void Derivate()
@@ -77,31 +76,31 @@ namespace DotnetBenchmark
          *
          */
 
-        private static Entity toSolveEasy = "x2 + x + 1";
+        private static readonly Entity toSolveEasy = "x2 + x + 1";
 
         [Benchmark]
         public void SolveEasy()
             => toSolveEasy.SolveEquation("x");
 
-        private static Entity toSolveEasyMedium = "x2 + x + a";
+        private static readonly Entity toSolveEasyMedium = "x2 + x + a";
 
         [Benchmark]
         public void SolveEasyMedium()
             => toSolveEasyMedium.SolveEquation("x");
 
-        private static Entity toSolveMedium = "(x + sqr(x) + a)2 + (x + sqr(x) + a) + b";
+        private static readonly Entity toSolveMedium = "(x + sqr(x) + a)2 + (x + sqr(x) + a) + b";
 
         [Benchmark]
         public void SolveMedium()
             => toSolveMedium.SolveEquation("x");
 
-        private static Entity toSolveMediumHard = "(sin(x) + sqr(sin(x)) + a)4 + (sin(x) + sqr(sin(x)) + a) + b";
+        private static readonly Entity toSolveMediumHard = "(sin(x) + sqr(sin(x)) + a)4 + (sin(x) + sqr(sin(x)) + a) + b";
 
         [Benchmark]
         public void SolveMediumHard()
             => toSolveMediumHard.SolveEquation("x");
 
-        private static Entity toSolveHard = "(sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a)4 + (sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a) + b";
+        private static readonly Entity toSolveHard = "(sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a)4 + (sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a) + b";
 
         [Benchmark]
         public void SolveHard()
@@ -114,7 +113,7 @@ namespace DotnetBenchmark
          *
          */
 
-        private static Entity evalEasy = "1 + 2 + log(2, 3) + sqrt(4) - 4 ^ 7 + e * pi";
+        private static readonly Entity evalEasy = "1 + 2 + log(2, 3) + sqrt(4) - 4 ^ 7 + e * pi";
 
         [Benchmark]
         public void EvalEasy()
@@ -126,13 +125,13 @@ namespace DotnetBenchmark
          *
          */
 
-        private static Entity toCompileEasy = "x + x / 2 + sin(x)";
+        private static readonly Entity toCompileEasy = "x + x / 2 + sin(x)";
 
         [Benchmark]
         public void CompileEasy()
             => toCompileEasy.Compile("x");
 
-        private static Entity toCompileHard = "(x + log(2, x) + sin(x + cos(x))3) / sqrt(x + tan(x))";
+        private static readonly Entity toCompileHard = "(x + log(2, x) + sin(x + cos(x))3) / sqrt(x + tan(x))";
 
         [Benchmark]
         public void CompileHard()

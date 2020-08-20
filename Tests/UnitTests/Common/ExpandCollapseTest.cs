@@ -26,10 +26,10 @@ namespace UnitTests.Common
             Assert.Equal(x * (1 + y), expr.Collapse());
         }
         [Fact]
-        public void Factorial() 
+        public void Factorial()
         {
             var expr = MathS.Factorial(x + 3) / MathS.Factorial(x + 1);
-            Assert.Equal(MathS.Pow(x, 2) + x * 3 + 2 * x + 6, expr.Expand());
+            Assert.Equal(MathS.Pow(x, 2) + x * 3 + (2 * x + 6), expr.Expand());
             expr = MathS.Factorial(x + -3) / MathS.Factorial(x + -1);
             Assert.Equal(1 / (x + -2) / (x + -1), expr.Expand());
         }

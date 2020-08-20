@@ -19,10 +19,11 @@
 // Ambiguous reference in cref attribute
 #pragma warning disable 419
 
+namespace AngouriMath.Core.Antlr {
 
     using System.Linq;
     using AngouriMath;
-    using static AngouriMath.Core.FromString.FunctionArgumentCountException;
+    using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
 
 using Antlr4.Runtime.Misc;
 using IParseTreeListener = Antlr4.Runtime.Tree.IParseTreeListener;
@@ -136,3 +137,4 @@ public interface IAngouriMathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitStatement([NotNull] AngouriMathParser.StatementContext context);
 }
+} // namespace AngouriMath.Core.Antlr

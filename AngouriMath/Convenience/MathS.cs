@@ -19,8 +19,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using PeterO.Numbers;
 using AngouriMath.Core;
-using AngouriMath.Core.FromString;
-using AngouriMath.Core.Sys;
 using AngouriMath.Limits;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
@@ -397,55 +395,32 @@ namespace AngouriMath
         // ReSharper disable once InconsistentNaming
         public static readonly Variable pi = nameof(pi);
 
-        /// <summary>
-        /// Converts a <see cref="string"/> to an expression
-        /// </summary>
-        /// <param name="expr">
-        /// <see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code>
-        /// </param>
-        /// <returns>
-        /// The parsed expression
-        /// </returns>
+        /// <summary>Converts a <see cref="string"/> to an expression</summary>
+        /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
+        /// <returns>The parsed expression</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity FromString(string expr) => Parser.Parse(expr);
 
-        /// <summary>
-        /// Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/>
-        /// </summary>
-        /// <param name="num">
-        /// A <see cref="RealNumber"/> in base 10 to be translated into base <paramref name="N"/>
-        /// </param>
-        /// <param name="N">
-        /// The base to translate the number into
-        /// </param>
-        /// <returns>
-        /// A <see cref="string"/> with the number in the required base
-        /// </returns>
+        /// <summary>Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/></summary>
+        /// <param name="num">A <see cref="RealNumber"/> in base 10 to be translated into base <paramref name="N"/></param>
+        /// <param name="N">The base to translate the number into</param>
+        /// <returns>A <see cref="string"/> with the number in the required base</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string ToBaseN(Number.Real num, int N) => BaseConversion.ToBaseN(num.EDecimal, N);
 
-        /// <summary>
-        /// Translates a number in base <paramref name="N"/> into base 10
-        /// </summary>
-        /// <param name="num">
-        /// A <see cref="RealNumber"/> in base <paramref name="N"/> to be translated into base 10
-        /// </param>
-        /// <param name="N">
-        /// The base to translate the number from
-        /// </param>
-        /// <returns>
-        /// The <see cref="RealNumber"/> in base 10
-        /// </returns>
+        /// <summary>Translates a number in base <paramref name="N"/> into base 10</summary>
+        /// <param name="num">A <see cref="RealNumber"/> in base <paramref name="N"/> to be translated into base 10</param>
+        /// <param name="N">The base to translate the number from</param>
+        /// <returns>The <see cref="RealNumber"/> in base 10</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Number.Real FromBaseN(string num, int N) => BaseConversion.FromBaseN(num, N);
 
-        /// <summary>
-        /// Returns the <a href="https://en.wikipedia.org/wiki/LaTeX">LaTeX</a> representation of the argument
-        /// </summary>
+        /// <returns>
+        /// The <a href="https://en.wikipedia.org/wiki/LaTeX">LaTeX</a> representation of the argument
+        /// </returns>
         /// <param name="latexiseable">
         /// Any element (<see cref="Entity"/>, <see cref="Set"/>, etc.) that can be represented in LaTeX
         /// </param>
-        /// <returns></returns>
         public static string Latex(ILatexiseable latexiseable) => latexiseable.Latexise();
 
         /// <summary>
@@ -686,62 +661,115 @@ namespace AngouriMath
         /// </summary>
         public static partial class Settings
         {
+            public class Setting<T> where T : notnull
+            {
+                internal Setting(T defaultValue) { Value = defaultValue; Default = defaultValue; }
+
+                /// <summary>
+                /// For example,
+                /// <code>
+                /// MathS.Settings.Precision.As(100, () => { /* some code considering precision = 100 */ });
+                /// </code>
+                /// </summary>
+                /// <param name="value">New value that will be automatically reverted after action is done</param>
+                /// <param name="action">What should be done under this setting</param>
+                public void As(T value, Action action)
+                {
+                    var previousValue = Value;
+                    Value = value;
+                    try { action(); } finally { Value = previousValue; }
+                }
+
+                /// <summary>
+                /// For example,
+                /// <code>
+                /// var res = MathS.Settings.Precision.As(100, () => { /* some code considering precision = 100 */ return 4; });
+                /// </code>
+                /// </summary>
+                /// <param name="value">New value that will be automatically reverted after action is done</param>
+                /// <param name="action">What should be done under this setting</param>
+                public TReturnType As<TReturnType>(T value, Func<TReturnType> action)
+                {
+                    var previousValue = Value;
+                    Value = value;
+                    try { return action(); } finally { Value = previousValue; }
+                }
+
+                public static implicit operator T(Setting<T> s) => s.Value;
+                public static implicit operator Setting<T>(T a) => new(a);
+                public override string ToString() => Value.ToString();
+                public T Value { get; private set; }
+                public T Default { get; }
+            }
+            public record NewtonSetting
+            {
+                public (EDecimal Re, EDecimal Im) From { get; init; } = (-10, -10);
+                public (EDecimal Re, EDecimal Im) To { get; init; } = (10, 10);
+                public (int Re, int Im) StepCount { get; init; } = (10, 10);
+                public int Precision { get; init; } = 30;
+            }
             /// <summary>
             /// Enables downcasting. Not recommended to turn off, disabling might be only useful for some calculations
             /// </summary>
-            public static Setting<bool> DowncastingEnabled => GetCurrentOrDefault(ref downcastingEnabled, true);
+            public static Setting<bool> DowncastingEnabled => downcastingEnabled ??= true;
+            [ThreadStatic] private static Setting<bool>? downcastingEnabled;
 
             /// <summary>
             /// Amount of iterations allowed for attempting to cast to a rational
             /// The more iterations, the larger fraction could be calculated
             /// </summary>
-            public static Setting<int> FloatToRationalIterCount => GetCurrentOrDefault(ref floatToRationalIterCount, 15);
+            public static Setting<int> FloatToRationalIterCount => floatToRationalIterCount ??= 15;
+            [ThreadStatic] private static Setting<int>? floatToRationalIterCount;
 
             /// <summary>
             /// If a numerator or denominator is too large, it's suspended to better keep the real number instead of casting
             /// </summary>
             public static Setting<EInteger> MaxAbsNumeratorOrDenominatorValue =>
-                GetCurrentOrDefault(ref maxAbsNumeratorOrDenominatorValue, 100000000);
+                maxAbsNumeratorOrDenominatorValue ??= EInteger.FromInt32(100000000);
+            [ThreadStatic] private static Setting<EInteger>? maxAbsNumeratorOrDenominatorValue;
 
             /// <summary>
             /// Sets threshold for comparison
             /// For example, if you don't need precision higher than 6 digits after .,
             /// you can set it to 1.0e-6 so 1.0000000 == 0.9999999
             /// </summary>
-            public static Setting<EDecimal> PrecisionErrorCommon =>
-                GetCurrentOrDefault(ref precisionErrorCommon, 1e-6m);
+            public static Setting<EDecimal> PrecisionErrorCommon => precisionErrorCommon ??= EDecimal.Create(1, -6);
+            [ThreadStatic] private static Setting<EDecimal>? precisionErrorCommon;
 
 
             /// <summary>
             /// Numbers whose absolute value is less than PrecisionErrorZeroRange are considered zeros
             /// </summary>
-            public static Setting<EDecimal> PrecisionErrorZeroRange => GetCurrentOrDefault(ref precisionErrorZeroRange, 1e-16m);
+            public static Setting<EDecimal> PrecisionErrorZeroRange => precisionErrorZeroRange ??= EDecimal.Create(1, -16);
+            [ThreadStatic] private static Setting<EDecimal>? precisionErrorZeroRange;
 
             /// <summary>
             /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
             /// </summary>
-            public static Setting<bool> AllowNewton => GetCurrentOrDefault(ref allowNewton, true);
+            public static Setting<bool> AllowNewton => allowNewton ??= true;
+            [ThreadStatic] private static Setting<bool>? allowNewton;
 
             /// <summary>
             /// Criteria for simplifier so you could control which expressions are considered easier by you
             /// </summary>
             public static Setting<Func<Entity, int>> ComplexityCriteria =>
-                GetCurrentOrDefault(ref complexityCriteria, expr =>
+                complexityCriteria ??= new Func<Entity, int>(expr =>
                 {
                     // Number of nodes
                     var res = expr.Complexity;
 
                     // Number of variables
-                    res += expr.Count(entity => entity is Variable);
+                    res += expr.Nodes.Count(entity => entity is Variable);
 
                     // Number of divides
-                    res += expr.Count(entity => entity is Divf) / 2;
+                    res += expr.Nodes.Count(entity => entity is Divf) / 2;
 
                     // Number of negative powers
-                    res += expr.Count(entity => entity is Powf(_, Number.Real { IsNegative: true }));
+                    res += expr.Nodes.Count(entity => entity is Powf(_, Number.Real { IsNegative: true }));
 
                     return res;
                 });
+            [ThreadStatic] private static Setting<Func<Entity, int>>? complexityCriteria;
 
             /// <summary>
             /// Settings for the Newton-Raphson's root-search method
@@ -757,7 +785,8 @@ namespace AngouriMath
             /// );
             /// </code>
             /// </summary>
-            public static Setting<NewtonSetting> NewtonSolver => GetCurrentOrDefault(ref newtonSolver, new());
+            public static Setting<NewtonSetting> NewtonSolver => newtonSolver ??= new NewtonSetting();
+            [ThreadStatic] private static Setting<NewtonSetting>? newtonSolver;
 
             /// <summary>
             /// The maximum number of linear children of an expression in polynomial solver
@@ -789,13 +818,15 @@ namespace AngouriMath
             ///     </item>
             /// </list>
             /// </summary>
-            public static Setting<int> MaxExpansionTermCount => GetCurrentOrDefault(ref maxExpansionTermCount, 50);
+            public static Setting<int> MaxExpansionTermCount => maxExpansionTermCount ??= 50;
+            [ThreadStatic] private static Setting<int>? maxExpansionTermCount;
 
             /// <summary>
             /// Settings for <see cref="EDecimal"/> precisions of <a href="https://github.com/peteroupc/Numbers">PeterO.Numbers</a>
             /// </summary>
             public static Setting<EContext> DecimalPrecisionContext =>
-                GetCurrentOrDefault(ref decimalPrecisionContext, new EContext(100, ERounding.HalfUp, -100, 1000, false));
+                decimalPrecisionContext ??= new EContext(100, ERounding.HalfUp, -100, 1000, false);
+            [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;
         }
 
         /// <summary>
@@ -822,19 +853,7 @@ namespace AngouriMath
             /// </returns>
             public static bool TryPolynomial(Entity expr, Variable variable,
                 [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
-                out Entity? dst) => Functions.Utils.TryPolynomial(expr, variable, out dst);
-
-            /// <summary>
-            /// Optimizes <paramref name="tree"/> to a binary tree.
-            /// This might boost some operations but is not necessary to use
-            /// </summary>
-            /// <param name="tree">
-            /// An expression (tree) to optimize
-            /// </param>
-            /// <returns>
-            /// An optimized but logically equal tree
-            /// </returns>
-            public static Entity OptimizeTree(Entity tree) => tree.Replace(Patterns.OptimizeRules);
+                out Entity? dst) => Simplificator.TryPolynomial(expr, variable, out dst);
 
             /// <summary>
             /// Returns sympy interpretable format

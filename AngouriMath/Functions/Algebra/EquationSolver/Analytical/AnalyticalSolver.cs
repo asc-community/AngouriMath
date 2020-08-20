@@ -13,16 +13,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
-using AngouriMath.Core.TreeAnalysis;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
-using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 
 namespace AngouriMath
@@ -50,7 +46,7 @@ namespace AngouriMath
         /// <returns>A set of possible roots of the expression.</returns>
         internal IEnumerable<Entity> Invert(Entity value, Entity x) =>
             value.InnerSimplify() is var simplified && this == x
-            ? Enumerable.Repeat(simplified, 1)
+            ? new[] { simplified }
             : Invert_(simplified, x).Where(el => el.IsFinite);
         /// <summary>Use <see cref="Invert(Entity, Entity)"/> instead which auto-simplifies <paramref name="value"/></summary>
         private protected abstract IEnumerable<Entity> Invert_(Entity value, Entity x);
@@ -75,11 +71,11 @@ namespace AngouriMath
         }
         public partial record Variable : Entity
         {
-            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) => Enumerable.Repeat(this, 1);
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) => new[] { this };
         }
         public partial record Tensor : Entity
         {
-            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) => Enumerable.Repeat(this, 1);
+            private protected override IEnumerable<Entity> Invert_(Entity value, Entity x) => new[] { this };
         }
         // Each function and operator processing
         public partial record Sumf
@@ -230,7 +226,7 @@ namespace AngouriMath
     }
 }
 
-namespace AngouriMath.Core.TreeAnalysis
+namespace AngouriMath.Core
 {
     internal static partial class TreeAnalyzer
     {
@@ -251,12 +247,12 @@ namespace AngouriMath.Core.TreeAnalysis
             // We must get a subtree that has more occurances than 1,
             // But at the same time it should cover all references to `ent`
 
-            var xs = expr.Count(child => child == x);
+            var xs = expr.Nodes.Count(child => child == x);
             return
-                expr
+                expr.Nodes
                 .TakeWhile(e => e != x) // Requires Entity enumeration to be depth-first!!
                 .Where(e => e.Vars.Contains(x)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
-                .LastOrDefault(sub => expr.Count(child => child == sub) * sub.Count(child => child == x) == xs)
+                .LastOrDefault(sub => expr.Nodes.Count(child => child == sub) * sub.Nodes.Count(child => child == x) == xs)
                 // if `expr` contains 2 `sub`s and `sub` contains 3 `x`s, then there should be 6 `x`s in `expr` (6 == `xs`)
                 ?? x;
         }
@@ -267,31 +263,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     internal static class AnalyticalSolver
     {
-        private static Entity TryDowncast(Entity equation, Variable x, Entity root)
-        {
-            if (!MathS.CanBeEvaluated(root))
-                return root;
-            var preciseValue = root.Eval();
-            var downcasted = MathS.Settings.FloatToRationalIterCount.As(20, () =>
-                MathS.Settings.PrecisionErrorZeroRange.As(1e-7m, () =>
-                    Complex.Create(preciseValue.RealPart, preciseValue.ImaginaryPart)));
-            var errorExpr = equation.Substitute(x, downcasted);
-            if (!MathS.CanBeEvaluated(errorExpr))
-                return root;
-            var error = errorExpr.Eval();
-
-            static bool ComplexRational(Complex a)
-                => a.RealPart is Rational && a.ImaginaryPart is Rational;
-
-            var innerSimplified = root.InnerSimplify();
-
-            return Number.IsZero(error) && ComplexRational(downcasted) ? downcasted : innerSimplified;
-        }
-
-
         /// <summary>Equation solver</summary>
-        internal static void Solve(Entity expr, Variable x, Set dst)
-            => Solve(expr, x, dst, compensateSolving: false);
+        internal static void Solve(Entity expr, Variable x, Set dst) => Solve(expr, x, dst, compensateSolving: false);
+        /// <param name="compensateSolving">
+        /// Compensate solving is needed when you formatted an equation to (something - const)
+        /// and compensateSolving "compensates" this by applying expression inverter,
+        /// aka compensating the equation formed by the previous solver
+        /// </param>
         internal static void Solve(Entity expr, Variable x, Set dst, bool compensateSolving)
         {
             if (expr == x)
@@ -301,15 +279,31 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
 
             // Applies an attempt to downcast roots
-            void DestinationAddRange(Set toAdd)
+            static Entity TryDowncast(Entity equation, Variable x, Entity root)
+            {
+                if (!(root.Evaled is Complex preciseValue))
+                    return root;
+                var downcasted = MathS.Settings.FloatToRationalIterCount.As(20, () =>
+                    MathS.Settings.PrecisionErrorZeroRange.As(1e-7m, () =>
+                        Complex.Create(preciseValue.RealPart, preciseValue.ImaginaryPart)));
+                if (!(equation.Substitute(x, downcasted).Evaled is Complex error))
+                    return root;
+                return Number.IsZero(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational
+                       ? downcasted : root.InnerSimplify();
+            }
+            void DestinationAddSet(Set toAdd)
             {
                 toAdd.FiniteApply(ent => TryDowncast(expr, x, ent));
                 dst.AddRange(toAdd);
             }
+            void DestinationAddEntities(IEnumerable<Entity> toAdd)
+            {
+                foreach (var ent in toAdd)
+                    dst.Add(TryDowncast(expr, x, ent));
+            }
             if (PolynomialSolver.SolveAsPolynomial(expr, x) is { } poly)
             {
-                poly.FiniteApply(e => e.InnerSimplify());
-                DestinationAddRange(poly);
+                DestinationAddEntities(poly.Select(e => e.InnerSimplify()));
                 return;
             }
 
@@ -342,72 +336,50 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 case Powf(var @base, _):
                     Solve(@base, x, dst);
                     return;
-                case Minusf(var subtrahend, var minuend):
-                    if (!minuend.Vars.Contains(x) && compensateSolving)
+                case Minusf(var subtrahend, var minuend) when !minuend.Vars.Contains(x) && compensateSolving:
+                    if (subtrahend == x)
                     {
-                        if (subtrahend == x)
-                        {
-                            dst.Add(minuend);
-                            return;
-                        }
-                        var subs = 0;
-                        Entity? lastChild = null;
-                        foreach (var child in subtrahend.DirectChildren)
-                            if (child.Vars.Contains(x))
-                            {
-                                subs += 1;
-                                lastChild = child;
-                            }
-                        if (subs != 1 || lastChild is null)
-                            break;
-                        var resInverted = subtrahend.Invert(minuend, lastChild);
-                        foreach (var result in resInverted)
-                            Solve(lastChild - result, x, dst, compensateSolving: true);
+                        dst.Add(minuend);
                         return;
                     }
-                    break;
+                    var subs = 0;
+                    Entity? lastChild = null;
+                    foreach (var child in subtrahend.DirectChildren)
+                        if (child.Vars.Contains(x))
+                        {
+                            subs += 1;
+                            lastChild = child;
+                        }
+                    if (subs != 1 || lastChild is null)
+                        break;
+                    var resInverted = subtrahend.Invert(minuend, lastChild);
+                    foreach (var result in resInverted)
+                        Solve(lastChild - result, x, dst, compensateSolving: true);
+                    return;
                 case Function:
-                    DestinationAddRange(expr.Invert(0, x).Aggregate(new Set(), (set, e) => { set.Add(e); return set; }));
+                    DestinationAddEntities(expr.Invert(0, x));
                     return;
             }
 
-            // if the replacement isn't one-variable one,
+            // If the replacement isn't one-variable one,
             // then solving over replacements is already useless,
             // so we skip this part and go to other solvers
             if (!compensateSolving)
             {
                 // Here we generate a unique variable name
-                var newVar =
-                    expr.Vars
-                    .OrderByDescending(v => v.Name.Length)
-                    .First().Name + "quack";
-                // // //
+                var newVar = new Variable(expr.Vars.OrderByDescending(v => v.Name.Length).First().Name + "quack");
 
-
-                // Here we find all possible replacements
-                var replacements = new List<(Entity, Entity)>
-                {
-                    (TreeAnalyzer.GetMinimumSubtree(expr, x), expr)
-                };
-                foreach (var alt in expr.Alternate(4).FiniteSet())
+                // Here we find all possible replacements and find one that has at least one solution
+                foreach (var alt in expr.Alternate(4))
                 {
                     if (!alt.Vars.Contains(x))
                         return; // in this case there is either 0 or +oo solutions
-                    replacements.Add((TreeAnalyzer.GetMinimumSubtree(alt, x), alt));
-                }
-                // // //
-
-                // Here we find one that has at least one solution
-
-                foreach (var replacement in replacements)
-                {
-                    if (replacement.Item1 == x)
+                    var minimumSubtree = TreeAnalyzer.GetMinimumSubtree(alt, x);
+                    if (minimumSubtree == x)
                         continue;
-                    var solutions = replacement.Item2.Substitute(replacement.Item1, newVar).SolveEquation(newVar);
+                    var solutions = alt.Substitute(minimumSubtree, newVar).SolveEquation(newVar);
                     if (!solutions.IsEmpty())
                     {
-                        var bestReplacement = replacement.Item1;
-
                         // Here we are trying to solve for this replacement
                         Set newDst = new Set();
                         foreach (var solution in solutions.FiniteSet())
@@ -416,11 +388,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                             // The idea is  
                             // similarToPrevious = ((bestReplacement - solution) - expr).Simplify() == 0
                             // But Simplify costs us too much time
-                            var similarToPrevious = (bestReplacement - solution).Complexity >= expr.Complexity;
+                            var similarToPrevious = (minimumSubtree - solution).Complexity >= expr.Complexity;
                             if (!compensateSolving || !similarToPrevious)
-                                Solve(bestReplacement - solution, x, newDst, compensateSolving: true);
+                                Solve(minimumSubtree - solution, x, newDst, compensateSolving: true);
                         }
-                        DestinationAddRange(newDst);
+                        DestinationAddSet(newDst);
                         if (!dst.IsEmpty())
                             break;
                         // // //
@@ -433,7 +405,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (dst.IsEmpty())
                 if (TrigonometricSolver.SolveLinear(expr, x) is { } res)
                 {
-                    DestinationAddRange(res);
+                    DestinationAddSet(res);
                     return;
                 }
             // // //
@@ -442,7 +414,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (dst.IsEmpty())
                 if (CommonDenominatorSolver.Solve(expr, x) is { } res)
                 {
-                    DestinationAddRange(res);
+                    DestinationAddSet(res);
                     return;
                 }
             // // //
@@ -452,7 +424,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (dst.IsEmpty())
                 if (FractionedPolynoms.Solve(expr, x) is { } res)
                 {
-                    DestinationAddRange(res);
+                    DestinationAddSet(res);
                     return;
                 }
             // // //
@@ -462,7 +434,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             // if nothing has been found so far
             if (dst.IsEmpty() && MathS.Settings.AllowNewton && expr.Vars.Count == 1)
-                DestinationAddRange(expr.SolveNt(x));
+                DestinationAddSet(expr.SolveNt(x));
         }
     }
 }

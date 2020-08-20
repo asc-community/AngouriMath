@@ -3,7 +3,6 @@ using System;
 using System.Numerics;
 using BenchmarkDotNet.Attributes;
 using System.Linq.Expressions;
-using AngouriMath.Core.Numerix;
 
 namespace DotnetBenchmark
 {
@@ -13,7 +12,7 @@ namespace DotnetBenchmark
         private readonly Func<Complex, Complex> linqComp;
         private readonly Entity notCompiled;
         private readonly Entity.Variable x = MathS.Var("x");
-        private readonly ComplexNumber ComNumToSub = 3;
+        private readonly Entity.Number.Complex ComNumToSub = 3;
         private readonly Complex ComToSub = 3;
         public CacheCompiledFuncTest()
         {
@@ -31,6 +30,6 @@ namespace DotnetBenchmark
         [Benchmark]
         public Complex LinqCompiled() => linqComp.Invoke(3);
         [Benchmark]
-        public ComplexNumber NotCompiled() => notCompiled.Substitute(x, 3).Eval();
+        public Entity.Number.Complex NotCompiled() => notCompiled.Substitute(x, 3).Eval();
     }
 }

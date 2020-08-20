@@ -26,16 +26,18 @@ using System.IO;
 using System.Text;
 
 [assembly: System.CLSCompliant(false)]
-namespace AngouriMath.Core.FromString
+namespace AngouriMath.Core
 {
-    // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
-    class AngouriMathTextWriter : TextWriter
-    {
-        public override Encoding Encoding => Encoding.UTF8;
-        public override void WriteLine(string s) => throw new ParseException("parsing error: " + s);
-    }
+    using Antlr;
+    using Exceptions;
     static class Parser
     {
+        // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
+        class AngouriMathTextWriter : TextWriter
+        {
+            public override Encoding Encoding => Encoding.UTF8;
+            public override void WriteLine(string s) => throw new ParseException("parsing error: " + s);
+        }
         public static Entity Parse(string source)
         {
             var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, new AngouriMathTextWriter());

@@ -28,10 +28,10 @@ namespace AngouriMath
     {
         internal enum InstructionType
         {
-            PUSHVAR,
-            PUSHCONST,
-            PULLCACHE,
-            TOCACHE,
+            PUSH_VAR,
+            PUSH_CONST,
+            LOAD_CACHE,
+            SAVE_CACHE,
             // 1-arg functions
             CALL_SIN = 50,
             CALL_COS,
@@ -53,7 +53,7 @@ namespace AngouriMath
         public override string ToString() =>
             Type
             + (Reference == -1 ? "" : Reference.ToString())
-            + (Type != InstructionType.PUSHCONST ? "" : Value.ToString());
+            + (Type != InstructionType.PUSH_CONST ? "" : Value.ToString());
     }
     public abstract partial record Entity : ILatexiseable
     {
@@ -103,41 +103,34 @@ namespace AngouriMath
             cache = new Complex[cacheCount];
         }
 
-        /// <summary>
-        /// Calls the compiled function (synonym to <see cref="Substitute(Complex[])"/>)
-        /// </summary>
-        /// <param name="values">
-        /// List arguments in the same order in which you compiled the function
-        /// </param>
+        /// <summary>Calls the compiled function (synonym to <see cref="Substitute(Complex[])"/>)</summary>
+        /// <param name="values">List arguments in the same order in which you compiled the function</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Complex Call(params Complex[] values) => Substitute(values);
 
-        /// <summary>
-        /// Calls the compiled function (synonym to <see cref="Call(Complex[])"/>)
-        /// </summary>
-        /// <param name="values">
-        /// List arguments in the same order in which you compiled the function
-        /// </param>
+        /// <summary>Calls the compiled function (synonym to <see cref="Call(Complex[])"/>)</summary>
+        /// <param name="values">List arguments in the same order in which you compiled the function</param>
+        /// <exception cref="System.ArgumentException">
+        /// Thrown when the length of <paramref name="values"/> does not match the number of variables compiled.
+        /// </exception>
         // TODO: Optimization
         public Complex Substitute(params Complex[] values)
         {
             if (values.Length != varCount)
-                throw new AngouriBugException("Wrong amount of parameters");
-            for (int i = 0; i < instructions.Count; i++)
-            {
-                var instruction = instructions[i];
+                throw new System.ArgumentException($"Wrong number of parameters: Expected {varCount} but {values.Length} provided");
+            foreach (var instruction in instructions)
                 switch (instruction.Type)
                 {
-                    case InstructionType.PUSHVAR:
+                    case InstructionType.PUSH_VAR:
                         stack.Push(values[instruction.Reference]);
                         break;
-                    case InstructionType.PUSHCONST:
+                    case InstructionType.PUSH_CONST:
                         stack.Push(instruction.Value);
                         break;
-                    case InstructionType.PULLCACHE:
+                    case InstructionType.LOAD_CACHE:
                         stack.Push(cache[instruction.Reference]);
                         break;
-                    case InstructionType.TOCACHE:
+                    case InstructionType.SAVE_CACHE:
                         cache[instruction.Reference] = stack.Peek();
                         break;
                     case InstructionType.CALL_SUM:
@@ -203,16 +196,14 @@ namespace AngouriMath
                         stack.Push(Gamma(stack.Pop() + 1));
                         break;
                 }
-            }
+            if (stack.Count != 1)
+                throw new AngouriBugException("Unused values remain in the stack");
             return stack.Pop();
         }
 
-        static readonly double[] gammaCoeffs = new[] { 0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7 };
+        static readonly double[] gammaCoeffs = { 0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7 };
 
-        /// <summary>
-        /// Might be useful for debug if a function works too slowly
-        /// </summary>
-        /// <returns></returns>
+        /// <summary>Might be useful for debug if a function works too slowly</summary>
         public override string ToString() => string.Join(" \n| ", instructions);
     }
 }

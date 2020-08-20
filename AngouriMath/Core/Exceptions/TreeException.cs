@@ -13,10 +13,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-using AngouriMath.Core.Exceptions;
-
-namespace AngouriMath
+namespace AngouriMath.Core.Exceptions
 {
     public class TreeException : MathSException
     {

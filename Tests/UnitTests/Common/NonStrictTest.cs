@@ -43,7 +43,7 @@ namespace UnitTests.Common
         public void TryPoly1()
         {
             Entity expr = "x + x2";
-            if (Utils.TryPolynomial(expr, x, out var dst))
+            if (Simplificator.TryPolynomial(expr, x, out var dst))
                 Assert.Equal(MathS.FromString("x2 + x"), dst);
             else
                 throw new Xunit.Sdk.XunitException($"{expr} is polynomial");
@@ -53,7 +53,7 @@ namespace UnitTests.Common
         public void TryPoly2()
         {
             Entity expr = "x * (x + x2)";
-            if (Utils.TryPolynomial(expr, x, out var dst))
+            if (Simplificator.TryPolynomial(expr, x, out var dst))
                 Assert.Equal(MathS.FromString("x3 + x2"), dst);
             else
                 throw new Xunit.Sdk.XunitException($"{expr} is polynomial");
@@ -63,8 +63,8 @@ namespace UnitTests.Common
         public void TryPoly3()
         {
             Entity expr = "x * (x + x2 + z) + y * x";
-            if (Utils.TryPolynomial(expr, x, out var dst))
-                Assert.Equal(MathS.FromString("x3 + x2 + (y + z) * x"), dst);
+            if (Simplificator.TryPolynomial(expr, x, out var dst))
+                Assert.Equal(MathS.FromString("x3 + x2 + (z + y) * x"), dst);
             else
                 throw new Xunit.Sdk.XunitException($"{expr} is polynomial");
         }

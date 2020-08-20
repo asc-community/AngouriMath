@@ -1,6 +1,5 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
-using AngouriMath.Core.FromString;
+using AngouriMath.Core.Exceptions;
 using Xunit;
 
 namespace UnitTests.Convenience

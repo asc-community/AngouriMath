@@ -23,7 +23,7 @@ namespace UnitTests.Algebra
         public void TestCosCustom()
         {
             var func = MathS.Cos(MathS.Pow(x, 3));
-            var expected = -3 * (MathS.Sin(MathS.Pow(x, 3)) * MathS.Sqr(x));
+            var expected = -3 * MathS.Sin(MathS.Pow(x, 3)) * MathS.Sqr(x);
             var actual = func.Derive(x).Simplify();
             Assert.Equal(expected, actual);
         }

@@ -34,18 +34,15 @@ namespace AngouriMath
     // Note: When editing record parameter lists on Visual Studio 16.7.x or 16.8 Preview 1,
     // watch out for Visual Studio crash: https://github.com/dotnet/roslyn/issues/46123
     // Workaround is to use Notepad for editing.
-    public abstract partial record Entity : IEnumerable<Entity>, ILatexiseable
+    public abstract partial record Entity : ILatexiseable
     {
         static readonly ConditionalWeakTable<Entity, Entity[]> _directChildren = new();
-        protected internal IReadOnlyList<Entity> DirectChildren =>
-            _directChildren.GetValue(this, e => e.InitDirectChildren());
         protected abstract Entity[] InitDirectChildren();
+        public IReadOnlyList<Entity> DirectChildren => _directChildren.GetValue(this, e => e.InitDirectChildren());
 
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="Core.TreeAnalysis.TreeAnalyzer.GetMinimumSubtree(Entity, Variable)"/></remarks>
-        public IEnumerator<Entity> GetEnumerator() =>
-            Enumerable.Repeat(this, 1).Concat(DirectChildren.SelectMany(c => c)).GetEnumerator();
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+        public IEnumerable<Entity> Nodes => DirectChildren.SelectMany(c => c.Nodes).Prepend(this);
 
         public abstract Entity Replace(Func<Entity, Entity> func);
         public Entity Replace(Func<Entity, Entity> func1, Func<Entity, Entity> func2) =>
@@ -124,12 +121,12 @@ namespace AngouriMath
         /// so it is O(1)
         /// </remarks>
         public IReadOnlyCollection<Variable> Vars => _vars.GetValue(this, e =>
-            new(e is Variable v ? Enumerable.Repeat(v, 1) : DirectChildren.SelectMany(x => x.Vars)));
+            new(e is Variable { IsConstant: false } v ? new[] { v } : DirectChildren.SelectMany(x => x.Vars)));
         static readonly ConditionalWeakTable<Entity, HashSet<Variable>> _vars = new();
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>
-        public bool Contains(Entity x) => x is Variable v ? Vars.Contains(v) : Enumerable.Contains(this, x);
+        public bool Contains(Entity x) => x is Variable { IsConstant: false } v ? Vars.Contains(v) : Enumerable.Contains(Nodes, x);
 
         public static implicit operator Entity(sbyte value) => Number.Integer.Create(value);
         public static implicit operator Entity(byte value) => Number.Integer.Create(value);
@@ -272,7 +269,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => Elementwise(element => element.Replace(func));
             protected override Entity[] InitDirectChildren() => InnerTensor.Iterate().Select(tup => tup.Value).ToArray();
 
-            public struct EntityTensorWrapperOperations : IOperations<Entity>
+            public readonly struct EntityTensorWrapperOperations : IOperations<Entity>
             {
                 public Entity Add(Entity a, Entity b) => a + b;
                 public Entity Subtract(Entity a, Entity b) => a - b;
@@ -349,7 +346,7 @@ namespace AngouriMath
                 Sumf(var augend, var addend) => LinearChildren(augend).Concat(LinearChildren(addend)),
                 Minusf(var subtrahend, var minuend) =>
                     LinearChildren(subtrahend).Concat(LinearChildren(minuend).Select(entity => -1 * entity)),
-                _ => Enumerable.Repeat(tree, 1)
+                _ => new[] { tree }
             };
         }
         public partial record Minusf(Entity Subtrahend, Entity Minuend) : Entity
@@ -380,7 +377,7 @@ namespace AngouriMath
                 Mulf(var multiplier, var multiplicand) => LinearChildren(multiplier).Concat(LinearChildren(multiplicand)),
                 Divf(var dividend, var divisor) =>
                     LinearChildren(dividend).Concat(LinearChildren(divisor).Select(entity => new Powf(entity, -1))),
-                _ => Enumerable.Repeat(tree, 1)
+                _ => new[] { tree }
             };
         }
         public partial record Divf(Entity Dividend, Entity Divisor) : Entity

@@ -15,11 +15,9 @@
 
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
-using AngouriMath.Core.TreeAnalysis;
 
 namespace AngouriMath
 {
@@ -130,10 +128,8 @@ namespace AngouriMath
         internal static Entity TrigonometricRules(Entity x) => x switch
         {
             // sin({}) * cos({}) = 1/2 * sin(2{})
-            Mulf(Sinf(var any1), Cosf(var any1a)) when any1 == any1a =>
-                Rational.Create(1, 2) * new Sinf(2 * any1),
-            Mulf(Cosf(var any1), Sinf(var any1a)) when any1 == any1a =>
-                Rational.Create(1, 2) * new Sinf(2 * any1),
+            Mulf(Sinf(var any1), Cosf(var any1a)) when any1 == any1a => Rational.Create(1, 2) * new Sinf(2 * any1),
+            Mulf(Cosf(var any1), Sinf(var any1a)) when any1 == any1a => Rational.Create(1, 2) * new Sinf(2 * any1),
 
             // arc1({}) + arc2({}) = pi/2
             Sumf(Arcsinf(var any1), Arccosf(var any1a)) when any1 == any1a => MathS.pi / 2,
@@ -380,10 +376,10 @@ namespace AngouriMath
             Sumf(Divf(var any1, var any2), Mulf(var any3, var any1a)) when any1 == any1a => any1 * (1 / any2 + any3),
             Sumf(Mulf(var any2, var any1), Divf(var any1a, var any3)) when any1 == any1a => any1 * (any2 + 1 / any3),
             Sumf(Mulf(var any1, var any2), Divf(var any1a, var any3)) when any1 == any1a => any1 * (any2 + 1 / any3),
-            Sumf(var anyButNot1, Divf(var anyButNot1a, var any2))
-                when anyButNot1 == anyButNot1a && anyButNot1 is not Integer(1) => anyButNot1 * (1 + 1 / any2),
-            Sumf(Divf(var anyButNot1, var any2), var anyButNot1a)
-                when anyButNot1 == anyButNot1a && anyButNot1 is not Integer(1) => anyButNot1 * (1 + 1 / any2),
+            Sumf(var anyButNot1 and not Integer(1), Divf(var anyButNot1a, var any2))
+                when anyButNot1 == anyButNot1a => anyButNot1 * (1 + 1 / any2),
+            Sumf(Divf(var anyButNot1 and not Integer(1), var any2), var anyButNot1a)
+                when anyButNot1 == anyButNot1a => anyButNot1 * (1 + 1 / any2),
 
             // {1} * {2} - {1} * {3} = {1} * ({2} - {3})
             Minusf(Mulf(var any1, var any2), Mulf(var any1a, var any3)) when any1 == any1a => any1 * (any2 - any3),
@@ -413,9 +409,9 @@ namespace AngouriMath
 
             // (x - {}) (x + {}) = x2 - {}2
             Mulf(Minusf(Variable var1, var any1), Sumf(Variable var1a, var any1a))
-                when var1 == var1a && any1 == any1a => new Powf(var1, 2) - new Powf(any1, 2),
+                when (var1, any1) == (var1a, any1a) => new Powf(var1, 2) - new Powf(any1, 2),
             Mulf(Sumf(Variable var1, var any1), Minusf(Variable var1a, var any1a))
-                when var1 == var1a && any1 == any1a => new Powf(var1, 2) - new Powf(any1, 2),
+                when (var1, any1) == (var1a, any1a) => new Powf(var1, 2) - new Powf(any1, 2),
 
             // a / a
             Divf(var any1, var any1a) when any1 == any1a => 1,
@@ -444,6 +440,26 @@ namespace AngouriMath
             // {1} - {2} * {1}
             Minusf(var any1, Mulf(var any2, var any1a)) when any1 == any1a => any1 * (1 - any2),
             Minusf(var any1, Mulf(var any1a, var any2)) when any1 == any1a => any1 * (1 - any2),
+
+            Sumf(var any1, Sumf(var any2, var any1a)) when any1 == any1a => 2 * any1 + any2,
+            Sumf(var any1, Sumf(var any1a, var any2)) when any1 == any1a => 2 * any1 + any2,
+            Sumf(Sumf(var any2, var any1), var any1a) when any1 == any1a => 2 * any1 + any2,
+            Sumf(Sumf(var any1, var any2), var any1a) when any1 == any1a => 2 * any1 + any2,
+
+            Minusf(Sumf(var any1, var any2), var any1a) when any1 == any1a => any2,
+            Minusf(Sumf(var any2, var any1), var any1a) when any1 == any1a => any2,
+            Minusf(var any1, Sumf(var any2, var any1a)) when any1 == any1a => -any2,
+            Minusf(var any1, Sumf(var any1a, var any2)) when any1 == any1a => -any2,
+
+            Sumf(var any1, Minusf(var any2, var any1a)) when any1 == any1a => any2,
+            Sumf(var any1, Minusf(var any1a, var any2)) when any1 == any1a => 2 * any1 - any2,
+            Sumf(Minusf(var any2, var any1), var any1a) when any1 == any1a => any2,
+            Sumf(Minusf(var any1, var any2), var any1a) when any1 == any1a => 2 * any1 - any2,
+
+            Minusf(var any1, Minusf(var any2, var any1a)) when any1 == any1a => 2 * any1 - any2,
+            Minusf(var any1, Minusf(var any1a, var any2)) when any1 == any1a => any2,
+            Minusf(Minusf(var any2, var any1), var any1a) when any1 == any1a => any2 - 2 * any1,
+            Minusf(Minusf(var any1, var any2), var any1a) when any1 == any1a => -any2,
 
             _ => x
         };
@@ -494,38 +510,20 @@ namespace AngouriMath
             _ => x
         };
         /// <summary>Actual sorting with <see cref="Entity.SortHash(TreeAnalyzer.SortLevel)"/></summary>
-        internal static Func<Entity, Entity> SortRules(TreeAnalyzer.SortLevel level) => tree =>
+        internal static Func<Entity, Entity> SortRules(Core.TreeAnalyzer.SortLevel level) => x => x switch
         {
-            switch (tree)
-            {
-                case Sumf or Minusf:
-                    var linChildren = Sumf.LinearChildren(tree);
-                    var groups = TreeAnalyzer.GroupByHash(linChildren, level);
-                    var grouppedChildren =
-                        groups.Select(list => TreeAnalyzer.MultiHangLinear(list, (a, b) => new Sumf(a, b))).ToList();
-                    return TreeAnalyzer.MultiHangLinear(grouppedChildren, (a, b) => new Sumf(a, b));
-                case Mulf or Divf:
-                    linChildren = Mulf.LinearChildren(tree);
-                    groups = TreeAnalyzer.GroupByHash(linChildren, level);
-                    grouppedChildren =
-                        groups.Select(list => TreeAnalyzer.MultiHangLinear(list, (a, b) => new Mulf(a, b))).ToList();
-                    return TreeAnalyzer.MultiHangLinear(grouppedChildren, (a, b) => new Mulf(a, b));
-                default:
-                    return tree;
-            }
+            Sumf or Minusf =>
+                Sumf.LinearChildren(x).OrderBy(e => e.SortHash(level)).Aggregate((a, b) => new Sumf(a, b)),
+            Mulf or Divf =>
+                Mulf.LinearChildren(x).OrderBy(e => e.SortHash(level)).Aggregate((a, b) => new Mulf(a, b)),
+            _ => x,
         };
         internal static Entity PolynomialLongDivision(Entity x) =>
             x is Divf(var num, var denom)
             && !MathS.CanBeEvaluated(num)
             && !MathS.CanBeEvaluated(denom)
-            && TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
+            && Core.TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
             ? divided + remainder
             : x;
-        internal static Entity OptimizeRules(Entity x) => x switch
-        {
-            Sumf or Minusf => TreeAnalyzer.MultiHangBinary(Sumf.LinearChildren(x).ToList(), (a, b) => new Sumf(a, b)),
-            Mulf or Divf => TreeAnalyzer.MultiHangBinary(Mulf.LinearChildren(x).ToList(), (a, b) => new Mulf(a, b)),
-            _ => x
-        };
     }
 }

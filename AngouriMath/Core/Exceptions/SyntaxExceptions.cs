@@ -14,7 +14,7 @@
  */
 
 ﻿using System;
-namespace AngouriMath.Core.FromString
+namespace AngouriMath.Core.Exceptions
 {
     public abstract class SyntaxException : Exception
     {

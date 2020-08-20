@@ -1,5 +1,4 @@
-﻿using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
+﻿using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
@@ -15,7 +14,7 @@ namespace AngouriMath.Limits
     {
         internal static Dictionary<EDecimal, Entity>? ParseAsPolynomial(Entity expr, Variable x)
         {
-            var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
+            var children = Core.TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
                  expr, entity => entity.Vars.Contains(x)
             );
 
@@ -23,7 +22,7 @@ namespace AngouriMath.Limits
                 return null;
 
             var monomials = PolynomialSolver.GatherMonomialInformation
-                <EDecimal, TreeAnalyzer.PrimitiveDecimal>(children, x);
+                <EDecimal, Core.TreeAnalyzer.PrimitiveDecimal>(children, x);
             if (monomials is null) return null;
             var filteredDictionary = new Dictionary<EDecimal, Entity>();
             foreach (var monomial in monomials)
@@ -150,9 +149,9 @@ namespace AngouriMath.Limits
                 var lowerLogLimit = LimitFunctional.ComputeLimit(lowerLogArgument, x, Real.PositiveInfinity);
                 if (upperLogLimit is null || lowerLogLimit is null) return null;
 
-                if ((upperLogLimit.Any(child => child == Real.PositiveInfinity || child == Real.NegativeInfinity)
+                if ((upperLogLimit.Nodes.Any(child => child == Real.PositiveInfinity || child == Real.NegativeInfinity)
                      || upperLogLimit == Integer.Zero)
-                    && (lowerLogLimit.Any(child => child == Real.PositiveInfinity || child == Real.NegativeInfinity)
+                    && (lowerLogLimit.Nodes.Any(child => child == Real.PositiveInfinity || child == Real.NegativeInfinity)
                      || lowerLogLimit == Integer.Zero))
                 {
                     // apply L'Hôpital's rule for lim(x -> +oo) log(f(x), g(x))
