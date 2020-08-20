@@ -86,6 +86,7 @@ namespace DotnetBenchmark
         public static void Main(string[] _)
         {
             BenchmarkRunner.Run<CommonFunctionsInterVersionTest>();
+            Console.ReadLine(); Console.ReadLine(); Console.ReadLine();
         }
     }
 }
