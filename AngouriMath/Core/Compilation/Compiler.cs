@@ -16,7 +16,7 @@
 using System.Collections.Generic;
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity;
-using static AngouriMath.Instruction;
+using static AngouriMath.Core.FastExpression;
 
 namespace AngouriMath
 {
@@ -49,7 +49,7 @@ namespace AngouriMath
         public partial record Variable : Entity
         {
             private protected override void InnerCompile_(Compiler compiler) =>
-                compiler.Instructions.Add(new(InstructionType.PUSH_VAR, compiler.VarNamespace[Name]));
+                compiler.Instructions.Add(new(InstructionType.PUSH_VAR, compiler.VarNamespace[this]));
         }
         public partial record Tensor : Entity
         {
@@ -204,7 +204,10 @@ namespace AngouriMath
                 throw new UncompilableNodeException($"Limits cannot be compiled");
         }
     }
-    internal partial record Instruction
+}
+namespace AngouriMath.Core
+{
+    public partial class FastExpression
     {
         /// <summary>The <paramref name="Cache"/> stores the saved cache number if zero/positive,
         /// or the bitwise complement of the unsaved cache number if negative.</summary>

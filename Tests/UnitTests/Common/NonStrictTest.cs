@@ -36,7 +36,7 @@ namespace UnitTests.Common
         public void SympySyntax()
         {
             Entity expr = "x + 4 + e";
-            Assert.True(MathS.Utils.ToSympyCode(expr).Length > 10);
+            Assert.True(MathS.ToSympyCode(expr).Length > 10);
         }
 
         [Fact]

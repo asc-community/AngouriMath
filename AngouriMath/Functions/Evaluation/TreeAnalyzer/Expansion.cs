@@ -16,10 +16,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 
-namespace AngouriMath.Core
+namespace AngouriMath.Functions
 {
     using static Entity;
     using static Entity.Number;
@@ -47,9 +48,6 @@ namespace AngouriMath.Core
         /// Finds out how many terms we get after expansion via binomial coefficients, e. g
         /// (a + b) ^ 3 -> 2, 3 -> 4
         /// </summary>
-        /// <param name="numberOfTerms"></param>
-        /// <param name="power"></param>
-        /// <returns></returns>
         internal static EInteger EstimateTermCount(EInteger numberOfTerms, EInteger power) =>
             (power + numberOfTerms - 1).Combinations(power);
 
@@ -60,15 +58,12 @@ namespace AngouriMath.Core
         /// =>
         /// [x2, x, a + b, x]
         /// </summary>
-        /// <param name="expr"></param>
-        /// <param name="x"></param>
-        /// <returns></returns>
         internal static List<Entity>? GatherLinearChildrenOverSumAndExpand(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
         {
             if (expr is not (Sumf or Minusf))
                 return SmartExpandOver(expr, conditionForUniqueTerms);
             var res = new List<Entity>();
-            Entity freeTerm = 0;
+            Entity? freeTerm = null;
             foreach (var child in Sumf.LinearChildren(expr))
                 if (conditionForUniqueTerms(child))
                 {
@@ -78,8 +73,8 @@ namespace AngouriMath.Core
                     res.AddRange(expanded);
                 }
                 else
-                    freeTerm += child;
-            if (freeTerm is not Integer(0))
+                    freeTerm = freeTerm is { } ? freeTerm + child : child;
+            if (freeTerm is { })
                 res.Add(freeTerm);
             return res;
         }
@@ -123,16 +118,10 @@ namespace AngouriMath.Core
                 yield return item;
             }
         }
-        /// <summary>
-        /// expr is NEITHER + NOR -
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <param name="x"></param>
-        /// <returns></returns>
+        /// <summary><paramref name="expr"/> is NEITHER <see cref="Sumf"/> NOR <see cref="Minusf"/></summary>
         internal static List<Entity>? SmartExpandOver(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
         {
             var newChildren = new List<Entity>();
-            var result = new List<Entity>();
             switch (expr)
             {
                 case Sumf or Minusf:

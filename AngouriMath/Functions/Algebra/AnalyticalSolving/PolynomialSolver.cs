@@ -22,7 +22,7 @@ using PeterO.Numbers;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 
-namespace AngouriMath.Core
+namespace AngouriMath.Functions
 {
     internal static partial class TreeAnalyzer
     {
@@ -206,7 +206,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     children.AddRange(expanded);
                 }
                 */
-            var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, entity => entity.Vars.Contains(subtree));
+            var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, entity => entity.Contains(subtree));
             if (children is null)
                 return null;
             // // //
@@ -268,55 +268,72 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         }
 
         /// <summary>Finds all terms of a polynomial</summary>
+        /// <returns><see langword="null"/> if polynomial is bad</returns>
         internal static Dictionary<T, Entity>? GatherMonomialInformation<T, TPrimitive>(IEnumerable<Entity> terms, Variable subtree)
             where TPrimitive : TreeAnalyzer.IPrimitive<T>, new()
         {
             var monomialsByPower = new Dictionary<T, Entity>();
             // here we fill the dictionary with information about monomials' coefficiants
             foreach (var child in terms)
-                if (ParseMonomial(subtree, child) is var (free, q))
+                if (ParseMonomial<T, TPrimitive>(subtree, child) is var (free, q))
                     monomialsByPower[q.Value] =
                         monomialsByPower.TryGetValue(q.Value, out var power) ? power + free : free;
                 else return null;
-            // TODO: do we need to simplify all values of monomialsByPower?
             return monomialsByPower;
+        }
+        /// <summary>Finds all terms of a polynomial</summary>
+        internal static (Dictionary<T, Entity> poly, Entity rem) GatherMonomialInformationAllowingBad<T, TPrimitive>(IEnumerable<Entity> terms, Variable subtree)
+            where TPrimitive : TreeAnalyzer.IPrimitive<T>, new()
+        {
+            var monomialsByPower = new Dictionary<T, Entity>();
+            Entity rem = 0;
+            // here we fill the dictionary with information about monomials' coefficiants
+            foreach (var child in terms)
+                if (ParseMonomial<T, TPrimitive>(subtree, child) is var (free, q))
+                    monomialsByPower[q.Value] =
+                        monomialsByPower.TryGetValue(q.Value, out var power) ? power + free : free;
+                else
+                    rem += child;
+            return (monomialsByPower, rem);
+        }
 
-            static (Entity FreeMono, TPrimitive Power)? ParseMonomial(Variable aVar, Entity expr)
-            {
-                var power = new TPrimitive();
-                if (!expr.Vars.Contains(aVar))
-                    return (expr, power);
 
-                Entity freeMono = 1; // a * b
-                foreach (var mp in Mulf.LinearChildren(expr))
-                    if (!mp.Vars.Contains(aVar))
-                        freeMono *= mp;
-                    else if (mp is Powf(var @base, var pow_num))
-                    {
-                        // x ^ a or x ^ i is bad
-                        if (!(pow_num.Evaled is Real value))
-                            return null;
-                        // x ^ 0.3 is bad
-                        if (!power.AllowFloat && value is not Integer)
-                            return null;
-                        if (mp == aVar)
-                            power.Add(value);
-                        else if (ParseMonomial(aVar, @base) is var (tmpFree, q))
-                        {
-                            freeMono *= MathS.Pow(tmpFree, value);
-                            power.AddMp(q.Value, value);
-                        }
-                        else return null;
-                    }
-                    else if (mp == aVar)
-                        power.Add(1);
-                    // a ^ x, (a + x) etc. are bad
-                    else if (mp.Vars.Contains(aVar))
+        internal static (Entity FreeMono, TPrimitive Power)? ParseMonomial<T, TPrimitive>(Variable aVar, Entity expr)
+            where TPrimitive : TreeAnalyzer.IPrimitive<T>, new()
+        {
+            var power = new TPrimitive();
+            if (!expr.Contains(aVar))
+                return (expr, power);
+
+            Entity freeMono = 1; // a * b
+            foreach (var mp in Mulf.LinearChildren(expr))
+                if (!mp.Contains(aVar))
+                    freeMono *= mp;
+                else if (mp is Powf(var @base, var pow_num))
+                {
+                    // x ^ a or x ^ i is bad
+                    if (!(pow_num.Evaled is Real value))
                         return null;
-                    else freeMono *= mp;
-                // TODO: do we need to simplify freeMono?
-                return (freeMono, power);
-            }
+                    // x ^ 0.3 is bad
+                    if (!power.AllowFloat && value is not Integer)
+                        return null;
+                    if (mp == aVar)
+                        power.Add(value);
+                    else if (ParseMonomial<T, TPrimitive>(aVar, @base) is var (tmpFree, q))
+                    {
+                        freeMono *= MathS.Pow(tmpFree, value);
+                        power.AddMp(q.Value, value);
+                    }
+                    else return null;
+                }
+                else if (mp == aVar)
+                    power.Add(1);
+                // a ^ x, (a + x) etc. are bad
+                else if (mp.Contains(aVar))
+                    return null;
+                else freeMono *= mp;
+            // TODO: do we need to simplify freeMono?
+            return (freeMono, power);
         }
     }
 }

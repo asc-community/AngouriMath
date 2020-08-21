@@ -21,15 +21,19 @@ using System.Runtime.CompilerServices;
 using GenericTensor.Core;
 using PeterO.Numbers;
 
+namespace AngouriMath.Core
+{
+    public enum Priority { Sum = 20, Minus = 20, Mul = 40, Div = 40, Pow = 60, Factorial = 70, Func = 80, Variable = 100, Number = 100 }
+    public interface ILatexiseable { public string Latexise(); }
+}
 namespace AngouriMath
 {
+    using Core;
     using GenTensor = GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
-    public interface ILatexiseable { public string Latexise(); }
-    public enum Priority { Sum = 20, Minus = 20, Mul = 40, Div = 40, Pow = 60, Factorial = 70, Func = 80, Variable = 100, Number = 100 }
     /// <summary>
-    /// The main class in AngouriMath
-    /// Every node, expression, or number is an <see cref="Entity"/>
-    /// However, you cannot create an instance of this class, look for the nested classes instead
+    /// This is the main class in AngouriMath.
+    /// Every node, expression, or number is an <see cref="Entity"/>.
+    /// However, you cannot create an instance of this class, look for the nested classes instead.
     /// </summary>
     // Note: When editing record parameter lists on Visual Studio 16.7.x or 16.8 Preview 1,
     // watch out for Visual Studio crash: https://github.com/dotnet/roslyn/issues/46123
@@ -59,24 +63,6 @@ namespace AngouriMath
 
         public abstract Priority Priority { get; }
 
-        public static Entity operator +(Entity a, Entity b) => new Sumf(a, b);
-        public static Entity operator +(Entity a) => a;
-        public static Entity operator -(Entity a, Entity b) => new Minusf(a, b);
-        public static Entity operator -(Entity a) => new Mulf(-1, a);
-        public static Entity operator *(Entity a, Entity b) => new Mulf(a, b);
-        public static Entity operator /(Entity a, Entity b) => new Divf(a, b);
-        public Entity Pow(Entity n) => new Powf(this, n);
-        public Entity Sin() => new Sinf(this);
-        public Entity Cos() => new Cosf(this);
-        public Entity Tan() => new Tanf(this);
-        public Entity Cotan() => new Cotanf(this);
-        public Entity Arcsin() => new Arcsinf(this);
-        public Entity Arccos() => new Arccosf(this);
-        public Entity Arctan() => new Arctanf(this);
-        public Entity Arccotan() => new Arccotanf(this);
-        public Entity Factorial() => new Factorialf(this);
-        public Entity Log(Entity n) => new Logf(this, n);
-        public bool IsLowerThan(Entity a) => Priority < a.Priority;
         /// <summary>Deep but stupid comparison</summary>
         public static bool operator ==(Entity? a, Entity? b)
         {
@@ -88,45 +74,47 @@ namespace AngouriMath
         }
         public static bool operator !=(Entity? a, Entity? b) => !(a == b);
 
-        /// <summary>
-        /// Checks whether both parts of the complex number are finite
+        /// <value>
+        /// Whether both parts of the complex number are finite
         /// meaning that it could be safely used for calculations
-        /// </summary>
+        /// </value>
         public bool IsFinite =>
             _isFinite.GetValue(this, e => new(e.ThisIsFinite && e.DirectChildren.All(x => x.IsFinite))).Value;
         protected virtual bool ThisIsFinite => true;
         static readonly ConditionalWeakTable<Entity, Wrapper<bool>> _isFinite = new();
         record Wrapper<T>(T Value) where T : struct { }
 
-        /// <returns>
-        /// Number of nodes in tree
-        /// TODO: improve measurement of Entity complexity, for example
-        /// (1 / x ^ 2).Complexity() < (x ^ (-0.5)).Complexity()
-        /// </returns>
+        /// <value>Number of nodes in tree</value>
+        // TODO: improve measurement of Entity complexity, for example
+        // (1 / x ^ 2).Complexity() &lt; (x ^ (-0.5)).Complexity()
         public int Complexity =>
             _complexity.GetValue(this, e => new(1 + e.DirectChildren.Sum(x => x.Complexity))).Value;
         static readonly ConditionalWeakTable<Entity, Wrapper<int>> _complexity = new();
 
         /// <summary>
-        /// Returns list of unique variables, for example 
+        /// Set of unique variables, for example 
         /// it extracts <c>`x`</c>, <c>`goose`</c> from <c>(x + 2 * goose) - pi * x</c>
         /// </summary>
         /// <returns>
-        /// <see cref="Set"/> of unique variables excluding mathematical constants
-        /// such as <see cref="pi"/>, <see cref="e"/> and <see cref="i"/>
+        /// Set of unique variables excluding mathematical constants
+        /// such as <see cref="pi"/> and <see cref="e"/>
         /// </returns>
-        /// <remarks>
-        /// Remember that <see cref="Enumerable.Contains{TSource}(IEnumerable{TSource}, TSource)"/> will
-        /// use <see cref="ICollection{T}.Contains(T)"/> which in this case is <see cref="HashSet{T}.Contains(T)"/>
-        /// so it is O(1)
-        /// </remarks>
-        public IReadOnlyCollection<Variable> Vars => _vars.GetValue(this, e =>
-            new(e is Variable { IsConstant: false } v ? new[] { v } : DirectChildren.SelectMany(x => x.Vars)));
+        public IEnumerable<Variable> Vars => VarsAndConsts.Where(x => !x.IsConstant);
+        /// <summary>
+        /// Set of unique variables, for example 
+        /// it extracts <c>`x`</c>, <c>`goose`</c> from <c>(x + 2 * goose) - pi * x</c>
+        /// </summary>
+        /// <returns>
+        /// Set of unique variables and mathematical constants
+        /// such as <see cref="pi"/> and <see cref="e"/>
+        /// </returns>
+        public IReadOnlyCollection<Variable> VarsAndConsts => _vars.GetValue(this, e =>
+            new(e is Variable v ? new[] { v } : DirectChildren.SelectMany(x => x.VarsAndConsts)));
         static readonly ConditionalWeakTable<Entity, HashSet<Variable>> _vars = new();
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>
-        public bool Contains(Entity x) => x is Variable { IsConstant: false } v ? Vars.Contains(v) : Enumerable.Contains(Nodes, x);
+        public bool Contains(Entity x) => x is Variable v ? VarsAndConsts.Contains(v) : Nodes.Contains(x);
 
         public static implicit operator Entity(sbyte value) => Number.Integer.Create(value);
         public static implicit operator Entity(byte value) => Number.Integer.Create(value);
@@ -187,17 +175,26 @@ namespace AngouriMath
                 Complex.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
         }
 
-        /// <summary>Variable node. It only has a name</summary>
-        public partial record Variable(string Name) : Entity
+        /// <summary>
+        /// Variable node. It only has a name.
+        /// Construct a <see cref="Variable"/> with an implicit conversion from <see cref="string"/>.
+        /// 
+        /// </summary>
+        public partial record Variable : Entity
         {
+            internal static Variable CreateVariableUnchecked(string name) => new(name);
+            private Variable(string name) => Name = name;
+            public string Name { get; }
             public override Priority Priority => Priority.Variable;
             public override Entity Replace(Func<Entity, Entity> func) => func(this);
             protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
+            internal static readonly Variable pi = new Variable(nameof(pi));
+            internal static readonly Variable e = new Variable(nameof(e));
             internal static readonly IReadOnlyDictionary<Variable, Number.Complex> ConstantList =
                 new Dictionary<Variable, Number.Complex>
                 {
-                    { nameof(MathS.DecimalConst.pi), MathS.DecimalConst.pi },
-                    { nameof(MathS.DecimalConst.e), MathS.DecimalConst.e }
+                    { pi, MathS.DecimalConst.pi },
+                    { e, MathS.DecimalConst.e }
                 };
             /// <summary>
             /// Determines whether something is a variable or contant, e. g.
@@ -220,21 +217,19 @@ namespace AngouriMath
             /// (<see cref="string"/> Prefix, <see cref="string"/> Index),
             /// <see langword="null"/> otherwise
             /// </returns>
-            internal (string Prefix, string Index)? SplitIndex()
-            {
-                var pos_ = Name.IndexOf('_');
-                if (pos_ != -1)
-                {
-                    var varName = Name.Substring(0, pos_);
-                    return (varName, Name.Substring(pos_ + 1));
-                }
-                return null;
-            }
+            internal (string Prefix, string Index)? SplitIndex() =>
+                Name.IndexOf('_') is var pos_ && pos_ == -1
+                ? null
+                : ((string Prefix, string Index)?)(Name.Substring(0, pos_), Name.Substring(pos_ + 1));
             /// <summary>
-            /// Finds next var index name starting with 1, e. g.
+            /// Finds next var index name that is unused in <paramref name="expr"/> starting with 1, e. g.
             /// x + n_0 + n_a + n_3 + n_1
             /// will find n_2
             /// </summary>
+            /// <remarks>
+            /// This is intended for variables visible to the user.
+            /// For non-visible variables, use <see cref="CreateTemp(Entity)"/> instead.
+            /// </remarks>
             internal static Variable CreateUnique(Entity expr, string prefix)
             {
                 var indices = new HashSet<int>();
@@ -248,7 +243,23 @@ namespace AngouriMath
                     i++;
                 return new Variable(prefix + "_" + i);
             }
-            public static implicit operator Variable(string name) => new(name);
+            /// <summary>Creates a temporary variable like %1, %2 and %3 that is unused in <paramref name="expr"/></summary>
+            /// <remarks>
+            /// This is intended for variables not visible to the user.
+            /// For visible variables, use <see cref="CreateUnique(Entity, string)"/> instead.
+            /// </remarks>
+            internal static Variable CreateTemp(Entity expr)
+            {
+                var indices = new HashSet<int>();
+                foreach (var var in expr.Vars)
+                    if (var.Name.StartsWith("%") && int.TryParse(var.Name.Substring(1), out var num))
+                        indices.Add(num);
+                var i = 1;
+                while (indices.Contains(i))
+                    i++;
+                return new Variable("%" + i);
+            }
+            public static implicit operator Variable(string name) => (Variable)Parser.Parse(name);
         }
         /// <summary>Basic tensor implementation: <a href="https://en.wikipedia.org/wiki/Tensor"/></summary>
         public partial record Tensor(GenTensor InnerTensor) : Entity
@@ -263,7 +274,7 @@ namespace AngouriMath
                 New(GenTensor.CreateTensor(InnerTensor.Shape, indices => operation(InnerTensor.GetValueNoCheck(indices))));
             internal Tensor Elementwise(Tensor other, Func<Entity, Entity, Entity> operation) =>
                 Shape != other.Shape
-                ? throw new InvalidShapeException("Arguments should be of the same shape")
+                ? throw new InvalidShapeException("Arguments should be of the same shape to apply elementwise operation")
                 : New(GenTensor.CreateTensor(InnerTensor.Shape, indices =>
                         operation(InnerTensor.GetValueNoCheck(indices), other.InnerTensor.GetValueNoCheck(indices))));
             public override Entity Replace(Func<Entity, Entity> func) => Elementwise(element => element.Replace(func));
@@ -349,6 +360,8 @@ namespace AngouriMath
                 _ => new[] { tree }
             };
         }
+        public static Entity operator +(Entity a, Entity b) => new Sumf(a, b);
+        public static Entity operator +(Entity a) => a;
         public partial record Minusf(Entity Subtrahend, Entity Minuend) : Entity
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -358,6 +371,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Subtrahend.Replace(func), Minuend.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Subtrahend, Minuend };
         }
+        public static Entity operator -(Entity a, Entity b) => new Minusf(a, b);
         public partial record Mulf(Entity Multiplier, Entity Multiplicand) : Entity
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -380,6 +394,8 @@ namespace AngouriMath
                 _ => new[] { tree }
             };
         }
+        public static Entity operator -(Entity a) => new Mulf(-1, a);
+        public static Entity operator *(Entity a, Entity b) => new Mulf(a, b);
         public partial record Divf(Entity Dividend, Entity Divisor) : Entity
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -389,6 +405,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Dividend.Replace(func), Divisor.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Dividend, Divisor };
         }
+        public static Entity operator /(Entity a, Entity b) => new Divf(a, b);
         public partial record Powf(Entity Base, Entity Exponent) : Entity
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -398,6 +415,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Base.Replace(func), Exponent.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Base, Exponent };
         }
+        public Entity Pow(Entity n) => new Powf(this, n);
         public abstract record Function : Entity
         {
             public override Priority Priority => Priority.Func;
@@ -409,6 +427,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+        public Entity Sin() => new Sinf(this);
         public partial record Cosf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -416,6 +435,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+        public Entity Cos() => new Cosf(this);
         public partial record Tanf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -423,6 +443,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+        public Entity Tan() => new Tanf(this);
         public partial record Cotanf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -430,6 +451,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+        public Entity Cotan() => new Cotanf(this);
         public partial record Logf(Entity Base, Entity Antilogarithm) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -438,6 +460,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Base.Replace(func), Antilogarithm.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Base, Antilogarithm };
         }
+        public Entity Log(Entity n) => new Logf(this, n);
         public partial record Arcsinf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -445,6 +468,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+        public Entity Arcsin() => new Arcsinf(this);
         public partial record Arccosf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -452,6 +476,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+        public Entity Arccos() => new Arccosf(this);
         public partial record Arctanf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -459,6 +484,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+        public Entity Arctan() => new Arctanf(this);
         public partial record Arccotanf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -466,6 +492,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+        public Entity Arccotan() => new Arccotanf(this);
         public partial record Factorialf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -475,6 +502,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+        public Entity Factorial() => new Factorialf(this);
         public partial record Derivativef(Entity Expression, Entity Var, Entity Iterations) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -495,10 +523,10 @@ namespace AngouriMath
                 func(New(Expression.Replace(func), Var.Replace(func), Iterations.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
-        public partial record Limitf(Entity Expression, Entity Var, Entity Destination, Limits.ApproachFrom ApproachFrom) : Function
+        public partial record Limitf(Entity Expression, Entity Var, Entity Destination, ApproachFrom ApproachFrom) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            Limitf New(Entity expression, Entity var, Entity destination, Limits.ApproachFrom approachFrom) =>
+            Limitf New(Entity expression, Entity var, Entity destination, ApproachFrom approachFrom) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var) && ReferenceEquals(Destination, destination)
                 && ApproachFrom == approachFrom ? this : new(expression, var, destination, approachFrom);
             public override Entity Replace(Func<Entity, Entity> func) =>

@@ -101,7 +101,7 @@ function_arguments returns[List<Entity> list]
    
 atom returns[Entity value]
     : NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
-    | VARIABLE { $value = MathS.Var($VARIABLE.text); }
+    | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
     | '(' expression ')' { $value = $expression.value; }
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
     | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
@@ -124,8 +124,8 @@ atom returns[Entity value]
     | 'derivative(' args = function_arguments ')' { Assert("derivative", 3, $args.list.Count); $value = MathS.Derivative($args.list[0], $args.list[1], $args.list[2]); }
     | 'integral(' args = function_arguments ')' { Assert("integral", 3, $args.list.Count); $value = MathS.Integral($args.list[0], $args.list[1], $args.list[2]); }
     | 'limit(' args = function_arguments ')' { Assert("limit", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2]); }
-    | 'limitleft(' args = function_arguments ')' { Assert("limitleft", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Limits.ApproachFrom.Left); }
-    | 'limitright(' args = function_arguments ')' { Assert("limitright", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Limits.ApproachFrom.Right); }
+    | 'limitleft(' args = function_arguments ')' { Assert("limitleft", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Core.ApproachFrom.Left); }
+    | 'limitright(' args = function_arguments ')' { Assert("limitright", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Core.ApproachFrom.Right); }
     ;
 
 statement: expression EOF { Result = $expression.value; } ;

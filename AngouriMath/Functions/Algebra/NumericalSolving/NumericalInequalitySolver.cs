@@ -16,7 +16,7 @@ using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 
-namespace AngouriMath.Functions.Algebra.InequalitySolver
+namespace AngouriMath.Functions.Algebra.NumericalSolving
 {
     using static Entity;
     using static Entity.Number;
@@ -30,7 +30,7 @@ namespace AngouriMath.Functions.Algebra.InequalitySolver
         /// <param name="sign">The relation of the expression to zero.</param>
         internal static Set Solve(Entity expr, Variable x, MathS.Inequality sign)
         {
-            if (expr.Vars.Count != 1 || expr.Vars.Single() != x)
+            if (expr.Vars.Single() != x)
                 throw new MathSException($"{nameof(expr)} should only contain {nameof(Variable)} {nameof(x)}");
             bool Corresponds(Real val) => sign switch
             {

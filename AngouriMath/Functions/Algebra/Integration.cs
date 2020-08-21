@@ -13,13 +13,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using static AngouriMath.Entity.Number;
 using AngouriMath.Extensions;
+using AngouriMath.Functions.Algebra;
 using PeterO.Numbers;
 
 namespace AngouriMath
 {
-    using static Entity.Number;
-    public abstract partial record Entity : ILatexiseable
+    public abstract partial record Entity
     {
         /// <summary>
         /// Returns a value of a definite integral of a function. Only works for one-variable functions
@@ -49,6 +50,9 @@ namespace AngouriMath
         public Complex DefiniteIntegral(Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
             Integration.Integrate(this, x, from, to, stepCount);
     }
+}
+namespace AngouriMath.Functions.Algebra
+{
     internal static class Integration
     {
         /// <summary>Numerical definite integration, see more in <see cref="Entity.DefiniteIntegral(Entity.Variable, EDecimal, EDecimal)"/></summary>
@@ -56,7 +60,7 @@ namespace AngouriMath
         {
             System.Numerics.Complex res = 0;
             var cfunc = func.Compile(x);
-            for(int i = 0; i <= stepCount; i++)
+            for (int i = 0; i <= stepCount; i++)
             {
                 var share = ((EDecimal)i) / stepCount;
                 var tmp = Complex.Create(from.Re * share + to.Re * (1 - share), from.Im * share + to.Im * (1 - share));

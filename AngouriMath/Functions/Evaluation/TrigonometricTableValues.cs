@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using PeterO.Numbers;
 
-namespace AngouriMath
+namespace AngouriMath.Functions
 {
     using static Entity;
     using static Entity.Number;

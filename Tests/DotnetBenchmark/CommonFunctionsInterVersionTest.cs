@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Numerics;
-using System.Text;
+﻿using System.Numerics;
 using AngouriMath;
+using AngouriMath.Core;
 using AngouriMath.Extensions;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Exporters.Csv;

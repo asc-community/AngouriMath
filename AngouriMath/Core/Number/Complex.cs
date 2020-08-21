@@ -15,16 +15,17 @@
 
 using System.Linq;
 using PeterO.Numbers;
-using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
+    using Core;
+    using Core.Exceptions;
     partial record Entity
     {
         public abstract partial record Number
         {
             /// <summary>
-            /// Extension for <see cref="Number.Real"/>s
+            /// Extension for <see cref="Real"/>s
             /// <a href="https://en.wikipedia.org/wiki/Complex_number"/>
             /// </summary>
             public record Complex : Number

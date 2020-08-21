@@ -13,9 +13,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -23,6 +20,7 @@ using PeterO.Numbers;
 
 namespace AngouriMath
 {
+    using Core;
     using static Entity.Number;
     public abstract partial record Entity : ILatexiseable
     {
@@ -265,10 +263,10 @@ namespace AngouriMath
 
                 switch (ApproachFrom)
                 {
-                    case Limits.ApproachFrom.Left:
+                    case ApproachFrom.Left:
                         sb.Append("^-");
                         break;
-                    case Limits.ApproachFrom.Right:
+                    case ApproachFrom.Right:
                         sb.Append("^+");
                         break;
                 }

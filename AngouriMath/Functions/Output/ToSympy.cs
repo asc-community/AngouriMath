@@ -15,7 +15,8 @@
 
 namespace AngouriMath
 {
-    public abstract partial record Entity : ILatexiseable
+    using Core;
+    public abstract partial record Entity
     {
         /// <summary>Generates Python code that you can use with sympy</summary>
         internal abstract string ToSymPy();
@@ -115,11 +116,11 @@ namespace AngouriMath
             internal override string ToSymPy() =>
                 @$"sympy.limit({Expression.ToSymPy()}, {Var.ToSymPy()}, {Destination.ToSymPy()}{ApproachFrom switch
                 {
-                    Limits.ApproachFrom.Left => ", '-'",
-                    Limits.ApproachFrom.BothSides => "",
-                    Limits.ApproachFrom.Right => ", '+'",
+                    ApproachFrom.Left => ", '-'",
+                    ApproachFrom.BothSides => "",
+                    ApproachFrom.Right => ", '+'",
                     _ => throw new System.ComponentModel.InvalidEnumArgumentException
-                      (nameof(ApproachFrom), (int)ApproachFrom, typeof(Limits.ApproachFrom))
+                      (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
                 }})";
         }
     }

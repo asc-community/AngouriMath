@@ -20,8 +20,8 @@ using System.Linq;
 
 namespace AngouriMath
 {
-    using SortLevel = Core.TreeAnalyzer.SortLevel;
-    public abstract partial record Entity : ILatexiseable
+    using SortLevel = Functions.TreeAnalyzer.SortLevel;
+    public abstract partial record Entity
     {
         /// <summary>Hash that is convenient to sort with</summary>
         internal string SortHash(SortLevel level) =>
@@ -126,7 +126,7 @@ namespace AngouriMath
     }
 }
 
-namespace AngouriMath.Core
+namespace AngouriMath.Functions
 {
     internal static partial class TreeAnalyzer
     {

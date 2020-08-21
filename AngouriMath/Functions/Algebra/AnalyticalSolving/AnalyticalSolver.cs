@@ -56,9 +56,8 @@ namespace AngouriMath
         /// </summary>
         private protected static bool EntityInBounds(Entity a, Complex from, Complex to)
         {
-            if (!MathS.CanBeEvaluated(a))
+            if (!(a.Evaled is Complex r))
                 return true;
-            var r = a.Eval();
             return r.RealPart >= from.RealPart &&
                    r.ImaginaryPart >= from.ImaginaryPart &&
                    r.RealPart <= to.RealPart &&
@@ -226,7 +225,7 @@ namespace AngouriMath
     }
 }
 
-namespace AngouriMath.Core
+namespace AngouriMath.Functions
 {
     internal static partial class TreeAnalyzer
     {
@@ -240,18 +239,17 @@ namespace AngouriMath.Core
         /// </summary>
         public static Entity GetMinimumSubtree(Entity expr, Variable x)
         {
-            if (!expr.Vars.Contains(x))
+            if (!expr.Contains(x))
                 throw new ArgumentException($"{nameof(expr)} must contain {nameof(x)}", nameof(expr));
 
             // The idea is the following:
             // We must get a subtree that has more occurances than 1,
             // But at the same time it should cover all references to `ent`
-
             var xs = expr.Nodes.Count(child => child == x);
             return
                 expr.Nodes
                 .TakeWhile(e => e != x) // Requires Entity enumeration to be depth-first!!
-                .Where(e => e.Vars.Contains(x)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
+                .Where(e => e.Contains(x)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
                 .LastOrDefault(sub => expr.Nodes.Count(child => child == sub) * sub.Nodes.Count(child => child == x) == xs)
                 // if `expr` contains 2 `sub`s and `sub` contains 3 `x`s, then there should be 6 `x`s in `expr` (6 == `xs`)
                 ?? x;
@@ -336,7 +334,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 case Powf(var @base, _):
                     Solve(@base, x, dst);
                     return;
-                case Minusf(var subtrahend, var minuend) when !minuend.Vars.Contains(x) && compensateSolving:
+                case Minusf(var subtrahend, var minuend) when !minuend.Contains(x) && compensateSolving:
                     if (subtrahend == x)
                     {
                         dst.Add(minuend);
@@ -345,7 +343,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var subs = 0;
                     Entity? lastChild = null;
                     foreach (var child in subtrahend.DirectChildren)
-                        if (child.Vars.Contains(x))
+                        if (child.Contains(x))
                         {
                             subs += 1;
                             lastChild = child;
@@ -366,13 +364,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // so we skip this part and go to other solvers
             if (!compensateSolving)
             {
-                // Here we generate a unique variable name
-                var newVar = new Variable(expr.Vars.OrderByDescending(v => v.Name.Length).First().Name + "quack");
-
+                var newVar = Variable.CreateTemp(expr);
                 // Here we find all possible replacements and find one that has at least one solution
                 foreach (var alt in expr.Alternate(4))
                 {
-                    if (!alt.Vars.Contains(x))
+                    if (!alt.Contains(x))
                         return; // in this case there is either 0 or +oo solutions
                     var minimumSubtree = TreeAnalyzer.GetMinimumSubtree(alt, x);
                     if (minimumSubtree == x)
@@ -433,7 +429,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // https://mathoverflow.net/a/28977
 
             // if nothing has been found so far
-            if (dst.IsEmpty() && MathS.Settings.AllowNewton && expr.Vars.Count == 1)
+            if (dst.IsEmpty() && MathS.Settings.AllowNewton && expr.Vars.Count() == 1)
                 DestinationAddSet(expr.SolveNt(x));
         }
     }

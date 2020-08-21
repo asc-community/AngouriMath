@@ -39,7 +39,7 @@ namespace AngouriMath.Functions.Algebra
             {
                 static Entity simplifier(Entity entity) => entity.InnerSimplify();
                 static Entity evaluator(Entity entity) => entity.Evaled;
-                Entity collapser(Entity expr) => equation.Vars.Count == 1 ? evaluator(expr) : simplifier(expr);
+                Entity collapser(Entity expr) => equation.Vars.Count() == 1 ? evaluator(expr) : simplifier(expr);
 
                 res.FiniteApply(simplifier);
                 var finalSet = new Set { FastAddingMode = true };
@@ -99,7 +99,7 @@ namespace AngouriMath.Functions.Algebra
             var result = new List<List<Entity>>();
             var replacements = new Dictionary<Variable, Entity>();
             for (int i = 0; i < equations.Count; i++)
-                if (equations[i].Vars.Contains(var))
+                if (equations[i].Contains(var))
                 {
                     var solutionsOverVar = equations[i].SolveEquation(var);
                     equations.RemoveAt(i);

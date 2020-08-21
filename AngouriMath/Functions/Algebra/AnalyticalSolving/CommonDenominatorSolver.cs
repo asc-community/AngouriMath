@@ -55,7 +55,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var multipliers = Mulf.LinearChildren(term);
             foreach (var multiplier in multipliers)
             {
-                if (!multiplier.Vars.Contains(x))
+                if (!multiplier.Contains(x))
                 {
                     oneInfo.numerator *= multiplier;
                     continue;

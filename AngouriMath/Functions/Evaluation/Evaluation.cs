@@ -15,10 +15,11 @@
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
-using AngouriMath.Functions;
 
 namespace AngouriMath
 {
+    using Core;
+    using Functions;
     using static Entity.Number;
     public static partial class MathS
     {
@@ -26,7 +27,7 @@ namespace AngouriMath
     }
 
     // Adding function Eval to Entity
-    public abstract partial record Entity : ILatexiseable
+    public abstract partial record Entity
     {
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
@@ -48,13 +49,13 @@ namespace AngouriMath
             var expChildren = new List<Entity>();
             foreach (var linChild in Sumf.LinearChildren(this))
             {
-                var exp = Core.TreeAnalyzer.SmartExpandOver(linChild, entity => true);
+                var exp = Functions.TreeAnalyzer.SmartExpandOver(linChild, entity => true);
                 if (exp is { })
                     expChildren.AddRange(exp);
                 else
                     return this; // if one is too complicated, return the current one
             }
-            var expanded = Core.TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b));
+            var expanded = Functions.TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b));
             return Expand_(expanded, level).InnerSimplify();
         }
 
@@ -454,16 +455,16 @@ namespace AngouriMath
         {
             protected override Entity InnerEval() => ApproachFrom switch
             {
-                Limits.ApproachFrom.Left => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
-                Limits.ApproachFrom.BothSides => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
-                Limits.ApproachFrom.Right => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                ApproachFrom.Left => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                ApproachFrom.BothSides => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                ApproachFrom.Right => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
                 _ => this,
             };
             internal override Entity InnerSimplify() => ApproachFrom switch
             {
-                Limits.ApproachFrom.Left => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
-                Limits.ApproachFrom.BothSides => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
-                Limits.ApproachFrom.Right => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                ApproachFrom.Left => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                ApproachFrom.BothSides => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                ApproachFrom.Right => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
                 _ => this,
             };
         }

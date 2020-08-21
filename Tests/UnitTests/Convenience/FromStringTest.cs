@@ -1,4 +1,5 @@
 ﻿using AngouriMath;
+using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using Xunit;
 
@@ -61,6 +62,6 @@ namespace UnitTests.Convenience
         [Fact] public void Test32()
             => Assert.Equal(MathS.Limit("x + y", x, 3), MathS.FromString("limit(x + y, x, 3)"));
         [Fact] public void Test33()
-            => Assert.Equal(MathS.Limit("x + y", x, 3, AngouriMath.Limits.ApproachFrom.Left), MathS.FromString("limitleft(x + y, x, 3)"));
+            => Assert.Equal(MathS.Limit("x + y", x, 3, ApproachFrom.Left), MathS.FromString("limitleft(x + y, x, 3)"));
     }
 }

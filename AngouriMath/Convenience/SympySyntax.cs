@@ -94,7 +94,7 @@ namespace AngouriMath
         /// </summary>
         /// <param name="name"></param>
         /// <returns></returns>
-        public static Variable Symbol(string name) => new Variable(name);
+        public static Variable Symbol(string name) => name;
 
         /// <summary>
         /// e ^ power

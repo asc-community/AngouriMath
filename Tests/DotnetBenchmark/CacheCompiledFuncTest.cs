@@ -1,4 +1,5 @@
 ﻿using AngouriMath;
+using AngouriMath.Core;
 using System;
 using System.Numerics;
 using BenchmarkDotNet.Attributes;

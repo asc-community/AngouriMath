@@ -13,12 +13,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
-
 namespace AngouriMath
 {
+    using Core;
     using static Entity.Number;
-    public abstract partial record Entity : ILatexiseable
+    public abstract partial record Entity
     {
         /// <summary>Converts an expression into a string</summary>
         public override string ToString() => Stringize();
@@ -116,11 +115,11 @@ namespace AngouriMath
             internal override string Stringize() =>
                 ApproachFrom switch
                 {
-                    Limits.ApproachFrom.Left => "limitleft",
-                    Limits.ApproachFrom.BothSides => "limit",
-                    Limits.ApproachFrom.Right => "limitright",
+                    ApproachFrom.Left => "limitleft",
+                    ApproachFrom.BothSides => "limit",
+                    ApproachFrom.Right => "limitright",
                     _ => throw new System.ComponentModel.InvalidEnumArgumentException
-                      (nameof(ApproachFrom), (int)ApproachFrom, typeof(Limits.ApproachFrom))
+                      (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
                 } + $"({Expression}, {Var}, {Destination})";
         }
     }

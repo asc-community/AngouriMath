@@ -100,13 +100,8 @@ namespace AngouriMath.Core
         internal static bool EdgeEqual(Edge A, Edge B)
             => A.Item1.Evaled == B.Item1.Evaled && A.Item2 == B.Item2 && A.Item3 == B.Item3;
 
-        internal static Piece ElementOrInterval(Entity a, Entity b, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm)
-        {
-            if (a == b)
-                return new OneElementPiece(a);
-            var interval = new IntervalPiece(a, b, closedARe, closedAIm, closedBRe, closedBIm);
-            return interval;
-        }
+        internal static Piece ElementOrInterval(Entity a, Entity b, bool closedARe, bool closedAIm, bool closedBRe, bool closedBIm) =>
+            a == b ? new OneElementPiece(a) : (Piece)new IntervalPiece(a, b, closedARe, closedAIm, closedBRe, closedBIm);
 
         /// <summary>
         /// Creates an instance of A closed interval (use SetNode-functions to change it,

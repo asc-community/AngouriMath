@@ -1,6 +1,6 @@
 ﻿using AngouriMath;
 using static AngouriMath.Entity.Number;
-using AngouriMath.Core;
+using AngouriMath.Functions;
 using Xunit;
 using System.Linq;
 
@@ -23,7 +23,7 @@ namespace UnitTests.PatternsTest
         {
             var expanded = MathS.Settings.MaxExpansionTermCount.As(3000, () =>
             {
-                var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.Vars.Contains("x"));
+                var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.Contains("x"));
                 if (expandOver is null)
                     throw new Xunit.Sdk.XunitException("expandOver is null");
                 return TreeAnalyzer.MultiHangBinary(expandOver, (a, b) => new Entity.Sumf(a, b));

@@ -1,12 +1,9 @@
-﻿using AngouriMath.Functions.Algebra.AnalyticalSolving;
-using PeterO.Numbers;
+﻿using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading;
 
-namespace AngouriMath.Limits
+namespace AngouriMath.Functions.Algebra
 {
     using static Entity;
     using static Entity.Number;
@@ -14,15 +11,15 @@ namespace AngouriMath.Limits
     {
         internal static Dictionary<EDecimal, Entity>? ParseAsPolynomial(Entity expr, Variable x)
         {
-            var children = Core.TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
-                 expr, entity => entity.Vars.Contains(x)
+            var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
+                 expr, entity => entity.Contains(x)
             );
 
             if (children is null)
                 return null;
 
-            var monomials = PolynomialSolver.GatherMonomialInformation
-                <EDecimal, Core.TreeAnalyzer.PrimitiveDecimal>(children, x);
+            var monomials = Algebra.AnalyticalSolving.PolynomialSolver.GatherMonomialInformation
+                <EDecimal, TreeAnalyzer.PrimitiveDecimal>(children, x);
             if (monomials is null) return null;
             var filteredDictionary = new Dictionary<EDecimal, Entity>();
             foreach (var monomial in monomials)
@@ -95,13 +92,10 @@ namespace AngouriMath.Limits
                     if (maxPowerP.CompareTo(maxPowerQ) > 0)
                     {
                         var term = maxTermP / maxTermQ;
-                        if (MathS.CanBeEvaluated(term))
+                        if (term.Evaled is Number eval)
                         {
-                            var result = Infinity * term.Eval();
-                            if (result == Real.NaN)
-                                return null;
-                            else
-                                return result;
+                            var result = Infinity * eval;
+                            return result == Real.NaN ? null : (Entity)result;
                         }
                         else return Infinity * term;
                     }
@@ -121,10 +115,8 @@ namespace AngouriMath.Limits
         {
             if (expr is Logf(var logBase, var logArgument))
             {
-                if (logBase.Vars.Contains(x))
-                {
+                if (logBase.Contains(x))
                     return SolveAsLogarithmDivision(MathS.Ln(logArgument) / MathS.Ln(logBase), x);
-                }
                 else
                 {
                     var innerLimit = LimitFunctional.ComputeLimit(logArgument, x, Real.PositiveInfinity);
@@ -143,7 +135,7 @@ namespace AngouriMath.Limits
         {
             if (expr is Divf(Logf(var upperLogBase, var upperLogArgument), Logf(var lowerLogBase, var lowerLogArgument)))
             {
-                if (lowerLogBase.Vars.Contains(x) || upperLogBase.Vars.Contains(x)) return null;
+                if (lowerLogBase.Contains(x) || upperLogBase.Contains(x)) return null;
 
                 var upperLogLimit = LimitFunctional.ComputeLimit(upperLogArgument, x, Real.PositiveInfinity);
                 var lowerLogLimit = LimitFunctional.ComputeLimit(lowerLogArgument, x, Real.PositiveInfinity);
@@ -160,17 +152,13 @@ namespace AngouriMath.Limits
                     return LimitFunctional.ComputeLimit(p / q, x, Real.PositiveInfinity);
                 }
                 else
-                {
-                    var limit = MathS.Ln(upperLogLimit) / MathS.Ln(lowerLogLimit);
-                    if (MathS.CanBeEvaluated(limit))
+                    return (MathS.Ln(upperLogLimit) / MathS.Ln(lowerLogLimit)) switch
                     {
-                        var res = limit.Eval();
-                        if (res == Real.NaN) return null;
-                        if (!res.IsFinite || res == Integer.Zero) return res;
-                        return limit;
-                    }
-                    return upperLogLimit / lowerLogLimit;
-                }
+                        { Evaled: Complex { IsNaN: true } } => null,
+                        { Evaled: (Complex { IsFinite: false } or Integer(0)) and var res } => res,
+                        { Evaled: Complex } limit => limit,
+                        _ => upperLogLimit / lowerLogLimit,
+                    };
             }
 
             return null;

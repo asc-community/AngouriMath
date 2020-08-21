@@ -24,12 +24,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
         internal static Set? SolveLinear(Entity expr, Variable variable)
         {
-            var replacement = Variable.CreateUnique(expr, variable.Name);
+            var replacement = Variable.CreateTemp(expr);
             expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
 
             // if there is still original variable after replacements,
             // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
-            if (expr.Vars.Contains(variable))
+            if (expr.Contains(variable))
                 return null;
 
             var solutions = EquationSolver.Solve(expr, replacement);
@@ -38,11 +38,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var actualSolutions = new Set();
             // TODO: make check for infinite solutions
             foreach(var solution in solutions.FiniteSet())
-            {
-                var func = MathS.Pow(MathS.e, MathS.i * variable);
-                foreach (var sol in func.Invert(solution, variable))
+                foreach (var sol in MathS.Pow(MathS.e, MathS.i * variable).Invert(solution, variable))
                     actualSolutions.AddPiece(sol);
-            }
             return actualSolutions;
         }
     }

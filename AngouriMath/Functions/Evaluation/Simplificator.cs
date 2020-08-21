@@ -96,14 +96,22 @@ namespace AngouriMath.Functions
                 if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
 
-                // It is quite slow at this point
                 Entity? possiblePoly = null;
                 foreach (var var in res.Vars)
-                    if (MathS.Utils.TryPolynomial(res, var, out var resPoly)
+                    if (TryPolynomial(res, var, out var resPoly)
                         && (possiblePoly is null || resPoly.Complexity < possiblePoly.Complexity))
                         AddHistory(possiblePoly = resPoly);
                 if (possiblePoly is { } && possiblePoly.Complexity < res.Complexity)
                     res = possiblePoly;
+                /*
+                This was intended to simplify expressions as polynomials over nodes, some kind of
+                greatest common node and simplifying over it. However, the current algorithm does
+                not solve this issue completely and yet too slow to be accepted. 
+
+
+                res = res.DeepCopy();
+                SmartPolynomialCollapser.Collapse(ref res);
+                */
 
                 res = history[history.Keys.Min()].First();
             }
@@ -130,7 +138,14 @@ namespace AngouriMath.Functions
                 <EInteger, TreeAnalyzer.PrimitiveInteger>(children, variable);
             if (monomialsByPower == null)
                 return false;
-            var newMonomialsByPower = new Dictionary<int, Entity>();
+            var res = BuildPoly(monomialsByPower, variable);
+            if (res is null)
+                return false;
+            dst = res;
+            return true;
+        }
+        internal static Entity? BuildPoly(Dictionary<EInteger, Entity> monomialsByPower, Variable x)
+        {
             var terms = new List<Entity>();
             foreach (var index in monomialsByPower.Keys.OrderByDescending(x => x))
             {
@@ -141,20 +156,19 @@ namespace AngouriMath.Functions
                     continue;
                 }
 
-                var px = pair.Key.Equals(EInteger.One) ? variable : MathS.Pow(variable, pair.Key);
+                var px = pair.Key.Equals(EInteger.One) ? x : MathS.Pow(x, pair.Key);
                 terms.Add(pair.Value == 1 ? px : pair.Value.InnerSimplify() * px);
             }
 
             if (terms.Count == 0)
-                return false;
-            dst = terms[0];
+                return null;
+            var dst = terms[0];
             for (int i = 1; i < terms.Count; i++)
                 if (terms[i] is Mulf(Real { IsNegative: true } r, var m))
                     dst -= -r * m;
                 else
                     dst += terms[i];
-            dst = dst.InnerSimplify();
-            return true;
+            return dst.InnerSimplify();
         }
     }
 }

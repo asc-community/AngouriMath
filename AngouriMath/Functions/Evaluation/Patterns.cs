@@ -19,7 +19,7 @@ using System.Linq;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 
-namespace AngouriMath
+namespace AngouriMath.Functions
 {
     internal static class Patterns
     {
@@ -510,7 +510,7 @@ namespace AngouriMath
             _ => x
         };
         /// <summary>Actual sorting with <see cref="Entity.SortHash(TreeAnalyzer.SortLevel)"/></summary>
-        internal static Func<Entity, Entity> SortRules(Core.TreeAnalyzer.SortLevel level) => x => x switch
+        internal static Func<Entity, Entity> SortRules(Functions.TreeAnalyzer.SortLevel level) => x => x switch
         {
             Sumf or Minusf =>
                 Sumf.LinearChildren(x).OrderBy(e => e.SortHash(level)).Aggregate((a, b) => new Sumf(a, b)),
@@ -522,7 +522,7 @@ namespace AngouriMath
             x is Divf(var num, var denom)
             && !MathS.CanBeEvaluated(num)
             && !MathS.CanBeEvaluated(denom)
-            && Core.TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
+            && Functions.TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
             ? divided + remainder
             : x;
     }

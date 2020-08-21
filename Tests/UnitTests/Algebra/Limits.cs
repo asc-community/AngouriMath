@@ -1,6 +1,6 @@
 ﻿using AngouriMath;
+using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
-using AngouriMath.Limits;
 using Xunit;
 
 namespace UnitTests.Algebra

@@ -13,6 +13,7 @@
  */
 
 using System;
+using System.Linq;
 using System.Numerics;
 using AngouriMath.Core;
 using AngouriMath.Extensions;
@@ -67,9 +68,9 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                 }
                 return ChooseGood();
             }
-            if (expr.Vars.Count != 1)
-                throw new Core.Exceptions.MathSException("Two or more or less than one variables in SolveNt is prohibited");
-            var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
+            if (expr.Vars.Single() != v)
+                throw new Core.Exceptions.MathSException($"{nameof(expr)} should only contain {nameof(Entity.Variable)} {nameof(v)}");
+            return MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
                 var res = new Set();
                 var df = expr.Derive(v).Simplify().Compile(v);
@@ -89,7 +90,6 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                     }
                 return res;
             });
-            return res;
         }
     }
 }

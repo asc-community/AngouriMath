@@ -14,17 +14,45 @@
  */
 
 
-using AngouriMath.Core.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
-using System.Text;
-using static AngouriMath.Instruction;
+using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
+using static AngouriMath.Core.FastExpression;
 
 namespace AngouriMath
 {
-    internal partial record Instruction(InstructionType Type, int Reference = -1, Complex Value = default)
+    public abstract partial record Entity
+    {
+        /// <summary>
+        /// Compile function so you can evaluate numerical value 15x faster,
+        /// than subsitution
+        /// </summary>
+        /// <param name="variables">
+        /// List string names of variables in the same order as you will list them when evaluating.
+        /// Constants, i.e. <see cref="MathS.pi"/> and <see cref="MathS.e"/> will be ignored.
+        /// </param>
+        /// <returns></returns>
+        public FastExpression Compile(params Variable[] variables) => Compiler.Compile(this, variables);
+
+        /// <summary>
+        /// Compile function so you can evaluate numerical value 15x faster,
+        /// than subsitution
+        /// </summary>
+        /// <param name="variables">
+        /// List string names of variables in the same order as you will list them when evaluating.
+        /// Constants, i.e. <see cref="MathS.pi"/> and <see cref="MathS.e"/> will be ignored.
+        /// </param>
+        /// <returns></returns>
+        public FastExpression Compile(params string[] variables) =>
+            Compiler.Compile(this, variables.Select(x => (Variable)x));
+    }
+}
+namespace AngouriMath.Core
+{
+    public partial class FastExpression
     {
         internal enum InstructionType
         {
@@ -50,42 +78,13 @@ namespace AngouriMath
             CALL_POW,
             CALL_LOG,
         }
-        public override string ToString() =>
-            Type
-            + (Reference == -1 ? "" : Reference.ToString())
-            + (Type != InstructionType.PUSH_CONST ? "" : Value.ToString());
-    }
-    public abstract partial record Entity : ILatexiseable
-    {
-        /// <summary>
-        /// Compile function so you can evaluate numerical value 15x faster,
-        /// than subsitution
-        /// </summary>
-        /// <param name="variables">
-        /// List string names of variables in the same order as you will list them when evaluating.
-        /// Constants, i.e. <see cref="MathS.pi"/> and <see cref="MathS.e"/> will be ignored.
-        /// </param>
-        /// <returns></returns>
-        public FastExpression Compile(params Variable[] variables) => Compiler.Compile(this, variables);
-
-        /// <summary>
-        /// Compile function so you can evaluate numerical value 15x faster,
-        /// than subsitution
-        /// </summary>
-        /// <param name="variables">
-        /// List string names of variables in the same order as you will list them when evaluating.
-        /// Constants, i.e. <see cref="MathS.pi"/> and <see cref="MathS.e"/> will be ignored.
-        /// </param>
-        /// <returns></returns>
-        public FastExpression Compile(params string[] variables) =>
-            Compiler.Compile(this, variables.Select(x => new Variable(x)));
-    }
-}
-
-namespace AngouriMath
-{
-    public class FastExpression
-    {
+        internal partial record Instruction(InstructionType Type, int Reference = -1, Complex Value = default)
+        {
+            public override string ToString() =>
+                Type
+                + (Reference == -1 ? "" : Reference.ToString())
+                + (Type != InstructionType.PUSH_CONST ? "" : Value.ToString());
+        }
         private readonly Stack<Complex> stack;
         private readonly Complex[] cache;
         private readonly List<Instruction> instructions;
@@ -95,7 +94,7 @@ namespace AngouriMath
         /// You cannot modify this function once it is sealed. The final user will never access to its
         /// direct instructions
         /// </summary>
-        internal FastExpression(int varCount, List<Instruction> instructions, int cacheCount) 
+        internal FastExpression(int varCount, List<Instruction> instructions, int cacheCount)
         {
             this.varCount = varCount;
             this.instructions = instructions;

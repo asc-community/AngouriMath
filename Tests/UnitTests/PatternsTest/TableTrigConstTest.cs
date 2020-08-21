@@ -15,7 +15,7 @@ using System;
 using System.Linq;
 using Xunit;
 
-namespace UnitTests.Core
+namespace UnitTests.PatternsTest
 {
     public class TestTrigTableConsts
     {

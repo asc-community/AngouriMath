@@ -17,7 +17,7 @@ using System.Collections.Generic;
 using System.Linq;
 using PeterO.Numbers;
 
-namespace AngouriMath.Core
+namespace AngouriMath.Functions
 {
     using static Entity;
     using static Entity.Number;
@@ -31,9 +31,9 @@ namespace AngouriMath.Core
             public IReadOnlyDictionary<Variable, Dictionary<EDecimal, Entity>> MonoInfo => monoInfo;
             public IReadOnlyDictionary<Entity, Variable> Replacements => replacements;
             public IReadOnlyDictionary<Variable, Entity> RevertReplacements => revertReplacements;
-            public void AddReplacement(Variable variable, Entity value)
+            public void AddReplacement(Entity expr, Entity value)
             {
-                variable = new(variable.Name + "_r");
+                var variable = Variable.CreateTemp(expr);
                 replacements[value] = variable;
                 revertReplacements[variable] = value;
             }
@@ -57,7 +57,7 @@ namespace AngouriMath.Core
                 {
                     // Replace all variables we can
                     foreach (var varMentioned in expr.Vars)
-                        res.AddReplacement(varMentioned, GetMinimumSubtree(expr, varMentioned));
+                        res.AddReplacement(expr, GetMinimumSubtree(expr, varMentioned));
                     expr = expr.Substitute(res.Replacements);
                 }
 

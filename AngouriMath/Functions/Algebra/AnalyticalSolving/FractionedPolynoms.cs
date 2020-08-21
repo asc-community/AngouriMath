@@ -26,7 +26,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         internal static Set? Solve(Entity expr, Variable x)
         {
             var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
-                expr, entity => entity.Vars.Contains(x)
+                expr, entity => entity.Contains(x)
             );
 
             if (children is null)

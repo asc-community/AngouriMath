@@ -14,10 +14,9 @@
  */
 
 using PeterO.Numbers;
-
-
 namespace AngouriMath
 {
+    using Core;
     partial record Entity
     {
         public abstract partial record Number

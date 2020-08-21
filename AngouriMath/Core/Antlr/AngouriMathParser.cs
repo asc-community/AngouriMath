@@ -711,7 +711,7 @@ public partial class AngouriMathParser : Parser {
 				EnterOuterAlt(_localctx, 2);
 				{
 				State = 107; _localctx._VARIABLE = Match(VARIABLE);
-				 _localctx.value =  MathS.Var((_localctx._VARIABLE!=null?_localctx._VARIABLE.Text:null)); 
+				 _localctx.value =  Entity.Variable.CreateVariableUnchecked((_localctx._VARIABLE!=null?_localctx._VARIABLE.Text:null)); 
 				}
 				break;
 			case T__7:
@@ -918,7 +918,7 @@ public partial class AngouriMathParser : Parser {
 				State = 219; Match(T__30);
 				State = 220; _localctx.args = function_arguments();
 				State = 221; Match(T__8);
-				 Assert("limitleft", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Limits.ApproachFrom.Left); 
+				 Assert("limitleft", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Core.ApproachFrom.Left); 
 				}
 				break;
 			case T__31:
@@ -927,7 +927,7 @@ public partial class AngouriMathParser : Parser {
 				State = 224; Match(T__31);
 				State = 225; _localctx.args = function_arguments();
 				State = 226; Match(T__8);
-				 Assert("limitright", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Limits.ApproachFrom.Right); 
+				 Assert("limitright", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Core.ApproachFrom.Right); 
 				}
 				break;
 			default:

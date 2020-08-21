@@ -21,7 +21,7 @@ namespace AngouriMath.Extensions
 {
     using static Entity;
     using static Entity.Number;
-    public static class AMExtensions
+    public static class AngouriMathExtensions
     {
         public static Entity ToEntity(this string expr) => MathS.FromString(expr);
         public static Entity Simplify(this string expr) => expr.ToEntity().Simplify();
@@ -44,6 +44,8 @@ namespace AngouriMath.Extensions
         public static string Latexise(this string str) => str.ToEntity().Latexise();
         public static FastExpression Compile(this string str, params Variable[] variables)
             => str.ToEntity().Compile(variables);
+        public static Entity Derive(this string str, Variable x)
+            => str.ToEntity().Derive(x);
 
         // C# can't into templates :(
         /*

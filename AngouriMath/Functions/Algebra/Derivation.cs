@@ -18,7 +18,7 @@ using PeterO.Numbers;
 namespace AngouriMath
 {
     // Adding function Derive to Entity
-    public abstract partial record Entity : ILatexiseable
+    public abstract partial record Entity
     {
         /// <summary>Derivation over a variable (without simplification)</summary>
         /// <param name="x">The variable to derive over</param>

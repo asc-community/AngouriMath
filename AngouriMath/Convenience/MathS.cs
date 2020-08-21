@@ -14,85 +14,69 @@
  */
 
 using System;
-using System.Numerics;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using PeterO.Numbers;
 using AngouriMath.Core;
-using AngouriMath.Limits;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
-using AngouriMath.Functions.Algebra.InequalitySolver;
+using AngouriMath.Functions.Algebra.NumericalSolving;
 
+namespace AngouriMath.Core
+{
+    public enum ApproachFrom
+    {
+        BothSides,
+        Left,
+        Right,
+    }
+}
 namespace AngouriMath
 {
     using static Entity;
+    using static Entity.Number;
+    using NumericsComplex = System.Numerics.Complex;
     using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
-    /// <summary>
-    /// Use functions from this class
-    /// </summary>
+    /// <summary>Use functions from this class</summary>
     /// If I need to add a function or operator (e.g. sin), I first pin this tab for reference :)
-    /// To start, implement real number evaluation
-    /// (Press F12 -> <see cref="PeterONumbersExtensions.Sin(PeterO.Numbers.EDecimal, PeterO.Numbers.EContext)"/>)
-    /// then complex number evaluation
-    /// (Press F12 -> <see cref="Core.Numerix.Number.Sin(Core.Numerix.ComplexNumber)"/>)
+    /// To start, implement real number evaluation (Press F12 -> <see cref="PeterONumbersExtensions.Sin"/>)
+    /// then complex number evaluation (Press F12 -> <see cref="Number.Sin"/>)
     ///
-    /// Next, Add Wakeup to static ctor below
-    ///  -> Copy static function class (Press F12 -> <see cref="Sinf.Wakeup()"/>)
-    ///  -> Add instance method to Entity (Press F12 -> <see cref="Entity.Sin()"/>)).
+    /// Next, Add a new node representing the function as a nested type in <see cref="Entity"/>
+    ///  -> Copy record class (Press F12 -> First result of <see cref="Sinf"/>)
+    ///  -> Add instance method to Entity (Press F12 -> <see cref="Entity.Sin"/>).
     /// 
     /// After that,
-    /// .Eval (Press F12 -> <see cref="Sinf.Eval(System.Collections.Generic.List{Entity})"/>)
-    /// .Hang (Press F12 -> <see cref="new Sinf(Entity)"/>)
-    /// .PHang (Press F12 -> <see cref="Sinf.PHang(Entity)"/>)
-    /// .ToString (Press F12 -> <see cref="Sinf.Stringize(System.Collections.Generic.List{Entity})"/>)
-    /// .Latex (Press F12 -> <see cref="Sinf.Latex(System.Collections.Generic.List{Entity})"/>)
-    /// .Derive (Press F12 -> <see cref="Sinf.Derive(System.Collections.Generic.List{Entity}, Variable)"/>)
-    /// .Simplify (Press F12 -> <see cref="Sinf.Simplify(System.Collections.Generic.List{Entity})"/>)
-    /// To compilation (Press F12 -> <see cref="CompiledMathFunctions.func2Num"/>
-    ///                                       ^ TODO: Replace numbers with enum ^
-    ///                          and <see cref="FastExpression.Substitute(System.Numerics.Complex[])"/>)
-    /// To From String Syntax Info goodStrings (Press F12 -> <see cref="Core.FromString.SyntaxInfo.goodStringsForFunctions"/>)
+    /// .InnerEval (Press F12 -> <see cref="Sinf.InnerEval"/>)
+    /// .Stringize (Press F12 -> <see cref="Sinf.Stringize"/>)
+    /// .Latexise (Press F12 -> <see cref="Sinf.Latexise"/>)
+    /// .Derive (Press F12 -> <see cref="Sinf.Derive"/>)
+    /// .InnerSimplify (Press F12 -> <see cref="Sinf.InnerSimplify"/>)
+    /// To compilation (Press F12 -> <see cref="Sinf.InnerCompile_"/> and <see cref="FastExpression.Substitute"/>)
+    /// To parser (Open AngouriMath/Core/Antlr/AngouriMath.g)
     /// To Pattern Replacer
-    ///     (Press F12 -> <see cref="Patterns.TrigonometricRules"/>
-    ///               and <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.Trigonometry"/>
-    ///               and <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.ContainsTrigonometric(Entity)"/>
-    ///               and <see cref="Functions.Evaluation.Simplification.Simplificator.Alternate(Entity, int)"/>)
-    /// To static MathS() (Press F12 -> <see cref="Sin(Entity)"/>)
-    /// To Analytical Solver (Press F12 -> <see cref="Functions.Algebra.Solver.Analytical.TrigonometricSolver"/>
-    ///                                and <see cref="Functions.Algebra.AnalyticalSolving.AnalyticalSolver.Solve(Entity, Variable, Core.Set, bool)"/>)
-    /// To TreeAnalyzer Optimization (Press F12 -> <see cref="Core.TreeAnalysis.TreeAnalyzer.Optimization.OptimizeTree(ref Entity)"/>)
-    /// To ToSympyCode (Press F12 -> <see cref="Functions.Output.ToSympy.FuncTable"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
+    ///     (Press F12 -> <see cref="Patterns.TrigonometricRules"/> and <see cref="Simplificator.Alternate"/>)
+    /// To static method in MathS (Press F12 -> <see cref="Sin"/>)
+    /// To Analytical Solver (Press F12 -> <see cref="Functions.Algebra.AnalyticalSolving.TrigonometricSolver"/>
+    ///                                and <see cref="Functions.Algebra.AnalyticalSolving.AnalyticalSolver.Solve"/>)
+    /// To ToSympy (Press F12 -> <see cref="Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
     /// 
     /// And finally, remember to add tests for all the new functionality!
     public static partial class MathS
     {
-        /// <summary>
-        /// Use it to solve equations
-        /// </summary>
+        /// <summary>Use it to solve equations</summary>
         /// <param name="equations">
         /// An array of <see cref="Entity"/> (or <see cref="string"/>s)
         /// the system consists of
         /// </param>
-        /// <returns>
-        /// An <see cref="EquationSystem"/> which can then be solved
-        /// </returns>
+        /// <returns>An <see cref="EquationSystem"/> which can then be solved</returns>
         public static EquationSystem Equations(params Entity[] equations) => new EquationSystem(equations);
 
-        /// <summary>
-        /// Solves one equation over one variable
-        /// </summary>
-        /// <param name="equation">
-        /// An equation that is assumed to equal 0
-        /// </param>
-        /// <param name="var">
-        /// Variable whose values we are looking for
-        /// </param>
-        /// <returns>
-        /// Returns a <see cref="Set"/> of possible values or intervals of values
-        /// </returns>
-        public static Set SolveEquation(Entity equation, Variable var)
-            => EquationSolver.Solve(equation, var);
+        /// <summary>Solves one equation over one variable</summary>
+        /// <param name="equation">An equation that is assumed to equal 0</param>
+        /// <param name="var">Variable whose values we are looking for</param>
+        /// <returns>A <see cref="Set"/> of possible values or intervals of values</returns>
+        public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
 
         // Marking small enums with ": byte" is premature optimization and shouldn't be done: https://stackoverflow.com/q/648823/5429648
         [Flags]
@@ -105,20 +89,12 @@ namespace AngouriMath
             GreaterEquals = 0b11,
         }
 
-        /// <summary>
-        /// Will be added soon!
-        /// Solves an inequality numerically
-        /// </summary>
+        /// <summary>Will be added soon! Solves an inequality numerically</summary>
         /// <param name="inequality">
         /// This must only contain one variable, which is <paramref name="var"/>
         /// </param>
-        /// <param name="var">
-        /// The only variable
-        /// </param>
-        /// <param name="sign">
-        /// The relation of the expression to zero.
-        /// </param>
-        /// <returns></returns>
+        /// <param name="var">The only variable</param>
+        /// <param name="sign">The relation of the expression to zero.</param>
         public static Set SolveInequalityNumerically(Entity inequality, Variable var, Inequality sign)
         {
             throw new NotSupportedException("Will be added soon");
@@ -127,213 +103,107 @@ namespace AngouriMath
 #pragma warning restore 162
         }
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of sine
-        /// </param>
-        /// <returns>
-        /// Sine node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of sine</param>
+        /// <returns>Sine node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Sin(Entity a) => new Sinf(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of cosine
-        /// </param>
-        /// <returns>
-        /// Cosine node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of cosine</param>
+        /// <returns>Cosine node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cos(Entity a) => new Cosf(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Logarithm"/>
-        /// </summary>
-        /// <param name="@base">
-        /// Base node of logarithm
-        /// </param>
-        /// <param name="x">
-        /// Argument node of logarithm
-        /// </param>
-        /// <returns>
-        /// Logarithm node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
+        /// <param name="@base">Base node of logarithm</param>
+        /// <param name="x">Argument node of logarithm</param>
+        /// <returns>Logarithm node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Log(Entity @base, Entity x) => new Logf(@base, x);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Power_function"/>
-        /// </summary>
-        /// <param name="base">
-        /// Base node of power
-        /// </param>
-        /// <param name="power">
-        /// Argument node of power
-        /// </param>
-        /// <returns>
-        /// Power node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
+        /// <param name="base">Base node of power</param>
+        /// <param name="power">Argument node of power</param>
+        /// <returns>Power node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Pow(Entity @base, Entity power) => new Powf(@base, power);
 
-        /// <summary>
-        /// Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/>
-        /// </summary>
-        /// <param name="a">
-        /// The argument of which square root will be taken
-        /// </param>
-        /// <returns>
-        /// Power node with (1/2) as the power
-        /// </returns>
+        /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
+        /// <param name="a">The argument of which square root will be taken</param>
+        /// <returns>Power node with (1/2) as the power</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Sqrt(Entity a) => new Powf(a, Number.Rational.Create(1, 2));
 
-        /// <summary>
-        /// Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/>
-        /// </summary>
-        /// <param name="a">
-        /// The argument of which cube root will be taken
-        /// </param>
-        /// <returns>
-        /// Power node with (1/3) as the power
-        /// </returns>
+        /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
+        /// <param name="a">The argument of which cube root will be taken</param>
+        /// <returns>Power node with (1/3) as the power</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cbrt(Entity a) => new Powf(a, Number.Rational.Create(1, 3));
 
-        /// <summary>
-        /// Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument to be squared
-        /// </param>
-        /// <returns>
-        /// Power node with 2 as the power
-        /// </returns>
+        /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
+        /// <param name="a">Argument to be squared</param>
+        /// <returns>Power node with 2 as the power</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Sqr(Entity a) => new Powf(a, 2);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which tangent will be taken
-        /// </param>
-        /// <returns>
-        /// Tangent node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of which tangent will be taken</param>
+        /// <returns>Tangent node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Tan(Entity a) => new Tanf(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which cotangent will be taken
-        /// </param>
-        /// <returns>
-        /// Cotangent node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of which cotangent will be taken</param>
+        /// <returns>Cotangent node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cotan(Entity a) => new Cotanf(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which secant will be taken
-        /// </param>
-        /// <returns>
-        /// Reciprocal of cosine node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of which secant will be taken</param>
+        /// <returns>Reciprocal of cosine node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Sec(Entity a) => 1 / Cos(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which cosecant will be taken
-        /// </param>
-        /// <returns>
-        /// Reciprocal of sine node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of which cosecant will be taken</param>
+        /// <returns>Reciprocal of sine node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cosec(Entity a) => 1 / Sin(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which arcsine will be taken
-        /// </param>
-        /// <returns>
-        /// Arcsine node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of which arcsine will be taken</param>
+        /// <returns>Arcsine node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arcsin(Entity a) => new Arcsinf(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which arccosine will be taken
-        /// </param>
-        /// <returns>
-        /// Arccosine node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of which arccosine will be taken</param>
+        /// <returns>Arccosine node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arccos(Entity a) => new Arccosf(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which arctangent will be taken
-        /// </param>
-        /// <returns>
-        /// Arctangent node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of which arctangent will be taken</param>
+        /// <returns>Arctangent node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arctan(Entity a) => new Arctanf(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which arccotangent will be taken
-        /// </param>
-        /// <returns>
-        /// Arccotangent node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of which arccotangent will be taken</param>
+        /// <returns>Arccotangent node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arccotan(Entity a) => new Arccotanf(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which arcsecant will be taken
-        /// </param>
-        /// <returns>
-        /// Arccosine node with the reciprocal of the argument
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of which arcsecant will be taken</param>
+        /// <returns>Arccosine node with the reciprocal of the argument</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arcsec(Entity a) => new Arccosf(1 / a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which arccosecant will be taken
-        /// </param>
-        /// <returns>
-        /// Arcsine node with the reciprocal of the argument
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of which arccosecant will be taken</param>
+        /// <returns>Arcsine node with the reciprocal of the argument</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Arccosec(Entity a) => new Arcsinf(1 / a);
 
@@ -342,58 +212,35 @@ namespace AngouriMath
         /// <a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)">e</a>:
         /// <a href="https://en.wikipedia.org/wiki/Natural_logarithm"/>
         /// </summary>
-        /// <param name="a">
-        /// Argument node of which natural logarithm will be taken
-        /// </param>
-        /// <returns>
-        /// Logarithm node with base equal to e
-        /// </returns>
+        /// <param name="a">Argument node of which natural logarithm will be taken</param>
+        /// <returns>Logarithm node with base equal to e</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Ln(Entity a) => new Logf(e, a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Factorial"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which factorial will be taken
-        /// </param>
-        /// <returns>
-        /// Factorial node
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Factorial"/></summary>
+        /// <param name="a">Argument node of which factorial will be taken</param>
+        /// <returns>Factorial node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Factorial(Entity a) => new Factorialf(a);
 
-        /// <summary>
-        /// <a href="https://en.wikipedia.org/wiki/Gamma_function"/>
-        /// </summary>
-        /// <param name="a">
-        /// Argument node of which gamma function will be taken
-        /// </param>
-        /// <returns>
-        /// Factorial node with one added to the argument
-        /// </returns>
+        /// <summary><a href="https://en.wikipedia.org/wiki/Gamma_function"/></summary>
+        /// <param name="a">Argument node of which gamma function will be taken</param>
+        /// <returns>Factorial node with one added to the argument</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Gamma(Entity a) => new Factorialf(a + 1);
 
-        /// <summary>
-        /// Creates an instance of <see cref="Variable"/>.
-        /// </summary>
-        /// <param name="name">
-        /// The name of the variable.
-        /// Variables of the same name are considered as the same variables.
-        /// </param>
-        /// <returns>
-        /// Variable node
-        /// </returns>
-        public static Variable Var(string name) => new Variable(name);
+        /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
+        /// <param name="name">The name of the <see cref="Variable"/> which equality is based on.</param>
+        /// <returns>Variable node</returns>
+        public static Variable Var(string name) => name;
 
         // List of public constants
         // ReSharper disable once InconsistentNaming
-        public static readonly Variable e = nameof(e);
+        public static readonly Variable e = Variable.e;
         // ReSharper disable once InconsistentNaming
-        public static readonly Number.Complex i = Number.Complex.ImaginaryOne;
+        public static readonly Complex i = Complex.ImaginaryOne;
         // ReSharper disable once InconsistentNaming
-        public static readonly Variable pi = nameof(pi);
+        public static readonly Variable pi = Variable.pi;
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
@@ -402,16 +249,16 @@ namespace AngouriMath
         public static Entity FromString(string expr) => Parser.Parse(expr);
 
         /// <summary>Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/></summary>
-        /// <param name="num">A <see cref="RealNumber"/> in base 10 to be translated into base <paramref name="N"/></param>
+        /// <param name="num">A <see cref="Real"/> in base 10 to be translated into base <paramref name="N"/></param>
         /// <param name="N">The base to translate the number into</param>
         /// <returns>A <see cref="string"/> with the number in the required base</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string ToBaseN(Number.Real num, int N) => BaseConversion.ToBaseN(num.EDecimal, N);
 
         /// <summary>Translates a number in base <paramref name="N"/> into base 10</summary>
-        /// <param name="num">A <see cref="RealNumber"/> in base <paramref name="N"/> to be translated into base 10</param>
+        /// <param name="num">A <see cref="Real"/> in base <paramref name="N"/> to be translated into base 10</param>
         /// <param name="N">The base to translate the number from</param>
-        /// <returns>The <see cref="RealNumber"/> in base 10</returns>
+        /// <returns>The <see cref="Real"/> in base 10</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Number.Real FromBaseN(string num, int N) => BaseConversion.FromBaseN(num, N);
 
@@ -428,7 +275,7 @@ namespace AngouriMath
         ///
         /// These methods represent the only possible way to explicitly create numeric instances.
         /// It will automatically downcast the result for you,
-        /// so <code>Number.Create(1.0);</code> is an <see cref="IntegerNumber"/>.
+        /// so <code>Number.Create(1.0);</code> is an <see cref="Integer"/>.
         /// To avoid it, you may temporarily disable it
         /// <code>
         ///  MathS.Settings.DowncastingEnabled.As(false, () =>
@@ -436,216 +283,123 @@ namespace AngouriMath
         ///    var yourNum = Number.Create(1.0);
         /// });
         /// </code>
-        /// and the result will be a <see cref="RealNumber"/>.
+        /// and the result will be a <see cref="Real"/>.
         /// </summary>
         public static class Numbers
         {
-            /// <summary>
-            /// Creates an instance of <see cref="ComplexNumber"/> from <see cref="Complex"/>
-            /// </summary>
-            /// <param name="value">
-            /// A value of type <see cref="Complex"/>
-            /// </param>
-            /// <returns>
-            /// The resulting <see cref="ComplexNumber"/>
-            /// </returns>
-            public static Number.Complex Create(Complex value) =>
+            /// <summary>Creates an instance of <see cref="Complex"/> from a <see cref="NumericsComplex"/></summary>
+            /// <param name="value">A value of type <see cref="NumericsComplex"/></param>
+            /// <returns>The resulting <see cref="Complex"/></returns>
+            public static Complex Create(NumericsComplex value) =>
                 Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
 
-            /// <summary>
-            /// Creates an instance of <see cref="IntegerNumber"/> from a <see cref="long"/>
-            /// </summary>
-            /// <param name="value">
-            /// A value of type <see cref="long"/> (signed 64-bit integer)
-            /// </param>
+            /// <summary>Creates an instance of <see cref="Integer"/> from a <see cref="long"/></summary>
+            /// <param name="value">A value of type <see cref="long"/> (signed 64-bit integer)</param>
+            /// <returns>The resulting <see cref="Integer"/></returns>
+            public static Integer Create(long value) => Integer.Create(value);
+
+            /// <summary>Creates an instance of <see cref="Integer"/> from an <see cref="EInteger"/></summary>
+            /// <param name="value">A value of type <see cref="EInteger"/></param>
+            /// <returns>The resulting <see cref="Integer"/></returns>
+            public static Integer Create(EInteger value) => Integer.Create(value);
+
+            /// <summary>Creates an instance of <see cref="Integer"/> from an <see cref="int"/></summary>
+            /// <param name="value">A value of type <see cref="int"/> (signed 32-bit integer)</param>
+            /// <returns>The resulting <see cref="Integer"/></returns>
+            public static Integer Create(int value) => Integer.Create(value);
+
+            /// <summary>Creates an instance of <see cref="Rational"/> from two <see cref="EInteger"/>s</summary>
+            /// <param name="numerator">Numerator of type <see cref="EInteger"/></param>
+            /// <param name="denominator">Denominator of type <see cref="EInteger"/></param>
             /// <returns>
-            /// The resulting <see cref="IntegerNumber"/>
+            /// The resulting <see cref="Rational"/>
             /// </returns>
-            public static Number.Integer Create(long value) => Number.Integer.Create(value);
+            public static Rational CreateRational(EInteger numerator, EInteger denominator)
+                => Rational.Create(numerator, denominator);
+
+            /// <summary>Creates an instance of <see cref="Rational"/> from an <see cref="ERational"/></summary>
+            /// <param name="rational">A value of type <see cref="ERational"/></param>
+            /// <returns>The resulting <see cref="Rational"/></returns>
+            public static Rational Create(ERational rational) => Rational.Create(rational);
+
+            /// <summary>Creates an instance of <see cref="Real"/> from an <see cref="EDecimal"/></summary>
+            /// <param name="value">A value of type <see cref="EDecimal"/></param>
+            /// <returns>The resulting <see cref="Real"/></returns>
+            public static Real Create(EDecimal value) => Real.Create(value);
+
+            /// <summary>Creates an instance of <see cref="Real"/> from a <see cref="double"/></summary>
+            /// <param name="value">A value of type <see cref="double"/> (64-bit floating-point number)</param>
+            /// <returns>The resulting <see cref="Real"/></returns>
+            public static Real Create(double value) => Real.Create(EDecimal.FromDouble(value));
 
             /// <summary>
-            /// Creates an instance of <see cref="IntegerNumber"/> from an <see cref="EInteger"/>
-            /// </summary>
-            /// <param name="value">
-            /// A value of type <see cref="EInteger"/>
-            /// </param>
-            /// <returns>
-            /// The resulting <see cref="IntegerNumber"/>
-            /// </returns>
-            public static Number.Integer Create(EInteger value) => Number.Integer.Create(value);
-
-            /// <summary>
-            /// Creates an instance of <see cref="IntegerNumber"/> from an <see cref="int"/>
-            /// </summary>
-            /// <param name="value">
-            /// A value of type <see cref="int"/> (signed 32-bit integer)
-            /// </param>
-            /// <returns>
-            /// The resulting <see cref="IntegerNumber"/>
-            /// </returns>
-            public static Number.Integer Create(int value) => Number.Integer.Create(value);
-
-            /// <summary>
-            /// Creates an instance of <see cref="RationalNumber"/> from two <see cref="EInteger"/>s
-            /// </summary>
-            /// <param name="numerator">
-            /// Numerator of type <see cref="EInteger"/>
-            /// </param>
-            /// <param name="denominator">
-            /// Denominator of type <see cref="EInteger"/>
-            /// </param>
-            /// <returns>
-            /// The resulting <see cref="RationalNumber"/>
-            /// </returns>
-            public static Number.Rational CreateRational(EInteger numerator, EInteger denominator)
-                => Number.Rational.Create(numerator, denominator);
-
-            /// <summary>
-            /// Creates an instance of <see cref="RationalNumber"/> from an <see cref="ERational"/>
-            /// </summary>
-            /// <param name="rational">
-            /// A value of type <see cref="ERational"/>
-            /// </param>
-            /// <returns>
-            /// The resulting <see cref="RationalNumber"/>
-            /// </returns>
-            public static Number.Rational Create(ERational rational) => Number.Rational.Create(rational);
-
-            /// <summary>
-            /// Creates an instance of <see cref="RealNumber"/> from an <see cref="EDecimal"/>
-            /// </summary>
-            /// <param name="value">
-            /// A value of type <see cref="EDecimal"/>
-            /// </param>
-            /// <returns>
-            /// The resulting <see cref="RealNumber"/>
-            /// </returns>
-            public static Number.Real Create(EDecimal value) => Number.Real.Create(value);
-
-            /// <summary>
-            /// Creates an instance of <see cref="RealNumber"/> from a <see cref="double"/>
-            /// </summary>
-            /// <param name="value">
-            /// A value of type <see cref="double"/> (64-bit floating-point number)
-            /// </param>
-            /// <returns>
-            /// The resulting <see cref="RealNumber"/>
-            /// </returns>
-            public static Number.Real Create(double value) => Number.Real.Create(EDecimal.FromDouble(value));
-
-            /// <summary>
-            /// Creates an instance of <see cref="ComplexNumber"/> from two <see cref="RealNumber"/>s
+            /// Creates an instance of <see cref="Complex"/> from two <see cref="EDecimal"/>s
             /// </summary>
             /// <param name="re">
-            /// Real part of the desired <see cref="ComplexNumber"/> of type <see cref="EDecimal"/>
+            /// Real part of the desired <see cref="Complex"/> of type <see cref="EDecimal"/>
             /// </param>
             /// <param name="im">
-            /// Imaginary part of the desired <see cref="ComplexNumber"/> of type <see cref="EDecimal"/>
+            /// Imaginary part of the desired <see cref="Complex"/> of type <see cref="EDecimal"/>
             /// </param>
-            /// <returns>
-            /// The resulting <see cref="ComplexNumber"/>
-            /// </returns>
-            public static Number.Complex Create(EDecimal re, EDecimal im) => Number.Complex.Create(re, im);
+            /// <returns>The resulting <see cref="Complex"/></returns>
+            public static Complex Create(EDecimal re, EDecimal im) => Complex.Create(re, im);
         }
 
-        /// <summary>
-        /// Classes and functions related to matrices are defined here
-        /// </summary>
+        /// <summary>Classes and functions related to matrices are defined here</summary>
         public static class Matrices
         {
             /// <summary>
             /// Creates an instance of <see cref="Tensor"/> that is a matrix.
             /// Usage example:
             /// <code>
-            /// var t = MathS.Matrix(5, 3,
-            ///     10, 11, 12,
-            ///     20, 21, 22,
-            ///     30, 31, 32,
-            ///     40, 41, 42,
+            /// var t = MathS.Matrix(5, 3,<br/>
+            /// <list type="bullet"><list type="bullet"><list type="bullet"><list type="bullet">
+            ///     10, 11, 12,<br/>
+            ///     20, 21, 22,<br/>
+            ///     30, 31, 32,<br/>
+            ///     40, 41, 42,<br/>
             ///     50, 51, 52);
+            /// </list></list></list></list>
             /// </code>
             /// creates 5×3 matrix with the appropriate elements
             /// </summary>
-            /// <param name="rows">
-            /// Number of rows (first axis)
-            /// </param>
-            /// <param name="columns">
-            /// Number of columns (second axis)
-            /// </param>
+            /// <param name="rows">Number of rows (first axis)</param>
+            /// <param name="columns">Number of columns (second axis)</param>
             /// <param name="values">
             /// Array of values of the matrix so that its length is equal to
             /// the product of <paramref name="rows"/> and <paramref name="columns"/>
             /// </param>
-            /// <returns>
-            /// A two-dimensional <see cref="Tensor"/> which is a matrix
-            /// </returns>
+            /// <returns>A two-dimensional <see cref="Tensor"/> which is a matrix</returns>
             public static Tensor Matrix(int rows, int columns, params Entity[] values) =>
                 new(GenTensor.CreateMatrix(rows, columns, (x, y) => values[x * columns + y]));
 
-            /// <summary>
-            /// Creates an instance of <see cref="Tensor"/> that is a matrix.
-            /// </summary>
-            /// <param name="values">
-            /// A two-dimensional array of values
-            /// </param>
-            /// <returns>
-            /// A two-dimensional <see cref="Tensor"/> which is a matrix
-            /// </returns>
+            /// <summary>Creates an instance of <see cref="Tensor"/> that is a matrix.</summary>
+            /// <param name="values">A two-dimensional array of values</param>
+            /// <returns>A two-dimensional <see cref="Tensor"/> which is a matrix</returns>
             public static Tensor Matrix(Entity[,] values) => new(GenTensor.CreateMatrix(values));
 
-            /// <summary>
-            /// Creates an instance of <see cref="Tensor"/> that is a vector.
-            /// </summary>
-            /// <param name="values">
-            /// The cells of the <see cref="Tensor"/>
-            /// </param>
-            /// <returns>
-            /// A one-dimensional <see cref="Tensor"/> which is a vector
-            /// </returns>
+            /// <summary>Creates an instance of <see cref="Tensor"/> that is a vector.</summary>
+            /// <param name="values">The cells of the <see cref="Tensor"/></param>
+            /// <returns>A one-dimensional <see cref="Tensor"/> which is a vector</returns>
             public static Tensor Vector(params Entity[] values) => new(GenTensor.CreateVector(values));
 
-            /// <summary>
-            /// Returns the dot product of two <see cref="Tensor"/>s that are matrices.
-            /// </summary>
-            /// <param name="A">
-            /// First matrix (its width is the result's width)
-            /// </param>
-            /// <param name="B">
-            /// Second matrix (its height is the result's height)
-            /// </param>
-            /// <returns>
-            /// A two-dimensional <see cref="Tensor"/> (matrix) as a result of symbolic multiplication
-            /// </returns>
+            /// <summary>Returns the dot product of two <see cref="Tensor"/>s that are matrices.</summary>
+            /// <param name="A">First matrix (its width is the result's width)</param>
+            /// <param name="B">Second matrix (its height is the result's height)</param>
+            /// <returns>A two-dimensional <see cref="Tensor"/> (matrix) as a result of symbolic multiplication</returns>
             [Obsolete("Use MatrixMultiplication instead")]
             public static Tensor DotProduct(Tensor A, Tensor B) => new(GenTensor.MatrixMultiply(A.InnerTensor, B.InnerTensor));
 
-            /// <summary>
-            /// Returns the dot product of two <see cref="Tensor"/>s that are matrices.
-            /// </summary>
-            /// <param name="A">
-            /// First matrix (its width is the result's width)
-            /// </param>
-            /// <param name="B">
-            /// Second matrix (its height is the result's height)
-            /// </param>
-            /// <returns>
-            /// A two-dimensional <see cref="Tensor"/> (matrix) as a result of symbolic multiplication
-            /// </returns>
+            /// <summary>Returns the dot product of two <see cref="Tensor"/>s that are matrices.</summary>
+            /// <param name="A">First matrix (its width is the result's width)</param>
+            /// <param name="B">Second matrix (its height is the result's height)</param>
+            /// <returns>A two-dimensional <see cref="Tensor"/> (matrix) as a result of symbolic multiplication</returns>
             public static Tensor MatrixMultiplication(Tensor A, Tensor B) => new(GenTensor.TensorMatrixMultiply(A.InnerTensor, B.InnerTensor));
 
-            /// <summary>
-            /// Returns the scalar product of two <see cref="Tensor"/>s that are vectors
-            /// with the same length.
-            /// </summary>
-            /// <param name="a">
-            /// First vector (order does not matter)
-            /// </param>
-            /// <param name="b">
-            /// Second vector
-            /// </param>
-            /// <returns>
-            /// The resulting scalar which is an <see cref="Entity"/> and not a <see cref="Tensor"/>
-            /// </returns>
+            /// <summary>Returns the scalar product of two <see cref="Tensor"/>s that are vectors with the same length.</summary>
+            /// <param name="a">First vector (order does not matter)</param>
+            /// <param name="b">Second vector</param>
+            /// <returns>The resulting scalar which is an <see cref="Entity"/> and not a <see cref="Tensor"/></returns>
             public static Entity ScalarProduct(Tensor a, Tensor b) => GenTensor.VectorDotProduct(a.InnerTensor, b.InnerTensor);
         }
 
@@ -653,10 +407,7 @@ namespace AngouriMath
         /// A couple of settings allowing you to set some preferences for AM's algorithms
         /// To use these settings the syntax is
         /// <code>
-        /// MathS.Settings.SomeSetting.As(5 /* Here you set a value to the setting */, () =>
-        /// {
-        ///     ... /* your code */
-        /// });
+        /// MathS.Settings.SomeSetting.As(5 /* Here you set a value to the setting */, () => { ... /* your code */ });
         /// </code>
         /// </summary>
         public static partial class Settings
@@ -829,56 +580,35 @@ namespace AngouriMath
             [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;
         }
 
-        /// <summary>
-        /// Some additional functions are defined here
-        /// </summary>
-        public static class Utils
-        {
-            /// <summary>
-            /// Returns an <see cref="Entity"/> in polynomial order if possible
-            /// </summary>
-            /// <param name="expr">
-            /// The unordered <see cref="Entity"/>
-            /// </param>
-            /// <param name="variable">
-            /// The variable of the polynomial
-            /// </param>
-            /// <param name="dst">
-            /// The ordered result
-            /// </param>
-            /// <returns>
-            /// <see langword="true"/> if success,
-            /// <see langword="false"/> otherwise
-            /// (do not access <paramref name="dst"/> in this case, it's undefined)
-            /// </returns>
-            public static bool TryPolynomial(Entity expr, Variable variable,
-                [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
-                out Entity? dst) => Simplificator.TryPolynomial(expr, variable, out dst);
+        /// <summary>Returns an <see cref="Entity"/> in polynomial order if possible</summary>
+        /// <param name="expr">The unordered <see cref="Entity"/></param>
+        /// <param name="variable">The variable of the polynomial</param>
+        /// <param name="dst">The ordered result</param>
+        /// <returns>
+        /// <see langword="true"/> if success,
+        /// <see langword="false"/> otherwise (<paramref name="dst"/> will be <see langword="null"/>)
+        /// </returns>
+        public static bool TryPolynomial(Entity expr, Variable variable,
+            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
+            out Entity? dst) => Simplificator.TryPolynomial(expr, variable, out dst);
 
-            /// <summary>
-            /// Returns sympy interpretable format
-            /// </summary>
-            /// <param name="expr">
-            /// An <see cref="Entity"/> representing an expression
-            /// </param>
-            /// <returns></returns>
-            public static string ToSympyCode(Entity expr)
-            {
-                var sb = new System.Text.StringBuilder();
-                var vars = expr.Vars;
-                sb.Append("import sympy\n\n");
-                foreach (var f in vars)
-                    sb.Append($"{f} = sympy.Symbol('{f}')\n");
-                sb.Append("\n");
-                sb.Append("expr = " + expr.ToSymPy());
-                return sb.ToString();
-            }
+        /// <returns>sympy interpretable format</returns>
+        /// <param name="expr">An <see cref="Entity"/> representing an expression</param>
+        public static string ToSympyCode(Entity expr)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append("import sympy\n\n");
+            foreach (var f in expr.Vars)
+                sb.Append($"{f} = sympy.Symbol('{f}')\n");
+            sb.Append("\n");
+            sb.Append("expr = " + expr.ToSymPy());
+            return sb.ToString();
         }
 
         /// <summary>
         /// Functions and classes related to sets defined here
         /// 
-        /// Class <see cref="SetNode"/> defines true mathematical sets
+        /// Class <see cref="Set"/> defines true mathematical sets
         /// It can be empty,
         /// it can contain <see cref="OneElementPiece"/>s,
         /// it can contain <see cref="IntervalPiece"/>s etc.
@@ -887,30 +617,22 @@ namespace AngouriMath
         /// </summary>
         public static class Sets
         {
-            /// <summary>
-            /// Creates an instance of an empty <see cref="Set"/>
-            /// </summary>
-            /// <returns>
-            /// A <see cref="Set"/> with no elements
-            /// </returns>
+            /// <summary>Creates an instance of an empty <see cref="Set"/></summary>
+            /// <returns>A <see cref="Set"/> with no elements</returns>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static Set Empty()
-                => new Set();
+            public static Set Empty() => new Set();
 
-            /// <returns>A set of all <see cref="ComplexNumber"/>s</returns>
-            public static Set C()
-                => Set.C();
+            /// <returns>A set of all <see cref="Complex"/>s</returns>
+            public static Set C() => Set.C();
 
-            /// <returns>A set of all <see cref="RealNumber"/>s</returns>
-            public static Set R()
-                => Set.R();
+            /// <returns>A set of all <see cref="Real"/>s</returns>
+            public static Set R() => Set.R();
 
             /// <summary>
-            /// Creats a <see cref="Set"/> that you can fill with elements
+            /// Creates a <see cref="Set"/> that you can fill with elements
             /// Later on, you may add an Interval if you wish
             /// </summary>
-            public static Set Finite(params Entity[] entities)
-                => Set.Finite(entities);
+            public static Set Finite(params Entity[] entities) => Set.Finite(entities);
 
             /// <summary>
             /// Creates an interval. To modify it, use e.g.
@@ -922,8 +644,7 @@ namespace AngouriMath
             /// <summary>
             /// Creates an element for <see cref="Set"/>. One can be created implicitly, <code>Piece a = 3;</code>
             /// </summary>
-            public static OneElementPiece Element(Entity element)
-                => new OneElementPiece(element);
+            public static OneElementPiece Element(Entity element) => new OneElementPiece(element);
         }
 
         /// <summary>
@@ -949,9 +670,7 @@ namespace AngouriMath
             public static Entity? Limit(Entity expr, Variable var, Entity approachDestination)
                 => LimitFunctional.ComputeLimit(expr, var, approachDestination);
 
-            /// <summary>
-            /// Derives over <paramref name="x"/> <paramref name="power"/> times
-            /// </summary>
+            /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
             public static Entity? Derivative(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
@@ -960,18 +679,12 @@ namespace AngouriMath
                 return ent;
             }
 
-            /// <summary>
-            /// Derivation over a variable (without simplification)
-            /// </summary>
-            /// <param name="x">
-            /// The variable to derive over
-            /// </param>
+            /// <summary>Derivation over a variable (without simplification)</summary>
+            /// <param name="x">The variable to derive over</param>
             /// <returns>The derived result</returns>
             public static Entity? Derivative(Entity expr, Variable x) => expr.Derive(x);
 
-            /// <summary>
-            /// Integrates over <paramref name="x"/> <paramref name="power"/> times
-            /// </summary>
+            /// <summary>Integrates over <paramref name="x"/> <paramref name="power"/> times</summary>
             public static Entity? Integral(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
@@ -980,12 +693,8 @@ namespace AngouriMath
                 return ent;
             }
 
-            /// <summary>
-            /// Integrates over a variable (without simplification)
-            /// </summary>
-            /// <param name="x">
-            /// The variable to integrate over
-            /// </param>
+            /// <summary>Integrates over a variable (without simplification)</summary>
+            /// <param name="x">The variable to integrate over</param>
             /// <returns>The integrated result</returns>
             public static Entity? Integral(Entity expr, Variable x) =>
                 throw new NotImplementedException("Integrals not implemented yet");
@@ -994,78 +703,44 @@ namespace AngouriMath
         /// Hangs your <see cref="Entity"/> to a derivative node
         /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Variable)"/>)
         /// </summary>
-        /// <param name="expr">
-        /// Expression to be hung
-        /// </param>
-        /// <param name="var">
-        /// Variable over which derivative is taken
-        /// </param>
-        public static Entity Derivative(Entity expr, Entity var)
-            => new Derivativef(expr, var, 1);
+        /// <param name="expr">Expression to be hung</param>
+        /// <param name="var">Variable over which derivative is taken</param>
+        public static Entity Derivative(Entity expr, Entity var) => new Derivativef(expr, var, 1);
 
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
         /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Variable)"/>)
         /// </summary>
-        /// <param name="expr">
-        /// Expression to be hung
-        /// </param>
-        /// <param name="var">
-        /// Variable over which derivative is taken
-        /// </param>
-        /// <param name="power">
-        /// Number of times derivative is taken
-        /// Only integers will be simplified or evaluated
-        /// </param>
-        public static Entity Derivative(Entity expr, Entity var, Entity power)
-            => new Derivativef(expr, var, power);
+        /// <param name="expr">Expression to be hung</param>
+        /// <param name="var">Variable over which derivative is taken</param>
+        /// <param name="power">Number of times derivative is taken. Only integers will be simplified or evaluated.</param>
+        public static Entity Derivative(Entity expr, Entity var, Entity power) => new Derivativef(expr, var, power);
 
         /// <summary>
         /// Hangs your entity to an integral node
         /// (to evaluate instead use <see cref="Compute.Integral(Entity, Variable)"/>)
         /// </summary>
-        /// <param name="expr">
-        /// Expression to be hung
-        /// </param>
-        /// <param name="var">
-        /// Variable over which integral is taken
-        /// </param>
-        public static Entity Integral(Entity expr, Entity var)
-            => new Integralf(expr, var, 1);
+        /// <param name="expr">Expression to be hung</param>
+        /// <param name="var">Variable over which integral is taken</param>
+        public static Entity Integral(Entity expr, Entity var) => new Integralf(expr, var, 1);
 
         /// <summary>
         /// Hangs your entity to an integral node
         /// (to evaluate instead use <see cref="Compute.Integral(Entity, Variable)"/>)
         /// </summary>
-        /// <param name="expr">
-        /// Expression to be hung
-        /// </param>
-        /// <param name="var">
-        /// Variable over which integral is taken
-        /// </param>
-        /// <param name="power">
-        /// Number of times integral is taken
-        /// Only integers will be simplified or evaluated
-        /// </param>
-        public static Entity Integral(Entity expr, Entity var, Entity power)
-            => new Integralf(expr, var, power);
+        /// <param name="expr">Expression to be hung</param>
+        /// <param name="var">Variable over which integral is taken</param>
+        /// <param name="power">Number of times integral is taken. Only integers will be simplified or evaluated.</param>
+        public static Entity Integral(Entity expr, Entity var, Entity power) => new Integralf(expr, var, power);
 
         /// <summary>
         /// Hangs your entity to a limit node
         /// (to evaluate instead use <see cref="Compute.Limit(Entity, Variable, Entity)"/>)
         /// </summary>
-        /// <param name="expr">
-        /// Expression to be hung
-        /// </param>
-        /// <param name="var">
-        /// Variable over which limit is taken
-        /// </param>
-        /// <param name="dest">
-        /// Where <paramref name="var"/> approaches (could be finite or infinite)
-        /// </param>
-        /// <param name="approach">
-        /// From where it approaches
-        /// </param>
+        /// <param name="expr">Expression to be hung</param>
+        /// <param name="var">Variable over which limit is taken</param>
+        /// <param name="dest">Where <paramref name="var"/> approaches (could be finite or infinite)</param>
+        /// <param name="approach">From where it approaches</param>
         public static Entity Limit(Entity expr, Entity var, Entity dest, ApproachFrom approach = ApproachFrom.BothSides)
             => new Limitf(expr, var, dest, approach);
 

@@ -15,11 +15,11 @@
 
 using System.Runtime.CompilerServices;
 using PeterO.Numbers;
-
 [assembly: InternalsVisibleTo("DotnetBenchmark")]
 
 namespace AngouriMath
 {
+    using Core;
     partial record Entity
     {
         public abstract partial record Number

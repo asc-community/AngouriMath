@@ -13,17 +13,17 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-﻿using System;
+using System;
+
 namespace AngouriMath.Core.Exceptions
 {
-    public abstract class SyntaxException : Exception
-    {
-        protected SyntaxException(string msg) : base(msg) { }
-    }
-    public class ParseException : SyntaxException
-    {
-        public ParseException(string msg) : base(msg) { }
-    }
+    /// <summary>If one was thrown, the exception is probably not foreseen by AM. Repost it is an issue</summary>
+    public class AngouriBugException : Exception { public AngouriBugException(string msg) : base(msg) { } }
+    public class MathSException : AngouriBugException { public MathSException(string message) : base(message) { } }
+    public class TreeException : MathSException { public TreeException(string message) : base(message) { } }
+    public class UncompilableNodeException : TreeException { public UncompilableNodeException(string message) : base(message) { } }
+    public abstract class SyntaxException : MathSException { protected SyntaxException(string msg) : base(msg) { } }
+    public class ParseException : SyntaxException { public ParseException(string msg) : base(msg) { } }
     public class FunctionArgumentCountException : SyntaxException
     {
         private FunctionArgumentCountException(string msg) : base(msg) { }

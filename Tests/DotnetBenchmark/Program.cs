@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Numerics;
 using AngouriMath;
-using AngouriMath.Extensions;
+using AngouriMath.Core;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
 
@@ -81,7 +80,8 @@ namespace DotnetBenchmark
     {
         public static void Main(string[] _)
         {
-            BenchmarkRunner.Run<AlgebraTest>();
+            BenchmarkRunner.Run<CommonFunctionsInterVersionTest>();
+            Console.ReadLine(); Console.ReadLine(); Console.ReadLine();
         }
     }
 }
