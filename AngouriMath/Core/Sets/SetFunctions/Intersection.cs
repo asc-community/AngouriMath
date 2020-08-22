@@ -14,6 +14,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AngouriMath.Core
 {
@@ -29,21 +30,29 @@ namespace AngouriMath.Core
                 var (goodBPieces, badBPieces) = GatherEvaluablePieces(b);
                 if (goodAPieces.Count * goodBPieces.Count == 0)
                     return new Intersection(A, B);
-                var newPieces = new List<Piece>();
-                foreach (var goodAPiece in goodAPieces)
-                    foreach (var goodBPiece in goodBPieces)
-                        if (PieceFunctions.Intersect(goodAPiece, goodBPiece) is { } piece
-                            && PieceFunctions.IsPieceCorrect(piece))
-                            newPieces.Add(piece);
+                var newPieces = goodAPieces
+                    .SelectMany(_ => goodBPieces, (goodAPiece, goodBPiece) =>
+                        PieceFunctions.Intersect(goodAPiece, goodBPiece) is { } piece
+                        && PieceFunctions.IsPieceCorrect(piece)
+                        ? piece : null);
+
+                static IEnumerable<Piece>? UniteList(IEnumerable<Piece?> pieces)
+                {
+                    using var enumerator = pieces.GetEnumerator();
+                    do if (!enumerator.MoveNext()) return null;
+                    while (enumerator.Current is null);
+                    IEnumerable<Piece> remainders = new[] { enumerator.Current };
+                    while (enumerator.MoveNext())
+                        if (enumerator.Current is { } current)
+                            remainders = remainders.SelectMany(rem => PieceFunctions.Unite(rem, current));
+                    return remainders;
+                }
                 var union = UniteList(newPieces);
                 var badA = new Set { Pieces = badAPieces };
                 var badB = new Set { Pieces = badBPieces };
-                if (union.Count == 0)
-                    if (badA.IsEmpty() || badB.IsEmpty())
-                        return new Set();
-                    else
-                        return new Intersection(badA, badB);
-                var united = new Set { Pieces = union };
+                if (union is null)
+                    return badA.IsEmpty() || badB.IsEmpty() ? new Set() : (SetNode)new Intersection(badA, badB);
+                var united = new Set { Pieces = union.ToList() };
                 if (badBPieces.Count + badAPieces.Count == 0)
                     return united;
                 /*
@@ -54,15 +63,12 @@ namespace AngouriMath.Core
                 var goodA = new Set { Pieces = goodAPieces };
                 var goodB = new Set { Pieces = goodBPieces };
                 return new Union(
-                    united,                                      // A1 & B1
-                    new Union(
-                        new Intersection(                         // A2 & B2
-                            badA,
-                            badB
-                        ),
+                    united,                                // A1 & B1
+                    new Union(                             
+                        new Intersection(badA, badB),      // A2 & B2
                         new Union(
-                            new Intersection(badA, goodB),        // A2 & B1
-                            new Intersection(badB, goodA)     // A1 & B2
+                            new Intersection(badA, goodB), // A2 & B1
+                            new Intersection(badB, goodA)  // A1 & B2
                         )
                     )
                 );

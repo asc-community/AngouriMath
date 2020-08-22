@@ -35,15 +35,14 @@ namespace AngouriMath.Functions.Algebra
                 AnalyticalSolver.Solve(equation, x, res)
             ));
 
-            if (res.Power == Set.PowerLevel.FINITE)
+            if (res.AsFiniteSet() is { } finiteSet)
             {
                 static Entity simplifier(Entity entity) => entity.InnerSimplify();
                 static Entity evaluator(Entity entity) => entity.Evaled;
                 Entity collapser(Entity expr) => equation.Vars.Count() == 1 ? evaluator(expr) : simplifier(expr);
 
-                res.FiniteApply(simplifier);
                 var finalSet = new Set { FastAddingMode = true };
-                foreach (var elem in res.FiniteSet())
+                foreach (var elem in finiteSet.Select(simplifier))
                     if (elem.IsFinite && collapser(equation.Substitute(x, elem)).IsFinite)
                         finalSet.Add(elem);
                 finalSet.FastAddingMode = false;

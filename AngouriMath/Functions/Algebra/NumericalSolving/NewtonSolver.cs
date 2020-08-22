@@ -13,8 +13,8 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Numerics;
 using AngouriMath.Core;
 using AngouriMath.Extensions;
 using AngouriMath.Functions.Algebra.NumericalSolving;
@@ -22,6 +22,8 @@ using PeterO.Numbers;
 
 namespace AngouriMath.Functions.Algebra.NumericalSolving
 {
+    using static Entity.Number;
+    using NumericsComplex = System.Numerics.Complex;
     internal static class NewtonSolver
     {
         /// <summary>Performs a grid search with each iteration done by NewtonIter</summary>
@@ -34,15 +36,15 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
         /// <param name="precision">
         /// How many approximations we need to do before we reach the most precise result.
         /// </param>
-        internal static Set SolveNt(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings)
+        internal static HashSet<Complex> SolveNt(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings)
         {
             /// <summary>Perform one iteration of searching for a root with Newton-Raphson method</summary>
-            static Entity.Number.Complex NewtonIter(FastExpression f, FastExpression df, Complex value, int precision)
+            static Complex NewtonIter(FastExpression f, FastExpression df, NumericsComplex value, int precision)
             {
-                Complex prev = value;
+                var prev = value;
 
-                Complex ChooseGood() =>
-                    Complex.Abs(prev - value) > (double)MathS.Settings.PrecisionErrorCommon.Value
+                NumericsComplex ChooseGood() =>
+                    NumericsComplex.Abs(prev - value) > (double)MathS.Settings.PrecisionErrorCommon.Value
                     ? double.NaN
                     : value; 
 
@@ -72,7 +74,7 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                 throw new Core.Exceptions.MathSException($"{nameof(expr)} should only contain {nameof(Entity.Variable)} {nameof(v)}");
             return MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
-                var res = new Set();
+                var res = new HashSet<Complex>();
                 var df = expr.Derive(v).Simplify().Compile(v);
                 var f = expr.Simplify().Compile(v);
                 for (int x = 0; x < settings.StepCount.Re; x++)
@@ -80,7 +82,7 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                     {
                         var xShare = ((EDecimal)x) / settings.StepCount.Re;
                         var yShare = ((EDecimal)y) / settings.StepCount.Im;
-                        var value = Entity.Number.Complex.Create(
+                        var value = Complex.Create(
                             settings.From.Re * xShare + settings.To.Re * (1 - xShare),
                             settings.From.Im * yShare + settings.To.Im * (1 - yShare));
                         var root = NewtonIter(f, df, value.ToNumerics(), settings.Precision);
@@ -103,6 +105,7 @@ namespace AngouriMath
         /// <a href="https://en.wikipedia.org/wiki/Newton%27s_method"/>
         /// To change parameters see <see cref="MathS.Settings.NewtonSolver"/>
         /// </summary>
-        public Set SolveNt(Variable v) => NewtonSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
+        public HashSet<Number.Complex> SolveNt(Variable v) =>
+            NewtonSolver.SolveNt(this, v, MathS.Settings.NewtonSolver);
     }
 }

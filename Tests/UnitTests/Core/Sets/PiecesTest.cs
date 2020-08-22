@@ -7,10 +7,10 @@ namespace UnitTests.Core
 {
     public class PiecesTest
     {
-        public bool In(Complex num, Piece list) => In(num, new List<Piece>{list});
-        public bool In(Complex num, List<Piece> list) => new Set {Pieces = list}.Contains(num);
-            //=> list.Any(c => c.Contains(new OneElementPiece(num)));
-           
+        public bool In(Complex num, Piece list) => In(num, new List<Piece> { list });
+        public bool In(Complex num, IEnumerable<Piece> list) =>
+            new Set { Pieces = System.Linq.Enumerable.ToList(list) }.Contains(num);
+
         [Fact]
         public void PieceInversion()
         {

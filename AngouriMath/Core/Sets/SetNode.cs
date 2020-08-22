@@ -71,26 +71,8 @@ namespace AngouriMath.Core
             var goodPieces = new List<Piece>(); // Those we can eval, e. g. [3; 4]
             var badPieces = new List<Piece>();  // Those we cannot, e. g. [x + 3; -3]
             foreach (var piece in A)
-                if (piece.IsNumeric())
-                    goodPieces.Add(piece);
-                else
-                    badPieces.Add(piece);
+                (piece.IsNumeric() ? goodPieces : badPieces).Add(piece);
             return (goodPieces, badPieces);
-        }
-        static List<Piece> UniteList(List<Piece> pieces)
-        {
-            if (pieces.Count == 0)
-                return new List<Piece>();
-            var remainders = new List<Piece> { pieces[0] };
-            for (int i = 1; i < pieces.Count; i++)
-            {
-                var newRemainders = new List<Piece>();
-                foreach (var rem in remainders)
-                    newRemainders.AddRange(PieceFunctions.Unite(rem, pieces[i]));
-                remainders = newRemainders;
-            }
-
-            return remainders;
         }
     }
 
@@ -121,9 +103,9 @@ namespace AngouriMath.Core
                     Pieces.Add(piece);
                 return;
             }
-            else if (this.Power == PowerLevel.FINITE && piece is OneElementPiece oneelem)
+            else if (piece is OneElementPiece oneelem && AsFiniteSet() is { } finiteSet)
             {
-                if (!Pieces.OfType<OneElementPiece>().Select(o => o.Evaled).Contains(oneelem.Evaled))
+                if (finiteSet.All(finite => finite.Evaled != oneelem.entity.Item1.Evaled))
                     Pieces.Add(piece);
                 return;
             }
@@ -151,7 +133,7 @@ namespace AngouriMath.Core
         {
             // we will subtract each this.piece from piece and if piece finally becomes 0 then
             // there is no point outside this set
-            var remainders = new List<Piece>{ piece };
+            var remainders = new List<Piece> { piece };
             foreach (var p in this.Pieces)
             {
                 var newRemainders = new List<Piece>();
@@ -176,7 +158,7 @@ namespace AngouriMath.Core
         /// <param name="elements"></param>
         public void AddElements(params Entity[] elements)
         {
-            foreach(var el in elements)
+            foreach (var el in elements)
                 AddPiece(Piece.Element(el));
         }
 
@@ -191,51 +173,23 @@ namespace AngouriMath.Core
         public bool IsEmpty() => Pieces.Count == 0;
 
         public void Clear() => Pieces.Clear();
-        public enum PowerLevel
-        {
-            /// <summary>Set is empty.</summary>
-            EMPTY,
-            /// <summary>Set only contains discrete entities.</summary>
-            FINITE,
-            /// <summary>Set contains at least one interval.</summary>
-            INFINITE
-        }
 
-        public PowerLevel Power =>
-            Pieces.Count == 0 ? PowerLevel.EMPTY
-            : Pieces.Any(p => p is IntervalPiece) ? PowerLevel.INFINITE : PowerLevel.FINITE;
+        public IEnumerable<Entity>? AsFiniteSet() =>
+            Pieces.All(piece => piece is OneElementPiece)
+            ? Pieces.Select(piece => ((OneElementPiece)piece).entity.Item1)
+            : null;
 
         public int Count
-            => Power == PowerLevel.INFINITE ? -1 : Pieces.Count;
-
-        public IEnumerable<T> Select<T>(Func<Piece, T> selector)
-            => Pieces.Select(selector);
-
-        public Set Where(Func<Piece, bool> selector)
-            => new Set { Pieces = Pieces.Where(selector).ToList() };
-
-        public Set FiniteWhere(Func<Entity, bool> selector)
-            => new Set
-            {
-                Pieces = Pieces.Where(p => p is OneElementPiece one && selector(one.entity.Item1)).ToList()
-            };
-
-        public void Apply(Func<Piece, Piece> processor)
         {
-            for (int i = 0; i < Pieces.Count; i++)
-                Pieces[i] = processor(Pieces[i]);
-        }
-
-        public void FiniteApply(Func<Entity, Entity> processor)
-        {
-            for (int i = 0; i < Pieces.Count; i++)
+            get
             {
-                if (!(Pieces[i] is OneElementPiece oneelem))
-                    continue;
-                oneelem.entity = (
-                    processor(oneelem.entity.Item1),
-                    oneelem.entity.Item2,
-                    oneelem.entity.Item3);
+                int count = 0;
+                foreach (var piece in Pieces)
+                    if (piece is OneElementPiece)
+                        count++;
+                    else
+                        return -1;
+                return count;
             }
         }
 

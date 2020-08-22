@@ -29,7 +29,7 @@ namespace UnitTests.Algebra
 
         static void AssertRootCount(Set roots, int target)
         {
-            Assert.NotEqual(Set.PowerLevel.INFINITE, roots.Power);
+            Assert.NotEqual(-1, target);
             Assert.Equal(target, roots.Count);
         }
 
@@ -41,9 +41,9 @@ namespace UnitTests.Algebra
                 AssertRoots(expr, x, root, toSub);
             if (!testNewton) return;
             // TODO: Increase Newton precision
-            roots = MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () => expr.SolveNt(x));
-            AssertRootCount(roots, rootCount);
-            foreach (var root in roots.FiniteSet())
+            var ntRoots = MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () => expr.SolveNt(x));
+            Assert.Equal(rootCount, ntRoots.Count);
+            foreach (var root in ntRoots)
                 AssertRoots(expr, x, root, toSub);
         }
 
@@ -56,7 +56,7 @@ namespace UnitTests.Algebra
                     eq.SolveNt(x)
                 ));
             // AssertRootCount(roots, 1); TODO: remove // after fix
-            foreach (var root in roots.FiniteSet())
+            foreach (var root in roots)
                 AssertRoots(eq, x, root);
         }
 
@@ -68,6 +68,7 @@ namespace UnitTests.Algebra
         [InlineData("x2 - 3x + 2", 2)]
         [InlineData("x3 + 3x2 + 3x + 1", 1)]
         [InlineData("x3 - 6x2 + 11x - 6", 3)]
+        // TODO: Fix Newton Solver and set testNewton:true
         public void Polynomial(string expr, int rootCount) => TestSolver(expr, rootCount);
 
         [Theory]
@@ -84,9 +85,12 @@ namespace UnitTests.Algebra
             TestSolver(eq.Expand(), rootCount);
         }
 
+        // TODO: Fix Newton Solver and set testNewton:true
         [Fact] public void MomoTest() => TestSolver("1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4", 4);
+        // TODO: Fix Newton Solver and set testNewton:true
         [Fact] public void Logs() => TestSolver("log(x, 32) - 5", 1);
         [Fact] public void PiM1PowX() => TestSolver("pi - 1^x", 0, testNewton: true); // Check if it doesn't hang
+        // TODO: Fix Newton Solver and set testNewton:true
         [Fact] public void ExpSimpl() => TestSolver("x^4 * x^y - 2", 1);
 
         [Theory]
@@ -94,16 +98,8 @@ namespace UnitTests.Algebra
         [InlineData("3x10 + 5x6", 5)]
         // Wolfram Alpha goes nuts, LOL: https://www.wolframalpha.com/input/?i=3x%5E5+%2B+5x%5E3+%3D-+a
         // [InlineData("3x5 + 5x3 + a")] // TODO: To doose (honk honk)
+        // TODO: Fix Newton Solver and set testNewton:true
         public void Reduce(string expr, int rootCount) => TestSolver(expr, rootCount);
-        [Fact(Skip = "Pending precision improvements in SolveNt")]
-        public void ReduceNt()
-        {
-            Entity expr = "3x5 + 5x3";
-            var roots = expr.SolveNt(x);
-            AssertRootCount(roots, 3);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
 
         [Theory]
         [InlineData("sin", 8)]
@@ -145,7 +141,7 @@ namespace UnitTests.Algebra
         [InlineData("(x2 - 1)2 - 2")]
         [InlineData("x4 - 2x2 - 1")]
         [InlineData("x4 - 2x2 - 2")]
-        // TODO: Fix Newton Solver
+        // TODO: Fix Newton Solver and set testNewton:true
         public void Ferrari(string input) => TestSolver(input, 4);
 
         [Theory]

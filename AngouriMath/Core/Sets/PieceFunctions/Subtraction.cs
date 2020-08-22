@@ -26,38 +26,28 @@ namespace AngouriMath.Core
 {
     static partial class PieceFunctions
     {
-        /// <summary>
-        /// Subtracts B from A
-        /// A \ B = A & !B
-        /// </summary>
-        /// <param name="A"></param>
-        /// <param name="B"></param>
-        /// <returns></returns>
-        public static List<Piece> Subtract(Piece A, Piece B)
+        /// <summary>Subtracts B from A: A \ B = A & !B</summary>
+        public static IEnumerable<Piece> Subtract(Piece A, Piece B)
         {
-            var result = new List<Piece>();
             if (Intersect(A, B) == null) // if A & B is none, then A \ B = A
-            {
-                result.Add(A);
-                return result;
-            }
+                return new[] { A };
 
-            if (A == B)
-                return result;
+            if (A == B || B.Contains(A))
+                return Enumerable.Empty<Piece>();
 
-            if (B.Contains(A))
-                return result;
-
-            var inverted = Invert(B);
-
-            foreach (var piece in inverted)
-            {
-                var conj = Intersect(A, piece);
-                if (!(conj is null))
-                    result.Add(conj);
-            }
-
-            return result.Where(IsPieceCorrect).ToList();
+            return Invert(B).SelectMany(piece =>
+                Intersect(A, piece) is { } conj && IsPieceCorrect(conj)
+                ? new[] { conj }
+                : Enumerable.Empty<Piece>());
+        }
+        internal static bool IsPieceCorrect(Piece piece)
+        {
+            var lower = piece.LowerBound();
+            var upper = piece.UpperBound();
+            var num1 = lower.Item1.Eval();
+            var num2 = upper.Item1.Eval();
+            return (num1.RealPart != num2.RealPart || lower.Item2 && upper.Item2) &&
+                   (num1.ImaginaryPart != num2.ImaginaryPart || lower.Item3 && upper.Item3);
         }
     }
 }

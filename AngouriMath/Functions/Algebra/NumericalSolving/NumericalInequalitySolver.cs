@@ -12,6 +12,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
@@ -43,8 +44,10 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
 
             var compiled = expr.Compile(x);
             var roots = expr.SolveNt(x);
-            var realRootsSet = roots.FiniteWhere(root => root.Eval() is Real);
-            var realRoots = roots.FiniteSet().Select(root => root.Eval()).OfType<Real>().OrderBy(n => n).ToList();
+            var realRoots = roots.OfType<Real>().OrderBy(x => x).ToList();
+            var realRootsSet = new Set();
+            foreach (var root in realRoots)
+                realRootsSet.Add(root);
             if (realRoots.Count > 0)
             {
                 realRoots.Insert(0, realRoots[0] - 5);

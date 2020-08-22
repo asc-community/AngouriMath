@@ -145,7 +145,6 @@ namespace AngouriMath.Core
     public class OneElementPiece : Piece
     {
         internal Edge entity;
-        internal Entity Evaled => entity.Item1.Evaled;
         internal OneElementPiece(Entity element) => entity = new Edge(element, true, true);
         public override Edge UpperBound() => CopyEdge(entity);
         public override Edge LowerBound() => CopyEdge(entity);

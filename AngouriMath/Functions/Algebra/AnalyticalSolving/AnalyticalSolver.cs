@@ -291,8 +291,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
             void DestinationAddSet(Set toAdd)
             {
-                toAdd.FiniteApply(ent => TryDowncast(expr, x, ent));
-                dst.AddRange(toAdd);
+                foreach (var ent in toAdd)
+                    dst.Add(ent is OneElementPiece oneelem ? TryDowncast(expr, x, oneelem.entity.Item1) : ent);
+                    
             }
             void DestinationAddEntities(IEnumerable<Entity> toAdd)
             {
@@ -430,7 +431,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             // if nothing has been found so far
             if (dst.IsEmpty() && MathS.Settings.AllowNewton && expr.Vars.Count() == 1)
-                DestinationAddSet(expr.SolveNt(x));
+                DestinationAddEntities(expr.SolveNt(x));
         }
     }
 }

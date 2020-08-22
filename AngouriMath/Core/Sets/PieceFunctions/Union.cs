@@ -14,6 +14,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 
 /*
  *
@@ -24,17 +25,8 @@ namespace AngouriMath.Core
 {
     static partial class PieceFunctions
     {
-        public static List<Piece> Unite(Piece A, Piece B)
-        {
-            var intersection = Intersect(A, B);
-            if (intersection is null)
-                return new List<Piece> { A, B };
-            else
-            {
-                var res = Subtract(A, B);
-                res.Add(B);
-                return res;
-            }
-        }
+        /// <returns>At least one Piece.</returns>
+        public static IEnumerable<Piece> Unite(Piece A, Piece B) =>
+            Intersect(A, B) is null ? new[] { A, B } : Subtract(A, B).Append(B);
     }
 }

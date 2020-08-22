@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using System.Linq;
 using Xunit;
 
 namespace UnitTests.Convenience
@@ -51,7 +52,7 @@ namespace UnitTests.Convenience
         [Fact] public void Test8() =>
             // Only needed for Mac
             MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () =>
-                Assert.Equal(MathS.i, MathS.FromString("x^2+1").SolveNt(x).Pieces[0])
+                Assert.Equal(MathS.i, MathS.FromString("x^2+1").SolveNt(x).First())
             );
         [Fact] public void Test9() => Assert.Equal(1, MathS.FromString("cos(sin(0))").Eval());
         [Fact] public void Test10() => Assert.Equal(Entity.Number.Complex.Create(4, 1), MathS.FromString("2i + 2 * 2 - 1i").Eval());
