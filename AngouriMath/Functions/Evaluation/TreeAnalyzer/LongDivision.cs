@@ -31,9 +31,9 @@ namespace AngouriMath.Functions
             public IReadOnlyDictionary<Variable, Dictionary<EDecimal, Entity>> MonoInfo => monoInfo;
             public IReadOnlyDictionary<Entity, Variable> Replacements => replacements;
             public IReadOnlyDictionary<Variable, Entity> RevertReplacements => revertReplacements;
-            public void AddReplacement(Entity expr, Entity value)
+            public void AddReplacement(IEnumerable<Variable> existingVars, Entity value)
             {
-                var variable = Variable.CreateTemp(expr);
+                var variable = Variable.CreateTemp(existingVars.Concat(revertReplacements.Keys));
                 replacements[value] = variable;
                 revertReplacements[variable] = value;
             }
@@ -57,14 +57,14 @@ namespace AngouriMath.Functions
                 {
                     // Replace all variables we can
                     foreach (var varMentioned in expr.Vars)
-                        res.AddReplacement(expr, GetMinimumSubtree(expr, varMentioned));
+                        res.AddReplacement(expr.Vars, GetMinimumSubtree(expr, varMentioned));
                     expr = expr.Substitute(res.Replacements);
                 }
 
                 // Gather info about each var as if this var was the only argument of the polynomial P(x)
                 var children = Sumf.LinearChildren(expr);
                 foreach (var varMentioned in expr.Vars)
-                    res.AddMonoInfo(varMentioned, Functions.Algebra.AnalyticalSolving.PolynomialSolver.GatherMonomialInformation
+                    res.AddMonoInfo(varMentioned, Algebra.AnalyticalSolving.PolynomialSolver.GatherMonomialInformation
                        <EDecimal, PrimitiveDecimal>(children, varMentioned));
                 return res;
             }

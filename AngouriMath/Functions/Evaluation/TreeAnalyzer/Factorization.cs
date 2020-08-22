@@ -33,7 +33,7 @@ namespace AngouriMath.Functions
                     // or Where returned empty: this variable already got replaced with something else
                     if (varParent is null)
                         break;
-                    var key = Variable.CreateTemp(res);
+                    var key = Variable.CreateTemp(res.Vars);
                     replacements.Add(key, varParent);
                     res = res.Substitute(varParent, key);
                 }

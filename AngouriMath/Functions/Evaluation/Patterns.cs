@@ -522,7 +522,7 @@ namespace AngouriMath.Functions
             x is Divf(var num, var denom)
             && !MathS.CanBeEvaluated(num)
             && !MathS.CanBeEvaluated(denom)
-            && Functions.TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
+            && TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
             ? divided + remainder
             : x;
     }

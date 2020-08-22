@@ -228,7 +228,7 @@ namespace AngouriMath
             /// </summary>
             /// <remarks>
             /// This is intended for variables visible to the user.
-            /// For non-visible variables, use <see cref="CreateTemp(Entity)"/> instead.
+            /// For non-visible variables, use <see cref="CreateTemp"/> instead.
             /// </remarks>
             internal static Variable CreateUnique(Entity expr, string prefix)
             {
@@ -243,15 +243,15 @@ namespace AngouriMath
                     i++;
                 return new Variable(prefix + "_" + i);
             }
-            /// <summary>Creates a temporary variable like %1, %2 and %3 that is unused in <paramref name="expr"/></summary>
+            /// <summary>Creates a temporary variable like %1, %2 and %3 that is not in <paramref name="existingVars"/></summary>
             /// <remarks>
             /// This is intended for variables not visible to the user.
-            /// For visible variables, use <see cref="CreateUnique(Entity, string)"/> instead.
+            /// For visible variables, use <see cref="CreateUnique"/> instead.
             /// </remarks>
-            internal static Variable CreateTemp(Entity expr)
+            internal static Variable CreateTemp(IEnumerable<Variable> existingVars)
             {
                 var indices = new HashSet<int>();
-                foreach (var var in expr.Vars)
+                foreach (var var in existingVars)
                     if (var.Name.StartsWith("%") && int.TryParse(var.Name.Substring(1), out var num))
                         indices.Add(num);
                 var i = 1;

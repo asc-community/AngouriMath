@@ -24,7 +24,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
         internal static Set? SolveLinear(Entity expr, Variable variable)
         {
-            var replacement = Variable.CreateTemp(expr);
+            var replacement = Variable.CreateTemp(expr.Vars);
             expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
 
             // if there is still original variable after replacements,

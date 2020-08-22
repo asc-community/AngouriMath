@@ -364,7 +364,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // so we skip this part and go to other solvers
             if (!compensateSolving)
             {
-                var newVar = Variable.CreateTemp(expr);
+                var newVar = Variable.CreateTemp(expr.Vars);
                 // Here we find all possible replacements and find one that has at least one solution
                 foreach (var alt in expr.Alternate(4))
                 {

@@ -36,7 +36,7 @@ namespace AngouriMath.Core
         class AngouriMathTextWriter : TextWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
-            public override void WriteLine(string s) => throw new ParseException("parsing error: " + s);
+            public override void WriteLine(string s) => throw new ParseException(s);
         }
         public static Entity Parse(string source)
         {
@@ -49,14 +49,14 @@ namespace AngouriMath.Core
             const string VARIABLE = nameof(VARIABLE);
             const string PARENTHESIS_OPEN = "'('";
             const string PARENTHESIS_CLOSE = "')'";
-            const string FUNCTION = "\x1"; // Fake display name for all function tokens e.g. "'sin('"
+            const string FUNCTION_OPEN = "\x1"; // Fake display name for all function tokens e.g. "'sin('"
 
             static string GetType(IToken token) =>
                 AngouriMathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type
-                && type is not PARENTHESIS_OPEN && type.EndsWith("('") ? FUNCTION : type;
+                && type is not PARENTHESIS_OPEN && type.EndsWith("('") ? FUNCTION_OPEN : type;
 
             if (tokenList.Count == 0)
-                throw new ParseException("Input string is invalid");
+                throw new AngouriBugException($"{nameof(ParseException)} should have been thrown");
             int i = 0;
             while (tokenList[i].Channel != 0)
                 if (++i >= tokenList.Count)
@@ -66,34 +66,19 @@ namespace AngouriMath.Core
                 while (tokenList[j].Channel != 0)
                     if (++j >= tokenList.Count)
                         goto endTokenInsertion;
-                switch (GetType(tokenList[i]), GetType(tokenList[j]))
+                if ((GetType(tokenList[i]), GetType(tokenList[j])) switch
                 {
+                    // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
+                    // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
+                    // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
+                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) =>
+                        lexer.Multiply,
+                    // 3 2 -> 3 ^ 2      x2 -> x ^ 2             )2 -> ) ^ 2
+                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) => lexer.Power,
+                    _ => null
+                } is { } insertToken)
                     // Insert at j because we need to keep the first one behind
-                    // 2x -> 2 * x
-                    case (NUMBER, VARIABLE): tokenList.Insert(j, lexer.Multiply); break;
-                    // x y -> x * y
-                    case (VARIABLE, VARIABLE): tokenList.Insert(j, lexer.Multiply); break;
-                    // 2( -> 2 * (
-                    case (NUMBER, PARENTHESIS_OPEN): tokenList.Insert(j, lexer.Multiply); break;
-                    // )2 -> ) ^ 2
-                    case (PARENTHESIS_CLOSE, NUMBER): tokenList.Insert(j, lexer.Power); break;
-                    // x( -> x * (
-                    case (VARIABLE, PARENTHESIS_OPEN): tokenList.Insert(j, lexer.Multiply); break;
-                    // )x -> ) * x
-                    case (PARENTHESIS_CLOSE, VARIABLE): tokenList.Insert(j, lexer.Multiply); break;
-                    // x2 -> x ^ 2
-                    case (VARIABLE, NUMBER): tokenList.Insert(j, lexer.Power); break;
-                    // 3 2 -> 3 ^ 2
-                    case (NUMBER, NUMBER): tokenList.Insert(j, lexer.Power); break;
-                    // 2sqrt -> 2 * sqrt
-                    case (NUMBER, FUNCTION): tokenList.Insert(j, lexer.Multiply); break;
-                    // x sqrt -> x * sqrt
-                    case (VARIABLE, FUNCTION): tokenList.Insert(j, lexer.Multiply); break;
-                    // )sqrt -> ) * sqrt
-                    case (PARENTHESIS_CLOSE, FUNCTION): tokenList.Insert(j, lexer.Multiply); break;
-                    // )( -> ) * (
-                    case (PARENTHESIS_CLOSE, PARENTHESIS_OPEN): tokenList.Insert(j, lexer.Multiply); break;
-                }
+                    tokenList.Insert(j, insertToken);
             }
             endTokenInsertion:
 
