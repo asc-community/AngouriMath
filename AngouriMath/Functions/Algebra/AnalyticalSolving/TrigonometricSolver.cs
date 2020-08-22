@@ -14,6 +14,7 @@
 
 using AngouriMath.Core;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
@@ -22,7 +23,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     internal static class TrigonometricSolver
     {
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
-        internal static Set? SolveLinear(Entity expr, Variable variable)
+        internal static IEnumerable<Entity>? SolveLinear(Entity expr, Variable variable)
         {
             var replacement = Variable.CreateTemp(expr.Vars);
             expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
@@ -32,15 +33,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (expr.Contains(variable))
                 return null;
 
-            var solutions = EquationSolver.Solve(expr, replacement);
-            if (solutions == null) return null;
-
-            var actualSolutions = new Set();
-            // TODO: make check for infinite solutions
-            foreach(var solution in solutions.FiniteSet())
-                foreach (var sol in MathS.Pow(MathS.e, MathS.i * variable).Invert(solution, variable))
-                    actualSolutions.AddPiece(sol);
-            return actualSolutions;
+            return AnalyticalSolver.Solve(expr, replacement)
+                   .SelectMany(sol => MathS.Pow(MathS.e, MathS.i * variable).Invert(sol, variable));
         }
     }
 }

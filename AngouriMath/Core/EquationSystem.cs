@@ -13,9 +13,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using AngouriMath.Functions.Algebra;
 
@@ -24,40 +22,42 @@ namespace AngouriMath.Core
     using static Entity;
     public class EquationSystem : ILatexiseable
     {
-        private readonly List<Entity> equations;
+        private readonly IEnumerable<Entity> equations;
 
         /// <summary>
         /// After having created a system of equations,
         /// you may solve or latexise it
         /// </summary>
         /// <param name="equations"></param>
-        public EquationSystem(params Entity[] equations) => this.equations = equations.ToList();
+        public EquationSystem(IEnumerable<Entity> equations) => this.equations = equations;
 
         /// <summary>
         /// Returns a solution matrix
         /// The first axis of the matrix corresponds to the number of solutions,
         /// the second one corresponds to the number of variables.
         /// </summary>
-        /// <param name="vars">
-        /// Number of variables must match number of equations
-        /// </param>
-        /// <returns></returns>
+        /// <param name="vars">Number of variables must match number of equations</param>
         public Tensor? Solve(params Variable[] vars) => EquationSolver.SolveSystem(equations, vars);
-
         /// <summary>
-        /// Returns latexised version of the system
+        /// Returns a solution matrix
+        /// The first axis of the matrix corresponds to the number of solutions,
+        /// the second one corresponds to the number of variables.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="vars">Number of variables must match number of equations</param>
+        public Tensor? Solve(System.ReadOnlySpan<Variable> vars) => EquationSolver.SolveSystem(equations, vars);
+
+        /// <returns>Latexised version of the system</returns>
         public string Latexise()
         {
-            if (equations.Count == 1)
-                return equations[0].Latexise() + " = 0";
-            if (equations.Count == 0)
+            using var enumerator = equations.GetEnumerator();
+            if (!enumerator.MoveNext())
                 return string.Empty;
-            var sb = new StringBuilder();
-            sb.Append(@"\begin{cases}");
-            foreach (var eq in equations)
-                sb.Append(eq.Latexise()).Append(" = 0").Append(@"\\");
+            var firstEquation = enumerator.Current.Latexise() + " = 0";
+            if (!enumerator.MoveNext())
+                return firstEquation;
+            var sb = new StringBuilder(@"\begin{cases}").Append(firstEquation);
+            do sb.Append(@"\\").Append(enumerator.Current.Latexise()).Append(" = 0");
+            while (enumerator.MoveNext());
             sb.Append(@"\end{cases}");
             return sb.ToString();
         }

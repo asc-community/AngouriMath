@@ -14,6 +14,7 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using PeterO.Numbers;
@@ -71,6 +72,13 @@ namespace AngouriMath
         /// </param>
         /// <returns>An <see cref="EquationSystem"/> which can then be solved</returns>
         public static EquationSystem Equations(params Entity[] equations) => new EquationSystem(equations);
+        /// <summary>Use it to solve equations</summary>
+        /// <param name="equations">
+        /// An array of <see cref="Entity"/> (or <see cref="string"/>s)
+        /// the system consists of
+        /// </param>
+        /// <returns>An <see cref="EquationSystem"/> which can then be solved</returns>
+        public static EquationSystem Equations(IEnumerable<Entity> equations) => new EquationSystem(equations);
 
         /// <summary>Solves one equation over one variable</summary>
         /// <param name="equation">An equation that is assumed to equal 0</param>

@@ -28,28 +28,20 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>Solves one equation</summary>
         internal static Set Solve(Entity equation, Variable x)
         {
-            var res = new Set();
+            var solutions = MathS.Settings.PrecisionErrorZeroRange.As(1e-12m, () =>
+                MathS.Settings.FloatToRationalIterCount.As(0, () =>
+                    AnalyticalSolver.Solve(equation, x)
+                ));
 
-            MathS.Settings.PrecisionErrorZeroRange.As(1e-12m, () =>
-            MathS.Settings.FloatToRationalIterCount.As(0, () =>
-                AnalyticalSolver.Solve(equation, x, res)
-            ));
+            static Entity simplifier(Entity entity) => entity.InnerSimplify();
+            static Entity evaluator(Entity entity) => entity.Evaled;
+            var collapser = equation.Vars.Count() == 1 ? (Func<Entity, Entity>)evaluator : simplifier;
 
-            if (res.AsFiniteSet() is { } finiteSet)
-            {
-                static Entity simplifier(Entity entity) => entity.InnerSimplify();
-                static Entity evaluator(Entity entity) => entity.Evaled;
-                Entity collapser(Entity expr) => equation.Vars.Count() == 1 ? evaluator(expr) : simplifier(expr);
-
-                var finalSet = new Set { FastAddingMode = true };
-                foreach (var elem in finiteSet.Select(simplifier))
-                    if (elem.IsFinite && collapser(equation.Substitute(x, elem)).IsFinite)
-                        finalSet.Add(elem);
-                finalSet.FastAddingMode = false;
-                res = finalSet;
-            }
-
-            return res;
+            var finalSet = new Set();
+            foreach (var elem in solutions.Select(simplifier))
+                if (elem.IsFinite && collapser(equation.Substitute(x, elem)).IsFinite)
+                    finalSet.Add(elem);
+            return finalSet;
         }
 
         /// <summary>
@@ -64,17 +56,14 @@ namespace AngouriMath.Functions.Algebra
         /// Then we substitute back <br/>
         /// y = -3a + a = -2a <br/>
         /// </summary>
-        internal static Tensor? SolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars)
+        internal static Tensor? SolveSystem(IEnumerable<Entity> inputEquations, ReadOnlySpan<Variable> vars)
         {
+            var equations = new List<Entity>(inputEquations.Select(equation => equation.InnerSimplify()));
             if (equations.Count != vars.Length)
                 throw new MathSException("Amount of equations must be equal to that of vars");
-            equations = new List<Entity>(equations.Select(c => c));
             int initVarCount = vars.Length;
-            for (int i = 0; i < equations.Count; i++)
-                equations[i] = equations[i].InnerSimplify();
 
             var res = InSolveSystem(equations, vars);
-
             foreach (var tuple in res)
                 if (tuple.Count != initVarCount)
                     throw new AngouriBugException("InSolveSystem incorrect output");

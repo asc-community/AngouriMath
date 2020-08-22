@@ -262,19 +262,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     internal static class AnalyticalSolver
     {
         /// <summary>Equation solver</summary>
-        internal static void Solve(Entity expr, Variable x, Set dst) => Solve(expr, x, dst, compensateSolving: false);
         /// <param name="compensateSolving">
         /// Compensate solving is needed when you formatted an equation to (something - const)
         /// and compensateSolving "compensates" this by applying expression inverter,
         /// aka compensating the equation formed by the previous solver
         /// </param>
-        internal static void Solve(Entity expr, Variable x, Set dst, bool compensateSolving)
+        internal static IEnumerable<Entity> Solve(Entity expr, Variable x, bool compensateSolving = false)
         {
             if (expr == x)
-            {
-                dst.Add(0);
-                return;
-            }
+                return new Entity[] { 0 };
 
             // Applies an attempt to downcast roots
             static Entity TryDowncast(Entity equation, Variable x, Entity root)
@@ -286,78 +282,43 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         Complex.Create(preciseValue.RealPart, preciseValue.ImaginaryPart)));
                 if (!(equation.Substitute(x, downcasted).Evaled is Complex error))
                     return root;
-                return Number.IsZero(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational
+                return IsZero(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational
                        ? downcasted : root.InnerSimplify();
             }
-            void DestinationAddSet(Set toAdd)
-            {
-                foreach (var ent in toAdd)
-                    dst.Add(ent is OneElementPiece oneelem ? TryDowncast(expr, x, oneelem.entity.Item1) : ent);
-                    
-            }
-            void DestinationAddEntities(IEnumerable<Entity> toAdd)
-            {
-                foreach (var ent in toAdd)
-                    dst.Add(TryDowncast(expr, x, ent));
-            }
             if (PolynomialSolver.SolveAsPolynomial(expr, x) is { } poly)
-            {
-                DestinationAddEntities(poly.Select(e => e.InnerSimplify()));
-                return;
-            }
+                return poly.Select(e => TryDowncast(expr, x, e.InnerSimplify()));
 
             switch (expr)
             {
                 case Mulf(var multiplier, var multiplicand):
-                    Solve(multiplier, x, dst);
-                    Solve(multiplicand, x, dst);
-                    return;
+                    return Solve(multiplier, x).Concat(Solve(multiplicand, x));
                 case Divf(var dividend, var divisor):
-                    static bool IsSetNumeric(Set a) =>
-                        a.Select(piece => piece.LowerBound().Item1).All(MathS.CanBeEvaluated);
-
-                    var zeroNumerators = new Set();
-                    Solve(dividend, x, zeroNumerators);
-                    if (!IsSetNumeric(zeroNumerators))
-                    {
-                        dst.AddRange(zeroNumerators);
-                        return;
-                    }
-                    var zeroDenominators = new Set();
-                    Solve(divisor, x, zeroDenominators);
-                    if (!IsSetNumeric(zeroDenominators))
-                    {
-                        dst.AddRange(zeroNumerators);
-                        return;
-                    }
-                    dst.AddRange((Set)(zeroNumerators & !zeroDenominators));
-                    return;
+                    var zeroNumerators = Solve(dividend, x).ToList(); // Cache the enumeration
+                    if (!zeroNumerators.All(MathS.CanBeEvaluated))
+                        return zeroNumerators;
+                    var zeroDenominators = Solve(divisor, x).ToList(); // Cache the enumeration
+                    if (!zeroDenominators.All(MathS.CanBeEvaluated))
+                        return zeroNumerators;
+                    return zeroNumerators.Except(zeroDenominators);
                 case Powf(var @base, _):
-                    Solve(@base, x, dst);
-                    return;
+                    return Solve(@base, x);
                 case Minusf(var subtrahend, var minuend) when !minuend.Contains(x) && compensateSolving:
                     if (subtrahend == x)
-                    {
-                        dst.Add(minuend);
-                        return;
-                    }
-                    var subs = 0;
+                        return new[] { minuend };
                     Entity? lastChild = null;
                     foreach (var child in subtrahend.DirectChildren)
                         if (child.Contains(x))
-                        {
-                            subs += 1;
-                            lastChild = child;
-                        }
-                    if (subs != 1 || lastChild is null)
-                        break;
-                    var resInverted = subtrahend.Invert(minuend, lastChild);
-                    foreach (var result in resInverted)
-                        Solve(lastChild - result, x, dst, compensateSolving: true);
-                    return;
+                            if (lastChild is null)
+                                lastChild = child;
+                            else goto default;
+                    if (lastChild is null)
+                        goto default;
+                    return subtrahend.Invert(minuend, lastChild)
+                           .SelectMany(result => Solve(lastChild - result, x, compensateSolving: true));
                 case Function:
-                    DestinationAddEntities(expr.Invert(0, x));
-                    return;
+                    return expr.Invert(0, x).Select(ent => TryDowncast(expr, x, ent));
+                default:
+                    break;
             }
 
             // If the replacement isn't one-variable one,
@@ -370,68 +331,43 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 foreach (var alt in expr.Alternate(4))
                 {
                     if (!alt.Contains(x))
-                        return; // in this case there is either 0 or +oo solutions
+                        return Enumerable.Empty<Entity>(); // in this case there is either 0 or +oo solutions
                     var minimumSubtree = TreeAnalyzer.GetMinimumSubtree(alt, x);
                     if (minimumSubtree == x)
                         continue;
-                    var solutions = alt.Substitute(minimumSubtree, newVar).SolveEquation(newVar);
-                    if (!solutions.IsEmpty())
-                    {
-                        // Here we are trying to solve for this replacement
-                        Set newDst = new Set();
-                        foreach (var solution in solutions.FiniteSet())
-                        {
-                            // TODO: make a smarter comparison than just comparison of complexities of two expressions
-                            // The idea is  
-                            // similarToPrevious = ((bestReplacement - solution) - expr).Simplify() == 0
-                            // But Simplify costs us too much time
-                            var similarToPrevious = (minimumSubtree - solution).Complexity >= expr.Complexity;
-                            if (!compensateSolving || !similarToPrevious)
-                                Solve(minimumSubtree - solution, x, newDst, compensateSolving: true);
-                        }
-                        DestinationAddSet(newDst);
-                        if (!dst.IsEmpty())
-                            break;
-                        // // //
-                    }
+                    // Here we are trying to solve for this replacement
+                    var solutions =
+                        Solve(alt.Substitute(minimumSubtree, newVar), newVar)
+                        .SelectMany(solution => Solve(minimumSubtree - solution, x, compensateSolving: true));
+                    if (solutions.Any())
+                        return solutions.Select(ent => TryDowncast(expr, x, ent));
                 }
                 // // //
             }
 
             // if no replacement worked, try trigonometry solver
-            if (dst.IsEmpty())
-                if (TrigonometricSolver.SolveLinear(expr, x) is { } res)
-                {
-                    DestinationAddSet(res);
-                    return;
-                }
+            if (TrigonometricSolver.SolveLinear(expr, x) is { } trig)
+                return trig.Select(ent => TryDowncast(expr, x, ent));
             // // //
 
             // if no trigonometric rules helped, common denominator might help
-            if (dst.IsEmpty())
-                if (CommonDenominatorSolver.Solve(expr, x) is { } res)
-                {
-                    DestinationAddSet(res);
-                    return;
-                }
+            if (CommonDenominatorSolver.Solve(expr, x) is { } commonDenom)
+                return commonDenom.Select(ent => TryDowncast(expr, x, ent));
             // // //
 
-
             // if we have fractioned polynomials
-            if (dst.IsEmpty())
-                if (FractionedPolynoms.Solve(expr, x) is { } res)
-                {
-                    DestinationAddSet(res);
-                    return;
-                }
+            if (FractionedPolynoms.Solve(expr, x) is { } fractioned)
+                return fractioned.Select(ent => TryDowncast(expr, x, ent));
             // // //
 
             // TODO: Solve factorials (Needs Lambert W function)
             // https://mathoverflow.net/a/28977
 
             // if nothing has been found so far
-            if (dst.IsEmpty() && MathS.Settings.AllowNewton && expr.Vars.Count() == 1)
-                DestinationAddEntities(expr.SolveNt(x));
+            if (MathS.Settings.AllowNewton && expr.Vars.Count() == 1)
+                return expr.SolveNt(x).Select(ent => TryDowncast(expr, x, ent));
+
+            return Enumerable.Empty<Entity>();
         }
     }
 }
