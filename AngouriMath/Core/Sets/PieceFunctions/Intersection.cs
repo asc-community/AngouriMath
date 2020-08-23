@@ -42,21 +42,13 @@ namespace AngouriMath.Core
             Real max1, bool closedMax1,
             Real min2, bool closedMin2,
             Real max2, bool closedMax2)
-            => (
-                IntersectEdge(
-                    min1, closedMin1,
-                    min2, closedMin2,
-                    (min1, min2) => min1 > min2
-                ),
-                IntersectEdge(
-                    max1, closedMax1,
-                    max2, closedMax2,
-                    (max1, max2) => max1 < max2
-                    )
-                );
+            => (IntersectEdge(min1, closedMin1, min2, closedMin2, (min1, min2) => min1 > min2),
+                IntersectEdge(max1, closedMax1, max2, closedMax2, (max1, max2) => max1 < max2));
 
-        private static (Edge, Edge) SortEdges(Edge A, Edge B)
+        private static ((Complex, bool, bool) lowerEdge, (Complex, bool, bool) upperEdge) SortEdges(SetPiece piece)
         {
+            var A = piece.LowerBound();
+            var B = piece.UpperBound();
             var num1 = A.Item1.Eval();
             var num2 = B.Item1.Eval();
             var lowRe = num1.RealPart;
@@ -79,61 +71,39 @@ namespace AngouriMath.Core
                 (lowImClosed, upImClosed) = (upImClosed, lowImClosed);
             }
 
-            return (
-                new Edge(
-                    Complex.Create(lowRe, lowIm),
-                    lowReClosed,
-                    lowImClosed
-                    ),
-                new Edge(
-                    Complex.Create(upRe, upIm),
-                    upReClosed,
-                    upImClosed
-                    )
-                );
+            return ((Complex.Create(lowRe, lowIm), lowReClosed, lowImClosed),
+                    (Complex.Create(upRe, upIm), upReClosed, upImClosed));
         }
 
         /// <summary>Unsafe!</summary>
-        public static Piece? Intersect(Piece A, Piece B)
+        public static SetPiece? Intersect(SetPiece A, SetPiece B)
         {
             if (A == B)
                 return A;
-            var edgesASorted = SortEdges(A.LowerBound(), A.UpperBound());
-            var edgesBSorted = SortEdges(B.LowerBound(), B.UpperBound());
-            var low1 = edgesASorted.Item1;
-            var low2 = edgesBSorted.Item1;
-            var up1 = edgesASorted.Item2;
-            var up2 = edgesBSorted.Item2;
-            var low1Num = low1.Item1.Eval();
-            var low2Num = low2.Item1.Eval();
-            var up1Num = up1.Item1.Eval();
-            var up2Num = up2.Item1.Eval();
-            if (low1Num.RealPart > up2Num.RealPart || (low1Num.RealPart == up2Num.RealPart && (!low1.Item2 || !up2.Item2)) ||
-                low2Num.RealPart > up1Num.RealPart || (low2Num.RealPart == up1Num.RealPart && (!low2.Item2 || !up1.Item2)) ||
-                low1Num.ImaginaryPart > up2Num.ImaginaryPart || (low1Num.ImaginaryPart == up2Num.ImaginaryPart && (!low1.Item3 || !up2.Item3)) ||
-                low2Num.ImaginaryPart > up1Num.ImaginaryPart || (low2Num.ImaginaryPart == up1Num.ImaginaryPart && (!low2.Item3 || !up1.Item3)))
+            var ((low1Num, low1ReClosed, low1ImClosed), (up1Num, up1ReClosed, up1ImClosed)) = SortEdges(A);
+            var ((low2Num, low2ReClosed, low2ImClosed), (up2Num, up2ReClosed, up2ImClosed)) = SortEdges(B);
+            if (low1Num.RealPart > up2Num.RealPart || (low1Num.RealPart == up2Num.RealPart && (!low1ReClosed || !up2ReClosed)) ||
+                low2Num.RealPart > up1Num.RealPart || (low2Num.RealPart == up1Num.RealPart && (!low2ReClosed || !up1ReClosed)) ||
+                low1Num.ImaginaryPart > up2Num.ImaginaryPart || (low1Num.ImaginaryPart == up2Num.ImaginaryPart && (!low1ImClosed || !up2ImClosed)) ||
+                low2Num.ImaginaryPart > up1Num.ImaginaryPart || (low2Num.ImaginaryPart == up1Num.ImaginaryPart && (!low2ImClosed || !up1ImClosed)))
                 return null; // if they don't intersect
             var realAxis = IntersectAxis(
-                low1Num.RealPart, low1.Item2,
-                up1Num.RealPart, up1.Item2,
-                low2Num.RealPart, low2.Item2,
-                up2Num.RealPart, up2.Item2
+                low1Num.RealPart, low1ReClosed,
+                up1Num.RealPart, up1ReClosed,
+                low2Num.RealPart, low2ReClosed,
+                up2Num.RealPart, up2ReClosed
             );
             var imaginaryAxis = IntersectAxis(
-                low1Num.ImaginaryPart, low1.Item3,
-                up1Num.ImaginaryPart, up1.Item3,
-                low2Num.ImaginaryPart, low2.Item3,
-                up2Num.ImaginaryPart, up2.Item3
+                low1Num.ImaginaryPart, low1ImClosed,
+                up1Num.ImaginaryPart, up1ImClosed,
+                low2Num.ImaginaryPart, low2ImClosed,
+                up2Num.ImaginaryPart, up2ImClosed
             );
-            var edgeLeft = new Edge(
+            return Interval.OrElement(
                 Complex.Create(realAxis.Item1.Item1, imaginaryAxis.Item1.Item1),
-                realAxis.Item1.Item2,
-                imaginaryAxis.Item1.Item2);
-            var edgeRight = new Edge(
                 Complex.Create(realAxis.Item2.Item1, imaginaryAxis.Item2.Item1),
-                realAxis.Item2.Item2,
-                imaginaryAxis.Item2.Item2);
-            return Piece.ElementOrInterval(edgeLeft, edgeRight);
+                realAxis.Item1.Item2, imaginaryAxis.Item1.Item2,
+                realAxis.Item2.Item2, imaginaryAxis.Item2.Item2);
         }
     }
 }

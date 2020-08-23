@@ -32,7 +32,7 @@ namespace AngouriMath.Core
     public abstract partial record SetNode
     {
         public abstract override string ToString();
-        public abstract bool Contains(Piece piece);
+        public abstract bool Contains(SetPiece piece);
         public bool Contains(Set set) => set.Pieces.All(Contains);
         public bool Contains(Entity entity) => Contains(new OneElementPiece(entity));
 
@@ -45,82 +45,88 @@ namespace AngouriMath.Core
         /// <summary>A or B</summary>
         internal partial record Union(SetNode A, SetNode B) : SetNode
         {
-            public override bool Contains(Piece piece) => A.Contains(piece) || B.Contains(piece);
+            public override bool Contains(SetPiece piece) => A.Contains(piece) || B.Contains(piece);
             public override string ToString() => $"({A})&({B})";
         }
         /// <summary>A and B</summary>
         internal partial record Intersection(SetNode A, SetNode B) : SetNode
         {
-            public override bool Contains(Piece piece) => A.Contains(piece) && B.Contains(piece);
+            public override bool Contains(SetPiece piece) => A.Contains(piece) && B.Contains(piece);
             public override string ToString() => $"({A})|({B})";
         }
         /// <summary>A and not B</summary>
         internal partial record Complement(SetNode A, SetNode B) : SetNode
         {
-            public override bool Contains(Piece piece) => A.Contains(piece) && !B.Contains(piece);
+            public override bool Contains(SetPiece piece) => A.Contains(piece) && !B.Contains(piece);
             public override string ToString() => $@"({A})\({B})";
         }
         /// <summary>not A</summary>
         internal partial record Inversion(SetNode A) : SetNode
         {
-            public override bool Contains(Piece piece) => !A.Contains(piece);
+            public override bool Contains(SetPiece piece) => !A.Contains(piece);
             public override string ToString() => $"!({A})";
         }
-        static (List<Piece> Good, List<Piece> Bad) GatherEvaluablePieces(Set A)
+        static (List<SetPiece> Good, List<SetPiece> Bad) GatherEvaluablePieces(Set A)
         {
-            var goodPieces = new List<Piece>(); // Those we can eval, e. g. [3; 4]
-            var badPieces = new List<Piece>();  // Those we cannot, e. g. [x + 3; -3]
+            var goodPieces = new List<SetPiece>(); // Those we can eval, e. g. [3; 4]
+            var badPieces = new List<SetPiece>();  // Those we cannot, e. g. [x + 3; -3]
             foreach (var piece in A)
-                (piece.IsNumeric() ? goodPieces : badPieces).Add(piece);
+                (piece.Evaluable ? goodPieces : badPieces).Add(piece);
             return (goodPieces, badPieces);
+        }
+        /// <summary>
+        /// Performs <paramref name="func"/> on all of <paramref name="left"/> and <paramref name="right"/>.
+        /// Skips over any <see langword="null"/>s of <paramref name="left"/> and <paramref name="right"/>.
+        /// </summary>
+        /// <param name="left">If <see langword="null"/>, initializes to the first item of <paramref name="right"/>.</param>
+        protected static IEnumerable<SetPiece>? RepeatApply
+            (IEnumerable<SetPiece>? left, IEnumerable<SetPiece?> right,
+             Func<SetPiece, SetPiece, IEnumerable<SetPiece>> func)
+        {
+            using var enumerator = right.GetEnumerator();
+            var remainders = left;
+            if (remainders is null)
+            {
+                do if (!enumerator.MoveNext()) return null;
+                while (enumerator.Current is null);
+                remainders = new[] { enumerator.Current };
+            }
+            while (enumerator.MoveNext())
+                if (enumerator.Current is { } current)
+                    remainders = remainders.SelectMany(rem => func(rem, current));
+            return remainders;
         }
     }
 
-    public partial record Set : SetNode, ICollection<Piece>
+    public partial record Set : SetNode, ICollection<SetPiece>
     {
         public override SetNode Eval() => this;
 
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        public IEnumerator<Piece> GetEnumerator() => Pieces.GetEnumerator();
+        public IEnumerator<SetPiece> GetEnumerator() => Pieces.GetEnumerator();
 
         // TODO: exception
         public FiniteSet FiniteSet()
             => new FiniteSet(Pieces.ToArray());
 
-        internal List<Piece> Pieces = new List<Piece>();
+        internal List<SetPiece> Pieces = new List<SetPiece>();
 
-        internal void AddPiece(Piece piece)
+        internal void AddPiece(SetPiece piece)
         {
             if (FastAddingMode)
-            {
                 Pieces.Add(piece);
-                return;
-            }
-
-            if (!piece.IsNumeric())
+            else if (!piece.Evaluable)
             {
-                if (Pieces.All(p => p != piece))
+                if (Pieces.All(p => (p.LowerBound(), p.UpperBound()) != (piece.LowerBound(), piece.UpperBound())))
                     Pieces.Add(piece);
-                return;
             }
             else if (piece is OneElementPiece oneelem && AsFiniteSet() is { } finiteSet)
             {
-                if (finiteSet.All(finite => finite.Evaled != oneelem.entity.Item1.Evaled))
+                if (finiteSet.All(finite => finite.Evaled != oneelem.entity.Evaled))
                     Pieces.Add(piece);
-                return;
             }
-            var remainders = new List<Piece> { piece };
-            foreach (var p in Pieces)
-            {
-                if (!p.IsNumeric())
-                    continue;
-                var newRemainders = new List<Piece>();
-                foreach (var rem in remainders)
-                    newRemainders.AddRange(PieceFunctions.Subtract(rem, p));
-                remainders = newRemainders;
-            }
-
-            Pieces.AddRange(remainders);
+            else
+                Pieces.AddRange(RepeatApply(new[] { piece }, Pieces.Where(p => p.Evaluable), PieceFunctions.Subtract));
         }
 
         internal void AddRange(Set set)
@@ -129,14 +135,14 @@ namespace AngouriMath.Core
                 AddPiece(piece);
         }
 
-        public override bool Contains(Piece piece)
+        public override bool Contains(SetPiece piece)
         {
             // we will subtract each this.piece from piece and if piece finally becomes 0 then
             // there is no point outside this set
-            var remainders = new List<Piece> { piece };
+            var remainders = new List<SetPiece> { piece };
             foreach (var p in this.Pieces)
             {
-                var newRemainders = new List<Piece>();
+                var newRemainders = new List<SetPiece>();
                 foreach (var rem in remainders)
                     newRemainders.AddRange(PieceFunctions.Subtract(rem, p));
                 remainders = newRemainders;
@@ -144,13 +150,13 @@ namespace AngouriMath.Core
             return remainders.Count == 0;
         }
 
-        public Set(params Piece[] elements)
+        public Set(params SetPiece[] elements)
         {
             foreach (var el in elements)
                 AddPiece(el);
         }
 
-        public void Add(Piece piece) => AddPiece(piece);
+        public void Add(SetPiece piece) => AddPiece(piece);
 
         /// <summary>
         /// Adds a setNode of numbers to the setNode
@@ -159,14 +165,14 @@ namespace AngouriMath.Core
         public void AddElements(params Entity[] elements)
         {
             foreach (var el in elements)
-                AddPiece(Piece.Element(el));
+                AddPiece(SetPiece.Element(el));
         }
 
         /// <summary>
         /// Creates an interval, for example
         /// <code>AddInterval(MathS.Sets.Interval(3, 4).SetLeftClosed(true).SetRightClosed(true, true)</code>
         /// </summary>
-        public void AddInterval(IntervalPiece interval) => AddPiece(interval);
+        public void AddInterval(Interval interval) => AddPiece(interval);
 
         public override string ToString() => IsEmpty() ? "{}" : string.Join("|", Pieces);
 
@@ -176,7 +182,7 @@ namespace AngouriMath.Core
 
         public IEnumerable<Entity>? AsFiniteSet() =>
             Pieces.All(piece => piece is OneElementPiece)
-            ? Pieces.Select(piece => ((OneElementPiece)piece).entity.Item1)
+            ? Pieces.Select(piece => ((OneElementPiece)piece).entity)
             : null;
 
         public int Count
@@ -206,7 +212,7 @@ namespace AngouriMath.Core
             {
                 Pieces =
                 {
-                    Piece.Interval(
+                    new Interval(
                         Complex.NegNegInfinity,
                         Complex.PosPosInfinity,
                         false, false, false, false)
@@ -219,7 +225,7 @@ namespace AngouriMath.Core
             {
                 Pieces =
                 {
-                    Piece.Interval(Real.NegativeInfinity, Real.PositiveInfinity)
+                    new Interval(Real.NegativeInfinity, Real.PositiveInfinity)
                     .SetLeftClosed(false).SetRightClosed(false)
                 }
             };
@@ -233,11 +239,11 @@ namespace AngouriMath.Core
             return res;
         }
 
-        public void CopyTo(Piece[] array, int arrayIndex) => Pieces.CopyTo(array, arrayIndex);
+        public void CopyTo(SetPiece[] array, int arrayIndex) => Pieces.CopyTo(array, arrayIndex);
 
-        public bool Remove(Piece item) => Pieces.Remove(item);
+        public bool Remove(SetPiece item) => Pieces.Remove(item);
 
-        IEnumerator<Piece> IEnumerable<Piece>.GetEnumerator() => ((IEnumerable<Piece>)Pieces).GetEnumerator();
+        IEnumerator<SetPiece> IEnumerable<SetPiece>.GetEnumerator() => ((IEnumerable<SetPiece>)Pieces).GetEnumerator();
     }
 
     public class FiniteSet : IReadOnlyList<Entity>
@@ -245,8 +251,8 @@ namespace AngouriMath.Core
         private readonly Entity[] entities;
         public int Count => ((IReadOnlyCollection<Entity>)entities).Count;
         public Entity this[int index] => ((IReadOnlyList<Entity>)entities)[index];
-        internal FiniteSet(IEnumerable<Piece> pieces) =>
-            entities = pieces.OfType<OneElementPiece>().Select(p => p.entity.Item1).ToArray();
+        internal FiniteSet(IEnumerable<SetPiece> pieces) =>
+            entities = pieces.OfType<OneElementPiece>().Select(p => p.entity).ToArray();
         public List<Entity> ToList() => entities.ToList();
         public IEnumerator<Entity> GetEnumerator() => ((IEnumerable<Entity>)entities).GetEnumerator();
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();

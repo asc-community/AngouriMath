@@ -59,7 +59,9 @@ namespace AngouriMath
         /// <summary>Replaces all <see cref="replacements"/></summary>
         public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements)
             where TFrom : Entity where TTo : Entity =>
-            Replace(e => e is TFrom from && replacements.TryGetValue(from, out var value) ? value : e);
+            replacements.Count == 0
+            ? this
+            : Replace(e => e is TFrom from && replacements.TryGetValue(from, out var value) ? value : e);
 
         public abstract Priority Priority { get; }
 

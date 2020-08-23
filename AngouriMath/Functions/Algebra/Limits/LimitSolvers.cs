@@ -1,5 +1,4 @@
 ﻿using PeterO.Numbers;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -36,9 +35,8 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveBySubstitution(Entity expr, Variable x)
         {
             var res = expr.Substitute(x, Infinity);
-            if (MathS.CanBeEvaluated(res))
+            if (res.Evaled is Complex limit)
             {
-                var limit = res.Eval();
                 if (limit == Real.NaN) return null;
                 if (!limit.RealPart.IsFinite)
                     return limit.RealPart; // TODO: sometimes we get { oo + value * i } so we assume it is just infinity
@@ -51,26 +49,17 @@ namespace AngouriMath.Functions.Algebra
 
         internal static Entity? SolveAsPolynomial(Entity expr, Variable x)
         {
-            var mono = ParseAsPolynomial(expr, x);
-            if (mono is { })
+            if (ParseAsPolynomial(expr, x) is { } mono)
             {
                 var maxPower = mono.Keys.Max();
-                if (maxPower.IsZero)
-                {
-                    return mono[maxPower];
-                }
-                else if (maxPower.IsNegative)
-                {
-                    return 0;
-                }
-                else if (MathS.CanBeEvaluated(mono[maxPower]))
-                {
-                    return Infinity * mono[maxPower].Eval();
-                }
-                else
-                {
-                    return Infinity * mono[maxPower];
-                }
+                return
+                    maxPower.IsZero
+                    ? mono[maxPower]
+                    : maxPower.IsNegative
+                    ? 0
+                    : mono[maxPower].Evaled is Complex power
+                    ? Infinity * power
+                    : Infinity * mono[maxPower];
             }
             else return null;
         }

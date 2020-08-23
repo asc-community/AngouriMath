@@ -14,6 +14,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AngouriMath.Core
 {
@@ -27,16 +28,7 @@ namespace AngouriMath.Core
                     return A - B;
                 var (goodAPieces, badAPieces) = GatherEvaluablePieces(a);
                 var (goodBPieces, badBPieces) = GatherEvaluablePieces(b);
-                var newGoodPieces = new List<Piece>();
-                newGoodPieces.AddRange(goodAPieces);
-                foreach (var goodB in goodBPieces)
-                {
-                    var newNewGoodPieces = new List<Piece>();
-                    foreach (var newGoodPiece in newGoodPieces)
-                        newNewGoodPieces.AddRange(PieceFunctions.Subtract(newGoodPiece, goodB));
-                    newGoodPieces = newNewGoodPieces;
-                }
-
+                var newGoodPieces = RepeatApply(goodAPieces, goodBPieces, PieceFunctions.Subtract).ToList();
                 newGoodPieces.AddRange(badAPieces);
                 var newSet = new Set { Pieces = newGoodPieces };
                 if (badBPieces.Count == 0)

@@ -63,7 +63,7 @@ namespace AngouriMath
     /// To ToSympy (Press F12 -> <see cref="Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
     /// 
     /// And finally, remember to add tests for all the new functionality!
-    public static partial class MathS
+    public static class MathS
     {
         /// <summary>Use it to solve equations</summary>
         /// <param name="equations">
@@ -619,7 +619,7 @@ namespace AngouriMath
         /// Class <see cref="Set"/> defines true mathematical sets
         /// It can be empty,
         /// it can contain <see cref="OneElementPiece"/>s,
-        /// it can contain <see cref="IntervalPiece"/>s etc.
+        /// it can contain <see cref="Core.Interval"/>s etc.
         /// It supports intersection (with & operator), union (with | operator),
         ///             subtraction (with - operator) as well as inversion (with ! operator).
         /// </summary>
@@ -644,10 +644,10 @@ namespace AngouriMath
 
             /// <summary>
             /// Creates an interval. To modify it, use e.g.
-            /// <see cref="IntervalPiece.SetLeftClosed(bool)"/>
+            /// <see cref="Interval.SetLeftClosed(bool)"/>
             /// (see more alike functions in <see cref="Set"/> documentation)
             /// </summary>
-            public static IntervalPiece Interval(Entity from, Entity to) => Piece.Interval(from, to);
+            public static Interval Interval(Entity from, Entity to) => new(from, to);
 
             /// <summary>
             /// Creates an element for <see cref="Set"/>. One can be created implicitly, <code>Piece a = 3;</code>

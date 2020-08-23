@@ -21,26 +21,26 @@ namespace UnitTests.Core
 
             C.AddInterval(MathS.Sets.Interval(-10, 10).SetLeftClosed(false));
             C.AddInterval(MathS.Sets.Interval(-3, 3).SetRightClosed(false));
-            C.AddInterval(MathS.Sets.Interval(- 3 * MathS.i, 3 * MathS.i).SetRightClosed(true, false));
+            C.AddInterval(MathS.Sets.Interval(-3 * MathS.i, 3 * MathS.i).SetRightClosed(true, false));
         }
 
         [Fact]
         public void IndividualNumbersInIndividualOneSet()
         {
-            Assert.False(A.Contains(2));
-            Assert.True(A.Contains(3));
-            Assert.False(A.Contains(2.9));
-            Assert.True(A.Contains(4));
-            Assert.True(A.Contains(5));
+            Assert.DoesNotContain((Entity)2, A);
+            Assert.Contains((Entity)3, A);
+            Assert.DoesNotContain((Entity)2.9, A);
+            Assert.Contains((Entity)4, A);
+            Assert.Contains((Entity)5, A);
         }
 
         [Fact]
         public void InvididualNumbersInIntervalsOneSet()
         {
-            Assert.Contains(Piece.ElementOrInterval(11, 13), A);
-            Assert.Contains(Piece.ElementOrInterval(11, 16), A);
-            Assert.Contains(Piece.ElementOrInterval(10, 13), A);
-            Assert.Contains(Piece.ElementOrInterval(10, 15), A);
+            Assert.Contains(new Interval(11, 13), A);
+            Assert.Contains(new Interval(11, 16), A);
+            Assert.Contains(new Interval(10, 13), A);
+            Assert.Contains(new Interval(10, 15), A);
         }
 
         private readonly Set B = MathS.Sets.Empty();
@@ -104,29 +104,29 @@ namespace UnitTests.Core
         [Fact]
         public void SetsFiniteTestDisj()
         {
-            var Q = (Af | Bf) as Set;
-            Assert.Equal(5, Q?.Pieces.Count);
+            var Q = Assert.IsType<Set>(Af | Bf);
+            Assert.Equal(5, Q.Pieces.Count);
         }
 
         [Fact]
         public void SetsFiniteTestConj()
         {
-            var Q = (Af & Bf) as Set;
-            Assert.Equal(1, Q?.Pieces.Count);
+            var Q = Assert.IsType<Set>(Af & Bf);
+            Assert.Single(Q.Pieces);
         }
 
         [Fact]
         public void SetsFiniteTestSub()
         {
-            var Q = (Af - Bf) as Set;
-            Assert.Equal(2, Q?.Pieces.Count);
+            var Q = Assert.IsType<Set>(Af - Bf);
+            Assert.Equal(2, Q.Pieces.Count);
         }
 
         [Fact]
         public void SetsFiniteTestDisj2()
         {
-            var Q = (Ef | Gf) as Set;
-            Assert.Equal(1, Q?.Pieces.Count);
+            var Q = Assert.IsType<Set>(Ef | Gf);
+            Assert.Single(Q.Pieces);
         }
 
         [Fact]
@@ -144,8 +144,8 @@ namespace UnitTests.Core
         [Fact]
         public void SetsFiniteTestConj2()
         {
-            var Q = (Ef & Gf) as Set;
-            Assert.Equal(1, Q?.Pieces.Count);
+            var Q = Assert.IsType<Set>(Ef & Gf);
+            Assert.Single(Q.Pieces);
         }
     }
 }

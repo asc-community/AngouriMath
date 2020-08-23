@@ -26,7 +26,7 @@ namespace AngouriMath.Core
     static partial class PieceFunctions
     {
         /// <returns>At least one Piece.</returns>
-        public static IEnumerable<Piece> Unite(Piece A, Piece B) =>
+        public static IEnumerable<SetPiece> Unite(SetPiece A, SetPiece B) =>
             Intersect(A, B) is null ? new[] { A, B } : Subtract(A, B).Append(B);
     }
 }

@@ -14,6 +14,7 @@
  */
 
 using System.Collections.Generic;
+using System.Linq;
 
 namespace AngouriMath.Core
 {
@@ -26,20 +27,11 @@ namespace AngouriMath.Core
                 if (!(A is Set s))
                     return new Inversion(A);
                 var (goodAPieces, badAPieces) = GatherEvaluablePieces(s);
-                var remainders = new List<Piece> { Piece.CreateUniverse() };
-                foreach (var good in goodAPieces)
-                {
-                    var newRemainders = new List<Piece>();
-                    foreach (var rem in remainders)
-                        newRemainders.AddRange(PieceFunctions.Subtract(rem, good));
-                    remainders = newRemainders;
-                }
-
-                var newSet = new Set { Pieces = remainders };
-                if (badAPieces.Count == 0)
-                    return newSet;
-                else
-                    return new Complement(newSet, new Set { Pieces = badAPieces });
+                var remainders = RepeatApply(new[] { Interval.CreateUniverse() }, goodAPieces, PieceFunctions.Subtract);
+                var newSet = new Set { Pieces = remainders.ToList() };
+                return badAPieces.Count == 0
+                       ? newSet
+                       : (SetNode)new Complement(newSet, new Set { Pieces = badAPieces });
             }
         }
     }

@@ -54,7 +54,7 @@ namespace AngouriMath.Functions
         /// If an evaluable expression is equal to zero, <see langword="true"/>, otherwise, <see langword="false"/>
         /// For example, 1 - 1 is zero, but 1 + a is not
         /// </summary>
-        internal static bool IsZero(Entity e) => MathS.CanBeEvaluated(e) && e.Eval() == 0;
+        internal static bool IsZero(Entity e) => e.Evaled is Complex c && c == 0;
     }
 }
 

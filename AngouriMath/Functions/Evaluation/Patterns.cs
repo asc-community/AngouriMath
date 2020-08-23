@@ -520,8 +520,6 @@ namespace AngouriMath.Functions
         };
         internal static Entity PolynomialLongDivision(Entity x) =>
             x is Divf(var num, var denom)
-            && !MathS.CanBeEvaluated(num)
-            && !MathS.CanBeEvaluated(denom)
             && TreeAnalyzer.PolynomialLongDivision(num, denom) is var (divided, remainder)
             ? divided + remainder
             : x;

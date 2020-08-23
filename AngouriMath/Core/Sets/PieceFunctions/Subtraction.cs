@@ -27,20 +27,17 @@ namespace AngouriMath.Core
     static partial class PieceFunctions
     {
         /// <summary>Subtracts B from A: A \ B = A & !B</summary>
-        public static IEnumerable<Piece> Subtract(Piece A, Piece B)
+        public static IEnumerable<SetPiece> Subtract(SetPiece A, SetPiece B)
         {
-            if (Intersect(A, B) == null) // if A & B is none, then A \ B = A
+            if (Intersect(A, B) is null) // if A & B is none, then A \ B = A
                 return new[] { A };
 
             if (A == B || B.Contains(A))
-                return Enumerable.Empty<Piece>();
+                return Enumerable.Empty<SetPiece>();
 
-            return Invert(B).SelectMany(piece =>
-                Intersect(A, piece) is { } conj && IsPieceCorrect(conj)
-                ? new[] { conj }
-                : Enumerable.Empty<Piece>());
+            return Invert(B).Select(piece => Intersect(A, piece)).OfType<SetPiece>().Where(IsPieceCorrect);
         }
-        internal static bool IsPieceCorrect(Piece piece)
+        internal static bool IsPieceCorrect(SetPiece piece)
         {
             var lower = piece.LowerBound();
             var upper = piece.UpperBound();

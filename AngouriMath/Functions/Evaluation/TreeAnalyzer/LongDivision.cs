@@ -46,7 +46,7 @@ namespace AngouriMath.Functions
         /// Divides one polynomial over another one:
         /// <a href="https://en.wikipedia.org/wiki/Polynomial_long_division"/>
         /// </summary>
-        internal static (Entity Divided, Entity Remainder) PolynomialLongDivision(Entity p, Entity q)
+        internal static (Entity Divided, Entity Remainder)? PolynomialLongDivision(Entity p, Entity q)
         {
             static PolynomialInformation GatherAllPossiblePolynomials(Entity expr, bool replaceVars)
             {
@@ -68,6 +68,9 @@ namespace AngouriMath.Functions
                        <EDecimal, PrimitiveDecimal>(children, varMentioned));
                 return res;
             }
+            if (!p.Vars.Any() || !q.Vars.Any())
+                return null; // There are no variables to find polynomial as
+
             // ---> (x^0.6 + 2x^0.3 + 1) / (x^0.3 + 1)
             var replacementInfo = GatherAllPossiblePolynomials(p + q, replaceVars: true);
 
@@ -85,7 +88,7 @@ namespace AngouriMath.Functions
             // First attempt to find polynoms
             var polyvar = monoinfoP.Keys.FirstOrDefault(monoinfoQ.ContainsKey);
             // cannot divide, return unchanged
-            if (polyvar is null) return (Divided: originalP / originalQ, Remainder: 0);
+            if (polyvar is null) return null;
             var maxpowP = monoinfoP[polyvar].Keys.Max();
             var maxpowQ = monoinfoQ[polyvar].Keys.Max();
             var maxvalP = monoinfoP[polyvar][maxpowP];
@@ -93,7 +96,7 @@ namespace AngouriMath.Functions
 
             // TODO: add case where all powers are non-positive
             // for now just return polynomials unchanged
-            if (maxpowP.LessThan(maxpowQ)) return (Divided: originalP / originalQ, Remainder: 0);
+            if (maxpowP.LessThan(maxpowQ)) return null;
 
             var result = new Dictionary<EDecimal, Entity>();
             // possibly very long process

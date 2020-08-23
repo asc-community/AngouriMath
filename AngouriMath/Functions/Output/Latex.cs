@@ -300,7 +300,7 @@ namespace AngouriMath
                         case OneElementPiece oneelem:
                             sb.Append(oneelem.UpperBound().Item1.Latexise());
                             break;
-                        case IntervalPiece _:
+                        case Interval _:
                             var lower = p.LowerBound();
                             var upper = p.UpperBound();
                             var l = lower.Item1.Latexise();

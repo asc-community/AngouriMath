@@ -293,13 +293,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 case Mulf(var multiplier, var multiplicand):
                     return Solve(multiplier, x).Concat(Solve(multiplicand, x));
                 case Divf(var dividend, var divisor):
-                    var zeroNumerators = Solve(dividend, x).ToList(); // Cache the enumeration
-                    if (!zeroNumerators.All(MathS.CanBeEvaluated))
-                        return zeroNumerators;
-                    var zeroDenominators = Solve(divisor, x).ToList(); // Cache the enumeration
-                    if (!zeroDenominators.All(MathS.CanBeEvaluated))
-                        return zeroNumerators;
-                    return zeroNumerators.Except(zeroDenominators);
+                    return Solve(dividend, x).Except(Solve(divisor, x));
                 case Powf(var @base, _):
                     return Solve(@base, x);
                 case Minusf(var subtrahend, var minuend) when !minuend.Contains(x) && compensateSolving:

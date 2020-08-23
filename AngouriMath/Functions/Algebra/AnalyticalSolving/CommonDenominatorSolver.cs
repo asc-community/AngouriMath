@@ -54,32 +54,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var multipliers = Mulf.LinearChildren(term);
             foreach (var multiplier in multipliers)
-            {
-                if (!multiplier.Contains(x))
-                {
+                if (!(multiplier.Contains(x) && GetPower(multiplier).Evaled is Real { IsPositive:false } realPart))
                     oneInfo.numerator *= multiplier;
-                    continue;
-                }
-                var power = GetPower(multiplier);
-                if (!MathS.CanBeEvaluated(power))
-                {
-                    oneInfo.numerator *= multiplier;
-                    continue;
-                }
-                var preciseValue = power.Eval();
-                if (!(preciseValue is Real realPart))
-                {
-                    oneInfo.numerator *= multiplier;
-                    continue;
-                }
-                if (realPart > 0)
-                {
-                    oneInfo.numerator *= multiplier;
-                    continue;
-                }
-                oneInfo.denominatorMultipliers.Add((GetBase(multiplier), realPart));
-            }
-
+                else
+                    oneInfo.denominatorMultipliers.Add((GetBase(multiplier), realPart));
             return oneInfo;
         }
 

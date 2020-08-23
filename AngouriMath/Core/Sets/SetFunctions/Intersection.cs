@@ -36,18 +36,7 @@ namespace AngouriMath.Core
                         && PieceFunctions.IsPieceCorrect(piece)
                         ? piece : null);
 
-                static IEnumerable<Piece>? UniteList(IEnumerable<Piece?> pieces)
-                {
-                    using var enumerator = pieces.GetEnumerator();
-                    do if (!enumerator.MoveNext()) return null;
-                    while (enumerator.Current is null);
-                    IEnumerable<Piece> remainders = new[] { enumerator.Current };
-                    while (enumerator.MoveNext())
-                        if (enumerator.Current is { } current)
-                            remainders = remainders.SelectMany(rem => PieceFunctions.Unite(rem, current));
-                    return remainders;
-                }
-                var union = UniteList(newPieces);
+                var union = RepeatApply(null, newPieces, PieceFunctions.Unite);
                 var badA = new Set { Pieces = badAPieces };
                 var badB = new Set { Pieces = badBPieces };
                 if (union is null)

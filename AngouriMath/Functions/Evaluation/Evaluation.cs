@@ -21,12 +21,7 @@ namespace AngouriMath
     using Core;
     using Functions;
     using static Entity.Number;
-    public static partial class MathS
-    {
-        public static bool CanBeEvaluated(Entity expr) => expr.Evaled is Complex;
-    }
 
-    // Adding function Eval to Entity
     public abstract partial record Entity
     {
         /// <summary>
@@ -48,15 +43,11 @@ namespace AngouriMath
                 : Expand_(e.Replace(Patterns.ExpandRules), level - 1);
             var expChildren = new List<Entity>();
             foreach (var linChild in Sumf.LinearChildren(this))
-            {
-                var exp = Functions.TreeAnalyzer.SmartExpandOver(linChild, entity => true);
-                if (exp is { })
+                if (TreeAnalyzer.SmartExpandOver(linChild, entity => true) is { } exp)
                     expChildren.AddRange(exp);
                 else
                     return this; // if one is too complicated, return the current one
-            }
-            var expanded = Functions.TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b));
-            return Expand_(expanded, level).InnerSimplify();
+            return Expand_(TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b)), level).InnerSimplify();
         }
 
         /// <summary>
@@ -83,8 +74,7 @@ namespace AngouriMath
 
         public Entity Evaled => _evaled.GetValue(this, e => e.InnerEval());
         static readonly ConditionalWeakTable<Entity, Entity> _evaled = new();
-        protected abstract Entity InnerEval();
-        internal abstract Entity InnerSimplify();
+        public bool Evaluable => Evaled is Complex;
 
         /// <summary>
         /// Simplification synonym. Recommended to use in case of computing a concrete number.
@@ -94,12 +84,12 @@ namespace AngouriMath
         /// </returns>
         /// <exception cref="InvalidOperationException">
         /// Thrown when this entity cannot be represented as a simple number.
-        /// <see cref="MathS.CanBeEvaluated(Entity)"/> should be used to check beforehand.
+        /// <see cref="Evaluable"/> should be used to check beforehand.
         /// </exception>
         public Complex Eval() =>
             Evaled is Complex value ? value :
                 throw new InvalidOperationException
-                    ($"Result cannot be represented as a simple number! Use {nameof(MathS.CanBeEvaluated)} to check beforehand.");
+                    ($"Result cannot be represented as a simple number! Use {nameof(Evaluable)} to check beforehand.");
 
         /// <summary>
         /// Collapses the entire expression into a tensor if possible
@@ -121,6 +111,9 @@ namespace AngouriMath
             Evaled is Tensor value ? value :
                 throw new InvalidOperationException
                     ($"Result cannot be represented as a {nameof(Tensor)}! Check the type of {nameof(Evaled)} beforehand.");
+       
+        protected abstract Entity InnerEval();
+        internal abstract Entity InnerSimplify();
         public partial record Number : Entity
         {
             protected override Entity InnerEval() => this;
