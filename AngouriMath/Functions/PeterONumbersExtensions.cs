@@ -51,7 +51,8 @@ namespace AngouriMath
         /// <a href="https://en.wikipedia.org/wiki/Least_common_multiple#Using_the_greatest_common_divisor"/>
         /// </summary>
         public static EInteger Lcm(this EInteger bigintFirst, EInteger bigintSecond) =>
-            bigintFirst.IsZero && bigintSecond.IsZero ? EInteger.Zero
+            bigintFirst.IsZero && bigintSecond.IsZero
+            ? EInteger.Zero
             : bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
         /// <summary><a href="https://en.wikipedia.org/wiki/Combination"/>, equivalent to nCr
         /// or <a href="https://en.wikipedia.org/wiki/Binomial_coefficient"/></summary>

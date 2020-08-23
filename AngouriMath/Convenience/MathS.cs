@@ -369,7 +369,7 @@ namespace AngouriMath
             ///     50, 51, 52);
             /// </list></list></list></list>
             /// </code>
-            /// creates 5×3 matrix with the appropriate elements
+            /// creates 5?3 matrix with the appropriate elements
             /// </summary>
             /// <param name="rows">Number of rows (first axis)</param>
             /// <param name="columns">Number of columns (second axis)</param>
@@ -609,7 +609,7 @@ namespace AngouriMath
             foreach (var f in expr.Vars)
                 sb.Append($"{f} = sympy.Symbol('{f}')\n");
             sb.Append("\n");
-            sb.Append("expr = " + expr.ToSymPy());
+            sb.Append("expr = ").Append(expr.ToSymPy());
             return sb.ToString();
         }
 
