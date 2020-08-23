@@ -23,6 +23,6 @@ namespace UnitTests.Common
             MathS.Settings.NewtonSolver.As(new() { Precision = 400 }, () => Assert.InRange(Measure(() => (x.Pow(3) + x.Pow(2) - 4 * x - 4).SolveNt(x)), 0, 80000000));
         [Fact] public void Test4() => Assert.InRange(Measure(() => (x / x).Simplify()), 0, 5000);
         [Fact] public void Test5() => Assert.InRange(Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x)), 0, 70000);
-        [Fact] public void Test6() => Assert.InRange(Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x).Substitute(x, 3).Eval()), 0, 14000000);
+        [Fact] public void Test6() => Assert.InRange(Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x).Substitute(x, 3).Eval()), 0, 20000000);
     }
 }
