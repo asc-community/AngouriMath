@@ -3,7 +3,7 @@ name: Build
 on: [push, pull_request]
 jobs:
   Build:
-    runs-on: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v2
       with:
