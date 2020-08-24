@@ -4,6 +4,10 @@ using System;
 
 namespace UnitTests.Common
 {
+    /// <summary>
+    /// It should be removed once we add benchmark workflow
+    /// https://github.com/asc-community/AngouriMath/issues/194
+    /// </summary>
     public class PerformanceTest
     {
         public PerformanceTest() => MathS.FromString("x"); // Get rid of overhead

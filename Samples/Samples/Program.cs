@@ -10,7 +10,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-
+            Entity a = "x + 3 + sin(x) + sin(x)";
+            var com = a.Compile("x");
         }
     }
 }

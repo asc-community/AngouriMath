@@ -230,8 +230,10 @@ namespace AngouriMath.Core
                     if (node is Number or Variable)
                         continue; // Don't store simple nodes in cache
                     else if (visited.Contains(node))
-                        if (cache.ContainsKey(node)) { }
-                        else cache.Add(node, ~cache.Count); // Unsaved by default
+                    {
+                        if (!cache.ContainsKey(node))
+                            cache.Add(node, ~cache.Count); // Unsaved by default
+                    }
                     else visited.Add(node);
                 var compiler = new Compiler(new(), varNamespace, cache);
                 func.InnerCompile(compiler);
