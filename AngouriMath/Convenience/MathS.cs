@@ -39,30 +39,6 @@ namespace AngouriMath
     using NumericsComplex = System.Numerics.Complex;
     using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
     /// <summary>Use functions from this class</summary>
-    /// If I need to add a function or operator (e.g. sin), I first pin this tab for reference :)
-    /// To start, implement real number evaluation (Press F12 -> <see cref="PeterONumbersExtensions.Sin"/>)
-    /// then complex number evaluation (Press F12 -> <see cref="Number.Sin"/>)
-    ///
-    /// Next, Add a new node representing the function as a nested type in <see cref="Entity"/>
-    ///  -> Copy record class (Press F12 -> First result of <see cref="Sinf"/>)
-    ///  -> Add instance method to Entity (Press F12 -> <see cref="Entity.Sin"/>).
-    /// 
-    /// After that,
-    /// .InnerEval (Press F12 -> <see cref="Sinf.InnerEval"/>)
-    /// .Stringize (Press F12 -> <see cref="Sinf.Stringize"/>)
-    /// .Latexise (Press F12 -> <see cref="Sinf.Latexise"/>)
-    /// .Derive (Press F12 -> <see cref="Sinf.Derive"/>)
-    /// .InnerSimplify (Press F12 -> <see cref="Sinf.InnerSimplify"/>)
-    /// To compilation (Press F12 -> <see cref="Sinf.InnerCompile_"/> and <see cref="FastExpression.Substitute"/>)
-    /// To parser (Open AngouriMath/Core/Antlr/AngouriMath.g)
-    /// To Pattern Replacer
-    ///     (Press F12 -> <see cref="Patterns.TrigonometricRules"/> and <see cref="Simplificator.Alternate"/>)
-    /// To static method in MathS (Press F12 -> <see cref="Sin"/>)
-    /// To Analytical Solver (Press F12 -> <see cref="Functions.Algebra.AnalyticalSolving.TrigonometricSolver"/>
-    ///                                and <see cref="Functions.Algebra.AnalyticalSolving.AnalyticalSolver.Solve"/>)
-    /// To ToSympy (Press F12 -> <see cref="Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
-    /// 
-    /// And finally, remember to add tests for all the new functionality!
     public static class MathS
     {
         /// <summary>Use it to solve equations</summary>
