@@ -40,7 +40,7 @@ namespace AngouriMath
     // Workaround is to use Notepad for editing.
     public abstract partial record Entity : ILatexiseable
     {
-        static readonly ConditionalWeakTable<Entity, Entity[]> _directChildren = new();
+        private static readonly ConditionalWeakTable<Entity, Entity[]> _directChildren = new();
         protected abstract Entity[] InitDirectChildren();
         public IReadOnlyList<Entity> DirectChildren => _directChildren.GetValue(this, e => e.InitDirectChildren());
 

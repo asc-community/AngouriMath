@@ -28,8 +28,19 @@ namespace AngouriMath.Core
         /// After having created a system of equations,
         /// you may solve or latexise it
         /// </summary>
-        /// <param name="equations"></param>
+        /// <param name="equations">
+        /// Any IEnumerable parameter, such as List<> or Array
+        /// </param>
         public EquationSystem(IEnumerable<Entity> equations) => this.equations = equations;
+
+        /// <summary>
+        /// After having created a system of equations,
+        /// you may solve or latexise it
+        /// </summary>
+        /// <param name="equations">
+        /// An arbitrary number of equations
+        /// </param>
+        public EquationSystem(params Entity[] equations) => this.equations = equations;
 
         /// <summary>
         /// Returns a solution matrix

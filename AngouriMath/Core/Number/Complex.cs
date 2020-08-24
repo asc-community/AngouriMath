@@ -51,7 +51,7 @@ namespace AngouriMath
 
                 protected override bool ThisIsFinite => RealPart.EDecimal.IsFinite && ImaginaryPart.EDecimal.IsFinite;
                 public override bool IsExact => RealPart.IsExact && ImaginaryPart.IsExact;
-                public bool IsZero => RealPart.EDecimal.IsZero && ImaginaryPart.EDecimal.IsZero;
+                public new bool IsZero => RealPart.EDecimal.IsZero && ImaginaryPart.EDecimal.IsZero;
                 public bool IsNaN => this == Real.NaN;
 
                 public static Complex Create(Real real, Real imaginary) =>
