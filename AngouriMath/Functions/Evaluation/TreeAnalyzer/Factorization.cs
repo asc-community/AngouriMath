@@ -33,7 +33,7 @@ namespace AngouriMath.Functions
                     // or Where returned empty: this variable already got replaced with something else
                     if (varParent is null)
                         break;
-                    var key = Variable.CreateTemp(res.Vars);
+                    var key = Variable.CreateTemp(res.Vars.Concat(replacements.Keys));
                     replacements.Add(key, varParent);
                     res = res.Substitute(varParent, key);
                 }
@@ -48,7 +48,7 @@ namespace AngouriMath.Functions
                 res = 0;
                 foreach (var currVar in currVars)
                 {
-                    static (Entity polyCollapsed, Entity remainder) ExtractPolynomialLocally(Entity expr, Variable x)
+                    static (Entity poly, Entity remainder) ExtractPolynomialLocally(Entity expr, Variable x)
                     {
                         var (powInfo, rem) =
                             PolynomialSolver.GatherMonomialInformationAllowingBad<EInteger, PrimitiveInteger>(Sumf.LinearChildren(expr), x);
@@ -59,7 +59,7 @@ namespace AngouriMath.Functions
                             rem += info;
                             powInfo.Remove(EInteger.Zero);
                         }
-                        return (Functions.Simplificator.BuildPoly(powInfo, x) ?? 0, rem);
+                        return (Simplificator.BuildPoly(powInfo, x) ?? 0, rem);
                     }
                     var (poly, rem) = ExtractPolynomialLocally(currState, currVar);
                     res += poly;

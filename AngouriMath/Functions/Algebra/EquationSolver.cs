@@ -35,11 +35,11 @@ namespace AngouriMath.Functions.Algebra
 
             static Entity simplifier(Entity entity) => entity.InnerSimplify();
             static Entity evaluator(Entity entity) => entity.Evaled;
-            var collapser = equation.Vars.Count() == 1 ? (Func<Entity, Entity>)evaluator : simplifier;
+            var factorizer = equation.Vars.Count() == 1 ? (Func<Entity, Entity>)evaluator : simplifier;
 
             var finalSet = new Set();
             foreach (var elem in solutions.Select(simplifier))
-                if (elem.IsFinite && collapser(equation.Substitute(x, elem)).IsFinite)
+                if (elem.IsFinite && factorizer(equation.Substitute(x, elem)).IsFinite)
                     finalSet.Add(elem);
             return finalSet;
         }

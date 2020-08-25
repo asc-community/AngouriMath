@@ -13,10 +13,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using AngouriMath.Core;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
@@ -36,10 +33,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// and an entity whole power's real part is 0
         /// x ^ (-1 + 2i) => num: x ^ (2i), den: [x]
         /// x ^ (3 - 2i) => num: x ^ (3 - 2i), den: []
-        /// 
         /// </summary>
-        /// <param name="term"></param>
-        /// <returns></returns>
         private static (Entity numerator, List<(Entity den, Real pow)> denominatorMultipliers) FindFractions(Entity term, Variable x)
         {
             // TODO: consider cases where we should NOT gather all powers in row
@@ -90,26 +84,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (denominators.Count == 0)
                 return null; // If there's no denominators or it's equal to 1, then we don't have to try to solve yet anymore
 
-            static Dictionary<string, (Entity den, Real pow)> ToDict(List<(Entity den, Real pow)> list)
-            {
-                var res = new Dictionary<string, (Entity den, Real pow)>();
-                foreach (var (den, pow) in list)
-                    res[den.ToString()] = (den, -pow);
-                return res;
-            }
-
             var newTerms = new List<Entity>();
             foreach (var (num, dens) in fracs)
             {
-                var denDict = ToDict(dens);
+                var denDict = new Dictionary<string, (Entity den, Real pow)>();
+                foreach (var (den, pow) in dens)
+                    denDict[den.ToString()] = (den, -pow);
                 Entity invertDenominator = 1;
                 foreach (var mp in denominators)
-                {
-                    if (denDict.ContainsKey(mp.Key))
-                        invertDenominator *= MathS.Pow(mp.Value.den, denominators[mp.Key].pow - denDict[mp.Key].pow);
-                    else
-                        invertDenominator *= MathS.Pow(mp.Value.den, denominators[mp.Key].pow);
-                }
+                    invertDenominator *= MathS.Pow(mp.Value.den, 
+                        denDict.TryGetValue(mp.Key, out var denPow)
+                        ? denominators[mp.Key].pow - denPow.pow
+                        : denominators[mp.Key].pow);
                 newTerms.Add(invertDenominator * num);
             }
 

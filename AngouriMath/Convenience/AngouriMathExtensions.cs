@@ -27,7 +27,7 @@ namespace AngouriMath.Extensions
         public static Entity Simplify(this string expr) => expr.ToEntity().Simplify();
         public static Complex Eval(this string expr) => expr.ToEntity().Eval();
         public static Entity Expand(this string expr) => expr.ToEntity().Expand();
-        public static Entity Collapse(this string expr) => expr.ToEntity().Collapse();
+        public static Entity Factorize(this string expr) => expr.ToEntity().Factorize();
         public static Entity Substitute(this string expr, Variable var, Entity value)
             => expr.ToEntity().Substitute(var, value);
         public static Set SolveEquation(this string expr, Variable x)

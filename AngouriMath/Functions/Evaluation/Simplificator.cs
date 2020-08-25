@@ -91,7 +91,7 @@ namespace AngouriMath.Functions
                 if (res.Nodes.Any(child => child is Factorialf))
                 {
                     AddHistory(res = res.Replace(Patterns.ExpandFactorialDivisions).InnerSimplify());
-                    AddHistory(res = res.Replace(Patterns.CollapseFactorialMultiplications).InnerSimplify());
+                    AddHistory(res = res.Replace(Patterns.FactorizeFactorialMultiplications).InnerSimplify());
                 }
                 if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
@@ -106,11 +106,9 @@ namespace AngouriMath.Functions
                 /*
                 This was intended to simplify expressions as polynomials over nodes, some kind of
                 greatest common node and simplifying over it. However, the current algorithm does
-                not solve this issue completely and yet too slow to be accepted. 
+                not solve this issue completely and yet too slow to be accepted.
 
-
-                res = res.DeepCopy();
-                SmartPolynomialCollapser.Collapse(ref res);
+                AddHistory(res = TreeAnalyzer.Factorize(res));
                 */
 
                 res = history[history.Keys.Min()].First();
@@ -118,7 +116,7 @@ namespace AngouriMath.Functions
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
                 AddHistory(res.Expand().Simplify(-level));
-                AddHistory(res.Collapse().Simplify(-level));
+                AddHistory(res.Factorize().Simplify(-level));
             }
 
             return history.Values.SelectMany(x => x);

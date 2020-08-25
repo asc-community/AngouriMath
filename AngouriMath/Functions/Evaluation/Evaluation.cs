@@ -51,14 +51,14 @@ namespace AngouriMath
         }
 
         /// <summary>
-        /// Collapses an equation trying to eliminate as many power-uses as possible ( e.g. x * 3 + x * y = x * (3 + y) )
+        /// Factorizes an equation trying to eliminate as many power-uses as possible ( e.g. x * 3 + x * y = x * (3 + y) )
         /// </summary>
         /// <param name="level">
-        /// The number of iterations (increase this argument if some collapse operations are still available)
+        /// The number of iterations (increase this argument if some factor operations are still available)
         /// </param>
-        public Entity Collapse(int level = 2) => level <= 1
-            ? this.Replace(Patterns.CollapseRules)
-            : this.Replace(Patterns.CollapseRules).Collapse(level - 1);
+        public Entity Factorize(int level = 2) => level <= 1
+            ? this.Replace(Patterns.FactorizeRules)
+            : this.Replace(Patterns.FactorizeRules).Factorize(level - 1);
 
         /// <summary>
         /// Simplifies an equation ( e.g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x )
@@ -92,7 +92,7 @@ namespace AngouriMath
                     ($"Result cannot be represented as a simple number! Use {nameof(Evaluable)} to check beforehand.");
 
         /// <summary>
-        /// Collapses the entire expression into a tensor if possible
+        /// Evaluates the entire expression into a <see cref="Tensor"/> if possible
         /// ( x y ) + 1 => ( x+1 y+1 )
         /// 
         /// ( 1 2 ) + ( 3 4 ) => ( 4 6 ) vectors pointwise

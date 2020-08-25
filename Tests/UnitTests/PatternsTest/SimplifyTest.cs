@@ -92,7 +92,7 @@ namespace UnitTests.PatternsTest
         [Fact] public void Derive2() => AssertSimplify(MathS.Derivative("7x2 - x + 2", x, 2), 14);
         [Fact] public void Integral1() => AssertSimplify(MathS.Integral("x + y", x, 0), "x + y");
         [Fact] public void Divide1() => AssertSimplifyToString("(x2 + 2 x y + y2) / (x + y)", "x + y");
-        // TODO: Smart collapser
+        // TODO: Smart factorizer
         [Fact] public void Divide2() => AssertSimplifyToString("(x3 + 3 x 2 y + 3 x y 2 + y3) / (x + y)", "x ^ 2 + 2 * x * y + y ^ 2");
         [Fact] public void Divide3() => AssertSimplifyToString("(x2 + 2 x y + y2 + 1) / (x + y)", "x + 1 / (x + y) + y");
 

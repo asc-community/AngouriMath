@@ -24,22 +24,14 @@ namespace AngouriMath.Core
     {
         private readonly IEnumerable<Entity> equations;
 
-        /// <summary>
-        /// After having created a system of equations,
-        /// you may solve or latexise it
-        /// </summary>
+        /// <summary>After having created a system of equations, you may solve or latexise it</summary>
         /// <param name="equations">
-        /// Any IEnumerable parameter, such as List<> or Array
+        /// Any <see cref="IEnumerable{T}"/> parameter, such as <see cref="List{T}"/> or <see cref="System.Array"/>
         /// </param>
         public EquationSystem(IEnumerable<Entity> equations) => this.equations = equations;
 
-        /// <summary>
-        /// After having created a system of equations,
-        /// you may solve or latexise it
-        /// </summary>
-        /// <param name="equations">
-        /// An arbitrary number of equations
-        /// </param>
+        /// <summary>After having created a system of equations, you may solve or latexise it</summary>
+        /// <param name="equations">An arbitrary number of equations</param>
         public EquationSystem(params Entity[] equations) => this.equations = equations;
 
         /// <summary>

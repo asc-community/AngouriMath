@@ -70,31 +70,30 @@ namespace AngouriMath
         public static Entity Expand(Entity expr) => expr.Expand();
 
         /// <summary>
-        /// Collapses an equation trying to eliminate as many power-uses as possible ( e. g. x * 3 + x * y = x * (3 + y) )
+        /// Factorizes an equation trying to eliminate as many power-uses as possible ( e. g. x * 3 + x * y = x * (3 + y) )
         /// </summary>
-        /// <returns></returns>
-        public static Entity Collapse(Entity expr) => expr.Collapse();
+        public static Entity Factor(Entity expr) => expr.Factorize();
 
         /// <summary>
-        /// Simplification synonim. Recommended to use in case of 
+        /// Simplification synonym. Recommended to use in case of 
         /// computing a concrete number, knowing that you don't have
         /// any other symbols but numbers and functions.
         /// </summary>
-        /// <returns></returns>
         public static Number.Complex Evalf(Entity expr) => expr.Eval();
 
-        /// <summary>
+        /// <returns>
         /// Returns the expression in format of latex (for example, a / b -> \frac{a}{b})
-        /// </summary>
-        /// <returns></returns>
+        /// </returns>
         public static Entity Latex(Entity expr) => expr.Latexise();
 
-        /// <summary>
-        /// Creates an instance of variable entity.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
+        /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
         public static Variable Symbol(string name) => name;
+        /// <summary>Creates two instances of <see cref="Variable"/>.</summary>
+        public static (Variable, Variable) Symbol(string name1, string name2) => (name1, name2);
+        /// <summary>Creates three instances of <see cref="Variable"/>.</summary>
+        public static (Variable, Variable, Variable) Symbol(string name1, string name2, string name3) => (name1, name2, name3);
+        /// <summary>Creates four instances of <see cref="Variable"/>.</summary>
+        public static (Variable, Variable, Variable, Variable) Symbol(string name1, string name2, string name3, string name4) => (name1, name2, name3, name4);
 
         /// <summary>
         /// e ^ power

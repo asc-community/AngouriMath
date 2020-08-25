@@ -93,28 +93,28 @@ namespace AngouriMath.Functions
         // (z-1)! (z-1/2)! -> Γ(z) Γ(z + 1/2) = 2^(1 - 2 z) sqrt(π) Γ(2 z) -> 2^(1 - 2 z) sqrt(π) (2 z - 1)!
         // is also another possible simplification
         /// <summary>(x-1)! x -> x!, x! (x+1) -> (x+1)!, etc. <!--as well as z! (-z-1)! -> -π/sin(π z)--></summary>
-        internal static Entity CollapseFactorialMultiplications(Entity expr)
+        internal static Entity FactorizeFactorialMultiplications(Entity expr)
         {
-            Entity CollapseFactorialMultiplications(Entity x, Entity x2, Number factConst, Number @const) =>
+            Entity FactorizeFactorialMultiplications(Entity x, Entity x2, Number factConst, Number @const) =>
                 x == x2 && factConst + 1 == @const ? new Factorialf(x + @const) : expr;
             return expr switch
             {
                 Mulf(Factorialf(Sumf(var any1, Number const1)), Sumf(var any1a, Number const2)) =>
-                    CollapseFactorialMultiplications(any1, any1a, const1, const2),
+                    FactorizeFactorialMultiplications(any1, any1a, const1, const2),
                 Mulf(Factorialf(Sumf(Number const1, var any1)), Sumf(var any1a, Number const2)) =>
-                    CollapseFactorialMultiplications(any1, any1a, const1, const2),
+                    FactorizeFactorialMultiplications(any1, any1a, const1, const2),
                 Mulf(Factorialf(Sumf(var any1, Number const1)), Sumf(Number const2, var any1a)) =>
-                    CollapseFactorialMultiplications(any1, any1a, const1, const2),
+                    FactorizeFactorialMultiplications(any1, any1a, const1, const2),
                 Mulf(Factorialf(Sumf(Number const1, var any1)), Sumf(Number const2, var any1a)) =>
-                    CollapseFactorialMultiplications(any1, any1a, const1, const2),
+                    FactorizeFactorialMultiplications(any1, any1a, const1, const2),
                 Mulf(Factorialf(var any1), Sumf(var any1a, Number const2)) =>
-                    CollapseFactorialMultiplications(any1, any1a, 0, const2),
+                    FactorizeFactorialMultiplications(any1, any1a, 0, const2),
                 Mulf(Factorialf(var any1), Sumf(Number const2, var any1a)) =>
-                    CollapseFactorialMultiplications(any1, any1a, 0, const2),
+                    FactorizeFactorialMultiplications(any1, any1a, 0, const2),
                 Mulf(Factorialf(Sumf(var any1, Number const1)), var any1a) =>
-                    CollapseFactorialMultiplications(any1, any1a, const1, 0),
+                    FactorizeFactorialMultiplications(any1, any1a, const1, 0),
                 Mulf(Factorialf(Sumf(Number const1, var any1)), var any1a) =>
-                    CollapseFactorialMultiplications(any1, any1a, const1, 0),
+                    FactorizeFactorialMultiplications(any1, any1a, const1, 0),
                 _ => expr
             };
         }
@@ -472,7 +472,7 @@ namespace AngouriMath.Functions
             _ => x
         };
 
-        internal static Entity CollapseRules(Entity x) => x switch
+        internal static Entity FactorizeRules(Entity x) => x switch
         {
             // {1}2 - {2}2
             Minusf(Powf(var any1, Number const1), Powf(var any2, Number const2)) =>
