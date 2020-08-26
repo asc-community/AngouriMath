@@ -35,9 +35,6 @@ namespace AngouriMath
     /// Every node, expression, or number is an <see cref="Entity"/>.
     /// However, you cannot create an instance of this class, look for the nested classes instead.
     /// </summary>
-    // Note: When editing record parameter lists on Visual Studio 16.7.x or 16.8 Preview 1,
-    // watch out for Visual Studio crash: https://github.com/dotnet/roslyn/issues/46123
-    // Workaround is to use Notepad for editing.
     public abstract partial record Entity : ILatexiseable
     {
         private static readonly ConditionalWeakTable<Entity, Entity[]> _directChildren = new();

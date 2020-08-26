@@ -54,16 +54,16 @@ namespace UnitTests.PatternsTest
                 BeingCompletedForLessThan(
                     () => "(1 + 1 / x)^2 / (1 + 1 / x)".Simplify(), GithubIssue170Timeout));
 
-                [Fact]
+        [Fact]
         public void TestEnumerator1()
         {
             Entity expr = "a^x + b^y + c^z";
 
             var matches = new Set();
-            foreach(var match in expr.Nodes.OfType<Entity.Powf>())
+            foreach (var match in expr.Nodes.OfType<Entity.Powf>())
                 matches.Add(match);
             Assert.Equal(3, matches.Count);
-            foreach(var match in matches.FiniteSet())
+            foreach (var match in matches.FiniteSet())
                 Assert.True(expr.Contains(match));
         }
 

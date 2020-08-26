@@ -13,8 +13,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
 using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
@@ -62,12 +60,7 @@ namespace AngouriMath.Functions
             }
         }
 
-        /// <summary>
-        /// Transforms a floating number, but this number should be in [0; 1]
-        /// </summary>
-        /// <param name="num"></param>
-        /// <param name="N"></param>
-        /// <returns></returns>
+        /// <summary>Transforms a floating number, but this number should be in [0; 1]</summary>
         internal static string FloatToBaseN(EDecimal num /*should be < 1*/, int N)
         {
             if (num.GreaterThan(EDecimal.One) || num.IsNegative)
@@ -84,14 +77,10 @@ namespace AngouriMath.Functions
             return res.ToString();
         }
 
-
         /// <summary>
         /// if a number is A + B where A is integer and B is in [0; 1], it performs operations
         /// for A and B separately and then concatenates
         /// </summary>
-        /// <param name="num"></param>
-        /// <param name="N"></param>
-        /// <returns></returns>
         internal static string ToBaseN(EDecimal num, int N)
         {
             if (N > ALPHABET_TOCHAR.Length)
@@ -106,12 +95,7 @@ namespace AngouriMath.Functions
             return leftPart + rightPart;
         }
 
-        /// <summary>
-        /// Gets an integer from a string (which should not contain any ,.-)
-        /// </summary>
-        /// <param name="num"></param>
-        /// <param name="N"></param>
-        /// <returns></returns>
+        /// <summary>Gets an integer from a string which should not contain any of ,.-</summary>
         internal static int IntFromBaseN(string num, int N)
         {
             int res = 0;
@@ -124,12 +108,7 @@ namespace AngouriMath.Functions
             return res;
         }
 
-        /// <summary>
-        /// if num is ABC, the initial number was 0.ABC
-        /// </summary>
-        /// <param name="num"></param>
-        /// <param name="N"></param>
-        /// <returns></returns>
+        /// <summary>if num is ABC, the initial number was 0.ABC</summary>
         internal static EDecimal FloatFromBaseN(string num, int N)
         {
             EDecimal res = 0;
@@ -144,9 +123,6 @@ namespace AngouriMath.Functions
         /// <summary>
         /// Performs operations on both the integer and floating parts of a number and concatenates
         /// </summary>
-        /// <param name="num"></param>
-        /// <param name="N"></param>
-        /// <returns></returns>
         internal static EDecimal FromBaseN(string num, int N)
         {
             int sign = num[0] == '-' ? -1 : 1;
