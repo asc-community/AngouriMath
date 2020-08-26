@@ -2,18 +2,6 @@ name: CI
 
 on: [push, pull_request]
 jobs:
-  Benchmark:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: 'recursive'
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 5.0.100-preview.7.20366.6
-    - name: Benchmark
-      run: dotnet run -p Tests/DotnetBenchmark -c Release
   Build:
     runs-on: windows-latest
     steps:
@@ -61,3 +49,5 @@ jobs:
         dotnet add "Tests/UnitTests" package Microsoft.NET.Test.Sdk # Update is required for GitHubActionsTestLogger to print anything
         dotnet add "Tests/UnitTests" package GitHubActionsTestLogger
         dotnet test "Tests/UnitTests" -c Release -l GitHubActions
+    - name: Benchmark
+      run: dotnet run -p Tests/DotnetBenchmark -c Release
