@@ -81,7 +81,9 @@ namespace AngouriMath
         /// </param>
         /// <param name="var">The only variable</param>
         /// <param name="sign">The relation of the expression to zero.</param>
+#pragma warning disable IDE0060 // Remove unused parameter
         public static Set SolveInequalityNumerically(Entity inequality, Variable var, Inequality sign)
+#pragma warning restore IDE0060 // Remove unused parameter
         {
             throw new NotSupportedException("Will be added soon");
 #pragma warning disable 162
@@ -682,7 +684,9 @@ namespace AngouriMath
             /// <summary>Integrates over a variable (without simplification)</summary>
             /// <param name="x">The variable to integrate over</param>
             /// <returns>The integrated result</returns>
+#pragma warning disable IDE0060 // Remove unused parameter
             public static Entity? Integral(Entity expr, Variable x) =>
+#pragma warning restore IDE0060 // Remove unused parameter
                 throw new NotImplementedException("Integrals not implemented yet");
         }
         /// <summary>

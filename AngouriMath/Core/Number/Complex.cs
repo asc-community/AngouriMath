@@ -25,7 +25,7 @@ namespace AngouriMath
         public abstract partial record Number
         {
             /// <summary>
-            /// Extension for <see cref="Real"/>s
+            /// Extension for <see cref="Real"/>
             /// <a href="https://en.wikipedia.org/wiki/Complex_number"/>
             /// </summary>
             public record Complex : Number
@@ -172,6 +172,7 @@ namespace AngouriMath
                         return true;
                     }
                     if (source.Last() == 'i')
+                    {
                         if (source == "i")
                         {
                             dst = ImaginaryOne;
@@ -189,6 +190,7 @@ namespace AngouriMath
                         }
                         else
                             return false;
+                    }
                     return false;
                 }
 

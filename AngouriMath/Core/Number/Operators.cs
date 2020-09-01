@@ -15,8 +15,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -564,29 +562,29 @@ namespace AngouriMath
             public static Complex Arccotan(Complex num) => Arctan(1 / num);
 
             // From https://github.com/eobermuhlner/big-math/blob/ba75e9a80f040224cfeef3c2ac06390179712443/ch.obermuhlner.math.big/src/main/java/ch/obermuhlner/math/big/BigComplexMath.java
-            /**
-             * <summary>
-             * Calculates the factorial of the specified <see cref="Complex"/>.
-             *
-             * <para>This implementation uses
-             * <a href="https://en.wikipedia.org/wiki/Spouge%27s_approximation">Spouge's approximation</a>
-             * to calculate the factorial for non-integer values.</para>
-             *
-             * <para>This involves calculating a series of constants that depend on the desired precision.
-             * Since this constant calculation is quite expensive (especially for higher precisions),
-             * the constants for a specific precision will be cached
-             * and subsequent calls to this method with the same precision will be much faster.</para>
-             *
-             * <para>It is therefore recommended to do one call to this method with the standard precision of your application during the startup phase
-             * and to avoid calling it with many different precisions.</para>
-             *
-             * <para>See: <a href="https://en.wikipedia.org/wiki/Factorial#Extension_of_factorial_to_non-integer_values_of_argument">Wikipedia: Factorial - Extension of factorial to non-integer values of argument</a></para>
-             * </summary>
-             * <param name="x">The <see cref="Complex"/></param>
-             * <returns>The factorial <see cref="Complex"/></returns>
-             * <seealso cref="PeterONumbersExtensions.Factorial(EDecimal, EContext)"/>
-             * <seealso cref="Gamma(Complex)"/>
-             */
+            /// 
+            /// <summary>
+            /// Calculates the factorial of the specified <see cref="Complex"/>.
+            /// 
+            /// <para>This implementation uses
+            /// <a href="https://en.wikipedia.org/wiki/Spouge%27s_approximation">Spouge's approximation</a>
+            /// to calculate the factorial for non-integer values.</para>
+            /// 
+            /// <para>This involves calculating a series of constants that depend on the desired precision.
+            /// Since this constant calculation is quite expensive (especially for higher precisions),
+            /// the constants for a specific precision will be cached
+            /// and subsequent calls to this method with the same precision will be much faster.</para>
+            /// 
+            /// <para>It is therefore recommended to do one call to this method with the standard precision of your application during the startup phase
+            /// and to avoid calling it with many different precisions.</para>
+            /// 
+            /// <para>See: <a href="https://en.wikipedia.org/wiki/Factorial#Extension_of_factorial_to_non-integer_values_of_argument">Wikipedia: Factorial - Extension of factorial to non-integer values of argument</a></para>
+            /// </summary>
+            /// <param name="x">The <see cref="Complex"/></param>
+            /// <returns>The factorial <see cref="Complex"/></returns>
+            /// <seealso cref="PeterONumbersExtensions.Factorial(EDecimal, EContext)"/>
+            /// <seealso cref="Gamma(Complex)"/>
+            /// 
             public static Complex Factorial(Complex x)
             {
                 var mathContext = MathS.Settings.DecimalPrecisionContext.Value;
@@ -625,19 +623,18 @@ namespace AngouriMath
                                       result.ImaginaryPart.EDecimal.RoundToPrecision(mathContext));
             }
 
-            /**<summary>
-             * Calculates the gamma function of the specified <see cref="Complex"/>.
-             *
-             * <para>This implementation uses {@link #factorial(ComplexNumber, MathContext)} internally,
-             * therefore the performance implications described there apply also for this method.</para>
-             *
-             * <para>See: <a href="https://en.wikipedia.org/wiki/Gamma_function">Wikipedia: Gamma function</a></para>
-             * </summary>
-             * <param name="x">The <see cref="Complex"/></param>
-             * <returns>The gamma <see cref="Complex"/></returns>
-             * <seealso cref="PeterONumbersExtensions.Gamma(EDecimal, EContext)"/>
-             * <seealso cref="Factorial(Complex)"/>
-             */
+            /// <summary>
+            /// Calculates the gamma function of the specified <see cref="Complex"/>.
+            /// 
+            /// <para>This implementation uses {@link #factorial(ComplexNumber, MathContext)} internally,
+            /// therefore the performance implications described there apply also for this method.</para>
+            /// 
+            /// <para>See: <a href="https://en.wikipedia.org/wiki/Gamma_function">Wikipedia: Gamma function</a></para>
+            /// </summary>
+            /// <param name="x">The <see cref="Complex"/></param>
+            /// <returns>The gamma <see cref="Complex"/></returns>
+            /// <seealso cref="PeterONumbersExtensions.Gamma(EDecimal, EContext)"/>
+            /// <seealso cref="Factorial(Complex)"/>
             public static Complex Gamma(Complex x) => Factorial(x - Integer.One);
         }
     }
