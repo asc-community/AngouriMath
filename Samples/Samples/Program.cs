@@ -10,8 +10,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity a = "x + 3 + sin(x) + sin(x)";
-            var com = a.Compile("x");
+            Entity a = "(x4 - 4x3 - 8x2 + 48x + 16) / (x - a)";
+            Console.Write(a.Simplify());
         }
     }
 }

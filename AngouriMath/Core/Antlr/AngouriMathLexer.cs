@@ -30,7 +30,7 @@ using DFA = Antlr4.Runtime.Dfa.DFA;
 
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.8")]
 [System.CLSCompliant(false)]
-public partial class AngouriMathLexer : Lexer {
+internal partial class AngouriMathLexer : Lexer {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
 	public const int
@@ -85,7 +85,7 @@ public partial class AngouriMathLexer : Lexer {
 		null, null, null, null, null, null, null, null, null, "NEWLINE", "NUMBER", 
 		"VARIABLE", "COMMENT", "WS"
 	};
-	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
+	internal static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
 	[NotNull]
 	public override IVocabulary Vocabulary

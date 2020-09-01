@@ -25,6 +25,7 @@
     <StartupObject />
     <PackageIcon>icon.png</PackageIcon>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
   
   <ItemGroup>
@@ -32,6 +33,10 @@
     <None Include="../LICENSE.md" Pack="True" PackagePath="" />
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
     <PackageReference Include="GenericTensor" Version="0.1.1-beta" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="PeterO.Numbers" Version="1.7.4" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="Nullable" Version="1.2.1" PrivateAssets="all" />

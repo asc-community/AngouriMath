@@ -35,7 +35,7 @@ using IToken = Antlr4.Runtime.IToken;
 /// </summary>
 [System.CodeDom.Compiler.GeneratedCode("ANTLR", "4.8")]
 [System.CLSCompliant(false)]
-public interface IAngouriMathListener : IParseTreeListener {
+internal interface IAngouriMathListener : IParseTreeListener {
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.factorial_expression"/>.
 	/// </summary>

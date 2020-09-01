@@ -5,6 +5,12 @@ source files under the Antlr folder can update and be reflected in other parts o
 It only consists of commands that are consistent across CMD and Bash so you should be able to run that file
 regardless of whether you are on Windows, Linux or Mac. You need to have an installed Java Runtime, however.
 
+If I need something ANTLR has no API for, I follow the steps:
+1) Unzip the jar file
+2) Make changes (possibly here org\antlr\v4\tool\templates\codegen\CSharp\CSharp.stg)
+3) Execute the command
+start [path to your jdk]\jdk12\bin\jar.exe cmvf META-INF/MANIFEST.MF ../antlr4.jar *
+
 */
 
 grammar AngouriMath; // Should be identical to the file name or ANTLR will complain
@@ -14,6 +20,9 @@ options
     // Equivalent to passing "-Dlanguage=CSharp" into "antlr-4.8-complete.jar" in "antlr_rerun.bat"
     language = CSharp;
 }
+
+@modifier{internal}
+@ctorModifier{internal}
 
 @parser::header
 {

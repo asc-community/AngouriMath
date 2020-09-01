@@ -37,9 +37,9 @@ namespace AngouriMath
     /// </summary>
     public abstract partial record Entity : ILatexiseable
     {
-        private static readonly ConditionalWeakTable<Entity, Entity[]> _directChildren = new();
+        private static readonly ConditionalWeakTable<Entity, Entity[]> directChildren = new();
         protected abstract Entity[] InitDirectChildren();
-        public IReadOnlyList<Entity> DirectChildren => _directChildren.GetValue(this, e => e.InitDirectChildren());
+        public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(this, e => e.InitDirectChildren());
 
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="Core.TreeAnalysis.TreeAnalyzer.GetMinimumSubtree(Entity, Variable)"/></remarks>

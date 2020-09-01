@@ -48,6 +48,7 @@ namespace AngouriMath
         /// </param>
         /// <returns>An <see cref="EquationSystem"/> which can then be solved</returns>
         public static EquationSystem Equations(params Entity[] equations) => new EquationSystem(equations);
+
         /// <summary>Use it to solve equations</summary>
         /// <param name="equations">
         /// An array of <see cref="Entity"/> (or <see cref="string"/>s)
@@ -63,6 +64,7 @@ namespace AngouriMath
         public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
 
         // Marking small enums with ": byte" is premature optimization and shouldn't be done: https://stackoverflow.com/q/648823/5429648
+
         [Flags]
         public enum Inequality
         {

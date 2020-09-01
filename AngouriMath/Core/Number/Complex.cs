@@ -34,11 +34,11 @@ namespace AngouriMath
                 /// Constructor does not downcast automatically. Use <see cref="Create(Real, Real)"/> for automatic downcasting
                 /// </summary>
                 private protected Complex(Real? real, Real? imaginary) =>
-                    (_real, _imaginary) = (real, imaginary);
-                private readonly Real? _real;
-                private readonly Real? _imaginary;
-                public virtual Real RealPart => _real ?? Integer.Zero;
-                public Real ImaginaryPart => _imaginary ?? Integer.Zero;
+                    (this.real, this.imaginary) = (real, imaginary);
+                private readonly Real? real;
+                private readonly Real? imaginary;
+                public virtual Real RealPart => real ?? Integer.Zero;
+                public Real ImaginaryPart => imaginary ?? Integer.Zero;
                 public override Priority Priority =>
                     (RealPart, ImaginaryPart) switch
                     {
