@@ -1,232 +1,117 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using static AngouriMath.Entity.Number;
+using Xunit;
 using System;
 using System.Collections.Generic;
-using AngouriMath.Core.Numerix;
+using System.Linq;
 
 namespace UnitTests.Algebra
 {
-    [TestClass]
     public class SolveOneEquation
     {
-        public static VariableEntity x = "x";
+        public static Entity.Variable x = nameof(x);
 
-        /// <summary>
-        /// Numerically checks if a root fits an equation
-        /// </summary>
-        /// <param name="equation"></param>
-        /// <param name="toSub"></param>
-        /// <param name="varValue"></param>
-        public static void AssertRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber? subValue = null)
+        /// <summary>Numerically checks if a root fits an equation</summary>
+        internal static void AssertRoots(Entity equation, Entity.Variable toSub, Entity varValue, Integer? subValue = null)
         {
             subValue ??= 3;
-            static string LimitString(string s)
-            {
-                if (s.Length < 30)
-                    return s;
-                else
-                    return s.Substring(0, 10) + "..." + s.Substring(s.Length - 10, 10);
-            }
             string eqNormal = equation.ToString();
-            var err = CheckRoots(equation, toSub, varValue, subValue);
-            Assert.IsTrue(err < 0.001m, "Error is : " + err + "  " + LimitString(eqNormal) + "  wrong root is " + toSub.Name + " = " + LimitString(varValue.ToString()));
-        }
-
-        public static RealNumber CheckRoots(Entity equation, VariableEntity toSub, Entity varValue, ComplexNumber subValue)
-        {
             equation = equation.Substitute(toSub, varValue);
-            var allVars = MathS.Utils.GetUniqueVariables(equation);
-
-            var offset = 0;
-            foreach (var vr in allVars.FiniteSet())
-            {
-                equation = equation.Substitute(vr.Name, subValue + offset
-                    /* MUST be integer to correspond to integer coefficient of periodic roots*/);
-                offset++;
-            }
-
-            return Number.Abs(equation.Eval());
+            // MUST be integer to correspond to integer coefficient of periodic roots
+            var substitutions = new Dictionary<Entity.Variable, Integer>();
+            foreach (var vr in equation.Vars)
+                substitutions.Add(vr, subValue + substitutions.Count);
+            equation = equation.Substitute(substitutions);
+            var err = equation.Eval().Abs();
+            Assert.True(err < 0.001m, $"\nError = {err}\n{eqNormal}\nWrong root: {toSub} = {varValue}");
         }
 
-        public static void AssertRootCount(Set roots, int target)
+        static void AssertRootCount(Set roots, int target)
         {
-            Assert.AreNotEqual(Set.PowerLevel.INFINITE, roots.Power);
-            Assert.AreEqual(target, roots.Count);
+            Assert.NotEqual(-1, target);
+            Assert.Equal(target, roots.Count);
         }
 
-        public void TestSolver(Entity expr, int rootCount, ComplexNumber? toSub = null)
+        void TestSolver(Entity expr, int rootCount, Integer? toSub = null, bool testNewton = false)
         {
-            var roots = expr.SolveEquation(x);
+            var roots = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x));
             AssertRootCount(roots, rootCount);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root, toSub);
+            if (!testNewton) return;
+            // TODO: Increase Newton precision
+            var ntRoots = MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () => expr.SolveNt(x));
+            Assert.Equal(rootCount, ntRoots.Count);
+            foreach (var root in ntRoots)
+                AssertRoots(expr, x, root, toSub);
         }
 
-        [TestMethod]
-        public void Test1()
-        {
-            var eq = (x - 1) * (x - 2);
-            var roots = eq.SolveNt(x);
-            AssertRootCount(roots, 2);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-        }
-        [TestMethod]
-        public void Test2()
-        {
-            // TODO: Remove this line when precision is increased
-            MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () =>
-            {
-                var eq = MathS.Sqr(x) + 1;
-                var roots = eq.SolveNt(x);
-                AssertRootCount(roots, 2);
-                foreach (var root in roots.FiniteSet())
-                    AssertRoots(eq, x, root);
-            });
-        }
-        [TestMethod]
-        public void Test4()
+        [Fact]
+        public void TestPolynomialToFix()
         {
             var eq = x.Pow(2) + 2 * x + 1;
             var roots = MathS.Settings.PrecisionErrorCommon.As(1e-8m, () =>
-                MathS.Settings.NewtonSolver.As(new NewtonSetting() {Precision = 100}, () =>
+                MathS.Settings.NewtonSolver.As(new() { Precision = 100 }, () =>
                     eq.SolveNt(x)
                 ));
             // AssertRootCount(roots, 1); TODO: remove // after fix
-            foreach (var root in roots.FiniteSet())
+            foreach (var root in roots)
                 AssertRoots(eq, x, root);
         }
 
-        [TestMethod]
-        public void Test5()
+        [Theory]
+        [InlineData("(x - 1) * (x - 2)", 2)]
+        [InlineData("sqr(x) + 1", 2)]
+        [InlineData("x2 + 2x + 2", 2)]
+        [InlineData("2x2 + 4x + 2", 1)]
+        [InlineData("x2 - 3x + 2", 2)]
+        [InlineData("x3 + 3x2 + 3x + 1", 1)]
+        [InlineData("x3 - 6x2 + 11x - 6", 3)]
+        // TODO: Fix Newton Solver and set testNewton:true
+        public void Polynomial(string expr, int rootCount) => TestSolver(expr, rootCount);
+
+        [Theory]
+        [InlineData("(x - goose) * (x - 3)", 2)]
+        [InlineData("(x - momo) * (x - goose)", 2)]
+        [InlineData("(x - goose) * (x + goose * momo) * (x - momo * 2)", 3)]
+        // [InlineData("(x - goose) * (x - 2) * (sqr(x) - 4)", 3)] // TODO: Currently outputs 4 roots
+        [InlineData("(x - goose) * (x - 3) * (sqr(x) - 4)", 4)]
+        [InlineData("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)", 4)]
+        public void Vars(string expr, int rootCount)
         {
-            // solve x2 + 2x + 2
-            var eq = x.Pow(2) + 2 * x + 2;
-            var roots = eq.SolveEquation("x");
-            var r1 = MathS.FromString("-1 + 1i").Simplify();
-            var r2 = MathS.FromString("-1 - 1i").Simplify();
-            AssertRootCount(roots, 2);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-            var s = new Set();
+            var eq = MathS.FromString(expr);
+            TestSolver(eq, rootCount);
+            TestSolver(eq.Expand(), rootCount);
         }
 
-        [TestMethod]
-        public void Test6()
-        {
-            // solve 2x2 + 4x + 2
-            var eq = 2 * x.Pow(2) + 4 * x + 2;
-            var roots = eq.SolveEquation("x");
-            AssertRootCount(roots, 1);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-        }
+        // TODO: Fix Newton Solver and set testNewton:true
+        [Fact] public void MomoTest() => TestSolver("1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4", 4);
+        // TODO: Fix Newton Solver and set testNewton:true
+        [Fact] public void Logs() => TestSolver("log(x, 32) - 5", 1);
+        [Fact] public void PiM1PowX() => TestSolver("pi - 1^x", 0, testNewton: true); // Check if it doesn't hang
+        // TODO: Fix Newton Solver and set testNewton:true
+        [Fact] public void ExpSimpl() => TestSolver("x^4 * x^y - 2", 1);
 
-        [TestMethod]
-        public void Test7()
-        {
-            // solve x2 - 3x + 2
-            var eq = x.Pow(2) - 3 * x + 2;
-            var roots = eq.SolveEquation("x");
-            AssertRootCount(roots, 2);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-        }
+        [Theory]
+        [InlineData("3x5 + 5x3", 3)]
+        [InlineData("3x10 + 5x6", 5)]
+        // Wolfram Alpha goes nuts, LOL: https://www.wolframalpha.com/input/?i=3x%5E5+%2B+5x%5E3+%3D-+a
+        // [InlineData("3x5 + 5x3 + a")] // TODO: To doose (honk honk)
+        // TODO: Fix Newton Solver and set testNewton:true
+        public void Reduce(string expr, int rootCount) => TestSolver(expr, rootCount);
 
-        [TestMethod]
-        public void Test8()
-        {
-            // solve x3 + 3x2 + 3x + 1
-            var eq = x.Pow(3) + 3 * x.Pow(2) + 3 * x + 1;
-            var roots = eq.SolveEquation("x");
-            AssertRootCount(roots, 1);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-        }
-
-        [TestMethod]
-        public void Test9()
-        {
-            // solve x3 - 6x2 + 11x - 6
-            var eq = x.Pow(3) - 6 * x.Pow(2) + 11 * x - 6;
-            var roots = eq.SolveEquation("x");
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-        }
-        [TestMethod]
-        public void TestVars2()
-        {
-            var goose = MathS.Var("goose");
-            var eq = ((x - goose) * (x - 3)).Expand();
-            var roots = eq.SolveEquation(x);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-        }
-        [TestMethod]
-        public void TestVars4mp()
-        {
-            var goose = MathS.Var("goose");
-            var eq = ((x - goose) * (x - 3) * (MathS.Sqr(x) - 4));
-            var roots = eq.SolveEquation(x);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-        }
-
-        [TestMethod]
-        public void MomoTest()
-        {
-            Entity expr = "1/210 - (17*x)/210 + (101*x^2)/210 - (247*x^3)/210 + x^4";
-            var sols = expr.SolveEquation("x");
-            AssertRootCount(sols, 4);
-            foreach (var root in sols.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        [TestMethod]
-        public void TestVars3()
-        {
-            var goose = MathS.Var("goose");
-            var momo = MathS.Var("momo");
-            var eq = ((x - goose) * (x + goose * momo) * (x - momo * 2)).Expand();
-            var roots = eq.SolveEquation(x);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-        }
-        [TestMethod]
-        public void TestVars4()
-        {
-            var goose = MathS.Var("goose");
-            var momo = MathS.Var("momo");
-            var quack = MathS.Var("quack");
-            var eq = ((x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)).Expand();
-            var roots = eq.SolveEquation(x);
-            Assert.IsNotNull(roots, "roots is null");
-            AssertRootCount(roots, 4);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-        }
-        [TestMethod]
-        public void TestVars2_0()
-        {
-            var goose = MathS.Var("goose");
-            var momo = MathS.Var("momo");
-            var eq = ((x - momo) * (x - goose)).Expand();
-            var roots = eq.SolveEquation(x);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, x, root);
-        }
-        [TestMethod]
-        public void TestReduce()
-        {
-            Entity expr = "3x5 + 5x3";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 3);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        public void InvertedFunctionTests(string func, int rootAmount)
+        [Theory]
+        [InlineData("sin", 8)]
+        [InlineData("cos", 8)]
+        [InlineData("tan", 4)]
+        [InlineData("cotan", 4)]
+        [InlineData("arcsin", 4)]
+        // TODO: arccos return analytically correct answer, but incorrect when substituting variables (as there are some Y such there is no X that arccos(X) = Y)
+        // [InlineData("arccos", 4)]
+        [InlineData("arctan", 4)]
+        [InlineData("arccotan", 4)]
+        public void InvertedFunctions(string func, int rootAmount)
         {
             Entity toRepl = func + "(x2 + 3)";
             Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1 * MathS.Var("a");
@@ -236,311 +121,67 @@ namespace UnitTests.Algebra
                 AssertRoots(expr.Substitute("a", 5), x, root.Substitute("n_1", 3).Substitute("a", 5));
         }
 
-        [TestMethod]
-        public void TestRepl1()
-            => InvertedFunctionTests("sin", 8);
-        [TestMethod]
-        public void TestRepl2()
-            => InvertedFunctionTests("cos", 8);
-        [TestMethod]
-        public void TestRepl3()
-            => InvertedFunctionTests("tan", 4);
-        [TestMethod]
-        public void TestRepl4()
-            => InvertedFunctionTests("cotan", 4);
-        [TestMethod]
-        public void TestRepl5()
-            => InvertedFunctionTests("arcsin", 4);
-
-        // TODO: arccos return analytically correct answer, but incorrect when substituting variables (as there are some Y such there is no X that arccos(X) = Y)
-        //[TestMethod]
-        //public void TestRepl6()
-        //    => InvertedFunctionTests("arccos", 4);
-        [TestMethod]
-        public void TestRepl7()
-            => InvertedFunctionTests("arctan", 4);
-        [TestMethod]
-        public void TestRepl8()
-            => InvertedFunctionTests("arccotan", 4);
-
-
-        private readonly List<Number> KeyPoints = new List<Number>
+        private readonly List<Complex> KeyPoints = new List<Complex>
         {
-            ComplexNumber.Create(0, 1),
-            ComplexNumber.Create(1, 0),
-            ComplexNumber.Create(-3, -3),
-            ComplexNumber.Create(2, 2),
-            ComplexNumber.Create(13, 13),
-            ComplexNumber.Create(-9, +7),
-            ComplexNumber.Create(0.5m, -0.5m),
-            ComplexNumber.Create(-0.5m, 0.5m),
+            Complex.Create(0, 1),
+            Complex.Create(1, 0),
+            Complex.Create(-3, -3),
+            Complex.Create(2, 2),
+            Complex.Create(13, 13),
+            Complex.Create(-9, +7),
+            Complex.Create(0.5m, -0.5m),
+            Complex.Create(-0.5m, 0.5m),
         };
 
-        [TestMethod]
-        public void TestLogs()
-        {
-            Entity eqs = "log(x, 32) - 5";
-            var roots = eqs.SolveEquation("x");
-            AssertRootCount(roots, 1);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eqs, x, root);
-        }
+        [Theory]
+        [InlineData("x4 - x2 + 1")]
+        [InlineData("x4 - x + 1")]
+        [InlineData("x4 - x3 + 1")]
+        [InlineData("x4 - x2 + x - x3 + 1")]
+        [InlineData("(x2 - 1)2 - 2")]
+        [InlineData("x4 - 2x2 - 1")]
+        [InlineData("x4 - 2x2 - 2")]
+        // TODO: Fix Newton Solver and set testNewton:true
+        public void Ferrari(string input) => TestSolver(input, 4);
 
-        [TestMethod]
-        public void TestFerrari1()
-        {
-            Entity eq = "x4 - x2 + 1";
-            var roots = eq.SolveEquation("x");
-            AssertRootCount(roots, 4);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
-        }
+        [Theory]
+        [InlineData("sin(x) + cos(x) - 1", 2)]
+        [InlineData("sin(x) + cos(x) - 0.5", 2)]
+        [InlineData("sin(x) + cos(x) - 2", 2)]
+        [InlineData("sin(x)^2 + cos(x) - 1", 3)] // 2 pi n, -pi/2 + 2 pi n, pi/2 + 2 pi n
+        [InlineData("3 * sin(2 * x + 1) - sin(x) - a", 4)]
+        [InlineData("3 * sin(1 + 2 * x) - sin(x) - a", 4)]
+        [InlineData("3 * sin(1 + x * 2) - sin(x) - a", 4)]
+        [InlineData("3 * sin(x * 2 + 1) - sin(x) - a", 4)]
+        [InlineData("3 * cos(2 * x + 1) - cos(x) - a", 4)]
+        [InlineData("3 * cos(1 + 2 * x) - cos(x) - a", 4)]
+        [InlineData("3 * cos(1 + x * 2) - cos(x) - a", 4)]
+        [InlineData("3 * cos(x * 2 + 1) - cos(x) - a", 4)]
+        [InlineData("sin(2x + 2) + sin(x + 1) - a", 4)] // Momo's Issue
+        [InlineData("sin(2*x + 1) - sin(x) - 1", 4)]
+        [InlineData("3 * sin(2 * x) - sin(x) - a", 4)]
+        [InlineData("3 * sin(x * 2) - sin(x) - a", 4)]
+        [InlineData("3 * sin(1 + x) - sin(x) - a", 2)]
+        [InlineData("3 * sin(x + 1) - sin(x) - a", 2)]
+        [InlineData("3 * cos(2 * x) - cos(x) - a", 4)]
+        [InlineData("3 * cos(x * 2) - cos(x) - a", 4)]
+        [InlineData("3 * cos(1 + x) - cos(x) - a", 2)]
+        [InlineData("3 * cos(x + 1) - cos(x) - a", 2)]
+        public void LinearTrigRoots(string expr, int rootCount) => TestSolver(expr, rootCount);
 
-        [TestMethod]
-        public void TestFerrari2()
-        {
-            Entity eq = "x4 - x + 1";
-            var roots = eq.SolveEquation("x");
-            AssertRootCount(roots, 4);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
-        }
-        [TestMethod]
-        public void TestFerrari3()
-        {
-            Entity eq = "x4 - x3 + 1";
-            var roots = eq.SolveEquation("x");
-            AssertRootCount(roots, 4);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
-        }
-        [TestMethod]
-        public void TestFerrari4()
-        {
-            Entity eq = "x4 - x2 + x - x3 + 1";
-            var roots = eq.SolveEquation("x");
-            AssertRootCount(roots, 4);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
-        }
-        [TestMethod]
-        public void TestFerrari5()
-        {
-            Entity eq = "(x2 - 1)2 - 2";
-            var roots = eq.SolveEquation("x");
-            AssertRootCount(roots, 4);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
-        }
+        [Theory]
+        [InlineData("(x - b) / (x + a) + c", 1)]
+        [InlineData("(x - b) / (x + a) + c / (x + a)", 1)]
+        [InlineData("(x - b) / (x + a) + c / (x + a)2", 2)]
+        [InlineData("(x - b) / (x + a) + c + (x - c) / (x + d)", 2, 11)]
+        public void CDSolver(string expr, int rootCount, int? toSub = null) => TestSolver(expr, rootCount, toSub);
 
-        [TestMethod]
-        public void TestFerrari6()
-        {
-            Entity eq = "x4 - 2x2 - 1";
-            var roots = eq.SolveEquation("x");
-            AssertRootCount(roots, 4);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
-        }
-
-        [TestMethod]
-        public void TestFerrari7()
-        {
-            Entity eq = "x4 - 2x2 - 2";
-            var roots = eq.SolveEquation("x");
-            AssertRootCount(roots, 4);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(eq, "x", root);
-        }
-
-        [TestMethod]
-        public void Test1px()
-        {
-            Entity expr = "pi - 1^x";
-            expr.SolveEquation("x"); // Check if it doesn't hang
-        }
-
-        [TestMethod]
-        public void ExpSimpl()
-        {
-            Entity expr = "x^4 * x^y - 2";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 1);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        [TestMethod]
-        public void TestLinearTrigRoots1()
-        {
-            Entity expr = "sin(x) + cos(x) - 1";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 2);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        [TestMethod]
-        public void TestLinearTrigRoots2()
-        {
-            Entity expr = "sin(x) + cos(x) - 0.5";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 2);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        [TestMethod]
-        public void TestLinearTrigRoots3()
-        {
-            Entity expr = "sin(x) + cos(x) - 2";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 2);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        [TestMethod]
-        public void TestLinearTrigRoots4()
-        {
-            Entity expr = "sin(x)^2 + cos(x) - 1";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 3);
-            
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-            // 2 pi n, -pi/2 + 2 pi n, pi/2 + 2 pi n
-        }
-
-        public void TestLinearTrig5Func(Entity expr)
-        {
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 4);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        [TestMethod]
-        public void TestLinearTrigRoots5_1()
-            => TestLinearTrig5Func("3 * sin(2 * x + 1) - sin(x) - a");
-
-        [TestMethod]
-        public void TestLinearTrigRoots5_2()
-            => TestLinearTrig5Func("3 * sin(1 + 2 * x) - sin(x) - a");
-
-        [TestMethod]
-        public void TestLinearTrigRoots5_3()
-            => TestLinearTrig5Func("3 * sin(1 + x * 2) - sin(x) - a");
-
-        [TestMethod]
-        public void TestLinearTrigRoots5_4()
-            => TestLinearTrig5Func("3 * sin(x * 2 + 1) - sin(x) - a");
-
-        [TestMethod]
-        public void TestLinearTrigRoots5_5()
-            => TestLinearTrig5Func("3 * cos(2 * x + 1) - cos(x) - a");
-
-        [TestMethod]
-        public void TestLinearTrigRoots5_6()
-            => TestLinearTrig5Func("3 * cos(1 + 2 * x) - cos(x) - a");
-
-        [TestMethod]
-        public void TestLinearTrigRoots5_7()
-            => TestLinearTrig5Func("3 * cos(1 + x * 2) - cos(x) - a");
-
-        [TestMethod]
-        public void TestLinearTrigRoots5_8()
-            => TestLinearTrig5Func("3 * cos(x * 2 + 1) - cos(x) - a");
-        [TestMethod]
-        public void TestLinearTrigRootsMomosIssue()
-            => TestLinearTrig5Func("sin(2x + 2) + sin(x + 1) - a");
-
-        [TestMethod]
-        public void TestLinearTrigRoots7()
-        {
-            var exprs = new List<Entity>() {
-                "3 * sin(2 * x) - sin(x) - a",
-                "3 * sin(x * 2) - sin(x) - a",
-                "3 * sin(1 + x) - sin(x) - a",
-                "3 * sin(x + 1) - sin(x) - a",
-                "3 * cos(2 * x) - cos(x) - a",
-                "3 * cos(x * 2) - cos(x) - a",
-                "3 * cos(1 + x) - cos(x) - a",
-                "3 * cos(x + 1) - cos(x) - a",
-            };
-            foreach (var expr in exprs)
-            {
-                var roots = expr.SolveEquation("x");
-                foreach (var root in roots.FiniteSet())
-                    AssertRoots(expr, x, root);
-            }
-        }
-
-        [TestMethod]
-        public void TestLinearTrigRoots6()
-        {
-            Entity expr = "sin(2*x + 1) - sin(x) - 1";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 4);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        [TestMethod]
-        public void TestCDSolver1()
-        {
-            Entity expr = "(x - b) / (x + a) + c";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 1);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        [TestMethod]
-        public void TestCDSolver2()
-        {
-            Entity expr = "(x - b) / (x + a) + c / (x + a)";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 1);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        [TestMethod]
-        public void TestCDSolver3()
-        {
-            Entity expr = "(x - b) / (x + a) + c / (x + a)2";
-            var roots = expr.SolveEquation("x");
-            AssertRootCount(roots, 2);
-            foreach (var root in roots.FiniteSet())
-                AssertRoots(expr, x, root);
-        }
-
-        [TestMethod]
-        public void TestCDSolver4()
-        => TestSolver("(x - b) / (x + a) + c + (x - c) / (x + d)", 2, 11);
-
-        [TestMethod]
-        public void TestFractionedPoly1()
-            => TestSolver("x + sqr(x + a) + c", 2);
-
-        [TestMethod]
-        public void TestFractionedPoly2()
-            => TestSolver("x + sqr(x^0.1 + a) + c", 0);
-
-        
-        [TestMethod]
-        public void TestFractionedPoly3()
-            => TestSolver("(x + 6)^(1/6) + x + x3 + a", 0);
-
-        [TestMethod]
-        public void TestFractionedPoly4()
-            => TestSolver("sqrt(x + 1) + sqrt(x + 2) + a + x", 0);
-
-        [TestMethod]
-        public void TestFractionedPoly5()
-            => TestSolver("(x + 1)^(1/3) - x - a", 3);
+        [Theory]
+        [InlineData("x + sqr(x + a) + c", 2)]
+        [InlineData("x + sqr(x^0.1 + a) + c", 0)]
+        [InlineData("(x + 6)^(1/6) + x + x3 + a", 0)]
+        [InlineData("sqrt(x + 1) + sqrt(x + 2) + a + x", 0)]
+        [InlineData("(x + 1)^(1/3) - x - a", 3)]
+        public void FractionedPoly(string expr, int rootCount) => TestSolver(expr, rootCount);
     }
 }
-
-

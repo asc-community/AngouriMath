@@ -1,32 +1,32 @@
 ﻿using AngouriMath;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 using System;
 
 namespace UnitTests.Common
 {
-    [TestClass]
+    /// <summary>
+    /// It should be removed once we add benchmark workflow
+    /// https://github.com/asc-community/AngouriMath/issues/194
+    /// </summary>
     public class PerformanceTest
     {
-        private readonly int ITERATIONS = 10;
-        private readonly VariableEntity x = MathS.Var("x");
-        public long Measure(Func<object> func)
+        public PerformanceTest() => MathS.FromString("x"); // Get rid of overhead
+        private const int ITERATIONS = 100;
+        private readonly Entity.Variable x = MathS.Var(nameof(x));
+        void Measure(Func<object> func, TimeSpan maxTime)
         {
-            long milliseconds = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             for (int i = 0; i < ITERATIONS; i++)
-            {
                 func();
-            }
-            return (DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond - milliseconds) / ITERATIONS;
+            stopwatch.Stop();
+            Assert.InRange(stopwatch.Elapsed / ITERATIONS, TimeSpan.Zero, maxTime);
         }
-        [TestMethod]
-        public void Test1() => Assert.IsTrue(Measure(() => MathS.FromString("x + x^2 + x^3")) < 4);
-        [TestMethod]
-        public void Test2() => Assert.IsTrue(Measure(() => MathS.FromString("x + log(2, 4)^2 * sin(cos(sin(cos(5)))) + x^3")) < 10);
-        [TestMethod]
-        public void Test4() => Assert.IsTrue(Measure(() => x / x) < 1);
-        [TestMethod]
-        public void Test5() => Assert.IsTrue(Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x)) < 30);
-        [TestMethod]
-        public void Test6() => Assert.IsTrue(Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x).Substitute(x, 3).Eval()) < 50);
+        [Fact] public void Test1() => Measure(() => MathS.FromString("x + x^2 + x^3"), TimeSpan.FromMilliseconds(2.6));
+        [Fact] public void Test2() => Measure(() => MathS.FromString("x + log(2, 4)^2 * sin(cos(sin(cos(5)))) + x^3"), TimeSpan.FromMilliseconds(7.4));
+        [Fact] public void Test3() =>
+            MathS.Settings.NewtonSolver.As(new() { Precision = 400 }, () => Measure(() => (x.Pow(3) + x.Pow(2) - 4 * x - 4).SolveNt(x), TimeSpan.FromMilliseconds(310)));
+        [Fact] public void Test4() => Measure(() => (x / x).Simplify(), TimeSpan.FromMilliseconds(0.05));
+        [Fact] public void Test5() => Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x), TimeSpan.FromMilliseconds(0.5));
+        [Fact] public void Test6() => Measure(() => (x * MathS.Pow(MathS.e, x) * MathS.Ln(x) - MathS.Sqrt(x / (x * x - 1))).Derive(x).Substitute(x, 3).Eval(), TimeSpan.FromMilliseconds(55));
     }
 }

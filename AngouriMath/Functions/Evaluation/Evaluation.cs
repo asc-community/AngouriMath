@@ -1,5 +1,4 @@
-﻿
-/* Copyright (c) 2019-2020 Angourisoft
+﻿/* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
  * files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
@@ -13,65 +12,18 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
-using AngouriMath.Core;
-using AngouriMath.Core.Exceptions;
-using AngouriMath.Core.Sys.Items.Tensors;
-using AngouriMath.Core.TreeAnalysis;
-using AngouriMath.Functions.Evaluation.Simplification;
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using AngouriMath.Convenience;
-using AngouriMath.Core.Numerix;
-using AngouriMath.Core.Sys.Interfaces;
-using AngouriMath.Functions.Output;
-using EvalTable = System.Collections.Generic.Dictionary<string, System.Func<System.Collections.Generic.List<AngouriMath.Entity>, AngouriMath.Entity>>;
-namespace AngouriMath
-{
-    public static partial class MathS
-    {
-        internal static readonly Dictionary<string, ComplexNumber> ConstantList = new Dictionary<string, ComplexNumber>
-        {
-            { "pi", MathS.DecimalConst.pi },
-            { "e", MathS.DecimalConst.e },
-        };
-
-        /// <summary>
-        /// Determines whether something is a variable or contant, e. g.
-        /// x + 3 - is not a constant
-        /// e - is a constant
-        /// x - is not a constant
-        /// pi + 4 - is not a constant (but pi is)
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        public static bool IsConstant(Entity expr) => (expr is VariableEntity && MathS.ConstantList.ContainsKey(expr.Name));
-        public static bool CanBeEvaluated(Entity expr)
-        {
-            if (expr.IsTensoric())
-                return false;
-            if (expr is VariableEntity)
-                return IsConstant(expr);
-            for (int i = 0; i < expr.ChildrenCount; i++)
-                if (!CanBeEvaluated(expr.GetChild(i)))
-                    return false;
-            return true;
-        }
-    }
-}
+using System.Runtime.CompilerServices;
 
 namespace AngouriMath
 {
-    using EvalTable = Dictionary<string, Func<List<Entity>, Entity>>;
+    using Core;
+    using Functions;
+    using static Entity.Number;
 
-    // Adding function Eval to Entity
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity
     {
-        const int DefaultLevel = 2;
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
         /// </summary>
@@ -81,90 +33,66 @@ namespace AngouriMath
         /// <returns>
         /// An expanded Entity if it wasn't too complicated,
         /// current entity otherwise
-        /// To change the limit use MathS.Settings.MaxExpansionTermCount
+        /// To change the limit use <see cref="MathS.Settings.MaxExpansionTermCount"/>
         /// </returns>
-        public Entity Expand(int level = DefaultLevel)
+        public Entity Expand(int level = 2)
         {
             static Entity Expand_(Entity e, int level) =>
                 level <= 1
-                ? TreeAnalyzer.Replace(Patterns.ExpandRules, e)
-                : Expand_(TreeAnalyzer.Replace(Patterns.ExpandRules, e), level - 1);
+                ? e.Replace(Patterns.ExpandRules)
+                : Expand_(e.Replace(Patterns.ExpandRules), level - 1);
             var expChildren = new List<Entity>();
-            foreach (var linChild in TreeAnalyzer.LinearChildrenOverSum(this))
-            {
-                var exp = TreeAnalyzer.SmartExpandOver(linChild, entity => true);
-                if (exp is { })
+            foreach (var linChild in Sumf.LinearChildren(this))
+                if (TreeAnalyzer.SmartExpandOver(linChild, entity => true) is { } exp)
                     expChildren.AddRange(exp);
                 else
                     return this; // if one is too complicated, return the current one
-            }
-            var expanded = TreeAnalyzer.MultiHangBinary(expChildren, "sumf", Const.PRIOR_SUM);
-            return Expand_(expanded, level).InnerSimplify();
+            return Expand_(TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b)), level).InnerSimplify();
         }
 
         /// <summary>
-        /// Collapses an equation trying to eliminate as many power-uses as possible ( e. g. x * 3 + x * y = x * (3 + y) )
+        /// Factorizes an equation trying to eliminate as many power-uses as possible ( e.g. x * 3 + x * y = x * (3 + y) )
         /// </summary>
         /// <param name="level">
-        /// The number of iterations (increase this argument if some collapse operations are still available)
+        /// The number of iterations (increase this argument if some factor operations are still available)
         /// </param>
-        /// <returns></returns>
-        public Entity Collapse(int level = DefaultLevel) => level <= 1
-            ? TreeAnalyzer.Replace(Patterns.CollapseRules, this)
-            : TreeAnalyzer.Replace(Patterns.CollapseRules, this).Collapse(level - 1);
+        public Entity Factorize(int level = 2) => level <= 1
+            ? this.Replace(Patterns.FactorizeRules)
+            : this.Replace(Patterns.FactorizeRules).Factorize(level - 1);
 
         /// <summary>
-        /// Simplifies an equation (e. g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x)
+        /// Simplifies an equation ( e.g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x )
         /// </summary>
         /// <param name="level">
         /// Increase this argument if you think the equation should be simplified better
         /// </param>
         /// <returns></returns>
-        public Entity Simplify(int level = DefaultLevel) => Simplificator.Simplify(this, level);
+        public Entity Simplify(int level = 2) => Simplificator.Simplify(this, level);
 
-        /// <summary>
-        /// Finds all alternative forms of an expression sorted by their complexity
-        /// </summary>
-        /// <param name="level"></param>
-        /// <returns></returns>
-        public Set Alternate(int level) => Simplificator.Alternate(this, level);
+        /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
+        public IEnumerable<Entity> Alternate(int level) => Simplificator.Alternate(this, level);
 
-        internal abstract Entity InnerEval();
-        internal abstract Entity InnerSimplify();
-
-        /// <summary>
-        /// Fast substitution of some mathematical constants,
-        /// e. g. pi * e + 3 => 3.1415 * 2.718 + 3
-        /// </summary>
-        /// <returns></returns>
-        public Entity SubstituteConstants()
-        {
-            if (MathS.IsConstant(this))
-                return MathS.ConstantList[this.Name];
-            Entity curr = this.DeepCopy(); // Instead of copying in substitute, 
-            // we better copy first and then do inPlace substitute
-            foreach (var pair in MathS.ConstantList)
-                curr.Substitute(pair.Key, pair.Value, inPlace: true);
-            return curr;
-        }
+        public Entity Evaled => _evaled.GetValue(this, e => e.InnerEval());
+        static readonly ConditionalWeakTable<Entity, Entity> _evaled = new();
+        public bool Evaluable => Evaled is Complex;
 
         /// <summary>
         /// Simplification synonym. Recommended to use in case of computing a concrete number.
         /// </summary>
         /// <returns>
-        /// <see cref="ComplexNumber"/> since new version
+        /// <see cref="Complex"/> since new version
         /// </returns>
         /// <exception cref="InvalidOperationException">
         /// Thrown when this entity cannot be represented as a simple number.
-        /// <see cref="MathS.CanBeEvaluated(Entity)"/> should be used to check beforehand.
+        /// <see cref="Evaluable"/> should be used to check beforehand.
         /// </exception>
-        public ComplexNumber Eval() =>
-            SubstituteConstants().InnerEval() is NumberEntity { Value: var value } ? value :
+        public Complex Eval() =>
+            Evaled is Complex value ? value :
                 throw new InvalidOperationException
-                    ($"Result cannot be represented as a simple number! Use {nameof(MathS.CanBeEvaluated)} to check beforehand.");
+                    ($"Result cannot be represented as a simple number! Use {nameof(Evaluable)} to check beforehand.");
 
         /// <summary>
-        /// Collapses the entire expression into a tensor if possible
+        /// Evaluates the entire expression into a <see cref="Tensor"/> if possible
         /// ( x y ) + 1 => ( x+1 y+1 )
         /// 
         /// ( 1 2 ) + ( 3 4 ) => ( 4 6 ) vectors pointwise
@@ -176,961 +104,362 @@ namespace AngouriMath
         /// ( 1 2 ) x ( 1 3 ) => ( 1 6 ) Vectors pointwise
         /// </summary>
         /// <exception cref="InvalidOperationException">
-        /// Thrown when this entity cannot be represented as a tensor.
+        /// Thrown when this entity cannot be represented as a <see cref="Tensor"/>.
         /// <see cref="IsTensoric"/> should be used to check beforehand.
         /// </exception>
-        public Tensor EvalTensor()
+        public Tensor EvalTensor() =>
+            Evaled is Tensor value ? value :
+                throw new InvalidOperationException
+                    ($"Result cannot be represented as a {nameof(Tensor)}! Check the type of {nameof(Evaled)} beforehand.");
+       
+        protected abstract Entity InnerEval();
+        internal abstract Entity InnerSimplify();
+        public partial record Number : Entity
         {
-            if (!IsTensoric())
-                throw new InvalidOperationException(
-                    "To evaluate an expression as a tensor, it should contain at least one tensor (including matrices and vectors). " +
-                    $"Use {nameof(IsTensoric)} to check beforehand.");
-            if (this is Tensor result)
+            protected override Entity InnerEval() => this;
+            internal override Entity InnerSimplify() => this;
+        }
+        public partial record Variable : Entity
+        {
+            // TODO: When target-typed conditional expression lands, remove the explicit conversion
+            protected override Entity InnerEval() => ConstantList.TryGetValue(this, out var value) ? (Entity)value : this;
+            internal override Entity InnerSimplify() => this;
+        }
+        public partial record Tensor : Entity
+        {
+            protected override Entity InnerEval() => Elementwise(e => e.Evaled);
+            internal override Entity InnerSimplify() => Elementwise(e => e.InnerSimplify());
+        }
+        // Each function and operator processing
+        public partial record Sumf
+        {
+            protected override Entity InnerEval() => (Augend.Evaled, Addend.Evaled) switch
             {
-                TensorFunctional.Apply(result, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
-                return result;
-            }
-            var r = DeepCopy();
-            TensorFunctional.__EvalTensor(ref r);
-            if (r is Tensor t)
-            {
-                TensorFunctional.Apply(t, p => MathS.CanBeEvaluated(p) ? p.Eval() : p);
-                return t;
-            }
-            else
-                throw new SysException("Unexpected behaviour");
-        }
-    }
-
-    // Adding invoke table for eval & simplify
-    internal static partial class MathFunctions
-    {
-        internal static readonly EvalTable evalTable = new EvalTable();
-        internal static readonly EvalTable simplifyTable = new EvalTable();
-
-        internal static Entity InvokeSimplify(string typeName, List<Entity> args)
-        {
-            return simplifyTable[typeName](args);
-        }
-
-        internal static Entity InvokeEval(string typeName, List<Entity> args)
-        {
-            return evalTable[typeName](args);
-        }
-
-        internal static bool IsOneNumber(List<Entity> args, NumberEntity e)
-        {
-            return args[0] is NumberEntity n0 && n0.Value == e.Value ||
-                   args[1] is NumberEntity n1 && n1.Value == e.Value;
-
-        }
-
-        internal static Entity GetAnotherEntity(List<Entity> args, NumberEntity e)
-        {
-            if (args[0] is NumberEntity n && n.Value == e.Value)
-                return args[1];
-            else
-                return args[0];
-        }
-    }
-}
-
-
-/*
- *
- * This class contains implementation for evaluation for all operators and functions
- *
- */
-
-
-namespace AngouriMath
-{
-    // Each function and operator processing
-    internal static partial class Sumf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerEval();
-            var r2 = args[1].InnerEval();
-            args = new List<Entity> { r1, r2 };
-            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
-                return new NumberEntity(n1.Value + n2.Value);
-            else
-                if (MathFunctions.IsOneNumber(args, 0))
-                return MathFunctions.GetAnotherEntity(args, 0);
-            else
-                return r1 + r2;
-        }
-    }
-    internal static partial class Minusf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerEval();
-            var r2 = args[1].InnerEval();
-            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
-                return new NumberEntity(n1.Value - n2.Value);
-            else if (r1 == r2)
-                return 0;
-            else if (r2 == 0)
-                return r1;
-            else
-                return r1 - r2;
-        }
-    }
-    internal static partial class Mulf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerEval();
-            var r2 = args[1].InnerEval();
-            args = new List<Entity> { r1, r2 };
-            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
-                return new NumberEntity(n1.Value * n2.Value);
-            else if (MathFunctions.IsOneNumber(args, 1))
-                return MathFunctions.GetAnotherEntity(args, 1);
-            else if (MathFunctions.IsOneNumber(args, 0))
-                return 0;
-            else
-                return r1 * r2;
-
-        }
-    }
-    internal static partial class Divf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerEval();
-            var r2 = args[1].InnerEval();
-            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
-                return new NumberEntity(n1.Value / n2.Value);
-            else if (r1 == 0)
-                return 0;
-            else if (r2 == 1)
-                return r1;
-            else
-                return r1 / r2;
-        }
-    }
-    internal static partial class Powf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerEval();
-            var r2 = args[1].InnerEval();
-            if (r1 is NumberEntity n1 && r2 is NumberEntity n2)
-                return new NumberEntity(Number.Pow(n1.Value, n2.Value));
-            else if (r1 == 0 || r1 == 1)
-                return r1;
-            else if (r2 == 1)
-                return r1;
-            else if (r2 == 0)
-                return 1;
-            else
-                return r1.Pow(r2);
-        }
-    }
-    internal static partial class Sinf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerEval();
-            if (r is NumberEntity n)
-                return new NumberEntity(Number.Sin(n.Value));
-            else
-                return r.Sin();
-        }
-    }
-    internal static partial class Cosf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerEval();
-            if (r is NumberEntity n)
-                return new NumberEntity(Number.Cos(n.Value));
-            else
-                return r.Cos();
-        }
-    }
-    internal static partial class Tanf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerEval();
-            if (r is NumberEntity n)
-                return new NumberEntity(Number.Tan(n.Value));
-            else
-                return r.Tan();
-        }
-    }
-    internal static partial class Cotanf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerEval();
-            if (r is NumberEntity n)
-                return new NumberEntity(Number.Cotan(n.Value));
-            else
-                return r.Cotan();
-        }
-    }
-
-    internal static partial class Logf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r = args[0].InnerEval();
-            var n = args[1].InnerEval();
-            args = new List<Entity> { r, n };
-            if (r is NumberEntity rn && n is NumberEntity nn)
-                return new NumberEntity(Number.Log(rn.Value, nn.Value));
-            else if (r == n)
-                return 1;
-            else if (r == 1)
-                return 0;
-            else
-                return r.Log(args[1]);
-        }
-    }
-
-    internal static partial class Arcsinf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerEval();
-            if (arg is NumberEntity n)
-                return new NumberEntity(Number.Arcsin(n.Value));
-            else
-                return Arcsinf.Hang(arg);
-        }
-    }
-    internal static partial class Arccosf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerEval();
-            if (arg is NumberEntity n)
-                return new NumberEntity(Number.Arccos(n.Value));
-            else
-                return Arccosf.Hang(arg);
-        }
-    }
-    internal static partial class Arctanf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerEval();
-            if (arg is NumberEntity n)
-                return new NumberEntity(Number.Arctan(n.Value));
-            else
-                return Arctanf.Hang(arg);
-        }
-    }
-    internal static partial class Arccotanf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerEval();
-            if (arg is NumberEntity n)
-                return new NumberEntity(Number.Arccotan(n.Value));
-            else
-                return Arccotanf.Hang(arg);
-        }
-    }
-    internal static partial class Factorialf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerEval();
-            if (r is NumberEntity n)
-                return new NumberEntity(Number.Factorial(n.Value));
-            else
-                return r.Sin();
-        }
-    }
-
-    internal static partial class Derivativef
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 3);
-            var x = args[1].InnerEval();
-            var p = args[2].InnerEval();
-            if (x is VariableEntity var && p is NumberEntity { Value: var value } && value is IntegerNumber asInt)
-            {
-                // TODO: consider Integral for negative cases
-                var derived = args[0].Derive(var, asInt.Value);
-                return derived;
-            }
-            else
-                return MathS.Derivative(args[0], x, p);
-        }
-    }
-
-    internal static partial class Integralf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 3);
-            var x = args[1].InnerEval();
-            var p = args[2].InnerEval();
-            if (x is VariableEntity var && p is NumberEntity { Value: var value } && value is IntegerNumber asInt)
-            {
-                if (asInt == 0)
-                    return args[0].InnerEval();
-                throw new NotImplementedException("Integration is not implemented yet");
-            }
-            else
-                return MathS.Integral(args[0], x, p);
-        }
-    }
-
-    internal static partial class Limitf
-    {
-        public static Entity Eval(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 4);
-            var expr = args[0].InnerEval();
-            var x = args[1].InnerEval();
-            var dest = args[2].InnerEval();
-            var appr = args[3].InnerEval();
-            Entity? lim = null;
-            if (appr == IntegerNumber.MinusOne)
-                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
-            else if (appr == IntegerNumber.Zero)
-                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
-            else if (appr == IntegerNumber.One)
-                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
-            else
-                return Limitf.Hang(expr, x, dest, appr);
-        }
-    }
-}
-
-namespace AngouriMath
-{
-    public abstract partial class Entity
-    {
-        internal ComplexNumber? __cachedEvaledValue = null;
-    }
-}
-
-/*
- *
- * This class contains implementation for basic simplification for all operators and functions
- * This keeps all numbers rational or as an expression so no precision loss occurres
- *
- */
-
-namespace AngouriMath
-{
-    internal static class InnerSimplifyAdditionalFunctional
-    {
-        internal static Entity KeepIfBad(ComplexNumber candidate, Entity ifAllBad, params ComplexNumber[] nums)
-        {
-            if (!candidate.IsFinite)
-                return candidate;
-            if (IsGood(candidate.Real, nums.Select(n => n.Real).ToArray(), false) &&
-                IsGood(candidate.Imaginary, nums.Select(n => n.Imaginary).ToArray(), false))
-                return candidate;
-            else
-                return ifAllBad;
-        }
-
-        internal static bool KeepIfBad(ComplexNumber candidate,
-            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
-            out Entity? res, bool disableIrrational, params ComplexNumber[] nums)
-        {
-            if (!candidate.IsFinite)
-            {
-                res = candidate;
-                return true;
-            }
-            if (IsGood(candidate.Real, nums.Select(n => n.Real).ToArray(), disableIrrational) &&
-                IsGood(candidate.Imaginary, nums.Select(n => n.Imaginary).ToArray(), disableIrrational))
-            {
-                res = candidate;
-                return true;
-            }
-            else
-            {
-                res = null;
-                return false;
-            }
-        }
-
-        static bool IsGood(RealNumber cand, RealNumber[] nums, bool disableIrrational)
-        {
-            static int GetRank(RealNumber num) =>
-                num == 0 ? 0 : num switch
+                (Complex n1, Complex n2) => n1 + n2,
+                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).Evaled),
+                (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2).Evaled),
+                (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 + n2).Evaled),
+                (var n1, var n2) => New(n1, n2)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : (Augend.InnerSimplify(), Addend.InnerSimplify()) switch
                 {
-                    IntegerNumber _ => 0,
-                    RationalNumber _ => 1,
-                    RealNumber _ => 2
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).InnerSimplify()),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2).InnerSimplify()),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 + n2).InnerSimplify()),
+                    (var n1, Integer(0)) => n1,
+                    (Integer(0), var n2) => n2,
+                    (var n1, var n2) => n1 == n2 ? (2 * n1).InnerSimplify() : New(n1, n2)
                 };
-            var minLevel = nums.Select(GetRank).Min();
-            return cand is RationalNumber ||
-                   (GetRank(cand) <= minLevel && !disableIrrational) ||
-                (cand is RealNumber && !(cand is RationalNumber) && cand.Value.IsZero); // TODO: make im:0 downcastable
         }
-
-        /// <summary>Test for exact value</summary>
-        internal static bool IsRationalOrNonFiniteComplex(ComplexNumber num)
-            => num.Real is RationalNumber && num.Imaginary == 0
-            || num is RationalNumber
-            || !num.Real.IsFinite && (num.Imaginary == 0 || !num.Imaginary.IsFinite);
-    }
-
-    // Each function and operator processing
-    internal static partial class Sumf
-    {
-        public static Entity Simplify(List<Entity> args)
+        public partial record Minusf
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerSimplify();
-            var r2 = args[1].InnerSimplify();
-            ComplexNumber? potentialResult = null;
-            if (r1.__cachedEvaledValue is { } && r2.__cachedEvaledValue is { })
+            protected override Entity InnerEval() => (Subtrahend.Evaled, Minuend.Evaled) switch
             {
-                potentialResult = r1.__cachedEvaledValue + r2.__cachedEvaledValue;
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-            args = new List<Entity> { r1, r2 };
-            Entity result;
-            if (r1 is NumberEntity { Value: var n1 } && r2 is NumberEntity { Value: var n2 })
-            {
-                result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 + n2, r1 + r2, n1, n2);
-            }
-            else
-                if (MathFunctions.IsOneNumber(args, 0))
-                result = MathFunctions.GetAnotherEntity(args, 0);
-            else
-                result = r1 + r2;
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Minusf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerSimplify();
-            var r2 = args[1].InnerSimplify();
-
-            ComplexNumber? potentialResult = null;
-            if (r1.__cachedEvaledValue is { } && r2.__cachedEvaledValue is { })
-            {
-                potentialResult = r1.__cachedEvaledValue - r2.__cachedEvaledValue;
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (r1 is NumberEntity { Value: var n1 } && r2 is NumberEntity { Value: var n2 })
-            {
-                result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 - n2, r1 - r2, n1, n2);
-            }
-            else if (r1 == r2)
-                result = 0;
-            else if (r2 == 0)
-                result = r1;
-            else
-                result = r1 - r2;
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Mulf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerSimplify();
-            var r2 = args[1].InnerSimplify();
-
-            ComplexNumber? potentialResult = null;
-            if (r1.__cachedEvaledValue is { } && r2.__cachedEvaledValue is { })
-            {
-                potentialResult = r1.__cachedEvaledValue * r2.__cachedEvaledValue;
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            args = new List<Entity> { r1, r2 };
-            if (MathFunctions.IsOneNumber(args, 1))
-                result = MathFunctions.GetAnotherEntity(args, 1);
-            else if (MathFunctions.IsOneNumber(args, 0))
-                result = 0;
-            else if (r1 is NumberEntity { Value: var n1 } && r2 is NumberEntity { Value: var n2 })
-            {
-                result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 * n2, r1 * r2, n1, n2);
-            }
-            else
-                result = r1 * r2;
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-
-        }
-    }
-    internal static partial class Divf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerSimplify();
-            var r2 = args[1].InnerSimplify();
-
-            ComplexNumber? potentialResult = null;
-            if (r1.__cachedEvaledValue is { } && r2.__cachedEvaledValue is { })
-            {
-                potentialResult = r1.__cachedEvaledValue / r2.__cachedEvaledValue;
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (r1 is NumberEntity { Value: var n1 } && r2 is NumberEntity { Value: var n2 })
-            {
-                result = InnerSimplifyAdditionalFunctional.KeepIfBad(n1 / n2, r1 / r2, n1, n2);
-            }
-            else if (r1 == 0)
-                result = 0;
-            else if (r2 == 1)
-                result = r1;
-            else
-                result = r1 / r2;
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Powf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r1 = args[0].InnerSimplify();
-            var r2 = args[1].InnerSimplify();
-
-            ComplexNumber? potentialResult = null;
-            if (r1.__cachedEvaledValue is { } && r2.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Pow(r1.__cachedEvaledValue, r2.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (r1 is NumberEntity { Value: var n1 } && r2 is NumberEntity { Value: var n2 })
-            {
-                // TODO: Consider cases like sqrt(12) which could be simplified to 2 sqrt(3)
-                result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Pow(n1, n2), MathS.Pow(r1, r2), n1, n2);
-            }
-            else if (r1 == 0 || r1 == 1)
-                result = r1;
-            else if (r2 == 1)
-                result = r1;
-            else if (r2 == 0)
-                result = 1;
-            else if (r2 == -1)
-                result = 1 / r1;
-            else
-                result = r1.Pow(r2);
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Sinf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerSimplify();
-            ComplexNumber? evaled = r.__cachedEvaledValue;
-
-            ComplexNumber? potentialResult = null;
-            if (r.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Sin(r.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (evaled is { })
-            {
-                var n = evaled;
-                if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Sin(n), out var res, true, n))
-                    result = res;
-                else if (Const.TrigonometryTableValues.PullSin(n, out res))
-                    result = res;
-                else
-                    result = MathS.Sin(r);
-            }
-            else
-                result = r.Sin();
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Cosf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerSimplify();
-            ComplexNumber? evaled = r.__cachedEvaledValue;
-
-            ComplexNumber? potentialResult = null;
-            if (r.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Cos(r.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (evaled is { })
-            {
-                var n = evaled;
-                if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Cos(n), out var res, true, n))
-                    result = res;
-                else if (Const.TrigonometryTableValues.PullCos(n, out res))
-                    result = res;
-                else
-                    result = r.Cos();
-            }
-            else
-                result = r.Cos();
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Tanf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerSimplify();
-            ComplexNumber? evaled = r.__cachedEvaledValue;
-
-            ComplexNumber? potentialResult = null;
-            if (r.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Tan(r.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (evaled is { })
-            {
-                var n = evaled;
-                if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Tan(n), out var res, true, n))
-                    result = res;
-                else if (Const.TrigonometryTableValues.PullTan(n, out res))
-                    result = res;
-                else
-                    result = r.Tan();
-            }
-            else
-                result = r.Tan();
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Cotanf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var r = args[0].InnerSimplify();
-            ComplexNumber? evaled = r.__cachedEvaledValue;
-
-            ComplexNumber? potentialResult = null;
-            if (r.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Cotan(r.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (evaled is { })
-            {
-                var n = evaled;
-                if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Cotan(n), out var res, true, n))
-                    result = 1 / res;
-                else if (Const.TrigonometryTableValues.PullTan(n, out res))
-                    result = 1 / res;
-                else
-                    result = r.Cotan();
-            }
-            else
-                result = r.Cotan();
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-
-    internal static partial class Logf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var r = args[0].InnerSimplify();
-            var n = args[1].InnerSimplify();
-
-            ComplexNumber? potentialResult = null;
-            if (r.__cachedEvaledValue is { } && n.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Log(r.__cachedEvaledValue, n.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            args = new List<Entity> { r, n };
-            if (r is NumberEntity { Value: var n1 } && n is NumberEntity { Value: var n2 })
-            {
-                return InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Log(n1, n2), MathS.Log(r, n), n1, n2);
-            }
-            else if (r == n)
-                result = 1;
-            else if (r == 1)
-                result = 0;
-            else
-                result = r.Log(args[1]);
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-
-    internal static partial class Arcsinf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerSimplify();
-
-            ComplexNumber? potentialResult = null;
-            if (arg.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Arcsin(arg.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (arg is NumberEntity { Value: var n })
-            {
-                result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arcsin(n), MathS.Arcsin(arg), n);
-            }
-            else
-                result = Arcsinf.Hang(arg);
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Arccosf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerSimplify();
-
-            ComplexNumber? potentialResult = null;
-            if (arg.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Arccos(arg.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (arg is NumberEntity { Value: var n })
-            {
-                result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arccos(n), MathS.Arccos(arg), n);
-            }
-            else
-                result = Arccosf.Hang(arg);
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Arctanf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerSimplify();
-
-            ComplexNumber? potentialResult = null;
-            if (arg.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Arctan(arg.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (arg is NumberEntity { Value: var n })
-            {
-                result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arctan(n), MathS.Arctan(arg), n);
-            }
-            else
-                result = Arctanf.Hang(arg);
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Arccotanf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerSimplify();
-
-            ComplexNumber? potentialResult = null;
-            if (arg.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Arccotan(arg.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (arg is NumberEntity { Value: var n })
-            {
-                result = InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Arccotan(n), MathS.Arccotan(arg), n);
-            }
-            else
-                result = Arccotanf.Hang(arg);
-            result.__cachedEvaledValue = potentialResult;
-            return result;
-        }
-    }
-    internal static partial class Factorialf
-    {
-        public static Entity Simplify(List<Entity> args)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var arg = args[0].InnerSimplify();
-
-            ComplexNumber? potentialResult = null;
-            if (arg.__cachedEvaledValue is { })
-            {
-                potentialResult = Number.Factorial(arg.__cachedEvaledValue);
-                if (InnerSimplifyAdditionalFunctional.IsRationalOrNonFiniteComplex(potentialResult))
-                    return new NumberEntity(potentialResult) { __cachedEvaledValue = potentialResult };
-            }
-
-            Entity result;
-            if (arg.__cachedEvaledValue is { } n)
-            {
-                if (InnerSimplifyAdditionalFunctional.KeepIfBad(Number.Factorial(n), out var res, true, n))
-                    result = 1 / res;
-                else if (n is RationalNumber { Value: { Numerator: var num, Denominator: var denom } } && denom.Equals(2))
+                (Complex n1, Complex n2) => n1 - n2,
+                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 - n2).Evaled),
+                (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 - n2).Evaled),
+                (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 - n2).Evaled),
+                (var n1, var n2) => New(n1, n2)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : (Subtrahend.InnerSimplify(), Minuend.InnerSimplify()) switch
                 {
-                    var en = (num + 1) / 2;
-                    var positive = en > 0;
-                    if (!positive) en = -en;
-                    result =
-                        positive
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 - n2).InnerSimplify()),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 - n2).InnerSimplify()),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 - n2).InnerSimplify()),
+                    (var n1, Integer(0)) => n1,
+                    (Integer(0), var n2) => (-n2).InnerSimplify(),
+                    (var n1, var n2) => n1 == n2 ? (Entity)0 : New(n1, n2)
+                };
+        }
+        public partial record Mulf
+        {
+            protected override Entity InnerEval() => (Multiplier.Evaled, Multiplicand.Evaled) switch
+            {
+                (Complex n1, Complex n2) => n1 * n2,
+                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 * n2).Evaled),
+                (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 * n2).Evaled),
+                (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 * n2).Evaled),
+                (var n1, var n2) => New(n1, n2)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : (Multiplier.InnerSimplify(), Multiplicand.InnerSimplify()) switch
+                {
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 * n2).InnerSimplify()),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 * n2).InnerSimplify()),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 * n2).InnerSimplify()),
+                    (_, Integer(0)) or (Integer(0), _) => 0,
+                    (var n1, Integer(1)) => n1,
+                    (Integer(1), var n2) => n2,
+                    (var n1, var n2) => n1 == n2 ? new Powf(n1, 2).InnerSimplify() : New(n1, n2)
+                };
+        }
+        public partial record Divf
+        {
+            protected override Entity InnerEval() => (Dividend.Evaled, Divisor.Evaled) switch
+            {
+                (Complex n1, Complex n2) => n1 / n2,
+                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 / n2).Evaled),
+                (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 / n2).Evaled),
+                (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 / n2).Evaled),
+                (var n1, var n2) => New(n1, n2)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : (Dividend.InnerSimplify(), Divisor.InnerSimplify()) switch
+                {
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 / n2).InnerSimplify()),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 / n2).InnerSimplify()),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 / n2).InnerSimplify()),
+                    (Integer(0), _) => 0,
+                    (_, Integer(0)) => Real.NaN,
+                    (var n1, Integer(1)) => n1.InnerSimplify(),
+                    (var n1, var n2) => n1 == n2 ? (Entity)1 : New(n1, n2)
+                };
+        }
+        public partial record Powf
+        {
+            protected override Entity InnerEval() => (Base.Evaled, Exponent.Evaled) switch
+            {
+                (Complex n1, Complex n2) => Number.Pow(n1, n2),
+                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => new Powf(n1, n2).Evaled),
+                (var n1, Tensor n2) => n2.Elementwise(n2 => new Powf(n1, n2).Evaled),
+                (Tensor n1, var n2) => n1.Elementwise(n1 => new Powf(n1, n2).Evaled),
+                (var n1, var n2) => New(n1, n2)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : (Base.InnerSimplify(), Exponent.InnerSimplify()) switch
+                {
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => new Powf(n1, n2).InnerSimplify()),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => new Powf(n1, n2).InnerSimplify()),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => new Powf(n1, n2).InnerSimplify()),
+                    // 0^x is undefined for Re(x) <= 0
+                    (Integer(1), _) => 0,
+                    (var n1, Integer(-1)) => (1 / n1).InnerSimplify(),
+                    (_, Integer(0)) => 1,
+                    (var n1, Integer(1)) => n1.InnerSimplify(),
+                    (var n1, var n2) => New(n1, n2)
+                };
+        }
+        public partial record Sinf
+        {
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Sin(n),
+                Tensor n => n.Elementwise(n => new Sinf(n).Evaled),
+                var n => New(n)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
+                {
+                    Tensor n => n.Elementwise(n => new Sinf(n).InnerSimplify()),
+                    { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => res,
+                    var n => New(n)
+                };
+        }
+        public partial record Cosf
+        {
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Cos(n),
+                Tensor n => n.Elementwise(n => new Cosf(n).Evaled),
+                var n => New(n)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
+                {
+                    Tensor n => n.Elementwise(n => new Cosf(n).InnerSimplify()),
+                    { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => res,
+                    var n => New(n)
+                };
+        }
+        public partial record Tanf
+        {
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Tan(n),
+                Tensor n => n.Elementwise(n => new Tanf(n).Evaled),
+                var n => New(n)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
+                {
+                    Tensor n => n.Elementwise(n => new Tanf(n).InnerSimplify()),
+                    { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => res,
+                    var n => New(n)
+                };
+        }
+        public partial record Cotanf
+        {
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Cotan(n),
+                Tensor n => n.Elementwise(n => new Cotanf(n).Evaled),
+                var n => New(n)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
+                {
+                    Tensor n => n.Elementwise(n => new Cotanf(n).InnerSimplify()),
+                    { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => 1 / res,
+                    var n => New(n)
+                };
+        }
+        public partial record Logf
+        {
+            protected override Entity InnerEval() => (Base.Evaled, Antilogarithm.Evaled) switch
+            {
+                (Complex n1, Complex n2) => Number.Log(n1, n2),
+                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => new Logf(n1, n2).Evaled),
+                (var n1, Tensor n2) => n2.Elementwise(n2 => new Logf(n1, n2).Evaled),
+                (Tensor n1, var n2) => n1.Elementwise(n1 => new Logf(n1, n2).Evaled),
+                (var n1, var n2) => New(n1, n2)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : (Base.InnerSimplify(), Antilogarithm.InnerSimplify()) switch
+                {
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => new Logf(n1, n2).InnerSimplify()),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => new Logf(n1, n2).InnerSimplify()),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => new Logf(n1, n2).InnerSimplify()),
+                    (_, Integer(0)) => Real.NegativeInfinity,
+                    (_, Integer(1)) => 0,
+                    (var n1, var n2) => n1 == n2 ? (Entity)1 : New(n1, n2)
+                };
+        }
+        public partial record Arcsinf
+        {
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Arcsin(n),
+                Tensor n => n.Elementwise(n => new Arcsinf(n).Evaled),
+                var n => New(n)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
+                {
+                    Tensor n => n.Elementwise(n => new Arcsinf(n).InnerSimplify()),
+                    var n => New(n)
+                };
+        }
+        public partial record Arccosf
+        {
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Arccos(n),
+                Tensor n => n.Elementwise(n => new Arccosf(n).Evaled),
+                var n => New(n)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
+                {
+                    Tensor n => n.Elementwise(n => new Arccosf(n).InnerSimplify()),
+                    var n => New(n)
+                };
+        }
+        public partial record Arctanf
+        {
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Arctan(n),
+                Tensor n => n.Elementwise(n => new Arctanf(n).Evaled),
+                var n => New(n)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
+                {
+                    Tensor n => n.Elementwise(n => new Arctanf(n).InnerSimplify()),
+                    var n => New(n)
+                };
+        }
+        public partial record Arccotanf
+        {
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Arccotan(n),
+                Tensor n => n.Elementwise(n => new Arccotanf(n).Evaled),
+                var n => New(n)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
+                {
+                    Tensor n => n.Elementwise(n => new Arccotanf(n).InnerSimplify()),
+                    var n => New(n)
+                };
+        }
+        public partial record Factorialf
+        {
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Factorial(n),
+                Tensor n => n.Elementwise(n => new Factorialf(n).Evaled),
+                var n => New(n)
+            };
+            internal override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplify() switch
+                {
+                    Tensor n => n.Elementwise(n => new Arccotanf(n).InnerSimplify()),
+                    Rational({ Numerator: var num, Denominator: var den }) when den.Equals(2) && (num + 1) / 2 is var en => (
+                        en > 0
                         // (+n - 1/2)! = (2n-1)!/(2^(2n-1)(n-1)!)*sqrt(pi)
                         // also 2n-1 is the numerator
-                        ? RationalNumber.Create(num.Factorial(), PeterO.Numbers.EInteger.FromInt32(2).Pow(num) * (en - 1).Factorial())
+                        ? Rational.Create(num.Factorial(), PeterO.Numbers.EInteger.FromInt32(2).Pow(num) * (en - 1).Factorial())
                         // (-n - 1/2)! = (-4)^n*n!/(2n)!*sqrt(pi)
-                        : RationalNumber.Create(PeterO.Numbers.EInteger.FromInt32(-4).Pow(en) * en.Factorial(), (2 * en).Factorial());
-                    result *= MathS.Sqrt(MathS.pi);
-                }
-                else
-                    result = arg.Factorial();
-            }
-            else
-                result = arg.Factorial();
-            result.__cachedEvaledValue = potentialResult;
-            return result;
+                        : Rational.Create(PeterO.Numbers.EInteger.FromInt32(-4).Pow(-en) * (-en).Factorial(), (2 * -en).Factorial())
+                    ) * MathS.Sqrt(MathS.pi),
+                    var n => New(n)
+                };
         }
-    }
-
-    internal static partial class Derivativef
-    {
-        public static Entity Simplify(List<Entity> args)
+        public partial record Derivativef
         {
-            MathFunctions.AssertArgs(args.Count, 3);
-            var ent = args[0].InnerSimplify();
-            var x = args[1].InnerSimplify();
-            var pow = args[2].InnerSimplify();
-            var def = MathS.Derivative(ent, x, pow);
-            if (!(x is VariableEntity var))
-                return def;
-            if (!(pow is NumberEntity {Value: var val}))
-                return def;
-            if (!(val is IntegerNumber asInt))
-                return def;
-
-            return ent.Derive(var, asInt.Value);
+            protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations.Evaled) switch
+            {
+                (Tensor expr, var var, var iters) => expr.Elementwise(n => new Derivativef(n, var, iters).Evaled),
+                (var expr, _, Integer(0)) => expr,
+                // TODO: consider Integral for negative cases
+                (var expr, Variable var, Integer { EInteger: var asInt }) => expr.Derive(var, asInt),
+                _ => this
+            };
+            internal override Entity InnerSimplify() =>
+                Var.InnerSimplify() is Variable var && Iterations.InnerSimplify() is Integer { EInteger: var asInt }
+                ? asInt.IsZero
+                  ? Expression.InnerSimplify()
+                  : Expression.Derive(var, asInt)
+                : this;
         }
-    }
-
-    internal static partial class Integralf
-    {
-        public static Entity Simplify(List<Entity> args)
+        public partial record Integralf
         {
-            MathFunctions.AssertArgs(args.Count, 3);
-            var ent = args[0].InnerSimplify();
-            var x = args[1].InnerSimplify();
-            var pow = args[2].InnerSimplify();
-            var def = MathS.Integral(ent, x, pow);
-            if (!(x is VariableEntity var))
-                return def;
-            if (!(pow is NumberEntity {Value: var val}))
-                return def;
-            if (!(val is IntegerNumber asInt))
-                return def;
-
-            if (asInt == IntegerNumber.Zero)
-                return ent;
-            throw new NotImplementedException("Integration is not implemented yet");
+            protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations.Evaled) switch
+            {
+                (Tensor expr, var var, var iters) => expr.Elementwise(n => new Integralf(n, var, iters).Evaled),
+                (var expr, _, Integer(0)) => expr,
+                // TODO: consider Derivative for negative cases
+                (var expr, Variable var, Integer { EInteger: var asInt }) =>
+                    throw new NotImplementedException("Integration is not implemented yet"),
+                _ => this
+            };
+            internal override Entity InnerSimplify() =>
+                Var.InnerSimplify() is Variable var && Iterations.InnerSimplify() is Integer { EInteger: var asInt }
+                ? asInt.IsZero
+                  ? Expression.InnerSimplify()
+                  : throw new NotImplementedException("Integration is not implemented yet")
+                : this;
         }
-    }
-
-    internal static partial class Limitf
-    {
-        public static Entity Simplify(List<Entity> args)
+        public partial record Limitf
         {
-            MathFunctions.AssertArgs(args.Count, 4);
-            var expr = args[0].InnerSimplify();
-            var x = args[1].InnerSimplify();
-            var dest = args[2].InnerSimplify();
-            var appr = args[3].InnerSimplify();
-            Entity? lim = null;
-            if (appr == IntegerNumber.MinusOne)
-                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
-            else if (appr == IntegerNumber.Zero)
-                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
-            else if (appr == IntegerNumber.One)
-                throw new NotImplementedException("1.1.0.4 will bring limits"); // TODO
-            else
-                return Limitf.Hang(expr, x, dest, appr);
+            protected override Entity InnerEval() => ApproachFrom switch
+            {
+                ApproachFrom.Left => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                ApproachFrom.BothSides => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                ApproachFrom.Right => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                _ => this,
+            };
+            internal override Entity InnerSimplify() => ApproachFrom switch
+            {
+                ApproachFrom.Left => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                ApproachFrom.BothSides => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                ApproachFrom.Right => throw new NotImplementedException("1.1.0.4 will bring limits"), // TODO
+                _ => this,
+            };
         }
     }
 }

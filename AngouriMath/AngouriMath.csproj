@@ -3,7 +3,6 @@
   <PropertyGroup>
     <OutputType>Library</OutputType>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>8.0</LangVersion>
     <Authors>WhiteBlackGoose</Authors>
     <Company>Angourisoft</Company>
     <Copyright>Angourisoft</Copyright>
@@ -25,44 +24,21 @@
     <ApplicationIcon />
     <StartupObject />
     <PackageIcon>icon.png</PackageIcon>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <DebugType>full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
-    <Optimize>true</Optimize>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
   </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
-  </PropertyGroup>
-
+  
   <ItemGroup>
-    <Compile Remove="Core\Sys\Items\Numeric\bin\**" />
-    <Compile Remove="Core\Sys\Items\Numeric\obj\**" />
-    <Compile Remove="Core\Sys\Items\Numeric\packages\**" />
-    <EmbeddedResource Remove="Core\Sys\Items\Numeric\bin\**" />
-    <EmbeddedResource Remove="Core\Sys\Items\Numeric\obj\**" />
-    <EmbeddedResource Remove="Core\Sys\Items\Numeric\packages\**" />
-    <None Remove="Core\Sys\Items\Numeric\bin\**" />
-    <None Remove="Core\Sys\Items\Numeric\obj\**" />
-    <None Remove="Core\Sys\Items\Numeric\packages\**" />
-    <None Include="..\icon.png">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="..\LICENSE.md">
-      <Pack>True</Pack>
-      <PackagePath></PackagePath>
-    </None>
+    <None Include="../icon.png" Pack="True" PackagePath="" />
+    <None Include="../LICENSE.md" Pack="True" PackagePath="" />
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
     <PackageReference Include="GenericTensor" Version="0.1.1-beta" />
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="3.3.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
     <PackageReference Include="PeterO.Numbers" Version="1.7.4" />
+    <PackageReference Include="System.Memory" Version="4.5.4" />
     <PackageReference Include="Nullable" Version="1.2.1" PrivateAssets="all" />
-    <EmbeddedResource Include="Core/FromString/Antlr/Angourimath.tokens" />
   </ItemGroup>
 </Project>

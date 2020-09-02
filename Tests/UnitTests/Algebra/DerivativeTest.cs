@@ -1,126 +1,119 @@
 ﻿using AngouriMath;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace UnitTests.Algebra
 {
-    [TestClass]
     public class DerivativeTest
     {
-        static readonly VariableEntity x = MathS.Var("x");
-
-        public void AssertEqEntity(Entity actual, Entity target)
-            => Assert.AreEqual(target, actual);
-
-        [TestMethod]
+        static readonly Entity.Variable x = MathS.Var(nameof(x));
+        [Fact]
         public void Test1()
         {
             var func = MathS.Sqr(x) + 2 * x + 1;
             var derived = func.Derive(x);
-            var derivedSimplified = derived.Simplify();
-            var targetSimplified = (2 * x + 2).Simplify();
-            AssertEqEntity(derivedSimplified, targetSimplified);
+            Assert.Equal(2 + 2 * x, derived.Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestSin()
         {
             var func = MathS.Sin(x);
-            AssertEqEntity(func.Derive(x).Simplify(), MathS.Cos(x));
+            Assert.Equal(MathS.Cos(x), func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestCosCustom()
         {
             var func = MathS.Cos(MathS.Pow(x, 3));
             var expected = -3 * MathS.Sin(MathS.Pow(x, 3)) * MathS.Sqr(x);
             var actual = func.Derive(x).Simplify();
-            AssertEqEntity(expected.ToString(), actual.ToString());
+            Assert.Equal(expected, actual);
         }
-        [TestMethod]
+        [Fact]
         public void TestPow()
         {
             var func = MathS.Pow(MathS.e, x);
-            AssertEqEntity(func.Derive(x).Simplify(), func);
+            Assert.Equal(func, func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestPoly()
         {
             var func = MathS.Pow(x, 4);
-            AssertEqEntity(func.Derive(x).Simplify(), 4 * MathS.Pow(x, 3));
+            Assert.Equal(4 * MathS.Pow(x, 3), func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestCusfunc()
         {
             var func = MathS.Sin(x).Pow(2);
-            AssertEqEntity(func.Derive(x).Simplify(3), MathS.Sin(2 * x));
+            Assert.Equal(MathS.Sin(2 * x), func.Derive(x).Simplify(3));
         }
-        [TestMethod]
+        [Fact]
         public void TestTan()
         {
             var func = MathS.Tan(2 * x);
-            AssertEqEntity(func.Derive(x).Simplify(), 2 / MathS.Pow(MathS.Cos(2 * x), 2));
+            Assert.Equal(2 / MathS.Pow(MathS.Cos(2 * x), 2), func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestCoTan()
         {
             var func = MathS.Cotan(2 * x);
-            AssertEqEntity(func.Derive(x).Simplify(), -2 / MathS.Pow(MathS.Sin(2 * x), 2));
+            Assert.Equal(-2 / MathS.Pow(MathS.Sin(2 * x), 2), func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestArc1()
         {
             var func = MathS.Arcsin(x);
-            AssertEqEntity(func.Derive(x).Simplify(), 1 / MathS.Sqrt(1 - MathS.Sqr(x)));
+            Assert.Equal(1 / MathS.Sqrt(1 - MathS.Sqr(x)), func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestArc2()
         {
             var func = MathS.Arcsin(2 * x);
-            AssertEqEntity(func.Derive(x).Simplify(), 2 / MathS.Sqrt(1 + (-4) * MathS.Sqr(x)));
+            Assert.Equal(2 / MathS.Sqrt(1 + (-4) * MathS.Sqr(x)), func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestArc3()
         {
             var func = MathS.Arccos(2 * x);
-            AssertEqEntity(func.Derive(x).Simplify(), (-2) / MathS.Sqrt(1 + (-4) * MathS.Sqr(x)));
+            Assert.Equal((-2) / MathS.Sqrt(1 + (-4) * MathS.Sqr(x)), func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestArc4()
         {
             var func = MathS.Arctan(2 * x);
-            AssertEqEntity(func.Derive(x).Simplify(), 2 / (1 + 4 * MathS.Sqr(x)));
+            Assert.Equal(2 / (1 + 4 * MathS.Sqr(x)), func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestArc5()
         {
             var func = MathS.Arccotan(2 * x);
-            AssertEqEntity(func.Derive(x).Simplify(), -2 / (1 + 4 * MathS.Sqr(x)));
+            Assert.Equal(-2 / (1 + 4 * MathS.Sqr(x)), func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestNaN()
         {
-            var func = new NumberEntity(MathS.Numbers.Create(double.NaN));
-            AssertEqEntity(func.Derive(x).Simplify(), MathS.Numbers.Create(double.NaN));
+            var func = MathS.Numbers.Create(double.NaN);
+            Assert.Equal(MathS.Numbers.Create(double.NaN), func.Derive(x).Simplify());
         }
-        [TestMethod]
+        [Fact]
         public void TestNaN2()
         {
             var func = MathS.Pow(21, MathS.Numbers.Create(double.NaN));
-            AssertEqEntity(func.Derive(x).Simplify(), MathS.Numbers.Create(double.NaN));
+            Assert.Equal(MathS.Numbers.Create(double.NaN), func.Derive(x).Simplify());
         }
 
-        [TestMethod]
+        [Fact]
         public void TestDerOverDer1()
         {
-            var func = MathS.Derivative("x + 2", "x");
-            var derFunc = func.Derive("x");
-            Assert.AreEqual(MathS.Derivative("x + 2", "x", "1 + 1"), derFunc);
+            var func = MathS.Derivative("x + 2", x);
+            var derFunc = func.Derive(x);
+            Assert.Equal(MathS.Derivative("x + 2", x, "1 + 1"), derFunc);
         }
 
-        [TestMethod]
+        [Fact]
         public void TestDerOverDer2()
         {
             var func = MathS.Derivative("x + 2", "y");
-            var derFunc = func.Derive("x");
-            Assert.AreEqual(MathS.Derivative(func, "x"), derFunc);
+            var derFunc = func.Derive(x);
+            Assert.Equal(MathS.Derivative(func, x), derFunc);
         }
     }
 }

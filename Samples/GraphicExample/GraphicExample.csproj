@@ -9,6 +9,6 @@
     <PackageReference Include="ScottPlot" version="4.0.9"/>
     <PackageReference Include="ScottPlot.WinForms" version="4.0.9"/>
     <ProjectReference Include="../../AngouriMath/AngouriMath.csproj"/>
-    <ProjectReference Include="../../AngouriMathPlot/AngouriMathPlot.csproj"/>
+    <ProjectReference Include="../../Samples/AngouriMathPlot/AngouriMathPlot.csproj"/>
   </ItemGroup>
 </Project>

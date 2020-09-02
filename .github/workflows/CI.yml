@@ -1,0 +1,53 @@
+name: CI
+
+on: [push, pull_request]
+jobs:
+  Build:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.100-preview.8
+    - name: Build
+      run: dotnet build
+  Test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - name: Setup .NET Core 3.1 # We need the netcoreapp3.1 runtime
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.302
+    - name: Setup .NET 5 # The dotnet CLI above is replaced by this but the runtime is kept
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.100-preview.8
+    - name: Enable side-by-side .NET Core SDK installations
+      # This step is a workaround as specified in https://github.com/actions/setup-dotnet/issues/25#issuecomment-646925506
+      shell: pwsh
+      run: |
+        $version = Split-Path (Split-Path $ENV:DOTNET_ROOT -Parent) -Leaf;
+        $root = Split-Path (Split-Path $ENV:DOTNET_ROOT -Parent) -Parent;
+        $directories = Get-ChildItem $root | Where-Object { $_.Name -ne $version };
+        foreach ($dir in $directories) {
+          $from = $dir.FullName;
+          $to = "$root/$version";
+          Write-Host Copying from $from to $to;
+          Copy-Item "$from\*" $to -Recurse -Force;
+        }
+    - name: Test
+      run: |
+        dotnet add "Tests/UnitTests" package Microsoft.NET.Test.Sdk # Update is required for GitHubActionsTestLogger to print anything
+        dotnet add "Tests/UnitTests" package GitHubActionsTestLogger
+        dotnet test "Tests/UnitTests" -c Release -l GitHubActions
+    - name: Benchmark
+      run: dotnet run -p Tests/DotnetBenchmark -c Release

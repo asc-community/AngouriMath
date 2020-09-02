@@ -1,39 +1,38 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Xunit;
 
 namespace UnitTests.Algebra
 {
-    [TestClass]
     public class MatrixTest
     {
-        public static readonly Tensor A = MathS.Matrices.Matrix(4, 2,
+        public static readonly Entity.Tensor A = MathS.Matrices.Matrix(4, 2,
             1, 2,
             3, 4,
             5, 6,
             7, 8
         );
-        public static readonly Tensor B = MathS.Matrices.Matrix(4, 2,
+        public static readonly Entity.Tensor B = MathS.Matrices.Matrix(4, 2,
             1, 2,
             3, 4,
             5, 6,
             7, 8
             );
-        public static readonly Tensor C = MathS.Matrices.Matrix(2, 4,
+        public static readonly Entity.Tensor C = MathS.Matrices.Matrix(2, 4,
             1, 2, 3, 4,
             5, 6, 7, 8
         );
 
-        [TestMethod]
+        [Fact]
         public void DotProduct()
         {
             var R = MathS.Matrices.Matrix(2, 2,
                 50, 60,
                 114, 140
             );
-            Assert.AreEqual(R, MathS.Matrices.MatrixMultiplication(C, B).EvalTensor());
+            Assert.Equal(R, MathS.Matrices.MatrixMultiplication(C, B).EvalTensor());
         }
-        [TestMethod]
+        [Fact]
         public void DotPointwiseProduct1()
         {
             var C = MathS.Matrices.Matrix(4, 2,
@@ -42,21 +41,21 @@ namespace UnitTests.Algebra
                 25, 36,
                 49, 64
                 ); 
-            Assert.AreEqual(C, (A * B).EvalTensor());
+            Assert.Equal(C, (A * B).EvalTensor());
         }
 
-        [TestMethod]
-        public void SumProduct1() => Assert.AreEqual((2 * A).EvalTensor(), (A + B).EvalTensor());
+        [Fact]
+        public void SumProduct1() => Assert.Equal((2 * A).EvalTensor(), (A + B).EvalTensor());
 
-        [TestMethod]
+        [Fact]
         public void ScalarProduct1()
         {
             var a = MathS.Matrices.Vector(1, 2, 3);
             var b = MathS.Matrices.Vector(1, 2, 4);
-            Assert.AreEqual(17, MathS.Matrices.ScalarProduct(a, b).Eval());
+            Assert.Equal(17, MathS.Matrices.ScalarProduct(a, b).Eval());
         }
 
-        [TestMethod]
+        [Fact]
         public void Determ()
         {
             var A = MathS.Matrices.Matrix(new Entity[,]
@@ -68,7 +67,7 @@ namespace UnitTests.Algebra
                 .Substitute("B", 2)
                 .Substitute("C", 3)
                 .Substitute("D", 4);
-            Assert.AreEqual(-2, v.Eval());
+            Assert.Equal(-2, v.Eval());
         }
     }
 }

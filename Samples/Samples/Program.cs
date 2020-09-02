@@ -3,7 +3,7 @@ using System;
 using System.Diagnostics;
 using AngouriMath;
 using AngouriMath.Extensions;
-using AngouriMath.Functions.Evaluation.Simplification;
+using PeterO.Numbers;
 
 namespace Samples
 {
@@ -11,11 +11,11 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity a = "3 * sin(e^x) + 5 * sin(e^x) + 3 * sin(e^x) ^ 5 + a * sin(e^x) + 3f * sin(e^x) - h * sin(e^x) ^ 5";
-
-            SmartPolynomialCollapser.Collapse(ref a);
-
-            Console.WriteLine(a);
+            //var d = MathS.Numbers.Create(1e-20m);
+            //Console.Write(d);
+            EDecimal a = 1e-20m;
+            var n = MathS.Numbers.Create(1e-20m);
+            Console.Write(a + " " + n.ToString());
         }
     }
 }

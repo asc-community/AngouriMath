@@ -22,3 +22,5 @@ obj/
 /Tests/UnitTests/TestUtils/out/production/TestGenerator
 /AngouriMath.sln.DotSettings.user
 /Tests/UnitTests/.idea
+/Tests/DotnetBenchmark/benchmark_results.csv
+/AngouriMath/Core/Antlr/antlr4

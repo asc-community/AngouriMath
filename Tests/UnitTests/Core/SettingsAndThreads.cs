@@ -1,118 +1,88 @@
 ﻿using System;
-using System.Threading;
+using System.Threading.Tasks;
 using AngouriMath;
-using AngouriMath.Core.Numerix;
 using AngouriMath.Extensions;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using PeterO.Numbers;
+using Xunit;
 
 namespace UnitTests.Core
 {
-    [TestClass]
     public class SettingsAndThreads
     {
-        [TestMethod]
+        [Fact]
         public void SettingValue1()
         {
             MathS.Settings.MaxExpansionTermCount.As(27, () =>
                 {
-                    Assert.AreEqual(27, MathS.Settings.MaxExpansionTermCount.Value);
+                    Assert.Equal(27, MathS.Settings.MaxExpansionTermCount.Value);
                     MathS.Settings.MaxExpansionTermCount.As(134,
-                        () =>
-                        {
-                            Assert.AreEqual(134, MathS.Settings.MaxExpansionTermCount.Value);
-                        });
-                    Assert.AreEqual(27, MathS.Settings.MaxExpansionTermCount.Value);
+                        () => Assert.Equal(134, MathS.Settings.MaxExpansionTermCount.Value));
+                    Assert.Equal(27, MathS.Settings.MaxExpansionTermCount.Value);
                 }
             );
         }
 
-        [TestMethod]
+        [Fact]
         public void SettingValue2()
         {
             MathS.Settings.PrecisionErrorCommon.As(27.4m, () =>
                 {
-                    Assert.AreEqual(27.4m, MathS.Settings.PrecisionErrorCommon.Value);
+                    Assert.Equal(27.4m, MathS.Settings.PrecisionErrorCommon.Value);
                     MathS.Settings.PrecisionErrorCommon.As(134.5m,
-                        () =>
-                        {
-                            Assert.AreEqual(134.5m, MathS.Settings.PrecisionErrorCommon.Value);
-                        });
-                    Assert.AreEqual(27.4m, MathS.Settings.PrecisionErrorCommon.Value);
+                        () => Assert.Equal(134.5m, MathS.Settings.PrecisionErrorCommon.Value));
+                    Assert.Equal(27.4m, MathS.Settings.PrecisionErrorCommon.Value);
                 }
             );
         }
 
-        public void Solve(int num)
+        // NOTE: Use Tasks instead of Threads because with Threads, unhandled exceptions
+        // especially from Assertions crash the test runner entirely as exceptions on separate threads
+        // are not handled by the main test thread, leading to unran tests. Using Tasks instead
+        // ensures exceptions in worker threads are handled by the main test thread.
+        [Fact]
+        public async Task SettingParallelSolve()
         {
-            MathS.Settings.AllowNewton.As(num % 2 == 0, () =>
+            static void Solve(int num) =>
+                MathS.Settings.AllowNewton.As(num % 2 == 0, () =>
                 {
                     var roots = "x2 + e^x + sin(x)".SolveEquation("x");
-                    Assert.IsTrue((num % 2 == 0) == roots.Count > 0, 
-                        $"Considering that allow Newton is {num % 2 == 0}, root count shouldn't be {roots.Count}");
-                }
-            );
+                    Assert.Equal(num % 2 == 0, roots.Count > 0);
+                });
+            var th1 = Task.Run(() => Solve(0));
+            var th2 = Task.Run(() => Solve(1));
+            var th3 = Task.Run(() => Solve(2));
+            var th4 = Task.Run(() => Solve(3));
+            await Task.WhenAll(th1, th2, th3, th4);
         }
 
-        [TestMethod]
-        public void SettingThreadsSolve()
+        [Fact]
+        public async Task SettingParallelSeparateUse()
         {
-            var th1 = new Thread(() => Solve(0));
-            var th2 = new Thread(() => Solve(1));
-            var th3 = new Thread(() => Solve(2));
-            var th4 = new Thread(() => Solve(3));
-            th1.Start();
-            th2.Start();
-            th3.Start();
-            th4.Start();
-            th1.Join();
-            th2.Join();
-            th3.Join();
-            th4.Join();
+            static void Checker(int num) =>
+                MathS.Settings.MaxExpansionTermCount.As(num, () =>
+                {
+                    for (int i = 0; i < 100000; i++)
+                        Assert.Equal(num, MathS.Settings.MaxExpansionTermCount.Value);
+                });
+            var th1 = Task.Run(() => Checker(0));
+            var th2 = Task.Run(() => Checker(1));
+            var th3 = Task.Run(() => Checker(2));
+            var th4 = Task.Run(() => Checker(3));
+            await Task.WhenAll(th1, th2, th3, th4);
         }
 
-        public void Checker(int num)
-        {
-            MathS.Settings.MaxExpansionTermCount.As(num, () =>
-            {
-                for (int i = 0; i < 100000; i++)
-                    Assert.AreEqual(num, MathS.Settings.MaxExpansionTermCount.Value);
-            });
-        }
-        [TestMethod]
-        public void SettingThreadsSeparateUse()
-        {
-            var threads = new Thread[3];
-            for (int i = 0; i < threads.Length; i++)
-            {
-                threads[i] = new Thread(() => Checker(i));
-                threads[i].Start();
-            }
-            for (int i = 0; i < threads.Length; i++)
-                threads[i].Join();
-        }
-
-        [TestMethod]
+        [Fact]
         public void WithExceptionInside()
         {
-            MathS.Settings.MaxExpansionTermCount.As(500,
-                () =>
+            MathS.Settings.MaxExpansionTermCount.As(500, () =>
                 {
-                    Assert.AreEqual(MathS.Settings.MaxExpansionTermCount.Value, 500);
-                    try
-                    {
+                    Assert.Equal(500, MathS.Settings.MaxExpansionTermCount.Value);
+                    Assert.Throws<DataMisalignedException>(() =>
                         MathS.Settings.MaxExpansionTermCount.As(300, () =>
-                        {
                             // something happens
-                            throw new ArgumentNullException(); // some random exception
-                        });
-                        Assert.Fail("An exception should occur above");
-                    }
-                    catch
-                    {
-                        // should be kept as 500
-                        Assert.AreEqual(500, MathS.Settings.MaxExpansionTermCount.Value);
-                    }
+                            throw new DataMisalignedException() // some random exception
+                        ));
+                    // should be kept as 500
+                    Assert.Equal(500, MathS.Settings.MaxExpansionTermCount.Value);
                 }
             );
         }

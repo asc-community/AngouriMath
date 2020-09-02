@@ -13,273 +13,161 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-
-
- using System;
-using System.Collections.Generic;
- using AngouriMath.Core.Sys.Interfaces;
- using PeterO.Numbers;
+using PeterO.Numbers;
 
 namespace AngouriMath
 {
-    using DeriveTable = Dictionary<string, Func<List<Entity>, VariableEntity, Entity>>;
-
     // Adding function Derive to Entity
-    public abstract partial class Entity : ILatexiseable
+    public abstract partial record Entity
     {
-        /// <summary>
-        /// Derives over x power times
-        /// </summary>
-        public Entity Derive(VariableEntity x, EInteger power)
+        /// <summary>Derivation over a variable (without simplification)</summary>
+        /// <param name="x">The variable to derive over</param>
+        public abstract Entity Derive(Variable variable);
+
+        /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
+        public Entity Derive(Variable x, EInteger power)
         {
             var ent = this;
             for (var _ = 0; _ < power; _++)
                 ent = ent.Derive(x);
             return ent;
         }
-
-        /// <summary>
-        /// Derivation over a variable (without simplification)
-        /// </summary>
-        /// <param name="x">
-        /// The variable to derive over
-        /// </param>
-        /// <returns></returns>
-        public Entity Derive(VariableEntity x)
+        public partial record Number
         {
-            if (IsLeaf)
-                switch (this)
-                {
-                    case VariableEntity _ when Name == x.Name:
-                        return new NumberEntity(1);
-                    case NumberEntity { Value: var value } when value == Core.Numerix.RealNumber.NaN:
-                        return this;
-                    default:
-                        return new NumberEntity(0);
-                }
-            else
-                return MathFunctions.InvokeDerive(Name, Children, x);
+            public override Entity Derive(Variable variable) => Eval().IsNaN ? this : 0;
         }
-    }
-
-    // Adding invoke table for eval
-    internal static partial class MathFunctions
-    {
-        internal static readonly DeriveTable deriveTable = new DeriveTable();
-
-        public static Entity InvokeDerive(string typeName, List<Entity> args, VariableEntity x)
+        public partial record Variable
         {
-            return deriveTable[typeName](args, x);
+            public override Entity Derive(Variable variable) => Name == variable.Name ? 1 : 0;
         }
-    }
-
-
-    // Each function and operator processing
-    internal static partial class Sumf
-    {
-        // (a + b)' = a' + b'
-        public static Entity Derive(List<Entity> args, VariableEntity variable) {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var a = args[0];
-            var b = args[1];
-            return a.Derive(variable) + b.Derive(variable);
-        }
-        
-    }
-    internal static partial class Minusf
-    {
-        // (a - b)' = a' - b'
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        public partial record Tensor
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var a = args[0];
-            var b = args[1];
-            return a.Derive(variable) - b.Derive(variable);
+            public override Entity Derive(Variable variable) => Elementwise(e => e.Derive(variable));
         }
-    }
-    internal static partial class Mulf
-    {
-        // (a * b)' = a' * b + b' * a
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        // Each function and operator processing
+        public partial record Sumf
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var a = args[0];
-            var b = args[1];
-            return a.Derive(variable) * b + b.Derive(variable) * a;
+            // (a + b)' = a' + b'
+            public override Entity Derive(Variable variable) =>
+                Augend.Derive(variable) + Addend.Derive(variable);
         }
-    }
-
-    internal static partial class Divf
-    {
-        // (a / b)' = (a' * b - b' * a) / b^2
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        public partial record Minusf
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var a = args[0];
-            var b = args[1];
-            return (a.Derive(variable) * b - b.Derive(variable) * a) / (b.Pow(2));
+            // (a - b)' = a' - b'
+            public override Entity Derive(Variable variable) =>
+                Subtrahend.Derive(variable) - Minuend.Derive(variable);
         }
-    }
-    internal static partial class Powf
-    {
-        // (a ^ b)' = e ^ (ln(a) * b) * (a' * b / a + ln(a) * b')
-        // (a ^ const)' = const * a ^ (const - 1)
-        // (const ^ b)' = e^b * b'
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        public partial record Mulf
         {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var a = args[0];
-            var b = args[1];
-            if (b is NumberEntity { Value:var value })
+            // (a * b)' = a' * b + b' * a
+            public override Entity Derive(Variable variable) =>
+                Multiplier.Derive(variable) * Multiplicand + Multiplicand.Derive(variable) * Multiplier;
+        }
+        public partial record Divf
+        {
+            // (a / b)' = (a' * b - b' * a) / b^2
+            public override Entity Derive(Variable variable) =>
+                (Dividend.Derive(variable) * Divisor - Divisor.Derive(variable) * Dividend) / Divisor.Pow(2);
+        }
+        public partial record Powf
+        {
+            // (a ^ b)' = e ^ (ln(a) * b) * (a' * b / a + ln(a) * b')
+            // (a ^ const)' = const * a ^ (const - 1) * a'
+            // (const ^ b)' = e^b * b'
+            public override Entity Derive(Variable variable) =>
+                Exponent is Number exp
+                ? exp * Base.Pow(exp - 1) * Base.Derive(variable)
+                : Base is Number
+                ? Base.Pow(Exponent) * MathS.Ln(Base) * Exponent.Derive(variable)
+                : Base.Pow(Exponent) * (Base.Derive(variable) * Exponent / Base + MathS.Ln(Base) * Exponent.Derive(variable));
+        }
+        public partial record Sinf
+        {
+            // sin(a)' = cos(a) * a'
+            public override Entity Derive(Variable variable) =>
+                Argument.Cos() * Argument.Derive(variable);
+        }
+        public partial record Cosf
+        {
+            // cos(a)' = -sin(a) * a'
+            public override Entity Derive(Variable variable) =>
+                -Argument.Sin() * Argument.Derive(variable);
+        }
+        public partial record Tanf
+        {
+            // tan(a)' = 1 / cos(a) ^ 2 * a'
+            public override Entity Derive(Variable variable) =>
+                1 / Argument.Cos().Pow(2) * Argument.Derive(variable);
+        }
+        public partial record Cotanf
+        {
+            // cot(a)' = -1 / sin(a) ^ 2 * a'
+            public override Entity Derive(Variable variable) =>
+                -1 / Argument.Sin().Pow(2) * Argument.Derive(variable);
+        }
+        public partial record Logf
+        {
+            // log_b(a)' = (ln(a) / ln(b))' = (ln(a)' * ln(b) - ln(a) * ln(b)') / ln(b)^2 = (a' / a * ln(b) - ln(a) * b' / b) / ln(b)^2
+            public override Entity Derive(Variable variable) =>
+                (Antilogarithm.Derive(variable) / Antilogarithm * MathS.Ln(Base)
+                - MathS.Ln(Antilogarithm) * Base.Derive(variable) / Base)
+                / MathS.Ln(Base).Pow(2);
+        }
+        public partial record Arcsinf
+        {
+            // arcsin(x)' = 1 / sqrt(1 - x^2) * x'
+            public override Entity Derive(Variable variable) =>
+                1 / MathS.Sqrt(1 - MathS.Sqr(Argument)) * Argument.Derive(variable);
+        }
+        public partial record Arccosf
+        {
+            // arccos(x)' = -1 / sqrt(1 - x^2) * x'
+            public override Entity Derive(Variable variable) =>
+                -1 / MathS.Sqrt(1 - MathS.Sqr(Argument)) * Argument.Derive(variable);
+        }
+        public partial record Arctanf
+        {
+            // arctan(x)' = 1 / (1 + x^2) * x'
+            public override Entity Derive(Variable variable) =>
+                1 / (1 + MathS.Sqr(Argument)) * Argument.Derive(variable);
+        }
+        public partial record Arccotanf
+        {
+            // arccotan(x)' = -1 / (1 + x^2) * x'
+            public override Entity Derive(Variable variable) =>
+                -1 / (1 + MathS.Sqr(Argument)) * Argument.Derive(variable);
+        }
+        public partial record Factorialf
+        {
+            // (x!)' = Γ(x + 1) polygamma(0, x + 1)
+            public override Entity Derive(Variable variable)
             {
-                var cons = value - 1;
-                var res = b * (a.Pow(cons)) * a.Derive(variable);
-                return res;
+                // TODO: Implementation of symbolic gamma function and polygamma functions needed
+                return Number.Real.NaN;
             }
-            else if(a is NumberEntity)
-            {
-                return a.Pow(b) * MathS.Ln(a) * b.Derive(variable);
-            }
-            else
-                return a.Pow(b) * (a.Derive(variable) * b / a + MathS.Ln(a) * b.Derive(variable));
         }
-    }
-    internal static partial class Sinf
-    {
-        // sin(a) = cos(a) * a'
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        public partial record Derivativef
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var a = args[0];
-            return a.Cos() * a.Derive(variable);
+            public override Entity Derive(Variable variable) =>
+                Var == variable
+                ? this with { Iterations = Iterations + 1 }
+                : MathS.Derivative(this, variable, 1);
         }
-    }
-    internal static partial class Cosf
-    {
-        // sin(a) = -sin(a) * a'
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        public partial record Integralf
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var a = args[0];
-            return -1 * a.Sin() * a.Derive(variable);
+            public override Entity Derive(Variable variable) =>
+                Var == variable
+                ? this with { Iterations = Iterations - 1 }
+                : MathS.Derivative(this, variable, 1);
         }
-    }
-    internal static partial class Tanf
-    {
-        // tan(a) = 1 / cos(a) ^ 2
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
+        public partial record Limitf
         {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var a = args[0];
-            return 1 / a.Cos().Pow(2) * a.Derive(variable);
-        }
-    }
-    internal static partial class Cotanf
-    {
-        // tan(a) = -1 / sin(a) ^ 2
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var a = args[0];
-            return -1 / a.Sin().Pow(2) * a.Derive(variable);
-        }
-    }
-    internal static partial class Logf
-    {
-        // log(a, b) = (ln(a) / ln(b))' = (ln(a)' * ln(b) - ln(a) * ln(b)') / ln(b)^2 = (a' / a * ln(b) - ln(a) * b' / b) / ln(b)^2
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
-        {
-            MathFunctions.AssertArgs(args.Count, 2);
-            var a = args[0];
-            var b = args[1];
-            return (a.Derive(variable) / a * MathS.Ln(b) - MathS.Ln(a) * b.Derive(variable) / b) / (MathS.Ln(b).Pow(2));
-        }
-    }
-    internal static partial class Arcsinf
-    {
-        // arcsin(x)' = 1 / sqrt(1 - x^2)
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var a = args[0];
-            return 1 / MathS.Sqrt(1 - MathS.Sqr(a)) * a.Derive(variable);
-        }
-    }
-    internal static partial class Arccosf
-    {
-        // arccos(x)' = -1 / sqrt(1 - x^2)
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var a = args[0];
-            return -1 / MathS.Sqrt(1 - MathS.Sqr(a)) * a.Derive(variable);
-        }
-    }
-    internal static partial class Arctanf
-    {
-        // arctan(x)' = 1 / (1 + x^2)
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var a = args[0];
-            return 1 / (1 + MathS.Sqr(a)) * a.Derive(variable);
-        }
-    }
-    internal static partial class Arccotanf
-    {
-        // arccotan(x)' = -1 / (1 + x^2)
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var a = args[0];
-            return -1 / (1 + MathS.Sqr(a)) * a.Derive(variable);
-        }
-    }
-    internal static partial class Factorialf
-    {
-        // (x!)' = Γ(x + 1) polygamma(0, x + 1)
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
-        {
-            MathFunctions.AssertArgs(args.Count, 1);
-            var a = args[0];
-            // TODO: Implementation of symbolic gamma function and polygamma functions needed
-            return Core.Numerix.RealNumber.NaN;
-        }
-    }
+            public override Entity Derive(Variable variable) =>
+                // TODO: What is a derivative of a limit?
 
-    internal static partial class Derivativef
-    {
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
-        {
-            MathFunctions.AssertArgs(args.Count, 3);
-            if (args[1] == variable)
-                return MathS.Derivative(args[0], args[1], args[2] + 1);
-            else
-                return MathS.Derivative(MathS.Derivative(args[0], args[1], args[2]), variable, 1);
-        }
-    }
-
-    internal static partial class Integralf
-    {
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
-        {
-            MathFunctions.AssertArgs(args.Count, 3);
-            if (args[1] == variable)
-                return MathS.Integral(args[0], args[1], args[2] - 1);
-            else
-                return MathS.Integral(MathS.Derivative(args[0], args[1], args[2]), variable, 1);
-        }
-    }
-
-    internal static partial class Limitf
-    {
-        public static Entity Derive(List<Entity> args, VariableEntity variable)
-        {
-            MathFunctions.AssertArgs(args.Count, 4);
-            // TODO: What is a derivative of a limit?
-            return MathS.Derivative(
-                Limitf.Hang(args[0], args[1], args[2], args[3])
-                , variable);
+                // See https://math.stackexchange.com/a/1048570/627798:
+                // The derivative itself is a limit, so we can exchange limits if possible. -- Happypig375
+                MathS.Derivative(this, variable);
         }
     }
 }

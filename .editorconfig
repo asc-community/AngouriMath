@@ -2,3 +2,9 @@
 
 # CS0660: 'IntervalPiece' defines operator == or operator != but does not override Object.Equals(object o)
 dotnet_diagnostic.CS0660.severity = suggestion
+
+# RS0016: some public method is not mentioned as public API
+dotnet_diagnostic.RS0016.severity = error
+
+# RS0017: some method mentioned as public API is not public
+dotnet_diagnostic.RS0017.severity = error
