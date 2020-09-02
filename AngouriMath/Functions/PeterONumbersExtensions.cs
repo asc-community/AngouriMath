@@ -7,8 +7,8 @@ using PeterO.Numbers;
 
 namespace AngouriMath
 {
-    // Default visibility for classes is internal so we can use public for methods as we like
-    static class PeterONumbersExtensions
+    // Visibility for the class is internal so we can use public for methods as we like
+    internal static class PeterONumbersExtensions
     {
         public class ConstantCache
         {
