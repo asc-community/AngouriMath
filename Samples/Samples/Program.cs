@@ -3,6 +3,7 @@ using System;
 using System.Diagnostics;
 using AngouriMath;
 using AngouriMath.Extensions;
+using PeterO.Numbers;
 
 namespace Samples
 {
@@ -10,8 +11,11 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity a = "(x4 - 4x3 - 8x2 + 48x + 16) / (x - a)";
-            Console.Write(a.Simplify());
+            //var d = MathS.Numbers.Create(1e-20m);
+            //Console.Write(d);
+            EDecimal a = 1e-20m;
+            var n = MathS.Numbers.Create(1e-20m);
+            Console.Write(a + " " + n.ToString());
         }
     }
 }

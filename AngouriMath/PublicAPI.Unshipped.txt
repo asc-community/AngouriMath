@@ -702,6 +702,7 @@ static AngouriMath.MathS.Latex(AngouriMath.Core.ILatexiseable! latexiseable) -> 
 static AngouriMath.MathS.Limit(AngouriMath.Entity! expr, AngouriMath.Entity! var, AngouriMath.Entity! dest, AngouriMath.Core.ApproachFrom approach = AngouriMath.Core.ApproachFrom.BothSides) -> AngouriMath.Entity!
 static AngouriMath.MathS.Ln(AngouriMath.Entity! a) -> AngouriMath.Entity!
 static AngouriMath.MathS.Log(AngouriMath.Entity! base, AngouriMath.Entity! x) -> AngouriMath.Entity!
+static AngouriMath.MathS.Log(AngouriMath.Entity! x) -> AngouriMath.Entity!
 static AngouriMath.MathS.Matrices.DotProduct(AngouriMath.Entity.Tensor! A, AngouriMath.Entity.Tensor! B) -> AngouriMath.Entity.Tensor!
 static AngouriMath.MathS.Matrices.Matrix(AngouriMath.Entity![,]! values) -> AngouriMath.Entity.Tensor!
 static AngouriMath.MathS.Matrices.Matrix(int rows, int columns, params AngouriMath.Entity![]! values) -> AngouriMath.Entity.Tensor!

@@ -246,6 +246,10 @@ namespace AngouriMath.Core
         IEnumerator<SetPiece> IEnumerable<SetPiece>.GetEnumerator() => ((IEnumerable<SetPiece>)Pieces).GetEnumerator();
     }
 
+    /// <summary>
+    /// A collection whose length is finite so that you can
+    /// perform arithmetic operations on it
+    /// </summary>
     public class FiniteSet : IReadOnlyList<Entity>
     {
         private readonly Entity[] entities;

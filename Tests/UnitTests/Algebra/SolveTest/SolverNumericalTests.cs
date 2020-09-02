@@ -12,7 +12,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
     using static Entity.Number;
     public class NumericalEquationsSolve
     {
-        private Entity.Variable x = nameof(x);
+        private readonly Entity.Variable x = nameof(x);
 
         [Theory, CombinatorialData]
         public void RealRootsPower3(

@@ -110,6 +110,12 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Log(Entity @base, Entity x) => new Logf(@base, x);
 
+        /// <summary><a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
+        /// <param name="x">Argument node of logarithm</param>
+        /// <returns>Logarithm node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Log(Entity x) => new Logf(10, x);
+
         /// <summary><a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
         /// <param name="base">Base node of power</param>
         /// <param name="power">Argument node of power</param>
