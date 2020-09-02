@@ -62,17 +62,6 @@ namespace AngouriMath
 
         public abstract Priority Priority { get; }
 
-        /// <summary>Deep but stupid comparison</summary>
-        public static bool operator ==(Entity? a, Entity? b)
-        {
-            // Since C# 7 we can compare objects to null without casting them into object
-            if (a is null && b is null)
-                return true;
-            // We expect the EqualsTo implementation to check if a's type is equal to b's type
-            return a?.Equals(b) ?? false;
-        }
-        public static bool operator !=(Entity? a, Entity? b) => !(a == b);
-
         /// <value>
         /// Whether both parts of the complex number are finite
         /// meaning that it could be safely used for calculations

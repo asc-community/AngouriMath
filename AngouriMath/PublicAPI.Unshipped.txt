@@ -508,14 +508,12 @@ static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Nu
 static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Number.Complex!(uint value) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Number.Complex!(ulong value) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Number.Complex!(ushort value) -> AngouriMath.Entity.Number.Complex!
-static AngouriMath.Entity.Number.Complex.operator !=(AngouriMath.Entity.Number.Complex! a, AngouriMath.Entity.Number.Complex! b) -> bool
 static AngouriMath.Entity.Number.Complex.operator *(AngouriMath.Entity.Number.Complex! a, AngouriMath.Entity.Number.Complex! b) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.operator +(AngouriMath.Entity.Number.Complex! a) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.operator +(AngouriMath.Entity.Number.Complex! a, AngouriMath.Entity.Number.Complex! b) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.operator -(AngouriMath.Entity.Number.Complex! a) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.operator -(AngouriMath.Entity.Number.Complex! a, AngouriMath.Entity.Number.Complex! b) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.operator /(AngouriMath.Entity.Number.Complex! a, AngouriMath.Entity.Number.Complex! b) -> AngouriMath.Entity.Number.Complex!
-static AngouriMath.Entity.Number.Complex.operator ==(AngouriMath.Entity.Number.Complex! a, AngouriMath.Entity.Number.Complex! b) -> bool
 static AngouriMath.Entity.Number.Cos(AngouriMath.Entity.Number.Complex! num) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Cotan(AngouriMath.Entity.Number.Complex! num) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Exp(AngouriMath.Entity.Number.Complex! x) -> AngouriMath.Entity.Number.Complex!
@@ -533,7 +531,6 @@ static AngouriMath.Entity.Number.Integer.implicit operator AngouriMath.Entity.Nu
 static AngouriMath.Entity.Number.Integer.implicit operator AngouriMath.Entity.Number.Integer!(uint value) -> AngouriMath.Entity.Number.Integer!
 static AngouriMath.Entity.Number.Integer.implicit operator AngouriMath.Entity.Number.Integer!(ulong value) -> AngouriMath.Entity.Number.Integer!
 static AngouriMath.Entity.Number.Integer.implicit operator AngouriMath.Entity.Number.Integer!(ushort value) -> AngouriMath.Entity.Number.Integer!
-static AngouriMath.Entity.Number.Integer.operator !=(AngouriMath.Entity.Number.Integer! a, AngouriMath.Entity.Number.Integer! b) -> bool
 static AngouriMath.Entity.Number.Integer.operator *(AngouriMath.Entity.Number.Integer! a, AngouriMath.Entity.Number.Integer! b) -> AngouriMath.Entity.Number.Integer!
 static AngouriMath.Entity.Number.Integer.operator +(AngouriMath.Entity.Number.Integer! a) -> AngouriMath.Entity.Number.Integer!
 static AngouriMath.Entity.Number.Integer.operator +(AngouriMath.Entity.Number.Integer! a, AngouriMath.Entity.Number.Integer! b) -> AngouriMath.Entity.Number.Integer!
@@ -542,7 +539,6 @@ static AngouriMath.Entity.Number.Integer.operator -(AngouriMath.Entity.Number.In
 static AngouriMath.Entity.Number.Integer.operator /(AngouriMath.Entity.Number.Integer! a, AngouriMath.Entity.Number.Integer! b) -> AngouriMath.Entity.Number.Real!
 static AngouriMath.Entity.Number.Integer.operator <(AngouriMath.Entity.Number.Integer! a, AngouriMath.Entity.Number.Integer! b) -> bool
 static AngouriMath.Entity.Number.Integer.operator <=(AngouriMath.Entity.Number.Integer! a, AngouriMath.Entity.Number.Integer! b) -> bool
-static AngouriMath.Entity.Number.Integer.operator ==(AngouriMath.Entity.Number.Integer! a, AngouriMath.Entity.Number.Integer! b) -> bool
 static AngouriMath.Entity.Number.Integer.operator >(AngouriMath.Entity.Number.Integer! a, AngouriMath.Entity.Number.Integer! b) -> bool
 static AngouriMath.Entity.Number.Integer.operator >=(AngouriMath.Entity.Number.Integer! a, AngouriMath.Entity.Number.Integer! b) -> bool
 static AngouriMath.Entity.Number.IsZero(AngouriMath.Entity.Number.Complex! num) -> bool
@@ -564,7 +560,6 @@ static AngouriMath.Entity.Number.Rational.implicit operator AngouriMath.Entity.N
 static AngouriMath.Entity.Number.Rational.implicit operator AngouriMath.Entity.Number.Rational!(uint value) -> AngouriMath.Entity.Number.Rational!
 static AngouriMath.Entity.Number.Rational.implicit operator AngouriMath.Entity.Number.Rational!(ulong value) -> AngouriMath.Entity.Number.Rational!
 static AngouriMath.Entity.Number.Rational.implicit operator AngouriMath.Entity.Number.Rational!(ushort value) -> AngouriMath.Entity.Number.Rational!
-static AngouriMath.Entity.Number.Rational.operator !=(AngouriMath.Entity.Number.Rational! a, AngouriMath.Entity.Number.Rational! b) -> bool
 static AngouriMath.Entity.Number.Rational.operator *(AngouriMath.Entity.Number.Rational! a, AngouriMath.Entity.Number.Rational! b) -> AngouriMath.Entity.Number.Rational!
 static AngouriMath.Entity.Number.Rational.operator +(AngouriMath.Entity.Number.Rational! a) -> AngouriMath.Entity.Number.Rational!
 static AngouriMath.Entity.Number.Rational.operator +(AngouriMath.Entity.Number.Rational! a, AngouriMath.Entity.Number.Rational! b) -> AngouriMath.Entity.Number.Rational!
@@ -573,7 +568,6 @@ static AngouriMath.Entity.Number.Rational.operator -(AngouriMath.Entity.Number.R
 static AngouriMath.Entity.Number.Rational.operator /(AngouriMath.Entity.Number.Rational! a, AngouriMath.Entity.Number.Rational! b) -> AngouriMath.Entity.Number.Real!
 static AngouriMath.Entity.Number.Rational.operator <(AngouriMath.Entity.Number.Rational! a, AngouriMath.Entity.Number.Rational! b) -> bool
 static AngouriMath.Entity.Number.Rational.operator <=(AngouriMath.Entity.Number.Rational! a, AngouriMath.Entity.Number.Rational! b) -> bool
-static AngouriMath.Entity.Number.Rational.operator ==(AngouriMath.Entity.Number.Rational! a, AngouriMath.Entity.Number.Rational! b) -> bool
 static AngouriMath.Entity.Number.Rational.operator >(AngouriMath.Entity.Number.Rational! a, AngouriMath.Entity.Number.Rational! b) -> bool
 static AngouriMath.Entity.Number.Rational.operator >=(AngouriMath.Entity.Number.Rational! a, AngouriMath.Entity.Number.Rational! b) -> bool
 static AngouriMath.Entity.Number.Real.Create(PeterO.Numbers.EDecimal! value) -> AngouriMath.Entity.Number.Real!
@@ -591,7 +585,6 @@ static AngouriMath.Entity.Number.Real.implicit operator AngouriMath.Entity.Numbe
 static AngouriMath.Entity.Number.Real.implicit operator AngouriMath.Entity.Number.Real!(uint value) -> AngouriMath.Entity.Number.Real!
 static AngouriMath.Entity.Number.Real.implicit operator AngouriMath.Entity.Number.Real!(ulong value) -> AngouriMath.Entity.Number.Real!
 static AngouriMath.Entity.Number.Real.implicit operator AngouriMath.Entity.Number.Real!(ushort value) -> AngouriMath.Entity.Number.Real!
-static AngouriMath.Entity.Number.Real.operator !=(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> bool
 static AngouriMath.Entity.Number.Real.operator *(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> AngouriMath.Entity.Number.Real!
 static AngouriMath.Entity.Number.Real.operator +(AngouriMath.Entity.Number.Real! a) -> AngouriMath.Entity.Number.Real!
 static AngouriMath.Entity.Number.Real.operator +(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> AngouriMath.Entity.Number.Real!
@@ -600,7 +593,6 @@ static AngouriMath.Entity.Number.Real.operator -(AngouriMath.Entity.Number.Real!
 static AngouriMath.Entity.Number.Real.operator /(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> AngouriMath.Entity.Number.Real!
 static AngouriMath.Entity.Number.Real.operator <(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> bool
 static AngouriMath.Entity.Number.Real.operator <=(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> bool
-static AngouriMath.Entity.Number.Real.operator ==(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> bool
 static AngouriMath.Entity.Number.Real.operator >(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> bool
 static AngouriMath.Entity.Number.Real.operator >=(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> bool
 static AngouriMath.Entity.Number.Sin(AngouriMath.Entity.Number.Complex! num) -> AngouriMath.Entity.Number.Complex!
@@ -623,14 +615,12 @@ static AngouriMath.Entity.Number.implicit operator AngouriMath.Entity.Number!(sh
 static AngouriMath.Entity.Number.implicit operator AngouriMath.Entity.Number!(uint value) -> AngouriMath.Entity.Number!
 static AngouriMath.Entity.Number.implicit operator AngouriMath.Entity.Number!(ulong value) -> AngouriMath.Entity.Number!
 static AngouriMath.Entity.Number.implicit operator AngouriMath.Entity.Number!(ushort value) -> AngouriMath.Entity.Number!
-static AngouriMath.Entity.Number.operator !=(AngouriMath.Entity.Number! a, AngouriMath.Entity.Number! b) -> bool
 static AngouriMath.Entity.Number.operator *(AngouriMath.Entity.Number! a, AngouriMath.Entity.Number! b) -> AngouriMath.Entity.Number!
 static AngouriMath.Entity.Number.operator +(AngouriMath.Entity.Number! a) -> AngouriMath.Entity.Number!
 static AngouriMath.Entity.Number.operator +(AngouriMath.Entity.Number! a, AngouriMath.Entity.Number! b) -> AngouriMath.Entity.Number!
 static AngouriMath.Entity.Number.operator -(AngouriMath.Entity.Number! a) -> AngouriMath.Entity.Number!
 static AngouriMath.Entity.Number.operator -(AngouriMath.Entity.Number! a, AngouriMath.Entity.Number! b) -> AngouriMath.Entity.Number!
 static AngouriMath.Entity.Number.operator /(AngouriMath.Entity.Number! a, AngouriMath.Entity.Number! b) -> AngouriMath.Entity.Number!
-static AngouriMath.Entity.Number.operator ==(AngouriMath.Entity.Number! a, AngouriMath.Entity.Number! b) -> bool
 static AngouriMath.Entity.Variable.implicit operator AngouriMath.Entity.Variable!(string! name) -> AngouriMath.Entity.Variable!
 static AngouriMath.Entity.implicit operator AngouriMath.Entity!(PeterO.Numbers.EDecimal! value) -> AngouriMath.Entity!
 static AngouriMath.Entity.implicit operator AngouriMath.Entity!(PeterO.Numbers.EInteger! value) -> AngouriMath.Entity!
@@ -648,14 +638,12 @@ static AngouriMath.Entity.implicit operator AngouriMath.Entity!(string! expr) ->
 static AngouriMath.Entity.implicit operator AngouriMath.Entity!(uint value) -> AngouriMath.Entity!
 static AngouriMath.Entity.implicit operator AngouriMath.Entity!(ulong value) -> AngouriMath.Entity!
 static AngouriMath.Entity.implicit operator AngouriMath.Entity!(ushort value) -> AngouriMath.Entity!
-static AngouriMath.Entity.operator !=(AngouriMath.Entity? a, AngouriMath.Entity? b) -> bool
 static AngouriMath.Entity.operator *(AngouriMath.Entity! a, AngouriMath.Entity! b) -> AngouriMath.Entity!
 static AngouriMath.Entity.operator +(AngouriMath.Entity! a) -> AngouriMath.Entity!
 static AngouriMath.Entity.operator +(AngouriMath.Entity! a, AngouriMath.Entity! b) -> AngouriMath.Entity!
 static AngouriMath.Entity.operator -(AngouriMath.Entity! a) -> AngouriMath.Entity!
 static AngouriMath.Entity.operator -(AngouriMath.Entity! a, AngouriMath.Entity! b) -> AngouriMath.Entity!
 static AngouriMath.Entity.operator /(AngouriMath.Entity! a, AngouriMath.Entity! b) -> AngouriMath.Entity!
-static AngouriMath.Entity.operator ==(AngouriMath.Entity? a, AngouriMath.Entity? b) -> bool
 static AngouriMath.Extensions.AngouriMathExtensions.Compile(this string! str, params AngouriMath.Entity.Variable![]! variables) -> AngouriMath.Core.FastExpression!
 static AngouriMath.Extensions.AngouriMathExtensions.Derive(this string! str, AngouriMath.Entity.Variable! x) -> AngouriMath.Entity!
 static AngouriMath.Extensions.AngouriMathExtensions.Eval(this string! expr) -> AngouriMath.Entity.Number.Complex!
@@ -672,7 +660,6 @@ static AngouriMath.Extensions.AngouriMathExtensions.SolveSystem(this (string! eq
 static AngouriMath.Extensions.AngouriMathExtensions.SolveSystem(this (string! eq1, string! eq2, string! eq3, string! eq4, string! eq5, string! eq6, string! eq7) eqs, string! var1, string! var2, string! var3, string! var4, string! var5, string! var6, string! var7) -> AngouriMath.Entity.Tensor?
 static AngouriMath.Extensions.AngouriMathExtensions.SolveSystem(this (string! eq1, string! eq2, string! eq3, string! eq4, string! eq5, string! eq6, string! eq7, string! eq8) eqs, string! var1, string! var2, string! var3, string! var4, string! var5, string! var6, string! var7, string! var8) -> AngouriMath.Entity.Tensor?
 static AngouriMath.Extensions.AngouriMathExtensions.SolveSystem(this (string! eq1, string! eq2, string! eq3, string! eq4, string! eq5, string! eq6, string! eq7, string! eq8, string! eq9) eqs, string! var1, string! var2, string! var3, string! var4, string! var5, string! var6, string! var7, string! var8, string! var9) -> AngouriMath.Entity.Tensor?
-static AngouriMath.Extensions.AngouriMathExtensions.SolveSystem(this AngouriMath.Entity![]! equations, params AngouriMath.Entity.Variable![]! vars) -> AngouriMath.Entity.Tensor?
 static AngouriMath.Extensions.AngouriMathExtensions.Substitute(this string! expr, AngouriMath.Entity.Variable! var, AngouriMath.Entity! value) -> AngouriMath.Entity!
 static AngouriMath.Extensions.AngouriMathExtensions.ToEntity(this string! expr) -> AngouriMath.Entity!
 static AngouriMath.Extensions.AngouriMathExtensions.ToNumber(this PeterO.Numbers.EDecimal! value) -> AngouriMath.Entity.Number.Real!

@@ -9,73 +9,32 @@ using Xunit;
 
 namespace UnitTests.Algebra.PolynomialSolverTests
 {
-    public class ClassRealCardanoNumericRoots
+    using static Entity.Number;
+    public class NumericalEquationsSolve
     {
-        public static Entity.Variable x = nameof(x);
+        private Entity.Variable x = nameof(x);
 
-        [Theory]
-        [InlineData( -4, -3, -2 )]
-        [InlineData( -5, -8,   0)]
-        [InlineData( -8, -5,  -2)]
-        [InlineData(  0, -8,  -3)]
-        [InlineData( -4, -8,  -6)]
-        [InlineData( -8, -6,  -9)]
-        [InlineData( -5, -6,  -9)]
-        [InlineData( -2, -7,  -4)]
-        [InlineData(  5,  6,   9)]
-        [InlineData( 11, -3,  -1)]
-        [InlineData( -8, -9, -11)]
-        [InlineData(-11, -6,  -9)]
-        [InlineData(  5, -6,  -7)]
-        [InlineData(  5, -6,   7)]
-        [InlineData(  5,  6,  -7)]
-        [InlineData(  5,  6,   7)]
-        [InlineData( -5, -6,  -7)]
-        [InlineData( -5, -6,   7)]
-        [InlineData( -5,  6,  -7)]
-        [InlineData( -5,  6,   7)]
-        [InlineData(-10,-15, -20)]
-        [InlineData(-10,-15,  20)]
-        [InlineData(-10, 15, -20)]
-        [InlineData(-10, 15,  20)]
-        [InlineData( 10,-15, -20)]
-        [InlineData( 10,-15,  20)]
-        [InlineData( 10, 15, -20)]
-        [InlineData( 10, 15,  20)]
-        public void TestAllcomplexNumericWithPowerOf3(
-            Entity.Number.Real v1, 
-            Entity.Number.Real v2, 
-            Entity.Number.Real v3)
+        [Theory, CombinatorialData]
+        public void RealRootsPower3(
+            [CombinatorialValues(-4, 1, 5)] int v1,
+            [CombinatorialValues(-3, 3, 6)] int v2,
+            [CombinatorialValues(-1, 2, 10)] int v3)
         {
+            
             var expr = (x + v1) * (x + v2) * (x + v3);
             var newexpr = expr.Expand();
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-    }
-}
 
-namespace UnitTests.Algebra.PolynomialSolverTests
-{
-    using static Entity.Number;
-
-    public class ClassComplexCardanoNumericRoots
-    {
-        public static Entity.Variable x = nameof(x);
-
-        //[Theory, CombinatorialData]
-        [Theory]
-        [InlineData(1, 2, 3, 4, 5, 6)]
-        public void TestAllcomplexNumericWithPowerOf3(
-            //[CombinatorialValues(-3, 3)] Real v1re,
-            //[CombinatorialValues(-4, 4)] Real v1im,
-            //[CombinatorialValues(-5, 5)] Real v2re,
-            //[CombinatorialValues(-6, 6)] Real v2im,
-            //[CombinatorialValues(-7, 7)] Real v3re,
-            //[CombinatorialValues(-8, 8)] Real v3im
-            Real v1re, Real v1im,
-            Real v2re, Real v2im,
-            Real v3re, Real v3im
+        [Theory, CombinatorialData]
+        public void ComplexRootsPower3(
+            [CombinatorialValues(-3, 3)] int v1re,
+            [CombinatorialValues(-4, 4)] int v1im,
+            [CombinatorialValues(-5, 5)] int v2re,
+            [CombinatorialValues(-6, 6)] int v2im,
+            [CombinatorialValues(-7, 7)] int v3re,
+            [CombinatorialValues(-8, 8)] int v3im
             )
         {
             var v1 = Complex.Create(v1re, v1im);
@@ -86,180 +45,37 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
-    }
-}
 
-namespace UnitTests.Algebra.PolynomialSolverTests
-{
-    public class ClassRealFerrariNumericRoots
-    {
-        public static Entity.Variable x = nameof(x);
+        [Theory, CombinatorialData]
+        public void RealRootsPower4(
+            [CombinatorialValues(-4, 5)] int v1,
+            [CombinatorialValues(-3, 5)] int v2,
+            [CombinatorialValues(-1, 7)] int v3,
+            [CombinatorialValues(-2, 9, 3)] int v4)
+        {
+            var expr = (x - v1) * (x - v2) * (x - v3) * (x - v4);
+            var newexpr = expr.Expand();
+            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
+                SolveOneEquation.AssertRoots(newexpr, x, root);
+        }
 
-        [Fact]
-        public void TestAllcomplexNumeric1_4()
+        [Theory, CombinatorialData]
+        public void ComplexRootsPower4(
+            [CombinatorialValues(-3, 3)] int v1re,
+            [CombinatorialValues(-4, 4)] int v1im,
+            [CombinatorialValues(-5, 5)] int v2re,
+            [CombinatorialValues(1)] int v2im,
+            [CombinatorialValues(-7, 7)] int v3re,
+            [CombinatorialValues(2)] int v3im,
+            [CombinatorialValues(-9, 9)] int v4re,
+            [CombinatorialValues(-10, 10)] int v4im
+            )
         {
-            var expr = (x - 4) * (x - 3) * (x - 2) * (x - 5);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric2_4()
-        {
-            var expr = (x - 8) * (x - 0) * (x - 8) * (x - 5);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric3_4()
-        {
-            var expr = (x - 2) * (x - 0) * (x - 8) * (x - 3);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric4_4()
-        {
-            var expr = (x - 4) * (x - 8) * (x - 6) * (x - 8);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric5_4()
-        {
-            var expr = (x - 6) * (x - 9) * (x - 5) * (x - 6);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric6_4()
-        {
-            var expr = (x - 9) * (x - 5) * (x - 7) * (x - 4);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric7_4()
-        {
-            var expr = (x - 6) * (x - 0) * (x - 3) * (x - 7);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric8_4()
-        {
-            var expr = (x - 3) * (x - 3) * (x - 3) * (x - 3);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric9_4()
-        {
-            var expr = (x - 5) * (x - 3) * (x - 4) * (x - 1);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric10_4()
-        {
-            var expr = (x - 5) * (x - 1) * (x - 9) * (x - 0);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric11_4()
-        {
-            var expr = (x - 6) * (x - 7) * (x - 0) * (x - 7);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric12_4()
-        {
-            var expr = (x - 6) * (x - 0) * (x - 1) * (x - 3);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-    }
-}
-
-namespace UnitTests.Algebra.PolynomialSolverTests
-{
-    public class ClassComplexFerrariNumericRoots
-    {
-        public static Entity.Variable x = nameof(x);
-
-        [Fact]
-        public void TestAllcomplexNumeric1_4()
-        {
-            var expr = (x - 4 + MathS.i * 3) * (x - 2 + MathS.i * 5) * (x - 8 + MathS.i * 0) * (x - 8 + MathS.i * 5);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric2_4()
-        {
-            var expr = (x - 2 + MathS.i * 0) * (x - 8 + MathS.i * 3) * (x - 4 + MathS.i * 8) * (x - 6 + MathS.i * 8);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric3_4()
-        {
-            var expr = (x - 6 + MathS.i * 9) * (x - 5 + MathS.i * 6) * (x - 9 + MathS.i * 5) * (x - 7 + MathS.i * 4);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric4_4()
-        {
-            var expr = (x - 6 + MathS.i * 0) * (x - 3 + MathS.i * 7) * (x - 3 + MathS.i * 3) * (x - 3 + MathS.i * 3);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric5_4()
-        {
-            var expr = (x - 5 + MathS.i * 3) * (x - 4 + MathS.i * 1) * (x - 5 + MathS.i * 1) * (x - 9 + MathS.i * 0);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric6_4()
-        {
-            var expr = (x - 6 + MathS.i * 7) * (x - 0 + MathS.i * 7) * (x - 6 + MathS.i * 0) * (x - 1 + MathS.i * 3);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric7_4()
-        {
-            var expr = (x - 4 + MathS.i * 4) * (x - 9 + MathS.i * 4) * (x - 3 + MathS.i * 5) * (x - 4 + MathS.i * 3);
-            var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
-                SolveOneEquation.AssertRoots(newexpr, x, root);
-        }
-        [Fact]
-        public void TestAllcomplexNumeric8_4()
-        {
-            var expr = (x - 5 + MathS.i * 3) * (x - 7 + MathS.i * 6) * (x - 0 + MathS.i * 7) * (x - 4 + MathS.i * 1);
+            var v1 = Complex.Create(v1re, v1im);
+            var v2 = Complex.Create(v2re, v2im);
+            var v3 = Complex.Create(v3re, v3im);
+            var v4 = Complex.Create(v4re, v4im);
+            var expr = (x - v1) * (x - v2) * (x - v3) * (x - v4);
             var newexpr = expr.Expand();
             foreach (var root in newexpr.SolveEquation(x).FiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);

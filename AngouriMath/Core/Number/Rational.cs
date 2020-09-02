@@ -134,8 +134,6 @@ namespace AngouriMath
                 public static Real operator /(Rational a, Rational b) => (Real)OpDiv(a, b);
                 public static Rational operator +(Rational a) => a;
                 public static Rational operator -(Rational a) => OpMul(Integer.MinusOne, a);
-                public static bool operator ==(Rational a, Rational b) => AreEqual(a, b);
-                public static bool operator !=(Rational a, Rational b) => !AreEqual(a, b);
                 public static implicit operator Rational(sbyte value) => Integer.Create(value);
                 public static implicit operator Rational(byte value) => Integer.Create(value);
                 public static implicit operator Rational(short value) => Integer.Create(value);

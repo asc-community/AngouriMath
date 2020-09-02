@@ -203,8 +203,6 @@ namespace AngouriMath
                 public static Complex operator /(Complex a, Complex b) => OpDiv(a, b);
                 public static Complex operator +(Complex a) => a;
                 public static Complex operator -(Complex a) => OpMul(Integer.MinusOne, a);
-                public static bool operator ==(Complex a, Complex b) => AreEqual(a, b);
-                public static bool operator !=(Complex a, Complex b) => !AreEqual(a, b);
                 public static implicit operator Complex(sbyte value) => Integer.Create(value);
                 public static implicit operator Complex(byte value) => Integer.Create(value);
                 public static implicit operator Complex(short value) => Integer.Create(value);

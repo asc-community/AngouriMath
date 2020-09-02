@@ -67,8 +67,6 @@ namespace AngouriMath
                 public static Real operator /(Integer a, Integer b) => (Real)OpDiv(a, b);
                 public static Integer operator +(Integer a) => a;
                 public static Integer operator -(Integer a) => OpMul(MinusOne, a);
-                public static bool operator ==(Integer a, Integer b) => AreEqual(a, b);
-                public static bool operator !=(Integer a, Integer b) => !AreEqual(a, b);
                 public static implicit operator Integer(sbyte value) => Create(value);
                 public static implicit operator Integer(byte value) => Create(value);
                 public static implicit operator Integer(short value) => Create(value);

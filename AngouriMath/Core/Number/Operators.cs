@@ -185,9 +185,7 @@ namespace AngouriMath
             public static Number operator /(Number a, Number b) => OpDiv(a, b);
             public static Number operator +(Number a) => a;
             public static Number operator -(Number a) => OpMul(-1, a);
-            public static bool operator ==(Number a, Number b) => AreEqual(a, b);
-            public static bool operator !=(Number a, Number b) => !AreEqual(a, b);
-
+            
             public static IEnumerable<Entity> GetAllRootsOf1(EInteger rootPower)
             {
                 for (int i = 0; i < rootPower; i++)
