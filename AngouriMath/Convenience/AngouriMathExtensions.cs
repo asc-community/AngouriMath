@@ -47,28 +47,12 @@ namespace AngouriMath.Extensions
         public static Entity Derive(this string str, Variable x)
             => str.ToEntity().Derive(x);
 
-        // C# can't into templates :(
         /*
 
-        res = ""
-
-        for i in range(2, 10):
-            res += "public static Tensor SolveSystem(this ("
-            res += ", ".join(["string eq" + str(j) for j in range(1, i + 1)])
-            res += ") eqs, "
-            res += ", ".join(["string var" + str(j) for j in range(1, i + 1)])
-            res += ")\n"
-            res += "    => MathS.Equations("
-            res += ", ".join(["eqs.eq" + str(j) for j in range(1, i + 1)])
-            res += ").Solve("
-            res += ", ".join(["var" + str(j) for j in range(1, i + 1)])
-            res += ");\n\n"
-
-        print(res)
+            Utils/generate_tuples.bat to regenerate this block
 
         */
-        // Wait until you see https://source.dot.net/#System.Private.CoreLib/TupleExtensions.cs,a4f5075cbaf3a80e
-        // - Happypig375
+
         public static Tensor? SolveSystem(this (string eq1, string eq2) eqs, string var1, string var2)
             => MathS.Equations(eqs.eq1, eqs.eq2).Solve(var1, var2);
 
@@ -92,8 +76,5 @@ namespace AngouriMath.Extensions
 
         public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7, string eq8, string eq9) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7, string var8, string var9)
             => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7, eqs.eq8, eqs.eq9).Solve(var1, var2, var3, var4, var5, var6, var7, var8, var9);
-
-        public static Tensor? SolveSystem(this Entity[] equations, params Variable[] vars)
-            => MathS.Equations(equations).Solve(vars);
     }
 }

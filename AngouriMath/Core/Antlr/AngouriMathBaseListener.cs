@@ -45,133 +45,133 @@ internal partial class AngouriMathBaseListener : IAngouriMathListener {
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void EnterFactorial_expression([NotNull] AngouriMathParser.Factorial_expressionContext context) { }
+	public virtual void EnterFactorial_expression([NotNull] AngouriMathParser.Factorial_expressionContext context) { }
 	/// <summary>
 	/// Exit a parse tree produced by <see cref="AngouriMathParser.factorial_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void ExitFactorial_expression([NotNull] AngouriMathParser.Factorial_expressionContext context) { }
+	public virtual void ExitFactorial_expression([NotNull] AngouriMathParser.Factorial_expressionContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.power_list"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void EnterPower_list([NotNull] AngouriMathParser.Power_listContext context) { }
+	public virtual void EnterPower_list([NotNull] AngouriMathParser.Power_listContext context) { }
 	/// <summary>
 	/// Exit a parse tree produced by <see cref="AngouriMathParser.power_list"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void ExitPower_list([NotNull] AngouriMathParser.Power_listContext context) { }
+	public virtual void ExitPower_list([NotNull] AngouriMathParser.Power_listContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.power_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void EnterPower_expression([NotNull] AngouriMathParser.Power_expressionContext context) { }
+	public virtual void EnterPower_expression([NotNull] AngouriMathParser.Power_expressionContext context) { }
 	/// <summary>
 	/// Exit a parse tree produced by <see cref="AngouriMathParser.power_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void ExitPower_expression([NotNull] AngouriMathParser.Power_expressionContext context) { }
+	public virtual void ExitPower_expression([NotNull] AngouriMathParser.Power_expressionContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.unary_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void EnterUnary_expression([NotNull] AngouriMathParser.Unary_expressionContext context) { }
+	public virtual void EnterUnary_expression([NotNull] AngouriMathParser.Unary_expressionContext context) { }
 	/// <summary>
 	/// Exit a parse tree produced by <see cref="AngouriMathParser.unary_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void ExitUnary_expression([NotNull] AngouriMathParser.Unary_expressionContext context) { }
+	public virtual void ExitUnary_expression([NotNull] AngouriMathParser.Unary_expressionContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.mult_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void EnterMult_expression([NotNull] AngouriMathParser.Mult_expressionContext context) { }
+	public virtual void EnterMult_expression([NotNull] AngouriMathParser.Mult_expressionContext context) { }
 	/// <summary>
 	/// Exit a parse tree produced by <see cref="AngouriMathParser.mult_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void ExitMult_expression([NotNull] AngouriMathParser.Mult_expressionContext context) { }
+	public virtual void ExitMult_expression([NotNull] AngouriMathParser.Mult_expressionContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.sum_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void EnterSum_expression([NotNull] AngouriMathParser.Sum_expressionContext context) { }
+	public virtual void EnterSum_expression([NotNull] AngouriMathParser.Sum_expressionContext context) { }
 	/// <summary>
 	/// Exit a parse tree produced by <see cref="AngouriMathParser.sum_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void ExitSum_expression([NotNull] AngouriMathParser.Sum_expressionContext context) { }
+	public virtual void ExitSum_expression([NotNull] AngouriMathParser.Sum_expressionContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void EnterExpression([NotNull] AngouriMathParser.ExpressionContext context) { }
+	public virtual void EnterExpression([NotNull] AngouriMathParser.ExpressionContext context) { }
 	/// <summary>
 	/// Exit a parse tree produced by <see cref="AngouriMathParser.expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void ExitExpression([NotNull] AngouriMathParser.ExpressionContext context) { }
+	public virtual void ExitExpression([NotNull] AngouriMathParser.ExpressionContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.function_arguments"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void EnterFunction_arguments([NotNull] AngouriMathParser.Function_argumentsContext context) { }
+	public virtual void EnterFunction_arguments([NotNull] AngouriMathParser.Function_argumentsContext context) { }
 	/// <summary>
 	/// Exit a parse tree produced by <see cref="AngouriMathParser.function_arguments"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void ExitFunction_arguments([NotNull] AngouriMathParser.Function_argumentsContext context) { }
+	public virtual void ExitFunction_arguments([NotNull] AngouriMathParser.Function_argumentsContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.atom"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void EnterAtom([NotNull] AngouriMathParser.AtomContext context) { }
+	public virtual void EnterAtom([NotNull] AngouriMathParser.AtomContext context) { }
 	/// <summary>
 	/// Exit a parse tree produced by <see cref="AngouriMathParser.atom"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void ExitAtom([NotNull] AngouriMathParser.AtomContext context) { }
+	public virtual void ExitAtom([NotNull] AngouriMathParser.AtomContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void EnterStatement([NotNull] AngouriMathParser.StatementContext context) { }
+	public virtual void EnterStatement([NotNull] AngouriMathParser.StatementContext context) { }
 	/// <summary>
 	/// Exit a parse tree produced by <see cref="AngouriMathParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	internal virtual void ExitStatement([NotNull] AngouriMathParser.StatementContext context) { }
+	public virtual void ExitStatement([NotNull] AngouriMathParser.StatementContext context) { }
 
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>
-	internal virtual void EnterEveryRule([NotNull] ParserRuleContext context) { }
+	public virtual void EnterEveryRule([NotNull] ParserRuleContext context) { }
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>
-	internal virtual void ExitEveryRule([NotNull] ParserRuleContext context) { }
+	public virtual void ExitEveryRule([NotNull] ParserRuleContext context) { }
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>
-	internal virtual void VisitTerminal([NotNull] ITerminalNode node) { }
+	public virtual void VisitTerminal([NotNull] ITerminalNode node) { }
 	/// <inheritdoc/>
 	/// <remarks>The default implementation does nothing.</remarks>
-	internal virtual void VisitErrorNode([NotNull] IErrorNode node) { }
+	public virtual void VisitErrorNode([NotNull] IErrorNode node) { }
 }
 } // namespace AngouriMath.Core.Antlr

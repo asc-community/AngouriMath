@@ -221,6 +221,10 @@ namespace AngouriMath
                 public static implicit operator Complex(decimal value) => Real.Create(EDecimal.FromDecimal(value));
                 public static implicit operator Complex(System.Numerics.Complex value) =>
                     Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
+                public static implicit operator Complex((int re, int im) v) => Complex.Create(v.re, v.im);
+                public static implicit operator Complex((float re, float im) v) => Complex.Create(v.re, v.im);
+                public static implicit operator Complex((decimal re, decimal im) v) => Complex.Create(v.re, v.im);
+                public static implicit operator Complex((double re, double im) v) => Complex.Create(v.re, v.im);
             }
         }
     }

@@ -85,7 +85,7 @@ internal partial class AngouriMathLexer : Lexer {
 		null, null, null, null, null, null, null, null, null, "NEWLINE", "NUMBER", 
 		"VARIABLE", "COMMENT", "WS"
 	};
-	internal static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
+	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
 	[NotNull]
 	public override IVocabulary Vocabulary

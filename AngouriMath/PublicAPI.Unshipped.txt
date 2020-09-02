@@ -1,5 +1,4 @@
 ﻿#nullable enable
-AngouriMath.Core.Antlr.AngouriMathParser.Function_argumentsContext.expression(int i) -> AngouriMath.Core.Antlr.AngouriMathParser.ExpressionContext
 AngouriMath.Core.ApproachFrom
 AngouriMath.Core.ApproachFrom.BothSides = 0 -> AngouriMath.Core.ApproachFrom
 AngouriMath.Core.ApproachFrom.Left = 1 -> AngouriMath.Core.ApproachFrom
@@ -490,6 +489,10 @@ static AngouriMath.Entity.Number.Complex.Create(PeterO.Numbers.EDecimal! real, P
 static AngouriMath.Entity.Number.Complex.CreatePolar(PeterO.Numbers.EDecimal! magnitude, PeterO.Numbers.EDecimal! phase) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.Parse(string! source) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.TryParse(string! source, out AngouriMath.Entity.Number.Complex? dst) -> bool
+static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Number.Complex!((decimal re, decimal im) v) -> AngouriMath.Entity.Number.Complex!
+static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Number.Complex!((double re, double im) v) -> AngouriMath.Entity.Number.Complex!
+static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Number.Complex!((float re, float im) v) -> AngouriMath.Entity.Number.Complex!
+static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Number.Complex!((int re, int im) v) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Number.Complex!(PeterO.Numbers.EDecimal! value) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Number.Complex!(PeterO.Numbers.EInteger! value) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Complex.implicit operator AngouriMath.Entity.Number.Complex!(PeterO.Numbers.ERational! value) -> AngouriMath.Entity.Number.Complex!

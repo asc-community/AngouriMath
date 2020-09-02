@@ -8,8 +8,9 @@ regardless of whether you are on Windows, Linux or Mac. You need to have an inst
 If I need something ANTLR has no API for, I follow the steps:
 1) Unzip the jar file
 2) Make changes (possibly here org\antlr\v4\tool\templates\codegen\CSharp\CSharp.stg)
-3) Execute the command
-start [path to your jdk]\jdk12\bin\jar.exe cmvf META-INF/MANIFEST.MF ../antlr4.jar *
+3) Change directory to the one you unpacked it to
+4) Execute the command
+start [path to your jdk]/jdk12/bin/jar.exe cmvf META-INF/MANIFEST.MF ../antlr4.jar *
 
 */
 

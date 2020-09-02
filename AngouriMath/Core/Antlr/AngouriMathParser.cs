@@ -41,17 +41,17 @@ using DFA = Antlr4.Runtime.Dfa.DFA;
 internal partial class AngouriMathParser : Parser {
 	protected static DFA[] decisionToDFA;
 	protected static PredictionContextCache sharedContextCache = new PredictionContextCache();
-	internal const int
+	public const int
 		T__0=1, T__1=2, T__2=3, T__3=4, T__4=5, T__5=6, T__6=7, T__7=8, T__8=9, 
 		T__9=10, T__10=11, T__11=12, T__12=13, T__13=14, T__14=15, T__15=16, T__16=17, 
 		T__17=18, T__18=19, T__19=20, T__20=21, T__21=22, T__22=23, T__23=24, 
 		T__24=25, T__25=26, T__26=27, T__27=28, T__28=29, T__29=30, T__30=31, 
 		T__31=32, NEWLINE=33, NUMBER=34, VARIABLE=35, COMMENT=36, WS=37;
-	internal const int
+	public const int
 		RULE_factorial_expression = 0, RULE_power_list = 1, RULE_power_expression = 2, 
 		RULE_unary_expression = 3, RULE_mult_expression = 4, RULE_sum_expression = 5, 
 		RULE_expression = 6, RULE_function_arguments = 7, RULE_atom = 8, RULE_statement = 9;
-	internal static readonly string[] ruleNames = {
+	public static readonly string[] ruleNames = {
 		"factorial_expression", "power_list", "power_expression", "unary_expression", 
 		"mult_expression", "sum_expression", "expression", "function_arguments", 
 		"atom", "statement"
@@ -70,7 +70,7 @@ internal partial class AngouriMathParser : Parser {
 		null, null, null, null, null, null, null, null, null, "NEWLINE", "NUMBER", 
 		"VARIABLE", "COMMENT", "WS"
 	};
-	internal static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
+	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
 	[NotNull]
 	public override IVocabulary Vocabulary
@@ -109,12 +109,12 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	internal partial class Factorial_expressionContext : ParserRuleContext {
-		internal Entity value;
-		internal AtomContext p;
-		internal AtomContext atom() {
+		public Entity value;
+		public AtomContext p;
+		public AtomContext atom() {
 			return GetRuleContext<AtomContext>(0);
 		}
-		internal Factorial_expressionContext(ParserRuleContext parent, int invokingState)
+		public Factorial_expressionContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
@@ -166,15 +166,15 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	internal partial class Power_listContext : ParserRuleContext {
-		internal List<Entity> value;
-		internal Factorial_expressionContext _factorial_expression;
-		internal Factorial_expressionContext[] factorial_expression() {
+		public List<Entity> value;
+		public Factorial_expressionContext _factorial_expression;
+		public Factorial_expressionContext[] factorial_expression() {
 			return GetRuleContexts<Factorial_expressionContext>();
 		}
-		internal Factorial_expressionContext factorial_expression(int i) {
+		public Factorial_expressionContext factorial_expression(int i) {
 			return GetRuleContext<Factorial_expressionContext>(i);
 		}
-		internal Power_listContext(ParserRuleContext parent, int invokingState)
+		public Power_listContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
@@ -227,16 +227,16 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	internal partial class Power_expressionContext : ParserRuleContext {
-		internal Entity value;
-		internal Factorial_expressionContext _factorial_expression;
-		internal Power_listContext _power_list;
-		internal Factorial_expressionContext factorial_expression() {
+		public Entity value;
+		public Factorial_expressionContext _factorial_expression;
+		public Power_listContext _power_list;
+		public Factorial_expressionContext factorial_expression() {
 			return GetRuleContext<Factorial_expressionContext>(0);
 		}
-		internal Power_listContext power_list() {
+		public Power_listContext power_list() {
 			return GetRuleContext<Power_listContext>(0);
 		}
-		internal Power_expressionContext(ParserRuleContext parent, int invokingState)
+		public Power_expressionContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
@@ -292,12 +292,12 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	internal partial class Unary_expressionContext : ParserRuleContext {
-		internal Entity value;
-		internal Power_expressionContext p;
-		internal Power_expressionContext power_expression() {
+		public Entity value;
+		public Power_expressionContext p;
+		public Power_expressionContext power_expression() {
 			return GetRuleContext<Power_expressionContext>(0);
 		}
-		internal Unary_expressionContext(ParserRuleContext parent, int invokingState)
+		public Unary_expressionContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
@@ -394,16 +394,16 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	internal partial class Mult_expressionContext : ParserRuleContext {
-		internal Entity value;
-		internal Unary_expressionContext u1;
-		internal Unary_expressionContext u2;
-		internal Unary_expressionContext[] unary_expression() {
+		public Entity value;
+		public Unary_expressionContext u1;
+		public Unary_expressionContext u2;
+		public Unary_expressionContext[] unary_expression() {
 			return GetRuleContexts<Unary_expressionContext>();
 		}
-		internal Unary_expressionContext unary_expression(int i) {
+		public Unary_expressionContext unary_expression(int i) {
 			return GetRuleContext<Unary_expressionContext>(i);
 		}
-		internal Mult_expressionContext(ParserRuleContext parent, int invokingState)
+		public Mult_expressionContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
@@ -472,16 +472,16 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	internal partial class Sum_expressionContext : ParserRuleContext {
-		internal Entity value;
-		internal Mult_expressionContext m1;
-		internal Mult_expressionContext m2;
-		internal Mult_expressionContext[] mult_expression() {
+		public Entity value;
+		public Mult_expressionContext m1;
+		public Mult_expressionContext m2;
+		public Mult_expressionContext[] mult_expression() {
 			return GetRuleContexts<Mult_expressionContext>();
 		}
-		internal Mult_expressionContext mult_expression(int i) {
+		public Mult_expressionContext mult_expression(int i) {
 			return GetRuleContext<Mult_expressionContext>(i);
 		}
-		internal Sum_expressionContext(ParserRuleContext parent, int invokingState)
+		public Sum_expressionContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
@@ -550,12 +550,12 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	internal partial class ExpressionContext : ParserRuleContext {
-		internal Entity value;
-		internal Sum_expressionContext s;
-		internal Sum_expressionContext sum_expression() {
+		public Entity value;
+		public Sum_expressionContext s;
+		public Sum_expressionContext sum_expression() {
 			return GetRuleContext<Sum_expressionContext>(0);
 		}
-		internal ExpressionContext(ParserRuleContext parent, int invokingState)
+		public ExpressionContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
@@ -593,15 +593,15 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	internal partial class Function_argumentsContext : ParserRuleContext {
-		internal List<Entity> list;
-		internal ExpressionContext e;
-		internal ExpressionContext[] expression() {
+		public List<Entity> list;
+		public ExpressionContext e;
+		public ExpressionContext[] expression() {
 			return GetRuleContexts<ExpressionContext>();
 		}
-		internal ExpressionContext expression(int i) {
+		public ExpressionContext expression(int i) {
 			return GetRuleContext<ExpressionContext>(i);
 		}
-		internal Function_argumentsContext(ParserRuleContext parent, int invokingState)
+		public Function_argumentsContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
@@ -664,20 +664,20 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	internal partial class AtomContext : ParserRuleContext {
-		internal Entity value;
-		internal IToken _NUMBER;
-		internal IToken _VARIABLE;
-		internal ExpressionContext _expression;
-		internal Function_argumentsContext args;
-		internal ITerminalNode NUMBER() { return GetToken(AngouriMathParser.NUMBER, 0); }
-		internal ITerminalNode VARIABLE() { return GetToken(AngouriMathParser.VARIABLE, 0); }
-		internal ExpressionContext expression() {
+		public Entity value;
+		public IToken _NUMBER;
+		public IToken _VARIABLE;
+		public ExpressionContext _expression;
+		public Function_argumentsContext args;
+		public ITerminalNode NUMBER() { return GetToken(AngouriMathParser.NUMBER, 0); }
+		public ITerminalNode VARIABLE() { return GetToken(AngouriMathParser.VARIABLE, 0); }
+		public ExpressionContext expression() {
 			return GetRuleContext<ExpressionContext>(0);
 		}
-		internal Function_argumentsContext function_arguments() {
+		public Function_argumentsContext function_arguments() {
 			return GetRuleContext<Function_argumentsContext>(0);
 		}
-		internal AtomContext(ParserRuleContext parent, int invokingState)
+		public AtomContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
@@ -946,12 +946,12 @@ internal partial class AngouriMathParser : Parser {
 	}
 
 	internal partial class StatementContext : ParserRuleContext {
-		internal ExpressionContext _expression;
-		internal ExpressionContext expression() {
+		public ExpressionContext _expression;
+		public ExpressionContext expression() {
 			return GetRuleContext<ExpressionContext>(0);
 		}
-		internal ITerminalNode Eof() { return GetToken(AngouriMathParser.Eof, 0); }
-		internal StatementContext(ParserRuleContext parent, int invokingState)
+		public ITerminalNode Eof() { return GetToken(AngouriMathParser.Eof, 0); }
+		public StatementContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
 		{
 		}
