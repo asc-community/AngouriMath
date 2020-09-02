@@ -16,7 +16,7 @@ namespace UnitTests.PatternsTest
                 expr2 = expr2.Substitute(var, toSub);
             var evaled1 = expr1.Eval();
             var evaled2 = expr2.Eval();
-            return (evaled1 == evaled2, evaled1, evaled2, (evaled1 - evaled2).Abs());
+            return (evaled1.RoundToExponent(97) == evaled2.RoundToExponent(97), evaled1, evaled2, (evaled1 - evaled2).Abs());
         }
 
         void AssertExpander(Entity expr, Complex[] toSubs, bool nullExpansion = false)
