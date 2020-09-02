@@ -3,7 +3,6 @@ using static AngouriMath.Entity.Number;
 using AngouriMath.Functions;
 using Xunit;
 using System.Linq;
-using PeterO.Numbers;
 
 namespace UnitTests.PatternsTest
 {
@@ -17,7 +16,7 @@ namespace UnitTests.PatternsTest
                 expr2 = expr2.Substitute(var, toSub);
             var evaled1 = expr1.Eval();
             var evaled2 = expr2.Eval();
-            return ((evaled1 - evaled2).Abs().EDecimal.LessThan(EDecimal.FromDecimal(1e-20m)), evaled1, evaled2, (evaled1 - evaled2).Abs());
+            return (evaled1.RoundToExponent(97) == evaled2.RoundToExponent(97), evaled1, evaled2, (evaled1 - evaled2).Abs());
         }
 
         void AssertExpander(Entity expr, Complex[] toSubs, bool nullExpansion = false)
@@ -31,10 +30,8 @@ namespace UnitTests.PatternsTest
             });
             foreach (var toSub in toSubs)
             {
-                if (nullExpansion) 
-                    Assert.Equal(expr, expanded); // Nodes should be same
-                else 
-                    Assert.NotEqual(expr, expanded); // Nodes should be different
+                if (nullExpansion) Assert.Equal(expr, expanded); // Nodes should be same
+                else Assert.NotEqual(expr, expanded); // Nodes should be different
                 var (equal, expected, actual, err) = AreEqual(expr, expanded, toSub);
                 Assert.True(equal, $"\nexpected: {expected}\nactual: {actual}\nerror: {err}\ntoSub: {toSub}\nexpanded: {expanded}");
             }
