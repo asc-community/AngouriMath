@@ -30,8 +30,10 @@ namespace UnitTests.PatternsTest
             });
             foreach (var toSub in toSubs)
             {
-                if (nullExpansion) Assert.Equal(expr, expanded); // Nodes should be same
-                else Assert.NotEqual(expr, expanded); // Nodes should be different
+                if (nullExpansion)
+                    Assert.Equal(expr, expanded); // Nodes should be same
+                else
+                    Assert.NotEqual(expr, expanded); // Nodes should be different
                 var (equal, expected, actual, err) = AreEqual(expr, expanded, toSub);
                 Assert.True(equal, $"\nexpected: {expected}\nactual: {actual}\nerror: {err}\ntoSub: {toSub}\nexpanded: {expanded}");
             }
