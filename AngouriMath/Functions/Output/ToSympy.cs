@@ -16,6 +16,8 @@
 namespace AngouriMath
 {
     using Core;
+    using System;
+
     public abstract partial record Entity
     {
         /// <summary>Generates Python code that you can use with sympy</summary>
@@ -122,6 +124,11 @@ namespace AngouriMath
                     _ => throw new System.ComponentModel.InvalidEnumArgumentException
                       (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
                 }})";
+        }
+        public partial record Signumf
+        {
+            internal override string ToSymPy() =>
+                throw new NotImplementedException();
         }
     }
 }

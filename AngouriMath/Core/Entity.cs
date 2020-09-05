@@ -163,6 +163,7 @@ namespace AngouriMath
                 Complex.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
         }
 
+        #region Variable
         /// <summary>
         /// Variable node. It only has a name.
         /// Construct a <see cref="Variable"/> with an implicit conversion from <see cref="string"/>.
@@ -249,6 +250,9 @@ namespace AngouriMath
             }
             public static implicit operator Variable(string name) => (Variable)Parser.Parse(name);
         }
+        #endregion
+
+        #region Tensor
         /// <summary>Basic tensor implementation: <a href="https://en.wikipedia.org/wiki/Tensor"/></summary>
         public partial record Tensor(GenTensor InnerTensor) : Entity
         {
@@ -326,6 +330,9 @@ namespace AngouriMath
                 return new Tensor(cp);
             }
         }
+        #endregion
+
+        #region Operators
         public partial record Sumf(Entity Augend, Entity Addend) : Entity
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -350,6 +357,7 @@ namespace AngouriMath
         }
         public static Entity operator +(Entity a, Entity b) => new Sumf(a, b);
         public static Entity operator +(Entity a) => a;
+
         public partial record Minusf(Entity Subtrahend, Entity Minuend) : Entity
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -360,6 +368,7 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Subtrahend, Minuend };
         }
         public static Entity operator -(Entity a, Entity b) => new Minusf(a, b);
+
         public partial record Mulf(Entity Multiplier, Entity Multiplicand) : Entity
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -384,6 +393,7 @@ namespace AngouriMath
         }
         public static Entity operator -(Entity a) => new Mulf(-1, a);
         public static Entity operator *(Entity a, Entity b) => new Mulf(a, b);
+
         public partial record Divf(Entity Dividend, Entity Divisor) : Entity
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -394,20 +404,14 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Dividend, Divisor };
         }
         public static Entity operator /(Entity a, Entity b) => new Divf(a, b);
-        public partial record Powf(Entity Base, Entity Exponent) : Entity
-        {
-            /// <summary>Reuse the cache by returning the same object if possible</summary>
-            Powf New(Entity @base, Entity exponent) =>
-                ReferenceEquals(Base, @base) && ReferenceEquals(Exponent, exponent) ? this : new(@base, exponent);
-            public override Priority Priority => Priority.Pow;
-            public override Entity Replace(Func<Entity, Entity> func) => func(New(Base.Replace(func), Exponent.Replace(func)));
-            protected override Entity[] InitDirectChildren() => new[] { Base, Exponent };
-        }
-        public Entity Pow(Entity n) => new Powf(this, n);
+        #endregion
+
         public abstract record Function : Entity
         {
             public override Priority Priority => Priority.Func;
         }
+
+        #region Trigonometry
         public partial record Sinf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -440,6 +444,20 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
         public Entity Cotan() => new Cotanf(this);
+        #endregion
+
+        #region Exponential
+        public partial record Powf(Entity Base, Entity Exponent) : Entity
+        {
+            /// <summary>Reuse the cache by returning the same object if possible</summary>
+            Powf New(Entity @base, Entity exponent) =>
+                ReferenceEquals(Base, @base) && ReferenceEquals(Exponent, exponent) ? this : new(@base, exponent);
+            public override Priority Priority => Priority.Pow;
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Base.Replace(func), Exponent.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Base, Exponent };
+        }
+        public Entity Pow(Entity n) => new Powf(this, n);
+
         public partial record Logf(Entity Base, Entity Antilogarithm) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -448,7 +466,8 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Base.Replace(func), Antilogarithm.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Base, Antilogarithm };
         }
-        public Entity Log(Entity n) => new Logf(this, n);
+        public Entity Log(Entity x) => new Logf(this, x);
+
         public partial record Arcsinf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -456,6 +475,9 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+        #endregion
+
+        #region Arc trigonometry
         public Entity Arcsin() => new Arcsinf(this);
         public partial record Arccosf(Entity Argument) : Function
         {
@@ -464,6 +486,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+
         public Entity Arccos() => new Arccosf(this);
         public partial record Arctanf(Entity Argument) : Function
         {
@@ -472,6 +495,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+
         public Entity Arctan() => new Arctanf(this);
         public partial record Arccotanf(Entity Argument) : Function
         {
@@ -481,6 +505,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
         public Entity Arccotan() => new Arccotanf(this);
+        #endregion
+
+        #region Factorial
         public partial record Factorialf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -491,6 +518,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
         public Entity Factorial() => new Factorialf(this);
+        #endregion
+
+        #region Non-numeric nodes
         public partial record Derivativef(Entity Expression, Entity Var, Entity Iterations) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -501,6 +531,7 @@ namespace AngouriMath
                 func(New(Expression.Replace(func), Var.Replace(func), Iterations.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
+
         public partial record Integralf(Entity Expression, Entity Var, Entity Iterations) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -511,6 +542,7 @@ namespace AngouriMath
                 func(New(Expression.Replace(func), Var.Replace(func), Iterations.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
+
         public partial record Limitf(Entity Expression, Entity Var, Entity Destination, ApproachFrom ApproachFrom) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -521,5 +553,18 @@ namespace AngouriMath
                 func(New(Expression.Replace(func), Var.Replace(func), Destination.Replace(func), ApproachFrom));
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Destination };
         }
+        #endregion
+
+        #region Discrete
+
+        public partial record Signumf(Entity Argument) : Function
+        {
+            public override Priority Priority => Priority.Factorial;
+            public override Entity Replace(Func<Entity, Entity> func) => func(Argument.Replace(func).Signum());
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+        public Entity Signum() => new Signumf(this);
+
+        #endregion
     }
 }

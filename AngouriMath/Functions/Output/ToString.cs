@@ -16,6 +16,7 @@
 namespace AngouriMath
 {
     using Core;
+    using System.Security;
     using static Entity.Number;
     public abstract partial record Entity
     {
@@ -121,6 +122,10 @@ namespace AngouriMath
                     _ => throw new System.ComponentModel.InvalidEnumArgumentException
                       (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
                 } + $"({Expression}, {Var}, {Destination})";
+        }
+        public partial record Signumf
+        {
+            internal override string Stringize() => $"sgn({Argument})";
         }
     }
 }

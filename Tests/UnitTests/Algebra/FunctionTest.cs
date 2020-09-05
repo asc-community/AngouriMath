@@ -1,11 +1,13 @@
 ﻿using AngouriMath;
 using Xunit;
+using AngouriMath.Extensions;
 
 namespace UnitTests.Algebra
 {
     public class FunctionTest
     {
         // Testing function GetAllRoots
+        // TODO: make it via [Theory]
         [Fact]
         public void TestRoots0()
         {
@@ -46,6 +48,7 @@ namespace UnitTests.Algebra
             Assert.Equal("101", MathS.ToBaseN(5, 2));
             Assert.Equal("F", MathS.ToBaseN(15, 16));
         }
+
         [Fact]
         public void TestBaseConvertTo1()
         {
@@ -67,6 +70,7 @@ namespace UnitTests.Algebra
             Assert.Equal("-95", MathS.ToBaseN(-140, 15));
             Assert.Equal("-8C", MathS.ToBaseN(-140, 16));
         }
+
         [Fact]
         public void TestBaseConvertTo2()
         {
@@ -87,6 +91,7 @@ namespace UnitTests.Algebra
             Assert.Equal("8.C37", MathS.ToBaseN(8.875m, 14));
             Assert.Equal("8.E", MathS.ToBaseN(8.875m, 16));
         }
+
         [Fact]
         public void TestBaseConvertTo3()
         {
@@ -107,23 +112,54 @@ namespace UnitTests.Algebra
             Assert.Equal("-8.C37", MathS.ToBaseN(-8.875m, 14));
             Assert.Equal("-8.E", MathS.ToBaseN(-8.875m, 16));
         }
+
         [Fact]
         public void TestBaseConvertFrom0()
         {
             Assert.Equal(10, MathS.FromBaseN("A", 16));
             Assert.Equal(10, MathS.FromBaseN("1010", 2));
         }
+
         [Fact]
         public void TestBaseConvertFrom1()
         {
             Assert.Equal(-10.25m, MathS.FromBaseN("-A.4", 16));
             Assert.Equal(-140, MathS.FromBaseN("-A0", 14));
         }
+
         [Fact]
         public void TestBaseConvertFrom2()
         {
             Assert.Equal(-0.125m, MathS.FromBaseN("-0.125", 10));
             Assert.Equal(0.25m, MathS.FromBaseN("0.3", 12));
+        }
+
+        [Theory]
+        [InlineData("sgn(4)", "1")]
+        [InlineData("sgn(-4)", "-1")]
+        [InlineData("sgn(45.363)", "1")]
+        [InlineData("sgn(-45.363)", "-1")]
+        [InlineData("sgn(+1 + i)", "+sqrt(2) / 2 + sqrt(2) / 2 * i")]
+        [InlineData("sgn(+1 - i)", "+sqrt(2) / 2 - sqrt(2) / 2 * i")]
+        [InlineData("sgn(-1 + i)", "-sqrt(2) / 2 + sqrt(2) / 2 * i")]
+        [InlineData("sgn(-1 - i)", "-sqrt(2) / 2 - sqrt(2) / 2 * i")]
+        [InlineData("sgn(sgn(4))", "1")]
+        [InlineData("sgn(sgn(-4))", "-1")]
+        [InlineData("sgn(sgn(45.363))", "1")]
+        [InlineData("sgn(sgn(-45.363))", "-1")]
+        [InlineData("sgn(sgn(+1 + i))", "+sqrt(2) / 2 + sqrt(2) / 2 * i")]
+        [InlineData("sgn(sgn(+1 - i))", "+sqrt(2) / 2 - sqrt(2) / 2 * i")]
+        [InlineData("sgn(sgn(-1 + i))", "-sqrt(2) / 2 + sqrt(2) / 2 * i")]
+        [InlineData("sgn(sgn(-1 - i))", "-sqrt(2) / 2 - sqrt(2) / 2 * i")]
+        public void TestSignum(string expr, string answer)
+        {
+            var actual = expr.ToEntity().Eval();
+            var expected = answer.ToEntity().Eval();
+            var error = (actual - expected).Abs();
+            Assert.True(error < MathS.Numbers.Create(1e-8m),
+                $"\nError: {error}" + 
+                $"\nActual: {actual}" +
+                $"\nExpected: {expected}");
         }
     }
 }

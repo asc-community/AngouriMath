@@ -136,6 +136,8 @@ atom returns[Entity value]
     | 'limit(' args = function_arguments ')' { Assert("limit", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2]); }
     | 'limitleft(' args = function_arguments ')' { Assert("limitleft", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Core.ApproachFrom.Left); }
     | 'limitright(' args = function_arguments ')' { Assert("limitright", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Core.ApproachFrom.Right); }
+    | 'signum(' args = function_arguments ')' { Assert("signum", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
+    | 'sgn(' args = function_arguments ')' { Assert("sgn", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     ;
 
 statement: expression EOF { Result = $expression.value; } ;

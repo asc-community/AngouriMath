@@ -25,6 +25,8 @@ namespace UnitTests.Convenience
         [InlineData("Sqrt", "sqrt(x)")]
         [InlineData("Ln", "ln(x)")]
         [InlineData("Log", "log(x)")]
+        [InlineData("Signum", "sgn(x)")]
+        [InlineData("Signum", "signum(x)")]
         public void TestOneArgumentSynonym(string mathSFuncName, string stringizedExpr)
         {
             var mis = typeof(MathS)

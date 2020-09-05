@@ -86,5 +86,7 @@ namespace UnitTests.Convenience
             => Assert.Equal(MathS.Limit("x + y", x, 3), MathS.FromString("limit(x + y, x, 3)"));
         [Fact] public void Test33()
             => Assert.Equal(MathS.Limit("x + y", x, 3, ApproachFrom.Left), MathS.FromString("limitleft(x + y, x, 3)"));
+        [Fact] public void Test34()
+            => Assert.Equal(MathS.Signum("x"), MathS.FromString("signum(x)"));
     }
 }

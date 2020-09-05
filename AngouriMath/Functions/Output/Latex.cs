@@ -281,6 +281,13 @@ namespace AngouriMath
                 return sb.ToString();
             }
         }
+
+        public partial record Signumf
+        {
+            // TODO: there's no signum function in LaTeX?
+            public override string Latexise()
+                => $@"sgn\left({Argument.Latexise()}\right)";
+        }
     }
     namespace Core
     {

@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Functions.Algebra;
+using AngouriMath.Functions;
 
 namespace AngouriMath
 {
@@ -221,6 +222,16 @@ namespace AngouriMath
             // TODO: We can't just do a limit on the inverse function: https://math.stackexchange.com/q/3397326/627798
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Enumerable.Empty<Entity>();
+        }
+
+        public partial record Signumf
+        {
+            // signum(f(x)) = value
+            // f(x) = value * pr
+            // x = f(x).InvertNode(value * pr, x)
+            // TODO: we need to make a piecewise for 
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Argument.Invert(value * Variable.CreateUnique(Argument + value, "r"), x);
         }
     }
 }

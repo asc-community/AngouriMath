@@ -461,6 +461,8 @@ namespace AngouriMath.Functions
             Minusf(Minusf(var any2, var any1), var any1a) when any1 == any1a => any2 - 2 * any1,
             Minusf(Minusf(var any1, var any2), var any1a) when any1 == any1a => -any2,
 
+            Signumf(Signumf(var any1)) => new Signumf(any1),
+
             _ => x
         };
 

@@ -14,6 +14,7 @@
  */
 
 using PeterO.Numbers;
+using System;
 
 namespace AngouriMath
 {
@@ -168,6 +169,11 @@ namespace AngouriMath
                 // See https://math.stackexchange.com/a/1048570/627798:
                 // The derivative itself is a limit, so we can exchange limits if possible. -- Happypig375
                 MathS.Derivative(this, variable);
+        }
+        public partial record Signumf
+        {
+            public override Entity Derive(Variable variable)
+                => MathS.Derivative(this, variable);
         }
     }
 }

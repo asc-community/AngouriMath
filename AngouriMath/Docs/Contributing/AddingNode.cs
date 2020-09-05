@@ -6,7 +6,7 @@
 /// implement for your nodes.
 /// 
 /// 1. Numerical evaluation (if appropriate)
-///     a. Implement real number evaluation (<see cref="PeterONumbersExtensions.Sin"/>)
+///     a. Implement real number evaluation (<see cref="NumbersExtensions.Sin"/>)
 ///     b. then complex number evaluation (<see cref="Sin"/>)
 ///
 /// 2. Next, Add a new node representing the function as a nested type in <see cref="Entity"/>

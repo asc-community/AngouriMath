@@ -17,6 +17,8 @@ using System.Collections.Generic;
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity;
 using static AngouriMath.Core.FastExpression;
+using System.Security;
+using System.Linq.Expressions;
 
 namespace AngouriMath
 {
@@ -41,21 +43,25 @@ namespace AngouriMath
                 }
             }
         }
+
         public partial record Number : Entity
         {
             private protected override void CompileNode(Compiler compiler) =>
                 compiler.Instructions.Add(new(InstructionType.PUSH_CONST, Value: ((Complex)this).ToNumerics()));
         }
+
         public partial record Variable : Entity
         {
             private protected override void CompileNode(Compiler compiler) =>
                 compiler.Instructions.Add(new(InstructionType.PUSH_VAR, compiler.VarNamespace[this]));
         }
+
         public partial record Tensor : Entity
         {
             private protected override void CompileNode(Compiler compiler) =>
                 throw new UncompilableNodeException($"Tensors cannot be compiled");
         }
+
         // Each function and operator processing
         // Note: We pop values when executing instructions, so we add instructions in reverse child order
         public partial record Sumf
@@ -67,6 +73,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_SUM));
             }
         }
+
         public partial record Minusf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -76,6 +83,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_MINUS));
             }
         }
+
         public partial record Mulf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -85,6 +93,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_MUL));
             }
         }
+
         public partial record Divf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -94,6 +103,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_DIV));
             }
         }
+
         public partial record Powf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -103,6 +113,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_POW));
             }
         }
+
         public partial record Sinf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -111,6 +122,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_SIN));
             }
         }
+
         public partial record Cosf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -119,6 +131,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_COS));
             }
         }
+
         public partial record Tanf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -127,6 +140,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_TAN));
             }
         }
+
         public partial record Cotanf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -135,6 +149,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_COTAN));
             }
         }
+
         public partial record Logf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -156,6 +171,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_ARCSIN));
             }
         }
+
         public partial record Arccosf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -164,6 +180,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_ARCCOS));
             }
         }
+
         public partial record Arctanf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -172,6 +189,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_ARCTAN));
             }
         }
+
         public partial record Arccotanf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -180,6 +198,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_ARCCOTAN));
             }
         }
+
         public partial record Factorialf
         {
             private protected override void CompileNode(Compiler compiler)
@@ -188,20 +207,32 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_FACTORIAL));
             }
         }
+
         public partial record Derivativef
         {
             private protected override void CompileNode(Compiler compiler) =>
                 throw new UncompilableNodeException($"Derivatives cannot be compiled");
         }
+
         public partial record Integralf
         {
             private protected override void CompileNode(Compiler compiler) =>
                 throw new UncompilableNodeException($"Integrals cannot be compiled");
         }
+
         public partial record Limitf
         {
             private protected override void CompileNode(Compiler compiler) =>
                 throw new UncompilableNodeException($"Limits cannot be compiled");
+        }
+
+        public partial record Signumf
+        {
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_SIGNUM));
+            }
         }
     }
 }

@@ -285,5 +285,17 @@ namespace UnitTests.Core
         public void TestImaginaryInfinity16() =>
             Assert.Equal(Real.NegativeInfinity,
                 Complex.Create(0, Real.NegativeInfinity) * Complex.Create(0, Real.NegativeInfinity));
+
+        [Theory]
+        [InlineData(1, 0, 1, 0)]
+        [InlineData(0, 1, 0, 1)]
+        [InlineData(0, 2, 0, 1)]
+        [InlineData(2, 0, 1, 0)]
+        public void TestSignum(float argReal, float argImaginary, 
+            float expectedReal, float expectedImaginary)
+            => Assert.Equal(
+            Complex.Create(expectedReal, expectedImaginary),
+            Complex.Signum(Complex.Create(argReal, argImaginary))
+                );
     }
 }

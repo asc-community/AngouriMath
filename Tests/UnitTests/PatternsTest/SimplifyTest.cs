@@ -115,5 +115,11 @@ namespace UnitTests.PatternsTest
         [InlineData("(a+b)+(c+d)+(d+e)+(f+g)", "a + b + c + 2 * d + e + f + g")]
         [InlineData("((a+b)+(c+d))+((d+e)+(f+g))", "a + b + c + 2 * d + e + f + g")]
         public void Grouping(string input, string output) => AssertSimplifyToString(input, output);
+
+        [Theory]
+        [InlineData("sgn(x)", "sgn(x)")]
+        [InlineData("sgn(sgn(x))", "sgn(x)")]
+        [InlineData("sgn(sgn(sgn(x)))", "sgn(x)")]
+        public void SignumTest(string input, string output) => AssertSimplifyToString(input, output);
     }
 }

@@ -8,8 +8,11 @@ using PeterO.Numbers;
 namespace AngouriMath
 {
     // Visibility for the class is internal so we can use public for methods as we like
-    internal static class PeterONumbersExtensions
+    internal static class NumbersExtensions
     {
+        public static System.Numerics.Complex Signum(this System.Numerics.Complex z)
+            => z == 0 ? new System.Numerics.Complex(double.NaN, double.NaN) : z / z.Magnitude;
+
         public class ConstantCache
         {
             public static ConstantCache Lookup(EContext context)
@@ -148,6 +151,18 @@ namespace AngouriMath
             var cos = Cos(x, context);
             return CalculateSinFromCos(x, cos, consts, context);
         }
+
+        /// <summary>
+        /// That is a special case of Signum for real values.
+        /// As it follows the precise definition for Signum,
+        /// it is undefined for <paramref name="x"/> equals 0
+        /// </summary>
+        /// <returns>
+        /// Returns 1 for positive numbers, -1 for negative numbers, NaN for 0.
+        /// </returns>
+        public static EDecimal Signum(this EDecimal x, EContext context)
+            => x.IsZero ? EDecimal.NaN : x.Sign;
+
 
         /// <summary>Truncates <paramref name="x"/> to [-2*<see cref="Math.PI"/>, 2*<see cref="Math.PI"/>] </summary>
         private static void TruncateToPeriodicInterval(ref EDecimal x, ConstantCache consts, EContext context)
