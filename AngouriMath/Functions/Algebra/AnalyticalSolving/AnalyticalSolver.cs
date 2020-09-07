@@ -229,7 +229,7 @@ namespace AngouriMath
             // signum(f(x)) = value
             // f(x) = value * pr
             // x = f(x).InvertNode(value * pr, x)
-            // TODO: we need to make a piecewise for 
+            // TODO: we need to make a piecewise for the case when signum(x) = n and |n| != 1
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 => Argument.Invert(value * Variable.CreateUnique(Argument + value, "r"), x);
         }
