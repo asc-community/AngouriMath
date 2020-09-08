@@ -233,6 +233,15 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 => Argument.Invert(value * Variable.CreateUnique(Argument + value, "r"), x);
         }
+        
+        public partial record Absf
+        {
+            // abs(f(x)) = value
+            // f(x) = value * e ^ (i * n)
+            // x = f(x).InvertNode(value * e ^ (i * n), x)
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Argument.Invert(value * MathS.e.Pow(MathS.i * Variable.CreateUnique(value + Argument, "r")), x);
+        }
     }
 }
 

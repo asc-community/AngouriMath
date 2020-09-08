@@ -345,6 +345,8 @@ namespace UnitTests.Convenience
         [Fact] public void Limit5() =>
             Test(@"\lim_{xf\to {x_{2}}^{3}} \left[{x}^{23}-x_{16}\right]", MathS.Limit("x^23-x_16", "xf", "x_2^3"));
         [Fact] public void Signum()
-            => Test(@"sgn\left(x\right)", MathS.Signum(x));
+            => Test(@"\operatorname{sgn}\left(x\right)", MathS.Signum(x));
+        [Fact] public void Abs()
+            => Test(@"\left|x\right|", MathS.Abs(x));
     }
 }

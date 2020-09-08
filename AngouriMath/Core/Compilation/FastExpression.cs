@@ -72,6 +72,7 @@ namespace AngouriMath.Core
             CALL_ARCCOTAN,
             CALL_FACTORIAL,
             CALL_SIGNUM,
+            CALL_ABS,
 
             // 2-arg functions
             CALL_SUM = 100,
@@ -199,6 +200,9 @@ namespace AngouriMath.Core
                         break;
                     case InstructionType.CALL_SIGNUM:
                         stack.Push(stack.Pop().Signum());
+                        break;
+                    case InstructionType.CALL_ABS:
+                        stack.Push(stack.Pop().Abs());
                         break;
                 }
             if (stack.Count != 1)

@@ -82,5 +82,11 @@ namespace UnitTests.Common
         [InlineData("(x + y + x + 1 / (x + 4 + 4 + sin(x))) / (x + x + 3 / y) + 3")]
         public void TestLinch(string inputIsOutput) =>
             Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).ToString());
+
+        [Theory]
+        [InlineData("sgn(x)")]
+        [InlineData("abs(x)")]
+        public void TestDiscrete(string inputIsOutput) =>
+            Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).ToString());
     }
 }

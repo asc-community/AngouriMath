@@ -11,7 +11,10 @@ namespace AngouriMath
     internal static class NumbersExtensions
     {
         public static System.Numerics.Complex Signum(this System.Numerics.Complex z)
-            => z == 0 ? new System.Numerics.Complex(double.NaN, double.NaN) : z / z.Magnitude;
+            => z == 0 ? 0 : z / z.Magnitude;
+
+        public static System.Numerics.Complex Abs(this System.Numerics.Complex z)
+            => System.Numerics.Complex.Abs(z);
 
         public class ConstantCache
         {
@@ -152,16 +155,8 @@ namespace AngouriMath
             return CalculateSinFromCos(x, cos, consts, context);
         }
 
-        /// <summary>
-        /// That is a special case of Signum for real values.
-        /// As it follows the precise definition for Signum,
-        /// it is undefined for <paramref name="x"/> equals 0
-        /// </summary>
-        /// <returns>
-        /// Returns 1 for positive numbers, -1 for negative numbers, NaN for 0.
-        /// </returns>
         public static EDecimal Signum(this EDecimal x, EContext context)
-            => x.IsZero ? EDecimal.NaN : x.Sign;
+            => x.Sign;
 
 
         /// <summary>Truncates <paramref name="x"/> to [-2*<see cref="Math.PI"/>, 2*<see cref="Math.PI"/>] </summary>

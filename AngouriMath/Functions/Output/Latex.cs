@@ -284,9 +284,14 @@ namespace AngouriMath
 
         public partial record Signumf
         {
-            // TODO: there's no signum function in LaTeX?
             public override string Latexise()
-                => $@"sgn\left({Argument.Latexise()}\right)";
+                => $@"\operatorname{{sgn}}\left({Argument.Latexise()}\right)";
+        }
+
+        public partial record Absf
+        {
+            public override string Latexise()
+                => $@"\left|{Argument.Latexise()}\right|";
         }
     }
     namespace Core

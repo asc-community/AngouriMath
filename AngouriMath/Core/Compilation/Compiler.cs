@@ -17,8 +17,6 @@ using System.Collections.Generic;
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity;
 using static AngouriMath.Core.FastExpression;
-using System.Security;
-using System.Linq.Expressions;
 
 namespace AngouriMath
 {
@@ -232,6 +230,15 @@ namespace AngouriMath
             {
                 Argument.InnerCompile(compiler);
                 compiler.Instructions.Add(new(InstructionType.CALL_SIGNUM));
+            }
+        }
+
+        public partial record Absf
+        {
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_ABS));
             }
         }
     }

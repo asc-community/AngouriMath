@@ -49,68 +49,71 @@ namespace UnitTests.Algebra
             Assert.Equal("F", MathS.ToBaseN(15, 16));
         }
 
-        [Fact]
-        public void TestBaseConvertTo1()
+        [Theory]
+        [InlineData("-101",      -5, 2   )]
+        [InlineData("-F",        -15, 16 )]
+        [InlineData("-10001100", -140, 2 )]
+        [InlineData("-12012",    -140, 3 )]
+        [InlineData("-2030",     -140, 4 )]
+        [InlineData("-1030",     -140, 5 )]
+        [InlineData("-352",      -140, 6 )]
+        [InlineData("-260",      -140, 7 )]
+        [InlineData("-214",      -140, 8 )]
+        [InlineData("-165",      -140, 9 )]
+        [InlineData("-140",      -140, 10)]
+        [InlineData("-118",      -140, 11)]
+        [InlineData("-B8",       -140, 12)]
+        [InlineData("-AA",       -140, 13)]
+        [InlineData("-A0",       -140, 14)]
+        [InlineData("-95",       -140, 15)]
+        [InlineData("-8C",       -140, 16)]
+        public void TestBaseConvertTo1(string expected, int number, int system)
         {
-            Assert.Equal("-101", MathS.ToBaseN(-5, 2));
-            Assert.Equal("-F", MathS.ToBaseN(-15, 16));
-            Assert.Equal("-10001100", MathS.ToBaseN(-140, 2));
-            Assert.Equal("-12012", MathS.ToBaseN(-140, 3));
-            Assert.Equal("-2030", MathS.ToBaseN(-140, 4));
-            Assert.Equal("-1030", MathS.ToBaseN(-140, 5));
-            Assert.Equal("-352", MathS.ToBaseN(-140, 6));
-            Assert.Equal("-260", MathS.ToBaseN(-140, 7));
-            Assert.Equal("-214", MathS.ToBaseN(-140, 8));
-            Assert.Equal("-165", MathS.ToBaseN(-140, 9));
-            Assert.Equal("-140", MathS.ToBaseN(-140, 10));
-            Assert.Equal("-118", MathS.ToBaseN(-140, 11));
-            Assert.Equal("-B8", MathS.ToBaseN(-140, 12));
-            Assert.Equal("-AA", MathS.ToBaseN(-140, 13));
-            Assert.Equal("-A0", MathS.ToBaseN(-140, 14));
-            Assert.Equal("-95", MathS.ToBaseN(-140, 15));
-            Assert.Equal("-8C", MathS.ToBaseN(-140, 16));
+            Assert.Equal(expected, MathS.ToBaseN(number, system));
         }
 
-        [Fact]
-        public void TestBaseConvertTo2()
+        [Theory]
+        [InlineData("1000.001", "8.125", 2 )]
+        [InlineData("20.02",    "8.125", 4 )]
+        [InlineData("12.043",   "8.125", 6 )]
+        [InlineData("10.1",     "8.125", 8 )]
+        [InlineData("8.125",    "8.125", 10)]
+        [InlineData("8.16",     "8.125", 12)]
+        [InlineData("8.1A7",    "8.125", 14)]
+        [InlineData("8.2",      "8.125", 16)]
+        [InlineData("1000.111", "8.875", 2 )]
+        [InlineData("20.32",    "8.875", 4 )]
+        [InlineData("12.513",   "8.875", 6 )]
+        [InlineData("10.7",     "8.875", 8 )]
+        [InlineData("8.875",    "8.875", 10)]
+        [InlineData("8.A6",     "8.875", 12)]
+        [InlineData("8.C37",    "8.875", 14)]
+        [InlineData("8.E",      "8.875", 16)]
+        public void TestBaseConvertTo2(string expected, string decimalInString, int system)
         {
-            Assert.Equal("1000.001", MathS.ToBaseN(8.125m, 2));
-            Assert.Equal("20.02", MathS.ToBaseN(8.125m, 4));
-            Assert.Equal("12.043", MathS.ToBaseN(8.125m, 6));
-            Assert.Equal("10.1", MathS.ToBaseN(8.125m, 8));
-            Assert.Equal("8.125", MathS.ToBaseN(8.125m, 10));
-            Assert.Equal("8.16", MathS.ToBaseN(8.125m, 12));
-            Assert.Equal("8.1A7", MathS.ToBaseN(8.125m, 14));
-            Assert.Equal("8.2", MathS.ToBaseN(8.125m, 16));
-            Assert.Equal("1000.111", MathS.ToBaseN(8.875m, 2));
-            Assert.Equal("20.32", MathS.ToBaseN(8.875m, 4));
-            Assert.Equal("12.513", MathS.ToBaseN(8.875m, 6));
-            Assert.Equal("10.7", MathS.ToBaseN(8.875m, 8));
-            Assert.Equal("8.875", MathS.ToBaseN(8.875m, 10));
-            Assert.Equal("8.A6", MathS.ToBaseN(8.875m, 12));
-            Assert.Equal("8.C37", MathS.ToBaseN(8.875m, 14));
-            Assert.Equal("8.E", MathS.ToBaseN(8.875m, 16));
+            Assert.Equal(expected, MathS.ToBaseN(decimal.Parse(decimalInString), system));
         }
 
-        [Fact]
-        public void TestBaseConvertTo3()
+        [Theory]
+        [InlineData("-1000.001", "-8.125", 2 )]
+        [InlineData("-20.02",    "-8.125", 4 )]
+        [InlineData("-12.043",   "-8.125", 6 )]
+        [InlineData("-10.1",     "-8.125", 8 )]
+        [InlineData("-8.125",    "-8.125", 10)]
+        [InlineData("-8.16",     "-8.125", 12)]
+        [InlineData("-8.1A7",    "-8.125", 14)]
+        [InlineData("-8.2",      "-8.125", 16)]
+        [InlineData("-1000.111", "-8.875", 2 )]
+        [InlineData("-20.32",    "-8.875", 4 )]
+        [InlineData("-12.513",   "-8.875", 6 )]
+        [InlineData("-10.7",     "-8.875", 8 )]
+        [InlineData("-8.875",    "-8.875", 10)]
+        [InlineData("-8.A6",     "-8.875", 12)]
+        [InlineData("-8.C37",    "-8.875", 14)]
+        [InlineData("-8.E",      "-8.875", 16)]
+        public void TestConvertTo3(string expected, string decimalInString, int system)
         {
-            Assert.Equal("-1000.001", MathS.ToBaseN(-8.125m, 2));
-            Assert.Equal("-20.02", MathS.ToBaseN(-8.125m, 4));
-            Assert.Equal("-12.043", MathS.ToBaseN(-8.125m, 6));
-            Assert.Equal("-10.1", MathS.ToBaseN(-8.125m, 8));
-            Assert.Equal("-8.125", MathS.ToBaseN(-8.125m, 10));
-            Assert.Equal("-8.16", MathS.ToBaseN(-8.125m, 12));
-            Assert.Equal("-8.1A7", MathS.ToBaseN(-8.125m, 14));
-            Assert.Equal("-8.2", MathS.ToBaseN(-8.125m, 16));
-            Assert.Equal("-1000.111", MathS.ToBaseN(-8.875m, 2));
-            Assert.Equal("-20.32", MathS.ToBaseN(-8.875m, 4));
-            Assert.Equal("-12.513", MathS.ToBaseN(-8.875m, 6));
-            Assert.Equal("-10.7", MathS.ToBaseN(-8.875m, 8));
-            Assert.Equal("-8.875", MathS.ToBaseN(-8.875m, 10));
-            Assert.Equal("-8.A6", MathS.ToBaseN(-8.875m, 12));
-            Assert.Equal("-8.C37", MathS.ToBaseN(-8.875m, 14));
-            Assert.Equal("-8.E", MathS.ToBaseN(-8.875m, 16));
+            Assert.Equal(expected, MathS.ToBaseN(decimal.Parse(decimalInString), system));
         }
 
         [Fact]
@@ -151,6 +154,7 @@ namespace UnitTests.Algebra
         [InlineData("sgn(sgn(+1 - i))", "+sqrt(2) / 2 - sqrt(2) / 2 * i")]
         [InlineData("sgn(sgn(-1 + i))", "-sqrt(2) / 2 + sqrt(2) / 2 * i")]
         [InlineData("sgn(sgn(-1 - i))", "-sqrt(2) / 2 - sqrt(2) / 2 * i")]
+        [InlineData("sgn(0)", "0")]
         public void TestSignum(string expr, string answer)
         {
             var actual = expr.ToEntity().Eval();
@@ -158,6 +162,27 @@ namespace UnitTests.Algebra
             var error = (actual - expected).Abs();
             Assert.True(error < MathS.Numbers.Create(1e-8m),
                 $"\nError: {error}" + 
+                $"\nActual: {actual}" +
+                $"\nExpected: {expected}");
+        }
+
+        [Theory]
+        [InlineData("abs(5)", "5")]
+        [InlineData("abs(-5)", "5")]
+        [InlineData("abs(3 + 4i)", "5")]
+        [InlineData("abs(3 - 4i)", "5")]
+        [InlineData("abs(abs(3 - 4i))", "5")]
+        [InlineData("abs(- 3 + 4i)", "5")]
+        [InlineData("abs(-sqrt(1) / 2 + sqrt(3) / 2)", "1")]
+        [InlineData("abs(0)", "0")]
+        [InlineData("abs(-1) + 1", "2")]
+        public void TestAbs(string expr, string answer)
+        {
+            var actual = expr.ToEntity().Eval();
+            var expected = answer.ToEntity().Eval();
+            var error = (actual - expected).Abs();
+            Assert.True(error < MathS.Numbers.Create(1e-8m),
+                $"\nError: {error}" +
                 $"\nActual: {actual}" +
                 $"\nExpected: {expected}");
         }

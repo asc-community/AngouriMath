@@ -1,4 +1,5 @@
 ﻿using AngouriMath;
+using System.Numerics;
 using Xunit;
 
 namespace UnitTests.Convenience
@@ -83,6 +84,30 @@ namespace UnitTests.Convenience
             var expr = MathS.Signum(x) + 1;
             var func = expr.Compile(x);
             Assert.Equal(0, func.Call(-3));
+        }
+
+        [Fact]
+        public void TestAbs1()
+        {
+            var expr = MathS.Abs(x) + 4;
+            var func = expr.Compile(x);
+            Assert.Equal(4, func.Call(0));
+        }
+
+        [Fact]
+        public void TestAbs2()
+        {
+            var expr = MathS.Abs(x) + 4;
+            var func = expr.Compile(x);
+            Assert.Equal(8, func.Call(-4));
+        }
+
+        [Fact]
+        public void TestAbs3()
+        {
+            var expr = MathS.Abs(x) + 4;
+            var func = expr.Compile(x);
+            Assert.Equal(9, func.Call(new Complex(3, 4)));
         }
     }
 }

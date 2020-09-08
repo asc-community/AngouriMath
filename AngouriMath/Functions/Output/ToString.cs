@@ -16,7 +16,6 @@
 namespace AngouriMath
 {
     using Core;
-    using System.Security;
     using static Entity.Number;
     public abstract partial record Entity
     {
@@ -126,6 +125,10 @@ namespace AngouriMath
         public partial record Signumf
         {
             internal override string Stringize() => $"sgn({Argument})";
+        }
+        public partial record Absf
+        {
+            internal override string Stringize() => $"abs({Argument})";
         }
     }
 }

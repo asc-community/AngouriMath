@@ -26,9 +26,8 @@ namespace UnitTests.Convenience
         [InlineData("_", "line 1:0")]
         [InlineData("()", "line 1:1")]
         public void Error(string input, string errorPrefix) =>
-            Assert.Equal(errorPrefix, 
-                Assert.Throws<ParseException>(() => (Entity)input).Message
-                .Substring(0, "line x:x".Length));
+            Assert.StartsWith(errorPrefix, 
+                Assert.Throws<ParseException>(() => (Entity)input).Message);
         [Theory]
         [InlineData("limitleft()", "limitleft should have exactly 3 arguments but 0 arguments are provided")]
         [InlineData("derivative(3)", "derivative should have exactly 3 arguments but 1 argument is provided")]
@@ -90,5 +89,7 @@ namespace UnitTests.Convenience
             => Assert.Equal(MathS.Limit("x + y", x, 3, ApproachFrom.Left), MathS.FromString("limitleft(x + y, x, 3)"));
         [Fact] public void Test34()
             => Assert.Equal(MathS.Signum("x"), MathS.FromString("signum(x)"));
+        [Fact] public void Test35()
+            => Assert.Equal(MathS.Abs("x"), MathS.FromString("abs(x)"));
     }
 }

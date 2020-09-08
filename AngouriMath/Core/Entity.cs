@@ -559,11 +559,17 @@ namespace AngouriMath
 
         public partial record Signumf(Entity Argument) : Function
         {
-            public override Priority Priority => Priority.Factorial;
             public override Entity Replace(Func<Entity, Entity> func) => func(Argument.Replace(func).Signum());
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
         public Entity Signum() => new Signumf(this);
+
+        public partial record Absf(Entity Argument) : Function
+        {
+            public override Entity Replace(Func<Entity, Entity> func) => func(Argument.Replace(func).Abs());
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+        public Entity Abs() => new Signumf(this);
 
         #endregion
     }

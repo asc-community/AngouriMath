@@ -229,6 +229,12 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Signum(Entity a) => new Signumf(a);
 
+        /// <summary>https://en.wikipedia.org/wiki/Absolute_value</summary>
+        /// <param name="a">Argument node of which Abs function will be taken</param>
+        /// <returns>Abs node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Abs(Entity a) => new Absf(a);
+
         /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
         /// <param name="name">The name of the <see cref="Variable"/> which equality is based on.</param>
         /// <returns>Variable node</returns>

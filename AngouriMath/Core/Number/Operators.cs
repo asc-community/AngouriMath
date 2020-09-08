@@ -433,12 +433,16 @@ namespace AngouriMath
             /// <param name="num">Number to find Signum of</param>
             /// <returns>
             /// A complex signum value for a non-zero argument,
-            /// NaN otherwise
+            /// 0 otherwise
             /// </returns>
             public static Complex Signum(Complex num)
-                // we could rely on 0 / 0 => NaN
-                // but this way makes it more obvious
-                => num.IsZero ? Real.NaN : num / num.Abs();
+                => num.IsZero ? Integer.Zero : num / num.Abs();
+
+            /// <summary>
+            /// Complex absolute value
+            /// </summary>
+            public static Real Abs(Complex num)
+                => num.Abs();
 
             /// <summary>Calculates the exact value of cosine of num</summary>
             public static Complex Cos(Complex num)

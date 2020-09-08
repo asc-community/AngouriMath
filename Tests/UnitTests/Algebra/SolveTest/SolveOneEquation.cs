@@ -2,9 +2,7 @@
 using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace UnitTests.Algebra
 {
@@ -193,5 +191,13 @@ namespace UnitTests.Algebra
         [InlineData("sgn(x) - 1 / sqrt(2) - i / sqrt(2)")]
         [InlineData("sgn(x) - 1 / sqrt(2) + i / sqrt(2)")]
         public void SignumTest(string expr) => TestSolver(expr, 1, toSub: 4);
+
+        [Theory]
+        [InlineData("abs(x) + 5", 5)]
+        [InlineData("abs(x) + a", 4)]
+        [InlineData("abs(x) + a", 3)]
+        [InlineData("abs(x) + a", 2)]
+        [InlineData("abs(x) + a", 10)]
+        public void AbsTest(string expr, int value) => TestSolver(expr, value);
     }
 }

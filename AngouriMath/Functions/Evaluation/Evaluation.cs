@@ -477,7 +477,26 @@ namespace AngouriMath
                 => Argument.Evaled is Number { IsExact: true } ? Argument.Evaled :
                 Argument.InnerSimplify() switch
                 {
-                    Signumf sgn => sgn, // signum(signum(n)) = signum(n)
+                    Tensor n => n.Elementwise(c => c.Signum().InnerEval()),
+                    var n => this
+                };
+        }
+
+        public partial record Absf
+        {
+            protected override Entity InnerEval()
+                => Argument.Evaled switch
+                {
+                    Complex n => Complex.Abs(n),
+                    Tensor n => n.Elementwise(c => c.Abs().Evaled),
+                    var n => this
+                };
+
+            // TODO: probably we can simplify it further
+            internal override Entity InnerSimplify()
+                => Argument.Evaled is Number { IsExact: true } ? Argument.Evaled :
+                Argument.InnerSimplify() switch
+                {
                     Tensor n => n.Elementwise(c => c.Signum().InnerEval()),
                     var n => this
                 };

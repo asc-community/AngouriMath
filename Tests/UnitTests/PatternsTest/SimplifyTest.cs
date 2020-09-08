@@ -121,5 +121,13 @@ namespace UnitTests.PatternsTest
         [InlineData("sgn(sgn(x))", "sgn(x)")]
         [InlineData("sgn(sgn(sgn(x)))", "sgn(x)")]
         public void SignumTest(string input, string output) => AssertSimplifyToString(input, output);
+
+        [Theory]
+        [InlineData("abs(x)", "abs(x)")]
+        [InlineData("abs(abs(x))", "abs(x)")]
+        [InlineData("abs(abs(abs(x)))", "abs(x)")]
+        [InlineData("abs(sgn(x))", "1")]
+        [InlineData("sgn(abs(x))", "1")]
+        public void AbsTest(string input, string output) => AssertSimplifyToString(input, output);
     }
 }

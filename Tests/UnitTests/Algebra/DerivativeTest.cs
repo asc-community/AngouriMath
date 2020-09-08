@@ -123,5 +123,13 @@ namespace UnitTests.Algebra
             var derived = func.Derive("x");
             Assert.Equal(MathS.Derivative(func, x), derived);
         }
+
+        [Fact]
+        public void TestAbsDer()
+        {
+            Entity func = "abs(x + 2)";
+            var derived = func.Derive("x");
+            Assert.Equal(MathS.Derivative(func, x), derived);
+        }
     }
 }
