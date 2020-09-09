@@ -569,7 +569,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(Argument.Replace(func).Abs());
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-        public Entity Abs() => new Signumf(this);
+        public Entity Abs() => new Absf(this);
 
         #endregion
     }

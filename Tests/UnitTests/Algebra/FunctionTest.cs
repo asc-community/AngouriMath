@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using Xunit;
 using AngouriMath.Extensions;
+using System.Globalization;
 
 namespace UnitTests.Algebra
 {
@@ -91,7 +92,7 @@ namespace UnitTests.Algebra
         [InlineData("8.E",      "8.875", 16)]
         public void TestBaseConvertTo2(string expected, string decimalInString, int system)
         {
-            Assert.Equal(expected, MathS.ToBaseN(decimal.Parse(decimalInString), system));
+            Assert.Equal(expected, MathS.ToBaseN(decimal.Parse(decimalInString, CultureInfo.InvariantCulture), system));
         }
 
         [Theory]
@@ -113,7 +114,7 @@ namespace UnitTests.Algebra
         [InlineData("-8.E",      "-8.875", 16)]
         public void TestConvertTo3(string expected, string decimalInString, int system)
         {
-            Assert.Equal(expected, MathS.ToBaseN(decimal.Parse(decimalInString), system));
+            Assert.Equal(expected, MathS.ToBaseN(decimal.Parse(decimalInString, CultureInfo.InvariantCulture), system));
         }
 
         [Fact]
@@ -173,7 +174,7 @@ namespace UnitTests.Algebra
         [InlineData("abs(3 - 4i)", "5")]
         [InlineData("abs(abs(3 - 4i))", "5")]
         [InlineData("abs(- 3 + 4i)", "5")]
-        [InlineData("abs(-sqrt(1) / 2 + sqrt(3) / 2)", "1")]
+        [InlineData("abs(-sqrt(1) / 2 + sqrt(3) / 2 * i)", "1")]
         [InlineData("abs(0)", "0")]
         [InlineData("abs(-1) + 1", "2")]
         public void TestAbs(string expr, string answer)

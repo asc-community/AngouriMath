@@ -33,7 +33,8 @@ namespace UnitTests.Algebra
 
         void TestSolver(Entity expr, int rootCount, Integer? toSub = null, bool testNewton = false)
         {
-            var roots = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x));
+            var roots = MathS.Settings.AllowNewton.As(false /* shouldn't it be testNewton instead of false? */, 
+                () => expr.SolveEquation(x));
             AssertRootCount(roots, rootCount);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root, toSub);
@@ -181,11 +182,11 @@ namespace UnitTests.Algebra
         public void SignumTest(string expr) => TestSolver(expr, 1, toSub: 4);
 
         [Theory]
-        [InlineData("abs(x) + 5", 5)]
-        [InlineData("abs(x) + a", 4)]
-        [InlineData("abs(x) + a", 3)]
-        [InlineData("abs(x) + a", 2)]
-        [InlineData("abs(x) + a", 10)]
-        public void AbsTest(string expr, int value) => TestSolver(expr, value);
+        [InlineData("abs(x) - 5", 5)]
+        [InlineData("abs(x) - a", 4)]
+        [InlineData("abs(x) - a", 3)]
+        [InlineData("abs(x) - a", 2)]
+        [InlineData("abs(x) - a", 10)]
+        public void AbsTest(string expr, int value) => TestSolver(expr, rootCount: 1, toSub: value);
     }
 }
