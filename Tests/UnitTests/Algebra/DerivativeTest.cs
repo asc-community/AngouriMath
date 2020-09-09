@@ -129,7 +129,7 @@ namespace UnitTests.Algebra
         {
             Entity func = "abs(x + 2)";
             var derived = func.Derive("x");
-            Assert.Equal(MathS.Derivative(func, x), derived);
+            Assert.Equal(MathS.Signum("x + 2").Simplify(), derived.Simplify());
         }
     }
 }

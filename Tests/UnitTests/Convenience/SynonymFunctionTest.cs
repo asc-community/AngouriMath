@@ -27,6 +27,7 @@ namespace UnitTests.Convenience
         [InlineData("Log", "log(x)")]
         [InlineData("Signum", "sgn(x)")]
         [InlineData("Signum", "signum(x)")]
+        [InlineData("Signum", "sign(x)")]
         [InlineData("Abs", "abs(x)")]
         public void TestOneArgumentSynonym(string mathSFuncName, string stringizedExpr)
         {

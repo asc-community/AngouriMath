@@ -204,7 +204,7 @@ namespace AngouriMath
         {
             // TODO: derivative of the absolute function?
             public override Entity Derive(Variable variable)
-                => MathS.Derivative(this, variable);
+                => MathS.Signum(Argument) * Argument.Derive(variable);
         }
     }
 }

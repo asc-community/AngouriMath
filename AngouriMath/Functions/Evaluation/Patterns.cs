@@ -463,8 +463,8 @@ namespace AngouriMath.Functions
 
             Signumf(Signumf(var any1)) => new Signumf(any1),
             Absf(Absf(var any1)) => new Absf(any1),
-            Absf(Signumf(var _)) => 1,
-            Signumf(Absf(var _)) => 1,
+            Absf(Signumf(_)) => 1,
+            Signumf(Absf(_)) => 1,
 
             Mulf(Absf(var any1), Absf(var any2)) => new Absf(any1 * any2),
             Divf(Absf(var any1), Absf(var any2)) => new Absf(any1 / any2),

@@ -33,8 +33,7 @@ namespace UnitTests.Algebra
 
         void TestSolver(Entity expr, int rootCount, Integer? toSub = null, bool testNewton = false)
         {
-            var roots = MathS.Settings.AllowNewton.As(false /* shouldn't it be testNewton instead of false? */, 
-                () => expr.SolveEquation(x));
+            var roots = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x));
             AssertRootCount(roots, rootCount);
             foreach (var root in roots.FiniteSet())
                 AssertRoots(expr, x, root, toSub);
