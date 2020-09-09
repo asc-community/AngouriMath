@@ -146,16 +146,16 @@ AngouriMath.Entity.Integralf.Var.init -> void
 AngouriMath.Entity.IsFinite.get -> bool
 AngouriMath.Entity.Latexise(bool parenthesesRequired) -> string!
 AngouriMath.Entity.Limitf
-AngouriMath.Entity.Limitf.ApproachFrom.get -> AngouriMath.Core.ApproachFrom
-AngouriMath.Entity.Limitf.ApproachFrom.init -> void
-AngouriMath.Entity.Limitf.Destination.get -> AngouriMath.Entity!
-AngouriMath.Entity.Limitf.Destination.init -> void
-AngouriMath.Entity.Limitf.Expression.get -> AngouriMath.Entity!
 AngouriMath.Entity.Limitf.Expression.init -> void
-AngouriMath.Entity.Limitf.Limitf(AngouriMath.Entity! Expression, AngouriMath.Entity! Var, AngouriMath.Entity! Destination, AngouriMath.Core.ApproachFrom ApproachFrom) -> void
-AngouriMath.Entity.Limitf.Var.get -> AngouriMath.Entity!
+AngouriMath.Entity.Limitf.Expression.get -> AngouriMath.Entity!
 AngouriMath.Entity.Limitf.Var.init -> void
-AngouriMath.Entity.Log(AngouriMath.Entity! n) -> AngouriMath.Entity!
+AngouriMath.Entity.Limitf.Var.get -> AngouriMath.Entity!
+AngouriMath.Entity.Limitf.Destination.init -> void
+AngouriMath.Entity.Limitf.Destination.get -> AngouriMath.Entity!
+AngouriMath.Entity.Limitf.ApproachFrom.init -> void
+AngouriMath.Entity.Limitf.ApproachFrom.get -> AngouriMath.Core.ApproachFrom
+AngouriMath.Entity.Limitf.Limitf(AngouriMath.Entity! Expression, AngouriMath.Entity! Var, AngouriMath.Entity! Destination, AngouriMath.Core.ApproachFrom ApproachFrom) -> void
+AngouriMath.Entity.Log(AngouriMath.Entity! x) -> AngouriMath.Entity!
 AngouriMath.Entity.Logf
 AngouriMath.Entity.Logf.Antilogarithm.get -> AngouriMath.Entity!
 AngouriMath.Entity.Logf.Antilogarithm.init -> void
@@ -209,6 +209,7 @@ AngouriMath.Entity.Powf.Exponent.init -> void
 AngouriMath.Entity.Powf.Powf(AngouriMath.Entity! Base, AngouriMath.Entity! Exponent) -> void
 AngouriMath.Entity.Replace(System.Func<AngouriMath.Entity!, AngouriMath.Entity!>! func1, System.Func<AngouriMath.Entity!, AngouriMath.Entity!>! func2) -> AngouriMath.Entity!
 AngouriMath.Entity.Replace(System.Func<AngouriMath.Entity!, AngouriMath.Entity!>! func1, System.Func<AngouriMath.Entity!, AngouriMath.Entity!>! func2, System.Func<AngouriMath.Entity!, AngouriMath.Entity!>! func3) -> AngouriMath.Entity!
+AngouriMath.Entity.Signumf
 AngouriMath.Entity.Simplify(int level = 2) -> AngouriMath.Entity!
 AngouriMath.Entity.Sin() -> AngouriMath.Entity!
 AngouriMath.Entity.Sinf
@@ -426,6 +427,10 @@ override AngouriMath.Entity.Powf.InnerEval() -> AngouriMath.Entity!
 override AngouriMath.Entity.Powf.Latexise() -> string!
 override AngouriMath.Entity.Powf.Priority.get -> AngouriMath.Core.Priority
 override AngouriMath.Entity.Powf.Replace(System.Func<AngouriMath.Entity!, AngouriMath.Entity!>! func) -> AngouriMath.Entity!
+override AngouriMath.Entity.Signumf.Derive(AngouriMath.Entity.Variable! variable) -> AngouriMath.Entity!
+override AngouriMath.Entity.Signumf.InnerEval() -> AngouriMath.Entity!
+override AngouriMath.Entity.Signumf.InnerSimplify() -> AngouriMath.Entity!
+override AngouriMath.Entity.Signumf.Latexise() -> string!
 override AngouriMath.Entity.Sinf.Derive(AngouriMath.Entity.Variable! variable) -> AngouriMath.Entity!
 override AngouriMath.Entity.Sinf.InitDirectChildren() -> AngouriMath.Entity![]!
 override AngouriMath.Entity.Sinf.InnerEval() -> AngouriMath.Entity!
@@ -595,6 +600,7 @@ static AngouriMath.Entity.Number.Real.operator <(AngouriMath.Entity.Number.Real!
 static AngouriMath.Entity.Number.Real.operator <=(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> bool
 static AngouriMath.Entity.Number.Real.operator >(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> bool
 static AngouriMath.Entity.Number.Real.operator >=(AngouriMath.Entity.Number.Real! a, AngouriMath.Entity.Number.Real! b) -> bool
+static AngouriMath.Entity.Number.Signum(AngouriMath.Entity.Number.Complex! num) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Sin(AngouriMath.Entity.Number.Complex! num) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.Sqrt(AngouriMath.Entity.Number.Complex! num) -> AngouriMath.Entity.Number.Complex!
 static AngouriMath.Entity.Number.SuperSwitch<T>(AngouriMath.Entity.Number! num1, AngouriMath.Entity.Number! num2, System.Func<AngouriMath.Entity.Number.Integer!, AngouriMath.Entity.Number.Integer!, T>! ifInt, System.Func<AngouriMath.Entity.Number.Rational!, AngouriMath.Entity.Number.Rational!, T>! ifRat, System.Func<AngouriMath.Entity.Number.Real!, AngouriMath.Entity.Number.Real!, T>! ifReal, System.Func<AngouriMath.Entity.Number.Complex!, AngouriMath.Entity.Number.Complex!, T>! ifCom) -> T
@@ -738,6 +744,7 @@ static AngouriMath.MathS.Settings.PrecisionErrorCommon.get -> AngouriMath.MathS.
 static AngouriMath.MathS.Settings.PrecisionErrorZeroRange.get -> AngouriMath.MathS.Settings.Setting<PeterO.Numbers.EDecimal!>!
 static AngouriMath.MathS.Settings.Setting<T>.implicit operator AngouriMath.MathS.Settings.Setting<T>!(T a) -> AngouriMath.MathS.Settings.Setting<T>!
 static AngouriMath.MathS.Settings.Setting<T>.implicit operator T(AngouriMath.MathS.Settings.Setting<T>! s) -> T
+static AngouriMath.MathS.Signum(AngouriMath.Entity! a) -> AngouriMath.Entity!
 static AngouriMath.MathS.Sin(AngouriMath.Entity! a) -> AngouriMath.Entity!
 static AngouriMath.MathS.SolveEquation(AngouriMath.Entity! equation, AngouriMath.Entity.Variable! var) -> AngouriMath.Core.Set!
 static AngouriMath.MathS.SolveInequalityNumerically(AngouriMath.Entity! inequality, AngouriMath.Entity.Variable! var, AngouriMath.MathS.Inequality sign) -> AngouriMath.Core.Set!

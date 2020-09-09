@@ -8,8 +8,14 @@ using PeterO.Numbers;
 namespace AngouriMath
 {
     // Visibility for the class is internal so we can use public for methods as we like
-    internal static class PeterONumbersExtensions
+    internal static class NumbersExtensions
     {
+        public static System.Numerics.Complex Signum(this System.Numerics.Complex z)
+            => z == 0 ? 0 : z / z.Magnitude;
+
+        public static System.Numerics.Complex Abs(this System.Numerics.Complex z)
+            => System.Numerics.Complex.Abs(z);
+
         public class ConstantCache
         {
             public static ConstantCache Lookup(EContext context)
@@ -148,6 +154,10 @@ namespace AngouriMath
             var cos = Cos(x, context);
             return CalculateSinFromCos(x, cos, consts, context);
         }
+
+        public static EDecimal Signum(this EDecimal x, EContext _)
+            => x.Sign;
+
 
         /// <summary>Truncates <paramref name="x"/> to [-2*<see cref="Math.PI"/>, 2*<see cref="Math.PI"/>] </summary>
         private static void TruncateToPeriodicInterval(ref EDecimal x, ConstantCache consts, EContext context)

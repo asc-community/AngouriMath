@@ -344,5 +344,9 @@ namespace UnitTests.Convenience
             Test(@"\lim_{xf\to 1+x} \left[\frac{1}{x}\right]", MathS.Limit("1/x", "xf", "1+x"));
         [Fact] public void Limit5() =>
             Test(@"\lim_{xf\to {x_{2}}^{3}} \left[{x}^{23}-x_{16}\right]", MathS.Limit("x^23-x_16", "xf", "x_2^3"));
+        [Fact] public void Signum()
+            => Test(@"\operatorname{sgn}\left(x\right)", MathS.Signum(x));
+        [Fact] public void Abs()
+            => Test(@"\left|x\right|", MathS.Abs(x));
     }
 }

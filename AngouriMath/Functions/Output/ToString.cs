@@ -122,5 +122,13 @@ namespace AngouriMath
                       (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
                 } + $"({Expression}, {Var}, {Destination})";
         }
+        public partial record Signumf
+        {
+            internal override string Stringize() => $"sgn({Argument})";
+        }
+        public partial record Absf
+        {
+            internal override string Stringize() => $"abs({Argument})";
+        }
     }
 }

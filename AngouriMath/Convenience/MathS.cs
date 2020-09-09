@@ -223,6 +223,18 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Gamma(Entity a) => new Factorialf(a + 1);
 
+        /// <summary>https://en.wikipedia.org/wiki/Sign_function</summary>
+        /// <param name="a">Argument node of which Signum function will be taken</param>
+        /// <returns>Signum node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Signum(Entity a) => new Signumf(a);
+
+        /// <summary>https://en.wikipedia.org/wiki/Absolute_value</summary>
+        /// <param name="a">Argument node of which Abs function will be taken</param>
+        /// <returns>Abs node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Abs(Entity a) => new Absf(a);
+
         /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
         /// <param name="name">The name of the <see cref="Variable"/> which equality is based on.</param>
         /// <returns>Variable node</returns>
@@ -746,11 +758,11 @@ namespace AngouriMath
         {
             /// <summary><a href="https://en.wikipedia.org/wiki/Pi"/></summary>
             public static EDecimal pi =>
-                PeterONumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).Pi;
+                NumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).Pi;
 
             /// <summary><a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/></summary>
             public static EDecimal e =>
-                PeterONumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
+                NumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
         }
     }
 }

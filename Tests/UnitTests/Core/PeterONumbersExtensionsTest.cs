@@ -45,15 +45,15 @@ namespace UnitTests.Core
                 TestIteration(Random.NextDouble() * Random.Next(-500, 501));
         }
 
-        [Fact] public void TestMethodAsin() => Test(Math.Asin, PeterONumbersExtensions.Asin);
-        [Fact] public void TestMethodAcos() => Test(Math.Acos, PeterONumbersExtensions.Acos);
-        [Fact] public void TestMethodAtan() => Test(Math.Atan, PeterONumbersExtensions.Atan);
-        [Fact] public void TestMethodSin() => Test(Math.Sin, PeterONumbersExtensions.Sin);
-        [Fact] public void TestMethodCos() => Test(Math.Cos, PeterONumbersExtensions.Cos);
-        [Fact] public void TestMethodTan() => Test(Math.Tan, PeterONumbersExtensions.Tan);
-        [Fact] public void TestMethodSinh() => Test(Math.Sinh, PeterONumbersExtensions.Sinh);
-        [Fact] public void TestMethodCosh() => Test(Math.Cosh, PeterONumbersExtensions.Cosh);
-        [Fact] public void TestMethodTanh() => Test(Math.Tanh, PeterONumbersExtensions.Tanh);
+        [Fact] public void TestMethodAsin() => Test(Math.Asin, NumbersExtensions.Asin);
+        [Fact] public void TestMethodAcos() => Test(Math.Acos, NumbersExtensions.Acos);
+        [Fact] public void TestMethodAtan() => Test(Math.Atan, NumbersExtensions.Atan);
+        [Fact] public void TestMethodSin() => Test(Math.Sin, NumbersExtensions.Sin);
+        [Fact] public void TestMethodCos() => Test(Math.Cos, NumbersExtensions.Cos);
+        [Fact] public void TestMethodTan() => Test(Math.Tan, NumbersExtensions.Tan);
+        [Fact] public void TestMethodSinh() => Test(Math.Sinh, NumbersExtensions.Sinh);
+        [Fact] public void TestMethodCosh() => Test(Math.Cosh, NumbersExtensions.Cosh);
+        [Fact] public void TestMethodTanh() => Test(Math.Tanh, NumbersExtensions.Tanh);
         [Fact]
         public void TestMethodAtan2()
         {
@@ -97,25 +97,25 @@ namespace UnitTests.Core
         [Fact]
         public void FactorialInt()
         {
-            Assert.Equal(EInteger.FromInt32(1), PeterONumbersExtensions.Factorial(0));
-            Assert.Equal(EInteger.FromInt32(1), PeterONumbersExtensions.Factorial(1));
-            Assert.Equal(EInteger.FromInt32(2), PeterONumbersExtensions.Factorial(2));
-            Assert.Equal(EInteger.FromInt32(6), PeterONumbersExtensions.Factorial(3));
-            Assert.Equal(EInteger.FromInt32(24), PeterONumbersExtensions.Factorial(4));
-            Assert.Equal(EInteger.FromInt32(120), PeterONumbersExtensions.Factorial(5));
+            Assert.Equal(EInteger.FromInt32(1), NumbersExtensions.Factorial(0));
+            Assert.Equal(EInteger.FromInt32(1), NumbersExtensions.Factorial(1));
+            Assert.Equal(EInteger.FromInt32(2), NumbersExtensions.Factorial(2));
+            Assert.Equal(EInteger.FromInt32(6), NumbersExtensions.Factorial(3));
+            Assert.Equal(EInteger.FromInt32(24), NumbersExtensions.Factorial(4));
+            Assert.Equal(EInteger.FromInt32(120), NumbersExtensions.Factorial(5));
 
             Assert.Equal(
                     EInteger.FromString("9425947759838359420851623124482936749562312794702543768327889353416977599316221476503087861591808346911623490003549599583369706302603264000000000000000000000000"),
-                    PeterONumbersExtensions.Factorial(101));
+                    NumbersExtensions.Factorial(101));
 
             var expected = EInteger.One;
             for (int n = 1; n < 1000; n++)
             {
                 expected *= n;
-                Assert.Equal(expected, PeterONumbersExtensions.Factorial(n));
+                Assert.Equal(expected, NumbersExtensions.Factorial(n));
             }
-            Assert.Throws<ArgumentOutOfRangeException>(() => PeterONumbersExtensions.Factorial(-1));
-            Assert.Throws<ArgumentOutOfRangeException>(() => PeterONumbersExtensions.Factorial(-2));
+            Assert.Throws<ArgumentOutOfRangeException>(() => NumbersExtensions.Factorial(-1));
+            Assert.Throws<ArgumentOutOfRangeException>(() => NumbersExtensions.Factorial(-2));
         }
 
         // Results from wolframalpha.com:

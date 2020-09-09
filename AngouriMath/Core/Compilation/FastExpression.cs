@@ -60,6 +60,7 @@ namespace AngouriMath.Core
             PUSH_CONST,
             LOAD_CACHE,
             SAVE_CACHE,
+
             // 1-arg functions
             CALL_SIN = 50,
             CALL_COS,
@@ -70,6 +71,9 @@ namespace AngouriMath.Core
             CALL_ARCTAN,
             CALL_ARCCOTAN,
             CALL_FACTORIAL,
+            CALL_SIGNUM,
+            CALL_ABS,
+
             // 2-arg functions
             CALL_SUM = 100,
             CALL_MINUS,
@@ -193,6 +197,12 @@ namespace AngouriMath.Core
                             }
                         }
                         stack.Push(Gamma(stack.Pop() + 1));
+                        break;
+                    case InstructionType.CALL_SIGNUM:
+                        stack.Push(stack.Pop().Signum());
+                        break;
+                    case InstructionType.CALL_ABS:
+                        stack.Push(stack.Pop().Abs());
                         break;
                 }
             if (stack.Count != 1)

@@ -1,6 +1,6 @@
 ## AngouriMath
 
-| Contributions welcome?   |  ALWAYS!      |
+|                          |               |
 |:-------------------------|:-------------:|
 | Safe to clone right now? | ![Test](https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg) |
 | Installation from NuGet  | [![NuGet](https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet)](https://www.nuget.org/packages/AngouriMath) |

@@ -281,6 +281,18 @@ namespace AngouriMath
                 return sb.ToString();
             }
         }
+
+        public partial record Signumf
+        {
+            public override string Latexise()
+                => $@"\operatorname{{sgn}}\left({Argument.Latexise()}\right)";
+        }
+
+        public partial record Absf
+        {
+            public override string Latexise()
+                => $@"\left|{Argument.Latexise()}\right|";
+        }
     }
     namespace Core
     {

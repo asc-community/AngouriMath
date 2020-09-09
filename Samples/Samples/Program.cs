@@ -1,9 +1,5 @@
-﻿
-using System;
-using System.Diagnostics;
+﻿using System;
 using AngouriMath;
-using AngouriMath.Extensions;
-using PeterO.Numbers;
 
 namespace Samples
 {
@@ -11,11 +7,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            //var d = MathS.Numbers.Create(1e-20m);
-            //Console.Write(d);
-            EDecimal a = 1e-20m;
-            var n = MathS.Numbers.Create(1e-20m);
-            Console.Write(a + " " + n.ToString());
+            Entity ex = "sgn(x) + 5";
+            Console.WriteLine(ex.SolveEquation("x"));
         }
     }
 }

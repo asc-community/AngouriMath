@@ -426,6 +426,24 @@ namespace AngouriMath
                     re.Cos(context).Multiply(sinh, context));
             }
 
+            /// <summary>
+            /// Defines the Signum function on complex numbers
+            /// Which is z / |z|
+            /// </summary>
+            /// <param name="num">Number to find Signum of</param>
+            /// <returns>
+            /// A complex signum value for a non-zero argument,
+            /// 0 otherwise
+            /// </returns>
+            public static Complex Signum(Complex num)
+                => num.IsZero ? Integer.Zero : num / num.Abs();
+
+            /// <summary>
+            /// Complex absolute value
+            /// </summary>
+            public static Real Abs(Complex num)
+                => num.Abs();
+
             /// <summary>Calculates the exact value of cosine of num</summary>
             public static Complex Cos(Complex num)
             {
@@ -580,7 +598,7 @@ namespace AngouriMath
             /// </summary>
             /// <param name="x">The <see cref="Complex"/></param>
             /// <returns>The factorial <see cref="Complex"/></returns>
-            /// <seealso cref="PeterONumbersExtensions.Factorial(EDecimal, EContext)"/>
+            /// <seealso cref="NumbersExtensions.Factorial(EDecimal, EContext)"/>
             /// <seealso cref="Gamma(Complex)"/>
             /// 
             public static Complex Factorial(Complex x)
@@ -605,7 +623,7 @@ namespace AngouriMath
                 // https://en.wikipedia.org/wiki/Spouge%27s_approximation
                 int a = mathContext.Precision.ToInt32Checked() * 13 / 10;
 
-                    var constants = PeterONumbersExtensions.GetSpougeFactorialConstants(a);
+                    var constants = NumbersExtensions.GetSpougeFactorialConstants(a);
 
                     var negative = false;
                     var factor = Complex.Create(constants[0], 0);
@@ -631,7 +649,7 @@ namespace AngouriMath
             /// </summary>
             /// <param name="x">The <see cref="Complex"/></param>
             /// <returns>The gamma <see cref="Complex"/></returns>
-            /// <seealso cref="PeterONumbersExtensions.Gamma(EDecimal, EContext)"/>
+            /// <seealso cref="NumbersExtensions.Gamma(EDecimal, EContext)"/>
             /// <seealso cref="Factorial(Complex)"/>
             public static Complex Gamma(Complex x) => Factorial(x - Integer.One);
         }

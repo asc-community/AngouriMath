@@ -12,21 +12,22 @@ namespace UnitTests.Convenience
         public static readonly Entity.Variable y = MathS.Var(nameof(y));
 
         [Theory]
-        [InlineData("", "line 1:0 mismatched input '<EOF>' expecting {'-', '+', '(', 'sin(', 'cos(', 'log(', 'sqrt(', 'cbrt(', 'sqr(', 'ln(', 'tan(', 'cotan(', 'sec(', 'cosec(', 'arcsin(', 'arccos(', 'arctan(', 'arccotan(', 'arcsec(', 'arccosec(', 'gamma(', 'derivative(', 'integral(', 'limit(', 'limitleft(', 'limitright(', NUMBER, VARIABLE}")]
-        [InlineData(" ", "line 1:1 mismatched input '<EOF>' expecting {'-', '+', '(', 'sin(', 'cos(', 'log(', 'sqrt(', 'cbrt(', 'sqr(', 'ln(', 'tan(', 'cotan(', 'sec(', 'cosec(', 'arcsin(', 'arccos(', 'arctan(', 'arccotan(', 'arcsec(', 'arccosec(', 'gamma(', 'derivative(', 'integral(', 'limit(', 'limitleft(', 'limitright(', NUMBER, VARIABLE}")]
-        [InlineData("\t", "line 1:1 mismatched input '<EOF>' expecting {'-', '+', '(', 'sin(', 'cos(', 'log(', 'sqrt(', 'cbrt(', 'sqr(', 'ln(', 'tan(', 'cotan(', 'sec(', 'cosec(', 'arcsin(', 'arccos(', 'arctan(', 'arccotan(', 'arcsec(', 'arccosec(', 'gamma(', 'derivative(', 'integral(', 'limit(', 'limitleft(', 'limitright(', NUMBER, VARIABLE}")]
-        [InlineData("  ", "line 1:2 mismatched input '<EOF>' expecting {'-', '+', '(', 'sin(', 'cos(', 'log(', 'sqrt(', 'cbrt(', 'sqr(', 'ln(', 'tan(', 'cotan(', 'sec(', 'cosec(', 'arcsin(', 'arccos(', 'arctan(', 'arccotan(', 'arcsec(', 'arccosec(', 'gamma(', 'derivative(', 'integral(', 'limit(', 'limitleft(', 'limitright(', NUMBER, VARIABLE}")]
-        [InlineData("//", "line 1:0 mismatched input '/' expecting {'-', '+', '(', 'sin(', 'cos(', 'log(', 'sqrt(', 'cbrt(', 'sqr(', 'ln(', 'tan(', 'cotan(', 'sec(', 'cosec(', 'arcsin(', 'arccos(', 'arctan(', 'arccotan(', 'arcsec(', 'arccosec(', 'gamma(', 'derivative(', 'integral(', 'limit(', 'limitleft(', 'limitright(', NUMBER, VARIABLE}")]
-        [InlineData("//\n", "line 2:0 mismatched input '<EOF>' expecting {'-', '+', '(', 'sin(', 'cos(', 'log(', 'sqrt(', 'cbrt(', 'sqr(', 'ln(', 'tan(', 'cotan(', 'sec(', 'cosec(', 'arcsin(', 'arccos(', 'arctan(', 'arccotan(', 'arcsec(', 'arccosec(', 'gamma(', 'derivative(', 'integral(', 'limit(', 'limitleft(', 'limitright(', NUMBER, VARIABLE}")]
-        [InlineData("/**/", "line 1:4 mismatched input '<EOF>' expecting {'-', '+', '(', 'sin(', 'cos(', 'log(', 'sqrt(', 'cbrt(', 'sqr(', 'ln(', 'tan(', 'cotan(', 'sec(', 'cosec(', 'arcsin(', 'arccos(', 'arctan(', 'arccotan(', 'arcsec(', 'arccosec(', 'gamma(', 'derivative(', 'integral(', 'limit(', 'limitleft(', 'limitright(', NUMBER, VARIABLE}")]
-        [InlineData("a+", "line 1:2 mismatched input '<EOF>' expecting {'-', '+', '(', 'sin(', 'cos(', 'log(', 'sqrt(', 'cbrt(', 'sqr(', 'ln(', 'tan(', 'cotan(', 'sec(', 'cosec(', 'arcsin(', 'arccos(', 'arctan(', 'arccotan(', 'arcsec(', 'arccosec(', 'gamma(', 'derivative(', 'integral(', 'limit(', 'limitleft(', 'limitright(', NUMBER, VARIABLE}")]
-        [InlineData("*a", "line 1:0 extraneous input '*' expecting {'-', '+', '(', 'sin(', 'cos(', 'log(', 'sqrt(', 'cbrt(', 'sqr(', 'ln(', 'tan(', 'cotan(', 'sec(', 'cosec(', 'arcsin(', 'arccos(', 'arctan(', 'arccotan(', 'arcsec(', 'arccosec(', 'gamma(', 'derivative(', 'integral(', 'limit(', 'limitleft(', 'limitright(', NUMBER, VARIABLE}")]
-        [InlineData("a*a_", "line 1:3 token recognition error at: '_'")]
-        [InlineData("+!", "line 1:1 mismatched input '!' expecting {'(', 'sin(', 'cos(', 'log(', 'sqrt(', 'cbrt(', 'sqr(', 'ln(', 'tan(', 'cotan(', 'sec(', 'cosec(', 'arcsin(', 'arccos(', 'arctan(', 'arccotan(', 'arcsec(', 'arccosec(', 'gamma(', 'derivative(', 'integral(', 'limit(', 'limitleft(', 'limitright(', NUMBER, VARIABLE}")]
-        [InlineData("_", "line 1:0 token recognition error at: '_'")]
-        [InlineData("()", "line 1:1 no viable alternative at input '()'")]
-        public void Error(string input, string error) =>
-            Assert.Equal(error, Assert.Throws<ParseException>(() => (Entity)input).Message);
+        [InlineData("", "line 1:0")]
+        [InlineData(" ", "line 1:1")]
+        [InlineData("\t", "line 1:1")]
+        [InlineData("  ", "line 1:2")]
+        [InlineData("//", "line 1:0")]
+        [InlineData("//\n", "line 2:0")]
+        [InlineData("/**/", "line 1:4")]
+        [InlineData("a+", "line 1:2")]
+        [InlineData("*a", "line 1:0")]
+        [InlineData("a*a_", "line 1:3")]
+        [InlineData("+!", "line 1:1")]
+        [InlineData("_", "line 1:0")]
+        [InlineData("()", "line 1:1")]
+        public void Error(string input, string errorPrefix) =>
+            Assert.StartsWith(errorPrefix, 
+                Assert.Throws<ParseException>(() => (Entity)input).Message);
         [Theory]
         [InlineData("limitleft()", "limitleft should have exactly 3 arguments but 0 arguments are provided")]
         [InlineData("derivative(3)", "derivative should have exactly 3 arguments but 1 argument is provided")]
@@ -86,5 +87,9 @@ namespace UnitTests.Convenience
             => Assert.Equal(MathS.Limit("x + y", x, 3), MathS.FromString("limit(x + y, x, 3)"));
         [Fact] public void Test33()
             => Assert.Equal(MathS.Limit("x + y", x, 3, ApproachFrom.Left), MathS.FromString("limitleft(x + y, x, 3)"));
+        [Fact] public void Test34()
+            => Assert.Equal(MathS.Signum("x"), MathS.FromString("signum(x)"));
+        [Fact] public void Test35()
+            => Assert.Equal(MathS.Abs("x"), MathS.FromString("abs(x)"));
     }
 }
