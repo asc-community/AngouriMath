@@ -119,7 +119,7 @@ namespace AngouriMath
                 /// Returns the absolute value of this complex number, to be precise,
                 /// if this = a + ib, this.Abs() -> sqrt(a^2 + b^2)
                 /// </returns>
-                public virtual Real Abs() =>
+                public new virtual Real Abs() =>
                     (Real)Sqrt(RealPart.EDecimal * RealPart.EDecimal + ImaginaryPart.EDecimal * ImaginaryPart.EDecimal);
 
                 public Real Phase() => ImaginaryPart.EDecimal.Atan2(RealPart.EDecimal, MathS.Settings.DecimalPrecisionContext);

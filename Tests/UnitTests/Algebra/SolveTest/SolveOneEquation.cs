@@ -119,18 +119,6 @@ namespace UnitTests.Algebra
                 AssertRoots(expr.Substitute("a", 5), x, root.Substitute("n_1", 3).Substitute("a", 5));
         }
 
-        private readonly List<Complex> KeyPoints = new List<Complex>
-        {
-            Complex.Create(0, 1),
-            Complex.Create(1, 0),
-            Complex.Create(-3, -3),
-            Complex.Create(2, 2),
-            Complex.Create(13, 13),
-            Complex.Create(-9, +7),
-            Complex.Create(0.5m, -0.5m),
-            Complex.Create(-0.5m, 0.5m),
-        };
-
         [Theory]
         [InlineData("x4 - x2 + 1")]
         [InlineData("x4 - x + 1")]

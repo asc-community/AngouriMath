@@ -18,6 +18,8 @@
 ///     b. Stringize (<see cref="Sinf.Stringize"/>)
 ///     c. Latexise (<see cref="Sinf.Latexise"/>)
 ///     d. InnerSimplify (<see cref="Sinf.InnerSimplify"/>)
+///     e. Limit computation (<see cref="Sinf.ComputeLimitDivideEtImpera"/>)
+///     f. Hash for sorting (<see cref="Sinf.SortHashName"/>)
 /// 
 /// 4. Pattern replacer (<see cref="Patterns.CommonRules"/> and <see cref="Simplificator.Alternate"/>)
 /// 5. Expose to the user (add it to MathS, like <see cref="MathS.Sin">this</see>)

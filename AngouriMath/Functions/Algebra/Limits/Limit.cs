@@ -292,5 +292,12 @@ namespace AngouriMath
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
                 => new Limitf(this, x, dist, side);
         }
+
+        public partial record Absf
+        {
+            // TODO:
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+                => new Limitf(this, x, dist, side);
+        }
     }
 }

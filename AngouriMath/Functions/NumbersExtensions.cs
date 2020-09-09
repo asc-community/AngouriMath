@@ -155,7 +155,7 @@ namespace AngouriMath
             return CalculateSinFromCos(x, cos, consts, context);
         }
 
-        public static EDecimal Signum(this EDecimal x, EContext context)
+        public static EDecimal Signum(this EDecimal x, EContext _)
             => x.Sign;
 
 

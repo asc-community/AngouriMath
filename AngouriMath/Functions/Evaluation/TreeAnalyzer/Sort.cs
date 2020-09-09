@@ -128,6 +128,11 @@ namespace AngouriMath
         {
             private protected override string SortHashName(SortLevel level) => "signumf_";
         }
+
+        public partial record Absf
+        {
+            private protected override string SortHashName(SortLevel level) => "absf_";
+        }
     }
 }
 
