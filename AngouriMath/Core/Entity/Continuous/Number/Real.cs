@@ -22,113 +22,116 @@ namespace AngouriMath
     using Core;
     partial record Entity
     {
-        public abstract partial record Number
+        partial record Continuous
         {
-            public record Real : Complex, System.IComparable<Real>
+            public abstract partial record Number
             {
-                /// <summary>
-                /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
-                /// </summary>
-                private protected Real(EDecimal @decimal) : base(null, null) => EDecimal = @decimal;
-                public EDecimal EDecimal { get; }
-                public void Deconstruct(out EDecimal @decimal) => @decimal = EDecimal;
-                public override Real RealPart => this;
-                public override Priority Priority => EDecimal.IsNegative ? Priority.Mul : Priority.Number;
-                public override bool IsExact => !EDecimal.IsFinite;
-                public bool IsNegative => EDecimal.IsNegative;
-                public bool IsPositive => !EDecimal.IsNegative && !EDecimal.IsZero;
-                public static Real Create(EDecimal value)
+                public record Real : Complex, System.IComparable<Real>
                 {
-                    if (!MathS.Settings.DowncastingEnabled)
-                        return new Real(value);
-
-                    if (!value.IsFinite)
-                        return new Real(value);
-                    var (intPart, intRest) = value.SplitDecimal();
-                    // If the difference between value & round(value) is zero (see Number.IsZero), we consider value as an integer
-                    if (intRest.LessThan(MathS.Settings.PrecisionErrorZeroRange))
-                        return Integer.Create(intPart);
-                    if (intRest.GreaterThan(1 - MathS.Settings.PrecisionErrorZeroRange.Value))
-                        return Integer.Create(intPart.Increment());
-
-                    var attempt = Rational.FindRational(value);
-                    if (attempt is null ||
-                        attempt.ERational.Numerator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue ||
-                        attempt.ERational.Denominator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
-                        return new Real(value);
-                    else
-                        return attempt;
-                }
-
-                public override Real Abs() => Create(EDecimal.Abs());
-
-                internal override string Stringize() => this switch
-                {
-                    { IsFinite: true } => EDecimal.ToString(),
-                    { IsNaN: true } => "NaN",
-                    { IsNegative: true } => "-oo",
-                    _ => "+oo",
-                };
-
-                public override string Latexise() => this switch
-                {
-                    { IsFinite: true } => EDecimal.ToString(),
-                    { IsNaN: true } => @"\mathrm{undefined}",
-                    { IsNegative: true } => @"-\infty ",
-                    _ => @"\infty ",
-                };
-
-                internal static bool TryParse(string s,
-                    [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Real? dst)
-                {
-                    try
+                    /// <summary>
+                    /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
+                    /// </summary>
+                    private protected Real(EDecimal @decimal) : base(null, null) => EDecimal = @decimal;
+                    public EDecimal EDecimal { get; }
+                    public void Deconstruct(out EDecimal @decimal) => @decimal = EDecimal;
+                    public override Real RealPart => this;
+                    public override Priority Priority => EDecimal.IsNegative ? Priority.Mul : Priority.Number;
+                    public override bool IsExact => !EDecimal.IsFinite;
+                    public bool IsNegative => EDecimal.IsNegative;
+                    public bool IsPositive => !EDecimal.IsNegative && !EDecimal.IsZero;
+                    public static Real Create(EDecimal value)
                     {
-                        dst = EDecimal.FromString(s);
-                        return true;
+                        if (!MathS.Settings.DowncastingEnabled)
+                            return new Real(value);
+
+                        if (!value.IsFinite)
+                            return new Real(value);
+                        var (intPart, intRest) = value.SplitDecimal();
+                        // If the difference between value & round(value) is zero (see Number.IsZero), we consider value as an integer
+                        if (intRest.LessThan(MathS.Settings.PrecisionErrorZeroRange))
+                            return Integer.Create(intPart);
+                        if (intRest.GreaterThan(1 - MathS.Settings.PrecisionErrorZeroRange.Value))
+                            return Integer.Create(intPart.Increment());
+
+                        var attempt = Rational.FindRational(value);
+                        if (attempt is null ||
+                            attempt.ERational.Numerator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue ||
+                            attempt.ERational.Denominator.Abs() > MathS.Settings.MaxAbsNumeratorOrDenominatorValue)
+                            return new Real(value);
+                        else
+                            return attempt;
                     }
-                    catch
+
+                    public override Real Abs() => Create(EDecimal.Abs());
+
+                    internal override string Stringize() => this switch
                     {
-                        dst = null;
-                        return false;
+                        { IsFinite: true } => EDecimal.ToString(),
+                        { IsNaN: true } => "NaN",
+                        { IsNegative: true } => "-oo",
+                        _ => "+oo",
+                    };
+
+                    public override string Latexise() => this switch
+                    {
+                        { IsFinite: true } => EDecimal.ToString(),
+                        { IsNaN: true } => @"\mathrm{undefined}",
+                        { IsNegative: true } => @"-\infty ",
+                        _ => @"\infty ",
+                    };
+
+                    internal static bool TryParse(string s,
+                        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Real? dst)
+                    {
+                        try
+                        {
+                            dst = EDecimal.FromString(s);
+                            return true;
+                        }
+                        catch
+                        {
+                            dst = null;
+                            return false;
+                        }
                     }
+
+                    /// <summary>Negative Infinity (-oo)</summary>
+                    public static readonly Real NegativeInfinity = new Real(EDecimal.NegativeInfinity);
+
+                    /// <summary>Positive Infinity (+oo)</summary>
+                    public static readonly Real PositiveInfinity = new Real(EDecimal.PositiveInfinity);
+
+                    /// <summary>Not A Number (NaN)</summary>
+                    public static readonly Real NaN = new Real(EDecimal.NaN);
+
+                    public double AsDouble() => EDecimal.ToDouble();
+
+                    public static bool operator >(Real a, Real b) => a.EDecimal.GreaterThan(b.EDecimal);
+                    public static bool operator >=(Real a, Real b) => a.EDecimal.GreaterThanOrEquals(b.EDecimal);
+                    public static bool operator <(Real a, Real b) => a.EDecimal.LessThan(b.EDecimal);
+                    public static bool operator <=(Real a, Real b) => a.EDecimal.LessThanOrEquals(b.EDecimal);
+                    public int CompareTo(Real other) => EDecimal.CompareTo(other.EDecimal);
+                    public static Real operator +(Real a, Real b) => OpSum(a, b);
+                    public static Real operator -(Real a, Real b) => OpSub(a, b);
+                    public static Real operator *(Real a, Real b) => OpMul(a, b);
+                    public static Real operator /(Real a, Real b) => (Real)OpDiv(a, b);
+                    public static Real operator +(Real a) => a;
+                    public static Real operator -(Real a) => OpMul(Integer.MinusOne, a);
+                    public static implicit operator Real(sbyte value) => Integer.Create(value);
+                    public static implicit operator Real(byte value) => Integer.Create(value);
+                    public static implicit operator Real(short value) => Integer.Create(value);
+                    public static implicit operator Real(ushort value) => Integer.Create(value);
+                    public static implicit operator Real(int value) => Integer.Create(value);
+                    public static implicit operator Real(uint value) => Integer.Create(value);
+                    public static implicit operator Real(long value) => Integer.Create(value);
+                    public static implicit operator Real(ulong value) => Integer.Create(value);
+                    public static implicit operator Real(EInteger value) => Integer.Create(value);
+                    public static implicit operator Real(ERational value) => Rational.Create(value);
+                    public static implicit operator Real(EDecimal value) => Create(value);
+                    public static implicit operator Real(float value) => Create(EDecimal.FromSingle(value));
+                    public static implicit operator Real(double value) => Create(EDecimal.FromDouble(value));
+                    public static implicit operator Real(decimal value) => Create(EDecimal.FromDecimal(value));
                 }
-
-                /// <summary>Negative Infinity (-oo)</summary>
-                public static readonly Real NegativeInfinity = new Real(EDecimal.NegativeInfinity);
-
-                /// <summary>Positive Infinity (+oo)</summary>
-                public static readonly Real PositiveInfinity = new Real(EDecimal.PositiveInfinity);
-
-                /// <summary>Not A Number (NaN)</summary>
-                public static readonly Real NaN = new Real(EDecimal.NaN);
-
-                public double AsDouble() => EDecimal.ToDouble();
-
-                public static bool operator >(Real a, Real b) => a.EDecimal.GreaterThan(b.EDecimal);
-                public static bool operator >=(Real a, Real b) => a.EDecimal.GreaterThanOrEquals(b.EDecimal);
-                public static bool operator <(Real a, Real b) => a.EDecimal.LessThan(b.EDecimal);
-                public static bool operator <=(Real a, Real b) => a.EDecimal.LessThanOrEquals(b.EDecimal);
-                public int CompareTo(Real other) => EDecimal.CompareTo(other.EDecimal);
-                public static Real operator +(Real a, Real b) => OpSum(a, b);
-                public static Real operator -(Real a, Real b) => OpSub(a, b);
-                public static Real operator *(Real a, Real b) => OpMul(a, b);
-                public static Real operator /(Real a, Real b) => (Real)OpDiv(a, b);
-                public static Real operator +(Real a) => a;
-                public static Real operator -(Real a) => OpMul(Integer.MinusOne, a);
-                public static implicit operator Real(sbyte value) => Integer.Create(value);
-                public static implicit operator Real(byte value) => Integer.Create(value);
-                public static implicit operator Real(short value) => Integer.Create(value);
-                public static implicit operator Real(ushort value) => Integer.Create(value);
-                public static implicit operator Real(int value) => Integer.Create(value);
-                public static implicit operator Real(uint value) => Integer.Create(value);
-                public static implicit operator Real(long value) => Integer.Create(value);
-                public static implicit operator Real(ulong value) => Integer.Create(value);
-                public static implicit operator Real(EInteger value) => Integer.Create(value);
-                public static implicit operator Real(ERational value) => Rational.Create(value);
-                public static implicit operator Real(EDecimal value) => Create(value);
-                public static implicit operator Real(float value) => Create(EDecimal.FromSingle(value));
-                public static implicit operator Real(double value) => Create(EDecimal.FromDouble(value));
-                public static implicit operator Real(decimal value) => Create(EDecimal.FromDecimal(value));
             }
         }
     }

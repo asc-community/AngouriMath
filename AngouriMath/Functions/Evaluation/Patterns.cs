@@ -16,8 +16,8 @@
 
 using System;
 using System.Linq;
-using static AngouriMath.Entity;
-using static AngouriMath.Entity.Number;
+using static AngouriMath.Entity.Continuous;
+using static AngouriMath.Entity.Continuous.Number;
 
 namespace AngouriMath.Functions
 {
