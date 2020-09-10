@@ -16,6 +16,7 @@
 using AngouriMath.Core;
 using NumericsComplex = System.Numerics.Complex;
 using PeterO.Numbers;
+using System.Linq;
 
 namespace AngouriMath.Extensions
 {
@@ -23,6 +24,8 @@ namespace AngouriMath.Extensions
     using static Entity.Number;
     public static class AngouriMathExtensions
     {
+        public static FiniteSet ToFiniteSet(this System.Collections.Generic.IEnumerable<Entity> expr) 
+            => new FiniteSet(expr.Select(c => SetPiece.Element(c)));
         public static Entity ToEntity(this string expr) => MathS.FromString(expr);
         public static Entity Simplify(this string expr) => expr.ToEntity().Simplify();
         public static Complex Eval(this string expr) => expr.ToEntity().Eval();

@@ -3,6 +3,8 @@ using System;
 using System.Linq;
 using System.Reflection;
 using Xunit;
+using AngouriMath.Extensions;
+using AngouriMath.Core;
 
 namespace UnitTests.Convenience
 {
@@ -47,5 +49,9 @@ namespace UnitTests.Convenience
                 throw new InvalidCastException($"Invokation returned {entObj?.GetType()} instead of {typeof(Entity)}");
             Assert.Equal(ent, MathS.FromString(stringizedExpr));
         }
+
+        [Fact]
+        public void TestExtensionToFiniteSet()
+            => Assert.Equal(new Set(1, 2, 3).AsFiniteSet(), new Entity[] { 1, 2, 3 }.ToFiniteSet());
     }
 }
