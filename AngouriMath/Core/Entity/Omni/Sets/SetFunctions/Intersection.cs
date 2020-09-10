@@ -18,49 +18,52 @@ using System.Linq;
 
 namespace AngouriMath.Core
 {
-    partial record SetNode
+    partial record Entity
     {
-        partial record Intersection
+        partial record SetNode
         {
-            public override SetNode Eval()
+            partial record Intersection
             {
-                if (!(A is Set a && B is Set b))
-                    return new Intersection(A, B);
-                var (goodAPieces, badAPieces) = GatherEvaluablePieces(a);
-                var (goodBPieces, badBPieces) = GatherEvaluablePieces(b);
-                if (goodAPieces.Count * goodBPieces.Count == 0)
-                    return new Intersection(A, B);
-                var newPieces = goodAPieces
-                    .SelectMany(_ => goodBPieces, (goodAPiece, goodBPiece) =>
-                        PieceFunctions.Intersect(goodAPiece, goodBPiece) is { } piece
-                        && PieceFunctions.IsPieceCorrect(piece)
-                        ? piece : null);
+                public override SetNode Eval()
+                {
+                    if (!(A is Set a && B is Set b))
+                        return new Intersection(A, B);
+                    var (goodAPieces, badAPieces) = GatherEvaluablePieces(a);
+                    var (goodBPieces, badBPieces) = GatherEvaluablePieces(b);
+                    if (goodAPieces.Count * goodBPieces.Count == 0)
+                        return new Intersection(A, B);
+                    var newPieces = goodAPieces
+                        .SelectMany(_ => goodBPieces, (goodAPiece, goodBPiece) =>
+                            PieceFunctions.Intersect(goodAPiece, goodBPiece) is { } piece
+                            && PieceFunctions.IsPieceCorrect(piece)
+                            ? piece : null);
 
-                var union = RepeatApply(null, newPieces, PieceFunctions.Unite);
-                var badA = new Set { Pieces = badAPieces };
-                var badB = new Set { Pieces = badBPieces };
-                if (union is null)
-                    return badA.IsEmpty() || badB.IsEmpty() ? new Set() : (SetNode)new Intersection(badA, badB);
-                var united = new Set { Pieces = union.ToList() };
-                if (badBPieces.Count + badAPieces.Count == 0)
-                    return united;
-                /*
-                 * A = A1 or A2 (A1 - good, A2 - bad)
-                 * B = B1 or B2 (B1 - good, B2 - bad)
-                 * A & B = (A1 & B1) | (A1 & B2) | (A2 & B1) | (A2 & B2)
-                 */
-                var goodA = new Set { Pieces = goodAPieces };
-                var goodB = new Set { Pieces = goodBPieces };
-                return new Union(
-                    united,                                // A1 & B1
-                    new Union(                             
-                        new Intersection(badA, badB),      // A2 & B2
+                    var union = RepeatApply(null, newPieces, PieceFunctions.Unite);
+                    var badA = new Set { Pieces = badAPieces };
+                    var badB = new Set { Pieces = badBPieces };
+                    if (union is null)
+                        return badA.IsEmpty() || badB.IsEmpty() ? new Set() : (SetNode)new Intersection(badA, badB);
+                    var united = new Set { Pieces = union.ToList() };
+                    if (badBPieces.Count + badAPieces.Count == 0)
+                        return united;
+                    /*
+                     * A = A1 or A2 (A1 - good, A2 - bad)
+                     * B = B1 or B2 (B1 - good, B2 - bad)
+                     * A & B = (A1 & B1) | (A1 & B2) | (A2 & B1) | (A2 & B2)
+                     */
+                    var goodA = new Set { Pieces = goodAPieces };
+                    var goodB = new Set { Pieces = goodBPieces };
+                    return new Union(
+                        united,                                // A1 & B1
                         new Union(
-                            new Intersection(badA, goodB), // A2 & B1
-                            new Intersection(badB, goodA)  // A1 & B2
+                            new Intersection(badA, badB),      // A2 & B2
+                            new Union(
+                                new Intersection(badA, goodB), // A2 & B1
+                                new Intersection(badB, goodA)  // A1 & B2
+                            )
                         )
-                    )
-                );
+                    );
+                }
             }
         }
     }

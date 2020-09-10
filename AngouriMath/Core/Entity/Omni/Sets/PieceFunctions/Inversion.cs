@@ -22,7 +22,7 @@
 namespace AngouriMath.Core
 {
     using System.Collections.Generic;
-    using static Entity.Number;
+    using static Entity.Continuous.Number;
     static partial class PieceFunctions
     {
         public static IEnumerable<SetPiece> Invert(SetPiece A)

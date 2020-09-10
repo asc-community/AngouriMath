@@ -13,22 +13,25 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-namespace AngouriMath.Core
+namespace AngouriMath
 {
-    partial record SetNode
+    partial record Entity
     {
-        partial record Union
+        partial record SetNode
         {
-            public override SetNode Eval()
+            partial record Union
             {
-                if (!(A is Set a && B is Set b))
-                    return A & B;
-                var newSet = new Set();
-                foreach (var piece in a)
-                    newSet.AddPiece(piece);
-                foreach (var piece in b)
-                    newSet.AddPiece(piece);
-                return newSet;
+                public override SetNode Eval()
+                {
+                    if (!(A is Set a && B is Set b))
+                        return A & B;
+                    var newSet = new Set();
+                    foreach (var piece in a)
+                        newSet.AddPiece(piece);
+                    foreach (var piece in b)
+                        newSet.AddPiece(piece);
+                    return newSet;
+                }
             }
         }
     }

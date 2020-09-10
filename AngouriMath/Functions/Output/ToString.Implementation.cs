@@ -13,32 +13,26 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-
 namespace AngouriMath
 {
-    partial record Entity
+    using Core;
+    using static Entity.Number;
+    public abstract partial record Entity
     {
-        partial record SetNode
+        /// <summary>Converts an expression into a string</summary>
+        public override string ToString() => Stringize();
+        internal abstract string Stringize();
+        protected internal string Stringize(bool parenthesesRequired) =>
+            parenthesesRequired ? @$"({Stringize()})" : Stringize();
+
+        public partial record Variable
         {
-            partial record Complement
-            {
-                public override SetNode Eval()
-                {
-                    if (!(A is Set a && B is Set b))
-                        return A - B;
-                    var (goodAPieces, badAPieces) = GatherEvaluablePieces(a);
-                    var (goodBPieces, badBPieces) = GatherEvaluablePieces(b);
-                    var newGoodPieces = RepeatApply(goodAPieces, goodBPieces, PieceFunctions.Subtract).ToList();
-                    newGoodPieces.AddRange(badAPieces);
-                    var newSet = new Set { Pieces = newGoodPieces };
-                    if (badBPieces.Count == 0)
-                        return newSet;
-                    else
-                        return new Complement(newSet, new Set { Pieces = badBPieces });
-                }
-            }
+            internal override string Stringize() => Name;
+        }
+
+        public partial record Tensor
+        {
+            internal override string Stringize() => InnerTensor.ToString();
         }
     }
 }

@@ -25,6 +25,8 @@ namespace AngouriMath
 
     public abstract partial record Entity
     {
+        internal abstract Entity InnerSimplify();
+
         partial record Continuous
         {
             /// <summary>
@@ -114,9 +116,6 @@ namespace AngouriMath
                 Evaled is Tensor value ? value :
                     throw new InvalidOperationException
                         ($"Result cannot be represented as a {nameof(Tensor)}! Check the type of {nameof(Evaled)} beforehand.");
-
-            protected abstract Entity InnerEval();
-            internal abstract Entity InnerSimplify();
         }
     }
 }

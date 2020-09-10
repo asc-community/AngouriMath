@@ -22,8 +22,8 @@ using PeterO.Numbers;
 
 namespace AngouriMath.Functions
 {
-    using static Entity;
-    using static Entity.Number;
+    using static Entity.Continuous;
+    using static Entity.Continuous.Number;
     internal static partial class TreeAnalyzer
     {
         // TODO: realize all methods
@@ -58,7 +58,7 @@ namespace AngouriMath.Functions
         /// =>
         /// [x2, x, a + b, x]
         /// </summary>
-        internal static List<Entity>? GatherLinearChildrenOverSumAndExpand(Entity expr, Func<Entity, bool> conditionForUniqueTerms)
+        internal static List<Entity>? GatherLinearChildrenOverSumAndExpand(Entity.Continuous expr, Func<Entity.Continuous, bool> conditionForUniqueTerms)
         {
             if (expr is not (Sumf or Minusf))
                 return SmartExpandOver(expr, conditionForUniqueTerms);

@@ -16,22 +16,25 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace AngouriMath.Core
+namespace AngouriMath
 {
-    partial record SetNode
+    partial record Entity
     {
-        partial record Inversion
+        partial record SetNode
         {
-            public override SetNode Eval()
+            partial record Inversion
             {
-                if (!(A is Set s))
-                    return new Inversion(A);
-                var (goodAPieces, badAPieces) = GatherEvaluablePieces(s);
-                var remainders = RepeatApply(new[] { Interval.CreateUniverse() }, goodAPieces, PieceFunctions.Subtract);
-                var newSet = new Set { Pieces = remainders.ToList() };
-                return badAPieces.Count == 0
-                       ? newSet
-                       : (SetNode)new Complement(newSet, new Set { Pieces = badAPieces });
+                public override SetNode Eval()
+                {
+                    if (!(A is Set s))
+                        return new Inversion(A);
+                    var (goodAPieces, badAPieces) = GatherEvaluablePieces(s);
+                    var remainders = RepeatApply(new[] { Interval.CreateUniverse() }, goodAPieces, PieceFunctions.Subtract);
+                    var newSet = new Set { Pieces = remainders.ToList() };
+                    return badAPieces.Count == 0
+                           ? newSet
+                           : (SetNode)new Complement(newSet, new Set { Pieces = badAPieces });
+                }
             }
         }
     }

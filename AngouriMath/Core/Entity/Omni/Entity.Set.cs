@@ -21,7 +21,7 @@ namespace AngouriMath
 {
     partial record Entity
     {
-        public partial record Set
+        partial record Set
         {
 
         }
