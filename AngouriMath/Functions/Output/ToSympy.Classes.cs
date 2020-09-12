@@ -18,12 +18,7 @@ using AngouriMath.Core;
 namespace AngouriMath
 {
     public abstract partial record Entity
-    {
-        /// <summary>Generates Python code that you can use with sympy</summary>
-        internal abstract string ToSymPy();
-        protected string ToSymPy(bool parenthesesRequired) =>
-            parenthesesRequired ? @$"({ToSymPy()})" : ToSymPy();
-        
+    {   
         public partial record Variable
         {
             internal override string ToSymPy() => Name;
@@ -157,6 +152,42 @@ namespace AngouriMath
         {
             internal override string ToSymPy()
                 => $@"sympy.Abs({Argument.ToSymPy()})";
+        }
+
+        partial record Boolean
+        {
+            internal override string ToSymPy()
+                => this ? "True" : "False";
+        }
+
+        partial record Notf
+        {
+            internal override string ToSymPy()
+                => $"not {Argument.ToSymPy(Argument.Priority < Priority)}";
+        }
+
+        partial record Andf
+        {
+            internal override string ToSymPy()
+                => $"{Left.ToSymPy(Left.Priority < Priority)} and {Right.ToSymPy(Right.Priority < Priority)}";
+        }
+
+        partial record Orf
+        {
+            internal override string ToSymPy()
+                => $"{Left.ToSymPy(Left.Priority < Priority)} or {Right.ToSymPy(Right.Priority < Priority)}";
+        }
+
+        partial record Xorf
+        {
+            internal override string ToSymPy()
+                => $"{Left.ToSymPy(Left.Priority < Priority)} ^ {Right.ToSymPy(Right.Priority < Priority)}";
+        }
+
+        partial record Impliesf
+        {
+            internal override string ToSymPy()
+                => $"sympy.Implies({Assumption.ToSymPy()}, {Conclusion.ToSymPy()})";
         }
     }
 }

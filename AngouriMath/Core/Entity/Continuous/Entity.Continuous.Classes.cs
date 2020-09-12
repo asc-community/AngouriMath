@@ -252,6 +252,7 @@ namespace AngouriMath
 
         #region Non-numeric nodes
 
+        // Iterations should be refactored? to be int instead of Entity
         public partial record Derivativef(Entity Expression, Entity Var, Entity Iterations) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>

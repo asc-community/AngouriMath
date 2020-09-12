@@ -21,7 +21,8 @@ namespace AngouriMath
     // Adding function Derive to Entity
     public abstract partial record Entity
     {
-        public abstract Entity Derive(Variable variable);
+        public virtual Entity Derive(Variable variable)
+            => new Derivativef(this, variable, 1);
 
         public partial record Variable
         {

@@ -93,7 +93,9 @@ namespace AngouriMath
         // theoretically, for cases such limit (x -> -1) 1 / (x + 1)
         // this method will return NaN, but thanks to replacement of x to an non-definite expression,
         // it is somehow compensated
-        internal abstract Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side);
+        internal virtual Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            => new Limitf(this, x, dist, side);
+
         public partial record Number
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) => this;

@@ -37,47 +37,58 @@ namespace AngouriMath
                 _ => ToString() + " "
             };
         }
+
         public partial record Variable : Entity
         {
             private protected override string SortHashName(SortLevel level) => "v_" + Name;
         }
+
         public partial record Tensor : Entity
         {
             private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "tensort_" : "";
         }
+
         // Each function and operator processing
         public partial record Sumf
         {
             private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "sumf_" : "";
         }
+
         public partial record Minusf
         {
             private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "minusf_" : "";
         }
+
         public partial record Mulf
         {
             private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "mulf_" : "";
         }
+
         public partial record Divf
         {
             private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "divf_" : "";
         }
+
         public partial record Powf
         {
             private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "powf_" : "";
         }
+
         public partial record Sinf
         {
             private protected override string SortHashName(SortLevel level) => "sinf_";
         }
+
         public partial record Cosf
         {
             private protected override string SortHashName(SortLevel level) => "cosf_";
         }
+
         public partial record Tanf
         {
             private protected override string SortHashName(SortLevel level) => "tanf_";
         }
+
         public partial record Cotanf
         {
             private protected override string SortHashName(SortLevel level) => "cotanf_";
@@ -92,18 +103,22 @@ namespace AngouriMath
         {
             private protected override string SortHashName(SortLevel level) => "arcsinf_";
         }
+
         public partial record Arccosf
         {
             private protected override string SortHashName(SortLevel level) => "arccosf_";
         }
+
         public partial record Arctanf
         {
             private protected override string SortHashName(SortLevel level) => "arctanf_";
         }
+
         public partial record Arccotanf
         {
             private protected override string SortHashName(SortLevel level) => "arccotanf_";
         }
+
         public partial record Factorialf
         {
             private protected override string SortHashName(SortLevel level) => "factorialf_";
@@ -132,6 +147,47 @@ namespace AngouriMath
         public partial record Absf
         {
             private protected override string SortHashName(SortLevel level) => "absf_";
+        }
+
+        partial record Boolean
+        {
+            private protected override string SortHashName(SortLevel level)
+                => level switch
+                {
+                    SortLevel.HIGH_LEVEL => "",
+                    SortLevel.MIDDLE_LEVEL => ToString(),
+                    _ => ToString() + " "
+                };
+        }
+
+        partial record Notf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => level == SortLevel.LOW_LEVEL ? "not_" : "";
+        }
+
+        partial record Andf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => level == SortLevel.LOW_LEVEL ? "and_" : "";
+        }
+
+        partial record Orf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => level == SortLevel.LOW_LEVEL ? "or_" : "";
+        }
+
+        partial record Xorf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => level == SortLevel.LOW_LEVEL ? "xor_" : "";
+        }
+
+        partial record Impliesf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => level == SortLevel.LOW_LEVEL ? "impl_" : "";
         }
     }
 }

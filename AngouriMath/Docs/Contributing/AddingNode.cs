@@ -20,23 +20,22 @@
 ///     b. Add instance method to Entity (Press F12 -> <see cref="Entity.Sin"/>).
 /// 
 /// 3. A few essential methods
-///     a. InnerEval (<see cref="Sinf.InnerEval"/> for numerical and <see cref="Andf.InnerEval"/> for boolean)
+///     a. InnerEval and InnerSimplify (<see cref="Sinf.InnerEval"/> for numerical and <see cref="Andf.InnerEval"/> for boolean)
 ///     b. Stringize (<see cref="Sinf.Stringize"/>)
 ///     c. Latexise (<see cref="Sinf.Latexise"/>)
-///     d. InnerSimplify (<see cref="Sinf.InnerSimplify"/>)
-///     e. Limit computation (<see cref="Sinf.ComputeLimitDivideEtImpera"/>)
-///     f. Hash for sorting (<see cref="Sinf.SortHashName"/>)
+///     d. Limit computation (<see cref="Sinf.ComputeLimitDivideEtImpera"/>)
+///     e. Hash for sorting (<see cref="Sinf.SortHashName"/>)
 /// 
 /// 4. Pattern replacer (<see cref="Patterns.CommonRules"/> and <see cref="Simplificator.Alternate"/>)
 /// 5. Expose to the user (add it to MathS, like <see cref="MathS.Sin">this</see>)
 /// 
 /// Now, you might be required to complete the following steps as well:
 /// 
-/// 6. Derivation (if appropriate) (<see cref="Sinf.Derive"/>)
-/// 7. Compilation (if appropriate) (<see cref="Sinf.CompileNode"/> and <see cref="FastExpression.Substitute"/>)
-/// 8. Parser (if appropriate) (See ImproveParser.md in the same folder as this file)
-/// 9. Analytical Solver (if appropriate) (<see cref="Sinf.InvertNode"/>)
-/// 10. ToSympy (if appropriate) (<see cref="Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
+/// 6. Derivation (if applicable) (<see cref="Sinf.Derive"/>)
+/// 7. Compilation (if applicable) (<see cref="Sinf.CompileNode"/> and <see cref="FastExpression.Substitute"/>)
+/// 8. Parser (if applicable) (See ImproveParser.md in the same folder as this file)
+/// 9. Analytical Solver (if applicable) (<see cref="Sinf.InvertNode"/>)
+/// 10. ToSympy (if applicable) (<see cref="Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
 /// 
 
 

@@ -27,27 +27,31 @@ namespace AngouriMath
         public partial record Sumf
         {
             public override string Latexise() =>
-                Augend.Latexise(Augend.Priority < Priority.Sum)
-                + (Addend.Latexise(Addend.Priority < Priority.Sum) is var addend && addend.StartsWith("-")
+                Augend.Latexise(Augend.Priority < Priority)
+                + (Addend.Latexise(Addend.Priority < Priority) is var addend && addend.StartsWith("-")
                     ? addend : "+" + addend);
         }
+
         public partial record Minusf
         {
             public override string Latexise() =>
-                Subtrahend.Latexise(Subtrahend.Priority < Priority.Minus)
-                + "-" + Minuend.Latexise(Minuend.Priority <= Priority.Minus);
+                Subtrahend.Latexise(Subtrahend.Priority < Priority)
+                + "-" + Minuend.Latexise(Minuend.Priority <= Priority);
         }
+
         public partial record Mulf
         {
             public override string Latexise() =>
-                (Multiplier == -1 ? "-" : Multiplier.Latexise(Multiplier.Priority < Priority.Mul) + @"\times ")
-                + Multiplicand.Latexise(Multiplicand.Priority < Priority.Mul);
+                (Multiplier == -1 ? "-" : Multiplier.Latexise(Multiplier.Priority < Priority) + @"\times ")
+                + Multiplicand.Latexise(Multiplicand.Priority < Priority);
         }
+
         public partial record Divf
         {
             public override string Latexise() =>
                 @"\frac{" + Dividend.Latexise() + "}{" + Divisor.Latexise() + "}";
         }
+
         public partial record Sinf
         {
             public override string Latexise() =>
@@ -58,16 +62,19 @@ namespace AngouriMath
             public override string Latexise() =>
                 @"\cos\left(" + Argument.Latexise() + @"\right)";
         }
+
         public partial record Tanf
         {
             public override string Latexise() =>
                 @"\tan\left(" + Argument.Latexise() + @"\right)";
         }
+
         public partial record Cotanf
         {
             public override string Latexise() =>
                 @"\cot\left(" + Argument.Latexise() + @"\right)";
         }
+
         public partial record Logf
         {
             public override string Latexise() =>
@@ -77,6 +84,7 @@ namespace AngouriMath
                 ? @"\ln\left(" + Antilogarithm.Latexise() + @"\right)"
                 : @"\log_{" + Base.Latexise() + @"}\left(" + Antilogarithm.Latexise() + @"\right)";
         }
+
         public partial record Powf
         {
             public override string Latexise()
@@ -100,21 +108,25 @@ namespace AngouriMath
                 }
             }
         }
+
         public partial record Arcsinf
         {
             public override string Latexise() =>
                 @"\arcsin\left(" + Argument.Latexise() + @"\right)";
         }
+
         public partial record Arccosf
         {
             public override string Latexise() =>
                 @"\arccos\left(" + Argument.Latexise() + @"\right)";
         }
+
         public partial record Arctanf
         {
             public override string Latexise() =>
                 @"\arctan\left(" + Argument.Latexise() + @"\right)";
         }
+
         public partial record Arccotanf
         {
             public override string Latexise() =>
@@ -287,6 +299,7 @@ namespace AngouriMath
                 return sb.ToString();
             }
         }
+
         partial record SetNode : ILatexiseable
         {
             public abstract string Latexise();
@@ -306,6 +319,41 @@ namespace AngouriMath
             {
                 public override string Latexise() => $@"\left({A.Latexise()}^\complement\right)";
             }
+        }
+
+        partial record Boolean
+        {
+            public override string Latexise() => $@"\operatorname{{{((bool)this).ToString()}}}";
+        }
+
+        partial record Notf
+        {
+            public override string Latexise()
+                => $@"\neg{{{Argument.Latexise(Argument.Priority < Priority)}}}";
+        }
+
+        partial record Andf
+        {
+            public override string Latexise()
+                => $@"{Left.Latexise(Left.Priority < Priority)} \land {Right.Latexise(Right.Priority < Priority)}";
+        }
+
+        partial record Orf
+        {
+            public override string Latexise()
+                => $@"{Left.Latexise(Left.Priority < Priority)} \lor {Right.Latexise(Right.Priority < Priority)}";
+        }
+
+        partial record Xorf
+        {
+            public override string Latexise()
+                => $@"{Left.Latexise(Left.Priority < Priority)} \oplus {Right.Latexise(Right.Priority < Priority)}";
+        }
+
+        partial record Impliesf
+        {
+            public override string Latexise()
+                => $@"{Assumption.Latexise(Assumption.Priority < Priority)} \implies {Conclusion.Latexise(Conclusion.Priority < Priority)}";
         }
     }
 }
