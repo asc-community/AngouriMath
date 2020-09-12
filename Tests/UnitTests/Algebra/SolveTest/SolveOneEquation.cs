@@ -3,6 +3,7 @@ using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
 using System.Collections.Generic;
+using static AngouriMath.Entity;
 
 namespace UnitTests.Algebra
 {

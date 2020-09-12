@@ -5,6 +5,7 @@ using System.Reflection;
 using Xunit;
 using AngouriMath.Extensions;
 using AngouriMath.Core;
+using static AngouriMath.Entity;
 
 namespace UnitTests.Convenience
 {

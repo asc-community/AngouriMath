@@ -28,7 +28,7 @@ namespace AngouriMath
             SortHashName(level) + string.Join("_", DirectChildren.Select(child => child.SortHash(level)).Where(x => x is not ""));
         private protected abstract string SortHashName(SortLevel level);
 
-        public partial record Number : Entity
+        public partial record Number
         {
             private protected override string SortHashName(SortLevel level) => level switch
             {

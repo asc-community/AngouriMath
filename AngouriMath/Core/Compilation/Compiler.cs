@@ -42,7 +42,7 @@ namespace AngouriMath
             }
         }
 
-        public partial record Number : Entity
+        public partial record Number
         {
             private protected override void CompileNode(Compiler compiler) =>
                 compiler.Instructions.Add(new(InstructionType.PUSH_CONST, Value: ((Complex)this).ToNumerics()));

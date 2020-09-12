@@ -13,6 +13,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using AngouriMath.Core;
 using System;
 using System.Collections;
 using System.Collections.Generic;

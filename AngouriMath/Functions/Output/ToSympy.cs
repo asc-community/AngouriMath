@@ -34,133 +34,129 @@ namespace AngouriMath
             internal override string ToSymPy() => InnerTensor.ToString();
         }
 
-        partial record Continuous
+        public partial record Number
         {
-
-            public partial record Number
-            {
-                internal override string ToSymPy() => ToString().Replace("i", "sympy.I");
-            }
+            internal override string ToSymPy() => ToString().Replace("i", "sympy.I");
+        }
 
 
-            public partial record Sumf
-            {
-                internal override string ToSymPy() =>
-                    Augend.ToSymPy(Augend.Priority < Priority.Sum) + " + " + Addend.ToSymPy(Addend.Priority < Priority.Sum);
-            }
+        public partial record Sumf
+        {
+            internal override string ToSymPy() =>
+                Augend.ToSymPy(Augend.Priority < Priority.Sum) + " + " + Addend.ToSymPy(Addend.Priority < Priority.Sum);
+        }
 
-            public partial record Minusf
-            {
-                internal override string ToSymPy() =>
-                    Subtrahend.ToSymPy(Subtrahend.Priority < Priority.Minus) + " - " + Minuend.ToSymPy(Minuend.Priority <= Priority.Minus);
-            }
+        public partial record Minusf
+        {
+            internal override string ToSymPy() =>
+                Subtrahend.ToSymPy(Subtrahend.Priority < Priority.Minus) + " - " + Minuend.ToSymPy(Minuend.Priority <= Priority.Minus);
+        }
 
-            public partial record Mulf
-            {
-                internal override string ToSymPy() =>
-                    Multiplier.ToSymPy(Multiplier.Priority < Priority.Mul) + " * " + Multiplicand.ToSymPy(Multiplicand.Priority < Priority.Mul);
-            }
+        public partial record Mulf
+        {
+            internal override string ToSymPy() =>
+                Multiplier.ToSymPy(Multiplier.Priority < Priority.Mul) + " * " + Multiplicand.ToSymPy(Multiplicand.Priority < Priority.Mul);
+        }
 
-            public partial record Divf
-            {
-                internal override string ToSymPy() =>
-                    Dividend.ToSymPy(Dividend.Priority < Priority.Div) + " / " + Divisor.ToSymPy(Divisor.Priority <= Priority.Div);
-            }
+        public partial record Divf
+        {
+            internal override string ToSymPy() =>
+                Dividend.ToSymPy(Dividend.Priority < Priority.Div) + " / " + Divisor.ToSymPy(Divisor.Priority <= Priority.Div);
+        }
 
-            public partial record Sinf
-            {
-                internal override string ToSymPy() => "sympy.sin(" + Argument.ToSymPy() + ")";
-            }
+        public partial record Sinf
+        {
+            internal override string ToSymPy() => "sympy.sin(" + Argument.ToSymPy() + ")";
+        }
 
-            public partial record Cosf
-            {
-                internal override string ToSymPy() => "sympy.cos(" + Argument.ToSymPy() + ")";
-            }
+        public partial record Cosf
+        {
+            internal override string ToSymPy() => "sympy.cos(" + Argument.ToSymPy() + ")";
+        }
 
-            public partial record Tanf
-            {
-                internal override string ToSymPy() => "sympy.tan(" + Argument.ToSymPy() + ")";
-            }
+        public partial record Tanf
+        {
+            internal override string ToSymPy() => "sympy.tan(" + Argument.ToSymPy() + ")";
+        }
 
-            public partial record Cotanf
-            {
-                internal override string ToSymPy() => "sympy.cot(" + Argument.ToSymPy() + ")";
-            }
+        public partial record Cotanf
+        {
+            internal override string ToSymPy() => "sympy.cot(" + Argument.ToSymPy() + ")";
+        }
 
-            public partial record Logf
-            {
-                internal override string ToSymPy() => "sympy.log(" + Antilogarithm.ToSymPy() + ", " + Base.ToSymPy() + ")";
-            }
+        public partial record Logf
+        {
+            internal override string ToSymPy() => "sympy.log(" + Antilogarithm.ToSymPy() + ", " + Base.ToSymPy() + ")";
+        }
 
-            public partial record Powf
-            {
-                internal override string ToSymPy() =>
-                    Exponent == 0.5m
-                    ? "sympy.sqrt(" + Base.ToSymPy() + ")"
-                    : Base.ToSymPy(Base.Priority < Priority.Pow) + " ** " + Exponent.ToSymPy(Exponent.Priority < Priority.Pow);
-            }
+        public partial record Powf
+        {
+            internal override string ToSymPy() =>
+                Exponent == 0.5m
+                ? "sympy.sqrt(" + Base.ToSymPy() + ")"
+                : Base.ToSymPy(Base.Priority < Priority.Pow) + " ** " + Exponent.ToSymPy(Exponent.Priority < Priority.Pow);
+        }
 
-            public partial record Arcsinf
-            {
-                internal override string ToSymPy() => "sympy.asin(" + Argument.ToSymPy() + ")";
-            }
+        public partial record Arcsinf
+        {
+            internal override string ToSymPy() => "sympy.asin(" + Argument.ToSymPy() + ")";
+        }
 
-            public partial record Arccosf
-            {
-                internal override string ToSymPy() => "sympy.acos(" + Argument.ToSymPy() + ")";
-            }
+        public partial record Arccosf
+        {
+            internal override string ToSymPy() => "sympy.acos(" + Argument.ToSymPy() + ")";
+        }
 
-            public partial record Arctanf
-            {
-                internal override string ToSymPy() => "sympy.atan(" + Argument.ToSymPy() + ")";
-            }
+        public partial record Arctanf
+        {
+            internal override string ToSymPy() => "sympy.atan(" + Argument.ToSymPy() + ")";
+        }
 
-            public partial record Arccotanf
-            {
-                internal override string ToSymPy() => "sympy.acot(" + Argument.ToSymPy() + ")";
-            }
+        public partial record Arccotanf
+        {
+            internal override string ToSymPy() => "sympy.acot(" + Argument.ToSymPy() + ")";
+        }
 
-            public partial record Factorialf
-            {
-                internal override string ToSymPy() => "sympy.factorial(" + Argument.ToSymPy() + ")";
-            }
+        public partial record Factorialf
+        {
+            internal override string ToSymPy() => "sympy.factorial(" + Argument.ToSymPy() + ")";
+        }
 
-            public partial record Derivativef
-            {
-                internal override string ToSymPy() => $"sympy.diff({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations.ToSymPy()})";
-            }
+        public partial record Derivativef
+        {
+            internal override string ToSymPy() => $"sympy.diff({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations.ToSymPy()})";
+        }
 
-            public partial record Integralf
-            {
-                // TODO: The 3rd parameter of sympy.integrate is not interpreted as iterations, unlike sympy.diff
-                // which allows both sympy.diff(expr, var, iterations) and sympy.diff(expr, var1, var2, var3...)
-                internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations.ToSymPy()})";
-            }
+        public partial record Integralf
+        {
+            // TODO: The 3rd parameter of sympy.integrate is not interpreted as iterations, unlike sympy.diff
+            // which allows both sympy.diff(expr, var, iterations) and sympy.diff(expr, var1, var2, var3...)
+            internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations.ToSymPy()})";
+        }
 
-            public partial record Limitf
-            {
-                internal override string ToSymPy() =>
-                    @$"sympy.limit({Expression.ToSymPy()}, {Var.ToSymPy()}, {Destination.ToSymPy()}{ApproachFrom switch
-                    {
-                        ApproachFrom.Left => ", '-'",
-                        ApproachFrom.BothSides => "",
-                        ApproachFrom.Right => ", '+'",
-                        _ => throw new System.ComponentModel.InvalidEnumArgumentException
-                          (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
-                    }})";
-            }
+        public partial record Limitf
+        {
+            internal override string ToSymPy() =>
+                @$"sympy.limit({Expression.ToSymPy()}, {Var.ToSymPy()}, {Destination.ToSymPy()}{ApproachFrom switch
+                {
+                    ApproachFrom.Left => ", '-'",
+                    ApproachFrom.BothSides => "",
+                    ApproachFrom.Right => ", '+'",
+                    _ => throw new System.ComponentModel.InvalidEnumArgumentException
+                        (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
+                }})";
+        }
 
-            public partial record Signumf
-            {
-                internal override string ToSymPy()
-                    => $@"sympy.sign({Argument.ToSymPy()})";
-            }
+        public partial record Signumf
+        {
+            internal override string ToSymPy()
+                => $@"sympy.sign({Argument.ToSymPy()})";
+        }
 
-            public partial record Absf
-            {
-                internal override string ToSymPy()
-                    => $@"sympy.Abs({Argument.ToSymPy()})";
-            }
+        public partial record Absf
+        {
+            internal override string ToSymPy()
+                => $@"sympy.Abs({Argument.ToSymPy()})";
         }
     }
 }

@@ -67,10 +67,10 @@ namespace AngouriMath
         }
 
         #region Operators
-        public partial record Sumf(Continuous Augend, Continuous Addend) : Continuous
+        public partial record Sumf(Entity Augend, Entity Addend) : Continuous
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            Sumf New(Continuous augend, Continuous addend) =>
+            Sumf New(Entity augend, Entity addend) =>
                 ReferenceEquals(Augend, augend) && ReferenceEquals(Addend, addend) ? this : new(augend, addend);
             public override Priority Priority => Priority.Sum;
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Augend.Replace(func), Addend.Replace(func)));
@@ -89,7 +89,7 @@ namespace AngouriMath
                 _ => new[] { tree }
             };
         }
-        public static Continuous operator +(Continuous a, Continuous b) => new Sumf(a, b);
+        public static Entity operator +(Entity a, Entity b) => new Sumf(a, b);
         public static Entity operator +(Entity a) => a;
 
         public partial record Minusf(Entity Subtrahend, Entity Minuend) : Continuous

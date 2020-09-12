@@ -24,6 +24,8 @@ namespace AngouriMath.Core
     using static Entity.Continuous.Number;
     using Edge1D = ValueTuple<Entity.Continuous.Number.Real, bool>;
     using Edge = ValueTuple<Entity, bool, bool>;
+    using static AngouriMath.Entity;
+
     internal static partial class PieceFunctions
     {
         internal static Edge1D IntersectEdge(

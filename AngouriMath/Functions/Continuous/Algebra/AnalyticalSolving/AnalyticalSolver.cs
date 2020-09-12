@@ -64,7 +64,7 @@ namespace AngouriMath
                    r.RealPart <= to.RealPart &&
                    r.ImaginaryPart <= to.ImaginaryPart;
         }
-        public partial record Number : Entity
+        public partial record Number
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 throw new ArgumentException("This function must contain " + nameof(x), nameof(x));

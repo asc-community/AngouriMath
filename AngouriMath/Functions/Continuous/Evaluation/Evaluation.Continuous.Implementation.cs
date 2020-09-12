@@ -28,10 +28,6 @@ namespace AngouriMath
         internal abstract Entity InnerSimplify();
         protected abstract Entity InnerEval();
 
-        partial record Continuous
-        {
-        }
-
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
         /// </summary>

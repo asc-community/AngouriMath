@@ -19,10 +19,12 @@
  *
  */
 
+using System.Collections.Generic;
+using static AngouriMath.Entity.Number;
+using static AngouriMath.Entity;
+
 namespace AngouriMath.Core
 {
-    using System.Collections.Generic;
-    using static Entity.Continuous.Number;
     static partial class PieceFunctions
     {
         public static IEnumerable<SetPiece> Invert(SetPiece A)

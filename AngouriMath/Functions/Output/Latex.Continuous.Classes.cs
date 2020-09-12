@@ -223,93 +223,89 @@ namespace AngouriMath
             public override string Latexise()
                 => $@"\left|{Argument.Latexise()}\right|";
         }
-    }
-}
 
-
-namespace AngouriMath.Core
-{
-    partial record Set
-    {
-        public override string Latexise()
+        partial record Set
         {
-            if (IsEmpty())
-                return @"\emptyset";
-
-            var sb = new StringBuilder();
-            sb.Append(@"\left\{");
-            foreach (var p in Pieces)
+            public override string Latexise()
             {
-                switch (p)
+                if (IsEmpty())
+                    return @"\emptyset";
+
+                var sb = new StringBuilder();
+                sb.Append(@"\left\{");
+                foreach (var p in Pieces)
                 {
-                    case OneElementPiece oneelem:
-                        sb.Append(oneelem.UpperBound().Item1.Latexise());
-                        break;
-                    case Interval _:
-                        var lower = p.LowerBound();
-                        var upper = p.UpperBound();
-                        var l = lower.Item1.Latexise();
-                        var u = upper.Item1.Latexise();
-                        switch (lower.Item2, lower.Item3, upper.Item2, upper.Item3)
-                        {
-                            // Complex part is inclusive for all real intervals which is [0, 0]i
-                            case (false, true, false, true):
-                                sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right)");
-                                break;
-                            case (true, true, false, true):
-                                sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right)");
-                                break;
-                            case (false, true, true, true):
-                                sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right]");
-                                break;
-                            case (true, true, true, true):
-                                sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right]");
-                                break;
-                            case var (lr, li, ur, ui):
-                                static string Extract(Entity entity, bool takeReal) =>
-                                    (entity, takeReal) switch
-                                    {
-                                        (Complex num, true) => num.RealPart.Latexise(),
-                                        (Complex num, false) => num.ImaginaryPart.Latexise(),
-                                        (_, true) => @"\Re\left(" + entity.Latexise() + @"\right)",
-                                        (_, false) => @"\Im\left(" + entity.Latexise() + @"\right)",
-                                    };
-                                sb.Append(@"\left\{z\in\mathbb C:\Re\left(z\right)\in\left")
-                                    .Append(lr ? '[' : '(').Append(Extract(lower.Item1, true)).Append(',')
-                                    .Append(Extract(upper.Item1, true)).Append(@"\right").Append(ur ? ']' : ')')
-                                    .Append(@"\wedge\Im\left(z\right)\in\left")
-                                    .Append(li ? '[' : '(').Append(Extract(lower.Item1, false)).Append(',')
-                                    .Append(Extract(upper.Item1, false)).Append(@"\right").Append(ui ? ']' : ')')
-                                    .Append(@"\right\}");
-                                break;
-                        }
-                        break;
+                    switch (p)
+                    {
+                        case OneElementPiece oneelem:
+                            sb.Append(oneelem.UpperBound().Item1.Latexise());
+                            break;
+                        case Interval _:
+                            var lower = p.LowerBound();
+                            var upper = p.UpperBound();
+                            var l = lower.Item1.Latexise();
+                            var u = upper.Item1.Latexise();
+                            switch (lower.Item2, lower.Item3, upper.Item2, upper.Item3)
+                            {
+                                // Complex part is inclusive for all real intervals which is [0, 0]i
+                                case (false, true, false, true):
+                                    sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right)");
+                                    break;
+                                case (true, true, false, true):
+                                    sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right)");
+                                    break;
+                                case (false, true, true, true):
+                                    sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right]");
+                                    break;
+                                case (true, true, true, true):
+                                    sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right]");
+                                    break;
+                                case var (lr, li, ur, ui):
+                                    static string Extract(Entity entity, bool takeReal) =>
+                                        (entity, takeReal) switch
+                                        {
+                                            (Complex num, true) => num.RealPart.Latexise(),
+                                            (Complex num, false) => num.ImaginaryPart.Latexise(),
+                                            (_, true) => @"\Re\left(" + entity.Latexise() + @"\right)",
+                                            (_, false) => @"\Im\left(" + entity.Latexise() + @"\right)",
+                                        };
+                                    sb.Append(@"\left\{z\in\mathbb C:\Re\left(z\right)\in\left")
+                                        .Append(lr ? '[' : '(').Append(Extract(lower.Item1, true)).Append(',')
+                                        .Append(Extract(upper.Item1, true)).Append(@"\right").Append(ur ? ']' : ')')
+                                        .Append(@"\wedge\Im\left(z\right)\in\left")
+                                        .Append(li ? '[' : '(').Append(Extract(lower.Item1, false)).Append(',')
+                                        .Append(Extract(upper.Item1, false)).Append(@"\right").Append(ui ? ']' : ')')
+                                        .Append(@"\right\}");
+                                    break;
+                            }
+                            break;
+                    }
+                    sb.Append(',');
                 }
-                sb.Append(',');
+                sb.Remove(sb.Length - 1, 1); // Remove extra ,
+                sb.Append(@"\right\}");
+                return sb.ToString();
             }
-            sb.Remove(sb.Length - 1, 1); // Remove extra ,
-            sb.Append(@"\right\}");
-            return sb.ToString();
         }
-    }
-    partial record SetNode : ILatexiseable
-    {
-        public abstract string Latexise();
-        partial record Union
+        partial record SetNode : ILatexiseable
         {
-            public override string Latexise() => $@"\left({A.Latexise()}\cup{B.Latexise()}\right)";
-        }
-        partial record Intersection
-        {
-            public override string Latexise() => $@"\left({A.Latexise()}\cap{B.Latexise()}\right)";
-        }
-        partial record Complement
-        {
-            public override string Latexise() => $@"\left({A.Latexise()}\setminus{B.Latexise()}\right)";
-        }
-        partial record Inversion
-        {
-            public override string Latexise() => $@"\left({A.Latexise()}^\complement\right)";
+            public abstract string Latexise();
+            partial record Union
+            {
+                public override string Latexise() => $@"\left({A.Latexise()}\cup{B.Latexise()}\right)";
+            }
+            partial record Intersection
+            {
+                public override string Latexise() => $@"\left({A.Latexise()}\cap{B.Latexise()}\right)";
+            }
+            partial record Complement
+            {
+                public override string Latexise() => $@"\left({A.Latexise()}\setminus{B.Latexise()}\right)";
+            }
+            partial record Inversion
+            {
+                public override string Latexise() => $@"\left({A.Latexise()}^\complement\right)";
+            }
         }
     }
 }
