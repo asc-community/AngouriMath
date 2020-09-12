@@ -40,6 +40,11 @@ namespace AngouriMath
             public static Boolean False => new Boolean(BooleanValue.False);
             public static implicit operator bool(Boolean b) => b == True;
             public static Boolean Create(bool value) => value ? True : False;
+
+            public override Entity Replace(Func<Entity, Entity> func) 
+                => this;
+            public override Priority Priority => Priority.Number;
+            protected override Entity[] InitDirectChildren() => new Entity[] { };
         }
 
         #region Operators
@@ -53,6 +58,7 @@ namespace AngouriMath
             private Notf New(Entity negated) =>
                 ReferenceEquals(Argument, negated) ? this : new(negated);
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
         public sealed partial record Andf(Entity Left, Entity Right) : BooleanNode
@@ -62,6 +68,7 @@ namespace AngouriMath
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
         public sealed partial record Orf(Entity Left, Entity Right) : BooleanNode
@@ -71,6 +78,7 @@ namespace AngouriMath
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
         public sealed partial record Xorf(Entity Left, Entity Right) : BooleanNode
@@ -80,6 +88,7 @@ namespace AngouriMath
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
         public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : BooleanNode
@@ -89,6 +98,7 @@ namespace AngouriMath
                 ReferenceEquals(Assumption, left) && ReferenceEquals(Conclusion, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Assumption.Replace(func), Conclusion.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Assumption, Conclusion };
         }
 
         #endregion

@@ -348,7 +348,7 @@ namespace AngouriMath
                 _ => this
             };
             internal override Entity InnerSimplify() =>
-                Var.InnerSimplify() is Variable var && Iterations.InnerSimplify() is Integer { EInteger: var asInt }
+                Var.InnerSimplify() is Variable && Iterations.InnerSimplify() is Integer { EInteger: var asInt }
                 ? asInt.IsZero
                     ? Expression.InnerSimplify()
                     : throw new NotImplementedException("Integration is not implemented yet")

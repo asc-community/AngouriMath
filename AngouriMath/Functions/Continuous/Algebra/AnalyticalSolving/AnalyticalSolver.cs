@@ -66,8 +66,8 @@ namespace AngouriMath
         }
         public partial record Number
         {
-            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) 
+                => throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
         }
         public partial record Variable : Entity
         {
@@ -241,6 +241,47 @@ namespace AngouriMath
             // x = f(x).InvertNode(value * e ^ (i * n), x)
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 => Argument.Invert(value * MathS.e.Pow(MathS.i * Variable.CreateUnique(value + Argument, "r")), x);
+        }
+
+        partial record Boolean
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
+        }
+
+        partial record Notf
+        {
+            // !f(x) = value
+            // f(x) = !value
+            // x = f(x).InvertNode(!value, x)
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Argument.Invert(!value, x);
+        }
+
+        partial record Andf
+        {
+            // f(x) & b = value
+            // f(x) = Piecewise...
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Piecewise to be implemented");
+        }
+
+        partial record Orf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Piecewise to be implemented");
+        }
+
+        partial record Xorf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Piecewise to be implemented");
+        }
+
+        partial record Impliesf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Piecewise to be implemented");
         }
     }
 }

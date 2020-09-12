@@ -323,7 +323,7 @@ namespace AngouriMath
 
         partial record Boolean
         {
-            public override string Latexise() => $@"\operatorname{{{((bool)this).ToString()}}}";
+            public override string Latexise() => $@"\operatorname{{{(bool)this}}}";
         }
 
         partial record Notf

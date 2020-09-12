@@ -294,7 +294,7 @@ namespace AngouriMath
         {
             private Signumf New(Entity arg) =>
                 ReferenceEquals(Argument, arg) ? this : new(arg);
-            public override Entity Replace(Func<Entity, Entity> func) => func(Argument.Replace(func).Signum());
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
@@ -302,7 +302,7 @@ namespace AngouriMath
         {
             private Absf New(Entity arg) =>
                 ReferenceEquals(Argument, arg) ? this : new(arg);
-            public override Entity Replace(Func<Entity, Entity> func) => func(Argument.Replace(func).Abs());
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
