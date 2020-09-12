@@ -19,24 +19,27 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {
+        public partial record Variable
+        {
+            // TODO: When target-typed conditional expression lands, remove the explicit conversion
+            protected override Entity InnerEval() => ConstantList.TryGetValue(this, out var value) ? (Entity)value : this;
+            internal override Entity InnerSimplify() => this;
+        }
+        public partial record Tensor
+        {
+            protected override Entity InnerEval() => Elementwise(e => e.Evaled);
+            internal override Entity InnerSimplify() => Elementwise(e => e.InnerSimplify());
+        }
+
         partial record Continuous
         {
+
             public partial record Number
             {
                 protected override Entity InnerEval() => this;
                 internal override Entity InnerSimplify() => this;
             }
-            public partial record Variable
-            {
-                // TODO: When target-typed conditional expression lands, remove the explicit conversion
-                protected override Entity InnerEval() => ConstantList.TryGetValue(this, out var value) ? (Entity)value : this;
-                internal override Entity InnerSimplify() => this;
-            }
-            public partial record Tensor
-            {
-                protected override Entity InnerEval() => Elementwise(e => e.Evaled);
-                internal override Entity InnerSimplify() => Elementwise(e => e.InnerSimplify());
-            }
+            
             // Each function and operator processing
             public partial record Sumf
             {

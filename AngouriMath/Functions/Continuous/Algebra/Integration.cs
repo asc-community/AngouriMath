@@ -22,36 +22,33 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {
-        partial record Continuouos
-        {
-            /// <summary>
-            /// Returns a value of a definite integral of a function. Only works for one-variable functions
-            /// </summary>
-            /// <param name="x">Variable to integrate over</param>
-            /// <param name="from">The complex lower bound for integrating</param>
-            /// <param name="to">The complex upper bound for integrating</param>
-            public Complex DefiniteIntegral(Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to) =>
-                Integration.Integrate(this, x, from, to, 100);
+        /// <summary>
+        /// Returns a value of a definite integral of a function. Only works for one-variable functions
+        /// </summary>
+        /// <param name="x">Variable to integrate over</param>
+        /// <param name="from">The complex lower bound for integrating</param>
+        /// <param name="to">The complex upper bound for integrating</param>
+        public Complex DefiniteIntegral(Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to) =>
+            Integration.Integrate(this, x, from, to, 100);
 
-            /// <summary>
-            /// Returns a value of a definite integral of a function. Only works for one-variable functions
-            /// </summary>
-            /// <param name="x">Variable to integrate over</param>
-            /// <param name="from">The real lower bound for integrating</param>
-            /// <param name="to">The real upper bound for integrating</param>
-            public Complex DefiniteIntegral(Variable x, EDecimal from, EDecimal to) =>
-                Integration.Integrate(this, x, (from, 0), (to, 0), 100);
+        /// <summary>
+        /// Returns a value of a definite integral of a function. Only works for one-variable functions
+        /// </summary>
+        /// <param name="x">Variable to integrate over</param>
+        /// <param name="from">The real lower bound for integrating</param>
+        /// <param name="to">The real upper bound for integrating</param>
+        public Complex DefiniteIntegral(Variable x, EDecimal from, EDecimal to) =>
+            Integration.Integrate(this, x, (from, 0), (to, 0), 100);
 
-            /// <summary>
-            /// Returns a value of a definite integral of a function. Only works for one-variable functions
-            /// </summary>
-            /// <param name="x">Variable to integrate over</param>
-            /// <param name="from">The complex lower bound for integrating</param>
-            /// <param name="to">The complex upper bound for integrating</param>
-            /// <param name="stepCount">Accuracy (initially, amount of iterations)</param>
-            public Complex DefiniteIntegral(Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
-                Integration.Integrate(this, x, from, to, stepCount);
-        }
+        /// <summary>
+        /// Returns a value of a definite integral of a function. Only works for one-variable functions
+        /// </summary>
+        /// <param name="x">Variable to integrate over</param>
+        /// <param name="from">The complex lower bound for integrating</param>
+        /// <param name="to">The complex upper bound for integrating</param>
+        /// <param name="stepCount">Accuracy (initially, amount of iterations)</param>
+        public Complex DefiniteIntegral(Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
+            Integration.Integrate(this, x, from, to, stepCount);
     }
 }
 namespace AngouriMath.Functions.Algebra

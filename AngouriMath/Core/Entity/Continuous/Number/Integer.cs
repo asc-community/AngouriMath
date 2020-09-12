@@ -19,66 +19,63 @@ namespace AngouriMath
     using Core;
     partial record Entity
     {
-        partial record Continuous
+        public abstract partial record Number
         {
-            public abstract partial record Number
+            /// <summary>Use <see cref="Create(EInteger)"/> instead of the constructor for consistency with
+            /// <see cref="Rational"/>, <see cref="Real"/> and <see cref="Complex"/>.</summary>
+            public record Integer : Rational, System.IComparable<Integer>
             {
-                /// <summary>Use <see cref="Create(EInteger)"/> instead of the constructor for consistency with
-                /// <see cref="Rational"/>, <see cref="Real"/> and <see cref="Complex"/>.</summary>
-                public record Integer : Rational, System.IComparable<Integer>
+                private Integer(EInteger value) : base(value) => EInteger = value;
+                public EInteger EInteger { get; }
+                public override Priority Priority => IsNegative ? Priority.Mul : Priority.Number;
+                public static readonly Integer Zero = new Integer(EInteger.Zero);
+                public static readonly Integer One = new Integer(EInteger.One);
+                public static readonly Integer MinusOne = new Integer(-EInteger.One);
+
+                public static Integer Create(EInteger value) => new Integer(value);
+
+                public void Deconstruct(out int? value) =>
+                    value = EInteger.CanFitInInt32() ? EInteger.ToInt32Unchecked() : new int?();
+
+                // TODO: When we target .NET 5, remember to use covariant return types
+                public override Real Abs() => Create(EInteger.Abs());
+
+                internal override string Stringize() => EInteger.ToString();
+                public override string Latexise() => EInteger.ToString();
+                internal static bool TryParse(string s,
+                    [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Integer? dst)
                 {
-                    private Integer(EInteger value) : base(value) => EInteger = value;
-                    public EInteger EInteger { get; }
-                    public override Priority Priority => IsNegative ? Priority.Mul : Priority.Number;
-                    public static readonly Integer Zero = new Integer(EInteger.Zero);
-                    public static readonly Integer One = new Integer(EInteger.One);
-                    public static readonly Integer MinusOne = new Integer(-EInteger.One);
-
-                    public static Integer Create(EInteger value) => new Integer(value);
-
-                    public void Deconstruct(out int? value) =>
-                        value = EInteger.CanFitInInt32() ? EInteger.ToInt32Unchecked() : new int?();
-
-                    // TODO: When we target .NET 5, remember to use covariant return types
-                    public override Real Abs() => Create(EInteger.Abs());
-
-                    internal override string Stringize() => EInteger.ToString();
-                    public override string Latexise() => EInteger.ToString();
-                    internal static bool TryParse(string s,
-                        [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Integer? dst)
+                    try
                     {
-                        try
-                        {
-                            dst = EInteger.FromString(s);
-                            return true;
-                        }
-                        catch
-                        {
-                            dst = null;
-                            return false;
-                        }
+                        dst = EInteger.FromString(s);
+                        return true;
                     }
-                    public static bool operator >(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) > 0;
-                    public static bool operator >=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) >= 0;
-                    public static bool operator <(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) < 0;
-                    public static bool operator <=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) <= 0;
-                    public int CompareTo(Integer other) => EInteger.CompareTo(other.EInteger);
-                    public static Integer operator +(Integer a, Integer b) => OpSum(a, b);
-                    public static Integer operator -(Integer a, Integer b) => OpSub(a, b);
-                    public static Integer operator *(Integer a, Integer b) => OpMul(a, b);
-                    public static Real operator /(Integer a, Integer b) => (Real)OpDiv(a, b);
-                    public static Integer operator +(Integer a) => a;
-                    public static Integer operator -(Integer a) => OpMul(MinusOne, a);
-                    public static implicit operator Integer(sbyte value) => Create(value);
-                    public static implicit operator Integer(byte value) => Create(value);
-                    public static implicit operator Integer(short value) => Create(value);
-                    public static implicit operator Integer(ushort value) => Create(value);
-                    public static implicit operator Integer(int value) => Create(value);
-                    public static implicit operator Integer(uint value) => Create(value);
-                    public static implicit operator Integer(long value) => Create(value);
-                    public static implicit operator Integer(ulong value) => Create(value);
-                    public static implicit operator Integer(EInteger value) => Create(value);
+                    catch
+                    {
+                        dst = null;
+                        return false;
+                    }
                 }
+                public static bool operator >(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) > 0;
+                public static bool operator >=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) >= 0;
+                public static bool operator <(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) < 0;
+                public static bool operator <=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) <= 0;
+                public int CompareTo(Integer other) => EInteger.CompareTo(other.EInteger);
+                public static Integer operator +(Integer a, Integer b) => OpSum(a, b);
+                public static Integer operator -(Integer a, Integer b) => OpSub(a, b);
+                public static Integer operator *(Integer a, Integer b) => OpMul(a, b);
+                public static Real operator /(Integer a, Integer b) => (Real)OpDiv(a, b);
+                public static Integer operator +(Integer a) => a;
+                public static Integer operator -(Integer a) => OpMul(MinusOne, a);
+                public static implicit operator Integer(sbyte value) => Create(value);
+                public static implicit operator Integer(byte value) => Create(value);
+                public static implicit operator Integer(short value) => Create(value);
+                public static implicit operator Integer(ushort value) => Create(value);
+                public static implicit operator Integer(int value) => Create(value);
+                public static implicit operator Integer(uint value) => Create(value);
+                public static implicit operator Integer(long value) => Create(value);
+                public static implicit operator Integer(ulong value) => Create(value);
+                public static implicit operator Integer(EInteger value) => Create(value);
             }
         }
     }
