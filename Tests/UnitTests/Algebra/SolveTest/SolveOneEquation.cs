@@ -22,7 +22,7 @@ namespace UnitTests.Algebra
             foreach (var vr in equation.Vars)
                 substitutions.Add(vr, subValue + substitutions.Count);
             equation = equation.Substitute(substitutions);
-            var err = equation.Eval().Abs();
+            var err = equation.EvalNumerical().Abs();
             Assert.True(err < 0.001m, $"\nError = {err}\n{eqNormal}\nWrong root: {toSub} = {varValue}");
         }
 

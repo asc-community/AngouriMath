@@ -28,7 +28,7 @@ namespace AngouriMath
         /// <summary>
         /// This node represents all possible values a boolean node might be of
         /// </summary>
-        public sealed record Boolean(Boolean.BooleanValue Value) : BooleanNode
+        public sealed partial record Boolean(Boolean.BooleanValue Value) : BooleanNode
         {
             public enum BooleanValue
             {
@@ -38,7 +38,8 @@ namespace AngouriMath
 
             public static Boolean True => new Boolean(BooleanValue.True);
             public static Boolean False => new Boolean(BooleanValue.False);
-            public static implicit operator bool(Boolean b) => b == Boolean.True;
+            public static implicit operator bool(Boolean b) => b == True;
+            public static Boolean Create(bool value) => value ? True : False;
         }
 
         #region Operators
@@ -46,7 +47,7 @@ namespace AngouriMath
         /// <summary>
         /// Whatever its argument is, the result will be inverted
         /// </summary>
-        public partial record Notf(Entity Argument) : BooleanNode
+        public sealed partial record Notf(Entity Argument) : BooleanNode
         {
             public override Priority Priority => Priority.Negation;
             private Notf New(Entity negated) =>
@@ -54,7 +55,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
         }
 
-        public partial record Andf(Entity Left, Entity Right) : BooleanNode
+        public sealed partial record Andf(Entity Left, Entity Right) : BooleanNode
         {
             public override Priority Priority => Priority.Conjunction;
             private Andf New(Entity left, Entity right) =>
@@ -63,7 +64,7 @@ namespace AngouriMath
                 => func(New(Left.Replace(func), Right.Replace(func)));
         }
 
-        public partial record Orf(Entity Left, Entity Right) : BooleanNode
+        public sealed partial record Orf(Entity Left, Entity Right) : BooleanNode
         {
             public override Priority Priority => Priority.Disjunction;
             private Orf New(Entity left, Entity right) =>
@@ -72,7 +73,7 @@ namespace AngouriMath
                 => func(New(Left.Replace(func), Right.Replace(func)));
         }
 
-        public partial record Xorf(Entity Left, Entity Right) : BooleanNode
+        public sealed partial record Xorf(Entity Left, Entity Right) : BooleanNode
         {
             public override Priority Priority => Priority.XDisjunction;
             private Xorf New(Entity left, Entity right) =>
@@ -81,10 +82,10 @@ namespace AngouriMath
                 => func(New(Left.Replace(func), Right.Replace(func)));
         }
 
-        public partial record Impliesf(Entity Assumption, Entity Conclusion) : BooleanNode
+        public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : BooleanNode
         {
             public override Priority Priority => Priority.Impliciation;
-            private Orf New(Entity left, Entity right) =>
+            private Impliesf New(Entity left, Entity right) =>
                 ReferenceEquals(Assumption, left) && ReferenceEquals(Conclusion, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Assumption.Replace(func), Conclusion.Replace(func)));

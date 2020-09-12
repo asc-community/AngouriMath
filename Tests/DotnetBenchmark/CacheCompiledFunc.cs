@@ -27,6 +27,6 @@ namespace DotnetBenchmark
         [Benchmark] public Complex MyCompiled() => complexFunc.Call(ComToSub);
         [Benchmark] public Complex SysIncode() => Complex.Sin(Complex.Pow(3, 2)) + Complex.Cos(Complex.Pow(3, 2)) + Complex.Pow(3, 2) + Complex.Sin(Complex.Pow(3, 2));
         [Benchmark] public Complex LinqCompiled() => linqComp.Invoke(3);
-        [Benchmark] public Entity.Number.Complex NotCompiled() => notCompiled.Substitute(x, 3).Eval();
+        [Benchmark] public Entity.Number.Complex NotCompiled() => notCompiled.Substitute(x, 3).EvalNumerical();
     }
 }

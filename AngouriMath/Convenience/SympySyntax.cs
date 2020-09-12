@@ -79,7 +79,7 @@ namespace AngouriMath
         /// computing a concrete number, knowing that you don't have
         /// any other symbols but numbers and functions.
         /// </summary>
-        public static Number.Complex Evalf(Entity expr) => expr.Eval();
+        public static Number.Complex Evalf(Entity expr) => expr.EvalNumerical();
 
         /// <returns>
         /// Returns the expression in format of latex (for example, a / b -> \frac{a}{b})

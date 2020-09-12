@@ -23,10 +23,17 @@ namespace AngouriMath
         /// </summary>
         public abstract partial record BooleanNode : Entity
         {
-
+            
         }
 
-        public static implicit operator Entity(bool v) => v ? Boolean.True : Boolean.False;
-        //public static Entity operator &(Entity a, Entity b)
+        public static implicit operator Entity(bool v) => Boolean.Create(v);
+        public static Entity operator !(Entity a) => new Notf(a);
+        public static Entity operator &(Entity a, Entity b) => new Andf(a, b);
+        public static Entity operator |(Entity a, Entity b) => new Orf(a, b);
+
+        // TODO: do we need this operator? Won't it be confused with power?
+        //public static Entity operator ^(Entity a, Entity b) => new Xorf(a, b);
+        public Entity Xor(Entity another) => new Xorf(this, another);
+        public Entity Implies(Entity conclusion) => new Impliesf(this, conclusion);
     }
 }

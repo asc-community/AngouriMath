@@ -43,26 +43,26 @@ namespace UnitTests.Convenience
         [InlineData("2s")]
         public void NotAVariable(string input) =>
             Assert.Throws<System.InvalidCastException>(() => (Entity.Variable)input);
-        [Fact] public void Test1() => Assert.Equal(2, MathS.FromString("1 + 1").Eval());
-        [Fact] public void Test2() => Assert.Equal(0, MathS.FromString("sin(0)").Eval());
-        [Fact] public void Test3() => Assert.Equal(2, MathS.FromString("log(2, 4)").Eval());
-        [Fact] public void Test4() => Assert.Equal(2, MathS.FromString("log(100)").Eval());
+        [Fact] public void Test1() => Assert.Equal(2, MathS.FromString("1 + 1").EvalNumerical());
+        [Fact] public void Test2() => Assert.Equal(0, MathS.FromString("sin(0)").EvalNumerical());
+        [Fact] public void Test3() => Assert.Equal(2, MathS.FromString("log(2, 4)").EvalNumerical());
+        [Fact] public void Test4() => Assert.Equal(2, MathS.FromString("log(100)").EvalNumerical());
         [Fact] public void Test5() => Assert.Equal(MathS.Cos(x), MathS.FromString("sin(x)").Derive(x).Simplify());
-        [Fact] public void Test6() => Assert.Equal(7625597484987L, MathS.FromString("3 ^ 3 ^ 3").Eval());
-        [Fact] public void Test7() => Assert.Equal(6, MathS.FromString("2 + 2 * 2").Eval());
+        [Fact] public void Test6() => Assert.Equal(7625597484987L, MathS.FromString("3 ^ 3 ^ 3").EvalNumerical());
+        [Fact] public void Test7() => Assert.Equal(6, MathS.FromString("2 + 2 * 2").EvalNumerical());
         [Fact] public void Test8() =>
             // Only needed for Mac
             MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () =>
                 Assert.Equal(MathS.i, MathS.FromString("x^2+1").SolveNt(x).First())
             );
-        [Fact] public void Test9() => Assert.Equal(1, MathS.FromString("cos(sin(0))").Eval());
-        [Fact] public void Test10() => Assert.Equal(Entity.Number.Complex.Create(4, 1), MathS.FromString("2i + 2 * 2 - 1i").Eval());
-        [Fact] public void Test11() => Assert.Equal(-1, MathS.FromString("i^2").Eval());
-        [Fact] public void Test12() => Assert.Equal(3, MathS.FromString("x^2-1").Substitute(x, 2).Eval());
-        [Fact] public void Test13() => Assert.Equal(MathS.DecimalConst.pi / 2, MathS.FromString("arcsin(x)").Substitute(x, 1).Eval());
+        [Fact] public void Test9() => Assert.Equal(1, MathS.FromString("cos(sin(0))").EvalNumerical());
+        [Fact] public void Test10() => Assert.Equal(Entity.Number.Complex.Create(4, 1), MathS.FromString("2i + 2 * 2 - 1i").EvalNumerical());
+        [Fact] public void Test11() => Assert.Equal(-1, MathS.FromString("i^2").EvalNumerical());
+        [Fact] public void Test12() => Assert.Equal(3, MathS.FromString("x^2-1").Substitute(x, 2).EvalNumerical());
+        [Fact] public void Test13() => Assert.Equal(MathS.DecimalConst.pi / 2, MathS.FromString("arcsin(x)").Substitute(x, 1).EvalNumerical());
         [Fact] public void Test14() => Assert.Equal(MathS.Sqr(x), MathS.FromString("x2"));
         [Fact] public void Test15() =>  Assert.Equal(2 * x, MathS.FromString("2x"));
-        [Fact] public void Test16() => Assert.Equal(9, MathS.FromString("3 2").Eval());
+        [Fact] public void Test16() => Assert.Equal(9, MathS.FromString("3 2").EvalNumerical());
         [Fact] public void Test17() => Assert.Equal(5 * x, MathS.FromString("x(2 + 3)").Simplify());
         [Fact] public void Test18() => Assert.Equal(x * y, MathS.FromString("x y"));
         [Fact] public void Test19() => Assert.Equal(x * MathS.Sqrt(3), MathS.FromString("x sqrt(3)"));

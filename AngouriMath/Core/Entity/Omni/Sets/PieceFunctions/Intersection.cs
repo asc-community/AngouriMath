@@ -51,8 +51,8 @@ namespace AngouriMath.Core
         {
             var A = piece.LowerBound();
             var B = piece.UpperBound();
-            var num1 = A.Item1.Eval();
-            var num2 = B.Item1.Eval();
+            var num1 = A.Item1.EvalNumerical();
+            var num2 = B.Item1.EvalNumerical();
             var lowRe = num1.RealPart;
             var upRe = num2.RealPart;
             var lowIm = num1.ImaginaryPart;

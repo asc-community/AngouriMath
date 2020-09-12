@@ -53,5 +53,20 @@ namespace AngouriMath
         public static Entity operator -(Entity a) => new Mulf(-1, a);
         public static Entity operator *(Entity a, Entity b) => new Mulf(a, b);
         public static Entity operator /(Entity a, Entity b) => new Divf(a, b);
+
+        public Entity Sin() => new Sinf(this);
+        public Entity Cos() => new Cosf(this);
+        public Entity Tan() => new Tanf(this);
+        public Entity Cotan() => new Cotanf(this);
+        public Entity Pow(Entity n) => new Powf(this, n);
+        public Entity Log(Entity x) => new Logf(this, x);
+        public Entity Arcsin() => new Arcsinf(this);
+        public Entity Arccos() => new Arccosf(this);
+        public Entity Arctan() => new Arctanf(this);
+        public Entity Arccotan() => new Arccotanf(this);
+        public Entity Factorial() => new Factorialf(this);
+        public Entity Signum() => new Signumf(this);
+        public Entity Abs() => new Absf(this);
+
     }
 }

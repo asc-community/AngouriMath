@@ -52,7 +52,7 @@ namespace UnitTests.Algebra
         {
             var a = MathS.Matrices.Vector(1, 2, 3);
             var b = MathS.Matrices.Vector(1, 2, 4);
-            Assert.Equal(17, MathS.Matrices.ScalarProduct(a, b).Eval());
+            Assert.Equal(17, MathS.Matrices.ScalarProduct(a, b).EvalNumerical());
         }
 
         [Fact]
@@ -67,7 +67,7 @@ namespace UnitTests.Algebra
                 .Substitute("B", 2)
                 .Substitute("C", 3)
                 .Substitute("D", 4);
-            Assert.Equal(-2, v.Eval());
+            Assert.Equal(-2, v.EvalNumerical());
         }
     }
 }

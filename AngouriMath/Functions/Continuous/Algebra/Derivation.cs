@@ -44,7 +44,7 @@ namespace AngouriMath
 
         public partial record Number
         {
-            public override Entity Derive(Variable variable) => Eval().IsNaN ? this : 0;
+            public override Entity Derive(Variable variable) => EvalNumerical().IsNaN ? this : 0;
         }
 
         // Each function and operator processing

@@ -26,7 +26,7 @@ namespace DotnetBenchmark
         }
         [Benchmark] public void MultiFunc() => multiFunc.Call(CToSub);
         [Benchmark] public void LinqSin() => linqFunc(3);
-        [Benchmark] public void NotCompiled() => multiFuncNotCompiled.Substitute(x, 3).Eval();
+        [Benchmark] public void NotCompiled() => multiFuncNotCompiled.Substitute(x, 3).EvalNumerical();
     }
 
     public class NumbersBenchmark

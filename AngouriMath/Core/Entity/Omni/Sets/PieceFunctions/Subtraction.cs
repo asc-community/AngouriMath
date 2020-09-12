@@ -42,8 +42,8 @@ namespace AngouriMath.Core
         {
             var lower = piece.LowerBound();
             var upper = piece.UpperBound();
-            var num1 = lower.Item1.Eval();
-            var num2 = upper.Item1.Eval();
+            var num1 = lower.Item1.EvalNumerical();
+            var num2 = upper.Item1.EvalNumerical();
             return (num1.RealPart != num2.RealPart || lower.Item2 && upper.Item2) &&
                    (num1.ImaginaryPart != num2.ImaginaryPart || lower.Item3 && upper.Item3);
         }
