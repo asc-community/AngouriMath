@@ -25,7 +25,7 @@ namespace AngouriMath
         /// Any node that might be counted as a number, derived, etc. is continuous
         /// TODO
         /// </summary>
-        public abstract partial record Continuous : Entity
+        public abstract partial record NumericNode : Entity
         {
 
         }
@@ -46,5 +46,12 @@ namespace AngouriMath
         public static implicit operator Entity(decimal value) => Number.Real.Create(EDecimal.FromDecimal(value));
         public static implicit operator Entity(Complex value) =>
             Number.Complex.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
+
+        public static Entity operator +(Entity a, Entity b) => new Sumf(a, b);
+        public static Entity operator +(Entity a) => a;
+        public static Entity operator -(Entity a, Entity b) => new Minusf(a, b);
+        public static Entity operator -(Entity a) => new Mulf(-1, a);
+        public static Entity operator *(Entity a, Entity b) => new Mulf(a, b);
+        public static Entity operator /(Entity a, Entity b) => new Divf(a, b);
     }
 }

@@ -18,9 +18,15 @@ namespace AngouriMath
 {
     partial record Entity
     {
-        public abstract partial record Discrete : Entity
+        /// <summary>
+        /// This class describes every node whose value is boolean, that is, true or false
+        /// </summary>
+        public abstract partial record BooleanNode : Entity
         {
 
         }
+
+        public static implicit operator Entity(bool v) => v ? Boolean.True : Boolean.False;
+        //public static Entity operator &(Entity a, Entity b)
     }
 }

@@ -21,7 +21,36 @@ using AngouriMath.Core;
 
 namespace AngouriMath.Core
 {
-    public enum Priority { Sum = 20, Minus = 20, Mul = 40, Div = 40, Pow = 60, Factorial = 70, Func = 80, Variable = 100, Number = 100 }
+    public enum Priority
+    { 
+        EqualitySignsOperation = 0x0000,
+
+        Equal          = 10 | EqualitySignsOperation,
+        LessThan       = 20 | EqualitySignsOperation,
+        GreaterThan    = 20 | EqualitySignsOperation,
+        LessOrEqual    = 20 | EqualitySignsOperation,
+        GreaterOrEqual = 20 | EqualitySignsOperation,
+
+        NumericalOperation = 0x1000,
+
+        Sum       = 20  | NumericalOperation, 
+        Minus     = 20  | NumericalOperation, 
+        Mul       = 40  | NumericalOperation, 
+        Div       = 40  | NumericalOperation, 
+        Pow       = 60  | NumericalOperation, 
+        Factorial = 70  | NumericalOperation, 
+        Func      = 80  | NumericalOperation, 
+        Variable  = 100 | NumericalOperation, 
+        Number    = 100 | NumericalOperation,
+
+        BooleanOperation = 0x2000,
+
+        Impliciation = 10 | BooleanOperation,
+        Disjunction  = 30 | BooleanOperation,
+        XDisjunction = 30 | BooleanOperation,
+        Conjunction  = 50 | BooleanOperation,
+        Negation     = 70 | BooleanOperation,
+    }
     public interface ILatexiseable { public string Latexise(); }
 }
 
