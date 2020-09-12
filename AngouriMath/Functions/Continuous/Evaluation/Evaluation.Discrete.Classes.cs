@@ -22,13 +22,13 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {
-        partial record Boolean : BooleanNode
+        partial record Boolean
         {
             protected override Entity InnerEval() => this;
             internal override Entity InnerSimplify() => this;
         }
 
-        partial record Notf : BooleanNode
+        partial record Notf
         {
             protected override Entity InnerEval()
             {
@@ -41,7 +41,7 @@ namespace AngouriMath
             internal override Entity InnerSimplify() => InnerEval();
         }
 
-        partial record Andf : BooleanNode
+        partial record Andf
         {
             protected override Entity InnerEval()
             {
@@ -54,7 +54,7 @@ namespace AngouriMath
             internal override Entity InnerSimplify() => InnerEval();
         }
 
-        partial record Orf : BooleanNode
+        partial record Orf
         {
             protected override Entity InnerEval()
             {
@@ -67,7 +67,7 @@ namespace AngouriMath
             internal override Entity InnerSimplify() => InnerEval();
         }
 
-        partial record Xorf : BooleanNode
+        partial record Xorf
         {
             protected override Entity InnerEval()
             {
@@ -80,7 +80,7 @@ namespace AngouriMath
             internal override Entity InnerSimplify() => InnerEval();
         }
 
-        partial record Impliesf : BooleanNode
+        partial record Impliesf
         {
             protected override Entity InnerEval()
             {

@@ -5,6 +5,12 @@
 /// To add a new node (function, operator) follow this guide. It covers all the methods you can
 /// implement for your nodes.
 /// 
+/// 0. When choosing a file to add to between *.Continuous.Classes.cs and *.Discrete.Classes.cs, choose in the following
+///    way: if your node is of the boolean type (so that can be simplified to one), it should go to
+///    *.Discrete.Classes.cs, while if it's a numerical node (i. e. can be simplified to a number), it should be
+///    added to *.Continuous.Classes.cs. If there's no *.*.Classes.cs, then add it to *.Classes.cs or to the
+///    file you need to add.
+/// 
 /// 1. Numerical evaluation (if appropriate)
 ///     a. Implement real number evaluation (<see cref="NumbersExtensions.Sin"/>)
 ///     b. then complex number evaluation (<see cref="Sin"/>)
@@ -14,7 +20,7 @@
 ///     b. Add instance method to Entity (Press F12 -> <see cref="Entity.Sin"/>).
 /// 
 /// 3. A few essential methods
-///     a. InnerEval (<see cref="Sinf.InnerEval"/>)
+///     a. InnerEval (<see cref="Sinf.InnerEval"/> for numerical and <see cref="Andf.InnerEval"/> for boolean)
 ///     b. Stringize (<see cref="Sinf.Stringize"/>)
 ///     c. Latexise (<see cref="Sinf.Latexise"/>)
 ///     d. InnerSimplify (<see cref="Sinf.InnerSimplify"/>)

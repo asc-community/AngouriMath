@@ -23,80 +23,97 @@ namespace AngouriMath
         public partial record Sumf
         {
             internal override string Stringize() =>
-                Augend.Stringize(Augend.Priority < Priority.Sum) + " + " + Addend.Stringize(Addend.Priority < Priority.Sum);
+                Augend.Stringize(Augend.Priority < Priority) + " + " + Addend.Stringize(Addend.Priority < Priority);
         }
+
         public partial record Minusf
         {
             internal override string Stringize() =>
-                Subtrahend.Stringize(Subtrahend.Priority < Priority.Minus) + " - " + Minuend.Stringize(Minuend.Priority <= Priority.Minus);
+                Subtrahend.Stringize(Subtrahend.Priority < Priority) + " - " + Minuend.Stringize(Minuend.Priority <= Priority);
         }
+
         public partial record Mulf
         {
             internal override string Stringize() =>
                 (Multiplier is Integer(-1) ? "-"
-                    : Multiplier.Stringize(Multiplier.Priority < Priority.Mul) + " * ")
-                + Multiplicand.Stringize(Multiplicand.Priority < Priority.Mul);
+                    : Multiplier.Stringize(Multiplier.Priority < Priority) + " * ")
+                + Multiplicand.Stringize(Multiplicand.Priority < Priority);
         }
+
         public partial record Divf
         {
             internal override string Stringize() =>
-                Dividend.Stringize(Dividend.Priority < Priority.Div) + " / " + Divisor.Stringize(Divisor.Priority <= Priority.Div);
+                Dividend.Stringize(Dividend.Priority < Priority) + " / " + Divisor.Stringize(Divisor.Priority <= Priority);
         }
+
         public partial record Sinf
         {
             internal override string Stringize() => "sin(" + Argument.Stringize() + ")";
         }
+
         public partial record Cosf
         {
             internal override string Stringize() => "cos(" + Argument.Stringize() + ")";
         }
+
         public partial record Tanf
         {
             internal override string Stringize() => "tan(" + Argument.Stringize() + ")";
         }
+
         public partial record Cotanf
         {
             internal override string Stringize() => "cotan(" + Argument.Stringize() + ")";
         }
+
         public partial record Logf
         {
             internal override string Stringize() => "log(" + Base.Stringize() + ", " + Antilogarithm.Stringize() + ")";
         }
+
         public partial record Powf
         {
             internal override string Stringize() =>
                 Exponent == 0.5m
                 ? "sqrt(" + Base.Stringize() + ")"
-                : Base.Stringize(Base.Priority < Priority.Pow) + " ^ " + Exponent.Stringize(Exponent.Priority < Priority.Pow);
+                : Base.Stringize(Base.Priority < Priority) + " ^ " + Exponent.Stringize(Exponent.Priority < Priority);
         }
+
         public partial record Arcsinf
         {
             internal override string Stringize() => "arcsin(" + Argument.Stringize() + ")";
         }
+
         public partial record Arccosf
         {
             internal override string Stringize() => "arccos(" + Argument.Stringize() + ")";
         }
+
         public partial record Arctanf
         {
             internal override string Stringize() => "arctan(" + Argument.Stringize() + ")";
         }
+
         public partial record Arccotanf
         {
             internal override string Stringize() => "arccotan(" + Argument.Stringize() + ")";
         }
+
         public partial record Factorialf
         {
             internal override string Stringize() => Argument.Stringize(Argument.Priority < Priority.Number) + "!";
         }
+
         public partial record Derivativef
         {
             internal override string Stringize() => $"derive({Expression}, {Var}, {Iterations})";
         }
+
         public partial record Integralf
         {
             internal override string Stringize() => $"integrate({Expression}, {Var}, {Iterations})";
         }
+
         public partial record Limitf
         {
             internal override string Stringize() =>
@@ -109,13 +126,49 @@ namespace AngouriMath
                         (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
                 } + $"({Expression}, {Var}, {Destination})";
         }
+
         public partial record Signumf
         {
             internal override string Stringize() => $"sgn({Argument})";
         }
+
         public partial record Absf
         {
             internal override string Stringize() => $"abs({Argument})";
+        }
+
+        partial record Boolean
+        {
+            internal override string Stringize() => ((bool)this).ToString();
+        }
+
+        partial record Notf
+        {
+            internal override string Stringize() => $"!{Argument.Stringize(Argument.Priority < Priority)}";
+        }
+
+        partial record Andf
+        {
+            internal override string Stringize()
+                => $"{Left.Stringize(Left.Priority < Priority)} & {Right.Stringize(Right.Priority < Priority)}";
+        }
+
+        partial record Orf
+        {
+            internal override string Stringize()
+                => $"{Left.Stringize(Left.Priority < Priority)} | {Right.Stringize(Right.Priority < Priority)}";
+        }
+
+        partial record Xorf
+        {
+            internal override string Stringize()
+                => $"{Left.Stringize(Left.Priority < Priority)} xor {Right.Stringize(Right.Priority < Priority)}";
+        }
+
+        partial record Impliesf
+        {
+            internal override string Stringize()
+                => $"{Assumption.Stringize(Assumption.Priority < Priority)} -> {Conclusion.Stringize(Conclusion.Priority < Priority)}";
         }
     }
 }
