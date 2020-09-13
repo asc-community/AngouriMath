@@ -10,10 +10,10 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity exprComplex = "sqrt(-1)";
+            Entity exprComplex = "x4 - 1";
             var exprReal = exprComplex.DomainFromComplexToReal();
-            Console.WriteLine(exprComplex.EvalNumerical());
-            Console.WriteLine(exprReal.EvalNumerical());
+            Console.WriteLine(exprComplex.SolveEquation("x"));
+            Console.WriteLine(exprReal.SolveEquation("x"));
         }
     }
 }

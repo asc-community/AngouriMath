@@ -28,14 +28,18 @@ namespace AngouriMath
         /// </summary>
         public Domain Domain 
         { 
-            get => domain;
+            get
+            {
+                domain ??= DefaultDomain;
+                return (Domain)domain;
+            }
             protected init
-            { 
-                domain = DefaultDomain;
-            } 
+            {
+                domain = value;
+            }
         }
-        private Domain domain;
-
+        private Domain? domain = null;
+        
 
         protected Entity InnerWithNewDomain(Domain newDomain)
             => Domain == newDomain ? this : this with { Domain = newDomain };
