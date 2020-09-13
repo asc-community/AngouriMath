@@ -14,11 +14,6 @@
  */
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Runtime.CompilerServices;
-using PeterO.Numbers;
 using AngouriMath.Core;
 
 namespace AngouriMath
@@ -28,18 +23,12 @@ namespace AngouriMath
         /// <summary>
         /// This node represents all possible values a boolean node might be of
         /// </summary>
-        public sealed partial record Boolean(Boolean.BooleanValue Value) : BooleanNode
+        public sealed partial record Boolean(bool Value) : BooleanNode
         {
-            public enum BooleanValue
-            {
-                False,
-                True
-            }
-
-            public static Boolean True => new Boolean(BooleanValue.True);
-            public static Boolean False => new Boolean(BooleanValue.False);
-            public static implicit operator bool(Boolean b) => b == True;
-            public static Boolean Create(bool value) => value ? True : False;
+            public static Boolean True => new Boolean(true);
+            public static Boolean False => new Boolean(false);
+            public static implicit operator bool(Boolean b) => b.Value;
+            public static Boolean Create(bool value) => value ? True : False; // to avoid reallocation
 
             public override Entity Replace(Func<Entity, Entity> func) 
                 => this;

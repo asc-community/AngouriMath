@@ -25,6 +25,7 @@
 ///     c. Latexise (<see cref="Sinf.Latexise"/>)
 ///     d. Limit computation (<see cref="Sinf.ComputeLimitDivideEtImpera"/>)
 ///     e. Hash for sorting (<see cref="Sinf.SortHashName"/>)
+///     f. Default domain <see cref="Sinf.DefaultDomain"/>
 /// 
 /// 4. Pattern replacer (<see cref="Patterns.CommonRules"/> and <see cref="Simplificator.Alternate"/>)
 /// 5. Expose to the user (add it to MathS, like <see cref="MathS.Sin">this</see>)
@@ -36,7 +37,6 @@
 /// 8. Parser (if applicable) (See ImproveParser.md in the same folder as this file)
 /// 9. Analytical Solver (if applicable) (<see cref="Sinf.InvertNode"/>)
 /// 10. ToSympy (if applicable) (<see cref="Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
-/// 
 
 
 

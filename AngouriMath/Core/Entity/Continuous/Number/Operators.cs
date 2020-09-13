@@ -94,7 +94,7 @@ namespace AngouriMath
                     (a, b) => Rational.Create(CtxAdd(a.ERational, b.ERational)),
                     (a, b) => Real.Create(CtxAdd(a.EDecimal, b.EDecimal)),
                     (a, b) => Complex.Create(CtxAdd(a.RealPart.EDecimal, b.RealPart.EDecimal),
-                                                CtxAdd(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
+                                             CtxAdd(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
                     );
             internal static T OpSub<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
@@ -102,7 +102,7 @@ namespace AngouriMath
                     (a, b) => Rational.Create(CtxSubtract(a.ERational, b.ERational)),
                     (a, b) => Real.Create(CtxSubtract(a.EDecimal, b.EDecimal)),
                     (a, b) => Complex.Create(CtxSubtract(a.RealPart.EDecimal, b.RealPart.EDecimal),
-                                                CtxSubtract(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
+                                             CtxSubtract(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
                     );
             internal static T OpMul<T>(T a, T b) where T : Number =>
                 SuperSwitch(a, b,
@@ -207,7 +207,7 @@ namespace AngouriMath
                     var res = new HashSet<Complex>();
                     EDecimal phi = (Ln(value / value.Abs()) / MathS.i).RealPart.EDecimal;
                     if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
-                    phi = EDecimal.Zero;
+                        phi = EDecimal.Zero;
 
                     EDecimal newMod = Pow(value.Abs(), CtxDivide(EDecimal.One, rootPower)).RealPart.EDecimal;
 
