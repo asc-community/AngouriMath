@@ -17,13 +17,45 @@ using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using AngouriMath.Functions;
 using System;
+using AngouriMath.Core;
 
 namespace AngouriMath
 {
     public abstract partial record Entity
     {
+        /// <summary>
+        /// This should NOT be called inside itself
+        /// </summary>
         internal abstract Entity InnerSimplify();
+
+        /// <summary>
+        /// Make sure you call this function inside of <see cref="InnerSimplify"/>
+        /// </summary>
+        internal Entity InnerSimplifyWithCheck()
+        {
+            var innerSimplified = InnerSimplify();
+            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Domain))
+                return innerSimplified;
+            else
+                return this;
+        }
+
+        /// <summary>
+        /// This should NOT be called inside itself
+        /// </summary>
         protected abstract Entity InnerEval();
+        
+        /// <summary>
+        /// Make sure you call this function inside of <see cref="InnerEval"/>
+        /// </summary>
+        protected Entity InnerEvalWithCheck()
+        {
+            var innerEvaled = InnerEval();
+            if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Domain))
+                return innerEvaled;
+            else
+                return MathS.NaN;
+        }
 
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
@@ -73,7 +105,7 @@ namespace AngouriMath
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         public IEnumerable<Entity> Alternate(int level) => Simplificator.Alternate(this, level);
 
-        public Entity Evaled => _evaled.GetValue(this, e => e.InnerEval());
+        public Entity Evaled => _evaled.GetValue(this, e => e.InnerEvalWithCheck());
         static readonly ConditionalWeakTable<Entity, Entity> _evaled = new();
 
         /// <summary>

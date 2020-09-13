@@ -247,6 +247,8 @@ namespace AngouriMath
         public static readonly Complex i = Complex.ImaginaryOne;
         // ReSharper disable once InconsistentNaming
         public static readonly Variable pi = Variable.pi;
+        // ReSharper disable once InconsistentNaming
+        public static readonly Entity NaN = Number.Real.NaN;
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>

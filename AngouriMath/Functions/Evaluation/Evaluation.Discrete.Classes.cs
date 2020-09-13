@@ -38,7 +38,7 @@ namespace AngouriMath
                     return !(bool)b; // there's no cost in casting
                 return this;
             }
-            internal override Entity InnerSimplify() => InnerEval();
+            internal override Entity InnerSimplify() => InnerEvalWithCheck();
         }
 
         partial record Andf
@@ -51,7 +51,7 @@ namespace AngouriMath
                     return (bool)left && (bool)right; // there's no cost in casting
                 return this;
             }
-            internal override Entity InnerSimplify() => InnerEval();
+            internal override Entity InnerSimplify() => InnerEvalWithCheck();
         }
 
         partial record Orf
@@ -64,7 +64,7 @@ namespace AngouriMath
                     return (bool)left || (bool)right; // there's no cost in casting
                 return this;
             }
-            internal override Entity InnerSimplify() => InnerEval();
+            internal override Entity InnerSimplify() => InnerEvalWithCheck();
         }
 
         partial record Xorf
@@ -77,7 +77,7 @@ namespace AngouriMath
                     return (bool)left ^ (bool)right; // there's no cost in casting
                 return this;
             }
-            internal override Entity InnerSimplify() => InnerEval();
+            internal override Entity InnerSimplify() => InnerEvalWithCheck();
         }
 
         partial record Impliesf
@@ -90,7 +90,7 @@ namespace AngouriMath
                     return !(bool)ass || (bool)conclusion; // there's no cost in casting
                 return this;
             }
-            internal override Entity InnerSimplify() => InnerEval();
+            internal override Entity InnerSimplify() => InnerEvalWithCheck();
         }
     }
 }

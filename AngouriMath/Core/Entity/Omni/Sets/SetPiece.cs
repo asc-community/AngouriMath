@@ -50,7 +50,7 @@ namespace AngouriMath
 
             /// <summary>So that any numerical operations could be performed</summary>
             internal bool Evaluable
-                => LowerBound().Item1.Evaluable && UpperBound().Item1.Evaluable;
+                => LowerBound().Item1.EvaluableNumerical && UpperBound().Item1.EvaluableNumerical;
 
             /// <summary>Determines whether interval or element of piece is in this</summary>
             public bool Contains(SetPiece piece)

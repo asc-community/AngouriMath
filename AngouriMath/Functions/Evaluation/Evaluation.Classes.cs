@@ -13,19 +13,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath.Core;
-
 namespace AngouriMath
 {
-    partial record Entity
+    public abstract partial record Entity
     {
-        private protected abstract Domain DefaultDomain { get; }
-
-        /// <summary>
-        /// Domain of an expression
-        /// If its node value is outside of the domain,
-        /// it's converted to NaN
-        /// </summary>
-        public Domain Domain { get; protected init; }
+        public partial record Variable
+        {
+            // TODO: When target-typed conditional expression lands, remove the explicit conversion
+            protected override Entity InnerEval() => ConstantList.TryGetValue(this, out var value) ? (Entity)value : this;
+            internal override Entity InnerSimplify() => this;
+        }
+        public partial record Tensor
+        {
+            protected override Entity InnerEval() => Elementwise(e => e.Evaled);
+            internal override Entity InnerSimplify() => Elementwise(e => e.InnerSimplifyWithCheck());
+        }
     }
 }

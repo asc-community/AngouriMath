@@ -13,19 +13,28 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath.Core;
+using System;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
-    partial record Entity
+    public abstract partial record Entity
     {
-        private protected abstract Domain DefaultDomain { get; }
+        public bool EvaluableNumerical => Evaled is Complex;
 
         /// <summary>
-        /// Domain of an expression
-        /// If its node value is outside of the domain,
-        /// it's converted to NaN
+        /// Evaluates a given expression to one number or throws exception
         /// </summary>
-        public Domain Domain { get; protected init; }
+        /// <returns>
+        /// <see cref="Complex"/> since new version
+        /// </returns>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown when this entity cannot be represented as a simple number.
+        /// <see cref="EvaluableNumerical"/> should be used to check beforehand.
+        /// </exception>
+        public Complex EvalNumerical() =>
+            Evaled is Complex value ? value :
+                throw new InvalidOperationException
+                    ($"Result cannot be represented as a simple number! Use {nameof(EvaluableNumerical)} to check beforehand.");
     }
 }

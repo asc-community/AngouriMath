@@ -20,21 +20,21 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {
-        public bool Evaluable => Evaled is Complex;
+        public bool EvaluableBoolean => Evaled is Boolean;
 
         /// <summary>
-        /// Simplification synonym. Recommended to use in case of computing a concrete number.
+        /// Evaluates a given expression to one boolean or throws exception
         /// </summary>
         /// <returns>
-        /// <see cref="Complex"/> since new version
+        /// <see cref="Boolean"/>
         /// </returns>
         /// <exception cref="InvalidOperationException">
-        /// Thrown when this entity cannot be represented as a simple number.
-        /// <see cref="Evaluable"/> should be used to check beforehand.
+        /// Thrown when this entity cannot be represented as a simple boolean.
+        /// <see cref="EvalBoolean"/> should be used to check beforehand.
         /// </exception>
-        public Complex EvalNumerical() =>
-            Evaled is Complex value ? value :
+        public Boolean EvalBoolean() =>
+            Evaled is Boolean value ? value :
                 throw new InvalidOperationException
-                    ($"Result cannot be represented as a simple number! Use {nameof(Evaluable)} to check beforehand.");
+                    ($"Result cannot be represented as a simple boolea ! Use {nameof(EvaluableBoolean)} to check beforehand.");
     }
 }

@@ -13,34 +13,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using AngouriMath.Core;
 
 namespace AngouriMath
 {
     partial record Entity
     {
-        partial record Number
+        partial record Variable
         {
-            partial record Integer
-            {
-                private protected override Domain DefaultDomain => Domain.Integer;
-            }
+            private protected override Domain DefaultDomain => Domain.Any;
+        }
 
-            partial record Rational
-            {
-                private protected override Domain DefaultDomain => Domain.Rational;
-            }
-
-            partial record Real
-            {
-                private protected override Domain DefaultDomain => Domain.Real;
-            }
-
-            partial record Complex
-            {
-                private protected override Domain DefaultDomain => Domain.Complex;
-            }
+        partial record Tensor
+        {
+            private protected override Domain DefaultDomain => Domain.Any;
         }
 
         partial record Sumf
