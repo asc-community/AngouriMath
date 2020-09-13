@@ -26,6 +26,43 @@ namespace AngouriMath
         /// If its node value is outside of the domain,
         /// it's converted to NaN
         /// </summary>
-        public Domain Domain { get; protected init; }
+        public Domain Domain 
+        { 
+            get => domain;
+            protected init
+            { 
+                domain = DefaultDomain;
+            } 
+        }
+        private Domain domain;
+
+
+        protected Entity InnerWithNewDomain(Domain newDomain)
+            => Domain == newDomain ? this : this with { Domain = newDomain };
+
+        /// <summary>
+        /// Changes nodes of one domain to another one
+        /// </summary>
+        public Entity DomainChange(Domain domainFrom, Domain domainTo)
+            => Replace(ent =>
+            {
+                if (ent.Domain != domainFrom)
+                    return ent;
+                if (ent is Boolean or Number)
+                    return ent;
+                return ent with { Domain = domainTo };
+            });
+
+        /// <summary>
+        /// Moves all real domains to the complex ones
+        /// </summary>
+        public Entity DomainFromRealToComplex()
+            => DomainChange(Domain.Real, Domain.Complex);
+
+        /// <summary>
+        /// Moves all real domains to the complex ones
+        /// </summary>
+        public Entity DomainFromComplexToReal()
+            => DomainChange(Domain.Complex, Domain.Real);
     }
 }

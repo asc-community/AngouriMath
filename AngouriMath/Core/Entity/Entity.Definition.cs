@@ -130,7 +130,7 @@ namespace AngouriMath
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>
         public bool Contains(Entity x) => x is Variable v ? VarsAndConsts.Contains(v) : Nodes.Contains(x);
-        
+
         public static implicit operator Entity(string expr) => MathS.FromString(expr);
     }
 }

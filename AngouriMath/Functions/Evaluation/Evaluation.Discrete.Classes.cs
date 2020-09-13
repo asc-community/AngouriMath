@@ -32,11 +32,9 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                if (Evaled is Boolean)
-                    return Evaled;
-                if (Argument is Boolean b)
+                if (Argument.Evaled is Boolean b)
                     return !(bool)b; // there's no cost in casting
-                return this;
+                return New(Argument.Evaled);
             }
             internal override Entity InnerSimplify() => InnerEvalWithCheck();
         }
@@ -45,11 +43,9 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                if (Evaled is Boolean)
-                    return Evaled;
-                if (Left is Boolean left && Right is Boolean right)
+                if (Left.Evaled is Boolean left && Right.Evaled is Boolean right)
                     return (bool)left && (bool)right; // there's no cost in casting
-                return this;
+                return New(Left.Evaled, Right.Evaled);
             }
             internal override Entity InnerSimplify() => InnerEvalWithCheck();
         }
@@ -58,11 +54,9 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                if (Evaled is Boolean)
-                    return Evaled;
-                if (Left is Boolean left && Right is Boolean right)
+                if (Left.Evaled is Boolean left && Right.Evaled is Boolean right)
                     return (bool)left || (bool)right; // there's no cost in casting
-                return this;
+                return New(Left.Evaled, Right.Evaled);
             }
             internal override Entity InnerSimplify() => InnerEvalWithCheck();
         }
@@ -71,11 +65,9 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                if (Evaled is Boolean)
-                    return Evaled;
-                if (Left is Boolean left && Right is Boolean right)
+                if (Left.Evaled is Boolean left && Right.Evaled is Boolean right)
                     return (bool)left ^ (bool)right; // there's no cost in casting
-                return this;
+                return New(Left.Evaled, Right.Evaled);
             }
             internal override Entity InnerSimplify() => InnerEvalWithCheck();
         }
@@ -84,11 +76,9 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                if (Evaled is Boolean)
-                    return Evaled;
-                if (Assumption is Boolean ass && Conclusion is Boolean conclusion)
+                if (Assumption.Evaled is Boolean ass && Conclusion.Evaled is Boolean conclusion)
                     return !(bool)ass || (bool)conclusion; // there's no cost in casting
-                return this;
+                return New(Assumption.Evaled, Conclusion.Evaled);
             }
             internal override Entity InnerSimplify() => InnerEvalWithCheck();
         }
