@@ -19,30 +19,24 @@ namespace AngouriMath
 {
     partial record Entity
     {
-        private protected abstract Domain DefaultDomain { get; }
+        private protected abstract Domain DefaultCodomain { get; }
 
         /// <summary>
-        /// Domain of an expression
+        /// Coomain of an expression
         /// If its node value is outside of the domain,
         /// it's converted to NaN
         /// </summary>
-        public Domain Domain 
-        { 
-            get
-            {
-                domain ??= DefaultDomain;
-                return (Domain)domain;
-            }
-            protected init
-            {
-                domain = value;
-            }
+        public Domain Codomain 
+        {
+            // TODO: move to abstract getter & abstract setter
+            get => codomain ??= DefaultCodomain;
+            protected init => codomain = value;
         }
-        private Domain? domain = null;
+        private Domain? codomain = null;
         
 
         protected Entity InnerWithNewDomain(Domain newDomain)
-            => Domain == newDomain ? this : this with { Domain = newDomain };
+            => Codomain == newDomain ? this : this with { Codomain = newDomain };
 
         /// <summary>
         /// Changes nodes of one domain to another one
@@ -50,11 +44,11 @@ namespace AngouriMath
         public Entity DomainChange(Domain domainFrom, Domain domainTo)
             => Replace(ent =>
             {
-                if (ent.Domain != domainFrom)
+                if (ent.Codomain != domainFrom)
                     return ent;
                 if (ent is Boolean or Number)
                     return ent;
-                return ent with { Domain = domainTo };
+                return ent with { Codomain = domainTo };
             });
 
         /// <summary>

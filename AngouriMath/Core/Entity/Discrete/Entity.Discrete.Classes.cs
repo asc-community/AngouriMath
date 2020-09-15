@@ -25,8 +25,8 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Boolean(bool Value) : BooleanNode
         {
-            public static Boolean True => new Boolean(true);
-            public static Boolean False => new Boolean(false);
+            public static readonly Boolean True = new Boolean(true);
+            public static readonly Boolean False = new Boolean(false);
             public static implicit operator bool(Boolean b) => b.Value;
             public static Boolean Create(bool value) => value ? True : False; // to avoid reallocation
 

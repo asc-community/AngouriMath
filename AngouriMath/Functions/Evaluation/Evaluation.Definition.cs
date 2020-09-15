@@ -34,7 +34,7 @@ namespace AngouriMath
         internal Entity InnerSimplifyWithCheck()
         {
             var innerSimplified = InnerSimplify();
-            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Domain))
+            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
                 return innerSimplified;
             else
                 return this;
@@ -51,7 +51,7 @@ namespace AngouriMath
         protected Entity InnerEvalWithCheck()
         {
             var innerEvaled = InnerEval();
-            if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Domain))
+            if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Codomain))
                 return innerEvaled;
             else
                 return MathS.NaN;
