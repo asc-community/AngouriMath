@@ -130,7 +130,7 @@ namespace AngouriMath
                 public static implicit operator Real(double value) => Create(EDecimal.FromDouble(value));
                 public static implicit operator Real(decimal value) => Create(EDecimal.FromDecimal(value));
 
-                private protected override Domain DefaultDomain => Domain.Real;
+                private protected override Domain DefaultCodomain => Domain.Real;
             }
         }
     }

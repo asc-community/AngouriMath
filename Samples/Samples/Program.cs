@@ -1,5 +1,6 @@
 ﻿using System;
 using AngouriMath;
+using static AngouriMath.Entity.Boolean;
 
 namespace Samples
 {
@@ -10,10 +11,11 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity exprComplex = "x4 - 1";
-            var exprReal = exprComplex.DomainFromComplexToReal();
-            Console.WriteLine(exprComplex.SolveEquation("x"));
-            Console.WriteLine(exprReal.SolveEquation("x"));
+            Entity exprComplex = "x and x";
+            //var exprReal = exprComplex.DomainFromComplexToReal();
+            //Console.WriteLine(exprComplex.SolveEquation("x"));
+            //Console.WriteLine(exprReal.SolveEquation("x"));
+            Console.WriteLine(exprComplex);
         }
     }
 }

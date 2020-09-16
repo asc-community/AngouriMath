@@ -21,142 +21,142 @@ namespace AngouriMath
     {
         partial record Variable
         {
-            private protected override Domain DefaultDomain => Domain.Any;
+            private protected override Domain DefaultCodomain => Domain.Any;
         }
 
         partial record Tensor
         {
-            private protected override Domain DefaultDomain => Domain.Any;
+            private protected override Domain DefaultCodomain => Domain.Any;
         }
 
         partial record Sumf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Minusf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Mulf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Divf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Sinf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Cosf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Tanf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Cotanf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Logf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Powf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Arcsinf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Arccosf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Arctanf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Arccotanf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Factorialf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Derivativef
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Integralf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Limitf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Signumf
         {
-            private protected override Domain DefaultDomain => Domain.Complex;
+            private protected override Domain DefaultCodomain => Domain.Complex;
         }
 
         partial record Absf
         {
-            private protected override Domain DefaultDomain => Domain.Real;
+            private protected override Domain DefaultCodomain => Domain.Real;
         }
 
         partial record Boolean
         {
-            private protected override Domain DefaultDomain => Domain.Boolean;
+            private protected override Domain DefaultCodomain => Domain.Boolean;
         }
 
         partial record Notf
         {
-            private protected override Domain DefaultDomain => Domain.Boolean;
+            private protected override Domain DefaultCodomain => Domain.Boolean;
         }
 
         partial record Andf
         {
-            private protected override Domain DefaultDomain => Domain.Boolean;
+            private protected override Domain DefaultCodomain => Domain.Boolean;
         }
 
         partial record Orf
         {
-            private protected override Domain DefaultDomain => Domain.Boolean;
+            private protected override Domain DefaultCodomain => Domain.Boolean;
         }
 
         partial record Xorf
         {
-            private protected override Domain DefaultDomain => Domain.Boolean;
+            private protected override Domain DefaultCodomain => Domain.Boolean;
         }
 
         partial record Impliesf
         {
-            private protected override Domain DefaultDomain => Domain.Boolean;
+            private protected override Domain DefaultCodomain => Domain.Boolean;
         }
     }
 }

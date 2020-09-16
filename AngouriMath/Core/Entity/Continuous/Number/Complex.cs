@@ -224,7 +224,7 @@ namespace AngouriMath
                 public static implicit operator Complex((decimal re, decimal im) v) => Complex.Create(v.re, v.im);
                 public static implicit operator Complex((double re, double im) v) => Complex.Create(v.re, v.im);
 
-                private protected override Domain DefaultDomain => Domain.Complex;
+                private protected override Domain DefaultCodomain => Domain.Complex;
             }
         }
     }

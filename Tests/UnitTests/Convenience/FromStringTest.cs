@@ -91,5 +91,9 @@ namespace UnitTests.Convenience
             => Assert.Equal(MathS.Signum("x"), MathS.FromString("signum(x)"));
         [Fact] public void Test35()
             => Assert.Equal(MathS.Abs("x"), MathS.FromString("abs(x)"));
+        [Fact] public void Test36()
+            => Assert.Equal(-1 * (-1 * (-1 * x)), MathS.FromString("---x"));
+        [Fact] public void Test37()
+            => Assert.Equal(-1 * (-1 * (-1 * x)), MathS.FromString("-++-+-+x"));
     }
 }

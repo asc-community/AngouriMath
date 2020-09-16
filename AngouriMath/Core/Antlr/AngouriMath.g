@@ -5,13 +5,6 @@ source files under the Antlr folder can update and be reflected in other parts o
 It only consists of commands that are consistent across CMD and Bash so you should be able to run that file
 regardless of whether you are on Windows, Linux or Mac. You need to have an installed Java Runtime, however.
 
-If I need something ANTLR has no API for, I follow the steps:
-1) Unzip the jar file
-2) Make changes (possibly here org\antlr\v4\tool\templates\codegen\CSharp\CSharp.stg)
-3) Change directory to the one you unpacked it to
-4) Execute the command
-start [path to your jdk]/jdk12/bin/jar.exe cmvf META-INF/MANIFEST.MF ../antlr4.jar *
-
 */
 
 grammar AngouriMath; // Should be identical to the file name or ANTLR will complain
@@ -70,7 +63,8 @@ factorial_expression returns[Entity value]
 power_list returns[List<Entity> value]
     @init { $value = new List<Entity>(); }
     : ('^' factorial_expression { $value.Add($factorial_expression.value); })+ ;
-
+    
+// TODO: refactor
 power_expression returns[Entity value]
     : factorial_expression { $value = $factorial_expression.value; } (power_list {
         var list = $power_list.value;
@@ -82,9 +76,17 @@ power_expression returns[Entity value]
     })?
     ;
     
+/*
+
+Numerical nodes
+
+*/
+
 unary_expression returns[Entity value]
     : ('-' p = power_expression { $value = -$p.value; } | 
        '+' p = power_expression { $value = $p.value; })
+    | ('-' u = unary_expression { $value = -$u.value; } | 
+       '+' u = unary_expression { $value = $u.value; })
     | p = power_expression { $value = $p.value; }
     ;
     
@@ -100,9 +102,34 @@ sum_expression returns[Entity value]
     '-' m2 = mult_expression { $value = $value - $m2.value; })*
    ;
 
-expression returns[Entity value]
-    : s = sum_expression { $value = $s.value; }
+/*
+
+Equality/inequality nodes
+
+*/
+
+
+/*
+
+Boolean nodes
+
+*/
+
+negate_expression returns[Entity value]
+    : NOT sum_expression { $value = !$sum_expression.value; }
+    | NOT negate_expression { $value = !$negate_expression.value; }
+    | sum_expression { $value = $sum_expression.value; }
     ;
+
+and_expression returns[Entity value]
+    : m1 = negate_expression { $value = $m1.value; } AND m2 = negate_expression { $value = $value & $m2.value; }
+    | m = negate_expression { $value = $m.value; }
+    ;
+
+expression returns[Entity value]
+    : s = negate_expression { $value = $s.value; }
+    ;
+
 
 function_arguments returns[List<Entity> list]
     @init { $list = new List<Entity>(); }
@@ -144,6 +171,10 @@ atom returns[Entity value]
     ;
 
 statement: expression EOF { Result = $expression.value; } ;
+
+NOT: 'not' ;
+
+AND: 'and' ;
 
 NEWLINE: '\r'?'\n' ;
 

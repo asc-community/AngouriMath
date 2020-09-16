@@ -23,7 +23,15 @@ namespace AngouriMath.Core
 {
     public enum Priority
     { 
-        EqualitySignsOperation = 0x0000,
+        BooleanOperation = 0x0000,
+
+        Impliciation = 10 | BooleanOperation,
+        Disjunction  = 30 | BooleanOperation,
+        XDisjunction = 30 | BooleanOperation,
+        Conjunction  = 50 | BooleanOperation,
+        Negation     = 70 | BooleanOperation,
+
+        EqualitySignsOperation = 0x1000,
 
         Equal          = 10 | EqualitySignsOperation,
         LessThan       = 20 | EqualitySignsOperation,
@@ -31,7 +39,7 @@ namespace AngouriMath.Core
         LessOrEqual    = 20 | EqualitySignsOperation,
         GreaterOrEqual = 20 | EqualitySignsOperation,
 
-        NumericalOperation = 0x1000,
+        NumericalOperation = 0x2000,
 
         Sum       = 20  | NumericalOperation, 
         Minus     = 20  | NumericalOperation, 
@@ -42,14 +50,6 @@ namespace AngouriMath.Core
         Func      = 80  | NumericalOperation, 
         Variable  = 100 | NumericalOperation, 
         Number    = 100 | NumericalOperation,
-
-        BooleanOperation = 0x2000,
-
-        Impliciation = 10 | BooleanOperation,
-        Disjunction  = 30 | BooleanOperation,
-        XDisjunction = 30 | BooleanOperation,
-        Conjunction  = 50 | BooleanOperation,
-        Negation     = 70 | BooleanOperation,
     }
     public interface ILatexiseable { public string Latexise(); }
 }

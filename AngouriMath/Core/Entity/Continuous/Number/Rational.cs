@@ -145,7 +145,7 @@ namespace AngouriMath
                 public static implicit operator Rational(EInteger value) => Integer.Create(value);
                 public static implicit operator Rational(ERational value) => Create(value);
 
-                private protected override Domain DefaultDomain => Domain.Rational;
+                private protected override Domain DefaultCodomain => Domain.Rational;
             }
         }
     }

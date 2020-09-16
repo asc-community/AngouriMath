@@ -50,6 +50,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
+        /// <summary>
+        /// Is true iff both operands are true
+        /// </summary>
         public sealed partial record Andf(Entity Left, Entity Right) : BooleanNode
         {
             public override Priority Priority => Priority.Conjunction;
@@ -60,6 +63,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
+        /// <summary>
+        /// Is true iff at least one operand is true,
+        /// </summary>
         public sealed partial record Orf(Entity Left, Entity Right) : BooleanNode
         {
             public override Priority Priority => Priority.Disjunction;
@@ -70,6 +76,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
+        /// <summary>
+        /// Is true iff one operand is true
+        /// </summary>
         public sealed partial record Xorf(Entity Left, Entity Right) : BooleanNode
         {
             public override Priority Priority => Priority.XDisjunction;
@@ -80,6 +89,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
+        /// <summary>
+        /// Is true iff assumption is false or conclusion is true
+        /// </summary>
         public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : BooleanNode
         {
             public override Priority Priority => Priority.Impliciation;
