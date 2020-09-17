@@ -116,18 +116,37 @@ Boolean nodes
 */
 
 negate_expression returns[Entity value]
-    : NOT sum_expression { $value = !$sum_expression.value; }
-    | NOT negate_expression { $value = !$negate_expression.value; }
+    : 'not' sum_expression { $value = !$sum_expression.value; }
+    | 'not' negate_expression { $value = !$negate_expression.value; }
     | sum_expression { $value = $sum_expression.value; }
     ;
 
 and_expression returns[Entity value]
-    : m1 = negate_expression { $value = $m1.value; } AND m2 = negate_expression { $value = $value & $m2.value; }
-    | m = negate_expression { $value = $m.value; }
+    : m1 = negate_expression { $value = $m1.value; }
+    ('and' m2 = negate_expression { $value = $value & $m2.value; } |
+     '&' m2 = negate_expression { $value = $value & $m2.value; }
+    )*
+    ;
+
+xor_expression returns[Entity value]
+    : m1 = and_expression { $value = $m1.value; }
+    ('xor' m2 = and_expression { $value = $value ^ $m2.value; })*
+    ;
+
+or_expression returns[Entity value]
+    : m1 = xor_expression { $value = $m1.value; }
+    ('or' m2 = xor_expression { $value = $value | $m2.value; } |
+     '|' m2 = xor_expression { $value = $value | $m2.value; })*
+    ;
+
+implies_expression returns[Entity value]
+    : m1 = or_expression { $value = $m1.value; }
+    ('implies' m2 = or_expression { $value = $value.Implies($m2.value); } |
+     '->' m2 = or_expression { $value = $value.Implies($m2.value); })*
     ;
 
 expression returns[Entity value]
-    : s = negate_expression { $value = $s.value; }
+    : s = implies_expression { $value = $s.value; }
     ;
 
 
@@ -138,6 +157,7 @@ function_arguments returns[List<Entity> list]
    
 atom returns[Entity value]
     : NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
+    | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
     | '(' expression ')' { $value = $expression.value; }
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
@@ -172,16 +192,14 @@ atom returns[Entity value]
 
 statement: expression EOF { Result = $expression.value; } ;
 
-NOT: 'not' ;
-
-AND: 'and' ;
-
 NEWLINE: '\r'?'\n' ;
 
 // A fragment will never be counted as a token, it only serves to simplify a grammar.
 fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
 
 NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 'i'? | 'i' ;
+
+BOOLEAN: ('true' | 'false') ;
 
 VARIABLE: ('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
   

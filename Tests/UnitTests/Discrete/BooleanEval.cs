@@ -30,5 +30,16 @@ namespace UnitTests.Discrete
         [Fact] public void TestImplies2() => Test(False.Implies(True), True);
         [Fact] public void TestImplies3() => Test(False.Implies(False), True);
         [Fact] public void TestImplies4() => Test(True.Implies(False), False);
+
+        [Theory]
+        [InlineData("not false")]
+        [InlineData("true")]
+        [InlineData("not false and true")]
+        [InlineData("not (not true and false)")]
+        [InlineData("false -> true")]
+        [InlineData("true -> true")]
+        [InlineData("false and not true or true")]
+        public void TestString(string expr)        
+            => Assert.Equal(True, MathS.FromString(expr).EvalBoolean());
     }
 }

@@ -11,11 +11,11 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity exprComplex = "x and x";
+            Entity exprComplex = "not x and y -> x";
+            Console.WriteLine(exprComplex);
             //var exprReal = exprComplex.DomainFromComplexToReal();
             //Console.WriteLine(exprComplex.SolveEquation("x"));
             //Console.WriteLine(exprReal.SolveEquation("x"));
-            Console.WriteLine(exprComplex);
         }
     }
 }

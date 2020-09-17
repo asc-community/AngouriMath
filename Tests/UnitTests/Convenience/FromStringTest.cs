@@ -95,5 +95,13 @@ namespace UnitTests.Convenience
             => Assert.Equal(-1 * (-1 * (-1 * x)), MathS.FromString("---x"));
         [Fact] public void Test37()
             => Assert.Equal(-1 * (-1 * (-1 * x)), MathS.FromString("-++-+-+x"));
+        [Fact] public void Test38()
+            => Assert.Equal(!!!x, MathS.FromString("!!!x"));
+        [Fact] public void Test39()
+            => Assert.Equal(x & x | x.Implies(x), MathS.FromString("x and x or (x -> x)"));
+        [Fact] public void Test40()
+            => Assert.Equal(x & x & x & x, MathS.FromString("x and x and x and x"));
+        [Fact] public void Test41()
+            => Assert.Equal(x | x | x | x, MathS.FromString("x or x or x or x"));
     }
 }

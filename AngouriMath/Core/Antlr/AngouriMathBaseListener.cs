@@ -137,6 +137,42 @@ internal partial class AngouriMathBaseListener : IAngouriMathListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitAnd_expression([NotNull] AngouriMathParser.And_expressionContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.xor_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterXor_expression([NotNull] AngouriMathParser.Xor_expressionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.xor_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitXor_expression([NotNull] AngouriMathParser.Xor_expressionContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.or_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterOr_expression([NotNull] AngouriMathParser.Or_expressionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.or_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitOr_expression([NotNull] AngouriMathParser.Or_expressionContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.implies_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterImplies_expression([NotNull] AngouriMathParser.Implies_expressionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.implies_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitImplies_expression([NotNull] AngouriMathParser.Implies_expressionContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

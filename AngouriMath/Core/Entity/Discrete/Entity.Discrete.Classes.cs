@@ -15,6 +15,7 @@
 
 using System;
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
@@ -34,6 +35,37 @@ namespace AngouriMath
                 => this;
             public override Priority Priority => Priority.Number;
             protected override Entity[] InitDirectChildren() => new Entity[] { };
+
+            /// <summary>
+            /// Use this when parsing one boolean value
+            /// </summary>
+            /// <param name="expr">A string to parse from</param>
+            /// <param name="dst">Where to store the result</param>
+            /// <returns>
+            /// true if the parsing completed successfully, 
+            /// false otherwise
+            /// </returns>
+            public static bool TryParse(string expr, out Boolean dst)
+            {
+                switch (expr)
+                {
+                    case "false":
+                        dst = False;
+                        return true;
+                    case "true":
+                        dst = True;
+                        return true;
+                }
+                dst = False;
+                return false;
+            }
+
+            /// <summary>
+            /// Unlike <see cref="TryParse"/> this will throw a
+            /// <see cref="ParseException"/> if parsing is not successful
+            /// </summary>
+            public static Boolean Parse(string expr)
+                => TryParse(expr, out var res) ? res : throw new ParseException($"Token '{expr}' is not valid for boolean");
         }
 
         #region Operators
