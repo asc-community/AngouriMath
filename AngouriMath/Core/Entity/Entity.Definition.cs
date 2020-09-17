@@ -80,6 +80,7 @@ namespace AngouriMath
 
         /// <summary>Replaces all <see cref="x"/> with <see cref="value"/></summary>
         public Entity Substitute(Entity x, Entity value) => Replace(e => e == x ? value : e);
+
         /// <summary>Replaces all <see cref="replacements"/></summary>
         public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements)
             where TFrom : Entity where TTo : Entity =>
@@ -115,6 +116,7 @@ namespace AngouriMath
         /// such as <see cref="pi"/> and <see cref="e"/>
         /// </returns>
         public IEnumerable<Variable> Vars => VarsAndConsts.Where(x => !x.IsConstant);
+        
         /// <summary>
         /// Set of unique variables, for example 
         /// it extracts <c>`x`</c>, <c>`goose`</c> from <c>(x + 2 * goose) - pi * x</c>

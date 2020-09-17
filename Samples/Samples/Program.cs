@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Immutable;
 using AngouriMath;
 using static AngouriMath.Entity.Boolean;
+using static AngouriMath.MathS;
 
 namespace Samples
 {
@@ -11,12 +13,21 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity exprComplex = "not a and not b";
-            Console.WriteLine(exprComplex);
-            Console.WriteLine(exprComplex.Simplify());
-            //var exprReal = exprComplex.DomainFromComplexToReal();
-            //Console.WriteLine(exprComplex.SolveEquation("x"));
-            //Console.WriteLine(exprReal.SolveEquation("x"));
+            var imm = ImmutableArray.Create(2, 3, 4, 5, 6);
+            var values = new [] { False, True };
+            Entity expr = "(A -> (B -> C)) -> ((A -> B) -> (A -> C))";
+            
+            Console.WriteLine(expr.Simplify());
+
+            foreach (var A in values)
+                foreach (var B in values)
+                    foreach (var C in values)
+                    {
+                        var res = expr.Substitute("A", A);
+                        res = res.Substitute("B", B);
+                        res = res.Substitute("C", C);
+                        Console.WriteLine(res.EvalBoolean());
+                    }
         }
     }
 }

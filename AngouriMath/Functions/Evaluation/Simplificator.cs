@@ -91,7 +91,7 @@ namespace AngouriMath.Functions
 
                 if (res.Nodes.Any(child => child is BooleanNode))
                 {
-                    AddHistory(res.Replace(Patterns.BooleanRules).InnerSimplify());
+                    AddHistory(res = res.Replace(Patterns.BooleanRules).InnerSimplify());
                 }
 
                 if (res.Nodes.Any(child => child is Factorialf))
