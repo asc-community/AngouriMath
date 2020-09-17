@@ -41,17 +41,5 @@ namespace AngouriMath
                     return ent;
                 return ent with { Codomain = domainTo };
             });
-
-        /// <summary>
-        /// Moves all real domains to the complex ones
-        /// </summary>
-        public Entity DomainFromRealToComplex()
-            => DomainChange(Domain.Real, Domain.Complex);
-
-        /// <summary>
-        /// Moves all real domains to the complex ones
-        /// </summary>
-        public Entity DomainFromComplexToReal()
-            => DomainChange(Domain.Complex, Domain.Real);
     }
 }

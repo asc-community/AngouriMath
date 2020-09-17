@@ -8,24 +8,31 @@ namespace Samples
 {
     class Program
     {
+        static void Do(Span<int> quac)
+        {
+            quac[4] = 4;
+        }
+
         static void Main(string[] _)
         {
-            var values = new [] { False, True };
-            Entity expr = "(A -> (B -> C)) -> ((A -> B) -> (A -> C))";
-            Entity expr1 = "(A -> (B -> C)) -> ((A -> B) -> (A -> C))";
-
-            Console.WriteLine(expr.Simplify());
-            Console.WriteLine(expr1 == expr);
-
-            foreach (var A in values)
-                foreach (var B in values)
-                    foreach (var C in values)
-                    {
-                        var res = expr.Substitute("A", A);
-                        res = res.Substitute("B", B);
-                        res = res.Substitute("C", C);
-                        Console.WriteLine(res.EvalBoolean());
-                    }
+            Span<int> dfg = stackalloc int[] { 3, 4, 5, 6, 7, 8};
+            Console.WriteLine(dfg[4]);
+            //var values = new [] { False, True };
+            //Entity expr = "(A -> (B -> C)) -> ((A -> B) -> (A -> C))";
+            //Entity expr1 = "(A -> (B -> C)) -> ((A -> B) -> (A -> C))";
+            //
+            //Console.WriteLine(expr.Simplify());
+            //Console.WriteLine(expr1 == expr);
+            //
+            //foreach (var A in values)
+            //    foreach (var B in values)
+            //        foreach (var C in values)
+            //        {
+            //            var res = expr.Substitute("A", A);
+            //            res = res.Substitute("B", B);
+            //            res = res.Substitute("C", C);
+            //            Console.WriteLine(res.EvalBoolean());
+            //        }
         }
     }
 }

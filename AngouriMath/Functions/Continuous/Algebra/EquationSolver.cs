@@ -69,7 +69,8 @@ namespace AngouriMath.Functions.Algebra
                     throw new AngouriBugException("InSolveSystem incorrect output");
             if (res.Count == 0)
                 return null;
-            return new Tensor(indices => res[indices[0]][indices[1]], res.Count, initVarCount);
+            var tb = new TensorBuilder(res, initVarCount);
+            return tb.ToTensor();
         }
 
         /// <summary>Solves system of equations</summary>
