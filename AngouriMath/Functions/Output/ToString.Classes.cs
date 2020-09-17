@@ -144,19 +144,19 @@ namespace AngouriMath
 
         partial record Notf
         {
-            internal override string Stringize() => $"!{Argument.Stringize(Argument.Priority < Priority)}";
+            internal override string Stringize() => $"not {Argument.Stringize(Argument.Priority < Priority)}";
         }
 
         partial record Andf
         {
             internal override string Stringize()
-                => $"{Left.Stringize(Left.Priority < Priority)} & {Right.Stringize(Right.Priority < Priority)}";
+                => $"{Left.Stringize(Left.Priority < Priority)} and {Right.Stringize(Right.Priority < Priority)}";
         }
 
         partial record Orf
         {
             internal override string Stringize()
-                => $"{Left.Stringize(Left.Priority < Priority)} | {Right.Stringize(Right.Priority < Priority)}";
+                => $"{Left.Stringize(Left.Priority < Priority)} or {Right.Stringize(Right.Priority < Priority)}";
         }
 
         partial record Xorf
@@ -168,7 +168,7 @@ namespace AngouriMath
         partial record Impliesf
         {
             internal override string Stringize()
-                => $"{Assumption.Stringize(Assumption.Priority < Priority)} -> {Conclusion.Stringize(Conclusion.Priority < Priority)}";
+                => $"{Assumption.Stringize(Assumption.Priority < Priority)} implies {Conclusion.Stringize(Conclusion.Priority < Priority)}";
         }
     }
 }

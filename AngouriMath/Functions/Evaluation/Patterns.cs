@@ -18,6 +18,7 @@ using System;
 using System.Linq;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
+using static AngouriMath.Entity.Boolean;
 
 namespace AngouriMath.Functions
 {
@@ -519,6 +520,42 @@ namespace AngouriMath.Functions
 
             _ => x
         };
+
+        internal static Entity BooleanRules(Entity x) => x switch
+        {
+            // Should we simplify, say, 'false -> 5' ?
+            // TODO: should we check Codomains of any1, any2, ... that they are equal to Domain.Boolean?
+            Impliesf(var ass, _) when ass == False  => True,
+            Andf(Notf(var any1), Notf(var any2)) => !(any1 | any2),
+            Orf(Notf(var any1), Notf(var any2)) => !(any1 & any2),
+            Orf(Notf(var any1), var any1a) when any1 == any1a => True,
+            Orf(Notf(var any1), var any2) => any1.Implies(any2),
+            Andf(var any1, var any1a) when any1 == any1a => any1,
+            Orf(var any1, var any1a) when any1 == any1a => any1,
+            Impliesf(var any1, var any1a) when any1 == any1a => True,
+            Xorf(var any1, var any1a) when any1 == any1a => False,
+            Notf(Notf(var any1)) => any1,
+            Orf(Andf(var any1, var any2), Andf(var any1a, var any3)) when any1 == any1a => any1 & (any2 | any3),
+            Andf(Orf(var any1, var any2), Orf(var any1a, var any3)) when any1 == any1a => any1 | (any2 & any3),
+            Orf(Andf(var any1, var any2), Andf(var any3, var any1a)) when any1 == any1a => any1 & (any2 | any3),
+            Andf(Orf(var any1, var any2), Orf(var any3, var any1a)) when any1 == any1a => any1 | (any2 & any3),
+            Orf(Andf(var any2, var any1), Andf(var any1a, var any3)) when any1 == any1a => any1 & (any2 | any3),
+            Andf(Orf(var any2, var any1), Orf(var any1a, var any3)) when any1 == any1a => any1 | (any2 & any3),
+            Orf(Andf(var any2, var any1), Andf(var any3, var any1a)) when any1 == any1a => any1 & (any2 | any3),
+            Andf(Orf(var any2, var any1), Orf(var any3, var any1a)) when any1 == any1a => any1 | (any2 & any3),
+            Orf(var any1, Andf(var any1a, _)) when any1 == any1a => any1,
+            Andf(var any1, Orf(var any1a, _)) when any1 == any1a => any1,
+            Orf(var any1, Andf(Notf(var any1a), var any2)) when any1 == any1a => any1 | any2,
+            Andf(var any1, Orf(Notf(var any1a), var any2)) when any1 == any1a => any1 & any2,
+            Orf(var any1, Andf(var any1a, Notf(var any2))) when any1 == any1a => any1 | any2,
+            Andf(var any1, Orf(var any1a, Notf(var any2))) when any1 == any1a => any1 & any2,
+            Orf(Andf(Notf(var any1a), var any2), var any1) when any1 == any1a => any1 | any2,
+            Andf(Orf(Notf(var any1a), var any2), var any1) when any1 == any1a => any1 & any2,
+            Orf(Andf(var any1a, Notf(var any2)), var any1) when any1 == any1a => any1 | any2,
+            Andf(Orf(var any1a, Notf(var any2)) , var any1) when any1 == any1a => any1 & any2,
+            _ => x
+        };
+
         /// <summary>Actual sorting with <see cref="Entity.SortHash(TreeAnalyzer.SortLevel)"/></summary>
         internal static Func<Entity, Entity> SortRules(Functions.TreeAnalyzer.SortLevel level) => x => x switch
         {
