@@ -77,7 +77,7 @@ namespace AngouriMath
                 public static implicit operator Integer(ulong value) => Create(value);
                 public static implicit operator Integer(EInteger value) => Create(value);
 
-                private protected override Domain DefaultCodomain => Domain.Integer;
+                public override Domain Codomain { get; protected init; } = Domain.Integer;
             }
         }
     }

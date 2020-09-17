@@ -7,7 +7,7 @@ namespace UnitTests.Discrete
 
     public class BooleanEval
     {
-        public void Test(Entity expr, Entity.Boolean expected)
+        private void Test(Entity expr, Entity.Boolean expected)
             => Assert.Equal(expected, expr.EvalBoolean());
 
         [Fact] public void Test1() => Test(True, True);

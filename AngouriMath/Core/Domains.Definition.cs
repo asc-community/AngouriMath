@@ -19,21 +19,12 @@ namespace AngouriMath
 {
     partial record Entity
     {
-        private protected abstract Domain DefaultCodomain { get; }
-
         /// <summary>
         /// Coomain of an expression
         /// If its node value is outside of the domain,
         /// it's converted to NaN
         /// </summary>
-        public Domain Codomain 
-        {
-            // TODO: move to abstract getter & abstract setter
-            get => codomain ??= DefaultCodomain;
-            protected init => codomain = value;
-        }
-        private Domain? codomain = null;
-        
+        public abstract Domain Codomain { get; protected init; }
 
         protected Entity InnerWithNewDomain(Domain newDomain)
             => Codomain == newDomain ? this : this with { Codomain = newDomain };
