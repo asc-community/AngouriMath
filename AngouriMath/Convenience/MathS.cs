@@ -22,6 +22,7 @@ using AngouriMath.Core;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Algebra.NumericalSolving;
+using AngouriMath.Functions.Boolean;
 
 namespace AngouriMath.Core
 {
@@ -62,6 +63,13 @@ namespace AngouriMath
         /// <param name="var">Variable whose values we are looking for</param>
         /// <returns>A <see cref="Set"/> of possible values or intervals of values</returns>
         public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
+
+        /// <summary>
+        /// Solves a boolean expression. That is, finds all values for
+        /// <paramref name="variables"/> such that the expression turns into True when evaluated
+        /// </summary>
+        public static Tensor? SolveBoolean(Entity expression, params Variable[] variables)
+            => BooleanSolver.SolveTable(expression, variables);
 
         // Marking small enums with ": byte" is premature optimization and shouldn't be done: https://stackoverflow.com/q/648823/5429648
 

@@ -8,15 +8,10 @@ namespace Samples
 {
     class Program
     {
-        static void Do(Span<int> quac)
-        {
-            quac[4] = 4;
-        }
-
         static void Main(string[] _)
         {
-            Span<int> dfg = stackalloc int[] { 3, 4, 5, 6, 7, 8};
-            Console.WriteLine(dfg[4]);
+            Entity expr = "A and B and not C or A";
+            Console.WriteLine(MathS.SolveBoolean(expr, "A", "B", "C"));
             //var values = new [] { False, True };
             //Entity expr = "(A -> (B -> C)) -> ((A -> B) -> (A -> C))";
             //Entity expr1 = "(A -> (B -> C)) -> ((A -> B) -> (A -> C))";
