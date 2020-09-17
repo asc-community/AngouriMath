@@ -35,6 +35,6 @@ namespace AngouriMath
         public Boolean EvalBoolean() =>
             Evaled is Boolean value ? value :
                 throw new InvalidOperationException
-                    ($"Result cannot be represented as a simple boolea ! Use {nameof(EvaluableBoolean)} to check beforehand.");
+                    ($"Result cannot be represented as a simple boolean! Use {nameof(EvaluableBoolean)} to check beforehand.");
     }
 }

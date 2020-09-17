@@ -11,7 +11,7 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Entity exprComplex = "not x and y -> x";
+            Entity exprComplex = "not true";
             Console.WriteLine(exprComplex);
             //var exprReal = exprComplex.DomainFromComplexToReal();
             //Console.WriteLine(exprComplex.SolveEquation("x"));
