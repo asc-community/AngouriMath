@@ -10,24 +10,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity expr = "A and B and not C or A";
-            Console.WriteLine(MathS.SolveBoolean(expr, "A", "B", "C"));
-            //var values = new [] { False, True };
-            //Entity expr = "(A -> (B -> C)) -> ((A -> B) -> (A -> C))";
-            //Entity expr1 = "(A -> (B -> C)) -> ((A -> B) -> (A -> C))";
-            //
-            //Console.WriteLine(expr.Simplify());
-            //Console.WriteLine(expr1 == expr);
-            //
-            //foreach (var A in values)
-            //    foreach (var B in values)
-            //        foreach (var C in values)
-            //        {
-            //            var res = expr.Substitute("A", A);
-            //            res = res.Substitute("B", B);
-            //            res = res.Substitute("C", C);
-            //            Console.WriteLine(res.EvalBoolean());
-            //        }
+            Entity expr = "A and B implies C xor D implies not B";
+            Console.WriteLine(MathS.BuildTruthTable(expr, "A", "B", "C", "D"));
         }
     }
 }

@@ -71,6 +71,13 @@ namespace AngouriMath
         public static Tensor? SolveBoolean(Entity expression, params Variable[] variables)
             => BooleanSolver.SolveTable(expression, variables);
 
+        /// <summary>
+        /// Combines all possible values of <paramref name="variables"/>
+        /// and has the last column as the result of the function
+        /// </summary>
+        public static Tensor? BuildTruthTable(Entity expression, params Variable[] variables)
+            => BooleanSolver.BuildTruthTable(expression, variables);
+
         // Marking small enums with ": byte" is premature optimization and shouldn't be done: https://stackoverflow.com/q/648823/5429648
 
         [Flags]

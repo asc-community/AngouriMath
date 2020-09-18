@@ -66,5 +66,25 @@ namespace AngouriMath.Functions.Boolean
 
             return tb.ToTensor();
         }
+
+        internal static Tensor? BuildTruthTable(Entity expr, Variable[] variables)
+        {
+            var count = expr.Vars.Count();
+            // TODO: we probably also should verify the uniqueness of the given variables
+            if (count != variables.Length)
+                throw new ArgumentException("Number of variables must equal number of variables in the expression");
+            Span<bool> states = stackalloc bool[variables.Length];
+            var tb = new TensorBuilder(count + 1);
+            do
+            {
+                var exprSubstituted = expr;
+                for (var i = 0; i < count; i++)
+                    exprSubstituted = exprSubstituted.Substitute(variables[i], states[i]);
+                tb.Add(states.ToArray().Select(s => (Entity)s).Append(exprSubstituted.EvalBoolean()));
+            }
+            while (Next(states));
+
+            return tb.ToTensor();
+        }
     }
 }

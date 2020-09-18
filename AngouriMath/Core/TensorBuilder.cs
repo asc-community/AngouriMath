@@ -36,7 +36,7 @@ namespace AngouriMath.Core
             if (row.Count == columnCount)
                 raw.Add(row);
             else
-                throw new AngouriBugException(""); 
+                throw new AngouriBugException($"Incorrect usage of {nameof(TensorBuilder)}"); 
         }
 
         public void Add(IEnumerable<Entity> row)
