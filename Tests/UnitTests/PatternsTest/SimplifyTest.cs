@@ -107,7 +107,7 @@ namespace UnitTests.PatternsTest
         [InlineData("x / y + x * x * y", "x / y + x ^ 2 * y")]
         [InlineData("x / 1 + 2", "2 + x")]
         [InlineData("(x + y + x + 1 / (x + 4 + 4 + sin(x))) / (x + x + 3 / y) + 3",
-                    "3 + (1 / (sin(x) + 8 + x) + 2x + y) / (2 * x + 3 / y)")]
+                    "3 + (1 / (sin(x) + 8 + x) + 2 * x + y) / (2 * x + 3 / y)")]
         // TODO: What is Linch?
         public void Linch(string input, string output) => AssertSimplifyToString(input, output);
         [Theory]
