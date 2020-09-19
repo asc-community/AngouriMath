@@ -33,7 +33,17 @@ namespace UnitTests.PatternsTest
         [InlineData("anything implies anything", "true")]
         [InlineData("not a or not b", "not (a and b)")]
         [InlineData("not a and not b", "not (a or b)")]
-        public void Test(string expr, string expected) 
-            => Assert.Equal(expected.ToEntity(), expr.Simplify());
+        [InlineData("not a or b", "a implies b")]
+        [InlineData("not not a", "a")]
+        [InlineData("not not not a", "not a")]
+        [InlineData("a and b and a", "a and b")]
+        [InlineData("a and b and b", "a and b")]
+        [InlineData("a and b and c and f and a", "a and b and c and f")]
+        public void Test(string expr, string expected)
+        {
+            var exp = expected.ToEntity();
+            var act = expr.ToEntity();
+            Assert.Equal(exp, act.Simplify());
+        }
     }
 }

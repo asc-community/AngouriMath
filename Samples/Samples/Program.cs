@@ -8,10 +8,11 @@ namespace Samples
 {
     class Program
     {
+
         static void Main(string[] _)
         {
-            Entity expr = "A & B -> C xor D -> not B";
-            Console.WriteLine(MathS.BuildTruthTable(expr, "A", "B", "C", "D"));
+            //Entity expr = "A & B -> C xor D -> not B";
+            //Console.WriteLine(MathS.BuildTruthTable(expr, "A", "B", "C", "D"));
         }
     }
 }

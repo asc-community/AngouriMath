@@ -19,6 +19,7 @@ using System.Linq;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Boolean;
+using System.Collections.Generic;
 
 namespace AngouriMath.Functions
 {
@@ -544,6 +545,9 @@ namespace AngouriMath.Functions
             Xorf(var any1, var any1a) when any1 == any1a && IsLogic(any1) => False,
             Notf(Notf(var any1)) when IsLogic(any1) => any1,
 
+            Orf(var any1, var any2) when (any1 == True || any2 == True) && IsLogic(any1, any2) => True,
+            Andf(var any1, var any2) when (any1 == False || any2 == False) && IsLogic(any1, any2) => False,
+
             Orf(Andf(var any1, var any2), Andf(var any1a, var any3)) when any1 == any1a && IsLogic(any1, any2, any3) => any1 & (any2 | any3),
             Andf(Orf(var any1, var any2), Orf(var any1a, var any3))  when any1 == any1a && IsLogic(any1, any2, any3) => any1 | (any2 & any3),
             Orf(Andf(var any1, var any2), Andf(var any3, var any1a)) when any1 == any1a && IsLogic(any1, any2, any3) => any1 & (any2 | any3),
@@ -570,13 +574,30 @@ namespace AngouriMath.Functions
             _ => x
         };
 
+        private static Entity SortAndGroup(IEnumerable<Entity> children, TreeAnalyzer.SortLevel level, Func<Entity, Entity, Entity> ctor)
+        {
+            var groups = new Dictionary<string, List<Entity>>();
+            foreach (var child in children)
+            {
+                var hash = child.SortHash(level);
+                if (!groups.ContainsKey(hash))
+                    groups[hash] = new();
+                groups[hash].Add(child);
+            }
+            return groups.Select(pair => pair.Value.Aggregate(ctor)).Aggregate(ctor);
+        }
+
         /// <summary>Actual sorting with <see cref="Entity.SortHash(TreeAnalyzer.SortLevel)"/></summary>
-        internal static Func<Entity, Entity> SortRules(Functions.TreeAnalyzer.SortLevel level) => x => x switch
+        internal static Func<Entity, Entity> SortRules(TreeAnalyzer.SortLevel level) => x => x switch
         {
             Sumf or Minusf =>
-                Sumf.LinearChildren(x).OrderBy(e => e.SortHash(level)).Aggregate((a, b) => new Sumf(a, b)),
+                SortAndGroup(Sumf.LinearChildren(x), level, (a, b) => a + b),
             Mulf or Divf =>
-                Mulf.LinearChildren(x).OrderBy(e => e.SortHash(level)).Aggregate((a, b) => new Mulf(a, b)),
+                SortAndGroup(Mulf.LinearChildren(x), level, (a, b) => a * b),
+            Andf =>
+                SortAndGroup(Andf.LinearChildren(x), level, (a, b) => a & b),
+            Orf =>
+                SortAndGroup(Orf.LinearChildren(x), level, (a, b) => a | b),
             _ => x,
         };
         internal static Entity PolynomialLongDivision(Entity x) =>

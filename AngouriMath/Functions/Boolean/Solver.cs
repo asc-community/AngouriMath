@@ -15,6 +15,7 @@
 
 using AngouriMath.Core;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using static AngouriMath.Entity;
 
@@ -52,15 +53,15 @@ namespace AngouriMath.Functions.Boolean
             // TODO: we probably also should verify the uniqueness of the given variables
             if (count != variables.Length)
                 throw new ArgumentException("Number of variables must equal number of variables in the expression");
-            Span<bool> states = stackalloc bool[variables.Length];
+            var states = new bool[variables.Length];
             var tb = new TensorBuilder(count);
+            var variablesStorage = new Dictionary<Variable, Entity>();
             do
             {
-                var exprSubstituted = expr;
-                for (var i = 0; i < count; i++)
-                    exprSubstituted = exprSubstituted.Substitute(variables[i], states[i]);
-                if (exprSubstituted.EvalBoolean())
-                    tb.Add(states.ToArray().Select(s => (Entity)s));
+                for (int i = 0; i < count; i++)
+                    variablesStorage[variables[i]] = states[i];
+                if (expr.Substitute(variablesStorage).EvalBoolean())
+                    tb.Add(states.Select(s => (Entity)s));
             }
             while (Next(states));
 
@@ -73,14 +74,14 @@ namespace AngouriMath.Functions.Boolean
             // TODO: we probably also should verify the uniqueness of the given variables
             if (count != variables.Length)
                 throw new ArgumentException("Number of variables must equal number of variables in the expression");
-            Span<bool> states = stackalloc bool[variables.Length];
+            var states = new bool[variables.Length];
             var tb = new TensorBuilder(count + 1);
+            var variablesStorage = new Dictionary<Variable, Entity>();
             do
             {
-                var exprSubstituted = expr;
-                for (var i = 0; i < count; i++)
-                    exprSubstituted = exprSubstituted.Substitute(variables[i], states[i]);
-                tb.Add(states.ToArray().Select(s => (Entity)s).Append(exprSubstituted.EvalBoolean()));
+                for (int i = 0; i < count; i++)
+                    variablesStorage[variables[i]] = states[i];
+                tb.Add(states.Select(s => (Entity)s).Append(expr.Substitute(variablesStorage).EvalBoolean()));
             }
             while (Next(states));
 
