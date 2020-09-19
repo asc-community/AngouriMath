@@ -584,7 +584,7 @@ namespace AngouriMath.Functions
                     groups[hash] = new();
                 groups[hash].Add(child);
             }
-            return groups.Select(pair => pair.Value.Aggregate(ctor)).Aggregate(ctor);
+            return groups.OrderBy(pair => pair.Key).Select(pair => pair.Value.Aggregate(ctor)).Aggregate(ctor);
         }
 
         /// <summary>Actual sorting with <see cref="Entity.SortHash(TreeAnalyzer.SortLevel)"/></summary>

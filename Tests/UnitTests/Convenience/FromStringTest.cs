@@ -96,7 +96,7 @@ namespace UnitTests.Convenience
         [Fact] public void Test37()
             => Assert.Equal(-1 * (-1 * (-1 * x)), MathS.FromString("-++-+-+x"));
         [Fact] public void Test38()
-            => Assert.Equal(!!!x, MathS.FromString("!!!x"));
+            => Assert.Equal(!!!x, MathS.FromString("not not not x"));
         [Fact] public void Test39()
             => Assert.Equal(x & x | x.Implies(x), MathS.FromString("x and x or (x -> x)"));
         [Fact] public void Test40()

@@ -26,7 +26,7 @@ namespace UnitTests.PatternsTest
         [InlineData("false implies anything", "true")]
         [InlineData("false or anything", "false or anything")]
         [InlineData("true or anything", "true")]
-        [InlineData("anything or false", "anything or false")]
+        [InlineData("anything or false", "false or anything")]
         [InlineData("anything or true", "true")]
         [InlineData("anything or anything", "anything")]
         [InlineData("anything and anything", "anything")]
