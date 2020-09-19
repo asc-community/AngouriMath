@@ -24,7 +24,7 @@ namespace AngouriMath
         /// <summary>
         /// This node represents all possible values a boolean node might be of
         /// </summary>
-        public sealed partial record Boolean(bool Value) : BooleanNode
+        public sealed partial record Boolean(bool Value) : Statement
         {
             public static readonly Boolean True = new Boolean(true);
             public static readonly Boolean False = new Boolean(false);
@@ -73,7 +73,7 @@ namespace AngouriMath
         /// <summary>
         /// Whatever its argument is, the result will be inverted
         /// </summary>
-        public sealed partial record Notf(Entity Argument) : BooleanNode
+        public sealed partial record Notf(Entity Argument) : Statement
         {
             public override Priority Priority => Priority.Negation;
             private Notf New(Entity negated) =>
@@ -85,7 +85,7 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff both operands are true
         /// </summary>
-        public sealed partial record Andf(Entity Left, Entity Right) : BooleanNode
+        public sealed partial record Andf(Entity Left, Entity Right) : Statement
         {
             public override Priority Priority => Priority.Conjunction;
             private Andf New(Entity left, Entity right) =>
@@ -98,7 +98,7 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff at least one operand is true,
         /// </summary>
-        public sealed partial record Orf(Entity Left, Entity Right) : BooleanNode
+        public sealed partial record Orf(Entity Left, Entity Right) : Statement
         {
             public override Priority Priority => Priority.Disjunction;
             private Orf New(Entity left, Entity right) =>
@@ -111,7 +111,7 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff one operand is true
         /// </summary>
-        public sealed partial record Xorf(Entity Left, Entity Right) : BooleanNode
+        public sealed partial record Xorf(Entity Left, Entity Right) : Statement
         {
             public override Priority Priority => Priority.XDisjunction;
             private Xorf New(Entity left, Entity right) =>
@@ -124,7 +124,7 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff assumption is false or conclusion is true
         /// </summary>
-        public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : BooleanNode
+        public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : Statement
         {
             public override Priority Priority => Priority.Impliciation;
             private Impliesf New(Entity left, Entity right) =>

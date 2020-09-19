@@ -21,7 +21,7 @@ namespace AngouriMath
         /// <summary>
         /// This class describes every node whose value is boolean, that is, true or false
         /// </summary>
-        public abstract partial record BooleanNode : Entity
+        public abstract partial record Statement : Entity
         {
             
         }

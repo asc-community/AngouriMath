@@ -89,7 +89,7 @@ namespace AngouriMath.Functions
                     res = res.Complexity > res1.Complexity ? res1 : res;
                 }
 
-                if (res.Nodes.Any(child => child is BooleanNode))
+                if (res.Nodes.Any(child => child is Statement))
                 {
                     AddHistory(res = res.Replace(Patterns.BooleanRules).InnerSimplify());
                 }
