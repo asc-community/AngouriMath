@@ -113,7 +113,7 @@ Console.WriteLine(expr.Simplify());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{1}{2}\times \left(1%2B\sqrt{2}\right)%2B1">
 
-#### <a name="bool"</a>Boolean algebra
+#### <a name="bool"></a>Boolean algebra
 ```cs
 // Those are equal
 Entity expr1 = "a and b or c";
