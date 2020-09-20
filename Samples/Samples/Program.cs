@@ -10,10 +10,10 @@ namespace Samples
 {
     class Program
     {
-
         static void Main(string[] _)
         {
-            
+            Entity expr = "a -> true";
+            Console.WriteLine(MathS.SolveBooleanTable(expr, "a"));
         }
     }
 }

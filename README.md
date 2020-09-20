@@ -35,7 +35,7 @@ by community, hence, any contribution is welcomed.
   - [Substitution](#subs)
   - [Derivation](#deri)
   - [Simplification](#simp)
-  - [Boolean](#bool) (under work)
+  - [Boolean](#bool)
   - [Numbers](#numb)
   - [Equations](#equa)
   - [Equation systems](#eqsys)
@@ -70,18 +70,18 @@ After cloning, you do not need to set up it. It is ready to use, just add the re
 #### <a name="eval"></a>Use as a simple calculator
 ```cs
 Entity expr = "1 + 2 * log(3, 9)";
-Console.WriteLine(expr.Eval());
+Console.WriteLine(expr.EvalNumerical());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=5">
 
 ```cs
-Console.WriteLine("2 / 3 + sqrt(-16)".Eval());
+Console.WriteLine("2 / 3 + sqrt(-16)".EvalNumerical());
 >>> 2 / 3 + 4i
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{2}{3} %2B 4i">
 
 ```cs
-Console.WriteLine("(-2) ^ 3".Eval());
+Console.WriteLine("(-2) ^ 3".EvalNumerical());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=-8">
 
@@ -112,6 +112,28 @@ var expr = "1/2 + sin(pi / 4) + (sin(3x)2 + cos(3x)2)";
 Console.WriteLine(expr.Simplify());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{1}{2}\times \left(1%2B\sqrt{2}\right)%2B1">
+
+#### <a name="bool"</a>Boolean algebra
+```cs
+// Those are equal
+Entity expr1 = "a and b or c";
+Entity expr2 = "a & b | c";
+
+// as well as those
+Entity expr3 = "a -> b";
+Entity expr3 = "a implies b";
+```
+
+```cs
+Entity expr = "a -> true";
+Console.WriteLine(MathS.SolveBooleanTable(expr, "a"));
+```
+
+```
+>>> Matrix[2 x 1]
+>>> False
+>>> True
+```
 
 #### <a name="late"></a>Build latex
 ```cs
