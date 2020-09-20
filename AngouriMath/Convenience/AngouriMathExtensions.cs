@@ -28,7 +28,8 @@ namespace AngouriMath.Extensions
             => new FiniteSet(expr.Select(c => SetPiece.Element(c)));
         public static Entity ToEntity(this string expr) => MathS.FromString(expr);
         public static Entity Simplify(this string expr) => expr.ToEntity().Simplify();
-        public static Complex Eval(this string expr) => expr.ToEntity().EvalNumerical();
+        public static Complex EvalNumerical(this string expr) => expr.ToEntity().EvalNumerical();
+        public static Boolean EvalBoolean(this string expr) => expr.ToEntity().EvalBoolean();
         public static Entity Expand(this string expr) => expr.ToEntity().Expand();
         public static Entity Factorize(this string expr) => expr.ToEntity().Factorize();
         public static Entity Substitute(this string expr, Variable var, Entity value)
