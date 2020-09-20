@@ -62,7 +62,8 @@ factorial_expression returns[Entity value]
 
 power_list returns[List<Entity> value]
     @init { $value = new List<Entity>(); }
-    : ('^' factorial_expression { $value.Add($factorial_expression.value); })+ ;
+    : ('^' factorial_expression { $value.Add($factorial_expression.value); })+
+    ;
     
 // TODO: refactor
 power_expression returns[Entity value]
@@ -159,6 +160,7 @@ atom returns[Entity value]
     : NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
+    | '(|' expression '|)' { $value = $expression.value.Abs(); }
     | '(' expression ')' { $value = $expression.value; }
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
     | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
@@ -186,8 +188,8 @@ atom returns[Entity value]
     | 'signum(' args = function_arguments ')' { Assert("signum", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'sgn(' args = function_arguments ')' { Assert("sgn", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'sign(' args = function_arguments ')' { Assert("sign", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
-    // TODO: we might want to use another way for the absolute value function
     | 'abs(' args = function_arguments ')' { Assert("abs", 1, $args.list.Count); $value = MathS.Abs($args.list[0]); }
+    | 'domain(' args = function_arguments ')' { Assert("domain", 2, $args.list.Count); $value = $args.list[0].WithCodomain(DomainsFunctional.Parse($args.list[1])); }
     ;
 
 statement: expression EOF { Result = $expression.value; } ;

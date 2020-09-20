@@ -13,8 +13,7 @@ namespace Samples
 
         static void Main(string[] _)
         {
-            Variable x = "x";
-
+            
         }
     }
 }

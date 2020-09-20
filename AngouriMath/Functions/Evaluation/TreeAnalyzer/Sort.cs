@@ -38,7 +38,7 @@ namespace AngouriMath
             };
         }
 
-        public partial record Variable : Entity
+        public partial record Variable
         {
             private protected override string SortHashName(SortLevel level) => "v_" + Name;
         }

@@ -47,8 +47,9 @@ internal partial class AngouriMathParser : Parser {
 		T__17=18, T__18=19, T__19=20, T__20=21, T__21=22, T__22=23, T__23=24, 
 		T__24=25, T__25=26, T__26=27, T__27=28, T__28=29, T__29=30, T__30=31, 
 		T__31=32, T__32=33, T__33=34, T__34=35, T__35=36, T__36=37, T__37=38, 
-		T__38=39, T__39=40, T__40=41, T__41=42, T__42=43, T__43=44, NEWLINE=45, 
-		NUMBER=46, BOOLEAN=47, VARIABLE=48, COMMENT=49, WS=50;
+		T__38=39, T__39=40, T__40=41, T__41=42, T__42=43, T__43=44, T__44=45, 
+		T__45=46, T__46=47, NEWLINE=48, NUMBER=49, BOOLEAN=50, VARIABLE=51, COMMENT=52, 
+		WS=53;
 	public const int
 		RULE_factorial_expression = 0, RULE_power_list = 1, RULE_power_expression = 2, 
 		RULE_unary_expression = 3, RULE_mult_expression = 4, RULE_sum_expression = 5, 
@@ -64,19 +65,19 @@ internal partial class AngouriMathParser : Parser {
 
 	private static readonly string[] _LiteralNames = {
 		null, "'!'", "'^'", "'-'", "'+'", "'*'", "'/'", "'not'", "'and'", "'&'", 
-		"'xor'", "'or'", "'|'", "'implies'", "'->'", "','", "'('", "')'", "'sin('", 
-		"'cos('", "'log('", "'sqrt('", "'cbrt('", "'sqr('", "'ln('", "'tan('", 
-		"'cotan('", "'sec('", "'cosec('", "'arcsin('", "'arccos('", "'arctan('", 
-		"'arccotan('", "'arcsec('", "'arccosec('", "'gamma('", "'derivative('", 
+		"'xor'", "'or'", "'|'", "'implies'", "'->'", "','", "'(|'", "'|)'", "'('", 
+		"')'", "'sin('", "'cos('", "'log('", "'sqrt('", "'cbrt('", "'sqr('", "'ln('", 
+		"'tan('", "'cotan('", "'sec('", "'cosec('", "'arcsin('", "'arccos('", 
+		"'arctan('", "'arccotan('", "'arcsec('", "'arccosec('", "'gamma('", "'derivative('", 
 		"'integral('", "'limit('", "'limitleft('", "'limitright('", "'signum('", 
-		"'sgn('", "'sign('", "'abs('"
+		"'sgn('", "'sign('", "'abs('", "'domain('"
 	};
 	private static readonly string[] _SymbolicNames = {
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, null, null, 
 		null, null, null, null, null, null, null, null, null, null, null, null, 
-		null, null, null, null, null, null, null, null, null, "NEWLINE", "NUMBER", 
-		"BOOLEAN", "VARIABLE", "COMMENT", "WS"
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		"NEWLINE", "NUMBER", "BOOLEAN", "VARIABLE", "COMMENT", "WS"
 	};
 	public static readonly IVocabulary DefaultVocabulary = new Vocabulary(_LiteralNames, _SymbolicNames);
 
@@ -1003,7 +1004,7 @@ internal partial class AngouriMathParser : Parser {
 			State = 192;
 			ErrorHandler.Sync(this);
 			_la = TokenStream.LA(1);
-			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__3) | (1L << T__6) | (1L << T__15) | (1L << T__17) | (1L << T__18) | (1L << T__19) | (1L << T__20) | (1L << T__21) | (1L << T__22) | (1L << T__23) | (1L << T__24) | (1L << T__25) | (1L << T__26) | (1L << T__27) | (1L << T__28) | (1L << T__29) | (1L << T__30) | (1L << T__31) | (1L << T__32) | (1L << T__33) | (1L << T__34) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << T__40) | (1L << T__41) | (1L << T__42) | (1L << T__43) | (1L << NUMBER) | (1L << BOOLEAN) | (1L << VARIABLE))) != 0)) {
+			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__2) | (1L << T__3) | (1L << T__6) | (1L << T__15) | (1L << T__17) | (1L << T__19) | (1L << T__20) | (1L << T__21) | (1L << T__22) | (1L << T__23) | (1L << T__24) | (1L << T__25) | (1L << T__26) | (1L << T__27) | (1L << T__28) | (1L << T__29) | (1L << T__30) | (1L << T__31) | (1L << T__32) | (1L << T__33) | (1L << T__34) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << T__40) | (1L << T__41) | (1L << T__42) | (1L << T__43) | (1L << T__44) | (1L << T__45) | (1L << T__46) | (1L << NUMBER) | (1L << BOOLEAN) | (1L << VARIABLE))) != 0)) {
 				{
 				State = 181; _localctx.e = expression();
 				 _localctx.list.Add(_localctx.e.value); 
@@ -1074,7 +1075,7 @@ internal partial class AngouriMathParser : Parser {
 		AtomContext _localctx = new AtomContext(Context, State);
 		EnterRule(_localctx, 26, RULE_atom);
 		try {
-			State = 340;
+			State = 350;
 			ErrorHandler.Sync(this);
 			switch (TokenStream.LA(1)) {
 			case NUMBER:
@@ -1104,250 +1105,268 @@ internal partial class AngouriMathParser : Parser {
 				State = 200; Match(T__15);
 				State = 201; _localctx._expression = expression();
 				State = 202; Match(T__16);
-				 _localctx.value =  _localctx._expression.value; 
+				 _localctx.value =  _localctx._expression.value.Abs(); 
 				}
 				break;
 			case T__17:
 				EnterOuterAlt(_localctx, 5);
 				{
 				State = 205; Match(T__17);
-				State = 206; _localctx.args = function_arguments();
-				State = 207; Match(T__16);
-				 Assert("sin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sin(_localctx.args.list[0]); 
-				}
-				break;
-			case T__18:
-				EnterOuterAlt(_localctx, 6);
-				{
-				State = 210; Match(T__18);
-				State = 211; _localctx.args = function_arguments();
-				State = 212; Match(T__16);
-				 Assert("cos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cos(_localctx.args.list[0]); 
+				State = 206; _localctx._expression = expression();
+				State = 207; Match(T__18);
+				 _localctx.value =  _localctx._expression.value; 
 				}
 				break;
 			case T__19:
-				EnterOuterAlt(_localctx, 7);
+				EnterOuterAlt(_localctx, 6);
 				{
-				State = 215; Match(T__19);
-				State = 216; _localctx.args = function_arguments();
-				State = 217; Match(T__16);
-				 _localctx.value =  Assert("log", (1, 2), _localctx.args.list.Count) ? MathS.Log(10, _localctx.args.list[0]) : MathS.Log(_localctx.args.list[0], _localctx.args.list[1]); 
+				State = 210; Match(T__19);
+				State = 211; _localctx.args = function_arguments();
+				State = 212; Match(T__18);
+				 Assert("sin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sin(_localctx.args.list[0]); 
 				}
 				break;
 			case T__20:
-				EnterOuterAlt(_localctx, 8);
+				EnterOuterAlt(_localctx, 7);
 				{
-				State = 220; Match(T__20);
-				State = 221; _localctx.args = function_arguments();
-				State = 222; Match(T__16);
-				 Assert("sqrt", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sqrt(_localctx.args.list[0]); 
+				State = 215; Match(T__20);
+				State = 216; _localctx.args = function_arguments();
+				State = 217; Match(T__18);
+				 Assert("cos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cos(_localctx.args.list[0]); 
 				}
 				break;
 			case T__21:
-				EnterOuterAlt(_localctx, 9);
+				EnterOuterAlt(_localctx, 8);
 				{
-				State = 225; Match(T__21);
-				State = 226; _localctx.args = function_arguments();
-				State = 227; Match(T__16);
-				 Assert("cbrt", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cbrt(_localctx.args.list[0]); 
+				State = 220; Match(T__21);
+				State = 221; _localctx.args = function_arguments();
+				State = 222; Match(T__18);
+				 _localctx.value =  Assert("log", (1, 2), _localctx.args.list.Count) ? MathS.Log(10, _localctx.args.list[0]) : MathS.Log(_localctx.args.list[0], _localctx.args.list[1]); 
 				}
 				break;
 			case T__22:
-				EnterOuterAlt(_localctx, 10);
+				EnterOuterAlt(_localctx, 9);
 				{
-				State = 230; Match(T__22);
-				State = 231; _localctx.args = function_arguments();
-				State = 232; Match(T__16);
-				 Assert("sqr", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sqr(_localctx.args.list[0]); 
+				State = 225; Match(T__22);
+				State = 226; _localctx.args = function_arguments();
+				State = 227; Match(T__18);
+				 Assert("sqrt", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sqrt(_localctx.args.list[0]); 
 				}
 				break;
 			case T__23:
-				EnterOuterAlt(_localctx, 11);
+				EnterOuterAlt(_localctx, 10);
 				{
-				State = 235; Match(T__23);
-				State = 236; _localctx.args = function_arguments();
-				State = 237; Match(T__16);
-				 Assert("ln", 1, _localctx.args.list.Count); _localctx.value =  MathS.Ln(_localctx.args.list[0]); 
+				State = 230; Match(T__23);
+				State = 231; _localctx.args = function_arguments();
+				State = 232; Match(T__18);
+				 Assert("cbrt", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cbrt(_localctx.args.list[0]); 
 				}
 				break;
 			case T__24:
-				EnterOuterAlt(_localctx, 12);
+				EnterOuterAlt(_localctx, 11);
 				{
-				State = 240; Match(T__24);
-				State = 241; _localctx.args = function_arguments();
-				State = 242; Match(T__16);
-				 Assert("tan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Tan(_localctx.args.list[0]); 
+				State = 235; Match(T__24);
+				State = 236; _localctx.args = function_arguments();
+				State = 237; Match(T__18);
+				 Assert("sqr", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sqr(_localctx.args.list[0]); 
 				}
 				break;
 			case T__25:
-				EnterOuterAlt(_localctx, 13);
+				EnterOuterAlt(_localctx, 12);
 				{
-				State = 245; Match(T__25);
-				State = 246; _localctx.args = function_arguments();
-				State = 247; Match(T__16);
-				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cotan(_localctx.args.list[0]); 
+				State = 240; Match(T__25);
+				State = 241; _localctx.args = function_arguments();
+				State = 242; Match(T__18);
+				 Assert("ln", 1, _localctx.args.list.Count); _localctx.value =  MathS.Ln(_localctx.args.list[0]); 
 				}
 				break;
 			case T__26:
-				EnterOuterAlt(_localctx, 14);
+				EnterOuterAlt(_localctx, 13);
 				{
-				State = 250; Match(T__26);
-				State = 251; _localctx.args = function_arguments();
-				State = 252; Match(T__16);
-				 Assert("sec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sec(_localctx.args.list[0]); 
+				State = 245; Match(T__26);
+				State = 246; _localctx.args = function_arguments();
+				State = 247; Match(T__18);
+				 Assert("tan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Tan(_localctx.args.list[0]); 
 				}
 				break;
 			case T__27:
-				EnterOuterAlt(_localctx, 15);
+				EnterOuterAlt(_localctx, 14);
 				{
-				State = 255; Match(T__27);
-				State = 256; _localctx.args = function_arguments();
-				State = 257; Match(T__16);
-				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cosec(_localctx.args.list[0]); 
+				State = 250; Match(T__27);
+				State = 251; _localctx.args = function_arguments();
+				State = 252; Match(T__18);
+				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cotan(_localctx.args.list[0]); 
 				}
 				break;
 			case T__28:
-				EnterOuterAlt(_localctx, 16);
+				EnterOuterAlt(_localctx, 15);
 				{
-				State = 260; Match(T__28);
-				State = 261; _localctx.args = function_arguments();
-				State = 262; Match(T__16);
-				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsin(_localctx.args.list[0]); 
+				State = 255; Match(T__28);
+				State = 256; _localctx.args = function_arguments();
+				State = 257; Match(T__18);
+				 Assert("sec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Sec(_localctx.args.list[0]); 
 				}
 				break;
 			case T__29:
-				EnterOuterAlt(_localctx, 17);
+				EnterOuterAlt(_localctx, 16);
 				{
-				State = 265; Match(T__29);
-				State = 266; _localctx.args = function_arguments();
-				State = 267; Match(T__16);
-				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccos(_localctx.args.list[0]); 
+				State = 260; Match(T__29);
+				State = 261; _localctx.args = function_arguments();
+				State = 262; Match(T__18);
+				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Cosec(_localctx.args.list[0]); 
 				}
 				break;
 			case T__30:
-				EnterOuterAlt(_localctx, 18);
+				EnterOuterAlt(_localctx, 17);
 				{
-				State = 270; Match(T__30);
-				State = 271; _localctx.args = function_arguments();
-				State = 272; Match(T__16);
-				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arctan(_localctx.args.list[0]); 
+				State = 265; Match(T__30);
+				State = 266; _localctx.args = function_arguments();
+				State = 267; Match(T__18);
+				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsin(_localctx.args.list[0]); 
 				}
 				break;
 			case T__31:
-				EnterOuterAlt(_localctx, 19);
+				EnterOuterAlt(_localctx, 18);
 				{
-				State = 275; Match(T__31);
-				State = 276; _localctx.args = function_arguments();
-				State = 277; Match(T__16);
-				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccotan(_localctx.args.list[0]); 
+				State = 270; Match(T__31);
+				State = 271; _localctx.args = function_arguments();
+				State = 272; Match(T__18);
+				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccos(_localctx.args.list[0]); 
 				}
 				break;
 			case T__32:
-				EnterOuterAlt(_localctx, 20);
+				EnterOuterAlt(_localctx, 19);
 				{
-				State = 280; Match(T__32);
-				State = 281; _localctx.args = function_arguments();
-				State = 282; Match(T__16);
-				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsec(_localctx.args.list[0]); 
+				State = 275; Match(T__32);
+				State = 276; _localctx.args = function_arguments();
+				State = 277; Match(T__18);
+				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arctan(_localctx.args.list[0]); 
 				}
 				break;
 			case T__33:
-				EnterOuterAlt(_localctx, 21);
+				EnterOuterAlt(_localctx, 20);
 				{
-				State = 285; Match(T__33);
-				State = 286; _localctx.args = function_arguments();
-				State = 287; Match(T__16);
-				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccosec(_localctx.args.list[0]); 
+				State = 280; Match(T__33);
+				State = 281; _localctx.args = function_arguments();
+				State = 282; Match(T__18);
+				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccotan(_localctx.args.list[0]); 
 				}
 				break;
 			case T__34:
-				EnterOuterAlt(_localctx, 22);
+				EnterOuterAlt(_localctx, 21);
 				{
-				State = 290; Match(T__34);
-				State = 291; _localctx.args = function_arguments();
-				State = 292; Match(T__16);
-				 Assert("gamma", 1, _localctx.args.list.Count); _localctx.value =  MathS.Gamma(_localctx.args.list[0]); 
+				State = 285; Match(T__34);
+				State = 286; _localctx.args = function_arguments();
+				State = 287; Match(T__18);
+				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arcsec(_localctx.args.list[0]); 
 				}
 				break;
 			case T__35:
-				EnterOuterAlt(_localctx, 23);
+				EnterOuterAlt(_localctx, 22);
 				{
-				State = 295; Match(T__35);
-				State = 296; _localctx.args = function_arguments();
-				State = 297; Match(T__16);
-				 Assert("derivative", 3, _localctx.args.list.Count); _localctx.value =  MathS.Derivative(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
+				State = 290; Match(T__35);
+				State = 291; _localctx.args = function_arguments();
+				State = 292; Match(T__18);
+				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Arccosec(_localctx.args.list[0]); 
 				}
 				break;
 			case T__36:
-				EnterOuterAlt(_localctx, 24);
+				EnterOuterAlt(_localctx, 23);
 				{
-				State = 300; Match(T__36);
-				State = 301; _localctx.args = function_arguments();
-				State = 302; Match(T__16);
-				 Assert("integral", 3, _localctx.args.list.Count); _localctx.value =  MathS.Integral(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
+				State = 295; Match(T__36);
+				State = 296; _localctx.args = function_arguments();
+				State = 297; Match(T__18);
+				 Assert("gamma", 1, _localctx.args.list.Count); _localctx.value =  MathS.Gamma(_localctx.args.list[0]); 
 				}
 				break;
 			case T__37:
-				EnterOuterAlt(_localctx, 25);
+				EnterOuterAlt(_localctx, 24);
 				{
-				State = 305; Match(T__37);
-				State = 306; _localctx.args = function_arguments();
-				State = 307; Match(T__16);
-				 Assert("limit", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
+				State = 300; Match(T__37);
+				State = 301; _localctx.args = function_arguments();
+				State = 302; Match(T__18);
+				 Assert("derivative", 3, _localctx.args.list.Count); _localctx.value =  MathS.Derivative(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
 				}
 				break;
 			case T__38:
-				EnterOuterAlt(_localctx, 26);
+				EnterOuterAlt(_localctx, 25);
 				{
-				State = 310; Match(T__38);
-				State = 311; _localctx.args = function_arguments();
-				State = 312; Match(T__16);
-				 Assert("limitleft", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Core.ApproachFrom.Left); 
+				State = 305; Match(T__38);
+				State = 306; _localctx.args = function_arguments();
+				State = 307; Match(T__18);
+				 Assert("integral", 3, _localctx.args.list.Count); _localctx.value =  MathS.Integral(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
 				}
 				break;
 			case T__39:
-				EnterOuterAlt(_localctx, 27);
+				EnterOuterAlt(_localctx, 26);
 				{
-				State = 315; Match(T__39);
-				State = 316; _localctx.args = function_arguments();
-				State = 317; Match(T__16);
-				 Assert("limitright", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Core.ApproachFrom.Right); 
+				State = 310; Match(T__39);
+				State = 311; _localctx.args = function_arguments();
+				State = 312; Match(T__18);
+				 Assert("limit", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
 				}
 				break;
 			case T__40:
-				EnterOuterAlt(_localctx, 28);
+				EnterOuterAlt(_localctx, 27);
 				{
-				State = 320; Match(T__40);
-				State = 321; _localctx.args = function_arguments();
-				State = 322; Match(T__16);
-				 Assert("signum", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
+				State = 315; Match(T__40);
+				State = 316; _localctx.args = function_arguments();
+				State = 317; Match(T__18);
+				 Assert("limitleft", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Core.ApproachFrom.Left); 
 				}
 				break;
 			case T__41:
-				EnterOuterAlt(_localctx, 29);
+				EnterOuterAlt(_localctx, 28);
 				{
-				State = 325; Match(T__41);
-				State = 326; _localctx.args = function_arguments();
-				State = 327; Match(T__16);
-				 Assert("sgn", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
+				State = 320; Match(T__41);
+				State = 321; _localctx.args = function_arguments();
+				State = 322; Match(T__18);
+				 Assert("limitright", 3, _localctx.args.list.Count); _localctx.value =  MathS.Limit(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2], AngouriMath.Core.ApproachFrom.Right); 
 				}
 				break;
 			case T__42:
-				EnterOuterAlt(_localctx, 30);
+				EnterOuterAlt(_localctx, 29);
 				{
-				State = 330; Match(T__42);
-				State = 331; _localctx.args = function_arguments();
-				State = 332; Match(T__16);
-				 Assert("sign", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
+				State = 325; Match(T__42);
+				State = 326; _localctx.args = function_arguments();
+				State = 327; Match(T__18);
+				 Assert("signum", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
 				}
 				break;
 			case T__43:
+				EnterOuterAlt(_localctx, 30);
+				{
+				State = 330; Match(T__43);
+				State = 331; _localctx.args = function_arguments();
+				State = 332; Match(T__18);
+				 Assert("sgn", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
+				}
+				break;
+			case T__44:
 				EnterOuterAlt(_localctx, 31);
 				{
-				State = 335; Match(T__43);
+				State = 335; Match(T__44);
 				State = 336; _localctx.args = function_arguments();
-				State = 337; Match(T__16);
+				State = 337; Match(T__18);
+				 Assert("sign", 1, _localctx.args.list.Count); _localctx.value =  MathS.Signum(_localctx.args.list[0]); 
+				}
+				break;
+			case T__45:
+				EnterOuterAlt(_localctx, 32);
+				{
+				State = 340; Match(T__45);
+				State = 341; _localctx.args = function_arguments();
+				State = 342; Match(T__18);
 				 Assert("abs", 1, _localctx.args.list.Count); _localctx.value =  MathS.Abs(_localctx.args.list[0]); 
+				}
+				break;
+			case T__46:
+				EnterOuterAlt(_localctx, 33);
+				{
+				State = 345; Match(T__46);
+				State = 346; _localctx.args = function_arguments();
+				State = 347; Match(T__18);
+				 Assert("domain", 2, _localctx.args.list.Count); _localctx.value =  _localctx.args.list[0].WithCodomain(DomainsFunctional.Parse(_localctx.args.list[1])); 
 				}
 				break;
 			default:
@@ -1393,8 +1412,8 @@ internal partial class AngouriMathParser : Parser {
 		try {
 			EnterOuterAlt(_localctx, 1);
 			{
-			State = 342; _localctx._expression = expression();
-			State = 343; Match(Eof);
+			State = 352; _localctx._expression = expression();
+			State = 353; Match(Eof);
 			 Result = _localctx._expression.value; 
 			}
 		}
@@ -1411,7 +1430,7 @@ internal partial class AngouriMathParser : Parser {
 
 	private static char[] _serializedATN = {
 		'\x3', '\x608B', '\xA72A', '\x8133', '\xB9ED', '\x417C', '\x3BE7', '\x7786', 
-		'\x5964', '\x3', '\x34', '\x15D', '\x4', '\x2', '\t', '\x2', '\x4', '\x3', 
+		'\x5964', '\x3', '\x37', '\x167', '\x4', '\x2', '\t', '\x2', '\x4', '\x3', 
 		'\t', '\x3', '\x4', '\x4', '\t', '\x4', '\x4', '\x5', '\t', '\x5', '\x4', 
 		'\x6', '\t', '\x6', '\x4', '\a', '\t', '\a', '\x4', '\b', '\t', '\b', 
 		'\x4', '\t', '\t', '\t', '\x4', '\n', '\t', '\n', '\x4', '\v', '\t', '\v', 
@@ -1478,10 +1497,12 @@ internal partial class AngouriMathParser : Parser {
 		'\xF', '\x3', '\xF', '\x3', '\xF', '\x3', '\xF', '\x3', '\xF', '\x3', 
 		'\xF', '\x3', '\xF', '\x3', '\xF', '\x3', '\xF', '\x3', '\xF', '\x3', 
 		'\xF', '\x3', '\xF', '\x3', '\xF', '\x3', '\xF', '\x3', '\xF', '\x3', 
-		'\xF', '\x3', '\xF', '\x5', '\xF', '\x157', '\n', '\xF', '\x3', '\x10', 
+		'\xF', '\x3', '\xF', '\x3', '\xF', '\x3', '\xF', '\x3', '\xF', '\x3', 
+		'\xF', '\x3', '\xF', '\x3', '\xF', '\x3', '\xF', '\x3', '\xF', '\x3', 
+		'\xF', '\x3', '\xF', '\x5', '\xF', '\x161', '\n', '\xF', '\x3', '\x10', 
 		'\x3', '\x10', '\x3', '\x10', '\x3', '\x10', '\x3', '\x10', '\x2', '\x2', 
 		'\x11', '\x2', '\x4', '\x6', '\b', '\n', '\f', '\xE', '\x10', '\x12', 
-		'\x14', '\x16', '\x18', '\x1A', '\x1C', '\x1E', '\x2', '\x2', '\x2', '\x181', 
+		'\x14', '\x16', '\x18', '\x1A', '\x1C', '\x1E', '\x2', '\x2', '\x2', '\x18D', 
 		'\x2', '\'', '\x3', '\x2', '\x2', '\x2', '\x4', '-', '\x3', '\x2', '\x2', 
 		'\x2', '\x6', '\x31', '\x3', '\x2', '\x2', '\x2', '\b', 'O', '\x3', '\x2', 
 		'\x2', '\x2', '\n', 'Q', '\x3', '\x2', '\x2', '\x2', '\f', '`', '\x3', 
@@ -1489,8 +1510,8 @@ internal partial class AngouriMathParser : Parser {
 		'\x3', '\x2', '\x2', '\x2', '\x12', '\x8B', '\x3', '\x2', '\x2', '\x2', 
 		'\x14', '\x96', '\x3', '\x2', '\x2', '\x2', '\x16', '\xA5', '\x3', '\x2', 
 		'\x2', '\x2', '\x18', '\xB4', '\x3', '\x2', '\x2', '\x2', '\x1A', '\xC2', 
-		'\x3', '\x2', '\x2', '\x2', '\x1C', '\x156', '\x3', '\x2', '\x2', '\x2', 
-		'\x1E', '\x158', '\x3', '\x2', '\x2', '\x2', ' ', '!', '\x5', '\x1C', 
+		'\x3', '\x2', '\x2', '\x2', '\x1C', '\x160', '\x3', '\x2', '\x2', '\x2', 
+		'\x1E', '\x162', '\x3', '\x2', '\x2', '\x2', ' ', '!', '\x5', '\x1C', 
 		'\xF', '\x2', '!', '\"', '\a', '\x3', '\x2', '\x2', '\"', '#', '\b', '\x2', 
 		'\x1', '\x2', '#', '(', '\x3', '\x2', '\x2', '\x2', '$', '%', '\x5', '\x1C', 
 		'\xF', '\x2', '%', '&', '\b', '\x2', '\x1', '\x2', '&', '(', '\x3', '\x2', 
@@ -1595,119 +1616,126 @@ internal partial class AngouriMathParser : Parser {
 		'\x2', '\xC0', '\xC3', '\x3', '\x2', '\x2', '\x2', '\xC1', '\xBF', '\x3', 
 		'\x2', '\x2', '\x2', '\xC2', '\xB7', '\x3', '\x2', '\x2', '\x2', '\xC2', 
 		'\xC3', '\x3', '\x2', '\x2', '\x2', '\xC3', '\x1B', '\x3', '\x2', '\x2', 
-		'\x2', '\xC4', '\xC5', '\a', '\x30', '\x2', '\x2', '\xC5', '\x157', '\b', 
-		'\xF', '\x1', '\x2', '\xC6', '\xC7', '\a', '\x31', '\x2', '\x2', '\xC7', 
-		'\x157', '\b', '\xF', '\x1', '\x2', '\xC8', '\xC9', '\a', '\x32', '\x2', 
-		'\x2', '\xC9', '\x157', '\b', '\xF', '\x1', '\x2', '\xCA', '\xCB', '\a', 
+		'\x2', '\xC4', '\xC5', '\a', '\x33', '\x2', '\x2', '\xC5', '\x161', '\b', 
+		'\xF', '\x1', '\x2', '\xC6', '\xC7', '\a', '\x34', '\x2', '\x2', '\xC7', 
+		'\x161', '\b', '\xF', '\x1', '\x2', '\xC8', '\xC9', '\a', '\x35', '\x2', 
+		'\x2', '\xC9', '\x161', '\b', '\xF', '\x1', '\x2', '\xCA', '\xCB', '\a', 
 		'\x12', '\x2', '\x2', '\xCB', '\xCC', '\x5', '\x18', '\r', '\x2', '\xCC', 
 		'\xCD', '\a', '\x13', '\x2', '\x2', '\xCD', '\xCE', '\b', '\xF', '\x1', 
-		'\x2', '\xCE', '\x157', '\x3', '\x2', '\x2', '\x2', '\xCF', '\xD0', '\a', 
-		'\x14', '\x2', '\x2', '\xD0', '\xD1', '\x5', '\x1A', '\xE', '\x2', '\xD1', 
-		'\xD2', '\a', '\x13', '\x2', '\x2', '\xD2', '\xD3', '\b', '\xF', '\x1', 
-		'\x2', '\xD3', '\x157', '\x3', '\x2', '\x2', '\x2', '\xD4', '\xD5', '\a', 
-		'\x15', '\x2', '\x2', '\xD5', '\xD6', '\x5', '\x1A', '\xE', '\x2', '\xD6', 
-		'\xD7', '\a', '\x13', '\x2', '\x2', '\xD7', '\xD8', '\b', '\xF', '\x1', 
-		'\x2', '\xD8', '\x157', '\x3', '\x2', '\x2', '\x2', '\xD9', '\xDA', '\a', 
-		'\x16', '\x2', '\x2', '\xDA', '\xDB', '\x5', '\x1A', '\xE', '\x2', '\xDB', 
-		'\xDC', '\a', '\x13', '\x2', '\x2', '\xDC', '\xDD', '\b', '\xF', '\x1', 
-		'\x2', '\xDD', '\x157', '\x3', '\x2', '\x2', '\x2', '\xDE', '\xDF', '\a', 
-		'\x17', '\x2', '\x2', '\xDF', '\xE0', '\x5', '\x1A', '\xE', '\x2', '\xE0', 
-		'\xE1', '\a', '\x13', '\x2', '\x2', '\xE1', '\xE2', '\b', '\xF', '\x1', 
-		'\x2', '\xE2', '\x157', '\x3', '\x2', '\x2', '\x2', '\xE3', '\xE4', '\a', 
-		'\x18', '\x2', '\x2', '\xE4', '\xE5', '\x5', '\x1A', '\xE', '\x2', '\xE5', 
-		'\xE6', '\a', '\x13', '\x2', '\x2', '\xE6', '\xE7', '\b', '\xF', '\x1', 
-		'\x2', '\xE7', '\x157', '\x3', '\x2', '\x2', '\x2', '\xE8', '\xE9', '\a', 
-		'\x19', '\x2', '\x2', '\xE9', '\xEA', '\x5', '\x1A', '\xE', '\x2', '\xEA', 
-		'\xEB', '\a', '\x13', '\x2', '\x2', '\xEB', '\xEC', '\b', '\xF', '\x1', 
-		'\x2', '\xEC', '\x157', '\x3', '\x2', '\x2', '\x2', '\xED', '\xEE', '\a', 
-		'\x1A', '\x2', '\x2', '\xEE', '\xEF', '\x5', '\x1A', '\xE', '\x2', '\xEF', 
-		'\xF0', '\a', '\x13', '\x2', '\x2', '\xF0', '\xF1', '\b', '\xF', '\x1', 
-		'\x2', '\xF1', '\x157', '\x3', '\x2', '\x2', '\x2', '\xF2', '\xF3', '\a', 
-		'\x1B', '\x2', '\x2', '\xF3', '\xF4', '\x5', '\x1A', '\xE', '\x2', '\xF4', 
-		'\xF5', '\a', '\x13', '\x2', '\x2', '\xF5', '\xF6', '\b', '\xF', '\x1', 
-		'\x2', '\xF6', '\x157', '\x3', '\x2', '\x2', '\x2', '\xF7', '\xF8', '\a', 
-		'\x1C', '\x2', '\x2', '\xF8', '\xF9', '\x5', '\x1A', '\xE', '\x2', '\xF9', 
-		'\xFA', '\a', '\x13', '\x2', '\x2', '\xFA', '\xFB', '\b', '\xF', '\x1', 
-		'\x2', '\xFB', '\x157', '\x3', '\x2', '\x2', '\x2', '\xFC', '\xFD', '\a', 
-		'\x1D', '\x2', '\x2', '\xFD', '\xFE', '\x5', '\x1A', '\xE', '\x2', '\xFE', 
-		'\xFF', '\a', '\x13', '\x2', '\x2', '\xFF', '\x100', '\b', '\xF', '\x1', 
-		'\x2', '\x100', '\x157', '\x3', '\x2', '\x2', '\x2', '\x101', '\x102', 
-		'\a', '\x1E', '\x2', '\x2', '\x102', '\x103', '\x5', '\x1A', '\xE', '\x2', 
-		'\x103', '\x104', '\a', '\x13', '\x2', '\x2', '\x104', '\x105', '\b', 
-		'\xF', '\x1', '\x2', '\x105', '\x157', '\x3', '\x2', '\x2', '\x2', '\x106', 
-		'\x107', '\a', '\x1F', '\x2', '\x2', '\x107', '\x108', '\x5', '\x1A', 
-		'\xE', '\x2', '\x108', '\x109', '\a', '\x13', '\x2', '\x2', '\x109', '\x10A', 
-		'\b', '\xF', '\x1', '\x2', '\x10A', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x10B', '\x10C', '\a', ' ', '\x2', '\x2', '\x10C', '\x10D', '\x5', '\x1A', 
-		'\xE', '\x2', '\x10D', '\x10E', '\a', '\x13', '\x2', '\x2', '\x10E', '\x10F', 
-		'\b', '\xF', '\x1', '\x2', '\x10F', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x110', '\x111', '\a', '!', '\x2', '\x2', '\x111', '\x112', '\x5', '\x1A', 
-		'\xE', '\x2', '\x112', '\x113', '\a', '\x13', '\x2', '\x2', '\x113', '\x114', 
-		'\b', '\xF', '\x1', '\x2', '\x114', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x115', '\x116', '\a', '\"', '\x2', '\x2', '\x116', '\x117', '\x5', '\x1A', 
-		'\xE', '\x2', '\x117', '\x118', '\a', '\x13', '\x2', '\x2', '\x118', '\x119', 
-		'\b', '\xF', '\x1', '\x2', '\x119', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x11A', '\x11B', '\a', '#', '\x2', '\x2', '\x11B', '\x11C', '\x5', '\x1A', 
-		'\xE', '\x2', '\x11C', '\x11D', '\a', '\x13', '\x2', '\x2', '\x11D', '\x11E', 
-		'\b', '\xF', '\x1', '\x2', '\x11E', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x11F', '\x120', '\a', '$', '\x2', '\x2', '\x120', '\x121', '\x5', '\x1A', 
-		'\xE', '\x2', '\x121', '\x122', '\a', '\x13', '\x2', '\x2', '\x122', '\x123', 
-		'\b', '\xF', '\x1', '\x2', '\x123', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x124', '\x125', '\a', '%', '\x2', '\x2', '\x125', '\x126', '\x5', '\x1A', 
-		'\xE', '\x2', '\x126', '\x127', '\a', '\x13', '\x2', '\x2', '\x127', '\x128', 
-		'\b', '\xF', '\x1', '\x2', '\x128', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x129', '\x12A', '\a', '&', '\x2', '\x2', '\x12A', '\x12B', '\x5', '\x1A', 
-		'\xE', '\x2', '\x12B', '\x12C', '\a', '\x13', '\x2', '\x2', '\x12C', '\x12D', 
-		'\b', '\xF', '\x1', '\x2', '\x12D', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x12E', '\x12F', '\a', '\'', '\x2', '\x2', '\x12F', '\x130', '\x5', '\x1A', 
-		'\xE', '\x2', '\x130', '\x131', '\a', '\x13', '\x2', '\x2', '\x131', '\x132', 
-		'\b', '\xF', '\x1', '\x2', '\x132', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x133', '\x134', '\a', '(', '\x2', '\x2', '\x134', '\x135', '\x5', '\x1A', 
-		'\xE', '\x2', '\x135', '\x136', '\a', '\x13', '\x2', '\x2', '\x136', '\x137', 
-		'\b', '\xF', '\x1', '\x2', '\x137', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x138', '\x139', '\a', ')', '\x2', '\x2', '\x139', '\x13A', '\x5', '\x1A', 
-		'\xE', '\x2', '\x13A', '\x13B', '\a', '\x13', '\x2', '\x2', '\x13B', '\x13C', 
-		'\b', '\xF', '\x1', '\x2', '\x13C', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x13D', '\x13E', '\a', '*', '\x2', '\x2', '\x13E', '\x13F', '\x5', '\x1A', 
-		'\xE', '\x2', '\x13F', '\x140', '\a', '\x13', '\x2', '\x2', '\x140', '\x141', 
-		'\b', '\xF', '\x1', '\x2', '\x141', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x142', '\x143', '\a', '+', '\x2', '\x2', '\x143', '\x144', '\x5', '\x1A', 
-		'\xE', '\x2', '\x144', '\x145', '\a', '\x13', '\x2', '\x2', '\x145', '\x146', 
-		'\b', '\xF', '\x1', '\x2', '\x146', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x147', '\x148', '\a', ',', '\x2', '\x2', '\x148', '\x149', '\x5', '\x1A', 
-		'\xE', '\x2', '\x149', '\x14A', '\a', '\x13', '\x2', '\x2', '\x14A', '\x14B', 
-		'\b', '\xF', '\x1', '\x2', '\x14B', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x14C', '\x14D', '\a', '-', '\x2', '\x2', '\x14D', '\x14E', '\x5', '\x1A', 
-		'\xE', '\x2', '\x14E', '\x14F', '\a', '\x13', '\x2', '\x2', '\x14F', '\x150', 
-		'\b', '\xF', '\x1', '\x2', '\x150', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x151', '\x152', '\a', '.', '\x2', '\x2', '\x152', '\x153', '\x5', '\x1A', 
-		'\xE', '\x2', '\x153', '\x154', '\a', '\x13', '\x2', '\x2', '\x154', '\x155', 
-		'\b', '\xF', '\x1', '\x2', '\x155', '\x157', '\x3', '\x2', '\x2', '\x2', 
-		'\x156', '\xC4', '\x3', '\x2', '\x2', '\x2', '\x156', '\xC6', '\x3', '\x2', 
-		'\x2', '\x2', '\x156', '\xC8', '\x3', '\x2', '\x2', '\x2', '\x156', '\xCA', 
-		'\x3', '\x2', '\x2', '\x2', '\x156', '\xCF', '\x3', '\x2', '\x2', '\x2', 
-		'\x156', '\xD4', '\x3', '\x2', '\x2', '\x2', '\x156', '\xD9', '\x3', '\x2', 
-		'\x2', '\x2', '\x156', '\xDE', '\x3', '\x2', '\x2', '\x2', '\x156', '\xE3', 
-		'\x3', '\x2', '\x2', '\x2', '\x156', '\xE8', '\x3', '\x2', '\x2', '\x2', 
-		'\x156', '\xED', '\x3', '\x2', '\x2', '\x2', '\x156', '\xF2', '\x3', '\x2', 
-		'\x2', '\x2', '\x156', '\xF7', '\x3', '\x2', '\x2', '\x2', '\x156', '\xFC', 
-		'\x3', '\x2', '\x2', '\x2', '\x156', '\x101', '\x3', '\x2', '\x2', '\x2', 
-		'\x156', '\x106', '\x3', '\x2', '\x2', '\x2', '\x156', '\x10B', '\x3', 
-		'\x2', '\x2', '\x2', '\x156', '\x110', '\x3', '\x2', '\x2', '\x2', '\x156', 
-		'\x115', '\x3', '\x2', '\x2', '\x2', '\x156', '\x11A', '\x3', '\x2', '\x2', 
-		'\x2', '\x156', '\x11F', '\x3', '\x2', '\x2', '\x2', '\x156', '\x124', 
-		'\x3', '\x2', '\x2', '\x2', '\x156', '\x129', '\x3', '\x2', '\x2', '\x2', 
-		'\x156', '\x12E', '\x3', '\x2', '\x2', '\x2', '\x156', '\x133', '\x3', 
-		'\x2', '\x2', '\x2', '\x156', '\x138', '\x3', '\x2', '\x2', '\x2', '\x156', 
-		'\x13D', '\x3', '\x2', '\x2', '\x2', '\x156', '\x142', '\x3', '\x2', '\x2', 
-		'\x2', '\x156', '\x147', '\x3', '\x2', '\x2', '\x2', '\x156', '\x14C', 
-		'\x3', '\x2', '\x2', '\x2', '\x156', '\x151', '\x3', '\x2', '\x2', '\x2', 
-		'\x157', '\x1D', '\x3', '\x2', '\x2', '\x2', '\x158', '\x159', '\x5', 
-		'\x18', '\r', '\x2', '\x159', '\x15A', '\a', '\x2', '\x2', '\x3', '\x15A', 
-		'\x15B', '\b', '\x10', '\x1', '\x2', '\x15B', '\x1F', '\x3', '\x2', '\x2', 
-		'\x2', '\x17', '\'', '/', '\x36', '@', 'J', 'O', '[', ']', 'j', 'l', 'z', 
-		'\x86', '\x88', '\x93', '\xA0', '\xA2', '\xAF', '\xB1', '\xBF', '\xC2', 
-		'\x156',
+		'\x2', '\xCE', '\x161', '\x3', '\x2', '\x2', '\x2', '\xCF', '\xD0', '\a', 
+		'\x14', '\x2', '\x2', '\xD0', '\xD1', '\x5', '\x18', '\r', '\x2', '\xD1', 
+		'\xD2', '\a', '\x15', '\x2', '\x2', '\xD2', '\xD3', '\b', '\xF', '\x1', 
+		'\x2', '\xD3', '\x161', '\x3', '\x2', '\x2', '\x2', '\xD4', '\xD5', '\a', 
+		'\x16', '\x2', '\x2', '\xD5', '\xD6', '\x5', '\x1A', '\xE', '\x2', '\xD6', 
+		'\xD7', '\a', '\x15', '\x2', '\x2', '\xD7', '\xD8', '\b', '\xF', '\x1', 
+		'\x2', '\xD8', '\x161', '\x3', '\x2', '\x2', '\x2', '\xD9', '\xDA', '\a', 
+		'\x17', '\x2', '\x2', '\xDA', '\xDB', '\x5', '\x1A', '\xE', '\x2', '\xDB', 
+		'\xDC', '\a', '\x15', '\x2', '\x2', '\xDC', '\xDD', '\b', '\xF', '\x1', 
+		'\x2', '\xDD', '\x161', '\x3', '\x2', '\x2', '\x2', '\xDE', '\xDF', '\a', 
+		'\x18', '\x2', '\x2', '\xDF', '\xE0', '\x5', '\x1A', '\xE', '\x2', '\xE0', 
+		'\xE1', '\a', '\x15', '\x2', '\x2', '\xE1', '\xE2', '\b', '\xF', '\x1', 
+		'\x2', '\xE2', '\x161', '\x3', '\x2', '\x2', '\x2', '\xE3', '\xE4', '\a', 
+		'\x19', '\x2', '\x2', '\xE4', '\xE5', '\x5', '\x1A', '\xE', '\x2', '\xE5', 
+		'\xE6', '\a', '\x15', '\x2', '\x2', '\xE6', '\xE7', '\b', '\xF', '\x1', 
+		'\x2', '\xE7', '\x161', '\x3', '\x2', '\x2', '\x2', '\xE8', '\xE9', '\a', 
+		'\x1A', '\x2', '\x2', '\xE9', '\xEA', '\x5', '\x1A', '\xE', '\x2', '\xEA', 
+		'\xEB', '\a', '\x15', '\x2', '\x2', '\xEB', '\xEC', '\b', '\xF', '\x1', 
+		'\x2', '\xEC', '\x161', '\x3', '\x2', '\x2', '\x2', '\xED', '\xEE', '\a', 
+		'\x1B', '\x2', '\x2', '\xEE', '\xEF', '\x5', '\x1A', '\xE', '\x2', '\xEF', 
+		'\xF0', '\a', '\x15', '\x2', '\x2', '\xF0', '\xF1', '\b', '\xF', '\x1', 
+		'\x2', '\xF1', '\x161', '\x3', '\x2', '\x2', '\x2', '\xF2', '\xF3', '\a', 
+		'\x1C', '\x2', '\x2', '\xF3', '\xF4', '\x5', '\x1A', '\xE', '\x2', '\xF4', 
+		'\xF5', '\a', '\x15', '\x2', '\x2', '\xF5', '\xF6', '\b', '\xF', '\x1', 
+		'\x2', '\xF6', '\x161', '\x3', '\x2', '\x2', '\x2', '\xF7', '\xF8', '\a', 
+		'\x1D', '\x2', '\x2', '\xF8', '\xF9', '\x5', '\x1A', '\xE', '\x2', '\xF9', 
+		'\xFA', '\a', '\x15', '\x2', '\x2', '\xFA', '\xFB', '\b', '\xF', '\x1', 
+		'\x2', '\xFB', '\x161', '\x3', '\x2', '\x2', '\x2', '\xFC', '\xFD', '\a', 
+		'\x1E', '\x2', '\x2', '\xFD', '\xFE', '\x5', '\x1A', '\xE', '\x2', '\xFE', 
+		'\xFF', '\a', '\x15', '\x2', '\x2', '\xFF', '\x100', '\b', '\xF', '\x1', 
+		'\x2', '\x100', '\x161', '\x3', '\x2', '\x2', '\x2', '\x101', '\x102', 
+		'\a', '\x1F', '\x2', '\x2', '\x102', '\x103', '\x5', '\x1A', '\xE', '\x2', 
+		'\x103', '\x104', '\a', '\x15', '\x2', '\x2', '\x104', '\x105', '\b', 
+		'\xF', '\x1', '\x2', '\x105', '\x161', '\x3', '\x2', '\x2', '\x2', '\x106', 
+		'\x107', '\a', ' ', '\x2', '\x2', '\x107', '\x108', '\x5', '\x1A', '\xE', 
+		'\x2', '\x108', '\x109', '\a', '\x15', '\x2', '\x2', '\x109', '\x10A', 
+		'\b', '\xF', '\x1', '\x2', '\x10A', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x10B', '\x10C', '\a', '!', '\x2', '\x2', '\x10C', '\x10D', '\x5', '\x1A', 
+		'\xE', '\x2', '\x10D', '\x10E', '\a', '\x15', '\x2', '\x2', '\x10E', '\x10F', 
+		'\b', '\xF', '\x1', '\x2', '\x10F', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x110', '\x111', '\a', '\"', '\x2', '\x2', '\x111', '\x112', '\x5', '\x1A', 
+		'\xE', '\x2', '\x112', '\x113', '\a', '\x15', '\x2', '\x2', '\x113', '\x114', 
+		'\b', '\xF', '\x1', '\x2', '\x114', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x115', '\x116', '\a', '#', '\x2', '\x2', '\x116', '\x117', '\x5', '\x1A', 
+		'\xE', '\x2', '\x117', '\x118', '\a', '\x15', '\x2', '\x2', '\x118', '\x119', 
+		'\b', '\xF', '\x1', '\x2', '\x119', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x11A', '\x11B', '\a', '$', '\x2', '\x2', '\x11B', '\x11C', '\x5', '\x1A', 
+		'\xE', '\x2', '\x11C', '\x11D', '\a', '\x15', '\x2', '\x2', '\x11D', '\x11E', 
+		'\b', '\xF', '\x1', '\x2', '\x11E', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x11F', '\x120', '\a', '%', '\x2', '\x2', '\x120', '\x121', '\x5', '\x1A', 
+		'\xE', '\x2', '\x121', '\x122', '\a', '\x15', '\x2', '\x2', '\x122', '\x123', 
+		'\b', '\xF', '\x1', '\x2', '\x123', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x124', '\x125', '\a', '&', '\x2', '\x2', '\x125', '\x126', '\x5', '\x1A', 
+		'\xE', '\x2', '\x126', '\x127', '\a', '\x15', '\x2', '\x2', '\x127', '\x128', 
+		'\b', '\xF', '\x1', '\x2', '\x128', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x129', '\x12A', '\a', '\'', '\x2', '\x2', '\x12A', '\x12B', '\x5', '\x1A', 
+		'\xE', '\x2', '\x12B', '\x12C', '\a', '\x15', '\x2', '\x2', '\x12C', '\x12D', 
+		'\b', '\xF', '\x1', '\x2', '\x12D', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x12E', '\x12F', '\a', '(', '\x2', '\x2', '\x12F', '\x130', '\x5', '\x1A', 
+		'\xE', '\x2', '\x130', '\x131', '\a', '\x15', '\x2', '\x2', '\x131', '\x132', 
+		'\b', '\xF', '\x1', '\x2', '\x132', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x133', '\x134', '\a', ')', '\x2', '\x2', '\x134', '\x135', '\x5', '\x1A', 
+		'\xE', '\x2', '\x135', '\x136', '\a', '\x15', '\x2', '\x2', '\x136', '\x137', 
+		'\b', '\xF', '\x1', '\x2', '\x137', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x138', '\x139', '\a', '*', '\x2', '\x2', '\x139', '\x13A', '\x5', '\x1A', 
+		'\xE', '\x2', '\x13A', '\x13B', '\a', '\x15', '\x2', '\x2', '\x13B', '\x13C', 
+		'\b', '\xF', '\x1', '\x2', '\x13C', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x13D', '\x13E', '\a', '+', '\x2', '\x2', '\x13E', '\x13F', '\x5', '\x1A', 
+		'\xE', '\x2', '\x13F', '\x140', '\a', '\x15', '\x2', '\x2', '\x140', '\x141', 
+		'\b', '\xF', '\x1', '\x2', '\x141', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x142', '\x143', '\a', ',', '\x2', '\x2', '\x143', '\x144', '\x5', '\x1A', 
+		'\xE', '\x2', '\x144', '\x145', '\a', '\x15', '\x2', '\x2', '\x145', '\x146', 
+		'\b', '\xF', '\x1', '\x2', '\x146', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x147', '\x148', '\a', '-', '\x2', '\x2', '\x148', '\x149', '\x5', '\x1A', 
+		'\xE', '\x2', '\x149', '\x14A', '\a', '\x15', '\x2', '\x2', '\x14A', '\x14B', 
+		'\b', '\xF', '\x1', '\x2', '\x14B', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x14C', '\x14D', '\a', '.', '\x2', '\x2', '\x14D', '\x14E', '\x5', '\x1A', 
+		'\xE', '\x2', '\x14E', '\x14F', '\a', '\x15', '\x2', '\x2', '\x14F', '\x150', 
+		'\b', '\xF', '\x1', '\x2', '\x150', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x151', '\x152', '\a', '/', '\x2', '\x2', '\x152', '\x153', '\x5', '\x1A', 
+		'\xE', '\x2', '\x153', '\x154', '\a', '\x15', '\x2', '\x2', '\x154', '\x155', 
+		'\b', '\xF', '\x1', '\x2', '\x155', '\x161', '\x3', '\x2', '\x2', '\x2', 
+		'\x156', '\x157', '\a', '\x30', '\x2', '\x2', '\x157', '\x158', '\x5', 
+		'\x1A', '\xE', '\x2', '\x158', '\x159', '\a', '\x15', '\x2', '\x2', '\x159', 
+		'\x15A', '\b', '\xF', '\x1', '\x2', '\x15A', '\x161', '\x3', '\x2', '\x2', 
+		'\x2', '\x15B', '\x15C', '\a', '\x31', '\x2', '\x2', '\x15C', '\x15D', 
+		'\x5', '\x1A', '\xE', '\x2', '\x15D', '\x15E', '\a', '\x15', '\x2', '\x2', 
+		'\x15E', '\x15F', '\b', '\xF', '\x1', '\x2', '\x15F', '\x161', '\x3', 
+		'\x2', '\x2', '\x2', '\x160', '\xC4', '\x3', '\x2', '\x2', '\x2', '\x160', 
+		'\xC6', '\x3', '\x2', '\x2', '\x2', '\x160', '\xC8', '\x3', '\x2', '\x2', 
+		'\x2', '\x160', '\xCA', '\x3', '\x2', '\x2', '\x2', '\x160', '\xCF', '\x3', 
+		'\x2', '\x2', '\x2', '\x160', '\xD4', '\x3', '\x2', '\x2', '\x2', '\x160', 
+		'\xD9', '\x3', '\x2', '\x2', '\x2', '\x160', '\xDE', '\x3', '\x2', '\x2', 
+		'\x2', '\x160', '\xE3', '\x3', '\x2', '\x2', '\x2', '\x160', '\xE8', '\x3', 
+		'\x2', '\x2', '\x2', '\x160', '\xED', '\x3', '\x2', '\x2', '\x2', '\x160', 
+		'\xF2', '\x3', '\x2', '\x2', '\x2', '\x160', '\xF7', '\x3', '\x2', '\x2', 
+		'\x2', '\x160', '\xFC', '\x3', '\x2', '\x2', '\x2', '\x160', '\x101', 
+		'\x3', '\x2', '\x2', '\x2', '\x160', '\x106', '\x3', '\x2', '\x2', '\x2', 
+		'\x160', '\x10B', '\x3', '\x2', '\x2', '\x2', '\x160', '\x110', '\x3', 
+		'\x2', '\x2', '\x2', '\x160', '\x115', '\x3', '\x2', '\x2', '\x2', '\x160', 
+		'\x11A', '\x3', '\x2', '\x2', '\x2', '\x160', '\x11F', '\x3', '\x2', '\x2', 
+		'\x2', '\x160', '\x124', '\x3', '\x2', '\x2', '\x2', '\x160', '\x129', 
+		'\x3', '\x2', '\x2', '\x2', '\x160', '\x12E', '\x3', '\x2', '\x2', '\x2', 
+		'\x160', '\x133', '\x3', '\x2', '\x2', '\x2', '\x160', '\x138', '\x3', 
+		'\x2', '\x2', '\x2', '\x160', '\x13D', '\x3', '\x2', '\x2', '\x2', '\x160', 
+		'\x142', '\x3', '\x2', '\x2', '\x2', '\x160', '\x147', '\x3', '\x2', '\x2', 
+		'\x2', '\x160', '\x14C', '\x3', '\x2', '\x2', '\x2', '\x160', '\x151', 
+		'\x3', '\x2', '\x2', '\x2', '\x160', '\x156', '\x3', '\x2', '\x2', '\x2', 
+		'\x160', '\x15B', '\x3', '\x2', '\x2', '\x2', '\x161', '\x1D', '\x3', 
+		'\x2', '\x2', '\x2', '\x162', '\x163', '\x5', '\x18', '\r', '\x2', '\x163', 
+		'\x164', '\a', '\x2', '\x2', '\x3', '\x164', '\x165', '\b', '\x10', '\x1', 
+		'\x2', '\x165', '\x1F', '\x3', '\x2', '\x2', '\x2', '\x17', '\'', '/', 
+		'\x36', '@', 'J', 'O', '[', ']', 'j', 'l', 'z', '\x86', '\x88', '\x93', 
+		'\xA0', '\xA2', '\xAF', '\xB1', '\xBF', '\xC2', '\x160',
 	};
 
 	public static readonly ATN _ATN =

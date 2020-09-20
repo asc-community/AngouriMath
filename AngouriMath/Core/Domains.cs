@@ -1,4 +1,6 @@
-﻿using System;
+﻿using AngouriMath.Core.Exceptions;
+using System;
+using static AngouriMath.Entity;
 
 namespace AngouriMath.Core
 {
@@ -30,5 +32,17 @@ namespace AngouriMath.Core
             entity is Entity.Variable ||
             entity.DirectChildren.Count > 0 ||
             Types[(int)domain].IsAssignableFrom(entity.GetType());
+
+        // that should only be used in parser
+        public static Domain Parse(Entity expr)
+            => expr switch
+            {
+                Variable(var name) when name == "ZZ" => Domain.Integer,
+                Variable(var name) when name == "QQ" => Domain.Rational,
+                Variable(var name) when name == "RR" => Domain.Real,
+                Variable(var name) when name == "CC" => Domain.Complex,
+                Variable(var name) when name == "BB" => Domain.Boolean,
+                _ => throw new ParseException($"Unrecognized domain {expr}")
+            };
     }
 }

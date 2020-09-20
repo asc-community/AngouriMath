@@ -69,7 +69,7 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) 
                 => throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
         }
-        public partial record Variable : Entity
+        public partial record Variable
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) => new[] { this };
         }

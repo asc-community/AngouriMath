@@ -50,7 +50,7 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.PUSH_CONST, Value: ((Complex)this).ToNumerics()));
         }
 
-        public partial record Variable : Entity
+        public partial record Variable
         {
             private protected override void CompileNode(Compiler compiler) =>
                 compiler.Instructions.Add(new(InstructionType.PUSH_VAR, compiler.VarNamespace[this]));

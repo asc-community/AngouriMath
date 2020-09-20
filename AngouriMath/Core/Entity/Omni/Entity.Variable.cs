@@ -32,6 +32,8 @@ namespace AngouriMath
         /// </summary>
         public partial record Variable : Entity
         {
+            public void Deconstruct(out string name)
+                => name = Name;
             internal static Variable CreateVariableUnchecked(string name) => new(name);
             private Variable(string name) => Name = name;
             public string Name { get; }
