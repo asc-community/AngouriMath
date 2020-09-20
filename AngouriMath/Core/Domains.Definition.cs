@@ -26,20 +26,10 @@ namespace AngouriMath
         /// </summary>
         public abstract Domain Codomain { get; protected init; }
 
-        protected Entity InnerWithNewDomain(Domain newDomain)
-            => Codomain == newDomain ? this : this with { Codomain = newDomain };
-
         /// <summary>
-        /// Changes nodes of one domain to another one
+        /// Returns this node with the specified codomain
         /// </summary>
-        public Entity DomainChange(Domain domainFrom, Domain domainTo)
-            => Replace(ent =>
-            {
-                if (ent.Codomain != domainFrom)
-                    return ent;
-                if (ent is Boolean or Number)
-                    return ent;
-                return ent with { Codomain = domainTo };
-            });
+        public Entity WithCodomain(Domain newDomain)
+            => Codomain == newDomain ? this : this with { Codomain = newDomain };
     }
 }

@@ -67,8 +67,10 @@ namespace AngouriMath
         /// <summary>
         /// Solves a boolean expression. That is, finds all values for
         /// <paramref name="variables"/> such that the expression turns into True when evaluated
+        /// Uses a simple table of truth
+        /// Use <see cref="Entity.SolveBoolean(Variable)"/> for smart solving
         /// </summary>
-        public static Tensor? SolveBoolean(Entity expression, params Variable[] variables)
+        public static Tensor? SolveBooleanTable(Entity expression, params Variable[] variables)
             => BooleanSolver.SolveTable(expression, variables);
 
         // Marking small enums with ": byte" is premature optimization and shouldn't be done: https://stackoverflow.com/q/648823/5429648

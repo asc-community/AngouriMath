@@ -164,13 +164,14 @@ namespace UnitTests.Algebra
         public void CDSolver(string expr, int rootCount, int? toSub = null) => TestSolver(expr, rootCount, toSub);
 
         [Theory]
-        // It's Skip but Skip doesn't work for InlineData
-        //[InlineData("x + sqrt(x + a) + c", 2, Skip = "Under work")] 
         [InlineData("x + sqrt(x^0.1 + a) + c", 0)]
         [InlineData("(x + 6)^(1/6) + x + x3 + a", 0)]
         [InlineData("sqrt(x + 1) + sqrt(x + 2) + a + x", 0)]
         [InlineData("(x + 1)^(1/3) - x - a", 3)]
         public void FractionedPoly(string expr, int rootCount) => TestSolver(expr, rootCount);
+
+        [Fact(Skip = "Piecewise required")]
+        public void FractionedPolyTestPiecewise() => TestSolver("x + sqrt(x + a) + c", 2);
 
         [Theory]
         [InlineData("sgn(x) + 1")]
@@ -188,5 +189,19 @@ namespace UnitTests.Algebra
         [InlineData("abs(x) - a", 2)]
         [InlineData("abs(x) - a", 10)]
         public void AbsTest(string expr, int value) => TestSolver(expr, rootCount: 1, toSub: value);
+
+        [Fact(Skip = "Piecewise required")]
+        public void Abs0RootsTest1() => AbsTest("abs(x) + 5", 3);
+
+        [Fact(Skip = "Piecewise required")]
+        public void Abs0RootsTest2() => AbsTest("abs(x) - i", 3);
+
+        [Fact(Skip = "Piecewise required")]
+        public void Sign0RootsTest1() => SignumTest("sgn(x) + 14");
+
+        [Fact(Skip = "Piecewise required")]
+        public void Sign0RootsTest2() => SignumTest("sgn(x) + 1.1");
+        [Fact(Skip = "Piecewise required")]
+        public void Sign0RootsTest3() => SignumTest("sgn(x) + i + 1");
     }
 }

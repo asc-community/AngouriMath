@@ -35,6 +35,7 @@ by community, hence, any contribution is welcomed.
   - [Substitution](#subs)
   - [Derivation](#deri)
   - [Simplification](#simp)
+  - [Boolean](#bool) (under work)
   - [Numbers](#numb)
   - [Equations](#equa)
   - [Equation systems](#eqsys)

@@ -25,7 +25,7 @@
 ///     c. Latexise (<see cref="Sinf.Latexise"/>)
 ///     d. Limit computation (<see cref="Sinf.ComputeLimitDivideEtImpera"/>)
 ///     e. Hash for sorting (<see cref="Sinf.SortHashName"/>)
-///     f. Default domain <see cref="Sinf.DefaultDomain"/>
+///     f. Default domain <see cref="Sinf.Codomain"/>
 /// 
 /// 4. Pattern replacer (<see cref="Patterns.CommonRules"/> and <see cref="Simplificator.Alternate"/>)
 /// 5. Expose to the user (add it to MathS, like <see cref="MathS.Sin">this</see>)

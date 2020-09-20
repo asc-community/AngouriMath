@@ -21,6 +21,12 @@ using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions.Boolean
 {
+    /// <summary>
+    /// This is set of very simple algorithms
+    /// It's an analogue of Newton Solver as it doesn't represent its answer
+    /// symbolically
+    /// Use 
+    /// </summary>
     internal static class BooleanSolver
     {
         private static bool Next(in Span<bool> states)
