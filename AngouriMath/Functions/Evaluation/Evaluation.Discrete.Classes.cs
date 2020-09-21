@@ -181,7 +181,7 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                if (Left is Number numLeft && Right is Number numRight)
+                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
                 {
                     if (numLeft is Real reLeft && numRight is Real reRight)
                         return reLeft > reRight;
@@ -206,7 +206,7 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                if (Left is Number numLeft && Right is Number numRight)
+                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
                 {
                     if (numLeft is Real reLeft && numRight is Real reRight)
                         return reLeft >= reRight;
@@ -231,7 +231,7 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                if (Left is Number numLeft && Right is Number numRight)
+                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
                 {
                     if (numLeft is Real reLeft && numRight is Real reRight)
                         return reLeft < reRight;
@@ -256,7 +256,7 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                if (Left is Number numLeft && Right is Number numRight)
+                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
                 {
                     if (numLeft is Real reLeft && numRight is Real reRight)
                         return reLeft <= reRight;

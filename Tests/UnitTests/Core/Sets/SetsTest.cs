@@ -132,13 +132,13 @@ namespace UnitTests.Core
         [Fact]
         public void SetsFiniteTestSub2()
         {
-            Assert.True(Df.IsEmpty());
-            Assert.True(((Set)(Df - Af)).IsEmpty());
-            Assert.True(((Set)(Df - Bf)).IsEmpty());
-            Assert.True(((Set)(Df - Cf)).IsEmpty());
-            Assert.True(((Set)(Df - Df)).IsEmpty());
-            Assert.True(((Set)(Df - Ef)).IsEmpty());
-            Assert.True(((Set)(Df - Gf)).IsEmpty());
+            Assert.True(Df.IsEmpty);
+            Assert.True(((Set)(Df - Af)).IsEmpty);
+            Assert.True(((Set)(Df - Bf)).IsEmpty);
+            Assert.True(((Set)(Df - Cf)).IsEmpty);
+            Assert.True(((Set)(Df - Df)).IsEmpty);
+            Assert.True(((Set)(Df - Ef)).IsEmpty);
+            Assert.True(((Set)(Df - Gf)).IsEmpty);
         }
 
         [Fact]
