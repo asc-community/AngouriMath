@@ -297,9 +297,68 @@ namespace AngouriMath
 
         public partial record Absf
         {
-            // TODO:
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
-                => new Limitf(this, x, dist, side);
+                => Argument.ComputeLimitDivideEtImpera(x, dist, side)?.Abs();
+        }
+
+        partial record Equalsf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                var left = Left.ComputeLimitDivideEtImpera(x, dist, side);
+                var right = Right.ComputeLimitDivideEtImpera(x, dist, side);
+                if (left is null || right is null)
+                    return null;
+                return MathS.Equality(left, right);
+            }
+        }
+
+        partial record Greaterf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                var left = Left.ComputeLimitDivideEtImpera(x, dist, side);
+                var right = Right.ComputeLimitDivideEtImpera(x, dist, side);
+                if (left is null || right is null)
+                    return null;
+                return left > right;
+            }
+        }
+
+        partial record GreaterOrEqualf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                var left = Left.ComputeLimitDivideEtImpera(x, dist, side);
+                var right = Right.ComputeLimitDivideEtImpera(x, dist, side);
+                if (left is null || right is null)
+                    return null;
+                return left >= right;
+            }
+        }
+
+        partial record Lessf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                var left = Left.ComputeLimitDivideEtImpera(x, dist, side);
+                var right = Right.ComputeLimitDivideEtImpera(x, dist, side);
+                if (left is null || right is null)
+                    return null;
+                return left < right;
+            }
+        }
+
+        partial record LessOrEqualf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                var left = Left.ComputeLimitDivideEtImpera(x, dist, side);
+                var right = Right.ComputeLimitDivideEtImpera(x, dist, side);
+                if (left is null || right is null)
+                    return null;
+                return left <= right;
+            }
         }
     }
 }

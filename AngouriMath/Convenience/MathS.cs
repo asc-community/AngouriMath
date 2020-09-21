@@ -275,6 +275,12 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity ExclusiveDisjunction(Entity a, Entity b) => a ^ b;
 
+        /// <summary>
+        /// Do NOT confuse it with Equation
+        /// </summary>
+        /// <returns>An Equals node</returns>
+        public static Entity Equality(Entity a, Entity b) => a.Equalizes(b);
+
         /// <returns>A node</returns>
         public static Entity GreaterThan(Entity a, Entity b) => a > b;
 
