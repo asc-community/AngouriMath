@@ -283,6 +283,36 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 => throw new NotImplementedException("Requires Piecewise to be implemented");
         }
+
+        partial record Equalsf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Intervals to be Entities");
+        }
+
+        partial record Greaterf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Intervals to be Entities");
+        }
+
+        partial record GreaterOrEqualf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Intervals to be Entities");
+        }
+
+        partial record Lessf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Intervals to be Entities");
+        }
+
+        partial record LessOrEqualf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Intervals to be Entities");
+        }
     }
 }
 
