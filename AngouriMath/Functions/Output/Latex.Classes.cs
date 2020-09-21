@@ -355,5 +355,35 @@ namespace AngouriMath
             public override string Latexise()
                 => $@"{Assumption.Latexise(Assumption.Priority < Priority)} \implies {Conclusion.Latexise(Conclusion.Priority < Priority)}";
         }
+
+        partial record Equalsf
+        {
+            public override string Latexise()
+                => $@"{Left.Latexise(Left.Priority < Priority)} = {Right.Latexise(Right.Priority < Priority)}";
+        }
+
+        partial record Greaterf
+        {
+            public override string Latexise()
+                => $@"{Left.Latexise(Left.Priority < Priority)} > {Right.Latexise(Right.Priority < Priority)}";
+        }
+
+        partial record GreaterOrEqualf
+        {
+            public override string Latexise()
+                => $@"{Left.Latexise(Left.Priority < Priority)} \geqslant {Right.Latexise(Right.Priority < Priority)}";
+        }
+
+        partial record Lessf
+        {
+            public override string Latexise()
+                => $@"{Left.Latexise(Left.Priority < Priority)} < {Right.Latexise(Right.Priority < Priority)}";
+        }
+
+        partial record LessOrEqualf
+        {
+            public override string Latexise()
+                => $@"{Left.Latexise(Left.Priority < Priority)} \leqslant {Right.Latexise(Right.Priority < Priority)}";
+        }
     }
 }
