@@ -94,6 +94,11 @@ namespace AngouriMath.Functions
                     AddHistory(res = res.Replace(Patterns.BooleanRules).InnerSimplify());
                 }
 
+                if (res.Nodes.Any(child => child is Statement))
+                {
+                    AddHistory(res = res.Replace(Patterns.InequalityEqualityRules).InnerSimplify());
+                }
+
                 if (res.Nodes.Any(child => child is Factorialf))
                 {
                     AddHistory(res = res.Replace(Patterns.ExpandFactorialDivisions).InnerSimplify());

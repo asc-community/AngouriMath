@@ -189,6 +189,36 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level)
                 => level == SortLevel.LOW_LEVEL ? "impl_" : "";
         }
+
+        partial record Equalsf
+        {
+            private protected override string SortHashName(SortLevel level)
+               => level == SortLevel.LOW_LEVEL ? "equals_" : "";
+        }
+
+        partial record Greaterf
+        {
+            private protected override string SortHashName(SortLevel level)
+               => level == SortLevel.LOW_LEVEL ? "greater_" : "";
+        }
+
+        partial record GreaterOrEqualf
+        {
+            private protected override string SortHashName(SortLevel level)
+               => level == SortLevel.LOW_LEVEL ? "greaterequal_" : "";
+        }
+
+        partial record Lessf
+        {
+            private protected override string SortHashName(SortLevel level)
+               => level == SortLevel.LOW_LEVEL ? "less_" : "";
+        }
+
+        partial record LessOrEqualf
+        {
+            private protected override string SortHashName(SortLevel level)
+               => level == SortLevel.LOW_LEVEL ? "lessequal_" : "";
+        }
     }
 }
 
