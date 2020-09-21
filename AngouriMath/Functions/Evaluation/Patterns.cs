@@ -584,6 +584,12 @@ namespace AngouriMath.Functions
             Andf(Equalsf(var any1a, var any2a), Lessf(var any2, var any1)) when any1 == any1a && any2 == any2a => any1 <= any2,
             Andf(Equalsf(var any1a, var any2a), Greaterf(var any1, var any2)) when any1 == any1a && any2 == any2a => any1 >= any2,
             Andf(Equalsf(var any1a, var any2a), Greaterf(var any2, var any1)) when any1 == any1a && any2 == any2a => any1 >= any2,
+
+            Notf(Greaterf(var any1, var any2)) => any1 <= any2,
+            Notf(Lessf(var any1, var any2)) => any1 >= any2,
+            Notf(GreaterOrEqualf(var any1, var any2)) => any1 < any2,
+            Notf(LessOrEqualf(var any1, var any2)) => any1 > any2,
+
             _ => x
         };
         private static Entity SortAndGroup(IEnumerable<Entity> children, TreeAnalyzer.SortLevel level, Func<Entity, Entity, Entity> ctor)

@@ -1,0 +1,57 @@
+﻿using AngouriMath;
+using AngouriMath.Extensions;
+using Xunit;
+
+namespace UnitTests.Discrete
+{
+    public class EqualityInequalityEval
+    {
+        [Theory]
+        [InlineData("5 > 3")]
+        [InlineData("3 >= 3")]
+        [InlineData("3 == 3")]
+        [InlineData("3 < 0 or 3 > 0")]
+        [InlineData("4.1 > 4")]
+        [InlineData("4 < 4.1")]
+        [InlineData("4 <= 4.1")]
+        [InlineData("4 <= 4")]
+        [InlineData("not 3 == 4")]
+        [InlineData("3 > 2 and 5 < 6 and 1 >= 1 and 2 <= 2")]
+        [InlineData("(true and false) = (false and true)")]
+        [InlineData("true = true")]
+        [InlineData("false = false")]
+        [InlineData("(not (true and false)) = (not true and not false)")]
+        public void IsTrue(string expr)
+            => Assert.True(expr.EvalBoolean());
+
+        [Theory]
+        [InlineData("5 <= 3")]
+        [InlineData("3 < 3")]
+        [InlineData("3 == 4")]
+        [InlineData("3 < 0 and 3 > 0")]
+        [InlineData("4.1 <= 4")]
+        [InlineData("4 > 4.1")]
+        [InlineData("4 >= 4.1")]
+        [InlineData("4 < 4")]
+        [InlineData("3 < 2 or 5 > 6 or 1 < 1 or 2 > 2")]
+        [InlineData("true = false")]
+        [InlineData("false = true")]
+        public void IsFalse(string expr)
+            => Assert.False(expr.EvalBoolean());
+
+        [Theory]
+        [InlineData("3 + i > 3")]
+        [InlineData("sqrt(-1) < 3")]
+        [InlineData("i < 3")]
+        [InlineData("i < i")]
+        [InlineData("i > i")]
+        [InlineData("i <= i")]
+        [InlineData("i >= i")]
+        [InlineData("1 < i")]
+        [InlineData("1 > i")]
+        [InlineData("1 <= i")]
+        [InlineData("1 >= i")]
+        public void IsNaN(string expr)
+            => Assert.Equal(MathS.NaN, expr.ToEntity().Evaled);
+    }
+}
