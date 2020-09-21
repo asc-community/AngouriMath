@@ -25,16 +25,43 @@ namespace AngouriMath
         {
             
         }
-
+        /// <returns>A node</returns>
         public static implicit operator Entity(bool v) => Boolean.Create(v);
+
+        /// <returns>A node</returns>
         public static Entity operator !(Entity a) => new Notf(a);
+
+        /// <returns>A node</returns>
         public static Entity operator &(Entity a, Entity b) => new Andf(a, b);
+
+        /// <returns>A node</returns>
         public static Entity operator |(Entity a, Entity b) => new Orf(a, b);
+
         /// <summary>
         /// This is an exclusive OR operator. Shouldn't be confused with power!
         /// </summary>
+        /// <returns>A node</returns>
         public static Entity operator ^(Entity a, Entity b) => new Xorf(a, b);
+
+        /// <returns>A node</returns>
         public Entity Xor(Entity another) => new Xorf(this, another);
+
+        /// <returns>A node</returns>
         public Entity Implies(Entity conclusion) => new Impliesf(this, conclusion);
+
+        /// <returns>A node</returns>
+        public Entity Equalizes(Entity another) => new Equalsf(this, another);
+
+        /// <returns>A node</returns>
+        public static Entity operator >(Entity a, Entity b) => new Greaterf(a, b);
+
+        /// <returns>A node</returns>
+        public static Entity operator <(Entity a, Entity b) => new Lessf(a, b);
+
+        /// <returns>A node</returns>
+        public static Entity operator >=(Entity a, Entity b) => new GreaterOrEqualf(a, b);
+
+        /// <returns>A node</returns>
+        public static Entity operator <=(Entity a, Entity b) => new LessOrEqualf(a, b);
     }
 }

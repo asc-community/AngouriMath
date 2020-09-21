@@ -22,7 +22,6 @@ using AngouriMath.Core;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Algebra.NumericalSolving;
-using AngouriMath.Functions.Boolean;
 
 namespace AngouriMath.Core
 {
@@ -245,6 +244,48 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Abs(Entity a) => new Absf(a);
 
+        /// <summary>https://en.wikipedia.org/wiki/Negation</summary>
+        /// <param name="a">Argument node of which Negation function will be taken</param>
+        /// <returns>Not node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Negation(Entity a) => !a;
+
+        /// <summary>https://en.wikipedia.org/wiki/Logical_disjunction</summary>
+        /// <param name="a">Argument node of which Disjunction function will be taken</param>
+        /// <returns>Or node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Disjunction(Entity a, Entity b) => a | b;
+
+        /// <summary>https://en.wikipedia.org/wiki/Logical_conjunction</summary>
+        /// <param name="a">Argument node of which Conjunction function will be taken</param>
+        /// <returns>And node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Conjunction(Entity a, Entity b) => a & b;
+
+        /// <summary>https://en.wikipedia.org/wiki/Material_implication_(rule_of_inference)</summary>
+        /// <param name="a">Argument node of which Implication function will be taken</param>
+        /// <returns>Implies node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Implication(Entity a, Entity b) => a.Implies(b);
+
+        /// <summary>https://en.wikipedia.org/wiki/Exclusive_or#:~:text=Exclusive%20or%20or%20exclusive%20disjunction,⊕%2C%20↮%2C%20and%20≢.</summary>
+        /// <param name="a">Argument node of which Exclusive disjunction function will be taken</param>
+        /// <returns>Xor node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity ExclusiveDisjunction(Entity a, Entity b) => a ^ b;
+
+        /// <returns>A node</returns>
+        public static Entity GreaterThan(Entity a, Entity b) => a > b;
+
+        /// <returns>A node</returns>
+        public static Entity LessThan(Entity a, Entity b) => a < b;
+
+        /// <returns>A node</returns>
+        public static Entity GreaterOrEqualThan(Entity a, Entity b) => a >= b;
+
+        /// <returns>A node</returns>
+        public static Entity LessOrEqualThan(Entity a, Entity b) => a <= b;
+
         /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
         /// <param name="name">The name of the <see cref="Variable"/> which equality is based on.</param>
         /// <returns>Variable node</returns>
@@ -257,8 +298,9 @@ namespace AngouriMath
         public static readonly Complex i = Complex.ImaginaryOne;
         // ReSharper disable once InconsistentNaming
         public static readonly Variable pi = Variable.pi;
-        // ReSharper disable once InconsistentNaming
-        public static readonly Entity NaN = Number.Real.NaN;
+
+        // Undefined
+        public static readonly Entity NaN = Real.NaN;
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
@@ -775,17 +817,6 @@ namespace AngouriMath
             /// <summary><a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/></summary>
             public static EDecimal e =>
                 NumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
-        }
-
-        public static class Boolean
-        {
-
-            /// <summary>
-            /// Combines all possible values of <paramref name="variables"/>
-            /// and has the last column as the result of the function
-            /// </summary>
-            public static Tensor? BuildTruthTable(Entity expression, params Variable[] variables)
-                => BooleanSolver.BuildTruthTable(expression, variables);
         }
     }
 }
