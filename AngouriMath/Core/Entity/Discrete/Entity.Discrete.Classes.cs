@@ -68,7 +68,7 @@ namespace AngouriMath
                 => TryParse(expr, out var res) ? res : throw new ParseException($"Token '{expr}' is not valid for boolean");
         }
 
-        #region Operators
+        #region Logical gates
 
         /// <summary>
         /// Whatever its argument is, the result will be inverted
@@ -132,6 +132,15 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Assumption.Replace(func), Conclusion.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Assumption, Conclusion };
+        }
+
+        #endregion
+
+        #region Equality/inequality operators
+
+        public sealed partial record Equalsf(Entity Left, Entity Right) : Statement
+        {
+
         }
 
         #endregion
