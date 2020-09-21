@@ -12,8 +12,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity expr = "a -> true";
-            Console.WriteLine(MathS.SolveBooleanTable(expr, "a"));
+            Console.WriteLine("(x - 1)(x + 3) = 0 and (x - 1)(x + 2) = 0");
         }
     }
 }

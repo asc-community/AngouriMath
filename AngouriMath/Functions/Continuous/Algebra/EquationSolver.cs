@@ -38,9 +38,10 @@ namespace AngouriMath.Functions.Algebra
             var factorizer = equation.Vars.Count() == 1 ? (Func<Entity, Entity>)evaluator : simplifier;
 
             var finalSet = new Set();
-            foreach (var elem in solutions.Select(simplifier))
-                if (elem.IsFinite && factorizer(equation.Substitute(x, elem)).IsFinite)
-                    finalSet.Add(elem);
+            if (solutions.IsFiniteSet(out var finiteSet))
+                foreach (var elem in finiteSet.Select(simplifier))
+                    if (elem.IsFinite && factorizer(equation.Substitute(x, elem)).IsFinite)
+                        finalSet.Add(elem);
             return finalSet;
         }
 

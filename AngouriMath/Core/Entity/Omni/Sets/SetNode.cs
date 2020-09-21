@@ -14,6 +14,7 @@
  */
 
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -52,24 +53,32 @@ namespace AngouriMath
             {
                 public override bool Contains(SetPiece piece) => A.Contains(piece) || B.Contains(piece);
                 public override string ToString() => $"({A})&({B})";
+                public override bool IsFinite => false; //A.IsFinite && B.IsFinite; we can't iterate over this :(
+                public override bool IsEmpty => false; //A.IsEmpty && B.IsEmpty; we can't iterate over this :(
             }
             /// <summary>A and B</summary>
             internal partial record Intersection(SetNode A, SetNode B) : SetNode
             {
                 public override bool Contains(SetPiece piece) => A.Contains(piece) && B.Contains(piece);
                 public override string ToString() => $"({A})|({B})";
+                public override bool IsFinite => false; // A.IsFinite || B.IsFinite; we can't iterate over this :(
+                public override bool IsEmpty => false; // A.IsEmpty || B.IsEmpty; we can't iterate over this :(
             }
             /// <summary>A and not B</summary>
             internal partial record Complement(SetNode A, SetNode B) : SetNode
             {
                 public override bool Contains(SetPiece piece) => A.Contains(piece) && !B.Contains(piece);
                 public override string ToString() => $@"({A})\({B})";
+                public override bool IsFinite => false; // A.IsFinite; we can't iterate over this :(
+                public override bool IsEmpty => false; // A.IsEmpty; we can't iterate over this :(
             }
             /// <summary>not A</summary>
             internal partial record Inversion(SetNode A) : SetNode
             {
                 public override bool Contains(SetPiece piece) => !A.Contains(piece);
                 public override string ToString() => $"!({A})";
+                public override bool IsFinite => false;
+                public override bool IsEmpty => false;
             }
             static (List<SetPiece> Good, List<SetPiece> Bad) GatherEvaluablePieces(Set A)
             {
@@ -100,6 +109,25 @@ namespace AngouriMath
                     if (enumerator.Current is { } current)
                         remainders = remainders.SelectMany(rem => func(rem, current));
                 return remainders;
+            }
+
+            public abstract bool IsFinite { get; }
+            public abstract bool IsEmpty { get; }
+
+            public bool IsFiniteSet(out IEnumerable<Entity> res)
+            {
+                if (!IsFinite)
+                {
+                    res = Enumerable.Empty<Entity>();
+                    return false;
+                }
+                if (this is not Set set)
+                    throw new AngouriBugException($"If a set is finite, it should be of the {nameof(Set)} type");
+                var resQ = set.AsFiniteSet();
+                if (resQ is null)
+                    throw new AngouriBugException($"If a set is finite, it should not be null");
+                res = resQ;
+                return true;
             }
         }
 
@@ -179,9 +207,10 @@ namespace AngouriMath
             /// </summary>
             public void AddInterval(Interval interval) => AddPiece(interval);
 
-            public override string ToString() => IsEmpty() ? "{}" : string.Join("|", Pieces);
+            public override string ToString() => IsEmpty ? "{}" : string.Join("|", Pieces);
 
-            public bool IsEmpty() => Pieces.Count == 0;
+            public override bool IsEmpty => Pieces.Count == 0;
+            public override bool IsFinite => Pieces.Count != -1;
 
             public void Clear() => Pieces.Clear();
 
@@ -190,19 +219,8 @@ namespace AngouriMath
                 ? Pieces.Select(piece => ((OneElementPiece)piece).entity)
                 : null;
 
-            public int Count
-            {
-                get
-                {
-                    int count = 0;
-                    foreach (var piece in Pieces)
-                        if (piece is OneElementPiece)
-                            count++;
-                        else
-                            return -1;
-                    return count;
-                }
-            }
+            private int? count;
+            public int Count => count ??= (Pieces.Any(p => p is Interval) ? -1 : Pieces.Count);
 
             /// <summary>
             /// Adding to this <see cref="Set"/> will not check whether <see cref="Entity"/> is already added

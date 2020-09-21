@@ -24,8 +24,16 @@ namespace AngouriMath.Extensions
     using static Entity.Number;
     public static class AngouriMathExtensions
     {
+        public static Set ToSet(this System.Collections.Generic.IEnumerable<Entity> expr)
+            => new Set(expr.Select(c => SetPiece.Element(c)).ToArray());
+        public static SetNode ToSetNode(this System.Collections.Generic.IEnumerable<Entity> expr)
+            => new Set(expr.Select(c => SetPiece.Element(c)).ToArray());
         public static FiniteSet ToFiniteSet(this System.Collections.Generic.IEnumerable<Entity> expr) 
             => new FiniteSet(expr.Select(c => SetPiece.Element(c)));
+        public static SetNode Unite(this System.Collections.Generic.IEnumerable<SetNode> sets)
+            => sets.Aggregate((a, b) => a | b);
+        public static SetNode Intersect(this System.Collections.Generic.IEnumerable<SetNode> sets)
+            => sets.Aggregate((a, b) => a & b);
         public static Entity ToEntity(this string expr) => MathS.FromString(expr);
         public static Entity Simplify(this string expr) => expr.ToEntity().Simplify();
         public static Complex EvalNumerical(this string expr) => expr.ToEntity().EvalNumerical();

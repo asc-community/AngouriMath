@@ -1,3 +1,4 @@
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -12,29 +13,20 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath.Extensions;
-using System.Linq;
+using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
-    using static Entity;
-    internal static class TrigonometricSolver
+    internal static class StatementSolver
     {
-        // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
-        internal static SetNode? SolveLinear(Entity expr, Variable variable)
-        {
-            var replacement = Variable.CreateTemp(expr.Vars);
-            expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
-
-            // if there is still original variable after replacements,
-            // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
-            if (expr.Contains(variable))
-                return null;
-
-            if (AnalyticalSolver.Solve(expr, replacement).IsFiniteSet(out var els))
-                return els.Select(sol => MathS.Pow(MathS.e, MathS.i * variable).Invert(sol, variable).ToSetNode()).Unite();
-            else
-                return null;
-        }
+        internal static SetNode Solve(Entity expr, Variable x)
+            => expr switch
+            {
+                Equalsf(var left, var right) => AnalyticalSolver.Solve(left - right, x),
+                Andf(var left, var right) => AnalyticalSolver.Solve(left, x) & AnalyticalSolver.Solve(right, x),
+                Orf(var left, var right) => AnalyticalSolver.Solve(left, x) | AnalyticalSolver.Solve(right, x),
+                Impliesf(var left, var right) => !AnalyticalSolver.Solve(left, x) | AnalyticalSolver.Solve(right, x),
+                _ => new Set()
+            };
     }
 }

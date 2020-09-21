@@ -43,7 +43,7 @@ namespace AngouriMath
                     var badA = new Set { Pieces = badAPieces };
                     var badB = new Set { Pieces = badBPieces };
                     if (union is null)
-                        return badA.IsEmpty() || badB.IsEmpty() ? new Set() : (SetNode)new Intersection(badA, badB);
+                        return badA.IsEmpty || badB.IsEmpty ? new Set() : (SetNode)new Intersection(badA, badB);
                     var united = new Set { Pieces = union.ToList() };
                     if (badBPieces.Count + badAPieces.Count == 0)
                         return united;

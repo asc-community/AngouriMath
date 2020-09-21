@@ -240,7 +240,7 @@ namespace AngouriMath
         {
             public override string Latexise()
             {
-                if (IsEmpty())
+                if (IsEmpty)
                     return @"\emptyset";
 
                 var sb = new StringBuilder();

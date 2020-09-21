@@ -667,7 +667,7 @@ namespace AngouriMath
             sb.Append("import sympy\n\n");
             foreach (var f in expr.Vars)
                 sb.Append($"{f} = sympy.Symbol('{f}')\n");
-            sb.Append("\n");
+            sb.Append('\n');
             sb.Append("expr = ").Append(expr.ToSymPy());
             return sb.ToString();
         }
