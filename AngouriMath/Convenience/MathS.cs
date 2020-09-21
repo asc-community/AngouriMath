@@ -22,6 +22,7 @@ using AngouriMath.Core;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Algebra.NumericalSolving;
+using AngouriMath.Functions.Boolean;
 
 namespace AngouriMath.Core
 {

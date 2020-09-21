@@ -188,23 +188,93 @@ namespace AngouriMath
                     else
                         return MathS.NaN;
                 }
-                else return this;
+                else 
+                    return New(Left.Evaled, Right.Evaled);
+            }
+
+            internal override Entity InnerSimplify()
+            {
+                var res = InnerEval();
+                if (res is Boolean)
+                    return res;
+                else
+                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
             }
         }
 
         partial record GreaterOrEqualf
         {
+            protected override Entity InnerEval()
+            {
+                if (Left is Number numLeft && Right is Number numRight)
+                {
+                    if (numLeft is Real reLeft && numRight is Real reRight)
+                        return reLeft >= reRight;
+                    else
+                        return MathS.NaN;
+                }
+                else
+                    return New(Left.Evaled, Right.Evaled);
+            }
 
+            internal override Entity InnerSimplify()
+            {
+                var res = InnerEval();
+                if (res is Boolean)
+                    return res;
+                else
+                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
         }
 
         partial record Lessf
         {
+            protected override Entity InnerEval()
+            {
+                if (Left is Number numLeft && Right is Number numRight)
+                {
+                    if (numLeft is Real reLeft && numRight is Real reRight)
+                        return reLeft < reRight;
+                    else
+                        return MathS.NaN;
+                }
+                else
+                    return New(Left.Evaled, Right.Evaled);
+            }
 
+            internal override Entity InnerSimplify()
+            {
+                var res = InnerEval();
+                if (res is Boolean)
+                    return res;
+                else
+                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
         }
 
         partial record LessOrEqualf
         {
+            protected override Entity InnerEval()
+            {
+                if (Left is Number numLeft && Right is Number numRight)
+                {
+                    if (numLeft is Real reLeft && numRight is Real reRight)
+                        return reLeft <= reRight;
+                    else
+                        return MathS.NaN;
+                }
+                else
+                    return New(Left.Evaled, Right.Evaled);
+            }
 
+            internal override Entity InnerSimplify()
+            {
+                var res = InnerEval();
+                if (res is Boolean)
+                    return res;
+                else
+                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
         }
     }
 }
