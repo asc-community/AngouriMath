@@ -98,7 +98,7 @@ namespace UnitTests.PatternsTest
 
         [Fact] public void BigSimple1() => AssertSimplifyToString(
             "1+2x*-1+2x*2+x^2+2x+2x*-4+2x*4+2x*2x*-1+2x*2x*2+2x*x^2+x^2+x^2*-4+x^2*4+x^2*2*x*-1+x^2*2x*2+x^2*x^2",
-            "1 + x ^ 4 + 4 * x ^ 3 + 6 * x ^ 2 + 4 * x");
+            "1 + 6 * x ^ 2 + x ^ 4 + 4 * (x + x ^ 3)");
         // NOTE: Simplify should not be called both sides since does not ensure that the simplified result
         // is acceptable - we should maintain an expected result that does not change with the implementation
         // and update it when needed. Test should be more restrictive to actually catch bugs.
@@ -107,7 +107,7 @@ namespace UnitTests.PatternsTest
         [InlineData("x / y + x * x * y", "x / y + x ^ 2 * y")]
         [InlineData("x / 1 + 2", "2 + x")]
         [InlineData("(x + y + x + 1 / (x + 4 + 4 + sin(x))) / (x + x + 3 / y) + 3",
-                    "3 + (2 * x + 1 / (sin(x) + 8 + x) + y) / (2 * x + 3 / y)")]
+                    "3 + (1 / (sin(x) + 8 + x) + 2 * x + y) / (2 * x + 3 / y)")]
         // TODO: What is Linch?
         public void Linch(string input, string output) => AssertSimplifyToString(input, output);
         [Theory]

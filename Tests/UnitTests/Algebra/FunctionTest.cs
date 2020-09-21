@@ -158,8 +158,8 @@ namespace UnitTests.Algebra
         [InlineData("sgn(0)", "0")]
         public void TestSignum(string expr, string answer)
         {
-            var actual = expr.ToEntity().Eval();
-            var expected = answer.ToEntity().Eval();
+            var actual = expr.ToEntity().EvalNumerical();
+            var expected = answer.ToEntity().EvalNumerical();
             var error = (actual - expected).Abs();
             Assert.True(error < MathS.Numbers.Create(1e-8m),
                 $"\nError: {error}" + 
@@ -179,8 +179,8 @@ namespace UnitTests.Algebra
         [InlineData("abs(-1) + 1", "2")]
         public void TestAbs(string expr, string answer)
         {
-            var actual = expr.ToEntity().Eval();
-            var expected = answer.ToEntity().Eval();
+            var actual = expr.ToEntity().EvalNumerical();
+            var expected = answer.ToEntity().EvalNumerical();
             var error = (actual - expected).Abs();
             Assert.True(error < MathS.Numbers.Create(1e-8m),
                 $"\nError: {error}" +

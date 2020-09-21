@@ -50,26 +50,26 @@ namespace UnitTests.Core
         {
             var frac21_10 = Rational.Create(21, 10);
             Assert.IsType<Rational>(frac21_10);
-            Assert.Equal(frac21_10, frac21_10.Eval());
-            Assert.Equal(frac21_10, frac21_10.Simplify().Eval());
+            Assert.Equal(frac21_10, frac21_10.EvalNumerical());
+            Assert.Equal(frac21_10, frac21_10.Simplify().EvalNumerical());
 
             var squared = Entity.Number.Pow(frac21_10, 2);
             Assert.IsType<Rational>(squared);
             Assert.Equal(Rational.Create(441, 100), squared);
-            Assert.Equal(squared, squared.Eval());
-            Assert.Equal(squared, squared.Simplify().Eval());
+            Assert.Equal(squared, squared.EvalNumerical());
+            Assert.Equal(squared, squared.Simplify().EvalNumerical());
 
             var cubed = Entity.Number.Pow(squared, Rational.Create(3, 2));
             Assert.IsType<Rational>(cubed);
             Assert.Equal(Rational.Create(9261, 1000), cubed);
-            Assert.Equal(cubed, cubed.Eval());
-            Assert.Equal(cubed, cubed.Simplify().Eval());
+            Assert.Equal(cubed, cubed.EvalNumerical());
+            Assert.Equal(cubed, cubed.Simplify().EvalNumerical());
 
             var ten = cubed + Rational.Create(739, 1000);
             Assert.IsType<Integer>(ten);
             Assert.Equal(Integer.Create(10), ten);
-            Assert.Equal(ten, ten.Eval());
-            Assert.Equal(ten, ten.Simplify().Eval());
+            Assert.Equal(ten, ten.EvalNumerical());
+            Assert.Equal(ten, ten.Simplify().EvalNumerical());
         }
         [Fact]
         public void TestComplexDowncasting()

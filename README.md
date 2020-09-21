@@ -1,24 +1,41 @@
-## AngouriMath
+<p align="center">
+  <a href="https://github.com/asc-community/AngouriMath">
+    <img src="./icon.png" alt="AngouriMath logo" width="200" height="200">
+  </a>
+</p>
 
-|                          |               |
-|:-------------------------|:-------------:|
-| Safe to clone right now? | ![Test](https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg) |
-| Installation from NuGet  | [![NuGet](https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet)](https://www.nuget.org/packages/AngouriMath) |
-| License                  | [![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)](https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md) |
-| Contact us               | [![Discord](https://img.shields.io/discord/642350046213439489?color=orange&label=Discord)](https://discord.gg/YWJEX7a) |
+<h3 align="center">AngouriMath</h3>
 
-### What is it about?
+<p align="center">
+  New, skyrocketing symbolic algebra library in .NET. Everything one would need.
+  <br>
+  <a href="#inst">Download</a>
+  ·
+  <a href="#exam">Examples</a>
+  ·
+  <a href="#contrib">Contributions</a>
+  <br>
+</p>
+
+## What is it about?
 
 AngouriMath is a cross-platform open-source library that enables to work with non-linear 
-multi-variable expressions. Written in C#. Free and distributed under MIT license.
+multi-variable expressions. Written in C#. Free and distributed under MIT license. Raised
+by community, hence, any contribution is welcomed.
 
-#### README navigation:
+![Test](https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg)
+  [![NuGet](https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet)](https://www.nuget.org/packages/AngouriMath)
+  [![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)](https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md)
+  [![Discord](https://img.shields.io/discord/642350046213439489?color=orange&label=Discord)](https://discord.gg/YWJEX7a)
+
+### README navigation:
 - [Installation](#inst)
 - [Examples](#exam)
   - [Evaluation](#eval)
   - [Substitution](#subs)
   - [Derivation](#deri)
   - [Simplification](#simp)
+  - [Boolean](#bool)
   - [Numbers](#numb)
   - [Equations](#equa)
   - [Equation systems](#eqsys)
@@ -53,18 +70,18 @@ After cloning, you do not need to set up it. It is ready to use, just add the re
 #### <a name="eval"></a>Use as a simple calculator
 ```cs
 Entity expr = "1 + 2 * log(3, 9)";
-Console.WriteLine(expr.Eval());
+Console.WriteLine(expr.EvalNumerical());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=5">
 
 ```cs
-Console.WriteLine("2 / 3 + sqrt(-16)".Eval());
+Console.WriteLine("2 / 3 + sqrt(-16)".EvalNumerical());
 >>> 2 / 3 + 4i
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{2}{3} %2B 4i">
 
 ```cs
-Console.WriteLine("(-2) ^ 3".Eval());
+Console.WriteLine("(-2) ^ 3".EvalNumerical());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=-8">
 
@@ -95,6 +112,28 @@ var expr = "1/2 + sin(pi / 4) + (sin(3x)2 + cos(3x)2)";
 Console.WriteLine(expr.Simplify());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{1}{2}\times \left(1%2B\sqrt{2}\right)%2B1">
+
+#### <a name="bool"></a>Boolean algebra
+```cs
+// Those are equal
+Entity expr1 = "a and b or c";
+Entity expr2 = "a & b | c";
+
+// as well as those
+Entity expr3 = "a -> b";
+Entity expr3 = "a implies b";
+```
+
+```cs
+Entity expr = "a -> true";
+Console.WriteLine(MathS.SolveBooleanTable(expr, "a"));
+```
+
+```
+>>> Matrix[2 x 1]
+>>> False
+>>> True
+```
 
 #### <a name="late"></a>Build latex
 ```cs

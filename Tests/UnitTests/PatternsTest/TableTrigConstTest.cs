@@ -36,8 +36,8 @@ namespace UnitTests.PatternsTest
             var toSimplify =
                 (Entity?)typeof(MathS).GetMethod(trigFunc)?.Invoke(null, new object[] { 2 * MathS.pi / twoPiOver })
                 ?? throw new ArgumentException($"{trigFunc} not found.", nameof(trigFunc));
-            var expected = Assert.IsAssignableFrom<Real>(toSimplify.Eval());
-            var actual = Assert.IsAssignableFrom<Real>(toSimplify.Simplify().Eval());
+            var expected = Assert.IsAssignableFrom<Real>(toSimplify.EvalNumerical());
+            var actual = Assert.IsAssignableFrom<Real>(toSimplify.Simplify().EvalNumerical());
             AssertEqualWithoutLast3Digits(expected, actual);
         }
     }

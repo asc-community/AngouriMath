@@ -97,6 +97,56 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitSum_expression([NotNull] AngouriMathParser.Sum_expressionContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.negate_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterNegate_expression([NotNull] AngouriMathParser.Negate_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.negate_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitNegate_expression([NotNull] AngouriMathParser.Negate_expressionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.and_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterAnd_expression([NotNull] AngouriMathParser.And_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.and_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitAnd_expression([NotNull] AngouriMathParser.And_expressionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.xor_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterXor_expression([NotNull] AngouriMathParser.Xor_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.xor_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitXor_expression([NotNull] AngouriMathParser.Xor_expressionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.or_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterOr_expression([NotNull] AngouriMathParser.Or_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.or_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitOr_expression([NotNull] AngouriMathParser.Or_expressionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.implies_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterImplies_expression([NotNull] AngouriMathParser.Implies_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.implies_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitImplies_expression([NotNull] AngouriMathParser.Implies_expressionContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

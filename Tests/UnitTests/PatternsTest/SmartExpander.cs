@@ -15,8 +15,8 @@ namespace UnitTests.PatternsTest
                 expr1 = expr1.Substitute(var, toSub);
             foreach (var var in expr2.Vars)
                 expr2 = expr2.Substitute(var, toSub);
-            var evaled1 = expr1.Eval();
-            var evaled2 = expr2.Eval();
+            var evaled1 = expr1.EvalNumerical();
+            var evaled2 = expr2.EvalNumerical();
             return (
                 evaled1 == evaled2 /*non-finite goes with that*/ 
                 || (evaled1 - evaled2).Abs().EDecimal.LessThan(EDecimal.FromDecimal(1e-20m)), 

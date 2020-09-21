@@ -22,6 +22,7 @@ using AngouriMath.Core;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Algebra.NumericalSolving;
+using AngouriMath.Functions.Boolean;
 
 namespace AngouriMath.Core
 {
@@ -62,6 +63,15 @@ namespace AngouriMath
         /// <param name="var">Variable whose values we are looking for</param>
         /// <returns>A <see cref="Set"/> of possible values or intervals of values</returns>
         public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
+
+        /// <summary>
+        /// Solves a boolean expression. That is, finds all values for
+        /// <paramref name="variables"/> such that the expression turns into True when evaluated
+        /// Uses a simple table of truth
+        /// Use <see cref="Entity.SolveBoolean(Variable)"/> for smart solving
+        /// </summary>
+        public static Tensor? SolveBooleanTable(Entity expression, params Variable[] variables)
+            => BooleanSolver.SolveTable(expression, variables);
 
         // Marking small enums with ": byte" is premature optimization and shouldn't be done: https://stackoverflow.com/q/648823/5429648
 
@@ -247,6 +257,8 @@ namespace AngouriMath
         public static readonly Complex i = Complex.ImaginaryOne;
         // ReSharper disable once InconsistentNaming
         public static readonly Variable pi = Variable.pi;
+        // ReSharper disable once InconsistentNaming
+        public static readonly Entity NaN = Number.Real.NaN;
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
@@ -763,6 +775,17 @@ namespace AngouriMath
             /// <summary><a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/></summary>
             public static EDecimal e =>
                 NumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
+        }
+
+        public static class Boolean
+        {
+
+            /// <summary>
+            /// Combines all possible values of <paramref name="variables"/>
+            /// and has the last column as the result of the function
+            /// </summary>
+            public static Tensor? BuildTruthTable(Entity expression, params Variable[] variables)
+                => BooleanSolver.BuildTruthTable(expression, variables);
         }
     }
 }

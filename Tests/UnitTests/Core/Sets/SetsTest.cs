@@ -1,6 +1,6 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
+using static AngouriMath.Entity;
 using Xunit;
 
 namespace UnitTests.Core

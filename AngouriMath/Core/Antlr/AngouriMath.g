@@ -5,13 +5,6 @@ source files under the Antlr folder can update and be reflected in other parts o
 It only consists of commands that are consistent across CMD and Bash so you should be able to run that file
 regardless of whether you are on Windows, Linux or Mac. You need to have an installed Java Runtime, however.
 
-If I need something ANTLR has no API for, I follow the steps:
-1) Unzip the jar file
-2) Make changes (possibly here org\antlr\v4\tool\templates\codegen\CSharp\CSharp.stg)
-3) Change directory to the one you unpacked it to
-4) Execute the command
-start [path to your jdk]/jdk12/bin/jar.exe cmvf META-INF/MANIFEST.MF ../antlr4.jar *
-
 */
 
 grammar AngouriMath; // Should be identical to the file name or ANTLR will complain
@@ -69,8 +62,10 @@ factorial_expression returns[Entity value]
 
 power_list returns[List<Entity> value]
     @init { $value = new List<Entity>(); }
-    : ('^' factorial_expression { $value.Add($factorial_expression.value); })+ ;
-
+    : ('^' factorial_expression { $value.Add($factorial_expression.value); })+
+    ;
+    
+// TODO: refactor
 power_expression returns[Entity value]
     : factorial_expression { $value = $factorial_expression.value; } (power_list {
         var list = $power_list.value;
@@ -82,9 +77,17 @@ power_expression returns[Entity value]
     })?
     ;
     
+/*
+
+Numerical nodes
+
+*/
+
 unary_expression returns[Entity value]
     : ('-' p = power_expression { $value = -$p.value; } | 
        '+' p = power_expression { $value = $p.value; })
+    | ('-' u = unary_expression { $value = -$u.value; } | 
+       '+' u = unary_expression { $value = $u.value; })
     | p = power_expression { $value = $p.value; }
     ;
     
@@ -100,9 +103,53 @@ sum_expression returns[Entity value]
     '-' m2 = mult_expression { $value = $value - $m2.value; })*
    ;
 
-expression returns[Entity value]
-    : s = sum_expression { $value = $s.value; }
+/*
+
+Equality/inequality nodes
+
+*/
+
+
+/*
+
+Boolean nodes
+
+*/
+
+negate_expression returns[Entity value]
+    : 'not' sum_expression { $value = !$sum_expression.value; }
+    | 'not' negate_expression { $value = !$negate_expression.value; }
+    | sum_expression { $value = $sum_expression.value; }
     ;
+
+and_expression returns[Entity value]
+    : m1 = negate_expression { $value = $m1.value; }
+    ('and' m2 = negate_expression { $value = $value & $m2.value; } |
+     '&' m2 = negate_expression { $value = $value & $m2.value; }
+    )*
+    ;
+
+xor_expression returns[Entity value]
+    : m1 = and_expression { $value = $m1.value; }
+    ('xor' m2 = and_expression { $value = $value ^ $m2.value; })*
+    ;
+
+or_expression returns[Entity value]
+    : m1 = xor_expression { $value = $m1.value; }
+    ('or' m2 = xor_expression { $value = $value | $m2.value; } |
+     '|' m2 = xor_expression { $value = $value | $m2.value; })*
+    ;
+
+implies_expression returns[Entity value]
+    : m1 = or_expression { $value = $m1.value; }
+    ('implies' m2 = or_expression { $value = $value.Implies($m2.value); } |
+     '->' m2 = or_expression { $value = $value.Implies($m2.value); })*
+    ;
+
+expression returns[Entity value]
+    : s = implies_expression { $value = $s.value; }
+    ;
+
 
 function_arguments returns[List<Entity> list]
     @init { $list = new List<Entity>(); }
@@ -111,7 +158,9 @@ function_arguments returns[List<Entity> list]
    
 atom returns[Entity value]
     : NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
+    | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
+    | '(|' expression '|)' { $value = $expression.value.Abs(); }
     | '(' expression ')' { $value = $expression.value; }
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
     | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
@@ -139,8 +188,8 @@ atom returns[Entity value]
     | 'signum(' args = function_arguments ')' { Assert("signum", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'sgn(' args = function_arguments ')' { Assert("sgn", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'sign(' args = function_arguments ')' { Assert("sign", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
-    // TODO: we might want to use another way for the absolute value function
     | 'abs(' args = function_arguments ')' { Assert("abs", 1, $args.list.Count); $value = MathS.Abs($args.list[0]); }
+    | 'domain(' args = function_arguments ')' { Assert("domain", 2, $args.list.Count); $value = $args.list[0].WithCodomain(DomainsFunctional.Parse($args.list[1])); }
     ;
 
 statement: expression EOF { Result = $expression.value; } ;
@@ -151,6 +200,8 @@ NEWLINE: '\r'?'\n' ;
 fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
 
 NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 'i'? | 'i' ;
+
+BOOLEAN: ('true' | 'false') ;
 
 VARIABLE: ('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
   

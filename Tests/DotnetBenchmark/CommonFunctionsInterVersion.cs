@@ -52,7 +52,7 @@ namespace DotnetBenchmark
         private static readonly Entity ntSolveHard = "sin(x + arcsin(x)) / (sqr(x) + cos(x)) * arccos(x / 1200 + 0.00032 / cotan(x + 43))";
 
         // Testing evaluation
-        [Benchmark] public void EvalEasy() => evalEasy.Eval();
+        [Benchmark] public void EvalEasy() => evalEasy.EvalNumerical();
         private static readonly Entity evalEasy = "1 + 2 + log(2, 3) + sqrt(4) - 4 ^ 7 + e * pi";
 
         // Testing compilation

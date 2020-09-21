@@ -8,9 +8,9 @@ namespace UnitTests.Common
         public static readonly Entity.Variable x = MathS.Var(nameof(x));
         public static readonly Entity.Variable y = MathS.Var(nameof(y));
         [Fact] public void ExpandAlgebra1() =>
-            Assert.Equal(16, ((x + y) * (x - y)).Expand().Substitute(x, 5).Substitute(y, 3).Eval());
+            Assert.Equal(16, ((x + y) * (x - y)).Expand().Substitute(x, 5).Substitute(y, 3).EvalNumerical());
         [Fact] public void ExpandAlgebra2() =>
-            Assert.Equal(64, ((x + y + x + y) * (x - y + x - y)).Expand().Substitute(x, 5).Substitute(y, 3).Eval());
+            Assert.Equal(64, ((x + y + x + y) * (x - y + x - y)).Expand().Substitute(x, 5).Substitute(y, 3).EvalNumerical());
         [Fact] public void Factorize1() =>
             Assert.Equal(x * (1 + y), (x * y + x).Factorize());
         [Fact]

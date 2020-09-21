@@ -32,7 +32,7 @@ namespace UnitTests.Algebra
                     foreach (var uniqvar in eqCopy.Vars)
                         substitutions.Add(uniqvar, ToSub);
                     eqCopy = eqCopy.Substitute(substitutions);
-                    var error = eqCopy.Eval().Abs();
+                    var error = eqCopy.EvalNumerical().Abs();
                     Assert.True(error.IsFinite && error < 0.0001,
                         $"\n{nameof(equation)}: {equation.InnerSimplify()}\n{nameof(i)}: {i}\n{nameof(error)}: {error}\n{nameof(sol)}: {sol}");
                 }

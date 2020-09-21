@@ -2,6 +2,7 @@
 using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
+using static AngouriMath.Entity;
 
 namespace UnitTests.Core
 {

@@ -1,5 +1,10 @@
 ﻿using System;
+using System.Collections.Immutable;
+using System.Linq;
 using AngouriMath;
+using static AngouriMath.Entity;
+using static AngouriMath.Entity.Boolean;
+using static AngouriMath.MathS;
 
 namespace Samples
 {
@@ -7,8 +12,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity ex = "sgn(x) + 5";
-            Console.WriteLine(ex.SolveEquation("x"));
+            Entity expr = "a -> true";
+            Console.WriteLine(MathS.SolveBooleanTable(expr, "a"));
         }
     }
 }
