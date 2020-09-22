@@ -129,6 +129,10 @@ namespace AngouriMath
                 res = resQ;
                 return true;
             }
+
+            public IEnumerable<Entity> AsFiniteSet()
+                // Should be a more appropriate exception
+                => IsFiniteSet(out var res) ? res : throw new InvalidOperationException("The given set is non-finite");
         }
 
         public partial record Set : SetNode, ICollection<SetPiece>
@@ -214,7 +218,7 @@ namespace AngouriMath
 
             public void Clear() => Pieces.Clear();
 
-            public IEnumerable<Entity>? AsFiniteSet() =>
+            private new IEnumerable<Entity>? AsFiniteSet() =>
                 Pieces.All(piece => piece is OneElementPiece)
                 ? Pieces.Select(piece => ((OneElementPiece)piece).entity)
                 : null;

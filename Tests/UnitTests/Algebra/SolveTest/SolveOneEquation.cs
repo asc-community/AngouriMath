@@ -35,8 +35,10 @@ namespace UnitTests.Algebra
         void TestSolver(Entity expr, int rootCount, Integer? toSub = null, bool testNewton = false)
         {
             var roots = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x));
-            AssertRootCount(roots, rootCount);
-            foreach (var root in roots.FiniteSet())
+#pragma warning disable CS8604 // Possible null reference argument.
+            AssertRootCount(roots as Set, rootCount);
+#pragma warning restore CS8604 // Possible null reference argument.
+            foreach (var root in roots.AsFiniteSet())
                 AssertRoots(expr, x, root, toSub);
             if (!testNewton) return;
             // TODO: Increase Newton precision
@@ -115,8 +117,10 @@ namespace UnitTests.Algebra
             Entity toRepl = func + "(x2 + 3)";
             Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1 * MathS.Var("a");
             var roots = expr.SolveEquation(x);
-            AssertRootCount(roots, rootAmount);
-            foreach (var root in roots.FiniteSet())
+#pragma warning disable CS8604 // Possible null reference argument.
+            AssertRootCount(roots as Set, rootAmount);
+#pragma warning restore CS8604 // Possible null reference argument.
+            foreach (var root in roots.AsFiniteSet())
                 AssertRoots(expr.Substitute("a", 5), x, root.Substitute("n_1", 3).Substitute("a", 5));
         }
 

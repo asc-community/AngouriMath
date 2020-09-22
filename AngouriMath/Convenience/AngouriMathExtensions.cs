@@ -42,7 +42,7 @@ namespace AngouriMath.Extensions
         public static Entity Factorize(this string expr) => expr.ToEntity().Factorize();
         public static Entity Substitute(this string expr, Variable var, Entity value)
             => expr.ToEntity().Substitute(var, value);
-        public static Set SolveEquation(this string expr, Variable x)
+        public static SetNode SolveEquation(this string expr, Variable x)
             => expr.ToEntity().SolveEquation(x);
         public static Integer ToNumber(this int value) => Integer.Create(value);
         public static Integer ToNumber(this long value) => Integer.Create(value);

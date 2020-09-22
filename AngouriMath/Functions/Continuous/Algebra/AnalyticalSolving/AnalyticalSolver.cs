@@ -33,7 +33,7 @@ namespace AngouriMath
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        public Set SolveEquation(Variable x) => EquationSolver.Solve(this, x);
+        public SetNode SolveEquation(Variable x) => EquationSolver.Solve(this, x);
     }
 }
 

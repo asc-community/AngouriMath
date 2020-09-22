@@ -62,7 +62,7 @@ namespace AngouriMath
         /// <param name="equation">An equation that is assumed to equal 0</param>
         /// <param name="var">Variable whose values we are looking for</param>
         /// <returns>A <see cref="Set"/> of possible values or intervals of values</returns>
-        public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
+        public static SetNode SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
 
         /// <summary>
         /// Solves a boolean expression. That is, finds all values for
@@ -824,6 +824,17 @@ namespace AngouriMath
             /// <summary><a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/></summary>
             public static EDecimal e =>
                 NumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
+        }
+
+        public static class Boolean
+        {
+
+            /// <summary>
+            /// Combines all possible values of <paramref name="variables"/>
+            /// and has the last column as the result of the function
+            /// </summary>
+            public static Tensor? BuildTruthTable(Entity expression, params Variable[] variables)
+                => BooleanSolver.BuildTruthTable(expression, variables);
         }
     }
 }

@@ -59,7 +59,7 @@ namespace AngouriMath
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        public static Set Solve(Entity expr, Variable x) => expr.SolveEquation(x);
+        public static SetNode Solve(Entity expr, Variable x) => expr.SolveEquation(x);
 
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
