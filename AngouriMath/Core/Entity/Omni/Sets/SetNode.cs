@@ -224,8 +224,7 @@ namespace AngouriMath
                 ? Pieces.Select(piece => ((OneElementPiece)piece).entity)
                 : null;
 
-            private int? count;
-            public int Count => count ??= (Pieces.Any(p => p is Interval) ? -1 : Pieces.Count);
+            public int Count => (Pieces.Any(p => p is Interval) ? -1 : Pieces.Count);
 
             /// <summary>
             /// Adding to this <see cref="Set"/> will not check whether <see cref="Entity"/> is already added
