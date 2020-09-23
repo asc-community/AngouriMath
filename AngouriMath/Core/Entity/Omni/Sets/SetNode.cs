@@ -114,6 +114,7 @@ namespace AngouriMath
             public abstract bool IsFinite { get; }
             public abstract bool IsEmpty { get; }
 
+            // TODO: Should've made it a virtual method instead?
             public bool IsFiniteSet(out IEnumerable<Entity> res)
             {
                 if (!IsFinite)
@@ -123,7 +124,7 @@ namespace AngouriMath
                 }
                 if (this is not Set set)
                     throw new AngouriBugException($"If a set is finite, it should be of the {nameof(Set)} type");
-                var resQ = set.AsFiniteSet();
+                var resQ = set.AsFiniteSetInternal();
                 if (resQ is null)
                     throw new AngouriBugException($"If a set is finite, it should not be null");
                 res = resQ;
@@ -218,7 +219,7 @@ namespace AngouriMath
 
             public void Clear() => Pieces.Clear();
 
-            private new IEnumerable<Entity>? AsFiniteSet() =>
+            internal IEnumerable<Entity>? AsFiniteSetInternal() =>
                 Pieces.All(piece => piece is OneElementPiece)
                 ? Pieces.Select(piece => ((OneElementPiece)piece).entity)
                 : null;
