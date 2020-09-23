@@ -158,7 +158,7 @@ namespace AngouriMath
                     if (Pieces.All(p => (p.LowerBound(), p.UpperBound()) != (piece.LowerBound(), piece.UpperBound())))
                         Pieces.Add(piece);
                 }
-                else if (piece is OneElementPiece oneelem && AsFiniteSet() is { } finiteSet)
+                else if (piece is OneElementPiece oneelem && IsFiniteSet(out var finiteSet))
                 {
                     if (finiteSet.All(finite => finite.Evaled != oneelem.entity.Evaled))
                         Pieces.Add(piece);
@@ -215,7 +215,7 @@ namespace AngouriMath
             public override string ToString() => IsEmpty ? "{}" : string.Join("|", Pieces);
 
             public override bool IsEmpty => Pieces.Count == 0;
-            public override bool IsFinite => Pieces.Count != -1;
+            public override bool IsFinite => Count != -1;
 
             public void Clear() => Pieces.Clear();
 
