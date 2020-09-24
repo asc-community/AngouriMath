@@ -44,6 +44,8 @@ namespace AngouriMath.Extensions
             => expr.ToEntity().Substitute(var, value);
         public static SetNode SolveEquation(this string expr, Variable x)
             => expr.ToEntity().SolveEquation(x);
+        public static SetNode Solve(this string expr, Variable x)
+            => expr.ToEntity().Solve(x);
         public static Integer ToNumber(this int value) => Integer.Create(value);
         public static Integer ToNumber(this long value) => Integer.Create(value);
         public static Integer ToNumber(this EInteger value) => Integer.Create(value);

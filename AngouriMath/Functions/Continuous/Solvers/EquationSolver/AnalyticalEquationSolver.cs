@@ -71,7 +71,7 @@ namespace AngouriMath.Functions
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
-    internal static class AnalyticalSolver
+    internal static class AnalyticalEquationSolver
     {
         /// <summary>Equation solver</summary>
         /// <param name="compensateSolving">

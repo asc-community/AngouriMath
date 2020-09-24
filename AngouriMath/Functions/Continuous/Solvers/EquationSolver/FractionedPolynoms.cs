@@ -98,7 +98,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var finalExpr = MathS.Pow(normalPolynom, intLcm) - mp;
 
-            return AnalyticalSolver.Solve(finalExpr, x);
+            return AnalyticalEquationSolver.Solve(finalExpr, x);
         }
     }
 }

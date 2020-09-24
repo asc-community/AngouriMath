@@ -1,3 +1,4 @@
+﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -12,29 +13,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath.Extensions;
+using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using System;
 using System.Linq;
 
-namespace AngouriMath.Functions.Algebra.AnalyticalSolving
+namespace AngouriMath
 {
-    using static Entity;
-    internal static class TrigonometricSolver
+    public abstract partial record Entity
     {
-        // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
-        internal static SetNode? SolveLinear(Entity expr, Variable variable)
+        public SetNode Solve(params Variable[] variables)
         {
-            var replacement = Variable.CreateTemp(expr.Vars);
-            expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
-
-            // if there is still original variable after replacements,
-            // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
-            if (expr.Contains(variable))
-                return null;
-
-            if (AnalyticalSolver.Solve(expr, replacement).IsFiniteSet(out var els))
-                return els.Select(sol => MathS.Pow(MathS.e, MathS.i * variable).Invert(sol, variable).ToSetNode()).Unite();
-            else
-                return null;
+            if (variables.Length != 1)
+                throw new NotImplementedException("Not yet :)");
+            if (this is Statement)
+                return StatementSolver.Solve(this, variables[0]);
+            if (this == variables[0])
+                return new Set(Boolean.True);
+            throw new InvalidOperationException("There should be statement to be true");
         }
     }
 }

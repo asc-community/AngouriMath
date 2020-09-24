@@ -60,7 +60,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// tries solving if the found denominator is not 1
         /// </summary>
         internal static SetNode? Solve(Entity expr, Variable x) =>
-            FindCD(expr, x) is { } res ? AnalyticalSolver.Solve(res, x) : null;
+            FindCD(expr, x) is { } res ? AnalyticalEquationSolver.Solve(res, x) : null;
 
         private static Entity? FindCD(Entity expr, Variable x)
         {

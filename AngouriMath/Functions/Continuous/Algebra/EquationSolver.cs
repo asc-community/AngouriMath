@@ -30,7 +30,7 @@ namespace AngouriMath.Functions.Algebra
         {
             var solutions = MathS.Settings.PrecisionErrorZeroRange.As(1e-12m, () =>
                 MathS.Settings.FloatToRationalIterCount.As(0, () =>
-                    AnalyticalSolver.Solve(equation, x)
+                    AnalyticalEquationSolver.Solve(equation, x)
                 ));
 
             static Entity simplifier(Entity entity) => entity.InnerSimplify();
