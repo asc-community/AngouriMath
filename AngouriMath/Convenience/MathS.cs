@@ -585,6 +585,9 @@ namespace AngouriMath
                     // Number of negative powers
                     res += expr.Nodes.Count(entity => entity is Powf(_, Number.Real { IsNegative: true }));
 
+                    // 0 < x is bad. x > 0 is good.
+                    res += expr.Nodes.Count(entity => entity is ComparisonSign && entity.DirectChildren[0] == 0);
+
                     return res;
                 });
             [ThreadStatic] private static Setting<Func<Entity, int>>? complexityCriteria;

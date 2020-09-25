@@ -44,6 +44,31 @@ namespace UnitTests.PatternsTest
             var exp = expected.ToEntity();
             var act = expr.ToEntity();
             Assert.Equal(exp, act.Simplify());
+            
+        }
+
+        [Theory]
+        [InlineData("0 < x",  "x > 0")]
+        [InlineData("0 <= x", "x >= 0")]
+        [InlineData("0 > x",  "x < 0")]
+        [InlineData("0 >= x", "x <= 0")]
+        [InlineData("0 = x", "x = 0")]
+        [InlineData("2 * x > 0", "x > 0")]
+        [InlineData("2 * x < 0", "x < 0")]
+        [InlineData("2 * x >= 0", "x >= 0")]
+        [InlineData("2 * x <= 0", "x <= 0")]
+        [InlineData("0 > 2 * x", "x < 0")]
+        [InlineData("0 < 2 * x", "x > 0")]
+        [InlineData("0 >= 2 * x", "x <= 0")]
+        [InlineData("0 <= 2 * x", "x >= 0")]
+        [InlineData("x ^ 2 = 0", "x = 0")]
+        [InlineData("x > y > z -> x > z", "true")]
+        [InlineData("x < y < z -> x < z", "true")]
+        public void TestInequality(string expr, string expected)
+        {
+            var exp = expected.ToEntity();
+            var act = expr.ToEntity();
+            Assert.Equal(exp, act.Simplify());
         }
     }
 }

@@ -78,7 +78,6 @@ namespace AngouriMath
         public static Entity HangOperator(Entity a, Entity b, Func<Entity, Entity, Entity> ctor)
            => a switch
            {
-               Equalsf(var left, var right) => new Equalsf(left, right) & ctor(right, b),
                Greaterf(var left, var right) => new Greaterf(left, right) & ctor(right, b),
                GreaterOrEqualf(var left, var right) => new GreaterOrEqualf(left, right) & ctor(right, b),
                Lessf(var left, var right) => new Lessf(left, right) & ctor(right, b),

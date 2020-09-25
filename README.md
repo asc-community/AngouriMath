@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/asc-community/AngouriMath">
-    <img src="./icon.png" alt="AngouriMath logo" width="200" height="200">
+    <img src="./additional/readme/icon_white.png" alt="AngouriMath logo" width="200" height="200">
   </a>
 </p>
 

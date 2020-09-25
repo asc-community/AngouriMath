@@ -81,9 +81,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// </param>
         internal static SetNode Solve(Entity expr, Variable x, bool compensateSolving = false)
         {
-            if (expr is Statement)
-                return StatementSolver.Solve(expr, x);
-
             if (expr == x)
                 return new Entity[] { 0 }.ToSet();
 

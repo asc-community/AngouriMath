@@ -13,7 +13,9 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Console.WriteLine("6 > x > 5".Solve("x"));
+            //Console.WriteLine("x4 = 1 and x8 = 1".Simplify());
+            //Entity expr = "x4 = 1 and x8 = 1";
+            Console.WriteLine("0 < x".Simplify());
         }
     }
 }

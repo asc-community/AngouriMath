@@ -25,9 +25,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
                 Equalsf(var left, var right) => AnalyticalEquationSolver.Solve(left - right, x),
 
-                Andf(var left, var right) => AnalyticalEquationSolver.Solve(left, x) & AnalyticalEquationSolver.Solve(right, x),
-                Orf(var left, var right) => AnalyticalEquationSolver.Solve(left, x) | AnalyticalEquationSolver.Solve(right, x),
-                Impliesf(var left, var right) => !AnalyticalEquationSolver.Solve(left, x) | AnalyticalEquationSolver.Solve(right, x),
+                Andf(var left, var right) => Solve(left, x) & Solve(right, x),
+                Orf(var left, var right) => Solve(left, x) | Solve(right, x),
+                Impliesf(var left, var right) => !Solve(left, x) | Solve(right, x),
 
                 // TODO: there should be universal set to subtract from when inverting
                 Greaterf(var left, var right) => AnalyticalInequalitySolver.Solve(left - right, x),
@@ -35,6 +35,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 GreaterOrEqualf(var left, var right) => AnalyticalInequalitySolver.Solve(left - right, x) | AnalyticalEquationSolver.Solve(left - right, x),
                 Lessf(var left, var right) => !(AnalyticalInequalitySolver.Solve(left - right, x) | AnalyticalEquationSolver.Solve(left - right, x)),
 
+                Variable when expr == x => new Set((Entity)true),
+
+                // TODO: Although piecewise needed?
                 _ => new Set()
             };
     }
