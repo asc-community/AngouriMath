@@ -109,16 +109,20 @@ Equality/inequality nodes
 
 */
 
-equality_expression returns[Entity value]
+inequality_expression returns[Entity value]
    : m1 = sum_expression { $value = $m1.value; }
    (
     '>=' m2 = sum_expression { $value = $value >= $m2.value; } | 
     '<=' m2 = sum_expression { $value = $value <= $m2.value; } |
     '>' m2 = sum_expression { $value = $value > $m2.value; } |
     '<' m2 = sum_expression { $value = $value < $m2.value; } |
-    '=' m2 = sum_expression { $value = MathS.Equality($value, $m2.value); } |
     'equalizes' m2 = sum_expression { $value = MathS.Equality($value, $m2.value); })*
    ;
+
+equality_expression returns[Entity value]
+    : m1 = inequality_expression { $value = $m1.value; }
+    ('=' m2 = inequality_expression { $value = $value.Equalizes($m2.value); })*
+    ;
 
 /*
 

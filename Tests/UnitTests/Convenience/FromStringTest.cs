@@ -114,17 +114,19 @@ namespace UnitTests.Convenience
             => Assert.Equal(Sqrt(x).WithCodomain(Domain.Real), FromString("domain(domain(sqrt(x), RR), RR)"));
         [Fact] public void Test46()
             => Assert.Equal(Sqrt(x).WithCodomain(Domain.Complex), FromString("domain(domain(sqrt(x), RR), CC)"));
-#pragma warning disable CS1718 // Comparison made to same variable
         [Fact] public void Test47()
-            => Assert.Equal(x > x, FromString("x > x"));
+            => Assert.Equal(x > y, FromString("x > y"));
         [Fact] public void Test48()
-            => Assert.Equal(x < x, FromString("x < x"));
+            => Assert.Equal(x < y, FromString("x < y"));
         [Fact] public void Test49()
-            => Assert.Equal(x >= x, FromString("x >= x"));
+            => Assert.Equal(x >= y, FromString("x >= y"));
         [Fact] public void Test50()
-            => Assert.Equal(x <= x, FromString("x <= x"));
+            => Assert.Equal(x <= y, FromString("x <= y"));
         [Fact] public void Test51()
-            => Assert.Equal(x.Equalizes(x), FromString("x = x"));
-#pragma warning restore CS1718 // Comparison made to same variable
+            => Assert.Equal(x.Equalizes(y), FromString("x = y"));
+        [Fact] public void Test52()
+            => Assert.Equal((x > y).Equalizes(x < y), FromString("x > y = x < y"));
+        [Fact] public void Test53()
+            => Assert.Equal(x.Equalizes(y).Equalizes(x), FromString("x = y = x"));
     }
 }
