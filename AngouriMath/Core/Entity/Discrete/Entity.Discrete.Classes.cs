@@ -141,7 +141,7 @@ namespace AngouriMath
         /// <summary>
         /// It is true if left and right are equal
         /// </summary>
-        public sealed partial record Equalsf(Entity Left, Entity Right) : Statement
+        public sealed partial record Equalsf(Entity Left, Entity Right) : ComparisonSign
         {
             public override Priority Priority => Priority.Equal;
             public Equalsf New(Entity left, Entity right)
@@ -158,7 +158,7 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record Greaterf(Entity Left, Entity Right) : Statement
+        public sealed partial record Greaterf(Entity Left, Entity Right) : ComparisonSign
         {
             public override Priority Priority => Priority.GreaterThan;
             public Greaterf New(Entity left, Entity right)
@@ -175,7 +175,7 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record GreaterOrEqualf(Entity Left, Entity Right) : Statement
+        public sealed partial record GreaterOrEqualf(Entity Left, Entity Right) : ComparisonSign
         {
             public override Priority Priority => Priority.GreaterThan;
             public GreaterOrEqualf New(Entity left, Entity right)
@@ -192,7 +192,7 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record Lessf(Entity Left, Entity Right) : Statement
+        public sealed partial record Lessf(Entity Left, Entity Right) : ComparisonSign
         {
             public override Priority Priority => Priority.GreaterThan;
             public Lessf New(Entity left, Entity right)
@@ -209,7 +209,7 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record LessOrEqualf(Entity Left, Entity Right) : Statement
+        public sealed partial record LessOrEqualf(Entity Left, Entity Right) : ComparisonSign
         {
             public override Priority Priority => Priority.GreaterThan;
             public LessOrEqualf New(Entity left, Entity right)

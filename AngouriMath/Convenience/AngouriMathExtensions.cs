@@ -22,6 +22,8 @@ namespace AngouriMath.Extensions
 {
     using static Entity;
     using static Entity.Number;
+
+    // TODO: this should be documented
     public static class AngouriMathExtensions
     {
         public static Set ToSet(this System.Collections.Generic.IEnumerable<Entity> expr)

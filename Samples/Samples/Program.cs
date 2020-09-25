@@ -13,8 +13,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            //Console.WriteLine("(x - 1)(x + 3) = a and (x - 1)(x + 2) = 0 or x2 = 16".SolveEquation("x"));
-            Console.WriteLine("x2 = 16 and x > 2".Solve("x"));
+            Console.WriteLine("6 > x > 5".Solve("x"));
         }
     }
 }

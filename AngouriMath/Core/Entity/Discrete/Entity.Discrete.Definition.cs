@@ -14,6 +14,8 @@
  */
 
 
+using System;
+
 namespace AngouriMath
 {
     partial record Entity
@@ -25,6 +27,15 @@ namespace AngouriMath
         {
             
         }
+
+        /// <summary>
+        /// =, <, >, <=, >=
+        /// </summary>
+        public abstract partial record ComparisonSign : Statement
+        {
+
+        }
+
         /// <returns>A node</returns>
         public static implicit operator Entity(bool v) => Boolean.Create(v);
 
@@ -50,18 +61,30 @@ namespace AngouriMath
         public Entity Implies(Entity conclusion) => new Impliesf(this, conclusion);
 
         /// <returns>A node</returns>
-        public Entity Equalizes(Entity another) => new Equalsf(this, another);
+        public Entity Equalizes(Entity another) => HangOperator(this, another, (a, b) => new Equalsf(this, another));
 
         /// <returns>A node</returns>
-        public static Entity operator >(Entity a, Entity b) => new Greaterf(a, b);
+        public static Entity operator >(Entity a, Entity b) => HangOperator(a, b, (a, b) => new Greaterf(a, b));
 
         /// <returns>A node</returns>
-        public static Entity operator <(Entity a, Entity b) => new Lessf(a, b);
+        public static Entity operator <(Entity a, Entity b) => HangOperator(a, b, (a, b) => new Lessf(a, b));
 
         /// <returns>A node</returns>
-        public static Entity operator >=(Entity a, Entity b) => new GreaterOrEqualf(a, b);
+        public static Entity operator >=(Entity a, Entity b) => HangOperator(a, b, (a, b) => new GreaterOrEqualf(a, b));
 
         /// <returns>A node</returns>
-        public static Entity operator <=(Entity a, Entity b) => new LessOrEqualf(a, b);
+        public static Entity operator <=(Entity a, Entity b) => HangOperator(a, b, (a, b) => new LessOrEqualf(a, b));
+
+        public static Entity HangOperator(Entity a, Entity b, Func<Entity, Entity, Entity> ctor)
+           => a switch
+           {
+               Equalsf(var left, var right) => new Equalsf(left, right) & ctor(right, b),
+               Greaterf(var left, var right) => new Greaterf(left, right) & ctor(right, b),
+               GreaterOrEqualf(var left, var right) => new GreaterOrEqualf(left, right) & ctor(right, b),
+               Lessf(var left, var right) => new Lessf(left, right) & ctor(right, b),
+               LessOrEqualf(var left, var right) => new LessOrEqualf(left, right) & ctor(right, b),
+
+               _ => ctor(a, b)
+           };
     }
 }

@@ -14,6 +14,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         {
             if (expr is Minusf(var v, var c) && v == x && !c.Contains(x))
                 return new Set(MathS.Sets.Interval(c, Number.Real.PositiveInfinity));
+            if (expr is Minusf(var c1, var v1) && v1 == x && !c1.Contains(x))
+                return new Set(MathS.Sets.Interval(Number.Real.NegativeInfinity, c1));
             throw new NotImplementedException("Inequalities are not implemented yet");
         }
     }
