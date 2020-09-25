@@ -32,6 +32,9 @@ namespace AngouriMath.Core.Exceptions
     /// <summary>Thrown when trying to parse an invalid string</summary>
     public class ParseException : MathSException { public ParseException(string msg) : base(msg) { } }
 
+    /// <summary>Is thrown when something cannot be collapsed into a single number or boolean</summary>
+    public class CannotEvalException : MathSException { public CannotEvalException(string msg) : base(msg) { } }
+
     /// <summary>Thrown when a wrong number of arguments are encountered when parsing a function</summary>
     public class FunctionArgumentCountException : ParseException
     {

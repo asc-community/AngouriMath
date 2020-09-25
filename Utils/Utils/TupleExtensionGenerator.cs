@@ -15,7 +15,10 @@ namespace Utils
             var sb = new StringBuilder();
             for (int i = 2; i <= LONGEST_TUPLE_LENGTH; i++)
             {
-                sb.Append("public static Tensor? SolveSystem(this (")
+                sb
+                .Append("///<summary>Solves a given set of arbitrary equations</summary>\n")
+                .Append($"///<returns>A tensor whose width is {i} columns long or null if no solutions were found</returns>\n")
+                .Append("public static Tensor? SolveSystem(this (")
                 .AppendJoin(", ", Enumerable.Range(1, i).Select(c => "string eq" + c))
                 .Append(") eqs, ")
                 .AppendJoin(", ", Enumerable.Range(1, i).Select(c => "string var" + c))
