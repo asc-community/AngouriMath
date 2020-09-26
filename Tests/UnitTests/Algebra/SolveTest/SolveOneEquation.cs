@@ -1,5 +1,4 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
 using System.Collections.Generic;
@@ -9,7 +8,7 @@ namespace UnitTests.Algebra
 {
     public class SolveOneEquation
     {
-        public static Entity.Variable x = nameof(x);
+        public static Variable x = nameof(x);
 
         /// <summary>Numerically checks if a root fits an equation</summary>
         internal static void AssertRoots(Entity equation, Entity.Variable toSub, Entity varValue, Integer? subValue = null)

@@ -52,7 +52,7 @@ namespace AngouriMath
             internal partial record Union(SetNode A, SetNode B) : SetNode
             {
                 public override bool Contains(SetPiece piece) => A.Contains(piece) || B.Contains(piece);
-                public override string ToString() => $"({A})&({B})";
+                public override string ToString() => $@"({A}) \/ ({B})";
                 public override bool IsFinite => false; //A.IsFinite && B.IsFinite; we can't iterate over this :(
                 public override bool IsEmpty => false; //A.IsEmpty && B.IsEmpty; we can't iterate over this :(
             }
@@ -60,7 +60,7 @@ namespace AngouriMath
             internal partial record Intersection(SetNode A, SetNode B) : SetNode
             {
                 public override bool Contains(SetPiece piece) => A.Contains(piece) && B.Contains(piece);
-                public override string ToString() => $"({A})|({B})";
+                public override string ToString() => $@"({A}) /\ ({B})";
                 public override bool IsFinite => false; // A.IsFinite || B.IsFinite; we can't iterate over this :(
                 public override bool IsEmpty => false; // A.IsEmpty || B.IsEmpty; we can't iterate over this :(
             }
@@ -68,7 +68,7 @@ namespace AngouriMath
             internal partial record Complement(SetNode A, SetNode B) : SetNode
             {
                 public override bool Contains(SetPiece piece) => A.Contains(piece) && !B.Contains(piece);
-                public override string ToString() => $@"({A})\({B})";
+                public override string ToString() => $@"({A}) \ ({B})";
                 public override bool IsFinite => false; // A.IsFinite; we can't iterate over this :(
                 public override bool IsEmpty => false; // A.IsEmpty; we can't iterate over this :(
             }
