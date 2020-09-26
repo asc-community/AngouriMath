@@ -158,5 +158,31 @@ namespace AngouriMath
         {
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
+
+        partial record Equalsf
+        {
+            public override Domain Codomain { get; protected init; } = Domain.Boolean;
+        }
+
+        partial record Greaterf
+        {
+            public override Domain Codomain { get; protected init; } = Domain.Boolean;
+        }
+
+        partial record GreaterOrEqualf
+        {
+            public override Domain Codomain { get; protected init; } = Domain.Boolean;
+        }
+
+        partial record Lessf
+        {
+            public override Domain Codomain { get; protected init; } = Domain.Boolean;
+        }
+
+        partial record LessOrEqualf
+        {
+            public override Domain Codomain { get; protected init; } = Domain.Boolean;
+        }
+
     }
 }

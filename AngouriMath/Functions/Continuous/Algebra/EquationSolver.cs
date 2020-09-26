@@ -26,22 +26,28 @@ namespace AngouriMath.Functions.Algebra
     internal static class EquationSolver
     {
         /// <summary>Solves one equation</summary>
-        internal static Set Solve(Entity equation, Variable x)
+        internal static SetNode Solve(Entity equation, Variable x)
         {
             var solutions = MathS.Settings.PrecisionErrorZeroRange.As(1e-12m, () =>
                 MathS.Settings.FloatToRationalIterCount.As(0, () =>
-                    AnalyticalSolver.Solve(equation, x)
+                    AnalyticalEquationSolver.Solve(equation, x)
                 ));
 
             static Entity simplifier(Entity entity) => entity.InnerSimplify();
             static Entity evaluator(Entity entity) => entity.Evaled;
             var factorizer = equation.Vars.Count() == 1 ? (Func<Entity, Entity>)evaluator : simplifier;
 
-            var finalSet = new Set();
-            foreach (var elem in solutions.Select(simplifier))
-                if (elem.IsFinite && factorizer(equation.Substitute(x, elem)).IsFinite)
-                    finalSet.Add(elem);
-            return finalSet;
+
+            if (solutions.IsFiniteSet(out var finiteSet))
+            {
+                var finalSet = new Set();
+                foreach (var elem in finiteSet.Select(simplifier))
+                    if (elem.IsFinite && factorizer(equation.Substitute(x, elem)).IsFinite)
+                        finalSet.Add(elem);
+                return finalSet;
+            }
+            else
+                return solutions;
         }
 
         /// <summary>
@@ -83,8 +89,9 @@ namespace AngouriMath.Functions.Algebra
         {
             var var = vars[vars.Length - 1];
             if (equations.Count == 1)
-                return equations[0].InnerSimplify().SolveEquation(var).FiniteSet()
-                       .Select(sol => new List<Entity> { sol }).ToList();
+                return equations[0].InnerSimplify().SolveEquation(var).IsFiniteSet(out var els) 
+                       ? els.Select(sol => new List<Entity> { sol }).ToList()
+                       : new();
             var result = new List<List<Entity>>();
             var replacements = new Dictionary<Variable, Entity>();
             for (int i = 0; i < equations.Count; i++)
@@ -94,9 +101,9 @@ namespace AngouriMath.Functions.Algebra
                     equations.RemoveAt(i);
                     vars = vars.Slice(0, vars.Length - 1);
 
-                    foreach (var sol in solutionsOverVar.FiniteSet())
-                        foreach (var j in
-                            InSolveSystem(equations.Select(eq => eq.Substitute(var, sol)).ToList(), vars))
+                    if (solutionsOverVar.IsFiniteSet(out var sols))
+                        foreach (var sol in sols)
+                        foreach (var j in InSolveSystem(equations.Select(eq => eq.Substitute(var, sol)).ToList(), vars))
                         {
                             replacements.Clear();
                             for (int varid = 0; varid < vars.Length; varid++)

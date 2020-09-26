@@ -23,7 +23,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             
             var expr = (x + v1) * (x + v2) * (x + v3);
             var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
+            foreach (var root in newexpr.SolveEquation(x).AsFiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
 
@@ -42,7 +42,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             var v3 = Complex.Create(v3re, v3im);
             var expr = (x + v1) * (x + v2) * (x + v3);
             var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
+            foreach (var root in newexpr.SolveEquation(x).AsFiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
 
@@ -55,7 +55,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
         {
             var expr = (x - v1) * (x - v2) * (x - v3) * (x - v4);
             var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
+            foreach (var root in newexpr.SolveEquation(x).AsFiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
 
@@ -77,7 +77,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
             var v4 = Complex.Create(v4re, v4im);
             var expr = (x - v1) * (x - v2) * (x - v3) * (x - v4);
             var newexpr = expr.Expand();
-            foreach (var root in newexpr.SolveEquation(x).FiniteSet())
+            foreach (var root in newexpr.SolveEquation(x).AsFiniteSet())
                 SolveOneEquation.AssertRoots(newexpr, x, root);
         }
     }

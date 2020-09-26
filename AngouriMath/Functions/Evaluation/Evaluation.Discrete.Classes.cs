@@ -17,6 +17,7 @@ using AngouriMath.Functions;
 using System;
 using static AngouriMath.Entity.Boolean;
 using AngouriMath.Core;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
@@ -41,46 +42,239 @@ namespace AngouriMath
 
         partial record Andf
         {
+            private bool GoodResult(Entity left, Entity right, out Entity res)
+            {
+                if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
+                {
+                    res = (bool)leftBool && (bool)rightBool; // there's no cost in casting
+                    return true;
+                }
+                else
+                {
+                    res = False;
+                    return false;
+                }
+            }
+
             protected override Entity InnerEval()
             {
-                if (Left.Evaled is Boolean left && Right.Evaled is Boolean right)
-                    return (bool)left && (bool)right; // there's no cost in casting
+                if (GoodResult(Left, Right, out var res))
+                    return res;
                 return New(Left.Evaled, Right.Evaled);
             }
-            internal override Entity InnerSimplify() => InnerEvalWithCheck();
+            internal override Entity InnerSimplify()
+            {
+                if (GoodResult(Left, Right, out var res))
+                    return res;
+                return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
         }
 
         partial record Orf
         {
+            private bool GoodResult(Entity left, Entity right, out Entity res)
+            {
+                if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
+                {
+                    res = (bool)leftBool || (bool)rightBool; // there's no cost in casting
+                    return true;
+                }
+                else
+                {
+                    res = False;
+                    return false;
+                }
+            }
+
             protected override Entity InnerEval()
             {
-                if (Left.Evaled is Boolean left && Right.Evaled is Boolean right)
-                    return (bool)left || (bool)right; // there's no cost in casting
+                if (GoodResult(Left, Right, out var res))
+                    return res;
                 return New(Left.Evaled, Right.Evaled);
             }
-            internal override Entity InnerSimplify() => InnerEvalWithCheck();
+            internal override Entity InnerSimplify()
+            {
+                if (GoodResult(Left, Right, out var res))
+                    return res;
+                return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
         }
 
         partial record Xorf
         {
+            private bool GoodResult(Entity left, Entity right, out Entity res)
+            {
+                if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
+                {
+                    res = (bool)leftBool ^ (bool)rightBool; // there's no cost in casting
+                    return true;
+                }
+                else
+                {
+                    res = False;
+                    return false;
+                }
+            }
+
             protected override Entity InnerEval()
             {
-                if (Left.Evaled is Boolean left && Right.Evaled is Boolean right)
-                    return (bool)left ^ (bool)right; // there's no cost in casting
+                if (GoodResult(Left, Right, out var res))
+                    return res;
                 return New(Left.Evaled, Right.Evaled);
             }
-            internal override Entity InnerSimplify() => InnerEvalWithCheck();
+            internal override Entity InnerSimplify()
+            {
+                if (GoodResult(Left, Right, out var res))
+                    return res;
+                return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
         }
 
         partial record Impliesf
         {
+            private bool GoodResult(Entity left, Entity right, out Entity res)
+            {
+                if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
+                {
+                    res = !(bool)leftBool || (bool)rightBool; // there's no cost in casting
+                    return true;
+                }
+                else
+                {
+                    res = False;
+                    return false;
+                }
+            }
+
             protected override Entity InnerEval()
             {
-                if (Assumption.Evaled is Boolean ass && Conclusion.Evaled is Boolean conclusion)
-                    return !(bool)ass || (bool)conclusion; // there's no cost in casting
+                if (GoodResult(Assumption, Conclusion, out var res))
+                    return res;
                 return New(Assumption.Evaled, Conclusion.Evaled);
             }
-            internal override Entity InnerSimplify() => InnerEvalWithCheck();
+
+            internal override Entity InnerSimplify()
+            {
+                if (GoodResult(Assumption, Conclusion, out var res))
+                    return res;
+                return New(Assumption.InnerSimplifyWithCheck(), Conclusion.InnerSimplifyWithCheck());
+            }
+        }
+
+        partial record Equalsf
+        {
+            protected override Entity InnerEval()
+            {
+                // TODO: Is it that?
+                return Left.Evaled == Right.Evaled;
+            }
+            internal override Entity InnerSimplify()
+            {
+               if (Left.Evaled is Number && Right.Evaled is Number)
+                    return InnerEvalWithCheck();
+               else
+                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
+        }
+
+        partial record Greaterf
+        {
+            protected override Entity InnerEval()
+            {
+                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
+                {
+                    if (numLeft is Real reLeft && numRight is Real reRight)
+                        return reLeft > reRight;
+                    else
+                        return MathS.NaN;
+                }
+                else 
+                    return New(Left.Evaled, Right.Evaled);
+            }
+
+            internal override Entity InnerSimplify()
+            {
+                var res = InnerEval();
+                if (res is Boolean)
+                    return res;
+                else
+                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
+        }
+
+        partial record GreaterOrEqualf
+        {
+            protected override Entity InnerEval()
+            {
+                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
+                {
+                    if (numLeft is Real reLeft && numRight is Real reRight)
+                        return reLeft >= reRight;
+                    else
+                        return MathS.NaN;
+                }
+                else
+                    return New(Left.Evaled, Right.Evaled);
+            }
+
+            internal override Entity InnerSimplify()
+            {
+                var res = InnerEval();
+                if (res is Boolean)
+                    return res;
+                else
+                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
+        }
+
+        partial record Lessf
+        {
+            protected override Entity InnerEval()
+            {
+                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
+                {
+                    if (numLeft is Real reLeft && numRight is Real reRight)
+                        return reLeft < reRight;
+                    else
+                        return MathS.NaN;
+                }
+                else
+                    return New(Left.Evaled, Right.Evaled);
+            }
+
+            internal override Entity InnerSimplify()
+            {
+                var res = InnerEval();
+                if (res is Boolean)
+                    return res;
+                else
+                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
+        }
+
+        partial record LessOrEqualf
+        {
+            protected override Entity InnerEval()
+            {
+                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
+                {
+                    if (numLeft is Real reLeft && numRight is Real reRight)
+                        return reLeft <= reRight;
+                    else
+                        return MathS.NaN;
+                }
+                else
+                    return New(Left.Evaled, Right.Evaled);
+            }
+
+            internal override Entity InnerSimplify()
+            {
+                var res = InnerEval();
+                if (res is Boolean)
+                    return res;
+                else
+                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+            }
         }
     }
 }

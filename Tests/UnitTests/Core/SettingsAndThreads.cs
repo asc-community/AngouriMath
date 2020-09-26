@@ -45,7 +45,7 @@ namespace UnitTests.Core
                 MathS.Settings.AllowNewton.As(num % 2 == 0, () =>
                 {
                     var roots = "x2 + e^x + sin(x)".SolveEquation("x");
-                    Assert.Equal(num % 2 == 0, roots.Count > 0);
+                    Assert.Equal(num % 2 == 0, !roots.IsEmpty);
                 });
             var th1 = Task.Run(() => Solve(0));
             var th2 = Task.Run(() => Solve(1));

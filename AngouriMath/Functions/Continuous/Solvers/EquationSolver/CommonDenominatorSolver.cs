@@ -59,8 +59,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// Finds the best common denominator, multiplies the whole expression by that, and
         /// tries solving if the found denominator is not 1
         /// </summary>
-        internal static IEnumerable<Entity>? Solve(Entity expr, Variable x) =>
-            FindCD(expr, x) is { } res ? AnalyticalSolver.Solve(res, x) : null;
+        internal static SetNode? Solve(Entity expr, Variable x) =>
+            FindCD(expr, x) is { } res ? AnalyticalEquationSolver.Solve(res, x) : null;
 
         private static Entity? FindCD(Entity expr, Variable x)
         {

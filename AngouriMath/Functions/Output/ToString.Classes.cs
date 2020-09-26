@@ -170,5 +170,35 @@ namespace AngouriMath
             internal override string Stringize()
                 => $"{Assumption.Stringize(Assumption.Priority < Priority)} implies {Conclusion.Stringize(Conclusion.Priority < Priority)}";
         }
+
+        partial record Equalsf
+        {
+            internal override string Stringize()
+                => $"{Left.Stringize(Left.Priority < Priority)} = {Right.Stringize(Right.Priority < Priority)}";
+        }
+
+        partial record Greaterf
+        {
+            internal override string Stringize()
+                => $"{Left.Stringize(Left.Priority < Priority)} > {Right.Stringize(Right.Priority < Priority)}";
+        }
+
+        partial record GreaterOrEqualf
+        {
+            internal override string Stringize()
+                => $"{Left.Stringize(Left.Priority < Priority)} >= {Right.Stringize(Right.Priority < Priority)}";
+        }
+
+        partial record Lessf
+        {
+            internal override string Stringize()
+                => $"{Left.Stringize(Left.Priority < Priority)} < {Right.Stringize(Right.Priority < Priority)}";
+        }
+
+        partial record LessOrEqualf
+        {
+            internal override string Stringize()
+                => $"{Left.Stringize(Left.Priority < Priority)} <= {Right.Stringize(Right.Priority < Priority)}";
+        }
     }
 }

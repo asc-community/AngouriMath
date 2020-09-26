@@ -68,7 +68,7 @@ namespace AngouriMath
                 => TryParse(expr, out var res) ? res : throw new ParseException($"Token '{expr}' is not valid for boolean");
         }
 
-        #region Operators
+        #region Logical gates
 
         /// <summary>
         /// Whatever its argument is, the result will be inverted
@@ -132,6 +132,91 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Assumption.Replace(func), Conclusion.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Assumption, Conclusion };
+        }
+
+        #endregion
+
+        #region Equality/inequality operators
+
+        /// <summary>
+        /// It is true if left and right are equal
+        /// </summary>
+        public sealed partial record Equalsf(Entity Left, Entity Right) : ComparisonSign
+        {
+            public override Priority Priority => Priority.Equal;
+            public Equalsf New(Entity left, Entity right)
+                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Equalsf(left, right);
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Left.Replace(func), Right.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Left, Right };
+        }
+
+        /// <summary>
+        /// It is true iff both parts are numeric and real, and left number is greater
+        /// than the right one
+        /// It is false iff both parts are numeric and real, and left number is less or equal 
+        /// the right one
+        /// It is NaN/unsimplified otherwise.
+        /// </summary>
+        public sealed partial record Greaterf(Entity Left, Entity Right) : ComparisonSign
+        {
+            public override Priority Priority => Priority.GreaterThan;
+            public Greaterf New(Entity left, Entity right)
+                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Left.Replace(func), Right.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Left, Right };
+        }
+
+        /// <summary>
+        /// It is true iff both parts are numeric and real, and left number is greater
+        /// than the right one or equal to it
+        /// It is false iff both parts are numeric and real, and left number is less 
+        /// the right one
+        /// It is NaN/unsimplified otherwise.
+        /// </summary>
+        public sealed partial record GreaterOrEqualf(Entity Left, Entity Right) : ComparisonSign
+        {
+            public override Priority Priority => Priority.GreaterThan;
+            public GreaterOrEqualf New(Entity left, Entity right)
+                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Left.Replace(func), Right.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Left, Right };
+        }
+
+        /// <summary>
+        /// It is true iff both parts are numeric and real, and left number is less
+        /// than the right one
+        /// It is false iff both parts are numeric and real, and left number is greater or equal 
+        /// the right one
+        /// It is NaN/unsimplified otherwise.
+        /// </summary>
+        public sealed partial record Lessf(Entity Left, Entity Right) : ComparisonSign
+        {
+            public override Priority Priority => Priority.GreaterThan;
+            public Lessf New(Entity left, Entity right)
+                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Left.Replace(func), Right.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Left, Right };
+        }
+
+        /// <summary>
+        /// It is true iff both parts are numeric and real, and left number is less
+        /// than the right one or equal to it
+        /// It is false iff both parts are numeric and real, and left number is greater
+        /// the right one
+        /// It is NaN/unsimplified otherwise.
+        /// </summary>
+        public sealed partial record LessOrEqualf(Entity Left, Entity Right) : ComparisonSign
+        {
+            public override Priority Priority => Priority.GreaterThan;
+            public LessOrEqualf New(Entity left, Entity right)
+                => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Left.Replace(func), Right.Replace(func)));
+            protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
         #endregion

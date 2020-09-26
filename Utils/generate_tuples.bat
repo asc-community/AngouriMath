@@ -1,2 +1,2 @@
-dotnet run -p Utils AntlrPostProcessorReplacePublicWithInternal
+dotnet run -p Utils TupleExtensionGenerator
 pause

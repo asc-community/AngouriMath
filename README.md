@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/asc-community/AngouriMath">
-    <img src="./icon.png" alt="AngouriMath logo" width="200" height="200">
+    <img src="./additional/readme/icon_white.png" alt="AngouriMath logo" width="200" height="200">
   </a>
 </p>
 
@@ -39,6 +39,7 @@ by community, hence, any contribution is welcomed.
   - [Numbers](#numb)
   - [Equations](#equa)
   - [Equation systems](#eqsys)
+  - [More complex equations](#stat)
   - [Compilation](#comp)
   - [Sets](#sets)
   - [LaTeX](#late)
@@ -201,6 +202,14 @@ Console.WriteLine(func.Substitute(3));
 var expr = "sin(x) + sqrt(x) / (sqrt(x) + cos(x)) + x3";
 var compiled = expr.Compile("x");
 Console.WriteLine(compiled.Substitute(4));
+```
+
+#### <a name="stat"></a>Solve statement
+Equivalent to finding `x` such that those fit the constraints.
+```cs
+var set = "x2 = 16 and x > 0 or x = a".Solve("x");
+Console.WriteLine(set);
+>>> {4}|{a}
 ```
 
 #### <a name="sets"></a>Work with sets

@@ -109,6 +109,20 @@ Equality/inequality nodes
 
 */
 
+inequality_expression returns[Entity value]
+   : m1 = sum_expression { $value = $m1.value; }
+   (
+    '>=' m2 = sum_expression { $value = $value >= $m2.value; } | 
+    '<=' m2 = sum_expression { $value = $value <= $m2.value; } |
+    '>' m2 = sum_expression { $value = $value > $m2.value; } |
+    '<' m2 = sum_expression { $value = $value < $m2.value; } |
+    'equalizes' m2 = sum_expression { $value = MathS.Equality($value, $m2.value); })*
+   ;
+
+equality_expression returns[Entity value]
+    : m1 = inequality_expression { $value = $m1.value; }
+    ('=' m2 = inequality_expression { $value = $value.Equalizes($m2.value); })*
+    ;
 
 /*
 
@@ -117,9 +131,9 @@ Boolean nodes
 */
 
 negate_expression returns[Entity value]
-    : 'not' sum_expression { $value = !$sum_expression.value; }
+    : 'not' equality_expression { $value = !$equality_expression.value; }
     | 'not' negate_expression { $value = !$negate_expression.value; }
-    | sum_expression { $value = $sum_expression.value; }
+    | equality_expression { $value = $equality_expression.value; }
     ;
 
 and_expression returns[Entity value]

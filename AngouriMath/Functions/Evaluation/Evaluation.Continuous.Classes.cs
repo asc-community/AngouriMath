@@ -84,6 +84,7 @@ namespace AngouriMath
             internal override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : (Multiplier.InnerSimplifyWithCheck(), Multiplicand.InnerSimplifyWithCheck()) switch
                 {
+                    (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
                     (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 * n2).InnerSimplifyWithCheck()),
                     (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 * n2).InnerSimplifyWithCheck()),
                     (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 * n2).InnerSimplifyWithCheck()),

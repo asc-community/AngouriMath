@@ -8,6 +8,8 @@ namespace UnitTests.Core
     public class SetsTest
     {
         private readonly Set A = MathS.Sets.Empty();
+        private readonly Set B = MathS.Sets.Empty();
+        private readonly Set C = MathS.Sets.Empty();
 
         public SetsTest()
         {
@@ -43,7 +45,7 @@ namespace UnitTests.Core
             Assert.Contains(new Interval(10, 15), A);
         }
 
-        private readonly Set B = MathS.Sets.Empty();
+        
 
         [Fact]
         public void InvididualNumbersInIntervalsTwoSets()
@@ -54,7 +56,7 @@ namespace UnitTests.Core
             Assert.True(C.Contains(11.1));
         }
 
-        private readonly Set C = MathS.Sets.Empty();
+        
 
         [Fact]
         public void RealIntervalDisjunctionTest()
@@ -132,13 +134,13 @@ namespace UnitTests.Core
         [Fact]
         public void SetsFiniteTestSub2()
         {
-            Assert.True(Df.IsEmpty());
-            Assert.True(((Set)(Df - Af)).IsEmpty());
-            Assert.True(((Set)(Df - Bf)).IsEmpty());
-            Assert.True(((Set)(Df - Cf)).IsEmpty());
-            Assert.True(((Set)(Df - Df)).IsEmpty());
-            Assert.True(((Set)(Df - Ef)).IsEmpty());
-            Assert.True(((Set)(Df - Gf)).IsEmpty());
+            Assert.True(Df.IsEmpty);
+            Assert.True(((Set)(Df - Af)).IsEmpty);
+            Assert.True(((Set)(Df - Bf)).IsEmpty);
+            Assert.True(((Set)(Df - Cf)).IsEmpty);
+            Assert.True(((Set)(Df - Df)).IsEmpty);
+            Assert.True(((Set)(Df - Ef)).IsEmpty);
+            Assert.True(((Set)(Df - Gf)).IsEmpty);
         }
 
         [Fact]

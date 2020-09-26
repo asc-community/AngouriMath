@@ -97,6 +97,26 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitSum_expression([NotNull] AngouriMathParser.Sum_expressionContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.inequality_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterInequality_expression([NotNull] AngouriMathParser.Inequality_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.inequality_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitInequality_expression([NotNull] AngouriMathParser.Inequality_expressionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.equality_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.equality_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.negate_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

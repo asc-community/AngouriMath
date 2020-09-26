@@ -76,7 +76,7 @@ namespace UnitTests.Core
         {
             Entity x = "x2 + 1/9";
             var roots = x.SolveEquation("x");
-            foreach (var root in roots.FiniteSet())
+            foreach (var root in roots.AsFiniteSet())
             {
                 var number = Assert.IsType<Complex>(root);
                 Assert.True(Assert.IsType<Integer>(number.RealPart).EInteger.IsZero);

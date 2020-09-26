@@ -1,4 +1,3 @@
-﻿
 /* Copyright (c) 2019-2020 Angourisoft
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -13,29 +12,29 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath.Core.Exceptions;
-using System;
-using static AngouriMath.Entity.Number;
+using AngouriMath.Extensions;
+using System.Linq;
 
-namespace AngouriMath
+namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
-    public abstract partial record Entity
+    using static Entity;
+    internal static class TrigonometricSolver
     {
-        public bool EvaluableNumerical => Evaled is Complex;
+        // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
+        internal static SetNode? SolveLinear(Entity expr, Variable variable)
+        {
+            var replacement = Variable.CreateTemp(expr.Vars);
+            expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
 
-        /// <summary>
-        /// Evaluates a given expression to one number or throws exception
-        /// </summary>
-        /// <returns>
-        /// <see cref="Complex"/> since new version
-        /// </returns>
-        /// <exception cref="InvalidOperationException">
-        /// Thrown when this entity cannot be represented as a simple number.
-        /// <see cref="EvaluableNumerical"/> should be used to check beforehand.
-        /// </exception>
-        public Complex EvalNumerical() =>
-            Evaled is Complex value ? value :
-                throw new CannotEvalException
-                    ($"Result cannot be represented as a simple number! Use {nameof(EvaluableNumerical)} to check beforehand.");
+            // if there is still original variable after replacements,
+            // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
+            if (expr.Contains(variable))
+                return null;
+
+            if (AnalyticalEquationSolver.Solve(expr, replacement).IsFiniteSet(out var els))
+                return els.Select(sol => MathS.Pow(MathS.e, MathS.i * variable).Invert(sol, variable).ToSetNode()).Unite();
+            else
+                return null;
+        }
     }
 }

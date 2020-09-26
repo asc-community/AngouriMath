@@ -113,6 +113,30 @@ internal partial class AngouriMathBaseListener : IAngouriMathListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitSum_expression([NotNull] AngouriMathParser.Sum_expressionContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.inequality_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterInequality_expression([NotNull] AngouriMathParser.Inequality_expressionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.inequality_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitInequality_expression([NotNull] AngouriMathParser.Inequality_expressionContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.equality_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.equality_expression"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.negate_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

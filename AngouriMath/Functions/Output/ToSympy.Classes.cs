@@ -189,5 +189,35 @@ namespace AngouriMath
             internal override string ToSymPy()
                 => $"sympy.Implies({Assumption.ToSymPy()}, {Conclusion.ToSymPy()})";
         }
+
+        partial record Equalsf
+        {
+            internal override string ToSymPy()
+                => $"{Left.ToSymPy(Left.Priority < Priority)} == {Right.ToSymPy(Right.Priority < Priority)}";
+        }
+
+        partial record Greaterf
+        {
+            internal override string ToSymPy()
+                => $"{Left.ToSymPy(Left.Priority < Priority)} > {Right.ToSymPy(Right.Priority < Priority)}";
+        }
+
+        partial record GreaterOrEqualf
+        {
+            internal override string ToSymPy()
+                => $"{Left.ToSymPy(Left.Priority < Priority)} >= {Right.ToSymPy(Right.Priority < Priority)}";
+        }
+
+        partial record Lessf
+        {
+            internal override string ToSymPy()
+                => $"{Left.ToSymPy(Left.Priority < Priority)} < {Right.ToSymPy(Right.Priority < Priority)}";
+        }
+
+        partial record LessOrEqualf
+        {
+            internal override string ToSymPy()
+                => $"{Left.ToSymPy(Left.Priority < Priority)} <= {Right.ToSymPy(Right.Priority < Priority)}";
+        }
     }
 }

@@ -13,6 +13,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using AngouriMath.Core.Exceptions;
 using System;
 using static AngouriMath.Entity.Number;
 
@@ -34,7 +35,7 @@ namespace AngouriMath
         /// </exception>
         public Boolean EvalBoolean() =>
             Evaled is Boolean value ? value :
-                throw new InvalidOperationException
+                throw new CannotEvalException
                     ($"Result cannot be represented as a simple boolean! Use {nameof(EvaluableBoolean)} to check beforehand.");
     }
 }

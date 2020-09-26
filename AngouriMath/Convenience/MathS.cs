@@ -62,7 +62,7 @@ namespace AngouriMath
         /// <param name="equation">An equation that is assumed to equal 0</param>
         /// <param name="var">Variable whose values we are looking for</param>
         /// <returns>A <see cref="Set"/> of possible values or intervals of values</returns>
-        public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
+        public static SetNode SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
 
         /// <summary>
         /// Solves a boolean expression. That is, finds all values for
@@ -245,6 +245,54 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Abs(Entity a) => new Absf(a);
 
+        /// <summary>https://en.wikipedia.org/wiki/Negation</summary>
+        /// <param name="a">Argument node of which Negation function will be taken</param>
+        /// <returns>Not node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Negation(Entity a) => !a;
+
+        /// <summary>https://en.wikipedia.org/wiki/Logical_disjunction</summary>
+        /// <param name="a">Argument node of which Disjunction function will be taken</param>
+        /// <returns>Or node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Disjunction(Entity a, Entity b) => a | b;
+
+        /// <summary>https://en.wikipedia.org/wiki/Logical_conjunction</summary>
+        /// <param name="a">Argument node of which Conjunction function will be taken</param>
+        /// <returns>And node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Conjunction(Entity a, Entity b) => a & b;
+
+        /// <summary>https://en.wikipedia.org/wiki/Material_implication_(rule_of_inference)</summary>
+        /// <param name="a">Argument node of which Implication function will be taken</param>
+        /// <returns>Implies node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Implication(Entity a, Entity b) => a.Implies(b);
+
+        /// <summary>https://en.wikipedia.org/wiki/Exclusive_or#:~:text=Exclusive%20or%20or%20exclusive%20disjunction,⊕%2C%20↮%2C%20and%20≢.</summary>
+        /// <param name="a">Argument node of which Exclusive disjunction function will be taken</param>
+        /// <returns>Xor node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity ExclusiveDisjunction(Entity a, Entity b) => a ^ b;
+
+        /// <summary>
+        /// Do NOT confuse it with Equation
+        /// </summary>
+        /// <returns>An Equals node</returns>
+        public static Entity Equality(Entity a, Entity b) => a.Equalizes(b);
+
+        /// <returns>A node</returns>
+        public static Entity GreaterThan(Entity a, Entity b) => a > b;
+
+        /// <returns>A node</returns>
+        public static Entity LessThan(Entity a, Entity b) => a < b;
+
+        /// <returns>A node</returns>
+        public static Entity GreaterOrEqualThan(Entity a, Entity b) => a >= b;
+
+        /// <returns>A node</returns>
+        public static Entity LessOrEqualThan(Entity a, Entity b) => a <= b;
+
         /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
         /// <param name="name">The name of the <see cref="Variable"/> which equality is based on.</param>
         /// <returns>Variable node</returns>
@@ -257,8 +305,9 @@ namespace AngouriMath
         public static readonly Complex i = Complex.ImaginaryOne;
         // ReSharper disable once InconsistentNaming
         public static readonly Variable pi = Variable.pi;
-        // ReSharper disable once InconsistentNaming
-        public static readonly Entity NaN = Number.Real.NaN;
+
+        // Undefined
+        public static readonly Entity NaN = Real.NaN;
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
@@ -536,6 +585,9 @@ namespace AngouriMath
                     // Number of negative powers
                     res += expr.Nodes.Count(entity => entity is Powf(_, Number.Real { IsNegative: true }));
 
+                    // 0 < x is bad. x > 0 is good.
+                    res += expr.Nodes.Count(entity => entity is ComparisonSign && entity.DirectChildren[0] == 0);
+
                     return res;
                 });
             [ThreadStatic] private static Setting<Func<Entity, int>>? complexityCriteria;
@@ -618,7 +670,7 @@ namespace AngouriMath
             sb.Append("import sympy\n\n");
             foreach (var f in expr.Vars)
                 sb.Append($"{f} = sympy.Symbol('{f}')\n");
-            sb.Append("\n");
+            sb.Append('\n');
             sb.Append("expr = ").Append(expr.ToSymPy());
             return sb.ToString();
         }

@@ -14,6 +14,7 @@
  */
 
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -51,25 +52,33 @@ namespace AngouriMath
             internal partial record Union(SetNode A, SetNode B) : SetNode
             {
                 public override bool Contains(SetPiece piece) => A.Contains(piece) || B.Contains(piece);
-                public override string ToString() => $"({A})&({B})";
+                public override string ToString() => $@"({A}) \/ ({B})";
+                public override bool IsFinite => false; //A.IsFinite && B.IsFinite; we can't iterate over this :(
+                public override bool IsEmpty => false; //A.IsEmpty && B.IsEmpty; we can't iterate over this :(
             }
             /// <summary>A and B</summary>
             internal partial record Intersection(SetNode A, SetNode B) : SetNode
             {
                 public override bool Contains(SetPiece piece) => A.Contains(piece) && B.Contains(piece);
-                public override string ToString() => $"({A})|({B})";
+                public override string ToString() => $@"({A}) /\ ({B})";
+                public override bool IsFinite => false; // A.IsFinite || B.IsFinite; we can't iterate over this :(
+                public override bool IsEmpty => false; // A.IsEmpty || B.IsEmpty; we can't iterate over this :(
             }
             /// <summary>A and not B</summary>
             internal partial record Complement(SetNode A, SetNode B) : SetNode
             {
                 public override bool Contains(SetPiece piece) => A.Contains(piece) && !B.Contains(piece);
-                public override string ToString() => $@"({A})\({B})";
+                public override string ToString() => $@"({A}) \ ({B})";
+                public override bool IsFinite => false; // A.IsFinite; we can't iterate over this :(
+                public override bool IsEmpty => false; // A.IsEmpty; we can't iterate over this :(
             }
             /// <summary>not A</summary>
             internal partial record Inversion(SetNode A) : SetNode
             {
                 public override bool Contains(SetPiece piece) => !A.Contains(piece);
                 public override string ToString() => $"!({A})";
+                public override bool IsFinite => false;
+                public override bool IsEmpty => false;
             }
             static (List<SetPiece> Good, List<SetPiece> Bad) GatherEvaluablePieces(Set A)
             {
@@ -101,6 +110,30 @@ namespace AngouriMath
                         remainders = remainders.SelectMany(rem => func(rem, current));
                 return remainders;
             }
+
+            public abstract bool IsFinite { get; }
+            public abstract bool IsEmpty { get; }
+
+            // TODO: Should've made it a virtual method instead?
+            public bool IsFiniteSet(out IEnumerable<Entity> res)
+            {
+                if (!IsFinite)
+                {
+                    res = Enumerable.Empty<Entity>();
+                    return false;
+                }
+                if (this is not Set set)
+                    throw new AngouriBugException($"If a set is finite, it should be of the {nameof(Set)} type");
+                var resQ = set.AsFiniteSetInternal();
+                if (resQ is null)
+                    throw new AngouriBugException($"If a set is finite, it should not be null");
+                res = resQ;
+                return true;
+            }
+
+            public IEnumerable<Entity> AsFiniteSet()
+                // Should be a more appropriate exception
+                => IsFiniteSet(out var res) ? res : throw new InvalidOperationException("The given set is non-finite");
         }
 
         public partial record Set : SetNode, ICollection<SetPiece>
@@ -125,7 +158,7 @@ namespace AngouriMath
                     if (Pieces.All(p => (p.LowerBound(), p.UpperBound()) != (piece.LowerBound(), piece.UpperBound())))
                         Pieces.Add(piece);
                 }
-                else if (piece is OneElementPiece oneelem && AsFiniteSet() is { } finiteSet)
+                else if (piece is OneElementPiece oneelem && IsFiniteSet(out var finiteSet))
                 {
                     if (finiteSet.All(finite => finite.Evaled != oneelem.entity.Evaled))
                         Pieces.Add(piece);
@@ -179,30 +212,19 @@ namespace AngouriMath
             /// </summary>
             public void AddInterval(Interval interval) => AddPiece(interval);
 
-            public override string ToString() => IsEmpty() ? "{}" : string.Join("|", Pieces);
+            public override string ToString() => IsEmpty ? "{}" : string.Join("|", Pieces);
 
-            public bool IsEmpty() => Pieces.Count == 0;
+            public override bool IsEmpty => Pieces.Count == 0;
+            public override bool IsFinite => Count != -1;
 
             public void Clear() => Pieces.Clear();
 
-            public IEnumerable<Entity>? AsFiniteSet() =>
+            internal IEnumerable<Entity>? AsFiniteSetInternal() =>
                 Pieces.All(piece => piece is OneElementPiece)
                 ? Pieces.Select(piece => ((OneElementPiece)piece).entity)
                 : null;
 
-            public int Count
-            {
-                get
-                {
-                    int count = 0;
-                    foreach (var piece in Pieces)
-                        if (piece is OneElementPiece)
-                            count++;
-                        else
-                            return -1;
-                    return count;
-                }
-            }
+            public int Count => (Pieces.Any(p => p is Interval) ? -1 : Pieces.Count);
 
             /// <summary>
             /// Adding to this <see cref="Set"/> will not check whether <see cref="Entity"/> is already added

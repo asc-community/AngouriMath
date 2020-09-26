@@ -26,57 +26,22 @@ namespace AngouriMath
 {
     public abstract partial record Entity : ILatexiseable
     {
-        /// <summary>
-        /// Attempt to find analytical roots of a custom equation
-        /// </summary>
-        /// <param name="x"></param>
-        /// <returns>
-        /// Returns Set. Work with it as with a list
-        /// </returns>
-        public Set SolveEquation(Variable x) => EquationSolver.Solve(this, x);
-
-        /// <summary><para>This <see cref="Entity"/> MUST contain exactly ONE occurance of <paramref name="x"/>,
-        /// otherwise this function won't work correctly.</para>
-        /// 
-        /// This function inverts an expression and returns a <see cref="Set"/>. Here, a represents <paramref name="value"/>.
-        /// <list type="table">
-        /// <item>x^2 = a ⇒ x = { sqrt(a), -sqrt(a) }</item>
-        /// <item>sin(x) = a ⇒ x = { arcsin(a) + 2 pi n, pi - arcsin(a) + 2 pi n }</item>
-        /// </list>
-        /// </summary>
-        /// <returns>A set of possible roots of the expression.</returns>
-        internal IEnumerable<Entity> Invert(Entity value, Entity x) =>
-            value.InnerSimplify() is var simplified && this == x
-            ? new[] { simplified }
-            : InvertNode(simplified, x).Where(el => el.IsFinite);
-        /// <summary>Use <see cref="Invert(Entity, Entity)"/> instead which auto-simplifies <paramref name="value"/></summary>
-        private protected abstract IEnumerable<Entity> InvertNode(Entity value, Entity x);
-        /// <summary>
-        /// Returns true if <paramref name="a"/> is inside a rect with corners <paramref name="from"/>
-        /// and <paramref name="to"/>, OR <paramref name="a"/> is an unevaluable expression
-        /// </summary>
-        private protected static bool EntityInBounds(Entity a, Complex from, Complex to)
-        {
-            if (!(a.Evaled is Complex r))
-                return true;
-            return r.RealPart >= from.RealPart &&
-                   r.ImaginaryPart >= from.ImaginaryPart &&
-                   r.RealPart <= to.RealPart &&
-                   r.ImaginaryPart <= to.ImaginaryPart;
-        }
         public partial record Number
         {
-            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) 
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 => throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
         }
+
         public partial record Variable
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) => new[] { this };
         }
+
         public partial record Tensor : Entity
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) => new[] { this };
         }
+
         // Each function and operator processing
         public partial record Sumf
         {
@@ -84,6 +49,7 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Augend.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
         }
+
         public partial record Minusf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
@@ -93,6 +59,7 @@ namespace AngouriMath
                 // a - x = value => x = a - value
                 : Minuend.Invert(value - Subtrahend, x);
         }
+
         public partial record Mulf
         {
             // x * a = value => x = value / a
@@ -101,6 +68,7 @@ namespace AngouriMath
                 ? Multiplier.Invert(value / Multiplicand, x)
                 : Multiplicand.Invert(value / Multiplier, x);
         }
+
         public partial record Divf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
@@ -110,6 +78,7 @@ namespace AngouriMath
                 // a / x = value => x = a / value
                 : Divisor.Invert(value / Dividend, x);
         }
+
         public partial record Powf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
@@ -121,6 +90,7 @@ namespace AngouriMath
                 // a ^ x = value => x = log(a, value)
                 : Exponent.Invert(MathS.Log(Base, value) + 2 * MathS.i * Variable.CreateUnique(this + value, "n") * MathS.pi, x);
         }
+
         // TODO: Consider case when sin(sin(x)) where double-mention of n occures
         public partial record Sinf
         {
@@ -130,6 +100,7 @@ namespace AngouriMath
                 // sin(x) = value => x = pi - arcsin(value) + 2pi * n
                 .Concat(Argument.Invert(MathS.pi - MathS.Arcsin(value) + 2 * MathS.pi * Variable.CreateUnique(this + value, "n"), x));
         }
+
         public partial record Cosf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
@@ -138,12 +109,14 @@ namespace AngouriMath
                 // cos(x) = value => x = -arccos(value) + 2pi * n
                 .Concat(Argument.Invert(-MathS.Arccos(value) + 2 * MathS.pi * Variable.CreateUnique(this + value, "n"), x));
         }
+
         public partial record Tanf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 // tan(x) = value => x = arctan(value) + pi * n
                 Argument.Invert(MathS.Arctan(value) + MathS.pi * Variable.CreateUnique(this + value, "n"), x);
         }
+
         public partial record Cotanf
         {
             // cotan(x) = value => x = arccotan(value) + pi * n
@@ -169,6 +142,7 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Sin(value), x) : Enumerable.Empty<Entity>();
         }
+
         public partial record Arccosf
         {
             private static readonly Complex From = Complex.Create(0, Real.NegativeInfinity.EDecimal);
@@ -177,6 +151,7 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cos(value), x) : Enumerable.Empty<Entity>();
         }
+
         public partial record Arctanf
         {
             private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
@@ -185,6 +160,7 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Tan(value), x) : Enumerable.Empty<Entity>();
         }
+
         public partial record Arccotanf
         {
             // TODO: Range should exclude Re(z) = 0
@@ -194,6 +170,7 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cotan(value), x) : Enumerable.Empty<Entity>();
         }
+
         public partial record Factorialf
         {
             // TODO: Inverse of factorial not implemented yet
@@ -233,7 +210,7 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 => Argument.Invert(value * Variable.CreateUnique(Argument + value, "r"), x);
         }
-        
+
         public partial record Absf
         {
             // abs(f(x)) = value
@@ -283,146 +260,35 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 => throw new NotImplementedException("Requires Piecewise to be implemented");
         }
-    }
-}
 
-namespace AngouriMath.Functions
-{
-    internal static partial class TreeAnalyzer
-    {
-        /// <summary>
-        /// Searches for a subtree containing `ent` and being minimal possible size.
-        /// For example, for expr = MathS.Sqr(x) + 2 * (MathS.Sqr(x) + 3) the result
-        /// will be MathS.Sqr(x) while for MathS.Sqr(x) + x the minimum subtree is x.
-        /// Further, it will be used for solving with variable replacing, for example,
-        /// there's no pattern for solving equation like sin(x)^2 + sin(x) + 1 = 0,
-        /// but we can first solve t^2 + t + 1 = 0, and then root = sin(x).
-        /// </summary>
-        public static Entity GetMinimumSubtree(Entity expr, Variable x)
+        partial record Equalsf
         {
-            if (!expr.Contains(x))
-                throw new ArgumentException($"{nameof(expr)} must contain {nameof(x)}", nameof(expr));
-
-            // The idea is the following:
-            // We must get a subtree that has more occurances than 1,
-            // But at the same time it should cover all references to `ent`
-            var xs = expr.Nodes.Count(child => child == x);
-            return
-                expr.Nodes
-                .TakeWhile(e => e != x) // Requires Entity enumeration to be depth-first!!
-                .Where(e => e.Contains(x)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
-                .LastOrDefault(sub => expr.Nodes.Count(child => child == sub) * sub.Nodes.Count(child => child == x) == xs)
-                // if `expr` contains 2 `sub`s and `sub` contains 3 `x`s, then there should be 6 `x`s in `expr` (6 == `xs`)
-                ?? x;
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Intervals to be Entities");
         }
-    }
-}
 
-namespace AngouriMath.Functions.Algebra.AnalyticalSolving
-{
-    internal static class AnalyticalSolver
-    {
-        /// <summary>Equation solver</summary>
-        /// <param name="compensateSolving">
-        /// Compensate solving is needed when you formatted an equation to (something - const)
-        /// and compensateSolving "compensates" this by applying expression inverter,
-        /// aka compensating the equation formed by the previous solver
-        /// </param>
-        internal static IEnumerable<Entity> Solve(Entity expr, Variable x, bool compensateSolving = false)
+        partial record Greaterf
         {
-            if (expr == x)
-                return new Entity[] { 0 };
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Intervals to be Entities");
+        }
 
-            // Applies an attempt to downcast roots
-            static Entity TryDowncast(Entity equation, Variable x, Entity root)
-            {
-                if (!(root.Evaled is Complex preciseValue))
-                    return root;
-                var downcasted = MathS.Settings.FloatToRationalIterCount.As(20, () =>
-                    MathS.Settings.PrecisionErrorZeroRange.As(1e-7m, () =>
-                        Complex.Create(preciseValue.RealPart, preciseValue.ImaginaryPart)));
-                if (!(equation.Substitute(x, downcasted).Evaled is Complex error))
-                    return root;
-                return IsZero(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational
-                       ? downcasted : root.InnerSimplify();
-            }
-            if (PolynomialSolver.SolveAsPolynomial(expr, x) is { } poly)
-                return poly.Select(e => TryDowncast(expr, x, e.InnerSimplify()));
+        partial record GreaterOrEqualf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Intervals to be Entities");
+        }
 
-            switch (expr)
-            {
-                case Mulf(var multiplier, var multiplicand):
-                    return Solve(multiplier, x).Concat(Solve(multiplicand, x));
-                case Divf(var dividend, var divisor):
-                    return Solve(dividend, x).Except(Solve(divisor, x));
-                case Powf(var @base, _):
-                    return Solve(@base, x);
-                case Minusf(var subtrahend, var minuend) when !minuend.Contains(x) && compensateSolving:
-                    if (subtrahend == x)
-                        return new[] { minuend };
-                    Entity? lastChild = null;
-                    foreach (var child in subtrahend.DirectChildren)
-                        if (child.Contains(x))
-                            if (lastChild is null)
-                                lastChild = child;
-                            else goto default;
-                    if (lastChild is null)
-                        goto default;
-                    return subtrahend.Invert(minuend, lastChild)
-                           .SelectMany(result => Solve(lastChild - result, x, compensateSolving: true));
-                case Function:
-                    return expr.Invert(0, x).Select(ent => TryDowncast(expr, x, ent));
-                default:
-                    break;
-            }
+        partial record Lessf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Intervals to be Entities");
+        }
 
-            // If the replacement isn't one-variable one,
-            // then solving over replacements is already useless,
-            // so we skip this part and go to other solvers
-            if (!compensateSolving)
-            {
-                var newVar = Variable.CreateTemp(expr.Vars);
-                // Here we find all possible replacements and find one that has at least one solution
-                foreach (var alt in expr.Alternate(4))
-                {
-                    if (!alt.Contains(x))
-                        return Enumerable.Empty<Entity>(); // in this case there is either 0 or +oo solutions
-                    var minimumSubtree = TreeAnalyzer.GetMinimumSubtree(alt, x);
-                    if (minimumSubtree == x)
-                        continue;
-                    // Here we are trying to solve for this replacement
-                    var solutions =
-                        Solve(alt.Substitute(minimumSubtree, newVar), newVar)
-                        .SelectMany(solution => Solve(minimumSubtree - solution, x, compensateSolving: true));
-                    if (solutions.Any())
-                        return solutions.Select(ent => TryDowncast(expr, x, ent));
-                }
-                // // //
-            }
-
-            // if no replacement worked, try trigonometry solver
-            if (TrigonometricSolver.SolveLinear(expr, x) is { } trig)
-                return trig.Select(ent => TryDowncast(expr, x, ent));
-            // // //
-
-            // if no trigonometric rules helped, common denominator might help
-            if (CommonDenominatorSolver.Solve(expr, x) is { } commonDenom)
-                return commonDenom.Select(ent => TryDowncast(expr, x, ent));
-            // // //
-
-            // if we have fractioned polynomials
-            if (FractionedPolynoms.Solve(expr, x) is { } fractioned)
-                return fractioned.Select(ent => TryDowncast(expr, x, ent));
-            // // //
-
-            // TODO: Solve factorials (Needs Lambert W function)
-            // https://mathoverflow.net/a/28977
-
-            // if nothing has been found so far
-            if (MathS.Settings.AllowNewton && expr.Vars.Count() == 1)
-                return expr.SolveNt(x).Select(ent => TryDowncast(expr, x, ent));
-
-            return Enumerable.Empty<Entity>();
+        partial record LessOrEqualf
+        {
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => throw new NotImplementedException("Requires Intervals to be Entities");
         }
     }
 }
