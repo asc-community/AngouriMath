@@ -39,6 +39,7 @@ by community, hence, any contribution is welcomed.
   - [Numbers](#numb)
   - [Equations](#equa)
   - [Equation systems](#eqsys)
+  - [More complex equations](#stat)
   - [Compilation](#comp)
   - [Sets](#sets)
   - [LaTeX](#late)
@@ -206,7 +207,9 @@ Console.WriteLine(compiled.Substitute(4));
 #### <a name="stat"></a>Solve statement
 Equivalent to finding `x` such that those fit the constraints.
 ```cs
-
+var set = "x2 = 16 and x > 0 or x = a".Solve("x");
+Console.WriteLine(set);
+>>> {4}|{a}
 ```
 
 #### <a name="sets"></a>Work with sets
