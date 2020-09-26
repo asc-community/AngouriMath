@@ -21,13 +21,11 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {
-        public SetNode Solve(params Variable[] variables)
+        public SetNode Solve(Variable var)
         {
-            if (variables.Length != 1)
-                throw new NotImplementedException("Not yet :)");
             if (this is Statement)
-                return StatementSolver.Solve(this, variables[0]);
-            if (this == variables[0])
+                return StatementSolver.Solve(this, var);
+            if (this == var)
                 return new Set(Boolean.True);
             throw new InvalidOperationException("There should be statement to be true");
         }

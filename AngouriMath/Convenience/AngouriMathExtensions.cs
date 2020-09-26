@@ -135,8 +135,8 @@ namespace AngouriMath.Extensions
         /// </summary>
         /// <param name="vars">The variables over which to solve</param>
         /// <returns>A <see cref="SetNode"/> of roots</returns>
-        public static SetNode Solve(this string expr, params Variable[] vars)
-            => expr.ToEntity().Solve(vars);
+        public static SetNode Solve(this string expr, Variable var)
+            => expr.ToEntity().Solve(var);
 
         /// <summary>
         /// Converts an <see cref="int"/> into an AM's understandable <see cref="Integer"/>

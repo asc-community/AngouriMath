@@ -13,9 +13,12 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            //Console.WriteLine("x4 = 1 and x8 = 1".Simplify());
-            //Entity expr = "x4 = 1 and x8 = 1";
-            Console.WriteLine("0 < x".Simplify());
+            var set = "x2 = 16 and x > 0 or x = a".Solve("x");
+            Console.WriteLine(set);
+            //if (set.IsFiniteSet(out var roots))
+            //    foreach (var root in roots)
+            //        //Console.WriteLine(root.InnerSimplifyWithCheck());
+            //        Console.WriteLine(root.InnerSimplifyWithCheck());
         }
     }
 }

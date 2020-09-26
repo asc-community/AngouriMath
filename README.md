@@ -203,6 +203,12 @@ var compiled = expr.Compile("x");
 Console.WriteLine(compiled.Substitute(4));
 ```
 
+#### <a name="stat"></a>Solve statement
+Equivalent to finding `x` such that those fit the constraints.
+```cs
+
+```
+
 #### <a name="sets"></a>Work with sets
 ```cs
 var A = new Set(3, 4, (5, 6)); // {3, 4} | [5; 6]
