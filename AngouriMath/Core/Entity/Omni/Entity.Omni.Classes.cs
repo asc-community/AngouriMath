@@ -41,6 +41,27 @@ namespace AngouriMath
 
                 private readonly Dictionary<Entity, Entity> elements;
 
+                // TODO: refactor
+                public override Entity Replace(Func<Entity, Entity> func)
+                {
+                    var hasAnythingChanged = false;
+                    List<Entity> newElements = new();
+                    foreach (var el in Elements)
+                    {
+                        var changed = el.Replace(func);
+                        if (ReferenceEquals(changed, el))
+                            hasAnythingChanged = true;
+                    }
+                    if (hasAnythingChanged)
+                        return func(new FiniteSet(newElements));
+                    else
+                        return func(this);
+                }
+
+                public override Priority Priority => Priority.Leaf;
+
+                protected override Entity[] InitDirectChildren() => Elements.ToArray();
+
                 private static Dictionary<Entity, Entity> BuildDictionaryFromElements(IEnumerable<Entity> elements, bool noCheck)
                 {
                     Dictionary<Entity, Entity> dict = new(elements.Count());
@@ -104,7 +125,6 @@ namespace AngouriMath
             }
             #endregion
 
-
             #region Interval
             /// <summary>
             /// An interval represents all numbres in between two Entities
@@ -113,25 +133,34 @@ namespace AngouriMath
             /// </summary>
             public partial record Interval(Entity Left, bool LeftClosed, Entity Right, bool RightClosed) : Set
             {
-                public bool IsNumeric => left is not null && right is not null;
+                public bool IsNumeric => !left.Value.IsNaN && !right.Value.IsNaN;
 
-                private Real?
-                private Real? left = Left.EvaluableNumerical && Left.Evaled is Real re ? re : null;
-                private Real? right = Right.EvaluableNumerical && Right.Evaled is Real re ? re : null;
+                // TODO: maybe it's not good to create an object just to lazily initialize and we need to write our own wheel?
+                private readonly Lazy<Real> left = new Lazy<Real>(() => Left.EvaluableNumerical && Left.Evaled is Real re ? re : Real.NaN);
+                private readonly Lazy<Real> right = new Lazy<Real>(() => Right.EvaluableNumerical && Right.Evaled is Real re ? re : Real.NaN);
 
                 private static bool IsALessThanB(Real A, Real B, bool closed)
                     => A < B || closed && A == B;
+
+                public Interval New(Entity left, Entity right)
+                    => ReferenceEquals(Left, left) 
+                    && ReferenceEquals(Right, right)
+                    ? this : new Interval(left, LeftClosed, right, RightClosed);
+
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(New(Left.Replace(func), Right.Replace(func)));
 
                 public override bool Contains(Entity entity)
                 {
                     if (entity is not Real re)
                         throw new CannotEvalException("The argument should be a real number");
-                    if (IsNumeric)
+                    if (!IsNumeric)
                         throw new CannotEvalException("The inteval's ends should be real numbers");
-                    return IsALessThanB(left!, re, LeftClosed) && IsALessThanB(right!, re, RightClosed);
+                    return IsALessThanB(left.Value, re, LeftClosed) && IsALessThanB(right.Value, re, RightClosed);
                 }
             }
             #endregion
+
         }
     }
 }

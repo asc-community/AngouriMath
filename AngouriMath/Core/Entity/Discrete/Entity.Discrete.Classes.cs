@@ -32,8 +32,8 @@ namespace AngouriMath
             public static Boolean Create(bool value) => value ? True : False; // to avoid reallocation
 
             public override Entity Replace(Func<Entity, Entity> func) 
-                => this;
-            public override Priority Priority => Priority.Number;
+                => func(this);
+            public override Priority Priority => Priority.Leaf;
             protected override Entity[] InitDirectChildren() => new Entity[] { };
 
             /// <summary>

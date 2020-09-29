@@ -43,7 +43,7 @@ namespace AngouriMath
                     (RealPart, ImaginaryPart) switch
                     {
                         ({ IsZero: false }, { IsZero: false }) => Priority.Sum,
-                        ({ IsZero: true }, Integer(1)) => Priority.Number,
+                        ({ IsZero: true }, Integer(1)) => Priority.Leaf,
                         _ => Priority.Mul
                     };
                 public static readonly Complex ImaginaryOne = new Complex(0, 1);

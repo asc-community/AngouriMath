@@ -33,7 +33,7 @@ namespace AngouriMath
                 public EDecimal EDecimal { get; }
                 public void Deconstruct(out EDecimal @decimal) => @decimal = EDecimal;
                 public override Real RealPart => this;
-                public override Priority Priority => EDecimal.IsNegative ? Priority.Mul : Priority.Number;
+                public override Priority Priority => EDecimal.IsNegative ? Priority.Mul : Priority.Leaf;
                 public override bool IsExact => !EDecimal.IsFinite;
                 public bool IsNegative => EDecimal.IsNegative;
                 public bool IsPositive => !EDecimal.IsNegative && !EDecimal.IsZero;

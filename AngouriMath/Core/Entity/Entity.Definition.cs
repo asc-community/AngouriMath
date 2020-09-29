@@ -48,8 +48,9 @@ namespace AngouriMath.Core
         Pow       = 60  | NumericalOperation, 
         Factorial = 70  | NumericalOperation, 
         Func      = 80  | NumericalOperation, 
-        Variable  = 100 | NumericalOperation, 
-        Number    = 100 | NumericalOperation,
+
+
+        Leaf      = 100 | NumericalOperation,
     }
     public interface ILatexiseable { public string Latexise(); }
 }

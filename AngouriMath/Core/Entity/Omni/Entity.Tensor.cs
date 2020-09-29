@@ -32,7 +32,7 @@ namespace AngouriMath
                 innerTensor.Iterate().All(tup => ReferenceEquals(InnerTensor.GetValueNoCheck(tup.Index), tup.Value))
                 ? this
                 : new Tensor(innerTensor);
-            public override Priority Priority => Priority.Number;
+            public override Priority Priority => Priority.Leaf;
             internal Tensor Elementwise(Func<Entity, Entity> operation) =>
                 New(GenTensor.CreateTensor(InnerTensor.Shape, indices => operation(InnerTensor.GetValueNoCheck(indices))));
             internal Tensor Elementwise(Tensor other, Func<Entity, Entity, Entity> operation) =>
