@@ -10,7 +10,7 @@ namespace UnitTests.Core
     {
         public bool In(Complex num, SetPiece list) => In(num, new List<SetPiece> { list });
         public bool In(Complex num, IEnumerable<SetPiece> list) =>
-            new Set { Pieces = System.Linq.Enumerable.ToList(list) }.Contains(num);
+            new Set { Pieces = System.Linq.Enumerable.ToList(list) }.ContainsNode(num);
 
         [Fact]
         public void PieceInversion()

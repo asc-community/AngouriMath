@@ -28,7 +28,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             // if there is still original variable after replacements,
             // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
-            if (expr.Contains(variable))
+            if (expr.ContainsNode(variable))
                 return null;
 
             if (AnalyticalEquationSolver.Solve(expr, replacement).IsFiniteSet(out var els))

@@ -206,7 +206,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     children.AddRange(expanded);
                 }
                 */
-            var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, entity => entity.Contains(subtree));
+            var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, entity => entity.ContainsNode(subtree));
             if (children is null)
                 return null;
             // // //
@@ -302,12 +302,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             where TPrimitive : TreeAnalyzer.IPrimitive<T>, new()
         {
             var power = new TPrimitive();
-            if (!expr.Contains(aVar))
+            if (!expr.ContainsNode(aVar))
                 return (expr, power);
 
             Entity freeMono = 1; // a * b
             foreach (var mp in Mulf.LinearChildren(expr))
-                if (!mp.Contains(aVar))
+                if (!mp.ContainsNode(aVar))
                     freeMono *= mp;
                 else if (mp is Powf(var @base, var pow_num))
                 {
@@ -329,7 +329,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 else if (mp == aVar)
                     power.Add(1);
                 // a ^ x, (a + x) etc. are bad
-                else if (mp.Contains(aVar))
+                else if (mp.ContainsNode(aVar))
                     return null;
                 else freeMono *= mp;
             // TODO: do we need to simplify freeMono?

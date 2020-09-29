@@ -48,7 +48,7 @@
 
         internal static Entity? ComputeLimitImpl(Entity expr, Variable x, Entity dist, ApproachFrom side) => dist switch
         {
-            _ when !expr.Contains(x) => expr,
+            _ when !expr.ContainsNode(x) => expr,
             // avoid NaN values as non finite numbers
             Real { IsNaN: true } => Real.NaN,
             // if x -> -oo just make -x -> +oo

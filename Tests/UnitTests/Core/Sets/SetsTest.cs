@@ -51,9 +51,9 @@ namespace UnitTests.Core
         public void InvididualNumbersInIntervalsTwoSets()
         {
             var C = A - B;
-            Assert.False(C.Contains(11));
-            Assert.True(C.Contains(10.9));
-            Assert.True(C.Contains(11.1));
+            Assert.False(C.ContainsNode(11));
+            Assert.True(C.ContainsNode(10.9));
+            Assert.True(C.ContainsNode(11.1));
         }
 
         
@@ -61,39 +61,39 @@ namespace UnitTests.Core
         [Fact]
         public void RealIntervalDisjunctionTest()
         {
-            Assert.True(C.Contains(0));
-            Assert.True(C.Contains(-3));
-            Assert.False(C.Contains(-10));
+            Assert.True(C.ContainsNode(0));
+            Assert.True(C.ContainsNode(-3));
+            Assert.False(C.ContainsNode(-10));
         }
 
         [Fact]
         public void SetsDisjunction()
         {
             var D = C | A;
-            Assert.True(D.Contains(0));
-            Assert.True(D.Contains(-3));
-            Assert.True(D.Contains(18.9));
-            Assert.False(D.Contains(19));
+            Assert.True(D.ContainsNode(0));
+            Assert.True(D.ContainsNode(-3));
+            Assert.True(D.ContainsNode(18.9));
+            Assert.False(D.ContainsNode(19));
         }
 
         [Fact]
         public void SetsConjuction()
         {
             var D = C & A;
-            Assert.True(D.Contains(5));
-            Assert.False(D.Contains(-3));
-            Assert.False(D.Contains(18.9));
-            Assert.False(D.Contains(19));
+            Assert.True(D.ContainsNode(5));
+            Assert.False(D.ContainsNode(-3));
+            Assert.False(D.ContainsNode(18.9));
+            Assert.False(D.ContainsNode(19));
         }
 
         [Fact]
         public void SetsSubtraction()
         {
             var D = C - A;
-            Assert.True(D.Contains(-9.9));
-            Assert.False(D.Contains(3));
-            Assert.False(D.Contains(4));
-            Assert.False(D.Contains(5));
+            Assert.True(D.ContainsNode(-9.9));
+            Assert.False(D.ContainsNode(3));
+            Assert.False(D.ContainsNode(4));
+            Assert.False(D.ContainsNode(5));
         }
 
         private readonly Set Af = MathS.Sets.Finite(3, 4, 5);

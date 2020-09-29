@@ -47,13 +47,13 @@ namespace AngouriMath
         {
             // x + a = value => x = value - a
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Augend.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
+                Augend.ContainsNode(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
         }
 
         public partial record Minusf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Subtrahend.Contains(x)
+                Subtrahend.ContainsNode(x)
                 // x - a = value => x = value + a
                 ? Subtrahend.Invert(value + Minuend, x)
                 // a - x = value => x = a - value
@@ -64,7 +64,7 @@ namespace AngouriMath
         {
             // x * a = value => x = value / a
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Multiplier.Contains(x)
+                Multiplier.ContainsNode(x)
                 ? Multiplier.Invert(value / Multiplicand, x)
                 : Multiplicand.Invert(value / Multiplier, x);
         }
@@ -72,7 +72,7 @@ namespace AngouriMath
         public partial record Divf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Dividend.Contains(x)
+                Dividend.ContainsNode(x)
                 // x / a = value => x = a * value
                 ? Dividend.Invert(value * Divisor, x)
                 // a / x = value => x = a / value
@@ -82,7 +82,7 @@ namespace AngouriMath
         public partial record Powf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Base.Contains(x)
+                Base.ContainsNode(x)
                 ? Exponent is Integer { EInteger: var pow }
                   ? Number.GetAllRootsOf1(pow)
                     .SelectMany(root => Base.Invert(root * MathS.Pow(value, 1 / Exponent), x))
@@ -127,7 +127,7 @@ namespace AngouriMath
         public partial record Logf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Base.Contains(x)
+                Base.ContainsNode(x)
                 // log_x(a) = value => a = x ^ value => x = a ^ (1 / value)
                 ? Base.Invert(MathS.Pow(Antilogarithm, 1 / value), x)
                 // log_a(x) = value => x = a ^ value
@@ -181,7 +181,7 @@ namespace AngouriMath
         public partial record Derivativef
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Expression.Contains(x)
+                Expression.ContainsNode(x)
                 ? Expression.Invert(MathS.Integral(value, Var, Iterations), x)
                 : Enumerable.Empty<Entity>();
         }
@@ -189,7 +189,7 @@ namespace AngouriMath
         public partial record Integralf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Expression.Contains(x)
+                Expression.ContainsNode(x)
                 ? Expression.Invert(MathS.Derivative(value, Var, Iterations), x)
                 : Enumerable.Empty<Entity>();
         }

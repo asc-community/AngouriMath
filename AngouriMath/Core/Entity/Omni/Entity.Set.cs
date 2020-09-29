@@ -21,9 +21,9 @@ namespace AngouriMath
 {
     partial record Entity
     {
-        partial record Set
+        public abstract partial record Set
         {
-
+            public abstract bool Contains(Entity entity);
         }
     }
 }

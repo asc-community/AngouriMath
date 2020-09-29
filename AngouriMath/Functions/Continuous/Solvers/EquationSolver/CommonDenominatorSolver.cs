@@ -48,7 +48,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var multipliers = Mulf.LinearChildren(term);
             foreach (var multiplier in multipliers)
-                if (!(multiplier.Contains(x) && GetPower(multiplier).Evaled is Real { IsPositive:false } realPart))
+                if (!(multiplier.ContainsNode(x) && GetPower(multiplier).Evaled is Real { IsPositive:false } realPart))
                     oneInfo.numerator *= multiplier;
                 else
                     oneInfo.denominatorMultipliers.Add((GetBase(multiplier), realPart));

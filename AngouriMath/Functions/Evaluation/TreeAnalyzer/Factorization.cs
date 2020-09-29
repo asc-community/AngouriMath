@@ -26,7 +26,7 @@ namespace AngouriMath.Functions
                     var varParent =
                         res.Nodes
                         .TakeWhile(e => e != var) // Requires Entity enumeration to be depth-first!!
-                        .Where(e => e.Contains(var)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
+                        .Where(e => e.ContainsNode(var)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
                         .LastOrDefault(); // e.g. x -> x+1
                     // if varParent is null, either
                     // TakeWhile returned empty: it's root => our expression is just one variable;

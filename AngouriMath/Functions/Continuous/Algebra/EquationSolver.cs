@@ -95,7 +95,7 @@ namespace AngouriMath.Functions.Algebra
             var result = new List<List<Entity>>();
             var replacements = new Dictionary<Variable, Entity>();
             for (int i = 0; i < equations.Count; i++)
-                if (equations[i].Contains(var))
+                if (equations[i].ContainsNode(var))
                 {
                     var solutionsOverVar = equations[i].SolveEquation(var);
                     equations.RemoveAt(i);

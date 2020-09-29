@@ -51,7 +51,7 @@ namespace AngouriMath.Functions
         /// </summary>
         public static Entity GetMinimumSubtree(Entity expr, Variable x)
         {
-            if (!expr.Contains(x))
+            if (!expr.ContainsNode(x))
                 throw new ArgumentException($"{nameof(expr)} must contain {nameof(x)}", nameof(expr));
 
             // The idea is the following:
@@ -61,7 +61,7 @@ namespace AngouriMath.Functions
             return
                 expr.Nodes
                 .TakeWhile(e => e != x) // Requires Entity enumeration to be depth-first!!
-                .Where(e => e.Contains(x)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
+                .Where(e => e.ContainsNode(x)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
                 .LastOrDefault(sub => expr.Nodes.Count(child => child == sub) * sub.Nodes.Count(child => child == x) == xs)
                 // if `expr` contains 2 `sub`s and `sub` contains 3 `x`s, then there should be 6 `x`s in `expr` (6 == `xs`)
                 ?? x;
@@ -108,12 +108,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     return Solve(dividend, x) - Solve(divisor, x);
                 case Powf(var @base, _):
                     return Solve(@base, x);
-                case Minusf(var subtrahend, var minuend) when !minuend.Contains(x) && compensateSolving:
+                case Minusf(var subtrahend, var minuend) when !minuend.ContainsNode(x) && compensateSolving:
                     if (subtrahend == x)
                         return new[] { minuend }.ToSet();
                     Entity? lastChild = null;
                     foreach (var child in subtrahend.DirectChildren)
-                        if (child.Contains(x))
+                        if (child.ContainsNode(x))
                             if (lastChild is null)
                                 lastChild = child;
                             else goto default;
@@ -136,7 +136,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // Here we find all possible replacements and find one that has at least one solution
                 foreach (var alt in expr.Alternate(4))
                 {
-                    if (!alt.Contains(x))
+                    if (!alt.ContainsNode(x))
                         return new Set(); // in this case there is either 0 or +oo solutions
                     var minimumSubtree = TreeAnalyzer.GetMinimumSubtree(alt, x);
                     if (minimumSubtree == x)

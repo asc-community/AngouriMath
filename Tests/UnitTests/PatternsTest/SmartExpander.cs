@@ -28,7 +28,7 @@ namespace UnitTests.PatternsTest
         {
             var expanded = MathS.Settings.MaxExpansionTermCount.As(3000, () =>
             {
-                var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.Contains("x"));
+                var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.ContainsNode("x"));
                 if (expandOver is null)
                     throw new Xunit.Sdk.XunitException("expandOver is null");
                 return TreeAnalyzer.MultiHangBinary(expandOver, (a, b) => new Entity.Sumf(a, b));

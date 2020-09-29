@@ -21,6 +21,7 @@ using AngouriMath.Core;
 
 namespace AngouriMath
 {
+
     partial record Entity
     {
         /// <summary>
@@ -28,6 +29,7 @@ namespace AngouriMath
         /// </summary>
         public partial record Set : Entity
         {
+            #region FiniteSet
             /// <summary>
             /// A finite set is a set whose elements can be counted and enumerated
             /// </summary>
@@ -89,11 +91,25 @@ namespace AngouriMath
                 {
                     var dict = BuildDictionaryFromElements(A.Elements, noCheck: true);
                     foreach (var el in B)
-                        if (!B.Contains(el.Evaled))
+                        if (!B.ContainsNode(el.Evaled))
                             dict.Remove(el.Evaled);
                     return new FiniteSet(dict.Values, noCheck: true); // we didn't add anything
                 }
             }
+            #endregion
+
+            #region Interval
+
+            /// <summary>
+            /// An interval represents all numbres in between two Entities
+            /// <see cref="Interval.LeftClosed"/> stands for whether <see cref="Interval.Left"/> is included
+            /// <see cref="Interval.RightClosed"/> stands for whether <see cref="Interval.Right"/> is included
+            /// </summary>
+            public partial record Interval(Entity Left, bool LeftClosed, Entity Right, bool RightClosed) : Set
+            {
+
+            }
+            #endregion
         }
     }
 }
