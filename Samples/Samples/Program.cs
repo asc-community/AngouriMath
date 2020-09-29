@@ -14,8 +14,9 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity expr = "x > 3 and x2 = 16";
-            Console.WriteLine(expr.Solve("x"));
+            Entity expr1 = "1.0000000000000000000001";
+            Entity expr2 = "1";
+            Console.WriteLine(expr1 + expr2);
         }
     }
 }

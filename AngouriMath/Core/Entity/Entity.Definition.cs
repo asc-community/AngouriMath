@@ -134,5 +134,15 @@ namespace AngouriMath
         public bool Contains(Entity x) => x is Variable v ? VarsAndConsts.Contains(v) : Nodes.Contains(x);
 
         public static implicit operator Entity(string expr) => MathS.FromString(expr);
+
+        /// <summary>
+        /// Shows how simple the given expression is. The lower - the simpler the expression is.
+        /// You might need it to pick the best expression to represent something. Unlike 
+        /// <see cref="Complexity"/>, which shows the number of nodes, <see cref="SimplifiedRate"/> 
+        /// shows how convenient it is to view the expression. This depends on 
+        /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
+        /// </summary>
+        public int SimplifiedRate => simplifiedRate ??= MathS.Settings.ComplexityCriteria.Value(this);
+        private int? simplifiedRate;
     }
 }

@@ -31,15 +31,68 @@ namespace AngouriMath
             /// <summary>
             /// A finite set is a set whose elements can be counted and enumerated
             /// </summary>
-            public partial record FiniteSet(IEnumerable<Entity> Elements) : Set, IReadOnlyCollection<Entity>
+            public partial record FiniteSet : Set, IReadOnlyCollection<Entity>
             {
-                public int Count { get; } = Elements.Count();
+                public IEnumerable<Entity> Elements { get; }
 
+                private static Dictionary<Entity, Entity> BuildDictionaryFromElements(IEnumerable<Entity> elements, bool noCheck)
+                {
+                    Dictionary<Entity, Entity> dict = new(elements.Count());
+                    foreach (var elem in elements)
+                    {
+                        if (!noCheck ||                                              // some operations should be done unconditionally
+                            !dict.ContainsKey(elem.Evaled) ||                        // if no such element in the dict
+                            dict[elem.Evaled].SimplifiedRate > elem.SimplifiedRate)  // if the one in the dict is more complicated
+                            dict[elem.Evaled] = elem;                                // then we add it
+                    }
+                    return dict;
+                }
+
+                public FiniteSet(IEnumerable<Entity> elements) : this(elements, noCheck: false) { }
+
+                private FiniteSet(IEnumerable<Entity> elements, bool noCheck)
+                {
+                    var dict = BuildDictionaryFromElements(elements, noCheck);
+                    Elements = dict.Values;
+                    Count = dict.Count;
+                }
+
+                public void Deconstruct(out IEnumerable<Entity> elements)
+                    => elements = Elements;
+
+
+                /// <summary> Represents number of entities in the current set </summary>
+                public int Count { get; }
+
+                /// <summary>
+                /// Used for enumerating. Use "foreach" for iterating over elements
+                /// </summary>
                 public IEnumerator<Entity> GetEnumerator()
                     => Elements.GetEnumerator();
 
                 IEnumerator IEnumerable.GetEnumerator()
                     => Elements.GetEnumerator();
+
+                internal static FiniteSet Unite(FiniteSet A, FiniteSet B)
+                    => new FiniteSet(A.Elements.Concat(B.Elements));
+
+                // It could be written with one chain request, but readability > one line
+                internal static FiniteSet Subtract(FiniteSet A, FiniteSet B)
+                {
+                    var dict = BuildDictionaryFromElements(A.Elements, noCheck: true);
+                    foreach (var el in B)
+                        dict.Remove(el.Evaled);
+                    return new FiniteSet(dict.Values, noCheck: true); // we didn't add anything
+                }
+
+                internal static FiniteSet Intersect(FiniteSet A, FiniteSet B)
+                {
+                    var dict = BuildDictionaryFromElements(A.Elements, noCheck: true);
+                    foreach (var el in B)
+                        if (!B.Contains(el.Evaled))
+                            dict.Remove(el.Evaled);
+                    return new FiniteSet(dict.Values, noCheck: true); // we didn't add anything
+                }
             }
         }
     }
