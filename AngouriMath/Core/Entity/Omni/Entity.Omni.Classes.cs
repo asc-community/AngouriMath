@@ -13,39 +13,34 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using static AngouriMath.Entity;
+using AngouriMath.Core;
 
-/*
- *
- * SUBTRACTION
- *
- */
-
-namespace AngouriMath.Core
+namespace AngouriMath
 {
-    static partial class PieceFunctions
+    partial record Entity
     {
-        /// <summary>Subtracts B from A: A \ B = A & !B</summary>
-        public static IEnumerable<SetPiece> Subtract(SetPiece A, SetPiece B)
+        /// <summary>
+        /// A
+        /// </summary>
+        public partial record Set : Entity
         {
-            if (Intersect(A, B) is null) // if A & B is none, then A \ B = A
-                return new[] { A };
+            /// <summary>
+            /// A finite set is a set whose elements can be counted and enumerated
+            /// </summary>
+            public partial record FiniteSet(IEnumerable<Entity> Elements) : Set, IReadOnlyCollection<Entity>
+            {
+                public int Count { get; } = Elements.Count();
 
-            if (A == B || B.Contains(A))
-                return Enumerable.Empty<SetPiece>();
+                public IEnumerator<Entity> GetEnumerator()
+                    => Elements.GetEnumerator();
 
-            return Invert(B).Select(piece => Intersect(A, piece)).OfType<SetPiece>().Where(IsPieceCorrect);
-        }
-        internal static bool IsPieceCorrect(SetPiece piece)
-        {
-            var lower = piece.LowerBound();
-            var upper = piece.UpperBound();
-            var num1 = lower.Item1.EvalNumerical();
-            var num2 = upper.Item1.EvalNumerical();
-            return (num1.RealPart != num2.RealPart || lower.Item2 && upper.Item2) &&
-                   (num1.ImaginaryPart != num2.ImaginaryPart || lower.Item3 && upper.Item3);
+                IEnumerator IEnumerable.GetEnumerator()
+                    => Elements.GetEnumerator();
+            }
         }
     }
 }
