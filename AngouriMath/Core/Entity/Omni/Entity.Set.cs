@@ -23,6 +23,11 @@ namespace AngouriMath
     {
         public abstract partial record Set
         {
+            /// <summary>
+            /// Checks whether the given element is in the set
+            /// </summary>
+            /// <param name="entity">The element to find in the set</param>
+            /// <returns>Whether this element is found</returns>
             public abstract bool Contains(Entity entity);
         }
     }

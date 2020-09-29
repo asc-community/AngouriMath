@@ -18,6 +18,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
@@ -35,7 +37,9 @@ namespace AngouriMath
             /// </summary>
             public partial record FiniteSet : Set, IReadOnlyCollection<Entity>
             {
-                public IEnumerable<Entity> Elements { get; }
+                public IEnumerable<Entity> Elements => elements.Values;
+
+                private readonly Dictionary<Entity, Entity> elements;
 
                 private static Dictionary<Entity, Entity> BuildDictionaryFromElements(IEnumerable<Entity> elements, bool noCheck)
                 {
@@ -54,9 +58,8 @@ namespace AngouriMath
 
                 private FiniteSet(IEnumerable<Entity> elements, bool noCheck)
                 {
-                    var dict = BuildDictionaryFromElements(elements, noCheck);
-                    Elements = dict.Values;
-                    Count = dict.Count;
+                    this.elements = BuildDictionaryFromElements(elements, noCheck);
+                    Count = this.elements.Count;
                 }
 
                 public void Deconstruct(out IEnumerable<Entity> elements)
@@ -95,11 +98,14 @@ namespace AngouriMath
                             dict.Remove(el.Evaled);
                     return new FiniteSet(dict.Values, noCheck: true); // we didn't add anything
                 }
+
+                public override bool Contains(Entity entity)
+                    => elements.ContainsKey(entity.Evaled);
             }
             #endregion
 
-            #region Interval
 
+            #region Interval
             /// <summary>
             /// An interval represents all numbres in between two Entities
             /// <see cref="Interval.LeftClosed"/> stands for whether <see cref="Interval.Left"/> is included
@@ -107,7 +113,23 @@ namespace AngouriMath
             /// </summary>
             public partial record Interval(Entity Left, bool LeftClosed, Entity Right, bool RightClosed) : Set
             {
+                public bool IsNumeric => left is not null && right is not null;
 
+                private Real?
+                private Real? left = Left.EvaluableNumerical && Left.Evaled is Real re ? re : null;
+                private Real? right = Right.EvaluableNumerical && Right.Evaled is Real re ? re : null;
+
+                private static bool IsALessThanB(Real A, Real B, bool closed)
+                    => A < B || closed && A == B;
+
+                public override bool Contains(Entity entity)
+                {
+                    if (entity is not Real re)
+                        throw new CannotEvalException("The argument should be a real number");
+                    if (IsNumeric)
+                        throw new CannotEvalException("The inteval's ends should be real numbers");
+                    return IsALessThanB(left!, re, LeftClosed) && IsALessThanB(right!, re, RightClosed);
+                }
             }
             #endregion
         }
