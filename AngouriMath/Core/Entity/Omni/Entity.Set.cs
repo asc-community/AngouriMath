@@ -21,6 +21,10 @@ namespace AngouriMath
 {
     partial record Entity
     {
+        /// <summary>
+        /// <a href="https://en.wikipedia.org/wiki/Set_(mathematics)"/>
+        /// A set might be a set operator, conditinal set, finite set, or interval
+        /// </summary>
         public abstract partial record Set
         {
             /// <summary>

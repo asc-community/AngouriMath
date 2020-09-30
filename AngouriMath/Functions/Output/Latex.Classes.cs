@@ -143,7 +143,7 @@ namespace AngouriMath
         {
             public override string Latexise()
             {
-                var powerIfNeeded = Iterations == Integer.One ? "" : "^{" + Iterations.Latexise() + "}";
+                var powerIfNeeded = Iterations == 1 ? "" : "^{" + Iterations + "}";
 
                 var varOverDeriv =
                     Var is Variable { Name: { Length: 1 } name }
@@ -164,14 +164,14 @@ namespace AngouriMath
                 // Unlike derivatives, integrals do not have "power" that would be equal
                 // to sequential applying integration to a function
 
-                if (!(Iterations is Integer asInt && asInt >= 0))
+                if (Iterations < 0)
                     return "Error";
 
-                if (asInt == 0)
+                if (Iterations == 0)
                     return Expression.Latexise(false);
 
                 var sb = new StringBuilder();
-                for (int i = 0; i < asInt; i++)
+                for (int i = 0; i < Iterations; i++)
                     sb.Append(@"\int ");
                 sb.Append(@"\left[");
                 sb.Append(Expression.Latexise(false));
@@ -179,7 +179,7 @@ namespace AngouriMath
 
                 // TODO: can we write d^2 x or (dx)^2 instead of dx dx?
                 // I don't think I have ever seen the same variable being integrated more than one time. -- Happypig375
-                for (int i = 0; i < asInt; i++)
+                for (int i = 0; i < Iterations; i++)
                 {
                     sb.Append(" d");
                     if (Var is Variable { Name: { Length: 1 } name })

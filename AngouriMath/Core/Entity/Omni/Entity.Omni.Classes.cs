@@ -25,10 +25,7 @@ namespace AngouriMath
 {
 
     partial record Entity
-    {
-        /// <summary>
-        /// A
-        /// </summary>
+    {        
         public partial record Set : Entity
         {
             #region FiniteSet
@@ -177,20 +174,6 @@ namespace AngouriMath
                 }
             }
             #endregion
-
-            /*
-            #region Set Variable
-            /// <summary>
-            /// This thing is used in ConditionalSet
-            /// Although allowed, no need to use it manually
-            /// </summary>
-            public partial record SetVariable(string Name) : Entity
-            {
-                public override Entity Replace(Func<Entity, Entity> func)
-                    => func(this);
-            }
-            #endregion
-            */
 
             #region Conditional Set
             /// <summary>
