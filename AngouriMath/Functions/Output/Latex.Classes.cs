@@ -224,13 +224,13 @@ namespace AngouriMath
             }
         }
 
-        public partial record Signumf
+        partial record Signumf
         {
             public override string Latexise()
                 => $@"\operatorname{{sgn}}\left({Argument.Latexise()}\right)";
         }
 
-        public partial record Absf
+        partial record Absf
         {
             public override string Latexise()
                 => $@"\left|{Argument.Latexise()}\right|";

@@ -115,6 +115,85 @@ namespace AngouriMath
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
+
+        partial record Signumf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Argument.Substitute(x, value));
+        }
+
+        partial record Absf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Argument.Substitute(x, value));
+        }
+
+        partial record Boolean
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : this;
+        }
+
+        partial record Notf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Argument.Substitute(x, value));
+        }
+
+        partial record Andf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
+        partial record Orf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
+        partial record Xorf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
+        partial record Impliesf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Assumption.Substitute(x, value), Conclusion.Substitute(x, value));
+        }
+
+        partial record Equalsf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
+        partial record Greaterf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
+        partial record GreaterOrEqualf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
+        partial record Lessf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
+        partial record LessOrEqualf
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+        }
+
         #endregion
 
         #region Local variable preserved
@@ -127,7 +206,7 @@ namespace AngouriMath
                 {
                     if (this == x)
                         return value;
-                    var replacement = Variable.CreateUnique(x + value + Predicate + Var, "temp");
+                    var replacement = Variable.CreateTemp((x + value + Predicate + Var).Vars);
 
                     // { x | x > a } -> { temp_1 | temp_1 > a }
                     var tempSubstituted = Predicate.Substitute(Var, replacement);
@@ -151,7 +230,7 @@ namespace AngouriMath
             {
                 if (this == x)
                     return value;
-                var replacement = Variable.CreateUnique(x + value + Expression + Var, "temp");
+                var replacement = Variable.CreateTemp((x + value + Expression + Var).Vars);
 
                 // integrate(x ^ 2 + a, x) -> integrate(temp_1 ^ 2 + a, temp_1)
                 var tempSubstituted = Expression.Substitute(Var, replacement);
@@ -174,7 +253,30 @@ namespace AngouriMath
             {
                 if (this == x)
                     return value;
-                var replacement = Variable.CreateUnique(x + value + Expression + Var, "temp");
+                var replacement = Variable.CreateTemp((x + value + Expression + Var).Vars);
+
+                // derive(x ^ 2 + a, x) -> derive(temp_1 ^ 2 + a, temp_1)
+                var tempSubstituted = Expression.Substitute(Var, replacement);
+
+                // a = 0 -> derive(temp_1 ^ 2 + a, temp_1) -> derive(temp_1 ^ 2 + 0, temp_1)
+                // x = 0 -> derive(temp_1 ^ 2 + a, temp_1) -> derive(temp_1 ^ 2 + a, temp_1)
+                var subs = tempSubstituted.Substitute(x, value);
+
+                // derive(temp_1 ^ 2 + a, temp_1) -> derive(x ^ 2 + a, temp_1)
+                var postSubs = subs.Substitute(replacement, Var);
+
+                return New(postSubs, Var);
+            }
+        }
+
+        partial record Limitf
+        {
+            // TODO: it might be optimized
+            public override Entity Substitute(Entity x, Entity value)
+            {
+                if (this == x)
+                    return value;
+                var replacement = Variable.CreateTemp((x + value + Expression + Var).Vars);
 
                 // derive(x ^ 2 + a, x) -> derive(temp_1 ^ 2 + a, temp_1)
                 var tempSubstituted = Expression.Substitute(Var, replacement);
