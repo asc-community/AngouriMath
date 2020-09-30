@@ -33,6 +33,10 @@ namespace AngouriMath
             /// <param name="entity">The element to find in the set</param>
             /// <returns>Whether this element is found</returns>
             public abstract bool Contains(Entity entity);
+
+            public static Set Empty = new FiniteSet();
         }
+
+        public static implicit operator Entity(Domain domain) => Set.SpecialSet.Create(domain);
     }
 }

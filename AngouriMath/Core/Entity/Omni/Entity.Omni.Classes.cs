@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Functions;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
@@ -40,19 +41,27 @@ namespace AngouriMath
 
                 // TODO: refactor
                 public override Entity Replace(Func<Entity, Entity> func)
+                    => func(Apply(el => el.Replace(func)));
+
+                /// <summary>
+                /// Applies a function to every element of a set
+                /// and returns a set
+                /// </summary>
+                /// <param name="func">What we do with each element?</param>
+                public FiniteSet Apply(Func<Entity, Entity> func)
                 {
                     var hasAnythingChanged = false;
                     List<Entity> newElements = new();
                     foreach (var el in Elements)
                     {
-                        var changed = el.Replace(func);
+                        var changed = func(el);
                         if (ReferenceEquals(changed, el))
                             hasAnythingChanged = true;
                     }
                     if (hasAnythingChanged)
-                        return func(new FiniteSet(newElements));
+                        return new FiniteSet(newElements);
                     else
-                        return func(this);
+                        return this;
                 }
 
                 public override Priority Priority => Priority.Leaf;
@@ -64,15 +73,16 @@ namespace AngouriMath
                     Dictionary<Entity, Entity> dict = new(elements.Count());
                     foreach (var elem in elements)
                     {
-                        if (!noCheck ||                                      // some operations should be done unconditionally
-                            !dict.TryGetValue(elem.Evaled, out var value) || // if no such element in the dict
-                            value.SimplifiedRate > elem.SimplifiedRate)      // if the one in the dict is more complicated
-                            dict[elem.Evaled] = elem;                        // then we add it
+                        if (!noCheck)
+                            dict[elem.Evaled] = dict.TryGetValue(elem.Evaled, out var value) ? Simplificator.PickSimplest(elem, value) : elem;
                     }
                     return dict;
                 }
 
                 public FiniteSet(IEnumerable<Entity> elements) : this(elements, noCheck: false) { }
+
+                // TODO: can we somehow add { } syntax but avoid inheriting from collection?
+                public FiniteSet(params Entity[] elements) : this((IEnumerable<Entity>)elements) { }
 
                 private FiniteSet(IEnumerable<Entity> elements, bool noCheck)
                 {
@@ -216,6 +226,18 @@ namespace AngouriMath
                 // TODO: make a more complicated check for more domains
                 public override bool Contains(Entity entity)
                     => DomainsFunctional.FitsDomainOrNonNumeric(entity, SetType) && entity is Boolean or Complex;
+
+                // Since there's a very small number of domains, it's wiser to
+                // cache them all
+                private readonly static Dictionary<Domain, SpecialSet> innerStorage = new();
+                public static SpecialSet Create(Domain domain)
+                { 
+                    if (innerStorage.TryGetValue(domain, out var res))
+                        return res;
+                    var result = new SpecialSet(domain);
+                    innerStorage[domain] = result;
+                    return result;
+                }
             }
             #endregion  
 

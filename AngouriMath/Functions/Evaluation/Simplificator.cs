@@ -25,6 +25,9 @@ namespace AngouriMath.Functions
     using static Entity.Number;
     internal static class Simplificator
     {
+        internal static Entity PickSimplest(Entity one, Entity another)
+            => one.SimplifiedRate < another.SimplifiedRate ? one : another;
+
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
         internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level).First().InnerSimplify();
 
