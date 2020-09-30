@@ -242,7 +242,8 @@ See more on [Wiki](https://github.com/asc-community/AngouriMath/wiki).
 
 ### <a name="contrib"></a>Contribution
 
-We appreciate and welcome any contributors to AngouriMath.
+We appreciate and welcome any contributors to AngouriMath. Current tasks can be tracked
+on <a href="https://github.com/asc-community/AngouriMath/projects">this page</a>.
 
 Use pull requests to contribute to it. We also appreciate early pull requests so that we know what you are improving and
 can help you with something.

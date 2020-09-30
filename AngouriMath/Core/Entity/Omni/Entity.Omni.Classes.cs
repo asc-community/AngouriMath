@@ -35,7 +35,7 @@ namespace AngouriMath
             /// <summary>
             /// A finite set is a set whose elements can be counted and enumerated
             /// </summary>
-            public partial record FiniteSet : Set, IReadOnlyCollection<Entity>
+            public partial record FiniteSet : Set, IReadOnlyCollection<Entity>, IEquatable<Entity>
             {
                 public IEnumerable<Entity> Elements => elements.Values;
 
@@ -122,6 +122,22 @@ namespace AngouriMath
 
                 public override bool Contains(Entity entity)
                     => elements.ContainsKey(entity.Evaled);
+
+                // TODO: how should we implement GetHashCode?
+                // Is it safe to store this hash inside?
+                public override int GetHashCode()
+                    => Elements.Select(el => el.GetHashCode()).Aggregate((acc, next) => acc + next);
+
+                public virtual bool Equals(Entity? anything)
+                {
+                    if (anything is null)
+                        return false;
+                    if (anything is not FiniteSet other)
+                        return false;
+                    if (other.Count != Count)
+                        return false;
+                    return Enumerable.Zip(Elements, other.Elements, (left, right) => left == right).All(c => c);
+                }
             }
             #endregion
 
