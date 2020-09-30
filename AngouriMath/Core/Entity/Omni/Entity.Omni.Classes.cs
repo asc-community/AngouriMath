@@ -35,7 +35,7 @@ namespace AngouriMath
             /// <summary>
             /// A finite set is a set whose elements can be counted and enumerated
             /// </summary>
-            public partial record FiniteSet : Set, IReadOnlyCollection<Entity>, IEquatable<Entity>
+            public partial record FiniteSet : Set, IReadOnlyCollection<Entity>, IEquatable<FiniteSet>
             {
                 public IEnumerable<Entity> Elements => elements.Values;
 
@@ -67,10 +67,10 @@ namespace AngouriMath
                     Dictionary<Entity, Entity> dict = new(elements.Count());
                     foreach (var elem in elements)
                     {
-                        if (!noCheck ||                                              // some operations should be done unconditionally
-                            !dict.ContainsKey(elem.Evaled) ||                        // if no such element in the dict
-                            dict[elem.Evaled].SimplifiedRate > elem.SimplifiedRate)  // if the one in the dict is more complicated
-                            dict[elem.Evaled] = elem;                                // then we add it
+                        if (!noCheck ||                                      // some operations should be done unconditionally
+                            !dict.TryGetValue(elem.Evaled, out var value) || // if no such element in the dict
+                            value.SimplifiedRate > elem.SimplifiedRate)      // if the one in the dict is more complicated
+                            dict[elem.Evaled] = elem;                        // then we add it
                     }
                     return dict;
                 }
@@ -128,15 +128,16 @@ namespace AngouriMath
                 public override int GetHashCode()
                     => Elements.Select(el => el.GetHashCode()).Aggregate((acc, next) => acc + next);
 
-                public virtual bool Equals(Entity? anything)
+                public virtual bool Equals(FiniteSet? other)
                 {
-                    if (anything is null)
-                        return false;
-                    if (anything is not FiniteSet other)
+                    if (other is null)
                         return false;
                     if (other.Count != Count)
                         return false;
-                    return Enumerable.Zip(Elements, other.Elements, (left, right) => left == right).All(c => c);
+                    foreach (var pair in elements)
+                        if (!other.Contains(pair.Value))
+                            return false;
+                    return true;
                 }
             }
             #endregion

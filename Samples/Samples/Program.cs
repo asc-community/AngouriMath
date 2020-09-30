@@ -7,6 +7,7 @@ using static AngouriMath.Entity.Boolean;
 using static AngouriMath.MathS;
 using AngouriMath.Extensions;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace Samples
 {
