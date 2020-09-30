@@ -786,7 +786,7 @@ namespace AngouriMath
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which derivative is taken</param>
         /// <param name="power">Number of times derivative is taken. Only integers will be simplified or evaluated.</param>
-        public static Entity Derivative(Entity expr, Entity var, Entity power) => new Derivativef(expr, var, power);
+        public static Entity Derivative(Entity expr, Entity var, int power) => new Derivativef(expr, var, power);
 
         /// <summary>
         /// Hangs your entity to an integral node
@@ -803,7 +803,7 @@ namespace AngouriMath
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which integral is taken</param>
         /// <param name="power">Number of times integral is taken. Only integers will be simplified or evaluated.</param>
-        public static Entity Integral(Entity expr, Entity var, Entity power) => new Integralf(expr, var, power);
+        public static Entity Integral(Entity expr, Entity var, int power) => new Integralf(expr, var, power);
 
         /// <summary>
         /// Hangs your entity to a limit node

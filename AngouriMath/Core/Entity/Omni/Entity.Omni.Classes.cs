@@ -153,14 +153,133 @@ namespace AngouriMath
                 public override bool Contains(Entity entity)
                 {
                     if (entity is not Real re)
-                        throw new CannotEvalException("The argument should be a real number");
+                        throw new ElementInSetAmbiguousException("The argument should be a real number");
                     if (!IsNumeric)
-                        throw new CannotEvalException("The inteval's ends should be real numbers");
+                        throw new ElementInSetAmbiguousException("The inteval's ends should be real numbers");
                     return IsALessThanB(left.Value, re, LeftClosed) && IsALessThanB(right.Value, re, RightClosed);
                 }
             }
             #endregion
 
+            /*
+            #region Set Variable
+            /// <summary>
+            /// This thing is used in ConditionalSet
+            /// Although allowed, no need to use it manually
+            /// </summary>
+            public partial record SetVariable(string Name) : Entity
+            {
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(this);
+            }
+            #endregion
+            */
+
+            #region Conditional Set
+            /// <summary>
+            /// This is the most abstract set. Technically, you can describe
+            /// any set within this one. Formally, you can define set A of
+            /// a condition F(x) in the following way: for each element x in 
+            /// the Universal x belongs to A if and only if F(x).
+            /// </summary>
+            public partial record ConditionalSet(Variable Var, Entity Predicate) : Set
+            {
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(this);
+
+                public override bool Contains(Entity entity)
+                {
+                    var substituted = entity.Replace(varCandidate => 
+                        varCandidate == Var ? entity : varCandidate).InnerSimplifyWithCheck();
+                    if (substituted.EvaluableBoolean)
+                        return substituted.EvalBoolean();
+                    else
+                        throw new ElementInSetAmbiguousException("It is still unclear");
+                }
+            }
+            #endregion
+
+            #region Special Set
+            /// <summary>
+            /// Special set is something that cannot be easily expressed in other
+            /// types of sets.
+            /// </summary>
+            public partial record SpecialSet(Domain SetType) : Set
+            {
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(this);
+
+                // TODO: make a more complicated check for more domains
+                public override bool Contains(Entity entity)
+                    => DomainsFunctional.FitsDomainOrNonNumeric(entity, SetType) && entity is Boolean or Complex;
+            }
+            #endregion
+
+            #region Union
+            /// <summary>
+            /// Unites two sets
+            /// It is true that an entity is in a union if it is at least in one of union's operands
+            /// </summary>
+            public partial record Unionf(Entity Left, Entity Right) : Set
+            {
+                private Unionf New(Entity left, Entity right)
+                    => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Unionf(left, right);
+
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(New(Left.Replace(func), Right.Replace(func)));
+
+                public override bool Contains(Entity entity)
+                {
+                    if (Left is not Set left || Right is not Set right)
+                        throw new ElementInSetAmbiguousException("One of union's operands is not set");
+                    return left.Contains(entity) || right.Contains(entity);
+                }
+            }
+            #endregion
+
+            #region Intersection
+            /// <summary>
+            /// Finds the intersection of two sets
+            /// It is true that an entity is in an intersection if it is in both of intersection's operands
+            /// </summary>
+            public partial record Intersectionf(Entity Left, Entity Right) : Set
+            {
+                private Intersectionf New(Entity left, Entity right)
+                    => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Intersectionf(left, right);
+
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(New(Left.Replace(func), Right.Replace(func)));
+
+                public override bool Contains(Entity entity)
+                {
+                    if (Left is not Set left || Right is not Set right)
+                        throw new ElementInSetAmbiguousException("One of union's operands is not set");
+                    return left.Contains(entity) && right.Contains(entity);
+                }
+            }
+            #endregion
+
+            #region Set Minus
+            /// <summary>
+            /// Finds A & !B
+            /// It is true that an entity is in SetMinus if it is in Left but not in Right
+            /// </summary>
+            public partial record SetMinusf(Entity Left, Entity Right) : Set
+            {
+                private SetMinusf New(Entity left, Entity right)
+                    => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new SetMinusf(left, right);
+
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(New(Left.Replace(func), Right.Replace(func)));
+
+                public override bool Contains(Entity entity)
+                {
+                    if (Left is not Set left || Right is not Set right)
+                        throw new ElementInSetAmbiguousException("One of union's operands is not set");
+                    return left.Contains(entity) && !right.Contains(entity);
+                }
+            }
+            #endregion
         }
     }
 }

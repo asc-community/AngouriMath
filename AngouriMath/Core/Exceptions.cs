@@ -54,4 +54,7 @@ namespace AngouriMath.Core.Exceptions
                 $"{function} should have exactly {CountArguments(expected.Item1, false)} or {CountArguments(expected.Item2, false)} but {CountArguments(actual, true)} provided");
         }
     }
+
+    /// <summary> Cannot figure out whether the entity is in the set </summary>
+    public class ElementInSetAmbiguousException : MathSException { public ElementInSetAmbiguousException(string msg) : base(msg) { } }
 }
