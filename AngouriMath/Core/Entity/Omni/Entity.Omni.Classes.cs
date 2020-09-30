@@ -199,7 +199,7 @@ namespace AngouriMath
             /// a condition F(x) in the following way: for each element x in 
             /// the Universal x belongs to A if and only if F(x).
             /// </summary>
-            public partial record ConditionalSet(Variable Var, Entity Predicate) : Set
+            public partial record ConditionalSet(Entity Var, Entity Predicate) : Set
             {
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(this);
@@ -213,6 +213,10 @@ namespace AngouriMath
                     else
                         throw new ElementInSetAmbiguousException("It is still unclear");
                 }
+
+                private Entity New(Entity var, Entity predicate)
+                    => ReferenceEquals(Var, var) && ReferenceEquals(Predicate, predicate) ?
+                    this : new ConditionalSet(var, predicate);
             }
             #endregion
 
@@ -230,7 +234,7 @@ namespace AngouriMath
                 public override bool Contains(Entity entity)
                     => DomainsFunctional.FitsDomainOrNonNumeric(entity, SetType) && entity is Boolean or Complex;
             }
-            #endregion
+            #endregion  
 
             #region Union
             /// <summary>

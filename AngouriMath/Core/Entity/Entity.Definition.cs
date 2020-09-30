@@ -80,7 +80,7 @@ namespace AngouriMath
             Replace(child => func3(func2(func1(child))));
 
         /// <summary>Replaces all <see cref="x"/> with <see cref="value"/></summary>
-        public Entity Substitute(Entity x, Entity value) => Replace(e => e == x ? value : e);
+        public abstract Entity Substitute(Entity x, Entity value);
 
         /// <summary>Replaces all <see cref="replacements"/></summary>
         public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements)
