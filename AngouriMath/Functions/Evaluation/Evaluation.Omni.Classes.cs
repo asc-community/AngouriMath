@@ -14,9 +14,6 @@
  */
 
 using AngouriMath.Functions;
-using System;
-using static AngouriMath.Entity.Number;
-using AngouriMath.Core;
 
 namespace AngouriMath
 {
@@ -70,17 +67,44 @@ namespace AngouriMath
 
             partial record Unionf
             {
-                
+                protected override Entity InnerEval()
+                    => InnerSimplifyWithCheck();
+
+                internal override Entity InnerSimplify()
+                    => (Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck()) switch
+                    {
+                        (FiniteSet setLeft, FiniteSet setRight) => FiniteSet.Unite(setLeft, setRight),
+                        // TODO
+                        (var left, var right) => New(left, right)
+                    };
             }
 
             partial record Intersectionf
             {
+                protected override Entity InnerEval()
+                    => InnerSimplifyWithCheck();
 
+                internal override Entity InnerSimplify()
+                    => (Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck()) switch
+                    {
+                        (FiniteSet setLeft, FiniteSet setRight) => FiniteSet.Intersect(setLeft, setRight),
+                        // TODO
+                        (var left, var right) => New(left, right)
+                    };
             }
 
             partial record SetMinusf
             {
+                protected override Entity InnerEval()
+                    => InnerSimplifyWithCheck();
 
+                internal override Entity InnerSimplify()
+                    => (Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck()) switch
+                    {
+                        (FiniteSet setLeft, FiniteSet setRight) => FiniteSet.Subtract(setLeft, setRight),
+                        // TODO
+                        (var left, var right) => New(left, right)
+                    };
             }
         }
     }

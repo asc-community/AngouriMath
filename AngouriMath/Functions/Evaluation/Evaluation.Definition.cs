@@ -28,16 +28,23 @@ namespace AngouriMath
         /// </summary>
         internal abstract Entity InnerSimplify();
 
+        // Cache of the result of the InnerSimplify function
+        private Entity? innerSimplified;
+
         /// <summary>
         /// Make sure you call this function inside of <see cref="InnerSimplify"/>
         /// </summary>
         internal Entity InnerSimplifyWithCheck()
         {
-            var innerSimplified = InnerSimplify();
-            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
-                return innerSimplified;
-            else
-                return this;
+            if (innerSimplified is null)
+            {
+                var _inner = InnerSimplify();
+                if (DomainsFunctional.FitsDomainOrNonNumeric(_inner, Codomain))
+                    innerSimplified = _inner;
+                else
+                    innerSimplified = this;
+            }
+            return innerSimplified;
         }
 
         /// <summary>
