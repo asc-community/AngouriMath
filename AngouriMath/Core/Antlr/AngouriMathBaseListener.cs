@@ -24,6 +24,7 @@ namespace AngouriMath.Core.Antlr {
     using System.Linq;
     using AngouriMath;
     using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
+    using static AngouriMath.Entity.Number;
 
 
 using Antlr4.Runtime.Misc;

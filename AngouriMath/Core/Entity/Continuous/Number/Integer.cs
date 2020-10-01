@@ -78,6 +78,9 @@ namespace AngouriMath
                 public static implicit operator Integer(EInteger value) => Create(value);
 
                 public override Domain Codomain { get; protected init; } = Domain.Integer;
+
+                public override Entity Substitute(Entity x, Entity value)
+                    => this == x ? value : this;
             }
         }
     }

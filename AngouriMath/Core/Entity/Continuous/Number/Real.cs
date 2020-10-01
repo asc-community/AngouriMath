@@ -131,6 +131,9 @@ namespace AngouriMath
                 public static implicit operator Real(decimal value) => Create(EDecimal.FromDecimal(value));
 
                 public override Domain Codomain { get; protected init; } = Domain.Real;
+
+                public override Entity Substitute(Entity x, Entity value)
+                    => this == x ? value : this;
             }
         }
     }

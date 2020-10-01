@@ -225,6 +225,9 @@ namespace AngouriMath
                 public static implicit operator Complex((double re, double im) v) => Complex.Create(v.re, v.im);
 
                 public override Domain Codomain { get; protected init; } = Domain.Complex;
+
+                public override Entity Substitute(Entity x, Entity value)
+                    => this == x ? value : this;
             }
         }
     }

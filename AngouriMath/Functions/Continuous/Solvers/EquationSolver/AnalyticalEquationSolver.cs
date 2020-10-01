@@ -155,17 +155,17 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
 
             // if no replacement worked, try trigonometry solver
-            if (TrigonometricSolver.SolveLinear(expr, x) is { } trig && trig.IsFiniteSet(out var elsTrig))
+            if (TrigonometricSolver.SolveLinear(expr, x) is { } trig && trig is FiniteSet elsTrig)
                 return elsTrig.Select(ent => TryDowncast(expr, x, ent)).ToSet();
             // // //
 
             // if no trigonometric rules helped, common denominator might help
-            if (CommonDenominatorSolver.Solve(expr, x) is { } commonDenom && commonDenom.IsFiniteSet(out var elsCd))
+            if (CommonDenominatorSolver.Solve(expr, x) is { } commonDenom && commonDenom is FiniteSet elsCd)
                 return elsCd.Select(ent => TryDowncast(expr, x, ent)).ToSet();
             // // //
 
             // if we have fractioned polynomials
-            if (FractionedPolynoms.Solve(expr, x) is { } fractioned && fractioned.IsFiniteSet(out var elsFracs))
+            if (FractionedPolynoms.Solve(expr, x) is { } fractioned && fractioned is FiniteSet elsFracs)
                 return elsFracs.Select(ent => TryDowncast(expr, x, ent)).ToSet();
             // // //
 

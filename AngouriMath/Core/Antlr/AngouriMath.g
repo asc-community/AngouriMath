@@ -23,6 +23,7 @@ options
     using System.Linq;
     using AngouriMath;
     using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
+    using static AngouriMath.Entity.Number;
 }
 
 @lexer::members
@@ -194,8 +195,22 @@ atom returns[Entity value]
     | 'arcsec(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Arcsec($args.list[0]); }
     | 'arccosec(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Arccosec($args.list[0]); }
     | 'gamma(' args = function_arguments ')' { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); }
-    | 'derivative(' args = function_arguments ')' { Assert("derivative", 3, $args.list.Count); $value = MathS.Derivative($args.list[0], $args.list[1], $args.list[2]); }
-    | 'integral(' args = function_arguments ')' { Assert("integral", 3, $args.list.Count); $value = MathS.Integral($args.list[0], $args.list[1], $args.list[2]); }
+    | 'derivative(' args = function_arguments ')' 
+        { 
+            Assert("derivative", 3, $args.list.Count); 
+            if ($args.list[2] is Integer { EInteger: var asEInt })
+                $value = MathS.Derivative($args.list[0], $args.list[1], asEInt.ToInt32Checked());
+            else
+                throw new ParseException("Expected number for the third argument of derivative");
+        }
+    | 'integral(' args = function_arguments ')' 
+        { 
+            Assert("integral", 3, $args.list.Count); 
+            if ($args.list[2] is Integer { EInteger: var asEInt })
+                $value = MathS.Integral($args.list[0], $args.list[1], asEInt.ToInt32Checked());
+            else
+                throw new ParseException("Expected number for the third argument of integral");
+        }
     | 'limit(' args = function_arguments ')' { Assert("limit", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2]); }
     | 'limitleft(' args = function_arguments ')' { Assert("limitleft", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Core.ApproachFrom.Left); }
     | 'limitright(' args = function_arguments ')' { Assert("limitright", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Core.ApproachFrom.Right); }

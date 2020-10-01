@@ -146,6 +146,9 @@ namespace AngouriMath
                 public static implicit operator Rational(ERational value) => Create(value);
 
                 public override Domain Codomain { get; protected init; } = Domain.Rational;
+
+                public override Entity Substitute(Entity x, Entity value)
+                    => this == x ? value : this;
             }
         }
     }

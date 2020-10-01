@@ -35,7 +35,7 @@ namespace AngouriMath
             /// <returns>Whether this element is found</returns>
             public abstract bool Contains(Entity entity);
 
-            public readonly static Set Empty = new FiniteSet();
+            public readonly static FiniteSet Empty = new FiniteSet();
         }
 
         public static implicit operator Entity(Domain domain) => Set.SpecialSet.Create(domain);

@@ -23,7 +23,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     using static Entity.Number;
     internal static class FractionedPolynoms
     {
-        internal static SetNode? Solve(Entity expr, Variable x)
+        internal static Set? Solve(Entity expr, Variable x)
         {
             var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
                 expr, entity => entity.ContainsNode(x)

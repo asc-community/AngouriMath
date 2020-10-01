@@ -24,6 +24,7 @@ namespace AngouriMath.Core.Antlr {
     using System.Linq;
     using AngouriMath;
     using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
+    using static AngouriMath.Entity.Number;
 
 using System;
 using System.IO;
@@ -1451,7 +1452,13 @@ internal partial class AngouriMathParser : Parser {
 				State = 342; Match(T__43);
 				State = 343; _localctx.args = function_arguments();
 				State = 344; Match(T__24);
-				 Assert("derivative", 3, _localctx.args.list.Count); _localctx.value =  MathS.Derivative(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
+				 
+				            Assert("derivative", 3, _localctx.args.list.Count); 
+				            if (_localctx.args.list[2] is Integer { EInteger: var asEInt })
+				                _localctx.value =  MathS.Derivative(_localctx.args.list[0], _localctx.args.list[1], asEInt.ToInt32Checked());
+				            else
+				                throw new ParseException("Expected number for the third argument of derivative");
+				        
 				}
 				break;
 			case T__44:
@@ -1460,7 +1467,13 @@ internal partial class AngouriMathParser : Parser {
 				State = 347; Match(T__44);
 				State = 348; _localctx.args = function_arguments();
 				State = 349; Match(T__24);
-				 Assert("integral", 3, _localctx.args.list.Count); _localctx.value =  MathS.Integral(_localctx.args.list[0], _localctx.args.list[1], _localctx.args.list[2]); 
+				 
+				            Assert("integral", 3, _localctx.args.list.Count); 
+				            if (_localctx.args.list[2] is Integer { EInteger: var asEInt })
+				                _localctx.value =  MathS.Integral(_localctx.args.list[0], _localctx.args.list[1], asEInt.ToInt32Checked());
+				            else
+				                throw new ParseException("Expected number for the third argument of integral");
+				        
 				}
 				break;
 			case T__45:

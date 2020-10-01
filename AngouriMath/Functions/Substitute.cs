@@ -26,7 +26,6 @@ namespace AngouriMath
     partial record Entity
     {
         #region Simple
-
         partial record Variable
         {
             public override Entity Substitute(Entity x, Entity value)

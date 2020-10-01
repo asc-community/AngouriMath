@@ -16,9 +16,11 @@ using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Extensions;
 
 namespace AngouriMath.Functions.Algebra.NumericalSolving
 {
+    using static AngouriMath.Entity.Set;
     using static Entity;
     using static Entity.Number;
     internal static class NumericalInequalitySolver
@@ -45,15 +47,13 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
             var compiled = expr.Compile(x);
             var roots = expr.SolveNt(x);
             var realRoots = roots.OfType<Real>().OrderBy(x => x).ToList();
-            var realRootsSet = new Set();
-            foreach (var root in realRoots)
-                realRootsSet.Add(root);
+            var realRootsSet = realRoots.ToSet();
             if (realRoots.Count > 0)
             {
                 realRoots.Insert(0, realRoots[0] - 5);
                 realRoots.Insert(realRoots.Count, realRoots[realRoots.Count - 1] + 5);
             }
-            var result = new Set();
+            var resultBuilder = new FiniteSetBuilder();
             for(int i = 0; i < realRoots.Count - 1; i++)
             {
                 var left = realRoots[i];
@@ -62,9 +62,10 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                 var val = compiled.Call(point.ToNumerics());
                 //if (Corresponds(val.AsRealNumber()))
                 if (Corresponds(val.Real))
-                    result.Add((left, right, false, false));
+                    resultBuilder.Add(new Interval(left, false, right, false));
             }
-            return (sign & MathS.Inequality.EqualsFlag) != 0 ? (Set)(realRootsSet | result) : result;
+            var result = resultBuilder.ToFiniteSet();
+            return (sign & MathS.Inequality.EqualsFlag) != 0 ? MathS.Union(realRootsSet, result) : result;
         }
     }
 }
