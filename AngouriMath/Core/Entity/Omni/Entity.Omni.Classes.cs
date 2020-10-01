@@ -182,6 +182,10 @@ namespace AngouriMath
                         throw new ElementInSetAmbiguousException("The inteval's ends should be real numbers");
                     return IsALessThanB(left.Value, re, LeftClosed) && IsALessThanB(right.Value, re, RightClosed);
                 }
+
+                public override Priority Priority => Priority.Leaf;
+
+                protected override Entity[] InitDirectChildren() => new[] { Left, Right };
             }
             #endregion
 
@@ -210,6 +214,11 @@ namespace AngouriMath
                 private Entity New(Entity var, Entity predicate)
                     => ReferenceEquals(Var, var) && ReferenceEquals(Predicate, predicate) ?
                     this : new ConditionalSet(var, predicate);
+
+                public override Priority Priority => Priority.Leaf;
+
+                // TODO: Does conditional set have children?
+                protected override Entity[] InitDirectChildren() => new Entity[] { };
             }
             #endregion
 
@@ -238,6 +247,10 @@ namespace AngouriMath
                     innerStorage[domain] = result;
                     return result;
                 }
+
+                public override Priority Priority => Priority.Leaf;
+
+                protected override Entity[] InitDirectChildren() => new Entity[] { };
             }
             #endregion  
 
@@ -260,6 +273,10 @@ namespace AngouriMath
                         throw new ElementInSetAmbiguousException("One of union's operands is not set");
                     return left.Contains(entity) || right.Contains(entity);
                 }
+
+                public override Priority Priority => Priority.Union;
+
+                protected override Entity[] InitDirectChildren() => new[] { Left, Right };
             }
             #endregion
 
@@ -282,6 +299,10 @@ namespace AngouriMath
                         throw new ElementInSetAmbiguousException("One of union's operands is not set");
                     return left.Contains(entity) && right.Contains(entity);
                 }
+
+                public override Priority Priority => Priority.Intersection;
+
+                protected override Entity[] InitDirectChildren() => new[] { Left, Right };
             }
             #endregion
 
@@ -304,6 +325,10 @@ namespace AngouriMath
                         throw new ElementInSetAmbiguousException("One of union's operands is not set");
                     return left.Contains(entity) && !right.Contains(entity);
                 }
+
+                public override Priority Priority => Priority.SetMinus;
+
+                protected override Entity[] InitDirectChildren() => new[] { Left, Right };
             }
             #endregion
         }

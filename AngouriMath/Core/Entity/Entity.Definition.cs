@@ -49,8 +49,14 @@ namespace AngouriMath.Core
         Factorial = 70  | NumericalOperation, 
         Func      = 80  | NumericalOperation, 
 
+        SetOperation = 0x3000,
 
-        Leaf      = 100 | NumericalOperation,
+        SetMinus     = 20 | SetOperation,
+        Union        = 30 | SetOperation,
+        Intersection = 40 | SetOperation,
+
+
+        Leaf      = 100 | SetOperation,
     }
     public interface ILatexiseable { public string Latexise(); }
 }

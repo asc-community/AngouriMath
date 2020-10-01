@@ -1,5 +1,7 @@
 ﻿using AngouriMath.Core.Exceptions;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Core
@@ -34,15 +36,28 @@ namespace AngouriMath.Core
             Types[(int)domain].IsAssignableFrom(entity.GetType());
 
         // that should only be used in parser
+
+        private readonly static (Domain domain, string name)[] DomainStringPairs = new[] 
+        { 
+            (Domain.Boolean, "BB"),
+            (Domain.Integer, "ZZ"),
+            (Domain.Rational, "QQ"),
+            (Domain.Real, "RR"),
+            (Domain.Complex, "CC"),
+            (Domain.Any, "AA")
+        };
+
+        private static Dictionary<string, Domain> FromStringToDomain = 
+            DomainStringPairs.ToDictionary(x => x.name, x => x.domain);
+
+        private static Dictionary<Domain, string> FromDomainToString =
+            DomainStringPairs.ToDictionary(x => x.domain, x => x.name);
+
+        public static string DomainToString(Domain domain)
+            => FromDomainToString.TryGetValue(domain, out var res) ? res : throw new AngouriBugException("Unrecognized domain");
+
         public static Domain Parse(Entity expr)
-            => expr switch
-            {
-                Variable(var name) when name == "ZZ" => Domain.Integer,
-                Variable(var name) when name == "QQ" => Domain.Rational,
-                Variable(var name) when name == "RR" => Domain.Real,
-                Variable(var name) when name == "CC" => Domain.Complex,
-                Variable(var name) when name == "BB" => Domain.Boolean,
-                _ => throw new ParseException($"Unrecognized domain {expr}")
-            };
+            => expr is Variable(var name) && FromStringToDomain.TryGetValue(name, out var dom) ? dom : 
+                throw new ParseException($"Unrecognized domain {expr}");
     }
 }

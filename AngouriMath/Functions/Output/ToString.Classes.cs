@@ -200,5 +200,54 @@ namespace AngouriMath
             internal override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} <= {Right.Stringize(Right.Priority < Priority)}";
         }
+
+        partial record Set
+        {
+            partial record FiniteSet
+            {
+                internal override string Stringize()
+                    => $"{{{string.Join(", ", Elements)}}}";
+            }
+
+            partial record Interval
+            {
+                internal override string Stringize()
+                {
+                    var left = LeftClosed ? "[" : "(";
+                    var right = RightClosed ? "]" : ")";
+                    return left + Left.Stringize() + "; " + Right.Stringize() + right;
+                }
+            }
+
+            partial record ConditionalSet
+            {
+                internal override string Stringize()
+                    => $"{{ {Var} | {Predicate} }}";
+            }
+
+            partial record SpecialSet
+            {
+                internal override string Stringize()
+                    => DomainsFunctional.DomainToString(SetType);
+            }
+
+            partial record Unionf
+            {
+                internal override string Stringize()
+                    => $@"{Left.Stringize(Left.Priority < Priority)} \/ {Right.Stringize(Right.Priority < Priority)}";
+            }
+
+            partial record Intersectionf
+            {
+                internal override string Stringize()
+                    => $@"{Left.Stringize(Left.Priority < Priority)} /\ {Right.Stringize(Right.Priority < Priority)}";
+            }
+
+            partial record SetMinusf
+            {
+                internal override string Stringize()
+                    => $@"{Left.Stringize(Left.Priority < Priority)} \ {Right.Stringize(Right.Priority < Priority)}";
+            }
+        }
     }
 }
