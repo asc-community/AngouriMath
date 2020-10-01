@@ -21,6 +21,7 @@ using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
@@ -240,55 +241,108 @@ namespace AngouriMath
             // f(x) & b = value
             // f(x) = Piecewise...
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Piecewise to be implemented");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Orf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Piecewise to be implemented");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Xorf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Piecewise to be implemented");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Impliesf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Piecewise to be implemented");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Equalsf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Intervals to be Entities");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Greaterf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Intervals to be Entities");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record GreaterOrEqualf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Intervals to be Entities");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Lessf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Intervals to be Entities");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record LessOrEqualf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Intervals to be Entities");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+        }
+
+        partial record Set
+        {
+            partial record FiniteSet
+            {
+                // set{,,,} = value
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => this == x ? new[] { value } : Enumerable.Empty<Entity>();
+            }
+
+            partial record Interval
+            {
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                {
+                    if (this == x)
+                        return new[] { value };
+                    if (x is FiniteSet fs && fs.Count == 1)
+                        throw FutureReleaseException.Raised("Piecewise required", "1.2");
+                    return Enumerable.Empty<Entity>();
+                }
+            }
+
+            partial record ConditionalSet
+            {
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => this == x ? new[] { value } : Enumerable.Empty<Entity>();
+            }
+
+            partial record SpecialSet
+            {
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => new[] { this };
+            }
+
+            partial record Unionf
+            {
+                //
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                {
+
+                }
+            }
+
+            partial record Intersectionf
+            {
+
+            }
+
+            partial record SetMinusf
+            {
+
+            }
         }
     }
 }

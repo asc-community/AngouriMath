@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AngouriMath.Core.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using static AngouriMath.Entity;
@@ -16,7 +17,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return new Set(MathS.Sets.Interval(c, Number.Real.PositiveInfinity).SetLeftClosed(false).SetRightClosed(false));
             if (expr is Minusf(var c1, var v1) && v1 == x && !c1.ContainsNode(x))
                 return new Set(MathS.Sets.Interval(Number.Real.NegativeInfinity, c1).SetLeftClosed(false).SetRightClosed(false));
-            throw new NotImplementedException("Inequalities are not implemented yet");
+            throw FutureReleaseException.Raised("Inequalities are not implemented yet", "1.2.1");
         }
     }
 }

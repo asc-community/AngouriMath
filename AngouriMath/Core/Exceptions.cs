@@ -14,11 +14,12 @@
  */
 
 using System;
+using System.Reflection;
 
 namespace AngouriMath.Core.Exceptions
 {
     /// <summary>If one was thrown, the exception is probably not foreseen by AM. Report it is an issue</summary>
-    public class AngouriBugException : Exception { public AngouriBugException(string msg) : base(msg) { } }
+    public class AngouriBugException : Exception { public AngouriBugException(string msg) : base(msg + "\n please report about it to the official repository") { } }
 
     /// <summary>If one is thrown, the user's input is invalid</summary>
     public class MathSException : ArgumentException { public MathSException(string message) : base(message) { } }
@@ -57,4 +58,19 @@ namespace AngouriMath.Core.Exceptions
 
     /// <summary> Cannot figure out whether the entity is in the set </summary>
     public class ElementInSetAmbiguousException : MathSException { public ElementInSetAmbiguousException(string msg) : base(msg) { } }
+
+    public class FutureReleaseException : NotImplementedException
+    {
+        private FutureReleaseException(string msg) : base(msg) {}
+
+        internal static Exception Raised(string feature, string plannedVersion)
+        {
+            var currVersion = Assembly.GetExecutingAssembly().GetName().Version;
+            var vers = new Version(plannedVersion);
+            if (currVersion > vers)
+                return new AngouriBugException($"{feature} was planned for {plannedVersion} but hasn't been released by {currVersion}");
+            else
+                return new FutureReleaseException($"Feature {feature} will be completed by {plannedVersion}. You are on {currVersion}");
+        }
+    }
 }

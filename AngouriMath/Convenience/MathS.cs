@@ -23,6 +23,7 @@ using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Algebra.NumericalSolving;
 using AngouriMath.Functions.Boolean;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath.Core
 {
@@ -769,7 +770,7 @@ namespace AngouriMath
 #pragma warning disable IDE0060 // Remove unused parameter
             public static Entity? Integral(Entity expr, Variable x) =>
 #pragma warning restore IDE0060 // Remove unused parameter
-                throw new NotImplementedException("Integrals not implemented yet");
+                throw FutureReleaseException.Raised("Integrals", "1.2.3");
         }
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
