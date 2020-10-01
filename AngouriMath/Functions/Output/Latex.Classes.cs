@@ -300,5 +300,54 @@ namespace AngouriMath
             public override string Latexise()
                 => $@"{Left.Latexise(Left.Priority < Priority)} \leqslant {Right.Latexise(Right.Priority < Priority)}";
         }
+
+        partial record Set
+        {
+            partial record FiniteSet
+            {
+                public override string Latexise()
+                    => $@"\left\{{{Stringize()}}}";
+            }
+
+            partial record Interval
+            {
+                public override string Latexise()
+                {
+                    var left = LeftClosed ? "[" : "(";
+                    var right = RightClosed ? "]" : ")";
+                    return @"\left" + left + Left.Stringize() + "; " + Right.Stringize() + @"\right" + right;
+                }
+            }
+
+            partial record ConditionalSet
+            {
+                public override string Latexise()
+                    => $@"\left\{{ {Var.Latexise()} | {Predicate.Latexise()} \right}}";
+            }
+
+            partial record SpecialSet
+            {
+                public override string Latexise()
+                    => $@"\mathbb{{{Stringize()[0]}}}";
+            }
+
+            partial record Unionf
+            {
+                public override string Latexise()
+                    => $@"{Left.Latexise(Left.Priority < Priority)} \cup {Right.Latexise(Right.Priority < Priority)}";
+            }
+
+            partial record Intersectionf
+            {
+                public override string Latexise()
+                    => $@"{Left.Latexise(Left.Priority < Priority)} \cap {Right.Latexise(Right.Priority < Priority)}";
+            }
+
+            partial record SetMinusf
+            {
+                public override string Latexise()
+                    => $@"{Left.Latexise(Left.Priority < Priority)} \setminus {Right.Latexise(Right.Priority < Priority)}";
+            }
+        }
     }
 }
