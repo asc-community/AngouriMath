@@ -26,6 +26,19 @@ namespace AngouriMath
     partial record Entity
     {
         #region Simple
+
+        partial record Variable
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : this;
+        }
+
+        partial record Tensor
+        {
+            public override Entity Substitute(Entity x, Entity value)
+                => x == this ? value : Elementwise(c => c.Substitute(x, value));
+        }
+
         partial record Sumf
         {
             public override Entity Substitute(Entity x, Entity value)

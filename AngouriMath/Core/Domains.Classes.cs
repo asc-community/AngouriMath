@@ -184,5 +184,42 @@ namespace AngouriMath
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
+        partial record Set
+        {
+            partial record FiniteSet
+            {
+                public override Domain Codomain { get; protected init; } = Domain.Any;
+            }
+
+            partial record Interval
+            {
+                public override Domain Codomain { get; protected init; } = Domain.Any;
+            }
+
+            partial record ConditionalSet
+            {
+                public override Domain Codomain { get; protected init; } = Domain.Any;
+            }
+
+            partial record SpecialSet
+            {
+                public override Domain Codomain { get; protected init; } = Domain.Any;
+            }
+
+            partial record Unionf
+            {
+                public override Domain Codomain { get; protected init; } = Domain.Any;
+            }
+
+            partial record Intersectionf
+            {
+                public override Domain Codomain { get; protected init; } = Domain.Any;
+            }
+
+            partial record SetMinusf
+            {
+                public override Domain Codomain { get; protected init; } = Domain.Any;
+            }
+        }
     }
 }
