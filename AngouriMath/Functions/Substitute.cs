@@ -207,7 +207,6 @@ namespace AngouriMath
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
 
-
         partial record Set
         {
             partial record FiniteSet
@@ -342,7 +341,9 @@ namespace AngouriMath
                 // derive(temp_1 ^ 2 + a, temp_1) -> derive(x ^ 2 + a, temp_1)
                 var postSubs = subs.Substitute(replacement, Var);
 
-                return New(postSubs, Var);
+                var dst = Destination.Substitute(x, value);
+
+                return New(postSubs, Var, dst, ApproachFrom);
             }
         }
 

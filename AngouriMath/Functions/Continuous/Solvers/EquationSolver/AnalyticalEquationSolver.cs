@@ -21,6 +21,7 @@ using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Extensions;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {
@@ -33,7 +34,7 @@ namespace AngouriMath
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        public SetNode SolveEquation(Variable x) => EquationSolver.Solve(this, x);
+        public Set SolveEquation(Variable x) => EquationSolver.Solve(this, x);
     }
 }
 
@@ -79,7 +80,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// and compensateSolving "compensates" this by applying expression inverter,
         /// aka compensating the equation formed by the previous solver
         /// </param>
-        internal static SetNode Solve(Entity expr, Variable x, bool compensateSolving = false)
+        internal static Set Solve(Entity expr, Variable x, bool compensateSolving = false)
         {
             if (expr == x)
                 return new Entity[] { 0 }.ToSet();
@@ -103,9 +104,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             switch (expr)
             {
                 case Mulf(var multiplier, var multiplicand):
-                    return Solve(multiplier, x) | Solve(multiplicand, x);
+                    return MathS.Union(Solve(multiplier, x), Solve(multiplicand, x));
                 case Divf(var dividend, var divisor):
-                    return Solve(dividend, x) - Solve(divisor, x);
+                    return MathS.SetSubtraction(Solve(dividend, x), Solve(divisor, x));
                 case Powf(var @base, _):
                     return Solve(@base, x);
                 case Minusf(var subtrahend, var minuend) when !minuend.ContainsNode(x) && compensateSolving:
@@ -120,7 +121,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     if (lastChild is null)
                         goto default;
                     // TODO: optimize?
-                    return subtrahend.Invert(minuend, lastChild).Select(result => Solve(lastChild - result, x, compensateSolving: true)).Aggregate((a, b) => a | b);
+                    return subtrahend.Invert(minuend, lastChild).Select(result => Solve(lastChild - result, x, compensateSolving: true)).Aggregate((a, b) => MathS.Union(a, b));
                 case Function:
                     return expr.Invert(0, x).Select(ent => TryDowncast(expr, x, ent)).ToSet();
                 default:
@@ -137,16 +138,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 foreach (var alt in expr.Alternate(4))
                 {
                     if (!alt.ContainsNode(x))
-                        return new Set(); // in this case there is either 0 or +oo solutions
+                        return Set.Empty; // in this case there is either 0 or +oo solutions
                     var minimumSubtree = TreeAnalyzer.GetMinimumSubtree(alt, x);
                     if (minimumSubtree == x)
                         continue;
                     // Here we are trying to solve for this replacement
                     var solutionsSet = Solve(alt.Substitute(minimumSubtree, newVar), newVar);
-                    if (solutionsSet.IsFiniteSet(out var enums))
+                    if (solutionsSet is FiniteSet enums)
                     {
                         var solutions = enums.Select(solution => Solve(minimumSubtree - solution, x, compensateSolving: true)).Unite();
-                        if (solutions.IsFiniteSet(out var els))
+                        if (solutions is FiniteSet els)
                             return els.Select(ent => TryDowncast(expr, x, ent)).ToSet();
                     }
                 }

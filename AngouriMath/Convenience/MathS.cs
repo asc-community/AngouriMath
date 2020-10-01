@@ -64,7 +64,7 @@ namespace AngouriMath
         /// <param name="equation">An equation that is assumed to equal 0</param>
         /// <param name="var">Variable whose values we are looking for</param>
         /// <returns>A <see cref="Set"/> of possible values or intervals of values</returns>
-        public static SetNode SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
+        public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
 
         /// <summary>
         /// Solves a boolean expression. That is, finds all values for
@@ -294,6 +294,15 @@ namespace AngouriMath
 
         /// <returns>A node</returns>
         public static Entity LessOrEqualThan(Entity a, Entity b) => a <= b;
+        
+        /// <returns>A node</returns>
+        public static Set Union(Entity a, Entity b) => a.Unite(b);
+
+        /// <returns>A node</returns>
+        public static Set Intersection(Entity a, Entity b) => a.Intersect(b);
+
+        /// <returns>A node</returns>
+        public static Set SetSubtraction(Entity a, Entity b) => a.SetSubtract(b);
 
         /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
         /// <param name="name">The name of the <see cref="Variable"/> which equality is based on.</param>

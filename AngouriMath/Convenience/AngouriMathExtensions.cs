@@ -22,6 +22,7 @@ using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath.Extensions
 {
+    using static AngouriMath.Entity.Set;
     using static Entity;
     using static Entity.Number;
 
@@ -31,39 +32,24 @@ namespace AngouriMath.Extensions
         /// Converts your <see cref="IEnumerable"/> into a set of unique values.
         /// </summary>
         /// <returns>A Set</returns>
-        public static Set ToSet(this IEnumerable<Entity> elements)
-            => new Set(elements.Select(c => SetPiece.Element(c)).ToArray());
-
-        /// <summary>
-        /// Converts your <see cref="IEnumerable"/> into a set of unique values.
-        /// </summary>
-        /// <returns>A Set</returns>
-        public static SetNode ToSetNode(this IEnumerable<Entity> elements)
-            => new Set(elements.Select(c => SetPiece.Element(c)).ToArray());
-
-        /// <summary>
-        /// Converts your <see cref="IEnumerable"/> into a set of unique values.
-        /// Guarantees the finiteness of the set
-        /// </summary>
-        /// <returns>A finite set of elements</returns>
-        public static FiniteSet ToFiniteSet(this IEnumerable<Entity> expr) 
-            => new FiniteSet(expr.Select(c => SetPiece.Element(c)));
+        public static FiniteSet ToSet(this IEnumerable<Entity> elements)
+            => new FiniteSet(elements);
 
         /// <summary>
         /// Unites your <see cref="IEnumerable"/> into one <see cref="SetNode"/>.
         /// Applies the "or" operator on those nodes
         /// </summary>
         /// <returns>A set of unique elements</returns>
-        public static SetNode Unite(this IEnumerable<SetNode> sets)
-            => sets.Aggregate((a, b) => a | b);
+        public static Set Unite(this IEnumerable<Set> sets)
+            => sets.Aggregate((a, b) => MathS.Union(a, b));
 
         /// <summary>
         /// Computes the intersection of your <see cref="IEnumerable"/>'s and makes it one <see cref="SetNode"/>.
         /// Applies the "and" operator on those nodes
         /// </summary>
         /// <returns>A set of unique elements</returns>
-        public static SetNode Intersect(this IEnumerable<SetNode> sets)
-            => sets.Aggregate((a, b) => a & b);
+        public static Set Intersect(this IEnumerable<Set> sets)
+            => sets.Aggregate((a, b) => MathS.Intersection(a, b));
 
         /// <summary>
         /// Parses the expression into <see cref="Entity"/>.
@@ -126,7 +112,7 @@ namespace AngouriMath.Extensions
         /// </summary>
         /// <param name="x">The variable to solve over</param>
         /// <returns>A <see cref="SetNode"/> of roots</returns>
-        public static SetNode SolveEquation(this string expr, Variable x)
+        public static Set SolveEquation(this string expr, Variable x)
             => expr.ToEntity().SolveEquation(x);
 
         /// <summary>
@@ -135,7 +121,7 @@ namespace AngouriMath.Extensions
         /// </summary>
         /// <param name="vars">The variables over which to solve</param>
         /// <returns>A <see cref="SetNode"/> of roots</returns>
-        public static SetNode Solve(this string expr, Variable var)
+        public static Set Solve(this string expr, Variable var)
             => expr.ToEntity().Solve(var);
 
         /// <summary>

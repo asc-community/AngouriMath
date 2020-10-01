@@ -311,35 +311,35 @@ namespace AngouriMath
         }
         public partial record Derivativef
         {
-            protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations.Evaled) switch
+            protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations) switch
             {
                 (Tensor expr, var var, var iters) => expr.Elementwise(n => new Derivativef(n, var, iters).Evaled),
-                (var expr, _, Integer(0)) => expr,
+                (var expr, _, 0) => expr,
                 // TODO: consider Integral for negative cases
-                (var expr, Variable var, Integer { EInteger: var asInt }) => expr.Derive(var, asInt),
+                (var expr, Variable var, var asInt) => expr.Derive(var, asInt),
                 _ => this
             };
             internal override Entity InnerSimplify() =>
-                Var.InnerSimplifyWithCheck() is Variable var && Iterations.InnerSimplifyWithCheck() is Integer { EInteger: var asInt }
-                ? asInt.IsZero
+                Var.InnerSimplifyWithCheck() is Variable var
+                ? Iterations == 0
                     ? Expression.InnerSimplifyWithCheck()
-                    : Expression.Derive(var, asInt)
+                    : Expression.Derive(var, Iterations)
                 : this;
         }
         public partial record Integralf
         {
-            protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations.Evaled) switch
+            protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations) switch
             {
                 (Tensor expr, var var, var iters) => expr.Elementwise(n => new Integralf(n, var, iters).Evaled),
-                (var expr, _, Integer(0)) => expr,
+                (var expr, _, 0) => expr,
                 // TODO: consider Derivative for negative cases
-                (var expr, Variable var, Integer { EInteger: var asInt }) =>
+                (var expr, Variable var, var asInt) =>
                     throw FutureReleaseException.Raised("Integration is not implemented yet", "1.2.3"),
                 _ => this
             };
             internal override Entity InnerSimplify() =>
-                Var.InnerSimplifyWithCheck() is Variable && Iterations.InnerSimplifyWithCheck() is Integer { EInteger: var asInt }
-                ? asInt.IsZero
+                Var.InnerSimplifyWithCheck() is Variable
+                ? Iterations == 0
                     ? Expression.InnerSimplifyWithCheck()
                     : throw FutureReleaseException.Raised("Integration is not implemented yet", "1.2.3")
                 : this;
