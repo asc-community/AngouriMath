@@ -25,6 +25,7 @@ namespace AngouriMath.Core.Antlr {
     using AngouriMath;
     using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
     using static AngouriMath.Entity.Number;
+    using AngouriMath.Core.Exceptions;
 
 
 using Antlr4.Runtime.Misc;

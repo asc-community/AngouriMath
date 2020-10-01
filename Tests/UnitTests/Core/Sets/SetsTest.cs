@@ -2,47 +2,47 @@
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity;
 using Xunit;
+using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Core
 {
     public class SetsTest
     {
-        private readonly Set A = MathS.Sets.Empty();
-        private readonly Set B = MathS.Sets.Empty();
-        private readonly Set C = MathS.Sets.Empty();
+        private readonly Set A = MathS.Sets.Empty;
+        private readonly Set B = MathS.Sets.Empty;
+        private readonly Set C = MathS.Sets.Empty;
 
         public SetsTest()
         {
-            A.AddElements(3, 4, 5);
-            A.AddInterval(MathS.Sets.Interval(10, 15).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(14, 19).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(Complex.Create(8, 3), Complex.Create(11, 5)).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(Complex.Create(3, 51), Complex.Create(3, 61)));
+            A = MathS.Union(A, new FiniteSet(3, 4, 5));
+            A = MathS.Union(A, new Interval(10, true, 15, false));
+            A = MathS.Union(A, new Interval(14, true, 19, false));
+            
+            B = MathS.Union(B, new FiniteSet(11));
 
-            B.AddElements(11);
-
-            C.AddInterval(MathS.Sets.Interval(-10, 10).SetLeftClosed(false));
-            C.AddInterval(MathS.Sets.Interval(-3, 3).SetRightClosed(false));
-            C.AddInterval(MathS.Sets.Interval(-3 * MathS.i, 3 * MathS.i).SetRightClosed(true, false));
+            C = MathS.Union(C, new Interval(-10, false, 10, true));
+            C = MathS.Union(C, new Interval(-3, true, 3, false));
         }
 
-        [Fact]
-        public void IndividualNumbersInIndividualOneSet()
-        {
-            Assert.DoesNotContain((Entity)2, A);
-            Assert.Contains((Entity)3, A);
-            Assert.DoesNotContain((Entity)2.9, A);
-            Assert.Contains((Entity)4, A);
-            Assert.Contains((Entity)5, A);
-        }
+        private void AssertContains(Set set, Entity el)
+            => Assert.True(set.Contains(el), $"{set} does not contain {el} but should");
+
+        private void AssertNotContains(Set set, Entity el)
+            => Assert.True(!set.Contains(el), $"{set} contains {el} but should not");
+
+        [Fact] public void IndividualNumbersInIndividualOneSet1() => AssertNotContains(A, 2);
+        [Fact] public void IndividualNumbersInIndividualOneSet2() => AssertContains(A, 3);
+        [Fact] public void IndividualNumbersInIndividualOneSet3() => AssertNotContains(A, 2.9);
+        [Fact] public void IndividualNumbersInIndividualOneSet4() => AssertContains(A, 4);
+        [Fact] public void IndividualNumbersInIndividualOneSet5() => AssertContains(A, 5);
 
         [Fact]
         public void InvididualNumbersInIntervalsOneSet()
         {
-            Assert.Contains(new Interval(11, 13), A);
-            Assert.Contains(new Interval(11, 16), A);
-            Assert.Contains(new Interval(10, 13), A);
-            Assert.Contains(new Interval(10, 15), A);
+            Assert.Contains(new Interval(11, true, 13, true), A);
+            Assert.Contains(new Interval(11, true, 16, true), A);
+            Assert.Contains(new Interval(10, true, 13, true), A);
+            Assert.Contains(new Interval(10, true, 15, true), A);
         }
 
         

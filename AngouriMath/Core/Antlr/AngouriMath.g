@@ -24,6 +24,7 @@ options
     using AngouriMath;
     using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
     using static AngouriMath.Entity.Number;
+    using AngouriMath.Core.Exceptions;
 }
 
 @lexer::members
