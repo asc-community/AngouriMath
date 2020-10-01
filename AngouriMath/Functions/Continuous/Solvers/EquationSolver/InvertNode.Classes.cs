@@ -327,10 +327,24 @@ namespace AngouriMath
 
             partial record Unionf
             {
-                //
+                // f(x) \/ A = value
+                // f(x) = (value \ A) \/ PowerSet(A)
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 {
-
+                    var (withX, withoutX) = Left.ContainsNode(x) ? (Left, Right) : (Right, Left);
+                    if (value is FiniteSet valueFiniteSet && withoutX is FiniteSet A)
+                    {
+                        var sub = FiniteSet.Subtract(valueFiniteSet, A);
+                        var answers = new List<Entity>();
+                        foreach (var ans in A.GetPowerSet())
+                        {
+                            if (ans is not FiniteSet finiteSet)
+                                throw new AngouriBugException("PowerSet must return a set of sets");
+                            answers.AddRange(withX.InvertNode(FiniteSet.Unite(sub, finiteSet), x));
+                        }
+                        return answers;
+                    }
+                    return withX.InvertNode(value.SetSubtract(withoutX), x);
                 }
             }
 

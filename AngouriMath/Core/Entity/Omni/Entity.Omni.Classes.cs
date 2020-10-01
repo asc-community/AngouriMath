@@ -20,6 +20,7 @@ using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Functions;
+using AngouriMath.Functions.Boolean;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
@@ -145,6 +146,30 @@ namespace AngouriMath
                         if (!other.Contains(pair.Value))
                             return false;
                     return true;
+                }
+
+                /// <summary>
+                /// Finds such a set that only contains all subsets of the given set
+                /// </summary>
+                public FiniteSet GetPowerSet() => powerSet ??= PowerSetWorkout();
+                
+                private FiniteSet? powerSet;
+
+                private FiniteSet PowerSetWorkout()
+                {
+                    var sets = new List<Entity>();
+                    var state = new bool[Count];
+                    var elements = Elements.ToArray();
+                    do
+                    {
+                        var innerSetElements = new List<Entity>();
+                        for (int i = 0; i < Count; i++)
+                            if (state[i])
+                                innerSetElements.Add(elements[i]);
+                        sets.Add(new FiniteSet(innerSetElements, noCheck: true));
+                    }
+                    while (BooleanSolver.Next(state));
+                    return new FiniteSet(sets, noCheck: true);
                 }
             }
             #endregion
