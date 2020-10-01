@@ -207,6 +207,47 @@ namespace AngouriMath
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
 
+
+        partial record Set
+        {
+            partial record FiniteSet
+            {
+                public override Entity Substitute(Entity x, Entity value)
+                    => x == this ? value : Apply(c => c.Substitute(x, value));
+            }
+
+            partial record Interval
+            {
+                public override Entity Substitute(Entity x, Entity value)
+                    => New(Left.Substitute(x, value), Right.Substitute(x, value));
+            }
+
+            partial record SpecialSet
+            {
+                public override Entity Substitute(Entity x, Entity value)
+                    => x == this ? value : this;
+            }
+
+            partial record Unionf
+            {
+                public override Entity Substitute(Entity x, Entity value)
+                    => x == this ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+            }
+
+            partial record Intersectionf
+            {
+                public override Entity Substitute(Entity x, Entity value)
+                    => x == this ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+            }
+
+            partial record SetMinusf
+            {
+                public override Entity Substitute(Entity x, Entity value)
+                    => x == this ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
+            }
+        }
+
+
         #endregion
 
         #region Local variable preserved

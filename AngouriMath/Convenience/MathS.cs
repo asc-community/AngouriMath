@@ -40,6 +40,7 @@ namespace AngouriMath
     using static Entity.Number;
     using NumericsComplex = System.Numerics.Complex;
     using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
+    using static Entity.Set;
     /// <summary>Use functions from this class</summary>
     public static class MathS
     {
@@ -690,32 +691,32 @@ namespace AngouriMath
         {
             /// <summary>Creates an instance of an empty <see cref="Set"/></summary>
             /// <returns>A <see cref="Set"/> with no elements</returns>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static Set Empty() => new Set();
+            public static Set Empty => Set.Empty;
 
             /// <returns>A set of all <see cref="Complex"/>s</returns>
-            public static Set C() => Set.C();
+            public static Set C => SpecialSet.Create(Domain.Complex);
 
             /// <returns>A set of all <see cref="Real"/>s</returns>
-            public static Set R() => Set.R();
+            public static Set R => SpecialSet.Create(Domain.Real);
+
+            /// <returns>A set of all <see cref="Rational"/>s</returns>
+            public static Set Q => SpecialSet.Create(Domain.Rational);
+
+            /// <returns>A set of all <see cref="Integers"/></returns>
+            public static Set Z => SpecialSet.Create(Domain.Integer);
 
             /// <summary>
             /// Creates a <see cref="Set"/> that you can fill with elements
             /// Later on, you may add an Interval if you wish
             /// </summary>
-            public static Set Finite(params Entity[] entities) => Set.Finite(entities);
+            public static Set Finite(params Entity[] entities) => new FiniteSet(entities);
 
             /// <summary>
             /// Creates an interval. To modify it, use e.g.
             /// <see cref="Interval.SetLeftClosed(bool)"/>
             /// (see more alike functions in <see cref="Set"/> documentation)
             /// </summary>
-            public static Interval Interval(Entity from, Entity to) => new(from, to);
-
-            /// <summary>
-            /// Creates an element for <see cref="Set"/>. One can be created implicitly, <code>Piece a = 3;</code>
-            /// </summary>
-            public static OneElementPiece Element(Entity element) => new OneElementPiece(element);
+            public static Interval Interval(Entity from, Entity to) => new(from, true, to, true);
         }
 
         /// <summary>
