@@ -34,7 +34,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func) 
                 => func(this);
             public override Priority Priority => Priority.Leaf;
-            protected override Entity[] InitDirectChildren() => new Entity[] { };
+            protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
 
             /// <summary>
             /// Use this when parsing one boolean value

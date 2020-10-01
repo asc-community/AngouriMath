@@ -47,10 +47,10 @@ namespace AngouriMath.Core
             (Domain.Any, "AA")
         };
 
-        private static Dictionary<string, Domain> FromStringToDomain = 
+        private readonly static Dictionary<string, Domain> FromStringToDomain = 
             DomainStringPairs.ToDictionary(x => x.name, x => x.domain);
 
-        private static Dictionary<Domain, string> FromDomainToString =
+        private readonly static Dictionary<Domain, string> FromDomainToString =
             DomainStringPairs.ToDictionary(x => x.domain, x => x.name);
 
         public static string DomainToString(Domain domain)

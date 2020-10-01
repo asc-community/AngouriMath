@@ -243,7 +243,7 @@ namespace AngouriMath
                 public override Priority Priority => Priority.Leaf;
 
                 // TODO: Does conditional set have children?
-                protected override Entity[] InitDirectChildren() => new Entity[] { };
+                protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
             }
             #endregion
 
@@ -275,7 +275,7 @@ namespace AngouriMath
 
                 public override Priority Priority => Priority.Leaf;
 
-                protected override Entity[] InitDirectChildren() => new Entity[] { };
+                protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
             }
             #endregion  
 

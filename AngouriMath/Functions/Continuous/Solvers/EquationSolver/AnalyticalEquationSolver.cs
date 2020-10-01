@@ -88,12 +88,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // Applies an attempt to downcast roots
             static Entity TryDowncast(Entity equation, Variable x, Entity root)
             {
-                if (!(root.Evaled is Complex preciseValue))
+                if (root.Evaled is not Complex preciseValue)
                     return root;
                 var downcasted = MathS.Settings.FloatToRationalIterCount.As(20, () =>
                     MathS.Settings.PrecisionErrorZeroRange.As(1e-7m, () =>
                         Complex.Create(preciseValue.RealPart, preciseValue.ImaginaryPart)));
-                if (!(equation.Substitute(x, downcasted).Evaled is Complex error))
+                if (equation.Substitute(x, downcasted).Evaled is not Complex error)
                     return root;
                 return IsZero(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational
                        ? downcasted : root.InnerSimplify();
