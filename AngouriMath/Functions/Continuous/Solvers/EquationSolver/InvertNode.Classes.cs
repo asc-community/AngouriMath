@@ -350,12 +350,16 @@ namespace AngouriMath
 
             partial record Intersectionf
             {
-
+                // f(x) /\ A = value
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.2");
             }
 
             partial record SetMinusf
             {
-
+                // f(x) \ A = value
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.2");
             }
         }
     }
