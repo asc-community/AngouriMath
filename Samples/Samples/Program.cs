@@ -22,6 +22,7 @@ namespace Samples
             Entity expr1 = "1.0000000000000000000001";
             Entity expr2 = "1";
             Console.WriteLine(expr1 + expr2);
+            
         }
     }
 }

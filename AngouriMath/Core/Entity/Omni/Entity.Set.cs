@@ -57,5 +57,9 @@ namespace AngouriMath
         /// </summary>
         /// <returns>A new node</returns>
         public Entity SetSubtract(Entity anotherSet) => new SetMinusf(this, anotherSet);
+
+        public static implicit operator Entity((Entity left, Entity right) interval) => new Interval(interval.left, true, interval.right, true);
+
+        public static implicit operator Entity(IEnumerable<Entity> elements) => new FiniteSet(elements);
     }
 }

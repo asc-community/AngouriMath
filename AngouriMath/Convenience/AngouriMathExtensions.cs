@@ -59,6 +59,12 @@ namespace AngouriMath.Extensions
         public static Entity ToEntity(this string expr) => MathS.FromString(expr);
 
         /// <summary>
+        /// Takes a tuple of four and builds an interval
+        /// </summary>
+        public static Interval ToEntity(this (Entity left, bool leftClosed, Entity right, bool rightClosed) arg)
+            => new Interval(arg.left, arg.leftClosed, arg.right, arg.rightClosed);
+
+        /// <summary>
         /// Parses this and simplifies by running <see cref="Entity.Simplify()"/>
         /// </summary>
         /// <returns>Simplified expression</returns>

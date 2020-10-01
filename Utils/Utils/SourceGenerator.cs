@@ -1,0 +1,31 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Linq;
+using System.Text;
+
+namespace Utils
+{
+    // Yes, I must be inventing wheel... but why adding yet another dependency
+    // for such a simple action?
+    public sealed class SourceGenerator
+    {
+        private readonly string[] toReplace;
+        private readonly string template;
+        public SourceGenerator(string template, params string[] toReplace)
+        {
+            this.toReplace = toReplace;
+            this.template = template;
+        }
+
+        public string Generate(params string[] replacements)
+        { 
+            if (replacements.Length != toReplace.Length)
+                throw new ArgumentException();
+            var sb = new StringBuilder(template);
+            for (int i = 0; i < toReplace.Length; i++)
+                sb.Replace(toReplace[i], replacements[i]);
+            return sb.ToString();
+        }
+    }
+}

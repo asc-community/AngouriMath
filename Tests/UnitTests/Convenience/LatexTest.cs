@@ -3,6 +3,7 @@ using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
 using static AngouriMath.Entity;
+using AngouriMath.Extensions;
 
 namespace UnitTests.Convenience
 {
@@ -174,16 +175,16 @@ namespace UnitTests.Convenience
         [Fact] public void MOOPOOI() => Test(@"-\infty  + \infty i", Real.PositiveInfinity * (-1 + MathS.i));
         [Fact] public void MOOMOOI() => Test(@"-\infty  - \infty i", Real.PositiveInfinity * (-1 - MathS.i));
         [Fact] public void Undefined() => TestSimplify(@"\mathrm{undefined}", Real.PositiveInfinity / Real.PositiveInfinity);
-        [Fact] public void Set0() => Test(@"\emptyset", MathS.Sets.Empty());
+        [Fact] public void Set0() => Test(@"\emptyset", MathS.Sets.Empty);
         [Fact] public void Set0Alternate() => Test(@"\emptyset", MathS.Sets.Finite());
         [Fact] public void Set1() => Test(@"\left\{1\right\}", MathS.Sets.Finite(1));
         [Fact] public void Set2() => Test(@"\left\{1,2\right\}", MathS.Sets.Finite(1, 2));
         [Fact] public void Set3() => Test(@"\left\{\sqrt{x},{x}^{2},\sin\left(x\right)\right\}", MathS.Sets.Finite(MathS.Sqrt(x), MathS.Sqr(x), MathS.Sin(x)));
-        [Fact] public void SetR() => Test(@"\left\{\left(-\infty ,\infty \right)\right\}", MathS.Sets.R());
+        [Fact] public void SetR() => Test(@"\left\{\left(-\infty ,\infty \right)\right\}", MathS.Sets.R);
         [Fact] public void SetC() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(-\infty ,\infty \right)\wedge\Im\left(z\right)\in\left(-\infty ,\infty \right)\right\}\right\}", MathS.Sets.C());
+            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(-\infty ,\infty \right)\wedge\Im\left(z\right)\in\left(-\infty ,\infty \right)\right\}\right\}", MathS.Sets.C);
         [Fact] public void SetIntervalCloseClose() =>
-            Test(@"\left\{\left[1,2\right]\right\}", new Set(MathS.Sets.Interval(1, 2)));
+            Test(@"\left\{\left[1,2\right]\right\}", (1, 2).ToEntity());
         [Fact] public void SetIntervalCloseOpen() =>
             Test(@"\left\{\left[1,2\right)\right\}", new Set(MathS.Sets.Interval(1, 2).SetRightClosed(false)));
         [Fact] public void SetIntervalOpenClose() =>
