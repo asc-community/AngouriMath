@@ -19,8 +19,8 @@
 
 namespace %namespace%
 {
-	%classheader%
-	{
+    %classheader%
+    {
 %content%
-	}
+    }
 }
