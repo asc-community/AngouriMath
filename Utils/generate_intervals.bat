@@ -1,2 +1,0 @@
-dotnet run -p Utils TupleToIntervalExtensionGenerator
-pause

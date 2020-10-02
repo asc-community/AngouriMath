@@ -13,6 +13,8 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+// This file is auto-generated. Use %bat% to re-generate it, do not edit the file itself.
+
 %usings%
 
 namespace %namespace%
