@@ -36,6 +36,13 @@ namespace AngouriMath
             public abstract bool Contains(Entity entity);
 
             public readonly static FiniteSet Empty = new FiniteSet();
+
+            public abstract bool IsSetFinite { get; }
+            public abstract bool IsSetEmpty { get; }
+
+            // To cache those above
+            private bool? isSetFinite;
+            private bool? isSetEmpty;
         }
 
         public static implicit operator Entity(Domain domain) => Set.SpecialSet.Create(domain);
@@ -60,6 +67,7 @@ namespace AngouriMath
 
         public static implicit operator Entity((Entity left, Entity right) interval) => new Interval(interval.left, true, interval.right, true);
 
-        public static implicit operator Entity(IEnumerable<Entity> elements) => new FiniteSet(elements);
+        public static implicit operator Entity(Entity[] elements) => new FiniteSet(elements);
+        public static implicit operator Entity(List<Entity> elements) => new FiniteSet((IEnumerable<Entity>)elements);
     }
 }

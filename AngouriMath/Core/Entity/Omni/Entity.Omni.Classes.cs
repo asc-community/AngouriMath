@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Extensions;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Boolean;
 using static AngouriMath.Entity.Number;
@@ -60,7 +61,7 @@ namespace AngouriMath
                             hasAnythingChanged = true;
                     }
                     if (hasAnythingChanged)
-                        return new FiniteSet(newElements);
+                        return newElements.ToSet();
                     else
                         return this;
                 }
@@ -171,6 +172,9 @@ namespace AngouriMath
                     while (BooleanSolver.Next(state));
                     return new FiniteSet(sets, noCheck: true);
                 }
+
+                public override bool IsSetFinite => true;
+                public override bool IsSetEmpty => Count == 0;
             }
             #endregion
 
@@ -211,6 +215,9 @@ namespace AngouriMath
                 public override Priority Priority => Priority.Leaf;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
+
+                public override bool IsSetFinite => false;
+                public override bool IsSetEmpty => false;
             }
             #endregion
 
@@ -244,6 +251,10 @@ namespace AngouriMath
 
                 // TODO: Does conditional set have children?
                 protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
+
+                // TODO:
+                public override bool IsSetFinite => false;
+                public override bool IsSetEmpty => Predicate.Evaled == Boolean.False;
             }
             #endregion
 
@@ -276,6 +287,9 @@ namespace AngouriMath
                 public override Priority Priority => Priority.Leaf;
 
                 protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
+
+                public override bool IsSetFinite => false;
+                public override bool IsSetEmpty => false;
             }
             #endregion  
 
@@ -302,6 +316,13 @@ namespace AngouriMath
                 public override Priority Priority => Priority.Union;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
+    
+                public override bool IsSetFinite => isSetFinite ??=
+                    Left is FiniteSet finite1 && Right is FiniteSet finite2
+                    && finite1.IsSetFinite && finite2.IsSetFinite;
+                public override bool IsSetEmpty => isSetEmpty ??=
+                    Left is FiniteSet finite1 && Right is FiniteSet finite2
+                    && finite1.IsSetEmpty && finite2.IsSetEmpty;
             }
             #endregion
 
@@ -328,6 +349,13 @@ namespace AngouriMath
                 public override Priority Priority => Priority.Intersection;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
+
+                public override bool IsSetFinite => isSetFinite ??=
+                    Left is FiniteSet finite1 && Right is FiniteSet finite2
+                    && (finite1.IsSetFinite || finite2.IsSetFinite);
+                public override bool IsSetEmpty => isSetEmpty ??=
+                    Left is FiniteSet finite1 && Right is FiniteSet finite2
+                    && (finite1.IsSetEmpty || finite2.IsSetEmpty);
             }
             #endregion
 
@@ -354,6 +382,13 @@ namespace AngouriMath
                 public override Priority Priority => Priority.SetMinus;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
+
+                public override bool IsSetFinite => isSetFinite ??=
+                    Left is FiniteSet finite1 && Right is FiniteSet finite2
+                    && finite1.IsSetFinite;
+                public override bool IsSetEmpty => isSetEmpty ??=
+                    Left is FiniteSet finite1 && Right is FiniteSet finite2
+                    && (finite1.IsSetEmpty || finite1 == finite2);
             }
             #endregion
         }

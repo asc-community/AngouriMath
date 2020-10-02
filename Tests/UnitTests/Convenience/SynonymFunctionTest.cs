@@ -53,6 +53,6 @@ namespace UnitTests.Convenience
 
         [Fact]
         public void TestExtensionToFiniteSet()
-            => Assert.Equal(new Set(1, 2, 3).AsFiniteSet(), new Entity[] { 1, 2, 3 }.ToFiniteSet());
+            => Assert.Equal(MathS.Sets.Finite(1, 2, 3), new Entity[] { 1, 2, 3 }.ToSet());
     }
 }

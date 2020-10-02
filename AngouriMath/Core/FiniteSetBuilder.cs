@@ -22,6 +22,6 @@ namespace AngouriMath.Core
             => raw.Add(element);
 
         public FiniteSet ToFiniteSet()
-            => raw.Count == 0 ? Empty : new FiniteSet(raw);
+            => raw.Count == 0 ? Empty : MathS.Sets.Finite(raw);
     }
 }

@@ -6,6 +6,8 @@ using Xunit;
 using System.Collections.Generic;
 using static AngouriMath.Entity;
 using System.Linq;
+using static AngouriMath.Entity.Set;
+using System;
 
 namespace UnitTests.Algebra
 {
@@ -41,8 +43,10 @@ namespace UnitTests.Algebra
         {
             var eq = expr.ToEntity();
             var solutions = eq.Solve("x");
-            Assert.True(solutions.IsFiniteSet(out var roots));
-            Assert.Equal(rootCount, roots.Count());
+            Assert.True(solutions is FiniteSet);
+            if (solutions is not FiniteSet roots)
+                throw new Exception(); // C#'s analyzers can't into Assert.True's exceptions
+            Assert.Equal(rootCount, roots.Count);
             foreach (var root in roots)
                 AssertRoots(eq, "x", root);
         }

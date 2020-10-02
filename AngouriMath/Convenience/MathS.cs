@@ -715,10 +715,14 @@ namespace AngouriMath
             public static Set Z => SpecialSet.Create(Domain.Integer);
 
             /// <summary>
-            /// Creates a <see cref="Set"/> that you can fill with elements
-            /// Later on, you may add an Interval if you wish
+            /// Creates a <see cref="FiniteSet"/> with given elements
             /// </summary>
-            public static Set Finite(params Entity[] entities) => new FiniteSet(entities);
+            public static FiniteSet Finite(params Entity[] entities) => new FiniteSet(entities);
+
+            /// <summary>
+            /// Creates a <see cref="FiniteSet"/> with given elements
+            /// </summary>
+            public static FiniteSet Finite(List<Entity> entities) => new FiniteSet((IEnumerable<Entity>)entities);
 
             /// <summary>
             /// Creates an interval. To modify it, use e.g.
