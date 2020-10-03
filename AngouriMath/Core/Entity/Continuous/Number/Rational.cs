@@ -106,7 +106,7 @@ namespace AngouriMath
                         return new Rational((intPart * sign + sign / rat.ERational).ToLowestTerms());
                     }
                 }
-                internal override string Stringize() => ERational.ToString();
+                public override string Stringize() => ERational.ToString();
                 public override string Latexise() => $@"\frac{{{ERational.Numerator}}}{{{ERational.Denominator}}}";
                 internal static bool TryParse(string s,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Rational? dst)

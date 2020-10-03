@@ -71,9 +71,9 @@ namespace AngouriMath
     /// </summary>
     public abstract partial record Entity : ILatexiseable
     {
-        private static readonly ConditionalWeakTable<Entity, Entity[]> directChildren = new();
+        private Entity[]? directChildren;
         protected abstract Entity[] InitDirectChildren();
-        public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(this, e => e.InitDirectChildren());
+        public IReadOnlyList<Entity> DirectChildren => directChildren ??= InitDirectChildren();
 
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="Core.TreeAnalysis.TreeAnalyzer.GetMinimumSubtree(Entity, Variable)"/></remarks>
@@ -101,18 +101,18 @@ namespace AngouriMath
         /// Whether both parts of the complex number are finite
         /// meaning that it could be safely used for calculations
         /// </value>
-        public bool IsFinite =>
-            _isFinite.GetValue(this, e => new(e.ThisIsFinite && e.DirectChildren.All(x => x.IsFinite))).Value;
+        public bool IsFinite => isFinite ??= ThisIsFinite && DirectChildren.All(x => x.IsFinite);
         protected virtual bool ThisIsFinite => true;
-        static readonly ConditionalWeakTable<Entity, Wrapper<bool>> _isFinite = new();
+        private bool? isFinite;
+
         record Wrapper<T>(T Value) where T : struct { }
 
         /// <value>Number of nodes in tree</value>
         // TODO: improve measurement of Entity complexity, for example
         // (1 / x ^ 2).Complexity() &lt; (x ^ (-0.5)).Complexity()
         public int Complexity =>
-            _complexity.GetValue(this, e => new(1 + e.DirectChildren.Sum(x => x.Complexity))).Value;
-        static readonly ConditionalWeakTable<Entity, Wrapper<int>> _complexity = new();
+            complexity ??= 1 + DirectChildren.Sum(x => x.Complexity);
+        private int? complexity;
 
         /// <summary>
         /// Set of unique variables, for example 
@@ -132,9 +132,8 @@ namespace AngouriMath
         /// Set of unique variables and mathematical constants
         /// such as <see cref="pi"/> and <see cref="e"/>
         /// </returns>
-        public IReadOnlyCollection<Variable> VarsAndConsts => _vars.GetValue(this, e =>
-            new(e is Variable v ? new[] { v } : DirectChildren.SelectMany(x => x.VarsAndConsts)));
-        static readonly ConditionalWeakTable<Entity, HashSet<Variable>> _vars = new();
+        public IReadOnlyCollection<Variable> VarsAndConsts => vars ??= new HashSet<Variable>(this is Variable v ? new[] { v } : DirectChildren.SelectMany(x => x.VarsAndConsts));
+        private HashSet<Variable>? vars;
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>

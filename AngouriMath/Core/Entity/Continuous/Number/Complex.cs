@@ -70,7 +70,7 @@ namespace AngouriMath
                 public void Deconstruct(out Real realPart, out Real imaginaryPart) =>
                     (realPart, imaginaryPart) = (RealPart, ImaginaryPart);
 
-                internal override string Stringize()
+                public override string Stringize()
                 {
                     static string RenderNum(Real number)
                     {

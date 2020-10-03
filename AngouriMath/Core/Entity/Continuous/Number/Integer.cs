@@ -40,7 +40,7 @@ namespace AngouriMath
                 // TODO: When we target .NET 5, remember to use covariant return types
                 public override Real Abs() => Create(EInteger.Abs());
 
-                internal override string Stringize() => EInteger.ToString();
+                public override string Stringize() => EInteger.ToString();
                 public override string Latexise() => EInteger.ToString();
                 internal static bool TryParse(string s,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Integer? dst)

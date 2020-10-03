@@ -62,7 +62,7 @@ namespace AngouriMath
 
                 public override Real Abs() => Create(EDecimal.Abs());
 
-                internal override string Stringize() => this switch
+                public override string Stringize() => this switch
                 {
                     { IsFinite: true } => EDecimal.ToString(),
                     { IsNaN: true } => "NaN",
