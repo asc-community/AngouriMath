@@ -19,7 +19,8 @@ namespace UnitTests.Common
         public void TensorFull()
         {
             var tens = new Entity.Tensor(indices => indices[0] * indices[1] * indices[2], 3, 4, 5);
-            Assert.True(tens.ToString().Length > 16);
+            string? tens2S = tens.ToString();
+            Assert.True(tens2S is not null && tens2S.Length > 16);
         }
 
         [Fact]
