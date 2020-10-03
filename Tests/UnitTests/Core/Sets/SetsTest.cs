@@ -65,14 +65,14 @@ namespace UnitTests.Core
         [Fact] public void SetsDisjunction3() => Assert.True(D.Contains(18.9));
         [Fact] public void SetsDisjunction4() => Assert.False(D.Contains(19));
 
-        private static Set D1 = MathS.Intersection(C, A);
+        private static readonly Set D1 = MathS.Intersection(C, A);
 
         [Fact] public void SetsConjuction1() => Assert.True(D1.Contains(5));
         [Fact] public void SetsConjuction2() => Assert.False(D1.Contains(-3));
         [Fact] public void SetsConjuction3() => Assert.False(D1.Contains(18.9));
         [Fact] public void SetsConjuction4() => Assert.False(D1.Contains(19));
 
-        private static Set D2 = MathS.SetSubtraction(C, A);
+        private static readonly Set D2 = MathS.SetSubtraction(C, A);
 
         [Fact] public void SetsSubtraction1() => Assert.True(D2.Contains(-9.9));
         [Fact] public void SetsSubtraction2() => Assert.False(D2.Contains(3));

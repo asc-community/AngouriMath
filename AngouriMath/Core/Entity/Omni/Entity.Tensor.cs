@@ -57,6 +57,16 @@ namespace AngouriMath
                 public bool AreEqual(Entity a, Entity b) => a == b;
                 public bool IsZero(Entity a) => a == 0;
                 public string ToString(Entity a) => a.ToString();
+
+                public byte[] Serialize(Entity a)
+                {
+                    throw new NotImplementedException("Serialization is not planned");
+                }
+
+                public Entity Deserialize(byte[] data)
+                {
+                    throw new NotImplementedException("Deserialization is not planned");
+                }
             }
             /// <summary>List of <see cref="int"/>s that stand for dimensions</summary>
             public TensorShape Shape => InnerTensor.Shape;

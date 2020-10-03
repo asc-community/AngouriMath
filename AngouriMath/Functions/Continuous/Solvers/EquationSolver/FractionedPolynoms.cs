@@ -48,7 +48,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         potentialFraction.multiplier *= mpChild;
                         continue;
                     }
-                    if (!(num is Rational fracNum))
+                    if (num is not Rational fracNum)
                         return null; // (x + 1)^0.2348728
                     var newChild = MathS.Pow(@base, fracNum.ERational.Numerator).InnerSimplify();
                     var den = fracNum.ERational.Denominator;

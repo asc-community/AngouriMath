@@ -46,7 +46,7 @@ namespace UnitTests.Convenience
             var mi = mis.First();
 
             var entObj = mi.Invoke(null, new[] { x });
-            if (!(entObj is Entity ent))
+            if (entObj is not Entity ent)
                 throw new InvalidCastException($"Invokation returned {entObj?.GetType()} instead of {typeof(Entity)}");
             Assert.Equal(ent, MathS.FromString(stringizedExpr));
         }

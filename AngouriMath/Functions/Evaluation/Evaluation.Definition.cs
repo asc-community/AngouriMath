@@ -112,8 +112,8 @@ namespace AngouriMath
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         public IEnumerable<Entity> Alternate(int level) => Simplificator.Alternate(this, level);
 
-        public Entity Evaled => _evaled.GetValue(this, e => e.InnerEvalWithCheck());
-        static readonly ConditionalWeakTable<Entity, Entity> _evaled = new();
+        public Entity Evaled => evaled ??= InnerEvalWithCheck();
+        private Entity? evaled;
 
         /// <summary>
         /// Evaluates the entire expression into a <see cref="Tensor"/> if possible

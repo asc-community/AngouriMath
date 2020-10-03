@@ -384,7 +384,7 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 public override bool IsSetFinite => isSetFinite ??=
-                    Left is FiniteSet finite1 && Right is FiniteSet finite2
+                    Left is FiniteSet finite1 && Right is FiniteSet
                     && finite1.IsSetFinite;
                 public override bool IsSetEmpty => isSetEmpty ??=
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
