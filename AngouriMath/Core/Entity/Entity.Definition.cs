@@ -90,9 +90,18 @@ namespace AngouriMath
         /// <summary>Replaces all <see cref="x"/> with <see cref="value"/></summary>
         public abstract Entity Substitute(Entity x, Entity value);
 
+
+        // TODO: this function has no performance beneficial anymore, 
+        // maybe need to think how it can be improved without defining
+        // another virtual method?
         /// <summary>Replaces all <see cref="replacements"/></summary>
-        public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements)
-            => throw FutureReleaseException.Raised("Since new Substitute, this should be rewritten or removed", "?");
+        public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements) where TFrom : Entity where TTo : Entity
+        {
+            var res = this;
+            foreach (var pair in replacements)
+                res = res.Substitute(pair.Key, pair.Value);
+            return res;
+        }
 
         public abstract Priority Priority { get; }
 

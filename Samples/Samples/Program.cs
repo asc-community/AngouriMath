@@ -22,9 +22,10 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity expr = "-1 - i";
-            var ex = expr.EvalNumerical();
-            Console.WriteLine(ex.Stringize());
+            Variable x = "x";
+            var expr = x;
+            var y = (expr.DefiniteIntegral(x, 0, 1).RealPart - 1.0 / 2).Abs() < 0.1;
+
         }
     }
 }
