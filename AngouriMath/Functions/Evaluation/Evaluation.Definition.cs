@@ -28,23 +28,19 @@ namespace AngouriMath
         /// </summary>
         internal abstract Entity InnerSimplify();
 
-        // Cache of the result of the InnerSimplify function
-        private Entity? innerSimplified;
+        public Entity InnerSimplified 
+            => caches.GetValue(this, cache => cache.innerSimplified, cache => cache.innerSimplified = InnerSimplifyWithCheck());
 
         /// <summary>
         /// Make sure you call this function inside of <see cref="InnerSimplify"/>
         /// </summary>
         internal Entity InnerSimplifyWithCheck()
         {
-            if (innerSimplified is null)
-            {
-                var _inner = InnerSimplify();
-                if (DomainsFunctional.FitsDomainOrNonNumeric(_inner, Codomain))
-                    innerSimplified = _inner;
-                else
-                    innerSimplified = this;
-            }
-            return innerSimplified;
+            var innerSimplified = InnerSimplify();
+            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
+                return innerSimplified;
+            else
+                return this;
         }
 
         /// <summary>
@@ -112,8 +108,8 @@ namespace AngouriMath
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         public IEnumerable<Entity> Alternate(int level) => Simplificator.Alternate(this, level);
 
-        public Entity Evaled => evaled ??= InnerEvalWithCheck();
-        private Entity? evaled;
+        public Entity Evaled 
+            => caches.GetValue(this, cache => cache.innerEvaled, cache => cache.innerEvaled = InnerEvalWithCheck());
 
         /// <summary>
         /// Evaluates the entire expression into a <see cref="Tensor"/> if possible

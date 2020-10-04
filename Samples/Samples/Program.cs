@@ -3,25 +3,27 @@
 using AngouriMath;
 using System;
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
+using static AngouriMath.Entity;
 
 namespace Samples
 {
-    public record ModuleManifest(string Name, Version Version);
-
-
-    public record ModuleSet(ImmutableArray<ModuleManifest> Manifests)
+    public record A
     {
-        public static ModuleSet Empty { get; } = new ModuleSet(ImmutableArray<ModuleManifest>.Empty);
+        public A? Another => another.GetValue(this, e => e);
+        private static readonly ConditionalWeakTable<A, A> another = new();
+
+        record Wrapper<T>(T Value) { }
     }
 
    
     class Program
     {
-
-        public static ModuleSet ActiveModuleSet { get; private set; } = ModuleSet.Empty;
         static void Main(string[] _)
         {
-            Console.WriteLine(ActiveModuleSet.ToString());
+            Entity x = "x + 2";
+            var c = x.Derive("x");
+            c.Simplify();
         }
     }
 }

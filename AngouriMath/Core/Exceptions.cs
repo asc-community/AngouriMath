@@ -66,9 +66,10 @@ namespace AngouriMath.Core.Exceptions
         internal static Exception Raised(string feature, string plannedVersion)
         {
             var currVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            var vers = new Version(plannedVersion);
-            if (currVersion > vers)
+            if (plannedVersion != "?" && currVersion > new Version(plannedVersion))
                 return new AngouriBugException($"{feature} was planned for {plannedVersion} but hasn't been released by {currVersion}");
+            else if (plannedVersion == "?")
+                return new FutureReleaseException($"It is unclear when {feature} will be fixed");
             else
                 return new FutureReleaseException($"Feature {feature} will be completed by {plannedVersion}. You are on {currVersion}");
         }

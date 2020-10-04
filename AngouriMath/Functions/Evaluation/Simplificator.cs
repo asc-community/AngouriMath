@@ -54,7 +54,8 @@ namespace AngouriMath.Functions
                     var ncompl = Math.Min(compl2, compl1);
                     if (history.TryGetValue(ncompl, out var ncomplList))
                         ncomplList.Add(n);
-                    else history[ncompl] = new HashSet<Entity> { n };
+                    else 
+                        history[ncompl] = new HashSet<Entity> { n };
                 }
                 __IterAddHistory(expr);
                 __IterAddHistory(expr.Replace(Patterns.InvertNegativePowers));
