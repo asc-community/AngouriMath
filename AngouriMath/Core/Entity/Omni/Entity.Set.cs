@@ -51,19 +51,19 @@ namespace AngouriMath
         /// Creates a node of union of two nodes (sets)
         /// </summary>
         /// <returns>A new node</returns>
-        public Entity Unite(Entity anotherSet) => new Unionf(this, anotherSet);
+        public Set Unite(Entity anotherSet) => new Unionf(this, anotherSet);
 
         /// <summary>
         /// Creates a node of intersection of two nodes (sets)
         /// </summary>
         /// <returns>A new node</returns>
-        public Entity Intersect(Entity anotherSet) => new Intersectionf(this, anotherSet);
+        public Set Intersect(Entity anotherSet) => new Intersectionf(this, anotherSet);
 
         /// <summary>
         /// Creates a new node of set difference of two nodes (sets)
         /// </summary>
         /// <returns>A new node</returns>
-        public Entity SetSubtract(Entity anotherSet) => new SetMinusf(this, anotherSet);
+        public Set SetSubtract(Entity anotherSet) => new SetMinusf(this, anotherSet);
 
         public static implicit operator Entity((Entity left, Entity right) interval) => new Interval(interval.left, true, interval.right, true);
 

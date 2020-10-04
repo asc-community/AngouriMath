@@ -296,13 +296,13 @@ namespace AngouriMath
         public static Entity LessOrEqualThan(Entity a, Entity b) => a <= b;
         
         /// <returns>A node</returns>
-        public static Set Union(Entity a, Entity b) => MathS.Union(a, b);
+        public static Set Union(Entity a, Entity b) => a.Unite(b);
 
         /// <returns>A node</returns>
-        public static Set Intersection(Entity a, Entity b) => MathS.Intersection(a, b);
+        public static Set Intersection(Entity a, Entity b) => a.Intersect(b);
 
         /// <returns>A node</returns>
-        public static Set SetSubtraction(Entity a, Entity b) => MathS.SetSubtraction(a, b);
+        public static Set SetSubtraction(Entity a, Entity b) => a.SetSubtract(b);
 
         /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
         /// <param name="name">The name of the <see cref="Variable"/> which equality is based on.</param>

@@ -25,7 +25,7 @@ namespace UnitTests.Algebra
                 substitutions.Add(vr, subValue + substitutions.Count);
             equation = equation.Substitute(substitutions);
             var err = equation.EvalBoolean();
-            Assert.True(err, $"\nError = {err}\n{eqNormal}\nWrong root: {toSub} = {varValue}");
+            Assert.True(err, $"\nError = {err.Stringize()}\n{eqNormal}\nWrong root: {toSub.Stringize()} = {varValue.Stringize()}");
         }
 
         [Theory]
@@ -42,7 +42,8 @@ namespace UnitTests.Algebra
         public void TestFinite(string expr, int rootCount)
         {
             var eq = expr.ToEntity();
-            var solutions = eq.Solve("x");
+            Variable x = "x";
+            var solutions = eq.Solve(x);
             Assert.True(solutions is FiniteSet);
             if (solutions is not FiniteSet roots)
                 throw new Exception(); // C#'s analyzers can't into Assert.True's exceptions
