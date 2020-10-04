@@ -33,8 +33,8 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level) => level switch
             {
                 SortLevel.HIGH_LEVEL => "",
-                SortLevel.MIDDLE_LEVEL => ToString(),
-                _ => ToString() + " "
+                SortLevel.MIDDLE_LEVEL => Stringize(),
+                _ => Stringize() + " "
             };
         }
 
@@ -155,8 +155,8 @@ namespace AngouriMath
                 => level switch
                 {
                     SortLevel.HIGH_LEVEL => "",
-                    SortLevel.MIDDLE_LEVEL => ToString(),
-                    _ => ToString() + " "
+                    SortLevel.MIDDLE_LEVEL => Stringize(),
+                    _ => Stringize() + " "
                 };
         }
 
@@ -228,8 +228,8 @@ namespace AngouriMath
                     => level switch
                     {
                         SortLevel.HIGH_LEVEL => "",
-                        SortLevel.MIDDLE_LEVEL => ToString(),
-                        _ => ToString() + " "
+                        SortLevel.MIDDLE_LEVEL => Stringize(),
+                        _ => Stringize() + " "
                     };
             }
 
@@ -239,8 +239,8 @@ namespace AngouriMath
                     => level switch
                     {
                         SortLevel.HIGH_LEVEL => "",
-                        SortLevel.MIDDLE_LEVEL => ToString(),
-                        _ => ToString() + " "
+                        SortLevel.MIDDLE_LEVEL => Stringize(),
+                        _ => Stringize() + " "
                     };
             }
 
@@ -250,8 +250,8 @@ namespace AngouriMath
                     => level switch
                     {
                         SortLevel.HIGH_LEVEL => "",
-                        SortLevel.MIDDLE_LEVEL => ToString(),
-                        _ => ToString() + " "
+                        SortLevel.MIDDLE_LEVEL => Stringize(),
+                        _ => Stringize() + " "
                     };
             }
 
@@ -261,8 +261,8 @@ namespace AngouriMath
                     => level switch
                     {
                         SortLevel.HIGH_LEVEL => "",
-                        SortLevel.MIDDLE_LEVEL => ToString(),
-                        _ => ToString() + " "
+                        SortLevel.MIDDLE_LEVEL => Stringize(),
+                        _ => Stringize() + " "
                     };
             }
 

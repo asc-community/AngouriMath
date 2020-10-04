@@ -56,7 +56,7 @@ namespace AngouriMath
                 public Entity Forward(Entity a) => a;
                 public bool AreEqual(Entity a, Entity b) => a == b;
                 public bool IsZero(Entity a) => a == 0;
-                public string ToString(Entity a) => a.ToString();
+                public string ToString(Entity a) => a.Stringize();
 
                 public byte[] Serialize(Entity a)
                 {

@@ -32,7 +32,7 @@ namespace AngouriMath
 
         public partial record Number
         {
-            internal override string ToSymPy() => ToString().Replace("i", "sympy.I");
+            internal override string ToSymPy() => Stringize().Replace("i", "sympy.I");
         }
 
 

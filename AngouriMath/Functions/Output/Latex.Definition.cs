@@ -89,7 +89,7 @@ namespace AngouriMath
                 }
                 else
                 {
-                    return this.ToString();
+                    return this.Stringize();
                 }
             }
         }

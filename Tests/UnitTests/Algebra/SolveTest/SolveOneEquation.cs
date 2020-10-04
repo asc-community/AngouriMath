@@ -16,7 +16,7 @@ namespace UnitTests.Algebra
         internal static void AssertRoots(Entity equation, Entity.Variable toSub, Entity varValue, Integer? subValue = null)
         {
             subValue ??= 3;
-            string? eqNormal = equation.ToString();
+            string? eqNormal = equation.Stringize();
             equation = equation.Substitute(toSub, varValue);
             // MUST be integer to correspond to integer coefficient of periodic roots
             var substitutions = new Dictionary<Entity.Variable, Integer>();

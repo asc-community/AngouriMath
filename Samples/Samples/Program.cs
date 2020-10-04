@@ -21,9 +21,10 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity x = "x + 2";
-            var c = x.Derive("x");
-            c.Simplify();
+            Variable x = "x";
+            var func = MathS.Sqr(x) + 2 * x + 1;
+            var derived = func.Derive(x);
+            derived.Simplify();
         }
     }
 }
