@@ -79,15 +79,15 @@ namespace AngouriMath
                         else if (number == Integer.One)
                             return "";
                         else
-                            return number.ToString();
+                            return number.Stringize();
                     }
                     if (ImaginaryPart is Integer(0))
-                        return RealPart.ToString();
+                        return RealPart.Stringize();
                     else if (RealPart is Integer(0))
                         return RenderNum(ImaginaryPart) + "i";
                     var (l, r) = ImaginaryPart is Rational and not Integer ? ("(", ")") : ("", "");
                     var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
-                    return RealPart.ToString() + " " + sign + " " + l + RenderNum(im) + r + "i";
+                    return RealPart.Stringize() + " " + sign + " " + l + RenderNum(im) + r + "i";
                 }
 
                 public override string Latexise()

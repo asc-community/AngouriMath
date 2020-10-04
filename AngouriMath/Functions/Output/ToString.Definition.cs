@@ -19,7 +19,10 @@ namespace AngouriMath
     using static Entity.Number;
     public abstract partial record Entity
     {
-        /// <summary>Converts an expression into a string</summary>
+        /// <summary>
+        /// Converts an expression into a string
+        /// Replacement for ToString since .NET 5 RC1
+        /// </summary>
         public abstract string Stringize();
         protected internal string Stringize(bool parenthesesRequired) =>
             parenthesesRequired ? @$"({Stringize()})" : Stringize();

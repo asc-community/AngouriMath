@@ -162,9 +162,9 @@ namespace UnitTests.Algebra
             var expected = answer.ToEntity().EvalNumerical();
             var error = (actual - expected).Abs();
             Assert.True(error < MathS.Numbers.Create(1e-8m),
-                $"\nError: {error}" + 
-                $"\nActual: {actual}" +
-                $"\nExpected: {expected}");
+                $"\nError: {error.Stringize()}" + 
+                $"\nActual: {actual.Stringize()}" +
+                $"\nExpected: {expected.Stringize()}");
         }
 
         [Theory]
@@ -183,9 +183,9 @@ namespace UnitTests.Algebra
             var expected = answer.ToEntity().EvalNumerical();
             var error = (actual - expected).Abs();
             Assert.True(error < MathS.Numbers.Create(1e-8m),
-                $"\nError: {error}" +
-                $"\nActual: {actual}" +
-                $"\nExpected: {expected}");
+                $"\nError: {error.Stringize()}" +
+                $"\nActual: {actual.Stringize()}" +
+                $"\nExpected: {expected.Stringize()}");
         }
     }
 }

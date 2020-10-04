@@ -2,6 +2,7 @@
 
 using AngouriMath;
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Runtime.CompilerServices;
 using static AngouriMath.Entity;
@@ -21,10 +22,9 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Variable x = "x";
-            var func = MathS.Sqr(x) + 2 * x + 1;
-            var derived = func.Derive(x);
-            derived.Simplify();
+            Entity expr = "-1 - i";
+            var ex = expr.EvalNumerical();
+            Console.WriteLine(ex.Stringize());
         }
     }
 }
