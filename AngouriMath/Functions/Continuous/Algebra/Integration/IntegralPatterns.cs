@@ -13,16 +13,16 @@ namespace AngouriMath.Functions.Algebra
         {
             Entity.Sinf(var arg) =>
                 arg == x ? 
-                    -MathS.Cos(x) :
+                    -MathS.Cos(arg) :
                 arg is Entity.Mulf(var a, var y) && !a.Contains(x) && y == x ?
-                    -MathS.Cos(x) / a :
+                    -MathS.Cos(arg) / a :
                 null,
 
             Entity.Cosf(var arg) =>
                 arg == x ?
-                    MathS.Sin(x) :
+                    MathS.Sin(arg) :
                 arg is Entity.Mulf(var a, var y) && !a.Contains(x) && y == x ?
-                    MathS.Sin(x) / a :
+                    MathS.Sin(arg) / a :
                 null,
 
             Entity.Tanf(var arg) =>
