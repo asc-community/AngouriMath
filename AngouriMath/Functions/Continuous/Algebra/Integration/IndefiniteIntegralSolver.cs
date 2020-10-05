@@ -1,4 +1,5 @@
-﻿using PeterO.Numbers;
+﻿using AngouriMath.Functions.Algebra.AnalyticalSolving;
+using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -47,5 +48,33 @@ namespace AngouriMath.Functions.Algebra
 
             _ => null
         };
+
+        internal static Entity? SolveIntegratingByParts(Entity expr, Entity.Variable x)
+        {
+            static Entity? IntegrateByParts(Entity v, Entity u, Entity.Variable x, int currentRecursion = 0)
+            {
+                if (v == 0) return 0;
+                if (currentRecursion == MathS.Settings.MaxExpansionTermCount) return null;
+
+                var integral = Integration.ComputeIndefiniteIntegral(u, x);
+                var differential = v.Derive(x).InnerSimplify();
+                var result = IntegrateByParts(differential, integral, x, currentRecursion + 1);
+                return (result is null) ? null : v * integral - result;
+            }
+
+            if (expr is Entity.Mulf(var f, var g))
+            {
+                if (MathS.TryPolynomial(f, x, out var fPoly))
+                {
+                    return IntegrateByParts(fPoly, g, x);
+                }
+                if (MathS.TryPolynomial(g, x, out var gPoly))
+                {
+                    return IntegrateByParts(gPoly, f, x);
+                }
+                else return null;
+            }
+            else return null;
+        }
     }
 }

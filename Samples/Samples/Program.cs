@@ -14,7 +14,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            var integ = "x4 + 1/(x2) - b*x^a + c";
+            var integ = "(x2 + 2x + 3) * sin(x)";
             var ans = Integration.ComputeIndefiniteIntegral(integ, "x");
             Console.WriteLine(ans.Simplify());
         }

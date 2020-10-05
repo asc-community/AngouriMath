@@ -11,10 +11,17 @@ namespace AngouriMath.Functions.Algebra
             if (!expr.Contains(x)) return expr * x; // base case, handle here
 
             Entity? answer = null;
+
+            answer = IntegralPatterns.TryStandardIntegrals(expr, x);
+            if (answer is { }) return answer;
+
             answer = IndefiniteIntegralSolver.SolveBySplittingSum(expr, x);
             if (answer is { }) return answer;
 
             answer = IndefiniteIntegralSolver.SolveAsPolynomialTerm(expr, x);
+            if (answer is { }) return answer;
+
+            answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x);
             if (answer is { }) return answer;
 
             return new Entity.Integralf(expr, x, 1); // return as integral if nothing can be done with expression
