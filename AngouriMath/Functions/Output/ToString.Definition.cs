@@ -25,16 +25,6 @@ namespace AngouriMath
         /// </summary>
         public abstract string Stringize();
         protected internal string Stringize(bool parenthesesRequired) =>
-            parenthesesRequired ? @$"({Stringize()})" : Stringize();
-
-        public partial record Variable
-        {
-            public override string Stringize() => Name;
-        }
-
-        public partial record Tensor
-        {
-            public override string Stringize() => InnerTensor.ToString();
-        }
+            parenthesesRequired ? $"({Stringize()})" : Stringize();
     }
 }

@@ -25,10 +25,10 @@ namespace UnitTests.Core
         }
 
         private void AssertContains(Set set, Entity el)
-            => Assert.True(set.Contains(el), $"{set} does not contain {el} but should");
+            => Assert.True(set.Contains(el), $"{set.Stringize()} does not contain {el.Stringize()} but should");
 
         private void AssertNotContains(Set set, Entity el)
-            => Assert.True(!set.Contains(el), $"{set} contains {el} but should not");
+            => Assert.True(!set.Contains(el), $"{set.Stringize()} contains {el.Stringize()} but should not");
 
         [Fact] public void IndividualNumbersInIndividualOneSet1() => AssertNotContains(A, 2);
         [Fact] public void IndividualNumbersInIndividualOneSet2() => AssertContains(A, 3);

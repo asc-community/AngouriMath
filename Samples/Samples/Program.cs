@@ -1,22 +1,7 @@
-﻿
-
-using AngouriMath;
-using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
-using System.Runtime.CompilerServices;
+﻿using System;
+using static System.Console;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
+using static AngouriMath.MathS;
 
-namespace Samples
-{
-    class Program
-    {
-        static void Main(string[] _)
-        {
-            var a = MathS.FromString("abs(x)");
-            a.Stringize();
-        }
-    }
-}
+WriteLine(FromString("(-1)!") == Factorial(-1));

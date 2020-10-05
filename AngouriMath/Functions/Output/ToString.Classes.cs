@@ -21,6 +21,16 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {
+        public partial record Variable
+        {
+            public override string Stringize() => Name;
+        }
+
+        public partial record Tensor
+        {
+            public override string Stringize() => InnerTensor.ToString();
+        }
+
         public partial record Sumf
         {
             public override string Stringize() =>

@@ -680,7 +680,7 @@ namespace AngouriMath
             var sb = new System.Text.StringBuilder();
             sb.Append("import sympy\n\n");
             foreach (var f in expr.Vars)
-                sb.Append($"{f} = sympy.Symbol('{f}')\n");
+                sb.Append($"{f.Stringize()} = sympy.Symbol('{f.Stringize()}')\n");
             sb.Append('\n');
             sb.Append("expr = ").Append(expr.ToSymPy());
             return sb.ToString();

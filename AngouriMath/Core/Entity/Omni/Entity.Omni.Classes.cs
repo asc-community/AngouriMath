@@ -76,7 +76,9 @@ namespace AngouriMath
                     Dictionary<Entity, Entity> dict = new(elements.Count());
                     foreach (var elem in elements)
                     {
-                        if (!noCheck)
+                        if (noCheck)
+                            dict[elem.Evaled] = elem;
+                        else
                             dict[elem.Evaled] = dict.TryGetValue(elem.Evaled, out var value) ? Simplificator.PickSimplest(elem, value) : elem;
                     }
                     return dict;
@@ -124,9 +126,9 @@ namespace AngouriMath
                 internal static FiniteSet Intersect(FiniteSet A, FiniteSet B)
                 {
                     var dict = BuildDictionaryFromElements(A.Elements, noCheck: true);
-                    foreach (var el in B)
-                        if (!B.ContainsNode(el.Evaled))
-                            dict.Remove(el.Evaled);
+                    foreach (var el in A.elements)
+                        if (!B.Contains(el.Key))
+                            dict.Remove(el.Key);
                     return new FiniteSet(dict.Values, noCheck: true); // we didn't add anything
                 }
 

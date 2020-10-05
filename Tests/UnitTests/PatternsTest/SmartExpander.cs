@@ -40,7 +40,7 @@ namespace UnitTests.PatternsTest
                 else
                     Assert.NotEqual(expr, expanded); // Nodes should be different
                 var (equal, expected, actual, err) = AreEqual(expr, expanded, toSub);
-                Assert.True(equal, $"\nexpected: {expected}\nactual: {actual}\nerror: {err}\ntoSub: {toSub}\nexpanded: {expanded}");
+                Assert.True(equal, $"\nexpected: {expected.Stringize()}\nactual: {actual.Stringize()}\nerror: {err.Stringize()}\ntoSub: {toSub.Stringize()}\nexpanded: {expanded.Stringize()}");
             }
         }
         

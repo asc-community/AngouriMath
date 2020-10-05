@@ -19,8 +19,8 @@ namespace UnitTests.Common
         public void TensorFull()
         {
             var tens = new Entity.Tensor(indices => indices[0] * indices[1] * indices[2], 3, 4, 5);
-            string? tens2S = tens.ToString();
-            Assert.True(tens2S is not null && tens2S.Length > 16);
+            var tens2S = tens.Stringize();
+            Assert.True(tens2S.Length > 16);
         }
 
         [Fact]
@@ -47,7 +47,7 @@ namespace UnitTests.Common
             if (Simplificator.TryPolynomial(expr, x, out var dst))
                 Assert.Equal(MathS.FromString("x2 + x"), dst);
             else
-                throw new Xunit.Sdk.XunitException($"{expr} is polynomial");
+                throw new Xunit.Sdk.XunitException($"{expr.Stringize()} is polynomial");
         }
 
         [Fact]
@@ -57,7 +57,7 @@ namespace UnitTests.Common
             if (Simplificator.TryPolynomial(expr, x, out var dst))
                 Assert.Equal(MathS.FromString("x3 + x2"), dst);
             else
-                throw new Xunit.Sdk.XunitException($"{expr} is polynomial");
+                throw new Xunit.Sdk.XunitException($"{expr.Stringize()} is polynomial");
         }
 
         [Fact]
@@ -67,7 +67,7 @@ namespace UnitTests.Common
             if (Simplificator.TryPolynomial(expr, x, out var dst))
                 Assert.Equal(MathS.FromString("x3 + x2 + (z + y) * x"), dst);
             else
-                throw new Xunit.Sdk.XunitException($"{expr} is polynomial");
+                throw new Xunit.Sdk.XunitException($"{expr.Stringize()} is polynomial");
         }
     }
 }
