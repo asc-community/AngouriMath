@@ -35,7 +35,8 @@ namespace UnitTests.Algebra
 
         void TestSolver(Entity expr, int rootCount, Integer? toSub = null, bool testNewton = false)
         {
-            var roots = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x)).InnerSimplified;
+            var roots = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x));
+            roots = (Set)roots.InnerSimplified;
             Assert.IsType<FiniteSet>(roots);
             if (roots is not FiniteSet finiteSet)
                 throw new AngouriBugException("Eeem?");

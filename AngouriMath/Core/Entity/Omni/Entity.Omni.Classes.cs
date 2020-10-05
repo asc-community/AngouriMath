@@ -53,15 +53,16 @@ namespace AngouriMath
                 public FiniteSet Apply(Func<Entity, Entity> func)
                 {
                     var hasAnythingChanged = false;
-                    List<Entity> newElements = new();
+                    FiniteSetBuilder newElements = new();
                     foreach (var el in Elements)
                     {
                         var changed = func(el);
                         if (ReferenceEquals(changed, el))
                             hasAnythingChanged = true;
+                        newElements.Add(changed);
                     }
                     if (hasAnythingChanged)
-                        return newElements.ToSet();
+                        return newElements.ToFiniteSet();
                     else
                         return this;
                 }

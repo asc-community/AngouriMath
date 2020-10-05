@@ -15,9 +15,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity expr = "(x - b) / (x + a) + c";
-            Variable x = "x";
-            var roots = expr.SolveEquation(x);
+            var a = MathS.FromString("abs(x)");
+            a.Stringize();
         }
     }
 }

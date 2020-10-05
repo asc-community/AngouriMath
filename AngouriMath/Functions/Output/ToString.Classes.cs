@@ -49,27 +49,27 @@ namespace AngouriMath
 
         public partial record Sinf
         {
-            public override string Stringize() => "sin(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"sin({Argument.Stringize()})";
         }
 
         public partial record Cosf
         {
-            public override string Stringize() => "cos(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"cos({Argument.Stringize()})";
         }
 
         public partial record Tanf
         {
-            public override string Stringize() => "tan(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"tan({Argument.Stringize()})";
         }
 
         public partial record Cotanf
         {
-            public override string Stringize() => "cotan(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"cotan({Argument.Stringize()})";
         }
 
         public partial record Logf
         {
-            public override string Stringize() => "log(" + Base.Stringize() + ", " + Antilogarithm.Stringize() + ")";
+            public override string Stringize() => $"log({Base.Stringize()}, {Antilogarithm.Stringize()})";
         }
 
         public partial record Powf
@@ -82,22 +82,22 @@ namespace AngouriMath
 
         public partial record Arcsinf
         {
-            public override string Stringize() => "arcsin(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"arcsin({Argument.Stringize()})";
         }
 
         public partial record Arccosf
         {
-            public override string Stringize() => "arccos(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"arccos({Argument.Stringize()})";
         }
 
         public partial record Arctanf
         {
-            public override string Stringize() => "arctan(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"arctan({Argument.Stringize()})";
         }
 
         public partial record Arccotanf
         {
-            public override string Stringize() => "arccotan(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"arccotan({Argument.Stringize()})";
         }
 
         public partial record Factorialf
@@ -107,12 +107,12 @@ namespace AngouriMath
 
         public partial record Derivativef
         {
-            public override string Stringize() => $"derive({Expression}, {Var}, {Iterations})";
+            public override string Stringize() => $"derive({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
         }
 
         public partial record Integralf
         {
-            public override string Stringize() => $"integrate({Expression}, {Var}, {Iterations})";
+            public override string Stringize() => $"integrate({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
         }
 
         public partial record Limitf
@@ -125,17 +125,17 @@ namespace AngouriMath
                     ApproachFrom.Right => "limitright",
                     _ => throw new System.ComponentModel.InvalidEnumArgumentException
                         (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
-                } + $"({Expression}, {Var}, {Destination})";
+                } + $"({Expression.Stringize()}, {Var.Stringize()}, {Destination.Stringize()})";
         }
 
         public partial record Signumf
         {
-            public override string Stringize() => $"sgn({Argument})";
+            public override string Stringize() => $"sgn({Argument.Stringize()})";
         }
 
         public partial record Absf
         {
-            public override string Stringize() => $"abs({Argument})";
+            public override string Stringize() => $"abs({Argument.Stringize()})";
         }
 
         partial record Boolean
