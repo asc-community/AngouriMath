@@ -17,6 +17,7 @@ using AngouriMath.Functions;
 using System;
 using static AngouriMath.Entity.Number;
 using AngouriMath.Core;
+using AngouriMath.Functions.Algebra;
 
 namespace AngouriMath
 {
@@ -333,14 +334,18 @@ namespace AngouriMath
                 (var expr, _, Integer(0)) => expr,
                 // TODO: consider Derivative for negative cases
                 (var expr, Variable var, Integer { EInteger: var asInt }) =>
-                    throw new NotImplementedException("Integration is not implemented yet"),
+                    asInt.CompareTo(1) == 0 ?
+                        Integration.ComputeIndefiniteIntegral(expr, var) :
+                        throw new NotImplementedException("Integral powers are not implemented yet"),
                 _ => this
             };
             internal override Entity InnerSimplify() =>
-                Var.InnerSimplifyWithCheck() is Variable && Iterations.InnerSimplifyWithCheck() is Integer { EInteger: var asInt }
+                Var.InnerSimplifyWithCheck() is Variable var && Iterations.InnerSimplifyWithCheck() is Integer { EInteger: var asInt }
                 ? asInt.IsZero
                     ? Expression.InnerSimplifyWithCheck()
-                    : throw new NotImplementedException("Integration is not implemented yet")
+                    : asInt.CompareTo(1) == 0 ?
+                        Integration.ComputeIndefiniteIntegral(Expression, var) :
+                        throw new NotImplementedException("Integral powers are not implemented yet")
                 : this;
         }
         public partial record Limitf

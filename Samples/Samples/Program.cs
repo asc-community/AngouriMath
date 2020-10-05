@@ -14,7 +14,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            var integ = "sin(a*x)";
+            var integ = "ln(x/2)";
             var ans = Integration.ComputeIndefiniteIntegral(integ, "x");
             Console.WriteLine(ans.Simplify());
         }
