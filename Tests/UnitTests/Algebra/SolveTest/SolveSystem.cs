@@ -34,7 +34,7 @@ namespace UnitTests.Algebra
                     eqCopy = eqCopy.Substitute(substitutions);
                     var error = eqCopy.EvalNumerical().Abs();
                     Assert.True(error.IsFinite && error < 0.0001,
-                        $"\n{nameof(equation)}: {equation.InnerSimplify()}\n{nameof(i)}: {i}\n{nameof(error)}: {error}\n{nameof(sol)}: {sol}");
+                        $"\n{nameof(equation)}: {equation.InnerSimplify().Stringize()}\n{nameof(i)}: {i}\n{nameof(error)}: {error.Stringize()}\n{nameof(sol)}: {sol.Stringize()}");
                 }
         }
 

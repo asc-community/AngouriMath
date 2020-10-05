@@ -191,21 +191,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         {
             // Safely expand the expression
             // Here we find all terms
-            /*
-            var children = new List<Entity>();
-            var subNodes = TreeAnalyzer.LinearChildrenOverSum(expr);
-            foreach (var child in subNodes)
-                if (child.FindSubtree(subtree) is null)
-                    children.Add(child); // We don't need to expand constants
-                else
-                {
-                    
-                    var expanded = TreeAnalyzer.SmartExpandOver(child, entity => entity.FindSubtree(subtree) is { });
-                    if (expanded is null) // Expanded expression is predicted to be too big
-                        return null;
-                    children.AddRange(expanded);
-                }
-                */
             var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, entity => entity.ContainsNode(subtree));
             if (children is null)
                 return null;

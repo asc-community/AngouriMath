@@ -73,7 +73,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 foreach (var denMp in oneInfo.denominatorMultipliers)
                 {
                     var (den, pow) = denMp;
-                    var name = den.ToString(); // TODO: Replace with faster hashing
+                    var name = den.Stringize(); // TODO: Replace with faster hashing
                     if (!denominators.ContainsKey(name))
                         denominators[name] = (den, 0);
                     denominators[name] = (den, Number.Max(denominators[name].pow, -pow));
@@ -89,7 +89,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             {
                 var denDict = new Dictionary<string, (Entity den, Real pow)>();
                 foreach (var (den, pow) in dens)
-                    denDict[den.ToString()] = (den, -pow);
+                    denDict[den.Stringize()] = (den, -pow);
                 Entity invertDenominator = 1;
                 foreach (var mp in denominators)
                     invertDenominator *= MathS.Pow(mp.Value.den, 

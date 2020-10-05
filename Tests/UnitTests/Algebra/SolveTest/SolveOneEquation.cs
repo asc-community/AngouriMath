@@ -16,7 +16,7 @@ namespace UnitTests.Algebra
         internal static void AssertRoots(Entity equation, Entity.Variable toSub, Entity varValue, Integer? subValue = null)
         {
             subValue ??= 3;
-            string? eqNormal = equation.Stringize();
+            string eqNormal = equation.Stringize();
             equation = equation.Substitute(toSub, varValue);
             // MUST be integer to correspond to integer coefficient of periodic roots
             var substitutions = new Dictionary<Entity.Variable, Integer>();
@@ -24,7 +24,7 @@ namespace UnitTests.Algebra
                 substitutions.Add(vr, subValue + substitutions.Count);
             equation = equation.Substitute(substitutions);
             var err = equation.EvalNumerical().Abs();
-            Assert.True(err < 0.001m, $"\nError = {err}\n{eqNormal}\nWrong root: {toSub} = {varValue}");
+            Assert.True(err < 0.001m, $"\nError = {err.Stringize()}\n{eqNormal}\nWrong root: {toSub.Stringize()} = {varValue.Stringize()}");
         }
 
         static void AssertRootCount(FiniteSet roots, int target)
@@ -35,7 +35,8 @@ namespace UnitTests.Algebra
 
         void TestSolver(Entity expr, int rootCount, Integer? toSub = null, bool testNewton = false)
         {
-            var roots = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x));
+            var roots = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x)).InnerSimplified;
+            Assert.IsType<FiniteSet>(roots);
             if (roots is not FiniteSet finiteSet)
                 throw new AngouriBugException("Eeem?");
             AssertRootCount(finiteSet, rootCount);
@@ -117,7 +118,8 @@ namespace UnitTests.Algebra
         {
             Entity toRepl = func + "(x2 + 3)";
             Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1 * MathS.Var("a");
-            var roots = expr.SolveEquation(x);
+            var roots = expr.SolveEquation(x).InnerSimplified;
+            Assert.IsType<FiniteSet>(roots);
             if (roots is not FiniteSet finite)
                 throw new AngouriBugException("Eeem?");
             AssertRootCount(finite, rootAmount);

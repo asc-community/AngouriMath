@@ -14,6 +14,7 @@
  */
 
 using AngouriMath.Core;
+using System.Linq;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
@@ -206,7 +207,7 @@ namespace AngouriMath
             partial record FiniteSet
             {
                 public override string Stringize()
-                    => $"{{{string.Join(", ", Elements)}}}";
+                    => $"{{{string.Join(", ", Elements.Select(c => c.Stringize()))}}}";
             }
 
             partial record Interval
@@ -222,7 +223,7 @@ namespace AngouriMath
             partial record ConditionalSet
             {
                 public override string Stringize()
-                    => $"{{ {Var} | {Predicate} }}";
+                    => $"{{ {Var.Stringize()} | {Predicate.Stringize()} }}";
             }
 
             partial record SpecialSet
