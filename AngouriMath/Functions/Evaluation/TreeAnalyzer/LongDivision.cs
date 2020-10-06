@@ -23,11 +23,11 @@ namespace AngouriMath.Functions
     using static Entity.Number;
     internal static partial class TreeAnalyzer
     {
-        class PolynomialInformation
+        internal sealed class PolynomialInformation
         {
-            readonly Dictionary<Variable, Dictionary<EDecimal, Entity>> monoInfo = new();
-            readonly Dictionary<Entity, Variable> replacements = new();
-            readonly Dictionary<Variable, Entity> revertReplacements = new();
+            private readonly Dictionary<Variable, Dictionary<EDecimal, Entity>> monoInfo = new();
+            private readonly Dictionary<Entity, Variable> replacements = new();
+            private readonly Dictionary<Variable, Entity> revertReplacements = new();
             public IReadOnlyDictionary<Variable, Dictionary<EDecimal, Entity>> MonoInfo => monoInfo;
             public IReadOnlyDictionary<Entity, Variable> Replacements => replacements;
             public IReadOnlyDictionary<Variable, Entity> RevertReplacements => revertReplacements;
@@ -42,32 +42,34 @@ namespace AngouriMath.Functions
                 if (powers is { }) monoInfo.Add(variable, powers);
             }
         }
+
+        internal static PolynomialInformation GatherAllPossiblePolynomials(Entity expr, bool replaceVars)
+        {
+            // Init
+            var res = new PolynomialInformation();
+
+            if (replaceVars)
+            {
+                // Replace all variables we can
+                foreach (var varMentioned in expr.Vars)
+                    res.AddReplacement(expr.Vars, GetMinimumSubtree(expr, varMentioned));
+                expr = expr.Substitute(res.Replacements);
+            }
+
+            // Gather info about each var as if this var was the only argument of the polynomial P(x)
+            var children = Sumf.LinearChildren(expr);
+            foreach (var varMentioned in expr.Vars)
+                res.AddMonoInfo(varMentioned, Algebra.AnalyticalSolving.PolynomialSolver.GatherMonomialInformation
+                   <EDecimal, PrimitiveDecimal>(children, varMentioned));
+            return res;
+        }
+
         /// <summary>
         /// Divides one polynomial over another one:
         /// <a href="https://en.wikipedia.org/wiki/Polynomial_long_division"/>
         /// </summary>
         internal static (Entity Divided, Entity Remainder)? PolynomialLongDivision(Entity p, Entity q)
         {
-            static PolynomialInformation GatherAllPossiblePolynomials(Entity expr, bool replaceVars)
-            {
-                // Init
-                var res = new PolynomialInformation();
-
-                if (replaceVars)
-                {
-                    // Replace all variables we can
-                    foreach (var varMentioned in expr.Vars)
-                        res.AddReplacement(expr.Vars, GetMinimumSubtree(expr, varMentioned));
-                    expr = expr.Substitute(res.Replacements);
-                }
-
-                // Gather info about each var as if this var was the only argument of the polynomial P(x)
-                var children = Sumf.LinearChildren(expr);
-                foreach (var varMentioned in expr.Vars)
-                    res.AddMonoInfo(varMentioned, Algebra.AnalyticalSolving.PolynomialSolver.GatherMonomialInformation
-                       <EDecimal, PrimitiveDecimal>(children, varMentioned));
-                return res;
-            }
             if (!p.Vars.Any() || !q.Vars.Any())
                 return null; // There are no variables to find polynomial as
 
