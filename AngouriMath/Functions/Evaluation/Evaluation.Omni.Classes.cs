@@ -27,7 +27,7 @@ namespace AngouriMath
                     => Apply(el => el.Evaled);
 
                 internal override Entity InnerSimplify()
-                    => Apply(el => el.InnerSimplifyWithCheck());
+                    => Apply(el => el.InnerSimplified);
             }
 
             partial record Interval
@@ -39,7 +39,7 @@ namespace AngouriMath
                     => New(Left.Evaled, Right.Evaled).IfEqualEndsThenCollapse();
 
                 internal override Entity InnerSimplify()
-                    => New(Left.InnerSimplifyWithCheck(), Left.InnerSimplifyWithCheck());
+                    => New(Left.InnerSimplified, Left.InnerSimplified);
             }
 
             partial record ConditionalSet
@@ -50,7 +50,7 @@ namespace AngouriMath
                 internal override Entity InnerSimplify()
                 {
                     if (!Predicate.EvaluableBoolean)
-                        return New(Var, Predicate.InnerSimplifyWithCheck());
+                        return New(Var, Predicate.InnerSimplified);
                     // so it's either U or {} if the statement is always true or false respectively
                     return Predicate.EvalBoolean() ? Codomain : Set.Empty;
                 }
@@ -71,7 +71,7 @@ namespace AngouriMath
                     => InnerSimplifyWithCheck();
 
                 internal override Entity InnerSimplify()
-                    => (Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck()) switch
+                    => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
                         (FiniteSet setLeft, FiniteSet setRight) => FiniteSet.Unite(setLeft, setRight),
                         // TODO
@@ -85,7 +85,7 @@ namespace AngouriMath
                     => InnerSimplifyWithCheck();
 
                 internal override Entity InnerSimplify()
-                    => (Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck()) switch
+                    => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
                         (FiniteSet setLeft, FiniteSet setRight) => FiniteSet.Intersect(setLeft, setRight),
                         // TODO
@@ -99,7 +99,7 @@ namespace AngouriMath
                     => InnerSimplifyWithCheck();
 
                 internal override Entity InnerSimplify()
-                    => (Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck()) switch
+                    => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
                         (FiniteSet setLeft, FiniteSet setRight) => FiniteSet.Subtract(setLeft, setRight),
                         // TODO

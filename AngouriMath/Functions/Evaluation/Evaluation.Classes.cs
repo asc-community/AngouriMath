@@ -26,7 +26,7 @@ namespace AngouriMath
         public partial record Tensor
         {
             protected override Entity InnerEval() => Elementwise(e => e.Evaled);
-            internal override Entity InnerSimplify() => Elementwise(e => e.InnerSimplifyWithCheck());
+            internal override Entity InnerSimplify() => Elementwise(e => e.InnerSimplified);
         }
     }
 }

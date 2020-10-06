@@ -66,7 +66,7 @@ namespace AngouriMath
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -96,7 +96,7 @@ namespace AngouriMath
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -126,7 +126,7 @@ namespace AngouriMath
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -157,7 +157,7 @@ namespace AngouriMath
             {
                 if (GoodResult(Assumption, Conclusion, out var res))
                     return res;
-                return New(Assumption.InnerSimplifyWithCheck(), Conclusion.InnerSimplifyWithCheck());
+                return New(Assumption.InnerSimplified, Conclusion.InnerSimplified);
             }
         }
 
@@ -173,7 +173,7 @@ namespace AngouriMath
                if (Left.Evaled is Number && Right.Evaled is Number)
                     return InnerEvalWithCheck();
                else
-                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                    return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -198,7 +198,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                    return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -223,7 +223,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                    return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -248,7 +248,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                    return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -273,7 +273,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                    return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
     }
