@@ -144,7 +144,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         continue;
                     // Here we are trying to solve for this replacement
                     var solutionsSet = Solve(alt.Substitute(minimumSubtree, newVar), newVar);
-                    if (solutionsSet is FiniteSet enums && !enums.IsSetEmpty)
+                    if (solutionsSet is FiniteSet { IsSetEmpty:false } enums)
                     {
                         var solutions = enums.Select(solution => Solve(minimumSubtree - solution, x, compensateSolving: true)).Unite();
                         if (solutions is FiniteSet els)
