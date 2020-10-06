@@ -725,11 +725,15 @@ namespace AngouriMath
             public static FiniteSet Finite(List<Entity> entities) => new FiniteSet((IEnumerable<Entity>)entities);
 
             /// <summary>
-            /// Creates an interval. To modify it, use e.g.
-            /// <see cref="Interval.SetLeftClosed(bool)"/>
-            /// (see more alike functions in <see cref="Set"/> documentation)
+            /// Creates a closed interval
             /// </summary>
             public static Interval Interval(Entity from, Entity to) => new(from, true, to, true);
+
+            /// <summary>
+            /// Creates an interval where <paramref name="leftClosed"/> shows whether <paramref name="from"/> is included,
+            /// <paramref name="rightClosed"/> shows whether <paramref name="to"/> included.
+            /// </summary>
+            public static Interval Interval(Entity from, bool leftClosed, Entity to, bool rightClosed) => new(from, leftClosed, to, rightClosed);
         }
 
         /// <summary>

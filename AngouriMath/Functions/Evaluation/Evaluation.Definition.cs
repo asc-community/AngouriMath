@@ -29,6 +29,10 @@ namespace AngouriMath
         /// </summary>
         internal abstract Entity InnerSimplify();
 
+        /// <summary>
+        /// This is the result of naive simplifications. In other 
+        /// symbolic algebra systems it is called "Automatic simplification"
+        /// </summary>
         public Entity InnerSimplified 
             => caches.GetValue(this, cache => cache.innerSimplified, cache => cache.innerSimplified = InnerSimplifyWithCheck());
 
