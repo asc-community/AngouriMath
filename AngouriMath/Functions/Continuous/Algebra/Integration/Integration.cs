@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AngouriMath.Functions.Algebra
+﻿namespace AngouriMath.Functions.Algebra
 {
     public static partial class Integration
     {
@@ -22,6 +18,9 @@ namespace AngouriMath.Functions.Algebra
             if (answer is { }) return answer;
 
             answer = IndefiniteIntegralSolver.SolveIntegratingByParts(expr, x);
+            if (answer is { }) return answer;
+
+            answer = IndefiniteIntegralSolver.SolveLogarithmic(expr, x);
             if (answer is { }) return answer;
 
             return new Entity.Integralf(expr, x, 1); // return as integral if nothing can be done with expression

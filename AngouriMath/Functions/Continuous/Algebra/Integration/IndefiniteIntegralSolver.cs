@@ -1,9 +1,4 @@
-﻿using AngouriMath.Functions.Algebra.AnalyticalSolving;
-using PeterO.Numbers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Linq;
 
 namespace AngouriMath.Functions.Algebra
 {
@@ -76,5 +71,27 @@ namespace AngouriMath.Functions.Algebra
             }
             else return null;
         }
+
+        internal static Entity? SolveLogarithmic(Entity expr, Entity.Variable x) => expr switch
+        {
+            Entity.Logf(var @base, var arg) =>
+                @base.Contains(x) ?
+                    Integration.ComputeIndefiniteIntegral(MathS.Ln(arg) / MathS.Ln(@base), x) :
+                arg is Entity.Powf(var y, var pow) ? // log(b, y^p) = ln(y^p) / ln(b) = ln(p) / ln(b) * ln(y)
+                    Integration.ComputeIndefiniteIntegral(pow / MathS.Ln(@base) * MathS.Ln(y), x) :
+                    null,
+
+            _ => null
+        };
+
+        internal static Entity? SolveExponential(Entity expr, Entity.Variable x) => expr switch
+        {
+            Entity.Powf(var @base, var pow) =>
+                @base.Contains(x) ?
+                    Integration.ComputeIndefiniteIntegral(MathS.Pow(MathS.e, MathS.Ln(@base) * pow), x) :
+                    null,
+
+            _ => null
+        };
     }
 }

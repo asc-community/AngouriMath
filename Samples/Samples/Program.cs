@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Immutable;
-using System.Linq;
-using AngouriMath;
-using static AngouriMath.Entity;
-using static AngouriMath.Entity.Boolean;
-using static AngouriMath.MathS;
-using AngouriMath.Extensions;
 using AngouriMath.Functions.Algebra;
 
 namespace Samples
@@ -14,9 +7,9 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            var integ = "ln(x/2)";
-            var ans = Integration.ComputeIndefiniteIntegral(integ, "x");
-            Console.WriteLine(ans.Simplify());
+            var t = "ln((a*x+b)^c)";
+            var res = Integration.ComputeIndefiniteIntegral(t, "x");
+            Console.WriteLine(res.Simplify());
         }
     }
 }
