@@ -14,9 +14,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
         private void AssertExprRoots(Set roots, Entity expr)
         {
             roots = (Set)roots.InnerSimplified;
-            Assert.IsType<FiniteSet>(roots);
-            if (roots is not FiniteSet finite)
-                throw new AngouriBugException("Eeem?");
+            var finite = Assert.IsType<FiniteSet>(roots);
             foreach (var root in finite)
                 SolveOneEquation.AssertRoots(expr, x, root);
         }

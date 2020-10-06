@@ -37,9 +37,7 @@ namespace UnitTests.Algebra
         {
             var roots = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x));
             roots = (Set)roots.InnerSimplified;
-            Assert.IsType<FiniteSet>(roots);
-            if (roots is not FiniteSet finiteSet)
-                throw new AngouriBugException("Eeem?");
+            var finiteSet = Assert.IsType<FiniteSet>(roots);
             AssertRootCount(finiteSet, rootCount);
             foreach (var root in finiteSet as FiniteSet)
                 AssertRoots(expr, x, root, toSub);
@@ -119,10 +117,9 @@ namespace UnitTests.Algebra
         {
             Entity toRepl = func + "(x2 + 3)";
             Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1 * MathS.Var("a");
-            var roots = expr.SolveEquation(x).InnerSimplified;
-            Assert.IsType<FiniteSet>(roots);
-            if (roots is not FiniteSet finite)
-                throw new AngouriBugException("Eeem?");
+            var roots = expr.SolveEquation(x);
+            roots = (Set)roots.InnerSimplified;
+            var finite = Assert.IsType<FiniteSet>(roots);
             AssertRootCount(finite, rootAmount);
             foreach (var root in finite)
                 AssertRoots(expr.Substitute("a", 5), x, root.Substitute("n_1", 3).Substitute("a", 5));

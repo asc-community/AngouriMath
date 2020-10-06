@@ -45,9 +45,7 @@ namespace UnitTests.Algebra
             Variable x = "x";
             var solutions = eq.Solve(x);
             solutions = (Set)solutions.InnerSimplified;
-            Assert.IsType<FiniteSet>(solutions);
-            if (solutions is not FiniteSet roots)
-                throw new Exception(); // C#'s analyzers can't into Assert.True's exceptions
+            var roots = Assert.IsType<FiniteSet>(solutions);
             Assert.Equal(rootCount, roots.Count);
             foreach (var root in roots)
                 AssertRoots(eq, "x", root);
