@@ -18,6 +18,8 @@ namespace AngouriMath.Core
             internal Entity? innerSimplified;
             internal Entity? innerEvaled;
             internal HashSet<Variable>? vars;
+            internal bool? isSetFinite;
+            internal bool? isSetEmpty;
         }
 
         private readonly ConditionalWeakTable<Entity, EntityCache> caches = new();

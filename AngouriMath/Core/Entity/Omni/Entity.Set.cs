@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
@@ -32,17 +33,17 @@ namespace AngouriMath
             /// Checks whether the given element is in the set
             /// </summary>
             /// <param name="entity">The element to find in the set</param>
-            /// <returns>Whether this element is found</returns>
-            public abstract bool Contains(Entity entity);
+            /// <param name="contains">The result whether it is in the set or not</param>
+            /// <returns>Whether this is possible to determine that it contains the given element</returns>
+            public abstract bool TryContains(Entity entity, out bool contains);
+
+            public bool Contains(Entity entity)
+                => TryContains(entity, out var res) ? res : throw new ElementInSetAmbiguousException("Cannot determine whether the element is in the set");
 
             public readonly static FiniteSet Empty = new FiniteSet();
 
             public abstract bool IsSetFinite { get; }
             public abstract bool IsSetEmpty { get; }
-
-            // To cache those above
-            private bool? isSetFinite;
-            private bool? isSetEmpty;
         }
 
         public static implicit operator Entity(Domain domain) => Set.SpecialSet.Create(domain);

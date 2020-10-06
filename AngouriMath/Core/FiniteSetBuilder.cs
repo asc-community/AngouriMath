@@ -16,6 +16,7 @@ namespace AngouriMath.Core
     {
         private readonly List<Entity> raw = new();
 
+        public bool IsEmpty => raw.Count == 0;
         public FiniteSetBuilder() { }
 
         public void Add(Entity element)

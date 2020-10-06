@@ -72,7 +72,7 @@ namespace AngouriMath
     /// </summary>
     public abstract partial record Entity : ILatexiseable
     {
-        private static RecordFieldCache caches = new();
+        private readonly static RecordFieldCache caches = new();
 
         protected abstract Entity[] InitDirectChildren();
         public IReadOnlyList<Entity> DirectChildren 

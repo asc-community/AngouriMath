@@ -68,7 +68,7 @@ namespace AngouriMath
             partial record Unionf
             {
                 protected override Entity InnerEval()
-                    => InnerSimplifyWithCheck();
+                    => InnerSimplified;
 
                 internal override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
@@ -82,7 +82,7 @@ namespace AngouriMath
             partial record Intersectionf
             {
                 protected override Entity InnerEval()
-                    => InnerSimplifyWithCheck();
+                    => InnerSimplified;
 
                 internal override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
@@ -96,7 +96,7 @@ namespace AngouriMath
             partial record SetMinusf
             {
                 protected override Entity InnerEval()
-                    => InnerSimplifyWithCheck();
+                    => InnerSimplified;
 
                 internal override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch

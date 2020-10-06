@@ -132,8 +132,14 @@ namespace AngouriMath
                     return new FiniteSet(dict.Values, noCheck: true); // we didn't add anything
                 }
 
-                public override bool Contains(Entity entity)
-                    => elements.ContainsKey(entity.Evaled);
+                public override bool TryContains(Entity entity, out bool contains)
+                {
+                    contains = elements.ContainsKey(entity.Evaled);
+                    // a in { 2, 3 } is false
+                    // 4 in { a, 3 } is false
+                    // TODO: should we return false when there are symbolic expressions?
+                    return true;
+                }
 
                 // TODO: how should we implement GetHashCode?
                 // Is it safe to store this hash inside?
@@ -206,13 +212,15 @@ namespace AngouriMath
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
 
-                public override bool Contains(Entity entity)
+                public override bool TryContains(Entity entity, out bool contains)
                 {
+                    contains = false;
                     if (entity is not Real re)
-                        throw new ElementInSetAmbiguousException("The argument should be a real number");
+                        return false;
                     if (!IsNumeric)
-                        throw new ElementInSetAmbiguousException("The inteval's ends should be real numbers");
-                    return IsALessThanB(left.Value, re, LeftClosed) && IsALessThanB(right.Value, re, RightClosed);
+                        return false;
+                    contains = IsALessThanB(left.Value, re, LeftClosed) && IsALessThanB(right.Value, re, RightClosed);
+                    return true;
                 }
 
                 public override Priority Priority => Priority.Leaf;
@@ -236,14 +244,18 @@ namespace AngouriMath
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(this);
 
-                public override bool Contains(Entity entity)
+                public override bool TryContains(Entity entity, out bool contains)
                 {
+                    contains = false;
                     var substituted = entity.Replace(varCandidate => 
                         varCandidate == Var ? entity : varCandidate).InnerSimplifyWithCheck();
                     if (substituted.EvaluableBoolean)
-                        return substituted.EvalBoolean();
+                    {
+                        contains = substituted.EvalBoolean();
+                        return true;
+                    }
                     else
-                        throw new ElementInSetAmbiguousException("It is still unclear");
+                        return false;
                 }
 
                 private Entity New(Entity var, Entity predicate)
@@ -272,8 +284,12 @@ namespace AngouriMath
                     => func(this);
 
                 // TODO: make a more complicated check for more domains
-                public override bool Contains(Entity entity)
-                    => DomainsFunctional.FitsDomainOrNonNumeric(entity, SetType) && entity is Boolean or Complex;
+                public override bool TryContains(Entity entity, out bool contains)
+                // Should return false for non-numeric
+                {
+                    contains = DomainsFunctional.FitsDomainOrNonNumeric(entity, SetType) && entity is Boolean or Complex;
+                    return true;
+                }
 
                 // Since there's a very small number of domains, it's wiser to
                 // cache them all
@@ -309,23 +325,31 @@ namespace AngouriMath
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
 
-                public override bool Contains(Entity entity)
+                public override bool TryContains(Entity entity, out bool contains)
                 {
+                    contains = false;
                     if (Left is not Set left || Right is not Set right)
-                        throw new ElementInSetAmbiguousException("One of union's operands is not set");
-                    return left.Contains(entity) || right.Contains(entity);
+                        return false;
+                    if (left.TryContains(entity, out var leftContains) && right.TryContains(entity, out var rightContains))
+                    {
+                        contains = leftContains || rightContains;
+                        return true;
+                    }
+                    return false;
                 }
 
                 public override Priority Priority => Priority.Union;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
     
-                public override bool IsSetFinite => isSetFinite ??=
+                public override bool IsSetFinite => caches.GetValue(this,
+                    cache => cache.isSetFinite, cache => cache.isSetFinite =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
-                    && finite1.IsSetFinite && finite2.IsSetFinite;
-                public override bool IsSetEmpty => isSetEmpty ??=
+                    && finite1.IsSetFinite && finite2.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
+                public override bool IsSetEmpty => caches.GetValue(this,
+                    cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
-                    && finite1.IsSetEmpty && finite2.IsSetEmpty;
+                    && finite1.IsSetEmpty && finite2.IsSetEmpty) ?? throw new AngouriBugException("isSetEmpty cannot be null");
             }
             #endregion
 
@@ -342,23 +366,30 @@ namespace AngouriMath
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
 
-                public override bool Contains(Entity entity)
+                public override bool TryContains(Entity entity, out bool contains)
                 {
+                    contains = false;
                     if (Left is not Set left || Right is not Set right)
-                        throw new ElementInSetAmbiguousException("One of union's operands is not set");
-                    return left.Contains(entity) && right.Contains(entity);
+                        return false;
+                    if (left.TryContains(entity, out var leftContains) && right.TryContains(entity, out var rightContains))
+                    {
+                        contains = leftContains && rightContains;
+                        return true;
+                    }
+                    return false;
                 }
 
                 public override Priority Priority => Priority.Intersection;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
-                public override bool IsSetFinite => isSetFinite ??=
+                public override bool IsSetFinite => caches.GetValue(this,
+                    cache => cache.isSetFinite, cache => cache.isSetFinite = Left is FiniteSet finite1 && Right is FiniteSet finite2
+                    && (finite1.IsSetFinite || finite2.IsSetFinite)) ?? throw new AngouriBugException("isSetFinite cannot be null");
+                public override bool IsSetEmpty => caches.GetValue(this,
+                    cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
-                    && (finite1.IsSetFinite || finite2.IsSetFinite);
-                public override bool IsSetEmpty => isSetEmpty ??=
-                    Left is FiniteSet finite1 && Right is FiniteSet finite2
-                    && (finite1.IsSetEmpty || finite2.IsSetEmpty);
+                    && (finite1.IsSetEmpty || finite2.IsSetEmpty)) ?? throw new AngouriBugException("isSetEmpty cannot be null");
             }
             #endregion
 
@@ -375,23 +406,30 @@ namespace AngouriMath
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
 
-                public override bool Contains(Entity entity)
+                public override bool TryContains(Entity entity, out bool contains)
                 {
+                    contains = false;
                     if (Left is not Set left || Right is not Set right)
-                        throw new ElementInSetAmbiguousException("One of union's operands is not set");
-                    return left.Contains(entity) && !right.Contains(entity);
+                        return false;
+                    if (left.TryContains(entity, out var leftContains) && right.TryContains(entity, out var rightContains))
+                    {
+                        contains = leftContains && !rightContains;
+                        return true;
+                    }
+                    return false;
                 }
 
                 public override Priority Priority => Priority.SetMinus;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
-                public override bool IsSetFinite => isSetFinite ??=
-                    Left is FiniteSet finite1 && Right is FiniteSet
-                    && finite1.IsSetFinite;
-                public override bool IsSetEmpty => isSetEmpty ??=
+                public override bool IsSetFinite => caches.GetValue(this,
+                    cache => cache.isSetFinite, cache => cache.isSetFinite =
+                    Left is FiniteSet finite1 && Right is FiniteSet && finite1.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
+                public override bool IsSetEmpty => caches.GetValue(this,
+                    cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
-                    && (finite1.IsSetEmpty || finite1 == finite2);
+                    && (finite1.IsSetEmpty || finite1 == finite2)) ?? throw new AngouriBugException("isSetEmpty cannot be null");
             }
             #endregion
         }
