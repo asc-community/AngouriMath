@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 
@@ -159,5 +160,11 @@ namespace AngouriMath
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
         /// </summary>
         public int SimplifiedRate => caches.GetValue(this, cache => cache.simplifiedRate, cache => cache.simplifiedRate = MathS.Settings.ComplexityCriteria.Value(this)) ?? throw new AngouriBugException("Sim cannot be null");
+
+        protected virtual bool PrintMembers(StringBuilder builder)
+        {
+            builder.Append(Stringize());
+            return false;
+        }
     }
 }

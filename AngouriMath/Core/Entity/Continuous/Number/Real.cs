@@ -20,6 +20,8 @@ using PeterO.Numbers;
 namespace AngouriMath
 {
     using Core;
+    using System.Text;
+
     partial record Entity
     {
         public abstract partial record Number
@@ -134,6 +136,12 @@ namespace AngouriMath
 
                 public override Entity Substitute(Entity x, Entity value)
                     => this == x ? value : this;
+
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
             }
         }
     }
