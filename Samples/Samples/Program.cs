@@ -1,5 +1,5 @@
 ﻿using System;
-using AngouriMath.Functions.Algebra;
+using AngouriMath;
 
 namespace Samples
 {
@@ -7,9 +7,8 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            var t = "ln((a*x+b)^c)";
-            var res = Integration.ComputeIndefiniteIntegral(t, "x");
-            Console.WriteLine(res.Simplify());
+            Entity t = "e^(a*x) / 0.5 / a + e^(2*a*x) + 1";
+            Console.WriteLine(t.SolveEquation("x"));
         }
     }
 }

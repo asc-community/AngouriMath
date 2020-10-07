@@ -153,9 +153,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // // //
             }
 
-            // if no replacement worked, try trigonometry solver
+            // if no replacement worked, try exponential solver
             if (TrigonometricSolver.SolveLinear(expr, x) is { } trig && trig.IsFiniteSet(out var elsTrig))
                 return elsTrig.Select(ent => TryDowncast(expr, x, ent)).ToSet();
+            // // //
+
+            // if no exponential rules helped, try trigonometric solver
+            if (ExponentialSolver.SolveLinear(expr, x) is { } exp && exp.IsFiniteSet(out var elsExp))
+                return elsExp.Select(ent => TryDowncast(expr, x, ent)).ToSet();
             // // //
 
             // if no trigonometric rules helped, common denominator might help
