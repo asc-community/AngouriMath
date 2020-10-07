@@ -25,13 +25,27 @@ namespace AngouriMath.Core.Sets
 {
     internal static partial class SetOperators
     {
-        internal static Set UniteFiniteSetAndInterval(FiniteSet finite, Interval interval)
+        internal static Set UniteFiniteSetAndSet(FiniteSet finite, Set set)
         {
             var sb = new FiniteSetBuilder();
             foreach (var el in finite)
-                if (!interval.TryContains(el, out var contains) || !contains)
+                if (!set.TryContains(el, out var contains) || !contains)
                     sb.Add(el);
-            return sb.IsEmpty ? interval : sb.ToFiniteSet().Unite(interval);
+            return sb.IsEmpty ? set : sb.ToFiniteSet().Unite(set);
+        }
+
+        internal static Set UniteIntervalAndInterval(Interval A, Interval B)
+        {
+            if (A.Left == B.Right && A.LeftClosed || B.RightClosed)
+                return new Interval(B.Left, B.LeftClosed, A.Right, B.RightClosed);
+            if (A.Right == B.Left && A.RightClosed || B.LeftClosed)
+                return new Interval(A.Left, A.LeftClosed, B.Right, B.RightClosed);
+            if (A.Left is not Real aLeft ||
+                A.Right is not Real aRight ||
+                B.Left is not Real bLeft ||
+                B.Right is not Real bRight)
+                return A.Unite(B);
+            return A.Unite(B); // TODO
         }
     }
 }

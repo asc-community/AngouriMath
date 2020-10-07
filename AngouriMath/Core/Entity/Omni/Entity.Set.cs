@@ -37,6 +37,12 @@ namespace AngouriMath
             /// <returns>Whether this is possible to determine that it contains the given element</returns>
             public abstract bool TryContains(Entity entity, out bool contains);
 
+            /// <summary>
+            /// Checks that an element is in the set
+            /// Unless you are confident about the set,
+            /// it is recommended to use <see cref="TryContains"/> instead
+            /// </summary>
+            /// <exception cref="ElementInSetAmbiguousException">Thrown when </exception>
             public bool Contains(Entity entity)
                 => TryContains(entity, out var res) ? res : throw new ElementInSetAmbiguousException("Cannot determine whether the element is in the set");
 
