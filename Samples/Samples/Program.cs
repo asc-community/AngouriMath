@@ -7,7 +7,7 @@ namespace Samples
     {
         static void Main(string[] _)
         {
-            Entity t = "e^(a*x) / 0.5 / a + e^(2*a*x) + 1";
+            Entity t = "2^x + 4^x - 2^(3x) - 4";
             Console.WriteLine(t.SolveEquation("x"));
         }
     }
