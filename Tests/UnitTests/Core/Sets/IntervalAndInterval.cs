@@ -41,10 +41,10 @@ namespace UnitTests.Core.Sets
         [Fact] public void Union4() => TestInt(C1.Unite(A), Interval(2, true, 7, true));
         [Fact] public void Union5() => CannotSimplify(E.Unite(D));
         [Fact] public void Union6() => CannotSimplify(D.Unite(E));
-        [Fact] public void Union7() => CannotSimplify(A.Unite(A));
-        [Fact] public void Union8() => CannotSimplify(B.Unite(B));
-        [Fact] public void Union9() => CannotSimplify(C.Unite(C));
-        [Fact] public void Union10() => CannotSimplify(D.Unite(D));
+        [Fact] public void Union7() =>  TestInt(A.Unite(A), (Interval)A);
+        [Fact] public void Union8() =>  TestInt(B.Unite(B), (Interval)B);
+        [Fact] public void Union9() =>  TestInt(C.Unite(C), (Interval)C);
+        [Fact] public void Union10() => TestInt(D.Unite(D), (Interval)D);
 
         [Fact] public void Intersection1() => TestInt(A.Intersect(B), Interval(2, true, 3, true));
         [Fact] public void Intersection2() => TestInt(B.Intersect(A), Interval(2, true, 3, true));

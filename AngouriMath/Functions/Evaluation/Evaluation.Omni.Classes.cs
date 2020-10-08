@@ -13,6 +13,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+using AngouriMath.Core.Sets;
 using AngouriMath.Functions;
 
 namespace AngouriMath
@@ -39,7 +40,7 @@ namespace AngouriMath
                     => New(Left.Evaled, Right.Evaled).IfEqualEndsThenCollapse();
 
                 internal override Entity InnerSimplify()
-                    => New(Left.InnerSimplified, Left.InnerSimplified);
+                    => New(Left.InnerSimplified, Right.InnerSimplified);
             }
 
             partial record ConditionalSet
@@ -74,6 +75,7 @@ namespace AngouriMath
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
                         (FiniteSet setLeft, FiniteSet setRight) => FiniteSet.Unite(setLeft, setRight),
+                        (Interval intLeft, Interval intRight) => SetOperators.UniteIntervalAndInterval(intLeft, intRight),
                         // TODO
                         (var left, var right) => New(left, right)
                     };

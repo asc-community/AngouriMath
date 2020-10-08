@@ -16,9 +16,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+[assembly: InternalsVisibleTo("Playground")]
 
 namespace AngouriMath.Core
 {

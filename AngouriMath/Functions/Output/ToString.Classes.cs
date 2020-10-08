@@ -30,6 +30,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Tensor
@@ -40,6 +41,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Sumf
@@ -51,6 +53,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Minusf
@@ -62,6 +65,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Mulf
@@ -75,6 +79,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Divf
@@ -86,6 +91,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Sinf
@@ -96,6 +102,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Cosf
@@ -106,6 +113,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Tanf
@@ -116,6 +124,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Cotanf
@@ -126,6 +135,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Logf
@@ -136,6 +146,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Powf
@@ -149,6 +160,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Arcsinf
@@ -159,6 +171,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Arccosf
@@ -169,6 +182,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Arctanf
@@ -179,6 +193,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Arccotanf
@@ -189,6 +204,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Factorialf
@@ -199,6 +215,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Derivativef
@@ -209,6 +226,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Integralf
@@ -219,6 +237,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Limitf
@@ -237,6 +256,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Signumf
@@ -247,6 +267,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         public partial record Absf
@@ -257,6 +278,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record Boolean
@@ -267,6 +289,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record Notf
@@ -277,6 +300,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record Andf
@@ -288,6 +312,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record Orf
@@ -299,6 +324,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record Xorf
@@ -310,6 +336,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record Impliesf
@@ -321,6 +348,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record Equalsf
@@ -332,6 +360,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record Greaterf
@@ -343,6 +372,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record GreaterOrEqualf
@@ -354,6 +384,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record Lessf
@@ -365,6 +396,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record LessOrEqualf
@@ -376,6 +408,7 @@ namespace AngouriMath
                 builder.Append(Stringize());
                 return false;
             }
+            public override string ToString() => Stringize();
         }
 
         partial record Set
@@ -389,6 +422,7 @@ namespace AngouriMath
                     builder.Append(Stringize());
                     return false;
                 }
+                public override string ToString() => Stringize();
             }
 
             partial record Interval
@@ -404,6 +438,7 @@ namespace AngouriMath
                     builder.Append(Stringize());
                     return false;
                 }
+                public override string ToString() => Stringize();
             }
 
             partial record ConditionalSet
@@ -415,6 +450,7 @@ namespace AngouriMath
                     builder.Append(Stringize());
                     return false;
                 }
+                public override string ToString() => Stringize();
             }
 
             partial record SpecialSet
@@ -426,6 +462,7 @@ namespace AngouriMath
                     builder.Append(Stringize());
                     return false;
                 }
+                public override string ToString() => Stringize();
             }
 
             partial record Unionf
@@ -437,6 +474,7 @@ namespace AngouriMath
                     builder.Append(Stringize());
                     return false;
                 }
+                public override string ToString() => Stringize();
             }
 
             partial record Intersectionf
@@ -448,6 +486,7 @@ namespace AngouriMath
                     builder.Append(Stringize());
                     return false;
                 }
+                public override string ToString() => Stringize();
             }
 
             partial record SetMinusf
@@ -459,6 +498,7 @@ namespace AngouriMath
                     builder.Append(Stringize());
                     return false;
                 }
+                public override string ToString() => Stringize();
             }
         }
     }

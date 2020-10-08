@@ -193,7 +193,7 @@ namespace AngouriMath
             /// <see cref="Interval.LeftClosed"/> stands for whether <see cref="Interval.Left"/> is included
             /// <see cref="Interval.RightClosed"/> stands for whether <see cref="Interval.Right"/> is included
             /// </summary>
-            public partial record Interval(Entity Left, bool LeftClosed, Entity Right, bool RightClosed) : Set
+            public partial record Interval(Entity Left, bool LeftClosed, Entity Right, bool RightClosed) : Set, IEquatable<Interval>
             {
                 public bool IsNumeric => !left.Value.IsNaN && !right.Value.IsNaN;
 
@@ -226,6 +226,12 @@ namespace AngouriMath
                 public override Priority Priority => Priority.Leaf;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
+
+                public virtual bool Equals(Interval other)
+                    => (Left == other.Left
+                        && Right == other.Right
+                        && LeftClosed == other.LeftClosed
+                        && RightClosed == other.RightClosed);
 
                 public override bool IsSetFinite => false;
                 public override bool IsSetEmpty => false;
