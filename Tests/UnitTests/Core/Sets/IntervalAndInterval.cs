@@ -29,7 +29,7 @@ namespace UnitTests.Core.Sets
 
         private void TestArb(Entity actual, Entity expected)
         {
-            Assert.Equal(expected, actual);
+            Assert.Equal(expected, actual.InnerSimplified);
         }
 
         private void CannotSimplify(Entity act)
@@ -50,8 +50,8 @@ namespace UnitTests.Core.Sets
         [Fact] public void Intersection2() => TestInt(B.Intersect(A), Interval(2, true, 3, true));
         [Fact] public void Intersection3() => TestArb(A.Intersect(C), new FiniteSet(5));
         [Fact] public void Intersection4() => TestArb(C.Intersect(A), new FiniteSet(5));
-        [Fact] public void Intersection5() => CannotSimplify(A.Intersect(A));
-        [Fact] public void Intersection6() => CannotSimplify(B.Intersect(B));
+        [Fact] public void Intersection5() => TestInt(A.Intersect(A), (Interval)A);
+        [Fact] public void Intersection6() => TestInt(B.Intersect(B), (Interval)B);
         [Fact] public void Intersection7() => TestArb(E.Intersect(D), Set.Empty);
         [Fact] public void Intersection8() => TestArb(D.Intersect(E), Set.Empty);
         [Fact] public void Intersection9() => TestArb(E.Intersect(B), Set.Empty);

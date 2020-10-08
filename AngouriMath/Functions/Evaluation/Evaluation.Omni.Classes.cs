@@ -75,6 +75,7 @@ namespace AngouriMath
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
                         (FiniteSet setLeft, Set setRight) => SetOperators.UniteFiniteSetAndSet(setLeft, setRight),
+                        (Set setLeft, FiniteSet setRight) => SetOperators.UniteFiniteSetAndSet(setRight, setLeft),
                         (Interval intLeft, Interval intRight) => SetOperators.UniteIntervalAndInterval(intLeft, intRight),
                         // TODO
                         (var left, var right) => New(left, right)
@@ -90,6 +91,7 @@ namespace AngouriMath
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
                         (FiniteSet setLeft, Set setRight) => SetOperators.IntersectFiniteSetAndSet(setLeft, setRight),
+                        (Set setLeft, FiniteSet setRight) => SetOperators.IntersectFiniteSetAndSet(setRight, setLeft),
                         (Interval intLeft, Interval intRight) => SetOperators.IntersectIntervalAndInterval(intLeft, intRight),
                         // TODO
                         (var left, var right) => New(left, right)
