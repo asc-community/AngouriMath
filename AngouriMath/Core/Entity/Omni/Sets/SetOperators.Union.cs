@@ -27,6 +27,8 @@ namespace AngouriMath.Core.Sets
     {
         internal static Set UniteFiniteSetAndSet(FiniteSet finite, Set set)
         {
+            if (set is FiniteSet another)
+                return FiniteSet.Unite(finite, another);
             var sb = new FiniteSetBuilder();
             foreach (var el in finite)
                 if (!set.TryContains(el, out var contains) || !contains)
@@ -34,6 +36,7 @@ namespace AngouriMath.Core.Sets
             return sb.IsEmpty ? set : sb.ToFiniteSet().Unite(set);
         }
 
+        // TODO: it requires cleaning
         internal static Set UniteIntervalAndInterval(Interval A, Interval B)
         {
             if (A.Left == B.Right && (A.LeftClosed || B.RightClosed))

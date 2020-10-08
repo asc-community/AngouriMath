@@ -14,15 +14,22 @@ namespace AngouriMath.Core
     /// </summary>
     internal sealed class FiniteSetBuilder
     {
-        private readonly List<Entity> raw = new();
+        private readonly HashSet<Entity> raw = new();
 
         public bool IsEmpty => raw.Count == 0;
         public FiniteSetBuilder() { }
+        public FiniteSetBuilder(IEnumerable<Entity> elements)
+        { 
+            raw = new(elements);
+        }
 
         public void Add(Entity element)
             => raw.Add(element);
 
+        public void Remove(Entity element)
+            => raw.Remove(element);
+
         public FiniteSet ToFiniteSet()
-            => raw.Count == 0 ? Empty : MathS.Sets.Finite(raw);
+            => raw.Count == 0 ? Empty : new FiniteSet(raw);
     }
 }
