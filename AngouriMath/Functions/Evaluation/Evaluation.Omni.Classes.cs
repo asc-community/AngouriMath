@@ -74,7 +74,7 @@ namespace AngouriMath
                 internal override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
-                        (FiniteSet setLeft, FiniteSet setRight) => FiniteSet.Unite(setLeft, setRight),
+                        (FiniteSet setLeft, Set setRight) => SetOperators.UniteFiniteSetAndSet(setLeft, setRight),
                         (Interval intLeft, Interval intRight) => SetOperators.UniteIntervalAndInterval(intLeft, intRight),
                         // TODO
                         (var left, var right) => New(left, right)
@@ -89,7 +89,8 @@ namespace AngouriMath
                 internal override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
-                        (FiniteSet setLeft, FiniteSet setRight) => FiniteSet.Intersect(setLeft, setRight),
+                        (FiniteSet setLeft, Set setRight) => SetOperators.IntersectFiniteSetAndSet(setLeft, setRight),
+                        (Interval intLeft, Interval intRight) => SetOperators.IntersectIntervalAndInterval(intLeft, intRight),
                         // TODO
                         (var left, var right) => New(left, right)
                     };

@@ -36,7 +36,34 @@ namespace AngouriMath.Core.Sets
 
         internal static Set IntersectIntervalAndInterval(Interval A, Interval B)
         {
-
+            if (A.Left == B.Left && A.Right == B.Right)
+                return new Interval(A.Left, A.LeftClosed && B.LeftClosed, A.Right, A.RightClosed && B.RightClosed);
+            if (A.Left is not Real aLeft ||
+                A.Right is not Real aRight ||
+                B.Left is not Real bLeft ||
+                B.Right is not Real bRight)
+                return A.Intersect(B);
+            if (aLeft == bRight)
+                return A.LeftClosed && B.RightClosed ? new FiniteSet(aLeft) : Empty;
+            if (bLeft == aRight)
+                return A.RightClosed && B.LeftClosed ? new FiniteSet(bLeft) : Empty;
+            if (aLeft >= aRight)
+                return B;
+            if (bLeft >= bRight)
+                return A;
+            if (aLeft > bRight)
+                return Empty;
+            if (bLeft > aRight)
+                return Empty;
+            var (left, leftClosed) =
+               aLeft == bLeft ?
+               (aLeft, A.LeftClosed && B.LeftClosed) :
+               (bLeft < aLeft ? (aLeft, A.LeftClosed) : (bLeft, B.LeftClosed));
+            var (right, rightClosed) =
+                aRight == bRight ?
+                (aRight, A.RightClosed && B.RightClosed) :
+                (bRight > aRight ? (aRight, A.RightClosed) : (bRight, B.RightClosed));
+            return new Interval(left, leftClosed, right, rightClosed);
         }
     }
 }
