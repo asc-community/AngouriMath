@@ -204,10 +204,15 @@ namespace AngouriMath
                 private static bool IsALessThanB(Real A, Real B, bool closed)
                     => A < B || closed && A == B;
 
-                public Interval New(Entity left, Entity right)
+                internal Interval New(Entity left, Entity right)
                     => ReferenceEquals(Left, left) 
                     && ReferenceEquals(Right, right)
                     ? this : new Interval(left, LeftClosed, right, RightClosed);
+
+                internal Interval New(Entity left, bool leftClosed, Entity right, bool rightClosed)
+                    => ReferenceEquals(Left, left) && ReferenceEquals(Right, right)
+                    && LeftClosed == leftClosed && RightClosed == rightClosed
+                    ? this : new Interval(left, leftClosed, right, rightClosed);
 
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
