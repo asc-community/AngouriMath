@@ -89,6 +89,8 @@ namespace AngouriMath
                     builder.Append(Stringize());
                     return false;
                 }
+
+                public override string ToString() => Stringize();
             }
         }
     }

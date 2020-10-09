@@ -652,6 +652,8 @@ namespace AngouriMath
             /// <seealso cref="NumbersExtensions.Gamma(EDecimal, EContext)"/>
             /// <seealso cref="Factorial(Complex)"/>
             public static Complex Gamma(Complex x) => Factorial(x - Integer.One);
+
+            public override string ToString() => Stringize();
         }
     }
 }

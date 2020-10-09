@@ -98,7 +98,7 @@ namespace AngouriMath.Functions
                     AddHistory(res = res.Replace(Patterns.BooleanRules).InnerSimplify());
                 }
 
-                if (res.Nodes.Any(child => child is Statement))
+                if (res.Nodes.Any(child => child is ComparisonSign))
                 {
                     AddHistory(res = res.Replace(Patterns.InequalityEqualityRules).InnerSimplify());
                 }

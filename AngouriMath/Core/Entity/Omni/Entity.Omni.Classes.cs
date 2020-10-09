@@ -19,6 +19,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Sets;
 using AngouriMath.Extensions;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Boolean;
@@ -146,7 +147,7 @@ namespace AngouriMath
                 public override int GetHashCode()
                     => Elements.Select(el => el.GetHashCode()).Aggregate((acc, next) => acc + next);
 
-                public virtual bool Equals(FiniteSet? other)
+                public virtual bool Equals(FiniteSet other)
                 {
                     if (other is null)
                         return false;
@@ -233,7 +234,7 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 public virtual bool Equals(Interval other)
-                    => (Left == other.Left
+                    => other is null ? false : (Left == other.Left
                         && Right == other.Right
                         && LeftClosed == other.LeftClosed
                         && RightClosed == other.RightClosed);
@@ -250,10 +251,10 @@ namespace AngouriMath
             /// a condition F(x) in the following way: for each element x in 
             /// the Universal x belongs to A if and only if F(x).
             /// </summary>
-            public partial record ConditionalSet(Entity Var, Entity Predicate) : Set
+            public partial record ConditionalSet(Entity Var, Entity Predicate) : Set, IEquatable<ConditionalSet>
             {
                 public override Entity Replace(Func<Entity, Entity> func)
-                    => func(this);
+                    => func(New(Var, Predicate.Replace(func)));
 
                 public override bool TryContains(Entity entity, out bool contains)
                 {
@@ -276,11 +277,19 @@ namespace AngouriMath
                 public override Priority Priority => Priority.Leaf;
 
                 // TODO: Does conditional set have children?
-                protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
+                protected override Entity[] InitDirectChildren() => new[] { Predicate };
 
                 // TODO:
                 public override bool IsSetFinite => false;
                 public override bool IsSetEmpty => Predicate.Evaled == Boolean.False;
+
+                public virtual bool Equals(ConditionalSet other)
+                {
+                    if (other is null) // invalid cast
+                        return false;
+                    var (one, two) = SetOperators.MergeToOneVariable(this, other);
+                    return one.Predicate == two.Predicate;
+                }
             }
             #endregion
 
