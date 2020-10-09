@@ -4,6 +4,7 @@ using AngouriMath.Core.Exceptions;
 using System.Data.Common;
 using System.Linq;
 using Xunit;
+using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 using static AngouriMath.MathS;
 
@@ -119,7 +120,10 @@ namespace UnitTests.Convenience
         [Fact] public void TestIntersection2() => Assert.Equal(x.Intersect(y), FromString(@"x intersect y"));
         [Fact] public void TestSetSubtraction1() => Assert.Equal(x.SetSubtract(y), FromString(@"x \ y"));
         [Fact] public void TestSetSubtraction2() => Assert.Equal(x.SetSubtract(y), FromString(@"x setsubtract y"));
-
+        [Fact] public void TestPlusInfinity1() => Assert.Equal(Real.PositiveInfinity, FromString("+oo"));
+        [Fact] public void TestPlusInfinity2() => Assert.Equal(Real.PositiveInfinity + (Entity)2, FromString("+oo + 2"));
+        [Fact] public void TestMinusInfinity1() => Assert.Equal(Real.NegativeInfinity, FromString("-oo"));
+        [Fact] public void TestMinusInfinity2() => Assert.Equal(Real.NegativeInfinity + (Entity)2, FromString("-oo + 2"));
 
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {

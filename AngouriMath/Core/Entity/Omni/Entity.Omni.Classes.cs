@@ -221,6 +221,24 @@ namespace AngouriMath
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
+                    if (Left == Right && !(LeftClosed && RightClosed))
+                    {
+                        contains = false;
+                        return true;
+                    }
+                    if (!IsNumeric)
+                    {
+                        if (entity == Left)
+                        {
+                            contains = LeftClosed;
+                            return true;
+                        }
+                        if (entity == Right)
+                        {
+                            contains = RightClosed;
+                            return true;
+                        }
+                    }
                     if (entity is not Real re)
                         return false;
                     if (!IsNumeric)
@@ -259,8 +277,9 @@ namespace AngouriMath
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
-                    var substituted = entity.Replace(varCandidate => 
-                        varCandidate == Var ? entity : varCandidate).InnerSimplifyWithCheck();
+                    var substituted = Predicate.Replace(varCandidate => 
+                        varCandidate == Var ? entity : varCandidate);
+                    substituted = substituted.InnerSimplified;
                     if (substituted.EvaluableBoolean)
                     {
                         contains = substituted.EvalBoolean();

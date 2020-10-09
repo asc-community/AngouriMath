@@ -49,6 +49,11 @@ namespace AngouriMath
                     res = (bool)leftBool && (bool)rightBool; // there's no cost in casting
                     return true;
                 }
+                else if (left.Evaled == False || right.Evaled == False)
+                {
+                    res = False;
+                    return true;
+                }
                 else
                 {
                     res = False;
@@ -77,6 +82,11 @@ namespace AngouriMath
                 if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
                 {
                     res = (bool)leftBool || (bool)rightBool; // there's no cost in casting
+                    return true;
+                }
+                else if (left.Evaled == True || right.Evaled == True)
+                {
+                    res = True;
                     return true;
                 }
                 else
@@ -139,6 +149,11 @@ namespace AngouriMath
                     res = !(bool)leftBool || (bool)rightBool; // there's no cost in casting
                     return true;
                 }
+                else if (left.Evaled == False || right.Evaled == True)
+                {
+                    res = True;
+                    return true;
+                }
                 else
                 {
                     res = False;
@@ -170,6 +185,8 @@ namespace AngouriMath
             }
             internal override Entity InnerSimplify()
             {
+               if (Left == Right)
+                    return true;
                if (Left.Evaled is Number && Right.Evaled is Number)
                     return InnerEvalWithCheck();
                else
