@@ -19,7 +19,7 @@ namespace UnitTests.Core.Sets
 
         private void Test(Set actual, ConditionalSet expected)
         {
-            var csetAct = Assert.IsType<ConditionalSet>(actual.InnerSimplified);
+            var csetAct = Assert.IsType<ConditionalSet>(actual.Simplify());
             Assert.Equal(expected, csetAct);
         }
 

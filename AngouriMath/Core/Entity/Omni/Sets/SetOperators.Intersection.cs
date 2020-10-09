@@ -67,5 +67,11 @@ namespace AngouriMath.Core.Sets
                 (bRight > aRight ? (aRight, A.RightClosed) : (bRight, B.RightClosed));
             return new Interval(left, leftClosed, right, rightClosed);
         }
+
+        internal static Set IntersectCSetAndCSet(ConditionalSet intLeft, ConditionalSet intRight)
+        {
+            (intLeft, intRight) = MergeToOneVariable(intLeft, intRight);
+            return new ConditionalSet(intLeft.Var, (intLeft.Predicate & intRight.Predicate).InnerSimplified);
+        }
     }
 }

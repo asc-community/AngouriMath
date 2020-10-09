@@ -76,5 +76,11 @@ namespace AngouriMath.Core.Sets
             return new Interval(aLeft, aLeft == bLeft ? A.LeftClosed && !B.LeftClosed : !B.LeftClosed,
                                 bRight, aRight == bRight ? A.RightClosed && !B.RightClosed : A.RightClosed);
         }
+
+        internal static Set SetSubtractCSetAndCSet(ConditionalSet intLeft, ConditionalSet intRight)
+        {
+            (intLeft, intRight) = MergeToOneVariable(intLeft, intRight);
+            return new ConditionalSet(intLeft.Var, (intLeft.Predicate & !intRight.Predicate).InnerSimplified);
+        }
     }
 }

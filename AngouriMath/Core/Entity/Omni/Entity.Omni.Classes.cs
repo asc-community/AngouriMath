@@ -269,7 +269,7 @@ namespace AngouriMath
                         return false;
                 }
 
-                private Entity New(Entity var, Entity predicate)
+                internal Entity New(Entity var, Entity predicate)
                     => ReferenceEquals(Var, var) && ReferenceEquals(Predicate, predicate) ?
                     this : new ConditionalSet(var, predicate);
 
