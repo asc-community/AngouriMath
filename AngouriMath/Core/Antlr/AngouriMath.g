@@ -216,6 +216,7 @@ atom returns[Entity value]
     | '-oo' { $value = Entity.Number.Real.NegativeInfinity; }
     | NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
+    | SPECIALSET { $value = DomainsFunctional.Parse($SPECIALSET.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }
     | '(' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, false, $interval_arguments.couple.to, false); }
@@ -266,7 +267,13 @@ atom returns[Entity value]
     | 'sgn(' args = function_arguments ')' { Assert("sgn", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'sign(' args = function_arguments ')' { Assert("sign", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'abs(' args = function_arguments ')' { Assert("abs", 1, $args.list.Count); $value = MathS.Abs($args.list[0]); }
-    | 'domain(' args = function_arguments ')' { Assert("domain", 2, $args.list.Count); $value = $args.list[0].WithCodomain(DomainsFunctional.Parse($args.list[1])); }
+    | 'domain(' args = function_arguments ')' 
+        { 
+            Assert("domain", 2, $args.list.Count); 
+            if ($args.list[1] is not SpecialSet ss)
+                throw new ParseException($"Unrecognized special set {$args.list[1].Stringize()}");
+            $value = $args.list[0].WithCodomain(DomainsFunctional.Parse(ss.SetType));
+        }
     ;
 
 statement: expression EOF { Result = $expression.value; } ;
@@ -277,6 +284,8 @@ NEWLINE: '\r'?'\n' ;
 fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
 
 NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 'i'? | 'i' ;
+
+SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB') ;
 
 BOOLEAN: ('true' | 'false') ;
 
