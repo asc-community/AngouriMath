@@ -145,7 +145,7 @@ namespace AngouriMath
                 // TODO: how should we implement GetHashCode?
                 // Is it safe to store this hash inside?
                 public override int GetHashCode()
-                    => Elements.Select(el => el.GetHashCode()).Aggregate((acc, next) => acc + next);
+                    => IsSetEmpty ? 0 : Elements.Select(el => el.GetHashCode()).Aggregate((acc, next) => acc + next);
 
                 public virtual bool Equals(FiniteSet other)
                 {
