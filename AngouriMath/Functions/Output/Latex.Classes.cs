@@ -371,7 +371,7 @@ namespace AngouriMath
             partial record FiniteSet
             {
                 public override string Latexise()
-                    => $@"\left\{{{Stringize()}}}";
+                    => IsSetEmpty ? @"\emptyset" : $@"\left\{{ {string.Join(", ", Elements.Select(c => c.Latexise()))} \right\}}";
             }
 
             partial record Interval

@@ -4,6 +4,7 @@ using static AngouriMath.Entity.Number;
 using Xunit;
 using static AngouriMath.Entity;
 using AngouriMath.Extensions;
+using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Convenience
 {
@@ -221,6 +222,26 @@ namespace UnitTests.Convenience
             Test(@"\lim_{xf\to 1+x} \left[\frac{1}{x}\right]", MathS.Limit("1/x", "xf", "1+x"));
         [Fact] public void Limit5() =>
             Test(@"\lim_{xf\to {x_{2}}^{3}} \left[{x}^{23}-x_{16}\right]", MathS.Limit("x^23-x_16", "xf", "x_2^3"));
+        [Fact] public void Interval1() =>
+            Test(@"\left[3; 4\right]", MathS.Sets.Interval(3, true, 4, true));
+        [Fact] public void Interval2() =>
+            Test(@"\left(3; 4\right]", MathS.Sets.Interval(3, false, 4, true));
+        [Fact] public void Interval3() =>
+            Test(@"\left(3; 4\right)", MathS.Sets.Interval(3, false, 4, false));
+        [Fact] public void Interval4() =>
+            Test(@"\left[3; 4\right)", MathS.Sets.Interval(3, true, 4, false));
+        [Fact] public void FiniteSet1() =>
+            Test(@"\left\{ 1, 2, 3 \right\}", MathS.Sets.Finite(1, 2, 3));
+        [Fact] public void FiniteSet2() =>
+            Test(@"\left\{ 1 \right\}", MathS.Sets.Finite(1));
+        [Fact] public void CSet1() =>
+            Test(@"\left\{ x : x > 0 \right\}", new ConditionalSet("x", "x > 0"));
+        [Fact] public void CSet2() =>
+            Test(@"\left\{ x : \sqrt{2} \right\}", new ConditionalSet("x", "sqrt(2)"));
+        [Fact] public void RR() =>
+            Test(@"\mathbb{R}", (Entity)Domain.Real);
+        [Fact] public void ZZ() =>
+            Test(@"\mathbb{Z}", (Entity)Domain.Integer);
         [Fact] public void Signum()
             => Test(@"\operatorname{sgn}\left(x\right)", MathS.Signum(x));
         [Fact] public void Abs()
