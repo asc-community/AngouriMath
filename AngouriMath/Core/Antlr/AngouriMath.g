@@ -25,6 +25,7 @@ options
     using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
     using static AngouriMath.Entity.Number;
     using AngouriMath.Core.Exceptions;
+    using static AngouriMath.Entity.Set;
 }
 
 @lexer::members
@@ -128,6 +129,14 @@ equality_expression returns[Entity value]
 
 /*
 
+Sets
+
+*/
+
+
+
+/*
+
 Boolean nodes
 
 */
@@ -171,13 +180,22 @@ function_arguments returns[List<Entity> list]
     @init { $list = new List<Entity>(); }
     : (e = expression { $list.Add($e.value); } (',' e = expression { $list.Add($e.value); })*)?
     ;
+
+interval_arguments returns[(Entity from, Entity to) couple]
+    : from = expression { $couple.from = $from.value; } ';' to = expression { $couple.to = $to.value; }
+    ;
    
 atom returns[Entity value]
     : NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }
+    | '(' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, false, $interval_arguments.couple.to, false); }
+    | '[' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, false); }
+    | '[' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, true); }
+    | '[' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, true); }
     | '(' expression ')' { $value = $expression.value; }
+    | '{' args = function_arguments '}' { $value = new FiniteSet((IEnumerable<Entity>)$args.list); }
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
     | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
     | 'log(' args = function_arguments ')' { $value = Assert("log", (1, 2), $args.list.Count) ? MathS.Log(10, $args.list[0]) : MathS.Log($args.list[0], $args.list[1]); }

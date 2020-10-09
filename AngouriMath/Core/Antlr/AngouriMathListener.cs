@@ -26,6 +26,7 @@ namespace AngouriMath.Core.Antlr {
     using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
     using static AngouriMath.Entity.Number;
     using AngouriMath.Core.Exceptions;
+    using static AngouriMath.Entity.Set;
 
 using Antlr4.Runtime.Misc;
 using IParseTreeListener = Antlr4.Runtime.Tree.IParseTreeListener;
@@ -188,6 +189,16 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitFunction_arguments([NotNull] AngouriMathParser.Function_argumentsContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.interval_arguments"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterInterval_arguments([NotNull] AngouriMathParser.Interval_argumentsContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.interval_arguments"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitInterval_arguments([NotNull] AngouriMathParser.Interval_argumentsContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.atom"/>.
 	/// </summary>
