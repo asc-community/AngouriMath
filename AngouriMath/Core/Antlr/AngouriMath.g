@@ -133,15 +133,27 @@ Sets
 
 */
 
-set_operator returns[Entity value]
+set_operator_intersection returns[Entity value]
     : left = equality_expression { $value = $left.value; }
-    ( 
-    'unite' right = equality_expression { $value = $value.Unite($right.value); } |
-    '\\/' right = equality_expression { $value = $value.Unite($right.value); } |
+    (
     'intersect' right = equality_expression { $value = $value.Intersect($right.value); } |
-    '/\\' right = equality_expression { $value = $value.Intersect($right.value); } |
-    'setsubtract' right = equality_expression { $value = $value.SetSubtract($right.value); } | 
-    '\\' right = equality_expression { $value = $value.SetSubtract($right.value); }
+    '/\\' right = equality_expression { $value = $value.Intersect($right.value); }
+    )*
+    ;
+
+set_operator_union returns[Entity value]
+    : left = set_operator_intersection { $value = $left.value; }
+    (
+    'unite' right = set_operator_intersection { $value = $value.Unite($right.value); } |
+    '\\/' right = set_operator_intersection { $value = $value.Unite($right.value); }
+    )*
+    ;
+
+set_operator_setsubtraction returns[Entity value]
+    : left = set_operator_union { $value = $left.value; }
+    (
+    'setsubtract' right = set_operator_union { $value = $value.SetSubtract($right.value); } |
+    '\\' right = set_operator_union { $value = $value.SetSubtract($right.value); }
     )*
     ;
 
@@ -152,9 +164,9 @@ Boolean nodes
 */
 
 negate_expression returns[Entity value]
-    : 'not' set_operator { $value = !$set_operator.value; }
+    : 'not' op = set_operator_setsubtraction { $value = !$op.value; }
     | 'not' negate_expression { $value = !$negate_expression.value; }
-    | set_operator { $value = $set_operator.value; }
+    | op = set_operator_setsubtraction { $value = $op.value; }
     ;
 
 and_expression returns[Entity value]
@@ -200,7 +212,9 @@ cset_arguments returns[(Entity variable, Entity predicate) couple]
     ;
 
 atom returns[Entity value]
-    : NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
+    : '+oo' { $value = Entity.Number.Real.PositiveInfinity; }
+    | '-oo' { $value = Entity.Number.Real.NegativeInfinity; }
+    | NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }

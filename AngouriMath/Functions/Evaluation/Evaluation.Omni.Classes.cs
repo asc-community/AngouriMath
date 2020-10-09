@@ -34,13 +34,16 @@ namespace AngouriMath
             partial record Interval
             {
                 private Entity IfEqualEndsThenCollapse()
-                    => Left.Evaled == Right.Evaled ? new FiniteSet(Simplificator.PickSimplest(Left, Right)) : this;
+                    => Left.Evaled == Right.Evaled ? 
+                    (
+                    LeftClosed && RightClosed ? new FiniteSet(Simplificator.PickSimplest(Left, Right)) : Empty)
+                     : this;
 
                 protected override Entity InnerEval()
                     => New(Left.Evaled, Right.Evaled).IfEqualEndsThenCollapse();
 
                 internal override Entity InnerSimplify()
-                    => New(Left.InnerSimplified, Right.InnerSimplified);
+                    => New(Left.InnerSimplified, Right.InnerSimplified).IfEqualEndsThenCollapse();
             }
 
             partial record ConditionalSet

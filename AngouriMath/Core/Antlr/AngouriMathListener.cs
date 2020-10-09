@@ -120,15 +120,35 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator"/>.
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator_intersection"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterSet_operator([NotNull] AngouriMathParser.Set_operatorContext context);
+	void EnterSet_operator_intersection([NotNull] AngouriMathParser.Set_operator_intersectionContext context);
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator"/>.
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator_intersection"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitSet_operator([NotNull] AngouriMathParser.Set_operatorContext context);
+	void ExitSet_operator_intersection([NotNull] AngouriMathParser.Set_operator_intersectionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator_union"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSet_operator_union([NotNull] AngouriMathParser.Set_operator_unionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator_union"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSet_operator_union([NotNull] AngouriMathParser.Set_operator_unionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator_setsubtraction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSet_operator_setsubtraction([NotNull] AngouriMathParser.Set_operator_setsubtractionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator_setsubtraction"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSet_operator_setsubtraction([NotNull] AngouriMathParser.Set_operator_setsubtractionContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.negate_expression"/>.
 	/// </summary>

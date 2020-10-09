@@ -225,7 +225,7 @@ namespace AngouriMath
                         return false;
                     if (!IsNumeric)
                         return false;
-                    contains = IsALessThanB(left.Value, re, LeftClosed) && IsALessThanB(right.Value, re, RightClosed);
+                    contains = IsALessThanB(left.Value, re, LeftClosed) && IsALessThanB(re, right.Value, RightClosed);
                     return true;
                 }
 
