@@ -7,4 +7,4 @@ using static AngouriMath.MathS;
 using AngouriMath.Extensions;
 using static AngouriMath.Entity.Number;
 
-WriteLine("{ 1, 2, 3 }".ToEntity());
+WriteLine("{ x : x > 0 and x2 / 2 > 3 }".ToEntity());

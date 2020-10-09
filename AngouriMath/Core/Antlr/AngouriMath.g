@@ -185,6 +185,10 @@ interval_arguments returns[(Entity from, Entity to) couple]
     : from = expression { $couple.from = $from.value; } ';' to = expression { $couple.to = $to.value; }
     ;
    
+cset_arguments returns[(Entity variable, Entity predicate) couple]
+    : variable = expression { $couple.variable = $variable.value; } ':' predicate = expression { $couple.predicate = $predicate.value; }
+    ;
+
 atom returns[Entity value]
     : NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
@@ -195,6 +199,7 @@ atom returns[Entity value]
     | '[' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, true); }
     | '[' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, true); }
     | '(' expression ')' { $value = $expression.value; }
+    | '{' cset_args = cset_arguments '}' { $value = new ConditionalSet($cset_args.couple.variable, $cset_args.couple.predicate); }
     | '{' args = function_arguments '}' { $value = new FiniteSet((IEnumerable<Entity>)$args.list); }
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
     | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }

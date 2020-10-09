@@ -236,6 +236,18 @@ internal partial class AngouriMathBaseListener : IAngouriMathListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitInterval_arguments([NotNull] AngouriMathParser.Interval_argumentsContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.cset_arguments"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterCset_arguments([NotNull] AngouriMathParser.Cset_argumentsContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.cset_arguments"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitCset_arguments([NotNull] AngouriMathParser.Cset_argumentsContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.atom"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

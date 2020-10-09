@@ -200,6 +200,16 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitInterval_arguments([NotNull] AngouriMathParser.Interval_argumentsContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.cset_arguments"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCset_arguments([NotNull] AngouriMathParser.Cset_argumentsContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.cset_arguments"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCset_arguments([NotNull] AngouriMathParser.Cset_argumentsContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.atom"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
