@@ -416,7 +416,7 @@ namespace AngouriMath
             partial record FiniteSet
             {
                 public override string Stringize()
-                    => $"{{{string.Join(", ", Elements.Select(c => c.Stringize()))}}}";
+                    => $"{{ {string.Join(", ", Elements.Select(c => c.Stringize()))} }}";
                 protected override bool PrintMembers(StringBuilder builder)
                 {
                     builder.Append(Stringize());
@@ -444,7 +444,7 @@ namespace AngouriMath
             partial record ConditionalSet
             {
                 public override string Stringize()
-                    => $"{{ {Var.Stringize()} | {Predicate.Stringize()} }}";
+                    => $"{{ {Var.Stringize()} : {Predicate.Stringize()} }}";
                 protected override bool PrintMembers(StringBuilder builder)
                 {
                     builder.Append(Stringize());

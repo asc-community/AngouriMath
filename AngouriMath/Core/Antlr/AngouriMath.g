@@ -133,7 +133,17 @@ Sets
 
 */
 
-
+set_operator returns[Entity value]
+    : left = equality_expression { $value = $left.value; }
+    ( 
+    'unite' right = equality_expression { $value = $value.Unite($right.value); } |
+    '\\/' right = equality_expression { $value = $value.Unite($right.value); } |
+    'intersect' right = equality_expression { $value = $value.Intersect($right.value); } |
+    '/\\' right = equality_expression { $value = $value.Intersect($right.value); } |
+    'setsubtract' right = equality_expression { $value = $value.SetSubtract($right.value); } | 
+    '\\' right = equality_expression { $value = $value.SetSubtract($right.value); }
+    )*
+    ;
 
 /*
 
@@ -142,9 +152,9 @@ Boolean nodes
 */
 
 negate_expression returns[Entity value]
-    : 'not' equality_expression { $value = !$equality_expression.value; }
+    : 'not' set_operator { $value = !$set_operator.value; }
     | 'not' negate_expression { $value = !$negate_expression.value; }
-    | equality_expression { $value = $equality_expression.value; }
+    | set_operator { $value = $set_operator.value; }
     ;
 
 and_expression returns[Entity value]

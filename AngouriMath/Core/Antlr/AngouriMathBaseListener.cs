@@ -140,6 +140,18 @@ internal partial class AngouriMathBaseListener : IAngouriMathListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSet_operator([NotNull] AngouriMathParser.Set_operatorContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSet_operator([NotNull] AngouriMathParser.Set_operatorContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.negate_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>

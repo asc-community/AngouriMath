@@ -120,6 +120,16 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSet_operator([NotNull] AngouriMathParser.Set_operatorContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSet_operator([NotNull] AngouriMathParser.Set_operatorContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.negate_expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
