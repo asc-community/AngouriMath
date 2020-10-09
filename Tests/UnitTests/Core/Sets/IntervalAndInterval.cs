@@ -63,8 +63,8 @@ namespace UnitTests.Core.Sets
 
         [Fact] public void Subtraction1() => TestInt(A.SetSubtract(B), Interval(3, false, 5, true));
         [Fact] public void Subtraction2() => TestArb(B.SetSubtract(A), Set.Empty);
-        [Fact] public void Subtraction3() => CannotSimplify(E.SetSubtract(D));
-        [Fact] public void Subtraction4() => CannotSimplify(D.SetSubtract(E));
+        [Fact] public void Subtraction3() => TestInt(E.SetSubtract(D), (Interval)E);
+        [Fact] public void Subtraction4() => TestInt(D.SetSubtract(E), (Interval)D);
         [Fact] public void Subtraction5() => TestInt(A.SetSubtract(F), Interval(2, true, 3, false));
         [Fact] public void Subtraction6() => TestInt(F.SetSubtract(A), Interval(5, false, 6, true));
     }

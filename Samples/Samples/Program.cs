@@ -7,7 +7,10 @@ using static AngouriMath.MathS;
 using AngouriMath.Extensions;
 using static AngouriMath.Entity.Number;
 
-var a = new Interval(3, true, 5, true);
-var b = new Interval(4, true, 6, false);
-var un = a.Unite(b);
-Console.WriteLine(un.InnerSimplify());
+WriteLine(
+    ("1x_1 + 4x_2 + 5x_3 + 2x_4 + 3x_5 - 1",
+    "-1x_1 + 5x_2 + 1x_3 + 3x_4 + 2x_5 - 2",
+    " 3x_1 + 2x_2 - 2x_3 + 1x_4 + 0x_5 + 7",
+    "-1x_1 + 2x_2 + 4x_3 + 1x_4 + 2x_5 - 3"
+    ).SolveSystem("x_1", "x_2", "x_3", "x_4")?.Stringize()
+    );

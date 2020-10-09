@@ -27,6 +27,8 @@ namespace AngouriMath.Core.Sets
     {
         internal static Set SetSubtractSetAndFiniteSet(Set set, FiniteSet finite)
         {
+            if (set is FiniteSet another)
+                return FiniteSet.Subtract(another, finite);
             var fsb = new FiniteSetBuilder(finite);
             foreach (var el in finite)
                 if (set.TryContains(el, out var contains) && !contains)
@@ -48,6 +50,7 @@ namespace AngouriMath.Core.Sets
                 B.Left is not Real bLeft ||
                 B.Right is not Real bRight)
                 return A.SetSubtract(B);
+
              if (aLeft > aRight)
                 return Empty;
              if (bLeft > bRight)
@@ -61,10 +64,17 @@ namespace AngouriMath.Core.Sets
             if (
                 (bLeft < aLeft || bLeft == aLeft && A.LeftClosed.Implies(B.LeftClosed))
                 &&
-                (bRight > aLeft || bRight == aRight && A.RightClosed.Implies(B.RightClosed))
+                (bRight > aRight || bRight == aRight && A.RightClosed.Implies(B.RightClosed))
                 )
                 return Empty;
-
+            if (aLeft >= bLeft && aRight >= bRight)
+                return new Interval(bRight, aLeft == bLeft ? A.LeftClosed && !B.LeftClosed : !B.LeftClosed,
+                                    aRight, aRight == bRight ? A.RightClosed && !B.RightClosed : A.RightClosed);
+            if (aLeft <= bLeft && aRight <= bRight)
+                return new Interval(aLeft, aLeft == bLeft ? A.LeftClosed && !B.LeftClosed : A.LeftClosed,
+                                    bLeft, aRight == bRight ? A.RightClosed && !B.RightClosed : !B.RightClosed);
+            return new Interval(aLeft, aLeft == bLeft ? A.LeftClosed && !B.LeftClosed : !B.LeftClosed,
+                                bRight, aRight == bRight ? A.RightClosed && !B.RightClosed : A.RightClosed);
         }
     }
 }
