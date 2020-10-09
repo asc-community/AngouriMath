@@ -55,8 +55,8 @@ namespace AngouriMath.Core
         SetOperation = 0x3000,
 
         SetMinus     = 20 | SetOperation,
-        Union        = 30 | SetOperation,
-        Intersection = 40 | SetOperation,
+        Union        = 20 | SetOperation,
+        Intersection = 20 | SetOperation,
 
 
         Leaf      = 100 | SetOperation,

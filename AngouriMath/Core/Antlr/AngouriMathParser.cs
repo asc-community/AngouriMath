@@ -1526,10 +1526,10 @@ internal partial class AngouriMathParser : Parser {
 			case 8:
 				EnterOuterAlt(_localctx, 8);
 				{
-				State = 311; Match(T__33);
+				State = 311; Match(T__31);
 				State = 312; _localctx._interval_arguments = interval_arguments();
 				State = 313; Match(T__34);
-				 _localctx.value =  new Entity.Set.Interval(_localctx._interval_arguments.couple.from, true, _localctx._interval_arguments.couple.to, true); 
+				 _localctx.value =  new Entity.Set.Interval(_localctx._interval_arguments.couple.from, false, _localctx._interval_arguments.couple.to, true); 
 				}
 				break;
 			case 9:
@@ -2169,7 +2169,7 @@ internal partial class AngouriMathParser : Parser {
 		'\x135', '\a', '$', '\x2', '\x2', '\x135', '\x136', '\x5', '\"', '\x12', 
 		'\x2', '\x136', '\x137', '\a', '%', '\x2', '\x2', '\x137', '\x138', '\b', 
 		'\x14', '\x1', '\x2', '\x138', '\x1DA', '\x3', '\x2', '\x2', '\x2', '\x139', 
-		'\x13A', '\a', '$', '\x2', '\x2', '\x13A', '\x13B', '\x5', '\"', '\x12', 
+		'\x13A', '\a', '\"', '\x2', '\x2', '\x13A', '\x13B', '\x5', '\"', '\x12', 
 		'\x2', '\x13B', '\x13C', '\a', '%', '\x2', '\x2', '\x13C', '\x13D', '\b', 
 		'\x14', '\x1', '\x2', '\x13D', '\x1DA', '\x3', '\x2', '\x2', '\x2', '\x13E', 
 		'\x13F', '\a', '\"', '\x2', '\x2', '\x13F', '\x140', '\x5', '\x1E', '\x10', 

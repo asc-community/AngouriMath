@@ -207,7 +207,7 @@ atom returns[Entity value]
     | '(' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, false, $interval_arguments.couple.to, false); }
     | '[' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, false); }
     | '[' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, true); }
-    | '[' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, true); }
+    | '(' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, false, $interval_arguments.couple.to, true); }
     | '(' expression ')' { $value = $expression.value; }
     | '{' cset_args = cset_arguments '}' { $value = new ConditionalSet($cset_args.couple.variable, $cset_args.couple.predicate); }
     | '{' args = function_arguments '}' { $value = new FiniteSet((IEnumerable<Entity>)$args.list); }
