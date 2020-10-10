@@ -157,6 +157,11 @@ set_operator_setsubtraction returns[Entity value]
     )*
     ;
 
+in_operator returns[Entity value]
+    : m1 = set_operator_setsubtraction { $value = $m1.value; }
+    ('in' m2 = set_operator_setsubtraction { $value = $value.In($m2.value); })*
+    ;
+
 /*
 
 Boolean nodes
@@ -164,9 +169,9 @@ Boolean nodes
 */
 
 negate_expression returns[Entity value]
-    : 'not' op = set_operator_setsubtraction { $value = !$op.value; }
-    | 'not' negate_expression { $value = !$negate_expression.value; }
-    | op = set_operator_setsubtraction { $value = $op.value; }
+    : 'not' op = in_operator { $value = !$op.value; }
+    | 'not' op = in_operator { $value = !$op.value; }
+    | op = in_operator { $value = $op.value; }
     ;
 
 and_expression returns[Entity value]
