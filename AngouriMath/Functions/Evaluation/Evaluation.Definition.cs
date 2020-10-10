@@ -139,8 +139,8 @@ namespace AngouriMath
                     ($"Result cannot be represented as a {nameof(Tensor)}! Check the type of {nameof(Evaled)} beforehand.");
 
         /// <summary>
-        /// Determines whether a given element can be unambiguously used
+        /// Determines whether a given element can be unambiguously used as a number or boolean
         /// </summary>
-        public bool IsConstant => Evaled is Complex or Boolean;
+        public bool IsConstant => Evaled is Complex or Boolean || Evaled is Variable v && Variable.ConstantList.ContainsKey(v);
     }
 }

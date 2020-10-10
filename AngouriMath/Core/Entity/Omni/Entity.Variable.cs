@@ -48,18 +48,7 @@ namespace AngouriMath
                     { pi, MathS.DecimalConst.pi },
                     { e, MathS.DecimalConst.e }
                 };
-            /// <summary>
-            /// Determines whether something is a variable or contant, e. g.
-            /// <list type="table">
-            ///     <listheader><term>Expression</term> <description>Is it a constant?</description></listheader>
-            ///     <item><term>e</term> <description>Yes</description></item>
-            ///     <item><term>x</term> <description>No</description></item>
-            ///     <item><term>x + 3</term> <description>No</description></item>
-            ///     <item><term>pi + 4</term> <description>No</description></item>
-            ///     <item><term>pi</term> <description>Yes</description></item>
-            /// </list>
-            /// </summary>
-            public bool IsConstant => ConstantList.ContainsKey(this);
+
             /// <summary>
             /// Extracts this <see cref="Variable"/>'s name and index
             /// from its <see cref="Name"/> (e. g. "qua" or "phi_3" or "qu_q")

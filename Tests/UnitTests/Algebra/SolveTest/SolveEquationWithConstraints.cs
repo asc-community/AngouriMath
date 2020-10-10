@@ -44,7 +44,8 @@ namespace UnitTests.Algebra
             var eq = expr.ToEntity();
             Variable x = "x";
             var solutions = eq.Solve(x);
-            solutions = (Set)solutions.InnerSimplified;
+            //solutions = (Set)solutions.InnerSimplified;
+            solutions = (Set)solutions.InnerSimplify();
             var roots = Assert.IsType<FiniteSet>(solutions);
             Assert.Equal(rootCount, roots.Count);
             foreach (var root in roots)

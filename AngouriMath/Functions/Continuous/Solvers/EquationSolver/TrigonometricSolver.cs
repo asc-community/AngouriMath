@@ -22,20 +22,24 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     internal static class TrigonometricSolver
     {
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
-        internal static Set? SolveLinear(Entity expr, Variable variable)
+        internal static bool TrySolveLinear(Entity expr, Variable variable, out Set res)
         {
+            res = Empty;
             var replacement = Variable.CreateTemp(expr.Vars);
             expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
 
             // if there is still original variable after replacements,
             // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
             if (expr.ContainsNode(variable))
-                return null;
+                return false;
 
             if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els)
-                return els.Select(sol => MathS.Pow(MathS.e, MathS.i * variable).Invert(sol, variable).ToSet()).Unite();
+            {
+                res = (Set)els.Select(sol => MathS.Pow(MathS.e, MathS.i * variable).Invert(sol, variable).ToSet()).Unite().InnerSimplified;
+                return true;
+            }
             else
-                return null;
+                return false;
         }
     }
 }

@@ -143,10 +143,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     if (minimumSubtree == x)
                         continue;
                     // Here we are trying to solve for this replacement
-                    var solutionsSet = Solve(alt.Substitute(minimumSubtree, newVar), newVar);
-                    if (solutionsSet is FiniteSet { IsSetEmpty:false } enums)
+                    var solutionsSet = Solve(alt.Substitute(minimumSubtree, newVar), newVar).InnerSimplified;
+                    if (solutionsSet is FiniteSet { IsSetEmpty: false } enums)
                     {
-                        var solutions = enums.Select(solution => Solve(minimumSubtree - solution, x, compensateSolving: true)).Unite();
+                        var solutions = enums.Select(solution => Solve(minimumSubtree - solution, x, compensateSolving: true)).Unite().InnerSimplified;
                         if (solutions is FiniteSet els)
                             return els.Select(ent => TryDowncast(expr, x, ent)).ToSet();
                     }
@@ -155,18 +155,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
 
             // if no replacement worked, try trigonometry solver
-            if (TrigonometricSolver.SolveLinear(expr, x) is { } trig && trig is FiniteSet elsTrig)
-                return elsTrig.Select(ent => TryDowncast(expr, x, ent)).ToSet();
+            if (TrigonometricSolver.TrySolveLinear(expr, x, out var trig) && trig is FiniteSet elsTrig)
+                return (Set)elsTrig.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
             // // //
 
             // if no trigonometric rules helped, common denominator might help
-            if (CommonDenominatorSolver.Solve(expr, x) is { } commonDenom && commonDenom is FiniteSet elsCd)
-                return elsCd.Select(ent => TryDowncast(expr, x, ent)).ToSet();
+            if (CommonDenominatorSolver.TrySolveGCD(expr, x, out var commonDenom) && commonDenom is FiniteSet elsCd)
+                return (Set)elsCd.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
             // // //
 
             // if we have fractioned polynomials
-            if (FractionedPolynoms.Solve(expr, x) is { } fractioned && fractioned is FiniteSet elsFracs)
-                return elsFracs.Select(ent => TryDowncast(expr, x, ent)).ToSet();
+            if (FractionedPolynoms.TrySolve(expr, x, out var fractioned) && fractioned is FiniteSet elsFracs)
+                return (Set)elsFracs.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
             // // //
 
             // TODO: Solve factorials (Needs Lambert W function)

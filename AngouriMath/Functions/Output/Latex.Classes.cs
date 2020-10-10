@@ -387,13 +387,13 @@ namespace AngouriMath
             partial record ConditionalSet
             {
                 public override string Latexise()
-                    => $@"\left\{{ {Var.Latexise()} | {Predicate.Latexise()} \right}}";
+                    => $@"\left\{{ {Var.Latexise()} : {Predicate.Latexise()} \right\}}";
             }
 
             partial record SpecialSet
             {
                 public override string Latexise()
-                    => $@"\mathbb{{{Latexise()[0]}}}";
+                    => $@"\mathbb{{{Stringize()[0]}}}";
             }
 
             partial record Unionf

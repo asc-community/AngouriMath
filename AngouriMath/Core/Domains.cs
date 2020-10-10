@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Core
 {
@@ -57,7 +58,7 @@ namespace AngouriMath.Core
             => FromDomainToString.TryGetValue(domain, out var res) ? res : throw new AngouriBugException("Unrecognized domain");
 
         public static Domain Parse(Entity expr)
-            => expr is Variable(var name) ? Parse(name) : throw new ParseException($"Unrecognized domain {expr.Stringize()}");
+            => expr is SpecialSet ss ? ss.SetType : (expr is Variable(var name) ? Parse(name) : throw new ParseException($"Unrecognized domain {expr.Stringize()}"));
 
         public static Domain Parse(string name)
             => FromStringToDomain.TryGetValue(name, out var dom) ? dom :

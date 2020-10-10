@@ -221,6 +221,11 @@ namespace AngouriMath
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
+                    if (entity is Complex and not Real)
+                    {
+                        contains = false;
+                        return true;
+                    }
                     if (Left == Right && !(LeftClosed && RightClosed))
                     {
                         contains = false;
@@ -252,7 +257,7 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 public virtual bool Equals(Interval other)
-                    => other is null ? false : (Left == other.Left
+                    => other is not null && (Left == other.Left
                         && Right == other.Right
                         && LeftClosed == other.LeftClosed
                         && RightClosed == other.RightClosed);
