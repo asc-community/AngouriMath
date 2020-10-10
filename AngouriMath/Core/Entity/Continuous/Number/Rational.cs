@@ -17,6 +17,8 @@ using PeterO.Numbers;
 namespace AngouriMath
 {
     using Core;
+    using System.Text;
+
     partial record Entity
     {
         public abstract partial record Number
@@ -106,7 +108,7 @@ namespace AngouriMath
                         return new Rational((intPart * sign + sign / rat.ERational).ToLowestTerms());
                     }
                 }
-                internal override string Stringize() => ERational.ToString();
+                public override string Stringize() => ERational.ToString();
                 public override string Latexise() => $@"\frac{{{ERational.Numerator}}}{{{ERational.Denominator}}}";
                 internal static bool TryParse(string s,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Rational? dst)
@@ -146,6 +148,17 @@ namespace AngouriMath
                 public static implicit operator Rational(ERational value) => Create(value);
 
                 public override Domain Codomain { get; protected init; } = Domain.Rational;
+
+                public override Entity Substitute(Entity x, Entity value)
+                    => this == x ? value : this;
+
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+
+                public override string ToString() => Stringize();
             }
         }
     }

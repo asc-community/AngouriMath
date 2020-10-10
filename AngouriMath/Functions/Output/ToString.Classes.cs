@@ -14,109 +14,235 @@
  */
 
 using AngouriMath.Core;
+using System.Linq;
+using System.Text;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
     public abstract partial record Entity
     {
+        public partial record Variable
+        {
+            public override string Stringize() => Name;
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Tensor
+        {
+            public override string Stringize() => InnerTensor.ToString();
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
+        }
+
         public partial record Sumf
         {
-            internal override string Stringize() =>
+            public override string Stringize() =>
                 Augend.Stringize(Augend.Priority < Priority) + " + " + Addend.Stringize(Addend.Priority < Priority);
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Minusf
         {
-            internal override string Stringize() =>
+            public override string Stringize() =>
                 Subtrahend.Stringize(Subtrahend.Priority < Priority) + " - " + Minuend.Stringize(Minuend.Priority <= Priority);
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Mulf
         {
-            internal override string Stringize() =>
+            public override string Stringize() =>
                 (Multiplier is Integer(-1) ? "-"
                     : Multiplier.Stringize(Multiplier.Priority < Priority) + " * ")
                 + Multiplicand.Stringize(Multiplicand.Priority < Priority);
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Divf
         {
-            internal override string Stringize() =>
+            public override string Stringize() =>
                 Dividend.Stringize(Dividend.Priority < Priority) + " / " + Divisor.Stringize(Divisor.Priority <= Priority);
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Sinf
         {
-            internal override string Stringize() => "sin(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"sin({Argument.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Cosf
         {
-            internal override string Stringize() => "cos(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"cos({Argument.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Tanf
         {
-            internal override string Stringize() => "tan(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"tan({Argument.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Cotanf
         {
-            internal override string Stringize() => "cotan(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"cotan({Argument.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Logf
         {
-            internal override string Stringize() => "log(" + Base.Stringize() + ", " + Antilogarithm.Stringize() + ")";
+            public override string Stringize() => $"log({Base.Stringize()}, {Antilogarithm.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Powf
         {
-            internal override string Stringize() =>
+            public override string Stringize() =>
                 Exponent == 0.5m
                 ? "sqrt(" + Base.Stringize() + ")"
                 : Base.Stringize(Base.Priority < Priority) + " ^ " + Exponent.Stringize(Exponent.Priority < Priority);
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Arcsinf
         {
-            internal override string Stringize() => "arcsin(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"arcsin({Argument.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Arccosf
         {
-            internal override string Stringize() => "arccos(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"arccos({Argument.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Arctanf
         {
-            internal override string Stringize() => "arctan(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"arctan({Argument.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Arccotanf
         {
-            internal override string Stringize() => "arccotan(" + Argument.Stringize() + ")";
+            public override string Stringize() => $"arccotan({Argument.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Factorialf
         {
-            internal override string Stringize() => Argument.Stringize(Argument.Priority < Priority.Number) + "!";
+            public override string Stringize() => Argument.Stringize(Argument.Priority < Priority.Leaf) + "!";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Derivativef
         {
-            internal override string Stringize() => $"derive({Expression}, {Var}, {Iterations})";
+            public override string Stringize() => $"derive({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Integralf
         {
-            internal override string Stringize() => $"integrate({Expression}, {Var}, {Iterations})";
+            public override string Stringize() => $"integrate({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Limitf
         {
-            internal override string Stringize() =>
+            public override string Stringize() =>
                 ApproachFrom switch
                 {
                     ApproachFrom.Left => "limitleft",
@@ -124,81 +250,268 @@ namespace AngouriMath
                     ApproachFrom.Right => "limitright",
                     _ => throw new System.ComponentModel.InvalidEnumArgumentException
                         (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
-                } + $"({Expression}, {Var}, {Destination})";
+                } + $"({Expression.Stringize()}, {Var.Stringize()}, {Destination.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Signumf
         {
-            internal override string Stringize() => $"sgn({Argument})";
+            public override string Stringize() => $"sgn({Argument.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         public partial record Absf
         {
-            internal override string Stringize() => $"abs({Argument})";
+            public override string Stringize() => $"abs({Argument.Stringize()})";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record Boolean
         {
-            internal override string Stringize() => ((bool)this).ToString();
+            public override string Stringize() => ((bool)this).ToString();
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record Notf
         {
-            internal override string Stringize() => $"not {Argument.Stringize(Argument.Priority < Priority)}";
+            public override string Stringize() => $"not {Argument.Stringize(Argument.Priority < Priority)}";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record Andf
         {
-            internal override string Stringize()
+            public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} and {Right.Stringize(Right.Priority < Priority)}";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record Orf
         {
-            internal override string Stringize()
+            public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} or {Right.Stringize(Right.Priority < Priority)}";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record Xorf
         {
-            internal override string Stringize()
+            public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} xor {Right.Stringize(Right.Priority < Priority)}";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record Impliesf
         {
-            internal override string Stringize()
+            public override string Stringize()
                 => $"{Assumption.Stringize(Assumption.Priority < Priority)} implies {Conclusion.Stringize(Conclusion.Priority < Priority)}";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record Equalsf
         {
-            internal override string Stringize()
+            public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} = {Right.Stringize(Right.Priority < Priority)}";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record Greaterf
         {
-            internal override string Stringize()
+            public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} > {Right.Stringize(Right.Priority < Priority)}";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record GreaterOrEqualf
         {
-            internal override string Stringize()
+            public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} >= {Right.Stringize(Right.Priority < Priority)}";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record Lessf
         {
-            internal override string Stringize()
+            public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} < {Right.Stringize(Right.Priority < Priority)}";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
         }
 
         partial record LessOrEqualf
         {
-            internal override string Stringize()
+            public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} <= {Right.Stringize(Right.Priority < Priority)}";
+            protected override bool PrintMembers(StringBuilder builder)
+            {
+                builder.Append(Stringize());
+                return false;
+            }
+            public override string ToString() => Stringize();
+        }
+
+        partial record Set
+        {
+            partial record FiniteSet
+            {
+                public override string Stringize()
+                    => $"{{ {string.Join(", ", Elements.Select(c => c.Stringize()))} }}";
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+                public override string ToString() => Stringize();
+            }
+
+            partial record Interval
+            {
+                public override string Stringize()
+                {
+                    var left = LeftClosed ? "[" : "(";
+                    var right = RightClosed ? "]" : ")";
+                    return left + Left.Stringize() + "; " + Right.Stringize() + right;
+                }
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+                public override string ToString() => Stringize();
+            }
+
+            partial record ConditionalSet
+            {
+                public override string Stringize()
+                    => $"{{ {Var.Stringize()} : {Predicate.Stringize()} }}";
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+                public override string ToString() => Stringize();
+            }
+
+            partial record SpecialSet
+            {
+                public override string Stringize()
+                    => DomainsFunctional.DomainToString(SetType);
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+                public override string ToString() => Stringize();
+            }
+
+            partial record Unionf
+            {
+                public override string Stringize()
+                    => $@"{Left.Stringize(Left.Priority < Priority)} \/ {Right.Stringize(Right.Priority < Priority)}";
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+                public override string ToString() => Stringize();
+            }
+
+            partial record Intersectionf
+            {
+                public override string Stringize()
+                    => $@"{Left.Stringize(Left.Priority < Priority)} /\ {Right.Stringize(Right.Priority < Priority)}";
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+                public override string ToString() => Stringize();
+            }
+
+            partial record SetMinusf
+            {
+                public override string Stringize()
+                    => $@"{Left.Stringize(Left.Priority < Priority)} \ {Right.Stringize(Right.Priority < Priority)}";
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+                public override string ToString() => Stringize();
+            }
+
+            partial record Inf
+            {
+                public override string Stringize()
+                    => $@"{Element.Stringize(Element.Priority < Priority)} in {SupSet.Stringize(SupSet.Priority < Priority)}";
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+                public override string ToString() => Stringize();
+            }
         }
     }
 }

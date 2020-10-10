@@ -17,7 +17,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
+//[assembly: InternalsVisibleTo("Playground, PublicKey=")]
 
 namespace AngouriMath.Core
 {
@@ -48,8 +51,16 @@ namespace AngouriMath.Core
         Pow       = 60  | NumericalOperation, 
         Factorial = 70  | NumericalOperation, 
         Func      = 80  | NumericalOperation, 
-        Variable  = 100 | NumericalOperation, 
-        Number    = 100 | NumericalOperation,
+
+        SetOperation = 0x3000,
+
+        ContainsIn   = 10 | SetOperation,
+        SetMinus     = 20 | SetOperation,
+        Union        = 30 | SetOperation,
+        Intersection = 40 | SetOperation,
+
+
+        Leaf      = 100 | SetOperation,
     }
     public interface ILatexiseable { public string Latexise(); }
 }
@@ -64,9 +75,11 @@ namespace AngouriMath
     /// </summary>
     public abstract partial record Entity : ILatexiseable
     {
-        private static readonly ConditionalWeakTable<Entity, Entity[]> directChildren = new();
+        private readonly static RecordFieldCache caches = new();
+
         protected abstract Entity[] InitDirectChildren();
-        public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(this, e => e.InitDirectChildren());
+        public IReadOnlyList<Entity> DirectChildren 
+            => caches.GetValue(this, cache => cache.directChildren, cache => cache.directChildren = InitDirectChildren());
 
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="Core.TreeAnalysis.TreeAnalyzer.GetMinimumSubtree(Entity, Variable)"/></remarks>
@@ -79,14 +92,20 @@ namespace AngouriMath
             Replace(child => func3(func2(func1(child))));
 
         /// <summary>Replaces all <see cref="x"/> with <see cref="value"/></summary>
-        public Entity Substitute(Entity x, Entity value) => Replace(e => e == x ? value : e);
+        public abstract Entity Substitute(Entity x, Entity value);
 
+
+        // TODO: this function has no performance beneficial anymore, 
+        // maybe need to think how it can be improved without defining
+        // another virtual method?
         /// <summary>Replaces all <see cref="replacements"/></summary>
-        public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements)
-            where TFrom : Entity where TTo : Entity =>
-            replacements.Count == 0
-            ? this
-            : Replace(e => e is TFrom from && replacements.TryGetValue(from, out var value) ? value : e);
+        public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements) where TFrom : Entity where TTo : Entity
+        {
+            var res = this;
+            foreach (var pair in replacements)
+                res = res.Substitute(pair.Key, pair.Value);
+            return res;
+        }
 
         public abstract Priority Priority { get; }
 
@@ -94,18 +113,18 @@ namespace AngouriMath
         /// Whether both parts of the complex number are finite
         /// meaning that it could be safely used for calculations
         /// </value>
-        public bool IsFinite =>
-            _isFinite.GetValue(this, e => new(e.ThisIsFinite && e.DirectChildren.All(x => x.IsFinite))).Value;
-        protected virtual bool ThisIsFinite => true;
-        static readonly ConditionalWeakTable<Entity, Wrapper<bool>> _isFinite = new();
-        record Wrapper<T>(T Value) where T : struct { }
+        public bool IsFinite
+            => caches.GetValue(this, cache => cache.isFinite, cache => cache.isFinite =
+            ThisIsFinite && DirectChildren.All(x => x.IsFinite)) ?? throw new AngouriBugException($"{IsFinite} cannot be null");
+        protected virtual bool ThisIsFinite => true;       
 
         /// <value>Number of nodes in tree</value>
         // TODO: improve measurement of Entity complexity, for example
         // (1 / x ^ 2).Complexity() &lt; (x ^ (-0.5)).Complexity()
-        public int Complexity =>
-            _complexity.GetValue(this, e => new(1 + e.DirectChildren.Sum(x => x.Complexity))).Value;
-        static readonly ConditionalWeakTable<Entity, Wrapper<int>> _complexity = new();
+        public int Complexity 
+            => caches.GetValue(this, 
+            cache => cache.complexity,
+            cache => cache.complexity = 1 + DirectChildren.Sum(x => x.Complexity)) ?? throw new AngouriBugException("Complexity cannot be null");
 
         /// <summary>
         /// Set of unique variables, for example 
@@ -125,14 +144,30 @@ namespace AngouriMath
         /// Set of unique variables and mathematical constants
         /// such as <see cref="pi"/> and <see cref="e"/>
         /// </returns>
-        public IReadOnlyCollection<Variable> VarsAndConsts => _vars.GetValue(this, e =>
-            new(e is Variable v ? new[] { v } : DirectChildren.SelectMany(x => x.VarsAndConsts)));
-        static readonly ConditionalWeakTable<Entity, HashSet<Variable>> _vars = new();
+        public IReadOnlyCollection<Variable> VarsAndConsts 
+            => caches.GetValue(this, cache => cache.vars,
+            cache => cache.vars = 
+            new HashSet<Variable>(this is Variable v ? new[] { v } : DirectChildren.SelectMany(x => x.VarsAndConsts)));
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>
-        public bool Contains(Entity x) => x is Variable v ? VarsAndConsts.Contains(v) : Nodes.Contains(x);
+        public bool ContainsNode(Entity x) => x is Variable v ? VarsAndConsts.Contains(v) : Nodes.Contains(x);
 
         public static implicit operator Entity(string expr) => MathS.FromString(expr);
+
+        /// <summary>
+        /// Shows how simple the given expression is. The lower - the simpler the expression is.
+        /// You might need it to pick the best expression to represent something. Unlike 
+        /// <see cref="Complexity"/>, which shows the number of nodes, <see cref="SimplifiedRate"/> 
+        /// shows how convenient it is to view the expression. This depends on 
+        /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
+        /// </summary>
+        public int SimplifiedRate => caches.GetValue(this, cache => cache.simplifiedRate, cache => cache.simplifiedRate = MathS.Settings.ComplexityCriteria.Value(this)) ?? throw new AngouriBugException("Sim cannot be null");
+
+        protected virtual bool PrintMembers(StringBuilder builder)
+        {
+            builder.Append(Stringize());
+            return false;
+        }
     }
 }

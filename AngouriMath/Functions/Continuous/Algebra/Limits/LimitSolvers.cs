@@ -11,7 +11,7 @@ namespace AngouriMath.Functions.Algebra
         internal static Dictionary<EDecimal, Entity>? ParseAsPolynomial(Entity expr, Variable x)
         {
             var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
-                 expr, entity => entity.Contains(x)
+                 expr, entity => entity.ContainsNode(x)
             );
 
             if (children is null)
@@ -104,7 +104,7 @@ namespace AngouriMath.Functions.Algebra
         {
             if (expr is Logf(var logBase, var logArgument))
             {
-                if (logBase.Contains(x))
+                if (logBase.ContainsNode(x))
                     return SolveAsLogarithmDivision(MathS.Ln(logArgument) / MathS.Ln(logBase), x);
                 else
                 {
@@ -124,7 +124,7 @@ namespace AngouriMath.Functions.Algebra
         {
             if (expr is Divf(Logf(var upperLogBase, var upperLogArgument), Logf(var lowerLogBase, var lowerLogArgument)))
             {
-                if (lowerLogBase.Contains(x) || upperLogBase.Contains(x)) return null;
+                if (lowerLogBase.ContainsNode(x) || upperLogBase.ContainsNode(x)) return null;
 
                 var upperLogLimit = LimitFunctional.ComputeLimit(upperLogArgument, x, Real.PositiveInfinity);
                 var lowerLogLimit = LimitFunctional.ComputeLimit(lowerLogArgument, x, Real.PositiveInfinity);

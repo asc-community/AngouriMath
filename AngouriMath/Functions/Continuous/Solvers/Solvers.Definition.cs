@@ -16,17 +16,18 @@
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using System;
 using System.Linq;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {
     public abstract partial record Entity
     {
-        public SetNode Solve(Variable var)
+        public Set Solve(Variable var)
         {
             if (this is Statement)
                 return StatementSolver.Solve(this, var);
             if (this == var)
-                return new Set(Boolean.True);
+                return new FiniteSet(Boolean.True);
             throw new InvalidOperationException("There should be statement to be true");
         }
     }

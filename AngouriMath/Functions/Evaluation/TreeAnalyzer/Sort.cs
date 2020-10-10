@@ -33,8 +33,8 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level) => level switch
             {
                 SortLevel.HIGH_LEVEL => "",
-                SortLevel.MIDDLE_LEVEL => ToString(),
-                _ => ToString() + " "
+                SortLevel.MIDDLE_LEVEL => Stringize(),
+                _ => Stringize() + " "
             };
         }
 
@@ -155,8 +155,8 @@ namespace AngouriMath
                 => level switch
                 {
                     SortLevel.HIGH_LEVEL => "",
-                    SortLevel.MIDDLE_LEVEL => ToString(),
-                    _ => ToString() + " "
+                    SortLevel.MIDDLE_LEVEL => Stringize(),
+                    _ => Stringize() + " "
                 };
         }
 
@@ -218,6 +218,77 @@ namespace AngouriMath
         {
             private protected override string SortHashName(SortLevel level)
                => level == SortLevel.LOW_LEVEL ? "lessequal_" : "";
+        }
+
+        partial record Set
+        {
+            partial record FiniteSet
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level switch
+                    {
+                        SortLevel.HIGH_LEVEL => "",
+                        SortLevel.MIDDLE_LEVEL => Stringize(),
+                        _ => Stringize() + " "
+                    };
+            }
+
+            partial record Interval
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level switch
+                    {
+                        SortLevel.HIGH_LEVEL => "",
+                        SortLevel.MIDDLE_LEVEL => Stringize(),
+                        _ => Stringize() + " "
+                    };
+            }
+
+            partial record ConditionalSet
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level switch
+                    {
+                        SortLevel.HIGH_LEVEL => "",
+                        SortLevel.MIDDLE_LEVEL => Stringize(),
+                        _ => Stringize() + " "
+                    };
+            }
+
+            partial record SpecialSet
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level switch
+                    {
+                        SortLevel.HIGH_LEVEL => "",
+                        SortLevel.MIDDLE_LEVEL => Stringize(),
+                        _ => Stringize() + " "
+                    };
+            }
+
+            partial record Unionf
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level == SortLevel.LOW_LEVEL ? "union_" : "";
+            }
+
+            partial record Intersectionf
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level == SortLevel.LOW_LEVEL ? "intersection_" : "";
+            }
+
+            partial record SetMinusf
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level == SortLevel.LOW_LEVEL ? "setminus_" : "";
+            }
+
+            partial record Inf
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level == SortLevel.LOW_LEVEL ? "in_" : "";
+            }
         }
     }
 }

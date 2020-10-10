@@ -46,13 +46,13 @@ namespace UnitTests.Convenience
             var mi = mis.First();
 
             var entObj = mi.Invoke(null, new[] { x });
-            if (!(entObj is Entity ent))
+            if (entObj is not Entity ent)
                 throw new InvalidCastException($"Invokation returned {entObj?.GetType()} instead of {typeof(Entity)}");
             Assert.Equal(ent, MathS.FromString(stringizedExpr));
         }
 
         [Fact]
         public void TestExtensionToFiniteSet()
-            => Assert.Equal(new Set(1, 2, 3).AsFiniteSet(), new Entity[] { 1, 2, 3 }.ToFiniteSet());
+            => Assert.Equal(MathS.Sets.Finite(1, 2, 3), new Entity[] { 1, 2, 3 }.ToSet());
     }
 }

@@ -2,152 +2,83 @@
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity;
 using Xunit;
+using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Core
 {
     public class SetsTest
     {
-        private readonly Set A = MathS.Sets.Empty();
-        private readonly Set B = MathS.Sets.Empty();
-        private readonly Set C = MathS.Sets.Empty();
+        private static Set A = MathS.Sets.Empty;
+        private static Set B = MathS.Sets.Empty;
+        private static Set C = MathS.Sets.Empty;
 
         public SetsTest()
         {
-            A.AddElements(3, 4, 5);
-            A.AddInterval(MathS.Sets.Interval(10, 15).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(14, 19).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(Complex.Create(8, 3), Complex.Create(11, 5)).SetLeftClosed(true).SetRightClosed(false));
-            A.AddInterval(MathS.Sets.Interval(Complex.Create(3, 51), Complex.Create(3, 61)));
+            A = MathS.Union(A, new FiniteSet(3, 4, 5));
+            A = MathS.Union(A, new Interval(10, true, 15, false));
+            A = MathS.Union(A, new Interval(14, true, 19, false));
+            // A = { 3, 4, 5 } \/ [10; 19)
 
-            B.AddElements(11);
+            B = MathS.Union(B, new FiniteSet(11));
 
-            C.AddInterval(MathS.Sets.Interval(-10, 10).SetLeftClosed(false));
-            C.AddInterval(MathS.Sets.Interval(-3, 3).SetRightClosed(false));
-            C.AddInterval(MathS.Sets.Interval(-3 * MathS.i, 3 * MathS.i).SetRightClosed(true, false));
+            C = MathS.Union(C, new Interval(-10, false, 10, true));
+            C = MathS.Union(C, new Interval(-3, true, 3, false));
+            // C = (-10; 10]
         }
+
+        private void AssertContains(Set set, Entity el)
+            => Assert.True(set.Contains(el), $"{set.Stringize()} does not contain {el.Stringize()} but should");
+
+        private void AssertNotContains(Set set, Entity el)
+            => Assert.True(!set.Contains(el), $"{set.Stringize()} contains {el.Stringize()} but should not");
+
+        [Fact] public void IndividualNumbersInIndividualOneSet1() => AssertNotContains(A, 2);
+        [Fact] public void IndividualNumbersInIndividualOneSet2() => AssertContains(A, 3);
+        [Fact] public void IndividualNumbersInIndividualOneSet3() => AssertNotContains(A, 2.9);
+        [Fact] public void IndividualNumbersInIndividualOneSet4() => AssertContains(A, 4);
+        [Fact] public void IndividualNumbersInIndividualOneSet5() => AssertContains(A, 5);
+
+        [Fact(Skip = "Subset needed")]
+        public void InvididualNumbersInIntervalsOneSet1()
+        {
+            //Assert.Contains(new Interval(11, true, 13, true), A);
+            //Assert.Contains(new Interval(11, true, 16, true), A);
+            //Assert.Contains(new Interval(10, true, 13, true), A);
+            //Assert.Contains(new Interval(10, true, 15, true), A);
+        }
+
+        public static Set C1 => A.SetSubtract(B);
 
         [Fact]
-        public void IndividualNumbersInIndividualOneSet()
-        {
-            Assert.DoesNotContain((Entity)2, A);
-            Assert.Contains((Entity)3, A);
-            Assert.DoesNotContain((Entity)2.9, A);
-            Assert.Contains((Entity)4, A);
-            Assert.Contains((Entity)5, A);
-        }
-
+        public void InvididualNumbersInIntervalsTwoSets1() => Assert.False(C1.Contains(11));
         [Fact]
-        public void InvididualNumbersInIntervalsOneSet()
-        {
-            Assert.Contains(new Interval(11, 13), A);
-            Assert.Contains(new Interval(11, 16), A);
-            Assert.Contains(new Interval(10, 13), A);
-            Assert.Contains(new Interval(10, 15), A);
-        }
-
-        
-
+        public void InvididualNumbersInIntervalsTwoSets2() => Assert.True(C1.Contains(10.9));
         [Fact]
-        public void InvididualNumbersInIntervalsTwoSets()
-        {
-            var C = A - B;
-            Assert.False(C.Contains(11));
-            Assert.True(C.Contains(10.9));
-            Assert.True(C.Contains(11.1));
-        }
+        public void InvididualNumbersInIntervalsTwoSets3() => Assert.True(C1.Contains(11.1));
 
-        
+        [Fact] public void RealIntervalDisjunctionTest1() => Assert.True(C.Contains(0));
+        [Fact] public void RealIntervalDisjunctionTest2() => Assert.True(C.Contains(-3));
+        [Fact] public void RealIntervalDisjunctionTest3() => Assert.False(C.Contains(-10));
 
-        [Fact]
-        public void RealIntervalDisjunctionTest()
-        {
-            Assert.True(C.Contains(0));
-            Assert.True(C.Contains(-3));
-            Assert.False(C.Contains(-10));
-        }
+        private static Set D => MathS.Union(C, A);
 
-        [Fact]
-        public void SetsDisjunction()
-        {
-            var D = C | A;
-            Assert.True(D.Contains(0));
-            Assert.True(D.Contains(-3));
-            Assert.True(D.Contains(18.9));
-            Assert.False(D.Contains(19));
-        }
+        [Fact] public void SetsDisjunction1() => Assert.True(D.Contains(0));
+        [Fact] public void SetsDisjunction2() => Assert.True(D.Contains(-3));
+        [Fact] public void SetsDisjunction3() => Assert.True(D.Contains(18.9));
+        [Fact] public void SetsDisjunction4() => Assert.False(D.Contains(19));
 
-        [Fact]
-        public void SetsConjuction()
-        {
-            var D = C & A;
-            Assert.True(D.Contains(5));
-            Assert.False(D.Contains(-3));
-            Assert.False(D.Contains(18.9));
-            Assert.False(D.Contains(19));
-        }
+        private static Set D1 => MathS.Intersection(C, A);
 
-        [Fact]
-        public void SetsSubtraction()
-        {
-            var D = C - A;
-            Assert.True(D.Contains(-9.9));
-            Assert.False(D.Contains(3));
-            Assert.False(D.Contains(4));
-            Assert.False(D.Contains(5));
-        }
+        [Fact] public void SetsConjuction1() => Assert.True(D1.Contains(5));
+        [Fact] public void SetsConjuction2() => Assert.False(D1.Contains(-3));
+        [Fact] public void SetsConjuction3() => Assert.False(D1.Contains(18.9));
+        [Fact] public void SetsConjuction4() => Assert.False(D1.Contains(19));
 
-        private readonly Set Af = MathS.Sets.Finite(3, 4, 5);
-        private readonly Set Bf = MathS.Sets.Finite(1, 2, 4);
-        private readonly Set Cf = MathS.Sets.Finite(-7);
-        private readonly Set Df = MathS.Sets.Finite();
-        private readonly Set Ef = MathS.Sets.Finite(Complex.Create(-1, -1));
-        private readonly Set Gf = MathS.Sets.Finite(Complex.Create(-1, -1));
+        private static Set D2 => MathS.SetSubtraction(C, A);
 
-        [Fact]
-        public void SetsFiniteTestDisj()
-        {
-            var Q = Assert.IsType<Set>(Af | Bf);
-            Assert.Equal(5, Q.Pieces.Count);
-        }
-
-        [Fact]
-        public void SetsFiniteTestConj()
-        {
-            var Q = Assert.IsType<Set>(Af & Bf);
-            Assert.Single(Q.Pieces);
-        }
-
-        [Fact]
-        public void SetsFiniteTestSub()
-        {
-            var Q = Assert.IsType<Set>(Af - Bf);
-            Assert.Equal(2, Q.Pieces.Count);
-        }
-
-        [Fact]
-        public void SetsFiniteTestDisj2()
-        {
-            var Q = Assert.IsType<Set>(Ef | Gf);
-            Assert.Single(Q.Pieces);
-        }
-
-        [Fact]
-        public void SetsFiniteTestSub2()
-        {
-            Assert.True(Df.IsEmpty);
-            Assert.True(((Set)(Df - Af)).IsEmpty);
-            Assert.True(((Set)(Df - Bf)).IsEmpty);
-            Assert.True(((Set)(Df - Cf)).IsEmpty);
-            Assert.True(((Set)(Df - Df)).IsEmpty);
-            Assert.True(((Set)(Df - Ef)).IsEmpty);
-            Assert.True(((Set)(Df - Gf)).IsEmpty);
-        }
-
-        [Fact]
-        public void SetsFiniteTestConj2()
-        {
-            var Q = Assert.IsType<Set>(Ef & Gf);
-            Assert.Single(Q.Pieces);
-        }
+        [Fact] public void SetsSubtraction1() => Assert.True(D2.Contains(-9.9));
+        [Fact] public void SetsSubtraction2() => Assert.False(D2.Contains(3));
+        [Fact] public void SetsSubtraction3() => Assert.False(D2.Contains(4));
+        [Fact] public void SetsSubtraction4() => Assert.False(D2.Contains(3));
     }
 }

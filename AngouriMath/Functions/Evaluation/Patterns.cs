@@ -20,6 +20,7 @@ using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Boolean;
 using System.Collections.Generic;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions
 {
@@ -580,16 +581,32 @@ namespace AngouriMath.Functions
         private static bool IsZero(Entity entity)
             => entity is Real re && Real.IsZero(re);
 
+        // Suggestions to refactor this?
+        private static bool OppositeSigns(ComparisonSign left, ComparisonSign right)
+        {
+            if (left is Lessf)
+                return right is Greaterf or GreaterOrEqualf or Equalsf;
+            if (left is LessOrEqualf)
+                return right is Greaterf;
+            if (left is Greaterf)
+                return right is Lessf or LessOrEqualf or Equalsf;
+            if (left is GreaterOrEqualf)
+                return right is Lessf;
+            if (left is Equalsf)
+                return right is Lessf or Greaterf;
+            return false;
+        }
+
         internal static Entity InequalityEqualityRules(Entity x) => x switch
         {
-            Andf(Lessf(var any1, var any2), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 <= any2,
-            Andf(Lessf(var any2, var any1), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 <= any2,
-            Andf(Greaterf(var any1, var any2), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 >= any2,
-            Andf(Greaterf(var any2, var any1), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 >= any2,
-            Andf(Equalsf(var any1a, var any2a), Lessf(var any1, var any2)) when any1 == any1a && any2 == any2a => any1 <= any2,
-            Andf(Equalsf(var any1a, var any2a), Lessf(var any2, var any1)) when any1 == any1a && any2 == any2a => any1 <= any2,
-            Andf(Equalsf(var any1a, var any2a), Greaterf(var any1, var any2)) when any1 == any1a && any2 == any2a => any1 >= any2,
-            Andf(Equalsf(var any1a, var any2a), Greaterf(var any2, var any1)) when any1 == any1a && any2 == any2a => any1 >= any2,
+            Orf(Lessf(var any1, var any2), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 <= any2,
+            Orf(Lessf(var any2, var any1), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 <= any2,
+            Orf(Greaterf(var any1, var any2), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 >= any2,
+            Orf(Greaterf(var any2, var any1), Equalsf(var any1a, var any2a)) when any1 == any1a && any2 == any2a => any1 >= any2,
+            Orf(Equalsf(var any1a, var any2a), Lessf(var any1, var any2)) when any1 == any1a && any2 == any2a => any1 <= any2,
+            Orf(Equalsf(var any1a, var any2a), Lessf(var any2, var any1)) when any1 == any1a && any2 == any2a => any1 <= any2,
+            Orf(Equalsf(var any1a, var any2a), Greaterf(var any1, var any2)) when any1 == any1a && any2 == any2a => any1 >= any2,
+            Orf(Equalsf(var any1a, var any2a), Greaterf(var any2, var any1)) when any1 == any1a && any2 == any2a => any1 >= any2,
 
             Notf(Greaterf(var any1, var any2)) => any1 <= any2,
             Notf(Lessf(var any1, var any2)) => any1 >= any2,
@@ -608,6 +625,17 @@ namespace AngouriMath.Functions
             GreaterOrEqualf(var zero, var anyButZero) when IsZero(zero) && !IsZero(anyButZero) => anyButZero <= zero,
             LessOrEqualf   (var zero, var anyButZero) when IsZero(zero) && !IsZero(anyButZero) => anyButZero >= zero,
 
+            Equalsf        (var @const, var anyButConst) when @const is Number && anyButConst is not Number => anyButConst.Equalizes(@const),
+            Greaterf       (var @const, var anyButConst) when @const is Number && anyButConst is not Number => anyButConst < @const,
+            Lessf          (var @const, var anyButConst) when @const is Number && anyButConst is not Number => anyButConst > @const,
+            GreaterOrEqualf(var @const, var anyButConst) when @const is Number && anyButConst is not Number => anyButConst <= @const,
+            LessOrEqualf   (var @const, var anyButConst) when @const is Number && anyButConst is not Number => anyButConst >= @const,
+
+            Andf(ComparisonSign left, ComparisonSign right) when 
+            left.DirectChildren[0] == right.DirectChildren[0] &&
+            left.DirectChildren[1] == right.DirectChildren[1] &&
+            OppositeSigns(left, right) => False,
+
             Equalsf        (Powf(var any1, var rePo), var zero) when IsRealPositive(rePo) && IsZero(zero) => any1.Equalizes(zero),
             
             Equalsf(Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1.Equalizes(Integer.Zero),
@@ -624,6 +652,16 @@ namespace AngouriMath.Functions
 
             _ => x
         };
+
+        internal static Entity SetOperatorRules(Entity x) => x switch
+        {
+            Intersectionf(var any1, var any1a) when any1 == any1a => any1,
+            Unionf(var any1, var any1a) when any1 == any1a => any1,
+            SetMinusf(var any1, var any1a) when any1 == any1a => Empty,
+            _ => x
+        };
+
+
         private static Entity SortAndGroup(IEnumerable<Entity> children, TreeAnalyzer.SortLevel level, Func<Entity, Entity, Entity> ctor)
         {
             var groups = new Dictionary<string, List<Entity>>();

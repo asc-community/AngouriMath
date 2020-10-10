@@ -16,7 +16,7 @@ namespace UnitTests.Common
         [InlineData("-x!")]
         [InlineData("(3i)!")]
         public void Circle(string inputIsOutput) =>
-            Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).ToString());
+            Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).Stringize());
         [Theory]
         [InlineData("0")]
         [InlineData("1")]
@@ -29,9 +29,9 @@ namespace UnitTests.Common
         [InlineData("-4i")]
         public void Number(string inputIsOutput)
         {
-            Assert.Equal(inputIsOutput, Complex.Parse(inputIsOutput).ToString());
+            Assert.Equal(inputIsOutput, Complex.Parse(inputIsOutput).Stringize());
             Assert.True(Complex.TryParse(inputIsOutput, out var output));
-            Assert.Equal(inputIsOutput, output?.ToString());
+            Assert.Equal(inputIsOutput, output?.Stringize());
         }
         [Theory]
         [InlineData("0i", "0")]
@@ -39,9 +39,9 @@ namespace UnitTests.Common
         [InlineData("-1i", "-i")]
         public void NumberSimplify(string input, string output)
         {
-            Assert.Equal(output, Complex.Parse(input).ToString());
+            Assert.Equal(output, Complex.Parse(input).Stringize());
             Assert.True(Complex.TryParse(input, out var o));
-            Assert.Equal(output, o?.ToString());
+            Assert.Equal(output, o?.Stringize());
         }
         [Theory]
         [InlineData("quack")]
@@ -51,7 +51,7 @@ namespace UnitTests.Common
         public void NotNumber(string input)
         {
             Assert.Equal($"Cannot parse number from {input}",
-                Assert.Throws<AngouriMath.Core.Exceptions.ParseException>(() => Complex.Parse(input).ToString()).Message);
+                Assert.Throws<AngouriMath.Core.Exceptions.ParseException>(() => Complex.Parse(input).Stringize()).Message);
             Assert.False(Complex.TryParse(input, out var output));
             Assert.Null(output);
         }
@@ -64,11 +64,11 @@ namespace UnitTests.Common
         {
             string expr = $"{@decimal} + 3 / 3 + {@decimal} + i";
             var exprActual = MathS.FromString(expr);
-            Assert.Equal($"{rational} + 3 / 3 + {rational} + i", exprActual.ToString());
+            Assert.Equal($"{rational} + 3 / 3 + {rational} + i", exprActual.Stringize());
         }
 
         [Fact]
-        public void Test4() => MathS.FromString((MathS.Sin(x) / MathS.Cos(x)).Derive(x).ToString());
+        public void Test4() => MathS.FromString((MathS.Sin(x) / MathS.Cos(x)).Derive(x).Stringize() ?? "");
 
         [Fact]
         public void Test7() => Assert.Equal(3 * x, MathS.Sin(MathS.Arcsin(x * 3)).Simplify());
@@ -81,12 +81,12 @@ namespace UnitTests.Common
         [InlineData("x / 1 + 2")]
         [InlineData("(x + y + x + 1 / (x + 4 + 4 + sin(x))) / (x + x + 3 / y) + 3")]
         public void TestLinch(string inputIsOutput) =>
-            Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).ToString());
+            Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).Stringize());
 
         [Theory]
         [InlineData("sgn(x)")]
         [InlineData("abs(x)")]
         public void TestDiscrete(string inputIsOutput) =>
-            Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).ToString());
+            Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).Stringize());
     }
 }

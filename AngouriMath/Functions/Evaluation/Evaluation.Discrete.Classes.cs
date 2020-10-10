@@ -49,34 +49,9 @@ namespace AngouriMath
                     res = (bool)leftBool && (bool)rightBool; // there's no cost in casting
                     return true;
                 }
-                else
+                else if (left.Evaled == False || right.Evaled == False)
                 {
                     res = False;
-                    return false;
-                }
-            }
-
-            protected override Entity InnerEval()
-            {
-                if (GoodResult(Left, Right, out var res))
-                    return res;
-                return New(Left.Evaled, Right.Evaled);
-            }
-            internal override Entity InnerSimplify()
-            {
-                if (GoodResult(Left, Right, out var res))
-                    return res;
-                return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
-            }
-        }
-
-        partial record Orf
-        {
-            private bool GoodResult(Entity left, Entity right, out Entity res)
-            {
-                if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
-                {
-                    res = (bool)leftBool || (bool)rightBool; // there's no cost in casting
                     return true;
                 }
                 else
@@ -96,7 +71,42 @@ namespace AngouriMath
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                return New(Left.InnerSimplified, Right.InnerSimplified);
+            }
+        }
+
+        partial record Orf
+        {
+            private bool GoodResult(Entity left, Entity right, out Entity res)
+            {
+                if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
+                {
+                    res = (bool)leftBool || (bool)rightBool; // there's no cost in casting
+                    return true;
+                }
+                else if (left.Evaled == True || right.Evaled == True)
+                {
+                    res = True;
+                    return true;
+                }
+                else
+                {
+                    res = False;
+                    return false;
+                }
+            }
+
+            protected override Entity InnerEval()
+            {
+                if (GoodResult(Left, Right, out var res))
+                    return res;
+                return New(Left.Evaled, Right.Evaled);
+            }
+            internal override Entity InnerSimplify()
+            {
+                if (GoodResult(Left, Right, out var res))
+                    return res;
+                return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -126,7 +136,7 @@ namespace AngouriMath
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -137,6 +147,11 @@ namespace AngouriMath
                 if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
                 {
                     res = !(bool)leftBool || (bool)rightBool; // there's no cost in casting
+                    return true;
+                }
+                else if (left.Evaled == False || right.Evaled == True)
+                {
+                    res = True;
                     return true;
                 }
                 else
@@ -157,7 +172,7 @@ namespace AngouriMath
             {
                 if (GoodResult(Assumption, Conclusion, out var res))
                     return res;
-                return New(Assumption.InnerSimplifyWithCheck(), Conclusion.InnerSimplifyWithCheck());
+                return New(Assumption.InnerSimplified, Conclusion.InnerSimplified);
             }
         }
 
@@ -165,15 +180,18 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                // TODO: Is it that?
+                if (!Left.IsConstant || !Right.IsConstant)
+                    return New(Left.Evaled, Right.Evaled);
                 return Left.Evaled == Right.Evaled;
             }
             internal override Entity InnerSimplify()
             {
+               if (Left == Right)
+                    return true;
                if (Left.Evaled is Number && Right.Evaled is Number)
                     return InnerEvalWithCheck();
                else
-                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                    return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -198,7 +216,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                    return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -223,7 +241,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                    return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -248,7 +266,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                    return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
 
@@ -273,7 +291,31 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplifyWithCheck(), Right.InnerSimplifyWithCheck());
+                    return New(Left.InnerSimplified, Right.InnerSimplified);
+            }
+        }
+
+        partial record Set
+        {
+            partial record Inf
+            {
+                protected override Entity InnerEval()
+                {
+                    if (SupSet.Evaled is not Set set)
+                        return New(Element.Evaled, SupSet.Evaled);
+                    if (!set.TryContains(Element, out var contains))
+                        return New(Element.Evaled, SupSet.Evaled);
+                    return contains;
+                }
+
+                internal override Entity InnerSimplify()
+                {
+                    if (SupSet.InnerSimplified is not Set set)
+                        return New(Element.InnerSimplified, SupSet.InnerSimplified);
+                    if (!set.TryContains(Element, out var contains))
+                        return New(Element.InnerSimplified, SupSet.InnerSimplified);
+                    return contains;
+                }
             }
         }
     }

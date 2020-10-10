@@ -253,25 +253,25 @@ namespace AngouriMath
         #region Non-numeric nodes
 
         // Iterations should be refactored? to be int instead of Entity
-        public partial record Derivativef(Entity Expression, Entity Var, Entity Iterations) : Function
+        public partial record Derivativef(Entity Expression, Entity Var, int Iterations) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Derivativef New(Entity expression, Entity var, Entity iterations) =>
-                ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var) && ReferenceEquals(Iterations, iterations)
-                ? this : new(expression, var, iterations);
+            private Derivativef New(Entity expression, Entity var) =>
+                ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var)
+                ? this : new(expression, var, Iterations);
             public override Entity Replace(Func<Entity, Entity> func) =>
-                func(New(Expression.Replace(func), Var.Replace(func), Iterations.Replace(func)));
+                func(New(Expression.Replace(func), Var.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
 
-        public partial record Integralf(Entity Expression, Entity Var, Entity Iterations) : Function
+        public partial record Integralf(Entity Expression, Entity Var, int Iterations) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Integralf New(Entity expression, Entity var, Entity iterations) =>
-                ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var) && ReferenceEquals(Iterations, iterations)
-                ? this : new(expression, var, iterations);
+            private Integralf New(Entity expression, Entity var) =>
+                ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var)
+                ? this : new(expression, var, Iterations);
             public override Entity Replace(Func<Entity, Entity> func) =>
-                func(New(Expression.Replace(func), Var.Replace(func), Iterations.Replace(func)));
+                func(New(Expression.Replace(func), Var.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
 

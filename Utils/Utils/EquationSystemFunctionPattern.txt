@@ -1,0 +1,5 @@
+﻿        ///<summary>Solves a given set of arbitrary equations</summary>
+        ///<returns>A tensor whose width is %i% columns long or null if no solutions were found</returns>
+        public static Tensor? SolveSystem(this (%tupleargs%) eqs, %vars%)
+            => MathS.Equations(%argspassed%).Solve(%varspassed%);
+

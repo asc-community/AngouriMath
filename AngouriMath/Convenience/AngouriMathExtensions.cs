@@ -22,48 +22,34 @@ using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath.Extensions
 {
+    using static AngouriMath.Entity.Set;
     using static Entity;
     using static Entity.Number;
 
-    public static class AngouriMathExtensions
+    public static partial class AngouriMathExtensions
     {
         /// <summary>
         /// Converts your <see cref="IEnumerable"/> into a set of unique values.
         /// </summary>
         /// <returns>A Set</returns>
-        public static Set ToSet(this IEnumerable<Entity> elements)
-            => new Set(elements.Select(c => SetPiece.Element(c)).ToArray());
-
-        /// <summary>
-        /// Converts your <see cref="IEnumerable"/> into a set of unique values.
-        /// </summary>
-        /// <returns>A Set</returns>
-        public static SetNode ToSetNode(this IEnumerable<Entity> elements)
-            => new Set(elements.Select(c => SetPiece.Element(c)).ToArray());
-
-        /// <summary>
-        /// Converts your <see cref="IEnumerable"/> into a set of unique values.
-        /// Guarantees the finiteness of the set
-        /// </summary>
-        /// <returns>A finite set of elements</returns>
-        public static FiniteSet ToFiniteSet(this IEnumerable<Entity> expr) 
-            => new FiniteSet(expr.Select(c => SetPiece.Element(c)));
+        public static FiniteSet ToSet(this IEnumerable<Entity> elements)
+            => new FiniteSet(elements);
 
         /// <summary>
         /// Unites your <see cref="IEnumerable"/> into one <see cref="SetNode"/>.
         /// Applies the "or" operator on those nodes
         /// </summary>
         /// <returns>A set of unique elements</returns>
-        public static SetNode Unite(this IEnumerable<SetNode> sets)
-            => sets.Aggregate((a, b) => a | b);
+        public static Set Unite(this IEnumerable<Set> sets)
+            => sets.Any() ? sets.Aggregate((a, b) => MathS.Union(a, b)) : Empty;
 
         /// <summary>
         /// Computes the intersection of your <see cref="IEnumerable"/>'s and makes it one <see cref="SetNode"/>.
         /// Applies the "and" operator on those nodes
         /// </summary>
         /// <returns>A set of unique elements</returns>
-        public static SetNode Intersect(this IEnumerable<SetNode> sets)
-            => sets.Aggregate((a, b) => a & b);
+        public static Set Intersect(this IEnumerable<Set> sets)
+            => sets.Any() ? sets.Aggregate((a, b) => MathS.Intersection(a, b)) : Empty;
 
         /// <summary>
         /// Parses the expression into <see cref="Entity"/>.
@@ -71,6 +57,12 @@ namespace AngouriMath.Extensions
         /// </summary>
         /// <returns>Expression</returns>
         public static Entity ToEntity(this string expr) => MathS.FromString(expr);
+
+        /// <summary>
+        /// Takes a tuple of four and builds an interval
+        /// </summary>
+        public static Interval ToEntity(this (Entity left, bool leftClosed, Entity right, bool rightClosed) arg)
+            => new Interval(arg.left, arg.leftClosed, arg.right, arg.rightClosed);
 
         /// <summary>
         /// Parses this and simplifies by running <see cref="Entity.Simplify()"/>
@@ -126,7 +118,7 @@ namespace AngouriMath.Extensions
         /// </summary>
         /// <param name="x">The variable to solve over</param>
         /// <returns>A <see cref="SetNode"/> of roots</returns>
-        public static SetNode SolveEquation(this string expr, Variable x)
+        public static Set SolveEquation(this string expr, Variable x)
             => expr.ToEntity().SolveEquation(x);
 
         /// <summary>
@@ -135,7 +127,7 @@ namespace AngouriMath.Extensions
         /// </summary>
         /// <param name="vars">The variables over which to solve</param>
         /// <returns>A <see cref="SetNode"/> of roots</returns>
-        public static SetNode Solve(this string expr, Variable var)
+        public static Set Solve(this string expr, Variable var)
             => expr.ToEntity().Solve(var);
 
         /// <summary>
@@ -225,51 +217,5 @@ namespace AngouriMath.Extensions
         /// <returns>A derived expression</returns>
         public static Entity Derive(this string str, Variable x)
             => str.ToEntity().Derive(x);
-
-        /*
-
-            Utils/generate_tuples.bat to regenerate this block
-
-        */
-
-        ///<summary>Solves a given set of arbitrary equations</summary>
-        ///<returns>A tensor whose width is 2 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2) eqs, string var1, string var2)
-            => MathS.Equations(eqs.eq1, eqs.eq2).Solve(var1, var2);
-
-        ///<summary>Solves a given set of arbitrary equations</summary>
-        ///<returns>A tensor whose width is 3 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3) eqs, string var1, string var2, string var3)
-            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3).Solve(var1, var2, var3);
-
-        ///<summary>Solves a given set of arbitrary equations</summary>
-        ///<returns>A tensor whose width is 4 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4) eqs, string var1, string var2, string var3, string var4)
-            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4).Solve(var1, var2, var3, var4);
-
-        ///<summary>Solves a given set of arbitrary equations</summary>
-        ///<returns>A tensor whose width is 5 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5) eqs, string var1, string var2, string var3, string var4, string var5)
-            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5).Solve(var1, var2, var3, var4, var5);
-
-        ///<summary>Solves a given set of arbitrary equations</summary>
-        ///<returns>A tensor whose width is 6 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6) eqs, string var1, string var2, string var3, string var4, string var5, string var6)
-            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6).Solve(var1, var2, var3, var4, var5, var6);
-
-        ///<summary>Solves a given set of arbitrary equations</summary>
-        ///<returns>A tensor whose width is 7 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7)
-            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7).Solve(var1, var2, var3, var4, var5, var6, var7);
-
-        ///<summary>Solves a given set of arbitrary equations</summary>
-        ///<returns>A tensor whose width is 8 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7, string eq8) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7, string var8)
-            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7, eqs.eq8).Solve(var1, var2, var3, var4, var5, var6, var7, var8);
-
-        ///<summary>Solves a given set of arbitrary equations</summary>
-        ///<returns>A tensor whose width is 9 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7, string eq8, string eq9) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7, string var8, string var9)
-            => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7, eqs.eq8, eqs.eq9).Solve(var1, var2, var3, var4, var5, var6, var7, var8, var9);
     }
 }

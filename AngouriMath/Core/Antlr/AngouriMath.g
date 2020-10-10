@@ -23,6 +23,9 @@ options
     using System.Linq;
     using AngouriMath;
     using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
+    using static AngouriMath.Entity.Number;
+    using AngouriMath.Core.Exceptions;
+    using static AngouriMath.Entity.Set;
 }
 
 @lexer::members
@@ -126,14 +129,49 @@ equality_expression returns[Entity value]
 
 /*
 
+Sets
+
+*/
+
+set_operator_intersection returns[Entity value]
+    : left = equality_expression { $value = $left.value; }
+    (
+    'intersect' right = equality_expression { $value = $value.Intersect($right.value); } |
+    '/\\' right = equality_expression { $value = $value.Intersect($right.value); }
+    )*
+    ;
+
+set_operator_union returns[Entity value]
+    : left = set_operator_intersection { $value = $left.value; }
+    (
+    'unite' right = set_operator_intersection { $value = $value.Unite($right.value); } |
+    '\\/' right = set_operator_intersection { $value = $value.Unite($right.value); }
+    )*
+    ;
+
+set_operator_setsubtraction returns[Entity value]
+    : left = set_operator_union { $value = $left.value; }
+    (
+    'setsubtract' right = set_operator_union { $value = $value.SetSubtract($right.value); } |
+    '\\' right = set_operator_union { $value = $value.SetSubtract($right.value); }
+    )*
+    ;
+
+in_operator returns[Entity value]
+    : m1 = set_operator_setsubtraction { $value = $m1.value; }
+    ('in' m2 = set_operator_setsubtraction { $value = $value.In($m2.value); })*
+    ;
+
+/*
+
 Boolean nodes
 
 */
 
 negate_expression returns[Entity value]
-    : 'not' equality_expression { $value = !$equality_expression.value; }
-    | 'not' negate_expression { $value = !$negate_expression.value; }
-    | equality_expression { $value = $equality_expression.value; }
+    : 'not' op = in_operator { $value = !$op.value; }
+    | 'not' opn = negate_expression { $value = !$opn.value; }
+    | op = in_operator { $value = $op.value; }
     ;
 
 and_expression returns[Entity value]
@@ -169,13 +207,30 @@ function_arguments returns[List<Entity> list]
     @init { $list = new List<Entity>(); }
     : (e = expression { $list.Add($e.value); } (',' e = expression { $list.Add($e.value); })*)?
     ;
+
+interval_arguments returns[(Entity from, Entity to) couple]
+    : from = expression { $couple.from = $from.value; } ';' to = expression { $couple.to = $to.value; }
+    ;
    
+cset_arguments returns[(Entity variable, Entity predicate) couple]
+    : variable = expression { $couple.variable = $variable.value; } ':' predicate = expression { $couple.predicate = $predicate.value; }
+    ;
+
 atom returns[Entity value]
-    : NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
+    : '+oo' { $value = Entity.Number.Real.PositiveInfinity; }
+    | '-oo' { $value = Entity.Number.Real.NegativeInfinity; }
+    | NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
+    | SPECIALSET { $value = DomainsFunctional.Parse($SPECIALSET.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }
+    | '(' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, false, $interval_arguments.couple.to, false); }
+    | '[' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, false); }
+    | '[' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, true); }
+    | '(' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, false, $interval_arguments.couple.to, true); }
     | '(' expression ')' { $value = $expression.value; }
+    | '{' cset_args = cset_arguments '}' { $value = new ConditionalSet($cset_args.couple.variable, $cset_args.couple.predicate); }
+    | '{' args = function_arguments '}' { $value = new FiniteSet((IEnumerable<Entity>)$args.list); }
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
     | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
     | 'log(' args = function_arguments ')' { $value = Assert("log", (1, 2), $args.list.Count) ? MathS.Log(10, $args.list[0]) : MathS.Log($args.list[0], $args.list[1]); }
@@ -194,8 +249,22 @@ atom returns[Entity value]
     | 'arcsec(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Arcsec($args.list[0]); }
     | 'arccosec(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Arccosec($args.list[0]); }
     | 'gamma(' args = function_arguments ')' { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); }
-    | 'derivative(' args = function_arguments ')' { Assert("derivative", 3, $args.list.Count); $value = MathS.Derivative($args.list[0], $args.list[1], $args.list[2]); }
-    | 'integral(' args = function_arguments ')' { Assert("integral", 3, $args.list.Count); $value = MathS.Integral($args.list[0], $args.list[1], $args.list[2]); }
+    | 'derivative(' args = function_arguments ')' 
+        { 
+            Assert("derivative", 3, $args.list.Count); 
+            if ($args.list[2] is Integer { EInteger: var asEInt })
+                $value = MathS.Derivative($args.list[0], $args.list[1], asEInt.ToInt32Checked());
+            else
+                throw new ParseException("Expected number for the third argument of derivative");
+        }
+    | 'integral(' args = function_arguments ')' 
+        { 
+            Assert("integral", 3, $args.list.Count); 
+            if ($args.list[2] is Integer { EInteger: var asEInt })
+                $value = MathS.Integral($args.list[0], $args.list[1], asEInt.ToInt32Checked());
+            else
+                throw new ParseException("Expected number for the third argument of integral");
+        }
     | 'limit(' args = function_arguments ')' { Assert("limit", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2]); }
     | 'limitleft(' args = function_arguments ')' { Assert("limitleft", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Core.ApproachFrom.Left); }
     | 'limitright(' args = function_arguments ')' { Assert("limitright", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Core.ApproachFrom.Right); }
@@ -203,7 +272,13 @@ atom returns[Entity value]
     | 'sgn(' args = function_arguments ')' { Assert("sgn", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'sign(' args = function_arguments ')' { Assert("sign", 1, $args.list.Count); $value = MathS.Signum($args.list[0]); }
     | 'abs(' args = function_arguments ')' { Assert("abs", 1, $args.list.Count); $value = MathS.Abs($args.list[0]); }
-    | 'domain(' args = function_arguments ')' { Assert("domain", 2, $args.list.Count); $value = $args.list[0].WithCodomain(DomainsFunctional.Parse($args.list[1])); }
+    | 'domain(' args = function_arguments ')' 
+        { 
+            Assert("domain", 2, $args.list.Count); 
+            if ($args.list[1] is not SpecialSet ss)
+                throw new ParseException($"Unrecognized special set {$args.list[1].Stringize()}");
+            $value = $args.list[0].WithCodomain(DomainsFunctional.Parse(ss.SetType));
+        }
     ;
 
 statement: expression EOF { Result = $expression.value; } ;
@@ -214,6 +289,8 @@ NEWLINE: '\r'?'\n' ;
 fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
 
 NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 'i'? | 'i' ;
+
+SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB') ;
 
 BOOLEAN: ('true' | 'false') ;
 

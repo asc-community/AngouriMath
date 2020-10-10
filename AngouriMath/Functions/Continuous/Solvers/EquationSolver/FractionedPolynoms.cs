@@ -23,14 +23,15 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
     using static Entity.Number;
     internal static class FractionedPolynoms
     {
-        internal static SetNode? Solve(Entity expr, Variable x)
+        internal static bool TrySolve(Entity expr, Variable x, out Set dst)
         {
+            dst = Set.Empty;
             var children = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(
-                expr, entity => entity.Contains(x)
+                expr, entity => entity.ContainsNode(x)
             );
 
             if (children is null)
-                return null;
+                return false;
 
             Entity normalPolynom = 0;
             var fractioned = new List<(Entity multiplier, List<(Entity main, Integer pow)> fracs)>();
@@ -48,8 +49,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         potentialFraction.multiplier *= mpChild;
                         continue;
                     }
-                    if (!(num is Rational fracNum))
-                        return null; // (x + 1)^0.2348728
+                    if (num is not Rational fracNum)
+                        return false; // (x + 1)^0.2348728
                     var newChild = MathS.Pow(@base, fracNum.ERational.Numerator).InnerSimplify();
                     var den = fracNum.ERational.Denominator;
                     potentialFraction.fracs.Add((newChild, den));
@@ -62,7 +63,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             }
 
             if (fractioned.Count == 0)
-                return null; // means that one can either be solved polynomially or unsolvable at all
+                return false; // means that one can either be solved polynomially or unsolvable at all
 
             // starting from i = 1 check if all are equal to [0]
             static bool BasesAreEqual(List<(Entity main, Integer pow)> f1,
@@ -83,7 +84,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     fractioned[0] = (were.multiplier + fractioned[i].multiplier, were.fracs);
                 }
                 else
-                    return null;
+                    return false;
             }
 
             var (multiplier, fracs) = fractioned[0];
@@ -92,13 +93,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var intLcm = Integer.Create(lcm);
 
             //                        "-" to compensate sum: x + sqrt(x + 1) = 0 => x = -sqrt(x+1)
-            var mp = MathS.Pow(-multiplier, intLcm).InnerSimplify();
+            var mp = MathS.Pow(-multiplier, intLcm).InnerSimplified;
             foreach (var (main, pow) in fracs)
                 mp *= MathS.Pow(main, Integer.Create(lcm.Divide(pow.EInteger)));
 
             var finalExpr = MathS.Pow(normalPolynom, intLcm) - mp;
 
-            return AnalyticalEquationSolver.Solve(finalExpr, x);
+            dst = (Set)AnalyticalEquationSolver.Solve(finalExpr, x).InnerSimplified;
+            return true;
         }
     }
 }

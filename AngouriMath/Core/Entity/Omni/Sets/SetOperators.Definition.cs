@@ -13,30 +13,23 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
+using static AngouriMath.Entity.Set;
 
-namespace AngouriMath
+namespace AngouriMath.Core.Sets
 {
-    partial record Entity
+    internal static partial class SetOperators
     {
-        partial record SetNode
+        internal static (ConditionalSet one, ConditionalSet another) MergeToOneVariable
+            (ConditionalSet one, ConditionalSet another)
         {
-            partial record Inversion
-            {
-                public override SetNode Eval()
-                {
-                    if (!(A is Set s))
-                        return new Inversion(A);
-                    var (goodAPieces, badAPieces) = GatherEvaluablePieces(s);
-                    var remainders = RepeatApply(new[] { Interval.CreateUniverse() }, goodAPieces, PieceFunctions.Subtract);
-                    var newSet = new Set { Pieces = remainders.ToList() };
-                    return badAPieces.Count == 0
-                           ? newSet
-                           : (SetNode)new Complement(newSet, new Set { Pieces = badAPieces });
-                }
-            }
+            var stat1 = another.Predicate.Substitute(another.Var, one.Var);
+            return (one, (ConditionalSet)another.New(one.Var, stat1));
         }
     }
 }

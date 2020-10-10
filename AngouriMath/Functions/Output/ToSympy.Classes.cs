@@ -14,6 +14,7 @@
  */
 
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
@@ -31,7 +32,7 @@ namespace AngouriMath
 
         public partial record Number
         {
-            internal override string ToSymPy() => ToString().Replace("i", "sympy.I");
+            internal override string ToSymPy() => Stringize().Replace("i", "sympy.I");
         }
 
 
@@ -119,14 +120,14 @@ namespace AngouriMath
 
         public partial record Derivativef
         {
-            internal override string ToSymPy() => $"sympy.diff({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations.ToSymPy()})";
+            internal override string ToSymPy() => $"sympy.diff({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations})";
         }
 
         public partial record Integralf
         {
             // TODO: The 3rd parameter of sympy.integrate is not interpreted as iterations, unlike sympy.diff
             // which allows both sympy.diff(expr, var, iterations) and sympy.diff(expr, var1, var2, var3...)
-            internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations.ToSymPy()})";
+            internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations})";
         }
 
         public partial record Limitf
@@ -218,6 +219,64 @@ namespace AngouriMath
         {
             internal override string ToSymPy()
                 => $"{Left.ToSymPy(Left.Priority < Priority)} <= {Right.ToSymPy(Right.Priority < Priority)}";
+        }
+
+        partial record Set
+        {
+            partial record FiniteSet
+            {
+                internal override string ToSymPy()
+                    => $"FiniteSet({string.Join(", ", elements)})";
+            }
+
+            partial record Interval
+            {
+                internal override string ToSymPy()
+                    => $"Interval({Left}, {Right}, left_open={(!(Boolean)LeftClosed).ToSymPy()}, right_open={(!(Boolean)RightClosed).ToSymPy()})";
+            }
+
+            partial record ConditionalSet
+            {
+                internal override string ToSymPy()
+                    => $"ConditionSet({Var.ToSymPy()}, {Predicate.ToSymPy()}, {((SpecialSet)Var.Codomain).ToSymPy()})";
+            }
+
+            partial record SpecialSet
+            {
+                internal override string ToSymPy()
+                    => "S." + (SetType switch
+                    {
+                        Domain.Integer => "Integers",
+                        Domain.Rational => "Rationals",
+                        Domain.Real => "Reals",
+                        Domain.Complex => "Complexes",
+                        _ => throw new MathSException($"There is no {SetType} in either SymPy or AM's {nameof(ToSymPy)}")
+                    });
+            }
+
+            partial record Unionf
+            {
+                internal override string ToSymPy()
+                    => $"Union({Left.ToSymPy()}, {Right.ToSymPy()})";
+            }
+
+            partial record Intersectionf
+            {
+                internal override string ToSymPy()
+                    => $"Intersection({Left.ToSymPy()}, {Right.ToSymPy()})";
+            }
+
+            partial record SetMinusf
+            {
+                internal override string ToSymPy()
+                    => $"Complement({Left.ToSymPy()}, {Right.ToSymPy()})";
+            }
+
+            partial record Inf
+            {
+                internal override string ToSymPy()
+                    => $"{Element.ToSymPy(Element.Priority < Priority)} in {SupSet.ToSymPy(SupSet.Priority < Priority)}";
+            }
         }
     }
 }

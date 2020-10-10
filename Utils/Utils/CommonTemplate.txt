@@ -13,39 +13,14 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System.Collections.Generic;
-using System.Linq;
-using static AngouriMath.Entity;
+// This file is auto-generated. Use %bat% to re-generate it, do not edit the file itself.
 
-/*
- *
- * SUBTRACTION
- *
- */
+%usings%
 
-namespace AngouriMath.Core
+namespace %namespace%
 {
-    static partial class PieceFunctions
+    %classheader%
     {
-        /// <summary>Subtracts B from A: A \ B = A & !B</summary>
-        public static IEnumerable<SetPiece> Subtract(SetPiece A, SetPiece B)
-        {
-            if (Intersect(A, B) is null) // if A & B is none, then A \ B = A
-                return new[] { A };
-
-            if (A == B || B.Contains(A))
-                return Enumerable.Empty<SetPiece>();
-
-            return Invert(B).Select(piece => Intersect(A, piece)).OfType<SetPiece>().Where(IsPieceCorrect);
-        }
-        internal static bool IsPieceCorrect(SetPiece piece)
-        {
-            var lower = piece.LowerBound();
-            var upper = piece.UpperBound();
-            var num1 = lower.Item1.EvalNumerical();
-            var num2 = upper.Item1.EvalNumerical();
-            return (num1.RealPart != num2.RealPart || lower.Item2 && upper.Item2) &&
-                   (num1.ImaginaryPart != num2.ImaginaryPart || lower.Item3 && upper.Item3);
-        }
+%content%
     }
 }

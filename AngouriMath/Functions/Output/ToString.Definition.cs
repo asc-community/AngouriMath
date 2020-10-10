@@ -19,20 +19,12 @@ namespace AngouriMath
     using static Entity.Number;
     public abstract partial record Entity
     {
-        /// <summary>Converts an expression into a string</summary>
-        public override string ToString() => Stringize();
-        internal abstract string Stringize();
+        /// <summary>
+        /// Converts an expression into a string
+        /// Replacement for ToString since .NET 5 RC1
+        /// </summary>
+        public abstract string Stringize();
         protected internal string Stringize(bool parenthesesRequired) =>
-            parenthesesRequired ? @$"({Stringize()})" : Stringize();
-
-        public partial record Variable
-        {
-            internal override string Stringize() => Name;
-        }
-
-        public partial record Tensor
-        {
-            internal override string Stringize() => InnerTensor.ToString();
-        }
+            parenthesesRequired ? $"({Stringize()})" : Stringize();
     }
 }

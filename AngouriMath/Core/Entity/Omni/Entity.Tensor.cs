@@ -32,7 +32,7 @@ namespace AngouriMath
                 innerTensor.Iterate().All(tup => ReferenceEquals(InnerTensor.GetValueNoCheck(tup.Index), tup.Value))
                 ? this
                 : new Tensor(innerTensor);
-            public override Priority Priority => Priority.Number;
+            public override Priority Priority => Priority.Leaf;
             internal Tensor Elementwise(Func<Entity, Entity> operation) =>
                 New(GenTensor.CreateTensor(InnerTensor.Shape, indices => operation(InnerTensor.GetValueNoCheck(indices))));
             internal Tensor Elementwise(Tensor other, Func<Entity, Entity, Entity> operation) =>
@@ -56,7 +56,17 @@ namespace AngouriMath
                 public Entity Forward(Entity a) => a;
                 public bool AreEqual(Entity a, Entity b) => a == b;
                 public bool IsZero(Entity a) => a == 0;
-                public string ToString(Entity a) => a.ToString();
+                public string ToString(Entity a) => a.Stringize();
+
+                public byte[] Serialize(Entity a)
+                {
+                    throw new NotImplementedException("Serialization is not planned");
+                }
+
+                public Entity Deserialize(byte[] data)
+                {
+                    throw new NotImplementedException("Deserialization is not planned");
+                }
             }
             /// <summary>List of <see cref="int"/>s that stand for dimensions</summary>
             public TensorShape Shape => InnerTensor.Shape;

@@ -17,6 +17,8 @@ using AngouriMath.Functions;
 using System;
 using static AngouriMath.Entity.Number;
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {
@@ -37,17 +39,25 @@ namespace AngouriMath
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).Evaled),
                 (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2).Evaled),
                 (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 + n2).Evaled),
+                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c + n2).Evaled),
+                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 + c).Evaled),
+                (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Evaled, (inter.Right + n2).Evaled),
+                (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Evaled, (n2 + inter.Right).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Augend.InnerSimplifyWithCheck(), Addend.InnerSimplifyWithCheck()) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Augend.InnerSimplified, Addend.InnerSimplified) switch
                 {
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).InnerSimplifyWithCheck()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2).InnerSimplifyWithCheck()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 + n2).InnerSimplifyWithCheck()),
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).InnerSimplified),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2).InnerSimplified),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 + n2).InnerSimplified),
                     (var n1, Integer(0)) => n1,
                     (Integer(0), var n2) => n2,
-                    (var n1, var n2) => n1 == n2 ? (2 * n1).InnerSimplifyWithCheck() : New(n1, n2)
+                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c + n2).InnerSimplified),
+                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 + c).InnerSimplified),
+                    (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).InnerSimplified, (inter.Right + n2).InnerSimplified),
+                    (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).InnerSimplified, (n2 + inter.Right).InnerSimplified),
+                    (var n1, var n2) => n1 == n2 ? (2 * n1).InnerSimplified : New(n1, n2)
                 };
         }
         public partial record Minusf
@@ -58,16 +68,24 @@ namespace AngouriMath
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 - n2).Evaled),
                 (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 - n2).Evaled),
                 (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 - n2).Evaled),
+                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c - n2).Evaled),
+                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 - c).Evaled),
+                (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).Evaled, (inter.Right - n2).Evaled),
+                (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Evaled, (n2 - inter.Right).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Subtrahend.InnerSimplifyWithCheck(), Minuend.InnerSimplifyWithCheck()) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Subtrahend.InnerSimplified, Minuend.InnerSimplified) switch
                 {
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 - n2).InnerSimplifyWithCheck()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 - n2).InnerSimplifyWithCheck()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 - n2).InnerSimplifyWithCheck()),
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 - n2).InnerSimplified),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 - n2).InnerSimplified),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 - n2).InnerSimplified),
                     (var n1, Integer(0)) => n1,
-                    (Integer(0), var n2) => (-n2).InnerSimplifyWithCheck(),
+                    (Integer(0), var n2) => (-n2).InnerSimplified,
+                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c - n2).InnerSimplified),
+                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 - c).InnerSimplified),
+                    (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).InnerSimplified, (inter.Right - n2).InnerSimplified),
+                    (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).InnerSimplified, (n2 - inter.Right).InnerSimplified),
                     (var n1, var n2) => n1 == n2 ? (Entity)0 : New(n1, n2)
                 };
         }
@@ -79,19 +97,23 @@ namespace AngouriMath
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 * n2).Evaled),
                 (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 * n2).Evaled),
                 (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 * n2).Evaled),
+                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c * n2).Evaled),
+                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 * c).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Multiplier.InnerSimplifyWithCheck(), Multiplicand.InnerSimplifyWithCheck()) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Multiplier.InnerSimplified, Multiplicand.InnerSimplified) switch
                 {
                     (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 * n2).InnerSimplifyWithCheck()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 * n2).InnerSimplifyWithCheck()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 * n2).InnerSimplifyWithCheck()),
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 * n2).InnerSimplified),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 * n2).InnerSimplified),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 * n2).InnerSimplified),
                     (_, Integer(0)) or (Integer(0), _) => 0,
                     (var n1, Integer(1)) => n1,
                     (Integer(1), var n2) => n2,
-                    (var n1, var n2) => n1 == n2 ? new Powf(n1, 2).InnerSimplifyWithCheck() : New(n1, n2)
+                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c * n2).InnerSimplified),
+                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 * c).InnerSimplified),
+                    (var n1, var n2) => n1 == n2 ? new Powf(n1, 2).InnerSimplified : New(n1, n2)
                 };
         }
         public partial record Divf
@@ -102,17 +124,21 @@ namespace AngouriMath
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 / n2).Evaled),
                 (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 / n2).Evaled),
                 (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 / n2).Evaled),
+                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c / n2).Evaled),
+                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 / c).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Dividend.InnerSimplifyWithCheck(), Divisor.InnerSimplifyWithCheck()) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Dividend.InnerSimplified, Divisor.InnerSimplified) switch
                 {
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 / n2).InnerSimplifyWithCheck()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 / n2).InnerSimplifyWithCheck()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 / n2).InnerSimplifyWithCheck()),
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 / n2).InnerSimplified),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 / n2).InnerSimplified),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 / n2).InnerSimplified),
                     (Integer(0), _) => 0,
                     (_, Integer(0)) => Real.NaN,
-                    (var n1, Integer(1)) => n1.InnerSimplifyWithCheck(),
+                    (var n1, Integer(1)) => n1.InnerSimplified,
+                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c / n2).InnerSimplified),
+                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 / c).InnerSimplified),
                     (var n1, var n2) => n1 == n2 ? (Entity)1 : New(n1, n2)
                 };
         }
@@ -124,19 +150,23 @@ namespace AngouriMath
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Pow(n2).Evaled),
                 (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Pow(n2).Evaled),
                 (Tensor n1, var n2) => n1.Elementwise(n1 => n1.Pow(n2).Evaled),
+                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => c.Pow(n2).Evaled),
+                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => n2.Pow(c).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Base.InnerSimplifyWithCheck(), Exponent.InnerSimplifyWithCheck()) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Base.InnerSimplified, Exponent.InnerSimplified) switch
                 {
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Pow(n2).InnerSimplifyWithCheck()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Pow(n2).InnerSimplifyWithCheck()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => n1.Pow(n2).InnerSimplifyWithCheck()),
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Pow(n2).InnerSimplified),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Pow(n2).InnerSimplified),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => n1.Pow(n2).InnerSimplified),
                 // 0^x is undefined for Re(x) <= 0
-                (Integer(1), _) => 0,
-                    (var n1, Integer(-1)) => (1 / n1).InnerSimplifyWithCheck(),
+                    (Integer(1), _) => 0,
+                    (var n1, Integer(-1)) => (1 / n1).InnerSimplified,
                     (_, Integer(0)) => 1,
-                    (var n1, Integer(1)) => n1.InnerSimplifyWithCheck(),
+                    (var n1, Integer(1)) => n1.InnerSimplified,
+                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => c.Pow(n2).InnerSimplified),
+                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => n2.Pow(c).InnerSimplified),
                     (var n1, var n2) => New(n1, n2)
                 };
         }
@@ -146,13 +176,15 @@ namespace AngouriMath
             {
                 Complex n => Number.Sin(n),
                 Tensor n => n.Elementwise(n => n.Sin().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Sin().Evaled),
                 var n => New(n)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplifyWithCheck() switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Sin().InnerSimplifyWithCheck()),
+                    Tensor n => n.Elementwise(n => n.Sin().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => res,
+                    FiniteSet finite => finite.Apply(c => c.Sin().InnerSimplified),
                     var n => New(n)
                 };
         }
@@ -162,13 +194,15 @@ namespace AngouriMath
             {
                 Complex n => Number.Cos(n),
                 Tensor n => n.Elementwise(n => n.Cos().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Cos().Evaled),
                 var n => New(n)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplifyWithCheck() switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Cos().InnerSimplifyWithCheck()),
+                    Tensor n => n.Elementwise(n => n.Cos().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => res,
+                    FiniteSet finite => finite.Apply(c => c.Cos().InnerSimplified),
                     var n => New(n)
                 };
         }
@@ -178,13 +212,15 @@ namespace AngouriMath
             {
                 Complex n => Number.Tan(n),
                 Tensor n => n.Elementwise(n => n.Tan().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Tan().Evaled),
                 var n => New(n)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplifyWithCheck() switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Tan().InnerSimplifyWithCheck()),
+                    Tensor n => n.Elementwise(n => n.Tan().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => res,
+                    FiniteSet finite => finite.Apply(c => c.Tan().InnerSimplified),
                     var n => New(n)
                 };
         }
@@ -194,13 +230,15 @@ namespace AngouriMath
             {
                 Complex n => Number.Cotan(n),
                 Tensor n => n.Elementwise(n => n.Cotan().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Cotan().Evaled),
                 var n => New(n)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplifyWithCheck() switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Cotan().InnerSimplifyWithCheck()),
+                    Tensor n => n.Elementwise(n => n.Cotan().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => 1 / res,
+                    FiniteSet finite => finite.Apply(c => c.Cotan().InnerSimplified),
                     var n => New(n)
                 };
         }
@@ -212,16 +250,20 @@ namespace AngouriMath
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Log(n2).Evaled),
                 (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Log(n2).Evaled),
                 (Tensor n1, var n2) => n1.Elementwise(n1 => n1.Log(n2).Evaled),
+                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => MathS.Log(c, n2).Evaled),
+                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => MathS.Log(n2, c).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Base.InnerSimplifyWithCheck(), Antilogarithm.InnerSimplifyWithCheck()) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Base.InnerSimplified, Antilogarithm.InnerSimplified) switch
                 {
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Log(n2).InnerSimplifyWithCheck()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Log(n2).InnerSimplifyWithCheck()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => n1.Log(n2).InnerSimplifyWithCheck()),
+                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Log(n2).InnerSimplified),
+                    (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Log(n2).InnerSimplified),
+                    (Tensor n1, var n2) => n1.Elementwise(n1 => n1.Log(n2).InnerSimplified),
                     (_, Integer(0)) => Real.NegativeInfinity,
                     (_, Integer(1)) => 0,
+                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => MathS.Log(c, n2).InnerSimplified),
+                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => MathS.Log(n2, c).InnerSimplified),
                     (var n1, var n2) => n1 == n2 ? (Entity)1 : New(n1, n2)
                 };
         }
@@ -231,12 +273,14 @@ namespace AngouriMath
             {
                 Complex n => Number.Arcsin(n),
                 Tensor n => n.Elementwise(n => n.Arcsin().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Arcsin().Evaled),
                 var n => New(n)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplifyWithCheck() switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Arcsin().InnerSimplifyWithCheck()),
+                    Tensor n => n.Elementwise(n => n.Arcsin().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Arcsin().InnerSimplified),
                     var n => New(n)
                 };
         }
@@ -246,12 +290,14 @@ namespace AngouriMath
             {
                 Complex n => Number.Arccos(n),
                 Tensor n => n.Elementwise(n => n.Arccos().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Arccos().Evaled),
                 var n => New(n)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplifyWithCheck() switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Arccos().InnerSimplifyWithCheck()),
+                    Tensor n => n.Elementwise(n => n.Arccos().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Arccos().InnerSimplified),
                     var n => New(n)
                 };
         }
@@ -261,12 +307,14 @@ namespace AngouriMath
             {
                 Complex n => Number.Arctan(n),
                 Tensor n => n.Elementwise(n => n.Arctan().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Arctan().Evaled),
                 var n => New(n)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplifyWithCheck() switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Arctan().InnerSimplifyWithCheck()),
+                    Tensor n => n.Elementwise(n => n.Arctan().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Arctan().InnerSimplified),
                     var n => New(n)
                 };
         }
@@ -276,12 +324,14 @@ namespace AngouriMath
             {
                 Complex n => Number.Arccotan(n),
                 Tensor n => n.Elementwise(n => n.Arccotan().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Arccotan().Evaled),
                 var n => New(n)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplifyWithCheck() switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Arccotan().InnerSimplifyWithCheck()),
+                    Tensor n => n.Elementwise(n => n.Arccotan().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Arccotan().InnerSimplified),
                     var n => New(n)
                 };
         }
@@ -291,12 +341,14 @@ namespace AngouriMath
             {
                 Complex n => Number.Factorial(n),
                 Tensor n => n.Elementwise(n => n.Factorial().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Factorial().InnerSimplified),
                 var n => New(n)
             };
             internal override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplifyWithCheck() switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Factorial().InnerSimplifyWithCheck()),
+                    Tensor n => n.Elementwise(n => n.Factorial().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Factorial().InnerSimplified),
                     Rational({ Numerator: var num, Denominator: var den }) when den.Equals(2) && (num + 1) / 2 is var en => (
                         en > 0
                         // (+n - 1/2)! = (2n-1)!/(2^(2n-1)(n-1)!)*sqrt(pi)
@@ -310,37 +362,37 @@ namespace AngouriMath
         }
         public partial record Derivativef
         {
-            protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations.Evaled) switch
+            protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations) switch
             {
                 (Tensor expr, var var, var iters) => expr.Elementwise(n => new Derivativef(n, var, iters).Evaled),
-                (var expr, _, Integer(0)) => expr,
+                (var expr, _, 0) => expr,
                 // TODO: consider Integral for negative cases
-                (var expr, Variable var, Integer { EInteger: var asInt }) => expr.Derive(var, asInt),
+                (var expr, Variable var, var asInt) => expr.Derive(var, asInt),
                 _ => this
             };
             internal override Entity InnerSimplify() =>
-                Var.InnerSimplifyWithCheck() is Variable var && Iterations.InnerSimplifyWithCheck() is Integer { EInteger: var asInt }
-                ? asInt.IsZero
-                    ? Expression.InnerSimplifyWithCheck()
-                    : Expression.Derive(var, asInt)
+                Var.InnerSimplified is Variable var
+                ? Iterations == 0
+                    ? Expression.InnerSimplified
+                    : Expression.Derive(var, Iterations)
                 : this;
         }
         public partial record Integralf
         {
-            protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations.Evaled) switch
+            protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations) switch
             {
                 (Tensor expr, var var, var iters) => expr.Elementwise(n => new Integralf(n, var, iters).Evaled),
-                (var expr, _, Integer(0)) => expr,
+                (var expr, _, 0) => expr,
                 // TODO: consider Derivative for negative cases
-                (var expr, Variable var, Integer { EInteger: var asInt }) =>
-                    throw new NotImplementedException("Integration is not implemented yet"),
+                (var expr, Variable var, var asInt) =>
+                    throw FutureReleaseException.Raised("Integration is not implemented yet", "1.2.3"),
                 _ => this
             };
             internal override Entity InnerSimplify() =>
-                Var.InnerSimplifyWithCheck() is Variable && Iterations.InnerSimplifyWithCheck() is Integer { EInteger: var asInt }
-                ? asInt.IsZero
-                    ? Expression.InnerSimplifyWithCheck()
-                    : throw new NotImplementedException("Integration is not implemented yet")
+                Var.InnerSimplified is Variable
+                ? Iterations == 0
+                    ? Expression.InnerSimplified
+                    : throw FutureReleaseException.Raised("Integration is not implemented yet", "1.2.3")
                 : this;
         }
         public partial record Limitf
@@ -353,10 +405,10 @@ namespace AngouriMath
                 _ => this,
             };
             internal override Entity InnerSimplify() =>
-                Var.InnerSimplifyWithCheck() switch
+                Var.InnerSimplified switch
                 {
-                    Entity.Variable x => MathS.Compute.Limit(Expression.InnerSimplifyWithCheck(), x, Destination.InnerSimplifyWithCheck(), ApproachFrom) ?? this,
-                    var x => new Limitf(Expression.InnerSimplifyWithCheck(), x, Destination.InnerSimplifyWithCheck(), ApproachFrom)
+                    Entity.Variable x => MathS.Compute.Limit(Expression.InnerSimplified, x, Destination.InnerSimplified, ApproachFrom) ?? this,
+                    var x => new Limitf(Expression.InnerSimplified, x, Destination.InnerSimplified, ApproachFrom)
                 };
 
         }
@@ -368,15 +420,17 @@ namespace AngouriMath
                 {
                     Complex n => Complex.Signum(n),
                     Tensor n => n.Elementwise(c => c.Signum().Evaled),
+                    FiniteSet finite => finite.Apply(c => c.Signum().InnerSimplified),
                     var n => this
                 };
 
             // TODO: probably we can simplify it further
             internal override Entity InnerSimplify()
                 => Argument.Evaled is Number { IsExact: true } ? Argument.Evaled :
-                Argument.InnerSimplifyWithCheck() switch
+                Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(c => c.Signum().Evaled),
+                    Tensor n => n.Elementwise(c => c.Signum().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Signum().InnerSimplified),
                     var n => this
                 };
         }
@@ -388,15 +442,17 @@ namespace AngouriMath
                 {
                     Complex n => Complex.Abs(n),
                     Tensor n => n.Elementwise(c => c.Abs().Evaled),
+                    FiniteSet finite => finite.Apply(c => c.Abs().Evaled),
                     var n => this
                 };
 
             // TODO: probably we can simplify it further
             internal override Entity InnerSimplify()
                 => Argument.Evaled is Number { IsExact: true } ? Argument.Evaled :
-                Argument.InnerSimplifyWithCheck() switch
+                Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(c => c.Signum().Evaled),
+                    Tensor n => n.Elementwise(c => c.Signum().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Abs().InnerSimplified),
                     var n => this
                 };
         }

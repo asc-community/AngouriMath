@@ -3,6 +3,8 @@ using static AngouriMath.Entity.Number;
 using Xunit;
 using System.Collections.Generic;
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Set;
+using AngouriMath.Core.Exceptions;
 
 namespace UnitTests.Algebra
 {
@@ -14,7 +16,7 @@ namespace UnitTests.Algebra
         internal static void AssertRoots(Entity equation, Entity.Variable toSub, Entity varValue, Integer? subValue = null)
         {
             subValue ??= 3;
-            string eqNormal = equation.ToString();
+            string eqNormal = equation.Stringize();
             equation = equation.Substitute(toSub, varValue);
             // MUST be integer to correspond to integer coefficient of periodic roots
             var substitutions = new Dictionary<Entity.Variable, Integer>();
@@ -22,10 +24,10 @@ namespace UnitTests.Algebra
                 substitutions.Add(vr, subValue + substitutions.Count);
             equation = equation.Substitute(substitutions);
             var err = equation.EvalNumerical().Abs();
-            Assert.True(err < 0.001m, $"\nError = {err}\n{eqNormal}\nWrong root: {toSub} = {varValue}");
+            Assert.True(err < 0.001m, $"\nError = {err.Stringize()}\n{eqNormal}\nWrong root: {toSub.Stringize()} = {varValue.Stringize()}");
         }
 
-        static void AssertRootCount(Set roots, int target)
+        static void AssertRootCount(FiniteSet roots, int target)
         {
             Assert.NotEqual(-1, target);
             Assert.Equal(target, roots.Count);
@@ -34,10 +36,10 @@ namespace UnitTests.Algebra
         void TestSolver(Entity expr, int rootCount, Integer? toSub = null, bool testNewton = false)
         {
             var roots = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x));
-#pragma warning disable CS8604 // Possible null reference argument.
-            AssertRootCount(roots as Set, rootCount);
-#pragma warning restore CS8604 // Possible null reference argument.
-            foreach (var root in roots.AsFiniteSet())
+            roots = (Set)roots.InnerSimplified;
+            var finiteSet = Assert.IsType<FiniteSet>(roots);
+            AssertRootCount(finiteSet, rootCount);
+            foreach (var root in finiteSet as FiniteSet)
                 AssertRoots(expr, x, root, toSub);
             if (!testNewton) return;
             // TODO: Increase Newton precision
@@ -116,10 +118,10 @@ namespace UnitTests.Algebra
             Entity toRepl = func + "(x2 + 3)";
             Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1 * MathS.Var("a");
             var roots = expr.SolveEquation(x);
-#pragma warning disable CS8604 // Possible null reference argument.
-            AssertRootCount(roots as Set, rootAmount);
-#pragma warning restore CS8604 // Possible null reference argument.
-            foreach (var root in roots.AsFiniteSet())
+            roots = (Set)roots.InnerSimplified;
+            var finite = Assert.IsType<FiniteSet>(roots);
+            AssertRootCount(finite, rootAmount);
+            foreach (var root in finite)
                 AssertRoots(expr.Substitute("a", 5), x, root.Substitute("n_1", 3).Substitute("a", 5));
         }
 

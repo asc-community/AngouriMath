@@ -1,4 +1,5 @@
-﻿using AngouriMath.Functions.Boolean.AnalyticalSolving;
+﻿using AngouriMath.Core.Exceptions;
+using AngouriMath.Functions.Boolean.AnalyticalSolving;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -22,6 +23,6 @@ namespace AngouriMath.Functions.Boolean.AnalyticalSolving
     internal static class BooleanAnalyticalSolver
     {
         internal static Set SolveBoolean(Entity expr, Variable x)
-            => throw new NotImplementedException("Piecewise required");
+            => throw FutureReleaseException.Raised("Piecewise", "1.2.1");
     }
 }

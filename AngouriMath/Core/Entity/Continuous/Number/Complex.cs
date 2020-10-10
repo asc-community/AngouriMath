@@ -20,6 +20,8 @@ namespace AngouriMath
 {
     using Core;
     using Core.Exceptions;
+    using System.Text;
+
     partial record Entity
     {
         public abstract partial record Number
@@ -43,7 +45,7 @@ namespace AngouriMath
                     (RealPart, ImaginaryPart) switch
                     {
                         ({ IsZero: false }, { IsZero: false }) => Priority.Sum,
-                        ({ IsZero: true }, Integer(1)) => Priority.Number,
+                        ({ IsZero: true }, Integer(1)) => Priority.Leaf,
                         _ => Priority.Mul
                     };
                 public static readonly Complex ImaginaryOne = new Complex(0, 1);
@@ -70,7 +72,7 @@ namespace AngouriMath
                 public void Deconstruct(out Real realPart, out Real imaginaryPart) =>
                     (realPart, imaginaryPart) = (RealPart, ImaginaryPart);
 
-                internal override string Stringize()
+                public override string Stringize()
                 {
                     static string RenderNum(Real number)
                     {
@@ -79,15 +81,15 @@ namespace AngouriMath
                         else if (number == Integer.One)
                             return "";
                         else
-                            return number.ToString();
+                            return number.Stringize();
                     }
                     if (ImaginaryPart is Integer(0))
-                        return RealPart.ToString();
+                        return RealPart.Stringize();
                     else if (RealPart is Integer(0))
                         return RenderNum(ImaginaryPart) + "i";
                     var (l, r) = ImaginaryPart is Rational and not Integer ? ("(", ")") : ("", "");
                     var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
-                    return RealPart.ToString() + " " + sign + " " + l + RenderNum(im) + r + "i";
+                    return RealPart.Stringize() + " " + sign + " " + l + RenderNum(im) + r + "i";
                 }
 
                 public override string Latexise()
@@ -225,6 +227,17 @@ namespace AngouriMath
                 public static implicit operator Complex((double re, double im) v) => Complex.Create(v.re, v.im);
 
                 public override Domain Codomain { get; protected init; } = Domain.Complex;
+
+                public override Entity Substitute(Entity x, Entity value)
+                    => this == x ? value : this;
+
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+
+                public override string ToString() => Stringize();
             }
         }
     }

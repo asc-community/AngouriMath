@@ -21,6 +21,7 @@ using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
@@ -47,13 +48,13 @@ namespace AngouriMath
         {
             // x + a = value => x = value - a
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Augend.Contains(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
+                Augend.ContainsNode(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
         }
 
         public partial record Minusf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Subtrahend.Contains(x)
+                Subtrahend.ContainsNode(x)
                 // x - a = value => x = value + a
                 ? Subtrahend.Invert(value + Minuend, x)
                 // a - x = value => x = a - value
@@ -64,7 +65,7 @@ namespace AngouriMath
         {
             // x * a = value => x = value / a
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Multiplier.Contains(x)
+                Multiplier.ContainsNode(x)
                 ? Multiplier.Invert(value / Multiplicand, x)
                 : Multiplicand.Invert(value / Multiplier, x);
         }
@@ -72,7 +73,7 @@ namespace AngouriMath
         public partial record Divf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Dividend.Contains(x)
+                Dividend.ContainsNode(x)
                 // x / a = value => x = a * value
                 ? Dividend.Invert(value * Divisor, x)
                 // a / x = value => x = a / value
@@ -82,7 +83,7 @@ namespace AngouriMath
         public partial record Powf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Base.Contains(x)
+                Base.ContainsNode(x)
                 ? Exponent is Integer { EInteger: var pow }
                   ? Number.GetAllRootsOf1(pow)
                     .SelectMany(root => Base.Invert(root * MathS.Pow(value, 1 / Exponent), x))
@@ -127,7 +128,7 @@ namespace AngouriMath
         public partial record Logf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Base.Contains(x)
+                Base.ContainsNode(x)
                 // log_x(a) = value => a = x ^ value => x = a ^ (1 / value)
                 ? Base.Invert(MathS.Pow(Antilogarithm, 1 / value), x)
                 // log_a(x) = value => x = a ^ value
@@ -181,7 +182,7 @@ namespace AngouriMath
         public partial record Derivativef
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Expression.Contains(x)
+                Expression.ContainsNode(x)
                 ? Expression.Invert(MathS.Integral(value, Var, Iterations), x)
                 : Enumerable.Empty<Entity>();
         }
@@ -189,7 +190,7 @@ namespace AngouriMath
         public partial record Integralf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Expression.Contains(x)
+                Expression.ContainsNode(x)
                 ? Expression.Invert(MathS.Derivative(value, Var, Iterations), x)
                 : Enumerable.Empty<Entity>();
         }
@@ -240,55 +241,134 @@ namespace AngouriMath
             // f(x) & b = value
             // f(x) = Piecewise...
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Piecewise to be implemented");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Orf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Piecewise to be implemented");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Xorf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Piecewise to be implemented");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Impliesf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Piecewise to be implemented");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Equalsf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Intervals to be Entities");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Greaterf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Intervals to be Entities");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record GreaterOrEqualf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Intervals to be Entities");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record Lessf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Intervals to be Entities");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
         }
 
         partial record LessOrEqualf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new NotImplementedException("Requires Intervals to be Entities");
+                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+        }
+
+        partial record Set
+        {
+            partial record FiniteSet
+            {
+                // set{,,,} = value
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => this == x ? new[] { value } : Enumerable.Empty<Entity>();
+            }
+
+            partial record Interval
+            {
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                {
+                    if (this == x)
+                        return new[] { value };
+                    if (x is FiniteSet fs && fs.Count == 1)
+                        throw FutureReleaseException.Raised("Piecewise required", "1.2");
+                    return Enumerable.Empty<Entity>();
+                }
+            }
+
+            partial record ConditionalSet
+            {
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => this == x ? new[] { value } : Enumerable.Empty<Entity>();
+            }
+
+            partial record SpecialSet
+            {
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => new[] { this };
+            }
+
+            partial record Unionf
+            {
+                // f(x) \/ A = value
+                // f(x) = (value \ A) \/ PowerSet(A)
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                {
+                    var (withX, withoutX) = Left.ContainsNode(x) ? (Left, Right) : (Right, Left);
+                    if (value is FiniteSet valueFiniteSet && withoutX is FiniteSet A)
+                    {
+                        var sub = FiniteSet.Subtract(valueFiniteSet, A);
+                        var answers = new List<Entity>();
+                        foreach (var ans in A.GetPowerSet())
+                        {
+                            if (ans is not FiniteSet finiteSet)
+                                throw new AngouriBugException("PowerSet must return a set of sets");
+                            answers.AddRange(withX.InvertNode(FiniteSet.Unite(sub, finiteSet), x));
+                        }
+                        return answers;
+                    }
+                    return withX.InvertNode(value.SetSubtract(withoutX), x);
+                }
+            }
+
+            partial record Intersectionf
+            {
+                // f(x) /\ A = value
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.2");
+            }
+
+            partial record SetMinusf
+            {
+                // f(x) \ A = value
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.2");
+            }
+
+            partial record Inf
+            {
+                // TODO: CSet is needed here => InvertNode to return a Set, not an IEnumerable
+                // f(x) in A = value
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => throw FutureReleaseException.Raised("InvertNode should return set", "1.2");
+            }
         }
     }
 }

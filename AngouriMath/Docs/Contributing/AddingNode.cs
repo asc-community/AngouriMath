@@ -16,8 +16,12 @@
 ///     b. then complex number evaluation (<see cref="Sin"/>)
 ///
 /// 2. Next, Add a new node representing the function as a nested type in <see cref="Entity"/>
-///     a. Copy record class (Press F12 -> Longest result of <see cref="Sinf"/>)
+///     a. Copy record class (Press F12 -> Longest result of <see cref="Sinf"/> <see cref="Impliesf"/> <see cref="Set.Unionf"/>)
 ///     b. Add instance method to Entity (Press F12 -> <see cref="Entity.Sin"/>).
+///     c. Add <see cref="Boolean.Replace"/> to your node
+///     d. Add <see cref="Boolean.Priority"/> to your node
+///     e. Add <see cref="Boolean.InitDirectChildren"/> to your node
+///     
 /// 
 /// 3. A few essential methods
 ///     a. InnerEval and InnerSimplify (<see cref="Sinf.InnerEval"/> for numerical and <see cref="Andf.InnerEval"/> for boolean)
@@ -26,6 +30,7 @@
 ///     d. Limit computation (<see cref="Sinf.ComputeLimitDivideEtImpera"/>)
 ///     e. Hash for sorting (<see cref="Sinf.SortHashName"/>)
 ///     f. Default domain <see cref="Sinf.Codomain"/>
+///     g. Substitute <see cref="Sinf.Substitute"/>
 /// 
 /// 4. Pattern replacer (<see cref="Patterns.CommonRules"/> and <see cref="Simplificator.Alternate"/>)
 /// 5. Expose to the user (add it to MathS, like <see cref="MathS.Sin">this</see>)

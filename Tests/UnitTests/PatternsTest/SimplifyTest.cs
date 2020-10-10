@@ -19,7 +19,7 @@ namespace UnitTests.PatternsTest
             Assert.Equal(simplified, level is { } l ? original.Simplify(l) : original.Simplify());
         }
         void AssertSimplifyToString(Entity original, string simplified, int? level = null) =>
-            Assert.Equal(simplified, (level is { } l ? original.Simplify(l) : original.Simplify()).ToString());
+            Assert.Equal(simplified, (level is { } l ? original.Simplify(l) : original.Simplify()).Stringize());
         void AssertSimplifyIdentical(Entity original, int? level = null) =>
             Assert.Equal(original, level is { } l ? original.Simplify(l) : original.Simplify());
         [Fact] public void Minus() => AssertSimplify(x - x, 0);

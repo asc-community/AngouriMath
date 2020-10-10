@@ -17,6 +17,8 @@ using PeterO.Numbers;
 namespace AngouriMath
 {
     using Core;
+    using System.Text;
+
     partial record Entity
     {
         public abstract partial record Number
@@ -27,7 +29,7 @@ namespace AngouriMath
             {
                 private Integer(EInteger value) : base(value) => EInteger = value;
                 public EInteger EInteger { get; }
-                public override Priority Priority => IsNegative ? Priority.Mul : Priority.Number;
+                public override Priority Priority => IsNegative ? Priority.Mul : Priority.Leaf;
                 public static readonly Integer Zero = new Integer(EInteger.Zero);
                 public static readonly Integer One = new Integer(EInteger.One);
                 public static readonly Integer MinusOne = new Integer(-EInteger.One);
@@ -40,7 +42,7 @@ namespace AngouriMath
                 // TODO: When we target .NET 5, remember to use covariant return types
                 public override Real Abs() => Create(EInteger.Abs());
 
-                internal override string Stringize() => EInteger.ToString();
+                public override string Stringize() => EInteger.ToString();
                 public override string Latexise() => EInteger.ToString();
                 internal static bool TryParse(string s,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Integer? dst)
@@ -78,6 +80,17 @@ namespace AngouriMath
                 public static implicit operator Integer(EInteger value) => Create(value);
 
                 public override Domain Codomain { get; protected init; } = Domain.Integer;
+
+                public override Entity Substitute(Entity x, Entity value)
+                    => this == x ? value : this;
+
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+
+                public override string ToString() => Stringize();
             }
         }
     }
