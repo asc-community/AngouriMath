@@ -4,7 +4,7 @@
     {
         public static Entity ComputeIndefiniteIntegral(Entity expr, Entity.Variable x)
         {
-            if (!expr.Contains(x)) return expr * x; // base case, handle here
+            if (!expr.ContainsNode(x)) return expr * x; // base case, handle here
 
             Entity? answer = null;
 

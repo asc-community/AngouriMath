@@ -18,6 +18,8 @@ using System.Runtime.CompilerServices;
 using AngouriMath.Functions;
 using System;
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
@@ -27,6 +29,13 @@ namespace AngouriMath
         /// This should NOT be called inside itself
         /// </summary>
         internal abstract Entity InnerSimplify();
+
+        /// <summary>
+        /// This is the result of naive simplifications. In other 
+        /// symbolic algebra systems it is called "Automatic simplification"
+        /// </summary>
+        public Entity InnerSimplified 
+            => caches.GetValue(this, cache => cache.innerSimplified, cache => cache.innerSimplified = InnerSimplifyWithCheck());
 
         /// <summary>
         /// Make sure you call this function inside of <see cref="InnerSimplify"/>
@@ -105,8 +114,8 @@ namespace AngouriMath
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         public IEnumerable<Entity> Alternate(int level) => Simplificator.Alternate(this, level);
 
-        public Entity Evaled => _evaled.GetValue(this, e => e.InnerEvalWithCheck());
-        static readonly ConditionalWeakTable<Entity, Entity> _evaled = new();
+        public Entity Evaled 
+            => caches.GetValue(this, cache => cache.innerEvaled, cache => cache.innerEvaled = InnerEvalWithCheck());
 
         /// <summary>
         /// Evaluates the entire expression into a <see cref="Tensor"/> if possible
@@ -128,5 +137,10 @@ namespace AngouriMath
             Evaled is Tensor value ? value :
                 throw new InvalidOperationException
                     ($"Result cannot be represented as a {nameof(Tensor)}! Check the type of {nameof(Evaled)} beforehand.");
+
+        /// <summary>
+        /// Determines whether a given element can be unambiguously used as a number or boolean
+        /// </summary>
+        public bool IsConstant => Evaled is Complex or Boolean || Evaled is Variable v && Variable.ConstantList.ContainsKey(v);
     }
 }

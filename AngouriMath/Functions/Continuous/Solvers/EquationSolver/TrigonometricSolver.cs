@@ -17,24 +17,29 @@ using System.Linq;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
+    using static AngouriMath.Entity.Set;
     using static Entity;
     internal static class TrigonometricSolver
     {
         // solves equation f(sin(x), cos(x), tan(x), cot(x)) for x
-        internal static SetNode? SolveLinear(Entity expr, Variable variable)
+        internal static bool TrySolveLinear(Entity expr, Variable variable, out Set res)
         {
+            res = Empty;
             var replacement = Variable.CreateTemp(expr.Vars);
             expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
 
             // if there is still original variable after replacements,
             // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
-            if (expr.Contains(variable))
-                return null;
+            if (expr.ContainsNode(variable))
+                return false;
 
-            if (AnalyticalEquationSolver.Solve(expr, replacement).IsFiniteSet(out var els))
-                return els.Select(sol => MathS.Pow(MathS.e, MathS.i * variable).Invert(sol, variable).ToSetNode()).Unite();
+            if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els)
+            {
+                res = (Set)els.Select(sol => MathS.Pow(MathS.e, MathS.i * variable).Invert(sol, variable).ToSet()).Unite().InnerSimplified;
+                return true;
+            }
             else
-                return null;
+                return false;
         }
     }
 }

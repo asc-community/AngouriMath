@@ -3,6 +3,8 @@ using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
 using static AngouriMath.Entity;
+using AngouriMath.Extensions;
+using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Convenience
 {
@@ -174,133 +176,8 @@ namespace UnitTests.Convenience
         [Fact] public void MOOPOOI() => Test(@"-\infty  + \infty i", Real.PositiveInfinity * (-1 + MathS.i));
         [Fact] public void MOOMOOI() => Test(@"-\infty  - \infty i", Real.PositiveInfinity * (-1 - MathS.i));
         [Fact] public void Undefined() => TestSimplify(@"\mathrm{undefined}", Real.PositiveInfinity / Real.PositiveInfinity);
-        [Fact] public void Set0() => Test(@"\emptyset", MathS.Sets.Empty());
+        [Fact] public void Set0() => Test(@"\emptyset", MathS.Sets.Empty);
         [Fact] public void Set0Alternate() => Test(@"\emptyset", MathS.Sets.Finite());
-        [Fact] public void Set1() => Test(@"\left\{1\right\}", MathS.Sets.Finite(1));
-        [Fact] public void Set2() => Test(@"\left\{1,2\right\}", MathS.Sets.Finite(1, 2));
-        [Fact] public void Set3() => Test(@"\left\{\sqrt{x},{x}^{2},\sin\left(x\right)\right\}", MathS.Sets.Finite(MathS.Sqrt(x), MathS.Sqr(x), MathS.Sin(x)));
-        [Fact] public void SetR() => Test(@"\left\{\left(-\infty ,\infty \right)\right\}", MathS.Sets.R());
-        [Fact] public void SetC() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(-\infty ,\infty \right)\wedge\Im\left(z\right)\in\left(-\infty ,\infty \right)\right\}\right\}", MathS.Sets.C());
-        [Fact] public void SetIntervalCloseClose() =>
-            Test(@"\left\{\left[1,2\right]\right\}", new Set(MathS.Sets.Interval(1, 2)));
-        [Fact] public void SetIntervalCloseOpen() =>
-            Test(@"\left\{\left[1,2\right)\right\}", new Set(MathS.Sets.Interval(1, 2).SetRightClosed(false)));
-        [Fact] public void SetIntervalOpenClose() =>
-            Test(@"\left\{\left(1,2\right]\right\}", new Set(MathS.Sets.Interval(1, 2).SetLeftClosed(false)));
-        [Fact] public void SetIntervalOpenOpen() =>
-            Test(@"\left\{\left(1,2\right)\right\}", new Set(MathS.Sets.Interval(1, 2).SetLeftClosed(false).SetRightClosed(false)));
-        [Fact] public void SetIntervalCloseCloseCloseClose() =>
-            Test(@"\left\{\left[1 - i,2 + 9i\right]\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(true, true).SetRightClosed(true, true)));
-        [Fact] public void SetIntervalCloseCloseCloseOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[1,2\right]\wedge\Im\left(z\right)\in\left[-1,9\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(true, true).SetRightClosed(true, false)));
-        [Fact] public void SetIntervalCloseCloseOpenClose() =>
-            Test(@"\left\{\left[1 - i,2 + 9i\right)\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(true, true).SetRightClosed(false, true)));
-        [Fact] public void SetIntervalCloseCloseOpenOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[1,2\right)\wedge\Im\left(z\right)\in\left[-1,9\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(true, true).SetRightClosed(false, false)));
-        [Fact] public void SetIntervalCloseOpenCloseClose() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[1,2\right]\wedge\Im\left(z\right)\in\left(-1,9\right]\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(true, false).SetRightClosed(true, true)));
-        [Fact] public void SetIntervalCloseOpenCloseOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[1,2\right]\wedge\Im\left(z\right)\in\left(-1,9\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(true, false).SetRightClosed(true, false)));
-        [Fact] public void SetIntervalCloseOpenOpenClose() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[1,2\right)\wedge\Im\left(z\right)\in\left(-1,9\right]\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(true, false).SetRightClosed(false, true)));
-        [Fact] public void SetIntervalCloseOpenOpenOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[1,2\right)\wedge\Im\left(z\right)\in\left(-1,9\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(true, false).SetRightClosed(false, false)));
-        [Fact] public void SetIntervalOpenCloseCloseClose() =>
-            Test(@"\left\{\left(1 - i,2 + 9i\right]\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(false, true).SetRightClosed(true, true)));
-        [Fact] public void SetIntervalOpenCloseCloseOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(1,2\right]\wedge\Im\left(z\right)\in\left[-1,9\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(false, true).SetRightClosed(true, false)));
-        [Fact] public void SetIntervalOpenCloseOpenClose() =>
-            Test(@"\left\{\left(1 - i,2 + 9i\right)\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(false, true).SetRightClosed(false, true)));
-        [Fact] public void SetIntervalOpenCloseOpenOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(1,2\right)\wedge\Im\left(z\right)\in\left[-1,9\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(false, true).SetRightClosed(false, false)));
-        [Fact] public void SetIntervalOpenOpenCloseClose() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(1,2\right]\wedge\Im\left(z\right)\in\left(-1,9\right]\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(false, false).SetRightClosed(true, true)));
-        [Fact] public void SetIntervalOpenOpenCloseOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(1,2\right]\wedge\Im\left(z\right)\in\left(-1,9\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(false, false).SetRightClosed(true, false)));
-        [Fact] public void SetIntervalOpenOpenOpenClose() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(1,2\right)\wedge\Im\left(z\right)\in\left(-1,9\right]\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(false, false).SetRightClosed(false, true)));
-        [Fact] public void SetIntervalOpenOpenOpenOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(1,2\right)\wedge\Im\left(z\right)\in\left(-1,9\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(1 - MathS.i, 2 + 9 * MathS.i).SetLeftClosed(false, false).SetRightClosed(false, false)));
-        [Fact] public void SetIntervalVariableCloseClose() =>
-            Test(@"\left\{\left[x-i,2-x\times i\right]\right\}", new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i)));
-        [Fact] public void SetIntervalVariableCloseOpen() =>
-            Test(@"\left\{\left[x-i,2-x\times i\right)\right\}", new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetRightClosed(false)));
-        [Fact] public void SetIntervalVariableOpenClose() =>
-            Test(@"\left\{\left(x-i,2-x\times i\right]\right\}", new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(false)));
-        [Fact] public void SetIntervalVariableOpenOpen() =>
-            Test(@"\left\{\left(x-i,2-x\times i\right)\right\}", new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(false).SetRightClosed(false)));
-        [Fact] public void SetIntervalVariableCloseCloseCloseClose() =>
-            Test(@"\left\{\left[x-i,2-x\times i\right]\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(true, true).SetRightClosed(true, true)));
-        [Fact] public void SetIntervalVariableCloseCloseCloseOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[\Re\left(x-i\right),\Re\left(2-x\times i\right)\right]\wedge\Im\left(z\right)\in\left[\Im\left(x-i\right),\Im\left(2-x\times i\right)\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(true, true).SetRightClosed(true, false)));
-        [Fact] public void SetIntervalVariableCloseCloseOpenClose() =>
-            Test(@"\left\{\left[x-i,2-x\times i\right)\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(true, true).SetRightClosed(false, true)));
-        [Fact] public void SetIntervalVariableCloseCloseOpenOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[\Re\left(x-i\right),\Re\left(2-x\times i\right)\right)\wedge\Im\left(z\right)\in\left[\Im\left(x-i\right),\Im\left(2-x\times i\right)\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(true, true).SetRightClosed(false, false)));
-        [Fact] public void SetIntervalVariableCloseOpenCloseClose() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[\Re\left(x-i\right),\Re\left(2-x\times i\right)\right]\wedge\Im\left(z\right)\in\left(\Im\left(x-i\right),\Im\left(2-x\times i\right)\right]\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(true, false).SetRightClosed(true, true)));
-        [Fact] public void SetIntervalVariableCloseOpenCloseOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[\Re\left(x-i\right),\Re\left(2-x\times i\right)\right]\wedge\Im\left(z\right)\in\left(\Im\left(x-i\right),\Im\left(2-x\times i\right)\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(true, false).SetRightClosed(true, false)));
-        [Fact] public void SetIntervalVariableCloseOpenOpenClose() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[\Re\left(x-i\right),\Re\left(2-x\times i\right)\right)\wedge\Im\left(z\right)\in\left(\Im\left(x-i\right),\Im\left(2-x\times i\right)\right]\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(true, false).SetRightClosed(false, true)));
-        [Fact] public void SetIntervalVariableCloseOpenOpenOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left[\Re\left(x-i\right),\Re\left(2-x\times i\right)\right)\wedge\Im\left(z\right)\in\left(\Im\left(x-i\right),\Im\left(2-x\times i\right)\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(true, false).SetRightClosed(false, false)));
-        [Fact] public void SetIntervalVariableOpenCloseCloseClose() =>
-            Test(@"\left\{\left(x-i,2-x\times i\right]\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(false, true).SetRightClosed(true, true)));
-        [Fact] public void SetIntervalVariableOpenCloseCloseOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(\Re\left(x-i\right),\Re\left(2-x\times i\right)\right]\wedge\Im\left(z\right)\in\left[\Im\left(x-i\right),\Im\left(2-x\times i\right)\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(false, true).SetRightClosed(true, false)));
-        [Fact] public void SetIntervalVariableOpenCloseOpenClose() =>
-            Test(@"\left\{\left(x-i,2-x\times i\right)\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(false, true).SetRightClosed(false, true)));
-        [Fact] public void SetIntervalVariableOpenCloseOpenOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(\Re\left(x-i\right),\Re\left(2-x\times i\right)\right)\wedge\Im\left(z\right)\in\left[\Im\left(x-i\right),\Im\left(2-x\times i\right)\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(false, true).SetRightClosed(false, false)));
-        [Fact] public void SetIntervalVariableOpenOpenCloseClose() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(\Re\left(x-i\right),\Re\left(2-x\times i\right)\right]\wedge\Im\left(z\right)\in\left(\Im\left(x-i\right),\Im\left(2-x\times i\right)\right]\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(false, false).SetRightClosed(true, true)));
-        [Fact] public void SetIntervalVariableOpenOpenCloseOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(\Re\left(x-i\right),\Re\left(2-x\times i\right)\right]\wedge\Im\left(z\right)\in\left(\Im\left(x-i\right),\Im\left(2-x\times i\right)\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(false, false).SetRightClosed(true, false)));
-        [Fact] public void SetIntervalVariableOpenOpenOpenClose() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(\Re\left(x-i\right),\Re\left(2-x\times i\right)\right)\wedge\Im\left(z\right)\in\left(\Im\left(x-i\right),\Im\left(2-x\times i\right)\right]\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(false, false).SetRightClosed(false, true)));
-        [Fact] public void SetIntervalVariableOpenOpenOpenOpen() =>
-            Test(@"\left\{\left\{z\in\mathbb C:\Re\left(z\right)\in\left(\Re\left(x-i\right),\Re\left(2-x\times i\right)\right)\wedge\Im\left(z\right)\in\left(\Im\left(x-i\right),\Im\left(2-x\times i\right)\right)\right\}\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i).SetLeftClosed(false, false).SetRightClosed(false, false)));
-        [Fact] public void SetItemsAndIntervals() =>
-            Test(@"\left\{\left[x-i,2-x\times i\right],2,\begin{pmatrix}a & i\\\pi & e\end{pmatrix},\left[x-i,3-x\times i\right]\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i), 2, MathS.Matrices.Matrix(2, 2, "a", "i", "pi", "e"), MathS.Sets.Interval(x - MathS.i, 3 - x * MathS.i)));
-        [Fact] public void SetSimplify() => Test(@"\left\{\log_{2}\left(4\right)\right\}", new Set(MathS.Log(2, 4), MathS.Sqrt(MathS.Sqrt(16))));
-        [Fact] public void SetDuplicates() =>
-            Test(@"\left\{\left[x-i,2-x\times i\right],2,\begin{pmatrix}a & i\\\pi & e\end{pmatrix},4,\left[x-i,3-x\times i\right],i\right\}",
-                new Set(MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i), 2, MathS.Matrices.Matrix(2, 2, "a", "i", "pi", "e"), 2+2, MathS.Sets.Interval(x - MathS.i, 2 - x * MathS.i), MathS.Sqrt(16), MathS.Sets.Interval(x - MathS.i, 3 - x * MathS.i), MathS.Matrices.Matrix(2, 2, "a", "i", "pi", "e"), MathS.i));
         [Fact] public void Matrix() =>
             Test(@"\begin{pmatrix}11 & 12\\21 & 22\\31 & 32\end{pmatrix}", MathS.Matrices.Matrix(3, 2, 11, 12, 21, 22, 31, 32));
         [Fact] public void MatrixRow() =>
@@ -345,6 +222,26 @@ namespace UnitTests.Convenience
             Test(@"\lim_{xf\to 1+x} \left[\frac{1}{x}\right]", MathS.Limit("1/x", "xf", "1+x"));
         [Fact] public void Limit5() =>
             Test(@"\lim_{xf\to {x_{2}}^{3}} \left[{x}^{23}-x_{16}\right]", MathS.Limit("x^23-x_16", "xf", "x_2^3"));
+        [Fact] public void Interval1() =>
+            Test(@"\left[3; 4\right]", MathS.Sets.Interval(3, true, 4, true));
+        [Fact] public void Interval2() =>
+            Test(@"\left(3; 4\right]", MathS.Sets.Interval(3, false, 4, true));
+        [Fact] public void Interval3() =>
+            Test(@"\left(3; 4\right)", MathS.Sets.Interval(3, false, 4, false));
+        [Fact] public void Interval4() =>
+            Test(@"\left[3; 4\right)", MathS.Sets.Interval(3, true, 4, false));
+        [Fact] public void FiniteSet1() =>
+            Test(@"\left\{ 1, 2, 3 \right\}", MathS.Sets.Finite(1, 2, 3));
+        [Fact] public void FiniteSet2() =>
+            Test(@"\left\{ 1 \right\}", MathS.Sets.Finite(1));
+        [Fact] public void CSet1() =>
+            Test(@"\left\{ x : x > 0 \right\}", new ConditionalSet("x", "x > 0"));
+        [Fact] public void CSet2() =>
+            Test(@"\left\{ x : \sqrt{2} \right\}", new ConditionalSet("x", "sqrt(2)"));
+        [Fact] public void RR() =>
+            Test(@"\mathbb{R}", (Entity)Domain.Real);
+        [Fact] public void ZZ() =>
+            Test(@"\mathbb{Z}", (Entity)Domain.Integer);
         [Fact] public void Signum()
             => Test(@"\operatorname{sgn}\left(x\right)", MathS.Signum(x));
         [Fact] public void Abs()

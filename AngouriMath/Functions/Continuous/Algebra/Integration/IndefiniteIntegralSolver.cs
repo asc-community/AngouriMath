@@ -6,7 +6,7 @@ namespace AngouriMath.Functions.Algebra
     {
         internal static Entity? SolveBySplittingSum(Entity expr, Entity.Variable x)
         {
-            var splitted = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, e => e.Contains(x));
+            var splitted = TreeAnalyzer.GatherLinearChildrenOverSumAndExpand(expr, e => e.ContainsNode(x));
             if (splitted is null || splitted.Count < 2) return null; // nothing to do, let other solvers do the work   
             splitted[0] = Integration.ComputeIndefiniteIntegral(splitted[0], x); // base case for aggregate
             var result = splitted.Aggregate((e1, e2) => e1 + Integration.ComputeIndefiniteIntegral(e2, x));
@@ -16,23 +16,23 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveAsPolynomialTerm(Entity expr, Entity.Variable x) => expr switch
         {
             Entity.Mulf(var m1, var m2) => 
-                !m1.Contains(x) ? 
+                !m1.ContainsNode(x) ? 
                     m1 * Integration.ComputeIndefiniteIntegral(m2, x) : 
-                !m2.Contains(x) ?
+                !m2.ContainsNode(x) ?
                     m2 * Integration.ComputeIndefiniteIntegral(m1, x) :
                 null,
 
             Entity.Divf(var div, var over) =>
-                !div.Contains(x) ?
+                !div.ContainsNode(x) ?
                     over is Entity.Powf(var @base, var power) ?
                         div * Integration.ComputeIndefiniteIntegral(MathS.Pow(@base, -power), x) :
                         div * Integration.ComputeIndefiniteIntegral(MathS.Pow(over, -1), x) :
-                !over.Contains(x) ?
+                !over.ContainsNode(x) ?
                     Integration.ComputeIndefiniteIntegral(div, x) / over :
                 null,
 
             Entity.Powf(var @base, var power) =>
-                !power.Contains(x) && @base == x ?
+                !power.ContainsNode(x) && @base == x ?
                     power == -1 ?
                         MathS.Ln(@base) : // TODO: here should be ln(abs(x)) but for now I left it as is
                         MathS.Pow(x, power + 1) / (power + 1) :     
@@ -75,7 +75,7 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveLogarithmic(Entity expr, Entity.Variable x) => expr switch
         {
             Entity.Logf(var @base, var arg) =>
-                @base.Contains(x) ?
+                @base.ContainsNode(x) ?
                     Integration.ComputeIndefiniteIntegral(MathS.Ln(arg) / MathS.Ln(@base), x) :
                 arg is Entity.Powf(var y, var pow) ? // log(b, y^p) = ln(y^p) / ln(b) = ln(p) / ln(b) * ln(y)
                     Integration.ComputeIndefiniteIntegral(pow / MathS.Ln(@base) * MathS.Ln(y), x) :
@@ -87,7 +87,7 @@ namespace AngouriMath.Functions.Algebra
         internal static Entity? SolveExponential(Entity expr, Entity.Variable x) => expr switch
         {
             Entity.Powf(var @base, var pow) =>
-                @base.Contains(x) ?
+                @base.ContainsNode(x) ?
                     Integration.ComputeIndefiniteIntegral(MathS.Pow(MathS.e, MathS.Ln(@base) * pow), x) :
                     null,
 

@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
@@ -10,13 +9,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <summary>
         /// Considers expr > 0
         /// </summary>
-        internal static SetNode Solve(Entity expr, Variable x)
+        internal static Set Solve(Entity expr, Variable x)
         {
-            if (expr is Minusf(var v, var c) && v == x && !c.Contains(x))
-                return new Set(MathS.Sets.Interval(c, Number.Real.PositiveInfinity).SetLeftClosed(false).SetRightClosed(false));
-            if (expr is Minusf(var c1, var v1) && v1 == x && !c1.Contains(x))
-                return new Set(MathS.Sets.Interval(Number.Real.NegativeInfinity, c1).SetLeftClosed(false).SetRightClosed(false));
-            throw new NotImplementedException("Inequalities are not implemented yet");
+            if (expr is Minusf(var v, var c) && v == x && !c.ContainsNode(x))
+                return new Interval(c, false, Number.Real.PositiveInfinity, false);
+            if (expr is Minusf(var c1, var v1) && v1 == x && !c1.ContainsNode(x))
+                return new Interval(Number.Real.NegativeInfinity, false, c1, false);
+            throw FutureReleaseException.Raised("Inequalities are not implemented yet", "1.2.1");
         }
     }
 }

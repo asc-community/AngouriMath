@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using AngouriMath;
 using AngouriMath.Extensions;
 using Xunit;
+using static AngouriMath.Entity;
 
 namespace UnitTests.Core
 {
@@ -45,7 +46,8 @@ namespace UnitTests.Core
                 MathS.Settings.AllowNewton.As(num % 2 == 0, () =>
                 {
                     var roots = "x2 + e^x + sin(x)".SolveEquation("x");
-                    Assert.Equal(num % 2 == 0, !roots.IsEmpty);
+                    var set = (Set)roots.Simplify();
+                    Assert.Equal(num % 2 == 0, !set.IsSetEmpty);
                 });
             var th1 = Task.Run(() => Solve(0));
             var th2 = Task.Run(() => Solve(1));

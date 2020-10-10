@@ -25,6 +25,9 @@ namespace AngouriMath.Functions
     using static Entity.Number;
     internal static class Simplificator
     {
+        internal static Entity PickSimplest(Entity one, Entity another)
+            => one.SimplifiedRate < another.SimplifiedRate ? one : another;
+
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
         internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level).First().InnerSimplify();
 
@@ -51,7 +54,8 @@ namespace AngouriMath.Functions
                     var ncompl = Math.Min(compl2, compl1);
                     if (history.TryGetValue(ncompl, out var ncomplList))
                         ncomplList.Add(n);
-                    else history[ncompl] = new HashSet<Entity> { n };
+                    else 
+                        history[ncompl] = new HashSet<Entity> { n };
                 }
                 __IterAddHistory(expr);
                 __IterAddHistory(expr.Replace(Patterns.InvertNegativePowers));
@@ -94,7 +98,7 @@ namespace AngouriMath.Functions
                     AddHistory(res = res.Replace(Patterns.BooleanRules).InnerSimplify());
                 }
 
-                if (res.Nodes.Any(child => child is Statement))
+                if (res.Nodes.Any(child => child is ComparisonSign))
                 {
                     AddHistory(res = res.Replace(Patterns.InequalityEqualityRules).InnerSimplify());
                 }
@@ -106,6 +110,9 @@ namespace AngouriMath.Functions
                 }
                 if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
+
+                if (res.Nodes.Any(child => child is Set))
+                    AddHistory(res = res.Replace(Patterns.SetOperatorRules).InnerSimplify());
 
                 Entity? possiblePoly = null;
                 foreach (var var in res.Vars)

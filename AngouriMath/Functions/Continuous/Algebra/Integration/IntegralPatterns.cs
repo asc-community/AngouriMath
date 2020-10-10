@@ -25,12 +25,12 @@
                     null,
 
             Entity.Logf(var @base, var arg) => 
-                !@base.Contains(x) && TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out var b) ?
+                !@base.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out var b) ?
                     ((b / a + x) * MathS.Ln(arg) - x) / MathS.Ln(@base) :
                     null,
 
             Entity.Powf(var @base, var power) =>
-                !@base.Contains(x) && TreeAnalyzer.TryGetPolyLinear(power, x, out var a, out _) ?
+                !@base.ContainsNode(x) && TreeAnalyzer.TryGetPolyLinear(power, x, out var a, out _) ?
                     MathS.Pow(@base, power) / (a * MathS.Ln(@base)) :
                     null,
 

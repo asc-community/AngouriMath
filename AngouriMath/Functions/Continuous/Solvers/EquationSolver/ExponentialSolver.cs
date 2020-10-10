@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     class ExponentialSolver
     {
-        internal static Entity.SetNode? SolveLinear(Entity expr, Entity.Variable x)
+        internal static Entity.Set? SolveLinear(Entity expr, Entity.Variable x)
         {
             var replacement = Entity.Variable.CreateTemp(expr.Vars);
 
@@ -34,16 +35,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             expr = expr.Replace(preparator);
             expr = expr.Replace(replacer);
 
-            if (expr.Contains(x)) return null; // cannot be solved, not a pure exponential
+            if (expr.ContainsNode(x)) return null; // cannot be solved, not a pure exponential
 
             expr = expr.InnerSimplify();
-            if (AnalyticalEquationSolver.Solve(expr, replacement).IsFiniteSet(out var els) && els.Any())
-                return els.Select(sol => MathS.Pow(MathS.e, x).Invert(sol, x).ToSetNode()).Unite();
+            if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els && els.Any())
+                return (Entity.Set)els.Select(sol => MathS.Pow(MathS.e, x).Invert(sol, x).ToSet()).Unite().InnerSimplified;
             else
                 return null;
         }
 
-        internal static Entity.SetNode? SolveMultiplicative(Entity expr, Entity.Variable x)
+        internal static Entity.Set? SolveMultiplicative(Entity expr, Entity.Variable x)
         {
             Entity? substitution = null;
             Entity ApplyPowerTransform(Entity @base, Entity arg)
@@ -61,13 +62,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         innerPower = innerPower * mult;
                 }
                 substitution = MathS.Pow(@base, innerPower);
-                return MathS.Pow(substitution, outerPower.InnerSimplify());
+                return MathS.Pow(substitution, outerPower.InnerSimplified);
             }
 
             Func<Entity, Entity> powerTransform = e => e switch
             {
                 Entity.Powf(var @base, var arg) 
-                    when @base == x && !arg.Contains(x) =>
+                    when @base == x && !arg.ContainsNode(x) =>
                         ApplyPowerTransform(@base, arg),  
 
                 _ => e,
@@ -79,11 +80,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var replacement = Entity.Variable.CreateTemp(expr.Vars);
             expr = expr.Substitute(substitution, replacement);
 
-            if (expr.Contains(x)) return null; // cannot be solved, not a multiplicative exponenial equation
+            if (expr.ContainsNode(x)) return null; // cannot be solved, not a multiplicative exponenial equation
 
             expr = expr.InnerSimplify();
-            if (AnalyticalEquationSolver.Solve(expr, replacement).IsFiniteSet(out var els) && els.Any())
-                return els.Select(sol => substitution.Invert(sol, x).ToSetNode()).Unite();
+            if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els && els.Any())
+                return (Entity.Set)els.Select(sol => substitution.Invert(sol, x).ToSet()).Unite().InnerSimplified;
             else
                 return null;
         }

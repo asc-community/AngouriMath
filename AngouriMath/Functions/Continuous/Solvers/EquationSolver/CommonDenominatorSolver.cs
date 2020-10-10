@@ -48,7 +48,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var multipliers = Mulf.LinearChildren(term);
             foreach (var multiplier in multipliers)
-                if (!(multiplier.Contains(x) && GetPower(multiplier).Evaled is Real { IsPositive:false } realPart))
+                if (!(multiplier.ContainsNode(x) && GetPower(multiplier).Evaled is Real { IsPositive:false } realPart))
                     oneInfo.numerator *= multiplier;
                 else
                     oneInfo.denominatorMultipliers.Add((GetBase(multiplier), realPart));
@@ -59,11 +59,23 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// Finds the best common denominator, multiplies the whole expression by that, and
         /// tries solving if the found denominator is not 1
         /// </summary>
-        internal static SetNode? Solve(Entity expr, Variable x) =>
-            FindCD(expr, x) is { } res ? AnalyticalEquationSolver.Solve(res, x) : null;
-
-        private static Entity? FindCD(Entity expr, Variable x)
+        internal static bool TrySolveGCD(Entity expr, Variable x, out Set dst)
         {
+            if (TryGCDSolve(expr, x, out var res))
+            {
+                dst = (Set)AnalyticalEquationSolver.Solve(res, x).InnerSimplified;
+                return true;
+            }
+            else
+            {
+                dst = Set.Empty;
+                return false;
+            }
+        }
+
+        private static bool TryGCDSolve(Entity expr, Variable x, out Entity res)
+        {
+            res = MathS.NaN;
             var terms = Sumf.LinearChildren(expr);
             var denominators = new Dictionary<string, (Entity den, Real pow)>();
             var fracs = new List<(Entity numerator, List<(Entity den, Real pow)> denominatorMultipliers)>();
@@ -73,7 +85,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 foreach (var denMp in oneInfo.denominatorMultipliers)
                 {
                     var (den, pow) = denMp;
-                    var name = den.ToString(); // TODO: Replace with faster hashing
+                    var name = den.Stringize(); // TODO: Replace with faster hashing
                     if (!denominators.ContainsKey(name))
                         denominators[name] = (den, 0);
                     denominators[name] = (den, Number.Max(denominators[name].pow, -pow));
@@ -81,15 +93,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 fracs.Add(oneInfo);
             }
 
+            // If there's no denominators or it's equal to 1, then we don't have to try to solve yet anymore
             if (denominators.Count == 0)
-                return null; // If there's no denominators or it's equal to 1, then we don't have to try to solve yet anymore
+                return false;
 
             var newTerms = new List<Entity>();
             foreach (var (num, dens) in fracs)
             {
                 var denDict = new Dictionary<string, (Entity den, Real pow)>();
                 foreach (var (den, pow) in dens)
-                    denDict[den.ToString()] = (den, -pow);
+                    denDict[den.Stringize()] = (den, -pow);
                 Entity invertDenominator = 1;
                 foreach (var mp in denominators)
                     invertDenominator *= MathS.Pow(mp.Value.den, 
@@ -99,7 +112,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 newTerms.Add(invertDenominator * num);
             }
 
-            return TreeAnalyzer.MultiHangBinary(newTerms, (a, b) => new Sumf(a, b)).InnerSimplify();
+            res = TreeAnalyzer.MultiHangBinary(newTerms, (a, b) => new Sumf(a, b)).InnerSimplify();
+            return true;
         }
     }
 }

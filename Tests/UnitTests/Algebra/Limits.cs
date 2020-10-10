@@ -52,7 +52,7 @@ namespace UnitTests.Algebra
             Entity dest = Real.PositiveInfinity;
             var limit = MathS.Compute.Limit(expr, x, dest, ApproachFrom.Left);
             Assert.NotNull(limit);
-            Assert.Equal("sqrt(a / c * 3 / sin(a / c) + sin(d))", limit?.ToString());
+            Assert.Equal("sqrt(a / c * 3 / sin(a / c) + sin(d))", limit?.Stringize());
         }
     }
 }

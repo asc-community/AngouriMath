@@ -19,7 +19,7 @@ namespace UnitTests.PatternsTest
             var evaled2 = expr2.EvalNumerical();
             return (
                 evaled1 == evaled2 /*non-finite goes with that*/ 
-                || (evaled1 - evaled2).Abs().EDecimal.LessThan(EDecimal.FromDecimal(1e-20m)), 
+                || (evaled1 - evaled2).Abs().EDecimal.CompareTo(EDecimal.FromDecimal(1e-20m)) < 0, 
                 
                 evaled1, evaled2, (evaled1 - evaled2).Abs());
         }
@@ -28,10 +28,7 @@ namespace UnitTests.PatternsTest
         {
             var expanded = MathS.Settings.MaxExpansionTermCount.As(3000, () =>
             {
-                var expandOver = TreeAnalyzer.SmartExpandOver(expr, entity => entity.Contains("x"));
-                if (expandOver is null)
-                    throw new Xunit.Sdk.XunitException("expandOver is null");
-                return TreeAnalyzer.MultiHangBinary(expandOver, (a, b) => new Entity.Sumf(a, b));
+                return MathS.Utils.SmartExpandOver(expr, "x");
             });
             foreach (var toSub in toSubs)
             {
@@ -40,7 +37,7 @@ namespace UnitTests.PatternsTest
                 else
                     Assert.NotEqual(expr, expanded); // Nodes should be different
                 var (equal, expected, actual, err) = AreEqual(expr, expanded, toSub);
-                Assert.True(equal, $"\nexpected: {expected}\nactual: {actual}\nerror: {err}\ntoSub: {toSub}\nexpanded: {expanded}");
+                Assert.True(equal, $"\nexpected: {expected.Stringize()}\nactual: {actual.Stringize()}\nerror: {err.Stringize()}\ntoSub: {toSub.Stringize()}\nexpanded: {expanded.Stringize()}");
             }
         }
         

@@ -105,7 +105,7 @@ namespace UnitTests.Algebra
         {
             var func = MathS.Derivative("x + 2", x);
             var derFunc = func.Derive(x);
-            Assert.Equal(MathS.Derivative("x + 2", x, "1 + 1"), derFunc);
+            Assert.Equal(MathS.Derivative("x + 2", x, 2), derFunc);
         }
 
         [Fact]

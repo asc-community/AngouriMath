@@ -12,7 +12,7 @@ namespace AngouriMath.Core
     /// </summary>
     internal sealed class TensorBuilder
     {
-        private readonly List<List<Entity>> raw = new List<List<Entity>>();
+        private readonly List<List<Entity>> raw = new();
         private readonly int columnCount;
 
         public TensorBuilder(int columnCount)

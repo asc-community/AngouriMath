@@ -1,0 +1,15 @@
+﻿        /// <summary>
+        /// Takes a <see cref="%type1%"/> and <see cref="%type2%"/> and returns
+        /// a closed interval (so that left and right ends are included)
+        /// </summary>
+        /// <returns>Interval</returns>
+        public static Interval ToInterval(this (%type1% left, %type2% right) arg) 
+            => MathS.Sets.Interval(arg.left, arg.right);
+
+        /// <summary>
+        /// Takes a <see cref="%type1%"/> and <see cref="%type2%"/> and returns
+        /// a closed interval (so that left and right ends are included)
+        /// </summary>
+        /// <returns>Interval</returns>
+        public static Interval ToInterval(this (%type1% left, bool leftClosed, %type2% right, bool rightClosed) arg) 
+            => new Interval(arg.left, arg.leftClosed, arg.right, arg.rightClosed);

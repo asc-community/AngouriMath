@@ -21,6 +21,7 @@ using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Extensions;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {
@@ -33,7 +34,7 @@ namespace AngouriMath
         /// <returns>
         /// Returns Set. Work with it as with a list
         /// </returns>
-        public SetNode SolveEquation(Variable x) => EquationSolver.Solve(this, x);
+        public Set SolveEquation(Variable x) => EquationSolver.Solve(this, x);
     }
 }
 
@@ -51,7 +52,7 @@ namespace AngouriMath.Functions
         /// </summary>
         public static Entity GetMinimumSubtree(Entity expr, Variable x)
         {
-            if (!expr.Contains(x))
+            if (!expr.ContainsNode(x))
                 throw new ArgumentException($"{nameof(expr)} must contain {nameof(x)}", nameof(expr));
 
             // The idea is the following:
@@ -61,7 +62,7 @@ namespace AngouriMath.Functions
             return
                 expr.Nodes
                 .TakeWhile(e => e != x) // Requires Entity enumeration to be depth-first!!
-                .Where(e => e.Contains(x)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
+                .Where(e => e.ContainsNode(x)) // e.g. when expr is sin((x+1)^2)+3, this step results in [sin((x+1)^2)+3, sin((x+1)^2), (x+1)^2, x+1]
                 .LastOrDefault(sub => expr.Nodes.Count(child => child == sub) * sub.Nodes.Count(child => child == x) == xs)
                 // if `expr` contains 2 `sub`s and `sub` contains 3 `x`s, then there should be 6 `x`s in `expr` (6 == `xs`)
                 ?? x;
@@ -79,7 +80,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// and compensateSolving "compensates" this by applying expression inverter,
         /// aka compensating the equation formed by the previous solver
         /// </param>
-        internal static SetNode Solve(Entity expr, Variable x, bool compensateSolving = false)
+        internal static Set Solve(Entity expr, Variable x, bool compensateSolving = false)
         {
             if (expr == x)
                 return new Entity[] { 0 }.ToSet();
@@ -87,12 +88,12 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // Applies an attempt to downcast roots
             static Entity TryDowncast(Entity equation, Variable x, Entity root)
             {
-                if (!(root.Evaled is Complex preciseValue))
+                if (root.Evaled is not Complex preciseValue)
                     return root;
                 var downcasted = MathS.Settings.FloatToRationalIterCount.As(20, () =>
                     MathS.Settings.PrecisionErrorZeroRange.As(1e-7m, () =>
                         Complex.Create(preciseValue.RealPart, preciseValue.ImaginaryPart)));
-                if (!(equation.Substitute(x, downcasted).Evaled is Complex error))
+                if (equation.Substitute(x, downcasted).Evaled is not Complex error)
                     return root;
                 return IsZero(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational
                        ? downcasted : root.InnerSimplify();
@@ -103,24 +104,24 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             switch (expr)
             {
                 case Mulf(var multiplier, var multiplicand):
-                    return Solve(multiplier, x) | Solve(multiplicand, x);
+                    return MathS.Union(Solve(multiplier, x), Solve(multiplicand, x));
                 case Divf(var dividend, var divisor):
-                    return Solve(dividend, x) - Solve(divisor, x);
+                    return MathS.SetSubtraction(Solve(dividend, x), Solve(divisor, x));
                 case Powf(var @base, _):
                     return Solve(@base, x);
-                case Minusf(var subtrahend, var minuend) when !minuend.Contains(x) && compensateSolving:
+                case Minusf(var subtrahend, var minuend) when !minuend.ContainsNode(x) && compensateSolving:
                     if (subtrahend == x)
                         return new[] { minuend }.ToSet();
                     Entity? lastChild = null;
                     foreach (var child in subtrahend.DirectChildren)
-                        if (child.Contains(x))
+                        if (child.ContainsNode(x))
                             if (lastChild is null)
                                 lastChild = child;
                             else goto default;
                     if (lastChild is null)
                         goto default;
                     // TODO: optimize?
-                    return subtrahend.Invert(minuend, lastChild).Select(result => Solve(lastChild - result, x, compensateSolving: true)).Aggregate((a, b) => a | b);
+                    return subtrahend.Invert(minuend, lastChild).Select(result => Solve(lastChild - result, x, compensateSolving: true)).Aggregate((a, b) => MathS.Union(a, b));
                 case Function:
                     return expr.Invert(0, x).Select(ent => TryDowncast(expr, x, ent)).ToSet();
                 default:
@@ -136,46 +137,46 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // Here we find all possible replacements and find one that has at least one solution
                 foreach (var alt in expr.Alternate(4))
                 {
-                    if (!alt.Contains(x))
-                        return new Set(); // in this case there is either 0 or +oo solutions
+                    if (!alt.ContainsNode(x))
+                        return Set.Empty; // in this case there is either 0 or +oo solutions
                     var minimumSubtree = TreeAnalyzer.GetMinimumSubtree(alt, x);
                     if (minimumSubtree == x)
                         continue;
                     // Here we are trying to solve for this replacement
-                    var solutionsSet = Solve(alt.Substitute(minimumSubtree, newVar), newVar);
-                    if (solutionsSet.IsFiniteSet(out var enums))
+                    var solutionsSet = Solve(alt.Substitute(minimumSubtree, newVar), newVar).InnerSimplified;
+                    if (solutionsSet is FiniteSet { IsSetEmpty: false } enums)
                     {
-                        var solutions = enums.Select(solution => Solve(minimumSubtree - solution, x, compensateSolving: true)).Unite();
-                        if (solutions.IsFiniteSet(out var els))
+                        var solutions = enums.Select(solution => Solve(minimumSubtree - solution, x, compensateSolving: true)).Unite().InnerSimplified;
+                        if (solutions is FiniteSet els)
                             return els.Select(ent => TryDowncast(expr, x, ent)).ToSet();
                     }
                 }
                 // // //
             }
 
-            // if no replacement worked, try exponential-multiplicative solver
-            if (TrigonometricSolver.SolveLinear(expr, x) is { } trig && trig.IsFiniteSet(out var elsTrig))
-                return elsTrig.Select(ent => TryDowncast(expr, x, ent)).ToSet();
+            // if no replacement worked, try trigonometric solver
+            if (TrigonometricSolver.TrySolveLinear(expr, x, out var trig) && trig is FiniteSet elsTrig)
+                return (Set)elsTrig.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
+            // // //
+
+            // if no trigonometric rules helped, try exponential-multiplicative solver
+            if (ExponentialSolver.SolveMultiplicative(expr, x) is { } expMul && expMul is FiniteSet elsExpMul)
+                return (Set)elsExpMul.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
             // // //
 
             // if no exponential-multiplicative rules helped, try exponential-linear solver
-            if (ExponentialSolver.SolveMultiplicative(expr, x) is { } expMul && expMul.IsFiniteSet(out var elsExpMul))
-                return elsExpMul.Select(ent => TryDowncast(expr, x, ent)).ToSet();
+            if (ExponentialSolver.SolveLinear(expr, x) is { } expLin && expLin is FiniteSet elsExpLin)
+                return (Set)elsExpLin.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
             // // //
 
-            // if no exponential-linear rules helped, try trigonometric solver
-            if (ExponentialSolver.SolveLinear(expr, x) is { } expLin && expLin.IsFiniteSet(out var elsExpLin))
-                return elsExpLin.Select(ent => TryDowncast(expr, x, ent)).ToSet();
-            // // //
-
-            // if no trigonometric rules helped, common denominator might help
-            if (CommonDenominatorSolver.Solve(expr, x) is { } commonDenom && commonDenom.IsFiniteSet(out var elsCd))
-                return elsCd.Select(ent => TryDowncast(expr, x, ent)).ToSet();
+            // if no exponential-linear rules helped, common denominator might help
+            if (CommonDenominatorSolver.TrySolveGCD(expr, x, out var commonDenom) && commonDenom is FiniteSet elsCd)
+                return (Set)elsCd.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
             // // //
 
             // if we have fractioned polynomials
-            if (FractionedPolynoms.Solve(expr, x) is { } fractioned && fractioned.IsFiniteSet(out var elsFracs))
-                return elsFracs.Select(ent => TryDowncast(expr, x, ent)).ToSet();
+            if (FractionedPolynoms.TrySolve(expr, x, out var fractioned) && fractioned is FiniteSet elsFracs)
+                return (Set)elsFracs.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
             // // //
 
             // TODO: Solve factorials (Needs Lambert W function)

@@ -6,6 +6,8 @@ using Xunit;
 using System.Collections.Generic;
 using static AngouriMath.Entity;
 using System.Linq;
+using static AngouriMath.Entity.Set;
+using System;
 
 namespace UnitTests.Algebra
 {
@@ -15,7 +17,7 @@ namespace UnitTests.Algebra
         internal static void AssertRoots(Entity equation, Variable toSub, Entity varValue, Integer? subValue = null)
         {
             subValue ??= 3;
-            string eqNormal = equation.ToString();
+            string? eqNormal = equation.Stringize();
             equation = equation.Substitute(toSub, varValue);
             // MUST be integer to correspond to integer coefficient of periodic roots
             var substitutions = new Dictionary<Entity.Variable, Integer>();
@@ -23,7 +25,7 @@ namespace UnitTests.Algebra
                 substitutions.Add(vr, subValue + substitutions.Count);
             equation = equation.Substitute(substitutions);
             var err = equation.EvalBoolean();
-            Assert.True(err, $"\nError = {err}\n{eqNormal}\nWrong root: {toSub} = {varValue}");
+            Assert.True(err, $"\nError = {err.Stringize()}\n{eqNormal}\nWrong root: {toSub.Stringize()} = {varValue.Stringize()}");
         }
 
         [Theory]
@@ -40,9 +42,12 @@ namespace UnitTests.Algebra
         public void TestFinite(string expr, int rootCount)
         {
             var eq = expr.ToEntity();
-            var solutions = eq.Solve("x");
-            Assert.True(solutions.IsFiniteSet(out var roots));
-            Assert.Equal(rootCount, roots.Count());
+            Variable x = "x";
+            var solutions = eq.Solve(x);
+            //solutions = (Set)solutions.InnerSimplified;
+            solutions = (Set)solutions.InnerSimplified;
+            var roots = Assert.IsType<FiniteSet>(solutions);
+            Assert.Equal(rootCount, roots.Count);
             foreach (var root in roots)
                 AssertRoots(eq, "x", root);
         }

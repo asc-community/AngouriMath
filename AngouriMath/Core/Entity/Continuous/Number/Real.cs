@@ -15,11 +15,13 @@
 
 using System.Runtime.CompilerServices;
 using PeterO.Numbers;
-[assembly: InternalsVisibleTo("DotnetBenchmark")]
+//[assembly: InternalsVisibleTo("DotnetBenchmark")]
 
 namespace AngouriMath
 {
     using Core;
+    using System.Text;
+
     partial record Entity
     {
         public abstract partial record Number
@@ -33,7 +35,7 @@ namespace AngouriMath
                 public EDecimal EDecimal { get; }
                 public void Deconstruct(out EDecimal @decimal) => @decimal = EDecimal;
                 public override Real RealPart => this;
-                public override Priority Priority => EDecimal.IsNegative ? Priority.Mul : Priority.Number;
+                public override Priority Priority => EDecimal.IsNegative ? Priority.Mul : Priority.Leaf;
                 public override bool IsExact => !EDecimal.IsFinite;
                 public bool IsNegative => EDecimal.IsNegative;
                 public bool IsPositive => !EDecimal.IsNegative && !EDecimal.IsZero;
@@ -62,7 +64,7 @@ namespace AngouriMath
 
                 public override Real Abs() => Create(EDecimal.Abs());
 
-                internal override string Stringize() => this switch
+                public override string Stringize() => this switch
                 {
                     { IsFinite: true } => EDecimal.ToString(),
                     { IsNaN: true } => "NaN",
@@ -131,6 +133,17 @@ namespace AngouriMath
                 public static implicit operator Real(decimal value) => Create(EDecimal.FromDecimal(value));
 
                 public override Domain Codomain { get; protected init; } = Domain.Real;
+
+                public override Entity Substitute(Entity x, Entity value)
+                    => this == x ? value : this;
+
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+
+                public override string ToString() => Stringize();
             }
         }
     }

@@ -29,7 +29,7 @@ namespace AngouriMath.Functions.Boolean
     /// </summary>
     internal static class BooleanSolver
     {
-        private static bool Next(in Span<bool> states)
+        internal static bool Next(in Span<bool> states)
         {
             var id = states.Length - 1;
             if (!states[id])

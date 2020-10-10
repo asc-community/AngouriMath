@@ -32,9 +32,9 @@ namespace AngouriMath
             public static Boolean Create(bool value) => value ? True : False; // to avoid reallocation
 
             public override Entity Replace(Func<Entity, Entity> func) 
-                => this;
-            public override Priority Priority => Priority.Number;
-            protected override Entity[] InitDirectChildren() => new Entity[] { };
+                => func(this);
+            public override Priority Priority => Priority.Leaf;
+            protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
 
             /// <summary>
             /// Use this when parsing one boolean value
@@ -219,6 +219,24 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
+        #endregion
+
+        #region Set statements
+        partial record Set
+        {
+            /// <summary>
+            /// This node represents whether the given element is in the set
+            /// </summary>
+            public sealed partial record Inf(Entity Element, Entity SupSet) : Statement
+            {
+                public override Priority Priority => Priority.ContainsIn;
+                public Inf New(Entity element, Entity supSet)
+                    => ReferenceEquals(Element, element) && ReferenceEquals(SupSet, supSet) ? this : new(Element, SupSet);
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(New(Element.Replace(func), SupSet.Replace(func)));
+                protected override Entity[] InitDirectChildren() => new[] { Element, SupSet };
+            }
+        }
         #endregion
     }
 }

@@ -44,12 +44,6 @@ namespace DotnetBenchmark
         private static readonly Entity toSolveMediumHard = "(sin(x) + sqr(sin(x)) + a)4 + (sin(x) + sqr(sin(x)) + a) + b";
         [Benchmark] public void SolveHard() => toSolveHard.SolveEquation("x");
         private static readonly Entity toSolveHard = "(sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a)4 + (sin(cos(x) + sin(x) + c) + sqr(sin(cos(x) + sin(x) + c)) + a) + b";
-        [Benchmark] public void SolveNtEasy() => ntSolveEasy.SolveNt("x");
-        private static readonly Entity ntSolveEasy = "x + sqr(x) - 3";
-        [Benchmark] public void SolveNtMedium() => ntSolveMedium.SolveNt("x");
-        private static readonly Entity ntSolveMedium = "sin(x + cos(x)) + sqrt(x + sqr(x))";
-        [Benchmark] public void SolveNtHard() => ntSolveHard.SolveNt("x");
-        private static readonly Entity ntSolveHard = "sin(x + arcsin(x)) / (sqr(x) + cos(x)) * arccos(x / 1200 + 0.00032 / cotan(x + 43))";
 
         // Testing evaluation
         [Benchmark] public void EvalEasy() => evalEasy.EvalNumerical();

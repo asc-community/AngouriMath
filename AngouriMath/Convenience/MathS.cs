@@ -23,6 +23,7 @@ using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Algebra.NumericalSolving;
 using AngouriMath.Functions.Boolean;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath.Core
 {
@@ -39,6 +40,7 @@ namespace AngouriMath
     using static Entity.Number;
     using NumericsComplex = System.Numerics.Complex;
     using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
+    using static Entity.Set;
     /// <summary>Use functions from this class</summary>
     public static class MathS
     {
@@ -62,7 +64,7 @@ namespace AngouriMath
         /// <param name="equation">An equation that is assumed to equal 0</param>
         /// <param name="var">Variable whose values we are looking for</param>
         /// <returns>A <see cref="Set"/> of possible values or intervals of values</returns>
-        public static SetNode SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
+        public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
 
         /// <summary>
         /// Solves a boolean expression. That is, finds all values for
@@ -292,6 +294,15 @@ namespace AngouriMath
 
         /// <returns>A node</returns>
         public static Entity LessOrEqualThan(Entity a, Entity b) => a <= b;
+        
+        /// <returns>A node</returns>
+        public static Set Union(Entity a, Entity b) => a.Unite(b);
+
+        /// <returns>A node</returns>
+        public static Set Intersection(Entity a, Entity b) => a.Intersect(b);
+
+        /// <returns>A node</returns>
+        public static Set SetSubtraction(Entity a, Entity b) => a.SetSubtract(b);
 
         /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
         /// <param name="name">The name of the <see cref="Variable"/> which equality is based on.</param>
@@ -669,7 +680,7 @@ namespace AngouriMath
             var sb = new System.Text.StringBuilder();
             sb.Append("import sympy\n\n");
             foreach (var f in expr.Vars)
-                sb.Append($"{f} = sympy.Symbol('{f}')\n");
+                sb.Append($"{f.Stringize()} = sympy.Symbol('{f.Stringize()}')\n");
             sb.Append('\n');
             sb.Append("expr = ").Append(expr.ToSymPy());
             return sb.ToString();
@@ -689,32 +700,47 @@ namespace AngouriMath
         {
             /// <summary>Creates an instance of an empty <see cref="Set"/></summary>
             /// <returns>A <see cref="Set"/> with no elements</returns>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static Set Empty() => new Set();
+            public static Set Empty => Set.Empty;
 
             /// <returns>A set of all <see cref="Complex"/>s</returns>
-            public static Set C() => Set.C();
+            public static Set C => SpecialSet.Create(Domain.Complex);
 
             /// <returns>A set of all <see cref="Real"/>s</returns>
-            public static Set R() => Set.R();
+            public static Set R => SpecialSet.Create(Domain.Real);
+
+            /// <returns>A set of all <see cref="Rational"/>s</returns>
+            public static Set Q => SpecialSet.Create(Domain.Rational);
+
+            /// <returns>A set of all <see cref="Integers"/></returns>
+            public static Set Z => SpecialSet.Create(Domain.Integer);
 
             /// <summary>
-            /// Creates a <see cref="Set"/> that you can fill with elements
-            /// Later on, you may add an Interval if you wish
+            /// Creates a <see cref="FiniteSet"/> with given elements
             /// </summary>
-            public static Set Finite(params Entity[] entities) => Set.Finite(entities);
+            public static FiniteSet Finite(params Entity[] entities) => new FiniteSet(entities);
 
             /// <summary>
-            /// Creates an interval. To modify it, use e.g.
-            /// <see cref="Interval.SetLeftClosed(bool)"/>
-            /// (see more alike functions in <see cref="Set"/> documentation)
+            /// Creates a <see cref="FiniteSet"/> with given elements
             /// </summary>
-            public static Interval Interval(Entity from, Entity to) => new(from, to);
+            public static FiniteSet Finite(List<Entity> entities) => new FiniteSet((IEnumerable<Entity>)entities);
 
             /// <summary>
-            /// Creates an element for <see cref="Set"/>. One can be created implicitly, <code>Piece a = 3;</code>
+            /// Creates a closed interval
             /// </summary>
-            public static OneElementPiece Element(Entity element) => new OneElementPiece(element);
+            public static Interval Interval(Entity from, Entity to) => new(from, true, to, true);
+
+            /// <summary>
+            /// Creates an interval where <paramref name="leftClosed"/> shows whether <paramref name="from"/> is included,
+            /// <paramref name="rightClosed"/> shows whether <paramref name="to"/> included.
+            /// </summary>
+            public static Interval Interval(Entity from, bool leftClosed, Entity to, bool rightClosed) => new(from, leftClosed, to, rightClosed);
+
+            /// <summary>
+            /// Creates a node of whether the given element belongs to the given set
+            /// </summary>
+            /// <returns>A node</returns>
+            public static Entity ElementInSet(Entity element, Entity set)
+                => element.In(set);
         }
 
         /// <summary>
@@ -769,7 +795,7 @@ namespace AngouriMath
 #pragma warning disable IDE0060 // Remove unused parameter
             public static Entity? Integral(Entity expr, Variable x) =>
 #pragma warning restore IDE0060 // Remove unused parameter
-                throw new NotImplementedException("Integrals not implemented yet");
+                throw FutureReleaseException.Raised("Integrals", "1.2.3");
         }
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
@@ -786,7 +812,7 @@ namespace AngouriMath
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which derivative is taken</param>
         /// <param name="power">Number of times derivative is taken. Only integers will be simplified or evaluated.</param>
-        public static Entity Derivative(Entity expr, Entity var, Entity power) => new Derivativef(expr, var, power);
+        public static Entity Derivative(Entity expr, Entity var, int power) => new Derivativef(expr, var, power);
 
         /// <summary>
         /// Hangs your entity to an integral node
@@ -803,7 +829,7 @@ namespace AngouriMath
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which integral is taken</param>
         /// <param name="power">Number of times integral is taken. Only integers will be simplified or evaluated.</param>
-        public static Entity Integral(Entity expr, Entity var, Entity power) => new Integralf(expr, var, power);
+        public static Entity Integral(Entity expr, Entity var, int power) => new Integralf(expr, var, power);
 
         /// <summary>
         /// Hangs your entity to a limit node
@@ -838,6 +864,26 @@ namespace AngouriMath
             /// </summary>
             public static Tensor? BuildTruthTable(Entity expression, params Variable[] variables)
                 => BooleanSolver.BuildTruthTable(expression, variables);
+        }
+
+        public static class Utils
+        {
+            public static Entity SmartExpandOver(Entity expr, Variable x)
+            {
+                var linChildren = Sumf.LinearChildren(expr);
+                
+                List<Entity> nodes = new();
+
+                foreach (var linChild in linChildren)
+                {
+                    var children = TreeAnalyzer.SmartExpandOver(linChild, n => n.ContainsNode(n));
+                    if (children is null)
+                        return expr;
+                    nodes.AddRange(children);
+                }
+
+                return TreeAnalyzer.MultiHangBinary(nodes, (a, b) => a + b);
+            }
         }
     }
 }

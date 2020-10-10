@@ -66,6 +66,8 @@ git submodule add https://github.com/asc-community/AngouriMath
 ```
 After cloning, you do not need to set up it. It is ready to use, just add the reference to the AngouriMath project from your solution.
 
+We do not recommend cloning the repo's master for the production as it might be not as stable as the version on NuGet.
+
 ### <a name="exam"></a>Examples
 
 #### <a name="eval"></a>Use as a simple calculator
@@ -214,9 +216,9 @@ Console.WriteLine(set);
 
 #### <a name="sets"></a>Work with sets
 ```cs
-var A = new Set(3, 4, (5, 6)); // {3, 4} | [5; 6]
-var B = new Set((x, MathS.Sqrt(x)), 4);
-var C = (A | B) & A;
+Entity setA = @"{ 1, 2, 3 } \/ [5; 6)"
+Entity setB = @"RR \ { x : x2 > 0 and x < y }";
+Entity setC = setA.Unite(setB);
 ```
 
 #### <a name="numb"></a>Work with numbers
@@ -242,7 +244,8 @@ See more on [Wiki](https://github.com/asc-community/AngouriMath/wiki).
 
 ### <a name="contrib"></a>Contribution
 
-We appreciate and welcome any contributors to AngouriMath.
+We appreciate and welcome any contributors to AngouriMath. Current tasks can be tracked
+on <a href="https://github.com/asc-community/AngouriMath/projects">this page</a>.
 
 Use pull requests to contribute to it. We also appreciate early pull requests so that we know what you are improving and
 can help you with something.

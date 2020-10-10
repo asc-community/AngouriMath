@@ -24,6 +24,9 @@ namespace AngouriMath.Core.Antlr {
     using System.Linq;
     using AngouriMath;
     using static AngouriMath.Core.Exceptions.FunctionArgumentCountException;
+    using static AngouriMath.Entity.Number;
+    using AngouriMath.Core.Exceptions;
+    using static AngouriMath.Entity.Set;
 
 
 using Antlr4.Runtime.Misc;
@@ -137,6 +140,54 @@ internal partial class AngouriMathBaseListener : IAngouriMathListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context) { }
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator_intersection"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSet_operator_intersection([NotNull] AngouriMathParser.Set_operator_intersectionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator_intersection"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSet_operator_intersection([NotNull] AngouriMathParser.Set_operator_intersectionContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator_union"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSet_operator_union([NotNull] AngouriMathParser.Set_operator_unionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator_union"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSet_operator_union([NotNull] AngouriMathParser.Set_operator_unionContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator_setsubtraction"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterSet_operator_setsubtraction([NotNull] AngouriMathParser.Set_operator_setsubtractionContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.set_operator_setsubtraction"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitSet_operator_setsubtraction([NotNull] AngouriMathParser.Set_operator_setsubtractionContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.in_operator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterIn_operator([NotNull] AngouriMathParser.In_operatorContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.in_operator"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitIn_operator([NotNull] AngouriMathParser.In_operatorContext context) { }
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.negate_expression"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
@@ -220,6 +271,30 @@ internal partial class AngouriMathBaseListener : IAngouriMathListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitFunction_arguments([NotNull] AngouriMathParser.Function_argumentsContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.interval_arguments"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterInterval_arguments([NotNull] AngouriMathParser.Interval_argumentsContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.interval_arguments"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitInterval_arguments([NotNull] AngouriMathParser.Interval_argumentsContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.cset_arguments"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterCset_arguments([NotNull] AngouriMathParser.Cset_argumentsContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.cset_arguments"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitCset_arguments([NotNull] AngouriMathParser.Cset_argumentsContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.atom"/>.
 	/// <para>The default implementation does nothing.</para>

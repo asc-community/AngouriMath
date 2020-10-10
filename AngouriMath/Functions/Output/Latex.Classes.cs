@@ -24,6 +24,71 @@ namespace AngouriMath
     using static Entity.Number;
     public abstract partial record Entity
     {
+        public partial record Variable
+        {
+            /// <summary>
+            /// List of constants LaTeX will correctly display
+            /// Yet to be extended
+            /// Case does matter, not all letters have both displays in LaTeX
+            /// </summary>
+            private static readonly HashSet<string> LatexisableConstants = new HashSet<string>
+            {
+                "alpha", "beta", "gamma", "delta", "epsilon", "varepsilon", "zeta", "eta", "theta", "vartheta",
+                "iota", "kappa", "varkappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "varpi", "rho",
+                "varrho", "sigma", "varsigma", "tau", "upsilon", "phi", "varphi", "chi", "psi", "omega",
+
+                "Gamma", "Delta", "Theta", "Lambda", "Xi", "Pi", "Sigma", "Upsilon", "Phi", "Psi", "Omega",
+            };
+
+            /// <summary>
+            /// Returns latexised const if it is possible to latexise it,
+            /// or its original name otherwise
+            /// </summary>
+            public override string Latexise() =>
+                SplitIndex() is var (prefix, index)
+                ? (LatexisableConstants.Contains(prefix) ? @"\" + prefix : prefix)
+                  + "_{" + index + "}"
+                : LatexisableConstants.Contains(Name) ? @"\" + Name : Name;
+        }
+
+        public partial record Tensor
+        {
+            public override string Latexise()
+            {
+                if (IsMatrix)
+                {
+                    var sb = new StringBuilder();
+                    sb.Append(@"\begin{pmatrix}");
+                    var lines = new List<string>();
+                    for (int x = 0; x < Shape[0]; x++)
+                    {
+                        var items = new List<string>();
+
+                        for (int y = 0; y < Shape[1]; y++)
+                            items.Add(this[x, y].Latexise());
+
+                        var line = string.Join(" & ", items);
+                        lines.Add(line);
+                    }
+                    sb.Append(string.Join(@"\\", lines));
+                    sb.Append(@"\end{pmatrix}");
+                    return sb.ToString();
+                }
+                else if (IsVector)
+                {
+                    var sb = new StringBuilder();
+                    sb.Append(@"\begin{bmatrix}");
+                    sb.Append(string.Join(" & ", InnerTensor.Iterate().Select(k => k.Value.Latexise())));
+                    sb.Append(@"\end{bmatrix}");
+                    return sb.ToString();
+                }
+                else
+                {
+                    return this.Stringize();
+                }
+            }
+        }
+
         public partial record Sumf
         {
             public override string Latexise() =>
@@ -143,7 +208,7 @@ namespace AngouriMath
         {
             public override string Latexise()
             {
-                var powerIfNeeded = Iterations == Integer.One ? "" : "^{" + Iterations.Latexise() + "}";
+                var powerIfNeeded = Iterations == 1 ? "" : "^{" + Iterations + "}";
 
                 var varOverDeriv =
                     Var is Variable { Name: { Length: 1 } name }
@@ -164,14 +229,14 @@ namespace AngouriMath
                 // Unlike derivatives, integrals do not have "power" that would be equal
                 // to sequential applying integration to a function
 
-                if (!(Iterations is Integer asInt && asInt >= 0))
+                if (Iterations < 0)
                     return "Error";
 
-                if (asInt == 0)
+                if (Iterations == 0)
                     return Expression.Latexise(false);
 
                 var sb = new StringBuilder();
-                for (int i = 0; i < asInt; i++)
+                for (int i = 0; i < Iterations; i++)
                     sb.Append(@"\int ");
                 sb.Append(@"\left[");
                 sb.Append(Expression.Latexise(false));
@@ -179,7 +244,7 @@ namespace AngouriMath
 
                 // TODO: can we write d^2 x or (dx)^2 instead of dx dx?
                 // I don't think I have ever seen the same variable being integrated more than one time. -- Happypig375
-                for (int i = 0; i < asInt; i++)
+                for (int i = 0; i < Iterations; i++)
                 {
                     sb.Append(" d");
                     if (Var is Variable { Name: { Length: 1 } name })
@@ -224,101 +289,16 @@ namespace AngouriMath
             }
         }
 
-        public partial record Signumf
+        partial record Signumf
         {
             public override string Latexise()
                 => $@"\operatorname{{sgn}}\left({Argument.Latexise()}\right)";
         }
 
-        public partial record Absf
+        partial record Absf
         {
             public override string Latexise()
                 => $@"\left|{Argument.Latexise()}\right|";
-        }
-
-        partial record Set
-        {
-            public override string Latexise()
-            {
-                if (IsEmpty)
-                    return @"\emptyset";
-
-                var sb = new StringBuilder();
-                sb.Append(@"\left\{");
-                foreach (var p in Pieces)
-                {
-                    switch (p)
-                    {
-                        case OneElementPiece oneelem:
-                            sb.Append(oneelem.UpperBound().Item1.Latexise());
-                            break;
-                        case Interval _:
-                            var lower = p.LowerBound();
-                            var upper = p.UpperBound();
-                            var l = lower.Item1.Latexise();
-                            var u = upper.Item1.Latexise();
-                            switch (lower.Item2, lower.Item3, upper.Item2, upper.Item3)
-                            {
-                                // Complex part is inclusive for all real intervals which is [0, 0]i
-                                case (false, true, false, true):
-                                    sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right)");
-                                    break;
-                                case (true, true, false, true):
-                                    sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right)");
-                                    break;
-                                case (false, true, true, true):
-                                    sb.Append(@"\left(").Append(l).Append(',').Append(u).Append(@"\right]");
-                                    break;
-                                case (true, true, true, true):
-                                    sb.Append(@"\left[").Append(l).Append(',').Append(u).Append(@"\right]");
-                                    break;
-                                case var (lr, li, ur, ui):
-                                    static string Extract(Entity entity, bool takeReal) =>
-                                        (entity, takeReal) switch
-                                        {
-                                            (Complex num, true) => num.RealPart.Latexise(),
-                                            (Complex num, false) => num.ImaginaryPart.Latexise(),
-                                            (_, true) => @"\Re\left(" + entity.Latexise() + @"\right)",
-                                            (_, false) => @"\Im\left(" + entity.Latexise() + @"\right)",
-                                        };
-                                    sb.Append(@"\left\{z\in\mathbb C:\Re\left(z\right)\in\left")
-                                        .Append(lr ? '[' : '(').Append(Extract(lower.Item1, true)).Append(',')
-                                        .Append(Extract(upper.Item1, true)).Append(@"\right").Append(ur ? ']' : ')')
-                                        .Append(@"\wedge\Im\left(z\right)\in\left")
-                                        .Append(li ? '[' : '(').Append(Extract(lower.Item1, false)).Append(',')
-                                        .Append(Extract(upper.Item1, false)).Append(@"\right").Append(ui ? ']' : ')')
-                                        .Append(@"\right\}");
-                                    break;
-                            }
-                            break;
-                    }
-                    sb.Append(',');
-                }
-                sb.Remove(sb.Length - 1, 1); // Remove extra ,
-                sb.Append(@"\right\}");
-                return sb.ToString();
-            }
-        }
-
-        partial record SetNode : ILatexiseable
-        {
-            public abstract string Latexise();
-            partial record Union
-            {
-                public override string Latexise() => $@"\left({A.Latexise()}\cup{B.Latexise()}\right)";
-            }
-            partial record Intersection
-            {
-                public override string Latexise() => $@"\left({A.Latexise()}\cap{B.Latexise()}\right)";
-            }
-            partial record Complement
-            {
-                public override string Latexise() => $@"\left({A.Latexise()}\setminus{B.Latexise()}\right)";
-            }
-            partial record Inversion
-            {
-                public override string Latexise() => $@"\left({A.Latexise()}^\complement\right)";
-            }
         }
 
         partial record Boolean
@@ -384,6 +364,61 @@ namespace AngouriMath
         {
             public override string Latexise()
                 => $@"{Left.Latexise(Left.Priority < Priority)} \leqslant {Right.Latexise(Right.Priority < Priority)}";
+        }
+
+        partial record Set
+        {
+            partial record FiniteSet
+            {
+                public override string Latexise()
+                    => IsSetEmpty ? @"\emptyset" : $@"\left\{{ {string.Join(", ", Elements.Select(c => c.Latexise()))} \right\}}";
+            }
+
+            partial record Interval
+            {
+                public override string Latexise()
+                {
+                    var left = LeftClosed ? "[" : "(";
+                    var right = RightClosed ? "]" : ")";
+                    return @"\left" + left + Left.Latexise() + "; " + Right.Latexise() + @"\right" + right;
+                }
+            }
+
+            partial record ConditionalSet
+            {
+                public override string Latexise()
+                    => $@"\left\{{ {Var.Latexise()} : {Predicate.Latexise()} \right\}}";
+            }
+
+            partial record SpecialSet
+            {
+                public override string Latexise()
+                    => $@"\mathbb{{{Stringize()[0]}}}";
+            }
+
+            partial record Unionf
+            {
+                public override string Latexise()
+                    => $@"{Left.Latexise(Left.Priority < Priority)} \cup {Right.Latexise(Right.Priority < Priority)}";
+            }
+
+            partial record Intersectionf
+            {
+                public override string Latexise()
+                    => $@"{Left.Latexise(Left.Priority < Priority)} \cap {Right.Latexise(Right.Priority < Priority)}";
+            }
+
+            partial record SetMinusf
+            {
+                public override string Latexise()
+                    => $@"{Left.Latexise(Left.Priority < Priority)} \setminus {Right.Latexise(Right.Priority < Priority)}";
+            }
+
+            partial record Inf
+            {
+                public override string Latexise()
+                    => $@"{Element.Stringize(Element.Priority < Priority)} \in {SupSet.Stringize(SupSet.Priority < Priority)}";
+            }
         }
     }
 }

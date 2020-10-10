@@ -26,24 +26,6 @@ namespace AngouriMath.Functions
     using static Entity.Number;
     internal static partial class TreeAnalyzer
     {
-        // TODO: realize all methods
-
-        /// <summary>
-        /// Counts all combinations of roots, for example
-        /// 3 ^ 0.5 + 4 ^ 0.25 will return a set of 8 different numbers
-        /// </summary>
-        /// <param name="expr"></param>
-        /// <returns></returns>
-        internal static Set EvalAll(Entity expr)
-        {
-            throw new NotImplementedException();
-        }
-
-        internal static void EvalCombs(Entity expr, Set set)
-        {
-            throw new NotImplementedException();
-        }
-
         /// <summary>
         /// Finds out how many terms we get after expansion via binomial coefficients, e. g
         /// (a + b) ^ 3 -> 2, 3 -> 4
