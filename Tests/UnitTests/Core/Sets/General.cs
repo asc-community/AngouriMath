@@ -47,11 +47,11 @@ namespace UnitTests.Core.Sets
         [InlineData(@"(2; 2)", @"{}")]
         [InlineData(@"(2; 2]", @"{}")]
         [InlineData(@"[2; 2]", @"{ 2 }")]
-        [InlineData(@"{ x : x > 0 } \/ { z : z > 0 }", @"{ u : u > 0 }")]
-        [InlineData(@"{ x : x > 0 } \/ { z : z < 0 }", @"{}")]
-        [InlineData(@"{ x : x >= 0 } \/ { z : z < 0 }", @"{}")]
-        [InlineData(@"{ x : x > 0 } \/ { z : z <= 0 }", @"{}")]
-        [InlineData(@"{ x : 0 < x } \/ { z : z <= 0 }", @"{}")]
+        [InlineData(@"{ x : x > 0 } /\ { z : z > 0 }", @"{ u : u > 0 }")]
+        [InlineData(@"{ x : x > 0 } /\ { z : z < 0 }", @"{}")]
+        [InlineData(@"{ x : x >= 0 } /\ { z : z < 0 }", @"{}")]
+        [InlineData(@"{ x : x > 0 } /\ { z : z <= 0 }", @"{}")]
+        [InlineData(@"{ x : 0 < x } /\ { z : z <= 0 }", @"{}")]
         [InlineData(@"{ 1, 2 } \/ [0; 4]", @"[0; 4]")]
         [InlineData(@"{ 2 } \/ [0; 4]", @"[0; 4]")]
         [InlineData(@"{ 1, 2, 5 } \/ [0; 4]", @"{ 5 } \/ [0; 4]")]
@@ -59,10 +59,10 @@ namespace UnitTests.Core.Sets
         [InlineData(@"{ x : x2 = 4 } /\ { 2 }", @"{ 2 }")]
         [InlineData(@"{ x : false }", @"{}")]
         [InlineData(@"{ x : 2 = 4 }", @"{}")]
-        public void TestSimplify(string unexpected, string expected)
+        public void TestSimplify(string unsimplified, string simplified)
         {
-            var actual = unexpected.ToEntity().Simplify();
-            Assert.Equal(expected.ToEntity(), actual);
+            var actual = unsimplified.ToEntity().Simplify();
+            Assert.Equal(simplified.ToEntity(), actual);
         }
 
         [Theory(Skip = "Smarter simplification algorithms needed")]

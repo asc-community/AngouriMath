@@ -180,7 +180,8 @@ namespace AngouriMath
         {
             protected override Entity InnerEval()
             {
-                // TODO: Is it that?
+                if (!Left.IsConstant || !Right.IsConstant)
+                    return New(Left.Evaled, Right.Evaled);
                 return Left.Evaled == Right.Evaled;
             }
             internal override Entity InnerSimplify()

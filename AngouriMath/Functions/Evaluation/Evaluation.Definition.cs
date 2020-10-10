@@ -19,6 +19,7 @@ using AngouriMath.Functions;
 using System;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
@@ -136,5 +137,10 @@ namespace AngouriMath
             Evaled is Tensor value ? value :
                 throw new InvalidOperationException
                     ($"Result cannot be represented as a {nameof(Tensor)}! Check the type of {nameof(Evaled)} beforehand.");
+
+        /// <summary>
+        /// Determines whether a given element can be unambiguously used
+        /// </summary>
+        public bool IsConstant => Evaled is Complex or Boolean;
     }
 }

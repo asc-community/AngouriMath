@@ -20,6 +20,7 @@ using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Boolean;
 using System.Collections.Generic;
+using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions
 {
@@ -651,6 +652,16 @@ namespace AngouriMath.Functions
 
             _ => x
         };
+
+        internal static Entity SetOperatorRules(Entity x) => x switch
+        {
+            Intersectionf(var any1, var any1a) when any1 == any1a => any1,
+            Unionf(var any1, var any1a) when any1 == any1a => any1,
+            SetMinusf(var any1, var any1a) when any1 == any1a => Empty,
+            _ => x
+        };
+
+
         private static Entity SortAndGroup(IEnumerable<Entity> children, TreeAnalyzer.SortLevel level, Func<Entity, Entity, Entity> ctor)
         {
             var groups = new Dictionary<string, List<Entity>>();

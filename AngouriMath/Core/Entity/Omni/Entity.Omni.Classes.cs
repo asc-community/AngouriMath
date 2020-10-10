@@ -154,7 +154,7 @@ namespace AngouriMath
                     if (other.Count != Count)
                         return false;
                     foreach (var pair in elements)
-                        if (!other.Contains(pair.Value))
+                        if (!other.Contains(pair.Key))
                             return false;
                     return true;
                 }
@@ -256,6 +256,9 @@ namespace AngouriMath
                         && Right == other.Right
                         && LeftClosed == other.LeftClosed
                         && RightClosed == other.RightClosed);
+
+                public override int GetHashCode()
+                    => Left.GetHashCode() + LeftClosed.GetHashCode() + Right.GetHashCode() + RightClosed.GetHashCode();
 
                 public override bool IsSetFinite => false;
                 public override bool IsSetEmpty => false;

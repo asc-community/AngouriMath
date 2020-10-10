@@ -29,11 +29,16 @@ namespace AngouriMath.Core.Sets
         {
             if (set is FiniteSet another)
                 return FiniteSet.Intersect(finite, another);
-            var fsb = new FiniteSetBuilder(finite);
+            var fsb = new FiniteSetBuilder();
+            var amb = new FiniteSetBuilder();
             foreach (var elem in finite)
-                if (set.TryContains(elem, out var contains) && !contains)
-                    fsb.Remove(elem);
-            return fsb.IsEmpty ? Empty : fsb.ToFiniteSet().Intersect(set);
+            {
+                if (!set.TryContains(elem, out var contains))
+                    amb.Add(elem);
+                else if (contains)
+                    fsb.Add(elem);
+            }
+            return amb.IsEmpty ? fsb.ToFiniteSet() : amb.ToFiniteSet().Intersect(fsb.ToFiniteSet());
         }
 
         internal static Set IntersectIntervalAndInterval(Interval A, Interval B)

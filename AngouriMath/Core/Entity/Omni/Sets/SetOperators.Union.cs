@@ -40,7 +40,7 @@ namespace AngouriMath.Core.Sets
         internal static Set UniteIntervalAndInterval(Interval A, Interval B)
         {
             if (A.Left == B.Right && (A.LeftClosed || B.RightClosed))
-                return new Interval(B.Left, B.LeftClosed, A.Right, B.RightClosed);
+                return new Interval(B.Left, B.LeftClosed, A.Right, A.RightClosed);
             if (A.Right == B.Left && (A.RightClosed || B.LeftClosed))
                 return new Interval(A.Left, A.LeftClosed, B.Right, B.RightClosed);
             if (A.Left is not Real aLeft ||
