@@ -15,7 +15,7 @@
 
 using System.Runtime.CompilerServices;
 using PeterO.Numbers;
-[assembly: InternalsVisibleTo("DotnetBenchmark")]
+//[assembly: InternalsVisibleTo("DotnetBenchmark")]
 
 namespace AngouriMath
 {

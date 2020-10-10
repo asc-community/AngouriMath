@@ -865,5 +865,25 @@ namespace AngouriMath
             public static Tensor? BuildTruthTable(Entity expression, params Variable[] variables)
                 => BooleanSolver.BuildTruthTable(expression, variables);
         }
+
+        public static class Utils
+        {
+            public static Entity SmartExpandOver(Entity expr, Variable x)
+            {
+                var linChildren = Sumf.LinearChildren(expr);
+                
+                List<Entity> nodes = new();
+
+                foreach (var linChild in linChildren)
+                {
+                    var children = TreeAnalyzer.SmartExpandOver(linChild, n => n.ContainsNode(n));
+                    if (children is null)
+                        return expr;
+                    nodes.AddRange(children);
+                }
+
+                return TreeAnalyzer.MultiHangBinary(nodes, (a, b) => a + b);
+            }
+        }
     }
 }

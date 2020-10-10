@@ -216,9 +216,9 @@ Console.WriteLine(set);
 
 #### <a name="sets"></a>Work with sets
 ```cs
-var A = new Set(3, 4, (5, 6)); // {3, 4} | [5; 6]
-var B = new Set((x, MathS.Sqrt(x)), 4);
-var C = (A | B) & A;
+Entity setA = @"{ 1, 2, 3 } \/ [5; 6)"
+Entity setB = @"RR \ { x : x2 > 0 and x < y }";
+Entity setC = setA.Unite(setB);
 ```
 
 #### <a name="numb"></a>Work with numbers

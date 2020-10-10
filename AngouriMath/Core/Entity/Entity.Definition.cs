@@ -20,7 +20,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-[assembly: InternalsVisibleTo("Playground")]
+//[assembly: InternalsVisibleTo("Playground, PublicKey=")]
 
 namespace AngouriMath.Core
 {

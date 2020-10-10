@@ -118,7 +118,7 @@ namespace UnitTests.Algebra
             Entity toRepl = func + "(x2 + 3)";
             Entity expr = MathS.Sqr(toRepl) + 0.3 * toRepl - 0.1 * MathS.Var("a");
             var roots = expr.SolveEquation(x);
-            roots = (Set)roots.InnerSimplify();
+            roots = (Set)roots.InnerSimplified;
             var finite = Assert.IsType<FiniteSet>(roots);
             AssertRootCount(finite, rootAmount);
             foreach (var root in finite)

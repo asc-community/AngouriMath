@@ -3,7 +3,7 @@
 using System;
 using System.Collections.Generic;
 using PeterO.Numbers;
-[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests")]
+//[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests")]
 
 namespace AngouriMath
 {
