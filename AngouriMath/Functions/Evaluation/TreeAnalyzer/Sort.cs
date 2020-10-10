@@ -283,6 +283,12 @@ namespace AngouriMath
                 private protected override string SortHashName(SortLevel level)
                     => level == SortLevel.LOW_LEVEL ? "setminus_" : "";
             }
+
+            partial record Inf
+            {
+                private protected override string SortHashName(SortLevel level)
+                    => level == SortLevel.LOW_LEVEL ? "in_" : "";
+            }
         }
     }
 }

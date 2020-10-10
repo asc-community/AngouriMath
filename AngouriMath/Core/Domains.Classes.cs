@@ -220,6 +220,11 @@ namespace AngouriMath
             {
                 public override Domain Codomain { get; protected init; } = Domain.Any;
             }
+
+            partial record Inf
+            {
+                public override Domain Codomain { get; protected init; } = Domain.Boolean;
+            }
         }
     }
 }

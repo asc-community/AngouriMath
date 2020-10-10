@@ -325,7 +325,7 @@ namespace AngouriMath
             /// Special set is something that cannot be easily expressed in other
             /// types of sets.
             /// </summary>
-            public partial record SpecialSet(Domain SetType) : Set
+            public sealed partial record SpecialSet(Domain SetType) : Set
             {
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(this);
@@ -364,7 +364,7 @@ namespace AngouriMath
             /// Unites two sets
             /// It is true that an entity is in a union if it is at least in one of union's operands
             /// </summary>
-            public partial record Unionf(Entity Left, Entity Right) : Set
+            public sealed partial record Unionf(Entity Left, Entity Right) : Set
             {
                 private Unionf New(Entity left, Entity right)
                     => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Unionf(left, right);
@@ -405,7 +405,7 @@ namespace AngouriMath
             /// Finds the intersection of two sets
             /// It is true that an entity is in an intersection if it is in both of intersection's operands
             /// </summary>
-            public partial record Intersectionf(Entity Left, Entity Right) : Set
+            public sealed partial record Intersectionf(Entity Left, Entity Right) : Set
             {
                 private Intersectionf New(Entity left, Entity right)
                     => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Intersectionf(left, right);
@@ -445,7 +445,7 @@ namespace AngouriMath
             /// Finds A & !B
             /// It is true that an entity is in SetMinus if it is in Left but not in Right
             /// </summary>
-            public partial record SetMinusf(Entity Left, Entity Right) : Set
+            public sealed partial record SetMinusf(Entity Left, Entity Right) : Set
             {
                 private SetMinusf New(Entity left, Entity right)
                     => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new SetMinusf(left, right);

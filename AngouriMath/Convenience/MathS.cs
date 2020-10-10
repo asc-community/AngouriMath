@@ -734,6 +734,13 @@ namespace AngouriMath
             /// <paramref name="rightClosed"/> shows whether <paramref name="to"/> included.
             /// </summary>
             public static Interval Interval(Entity from, bool leftClosed, Entity to, bool rightClosed) => new(from, leftClosed, to, rightClosed);
+
+            /// <summary>
+            /// Creates a node of whether the given element belongs to the given set
+            /// </summary>
+            /// <returns>A node</returns>
+            public static Entity ElementInSet(Entity element, Entity set)
+                => element.In(set);
         }
 
         /// <summary>

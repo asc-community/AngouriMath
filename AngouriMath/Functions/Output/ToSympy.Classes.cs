@@ -271,6 +271,12 @@ namespace AngouriMath
                 internal override string ToSymPy()
                     => $"Complement({Left.ToSymPy()}, {Right.ToSymPy()})";
             }
+
+            partial record Inf
+            {
+                internal override string ToSymPy()
+                    => $"{Element.ToSymPy(Element.Priority < Priority)} in {SupSet.ToSymPy(SupSet.Priority < Priority)}";
+            }
         }
     }
 }

@@ -361,6 +361,14 @@ namespace AngouriMath
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                     => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.2");
             }
+
+            partial record Inf
+            {
+                // TODO: CSet is needed here => InvertNode to return a Set, not an IEnumerable
+                // f(x) in A = value
+                private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                    => throw FutureReleaseException.Raised("InvertNode should return set", "1.2");
+            }
         }
     }
 }

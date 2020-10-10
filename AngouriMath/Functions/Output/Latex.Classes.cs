@@ -413,6 +413,12 @@ namespace AngouriMath
                 public override string Latexise()
                     => $@"{Left.Latexise(Left.Priority < Priority)} \setminus {Right.Latexise(Right.Priority < Priority)}";
             }
+
+            partial record Inf
+            {
+                public override string Latexise()
+                    => $@"{Element.Stringize(Element.Priority < Priority)} \in {SupSet.Stringize(SupSet.Priority < Priority)}";
+            }
         }
     }
 }

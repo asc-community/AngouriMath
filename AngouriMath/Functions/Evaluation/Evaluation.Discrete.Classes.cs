@@ -294,5 +294,29 @@ namespace AngouriMath
                     return New(Left.InnerSimplified, Right.InnerSimplified);
             }
         }
+
+        partial record Set
+        {
+            partial record Inf
+            {
+                protected override Entity InnerEval()
+                {
+                    if (SupSet.Evaled is not Set set)
+                        return New(Element.Evaled, SupSet.Evaled);
+                    if (!set.TryContains(Element, out var contains))
+                        return New(Element.Evaled, SupSet.Evaled);
+                    return contains;
+                }
+
+                internal override Entity InnerSimplify()
+                {
+                    if (SupSet.InnerSimplified is not Set set)
+                        return New(Element.InnerSimplified, SupSet.InnerSimplified);
+                    if (!set.TryContains(Element, out var contains))
+                        return New(Element.InnerSimplified, SupSet.InnerSimplified);
+                    return contains;
+                }
+            }
+        }
     }
 }

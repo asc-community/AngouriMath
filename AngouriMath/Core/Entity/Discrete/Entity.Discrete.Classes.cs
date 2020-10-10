@@ -220,5 +220,23 @@ namespace AngouriMath
         }
 
         #endregion
+
+        #region Set statements
+        partial record Set
+        {
+            /// <summary>
+            /// This node represents whether the given element is in the set
+            /// </summary>
+            public sealed partial record Inf(Entity Element, Entity SupSet) : Statement
+            {
+                public override Priority Priority => Priority.ContainsIn;
+                public Inf New(Entity element, Entity supSet)
+                    => ReferenceEquals(Element, element) && ReferenceEquals(SupSet, supSet) ? this : new(Element, SupSet);
+                public override Entity Replace(Func<Entity, Entity> func)
+                    => func(New(Element.Replace(func), SupSet.Replace(func)));
+                protected override Entity[] InitDirectChildren() => new[] { Element, SupSet };
+            }
+        }
+        #endregion
     }
 }

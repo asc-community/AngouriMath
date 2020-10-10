@@ -243,6 +243,12 @@ namespace AngouriMath
                 public override Entity Substitute(Entity x, Entity value)
                     => x == this ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
             }
+
+            partial record Inf
+            {
+                public override Entity Substitute(Entity x, Entity value)
+                    => x == this ? value : New(Element.Substitute(x, value), SupSet.Substitute(x, value));
+            }
         }
 
 

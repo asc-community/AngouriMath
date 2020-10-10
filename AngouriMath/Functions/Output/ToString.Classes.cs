@@ -500,6 +500,18 @@ namespace AngouriMath
                 }
                 public override string ToString() => Stringize();
             }
+
+            partial record Inf
+            {
+                public override string Stringize()
+                    => $@"{Element.Stringize(Element.Priority < Priority)} in {SupSet.Stringize(SupSet.Priority < Priority)}";
+                protected override bool PrintMembers(StringBuilder builder)
+                {
+                    builder.Append(Stringize());
+                    return false;
+                }
+                public override string ToString() => Stringize();
+            }
         }
     }
 }
