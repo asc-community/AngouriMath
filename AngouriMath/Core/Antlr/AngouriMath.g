@@ -170,7 +170,7 @@ Boolean nodes
 
 negate_expression returns[Entity value]
     : 'not' op = in_operator { $value = !$op.value; }
-    | 'not' op = in_operator { $value = !$op.value; }
+    | 'not' opn = negate_expression { $value = !$opn.value; }
     | op = in_operator { $value = $op.value; }
     ;
 

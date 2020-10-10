@@ -1037,8 +1037,12 @@ internal partial class AngouriMathParser : Parser {
 	internal partial class Negate_expressionContext : ParserRuleContext {
 		public Entity value;
 		public In_operatorContext op;
+		public Negate_expressionContext opn;
 		public In_operatorContext in_operator() {
 			return GetRuleContext<In_operatorContext>(0);
+		}
+		public Negate_expressionContext negate_expression() {
+			return GetRuleContext<Negate_expressionContext>(0);
 		}
 		public Negate_expressionContext(ParserRuleContext parent, int invokingState)
 			: base(parent, invokingState)
@@ -1075,8 +1079,8 @@ internal partial class AngouriMathParser : Parser {
 				EnterOuterAlt(_localctx, 2);
 				{
 				State = 223; Match(T__19);
-				State = 224; _localctx.op = in_operator();
-				 _localctx.value =  !_localctx.op.value; 
+				State = 224; _localctx.opn = negate_expression();
+				 _localctx.value =  !_localctx.opn.value; 
 				}
 				break;
 			case 3:
@@ -2336,7 +2340,7 @@ internal partial class AngouriMathParser : Parser {
 		'\x2', '\xDD', '\xDE', '\a', '\x16', '\x2', '\x2', '\xDE', '\xDF', '\x5', 
 		'\x18', '\r', '\x2', '\xDF', '\xE0', '\b', '\xE', '\x1', '\x2', '\xE0', 
 		'\xE9', '\x3', '\x2', '\x2', '\x2', '\xE1', '\xE2', '\a', '\x16', '\x2', 
-		'\x2', '\xE2', '\xE3', '\x5', '\x18', '\r', '\x2', '\xE3', '\xE4', '\b', 
+		'\x2', '\xE2', '\xE3', '\x5', '\x1A', '\xE', '\x2', '\xE3', '\xE4', '\b', 
 		'\xE', '\x1', '\x2', '\xE4', '\xE9', '\x3', '\x2', '\x2', '\x2', '\xE5', 
 		'\xE6', '\x5', '\x18', '\r', '\x2', '\xE6', '\xE7', '\b', '\xE', '\x1', 
 		'\x2', '\xE7', '\xE9', '\x3', '\x2', '\x2', '\x2', '\xE8', '\xDD', '\x3', 
