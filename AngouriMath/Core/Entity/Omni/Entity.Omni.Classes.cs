@@ -58,7 +58,7 @@ namespace AngouriMath
                     foreach (var el in Elements)
                     {
                         var changed = func(el);
-                        if (ReferenceEquals(changed, el))
+                        if (!ReferenceEquals(changed, el))
                             hasAnythingChanged = true;
                         newElements.Add(changed);
                     }
