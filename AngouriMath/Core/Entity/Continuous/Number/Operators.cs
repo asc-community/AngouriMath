@@ -185,7 +185,7 @@ namespace AngouriMath
                 for (int i = 0; i < rootPower; i++)
                 {
                     var angle = Rational.Create(i * 2, rootPower) * MathS.pi;
-                    yield return (MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplify();
+                    yield return (MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplified;
                 }
             }
             /// <summary>

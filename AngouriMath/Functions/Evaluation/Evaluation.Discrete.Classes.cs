@@ -17,7 +17,7 @@ namespace AngouriMath
         partial record Boolean
         {
             protected override Entity InnerEval() => this;
-            internal override Entity InnerSimplify() => this;
+            protected override Entity InnerSimplify() => this;
         }
 
         partial record Notf
@@ -28,7 +28,7 @@ namespace AngouriMath
                     return !(bool)b; // there's no cost in casting
                 return New(Argument.Evaled);
             }
-            internal override Entity InnerSimplify() => InnerEvalWithCheck();
+            protected override Entity InnerSimplify() => InnerEvalWithCheck();
         }
 
         partial record Andf
@@ -58,7 +58,7 @@ namespace AngouriMath
                     return res;
                 return New(Left.Evaled, Right.Evaled);
             }
-            internal override Entity InnerSimplify()
+            protected override Entity InnerSimplify()
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
@@ -93,7 +93,7 @@ namespace AngouriMath
                     return res;
                 return New(Left.Evaled, Right.Evaled);
             }
-            internal override Entity InnerSimplify()
+            protected override Entity InnerSimplify()
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
@@ -123,7 +123,7 @@ namespace AngouriMath
                     return res;
                 return New(Left.Evaled, Right.Evaled);
             }
-            internal override Entity InnerSimplify()
+            protected override Entity InnerSimplify()
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
@@ -159,7 +159,7 @@ namespace AngouriMath
                 return New(Assumption.Evaled, Conclusion.Evaled);
             }
 
-            internal override Entity InnerSimplify()
+            protected override Entity InnerSimplify()
             {
                 if (GoodResult(Assumption, Conclusion, out var res))
                     return res;
@@ -175,7 +175,7 @@ namespace AngouriMath
                     return New(Left.Evaled, Right.Evaled);
                 return Left.Evaled == Right.Evaled;
             }
-            internal override Entity InnerSimplify()
+            protected override Entity InnerSimplify()
             {
                if (Left == Right)
                     return true;
@@ -201,7 +201,7 @@ namespace AngouriMath
                     return New(Left.Evaled, Right.Evaled);
             }
 
-            internal override Entity InnerSimplify()
+            protected override Entity InnerSimplify()
             {
                 var res = InnerEval();
                 if (res is Boolean)
@@ -226,7 +226,7 @@ namespace AngouriMath
                     return New(Left.Evaled, Right.Evaled);
             }
 
-            internal override Entity InnerSimplify()
+            protected override Entity InnerSimplify()
             {
                 var res = InnerEval();
                 if (res is Boolean)
@@ -251,7 +251,7 @@ namespace AngouriMath
                     return New(Left.Evaled, Right.Evaled);
             }
 
-            internal override Entity InnerSimplify()
+            protected override Entity InnerSimplify()
             {
                 var res = InnerEval();
                 if (res is Boolean)
@@ -276,7 +276,7 @@ namespace AngouriMath
                     return New(Left.Evaled, Right.Evaled);
             }
 
-            internal override Entity InnerSimplify()
+            protected override Entity InnerSimplify()
             {
                 var res = InnerEval();
                 if (res is Boolean)
@@ -299,7 +299,7 @@ namespace AngouriMath
                     return contains;
                 }
 
-                internal override Entity InnerSimplify()
+                protected override Entity InnerSimplify()
                 {
                     if (SupSet.InnerSimplified is not Set set)
                         return New(Element.InnerSimplified, SupSet.InnerSimplified);

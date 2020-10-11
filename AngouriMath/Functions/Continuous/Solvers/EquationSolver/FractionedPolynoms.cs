@@ -30,7 +30,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var fractioned = new List<(Entity multiplier, List<(Entity main, Integer pow)> fracs)>();
 
             // Use PowerRules to replace sqrt(f(x))^2 => f(x)
-            foreach (var child in children.Select(c => c.InnerSimplify().Replace(Patterns.PowerRules)))
+            foreach (var child in children.Select(c => c.InnerSimplified.Replace(Patterns.PowerRules)))
             {
                 (Entity multiplier, List<(Entity main, Integer pow)> fracs) potentialFraction;
                 potentialFraction.multiplier = 1;
@@ -44,7 +44,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     }
                     if (num is not Rational fracNum)
                         return false; // (x + 1)^0.2348728
-                    var newChild = MathS.Pow(@base, fracNum.ERational.Numerator).InnerSimplify();
+                    var newChild = MathS.Pow(@base, fracNum.ERational.Numerator).InnerSimplified;
                     var den = fracNum.ERational.Denominator;
                     potentialFraction.fracs.Add((newChild, den));
                 }

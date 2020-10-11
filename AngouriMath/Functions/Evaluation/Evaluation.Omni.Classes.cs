@@ -21,7 +21,7 @@ namespace AngouriMath
                 protected override Entity InnerEval()
                     => Apply(el => el.Evaled);
 
-                internal override Entity InnerSimplify()
+                protected override Entity InnerSimplify()
                     => Apply(el => el.InnerSimplified);
             }
 
@@ -36,7 +36,7 @@ namespace AngouriMath
                 protected override Entity InnerEval()
                     => New(Left.Evaled, Right.Evaled).IfEqualEndsThenCollapse();
 
-                internal override Entity InnerSimplify()
+                protected override Entity InnerSimplify()
                     => New(Left.InnerSimplified, Right.InnerSimplified).IfEqualEndsThenCollapse();
             }
 
@@ -45,7 +45,7 @@ namespace AngouriMath
                 protected override Entity InnerEval()
                     => Simplificator.PickSimplest(New(Var, Predicate.Evaled), InnerSimplifyWithCheck());
 
-                internal override Entity InnerSimplify()
+                protected override Entity InnerSimplify()
                 {
                     if (!Predicate.EvaluableBoolean)
                         return New(Var, Predicate.InnerSimplified);
@@ -59,7 +59,7 @@ namespace AngouriMath
                 protected override Entity InnerEval()
                     => this;
 
-                internal override Entity InnerSimplify()
+                protected override Entity InnerSimplify()
                     => this;
             }
 
@@ -68,7 +68,7 @@ namespace AngouriMath
                 protected override Entity InnerEval()
                     => InnerSimplified;
 
-                internal override Entity InnerSimplify()
+                protected override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
                         (FiniteSet setLeft, Set setRight) => SetOperators.UniteFiniteSetAndSet(setLeft, setRight),
@@ -84,7 +84,7 @@ namespace AngouriMath
                 protected override Entity InnerEval()
                     => InnerSimplified;
 
-                internal override Entity InnerSimplify()
+                protected override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
                         (FiniteSet setLeft, Set setRight) => SetOperators.IntersectFiniteSetAndSet(setLeft, setRight),
@@ -100,7 +100,7 @@ namespace AngouriMath
                 protected override Entity InnerEval()
                     => InnerSimplified;
 
-                internal override Entity InnerSimplify()
+                protected override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
                         (Set setLeft, FiniteSet setRight) => SetOperators.SetSubtractSetAndFiniteSet(setLeft, setRight),

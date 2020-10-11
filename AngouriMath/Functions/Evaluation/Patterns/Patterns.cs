@@ -10,11 +10,8 @@
 using System;
 using System.Linq;
 using static AngouriMath.Entity;
-using static AngouriMath.Entity.Number;
-using static AngouriMath.Entity.Boolean;
 using System.Collections.Generic;
 using static AngouriMath.Entity.Set;
-using AngouriMath.Core;
 
 namespace AngouriMath.Functions
 {

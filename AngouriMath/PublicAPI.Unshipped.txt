@@ -429,7 +429,7 @@ override AngouriMath.Entity.Powf.Priority.get -> AngouriMath.Core.Priority
 override AngouriMath.Entity.Powf.Replace(System.Func<AngouriMath.Entity!, AngouriMath.Entity!>! func) -> AngouriMath.Entity!
 override AngouriMath.Entity.Signumf.Derive(AngouriMath.Entity.Variable! variable) -> AngouriMath.Entity!
 override AngouriMath.Entity.Signumf.InnerEval() -> AngouriMath.Entity!
-override AngouriMath.Entity.Signumf.InnerSimplify() -> AngouriMath.Entity!
+override AngouriMath.Entity.Signumf.InnerSimplified -> AngouriMath.Entity!
 override AngouriMath.Entity.Signumf.Latexise() -> string!
 override AngouriMath.Entity.Sinf.Derive(AngouriMath.Entity.Variable! variable) -> AngouriMath.Entity!
 override AngouriMath.Entity.Sinf.InitDirectChildren() -> AngouriMath.Entity![]!
