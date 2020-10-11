@@ -1,15 +1,10 @@
 ﻿using AngouriMath;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Xunit;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
-using static AngouriMath.MathS;
-using static AngouriMath.MathS.Sets;
 namespace UnitTests.Core.Sets
 {
-    public class CSetAndCSet
+    public sealed class CSetAndCSet
     {
         private readonly Set A = new ConditionalSet("x", "x > 0");
         private readonly Set A1 = new ConditionalSet("y", "y > 0");

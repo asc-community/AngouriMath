@@ -17,7 +17,7 @@ using Xunit;
 
 namespace UnitTests.PatternsTest
 {
-    public class TestTrigTableConsts
+    public sealed class TestTrigTableConsts
     {
         // TODO: Remove when we implement extra precision for rounding
         internal static void AssertEqualWithoutLast3Digits(Real expected, Real actual) =>

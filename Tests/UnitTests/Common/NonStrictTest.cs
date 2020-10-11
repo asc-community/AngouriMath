@@ -1,11 +1,9 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
-using AngouriMath.Functions;
 using Xunit;
 
 namespace UnitTests.Common
 {
-    public class NonStrictTest
+    public sealed class NonStrictTest
     {
         static readonly Entity.Variable x = nameof(x);
         [Fact]

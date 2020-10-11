@@ -4,7 +4,7 @@ using Xunit;
 
 namespace UnitTests.Common
 {
-    public class OperatorTest
+    public sealed class OperatorTest
     {
         [Fact] public void TestEq() => Assert.Equal(MathS.Var("x"), MathS.Var("x"));
         [Fact] public void TestIneq() => Assert.NotEqual(MathS.Var("x"), MathS.Var("y"));

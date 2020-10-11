@@ -3,7 +3,7 @@ using Xunit;
 
 namespace UnitTests.PatternsTest
 {
-    public class SimplifyTest
+    public sealed class SimplifyTest
     {
         static readonly Entity a = MathS.Var(nameof(a));
         static readonly Entity b = MathS.Var(nameof(b));

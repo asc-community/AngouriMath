@@ -6,7 +6,7 @@ using Xunit;
 namespace UnitTests.Discrete
 {
     using static AngouriMath.Entity;
-    public class BooleanSolver
+    public sealed class BooleanSolver
     {
         [Theory]
         [InlineData(10, "A & B -> C xor D -> not B")]

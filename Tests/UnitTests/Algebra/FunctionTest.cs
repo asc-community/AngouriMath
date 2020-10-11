@@ -5,7 +5,7 @@ using System.Globalization;
 
 namespace UnitTests.Algebra
 {
-    public class FunctionTest
+    public sealed class FunctionTest
     {
         // Testing function GetAllRoots
         // TODO: make it via [Theory]

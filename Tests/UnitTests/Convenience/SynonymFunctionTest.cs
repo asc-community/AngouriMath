@@ -4,12 +4,10 @@ using System.Linq;
 using System.Reflection;
 using Xunit;
 using AngouriMath.Extensions;
-using AngouriMath.Core;
-using static AngouriMath.Entity;
 
 namespace UnitTests.Convenience
 {
-    public class SynonymFunctionTest
+    public sealed class SynonymFunctionTest
     {
         private readonly Entity x = MathS.Var(nameof(x));
 

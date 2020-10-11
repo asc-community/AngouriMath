@@ -7,7 +7,7 @@ using System.Linq.Expressions;
 
 namespace DotnetBenchmark
 {
-    public class CacheCompiledFunc
+    public sealed class CacheCompiledFunc
     {
         private readonly FastExpression complexFunc;
         private readonly Func<Complex, Complex> linqComp;

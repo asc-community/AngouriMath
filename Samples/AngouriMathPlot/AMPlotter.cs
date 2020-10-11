@@ -6,7 +6,7 @@ using ScottPlot;
 
 namespace AngouriMathPlot
 {
-    public class AMPlotter
+    public sealed class AMPlotter
     {
         private readonly FormsPlot destination;
         private double[] dataX = Array.Empty<double>();

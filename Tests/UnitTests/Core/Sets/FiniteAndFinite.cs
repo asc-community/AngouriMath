@@ -5,7 +5,7 @@ using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Core.Sets
 {
-    public class FiniteAndFinite
+    public sealed class FiniteAndFinite
     {
         private readonly Set A = new FiniteSet(1,   3, 5);
         private readonly Set B = new FiniteSet(1,      5);

@@ -2,13 +2,11 @@ using AngouriMath;
 using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
-using static AngouriMath.Entity;
-using AngouriMath.Extensions;
 using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Convenience
 {
-    public class LatexTests
+    public sealed class LatexTests
     {
         private static readonly Entity x = MathS.Var(nameof(x));
         private static readonly Entity frac34 = Rational.Create(3, 4);

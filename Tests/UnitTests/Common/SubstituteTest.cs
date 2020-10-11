@@ -3,7 +3,7 @@ using Xunit;
 
 namespace UnitTests.Common
 {
-    public class SubstituteTest
+    public sealed class SubstituteTest
     {
         static readonly Entity.Variable x = nameof(x);
         [Fact]
