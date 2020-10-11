@@ -11,6 +11,10 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: 'recursive'
+    - name: Setup .NET Core 3.1
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.302
     - name: Setup .NET 5 # The dotnet CLI above is replaced by this but the runtime is kept
       uses: actions/setup-dotnet@v1
       with:
