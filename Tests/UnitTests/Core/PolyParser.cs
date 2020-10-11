@@ -10,7 +10,7 @@ namespace UnitTests.Core
         // Workaround to avoid ToString which results in SO in RC1
         private void AssertEntityEqual(Entity a, Entity b)
         {
-            b = b.InnerSimplify();
+            b = b.InnerSimplified;
             if (a != b)
                 Assert.False(true, $"{a.Stringize()} is not {b.Stringize()}");
         }
@@ -23,7 +23,7 @@ namespace UnitTests.Core
         [Fact]
         public void TestLinear1()
         {
-            if (TreeAnalyzer.TryGetPolyLinear("a x + b", "x", out var a, out var b))
+            if (MathS.Utils.TryGetPolyLinear("a x + b", "x", out var a, out var b))
             {
                 AssertEntityEqual("a", a);
                 AssertEntityEqual("b", b);
@@ -35,7 +35,7 @@ namespace UnitTests.Core
         [Fact]
         public void TestLinear2()
         {
-            if (TreeAnalyzer.TryGetPolyLinear("a x - b", "x", out var a, out var b))
+            if (MathS.Utils.TryGetPolyLinear("a x - b", "x", out var a, out var b))
             {
                 AssertEntityEqual("a", a);
                 AssertEntityEqual("-b", b);
@@ -47,7 +47,7 @@ namespace UnitTests.Core
         [Fact]
         public void TestLinear3()
         {
-            if (TreeAnalyzer.TryGetPolyLinear("a x - b + 3x + x", "x", out var a, out var b))
+            if (MathS.Utils.TryGetPolyLinear("a x - b + 3x + x", "x", out var a, out var b))
             {
                 AssertEntityEqual("a + 3 + 1", a);
                 AssertEntityEqual("-b", b);
@@ -59,19 +59,19 @@ namespace UnitTests.Core
         [Fact]
         public void TestLinear4()
         {
-            Assert.False(TreeAnalyzer.TryGetPolyLinear("a x - b + 3x + x2", "x", out _, out _));
+            Assert.False(MathS.Utils.TryGetPolyLinear("a x - b + 3x + x2", "x", out _, out _));
         }
 
         [Fact]
         public void TestLinear5()
         {
-            Assert.False(TreeAnalyzer.TryGetPolyLinear("a x - b + 3x + x^(-999)", "x", out _, out _));
+            Assert.False(MathS.Utils.TryGetPolyLinear("a x - b + 3x + x^(-999)", "x", out _, out _));
         }
 
         [Fact]
         public void TestQuadratic1()
         {
-            if (TreeAnalyzer.TryGetPolyQuadratic("a x2 + b x + c", "x", out var a, out var b, out var c))
+            if (MathS.Utils.TryGetPolyQuadratic("a x2 + b x + c", "x", out var a, out var b, out var c))
             {
                 AssertEntityEqual("a", a);
                 AssertEntityEqual("b", b);
@@ -84,7 +84,7 @@ namespace UnitTests.Core
         [Fact]
         public void TestQuadratic2()
         {
-            if (TreeAnalyzer.TryGetPolyQuadratic("a x2 + b x2 + c", "x", out var a, out var b, out var c))
+            if (MathS.Utils.TryGetPolyQuadratic("a x2 + b x2 + c", "x", out var a, out var b, out var c))
             {
                 AssertEntityEqual("a + b", a);
                 AssertEntityEqual("0", b);
