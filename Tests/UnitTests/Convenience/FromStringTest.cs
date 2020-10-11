@@ -104,7 +104,6 @@ namespace UnitTests.Convenience
         [Fact] public void TestInequality50() => Assert.Equal(x <= y, FromString("x <= y"));
         [Fact] public void TestInequality51() => Assert.Equal(x.Equalizes(y), FromString("x = y"));
         [Fact] public void TestInequality52() => Assert.Equal((x > y).Equalizes(x < y), FromString("x > y = x < y"));
-        [Fact] public void TestInequality53() => Assert.Equal(x.Equalizes(y).Equalizes(x), FromString("x = y = x"));
         [Fact] public void TestInterval1() => Assert.Equal(new Interval(x, true, y, true), FromString("[x; y]"));
         [Fact] public void TestInterval2() => Assert.Equal(new Interval(x, false, y, true), FromString("(x; y]"));
         [Fact] public void TestInterval3() => Assert.Equal(new Interval(x, true, y, false), FromString("[x; y)"));
