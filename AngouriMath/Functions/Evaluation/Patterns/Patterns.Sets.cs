@@ -35,7 +35,6 @@ namespace AngouriMath.Functions
             FiniteSet potentialBB when potentialBB == FullBooleanSet => SpecialSet.Create(Domain.Boolean),
             Interval(var left, _, var right, _) interval when left == Real.NegativeInfinity && right == Real.PositiveInfinity => SpecialSet.Create(interval.Codomain),
 
-
             _ => x
         };
     }

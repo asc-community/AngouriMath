@@ -6,5 +6,5 @@ using static AngouriMath.MathS;
 using AngouriMath.Extensions;
 using static System.Console;
 
-WriteLine("2x + 3 >= 0".Solve("x").Simplify());
+WriteLine("x2 + 3x - 3 >= 0".Solve("x").InnerSimplified);
 

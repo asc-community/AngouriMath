@@ -18,7 +18,7 @@ namespace AngouriMath
         public Set Solve(Variable var)
         {
             if (this is Statement)
-                return StatementSolver.Solve(this, var);
+                return (Set)StatementSolver.Solve(this, var).InnerSimplified;
             if (this == var)
                 return new FiniteSet(Boolean.True);
             throw new InvalidOperationException("There should be statement to be true");

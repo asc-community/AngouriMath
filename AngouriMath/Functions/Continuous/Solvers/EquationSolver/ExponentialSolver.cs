@@ -37,7 +37,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             if (expr.ContainsNode(x)) return null; // cannot be solved, not a pure exponential
 
-            expr = expr.InnerSimplify();
+            expr = expr.InnerSimplified;
             if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els && els.Any())
                 return (Entity.Set)els.Select(sol => MathS.Pow(MathS.e, x).Invert(sol, x).ToSet()).Unite().InnerSimplified;
             else
@@ -56,7 +56,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 Entity outerPower = 1;
                 foreach(var mult in mults)
                 {
-                    if (mult.InnerSimplify() is Entity.Number)
+                    if (mult.InnerSimplified is Entity.Number)
                         outerPower = outerPower * mult;
                     else
                         innerPower = innerPower * mult;
@@ -82,7 +82,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             if (expr.ContainsNode(x)) return null; // cannot be solved, not a multiplicative exponenial equation
 
-            expr = expr.InnerSimplify();
+            expr = expr.InnerSimplified;
             if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els && els.Any())
                 return (Entity.Set)els.Select(sol => substitution.Invert(sol, x).ToSet()).Unite().InnerSimplified;
             else
