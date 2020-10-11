@@ -1,11 +1,10 @@
 ﻿using AngouriMath;
-using static AngouriMath.Entity;
 using AngouriMath.Extensions;
 using Xunit;
 
 namespace UnitTests.Core
 {
-    public class Domains
+    public sealed class Domains
     {
         [Theory]
         [InlineData("domain(sqrt(-3), RR)")]

@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using System.Text;
 
 namespace Utils
@@ -14,7 +12,7 @@ namespace Utils
             var finalPath = Path.Combine(ANTLR_PATH, path);
 
             var textSb = new StringBuilder(File.ReadAllText(finalPath));
-            textSb.Replace("public class", "internal class");
+            textSb.Replace("public sealed class", "internal class");
             textSb.Replace("public partial class", "internal partial class");
             textSb.Replace("public interface", "internal interface");
             File.WriteAllText(finalPath, textSb.ToString());

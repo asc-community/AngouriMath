@@ -13,13 +13,12 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath;
 using AngouriMath.Extensions;
 using Xunit;
 
 namespace UnitTests.PatternsTest
 {
-    public class BooleanSimplify
+    public sealed class BooleanSimplify
     {
         [Theory]
         [InlineData("true and true", "true")]

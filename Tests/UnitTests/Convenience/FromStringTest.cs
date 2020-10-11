@@ -1,7 +1,6 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using System.Data.Common;
 using System.Linq;
 using Xunit;
 using static AngouriMath.Entity.Number;
@@ -10,7 +9,7 @@ using static AngouriMath.MathS;
 
 namespace UnitTests.Convenience
 {
-    public class FromStringTest
+    public sealed class FromStringTest
     {
         public static readonly Entity.Variable x = Var(nameof(x));
         public static readonly Entity.Variable y = Var(nameof(y));
@@ -105,7 +104,6 @@ namespace UnitTests.Convenience
         [Fact] public void TestInequality50() => Assert.Equal(x <= y, FromString("x <= y"));
         [Fact] public void TestInequality51() => Assert.Equal(x.Equalizes(y), FromString("x = y"));
         [Fact] public void TestInequality52() => Assert.Equal((x > y).Equalizes(x < y), FromString("x > y = x < y"));
-        [Fact] public void TestInequality53() => Assert.Equal(x.Equalizes(y).Equalizes(x), FromString("x = y = x"));
         [Fact] public void TestInterval1() => Assert.Equal(new Interval(x, true, y, true), FromString("[x; y]"));
         [Fact] public void TestInterval2() => Assert.Equal(new Interval(x, false, y, true), FromString("(x; y]"));
         [Fact] public void TestInterval3() => Assert.Equal(new Interval(x, true, y, false), FromString("[x; y)"));
@@ -124,7 +122,8 @@ namespace UnitTests.Convenience
         [Fact] public void TestPlusInfinity2() => Assert.Equal(Real.PositiveInfinity + (Entity)2, FromString("+oo + 2"));
         [Fact] public void TestMinusInfinity1() => Assert.Equal(Real.NegativeInfinity, FromString("-oo"));
         [Fact] public void TestMinusInfinity2() => Assert.Equal(Real.NegativeInfinity + (Entity)2, FromString("-oo + 2"));
-
+        [Fact] public void TestEquality1() => Assert.Equal(x.Equalizes(y) & y.Equalizes(x), FromString("x = y = x"));
+        [Fact] public void TestEquality2() => Assert.Equal(x.Equalizes(y).Equalizes(x), FromString("(x = y) = x"));
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {
             var s = $"x {signLeft} y {signRight} z";

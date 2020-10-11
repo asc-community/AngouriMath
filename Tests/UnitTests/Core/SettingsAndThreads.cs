@@ -7,7 +7,7 @@ using static AngouriMath.Entity;
 
 namespace UnitTests.Core
 {
-    public class SettingsAndThreads
+    public sealed class SettingsAndThreads
     {
         [Fact]
         public void SettingValue1()

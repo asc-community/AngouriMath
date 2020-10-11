@@ -1,10 +1,5 @@
-﻿using System;
-using AngouriMath;
-using static System.Console;
-using static AngouriMath.Entity;
-using static AngouriMath.Entity.Set;
+﻿using AngouriMath.Extensions;
 using static AngouriMath.MathS;
-using AngouriMath.Extensions;
-using static AngouriMath.Entity.Number;
+using static System.Console;
 
-WriteLine(@"BB".ToEntity());
+WriteLine("a = b = c = d = e".ToEntity());

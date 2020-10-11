@@ -5,7 +5,7 @@ using static AngouriMath.Entity.Number;
 
 namespace UnitTests.Algebra
 {
-    public class SolveSystem
+    public sealed class SolveSystem
     {
         void AssertSystemSolvable(Entity[] equations, Entity.Variable[] vars, int rootCount, Integer? ToSub = null)
         {

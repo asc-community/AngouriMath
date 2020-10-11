@@ -4,7 +4,7 @@ using Xunit;
 
 namespace UnitTests.Discrete
 {
-    public class EqualityInequalityEval
+    public sealed class EqualityInequalityEval
     {
         [Theory]
         [InlineData("5 > 3")]

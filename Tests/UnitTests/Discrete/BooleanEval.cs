@@ -5,7 +5,7 @@ namespace UnitTests.Discrete
 {
     using static Entity.Boolean;
 
-    public class BooleanEval
+    public sealed class BooleanEval
     {
         private void Test(Entity expr, Entity.Boolean expected)
             => Assert.Equal(expected, expr.EvalBoolean());

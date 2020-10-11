@@ -10,7 +10,7 @@ namespace DotnetBenchmark
     // DO NOT FORGET TO SWITCH TO RELEASE!
     [ArtifactsPath(@"./benchmark_results.csv")]
     [CsvExporter(CsvSeparator.Semicolon)]
-    public class CommonFunctionsInterVersion
+    public sealed class CommonFunctionsInterVersion
     {
         // Testing parsing
         [Benchmark] public void ParseEasy() => "1 + 2 / x + 2 / (y + x)".ToEntity();

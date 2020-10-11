@@ -1,22 +1,15 @@
-﻿
-/* Copyright (c) 2019-2020 Angourisoft
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
- * files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy,
- * modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software
- * is furnished to do so, subject to the following conditions:
- *
+﻿/*
+ * Copyright (c) 2019-2020 Angourisoft
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+ * 
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
- * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
- * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AngouriMath.Core;
 using PeterO.Numbers;
 
 namespace AngouriMath.Functions
@@ -30,6 +23,15 @@ namespace AngouriMath.Functions
 
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
         internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level).First().InnerSimplify();
+
+        internal static Entity SimplifyChildren(Entity expr)
+        {
+            return expr.Replace(
+                    Patterns.InvertNegativePowers,
+                    Patterns.InvertNegativeMultipliers,
+                    Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL))
+                .InnerSimplified.Replace(Patterns.CommonRules).InnerSimplified;
+        }
 
         /// <summary>Finds all alternative forms of an expression</summary>
         internal static IEnumerable<Entity> Alternate(Entity src, int level)
@@ -75,11 +77,7 @@ namespace AngouriMath.Functions
                 if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
 
-                AddHistory(res = res.Replace(
-                    Patterns.InvertNegativePowers,
-                    Patterns.InvertNegativeMultipliers,
-                    Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL)).InnerSimplify());
-                AddHistory(res = res.Replace(Patterns.CommonRules).InnerSimplify());
+                AddHistory(res = SimplifyChildren(res));
 
                 AddHistory(res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules).InnerSimplify());
                 AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplify());
@@ -185,6 +183,22 @@ namespace AngouriMath.Functions
                 else
                     dst += terms[i];
             return dst.InnerSimplify();
+        }
+
+        internal static Entity ParaphraseInterval(Entity entity, Entity left, bool leftClosed, Entity right, bool rightClosed)
+        {
+            var leftCon = ConditionallyGreater(entity, left);
+            if (leftClosed)
+                leftCon |= entity.Equalizes(left);
+            var rightCon = ConditionallyGreater(right, entity);
+            if (rightClosed)
+                rightCon |= entity.Equalizes(right);
+            return leftCon & rightCon;
+        }
+
+        internal static Entity ConditionallyGreater(Entity left, Entity right)
+        {
+            return SimplifyChildren(left - right) > 0;
         }
     }
 }

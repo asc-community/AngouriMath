@@ -64,7 +64,7 @@ factorial_expression returns[Entity value]
     ;
 
 power_list returns[List<Entity> value]
-    @init { $value = new List<Entity>(); }
+    @init { $value = new(); }
     : ('^' factorial_expression { $value.Add($factorial_expression.value); })+
     ;
     
@@ -122,9 +122,20 @@ inequality_expression returns[Entity value]
     'equalizes' m2 = sum_expression { $value = MathS.Equality($value, $m2.value); })*
    ;
 
+terms_list returns[List<Entity> terms]
+    @init { $terms = new(); }
+    : ('=' term = inequality_expression { $terms.Add($term.value); })+
+    ;
+
 equality_expression returns[Entity value]
-    : m1 = inequality_expression { $value = $m1.value; }
-    ('=' m2 = inequality_expression { $value = $value.Equalizes($m2.value); })*
+    : expr = inequality_expression { $value = $expr.value; } (terms_list 
+    {
+        var list = $terms_list.terms.Prepend($value).ToArray();
+        List<Entity> eqTerms = new();
+        for (int i = 0; i < list.Length - 1; i++)
+            eqTerms.Add(list[i].Equalizes(list[i + 1]));
+        $value = eqTerms.Aggregate((eq1, eq2) => eq1 & eq2);
+    })?
     ;
 
 /*

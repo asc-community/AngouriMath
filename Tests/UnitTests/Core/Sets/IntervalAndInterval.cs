@@ -1,16 +1,12 @@
 ﻿using AngouriMath;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using Xunit;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
-using static AngouriMath.MathS;
 using static AngouriMath.MathS.Sets;
 
 namespace UnitTests.Core.Sets
 {
-    public class IntervalAndInterval
+    public sealed class IntervalAndInterval
     {
         private readonly Set A = Interval(2, true, 5, true);
         private readonly Set B = Interval(2, true, 3, true);
