@@ -29,7 +29,7 @@ namespace AngouriMath.Functions.Algebra
                     AnalyticalEquationSolver.Solve(equation, x)
                 ));
 
-            static Entity simplifier(Entity entity) => entity.InnerSimplify();
+            static Entity simplifier(Entity entity) => entity.InnerSimplified;
             static Entity evaluator(Entity entity) => entity.Evaled;
             var factorizer = equation.Vars.Count() == 1 ? (Func<Entity, Entity>)evaluator : simplifier;
 
@@ -57,7 +57,7 @@ namespace AngouriMath.Functions.Algebra
         /// </summary>
         internal static Tensor? SolveSystem(IEnumerable<Entity> inputEquations, ReadOnlySpan<Variable> vars)
         {
-            var equations = new List<Entity>(inputEquations.Select(equation => equation.InnerSimplify()));
+            var equations = new List<Entity>(inputEquations.Select(equation => equation.InnerSimplified));
             if (equations.Count != vars.Length)
                 throw new MathSException("Amount of equations must be equal to that of vars");
             int initVarCount = vars.Length;
@@ -82,7 +82,7 @@ namespace AngouriMath.Functions.Algebra
         {
             var var = vars[vars.Length - 1];
             if (equations.Count == 1)
-                return equations[0].InnerSimplify().SolveEquation(var) is FiniteSet els 
+                return equations[0].InnerSimplified.SolveEquation(var) is FiniteSet els 
                        ? els.Select(sol => new List<Entity> { sol }).ToList()
                        : new();
             var result = new List<List<Entity>>();
@@ -101,7 +101,7 @@ namespace AngouriMath.Functions.Algebra
                             replacements.Clear();
                             for (int varid = 0; varid < vars.Length; varid++)
                                 replacements.Add(vars[varid], j[varid]);
-                            j.Add(sol.Substitute(replacements).InnerSimplify());
+                            j.Add(sol.Substitute(replacements).InnerSimplified);
                             result.Add(j);
                         }
                     break;

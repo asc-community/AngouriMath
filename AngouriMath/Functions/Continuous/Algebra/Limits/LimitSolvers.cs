@@ -32,7 +32,7 @@ namespace AngouriMath.Functions.Algebra
             var filteredDictionary = new Dictionary<EDecimal, Entity>();
             foreach (var monomial in monomials)
             {
-                var simplified = monomial.Value.InnerSimplify();
+                var simplified = monomial.Value.InnerSimplified;
                 if (simplified != Integer.Zero)
                 {
                     filteredDictionary.Add(monomial.Key, simplified);
@@ -99,8 +99,8 @@ namespace AngouriMath.Functions.Algebra
                     }
                     else if (maxPowerP.CompareTo(maxPowerQ) == 0)
                     {
-                        var termPSimplified = maxTermP.InnerSimplify();
-                        var termQSimplified = maxTermQ.InnerSimplify();
+                        var termPSimplified = maxTermP.InnerSimplified;
+                        var termQSimplified = maxTermQ.InnerSimplified;
                         return termPSimplified / termQSimplified;
                     }
                     else return 0;
