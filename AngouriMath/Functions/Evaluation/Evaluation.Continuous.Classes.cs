@@ -380,22 +380,27 @@ namespace AngouriMath
         }
         public partial record Integralf
         {
+            private Entity SequentialIntegrating(Entity expr, Variable var, int iterations)
+            {
+                if (iterations < 0)
+                    return this;
+                var changed = expr;
+                for (int i = 0; i < iterations; i++)
+                    changed = Integration.ComputeIndefiniteIntegral(changed.InnerSimplified, var);
+                return changed;
+            }
+
             protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations) switch
             {
                 (Tensor expr, var var, var iters) => expr.Elementwise(n => new Integralf(n, var, iters).Evaled),
                 (var expr, _, 0) => expr,
                 // TODO: consider Derivative for negative cases
-                (var expr, Variable var, int asInt) =>
-                    Iterations == 1 ?
-                        Integration.ComputeIndefiniteIntegral(expr, var)
-                        : throw FutureReleaseException.Raised("Integral powers are not implemented yet", "1.2.3"),
+                (var expr, Variable var, int asInt) => SequentialIntegrating(expr, var, asInt),
 
                 _ => this
             };
             internal override Entity InnerSimplify() =>
-               Var.InnerSimplified is Variable var && Iterations == 1 ?
-                    Integration.ComputeIndefiniteIntegral(Expression, var)
-                    : throw FutureReleaseException.Raised("Integral powers are not implemented yet", "1.2.3");
+               Var.InnerSimplified is Variable var ? SequentialIntegrating(Expression.InnerSimplified, var, Iterations) : this;
         }
         public partial record Limitf
         {
