@@ -5,6 +5,11 @@ using static AngouriMath.Entity.Boolean;
 using static AngouriMath.MathS;
 using AngouriMath.Extensions;
 using static System.Console;
+using static AngouriMath.Entity.Set;
 
-WriteLine("x2 + 3x - 3 >= 0".Solve("x").InnerSimplified);
+var expr = "x^ln(7) + 3".SolveEquation("x");
+foreach(var sol in (FiniteSet)expr)
+{
+    WriteLine(sol.Simplify());
+}
 

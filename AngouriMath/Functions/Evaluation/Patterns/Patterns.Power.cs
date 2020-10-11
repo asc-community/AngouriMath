@@ -33,6 +33,9 @@ namespace AngouriMath.Functions
 
         internal static Entity PowerRules(Entity x) => x switch
         {
+            // {1}^({2} / log({3}, {1})) = {3}^{2}
+            Powf(var any1, Divf(var any2, Logf(var any3, var any1a))) when any1 == any1a => new Powf(any3, any2),
+
             // {} ^ n * {}
             Mulf(Powf(var any1, var any2), var any1a) when any1 == any1a => new Powf(any1, any2 + 1),
             Mulf(var any1, Powf(var any1a, var any2)) when any1 == any1a => new Powf(any1, any2 + 1),
