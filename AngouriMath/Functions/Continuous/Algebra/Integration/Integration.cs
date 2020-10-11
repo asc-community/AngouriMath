@@ -1,6 +1,6 @@
 ﻿namespace AngouriMath.Functions.Algebra
 {
-    public static partial class Integration
+    static partial class Integration
     {
         public static Entity ComputeIndefiniteIntegral(Entity expr, Entity.Variable x)
         {

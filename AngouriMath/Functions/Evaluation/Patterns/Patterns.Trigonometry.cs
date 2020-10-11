@@ -89,11 +89,12 @@ namespace AngouriMath.Functions
             // e.g. tan(ax + b) = -i + (2i)/(1 + e^(2i*b) t^(2a))
             return tree switch
             {
-                Sinf(var arg) => TreeAnalyzer.TryGetPolyLinear(arg, from, out var a, out var b) ?
-                    SinResult(from, a.InnerSimplified, b.InnerSimplified) : tree,
+                Sinf(var arg) when TreeAnalyzer.TryGetPolyLinear(arg, from, out var a, out var b) =>
+                    SinResult(from, a.InnerSimplified, b.InnerSimplified),
 
-                Cosf(var arg) => TreeAnalyzer.TryGetPolyLinear(arg, from, out var a, out var b) ?
-                    CosResult(from, a.InnerSimplified, b.InnerSimplified) : tree,
+                Cosf(var arg) when TreeAnalyzer.TryGetPolyLinear(arg, from, out var a, out var b) =>
+                    CosResult(from, a.InnerSimplified, b.InnerSimplified),
+
                 _ => tree
             };
         };

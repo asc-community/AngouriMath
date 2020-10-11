@@ -47,7 +47,7 @@ namespace AngouriMath
 }
 namespace AngouriMath.Functions.Algebra
 {
-    public static partial class Integration
+    internal static partial class Integration
     {
         /// <summary>Numerical definite integration, see more in <see cref="Entity.DefiniteIntegral(Entity.Variable, EDecimal, EDecimal)"/></summary>
         internal static Complex Integrate(Entity func, Entity.Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount)
