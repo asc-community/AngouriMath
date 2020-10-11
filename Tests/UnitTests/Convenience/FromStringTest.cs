@@ -9,7 +9,7 @@ using static AngouriMath.MathS;
 
 namespace UnitTests.Convenience
 {
-    public class FromStringTest
+    public sealed class FromStringTest
     {
         public static readonly Entity.Variable x = Var(nameof(x));
         public static readonly Entity.Variable y = Var(nameof(y));

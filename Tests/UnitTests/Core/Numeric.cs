@@ -6,7 +6,7 @@ using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Core
 {
-    public class Numeric
+    public sealed class Numeric
     {
         [Fact]
         public void TestRational1() =>

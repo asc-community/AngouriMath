@@ -3,7 +3,7 @@ using AngouriMath.Extensions;
 
 namespace UnitTests.Core.Sets
 {
-    public class General
+    public sealed class General
     {
         [Theory]
         [InlineData(@"{}", "{}")]

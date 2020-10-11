@@ -6,7 +6,7 @@ namespace UnitTests.Algebra.PolynomialSolverTests
     using static AngouriMath.Entity;
     using static AngouriMath.Entity.Set;
     using static Entity.Number;
-    public class NumericalEquationsSolve
+    public sealed class NumericalEquationsSolve
     {
         private readonly Entity.Variable x = nameof(x);
 

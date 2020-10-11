@@ -12,7 +12,7 @@ namespace Utils
             var finalPath = Path.Combine(ANTLR_PATH, path);
 
             var textSb = new StringBuilder(File.ReadAllText(finalPath));
-            textSb.Replace("public class", "internal class");
+            textSb.Replace("public sealed class", "internal class");
             textSb.Replace("public partial class", "internal partial class");
             textSb.Replace("public interface", "internal interface");
             File.WriteAllText(finalPath, textSb.ToString());

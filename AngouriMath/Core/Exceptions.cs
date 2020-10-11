@@ -19,7 +19,7 @@ using System.Reflection;
 namespace AngouriMath.Core.Exceptions
 {
     /// <summary>If one was thrown, the exception is probably not foreseen by AM. Report it is an issue</summary>
-    public class AngouriBugException : Exception { public AngouriBugException(string msg) : base(msg + "\n please report about it to the official repository") { } }
+    public sealed class AngouriBugException : Exception { public AngouriBugException(string msg) : base(msg + "\n please report about it to the official repository") { } }
 
     /// <summary>If one is thrown, the user's input is invalid</summary>
     public class MathSException : ArgumentException { public MathSException(string message) : base(message) { } }
@@ -28,16 +28,16 @@ namespace AngouriMath.Core.Exceptions
     public class TreeException : MathSException { public TreeException(string message) : base(message) { } }
 
     /// <summary>Thrown when trying to compile and a node cannot be compiled</summary>
-    public class UncompilableNodeException : TreeException { public UncompilableNodeException(string message) : base(message) { } }
+    public sealed class UncompilableNodeException : TreeException { public UncompilableNodeException(string message) : base(message) { } }
 
     /// <summary>Thrown when trying to parse an invalid string</summary>
     public class ParseException : MathSException { public ParseException(string msg) : base(msg) { } }
 
     /// <summary>Is thrown when something cannot be collapsed into a single number or boolean</summary>
-    public class CannotEvalException : MathSException { public CannotEvalException(string msg) : base(msg) { } }
+    public sealed class CannotEvalException : MathSException { public CannotEvalException(string msg) : base(msg) { } }
 
     /// <summary>Thrown when a wrong number of arguments are encountered when parsing a function</summary>
-    public class FunctionArgumentCountException : ParseException
+    public sealed class FunctionArgumentCountException : ParseException
     {
         private FunctionArgumentCountException(string msg) : base(msg) { }
         private static string CountArguments(int count, bool isAre) =>
@@ -57,9 +57,9 @@ namespace AngouriMath.Core.Exceptions
     }
 
     /// <summary> Cannot figure out whether the entity is in the set </summary>
-    public class ElementInSetAmbiguousException : MathSException { public ElementInSetAmbiguousException(string msg) : base(msg) { } }
+    public sealed class ElementInSetAmbiguousException : MathSException { public ElementInSetAmbiguousException(string msg) : base(msg) { } }
 
-    public class FutureReleaseException : NotImplementedException
+    public sealed class FutureReleaseException : NotImplementedException
     {
         private FutureReleaseException(string msg) : base(msg) {}
 

@@ -20,7 +20,7 @@ using static AngouriMath.Entity;
 
 namespace AngouriMath.Core
 {
-    public class EquationSystem : ILatexiseable
+    public sealed class EquationSystem : ILatexiseable
     {
         private readonly IEnumerable<Entity> equations;
 

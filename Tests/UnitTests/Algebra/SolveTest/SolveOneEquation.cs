@@ -7,7 +7,7 @@ using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Algebra
 {
-    public class SolveOneEquation
+    public sealed class SolveOneEquation
     {
         public static Variable x = nameof(x);
 

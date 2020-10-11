@@ -490,7 +490,7 @@ namespace AngouriMath
         /// </summary>
         public static partial class Settings
         {
-            public class Setting<T> where T : notnull
+            public sealed class Setting<T> where T : notnull
             {
                 internal Setting(T defaultValue) { Value = defaultValue; Default = defaultValue; }
 
@@ -530,7 +530,7 @@ namespace AngouriMath
                 public T Value { get; private set; }
                 public T Default { get; }
             }
-            public record NewtonSetting
+            public sealed record NewtonSetting
             {
                 public (EDecimal Re, EDecimal Im) From { get; init; } = (-10, -10);
                 public (EDecimal Re, EDecimal Im) To { get; init; } = (10, 10);

@@ -6,7 +6,7 @@ using AngouriMath.Extensions;
 
 namespace UnitTests.PatternsTest
 {
-    public class PatternTest
+    public sealed class PatternTest
     {
         public bool BeingCompletedForLessThan(Action action, long timeoutMs)
         {

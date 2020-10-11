@@ -5,7 +5,7 @@ using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Core
 {
-    public class SetsTest
+    public sealed class SetsTest
     {
         private static Set A = MathS.Sets.Empty;
         private static Set B = MathS.Sets.Empty;

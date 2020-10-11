@@ -4,7 +4,7 @@ using AngouriMath;
 
 namespace UnitTests.Discrete
 {
-    public class InSet
+    public sealed class InSet
     {
         [Theory]
         [InlineData(@"x in {}", false)]

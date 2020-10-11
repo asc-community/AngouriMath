@@ -16,7 +16,7 @@ namespace AngouriMath
         public static System.Numerics.Complex Abs(this System.Numerics.Complex z)
             => System.Numerics.Complex.Abs(z);
 
-        public class ConstantCache
+        public sealed class ConstantCache
         {
             public static ConstantCache Lookup(EContext context)
             {

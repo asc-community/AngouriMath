@@ -5,7 +5,7 @@ using PeterO.Numbers;
 
 namespace UnitTests.PatternsTest
 {
-    public class SmartExpander
+    public sealed class SmartExpander
     {
         public (bool equal, Complex eval1, Complex eval2, Real err) AreEqual(Entity expr1, Entity expr2, Complex toSub)
         {

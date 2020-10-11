@@ -6,7 +6,7 @@ using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Convenience
 {
-    public class LatexTests
+    public sealed class LatexTests
     {
         private static readonly Entity x = MathS.Var(nameof(x));
         private static readonly Entity frac34 = Rational.Create(3, 4);

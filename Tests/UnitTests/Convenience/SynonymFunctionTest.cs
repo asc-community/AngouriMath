@@ -7,7 +7,7 @@ using AngouriMath.Extensions;
 
 namespace UnitTests.Convenience
 {
-    public class SynonymFunctionTest
+    public sealed class SynonymFunctionTest
     {
         private readonly Entity x = MathS.Var(nameof(x));
 

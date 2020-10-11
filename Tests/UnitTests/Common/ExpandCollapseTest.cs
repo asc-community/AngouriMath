@@ -3,7 +3,7 @@ using Xunit;
 
 namespace UnitTests.Common
 {
-    public class ExpandFactorizeTest
+    public sealed class ExpandFactorizeTest
     {
         public static readonly Entity.Variable x = MathS.Var(nameof(x));
         public static readonly Entity.Variable y = MathS.Var(nameof(y));

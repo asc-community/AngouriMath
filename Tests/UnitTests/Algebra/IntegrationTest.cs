@@ -3,7 +3,7 @@ using Xunit;
 
 namespace UnitTests.Algebra
 {
-    public class IntegrationTest
+    public sealed class IntegrationTest
     {
         static readonly Entity.Variable x = nameof(x);
         [Fact]

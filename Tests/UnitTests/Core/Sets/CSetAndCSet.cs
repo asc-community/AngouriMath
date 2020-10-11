@@ -4,7 +4,7 @@ using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
 namespace UnitTests.Core.Sets
 {
-    public class CSetAndCSet
+    public sealed class CSetAndCSet
     {
         private readonly Set A = new ConditionalSet("x", "x > 0");
         private readonly Set A1 = new ConditionalSet("y", "y > 0");

@@ -3,7 +3,7 @@ using Xunit;
 
 namespace UnitTests.Algebra
 {
-    public class DerivativeTest
+    public sealed class DerivativeTest
     {
         static readonly Entity.Variable x = MathS.Var(nameof(x));
         [Fact]

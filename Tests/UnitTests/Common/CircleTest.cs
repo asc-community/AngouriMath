@@ -4,7 +4,7 @@ using Xunit;
 
 namespace UnitTests.Common
 {
-    public class CircleTest
+    public sealed class CircleTest
     {
         public static readonly Entity.Variable x = MathS.Var(nameof(x));
 

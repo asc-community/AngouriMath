@@ -18,7 +18,7 @@ using Xunit;
 
 namespace UnitTests.PatternsTest
 {
-    public class BooleanSimplify
+    public sealed class BooleanSimplify
     {
         [Theory]
         [InlineData("true and true", "true")]

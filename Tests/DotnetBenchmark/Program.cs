@@ -9,7 +9,7 @@ using BenchmarkDotNet.Running;
 
 namespace DotnetBenchmark
 {
-    public class CompiledFuncTest
+    public sealed class CompiledFuncTest
     {
         private readonly Entity.Variable x = MathS.Var("x");
         private readonly FastExpression multiFunc;
@@ -29,7 +29,7 @@ namespace DotnetBenchmark
         [Benchmark] public void NotCompiled() => multiFuncNotCompiled.Substitute(x, 3).EvalNumerical();
     }
 
-    public class NumbersBenchmark
+    public sealed class NumbersBenchmark
     {
         private readonly Entity.Number.Real a = 3.4m;
         private readonly Entity.Number.Real b = 5.4m;
@@ -53,7 +53,7 @@ namespace DotnetBenchmark
         private readonly EDecimal coef = EDecimal.FromDecimal(0.2m);
     }
 
-    public class Program
+    public sealed class Program
     {
         public static void Main(string[] _)
         {

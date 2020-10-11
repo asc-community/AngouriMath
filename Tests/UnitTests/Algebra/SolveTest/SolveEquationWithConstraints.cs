@@ -8,7 +8,7 @@ using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Algebra
 {
-    public class SolveEquationWithConstraints
+    public sealed class SolveEquationWithConstraints
     {
         /// <summary>Numerically checks if a root fits an equation</summary>
         internal static void AssertRoots(Entity equation, Variable toSub, Entity varValue, Integer? subValue = null)

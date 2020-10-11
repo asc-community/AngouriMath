@@ -4,7 +4,7 @@ using Xunit;
 
 namespace UnitTests.Convenience
 {
-    public class CompilationTest
+    public sealed class CompilationTest
     {
         private static readonly Entity.Variable x = MathS.Var(nameof(x));
         private static readonly Entity.Variable y = MathS.Var(nameof(y));

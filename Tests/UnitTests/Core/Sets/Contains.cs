@@ -4,7 +4,7 @@ using AngouriMath.Extensions;
 
 namespace UnitTests.Core.Sets
 {
-    public class Contains
+    public sealed class Contains
     {
         [Theory]
         [InlineData("{}", "a", false)]

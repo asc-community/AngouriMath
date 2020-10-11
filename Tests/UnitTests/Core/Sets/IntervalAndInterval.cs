@@ -6,7 +6,7 @@ using static AngouriMath.MathS.Sets;
 
 namespace UnitTests.Core.Sets
 {
-    public class IntervalAndInterval
+    public sealed class IntervalAndInterval
     {
         private readonly Set A = Interval(2, true, 5, true);
         private readonly Set B = Interval(2, true, 3, true);

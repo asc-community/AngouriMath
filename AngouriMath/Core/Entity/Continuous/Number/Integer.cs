@@ -25,7 +25,7 @@ namespace AngouriMath
         {
             /// <summary>Use <see cref="Create(EInteger)"/> instead of the constructor for consistency with
             /// <see cref="Rational"/>, <see cref="Real"/> and <see cref="Complex"/>.</summary>
-            public record Integer : Rational, System.IComparable<Integer>
+            public sealed record Integer : Rational, System.IComparable<Integer>
             {
                 private Integer(EInteger value) : base(value) => EInteger = value;
                 public EInteger EInteger { get; }

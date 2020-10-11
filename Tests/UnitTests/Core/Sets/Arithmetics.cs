@@ -3,7 +3,7 @@ using AngouriMath.Extensions;
 
 namespace UnitTests.Core.Sets
 {
-    public class Arithmetics
+    public sealed class Arithmetics
     {
         [Theory]
         [InlineData("[2; 3] + 3", "[5; 6]")]

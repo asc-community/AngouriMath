@@ -3,7 +3,7 @@ using Xunit;
 
 namespace UnitTests.Algebra
 {
-    public class MatrixTest
+    public sealed class MatrixTest
     {
         public static readonly Entity.Tensor A = MathS.Matrices.Matrix(4, 2,
             1, 2,

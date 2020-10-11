@@ -5,7 +5,7 @@ using Xunit;
 
 namespace UnitTests.Algebra
 {
-    public class Limits
+    public sealed class Limits
     {
         void TestLimit(Entity expr, Entity where, ApproachFrom appr, Entity desiredOutput)
             => Assert.Equal(desiredOutput.Simplify(), MathS.Compute.Limit(expr, "x", where, appr)?.Simplify());

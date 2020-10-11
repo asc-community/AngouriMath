@@ -4,7 +4,7 @@ using Xunit;
 
 namespace UnitTests.Core
 {
-    public class NumericDigits
+    public sealed class NumericDigits
     {
         void Test(Entity.Number n, string expected) => Assert.Equal(expected, n.Stringize());
         static readonly Complex i = Complex.ImaginaryOne;
