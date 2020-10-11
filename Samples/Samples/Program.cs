@@ -6,6 +6,5 @@ using static AngouriMath.MathS;
 using AngouriMath.Extensions;
 using static System.Console;
 
-WriteLine("a = b = c = d = e".ToEntity());
-Console.WriteLine("4^x + 2^x - (2^x)^3 - a".SolveEquation("x"));
+WriteLine("2x + 3 >= 0".Solve("x").Simplify());
 
