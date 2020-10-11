@@ -18,6 +18,7 @@ using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Algebra.NumericalSolving;
 using AngouriMath.Functions.Boolean;
 using AngouriMath.Core.Exceptions;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AngouriMath.Core
 {
@@ -862,6 +863,9 @@ namespace AngouriMath
 
         public static class Utils
         {
+            /// <summary>
+            /// Performs the expansion operation over the given variable
+            /// </summary>
             public static Entity SmartExpandOver(Entity expr, Variable x)
             {
                 var linChildren = Sumf.LinearChildren(expr);
@@ -878,6 +882,50 @@ namespace AngouriMath
 
                 return TreeAnalyzer.MultiHangBinary(nodes, (a, b) => a + b);
             }
+
+            /// <summary>
+            /// Extracts a polynomial with integer powers
+            /// </summary>
+            /// <param name="expr">From which to extract the polynomial</param>
+            /// <param name="variable">Over which variable to extract the polynomial</param>
+            /// <param name="dst">
+            /// Where to put the dictionary, whose keys
+            /// are powers, and values - coefficients
+            /// </param>
+            /// <returns>Whether the input expression is a valid polynomial</returns>
+            public static bool TryGetPolynomial(Entity expr, Variable variable,
+            [NotNullWhen(true)] out Dictionary<EInteger, Entity>? dst)
+                => TreeAnalyzer.TryGetPolynomial(expr, variable, out dst);
+
+            /// <summary>
+            /// Extracts the linear coefficient and the bias over a variable
+            /// a x + b
+            /// </summary>
+            /// <param name="expr">From which to extract the linear function</param>
+            /// <param name="variable">Over which to extract</param>
+            /// <param name="a">The linear coefficient</param>
+            /// <param name="b">The bias</param>
+            /// <returns>Whether the extract was successful</returns>
+            public static bool TryGetPolyLinear(Entity expr, Variable variable,
+            [NotNullWhen(true)] out Entity? a,
+            [NotNullWhen(true)] out Entity? b)
+                => TreeAnalyzer.TryGetPolyLinear(expr, variable, out a, out b);
+
+            /// <summary>
+            /// Extracts the quadratic coefficient, linear coefficient and the bias over a variable
+            /// a x ^ 2 + b x + c
+            /// </summary>
+            /// <param name="expr">From which to extract the quadratic function</param>
+            /// <param name="variable">Over which to extract</param>
+            /// <param name="a">The quadratic coefficient</param>
+            /// <param name="b">The linear coefficient</param>
+            /// <param name="c">The bias</param>
+            /// <returns>Whether the extract was successful</returns>
+            public static bool TryGetPolyQuadratic(Entity expr, Variable variable,
+            [NotNullWhen(true)] out Entity? a,
+            [NotNullWhen(true)] out Entity? b,
+            [NotNullWhen(true)] out Entity? c)
+                => TreeAnalyzer.TryGetPolyQuadratic(expr, variable, out a, out b, out c);
         }
     }
 }

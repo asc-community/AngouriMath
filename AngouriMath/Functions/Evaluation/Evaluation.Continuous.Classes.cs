@@ -13,6 +13,7 @@ using static AngouriMath.Entity.Number;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity.Set;
+using AngouriMath.Functions.Algebra;
 
 namespace AngouriMath
 {
@@ -373,21 +374,27 @@ namespace AngouriMath
         }
         public partial record Integralf
         {
+            private Entity SequentialIntegrating(Entity expr, Variable var, int iterations)
+            {
+                if (iterations < 0)
+                    return this;
+                var changed = expr;
+                for (int i = 0; i < iterations; i++)
+                    changed = Integration.ComputeIndefiniteIntegral(changed.InnerSimplified, var);
+                return changed;
+            }
+
             protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations) switch
             {
                 (Tensor expr, var var, var iters) => expr.Elementwise(n => new Integralf(n, var, iters).Evaled),
                 (var expr, _, 0) => expr,
                 // TODO: consider Derivative for negative cases
-                (var expr, Variable var, var asInt) =>
-                    throw FutureReleaseException.Raised("Integration is not implemented yet", "1.2.3"),
+                (var expr, Variable var, int asInt) => SequentialIntegrating(expr, var, asInt),
+
                 _ => this
             };
             protected override Entity InnerSimplify() =>
-                Var.InnerSimplified is Variable
-                ? Iterations == 0
-                    ? Expression.InnerSimplified
-                    : throw FutureReleaseException.Raised("Integration is not implemented yet", "1.2.3")
-                : this;
+               Var.InnerSimplified is Variable var ? SequentialIntegrating(Expression.InnerSimplified, var, Iterations) : this;
         }
         public partial record Limitf
         {

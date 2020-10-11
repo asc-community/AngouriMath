@@ -20,9 +20,28 @@ namespace AngouriMath.Core.Sets
             if (set is FiniteSet another)
                 return FiniteSet.Unite(finite, another);
             var sb = new FiniteSetBuilder();
-            foreach (var el in finite)
-                if (!set.TryContains(el, out var contains) || !contains)
-                    sb.Add(el);
+            if (set is Interval(var left, var leftClosed, var right, var rightClosed) inter)
+            {
+                var newLeftClosed = leftClosed;
+                var newRightClosed = rightClosed;
+                foreach (var el in finite)
+                    if (!set.TryContains(el, out var contains) || !contains)
+                    {
+                        if (el == left)
+                            newLeftClosed = true;
+                        else if (el == right)
+                            newRightClosed = true;
+                        else
+                            sb.Add(el);
+                    }
+                set = inter.New(left, newLeftClosed, right, newRightClosed);
+            }
+            else
+            {
+                foreach (var el in finite)
+                    if (!set.TryContains(el, out var contains) || !contains)
+                        sb.Add(el);
+            }
             return sb.IsEmpty ? set : sb.ToFiniteSet().Unite(set);
         }
 
