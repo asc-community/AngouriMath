@@ -16,10 +16,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using GenericTensor.Core;
 using PeterO.Numbers;
 using AngouriMath.Core;
-using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {

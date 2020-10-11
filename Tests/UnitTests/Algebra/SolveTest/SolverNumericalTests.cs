@@ -1,5 +1,4 @@
 using AngouriMath;
-using AngouriMath.Core.Exceptions;
 using Xunit;
 
 namespace UnitTests.Algebra.PolynomialSolverTests

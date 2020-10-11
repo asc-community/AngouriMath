@@ -1,13 +1,10 @@
 ﻿using AngouriMath;
 using AngouriMath.Extensions;
-using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
 using System.Collections.Generic;
 using static AngouriMath.Entity;
-using System.Linq;
 using static AngouriMath.Entity.Set;
-using System;
 
 namespace UnitTests.Algebra
 {

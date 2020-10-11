@@ -1,12 +1,5 @@
-﻿using AngouriMath;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Xunit;
+﻿using Xunit;
 using static AngouriMath.Entity;
-using static AngouriMath.Entity.Set;
-using static AngouriMath.MathS;
-using static AngouriMath.MathS.Sets;
 using AngouriMath.Extensions;
 
 namespace UnitTests.Core.Sets

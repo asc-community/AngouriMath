@@ -14,7 +14,6 @@
  */
 
 using PeterO.Numbers;
-using System;
 
 namespace AngouriMath
 {

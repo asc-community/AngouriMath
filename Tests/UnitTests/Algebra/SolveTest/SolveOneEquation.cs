@@ -4,7 +4,6 @@ using Xunit;
 using System.Collections.Generic;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
-using AngouriMath.Core.Exceptions;
 
 namespace UnitTests.Algebra
 {

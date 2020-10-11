@@ -1,12 +1,8 @@
 ﻿using System;
-using AngouriMath;
-using AngouriMath.Core;
 using Xunit;
 using System.Diagnostics;
 using System.Threading;
 using AngouriMath.Extensions;
-using System.Linq;
-using static AngouriMath.Entity;
 
 namespace UnitTests.PatternsTest
 {

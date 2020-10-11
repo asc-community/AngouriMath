@@ -2,8 +2,6 @@ using AngouriMath;
 using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
-using static AngouriMath.Entity;
-using AngouriMath.Extensions;
 using static AngouriMath.Entity.Set;
 
 namespace UnitTests.Convenience

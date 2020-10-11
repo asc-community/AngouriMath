@@ -15,7 +15,6 @@
 
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using System;
-using System.Linq;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath

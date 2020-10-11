@@ -14,10 +14,8 @@
  */
 
 
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using AngouriMath.Core;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;

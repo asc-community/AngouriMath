@@ -17,7 +17,6 @@ using System.Collections.Generic;
 using System.Text;
 using AngouriMath.Functions.Algebra;
 using static AngouriMath.Entity;
-using AngouriMath;
 
 namespace AngouriMath.Core
 {

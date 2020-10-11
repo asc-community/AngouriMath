@@ -1,8 +1,6 @@
 ﻿using AngouriMath;
 using static AngouriMath.Entity.Number;
-using AngouriMath.Functions;
 using Xunit;
-using System.Linq;
 using PeterO.Numbers;
 
 namespace UnitTests.PatternsTest

@@ -1,5 +1,4 @@
 ﻿using AngouriMath;
-using static AngouriMath.Entity;
 using AngouriMath.Extensions;
 using Xunit;
 

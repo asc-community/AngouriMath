@@ -1,8 +1,4 @@
-﻿using AngouriMath.Core.Exceptions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using static AngouriMath.Entity;
+﻿using System.Collections.Generic;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Core

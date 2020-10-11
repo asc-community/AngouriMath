@@ -14,11 +14,9 @@
  */
 
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
 using AngouriMath.Functions;
 using System;
 using AngouriMath.Core;
-using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath

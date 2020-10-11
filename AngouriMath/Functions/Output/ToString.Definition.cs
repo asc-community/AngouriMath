@@ -15,8 +15,6 @@
 
 namespace AngouriMath
 {
-    using Core;
-    using static Entity.Number;
     public abstract partial record Entity
     {
         /// <summary>

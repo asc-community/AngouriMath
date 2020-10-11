@@ -20,7 +20,6 @@ using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sets;
-using AngouriMath.Extensions;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Boolean;
 using static AngouriMath.Entity.Number;

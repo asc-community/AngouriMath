@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using static AngouriMath.Entity.Set;
+﻿using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {

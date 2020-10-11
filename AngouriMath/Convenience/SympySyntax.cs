@@ -14,7 +14,6 @@
  */
 
 using System.Linq;
-using AngouriMath.Core;
 
 namespace AngouriMath
 {

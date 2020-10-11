@@ -13,14 +13,11 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
-using AngouriMath.Functions.Algebra;
-using AngouriMath.Functions;
 using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath

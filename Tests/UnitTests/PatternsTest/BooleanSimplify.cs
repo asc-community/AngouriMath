@@ -13,7 +13,6 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath;
 using AngouriMath.Extensions;
 using Xunit;
 

@@ -13,10 +13,7 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using AngouriMath.Functions;
-using System;
 using static AngouriMath.Entity.Boolean;
-using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath

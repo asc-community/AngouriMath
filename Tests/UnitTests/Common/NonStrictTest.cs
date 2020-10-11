@@ -1,6 +1,4 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
-using AngouriMath.Functions;
 using Xunit;
 
 namespace UnitTests.Common

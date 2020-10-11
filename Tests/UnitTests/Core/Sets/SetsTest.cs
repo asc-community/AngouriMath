@@ -1,5 +1,4 @@
 ﻿using AngouriMath;
-using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity;
 using Xunit;
 using static AngouriMath.Entity.Set;

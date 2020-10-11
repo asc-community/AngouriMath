@@ -15,7 +15,6 @@
 
 using AngouriMath.Core.Exceptions;
 using System;
-using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
