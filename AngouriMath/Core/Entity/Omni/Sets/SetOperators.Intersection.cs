@@ -28,7 +28,7 @@ namespace AngouriMath.Core.Sets
                 else if (contains)
                     fsb.Add(elem);
             }
-            return amb.IsEmpty ? fsb.ToFiniteSet() : amb.ToFiniteSet().Intersect(fsb.ToFiniteSet());
+            return amb.IsEmpty ? fsb.ToFiniteSet() : amb.ToFiniteSet().Unite(fsb.ToFiniteSet());
         }
 
         internal static Set IntersectIntervalAndInterval(Interval A, Interval B)
