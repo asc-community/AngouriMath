@@ -30,6 +30,15 @@ namespace AngouriMath.Functions
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
         internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level).First().InnerSimplify();
 
+        internal static Entity SimplifyChildren(Entity expr)
+        {
+            return expr.Replace(
+                    Patterns.InvertNegativePowers,
+                    Patterns.InvertNegativeMultipliers,
+                    Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL))
+                .InnerSimplified.Replace(Patterns.CommonRules).InnerSimplified;
+        }
+
         /// <summary>Finds all alternative forms of an expression</summary>
         internal static IEnumerable<Entity> Alternate(Entity src, int level)
         {
@@ -74,11 +83,7 @@ namespace AngouriMath.Functions
                 if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
 
-                AddHistory(res = res.Replace(
-                    Patterns.InvertNegativePowers,
-                    Patterns.InvertNegativeMultipliers,
-                    Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL)).InnerSimplify());
-                AddHistory(res = res.Replace(Patterns.CommonRules).InnerSimplify());
+                AddHistory(res = SimplifyChildren(res));
 
                 AddHistory(res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules).InnerSimplify());
                 AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplify());
@@ -184,6 +189,22 @@ namespace AngouriMath.Functions
                 else
                     dst += terms[i];
             return dst.InnerSimplify();
+        }
+
+        internal static Entity ParaphraseInterval(Entity entity, Entity left, bool leftClosed, Entity right, bool rightClosed)
+        {
+            var leftCon = ConditionallyGreater(entity, left);
+            if (leftClosed)
+                leftCon |= entity.Equalizes(left);
+            var rightCon = ConditionallyGreater(right, entity);
+            if (rightClosed)
+                rightCon |= entity.Equalizes(right);
+            return leftCon & rightCon;
+        }
+
+        internal static Entity ConditionallyGreater(Entity left, Entity right)
+        {
+            return SimplifyChildren(left - right) > 0;
         }
     }
 }
