@@ -1,19 +1,7 @@
-name: CI
+name: Test
 
 on: [push, pull_request]
 jobs:
-  Build:
-    runs-on: windows-latest
-    steps:
-    - uses: actions/checkout@v2
-      with:
-        submodules: 'recursive'
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '5.0.100-rc.1.20452.10'
-    - name: Build
-      run: dotnet build
   Test:
     runs-on: ${{ matrix.os }}
     strategy:
@@ -23,10 +11,6 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: 'recursive'
-    - name: Setup .NET Core 3.1 # We need the netcoreapp3.1 runtime
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.302
     - name: Setup .NET 5 # The dotnet CLI above is replaced by this but the runtime is kept
       uses: actions/setup-dotnet@v1
       with:
@@ -36,5 +20,3 @@ jobs:
         dotnet add "Tests/UnitTests" package Microsoft.NET.Test.Sdk # Update is required for GitHubActionsTestLogger to print anything
         dotnet add "Tests/UnitTests" package GitHubActionsTestLogger
         dotnet test "Tests/UnitTests" -c Release -l GitHubActions
-    - name: Benchmark
-      run: dotnet run -p Tests/DotnetBenchmark -c Release
