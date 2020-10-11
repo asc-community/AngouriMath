@@ -147,12 +147,22 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // // //
             }
 
-            // if no replacement worked, try trigonometry solver
+            // if no replacement worked, try trigonometric solver
             if (TrigonometricSolver.TrySolveLinear(expr, x, out var trig) && trig is FiniteSet elsTrig)
                 return (Set)elsTrig.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
             // // //
 
-            // if no trigonometric rules helped, common denominator might help
+            // if no trigonometric rules helped, try exponential-multiplicative solver
+            if (ExponentialSolver.SolveMultiplicative(expr, x) is { } expMul && expMul is FiniteSet elsExpMul)
+                return (Set)elsExpMul.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
+            // // //
+
+            // if no exponential-multiplicative rules helped, try exponential-linear solver
+            if (ExponentialSolver.SolveLinear(expr, x) is { } expLin && expLin is FiniteSet elsExpLin)
+                return (Set)elsExpLin.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
+            // // //
+
+            // if no exponential-linear rules helped, common denominator might help
             if (CommonDenominatorSolver.TrySolveGCD(expr, x, out var commonDenom) && commonDenom is FiniteSet elsCd)
                 return (Set)elsCd.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
             // // //

@@ -177,12 +177,12 @@ namespace AngouriMath.Functions
         internal static Func<Entity, Entity> TrigonometricToExponentialRules(Variable from, Variable to) => tree =>
         {
             // sin(ax + b) = (t^a * e^(i*b) - t^(-a) * e^(-i*b)) / (2i)
-            Entity SinResult(Variable x, Number a, Entity b) =>
+            Entity SinResult(Variable x, Entity a, Entity b) =>
                 x == from
                 ? MathS.Pow(to, a) * (MathS.Pow(MathS.e, b * MathS.i) / (2 * MathS.i)) - MathS.Pow(to, -a) * MathS.Pow(MathS.e, -b * MathS.i) / (2 * MathS.i)
                 : tree;
             // cos(ax + b) = (t^a * e^(i*b) + t^(-a) * e^(-i*b)) / 2
-            Entity CosResult(Variable x, Number a, Entity b) =>
+            Entity CosResult(Variable x, Entity a, Entity b) =>
                 x == from
                 ? MathS.Pow(to, a) * (MathS.Pow(MathS.e, b * MathS.i) / 2) + MathS.Pow(to, -a) * MathS.Pow(MathS.e, -b * MathS.i) / 2
                 : tree;
@@ -191,36 +191,12 @@ namespace AngouriMath.Functions
             // e.g. tan(ax + b) = -i + (2i)/(1 + e^(2i*b) t^(2a))
             return tree switch
             {
-                Sinf(Variable x) => SinResult(x, 1, 0),
-                Sinf(Mulf(Variable x, Number a)) => SinResult(x, a, 0),
-                Sinf(Mulf(Number a, Variable x)) => SinResult(x, a, 0),
-                Sinf(Sumf(Variable x, var b)) => SinResult(x, 1, b),
-                Sinf(Sumf(var b, Variable x)) => SinResult(x, 1, b),
-                Sinf(Sumf(Mulf(Variable x, Number a), var b)) => SinResult(x, a, b),
-                Sinf(Sumf(Mulf(Number a, Variable x), var b)) => SinResult(x, a, b),
-                Sinf(Sumf(var b, Mulf(Variable x, Number a))) => SinResult(x, a, b),
-                Sinf(Sumf(var b, Mulf(Number a, Variable x))) => SinResult(x, a, b),
-                Sinf(Minusf(Variable x, var b)) => SinResult(x, 1, -b),
-                Sinf(Minusf(var b, Variable x)) => SinResult(x, -1, b),
-                Sinf(Minusf(Mulf(Variable x, Number a), var b)) => SinResult(x, a, -b),
-                Sinf(Minusf(Mulf(Number a, Variable x), var b)) => SinResult(x, a, -b),
-                Sinf(Minusf(var b, Mulf(Variable x, Number a))) => SinResult(x, -a, b),
-                Sinf(Minusf(var b, Mulf(Number a, Variable x))) => SinResult(x, -a, b),
-                Cosf(Variable x) => CosResult(x, 1, 0),
-                Cosf(Mulf(Variable x, Number a)) => CosResult(x, a, 0),
-                Cosf(Mulf(Number a, Variable x)) => CosResult(x, a, 0),
-                Cosf(Sumf(Variable x, var b)) => CosResult(x, 1, b),
-                Cosf(Sumf(var b, Variable x)) => CosResult(x, 1, b),
-                Cosf(Sumf(Mulf(Variable x, Number a), var b)) => CosResult(x, a, b),
-                Cosf(Sumf(Mulf(Number a, Variable x), var b)) => CosResult(x, a, b),
-                Cosf(Sumf(var b, Mulf(Variable x, Number a))) => CosResult(x, a, b),
-                Cosf(Sumf(var b, Mulf(Number a, Variable x))) => CosResult(x, a, b),
-                Cosf(Minusf(Variable x, var b)) => CosResult(x, 1, -b),
-                Cosf(Minusf(var b, Variable x)) => CosResult(x, -1, b),
-                Cosf(Minusf(Mulf(Variable x, Number a), var b)) => CosResult(x, a, -b),
-                Cosf(Minusf(Mulf(Number a, Variable x), var b)) => CosResult(x, a, -b),
-                Cosf(Minusf(var b, Mulf(Variable x, Number a))) => CosResult(x, -a, b),
-                Cosf(Minusf(var b, Mulf(Number a, Variable x))) => CosResult(x, -a, b),
+                Sinf(var arg) => TreeAnalyzer.TryGetPolyLinear(arg, from, out var a, out var b) ?
+                    SinResult(from, a.InnerSimplify(), b.InnerSimplify()) : tree,
+
+                Cosf(var arg) => TreeAnalyzer.TryGetPolyLinear(arg, from, out var a, out var b) ?
+                    CosResult(from, a.InnerSimplify(), b.InnerSimplify()) : tree,
+
                 _ => tree
             };
         };
