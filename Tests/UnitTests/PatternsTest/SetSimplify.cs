@@ -28,7 +28,7 @@ namespace UnitTests.PatternsTest
         [InlineData("x2 in (x2 + 1/2; x2 + 1]", "false")]
         [InlineData("x2 in (x2 - 1/2; x2 + 1]", "true")]
         [InlineData("domain((-oo; +oo), RR)", "RR")]
-        [InlineData("x in {a}", "x = a")]
+        [InlineData("x in {a}", "false")]
         public void TestSimplify(string unsimplified, string simplified)
         {
             var actual = unsimplified.ToEntity();

@@ -2,4 +2,4 @@
 using static AngouriMath.MathS;
 using static System.Console;
 
-WriteLine(Compute.Limit("tan(5x) / sin(2x)", "x", 0));
+WriteLine("a = b = c = d = e".ToEntity());

@@ -123,7 +123,8 @@ namespace UnitTests.Convenience
         [Fact] public void TestPlusInfinity2() => Assert.Equal(Real.PositiveInfinity + (Entity)2, FromString("+oo + 2"));
         [Fact] public void TestMinusInfinity1() => Assert.Equal(Real.NegativeInfinity, FromString("-oo"));
         [Fact] public void TestMinusInfinity2() => Assert.Equal(Real.NegativeInfinity + (Entity)2, FromString("-oo + 2"));
-
+        [Fact] public void TestEquality1() => Assert.Equal(x.Equalizes(y) & y.Equalizes(x), FromString("x = y = x"));
+        [Fact] public void TestEquality2() => Assert.Equal(x.Equalizes(y).Equalizes(x), FromString("(x = y) = x"));
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {
             var s = $"x {signLeft} y {signRight} z";
