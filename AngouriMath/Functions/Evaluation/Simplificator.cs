@@ -22,7 +22,7 @@ namespace AngouriMath.Functions
             => one.SimplifiedRate < another.SimplifiedRate ? one : another;
 
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
-        internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level).First().InnerSimplify();
+        internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level).First().InnerSimplified;
 
         internal static Entity SimplifyChildren(Entity expr)
         {
@@ -38,7 +38,7 @@ namespace AngouriMath.Functions
         {
             if (src is Number || src is Variable)
                 return new[] { src };
-            var stage1 = src.InnerSimplify();
+            var stage1 = src.InnerSimplified;
             if (stage1 is Number)
                 return new[] { stage1 };
 
@@ -49,7 +49,7 @@ namespace AngouriMath.Functions
                 void __IterAddHistory(Entity expr)
                 {
                     static int CountExpressionComplexity(Entity expr) => MathS.Settings.ComplexityCriteria.Value(expr);
-                    var refexpr = expr.Replace(Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL)).InnerSimplify();
+                    var refexpr = expr.Replace(Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL)).InnerSimplified;
                     var compl1 = CountExpressionComplexity(refexpr);
                     var compl2 = CountExpressionComplexity(expr);
                     var n = compl1 > compl2 ? expr : refexpr;
@@ -73,44 +73,44 @@ namespace AngouriMath.Functions
                     1 => TreeAnalyzer.SortLevel.MIDDLE_LEVEL,
                     2 => TreeAnalyzer.SortLevel.LOW_LEVEL,
                     _ => TreeAnalyzer.SortLevel.HIGH_LEVEL
-                })).InnerSimplify();
+                })).InnerSimplified;
                 if (res.Nodes.Any(child => child is Powf))
-                    AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
+                    AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
 
                 AddHistory(res = SimplifyChildren(res));
 
-                AddHistory(res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules).InnerSimplify());
-                AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplify());
+                AddHistory(res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules).InnerSimplified);
+                AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplified);
 
                 if (res.Nodes.Any(child => child is
                     Sinf or Cosf or Tanf or Cotanf or Arcsinf or Arccosf or Arctanf or Arccotanf))
                 {
-                    var res1 = res.Replace(Patterns.ExpandTrigonometricRules).InnerSimplify();
-                    AddHistory(res = res.Replace(Patterns.TrigonometricRules, Patterns.CommonRules).InnerSimplify());
+                    var res1 = res.Replace(Patterns.ExpandTrigonometricRules).InnerSimplified;
+                    AddHistory(res = res.Replace(Patterns.TrigonometricRules, Patterns.CommonRules).InnerSimplified);
                     AddHistory(res1);
                     res = res.Complexity > res1.Complexity ? res1 : res;
                 }
 
                 if (res.Nodes.Any(child => child is Statement))
                 {
-                    AddHistory(res = res.Replace(Patterns.BooleanRules).InnerSimplify());
+                    AddHistory(res = res.Replace(Patterns.BooleanRules).InnerSimplified);
                 }
 
                 if (res.Nodes.Any(child => child is ComparisonSign))
                 {
-                    AddHistory(res = res.Replace(Patterns.InequalityEqualityRules).InnerSimplify());
+                    AddHistory(res = res.Replace(Patterns.InequalityEqualityRules).InnerSimplified);
                 }
 
                 if (res.Nodes.Any(child => child is Factorialf))
                 {
-                    AddHistory(res = res.Replace(Patterns.ExpandFactorialDivisions).InnerSimplify());
-                    AddHistory(res = res.Replace(Patterns.FactorizeFactorialMultiplications).InnerSimplify());
+                    AddHistory(res = res.Replace(Patterns.ExpandFactorialDivisions).InnerSimplified);
+                    AddHistory(res = res.Replace(Patterns.FactorizeFactorialMultiplications).InnerSimplified);
                 }
                 if (res.Nodes.Any(child => child is Powf))
-                    AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplify());
+                    AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
 
                 if (res.Nodes.Any(child => child is Set))
-                    AddHistory(res = res.Replace(Patterns.SetOperatorRules).InnerSimplify());
+                    AddHistory(res = res.Replace(Patterns.SetOperatorRules).InnerSimplified);
 
                 Entity? possiblePoly = null;
                 foreach (var var in res.Vars)
@@ -166,12 +166,12 @@ namespace AngouriMath.Functions
                 var pair = new KeyValuePair<EInteger, Entity>(index, monomialsByPower[index]);
                 if (pair.Key.IsZero)
                 {
-                    terms.Add(pair.Value.InnerSimplify());
+                    terms.Add(pair.Value.InnerSimplified);
                     continue;
                 }
 
                 var px = pair.Key.Equals(EInteger.One) ? x : MathS.Pow(x, pair.Key);
-                terms.Add(pair.Value == 1 ? px : pair.Value.InnerSimplify() * px);
+                terms.Add(pair.Value == 1 ? px : pair.Value.InnerSimplified * px);
             }
 
             if (terms.Count == 0)
@@ -182,7 +182,7 @@ namespace AngouriMath.Functions
                     dst -= -r * m;
                 else
                     dst += terms[i];
-            return dst.InnerSimplify();
+            return dst.InnerSimplified;
         }
 
         internal static Entity ParaphraseInterval(Entity entity, Entity left, bool leftClosed, Entity right, bool rightClosed)

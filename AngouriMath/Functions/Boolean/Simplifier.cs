@@ -7,6 +7,7 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -14,26 +15,52 @@ namespace AngouriMath
 {
     partial record Entity
     {
-        // Theoretically, we might've united And and Or under Binary operator
-        // and avoid duplication
+        // ngl; it looks awful
+
+        protected interface IBranchGetter<T>
+        { 
+            Entity Left(T node);
+            Entity Right(T node);
+        }
+
+        protected static IEnumerable<Entity> LinearChildren<TNode, TGetter>(Entity expr)
+            where TNode : Entity where TGetter : struct, IBranchGetter<TNode>
+        {
+            if (expr is not TNode node)
+                return new[] { expr };
+            var (left, right) = (default(TGetter).Left(node), default(TGetter).Right(node));
+            return LinearChildren<TNode, TGetter>(left).Concat(LinearChildren<TNode, TGetter>(right));
+        }
+
 
         partial record Orf
         {
+            private struct OrfBranchGetter : IBranchGetter<Orf> { public Entity Left(Orf node) => node.Left; public Entity Right(Orf node) => node.Right; }
             internal static IEnumerable<Entity> LinearChildren(Entity expr)
-            {
-                if (expr is not Orf orf)
-                    return new List<Entity>(new[] { expr });
-                return LinearChildren(orf.Left).Concat(LinearChildren(orf.Right));
-            }
+                => LinearChildren<Orf, OrfBranchGetter>(expr);
         }
 
         partial record Andf
         {
+            private struct AndfBranchGetter : IBranchGetter<Andf> { public Entity Left(Andf node) => node.Left; public Entity Right(Andf node) => node.Right; }
             internal static IEnumerable<Entity> LinearChildren(Entity expr)
+                => LinearChildren<Andf, AndfBranchGetter>(expr);
+        }
+
+        partial record Set
+        {
+            partial record Unionf
             {
-                if (expr is not Andf andf)
-                    return new[] { expr };
-                return LinearChildren(andf.Left).Concat(LinearChildren(andf.Right));
+                private struct UnionfBranchGetter : IBranchGetter<Unionf> { public Entity Left(Unionf node) => node.Left; public Entity Right(Unionf node) => node.Right; }
+                internal static IEnumerable<Entity> LinearChildren(Entity expr)
+                    => LinearChildren<Unionf, UnionfBranchGetter>(expr);
+            }
+
+            partial record Intersectionf
+            {
+                private struct IntersectionfBranchGetter : IBranchGetter<Intersectionf> { public Entity Left(Intersectionf node) => node.Left; public Entity Right(Intersectionf node) => node.Right; }
+                internal static IEnumerable<Entity> LinearChildren(Entity expr)
+                    => LinearChildren<Intersectionf, IntersectionfBranchGetter>(expr);
             }
         }
     }

@@ -106,7 +106,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 newTerms.Add(invertDenominator * num);
             }
 
-            res = TreeAnalyzer.MultiHangBinary(newTerms, (a, b) => new Sumf(a, b)).InnerSimplify();
+            res = TreeAnalyzer.MultiHangBinary(newTerms, (a, b) => new Sumf(a, b)).InnerSimplified;
             return true;
         }
     }

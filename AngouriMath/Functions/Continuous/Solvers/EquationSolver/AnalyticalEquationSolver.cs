@@ -89,10 +89,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 if (equation.Substitute(x, downcasted).Evaled is not Complex error)
                     return root;
                 return IsZero(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational
-                       ? downcasted : root.InnerSimplify();
+                       ? downcasted : root.InnerSimplified;
             }
             if (PolynomialSolver.SolveAsPolynomial(expr, x) is { } poly)
-                return poly.Select(e => TryDowncast(expr, x, e.InnerSimplify())).ToSet();
+                return poly.Select(e => TryDowncast(expr, x, e.InnerSimplified)).ToSet();
 
             switch (expr)
             {

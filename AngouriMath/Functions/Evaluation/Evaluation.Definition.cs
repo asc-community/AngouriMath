@@ -20,7 +20,7 @@ namespace AngouriMath
         /// <summary>
         /// This should NOT be called inside itself
         /// </summary>
-        internal abstract Entity InnerSimplify();
+        protected abstract Entity InnerSimplify();
 
         /// <summary>
         /// This is the result of naive simplifications. In other 
@@ -81,7 +81,7 @@ namespace AngouriMath
                     expChildren.AddRange(exp);
                 else
                     return this; // if one is too complicated, return the current one
-            return Expand_(TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b)), level).InnerSimplify();
+            return Expand_(TreeAnalyzer.MultiHangBinary(expChildren, (a, b) => new Sumf(a, b)), level).InnerSimplified;
         }
 
         /// <summary>

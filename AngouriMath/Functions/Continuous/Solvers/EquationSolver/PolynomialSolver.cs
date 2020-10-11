@@ -61,7 +61,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         // ax + b = 0
         // ax = -b
         // x = -b / a
-        internal static IEnumerable<Entity> SolveLinear(Entity a, Entity b) => new[] { (-b / a).InnerSimplify() };
+        internal static IEnumerable<Entity> SolveLinear(Entity a, Entity b) => new[] { (-b / a).InnerSimplified };
 
         /// <summary>Solves ax^2 + bx + c</summary>
         /// <param name="a">Coefficient of x^2</param>
@@ -73,8 +73,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (TreeAnalyzer.IsZero(c)) return SolveLinear(a, b).Append(0);
             if (TreeAnalyzer.IsZero(a)) return SolveLinear(b, c);
             var D = MathS.Sqr(b) - 4 * a * c;
-            return new[] { ((-b - MathS.Sqrt(D)) / (2 * a)).InnerSimplify(),
-                           ((-b + MathS.Sqrt(D)) / (2 * a)).InnerSimplify() };
+            return new[] { ((-b - MathS.Sqrt(D)) / (2 * a)).InnerSimplified,
+                           ((-b + MathS.Sqrt(D)) / (2 * a)).InnerSimplified };
         }
 
         /// <summary>Solves ax^3 + bx^2 + cx + d</summary>
@@ -96,7 +96,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var u2 = Rational.Create(-1, 2) + coeff;
             var u3 = Rational.Create(-1, 2) - coeff;
             var D0 = MathS.Sqr(b) - 3 * a * c;
-            var D1 = (2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d).InnerSimplify();
+            var D1 = (2 * MathS.Pow(b, 3) - 9 * a * b * c + 27 * MathS.Sqr(a) * d).InnerSimplified;
             var C = MathS.Pow((D1 + MathS.Sqrt(MathS.Sqr(D1) - 4 * MathS.Pow(D0, 3))) / 2, Rational.Create(1, 3));
 
             return new[] { u1, u2, u3 }.Select(uk =>
@@ -120,11 +120,11 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (TreeAnalyzer.IsZero(a)) return SolveCubic(b, c, d, e);
 
             var alpha = (-3 * MathS.Sqr(b) / (8 * MathS.Sqr(a)) + c / a)
-                .InnerSimplify();
+                .InnerSimplified;
             var beta = (MathS.Pow(b, 3) / (8 * MathS.Pow(a, 3)) - (b * c) / (2 * MathS.Sqr(a)) + d / a)
-                .InnerSimplify();
+                .InnerSimplified;
             var gamma = (-3 * MathS.Pow(b, 4) / (256 * MathS.Pow(a, 4)) + MathS.Sqr(b) * c / (16 * MathS.Pow(a, 3)) - (b * d) / (4 * MathS.Sqr(a)) + e / a)
-                .InnerSimplify();
+                .InnerSimplified;
 
             if (beta.Evaled == 0)
                 return sqrtsOf1.SelectMany(_ => sqrtsOf1,
@@ -132,16 +132,16 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var oneThird = Rational.Create(1, 3);
             var P = (-MathS.Sqr(alpha) / 12 - gamma)
-                .InnerSimplify();
+                .InnerSimplified;
             var Q = (-MathS.Pow(alpha, 3) / 108 + alpha * gamma / 3 - MathS.Sqr(beta) / 8)
-                .InnerSimplify();
+                .InnerSimplified;
             var R = -Q / 2 + MathS.Sqrt(MathS.Sqr(Q) / 4 + MathS.Pow(P, 3) / 27);
             var U = MathS.Pow(R, oneThird)
-                .InnerSimplify();
+                .InnerSimplified;
             var y = (Rational.Create(-5, 6) * alpha + U + (U.Evaled == 0 ? -MathS.Pow(Q, oneThird) : -P / (3 * U)))
-                .InnerSimplify();
+                .InnerSimplified;
             var W = MathS.Sqrt(alpha + 2 * y)
-                .InnerSimplify();
+                .InnerSimplified;
 
             // Now we need to permutate all four combinations
             return sqrtsOf1.SelectMany(_ => sqrtsOf1,
@@ -213,7 +213,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var gcdPowerRoots = GetAllRootsOf1(gcdPower);
             Entity GetMonomialByPower(EInteger power) =>
-                monomialsByPower.TryGetValue(power, out var monomial) ? monomial.InnerSimplify() : 0;
+                monomialsByPower.TryGetValue(power, out var monomial) ? monomial.InnerSimplified : 0;
             powers.Sort();
             if (!powers.Last().CanFitInInt32())
                 return null;
@@ -228,7 +228,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 (2, _) =>
                     // Solve a x ^ n + b = 0 for x ^ n -> x ^ n = -b / a
                     MathS.Pow(subtree, Integer.Create(powers[1]))
-                    .Invert((-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).InnerSimplify(), subtree),
+                    .Invert((-1 * monomialsByPower[powers[0]] / monomialsByPower[powers[1]]).InnerSimplified, subtree),
                 (_, 2) => SolveQuadratic(GetMonomialByPower(2), GetMonomialByPower(1), GetMonomialByPower(0)),
                 (_, 3) => SolveCubic(GetMonomialByPower(3), GetMonomialByPower(2), GetMonomialByPower(1), GetMonomialByPower(0)),
                 (_, 4) => SolveQuartic(GetMonomialByPower(4), GetMonomialByPower(3),
