@@ -577,19 +577,15 @@ namespace AngouriMath.Functions
 
         // Suggestions to refactor this?
         private static bool OppositeSigns(ComparisonSign left, ComparisonSign right)
-        {
-            if (left is Lessf)
-                return right is Greaterf or GreaterOrEqualf or Equalsf;
-            if (left is LessOrEqualf)
-                return right is Greaterf;
-            if (left is Greaterf)
-                return right is Lessf or LessOrEqualf or Equalsf;
-            if (left is GreaterOrEqualf)
-                return right is Lessf;
-            if (left is Equalsf)
-                return right is Lessf or Greaterf;
-            return false;
-        }
+            => left switch
+            { 
+                Lessf => right is Greaterf or GreaterOrEqualf or Equalsf,
+                LessOrEqualf => right is Greaterf,
+                Greaterf => right is Lessf or LessOrEqualf or Equalsf,
+                GreaterOrEqualf => right is Lessf,
+                Equalsf => right is Lessf or Greaterf,
+                _ => false
+            };
 
         internal static Entity InequalityEqualityRules(Entity x) => x switch
         {
