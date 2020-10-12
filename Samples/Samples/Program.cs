@@ -6,6 +6,7 @@ using static AngouriMath.MathS;
 using AngouriMath.Extensions;
 using static System.Console;
 using static AngouriMath.Entity.Set;
+using System.Diagnostics;
 
 //WriteLine("a^x + b^x = c^x".Solve("x"));
 //WriteLine("x e ^ x = a".Solve("x"));
@@ -22,3 +23,5 @@ using static AngouriMath.Entity.Set;
 //Console.WriteLine(MathS.ToSympyCode(sol));
 
 // WriteLine("integral(1/x^3*1/sqrt(x^2-4), x, 1)".Simplify());
+
+//WriteLine("(a x3 + b x) / (c x3 + c x)".Limit("x", "+oo").Integrate("c").Derive("c").Simplify());

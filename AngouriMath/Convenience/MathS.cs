@@ -317,9 +317,22 @@ namespace AngouriMath
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
+        /// <param name="useCache">By default is true, it boosts performance if you have multiple uses of the same string,
+        /// for example, 
+        /// Entity expr = (Entity)"+oo" + "x".Limit("x", "+oo") * "+oo";
+        /// First occurance will be parsed, others will be replaced with the cached entity
+        /// </param>
         /// <returns>The parsed expression</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity FromString(string expr) => Parser.Parse(expr);
+        public static Entity FromString(string expr, bool useCache) => 
+            useCache ? stringToEntityCache.GetValue(expr, key => Parser.Parse(key)) : Parser.Parse(expr);
+
+        /// <summary>Converts a <see cref="string"/> to an expression</summary>
+        /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
+        /// <returns>The parsed expression</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity FromString(string expr) => FromString(expr, useCache: true);
+        private static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
 
         /// <summary>Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/></summary>
         /// <param name="num">A <see cref="Real"/> in base 10 to be translated into base <paramref name="N"/></param>
@@ -780,7 +793,7 @@ namespace AngouriMath
             {
                 var ent = expr;
                 for (var _ = 0; _ < power; _++)
-                    ent = ent is { } ? Integral(ent, x) : ent;
+                    ent = Integral(ent, x);
                 return ent;
             }
 
