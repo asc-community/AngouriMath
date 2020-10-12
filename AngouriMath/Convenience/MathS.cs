@@ -749,34 +749,34 @@ namespace AngouriMath
             /// from one of two sides (left and right).
             /// Returns <see langword="null"/> otherwise.
             /// </summary>
-            public static Entity? Limit(Entity expr, Variable var, Entity approachDestination,
+            public static Entity Limit(Entity expr, Variable var, Entity approachDestination,
                 ApproachFrom direction)
-                => LimitFunctional.ComputeLimit(expr, var, approachDestination, direction);
+                => expr.Limit(var, approachDestination, direction);
 
             /// <summary>
             /// If possible, analytically computes the limit of <paramref name="expr"/>
             /// if <paramref name="var"/> approaches to <paramref name="approachDestination"/>.
             /// Returns <see langword="null"/> otherwise or if limits from left and right sides differ.
             /// </summary>
-            public static Entity? Limit(Entity expr, Variable var, Entity approachDestination)
-                => LimitFunctional.ComputeLimit(expr, var, approachDestination);
+            public static Entity Limit(Entity expr, Variable var, Entity approachDestination)
+                => expr.Limit(var, approachDestination, ApproachFrom.BothSides);
 
             /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
-            public static Entity? Derivative(Entity expr, Variable x, EInteger power)
+            public static Entity Derivative(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
                 for (var _ = 0; _ < power; _++)
-                    ent = ent is { } ? Derivative(ent, x) : ent;
+                    ent = Derivative(ent, x);
                 return ent;
             }
 
             /// <summary>Derivation over a variable (without simplification)</summary>
             /// <param name="x">The variable to derive over</param>
             /// <returns>The derived result</returns>
-            public static Entity? Derivative(Entity expr, Variable x) => expr.Derive(x);
+            public static Entity Derivative(Entity expr, Variable x) => expr.Derive(x);
 
             /// <summary>Integrates over <paramref name="x"/> <paramref name="power"/> times</summary>
-            public static Entity? Integral(Entity expr, Variable x, EInteger power)
+            public static Entity Integral(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
                 for (var _ = 0; _ < power; _++)
@@ -787,10 +787,36 @@ namespace AngouriMath
             /// <summary>Integrates over a variable (without simplification)</summary>
             /// <param name="x">The variable to integrate over</param>
             /// <returns>The integrated result</returns>
-#pragma warning disable IDE0060 // Remove unused parameter
-            public static Entity? Integral(Entity expr, Variable x) =>
-#pragma warning restore IDE0060 // Remove unused parameter
-                throw FutureReleaseException.Raised("Integrals", "1.2.3");
+            public static Entity Integral(Entity expr, Variable x) 
+                => expr.Integrate(x);
+
+            /// <summary>
+            /// Returns a value of a definite integral of a function. Only works for one-variable functions
+            /// </summary>
+            /// <param name="x">Variable to integrate over</param>
+            /// <param name="from">The complex lower bound for integrating</param>
+            /// <param name="to">The complex upper bound for integrating</param>
+            public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to) =>
+                Integration.Integrate(expr, x, from, to, 100);
+
+            /// <summary>
+            /// Returns a value of a definite integral of a function. Only works for one-variable functions
+            /// </summary>
+            /// <param name="x">Variable to integrate over</param>
+            /// <param name="from">The real lower bound for integrating</param>
+            /// <param name="to">The real upper bound for integrating</param>
+            public static Complex DefiniteIntegral(Entity expr, Variable x, EDecimal from, EDecimal to) =>
+                Integration.Integrate(expr, x, (from, 0), (to, 0), 100);
+
+            /// <summary>
+            /// Returns a value of a definite integral of a function. Only works for one-variable functions
+            /// </summary>
+            /// <param name="x">Variable to integrate over</param>
+            /// <param name="from">The complex lower bound for integrating</param>
+            /// <param name="to">The complex upper bound for integrating</param>
+            /// <param name="stepCount">Accuracy (initially, amount of iterations)</param>
+            public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
+                Integration.Integrate(expr, x, from, to, stepCount);
         }
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node

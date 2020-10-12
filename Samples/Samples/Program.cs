@@ -21,4 +21,4 @@ using static AngouriMath.Entity.Set;
 //
 //Console.WriteLine(MathS.ToSympyCode(sol));
 
-WriteLine("x > a or x ^ 2 = a^3".Solve("x"));
+// WriteLine("integral(1/x^3*1/sqrt(x^2-4), x, 1)".Simplify());

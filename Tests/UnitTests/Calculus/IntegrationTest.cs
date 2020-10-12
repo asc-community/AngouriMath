@@ -5,6 +5,9 @@ namespace UnitTests.Algebra
 {
     public sealed class IntegrationTest
     {
+        //[Theory]
+        //[InlineData()]
+
         static readonly Entity.Variable x = nameof(x);
         [Fact]
         public void Test1()
