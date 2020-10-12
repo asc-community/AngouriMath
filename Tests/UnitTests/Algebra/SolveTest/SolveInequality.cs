@@ -22,5 +22,27 @@ namespace UnitTests.Algebra
         {
             Assert.Equal(expected.ToEntity(), initial.Solve("x").Simplify());
         }
+
+
+        [Theory]
+        [InlineData("x > a")]
+        [InlineData("x < a")]
+        [InlineData("x <= a")]
+        [InlineData("x >= a")]
+        [InlineData("(x + 1)(x + 2) >= a")]
+        [InlineData("(x + 1)(x + 2) > a")]
+        [InlineData("(x + 1)(x + 2) <= a")]
+        [InlineData("(x + 1)(x + 2) < a")]
+        [InlineData("(x + a)(x + b) >= 0")]
+        [InlineData("(x + a)(x + b) > 0")]
+        [InlineData("(x + a)(x + b) <= 0")]
+        [InlineData("(x + a)(x + b) < 0")]
+        public void AutoTest(string inequality, string setToCheck = "{ -5, -3, 0, 3, 5 }")
+        {
+            FiniteSet checkpoints = setToCheck;
+            var roots = (Set)inequality.Solve("x").Substitute("a", -10).Substitute("b", 10).Simplify();
+            foreach (var cp in checkpoints)
+                Assert.True(roots.Contains(cp) == inequality.Substitute("x", cp).Substitute("a", -10).Substitute("b", 10).EvalBoolean());
+        }
     }
 }
