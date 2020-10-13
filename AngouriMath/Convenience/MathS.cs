@@ -514,7 +514,14 @@ namespace AngouriMath
                 {
                     var previousValue = Value;
                     Value = value;
-                    try { action(); } finally { Value = previousValue; }
+                    try
+                    { 
+                        action(); 
+                    } 
+                    finally
+                    {
+                        Value = previousValue;
+                    }
                 }
 
                 /// <summary>
@@ -529,7 +536,14 @@ namespace AngouriMath
                 {
                     var previousValue = Value;
                     Value = value;
-                    try { return action(); } finally { Value = previousValue; }
+                    try
+                    {
+                        return action(); 
+                    } 
+                    finally
+                    { 
+                        Value = previousValue;
+                    }
                 }
 
                 public static implicit operator T(Setting<T> s) => s.Value;

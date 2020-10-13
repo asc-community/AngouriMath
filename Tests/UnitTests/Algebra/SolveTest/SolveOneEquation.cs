@@ -207,5 +207,15 @@ namespace UnitTests.Algebra
         public void Sign0RootsTest2() => SignumTest("sgn(x) + 1.1");
         [Fact(Skip = "Piecewise required")]
         public void Sign0RootsTest3() => SignumTest("sgn(x) + i + 1");
+
+        [Theory]
+        [InlineData("4^x - a", 1, 3)]
+        [InlineData("4^x + 2^x - a", 2)]
+        [InlineData("a^x + (a^2)^x - c", 2)]
+        [InlineData("1 + 2 ^ x + 4 ^ x + 8 ^ x - c", 3)]
+        [InlineData("e^x + (e2)^x - 1", 2)]
+        [InlineData("2 ^ (x sin(x)) + 4 ^ (x sin(x)) + c", 0)]
+        public void TestExponentialSolver(string equation, int rootCount, int? toSub = null)
+            => TestSolver(equation, rootCount, toSub);
     }
 }
