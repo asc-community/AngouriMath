@@ -96,6 +96,8 @@ namespace AngouriMath.Functions
             // x * {} ^ {} = {} ^ {} * x
             Mulf(Variable var1, Powf(var any1, var any2)) => new Powf(any1, any2) * var1,
 
+            Logf(var any1, Powf(var any2, var any3)) => any3 * MathS.Log(any1, any2),
+
             _ => x
         };
     }

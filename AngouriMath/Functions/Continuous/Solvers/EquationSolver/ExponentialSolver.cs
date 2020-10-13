@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
@@ -44,12 +46,22 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return null;
         }
 
+        internal static Entity GetConstantOutOfLogarithm(Entity expr)
+            => expr switch
+            {
+                Logf(var anyBase1, Powf(var anyBase2, Integer cst))
+                    => cst * new Logf(anyBase1, anyBase2),
+                _ => expr
+            };
+
         internal static Entity.Set? SolveMultiplicative(Entity expr, Entity.Variable x)
         {
             Entity? substitution = null;
-            var powers = new List<Entity>();
+            var innerPowerList = new List<Entity>();
+            var outerPowerList = new List<Entity>();
             Entity ApplyPowerTransform(Entity @base, Entity arg)
             {
+                arg = arg.Replace(GetConstantOutOfLogarithm);
                 var mults = Entity.Mulf.LinearChildren(arg);
                 if (mults.Count() == 0) return MathS.Pow(@base, arg);
 
@@ -57,13 +69,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 Entity outerPower = 1;
                 foreach (var mult in mults)
                 {
-                    if (mult.InnerSimplified is Entity.Number)
-                        outerPower = outerPower * mult;
+                    if (mult.EvaluableNumerical)
+                        outerPower *= mult;
                     else
-                        innerPower = innerPower * mult;
+                        innerPower *= mult;
                 }
-                substitution = MathS.Pow(@base, innerPower);
-                powers.Add(innerPower);
+                substitution = innerPower == 1 ? @base : MathS.Pow(@base, innerPower);
+                if(innerPower != 1) innerPowerList.Add(innerPower);
+                if(outerPower != 1) outerPowerList.Add(outerPower);
                 return MathS.Pow(substitution, outerPower.InnerSimplified);
             }
 
@@ -81,27 +94,29 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             var replacement = Entity.Variable.CreateTemp(expr.Vars);
             
+            if(innerPowerList.Count == 0) 
+                (innerPowerList, outerPowerList) = (outerPowerList, innerPowerList);
+
             // handle special case when all bases are numerical
-            if (powers.All(e => e.EvaluableNumerical))
+            if (innerPowerList.All(e => e.EvaluableNumerical && e.Evaled is Real))
             {
-                var minPow = powers.Aggregate((a, b)
+                var minPow = innerPowerList.Aggregate((a, b)
                     => (a.EvalNumerical() < b.EvalNumerical()).EvalBoolean() ? a : b);
 
-                substitution = MathS.Pow(x, minPow);
+                substitution = MathS.Pow(x, minPow).InnerSimplified;
 
-                foreach (var pow in powers)
+                foreach (var pow in innerPowerList)
                 {
                     var divided = (pow / minPow).InnerSimplified;
-                    expr = expr.Substitute(MathS.Pow(x, pow), MathS.Pow(substitution, divided));
+                    expr = expr.Substitute(MathS.Pow(x, pow.InnerSimplified), MathS.Pow(substitution, divided));
                 }
             }
-
             expr = expr.Substitute(substitution, replacement);
             if (expr.ContainsNode(x)) return null; // cannot be solved, not a multiplicative exponenial equation
 
             expr = expr.InnerSimplified;
             if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els && els.Any())
-                return (Entity.Set)els.Select(sol => substitution.Invert(sol, x).ToSet()).Unite().InnerSimplified;
+                return (Set)els.Select(sol => substitution.Invert(sol, x).ToSet()).Unite().InnerSimplified;
             else
                 return null;
         }

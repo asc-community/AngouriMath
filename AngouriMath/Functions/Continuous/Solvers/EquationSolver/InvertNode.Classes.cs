@@ -73,14 +73,20 @@ namespace AngouriMath
 
         public partial record Powf
         {
-            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                Base.ContainsNode(x)
-                ? Exponent is Integer { EInteger: var pow }
-                  ? Number.GetAllRootsOf1(pow)
-                    .SelectMany(root => Base.Invert(root * MathS.Pow(value, 1 / Exponent), x))
-                  : Base.Invert(MathS.Pow(value, 1 / Exponent), x)
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+            {
+                if (Base.ContainsNode(x))
+                {
+                    if (Exponent is Integer { EInteger: var pow })
+                        return Number.GetAllRootsOf1(pow).SelectMany(root => Base.Invert(root * MathS.Pow(value, 1 / Exponent), x));
+                    else
+                        return Base.Invert(MathS.Pow(value, 1 / Exponent), x);
+                }  
                 // a ^ x = value => x = log(a, value)
-                : Exponent.Invert(MathS.Log(Base, value) + 2 * MathS.i * Variable.CreateUnique(this + value, "n") * MathS.pi / MathS.Ln(Base), x);
+                // TODO: determine how we should return periodic roots as
+                // (e ^ x) ^ a != (e ^ a) ^ x for logs
+                return Exponent.Invert(MathS.Log(Base, value), x);
+            }
         }
 
         // TODO: Consider case when sin(sin(x)) where double-mention of n occures
