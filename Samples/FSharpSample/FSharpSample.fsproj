@@ -9,4 +9,8 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj" />
+  </ItemGroup>
+
 </Project>
