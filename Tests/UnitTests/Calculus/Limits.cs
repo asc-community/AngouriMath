@@ -8,7 +8,7 @@ namespace UnitTests.Algebra
     public sealed class Limits
     {
         void TestLimit(Entity expr, Entity where, ApproachFrom appr, Entity desiredOutput)
-            => Assert.Equal(desiredOutput.Simplify(), MathS.Compute.Limit(expr, "x", where, appr)?.Simplify());
+            => Assert.Equal(desiredOutput.Simplify(), MathS.Compute.Limit(expr, "x", where, appr).Simplify());
 
         [Fact] public void Test1() => TestLimit("x", Real.PositiveInfinity, ApproachFrom.Left, Real.PositiveInfinity);
         [Fact] public void Test2() => TestLimit("-x", Real.PositiveInfinity, ApproachFrom.Left, Real.NegativeInfinity);
@@ -42,6 +42,7 @@ namespace UnitTests.Algebra
         [Fact] public void Test30() => TestLimit("log(x, x)", 0, ApproachFrom.Right, 1);
         [Fact] public void Test31() => TestLimit("ln(ln((e^2*x + t) / (x + 1)))", Real.PositiveInfinity, ApproachFrom.Left, MathS.Ln(2));
         [Fact] public void Test32() => TestLimit("log((2x - 1)/(x + 1), (x - 1)/(2x - 1))", Real.PositiveInfinity, ApproachFrom.Left, -1);
+        [Fact] public void Test33() => TestLimit("(x + 3) / (x + 4)", "+oo", ApproachFrom.BothSides, 1);
 
         [Fact]
         public void TestComplicated()

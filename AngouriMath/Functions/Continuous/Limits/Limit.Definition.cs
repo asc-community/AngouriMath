@@ -10,6 +10,7 @@
 
 namespace AngouriMath
 {
+    using AngouriMath.Functions.Algebra;
     using Core;
     using static Functions.Algebra.LimitFunctional;
     partial record Entity
@@ -35,7 +36,7 @@ namespace AngouriMath
         /// cannot be determined
         /// </returns>
         public Entity Limit(Variable x, Entity destination, ApproachFrom side)
-            => ComputeLimitDivideEtImpera(x, destination, side) ?? new Limitf(this, x, destination, side);
+            => LimitFunctional.ComputeLimit(this, x, destination, side) ?? new Limitf(this, x, destination, side);
 
         /// <summary>
         /// Finds the limit of the given expression over the given variable
@@ -53,7 +54,7 @@ namespace AngouriMath
         /// cannot be determined
         /// </returns>
         public Entity Limit(Variable x, Entity destination)
-            => ComputeLimitDivideEtImpera(x, destination, ApproachFrom.BothSides) ?? new Limitf(this, x, destination, ApproachFrom.BothSides);
+            => LimitFunctional.ComputeLimit(this, x, destination, ApproachFrom.BothSides) ?? new Limitf(this, x, destination, ApproachFrom.BothSides);
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Divide_and_rule"/>
@@ -171,12 +172,17 @@ namespace AngouriMath
 
         public partial record Logf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Base.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Base,
-                    Antilogarithm.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Antilogarithm),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (ComputeLimitImpl(this, x, dist, side) is { } lim)
+                    return lim;
+                else
+                {
+                    var @base = Base.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 && lim1 != 0 ? lim1 : Base;
+                    var power = Antilogarithm.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 && lim2 != 0 ? lim2 : Antilogarithm;
+                    return ComputeLimitImpl(New( @base, power ), x, dist, side);
+                }
+            }
         }
 
         public partial record Powf
