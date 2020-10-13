@@ -332,7 +332,7 @@ namespace AngouriMath
         /// <returns>The parsed expression</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity FromString(string expr) => FromString(expr, useCache: true);
-        private static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
+        internal static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
 
         /// <summary>Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/></summary>
         /// <param name="num">A <see cref="Real"/> in base 10 to be translated into base <paramref name="N"/></param>
@@ -965,6 +965,31 @@ namespace AngouriMath
             [NotNullWhen(true)] out Entity? b,
             [NotNullWhen(true)] out Entity? c)
                 => TreeAnalyzer.TryGetPolyQuadratic(expr, variable, out a, out b, out c);
+        }
+
+        /// <summary>
+        /// You may need it to manually manage some issues
+        /// </summary>
+        public static class Unsafe
+        {
+            /// <summary>
+            /// When you implicitly convert string to an Entity,
+            /// it caches the result by the string's reference.
+            /// If very strict about RAM usage, you can manually
+            /// clean it (or use <see cref="MathS.FromString(string, bool)"/>
+            /// instead and set the flag useCache to false)
+            /// </summary>
+            public static void ClearFromStringCache()
+                => MathS.stringToEntityCache = new();
+
+            /// <summary>
+            /// Entities' properties are not initialized once
+            /// a node is created. They are stored in another
+            /// weak table, whose memory consumtion might
+            /// be critical for some system. You can clean it
+            /// </summary>
+            public static void ClearEntityPropertyCache()
+                => Entity.caches = new();
         }
     }
 }

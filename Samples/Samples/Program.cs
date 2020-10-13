@@ -8,7 +8,7 @@ using static System.Console;
 using static AngouriMath.Entity.Set;
 using System.Diagnostics;
 
-//WriteLine("a^x + b^x = c^x".Solve("x"));
+WriteLine("a^x + b^x = c^x".Solve("x"));
 //WriteLine("x e ^ x = a".Solve("x"));
 //WriteLine("e ^ x + e ^ (2x) + c = d".Solve("x"));
 //WriteLine("x ^ x + x ^ (2x) = c".Solve("x"));
