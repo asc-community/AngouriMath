@@ -80,7 +80,7 @@ namespace AngouriMath
                     .SelectMany(root => Base.Invert(root * MathS.Pow(value, 1 / Exponent), x))
                   : Base.Invert(MathS.Pow(value, 1 / Exponent), x)
                 // a ^ x = value => x = log(a, value)
-                : Exponent.Invert(MathS.Log(Base, value) + 2 * MathS.i * Variable.CreateUnique(this + value, "n") * MathS.pi, x);
+                : Exponent.Invert(MathS.Log(Base, value) + 2 * MathS.i * Variable.CreateUnique(this + value, "n") * MathS.pi / MathS.Ln(Base), x);
         }
 
         // TODO: Consider case when sin(sin(x)) where double-mention of n occures
