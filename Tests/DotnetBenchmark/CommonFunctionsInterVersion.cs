@@ -13,8 +13,8 @@ namespace DotnetBenchmark
     public class CommonFunctionsInterVersion
     {
         // Testing parsing
-        [Benchmark] public void ParseEasy() => "1 + 2 / x + 2 / (y + x)".ToEntity();
-        [Benchmark] public void ParseHard() => "x ^ (x + y ^ 2 ^ sin(3 / z + i)) - log(-i, 3) ^ (x + x * y) - sqrt(y) / (i + sqrt(-1))".ToEntity();
+        [Benchmark] public void ParseEasy() => MathS.FromString("1 + 2 / x + 2 / (y + x)", useCache: false);
+        [Benchmark] public void ParseHard() => MathS.FromString("x ^ (x + y ^ 2 ^ sin(3 / z + i)) - log(-i, 3) ^ (x + x * y) - sqrt(y) / (i + sqrt(-1))", useCache: false);
 
         // Testing simplification
         [Benchmark] public void SimplifyEasy() => simplifyEasy.Simplify(4);

@@ -317,9 +317,22 @@ namespace AngouriMath
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
+        /// <param name="useCache">By default is true, it boosts performance if you have multiple uses of the same string,
+        /// for example, 
+        /// Entity expr = (Entity)"+oo" + "x".Limit("x", "+oo") * "+oo";
+        /// First occurance will be parsed, others will be replaced with the cached entity
+        /// </param>
         /// <returns>The parsed expression</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity FromString(string expr) => Parser.Parse(expr);
+        public static Entity FromString(string expr, bool useCache) => 
+            useCache ? stringToEntityCache.GetValue(expr, key => Parser.Parse(key)) : Parser.Parse(expr);
+
+        /// <summary>Converts a <see cref="string"/> to an expression</summary>
+        /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
+        /// <returns>The parsed expression</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity FromString(string expr) => FromString(expr, useCache: true);
+        internal static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
 
         /// <summary>Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/></summary>
         /// <param name="num">A <see cref="Real"/> in base 10 to be translated into base <paramref name="N"/></param>
@@ -501,7 +514,14 @@ namespace AngouriMath
                 {
                     var previousValue = Value;
                     Value = value;
-                    try { action(); } finally { Value = previousValue; }
+                    try
+                    { 
+                        action(); 
+                    } 
+                    finally
+                    {
+                        Value = previousValue;
+                    }
                 }
 
                 /// <summary>
@@ -516,7 +536,14 @@ namespace AngouriMath
                 {
                     var previousValue = Value;
                     Value = value;
-                    try { return action(); } finally { Value = previousValue; }
+                    try
+                    {
+                        return action(); 
+                    } 
+                    finally
+                    { 
+                        Value = previousValue;
+                    }
                 }
 
                 public static implicit operator T(Setting<T> s) => s.Value;
@@ -749,48 +776,74 @@ namespace AngouriMath
             /// from one of two sides (left and right).
             /// Returns <see langword="null"/> otherwise.
             /// </summary>
-            public static Entity? Limit(Entity expr, Variable var, Entity approachDestination,
+            public static Entity Limit(Entity expr, Variable var, Entity approachDestination,
                 ApproachFrom direction)
-                => LimitFunctional.ComputeLimit(expr, var, approachDestination, direction);
+                => expr.Limit(var, approachDestination, direction);
 
             /// <summary>
             /// If possible, analytically computes the limit of <paramref name="expr"/>
             /// if <paramref name="var"/> approaches to <paramref name="approachDestination"/>.
             /// Returns <see langword="null"/> otherwise or if limits from left and right sides differ.
             /// </summary>
-            public static Entity? Limit(Entity expr, Variable var, Entity approachDestination)
-                => LimitFunctional.ComputeLimit(expr, var, approachDestination);
+            public static Entity Limit(Entity expr, Variable var, Entity approachDestination)
+                => expr.Limit(var, approachDestination, ApproachFrom.BothSides);
 
             /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
-            public static Entity? Derivative(Entity expr, Variable x, EInteger power)
+            public static Entity Derivative(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
                 for (var _ = 0; _ < power; _++)
-                    ent = ent is { } ? Derivative(ent, x) : ent;
+                    ent = Derivative(ent, x);
                 return ent;
             }
 
             /// <summary>Derivation over a variable (without simplification)</summary>
             /// <param name="x">The variable to derive over</param>
             /// <returns>The derived result</returns>
-            public static Entity? Derivative(Entity expr, Variable x) => expr.Derive(x);
+            public static Entity Derivative(Entity expr, Variable x) => expr.Derive(x);
 
             /// <summary>Integrates over <paramref name="x"/> <paramref name="power"/> times</summary>
-            public static Entity? Integral(Entity expr, Variable x, EInteger power)
+            public static Entity Integral(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
                 for (var _ = 0; _ < power; _++)
-                    ent = ent is { } ? Integral(ent, x) : ent;
+                    ent = Integral(ent, x);
                 return ent;
             }
 
             /// <summary>Integrates over a variable (without simplification)</summary>
             /// <param name="x">The variable to integrate over</param>
             /// <returns>The integrated result</returns>
-#pragma warning disable IDE0060 // Remove unused parameter
-            public static Entity? Integral(Entity expr, Variable x) =>
-#pragma warning restore IDE0060 // Remove unused parameter
-                throw FutureReleaseException.Raised("Integrals", "1.2.3");
+            public static Entity Integral(Entity expr, Variable x) 
+                => expr.Integrate(x);
+
+            /// <summary>
+            /// Returns a value of a definite integral of a function. Only works for one-variable functions
+            /// </summary>
+            /// <param name="x">Variable to integrate over</param>
+            /// <param name="from">The complex lower bound for integrating</param>
+            /// <param name="to">The complex upper bound for integrating</param>
+            public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to) =>
+                Integration.Integrate(expr, x, from, to, 100);
+
+            /// <summary>
+            /// Returns a value of a definite integral of a function. Only works for one-variable functions
+            /// </summary>
+            /// <param name="x">Variable to integrate over</param>
+            /// <param name="from">The real lower bound for integrating</param>
+            /// <param name="to">The real upper bound for integrating</param>
+            public static Complex DefiniteIntegral(Entity expr, Variable x, EDecimal from, EDecimal to) =>
+                Integration.Integrate(expr, x, (from, 0), (to, 0), 100);
+
+            /// <summary>
+            /// Returns a value of a definite integral of a function. Only works for one-variable functions
+            /// </summary>
+            /// <param name="x">Variable to integrate over</param>
+            /// <param name="from">The complex lower bound for integrating</param>
+            /// <param name="to">The complex upper bound for integrating</param>
+            /// <param name="stepCount">Accuracy (initially, amount of iterations)</param>
+            public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
+                Integration.Integrate(expr, x, from, to, stepCount);
         }
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
@@ -926,6 +979,31 @@ namespace AngouriMath
             [NotNullWhen(true)] out Entity? b,
             [NotNullWhen(true)] out Entity? c)
                 => TreeAnalyzer.TryGetPolyQuadratic(expr, variable, out a, out b, out c);
+        }
+
+        /// <summary>
+        /// You may need it to manually manage some issues
+        /// </summary>
+        public static class Unsafe
+        {
+            /// <summary>
+            /// When you implicitly convert string to an Entity,
+            /// it caches the result by the string's reference.
+            /// If very strict about RAM usage, you can manually
+            /// clean it (or use <see cref="MathS.FromString(string, bool)"/>
+            /// instead and set the flag useCache to false)
+            /// </summary>
+            public static void ClearFromStringCache()
+                => MathS.stringToEntityCache = new();
+
+            /// <summary>
+            /// Entities' properties are not initialized once
+            /// a node is created. They are stored in another
+            /// weak table, whose memory consumtion might
+            /// be critical for some system. You can clean it
+            /// </summary>
+            public static void ClearEntityPropertyCache()
+                => Entity.caches = new();
         }
     }
 }

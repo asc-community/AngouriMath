@@ -7,83 +7,54 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-namespace AngouriMath.Functions.Algebra
-{
-    using Core;
-    using static Entity;
-    using static Entity.Number;
-    internal static class LimitFunctional
-    {
-        private static Entity? SimplifyAndComputeLimitToInfinity(Entity expr, Variable x)
-        {
-            expr = expr.Simplify();
-            return ComputeLimitToInfinity(expr, x);
-        }
 
-        private static Entity? ComputeLimitToInfinity(Entity expr, Variable x)
-        {
-            var substitutionResult = LimitSolvers.SolveBySubstitution(expr, x);
-            if (substitutionResult is { }) return substitutionResult;
-
-            var logarithmResult = LimitSolvers.SolveAsLogarithm(expr, x);
-            if (logarithmResult is { }) return logarithmResult;
-
-            var polynomialResult = LimitSolvers.SolveAsPolynomial(expr, x);
-            if (polynomialResult is { }) return polynomialResult;
-
-            var polynomialDivisionResult = LimitSolvers.SolvePolynomialDivision(expr, x);
-            if (polynomialDivisionResult is { }) return polynomialDivisionResult;
-
-            var logarithmDivisionResult = LimitSolvers.SolveAsLogarithmDivision(expr, x);
-            if (logarithmDivisionResult is { }) return logarithmDivisionResult;
-
-            return null;
-        }
-
-        public static Entity? ComputeLimit(Entity expr, Variable x, Entity dist, ApproachFrom side = ApproachFrom.BothSides) => side switch
-        {
-            ApproachFrom.Left or ApproachFrom.Right => expr.ComputeLimitDivideEtImpera(x, dist, side),
-            ApproachFrom.BothSides =>
-                !dist.IsFinite
-                // just compute limit with no check for left/right equality
-                // here approach left will be ignored anyways, as dist is infinite number
-                ? expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Left)
-                : expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Left) is { } fromLeft
-                  && expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Right) is { } fromRight
-                ? fromLeft == fromRight ? fromLeft : Real.NaN
-                : null,
-            _ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(side), (int)side, typeof(ApproachFrom))
-        };
-
-        internal static Entity? ComputeLimitImpl(Entity expr, Variable x, Entity dist, ApproachFrom side) => dist switch
-        {
-            _ when !expr.ContainsNode(x) => expr,
-            // avoid NaN values as non finite numbers
-            Real { IsNaN: true } => Real.NaN,
-            // if x -> -oo just make -x -> +oo
-            Real { IsFinite: false, IsNegative: true } => SimplifyAndComputeLimitToInfinity(expr.Substitute(x, -x), x),
-            // compute limit for x -> +oo
-            Real { IsFinite: false, IsNegative: false } => SimplifyAndComputeLimitToInfinity(expr, x),
-            Complex { IsFinite: false } =>
-                throw new Core.Exceptions.MathSException($"complex infinities are not supported in limits: lim({x} -> {dist}) {expr}"),
-            _ => SimplifyAndComputeLimitToInfinity(side switch
-            {
-                // lim(x -> 3-) x <=> lim(x -> 0+) 3 - x <=> lim(x -> +oo) 3 - 1 / x
-                ApproachFrom.Left => expr.Substitute(x, dist - 1 / x),
-                // lim(x -> 3+) x <=> lim(x -> 0+) 3 + x <=> lim(x -> +oo) 3 + 1 / x
-                ApproachFrom.Right => expr.Substitute(x, dist + 1 / x),
-                _ => throw new System.ArgumentOutOfRangeException(nameof(side), side,
-                    $"Only {ApproachFrom.Left} and {ApproachFrom.Right} are supported.")
-            }, x)
-        };
-    }
-}
 namespace AngouriMath
 {
     using Core;
     using static Functions.Algebra.LimitFunctional;
-    public abstract partial record Entity
+    partial record Entity
     {
+        /// <summary>
+        /// Finds the limit of the given expression over the given variable
+        /// </summary>
+        /// <param name="x">
+        /// The variable to be approaching
+        /// </param>
+        /// <param name="destination">
+        /// A value where the variable approaches. It might be a symbolic
+        /// expression, a finite number, or an infinite number, for example,
+        /// "sqrt(x2 + x) / (3x + 3)".Limit("x", "+oo", ApproachFrom.BothSides)
+        /// </param>
+        /// <param name="side">
+        /// From where to approach it: from the left, from the right,
+        /// or BothSides, implying that if limits from either are not
+        /// equal, there is no limit
+        /// </param>
+        /// <returns>
+        /// A result or the <see cref="Limitf"/> node if the limit
+        /// cannot be determined
+        /// </returns>
+        public Entity Limit(Variable x, Entity destination, ApproachFrom side)
+            => ComputeLimitDivideEtImpera(x, destination, side) ?? new Limitf(this, x, destination, side);
+
+        /// <summary>
+        /// Finds the limit of the given expression over the given variable
+        /// </summary>
+        /// <param name="x">
+        /// The variable to be approaching
+        /// </param>
+        /// <param name="destination">
+        /// A value where the variable approaches. It might be a symbolic
+        /// expression, a finite number, or an infinite number, for example,
+        /// "sqrt(x2 + x) / (3x + 3)".Limit("x", "+oo")
+        /// </param>
+        /// <returns>
+        /// A result or the <see cref="Limitf"/> node if the limit
+        /// cannot be determined
+        /// </returns>
+        public Entity Limit(Variable x, Entity destination)
+            => ComputeLimitDivideEtImpera(x, destination, ApproachFrom.BothSides) ?? new Limitf(this, x, destination, ApproachFrom.BothSides);
+
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Divide_and_rule"/>
         /// Divide and rule (Latin: divide et impera), or divide and conquer,
@@ -307,5 +278,78 @@ namespace AngouriMath
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
                 => Argument.ComputeLimitDivideEtImpera(x, dist, side)?.Abs();
         }
+    }
+}
+
+
+namespace AngouriMath.Functions.Algebra
+{
+    using Core;
+    using static Entity;
+    using static Entity.Number;
+    internal static class LimitFunctional
+    {
+        private static Entity? SimplifyAndComputeLimitToInfinity(Entity expr, Variable x)
+        {
+            expr = expr.Simplify();
+            return ComputeLimitToInfinity(expr, x);
+        }
+
+        private static Entity? ComputeLimitToInfinity(Entity expr, Variable x)
+        {
+            var substitutionResult = LimitSolvers.SolveBySubstitution(expr, x);
+            if (substitutionResult is { }) return substitutionResult;
+
+            var logarithmResult = LimitSolvers.SolveAsLogarithm(expr, x);
+            if (logarithmResult is { }) return logarithmResult;
+
+            var polynomialResult = LimitSolvers.SolveAsPolynomial(expr, x);
+            if (polynomialResult is { }) return polynomialResult;
+
+            var polynomialDivisionResult = LimitSolvers.SolvePolynomialDivision(expr, x);
+            if (polynomialDivisionResult is { }) return polynomialDivisionResult;
+
+            var logarithmDivisionResult = LimitSolvers.SolveAsLogarithmDivision(expr, x);
+            if (logarithmDivisionResult is { }) return logarithmDivisionResult;
+
+            return null;
+        }
+
+        public static Entity? ComputeLimit(Entity expr, Variable x, Entity dist, ApproachFrom side = ApproachFrom.BothSides) => side switch
+        {
+            ApproachFrom.Left or ApproachFrom.Right => expr.ComputeLimitDivideEtImpera(x, dist, side),
+            ApproachFrom.BothSides =>
+                !dist.IsFinite
+                // just compute limit with no check for left/right equality
+                // here approach left will be ignored anyways, as dist is infinite number
+                ? expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Left)
+                : expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Left) is { } fromLeft
+                  && expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Right) is { } fromRight
+                ? fromLeft == fromRight ? fromLeft : Real.NaN
+                : null,
+            _ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(side), (int)side, typeof(ApproachFrom))
+        };
+
+        internal static Entity? ComputeLimitImpl(Entity expr, Variable x, Entity dist, ApproachFrom side) => dist switch
+        {
+            _ when !expr.ContainsNode(x) => expr,
+            // avoid NaN values as non finite numbers
+            Real { IsNaN: true } => Real.NaN,
+            // if x -> -oo just make -x -> +oo
+            Real { IsFinite: false, IsNegative: true } => SimplifyAndComputeLimitToInfinity(expr.Substitute(x, -x), x),
+            // compute limit for x -> +oo
+            Real { IsFinite: false, IsNegative: false } => SimplifyAndComputeLimitToInfinity(expr, x),
+            Complex { IsFinite: false } =>
+                throw new Core.Exceptions.MathSException($"complex infinities are not supported in limits: lim({x} -> {dist}) {expr}"),
+            _ => SimplifyAndComputeLimitToInfinity(side switch
+            {
+                // lim(x -> 3-) x <=> lim(x -> 0+) 3 - x <=> lim(x -> +oo) 3 - 1 / x
+                ApproachFrom.Left => expr.Substitute(x, dist - 1 / x),
+                // lim(x -> 3+) x <=> lim(x -> 0+) 3 + x <=> lim(x -> +oo) 3 + 1 / x
+                ApproachFrom.Right => expr.Substitute(x, dist + 1 / x),
+                _ => throw new System.ArgumentOutOfRangeException(nameof(side), side,
+                    $"Only {ApproachFrom.Left} and {ApproachFrom.Right} are supported.")
+            }, x)
+        };
     }
 }
