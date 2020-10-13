@@ -46,7 +46,7 @@ namespace UnitTests.Convenience
         [InlineData("sin(x)")]
         [InlineData("2s")]
         public void NotAVariable(string input) =>
-            Assert.Throws<System.InvalidCastException>(() => (Entity.Variable)input);
+            Assert.Throws<ParseException>(() => (Entity.Variable)input);
         [Fact] public void TestFormula1() => Assert.Equal(2, FromString("1 + 1").EvalNumerical());
         [Fact] public void TestFormula2() => Assert.Equal(0, FromString("sin(0)").EvalNumerical());
         [Fact] public void TestFormula3() => Assert.Equal(2, FromString("log(2, 4)").EvalNumerical());

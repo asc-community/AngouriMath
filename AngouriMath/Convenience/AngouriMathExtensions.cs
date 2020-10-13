@@ -205,11 +205,70 @@ namespace AngouriMath.Extensions
             => str.ToEntity().Compile(variables);
 
         /// <summary>
-        /// Finds out the derivative of the given expression 
+        /// Finds the symbolical derivative of the given expression
         /// </summary>
-        /// <param name="x">A Variable over which to find a derivative</param>
-        /// <returns>A derived expression</returns>
+        /// <param name="variable">
+        /// Over which variable to find the derivative
+        /// </param>
+        /// <returns>
+        /// The derived expression which might contain <see cref="Derivativef"/> nodes,
+        /// or the initial one
+        /// </returns>
         public static Entity Derive(this string str, Variable x)
             => str.ToEntity().Derive(x);
+
+        /// <summary>
+        /// Integrates the given expression over the `x` variable, if can.
+        /// May return an unresolved <see cref="Integralf"/> node.
+        /// </summary>
+        /// <param name="x">Over which to integrate</param>
+        /// <returns>
+        /// An integrated expression. It might remain the same,
+        /// it might have no integrals, and it might be transformed so that
+        /// only a few nodes have unresolved integrals.
+        /// </returns>
+        public static Entity Integrate(this string str, Variable x)
+            => str.ToEntity().Integrate(x);
+
+        /// <summary>
+        /// Finds the limit of the given expression over the given variable
+        /// </summary>
+        /// <param name="x">
+        /// The variable to be approaching
+        /// </param>
+        /// <param name="destination">
+        /// A value where the variable approaches. It might be a symbolic
+        /// expression, a finite number, or an infinite number, for example,
+        /// "sqrt(x2 + x) / (3x + 3)".Limit("x", "+oo", ApproachFrom.BothSides)
+        /// </param>
+        /// <param name="side">
+        /// From where to approach it: from the left, from the right,
+        /// or BothSides, implying that if limits from either are not
+        /// equal, there is no limit
+        /// </param>
+        /// <returns>
+        /// A result or the <see cref="Limitf"/> node if the limit
+        /// cannot be determined
+        /// </returns>
+        public static Entity Limit(this string str, Variable x, Entity destination, ApproachFrom side)
+            => str.ToEntity().Limit(x, destination, side);
+
+        /// <summary>
+        /// Finds the limit of the given expression over the given variable
+        /// </summary>
+        /// <param name="x">
+        /// The variable to be approaching
+        /// </param>
+        /// <param name="destination">
+        /// A value where the variable approaches. It might be a symbolic
+        /// expression, a finite number, or an infinite number, for example,
+        /// "sqrt(x2 + x) / (3x + 3)".Limit("x", "+oo")
+        /// </param>
+        /// <returns>
+        /// A result or the <see cref="Limitf"/> node if the limit
+        /// cannot be determined
+        /// </returns>
+        public static Entity Limit(this string str, Variable x, Entity destination)
+            => str.ToEntity().Limit(x, destination);
     }
 }

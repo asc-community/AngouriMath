@@ -94,7 +94,6 @@ namespace AngouriMath
                     i++;
                 return new Variable("%" + i);
             }
-            public static implicit operator Variable(string name) => (Variable)Parser.Parse(name);
         }
         #endregion
     }

@@ -4,9 +4,6 @@ on: [push, pull_request]
 jobs:
   Benchmark:
     runs-on: windows-latest
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
     steps:
     - uses: actions/checkout@v2
       with:

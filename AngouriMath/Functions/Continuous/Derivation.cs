@@ -14,6 +14,16 @@ namespace AngouriMath
     // Adding function Derive to Entity
     public abstract partial record Entity
     {
+        /// <summary>
+        /// Finds the symbolical derivative of the given expression
+        /// </summary>
+        /// <param name="variable">
+        /// Over which variable to find the derivative
+        /// </param>
+        /// <returns>
+        /// The derived expression which might contain <see cref="Derivativef"/> nodes,
+        /// or the initial one
+        /// </returns>
         public virtual Entity Derive(Variable variable)
             => new Derivativef(this, variable, 1);
 

@@ -83,7 +83,7 @@ namespace AngouriMath
                     _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
                 });
             internal static T OpSum<T>(T a, T b) where T : Number =>
-                SuperSwitch(a, b,
+                SuperSwitch<T>(a, b,
                     (a, b) => Integer.Create(CtxAdd(a.EInteger, b.EInteger)),
                     (a, b) => Rational.Create(CtxAdd(a.ERational, b.ERational)),
                     (a, b) => Real.Create(CtxAdd(a.EDecimal, b.EDecimal)),
@@ -91,7 +91,7 @@ namespace AngouriMath
                                              CtxAdd(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
                     );
             internal static T OpSub<T>(T a, T b) where T : Number =>
-                SuperSwitch(a, b,
+                SuperSwitch<T>(a, b,
                     (a, b) => Integer.Create(CtxSubtract(a.EInteger, b.EInteger)),
                     (a, b) => Rational.Create(CtxSubtract(a.ERational, b.ERational)),
                     (a, b) => Real.Create(CtxSubtract(a.EDecimal, b.EDecimal)),
@@ -99,7 +99,7 @@ namespace AngouriMath
                                              CtxSubtract(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
                     );
             internal static T OpMul<T>(T a, T b) where T : Number =>
-                SuperSwitch(a, b,
+                SuperSwitch<T>(a, b,
                     (a, b) => Integer.Create(CtxMultiply(a.EInteger, b.EInteger)),
                     (a, b) => Rational.Create(CtxMultiply(a.ERational, b.ERational)),
                     (a, b) => Real.Create(CtxMultiply(a.EDecimal, b.EDecimal)),
@@ -114,7 +114,7 @@ namespace AngouriMath
                     }
                     );
             internal static Complex OpDiv<T>(T a, T b) where T : Number =>
-                SuperSwitch(a, b,
+                SuperSwitch<Complex>(a, b,
                     (a, b) => CtxDivide(a.ERational, b.ERational) is { } n ? Rational.Create(n) : Real.NaN,
                     (a, b) => CtxDivide(a.ERational, b.ERational) is { } n ? Rational.Create(n) : Real.NaN,
                     (a, b) => Real.Create(CtxDivide(a.EDecimal, b.EDecimal)),
@@ -164,7 +164,7 @@ namespace AngouriMath
             public static bool IsZero(Complex num) => IsZero(num.RealPart) && IsZero(num.ImaginaryPart);
 
             internal static bool AreEqual<T>(T a, T b) where T : Number =>
-                SuperSwitch(a, b,
+                SuperSwitch<bool>(a, b,
                     (a, b) => a.EInteger.Equals(b.EInteger),
                     (a, b) => a.ERational.Equals(b.ERational),
                     (a, b) => a.IsFinite && b.IsFinite

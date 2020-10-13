@@ -44,6 +44,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var roots = PolynomialSolver.SolveQuadratic(a, b, c);
                     if (roots.Any(c => c is Complex and not Real))
                         return Empty;
+                    roots = TreeAnalyzer.SortRealsAndNonReals(roots);
                     var root1 = roots.First();
                     var root2 = roots.Last();
                     if (a is Real { IsNegative: true })

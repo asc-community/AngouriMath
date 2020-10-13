@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
@@ -18,7 +20,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             {
                 Entity.Powf(var @base, var arg) when
                     TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out var b) =>
-                        MathS.Pow(MathS.e, b) * MathS.Pow(MathS.Pow(MathS.e, x), MathS.Ln(@base) * a),
+                        MathS.Pow(@base, b) * MathS.Pow(MathS.Pow(MathS.e, x), MathS.Ln(@base) * a),
 
                 _ => e,
             };
@@ -26,7 +28,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             Func<Entity, Entity> replacer = e => e switch
             {
                 Entity.Powf(var @base, var arg)
-                    when @base == MathS.e && arg == x 
+                    when @base == MathS.e && arg == x
                         => replacement,
 
                 _ => e,
@@ -44,32 +46,45 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return null;
         }
 
+        internal static Entity GetConstantOutOfLogarithm(Entity expr)
+            => expr switch
+            {
+                Logf(var anyBase1, Powf(var anyBase2, Integer cst))
+                    => cst * new Logf(anyBase1, anyBase2),
+                _ => expr
+            };
+
         internal static Entity.Set? SolveMultiplicative(Entity expr, Entity.Variable x)
         {
             Entity? substitution = null;
+            var innerPowerList = new List<Entity>();
+            var outerPowerList = new List<Entity>();
             Entity ApplyPowerTransform(Entity @base, Entity arg)
             {
+                arg = arg.Replace(GetConstantOutOfLogarithm);
                 var mults = Entity.Mulf.LinearChildren(arg);
                 if (mults.Count() == 0) return MathS.Pow(@base, arg);
 
                 Entity innerPower = 1;
                 Entity outerPower = 1;
-                foreach(var mult in mults)
+                foreach (var mult in mults)
                 {
-                    if (mult.InnerSimplified is Entity.Number)
-                        outerPower = outerPower * mult;
+                    if (mult.EvaluableNumerical)
+                        outerPower *= mult;
                     else
-                        innerPower = innerPower * mult;
+                        innerPower *= mult;
                 }
-                substitution = MathS.Pow(@base, innerPower);
+                substitution = innerPower == 1 ? @base : MathS.Pow(@base, innerPower);
+                if(innerPower != 1) innerPowerList.Add(innerPower);
+                if(outerPower != 1) outerPowerList.Add(outerPower);
                 return MathS.Pow(substitution, outerPower.InnerSimplified);
             }
 
             Func<Entity, Entity> powerTransform = e => e switch
             {
-                Entity.Powf(var @base, var arg) 
+                Entity.Powf(var @base, var arg)
                     when @base == x && !arg.ContainsNode(x) =>
-                        ApplyPowerTransform(@base, arg),  
+                        ApplyPowerTransform(@base, arg),
 
                 _ => e,
             };
@@ -78,13 +93,30 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (substitution is null) return null;
 
             var replacement = Entity.Variable.CreateTemp(expr.Vars);
-            expr = expr.Substitute(substitution, replacement);
+            
+            if(innerPowerList.Count == 0) 
+                (innerPowerList, outerPowerList) = (outerPowerList, innerPowerList);
 
+            // handle special case when all bases are numerical
+            if (innerPowerList.All(e => e.EvaluableNumerical && e.Evaled is Real))
+            {
+                var minPow = innerPowerList.Aggregate((a, b)
+                    => (a.EvalNumerical() < b.EvalNumerical()).EvalBoolean() ? a : b);
+
+                substitution = MathS.Pow(x, minPow).InnerSimplified;
+
+                foreach (var pow in innerPowerList)
+                {
+                    var divided = (pow / minPow).InnerSimplified;
+                    expr = expr.Substitute(MathS.Pow(x, pow.InnerSimplified), MathS.Pow(substitution, divided));
+                }
+            }
+            expr = expr.Substitute(substitution, replacement);
             if (expr.ContainsNode(x)) return null; // cannot be solved, not a multiplicative exponenial equation
 
             expr = expr.InnerSimplified;
             if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els && els.Any())
-                return (Entity.Set)els.Select(sol => substitution.Invert(sol, x).ToSet()).Unite().InnerSimplified;
+                return (Set)els.Select(sol => substitution.Invert(sol, x).ToSet()).Unite().InnerSimplified;
             else
                 return null;
         }

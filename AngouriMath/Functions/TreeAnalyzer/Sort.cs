@@ -11,6 +11,7 @@ using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
@@ -291,6 +292,14 @@ namespace AngouriMath.Functions
 {
     internal static partial class TreeAnalyzer
     {
+        internal static IEnumerable<Entity> SortRealsAndNonReals(IEnumerable<Entity> entities)
+        {
+            var reals = entities.OfType<Real>();
+            var nonReals = entities.Where(c => c is not Real);
+            var all = reals.OrderBy(c => c).Concat(nonReals);
+            return all;
+        }
+
         /// <summary>Binary multi hanging: ((1 + 1) + (1 + 1))</summary>
         internal static Entity MultiHangBinary(IReadOnlyList<Entity> children, Func<Entity, Entity, Entity> op)
         {

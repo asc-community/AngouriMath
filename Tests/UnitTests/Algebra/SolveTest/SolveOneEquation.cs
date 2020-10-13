@@ -16,14 +16,17 @@ namespace UnitTests.Algebra
         {
             subValue ??= 3;
             string eqNormal = equation.Stringize();
-            equation = equation.Substitute(toSub, varValue);
+
+            var rootSimplified = varValue.Complexity > 100 ? varValue : varValue.Simplify();
+
+            equation = equation.Substitute(toSub, rootSimplified);
             // MUST be integer to correspond to integer coefficient of periodic roots
             var substitutions = new Dictionary<Entity.Variable, Integer>();
             foreach (var vr in equation.Vars)
                 substitutions.Add(vr, subValue + substitutions.Count);
             equation = equation.Substitute(substitutions);
             var err = equation.EvalNumerical().Abs();
-            Assert.True(err < 0.001m, $"\nError = {err.Stringize()}\n{eqNormal}\nWrong root: {toSub.Stringize()} = {varValue.Stringize()}");
+            Assert.True(err < 0.001m, $"\nError = {err.Stringize()}\n{eqNormal}\nWrong root: {toSub.Stringize()} = {rootSimplified.Stringize()}");
         }
 
         static void AssertRootCount(FiniteSet roots, int target)
@@ -207,5 +210,16 @@ namespace UnitTests.Algebra
         public void Sign0RootsTest2() => SignumTest("sgn(x) + 1.1");
         [Fact(Skip = "Piecewise required")]
         public void Sign0RootsTest3() => SignumTest("sgn(x) + i + 1");
+
+        [Theory]
+        [InlineData("4^x - a", 1, 3)]
+        [InlineData("4^x + 2^x - a", 2, 3)]
+        [InlineData("a^x + (a^2)^x - c", 2)]
+        [InlineData("1 + 2 ^ x + 4 ^ x + 8 ^ x - c", 3)]
+        [InlineData("e^x + (e2)^x - 1", 2)]
+        [InlineData("2 ^ (x sin(x)) + 4 ^ (x sin(x)) + c", 0)]
+        [InlineData("2^x - 4^x", 1)]
+        public void TestExponentialSolver(string equation, int rootCount, int? toSub = null)
+            => TestSolver(equation, rootCount, toSub);
     }
 }
