@@ -80,16 +80,19 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (substitution is null) return null;
 
             var replacement = Entity.Variable.CreateTemp(expr.Vars);
-
+            
+            // handle special case when all bases are numerical
             if (powers.All(e => e.EvaluableNumerical))
             {
                 var minPow = powers.Aggregate((a, b)
                     => (a.EvalNumerical() < b.EvalNumerical()).EvalBoolean() ? a : b);
 
+                substitution = MathS.Pow(x, minPow);
+
                 foreach (var pow in powers)
                 {
                     var divided = (pow / minPow).InnerSimplified;
-                    expr = expr.Substitute(MathS.Pow(x, pow), MathS.Pow(MathS.Pow(x, minPow), divided));
+                    expr = expr.Substitute(MathS.Pow(x, pow), MathS.Pow(substitution, divided));
                 }
             }
 
