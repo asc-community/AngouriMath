@@ -42,49 +42,25 @@ be considered within a few hours.
 Finally, if not sure about it, try it on 
 <a href="https://dotnetfiddle.net/FIcaDG">.NET Fiddle</a>!
 
-### README navigation:
+## README navigation:
 - [Installation](#inst)
 - [Examples](#exam)
-  - [Evaluation](#eval)
-  - [Substitution](#subs)
-  - [Derivation](#deri)
-  - [Simplification](#simp)
-  - [Boolean](#bool)
-  - [Numbers](#numb)
-  - [Equations](#equa)
-  - [Equation systems](#eqsys)
-  - [More complex equations](#stat)
-  - [Compilation](#comp)
+  - [Computations](#computations)
+  - [Algebra](#algebra)
+  - [Calculus](#calculus)
   - [Sets](#sets)
-  - [LaTeX](#late)
-  - [Number system](#numsys)
+  - [Neat syntax](#syntax)
 - [I want to contribute](#contrib)
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
-documentation. If you prefer full manual to AM, see [Wiki](https://github.com/asc-community/AngouriMath/wiki).
-If you want to contribute, we surely appreciate it, but so far do not have documentation for
-you. It will appear soon!
+documentation. If you want to contribute, we would be happy to welcome you in our
+community.
 
-### <a name="inst"></a>Installation
+For any questions, feel free to contact us via <a href="https://discord.gg/YWJEX7a">Discord</a>.
 
-The easiest way to install AM is to install it from 
-[Nuget](https://www.nuget.org/packages/AngouriMath "Link to .NET package repository").
+### Computations
 
-If you need git commands, that is how you clone the repo
-```
-git clone https://github.com/asc-community/AngouriMath
-```
-Add this repo to your project's dependencies
-```
-git submodule add https://github.com/asc-community/AngouriMath
-```
-After cloning, you do not need to set up it. It is ready to use, just add the reference to the AngouriMath project from your solution.
-
-We do not recommend cloning the repo's master for the production as it might be not as stable as the version on NuGet.
-
-### <a name="exam"></a>Examples
-
-#### <a name="eval"></a>Use as a simple calculator
+Use as a simple calculator:
 ```cs
 Entity expr = "1 + 2 * log(3, 9)";
 Console.WriteLine(expr.EvalNumerical());
@@ -102,7 +78,7 @@ Console.WriteLine("(-2) ^ 3".EvalNumerical());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=-8">
 
-#### <a name="subs"></a>Substitute variables
+Build expressions with variables and substitute them:
 ```cs
 Entity expr = "2x + sin(x) / sin(2 ^ x)";
 var subs = expr.Substitute("x", 0.3m);
@@ -110,15 +86,7 @@ Console.WriteLine(subs);
 ```
 <img src="https://render.githubusercontent.com/render/math?math=2\times \frac{3}{10}%2B\frac{\sin\left(\frac{3}{10}\right)}{\sin\left(\sqrt[10]{2}^{3}\right)}">
 
-#### <a name="deri"></a>Find derivatives
-```cs
-var func = "x2 + ln(cos(x) + 3) + 4x";
-var derivative = func.Derive("x");
-Console.WriteLine(derivative.Simplify());
-```
-<img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)%2B3\right)}^{2}\times \left(\cos\left(x\right)%2B3\right)}%2B2\times x">
-
-#### <a name="simp"></a>Simplify
+Simplify complicated expressions:
 ```cs
 Console.WriteLine("2x + x + 3 + (4 a * a^6) / a^3 / 5".Simplify());
 ```
@@ -130,7 +98,23 @@ Console.WriteLine(expr.Simplify());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{1}{2}\times \left(1%2B\sqrt{2}\right)%2B1">
 
-#### <a name="bool"></a>Boolean algebra
+Compiled functions work 15x+ faster
+```cs
+var x = MathS.Variable("x");
+var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
+var func = expr.Compile(x);
+Console.WriteLine(func.Substitute(3));
+```
+
+```cs
+var expr = "sin(x) + sqrt(x) / (sqrt(x) + cos(x)) + x3";
+var compiled = expr.Compile("x");
+Console.WriteLine(compiled.Substitute(4));
+```
+
+## Algebra
+
+Start with boolean algebra:
 ```cs
 // Those are equal
 Entity expr1 = "a and b or c";
@@ -152,15 +136,7 @@ Console.WriteLine(MathS.SolveBooleanTable(expr, "a"));
 >>> True
 ```
 
-#### <a name="late"></a>Build latex
-```cs
-var expr = "x ^ y + sqrt(x + y / 4)(6 / x)";
-Console.WriteLine(expr.Latexise());
->>> {x}^{y}+\sqrt{x+\frac{y}{4}}\times \frac{6}{x}
-```
-<img src="https://render.githubusercontent.com/render/math?math={x}^{y}%2B\sqrt{x%2B\frac{y}{4}}\times \frac{6}{x}">
-
-#### <a name="equa"></a>Solve equations analytically
+Next, solve some equations:
 ```cs
 Console.WriteLine("x2 + x + a".SolveEquation("x"));
 ```
@@ -173,9 +149,13 @@ Console.WriteLine(expr.SolveEquation("x").Latexise());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\left\{-\left(-\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\arcsin\left(\frac{1%2B\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1%2B\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),\frac{-b}{-1},-i,i,1,2\right\}">
 
-#### <a name="eqsys"></a>Solve systems of non-linear equations
-Under developing now and forever (always available)
+Try some inequalities:
+```cs
+Console.WriteLine("(x - 6)(x + 9) >= 0".Solve("x"));
+```
+<img src="https://render.githubusercontent.com/render/math?math=\left\{-9,6\right\}\cup\left(-\infty;-9\right)\cup\left(6;\infty\right)">
 
+Systems of equations:
 ```cs
 var system = MathS.Equations(
     "x2 + y + a",
@@ -205,55 +185,71 @@ Console.WriteLine(solutions);
 <img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{\cos\left({x}^{2}%2B1\right)}^{2}%2B3\times y = 0\\y\times -1%2B4\times \cos\left({x}^{2}%2B1\right) = 0\\\end{cases}">
 (solution matrix is too complicated to show)
 
-#### <a name="comp"></a>Compile functions
-Compiled functions work 15x+ faster
+### Calculus
+
+Find derivatives:
 ```cs
-var x = MathS.Variable("x");
-var expr = MathS.Sin(x) + MathS.Sqrt(x) / (MathS.Sqrt(x) + MathS.Cos(x)) + MathS.Pow(x, 3);
-var func = expr.Compile(x);
-Console.WriteLine(func.Substitute(3));
+var func = "x2 + ln(cos(x) + 3) + 4x";
+var derivative = func.Derive("x");
+Console.WriteLine(derivative.Simplify());
+```
+<img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)%2B3\right)}^{2}\times \left(\cos\left(x\right)%2B3\right)}%2B2\times x">
+
+Find limits:
+```cs
+WriteLine("(a x2 + b x) / (e x - h x2 - 3)".Limit("x", "+oo").InnerSimplified);
+```
+<img src="https://render.githubusercontent.com/render/math?math=\frac{a}{-h}">
+
+Find integrals:
+```cs
+WriteLine("x2 + a x".Integrate("x").InnerSimplified);
+```
+<img src="https://render.githubusercontent.com/render/math?math=\frac{{x}^{3}}{3}+a\times \frac{{x}^{2}}{2}">
+
+### Sets
+
+There are four types of sets:
+```cs
+WriteLine("{ 1, 2 }".Latexise());
+WriteLine("[3; +oo)".Latexise());
+WriteLine("RR".Latexise());
+WriteLine("{ x : x8 + a x < 0 }".Latexise());
 ```
 
+<img src="https://render.githubusercontent.com/render/math?math=\left\{ 1, 2 \right\}">
+<img src="https://render.githubusercontent.com/render/math?math=\left[3; \infty \right)">
+<img src="https://render.githubusercontent.com/render/math?math=\mathbb{R}">
+<img src="https://render.githubusercontent.com/render/math?math=\left\{ x : {x}^{8}+a\times x < 0 \right\}">
+
+And there operators:
 ```cs
-var expr = "sin(x) + sqrt(x) / (sqrt(x) + cos(x)) + x3";
-var compiled = expr.Compile("x");
-Console.WriteLine(compiled.Substitute(4));
+WriteLine(@"A \/ B".Latexise());
+WriteLine(@"A /\ B".Latexise());
+WriteLine(@"A \ B".Latexise());
 ```
 
-#### <a name="stat"></a>Solve statement
-Equivalent to finding `x` such that those fit the constraints.
+<img src="https://render.githubusercontent.com/render/math?math=A\cup B">
+<img src="https://render.githubusercontent.com/render/math?math=A\cap B">
+<img src="https://render.githubusercontent.com/render/math?math=A\setminus B">
+
+### Syntax
+
+You can build LaTeX with AngouriMath:
 ```cs
-var set = "x2 = 16 and x > 0 or x = a".Solve("x");
-Console.WriteLine(set);
->>> {4}|{a}
+var expr = "x ^ y + sqrt(x) + integral(sqrt(x) / a, x, 1) + derive(sqrt(x) / a, x, 1) + limit(sqrt(x) / a, x, +oo)";
+Console.WriteLine(expr.Latexise());
+>>> {x}^{y}+\sqrt{x}+\int \left[\frac{\sqrt{x}}{a}\right] dx+\frac{d\left[\frac{\sqrt{x}}{a}\right]}{dx}+\lim_{x\to \infty } \left[\frac{\sqrt{x}}{a}\right]
+```
+<img src="https://render.githubusercontent.com/render/math?math={x}^{y}+\sqrt{x}+\int\left[\frac{\sqrt{x}}{a}\right]dx+\frac{d\left[\frac{\sqrt{x}}{a}\right]}{dx}+\lim_{x\to\infty}\left[\frac{\sqrt{x}}{a}\right]">
+
+You can parse `Entity` from string with
+```cs
+var expr = MathS.FromString("x + 2 + sqrt(x)");
+Entity expr = "x + 2 + sqrt(x)";
 ```
 
-#### <a name="sets"></a>Work with sets
-```cs
-Entity setA = @"{ 1, 2, 3 } \/ [5; 6)"
-Entity setB = @"RR \ { x : x2 > 0 and x < y }";
-Entity setC = setA.Unite(setB);
-```
-
-#### <a name="numb"></a>Work with numbers
-```cs
-var rat1 = Number.CreateRational(3, 4);
-var rat2 = Number.CreateRational(5, 6);
-Console.WriteLine((rat1 + rat2).ToString());
->>> 19 / 12
-```
-
-#### <a name="numsys"></a>Translate number systems
-```cs
-string x = MathS.ToBaseN(-32.25, 4);
-Console.WriteLine("-32.25(10) = " + x + "(4)");
-double y = MathS.FromBaseN("AB.3", 16);
-Console.WriteLine("AB.3(16) = " + y + "(1)");
->>> -32.25(10) = -200.1(4)
->>> AB.3(16) = 171,1875(1)
-```
-
-See more on [Wiki](https://github.com/asc-community/AngouriMath/wiki).
+A few convenient features: `x2` => `x^2`, `a x` => `a * x`, `(...)2` => `(...)^2`, `2(...)` => `2 * (...)`
 
 
 ### <a name="contrib"></a>Contribution
