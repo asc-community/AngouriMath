@@ -39,7 +39,7 @@ namespace AngouriMath.Functions
             if (src is Number || src is Variable)
                 return new[] { src };
             var stage1 = src.InnerSimplified;
-            if (stage1 is Number)
+            if (stage1 is Number or Entity.Boolean)
                 return new[] { stage1 };
 
             // List of criteria for expr's complexity
