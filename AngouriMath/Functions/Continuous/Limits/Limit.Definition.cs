@@ -321,16 +321,39 @@ namespace AngouriMath.Functions.Algebra
             return null;
         }
 
-        private static Entity EquivalenceTableRules(Entity expr, Variable x, Entity dest) => expr switch
+        private static Entity EquivalenceTable(Entity expr, Variable x, Entity dest) => expr switch
         {
+            // for f(x) -> 0
+
+            // sin(f(x)) ~ f(x)
             Sinf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+            // tan(f(x)) ~ f(x)
             Tanf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
-            Logf(var @base, var arg) when arg.ContainsNode(x) && !@base.ContainsNode(x) && (arg - 1).Limit(x, dest).Evaled == 0 => (arg - 1) / MathS.Ln(@base),
-            Minusf(Integer(1), Cosf(var arg)) when arg.Limit(x, dest).Evaled == 0 => arg.Pow(2) / 2,
+            // arcsin(f(x)) ~ f(x)
             Arcsinf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+            // arctan(f(x)) ~ f(x)
             Arctanf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+
+            // log(c, f(x) + 1) ~ f(x) / ln(a)
+            Logf(var @base, var arg) when arg.ContainsNode(x) && !@base.ContainsNode(x) && (arg - 1).Limit(x, dest).Evaled == 0 => (arg - 1) / MathS.Ln(@base),
+
+            // 1 - cos(f(x)) ~ f(x)^2 / 2
+            Minusf(Integer(1), Cosf(var arg)) when arg.Limit(x, dest).Evaled == 0 => arg.Pow(2) / 2,
+
+            // (f(x) + 1) ^ c - 1 ~ c * f(x)
             Minusf(Powf(var xPlusOne, var power), Integer(1)) when xPlusOne.ContainsNode(x) && !power.ContainsNode(x) && (xPlusOne - 1).Limit(x, dest).Evaled == 0 => power * (xPlusOne - 1),
+
+            // c ^ f(x) - 1 ~ f(x) * ln(c)
             Minusf(Powf(var @base, var arg), Integer(1)) when !@base.ContainsNode(x) && arg.ContainsNode(x) && arg.Limit(x, dest).Evaled == 0 => arg * MathS.Ln(@base),
+
+            // f(x)^g(x) for f(x) -> 1, g(x) -> +oo
+            // => (1 + (f(x) - 1)) ^ g(x) = ((1 - (f(x) - 1)) ^ (1 / (f(x) - 1))) ^ (g(x) (f(x) - 1))
+            // e ^ (g(x) * (f(x) - 1))
+            Powf(var xPlusOne, var xPower) when 
+            xPlusOne.ContainsNode(x) && xPower.ContainsNode(x) && 
+            (xPlusOne - 1).Limit(x, dest).Evaled == 0 && xPower.Limit(x, dest) == "+oo" => 
+            MathS.e.Pow(xPower * (xPlusOne - 1)),
+
             _ => expr
         };
 
@@ -340,7 +363,7 @@ namespace AngouriMath.Functions.Algebra
                 return expr.ComputeLimitDivideEtImpera(x, dest, side);
             if (side is ApproachFrom.BothSides)
             {
-                expr = expr.Replace(e => EquivalenceTableRules(e, x, dest)).InnerSimplified;
+                expr = expr.Replace(e => EquivalenceTable(e, x, dest)).InnerSimplified;
                 if (!dest.IsFinite)
                 // just compute limit with no check for left/right equality
                 // here approach left will be ignored anyways, as dist is infinite number

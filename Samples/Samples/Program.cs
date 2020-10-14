@@ -9,5 +9,4 @@ using static AngouriMath.Entity.Set;
 using System.Diagnostics;
 using System.Collections;
 
-var a = new ArrayList();
-a.Add("fd");
+WriteLine("((x + a) / (x - a))^x".Limit("x", "0"));
