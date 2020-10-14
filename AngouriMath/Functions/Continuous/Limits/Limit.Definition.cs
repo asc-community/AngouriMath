@@ -321,20 +321,38 @@ namespace AngouriMath.Functions.Algebra
             return null;
         }
 
-        public static Entity? ComputeLimit(Entity expr, Variable x, Entity dist, ApproachFrom side = ApproachFrom.BothSides) => side switch
+        private static Entity EquivalenceTableRules(Entity expr, Variable x, Entity dest) => expr switch
         {
-            ApproachFrom.Left or ApproachFrom.Right => expr.ComputeLimitDivideEtImpera(x, dist, side),
-            ApproachFrom.BothSides =>
-                !dist.IsFinite
+            Sinf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+            Tanf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+            Logf(var @base, var arg) when arg.ContainsNode(x) && !@base.ContainsNode(x) && (arg - 1).Limit(x, dest).Evaled == 0 => (arg - 1) / MathS.Ln(@base),
+            Minusf(Integer(1), Cosf(var arg)) when arg.Limit(x, dest).Evaled == 0 => arg.Pow(2) / 2,
+            Arcsinf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+            Arctanf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+            Minusf(Powf(var xPlusOne, var power), Integer(1)) when xPlusOne.ContainsNode(x) && !power.ContainsNode(x) && (xPlusOne - 1).Limit(x, dest).Evaled == 0 => power * (xPlusOne - 1),
+            Minusf(Powf(var @base, var arg), Integer(1)) when !@base.ContainsNode(x) && arg.ContainsNode(x) && arg.Limit(x, dest).Evaled == 0 => arg * MathS.Ln(@base),
+            _ => expr
+        };
+
+        public static Entity? ComputeLimit(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides)
+        {
+            if (side is ApproachFrom.Left or ApproachFrom.Right)
+                return expr.ComputeLimitDivideEtImpera(x, dest, side);
+            if (side is ApproachFrom.BothSides)
+            {
+                expr = expr.Replace(e => EquivalenceTableRules(e, x, dest)).InnerSimplified;
+                if (!dest.IsFinite)
                 // just compute limit with no check for left/right equality
                 // here approach left will be ignored anyways, as dist is infinite number
-                ? expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Left)
-                : expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Left) is { } fromLeft
-                  && expr.ComputeLimitDivideEtImpera(x, dist, ApproachFrom.Right) is { } fromRight
-                ? fromLeft == fromRight ? fromLeft : Real.NaN
-                : null,
-            _ => throw new System.ComponentModel.InvalidEnumArgumentException(nameof(side), (int)side, typeof(ApproachFrom))
-        };
+                    return expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left);
+                else if (expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left) is { } fromLeft
+                  && expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Right) is { } fromRight)
+                    return fromLeft == fromRight ? fromLeft : Real.NaN;
+                else
+                    return null;
+            }
+            throw new System.ComponentModel.InvalidEnumArgumentException(nameof(side), (int)side, typeof(ApproachFrom));
+        }
 
         internal static Entity? ComputeLimitImpl(Entity expr, Variable x, Entity dist, ApproachFrom side) => dist switch
         {
