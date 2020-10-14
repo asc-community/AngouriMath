@@ -205,7 +205,7 @@ Find integrals:
 ```cs
 WriteLine("x2 + a x".Integrate("x").InnerSimplified);
 ```
-<img src="https://render.githubusercontent.com/render/math?math=\frac{{x}^{3}}{3}%20a\times \frac{{x}^{2}}{2}">
+<img src="https://render.githubusercontent.com/render/math?math=\frac{{x}^{3}}{3}%2Ba\times \frac{{x}^{2}}{2}">
 
 ### Sets
 
@@ -220,7 +220,7 @@ WriteLine("{ x : x8 + a x < 0 }".Latexise());
 <img src="https://render.githubusercontent.com/render/math?math=\left\{ 1, 2 \right\}">
 <img src="https://render.githubusercontent.com/render/math?math=\left[3%3B \infty \right)">
 <img src="https://render.githubusercontent.com/render/math?math=\mathbb{R}">
-<img src="https://render.githubusercontent.com/render/math?math=\left\{ x %3A {x}^{8}%20a\times x < 0 \right\}">
+<img src="https://render.githubusercontent.com/render/math?math=\left\{ x %3A {x}^{8}%2B a\times x < 0 \right\}">
 
 And there operators:
 ```cs
@@ -241,7 +241,7 @@ var expr = "x ^ y + sqrt(x) + integral(sqrt(x) / a, x, 1) + derive(sqrt(x) / a, 
 Console.WriteLine(expr.Latexise());
 >>> {x}^{y}+\sqrt{x}+\int \left[\frac{\sqrt{x}}{a}\right] dx+\frac{d\left[\frac{\sqrt{x}}{a}\right]}{dx}+\lim_{x\to \infty } \left[\frac{\sqrt{x}}{a}\right]
 ```
-<img src="https://render.githubusercontent.com/render/math?math={x}^{y}%20\sqrt{x}%20\int\left[\frac{\sqrt{x}}{a}\right]dx%20\frac{d\left[\frac{\sqrt{x}}{a}\right]}{dx}%20\lim_{x\to\infty}\left[\frac{\sqrt{x}}{a}\right]">
+<img src="https://render.githubusercontent.com/render/math?math={x}^{y}%2B\sqrt{x}%2B\int\left[\frac{\sqrt{x}}{a}\right]dx%2B\frac{d\left[\frac{\sqrt{x}}{a}\right]}{dx}%2B\lim_{x\to\infty}\left[\frac{\sqrt{x}}{a}\right]">
 
 You can parse `Entity` from string with
 ```cs
