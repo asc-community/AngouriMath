@@ -170,7 +170,7 @@ namespace AngouriMath
                     (a, b) => a.IsFinite && b.IsFinite
                                 && CtxSubtract(a.EDecimal, b.EDecimal).Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange)
                                 || !a.IsFinite && !b.IsFinite && a.EDecimal.Equals(b.EDecimal),
-                    (a, b) => AreEqual(a.RealPart, b.RealPart) && AreEqual(a.ImaginaryPart, b.ImaginaryPart)
+                    (a, b) => AreEqual<Real>(a.RealPart, b.RealPart) && AreEqual<Real>(a.ImaginaryPart, b.ImaginaryPart)
                     );
 
             public static Number operator +(Number a, Number b) => OpSum(a, b);

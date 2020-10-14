@@ -15,6 +15,10 @@
   ·
   <a href="#contrib">Contributions</a>
   <br>
+  <img src="https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg"/>
+<a href="https://www.nuget.org/packages/AngouriMath"><img src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet"/></a>
+<a href="https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/AngouriSoft/MathS?color=purple"/></a>
+<a href="https://discord.gg/YWJEX7a"><img src="https://img.shields.io/discord/642350046213439489?color=orange&label=Discord"/></a>
 </p>
 
 ## What is it about?
@@ -24,11 +28,6 @@ multi-variable expressions. Written in C#. Free and distributed under MIT licens
 by community, hence, any contribution is welcomed.
 
 Try it on <a href="https://dotnetfiddle.net/lZmf6Z">.NET Fiddle</a>!
-
-![Test](https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg)
-  [![NuGet](https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet)](https://www.nuget.org/packages/AngouriMath)
-  [![GitHub](https://img.shields.io/github/license/AngouriSoft/MathS?color=purple)](https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md)
-  [![Discord](https://img.shields.io/discord/642350046213439489?color=orange&label=Discord)](https://discord.gg/YWJEX7a)
 
 ### README navigation:
 - [Installation](#inst)
