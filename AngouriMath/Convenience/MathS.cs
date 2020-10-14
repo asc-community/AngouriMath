@@ -616,7 +616,10 @@ namespace AngouriMath
                     res += expr.Nodes.Count(entity => entity is Divf) / 2;
 
                     // Number of negative powers
-                    res += expr.Nodes.Count(entity => entity is Powf(_, Number.Real { IsNegative: true }));
+                    res += expr.Nodes.Count(entity => entity is Powf(_, Real { IsNegative: true })) * 4;
+
+                    // Number of negative reals
+                    res += expr.Nodes.Count(entity => entity is Real { IsNegative: true }) * 3 /* to outweigh number of nodes */;
 
                     // 0 < x is bad. x > 0 is good.
                     res += expr.Nodes.Count(entity => entity is ComparisonSign && entity.DirectChildren[0] == 0);

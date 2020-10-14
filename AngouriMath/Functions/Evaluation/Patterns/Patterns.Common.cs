@@ -23,6 +23,31 @@ namespace AngouriMath.Functions
             _ => x
         };
 
+        internal static Entity NumericNeatRules(Entity x) => x switch
+        {
+            Sumf(Real { IsNegative: true } left, Real { IsNegative: true } right) => -(left + right),
+            Sumf(var any1, Real { IsNegative: true } right) => any1 - -right,
+            Sumf(Real { IsNegative: true } left, var any1) => any1 - -left,
+
+            Minusf(Real { IsNegative: true } left, Real { IsNegative: true } right) => -left + -right,
+            Minusf(var any1, Real { IsNegative: true } right) => any1 + -right,
+            Minusf(Real { IsNegative: true } left, var any1) => -(any1 + -left),
+
+            Mulf(Real { IsNegative: true } num1, Real { IsNegative: true } num2) => (-num1) * (Entity)(-num2),
+            Divf(Real { IsNegative: true } num1, Real { IsNegative: true } num2) => (-num1) / (Entity)(-num2),
+
+            Mulf(Mulf(Real { IsNegative: true } num, var any1), var any2) => -((-num) * (any1 * any2)),
+            Mulf(Mulf(var any1, Real { IsNegative: true } num), var any2) => -((-num) * (any1 * any2)),
+            Divf(Mulf(Real { IsNegative: true } num, var any1), var any2) => -((-num) * (any1 / any2)),
+            Divf(Mulf(var any1, Real { IsNegative: true } num), var any2) => -((-num) * (any1 / any2)),
+            Mulf(var any2, Mulf(Real { IsNegative: true } num, var any1)) => -((-num) * (any1 * any2)),
+            Mulf(var any2, Mulf(var any1, Real { IsNegative: true } num)) => -((-num) * (any1 * any2)),
+            Divf(var any2, Mulf(Real { IsNegative: true } num, var any1)) => -((-num) * (any1 / any2)),
+            Divf(var any2, Mulf(var any1, Real { IsNegative: true } num)) => -((-num) * (any1 / any2)),
+
+            _ => x
+        };
+
         internal static Entity CommonRules(Entity x) => x switch
         {
             // (a * f(x)) * g(x) = a * (f(x) * g(x))

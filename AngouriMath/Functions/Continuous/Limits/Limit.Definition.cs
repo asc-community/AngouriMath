@@ -36,7 +36,12 @@ namespace AngouriMath
         /// cannot be determined
         /// </returns>
         public Entity Limit(Variable x, Entity destination, ApproachFrom side)
-            => LimitFunctional.ComputeLimit(this, x, destination, side) ?? new Limitf(this, x, destination, side);
+        { 
+            var res = ComputeLimit(this, x, destination, side); 
+            if (res is null || res == MathS.NaN)
+                return new Limitf(this, x, destination, side);
+            return res;
+        }
 
         /// <summary>
         /// Finds the limit of the given expression over the given variable
@@ -54,7 +59,12 @@ namespace AngouriMath
         /// cannot be determined
         /// </returns>
         public Entity Limit(Variable x, Entity destination)
-            => LimitFunctional.ComputeLimit(this, x, destination, ApproachFrom.BothSides) ?? new Limitf(this, x, destination, ApproachFrom.BothSides);
+        {
+            var res = ComputeLimit(this, x, destination, ApproachFrom.BothSides);
+            if (res is null || res == MathS.NaN)
+                return new Limitf(this, x, destination, ApproachFrom.BothSides);
+            return res;
+        }
 
         /// <summary>
         /// <a href="https://en.wikipedia.org/wiki/Divide_and_rule"/>
@@ -370,7 +380,7 @@ namespace AngouriMath.Functions.Algebra
                     return expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left);
                 else if (expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left) is { } fromLeft
                   && expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Right) is { } fromRight)
-                    return fromLeft == fromRight ? fromLeft : Real.NaN;
+                    return (fromLeft - fromRight).Simplify().Evaled == 0 ? fromLeft : Real.NaN;
                 else
                     return null;
             }

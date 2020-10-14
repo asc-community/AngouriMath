@@ -119,6 +119,9 @@ namespace AngouriMath.Functions
                         AddHistory(possiblePoly = resPoly);
                 if (possiblePoly is { } && possiblePoly.Complexity < res.Complexity)
                     res = possiblePoly;
+
+                AddHistory(res = res.Replace(Patterns.CommonRules));
+                AddHistory(res = res.Replace(Patterns.NumericNeatRules));
                 /*
                 This was intended to simplify expressions as polynomials over nodes, some kind of
                 greatest common node and simplifying over it. However, the current algorithm does
