@@ -31,3 +31,33 @@ WriteLine();
 
 // Solve a complicated statement
 WriteLine("(x - 2)(x - 3) = 0 and (x - 1)(x - 2) = 0".Solve("x").InnerSimplified.Stringize());
+WriteLine("sin(a x)2 + c sin(2 a x) = c".Solve("x"));
+WriteLine("(x - 6)(x + 9) >= 0".Solve("x").Latexise());
+WriteLine();
+
+// Work with sets
+WriteLine("{ 1, 2 }".Latexise());
+WriteLine("[3; +oo)".Latexise());
+WriteLine("RR".Latexise());
+WriteLine("{ x : x8 + a x < 0 }".Latexise());
+WriteLine(@"A \/ B".Latexise());
+WriteLine(@"A /\ B".Latexise());
+WriteLine(@"A \ B".Latexise());
+WriteLine(@"{ 1, 2, 3 } \/ { 3, 5 }".Simplify());
+WriteLine(@"[a; b) \/ { b }".Simplify());
+WriteLine();
+
+// Differentiate, integrate, find limits
+WriteLine("x2 + a x".Derive("x").InnerSimplified);
+WriteLine("x2 + a x".Integrate("x").InnerSimplified.Latexise());
+WriteLine("(a x2 + b x) / (e x - h x2 - 3)".Limit("x", "+oo").InnerSimplified);
+WriteLine();
+
+// Boolean
+WriteLine("true and false implies true".Simplify());
+WriteLine(string.Join("       ", new[] { "a", "b", "c", "F" }));
+WriteLine(MathS.Boolean.BuildTruthTable("a and b implies c", "a", "b", "c"));
+WriteLine();
+
+// LaTeX
+WriteLine("x ^ y + sqrt(x) + integral(sqrt(x) / a, x, 1) + derivative(sqrt(x) / a, x, 1) + limit(sqrt(x) / a, x, +oo)".Latexise());
