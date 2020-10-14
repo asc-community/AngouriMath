@@ -4,22 +4,23 @@
   </a>
 </p>
 
-<h3 align="center">AngouriMath</h3>
+<h2 align="center">AngouriMath</h2>
 
 <p align="center">
-  New, skyrocketing symbolic algebra library in .NET. Everything one would need.
+  New, skyrocketing symbolic algebra library in .NET. Simplification, solvers, inequalities, calculus, LaTeX. Everything one would need.
   <br>
-  <a href="#inst">Download</a>
+  <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>Download</b></a>
   ·
-  <a href="#exam">Examples</a>
+  <a href="#exam"><b>Examples</b></a>
   ·
-  <a href="#contrib">Contributions</a>
+  <a href="#contrib"><b>Contributions</b></a>
+  .
+  <a href="#license"><b>License</b></a>
   <br>
   <br>
   <br>
   <img src="https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg"/>
 <a href="https://www.nuget.org/packages/AngouriMath"><img src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet"/></a>
-<a href="https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/AngouriSoft/MathS?color=purple"/></a>
 <a href="https://discord.gg/YWJEX7a"><img src="https://img.shields.io/discord/642350046213439489?color=orange&label=Discord"/></a>
 </p>
 
@@ -61,7 +62,7 @@ The easiest way to install AM is to install it from
 
 If you need git commands, that is how you clone the repo
 ```
-git clone --recurse-submodules https://github.com/asc-community/AngouriMath
+git clone https://github.com/asc-community/AngouriMath
 ```
 Add this repo to your project's dependencies
 ```
@@ -254,3 +255,10 @@ Use pull requests to contribute to it. We also appreciate early pull requests so
 can help you with something.
 
 Documentation for contributors and developers is <a href="./AngouriMath/Docs/Contributing/README.md">here</a>.
+
+### License
+
+<a href="https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/AngouriSoft/MathS?color=purple"/></a>
+
+The project is open source, but can be used in closed commercial projects. There is no restriction on it
+with the only requirement to keep the MIT license with all distributives of AngouriMath.
