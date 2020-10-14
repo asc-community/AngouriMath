@@ -7,14 +7,14 @@
 <h2 align="center">AngouriMath</h2>
 
 <p align="center">
-  New, skyrocketing symbolic algebra library in .NET. Simplification, solvers, inequalities, calculus, LaTeX. Everything one would need.
+  <b>New, leading symbolic algebra library in .NET. Everything one would need.</b>
   <br>
   <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>Download</b></a>
-  ·
+  <b>·</b>
   <a href="#exam"><b>Examples</b></a>
-  ·
+  <b>·</b>
   <a href="#contrib"><b>Contributions</b></a>
-  .
+  <b>·</b>
   <a href="#license"><b>License</b></a>
   <br>
   <br>
@@ -26,11 +26,21 @@
 
 ## What is it about?
 
-AngouriMath is a cross-platform open-source library that enables to work with non-linear 
-multi-variable expressions. Written in C#. Free and distributed under MIT license. Raised
-by community, hence, any contribution is welcomed.
+AngouriMath is an open source symbolic algebra library. That is, via AngouriMath,
+you can automatically solve equations, systems of equations, work with sets, differentiate,
+parse from string, and try many other features.
 
-Try it on <a href="https://dotnetfiddle.net/lZmf6Z">.NET Fiddle</a>!
+It is not a CAS, so you can use it in any your project by installing it from 
+<a href="https://www.nuget.org/packages/AngouriMath">NuGet</a>. AngouriMath
+can be used in calculators, algebra systems, educational/quiz apps, graphics,
+TeX rendering applications, etc.
+
+It is free to use even in commercial projects. We work on it a lot, so your requests on 
+<a href="https://github.com/asc-community/AngouriMath/issues">issues</a> are likely to
+be considered within a few hours.
+
+Finally, if not sure about it, try it on 
+<a href="https://dotnetfiddle.net/FIcaDG">.NET Fiddle</a>!
 
 ### README navigation:
 - [Installation](#inst)

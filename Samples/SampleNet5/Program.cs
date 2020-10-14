@@ -31,3 +31,25 @@ WriteLine();
 
 // Solve a complicated statement
 WriteLine("(x - 2)(x - 3) = 0 and (x - 1)(x - 2) = 0".Solve("x").InnerSimplified.Stringize());
+WriteLine("sin(a x)2 + c sin(2 a x) = c".Solve("x"));
+WriteLine();
+
+// Work with sets
+WriteLine(@"{ 1, 2, 3 } \/ { 3, 5 }".Simplify());
+WriteLine(@"[a; b) \/ { b }".Simplify());
+WriteLine();
+
+// Differentiate, integrate, find limits
+WriteLine("x2 + a x".Derive("x").InnerSimplified);
+WriteLine("x2 + a x".Integrate("x").InnerSimplified);
+WriteLine("(a x2 + b x) / (e x - h x2 - 3)".Limit("x", "+oo").InnerSimplified);
+WriteLine();
+
+// Boolean
+WriteLine("true and false implies true".Simplify());
+WriteLine(string.Join("       ", new[] { "a", "b", "c", "F" }));
+WriteLine(MathS.Boolean.BuildTruthTable("a and b implies c", "a", "b", "c"));
+WriteLine();
+
+// LaTeX
+WriteLine("sqrt(x) + x / a + integral(sin(x), x, 1)".Latexise());
