@@ -58,7 +58,7 @@ community.
 
 For any questions, feel free to contact us via <a href="https://discord.gg/YWJEX7a">Discord</a>.
 
-### Computations
+## Computations
 
 Use as a simple calculator:
 ```cs
@@ -185,7 +185,7 @@ Console.WriteLine(solutions);
 <img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{\cos\left({x}^{2}%2B1\right)}^{2}%2B3\times y = 0\\y\times -1%2B4\times \cos\left({x}^{2}%2B1\right) = 0\\\end{cases}">
 (solution matrix is too complicated to show)
 
-### Calculus
+## Calculus
 
 Find derivatives:
 ```cs
@@ -207,7 +207,7 @@ WriteLine("x2 + a x".Integrate("x").InnerSimplified);
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{{x}^{3}}{3}%2Ba\times \frac{{x}^{2}}{2}">
 
-### Sets
+## Sets
 
 There are four types of sets:
 ```cs
@@ -233,7 +233,7 @@ WriteLine(@"A \ B".Latexise());
 <img src="https://render.githubusercontent.com/render/math?math=A\cap B">
 <img src="https://render.githubusercontent.com/render/math?math=A\setminus B">
 
-### Syntax
+## Syntax
 
 You can build LaTeX with AngouriMath:
 ```cs
@@ -252,7 +252,7 @@ Entity expr = "x + 2 + sqrt(x)";
 A few convenient features: `x2` => `x^2`, `a x` => `a * x`, `(...)2` => `(...)^2`, `2(...)` => `2 * (...)`
 
 
-### <a name="contrib"></a>Contribution
+## <a name="contrib"></a>Contribution
 
 We appreciate and welcome any contributors to AngouriMath. Current tasks can be tracked
 on <a href="https://github.com/asc-community/AngouriMath/projects">this page</a>.
@@ -262,7 +262,7 @@ can help you with something.
 
 Documentation for contributors and developers is <a href="./AngouriMath/Docs/Contributing/README.md">here</a>.
 
-### License
+## License
 
 <a href="https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/AngouriSoft/MathS?color=purple"/></a>
 

@@ -262,7 +262,7 @@ namespace AngouriMath
                     // { temp_1 | temp_1 > a } -> { x | x > a }
                     var postSubs = subs.Substitute(replacement, Var);
 
-                    return New(postSubs, Var);
+                    return New(Var, postSubs);
                 }
             }
         }
