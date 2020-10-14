@@ -1,4 +1,5 @@
 ﻿using AngouriMath;
+using AngouriMath.Extensions;
 using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
@@ -43,6 +44,37 @@ namespace UnitTests.Algebra
         [Fact] public void Test31() => TestLimit("ln(ln((e^2*x + t) / (x + 1)))", Real.PositiveInfinity, ApproachFrom.Left, MathS.Ln(2));
         [Fact] public void Test32() => TestLimit("log((2x - 1)/(x + 1), (x - 1)/(2x - 1))", Real.PositiveInfinity, ApproachFrom.Left, -1);
         [Fact] public void Test33() => TestLimit("(x + 3) / (x + 4)", "+oo", ApproachFrom.BothSides, 1);
+
+        [Theory]
+        [InlineData("sin(x) / x", "1")]
+        [InlineData("sin(2x) / x", "2")]
+        [InlineData("sin(a x) / x", "a")]
+        [InlineData("sin(a x) / (a x)", "1")]
+        [InlineData("tan(x) / x", "1")]
+        [InlineData("tan(2x) / x", "2")]
+        [InlineData("tan(a x) / x", "a")]
+        [InlineData("tan(a x) / (a x)", "1")]
+        [InlineData("arcsin(x) / x", "1")]
+        [InlineData("arcsin(2x) / x", "2")]
+        [InlineData("arcsin(a x) / x", "a")]
+        [InlineData("arcsin(a x) / (a x)", "1")]
+        [InlineData("arctan(x) / x", "1")]
+        [InlineData("arctan(2x) / x", "2")]
+        [InlineData("arctan(a x) / x", "a")]
+        [InlineData("arctan(a x) / (a x)", "1")]
+        [InlineData("(tan(a x) - sin(b x)) / (a x)", "1 + -b / a")]
+        [InlineData("sin(a^x - 1) / tan(b^x - 1)", "ln(a) / ln(b)")]
+        [InlineData("(1 - cos(x)) / x2", "1/2")]
+        [InlineData("((1 + x)^4 - 1) / x", "4")]
+        [InlineData("((1 + x)^a - 1) / x", "a")]
+        [InlineData("((1 + c x2 + b x)^a - 1)", "0")]
+        public void TestEquivalenceTable(string input, string expected)
+        {
+            var limit = input.ToEntity();
+            var exp = expected.Simplify();
+            var actual = limit.Limit("x", 0).Simplify();
+            Assert.Equal(exp, actual);
+        }
 
         [Fact]
         public void TestComplicated()
