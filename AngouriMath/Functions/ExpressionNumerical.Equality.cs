@@ -18,8 +18,8 @@ namespace AngouriMath.Functions
         /// </summary>
         internal static bool AreEqual(Entity expr1, Entity expr2, Entity[] checkPoints)
         {
-            var vars1 = expr1.Vars.ToArray();
-            var vars2 = expr2.Vars.ToArray();
+            var vars1 = expr1.Vars.OrderBy(v => v.Name).ToArray();
+            var vars2 = expr2.Vars.OrderBy(v => v.Name).ToArray();
             var vars = expr1.Vars.Concat(expr2.Vars).ToSet();
 
             static int TrueRemainder(int left, int right)
@@ -32,17 +32,21 @@ namespace AngouriMath.Functions
 
             for (var offset = 0; offset < checkPoints.Length; offset++)
             {
-                offset++;
                 var expr1Subs = expr1;
                 var expr2Subs = expr2;
                 foreach (Variable var in vars)
                 {
-                    var idToTakeFrom = TrueRemainder(var.GetHashCode() + offset, checkPoints.Length);
-                    var evaled = checkPoints[idToTakeFrom].EvalNumerical();
+                    var hash = var.GetHashCode();
+                    var idToTakeFrom = TrueRemainder(hash + offset, checkPoints.Length);
+                    var evaled = checkPoints[idToTakeFrom];
                     expr1Subs = expr1Subs.Substitute(var, evaled);
                     expr2Subs = expr2Subs.Substitute(var, evaled);
                 }
-                if (expr1Subs.EvalNumerical() != expr2Subs.EvalNumerical())
+                var evaled1 = expr1Subs.EvalNumerical();
+                var evaled2 = expr2Subs.EvalNumerical();
+
+                // TODO: should we consider NaN = {} to be true?
+                if (evaled1 != evaled2 && evaled1 != MathS.NaN && evaled2 != MathS.NaN)
                     return false;
             }
 
