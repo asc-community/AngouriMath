@@ -1,4 +1,5 @@
 ﻿using AngouriMath.Extensions;
+using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,19 +22,6 @@ namespace AngouriMath.Functions
             var vars2 = expr2.Vars.ToArray();
             var vars = expr1.Vars.Concat(expr2.Vars).ToSet();
 
-            var expr1Compiled = expr1.Compile(vars1);
-            var expr2Compiled = expr2.Compile(vars2);
-
-            Dictionary<Variable, int> order1 = new();
-            for (int i = 0; i < vars1.Length; i++)
-                order1[vars1[i]] = i;
-            Dictionary<Variable, int> order2 = new();
-            for (int i = 0; i < vars2.Length; i++)
-                order2[vars2[i]] = i;
-
-            var toSub1 = new Complex[vars1.Length];
-            var toSub2 = new Complex[vars2.Length];
-
             static int TrueRemainder(int left, int right)
             {
                 var rem = left % right;
@@ -45,17 +33,16 @@ namespace AngouriMath.Functions
             for (var offset = 0; offset < checkPoints.Length; offset++)
             {
                 offset++;
+                var expr1Subs = expr1;
+                var expr2Subs = expr2;
                 foreach (Variable var in vars)
                 {
                     var idToTakeFrom = TrueRemainder(var.GetHashCode() + offset, checkPoints.Length);
-                    if (order1.ContainsKey(var))
-                        toSub1[order1[var]] = (Complex)checkPoints[idToTakeFrom].EvalNumerical();
-                    if (order2.ContainsKey(var))
-                        toSub2[order2[var]] = (Complex)checkPoints[idToTakeFrom].EvalNumerical();
+                    var evaled = checkPoints[idToTakeFrom].EvalNumerical();
+                    expr1Subs = expr1Subs.Substitute(var, evaled);
+                    expr2Subs = expr2Subs.Substitute(var, evaled);
                 }
-                var val1 = expr1Compiled.Call(toSub1);
-                var val2 = expr2Compiled.Call(toSub2);
-                if (val1 != val2)
+                if (expr1Subs.EvalNumerical() != expr2Subs.EvalNumerical())
                     return false;
             }
 
