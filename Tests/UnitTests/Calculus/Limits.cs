@@ -68,11 +68,30 @@ namespace UnitTests.Algebra
         [InlineData("((1 + x)^4 - 1) / x", "4")]
         [InlineData("((1 + x)^a - 1) / x", "a")]
         [InlineData("((1 + c x2 + b x)^a - 1)", "0")]
-        public void TestEquivalenceTable(string input, string expected)
+        [InlineData("sin(x - a * x) / tan(b * x - x)", "(a - 1) / (1 - b)")]
+        [InlineData("sin(x2) / sin(x)", "0")]
+        [InlineData("(sin(x) - tan(a x)) / (sin(b x) - tan(x))", "(a - 1) / (1 - b)")]
+        public void TestEquivalenceTableTo0(string input, string expected)
         {
             var limit = input.ToEntity();
             var exp = expected.Simplify();
             var actual = limit.Limit("x", 0).Simplify();
+            Assert.Equal(exp, actual);
+        }
+
+        [Theory]
+        [InlineData("(1 + 1/x)^x", "e")]
+        [InlineData("(1 + 1/(2x))^x", "sqrt(e)")]
+        [InlineData("(1 + 1/x)^(2x)", "e2")]
+        [InlineData("(1 + 2/x)^x", "e2")]
+        [InlineData("(1 + a/x)^x", "e^a")]
+        [InlineData("(1 + a/x)^(b x)", "e^(a * b)")]
+        [InlineData("(1 + a/(2x))^(b x + c x)", "e^(a * (b + c) / 2)")]
+        public void TestEquivalenceTableToInfinity(string input, string expected)
+        {
+            var limit = input.ToEntity();
+            var exp = expected.Simplify();
+            var actual = limit.Limit("x", "+oo").Simplify();
             Assert.Equal(exp, actual);
         }
 

@@ -400,9 +400,9 @@ namespace AngouriMath
         {
             protected override Entity InnerEval() => ApproachFrom switch
             {
-                ApproachFrom.Left => throw new NotImplementedException("Limits unevaluable"), // TODO
-                ApproachFrom.BothSides => throw new NotImplementedException("Limits unevaluable"), // TODO
-                ApproachFrom.Right => throw new NotImplementedException("Limits unevaluable"), // TODO
+                ApproachFrom.Left => New(Expression.Evaled, Var, Destination.Evaled, ApproachFrom),
+                ApproachFrom.BothSides => New(Expression.Evaled, Var, Destination.Evaled, ApproachFrom),
+                ApproachFrom.Right => New(Expression.Evaled, Var, Destination.Evaled, ApproachFrom),
                 _ => this,
             };
             protected override Entity InnerSimplify() =>
