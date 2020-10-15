@@ -36,6 +36,8 @@ namespace AngouriMath
     using NumericsComplex = System.Numerics.Complex;
     using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
     using static Entity.Set;
+    using static AngouriMath.MathS.Settings;
+
     /// <summary>Use functions from this class</summary>
     public static class MathS
     {
@@ -1007,6 +1009,39 @@ namespace AngouriMath
             /// </summary>
             public static void ClearEntityPropertyCache()
                 => Entity.caches = new();
+        }
+
+        /// <summary>
+        /// Although those functions might be used inside the library
+        /// only, the user may want to use them for some reason
+        /// </summary>
+        public static class Internal
+        {
+            /// <summary>
+            /// Checks if two expressions are equivalent if 
+            /// <see cref="Entity.Simplify"/> does not give the
+            /// expected response
+            /// </summary>
+            public static bool AreEqualNumerically(Entity expr1, Entity expr2, Entity[] checkPoints)
+                => ExpressionNumerical.AreEqual(expr1, expr2, checkPoints);
+
+            /// <summary>
+            /// Checks if two expressions are equivalent if 
+            /// <see cref="Entity.Simplify"/> does not give the
+            /// expected response
+            /// </summary>
+            public static bool AreEqualNumerically(Entity expr1, Entity expr2)
+                => ExpressionNumerical.AreEqual(expr1, expr2);
+
+            /// <summary>
+            /// Checkpoints for numerical equality check
+            /// </summary>
+            public static Setting<Entity[]> CheckPoints => checkPoints ??= new Entity[]
+            {
+                -100, -10, 1, 10, 100, 1.5,
+                "-100 + i", "-10 + 2i", "30i"
+            };
+            private static Setting<Entity[]>? checkPoints;
         }
     }
 }

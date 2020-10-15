@@ -3,6 +3,7 @@ using static AngouriMath.Entity.Number;
 using Xunit;
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity.Set;
+using AngouriMath.Extensions;
 
 namespace UnitTests.Core
 {
@@ -295,11 +296,33 @@ namespace UnitTests.Core
         [InlineData(0, 1, 0, 1)]
         [InlineData(0, 2, 0, 1)]
         [InlineData(2, 0, 1, 0)]
-        public void TestSignum(float argReal, float argImaginary, 
+        public void TestSignum(float argReal, float argImaginary,
             float expectedReal, float expectedImaginary)
             => Assert.Equal(
             Complex.Create(expectedReal, expectedImaginary),
             Complex.Signum(Complex.Create(argReal, argImaginary))
                 );
+
+        [Theory]
+        [InlineData("1 / (a - 1)", "-1 / (1 - a)")]
+        [InlineData("(a - 1) / (1 - b) - (1 - a) / (b - 1)", "0")]
+        [InlineData("sin(x)2 + cos(x)2", "1")]
+        public void TestAreNumericallyEqual(string one, string another)
+        {
+            var left = one.ToEntity();
+            var right = another.ToEntity();
+            Assert.True(MathS.Internal.AreEqualNumerically(left, right));
+        }
+
+        [Theory]
+        [InlineData("1 / (a - 1)", "-1 / (1 - a) + 1")]
+        [InlineData("a - b", "b - a")]
+        [InlineData("(a - 1) x", "a")]
+        public void TestAreNumericallyNotEqual(string one, string another)
+        {
+            var left = one.ToEntity();
+            var right = another.ToEntity();
+            Assert.False(MathS.Internal.AreEqualNumerically(left, right));
+        }
     }
 }

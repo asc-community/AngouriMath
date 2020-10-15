@@ -375,12 +375,18 @@ namespace AngouriMath.Functions.Algebra
             {
                 expr = expr.Replace(e => EquivalenceTable(e, x, dest)).InnerSimplified;
                 if (!dest.IsFinite)
-                // just compute limit with no check for left/right equality
-                // here approach left will be ignored anyways, as dist is infinite number
+                    // just compute limit with no check for left/right equality
+                    // here approach left will be ignored anyways, as dist is infinite number
                     return expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left);
                 else if (expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left) is { } fromLeft
                   && expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Right) is { } fromRight)
-                    return (fromLeft - fromRight).Simplify().Evaled == 0 ? fromLeft : Real.NaN;
+                {
+                    if (fromLeft == fromRight)
+                        return fromLeft;
+                    if (ExpressionNumerical.AreEqual(fromLeft, fromRight))
+                        return fromLeft;
+                    return Real.NaN;
+                }
                 else
                     return null;
             }

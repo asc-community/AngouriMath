@@ -36,10 +36,10 @@ namespace AngouriMath.Functions
         /// <summary>Finds all alternative forms of an expression</summary>
         internal static IEnumerable<Entity> Alternate(Entity src, int level)
         {
-            if (src is Number || src is Variable)
+            if (src is Number or Variable or Entity.Boolean)
                 return new[] { src };
             var stage1 = src.InnerSimplified;
-            if (stage1 is Number or Entity.Boolean)
+            if (stage1 is Number or Variable or Entity.Boolean)
                 return new[] { stage1 };
 
             // List of criteria for expr's complexity
