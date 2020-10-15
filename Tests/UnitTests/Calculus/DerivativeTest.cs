@@ -67,13 +67,13 @@ namespace UnitTests.Algebra
         public void TestArc2()
         {
             var func = MathS.Arcsin(2 * x);
-            Assert.Equal(2 / MathS.Sqrt(1 + (-4) * MathS.Sqr(x)), func.Derive(x).Simplify());
+            Assert.Equal(1 / MathS.Sqrt(1 - MathS.Sqr(2 * x)) * 2, func.Derive(x).Simplify());
         }
         [Fact]
         public void TestArc3()
         {
             var func = MathS.Arccos(2 * x);
-            Assert.Equal((-2) / MathS.Sqrt(1 + (-4) * MathS.Sqr(x)), func.Derive(x).Simplify());
+            Assert.Equal((-1) / MathS.Sqrt(1 - MathS.Sqr(2 * x)) * 2, func.Derive(x).Simplify());
         }
         [Fact]
         public void TestArc4()

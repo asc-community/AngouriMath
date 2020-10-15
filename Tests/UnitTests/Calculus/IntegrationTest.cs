@@ -11,7 +11,7 @@ namespace UnitTests.Algebra
         [InlineData("2x", "x2")]
         [InlineData("x2", "(1/3) * x3")]
         [InlineData("x2 + x", "(1/3) * x3 + (1/2) * x2")]
-        [InlineData("x2 - x", "(1/3) * x3 + (-1/2) * x2")]
+        [InlineData("x2 - x", "1/3 * x ^ 3 - 1/2 * x ^ 2")]
         public void TestIndefinite(string initial, string expected)
         {
             Assert.Equal(expected.ToEntity().InnerSimplified, initial.Integrate("x").Simplify());
