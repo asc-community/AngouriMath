@@ -36,10 +36,10 @@ namespace AngouriMath.Functions
         /// <summary>Finds all alternative forms of an expression</summary>
         internal static IEnumerable<Entity> Alternate(Entity src, int level)
         {
-            if (src is Number || src is Variable)
+            if (src is Number or Variable or Entity.Boolean)
                 return new[] { src };
             var stage1 = src.InnerSimplified;
-            if (stage1 is Number or Entity.Boolean)
+            if (stage1 is Number or Variable or Entity.Boolean)
                 return new[] { stage1 };
 
             // List of criteria for expr's complexity
@@ -119,6 +119,9 @@ namespace AngouriMath.Functions
                         AddHistory(possiblePoly = resPoly);
                 if (possiblePoly is { } && possiblePoly.Complexity < res.Complexity)
                     res = possiblePoly;
+
+                AddHistory(res = res.Replace(Patterns.CommonRules));
+                AddHistory(res = res.Replace(Patterns.NumericNeatRules));
                 /*
                 This was intended to simplify expressions as polynomials over nodes, some kind of
                 greatest common node and simplifying over it. However, the current algorithm does

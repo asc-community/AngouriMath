@@ -192,6 +192,8 @@ namespace AngouriMath
 
                 public System.Numerics.Complex ToNumerics() =>
                     new System.Numerics.Complex(RealPart.EDecimal.ToDouble(), ImaginaryPart.EDecimal.ToDouble());
+                public static explicit operator System.Numerics.Complex(Complex it)
+                    => it.ToNumerics();
 
                 public static Complex operator +(Complex a, Complex b) => OpSum(a, b);
                 public static Complex operator -(Complex a, Complex b) => OpSub(a, b);
