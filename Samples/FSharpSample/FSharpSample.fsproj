@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj" />
+    <ProjectReference Include="..\..\FSharp\FSharpWrapper\FSharpWrapper.fsproj" />
   </ItemGroup>
 
 </Project>
