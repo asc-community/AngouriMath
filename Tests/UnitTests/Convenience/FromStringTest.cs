@@ -51,7 +51,7 @@ namespace UnitTests.Convenience
         [Fact] public void TestFormula2() => Assert.Equal(0, FromString("sin(0)").EvalNumerical());
         [Fact] public void TestFormula3() => Assert.Equal(2, FromString("log(2, 4)").EvalNumerical());
         [Fact] public void TestFormula4() => Assert.Equal(2, FromString("log(100)").EvalNumerical());
-        [Fact] public void TestFormula5() => Assert.Equal(Cos(x), FromString("sin(x)").Derive(x).Simplify());
+        [Fact] public void TestFormula5() => Assert.Equal(Cos(x), FromString("sin(x)").Differentiate(x).Simplify());
         [Fact] public void TestFormula6() => Assert.Equal(7625597484987L, FromString("3 ^ 3 ^ 3").EvalNumerical());
         [Fact] public void TestFormula7() => Assert.Equal(6, FromString("2 + 2 * 2").EvalNumerical());
         [Fact] public void TestFormula8() =>

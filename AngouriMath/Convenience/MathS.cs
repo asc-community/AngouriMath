@@ -805,7 +805,7 @@ namespace AngouriMath
             /// <summary>Derivation over a variable (without simplification)</summary>
             /// <param name="x">The variable to derive over</param>
             /// <returns>The derived result</returns>
-            public static Entity Derivative(Entity expr, Variable x) => expr.Derive(x);
+            public static Entity Derivative(Entity expr, Variable x) => expr.Differentiate(x);
 
             /// <summary>Integrates over <paramref name="x"/> <paramref name="power"/> times</summary>
             public static Entity Integral(Entity expr, Variable x, EInteger power)

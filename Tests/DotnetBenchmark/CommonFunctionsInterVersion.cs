@@ -28,7 +28,7 @@ namespace DotnetBenchmark
                                                "1 / x / a + (x + x * y) + log(3, 9) + a ^ 1 + (cos(a)2 + sin(a))").ToEntity().Substitute("x", simplifyHardPart3);
 
         // Testing derivation
-        [Benchmark] public void Derivate() => toDerive.Derive("x");
+        [Benchmark] public void Derivate() => toDerive.Differentiate("x");
         private static readonly Entity toDerive = "x + 3 + arccos(x + 2) / sqrt(x2 + 1)";
 
         // Testing solver

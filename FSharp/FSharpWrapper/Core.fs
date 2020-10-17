@@ -20,3 +20,6 @@ let parse_g<'T when 'T :> Entity> x =
     match parsed with
     | :? 'T as correct -> correct
     | _ -> raise (ExprParseException("Cannot parse ", x))
+
+let parse_symbol x =
+    parse_g<Entity.Variable> x

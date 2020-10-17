@@ -62,7 +62,7 @@ namespace AngouriMath.Functions.Algebra
                 if (currentRecursion == MathS.Settings.MaxExpansionTermCount) return null;
 
                 var integral = Integration.ComputeIndefiniteIntegral(u, x);
-                var differential = v.Derive(x).InnerSimplified;
+                var differential = v.Differentiate(x);
                 var result = IntegrateByParts(differential, integral, x, currentRecursion + 1);
                 return (result is null) ? null : v * integral - result;
             }

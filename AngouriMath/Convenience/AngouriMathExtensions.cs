@@ -215,7 +215,7 @@ namespace AngouriMath.Extensions
         /// or the initial one
         /// </returns>
         public static Entity Derive(this string str, Variable x)
-            => str.ToEntity().Derive(x);
+            => str.ToEntity().Differentiate(x);
 
         /// <summary>
         /// Integrates the given expression over the `x` variable, if can.

@@ -2,20 +2,26 @@
 
 open Core
 
+type LimSide =
+    | Left
+    | Right
+
 let simplify x =
     (parse x).Simplify()
 
-let differentiate expr x =
-    (parse x).Derive(x)
+let differentiate x expr =
+    (parse expr).Differentiate(parse_symbol x)
 
-let integrate expr x = 
-    (parse expr).Integrate(x)
+let integrate x expr = 
+    (parse expr).Integrate(parse_symbol x)
 
-let limit expr x destination =
-    (parse expr).Limit(x, destination)
+let limit x destination expr =
+    (parse expr).Limit(parse_symbol x, parse destination)
 
-let limit_sided expr x destination side =
-    (parse expr).Limit(x, destination, side)
+let limit_sided x destination expr side =
+    match side with
+    | Left -> (parse expr).Limit(parse_symbol x, parse destination, AngouriMath.Core.ApproachFrom.Left)
+    | Right -> (parse expr).Limit(parse_symbol x, parse destination, AngouriMath.Core.ApproachFrom.Right)
 
 let evaled expr =
     (parse expr).Evaled
@@ -24,7 +30,7 @@ let as_number expr =
     (parse expr).EvalNumerical()
 
 let as_bool expr =
-    (parse expr).EvalNumerical()
+    (parse expr).EvalBoolean()
 
 let solve expr x =
     (parse expr).Solve(x)

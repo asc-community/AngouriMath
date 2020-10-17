@@ -34,7 +34,7 @@ namespace AngouriMath
         /// <returns></returns>
         public static Entity Diff(Entity expr, params Variable[] vars)
         {
-            expr = vars.Aggregate(expr, (current, v) => current.Derive(v));
+            expr = vars.Aggregate(expr, (current, v) => current.Differentiate(v));
             return expr.Simplify();
         }
 

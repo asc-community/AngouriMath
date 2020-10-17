@@ -70,7 +70,7 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
             return MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
                 var res = new HashSet<Complex>();
-                var df = expr.Derive(v).Simplify().Compile(v);
+                var df = expr.Differentiate(v).Simplify().Compile(v);
                 var f = expr.Simplify().Compile(v);
                 for (int x = 0; x < settings.StepCount.Re; x++)
                     for (int y = 0; y < settings.StepCount.Im; y++)
