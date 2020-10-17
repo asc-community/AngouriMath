@@ -7,30 +7,15 @@ open AngouriMath
 
 exception UnrecognizedDirection of string
 
-type Sided =
-    | Left of obj
-    | Right of obj
-
-type Tending =
-    | TendingTo of obj * obj
-    | TendingToFrom of x : obj * side : Sided
-
-let (^) base_ power =
-    (parse base_).Pow(parse power)
+type Tending = { var: obj; destination: obj; }
 
 let (@?) expr x =
     (parse expr).Solve(symbol x)
 
-let (&&&) (left : obj) (right : obj) =
+let (&&&) left (right : obj) =
     let expr = parse left
     match right with
-    | :? Tending as tending -> 
-        match tending with
-        | TendingTo(x, dest) -> expr.Limit(parse_g<Entity.Variable> x, parse dest)
-        | TendingToFrom(x, dest) ->
-            match dest with
-            | Right dest -> expr.Limit(parse_g<Entity.Variable> x, parse dest, Core.ApproachFrom.Right)
-            | Left dest -> expr.Limit(parse_g<Entity.Variable> x, parse dest, Core.ApproachFrom.Left)
+    | :? Tending as tending -> expr.Limit(parse_g<Entity.Variable> tending.var, parse tending.destination)
     | _ -> MathS.Conjunction(expr, parse right)
 
 let (|||) left right =
@@ -39,17 +24,20 @@ let (|||) left right =
 let (=>) assumption conclusion =
     (parse assumption).Implies(parse conclusion)
 
-let (-->) x (destination : obj) =
-    match destination with
-    | :? Sided as sided -> TendingToFrom(x, sided)
-    | _ -> TendingTo(x, destination)
-    
-let (<--) dst side =
-    match side with
-    | "left" | "-" -> Left(dst)
-    | "right" | "+" -> Right(dst)
-    | _ -> raise (UnrecognizedDirection(side))
-    
+let (-->) x destination =
+    { var = x; destination = destination; }
+
+let (^) base_ power =
+    (parse base_).Pow(parse power)
 
 let (+) a b =
     (parse a) + (parse b)
+
+let (-) a b =
+    (parse a) - (parse b)
+
+let (/) a b =
+    (parse a) / (parse b)
+
+let (*) a b =
+    (parse a) * (parse b)
