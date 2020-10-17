@@ -917,6 +917,13 @@ namespace AngouriMath
             /// </summary>
             public static Tensor? BuildTruthTable(Entity expression, params Variable[] variables)
                 => BooleanSolver.BuildTruthTable(expression, variables);
+
+
+            /// <summary>
+            /// Creates a boolean
+            /// </summary>
+            public static Entity.Boolean Create(bool b)
+                => Entity.Boolean.Create(b);
         }
 
         public static class Utils

@@ -1,40 +1,30 @@
 ﻿module Functions
 
-open AngouriMath
+open Core
 
-let expr x =
-    MathS.FromString(x)
+let simplify x =
+    (parse x).Simplify()
 
-let parse x =
-    MathS.FromString(x)
+let differentiate expr x =
+    (parse x).Derive(x)
 
-let simplify (x : Entity) =
-    x.Simplify()
+let integrate expr x = 
+    (parse expr).Integrate(x)
 
-let differentiate (expr : Entity) x =
-    expr.Derive(x)
+let limit expr x destination =
+    (parse expr).Limit(x, destination)
 
-let integrate (expr : Entity) x = 
-    expr.Integrate(x)
+let limit_sided expr x destination side =
+    (parse expr).Limit(x, destination, side)
 
-let limit (expr : Entity) x destination =
-    expr.Limit(x, destination)
+let evaled expr =
+    (parse expr).Evaled
 
-let limit_sided (expr : Entity) x destination side =
-    expr.Limit(x, destination, side)
+let as_number expr =
+    (parse expr).EvalNumerical()
 
-let evaled (expr : Entity) =
-    expr.Evaled
+let as_bool expr =
+    (parse expr).EvalNumerical()
 
-let as_number (expr : Entity) =
-    expr.EvalNumerical()
-
-let as_bool (expr : Entity) =
-    expr.EvalNumerical()
-
-let solve ( expr : Entity ) x =
-    expr.Solve(x)
-
-type Entity with
-    member Entity.Sin x =
-        MathS.Sin(x)
+let solve expr x =
+    (parse expr).Solve(x)

@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Core.fs" />
     <Compile Include="Functions\FromToString.fs" />
     <Compile Include="Functions\Functions.fs" />
     <Compile Include="Operators.fs" />
