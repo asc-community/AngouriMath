@@ -22,7 +22,7 @@ WriteLine(expr.Stringize());
 WriteLine();
 
 // Derive
-WriteLine(expr.Derive(x).Simplify().Stringize());
+WriteLine(expr.Differentiate(x).Simplify().Stringize());
 WriteLine();
 
 // Solve a simple equation

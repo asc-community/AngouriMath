@@ -16,7 +16,7 @@ jobs:
       with:
         dotnet-version: '5.0.100-rc.1.20452.10'
     - name: Build
-      run: dotnet build AngouriMath
+      run: dotnet build AngouriMath || dotnet build AngouriMath || dotnet build AngouriMath
   Everything:
     runs-on: windows-latest  # Window application cannot be run on other OS
     steps:
@@ -28,4 +28,4 @@ jobs:
       with:
         dotnet-version: '5.0.100-rc.1.20452.10'
     - name: Build
-      run: dotnet build 
+      run: dotnet build || dotnet build || dotnet build

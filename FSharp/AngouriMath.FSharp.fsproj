@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Core.fs" />
+    <Compile Include="Functions\FromToString.fs" />
+    <Compile Include="Functions\Functions.fs" />
+    <Compile Include="Operators.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AngouriMath\AngouriMath.csproj" />
+  </ItemGroup>
+
+</Project>

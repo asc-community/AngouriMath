@@ -10,6 +10,7 @@ using System.Diagnostics;
 using System.Collections;
 using System.Numerics;
 
+
 //WriteLine("((x + a) / (x - a))^x".Limit("x", "0"));
 //WriteLine("(x - a * x) / (b * x - x)".Limit("x", "0"));
 //WriteLine("sin(x2) / sin(x)".Limit("x", "0").Simplify());

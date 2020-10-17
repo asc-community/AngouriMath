@@ -145,8 +145,8 @@ namespace AngouriMath.Functions.Algebra
                      || lowerLogLimit == Integer.Zero))
                 {
                     // apply L'Hôpital's rule for lim(x -> +oo) log(f(x), g(x))
-                    var p = upperLogArgument.Derive(x) / upperLogArgument;
-                    var q = lowerLogArgument.Derive(x) / lowerLogArgument;
+                    var p = upperLogArgument.Differentiate(x) / upperLogArgument;
+                    var q = lowerLogArgument.Differentiate(x) / lowerLogArgument;
                     return LimitFunctional.ComputeLimit(p / q, x, Real.PositiveInfinity);
                 }
                 else

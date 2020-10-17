@@ -21,7 +21,7 @@ namespace AngouriMath
         /// only a few nodes have unresolved integrals.
         /// </returns>
         public Entity Integrate(Variable x)
-            => Integration.ComputeIndefiniteIntegral(this, x);
+            => Integration.ComputeIndefiniteIntegral(this, x).InnerSimplified;
     }
 }
 

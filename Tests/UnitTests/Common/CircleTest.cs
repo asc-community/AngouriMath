@@ -68,7 +68,7 @@ namespace UnitTests.Common
         }
 
         [Fact]
-        public void Test4() => MathS.FromString((MathS.Sin(x) / MathS.Cos(x)).Derive(x).Stringize() ?? "");
+        public void Test4() => MathS.FromString((MathS.Sin(x) / MathS.Cos(x)).Differentiate(x).Stringize() ?? "");
 
         [Fact]
         public void Test7() => Assert.Equal(3 * x, MathS.Sin(MathS.Arcsin(x * 3)).Simplify());
