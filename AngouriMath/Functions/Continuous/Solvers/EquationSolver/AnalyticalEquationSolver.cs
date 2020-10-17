@@ -91,8 +91,6 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 return IsZero(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational
                        ? downcasted : root.InnerSimplified;
             }
-            if (PolynomialSolver.SolveAsPolynomial(expr, x) is { } poly)
-                return poly.Select(e => TryDowncast(expr, x, e.InnerSimplified)).ToSet();
 
             switch (expr)
             {
@@ -120,6 +118,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 default:
                     break;
             }
+
+            if (PolynomialSolver.SolveAsPolynomial(expr, x) is { } poly)
+                return poly.Select(e => TryDowncast(expr, x, e.InnerSimplified)).ToSet();
 
             // If the replacement isn't one-variable one,
             // then solving over replacements is already useless,

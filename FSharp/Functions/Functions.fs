@@ -32,5 +32,5 @@ let as_number expr =
 let as_bool expr =
     (parse expr).EvalBoolean()
 
-let solve expr x =
-    (parse expr).Solve(x)
+let solve x expr =
+    (parse expr).Solve(parse_symbol x)

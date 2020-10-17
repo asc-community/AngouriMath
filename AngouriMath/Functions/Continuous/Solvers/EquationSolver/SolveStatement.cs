@@ -14,11 +14,19 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     internal static class StatementSolver
     {
+        private static Entity Minus(Entity left, Entity right)
+        {
+            if (left.Evaled == 0)
+                return -right;
+            if (right.Evaled == 0)
+                return left;
+            return left - right;
+        }
+
         internal static Set Solve(Entity expr, Variable x)
             => expr switch
             {
-
-                Equalsf(var left, var right) => AnalyticalEquationSolver.Solve(left - right, x),
+                Equalsf(var left, var right) => AnalyticalEquationSolver.Solve(Minus(left, right), x),
 
                 Andf(var left, var right) => 
                     MathS.Intersection(Solve(left, x), Solve(right, x)),
@@ -29,14 +37,14 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
                 // TODO: there should be universal set to subtract from when inverting
                 Greaterf(var left, var right) => 
-                    AnalyticalInequalitySolver.Solve(left - right, x),
+                    AnalyticalInequalitySolver.Solve(Minus(left, right), x),
                 LessOrEqualf(var left, var right) => 
-                    AnalyticalInequalitySolver.Solve(right - left, x)
-                    .Unite(AnalyticalEquationSolver.Solve(left - right, x)),
-                GreaterOrEqualf(var left, var right) => MathS.Union(AnalyticalInequalitySolver.Solve(left - right, x), AnalyticalEquationSolver.Solve(left - right, x)),
+                    AnalyticalInequalitySolver.Solve(Minus(right, left), x)
+                    .Unite(AnalyticalEquationSolver.Solve(Minus(left, right), x)),
+                GreaterOrEqualf(var left, var right) => MathS.Union(AnalyticalInequalitySolver.Solve(Minus(left, right), x), AnalyticalEquationSolver.Solve(Minus(left, right), x)),
 
                 Lessf(var left, var right) => 
-                    AnalyticalInequalitySolver.Solve(right - left, x),
+                    AnalyticalInequalitySolver.Solve(Minus(right, left), x),
 
                 Variable when expr == x => new FiniteSet(true),
 

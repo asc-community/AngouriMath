@@ -24,6 +24,13 @@ line()
 print (as_bool "true or false implies true")
 line()
 
+// solving
+print (solve "x" "x + 2 = 0")
+print (simplify (solve "x" "x2 + 2 a x + a2 = 0"))
+print (solve "x" "(x - 3)(x + a) = 0 and (x - 3)(x + 3) = 0 or x > a")
+//print (solve "x" "(x - 3)(x + a) = 0")
+line()
+
 // differentiation
 print (differentiate "x" "x2 + a x")
 print (differentiate "x" "e^x + ln(x) + log(2, x)")
