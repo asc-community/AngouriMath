@@ -12,7 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj" />
+    <ProjectReference Include="..\AngouriMath\AngouriMath.csproj" />
   </ItemGroup>
 
 </Project>
