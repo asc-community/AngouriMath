@@ -101,14 +101,6 @@ namespace UnitTests.Algebra
         }
 
         [Fact]
-        public void TestDerOverDer1()
-        {
-            var func = MathS.Derivative("x + 2", x);
-            var derFunc = func.Differentiate(x);
-            Assert.Equal(MathS.Derivative("x + 2", x, 2), derFunc);
-        }
-
-        [Fact]
         public void TestDerOverDer2()
         {
             var func = MathS.Derivative("x + 2", "y");
