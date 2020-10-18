@@ -10,6 +10,11 @@
   <b>New, leading symbolic algebra library in .NET. Everything one would need.</b>
   <br>
   <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>Download</b></a>
+  <b>(</b>
+  <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>C#</b></a>
+  , 
+  <a href="https://www.nuget.org/packages/AngouriMath.FSharp" title="Go to NuGet to get an F# version"><b>F#</b></a>
+  <b>)</b>
   <b>·</b>
   <a href="#exam"><b>Examples</b></a>
   <b>·</b>
@@ -22,6 +27,7 @@
   <img src="https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg"/>
 <a href="https://www.nuget.org/packages/AngouriMath"><img src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet"/></a>
 <a href="https://discord.gg/YWJEX7a"><img src="https://img.shields.io/discord/642350046213439489?color=orange&label=Discord"/></a>
+<a href="https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/AngouriSoft/MathS?color=purple"/></a>
 </p>
 
 ## What is it about?
@@ -42,6 +48,9 @@ be considered within a few hours.
 Finally, if not sure about it, try it on 
 <a href="https://dotnetfiddle.net/FIcaDG">.NET Fiddle</a>!
 
+Although most functions are convenient to use only from C#, there are some
+optimized for F#.
+
 ## README navigation:
 - [Installation](#inst)
 - [Examples](#exam)
@@ -50,6 +59,7 @@ Finally, if not sure about it, try it on
   - [Calculus](#calculus)
   - [Sets](#sets)
   - [Neat syntax](#syntax)
+  - [F#](#fsharp)
 - [I want to contribute](#contrib)
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
@@ -252,6 +262,34 @@ Entity expr = "x + 2 + sqrt(x)";
 A few convenient features: `x2` => `x^2`, `a x` => `a * x`, `(...)2` => `(...)^2`, `2(...)` => `2 * (...)`
 
 
+## <a name="fsharp"></a>F\#
+
+<a href="https://www.nuget.org/packages/AngouriMath.FSharp">Download</a>
+
+Not everything is supported directly from F#, so if something missing, you will need
+to address that functional from AngouriMath.
+
+```fs
+open Functions
+open Operators
+open FromToString
+
+
+solve "x" "x + 2 = 0"
+
+simplify (solve "x" "x2 + 2 a x + a2 = 0")
+
+differentiate "x" "x2 + a x"
+
+integrate "x" "x2 + e"
+
+limit "x" "0" "sin(a x) / x"
+
+"sin(a x) / x" &&& "x" --> 0
+
+latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)"
+```
+
 ## <a name="contrib"></a>Contribution
 
 We appreciate and welcome any contributors to AngouriMath. Current tasks can be tracked
@@ -263,8 +301,6 @@ can help you with something.
 Documentation for contributors and developers is <a href="./AngouriMath/Docs/Contributing/README.md">here</a>.
 
 ## License
-
-<a href="https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/AngouriSoft/MathS?color=purple"/></a>
 
 The project is open source, but can be used in closed commercial projects. There is no restriction on it
 with the only requirement to keep the MIT license with all distributives of AngouriMath.
