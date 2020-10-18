@@ -316,7 +316,6 @@ namespace UnitTests.Core
 
         [Theory]
         [InlineData("1 / (a - 1)", "-1 / (1 - a) + 1")]
-        [InlineData("a - b", "b - a")]
         [InlineData("(a - 1) x", "a")]
         public void TestAreNumericallyNotEqual(string one, string another)
         {

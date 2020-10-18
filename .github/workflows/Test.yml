@@ -27,6 +27,11 @@ jobs:
     - name: Test
       run: |
         dotnet test "Tests/UnitTests" -c Release -l GitHubActions /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+        dir
+        cd ./Tests
+        dir
+        cd ./UnitTests
+        dir
     - uses: codecov/codecov-action@v1
       with:
         file: ./Tests/UnitTests/coverage.opencover.xml
