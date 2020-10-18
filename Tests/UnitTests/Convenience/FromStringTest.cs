@@ -34,7 +34,8 @@ namespace UnitTests.Convenience
                 Assert.Throws<ParseException>(() => (Entity)input).Message);
         [Theory]
         [InlineData("limitleft()", "limitleft should have exactly 3 arguments but 0 arguments are provided")]
-        [InlineData("derivative(3)", "derivative should have exactly 3 arguments but 1 argument is provided")]
+        [InlineData("derivative(3)", "derivative should have exactly 3 arguments or 2 arguments but 1 argument is provided")]
+        [InlineData("integral(3)", "integral should have exactly 3 arguments or 2 arguments but 1 argument is provided")]
         [InlineData("ln(3, 5)", "ln should have exactly 1 argument but 2 arguments are provided")]
         [InlineData("sin(3, 5, 8)", "sin should have exactly 1 argument but 3 arguments are provided")]
         [InlineData("log()", "log should have exactly 1 argument or 2 arguments but 0 arguments are provided")]
@@ -124,6 +125,22 @@ namespace UnitTests.Convenience
         [Fact] public void TestMinusInfinity2() => Assert.Equal(Real.NegativeInfinity + (Entity)2, FromString("-oo + 2"));
         [Fact] public void TestEquality1() => Assert.Equal(x.Equalizes(y) & y.Equalizes(x), FromString("x = y = x"));
         [Fact] public void TestEquality2() => Assert.Equal(x.Equalizes(y).Equalizes(x), FromString("(x = y) = x"));
+        [Fact] public void TestDerivative2Args1() => Assert.Equal(MathS.Derivative("x + 2", "x"), FromString("derivative(x + 2, x)"));
+        [Fact] public void TestIntegral2Args1() => Assert.Equal(MathS.Integral("x + 2", "x"), FromString("integral(x + 2, x)"));
+        [Fact] public void TestDerivative2Args2() => Assert.Equal(2 * MathS.Derivative("x + 2", "x"), FromString("2 derivative(x + 2, x)"));
+        [Fact] public void TestIntegral2Args2() => Assert.Equal(2 * MathS.Integral("x + 2", "x"), FromString("2 integral(x + 2, x)"));
+
+        [Fact] public void TestInvalidArg1() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x)"));
+        [Fact] public void TestInvalidArg2() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(24)"));
+        [Fact] public void TestInvalidArg3() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x, x, 4, x)"));
+        [Fact] public void TestInvalidArg4() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x, x, x, x)"));
+        [Fact] public void TestInvalidArg5() => Assert.Throws<InvalidArgumentParseException>(() => FromString("integral(x, x, a)"));
+        [Fact] public void TestInvalidArg6() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(x)"));
+        [Fact] public void TestInvalidArg7() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(24)"));
+        [Fact] public void TestInvalidArg8() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(x, x, 4, x)"));
+        [Fact] public void TestInvalidArg9() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(x, x, x, x)"));
+        [Fact] public void TestInvalidArg10() => Assert.Throws<InvalidArgumentParseException>(() => FromString("derivative(x, x, a)"));
+
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {
             var s = $"x {signLeft} y {signRight} z";
