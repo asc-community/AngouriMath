@@ -261,20 +261,28 @@ atom returns[Entity value]
     | 'arccosec(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Arccosec($args.list[0]); }
     | 'gamma(' args = function_arguments ')' { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); }
     | 'derivative(' args = function_arguments ')' 
-        { 
-            Assert("derivative", 3, $args.list.Count); 
-            if ($args.list[2] is Integer { EInteger: var asEInt })
-                $value = MathS.Derivative($args.list[0], $args.list[1], asEInt.ToInt32Checked());
+        {
+            if (Assert("derivative", (3, 2), $args.list.Count))
+            {
+                if ($args.list[2] is Integer { EInteger: var asEInt })
+                    $value = MathS.Derivative($args.list[0], $args.list[1], asEInt.ToInt32Checked());
+                else
+                    throw new InvalidArgumentParseException("Expected integer number for the third argument of derivative");
+            } 
             else
-                throw new ParseException("Expected number for the third argument of derivative");
+                $value = MathS.Derivative($args.list[0], $args.list[1]);
         }
     | 'integral(' args = function_arguments ')' 
         { 
-            Assert("integral", 3, $args.list.Count); 
-            if ($args.list[2] is Integer { EInteger: var asEInt })
-                $value = MathS.Integral($args.list[0], $args.list[1], asEInt.ToInt32Checked());
+            if (Assert("integral", (3, 2), $args.list.Count))
+            {
+                if ($args.list[2] is Integer { EInteger: var asEInt })
+                    $value = MathS.Integral($args.list[0], $args.list[1], asEInt.ToInt32Checked());
+                else
+                    throw new InvalidArgumentParseException("Expected number for the third argument of integral");
+            }
             else
-                throw new ParseException("Expected number for the third argument of integral");
+                $value = MathS.Integral($args.list[0], $args.list[1]);
         }
     | 'limit(' args = function_arguments ')' { Assert("limit", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2]); }
     | 'limitleft(' args = function_arguments ')' { Assert("limitleft", 3, $args.list.Count); $value = MathS.Limit($args.list[0], $args.list[1], $args.list[2], AngouriMath.Core.ApproachFrom.Left); }
@@ -287,7 +295,7 @@ atom returns[Entity value]
         { 
             Assert("domain", 2, $args.list.Count); 
             if ($args.list[1] is not SpecialSet ss)
-                throw new ParseException($"Unrecognized special set {$args.list[1].Stringize()}");
+                throw new InvalidArgumentParseException($"Unrecognized special set {$args.list[1].Stringize()}");
             $value = $args.list[0].WithCodomain(DomainsFunctional.Parse(ss.SetType));
         }
     ;

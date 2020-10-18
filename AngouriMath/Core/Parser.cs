@@ -31,7 +31,7 @@ namespace AngouriMath.Core
         class AngouriMathTextWriter : TextWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
-            public override void WriteLine(string s) => throw new ParseException(s);
+            public override void WriteLine(string s) => throw new UnhandledParseException(s);
         }
         public static Entity Parse(string source)
         {

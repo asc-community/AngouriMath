@@ -50,8 +50,8 @@ namespace UnitTests.Common
         [InlineData("")]
         public void NotNumber(string input)
         {
-            Assert.Equal($"Cannot parse number from {input}",
-                Assert.Throws<AngouriMath.Core.Exceptions.ParseException>(() => Complex.Parse(input).Stringize()).Message);
+            Assert.Equal($"Cannot parse an instance of Complex from `{input}`",
+                Assert.Throws<AngouriMath.Core.Exceptions.CannotParseInstanceException>(() => Complex.Parse(input).Stringize()).Message);
             Assert.False(Complex.TryParse(input, out var output));
             Assert.Null(output);
         }

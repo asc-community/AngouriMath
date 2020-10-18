@@ -146,7 +146,7 @@ namespace AngouriMath
                 /// <returns><see cref="Complex"/></returns>
                 /// <exception cref="ParseException">Thrown when <paramref name="source"/> cannot be parsed.</exception>
                 public static Complex Parse(string source) =>
-                    TryParse(source, out var res) ? res : throw new ParseException("Cannot parse number from " + source);
+                    TryParse(source, out var res) ? res : throw new CannotParseInstanceException(typeof(Complex), source);
 
                 /// <summary>Tries to parse a <see cref="Complex"/> from <see cref="string"/></summary>
                 /// <param name="source"></param>

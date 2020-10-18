@@ -2,6 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+	<SignAssembly>true</SignAssembly>
+	<AssemblyOriginatorKeyFile>fsharp.key</AssemblyOriginatorKeyFile>
+	<Description>F# wrapper for some functions from AngouriMath</Description>
+	<Copyright>Angouri</Copyright>
+	<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+	<PackageProjectUrl>https://github.com/asc-community/AngouriMath</PackageProjectUrl>
+	<PackageIcon>icon.png</PackageIcon>
+	<RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
+	<PackageTags>fsharp, math, calculus, symbolic algebra, computer algebra, latex</PackageTags>
+	<PackageReleaseNotes>First release of F# wrapper for AM</PackageReleaseNotes>
+	<Version>1.0.0-preview.1</Version>
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<Authors>WhiteBlackGoose</Authors>
+	<Company>Angouri</Company>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,6 +27,17 @@
 
   <ItemGroup>
     <ProjectReference Include="..\AngouriMath\AngouriMath.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="icon.png">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
 
 </Project>

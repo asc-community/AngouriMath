@@ -1,7 +1,6 @@
 ﻿open Functions
 open Operators
 open FromToString
-open AngouriMath
 
 let print x =
     printfn "%O" x
