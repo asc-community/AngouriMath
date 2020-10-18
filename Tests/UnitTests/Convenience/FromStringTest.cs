@@ -31,7 +31,7 @@ namespace UnitTests.Convenience
         [InlineData("()", "line 1:1")]
         public void Error(string input, string errorPrefix) =>
             Assert.StartsWith(errorPrefix, 
-                Assert.Throws<ParseException>(() => (Entity)input).Message);
+                Assert.Throws<UnhandledParseException>(() => (Entity)input).Message);
         [Theory]
         [InlineData("limitleft()", "limitleft should have exactly 3 arguments but 0 arguments are provided")]
         [InlineData("derivative(3)", "derivative should have exactly 3 arguments or 2 arguments but 1 argument is provided")]
@@ -47,7 +47,7 @@ namespace UnitTests.Convenience
         [InlineData("sin(x)")]
         [InlineData("2s")]
         public void NotAVariable(string input) =>
-            Assert.Throws<ParseException>(() => (Entity.Variable)input);
+            Assert.Throws<CannotParseInstanceException>(() => (Entity.Variable)input);
         [Fact] public void TestFormula1() => Assert.Equal(2, FromString("1 + 1").EvalNumerical());
         [Fact] public void TestFormula2() => Assert.Equal(0, FromString("sin(0)").EvalNumerical());
         [Fact] public void TestFormula3() => Assert.Equal(2, FromString("log(2, 4)").EvalNumerical());
@@ -72,7 +72,7 @@ namespace UnitTests.Convenience
         [Fact] public void TestFormula18() => Assert.Equal(x * y, FromString("x y"));
         [Fact] public void TestFormula19() => Assert.Equal(x * MathS.Sqrt(3), FromString("x sqrt(3)"));
         [Fact] public void TestFormula20() => Assert.Equal(Factorial(x), FromString("x!"));
-        [Fact] public void TestFormula21() => Assert.Throws<ParseException>(() => FromString("x!!"));
+        [Fact] public void TestFormula21() => Assert.Throws<UnhandledParseException>(() => FromString("x!!"));
         [Fact] public void TestFormula22() => Assert.Equal(Factorial(Sin(x)), FromString("sin(x)!"));
         [Fact] public void TestFormula23() => Assert.Equal(Pow(2, MathS.Factorial(3)), FromString("2^3!"));
         [Fact] public void TestFormula24() => Assert.Equal(Pow(MathS.Factorial(2), MathS.Factorial(3)), FromString("2!^3!"));

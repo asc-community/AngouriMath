@@ -59,7 +59,7 @@ namespace AngouriMath
             /// <see cref="ParseException"/> if parsing is not successful
             /// </summary>
             public static Boolean Parse(string expr)
-                => TryParse(expr, out var res) ? res : throw new ParseException($"Token '{expr}' is not valid for boolean");
+                => TryParse(expr, out var res) ? res : throw new CannotParseInstanceException(typeof(Boolean), expr);
         }
 
         #region Logical gates

@@ -13,7 +13,7 @@ namespace AngouriMath
             var ent = expr.ToEntity();
             if (ent is T tEnt)
                 return tEnt;
-            throw new ParseException($"Cannot parse an instance of {typeof(T).Name} from `{expr}`");
+            throw new CannotParseInstanceException(typeof(T), expr);
         }
 
         partial record Variable
