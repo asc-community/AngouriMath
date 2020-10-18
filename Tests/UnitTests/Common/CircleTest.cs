@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using static AngouriMath.Entity.Number;
 using Xunit;
+using AngouriMath.Extensions;
 
 namespace UnitTests.Common
 {
@@ -88,5 +89,16 @@ namespace UnitTests.Common
         [InlineData("abs(x)")]
         public void TestDiscrete(string inputIsOutput) =>
             Assert.Equal(inputIsOutput, MathS.FromString(inputIsOutput).Stringize());
+
+        [Theory]
+        [InlineData("limitleft(y, x, 0)")]
+        [InlineData("limitright(y, x, 0)")]
+        [InlineData("limit(y, x, 0)")]
+        [InlineData("derivative(y, x)")]
+        [InlineData("integral(y, x)")]
+        [InlineData("derivative(y, x, 2)")]
+        [InlineData("integral(y, x, 2)")]
+        public void TestCalculus(string inputIsOutput) =>
+            Assert.Equal(inputIsOutput, inputIsOutput.ToEntity().Stringize());
     }
 }

@@ -25,4 +25,8 @@ jobs:
         dotnet add "Tests/UnitTests" package GitHubActionsTestLogger
         dotnet build Tests/UnitTests || dotnet build Tests/UnitTests || dotnet build Tests/UnitTests
     - name: Test
-      run: dotnet test "Tests/UnitTests" -c Release -l GitHubActions
+      run: |
+        dotnet test "Tests/UnitTests" -c Release -l GitHubActions /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+    - uses: codecov/codecov-action@v1
+      with:
+        file: ./Tests/UnitTests/coverage.opencover.xml

@@ -48,7 +48,7 @@ WriteLine(@"[a; b) \/ { b }".Simplify());
 WriteLine();
 
 // Differentiate, integrate, find limits
-WriteLine("x2 + a x".Derive("x").InnerSimplified);
+WriteLine("x2 + a x".Differentiate("x").InnerSimplified);
 WriteLine("x2 + a x".Integrate("x").InnerSimplified.Latexise());
 WriteLine("(a x2 + b x) / (e x - h x2 - 3)".Limit("x", "+oo").InnerSimplified);
 WriteLine();

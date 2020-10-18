@@ -214,7 +214,13 @@ namespace AngouriMath
 
         public partial record Derivativef
         {
-            public override string Stringize() => $"derive({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
+            public override string Stringize()
+            {
+                if (Iterations == 1)
+                    return $"derivative({Expression.Stringize()}, {Var.Stringize()})";
+                else
+                    return $"derivative({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
+            }
             protected override bool PrintMembers(StringBuilder builder)
             {
                 builder.Append(Stringize());
@@ -225,7 +231,13 @@ namespace AngouriMath
 
         public partial record Integralf
         {
-            public override string Stringize() => $"integrate({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
+            public override string Stringize()
+            {
+                if (Iterations == 1)
+                    return $"integral({Expression.Stringize()}, {Var.Stringize()})";
+                else
+                    return $"integral({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
+            }
             protected override bool PrintMembers(StringBuilder builder)
             {
                 builder.Append(Stringize());
