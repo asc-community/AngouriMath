@@ -23,7 +23,7 @@ jobs:
       run: |
         dotnet add "Tests/UnitTests" package Microsoft.NET.Test.Sdk # Update is required for GitHubActionsTestLogger to print anything
         dotnet add "Tests/UnitTests" package GitHubActionsTestLogger
-        dotnet add "UnitTests" package coverlet.msbuild
+        dotnet add "Tests/UnitTests" package coverlet.msbuild
         dotnet build Tests/UnitTests || dotnet build Tests/UnitTests || dotnet build Tests/UnitTests
     - name: Test
       run: |
