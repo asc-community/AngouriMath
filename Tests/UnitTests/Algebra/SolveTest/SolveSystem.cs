@@ -7,7 +7,7 @@ namespace UnitTests.Algebra
 {
     public sealed class SolveSystem
     {
-        void AssertSystemSolvable(Entity[] equations, Entity.Variable[] vars, int rootCount, Integer? ToSub = null)
+        internal static void AssertSystemSolvable(Entity[] equations, Entity.Variable[] vars, int rootCount, Integer? ToSub = null)
         {
             ToSub ??= 3;
             var sol = MathS.Equations(equations).Solve(vars);

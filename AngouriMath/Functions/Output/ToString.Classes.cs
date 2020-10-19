@@ -19,22 +19,12 @@ namespace AngouriMath
         public partial record Variable
         {
             public override string Stringize() => Name;
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Tensor
         {
             public override string Stringize() => InnerTensor.ToString();
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -42,11 +32,6 @@ namespace AngouriMath
         {
             public override string Stringize() =>
                 Augend.Stringize(Augend.Priority < Priority) + " + " + Addend.Stringize(Addend.Priority < Priority);
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -54,11 +39,6 @@ namespace AngouriMath
         {
             public override string Stringize() =>
                 Subtrahend.Stringize(Subtrahend.Priority < Priority) + " - " + Minuend.Stringize(Minuend.Priority <= Priority);
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -68,11 +48,6 @@ namespace AngouriMath
                 (Multiplier is Integer(-1) ? "-"
                     : Multiplier.Stringize(Multiplier.Priority < Priority) + " * ")
                 + Multiplicand.Stringize(Multiplicand.Priority < Priority);
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -80,66 +55,36 @@ namespace AngouriMath
         {
             public override string Stringize() =>
                 Dividend.Stringize(Dividend.Priority < Priority) + " / " + Divisor.Stringize(Divisor.Priority <= Priority);
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Sinf
         {
             public override string Stringize() => $"sin({Argument.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Cosf
         {
             public override string Stringize() => $"cos({Argument.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Tanf
         {
             public override string Stringize() => $"tan({Argument.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Cotanf
         {
             public override string Stringize() => $"cotan({Argument.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Logf
         {
             public override string Stringize() => $"log({Base.Stringize()}, {Antilogarithm.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -149,66 +94,36 @@ namespace AngouriMath
                 Exponent == 0.5m
                 ? "sqrt(" + Base.Stringize() + ")"
                 : Base.Stringize(Base.Priority < Priority) + " ^ " + Exponent.Stringize(Exponent.Priority < Priority);
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Arcsinf
         {
             public override string Stringize() => $"arcsin({Argument.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Arccosf
         {
             public override string Stringize() => $"arccos({Argument.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Arctanf
         {
             public override string Stringize() => $"arctan({Argument.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Arccotanf
         {
             public override string Stringize() => $"arccotan({Argument.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Factorialf
         {
             public override string Stringize() => Argument.Stringize(Argument.Priority < Priority.Leaf) + "!";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -221,11 +136,6 @@ namespace AngouriMath
                 else
                     return $"derivative({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
             }
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -237,11 +147,6 @@ namespace AngouriMath
                     return $"integral({Expression.Stringize()}, {Var.Stringize()})";
                 else
                     return $"integral({Expression.Stringize()}, {Var.Stringize()}, {Iterations})";
-            }
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
             }
             public override string ToString() => Stringize();
         }
@@ -257,55 +162,30 @@ namespace AngouriMath
                     _ => throw new System.ComponentModel.InvalidEnumArgumentException
                         (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
                 } + $"({Expression.Stringize()}, {Var.Stringize()}, {Destination.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Signumf
         {
             public override string Stringize() => $"sgn({Argument.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         public partial record Absf
         {
             public override string Stringize() => $"abs({Argument.Stringize()})";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         partial record Boolean
         {
             public override string Stringize() => ((bool)this).ToString();
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
         partial record Notf
         {
             public override string Stringize() => $"not {Argument.Stringize(Argument.Priority < Priority)}";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -313,11 +193,6 @@ namespace AngouriMath
         {
             public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} and {Right.Stringize(Right.Priority < Priority)}";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -325,11 +200,6 @@ namespace AngouriMath
         {
             public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} or {Right.Stringize(Right.Priority < Priority)}";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -337,11 +207,6 @@ namespace AngouriMath
         {
             public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} xor {Right.Stringize(Right.Priority < Priority)}";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -349,11 +214,6 @@ namespace AngouriMath
         {
             public override string Stringize()
                 => $"{Assumption.Stringize(Assumption.Priority < Priority)} implies {Conclusion.Stringize(Conclusion.Priority < Priority)}";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -361,11 +221,6 @@ namespace AngouriMath
         {
             public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} = {Right.Stringize(Right.Priority < Priority)}";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -373,11 +228,6 @@ namespace AngouriMath
         {
             public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} > {Right.Stringize(Right.Priority < Priority)}";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -385,11 +235,6 @@ namespace AngouriMath
         {
             public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} >= {Right.Stringize(Right.Priority < Priority)}";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -397,11 +242,6 @@ namespace AngouriMath
         {
             public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} < {Right.Stringize(Right.Priority < Priority)}";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -409,11 +249,6 @@ namespace AngouriMath
         {
             public override string Stringize()
                 => $"{Left.Stringize(Left.Priority < Priority)} <= {Right.Stringize(Right.Priority < Priority)}";
-            protected override bool PrintMembers(StringBuilder builder)
-            {
-                builder.Append(Stringize());
-                return false;
-            }
             public override string ToString() => Stringize();
         }
 
@@ -422,12 +257,7 @@ namespace AngouriMath
             partial record FiniteSet
             {
                 public override string Stringize()
-                    => $"{{ {string.Join(", ", Elements.Select(c => c.Stringize()))} }}";
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
+                    => $"{{ {string.Join(", ", Elements.Select(c => c.Stringize()))} }}";                
                 public override string ToString() => Stringize();
             }
 
@@ -438,12 +268,7 @@ namespace AngouriMath
                     var left = LeftClosed ? "[" : "(";
                     var right = RightClosed ? "]" : ")";
                     return left + Left.Stringize() + "; " + Right.Stringize() + right;
-                }
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
+                }                
                 public override string ToString() => Stringize();
             }
 
@@ -451,11 +276,6 @@ namespace AngouriMath
             {
                 public override string Stringize()
                     => $"{{ {Var.Stringize()} : {Predicate.Stringize()} }}";
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
                 public override string ToString() => Stringize();
             }
 
@@ -463,11 +283,6 @@ namespace AngouriMath
             {
                 public override string Stringize()
                     => DomainsFunctional.DomainToString(SetType);
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
                 public override string ToString() => Stringize();
             }
 
@@ -475,11 +290,6 @@ namespace AngouriMath
             {
                 public override string Stringize()
                     => $@"{Left.Stringize(Left.Priority < Priority)} \/ {Right.Stringize(Right.Priority < Priority)}";
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
                 public override string ToString() => Stringize();
             }
 
@@ -487,11 +297,6 @@ namespace AngouriMath
             {
                 public override string Stringize()
                     => $@"{Left.Stringize(Left.Priority < Priority)} /\ {Right.Stringize(Right.Priority < Priority)}";
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
                 public override string ToString() => Stringize();
             }
 
@@ -499,11 +304,6 @@ namespace AngouriMath
             {
                 public override string Stringize()
                     => $@"{Left.Stringize(Left.Priority < Priority)} \ {Right.Stringize(Right.Priority < Priority)}";
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
                 public override string ToString() => Stringize();
             }
 
@@ -511,11 +311,6 @@ namespace AngouriMath
             {
                 public override string Stringize()
                     => $@"{Element.Stringize(Element.Priority < Priority)} in {SupSet.Stringize(SupSet.Priority < Priority)}";
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
                 public override string ToString() => Stringize();
             }
         }

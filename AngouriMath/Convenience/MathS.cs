@@ -489,6 +489,16 @@ namespace AngouriMath
             /// <param name="b">Second vector</param>
             /// <returns>The resulting scalar which is an <see cref="Entity"/> and not a <see cref="Tensor"/></returns>
             public static Entity ScalarProduct(Tensor a, Tensor b) => GenTensor.VectorDotProduct(a.InnerTensor, b.InnerTensor);
+
+            /// <summary>
+            /// Creates a closed interval (segment)
+            /// </summary>
+            public static Interval Interval(Entity left, Entity right) => new Interval(left, true, right, true);
+
+            /// <summary>
+            /// Creates an interval with custom endings
+            /// </summary>
+            public static Interval Interval(Entity left, bool leftClosed, Entity right, bool rightClosed) => new Interval(left, leftClosed, right, rightClosed);
         }
 
         /// <summary>
