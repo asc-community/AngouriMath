@@ -26,7 +26,7 @@ namespace AngouriMath
 
         public partial record Variable
         {
-            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) => new[] { this };
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) => new[] { value };
         }
 
         public partial record Tensor : Entity
@@ -331,6 +331,10 @@ namespace AngouriMath
                     var (withX, withoutX) = Left.ContainsNode(x) ? (Left, Right) : (Right, Left);
                     if (value is FiniteSet valueFiniteSet && withoutX is FiniteSet A)
                     {
+                        if (!A.TryIsSubsetOf(valueFiniteSet, out var isSub))
+                            return withX.InvertNode(value.SetSubtract(withoutX), x);
+                        if (!isSub)
+                            return Empty;
                         var sub = FiniteSet.Subtract(valueFiniteSet, A);
                         var answers = new List<Entity>();
                         foreach (var ans in A.GetPowerSet())

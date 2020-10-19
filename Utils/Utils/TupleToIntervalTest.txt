@@ -1,0 +1,12 @@
+        [Fact] public void Test%testid%()
+            => Assert.Equal(
+            MathS.Matrices.Interval(%arg1%, %arg2%),
+            (%arg1%, %arg2%).ToInterval()
+            );
+
+        [Fact] public void Test%testid%_custom()
+            => Assert.Equal(
+            MathS.Matrices.Interval(%arg1%, true, %arg2%, false), 
+            (%arg1%, true, %arg2%, false).ToInterval()
+            );
+

@@ -221,5 +221,16 @@ namespace UnitTests.Algebra
         [InlineData("2^x - 4^x", 1)]
         public void TestExponentialSolver(string equation, int rootCount, int? toSub = null)
             => TestSolver(equation, rootCount, toSub);
+
+        [Theory]
+        [InlineData("(x / 3)^2 - 4", 2)]
+        [InlineData("(3 / x)^2 - 4", 2)]
+        [InlineData("(x - 3)^2 - 4", 2)]
+        [InlineData("(3 - x)^2 - 4", 2)]
+        [InlineData("arccos(x)2 - 1", 1)]
+        [InlineData("x! - 1", 0)]
+        [InlineData("limit(x, x, y)2 - 2", 0)]
+        public void TestInvertNodes(string equation, int rootCount, int? toSub = null)
+            => TestSolver(equation, rootCount, toSub);
     }
 }

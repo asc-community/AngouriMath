@@ -112,7 +112,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     if (lastChild is null)
                         goto default;
                     // TODO: optimize?
-                    return subtrahend.Invert(minuend, lastChild).Select(result => Solve(lastChild - result, x, compensateSolving: true)).Aggregate((a, b) => MathS.Union(a, b));
+                    return subtrahend.Invert(minuend, lastChild).Select(result => Solve(lastChild - result, x, compensateSolving: true)).Unite();
                 case Function:
                     return expr.Invert(0, x).Select(ent => TryDowncast(expr, x, ent)).ToSet();
                 default:
