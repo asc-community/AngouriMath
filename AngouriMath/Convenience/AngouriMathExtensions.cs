@@ -13,6 +13,7 @@ using PeterO.Numbers;
 using System.Linq;
 using System.Collections.Generic;
 using AngouriMath.Core.Exceptions;
+using System;
 
 namespace AngouriMath.Extensions
 {
@@ -204,6 +205,10 @@ namespace AngouriMath.Extensions
         public static FastExpression Compile(this string str, params Variable[] variables)
             => str.ToEntity().Compile(variables);
 
+        [Obsolete("Renamed to Differentiate")]
+        public static Entity Derive(this string str, Variable x)
+            => str.ToEntity().Differentiate(x);
+
         /// <summary>
         /// Finds the symbolical derivative of the given expression
         /// </summary>
@@ -214,7 +219,7 @@ namespace AngouriMath.Extensions
         /// The derived expression which might contain <see cref="Derivativef"/> nodes,
         /// or the initial one
         /// </returns>
-        public static Entity Derive(this string str, Variable x)
+        public static Entity Differentiate(this string str, Variable x)
             => str.ToEntity().Differentiate(x);
 
         /// <summary>
