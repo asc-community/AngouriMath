@@ -9,6 +9,7 @@
  */
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using System.Linq;
 
 namespace AngouriMath
 {
@@ -220,19 +221,19 @@ namespace AngouriMath
             partial record FiniteSet
             {
                 internal override string ToSymPy()
-                    => $"FiniteSet({string.Join(", ", elements)})";
+                    => $"FiniteSet({string.Join(", ", Elements.Select(c => c.ToSymPy()))})";
             }
 
             partial record Interval
             {
                 internal override string ToSymPy()
-                    => $"Interval({Left}, {Right}, left_open={(!(Boolean)LeftClosed).ToSymPy()}, right_open={(!(Boolean)RightClosed).ToSymPy()})";
+                    => $"Interval({Left}, {Right}, left_open={((Boolean)!LeftClosed).ToSymPy()}, right_open={((Boolean)!RightClosed).ToSymPy()})";
             }
 
             partial record ConditionalSet
             {
                 internal override string ToSymPy()
-                    => $"ConditionSet({Var.ToSymPy()}, {Predicate.ToSymPy()}, {((SpecialSet)Var.Codomain).ToSymPy()})";
+                    => $"ConditionSet({Var.ToSymPy()}, {Predicate.ToSymPy()}, {((SpecialSet)Codomain).ToSymPy()})";
             }
 
             partial record SpecialSet

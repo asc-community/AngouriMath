@@ -14,7 +14,7 @@ namespace UnitTests.Convenience
         [InlineData("x / 2", "Symbol('x')")]
         [InlineData("e pi x / 2", "Symbol('e')", false)]
         [InlineData("e pi x / 2", "Symbol('pi')", false)]
-        [InlineData("i", "sympy.I", false)]
+        [InlineData("i", "sympy.I")]
         [InlineData("{ 1, 2 }", "Symbol('pi')", false)]
         [InlineData("x - 2", "x - 2")]
         [InlineData("x + 2", "x + 2")]
@@ -26,10 +26,10 @@ namespace UnitTests.Convenience
         [InlineData("sin(x)", "sympy.sin(x)")]
         [InlineData("cos(x)", "sympy.cos(x)")]
         [InlineData("cotan(x)", "sympy.cot(x)")]
-        [InlineData("arcsin(x)", "sympy.arcsin(x)")]
-        [InlineData("arccos(x)", "sympy.arccos(x)")]
-        [InlineData("arctan(x)", "sympy.arctan(x)")]
-        [InlineData("arccotan(x)", "sympy.arccot(x)")]
+        [InlineData("arcsin(x)", "sympy.asin(x)")]
+        [InlineData("arccos(x)", "sympy.acos(x)")]
+        [InlineData("arctan(x)", "sympy.atan(x)")]
+        [InlineData("arccotan(x)", "sympy.acot(x)")]
         [InlineData("derivative(y, x, 2)", "sympy.diff(y, x, 2)")]
         [InlineData("integral(y, x, 2)", "sympy.integrate(y, x, 2)")]
         [InlineData("limit(y, x, 2)", "sympy.limit(y, x, 2)")]
@@ -62,6 +62,7 @@ namespace UnitTests.Convenience
         [InlineData(@"A /\ B", "Intersection(A, B)")]
         [InlineData(@"A \ B", "Complement(A, B)")]
         [InlineData(@"a in B", "a in B")]
+        [InlineData("domain({ x : x > 0 }, RR)", "ConditionSet(x, x > 0, S.Reals)")]
         public void TestSymPy(string expression, string expectedToBeIn, bool contains = true)
         {
             var ent = MathS.FromString(expression);

@@ -59,7 +59,7 @@ namespace UnitTests.Convenience
         [Fact]
         public void TestSystem7()
         {
-            var res = ("x", "y", "z", "t", "k", "p", "y").SolveSystem("x", "y", "z", "t", "k", "p", "y");
+            var res = ("x", "y", "z", "t", "k", "p", "r").SolveSystem("x", "y", "z", "t", "k", "p", "r");
             var exp = MathS.Matrices.Matrix(new Entity[,] { { 0, 0, 0, 0, 0, 0, 0 } });
             Assert.Equal(exp, res);
         }
@@ -67,7 +67,7 @@ namespace UnitTests.Convenience
         [Fact]
         public void TestSystem8()
         {
-            var res = ("x", "y", "z", "t", "k", "p", "y", "l").SolveSystem("x", "y", "z", "t", "k", "p", "y", "l");
+            var res = ("x", "y", "z", "t", "k", "p", "r", "l").SolveSystem("x", "y", "z", "t", "k", "p", "r", "l");
             var exp = MathS.Matrices.Matrix(new Entity[,] { { 0, 0, 0, 0, 0, 0, 0, 0 } });
             Assert.Equal(exp, res);
         }
