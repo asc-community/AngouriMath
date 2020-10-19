@@ -53,7 +53,7 @@ namespace AngouriMath.Core
         Func = 80      | NumericalOperation,
 
 
-        Leaf      = 100 | SetOperation,
+        Leaf      = 100 | NumericalOperation,
     }
     public interface ILatexiseable { public string Latexise(); }
 }

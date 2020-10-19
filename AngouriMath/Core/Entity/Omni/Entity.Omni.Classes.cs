@@ -176,6 +176,24 @@ namespace AngouriMath
                     return new FiniteSet(sets, noCheck: true);
                 }
 
+                /// <summary>
+                /// Safely checks whether this is a subset of the argument,
+                /// if successful, returns true AND stores the result in <paramref name="isSub"/>
+                /// </summary>
+                /// <returns>Whether it is possible to determine</returns>
+                public bool TryIsSubsetOf(FiniteSet superSet, out bool isSub)
+                {
+                    isSub = false;
+                    foreach (var el in this)
+                        if (!superSet.TryContains(el, out var contains))
+                            return false;
+                        else if (!contains)
+                            return true;
+
+                    isSub = true;
+                    return true;
+                }
+
                 public override bool IsSetFinite => true;
                 public override bool IsSetEmpty => Count == 0;
             }

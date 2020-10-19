@@ -26,10 +26,13 @@ namespace AngouriMath
         /// </list>
         /// </summary>
         /// <returns>A set of possible roots of the expression.</returns>
-        internal IEnumerable<Entity> Invert(Entity value, Entity x) =>
-            value.InnerSimplified is var simplified && this == x
-            ? new[] { simplified }
-            : InvertNode(simplified, x).Where(el => el.IsFinite);
+        internal IEnumerable<Entity> Invert(Entity value, Entity x)
+        {
+            if (value.InnerSimplified is var simplified && this == x)
+                return new[] { simplified };
+            else
+                return InvertNode(simplified, x).Where(el => el.IsFinite);
+        }
         /// <summary>Use <see cref="Invert(Entity, Entity)"/> instead which auto-simplifies <paramref name="value"/></summary>
         private protected abstract IEnumerable<Entity> InvertNode(Entity value, Entity x);
         /// <summary>

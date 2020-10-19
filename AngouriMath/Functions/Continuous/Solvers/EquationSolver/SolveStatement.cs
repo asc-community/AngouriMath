@@ -28,10 +28,10 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             => expr switch
             {
                 Equalsf(var left, var right) when left is Set || right is Set
-                    => AnalyticalEquationSolver.Solve(Minus(left, right), x),
+                    => AnalyticalSetSolver.Solve(left, right, x),
 
                 Equalsf(var left, var right) when left is not Set && right is not Set
-                    => AnalyticalSetSolver.Solve(left, right, x),
+                    => AnalyticalEquationSolver.Solve(left - right, x),
 
                 Equalsf => Empty,
 

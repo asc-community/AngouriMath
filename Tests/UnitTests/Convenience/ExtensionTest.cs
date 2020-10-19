@@ -8,7 +8,6 @@ using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 using static AngouriMath.MathS;
 using AngouriMath.Extensions;
-using System.Linq;
 using System.Linq.Expressions;
 using System;
 
