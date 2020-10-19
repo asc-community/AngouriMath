@@ -7,6 +7,7 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+using AngouriMath.Functions.Continuous.Solvers.SetSolver;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
 
@@ -26,7 +27,13 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         internal static Set Solve(Entity expr, Variable x)
             => expr switch
             {
-                Equalsf(var left, var right) => AnalyticalEquationSolver.Solve(Minus(left, right), x),
+                Equalsf(var left, var right) when left is Set || right is Set
+                    => AnalyticalEquationSolver.Solve(Minus(left, right), x),
+
+                Equalsf(var left, var right) when left is not Set && right is not Set
+                    => AnalyticalSetSolver.Solve(left, right, x),
+
+                Equalsf => Empty,
 
                 Andf(var left, var right) => 
                     MathS.Intersection(Solve(left, x), Solve(right, x)),

@@ -51,5 +51,12 @@ namespace UnitTests.Algebra
 
         [Fact(Skip = "Sets require more work")]
         public void TestFiniteIntersection() => TestFinite("x2 = a and x = a", 1);
+
+        [Theory]
+        [InlineData(@"x \/ { 1, 2 } = { 1, 2 }", "{ { }, { 1 }, { 2 }, { 1, 2 } }")]
+        public void TestSetSolver(string eq, string expected)
+        {
+            Assert.Equal(expected.ToEntity(), eq.Solve("x"));
+        }
     }
 }

@@ -108,47 +108,15 @@ sum_expression returns[Entity value]
 
 /*
 
-Equality/inequality nodes
-
-*/
-
-inequality_expression returns[Entity value]
-   : m1 = sum_expression { $value = $m1.value; }
-   (
-    '>=' m2 = sum_expression { $value = $value >= $m2.value; } | 
-    '<=' m2 = sum_expression { $value = $value <= $m2.value; } |
-    '>' m2 = sum_expression { $value = $value > $m2.value; } |
-    '<' m2 = sum_expression { $value = $value < $m2.value; } |
-    'equalizes' m2 = sum_expression { $value = MathS.Equality($value, $m2.value); })*
-   ;
-
-terms_list returns[List<Entity> terms]
-    @init { $terms = new(); }
-    : ('=' term = inequality_expression { $terms.Add($term.value); })+
-    ;
-
-equality_expression returns[Entity value]
-    : expr = inequality_expression { $value = $expr.value; } (terms_list 
-    {
-        var list = $terms_list.terms.Prepend($value).ToArray();
-        List<Entity> eqTerms = new();
-        for (int i = 0; i < list.Length - 1; i++)
-            eqTerms.Add(list[i].Equalizes(list[i + 1]));
-        $value = eqTerms.Aggregate((eq1, eq2) => eq1 & eq2);
-    })?
-    ;
-
-/*
-
 Sets
 
 */
 
 set_operator_intersection returns[Entity value]
-    : left = equality_expression { $value = $left.value; }
+    : left = sum_expression { $value = $left.value; }
     (
-    'intersect' right = equality_expression { $value = $value.Intersect($right.value); } |
-    '/\\' right = equality_expression { $value = $value.Intersect($right.value); }
+    'intersect' right = sum_expression { $value = $value.Intersect($right.value); } |
+    '/\\' right = sum_expression { $value = $value.Intersect($right.value); }
     )*
     ;
 
@@ -173,6 +141,39 @@ in_operator returns[Entity value]
     ('in' m2 = set_operator_setsubtraction { $value = $value.In($m2.value); })*
     ;
 
+
+/*
+
+Equality/inequality nodes
+
+*/
+
+inequality_expression returns[Entity value]
+   : m1 = in_operator { $value = $m1.value; }
+   (
+    '>=' m2 = in_operator { $value = $value >= $m2.value; } | 
+    '<=' m2 = in_operator { $value = $value <= $m2.value; } |
+    '>' m2 = in_operator { $value = $value > $m2.value; } |
+    '<' m2 = in_operator { $value = $value < $m2.value; } |
+    'equalizes' m2 = in_operator { $value = MathS.Equality($value, $m2.value); })*
+   ;
+
+terms_list returns[List<Entity> terms]
+    @init { $terms = new(); }
+    : ('=' term = inequality_expression { $terms.Add($term.value); })+
+    ;
+
+equality_expression returns[Entity value]
+    : expr = inequality_expression { $value = $expr.value; } (terms_list 
+    {
+        var list = $terms_list.terms.Prepend($value).ToArray();
+        List<Entity> eqTerms = new();
+        for (int i = 0; i < list.Length - 1; i++)
+            eqTerms.Add(list[i].Equalizes(list[i + 1]));
+        $value = eqTerms.Aggregate((eq1, eq2) => eq1 & eq2);
+    })?
+    ;
+
 /*
 
 Boolean nodes
@@ -180,9 +181,9 @@ Boolean nodes
 */
 
 negate_expression returns[Entity value]
-    : 'not' op = in_operator { $value = !$op.value; }
+    : 'not' op = equality_expression { $value = !$op.value; }
     | 'not' opn = negate_expression { $value = !$opn.value; }
-    | op = in_operator { $value = $op.value; }
+    | op = equality_expression { $value = $op.value; }
     ;
 
 and_expression returns[Entity value]

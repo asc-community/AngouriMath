@@ -100,36 +100,6 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitSum_expression([NotNull] AngouriMathParser.Sum_expressionContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngouriMathParser.inequality_expression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterInequality_expression([NotNull] AngouriMathParser.Inequality_expressionContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngouriMathParser.inequality_expression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitInequality_expression([NotNull] AngouriMathParser.Inequality_expressionContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngouriMathParser.terms_list"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterTerms_list([NotNull] AngouriMathParser.Terms_listContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngouriMathParser.terms_list"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitTerms_list([NotNull] AngouriMathParser.Terms_listContext context);
-	/// <summary>
-	/// Enter a parse tree produced by <see cref="AngouriMathParser.equality_expression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="AngouriMathParser.equality_expression"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context);
-	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.set_operator_intersection"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
@@ -169,6 +139,36 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitIn_operator([NotNull] AngouriMathParser.In_operatorContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.inequality_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterInequality_expression([NotNull] AngouriMathParser.Inequality_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.inequality_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitInequality_expression([NotNull] AngouriMathParser.Inequality_expressionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.terms_list"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterTerms_list([NotNull] AngouriMathParser.Terms_listContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.terms_list"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitTerms_list([NotNull] AngouriMathParser.Terms_listContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.equality_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.equality_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitEquality_expression([NotNull] AngouriMathParser.Equality_expressionContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.negate_expression"/>.
 	/// </summary>

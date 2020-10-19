@@ -84,22 +84,6 @@ namespace AngouriMath
             GreaterEquals = 0b11,
         }
 
-        /// <summary>Will be added soon! Solves an inequality numerically</summary>
-        /// <param name="inequality">
-        /// This must only contain one variable, which is <paramref name="var"/>
-        /// </param>
-        /// <param name="var">The only variable</param>
-        /// <param name="sign">The relation of the expression to zero.</param>
-#pragma warning disable IDE0060 // Remove unused parameter
-        public static Set SolveInequalityNumerically(Entity inequality, Variable var, Inequality sign)
-#pragma warning restore IDE0060 // Remove unused parameter
-        {
-            throw new NotSupportedException("Will be added soon");
-#pragma warning disable 162
-            return NumericalInequalitySolver.Solve(inequality, var, sign);
-#pragma warning restore 162
-        }
-
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of sine</param>
         /// <returns>Sine node</returns>

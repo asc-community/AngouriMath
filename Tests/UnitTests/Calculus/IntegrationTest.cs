@@ -12,6 +12,13 @@ namespace UnitTests.Algebra
         [InlineData("x2", "(1/3) * x3")]
         [InlineData("x2 + x", "(1/3) * x3 + (1/2) * x2")]
         [InlineData("x2 - x", "1/3 * x ^ 3 - 1/2 * x ^ 2")]
+        [InlineData("a / x", "ln(x) * a")]
+        [InlineData("sin(x)cos(x)", "-1/2 cos(x)2")]
+        [InlineData("x cos(x)", "cos(x) + sin(x) * x")]
+        [InlineData("ln(x)", "x * (ln(x) - 1)")]
+        [InlineData("log(a, x)", "x * (ln(x) - 1) / ln(a)")]
+        [InlineData("e ^ x", "e ^ x")]
+        [InlineData("a ^ x", "a ^ x / ln(a)")]
         public void TestIndefinite(string initial, string expected)
         {
             Assert.Equal(expected.ToEntity().InnerSimplified, initial.Integrate("x").Simplify());

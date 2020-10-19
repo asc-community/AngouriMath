@@ -35,22 +35,22 @@ namespace AngouriMath.Core
         LessOrEqual    = 20 | EqualitySignsOperation,
         GreaterOrEqual = 20 | EqualitySignsOperation,
 
-        NumericalOperation = 0x2000,
-
-        Sum       = 20  | NumericalOperation, 
-        Minus     = 20  | NumericalOperation, 
-        Mul       = 40  | NumericalOperation, 
-        Div       = 40  | NumericalOperation, 
-        Pow       = 60  | NumericalOperation, 
-        Factorial = 70  | NumericalOperation, 
-        Func      = 80  | NumericalOperation, 
-
-        SetOperation = 0x3000,
+        SetOperation = 0x2000,
 
         ContainsIn   = 10 | SetOperation,
         SetMinus     = 20 | SetOperation,
         Union        = 30 | SetOperation,
         Intersection = 40 | SetOperation,
+
+        NumericalOperation = 0x3000,
+
+        Sum = 20       | NumericalOperation,
+        Minus = 20     | NumericalOperation,
+        Mul = 40       | NumericalOperation,
+        Div = 40       | NumericalOperation,
+        Pow = 60       | NumericalOperation,
+        Factorial = 70 | NumericalOperation,
+        Func = 80      | NumericalOperation,
 
 
         Leaf      = 100 | SetOperation,
