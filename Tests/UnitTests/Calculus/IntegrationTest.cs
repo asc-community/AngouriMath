@@ -15,6 +15,7 @@ namespace UnitTests.Algebra
         [InlineData("a / x", "ln(x) * a")]
         
         [InlineData("x cos(x)", "cos(x) + sin(x) * x")]
+        [InlineData("sin(x)cos(x)", "-1/4 cos(2x)")]
         [InlineData("ln(x)", "x * (ln(x) - 1)")]
         [InlineData("log(a, x)", "x * (ln(x) - 1) / ln(a)")]
         [InlineData("e ^ x", "e ^ x")]
@@ -23,11 +24,6 @@ namespace UnitTests.Algebra
         {
             Assert.Equal(expected.ToEntity().InnerSimplified, initial.Integrate("x").Simplify());
         }
-
-        [Theory(Skip = "Fix bug in integrals")]
-        [InlineData("sin(x)cos(x)", "-1/2 cos(x)2")]
-        public void TestIndefiniteSkip(string initial, string expected)
-            => TestIndefinite(initial, expected);
 
         static readonly Entity.Variable x = nameof(x);
         [Fact]
