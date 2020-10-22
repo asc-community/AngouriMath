@@ -18,12 +18,13 @@
         <PackageLicenseExpression></PackageLicenseExpression>
         <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
         <PackageTags>Math, csharp, derivation, latex, calculator, parse, simplification, compute, symbol, compilation, algebra, equation system, equation</PackageTags>
-        <Version>1.2.0-preview.2</Version>
+        <Version>1.2.0-preview.3</Version>
         <PackageIconUrl></PackageIconUrl>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <Description>Enables to work with formulas built in the code or from a string. Computing, derivating, latex rendering, fast functions, solving equations and systems of equations analytycally, simplification, and much more.</Description>
         <PackageReleaseNotes>Preview 1: Sets, domains, booleans, signum and abs
 Preview 2: A lot of patterns for sets added, bugs fixed, extensions for integrate, limit added
+Preview 3: Derive -&gt; Differentiate, now all calculus functions apply InnerSimplified automatically, naive set solver, bugs fixed
 1.2 on its way!</PackageReleaseNotes>
         <PackageId>AngouriMath</PackageId>
         <Product>AngouriMath</Product>
@@ -36,11 +37,7 @@ Preview 2: A lot of patterns for sets added, bugs fixed, extensions for integrat
         <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
    </PropertyGroup>
 	
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-      <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-    </PropertyGroup>
-	
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <PropertyGroup>
       <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
     </PropertyGroup>
 
