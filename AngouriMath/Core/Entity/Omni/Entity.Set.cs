@@ -41,7 +41,14 @@ namespace AngouriMath
 
             public readonly static FiniteSet Empty = new FiniteSet();
 
+            /// <summary>
+            /// Checks that a set is finite
+            /// </summary>
             public abstract bool IsSetFinite { get; }
+
+            /// <summary>
+            /// Checks that a set does not contain any elements
+            /// </summary>
             public abstract bool IsSetEmpty { get; }
         }
 

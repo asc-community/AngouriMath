@@ -81,7 +81,12 @@ namespace AngouriMath
     {
         internal static RecordFieldCache caches = new();
 
+        /// <inheritdoc/>
         protected abstract Entity[] InitDirectChildren();
+        
+        /// <summary>
+        /// Represents all direct children of a node
+        /// </summary>
         public IReadOnlyList<Entity> DirectChildren 
             => caches.GetValue(this, cache => cache.directChildren, cache => cache.directChildren = InitDirectChildren());
 
