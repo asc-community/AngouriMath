@@ -11,6 +11,7 @@ namespace AngouriMath
 {
     partial record Entity
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         #region Simple
         partial record Variable
         {
@@ -56,6 +57,7 @@ namespace AngouriMath
 
         partial record Cosf
         {
+
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
@@ -339,5 +341,6 @@ namespace AngouriMath
         }
 
         #endregion
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

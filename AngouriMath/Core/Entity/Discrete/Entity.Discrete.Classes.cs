@@ -15,14 +15,38 @@ namespace AngouriMath
 {
     partial record Entity
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         /// <summary>
         /// This node represents all possible values a boolean node might be of
         /// </summary>
         public sealed partial record Boolean(bool Value) : Statement
         {
+            /// <summary>
+            /// One of the Boolean's state, which also behaves as Entity
+            /// That is, hangable
+            /// </summary>
             public static readonly Boolean True = new Boolean(true);
+
+            /// <summary>
+            /// One of the Boolean's state, which also behaves as Entity
+            /// That is, hangable
+            /// </summary>
             public static readonly Boolean False = new Boolean(false);
+
+            /// <summary>
+            /// This conversation is 100% free, no need to manually choose between
+            /// <see cref="True"/> and <see cref="False"/>
+            /// </summary>
+            /// <param name="b">To convert from</param>
             public static implicit operator bool(Boolean b) => b.Value;
+
+            /// <summary>
+            /// Creates a Boolean at 0 cost
+            /// No need to manually choose between <see cref="True"/> and <see cref="False"/>
+            /// </summary>
+            /// <param name="value">
+            /// From which to create
+            /// </param>
             public static Boolean Create(bool value) => value ? True : False; // to avoid reallocation
 
             public override Entity Replace(Func<Entity, Entity> func) 
@@ -138,7 +162,7 @@ namespace AngouriMath
         public sealed partial record Equalsf(Entity Left, Entity Right) : ComparisonSign
         {
             internal override Priority Priority => Priority.Equal;
-            public Equalsf New(Entity left, Entity right)
+            internal Equalsf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Equalsf(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -155,7 +179,7 @@ namespace AngouriMath
         public sealed partial record Greaterf(Entity Left, Entity Right) : ComparisonSign
         {
             internal override Priority Priority => Priority.GreaterThan;
-            public Greaterf New(Entity left, Entity right)
+            internal Greaterf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -172,7 +196,7 @@ namespace AngouriMath
         public sealed partial record GreaterOrEqualf(Entity Left, Entity Right) : ComparisonSign
         {
             internal override Priority Priority => Priority.GreaterThan;
-            public GreaterOrEqualf New(Entity left, Entity right)
+            internal GreaterOrEqualf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -189,7 +213,7 @@ namespace AngouriMath
         public sealed partial record Lessf(Entity Left, Entity Right) : ComparisonSign
         {
             internal override Priority Priority => Priority.GreaterThan;
-            public Lessf New(Entity left, Entity right)
+            internal Lessf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -206,7 +230,7 @@ namespace AngouriMath
         public sealed partial record LessOrEqualf(Entity Left, Entity Right) : ComparisonSign
         {
             internal override Priority Priority => Priority.GreaterThan;
-            public LessOrEqualf New(Entity left, Entity right)
+            internal LessOrEqualf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
@@ -224,7 +248,7 @@ namespace AngouriMath
             public sealed partial record Inf(Entity Element, Entity SupSet) : Statement
             {
                 internal override Priority Priority => Priority.ContainsIn;
-                public Inf New(Entity element, Entity supSet)
+                internal Inf New(Entity element, Entity supSet)
                     => ReferenceEquals(Element, element) && ReferenceEquals(SupSet, supSet) ? this : new(Element, SupSet);
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Element.Replace(func), SupSet.Replace(func)));
@@ -232,5 +256,6 @@ namespace AngouriMath
             }
         }
         #endregion
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }
