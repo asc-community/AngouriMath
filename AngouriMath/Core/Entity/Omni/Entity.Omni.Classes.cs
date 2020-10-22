@@ -296,18 +296,27 @@ namespace AngouriMath
 
                 internal override Priority Priority => Priority.Leaf;
 
+                /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
+                /// <summary>
+                /// Checks that two intervals are equal
+                /// If one is not interval, false is returned
+                /// </summary>
                 public virtual bool Equals(Interval other)
                     => other is not null && (Left == other.Left
                         && Right == other.Right
                         && LeftClosed == other.LeftClosed
                         && RightClosed == other.RightClosed);
 
+                /// <inheritdoc/>
                 public override int GetHashCode()
                     => Left.GetHashCode() + LeftClosed.GetHashCode() + Right.GetHashCode() + RightClosed.GetHashCode();
 
+                /// <inheritdoc/>
                 public override bool IsSetFinite => false;
+
+                /// <inheritdoc/>
                 public override bool IsSetEmpty => false;
             }
             #endregion
