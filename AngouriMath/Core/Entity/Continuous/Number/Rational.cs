@@ -28,17 +28,36 @@ namespace AngouriMath
                 /// </summary>
                 private protected Rational(ERational value)
                     : base(value.ToEDecimal(MathS.Settings.DecimalPrecisionContext)) => ERational = value;
+
+                /// <summary>
+                /// The PeterO number representation in rational
+                /// </summary>
                 public ERational ERational { get; }
+
+#pragma warning disable CS1591
+
                 public void Deconstruct(out ERational rational) => rational = ERational;
                 public void Deconstruct(out int? numerator, out int? denominator)
                 {
                     numerator = ERational.Numerator.CanFitInInt32() ? ERational.Numerator.ToInt32Unchecked() : new int?();
                     denominator = ERational.Denominator.CanFitInInt32() ? ERational.Denominator.ToInt32Unchecked() : new int?();
                 }
+
+#pragma warning restore CS1591
+
                 internal override Priority Priority => Priority.Div;
+                /// <inheritdoc/>
                 public override bool IsExact => true;
+
+                /// <summary>
+                /// Creates an instance of Rational number of two integers
+                /// </summary>
                 public static Rational Create(EInteger numerator, EInteger denominator) =>
                     Create(ERational.Create(numerator, denominator));
+
+                /// <summary>
+                /// Creates an instance of Rational number
+                /// </summary>
                 public static Rational Create(ERational value)
                 {
                     if (!value.IsFinite)
@@ -57,6 +76,7 @@ namespace AngouriMath
                 }
 
                 // TODO: When we target .NET 5, remember to use covariant return types
+                /// <inheritdoc/>
                 public override Real Abs() => Create(ERational.Abs());
 
                 /// <summary>
@@ -102,7 +122,9 @@ namespace AngouriMath
                         return new Rational((intPart * sign + sign / rat.ERational).ToLowestTerms());
                     }
                 }
+                /// <inheritdoc/>
                 public override string Stringize() => ERational.ToString();
+                /// <inheritdoc/>
                 public override string Latexise() => $@"\frac{{{ERational.Numerator}}}{{{ERational.Denominator}}}";
                 internal static bool TryParse(string s,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Rational? dst)
@@ -119,6 +141,7 @@ namespace AngouriMath
                     }
                 }
 
+#pragma warning disable CS1591
                 public static bool operator >(Rational a, Rational b) => a.ERational.CompareTo(b.ERational) > 0;
                 public static bool operator >=(Rational a, Rational b) => a.ERational.CompareTo(b.ERational) >= 0;
                 public static bool operator <(Rational a, Rational b) => a.ERational.CompareTo(b.ERational) < 0;
@@ -140,18 +163,15 @@ namespace AngouriMath
                 public static implicit operator Rational(ulong value) => Integer.Create(value);
                 public static implicit operator Rational(EInteger value) => Integer.Create(value);
                 public static implicit operator Rational(ERational value) => Create(value);
+#pragma warning restore CS1591
 
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Rational;
-
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => this == x ? value : this;
 
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
-
+                /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
         }

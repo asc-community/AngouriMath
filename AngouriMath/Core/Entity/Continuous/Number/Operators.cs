@@ -173,13 +173,19 @@ namespace AngouriMath
                     (a, b) => AreEqual<Real>(a.RealPart, b.RealPart) && AreEqual<Real>(a.ImaginaryPart, b.ImaginaryPart)
                     );
 
+#pragma warning disable CS1591
             public static Number operator +(Number a, Number b) => OpSum(a, b);
             public static Number operator -(Number a, Number b) => OpSub(a, b);
             public static Number operator *(Number a, Number b) => OpMul(a, b);
             public static Number operator /(Number a, Number b) => OpDiv(a, b);
             public static Number operator +(Number a) => a;
             public static Number operator -(Number a) => OpMul(-1, a);
+#pragma warning restore CS1591
 
+            /// <summary>
+            /// Gets all n-th roots of a number,
+            /// that is, all numbers whose n-th power equals 1
+            /// </summary>
             public static IEnumerable<Entity> GetAllRootsOf1(EInteger rootPower)
             {
                 for (int i = 0; i < rootPower; i++)
@@ -188,6 +194,7 @@ namespace AngouriMath
                     yield return (MathS.Cos(angle) + MathS.i * MathS.Sin(angle)).InnerSimplified;
                 }
             }
+
             /// <summary>
             /// Finds all complex roots of a number
             /// e. g. sqrt(1) = { -1, 1 }
@@ -647,6 +654,7 @@ namespace AngouriMath
             /// <seealso cref="Factorial(Complex)"/>
             public static Complex Gamma(Complex x) => Factorial(x - Integer.One);
 
+            /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
     }

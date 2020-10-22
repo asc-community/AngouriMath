@@ -52,6 +52,8 @@ namespace AngouriMath
                         return false;
                     }
                 }
+
+#pragma warning disable CS1591
                 public static bool operator >(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) > 0;
                 public static bool operator >=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) >= 0;
                 public static bool operator <(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) < 0;
@@ -72,18 +74,16 @@ namespace AngouriMath
                 public static implicit operator Integer(long value) => Create(value);
                 public static implicit operator Integer(ulong value) => Create(value);
                 public static implicit operator Integer(EInteger value) => Create(value);
+#pragma warning restore CS1591
 
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Integer;
 
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => this == x ? value : this;
 
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
-
+                /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
         }
