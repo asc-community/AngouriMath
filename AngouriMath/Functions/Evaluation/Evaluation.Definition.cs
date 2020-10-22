@@ -12,6 +12,7 @@ using AngouriMath.Functions;
 using System;
 using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
+using System.Linq;
 
 namespace AngouriMath
 {
@@ -106,8 +107,20 @@ namespace AngouriMath
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         public IEnumerable<Entity> Alternate(int level) => Simplificator.Alternate(this, level);
 
+        /// <summary>
+        /// Represents the evaluated value of the given expression
+        /// Unlike the result of <see cref="EvalNumerical"/>,
+        /// <see cref="EvalBoolean"/> and <see cref="EvalTensor"/>,
+        /// this is not constrained by any type
+        /// (cached value)
+        /// </summary>
         public Entity Evaled 
             => caches.GetValue(this, cache => cache.innerEvaled, cache => cache.innerEvaled = InnerEvalWithCheck());
+
+        /// <summary>
+        /// Whether the expression can be collapsed to a tensor
+        /// </summary>
+        public bool IsTensoric => Nodes.Any(c => c is Tensor);
 
         /// <summary>
         /// Evaluates the entire expression into a <see cref="Tensor"/> if possible

@@ -25,7 +25,7 @@
   <br>
   <br>
   <img src="https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg"/>
-  <a href="https://codecov.io/gh/asc-community/AngouriMath"><img src="https://codecov.io/gh/asc-community/AngouriMath/branch/master/graph/badge.svg?token=XaA0JGyNrS"/></a>    
+  <a href="https://codecov.io/gh/asc-community/AngouriMath"><img src="https://codecov.io/gh/asc-community/AngouriMath/branch/master/graph/badge.svg?token=XaA0JGyNrS"/></a>
 <a href="https://www.nuget.org/packages/AngouriMath"><img src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet"/></a>
 <a href="https://discord.gg/YWJEX7a"><img src="https://img.shields.io/discord/642350046213439489?color=orange&label=Discord"/></a>
 <a href="https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/AngouriSoft/MathS?color=purple"/></a>

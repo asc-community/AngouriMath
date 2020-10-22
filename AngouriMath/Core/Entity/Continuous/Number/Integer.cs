@@ -22,21 +22,46 @@ namespace AngouriMath
             public sealed record Integer : Rational, System.IComparable<Integer>
             {
                 private Integer(EInteger value) : base(value) => EInteger = value;
+
+                /// <summary>
+                /// Represents PeterO number in EInteger
+                /// </summary>
                 public EInteger EInteger { get; }
-                public override Priority Priority => IsNegative ? Priority.Mul : Priority.Leaf;
+                internal override Priority Priority => IsNegative ? Priority.Mul : Priority.Leaf;
+
+                /// <summary>
+                /// A zero, you can use it to avoid allocations
+                /// </summary>
                 public static readonly Integer Zero = new Integer(EInteger.Zero);
+
+                /// <summary>
+                /// A one, you can use it to avoid allocations
+                /// </summary>
                 public static readonly Integer One = new Integer(EInteger.One);
+
+                /// <summary>
+                /// A minus one, you can use it to avoid allocations
+                /// </summary>
                 public static readonly Integer MinusOne = new Integer(-EInteger.One);
 
+                /// <summary>
+                /// Creates an instance of Integer
+                /// </summary>
                 public static Integer Create(EInteger value) => new Integer(value);
 
+                /// <summary>
+                /// Deconstructs as record
+                /// </summary>
                 public void Deconstruct(out int? value) =>
                     value = EInteger.CanFitInInt32() ? EInteger.ToInt32Unchecked() : new int?();
 
                 // TODO: When we target .NET 5, remember to use covariant return types
+                /// <inheritdoc/>
                 public override Real Abs() => Create(EInteger.Abs());
 
+                /// <inheritdoc/>
                 public override string Stringize() => EInteger.ToString();
+                /// <inheritdoc/>
                 public override string Latexise() => EInteger.ToString();
                 internal static bool TryParse(string s,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Integer? dst)
@@ -52,6 +77,8 @@ namespace AngouriMath
                         return false;
                     }
                 }
+
+#pragma warning disable CS1591
                 public static bool operator >(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) > 0;
                 public static bool operator >=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) >= 0;
                 public static bool operator <(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) < 0;
@@ -72,18 +99,16 @@ namespace AngouriMath
                 public static implicit operator Integer(long value) => Create(value);
                 public static implicit operator Integer(ulong value) => Create(value);
                 public static implicit operator Integer(EInteger value) => Create(value);
+#pragma warning restore CS1591
 
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Integer;
 
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => this == x ? value : this;
 
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
-
+                /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
         }

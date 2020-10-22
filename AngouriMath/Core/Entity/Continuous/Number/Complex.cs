@@ -33,25 +33,59 @@ namespace AngouriMath
                     (this.real, this.imaginary) = (real, imaginary);
                 private readonly Real? real;
                 private readonly Real? imaginary;
+
+                /// <summary>
+                /// Real part of a complex number
+                /// </summary>
                 public virtual Real RealPart => real ?? Integer.Zero;
+
+                /// <summary>
+                /// Imaginary part of a complex number
+                /// </summary>
                 public Real ImaginaryPart => imaginary ?? Integer.Zero;
-                public override Priority Priority =>
+
+                internal override Priority Priority =>
                     (RealPart, ImaginaryPart) switch
                     {
                         ({ IsZero: false }, { IsZero: false }) => Priority.Sum,
                         ({ IsZero: true }, Integer(1)) => Priority.Leaf,
                         _ => Priority.Mul
                     };
+
+                /// <summary>
+                /// An imaginary one. You can use it to avoid allocations
+                /// </summary>
                 public static readonly Complex ImaginaryOne = new Complex(0, 1);
+
+                /// <summary>
+                /// An imaginary minus one. You can use it to avoid allocations
+                /// </summary>
                 public static readonly Complex MinusImaginaryOne = new Complex(0, -1);
 
+                /// <inheritdoc/>
                 protected override bool ThisIsFinite => RealPart.EDecimal.IsFinite && ImaginaryPart.EDecimal.IsFinite;
+                /// <inheritdoc/>
                 public override bool IsExact => RealPart.IsExact && ImaginaryPart.IsExact;
+
+                /// <summary>
+                /// Checks if both parts equal 0
+                /// </summary>
                 public new bool IsZero => RealPart.EDecimal.IsZero && ImaginaryPart.EDecimal.IsZero;
+
+                /// <summary>
+                /// Checks whether the given number is undefined
+                /// </summary>
                 public bool IsNaN => this == Real.NaN;
 
+                /// <summary>
+                /// Creates an instance of Complex
+                /// </summary>
                 public static Complex Create(Real real, Real imaginary) =>
                     Create(real.EDecimal, imaginary.EDecimal);
+
+                /// <summary>
+                /// Creates an instance of Complex
+                /// </summary>
                 public static Complex Create(EDecimal real, EDecimal imaginary)
                 {
                     if (!MathS.Settings.DowncastingEnabled)
@@ -63,9 +97,14 @@ namespace AngouriMath
                     else
                         return new Complex(Real.Create(real), Real.Create(imaginary));
                 }
+
+                /// <summary>
+                /// Deconstructs as record
+                /// </summary>
                 public void Deconstruct(out Real realPart, out Real imaginaryPart) =>
                     (realPart, imaginaryPart) = (RealPart, ImaginaryPart);
 
+                /// <inheritdoc/>
                 public override string Stringize()
                 {
                     static string RenderNum(Real number)
@@ -86,6 +125,7 @@ namespace AngouriMath
                     return RealPart.Stringize() + " " + sign + " " + l + RenderNum(im) + r + "i";
                 }
 
+                /// <inheritdoc/>
                 public override string Latexise()
                 {
                     static string RenderNum(Real number)
@@ -118,8 +158,14 @@ namespace AngouriMath
                 public new virtual Real Abs() =>
                     (Real)Sqrt(RealPart.EDecimal * RealPart.EDecimal + ImaginaryPart.EDecimal * ImaginaryPart.EDecimal);
 
+                /// <summary>
+                /// The phase of a complex number (aka angle)
+                /// </summary>
                 public Real Phase() => ImaginaryPart.EDecimal.Atan2(RealPart.EDecimal, MathS.Settings.DecimalPrecisionContext);
 
+                /// <summary>
+                /// Creates a normal complex from its polar representation
+                /// </summary>
                 public static Complex CreatePolar(EDecimal magnitude, EDecimal phase)
                 {
                     var context = MathS.Settings.DecimalPrecisionContext;
@@ -190,8 +236,13 @@ namespace AngouriMath
                     return false;
                 }
 
+                /// <summary>
+                /// Convers the Complex to its of the system module Numerics
+                /// </summary>
                 public System.Numerics.Complex ToNumerics() =>
                     new System.Numerics.Complex(RealPart.EDecimal.ToDouble(), ImaginaryPart.EDecimal.ToDouble());
+
+#pragma warning disable CS1591
                 public static explicit operator System.Numerics.Complex(Complex it)
                     => it.ToNumerics();
 
@@ -222,17 +273,16 @@ namespace AngouriMath
                 public static implicit operator Complex((decimal re, decimal im) v) => Complex.Create(v.re, v.im);
                 public static implicit operator Complex((double re, double im) v) => Complex.Create(v.re, v.im);
 
+#pragma warning restore CS1591
+
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Complex;
 
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => this == x ? value : this;
 
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
-
+                /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
         }

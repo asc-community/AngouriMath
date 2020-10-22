@@ -31,11 +31,16 @@ namespace AngouriMath
             /// </summary>
             public partial record FiniteSet : Set, IReadOnlyCollection<Entity>, IEquatable<FiniteSet>
             {
+                /// <summary>
+                /// The IEnumerable of elements of a finite set
+                /// Which is readonly
+                /// </summary>
                 public IEnumerable<Entity> Elements => elements.Values;
 
                 private readonly Dictionary<Entity, Entity> elements;
 
                 // TODO: refactor
+                /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(Apply(el => el.Replace(func)));
 
@@ -61,8 +66,9 @@ namespace AngouriMath
                         return this;
                 }
 
-                public override Priority Priority => Priority.Leaf;
+                internal override Priority Priority => Priority.Leaf;
 
+                /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => Elements.ToArray();
 
                 private static Dictionary<Entity, Entity> BuildDictionaryFromElements(IEnumerable<Entity> elements, bool noCheck)
@@ -78,9 +84,17 @@ namespace AngouriMath
                     return dict;
                 }
 
+                /// <summary>
+                /// Constructor of a finite set
+                /// Use <see cref="Empty"/> to create an empty set
+                /// </summary>
                 public FiniteSet(IEnumerable<Entity> elements) : this(elements, noCheck: false) { }
 
                 // TODO: can we somehow add { } syntax but avoid inheriting from collection?
+                /// <summary>
+                /// Constructor of a finite set
+                /// Use <see cref="Empty"/> to create an empty set
+                /// </summary>
                 public FiniteSet(params Entity[] elements) : this((IEnumerable<Entity>)elements) { }
 
                 private FiniteSet(IEnumerable<Entity> elements, bool noCheck)
@@ -89,6 +103,9 @@ namespace AngouriMath
                     Count = this.elements.Count;
                 }
 
+                /// <summary>
+                /// Deconstructs as record
+                /// </summary>
                 public void Deconstruct(out IEnumerable<Entity> elements)
                     => elements = Elements;
 
@@ -126,6 +143,7 @@ namespace AngouriMath
                     return new FiniteSet(dict.Values, noCheck: true); // we didn't add anything
                 }
 
+                /// <inheritdoc/>
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = elements.ContainsKey(entity.Evaled);
@@ -137,9 +155,14 @@ namespace AngouriMath
 
                 // TODO: how should we implement GetHashCode?
                 // Is it safe to store this hash inside?
+                /// <inheritdoc/>
                 public override int GetHashCode()
                     => IsSetEmpty ? 0 : Elements.Select(el => el.GetHashCode()).Aggregate((acc, next) => acc + next);
 
+                /// <summary>
+                /// Checks that two FiniteSets are equal
+                /// If one is not FiniteSet, the method returns false
+                /// </summary>
                 public virtual bool Equals(FiniteSet other)
                 {
                     if (other is null)
@@ -194,10 +217,15 @@ namespace AngouriMath
                     return true;
                 }
 
+                /// <inheritdoc/>
                 public override bool IsSetFinite => true;
+
+                /// <inheritdoc/>
                 public override bool IsSetEmpty => Count == 0;
             }
             #endregion
+
+#pragma warning disable CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
 
             #region Interval
             /// <summary>
@@ -207,6 +235,9 @@ namespace AngouriMath
             /// </summary>
             public partial record Interval(Entity Left, bool LeftClosed, Entity Right, bool RightClosed) : Set, IEquatable<Interval>
             {
+                /// <summary>
+                /// Checks whether the interval's ends are both numerical (convenient for some evaluations)
+                /// </summary>
                 public bool IsNumeric => !left.Value.IsNaN && !right.Value.IsNaN;
 
                 // TODO: maybe it's not good to create an object just to lazily initialize and we need to write our own wheel?
@@ -226,9 +257,11 @@ namespace AngouriMath
                     && LeftClosed == leftClosed && RightClosed == rightClosed
                     ? this : new Interval(left, leftClosed, right, rightClosed);
 
+                /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
 
+                /// <inheritdoc/>
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
@@ -263,20 +296,29 @@ namespace AngouriMath
                     return true;
                 }
 
-                public override Priority Priority => Priority.Leaf;
+                internal override Priority Priority => Priority.Leaf;
 
+                /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
+                /// <summary>
+                /// Checks that two intervals are equal
+                /// If one is not interval, false is returned
+                /// </summary>
                 public virtual bool Equals(Interval other)
                     => other is not null && (Left == other.Left
                         && Right == other.Right
                         && LeftClosed == other.LeftClosed
                         && RightClosed == other.RightClosed);
 
+                /// <inheritdoc/>
                 public override int GetHashCode()
                     => Left.GetHashCode() + LeftClosed.GetHashCode() + Right.GetHashCode() + RightClosed.GetHashCode();
 
+                /// <inheritdoc/>
                 public override bool IsSetFinite => false;
+
+                /// <inheritdoc/>
                 public override bool IsSetEmpty => false;
             }
             #endregion
@@ -290,14 +332,15 @@ namespace AngouriMath
             /// </summary>
             public partial record ConditionalSet(Entity Var, Entity Predicate) : Set, IEquatable<ConditionalSet>
             {
+                /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Var, Predicate.Replace(func)));
 
+                /// <inheritdoc/>
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
-                    var substituted = Predicate.Replace(varCandidate => 
-                        varCandidate == Var ? entity : varCandidate);
+                    var substituted = Predicate.Substitute(Var, entity);
                     substituted = substituted.InnerSimplified;
                     if (substituted.EvaluableBoolean)
                     {
@@ -312,15 +355,22 @@ namespace AngouriMath
                     => ReferenceEquals(Var, var) && ReferenceEquals(Predicate, predicate) ?
                     this : new ConditionalSet(var, predicate);
 
-                public override Priority Priority => Priority.Leaf;
+                internal override Priority Priority => Priority.Leaf;
 
                 // TODO: Does conditional set have children?
+                /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => new[] { Predicate };
 
                 // TODO:
+                /// <inheritdoc/>
                 public override bool IsSetFinite => false;
+                /// <inheritdoc/>
                 public override bool IsSetEmpty => Predicate.Evaled == Boolean.False;
 
+                /// <summary>
+                /// Compares two ConditionalSets
+                /// If one is not CSet, false is returned
+                /// </summary>
                 public virtual bool Equals(ConditionalSet other)
                 {
                     if (other is null) // invalid cast
@@ -328,6 +378,13 @@ namespace AngouriMath
                     var (one, two) = SetOperators.MergeToOneVariable(this, other);
                     return one.Predicate == two.Predicate;
                 }
+
+
+                private readonly static Variable universalVoidConstant = Variable.CreateVariableUnchecked("%");
+                /// <inheritdoc/>
+                public override int GetHashCode()
+                    // TODO: might not always work, requires testing
+                    => Predicate.Substitute(Var, universalVoidConstant).GetHashCode();
             }
             #endregion
 
@@ -338,10 +395,12 @@ namespace AngouriMath
             /// </summary>
             public sealed partial record SpecialSet(Domain SetType) : Set
             {
+                /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(this);
 
                 // TODO: make a more complicated check for more domains
+                /// <inheritdoc/>
                 public override bool TryContains(Entity entity, out bool contains)
                 // Should return false for non-numeric
                 {
@@ -352,6 +411,10 @@ namespace AngouriMath
                 // Since there's a very small number of domains, it's wiser to
                 // cache them all
                 private readonly static Dictionary<Domain, SpecialSet> innerStorage = new();
+
+                /// <summary>
+                /// Creates an instance of special set from a domain
+                /// </summary>
                 public static SpecialSet Create(Domain domain)
                 { 
                     if (innerStorage.TryGetValue(domain, out var res))
@@ -361,11 +424,15 @@ namespace AngouriMath
                     return result;
                 }
 
-                public override Priority Priority => Priority.Leaf;
+                internal override Priority Priority => Priority.Leaf;
 
+                /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
 
+                /// <inheritdoc/>
                 public override bool IsSetFinite => false;
+
+                /// <inheritdoc/>
                 public override bool IsSetEmpty => false;
             }
             #endregion  
@@ -380,9 +447,11 @@ namespace AngouriMath
                 private Unionf New(Entity left, Entity right)
                     => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Unionf(left, right);
 
+                /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
 
+                /// <inheritdoc/>
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
@@ -396,14 +465,18 @@ namespace AngouriMath
                     return false;
                 }
 
-                public override Priority Priority => Priority.Union;
+                internal override Priority Priority => Priority.Union;
 
+                /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
-    
+
+                /// <inheritdoc/>
                 public override bool IsSetFinite => caches.GetValue(this,
                     cache => cache.isSetFinite, cache => cache.isSetFinite =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && finite1.IsSetFinite && finite2.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
+
+                /// <inheritdoc/>
                 public override bool IsSetEmpty => caches.GetValue(this,
                     cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
@@ -421,9 +494,11 @@ namespace AngouriMath
                 private Intersectionf New(Entity left, Entity right)
                     => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Intersectionf(left, right);
 
+                /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
 
+                /// <inheritdoc/>
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
@@ -437,13 +512,17 @@ namespace AngouriMath
                     return false;
                 }
 
-                public override Priority Priority => Priority.Intersection;
+                internal override Priority Priority => Priority.Intersection;
 
+                /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
+                /// <inheritdoc/>
                 public override bool IsSetFinite => caches.GetValue(this,
                     cache => cache.isSetFinite, cache => cache.isSetFinite = Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && (finite1.IsSetFinite || finite2.IsSetFinite)) ?? throw new AngouriBugException("isSetFinite cannot be null");
+
+                /// <inheritdoc/>
                 public override bool IsSetEmpty => caches.GetValue(this,
                     cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
@@ -453,7 +532,7 @@ namespace AngouriMath
 
             #region Set Minus
             /// <summary>
-            /// Finds A & !B
+            /// Finds A &amp; !B
             /// It is true that an entity is in SetMinus if it is in Left but not in Right
             /// </summary>
             public sealed partial record SetMinusf(Entity Left, Entity Right) : Set
@@ -461,9 +540,11 @@ namespace AngouriMath
                 private SetMinusf New(Entity left, Entity right)
                     => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new SetMinusf(left, right);
 
+                /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
 
+                /// <inheritdoc/>
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
@@ -477,13 +558,17 @@ namespace AngouriMath
                     return false;
                 }
 
-                public override Priority Priority => Priority.SetMinus;
+                internal override Priority Priority => Priority.SetMinus;
 
+                /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
+                /// <inheritdoc/>
                 public override bool IsSetFinite => caches.GetValue(this,
                     cache => cache.isSetFinite, cache => cache.isSetFinite =
                     Left is FiniteSet finite1 && Right is FiniteSet && finite1.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
+
+                /// <inheritdoc/>
                 public override bool IsSetEmpty => caches.GetValue(this,
                     cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
@@ -491,5 +576,6 @@ namespace AngouriMath
             }
             #endregion
         }
+#pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
     }
 }

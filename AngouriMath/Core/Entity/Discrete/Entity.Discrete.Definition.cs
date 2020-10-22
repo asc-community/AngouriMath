@@ -22,7 +22,7 @@ namespace AngouriMath
         }
 
         /// <summary>
-        /// =, <, >, <=, >=
+        /// =, &lt;, &gt;, &gt;=, &lt;=
         /// </summary>
         public abstract partial record ComparisonSign : Statement
         {
@@ -68,7 +68,7 @@ namespace AngouriMath
         /// <returns>A node</returns>
         public static Entity operator <=(Entity a, Entity b) => HangOperator(a, b, (a, b) => new LessOrEqualf(a, b));
 
-        public static Entity HangOperator(Entity a, Entity b, Func<Entity, Entity, Entity> ctor)
+        internal static Entity HangOperator(Entity a, Entity b, Func<Entity, Entity, Entity> ctor)
            => a switch
            {
                Greaterf(var left, var right) => new Greaterf(left, right) & ctor(right, b),

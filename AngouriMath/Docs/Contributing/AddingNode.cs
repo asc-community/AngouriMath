@@ -11,6 +11,7 @@ using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using An
 // TODO: the directives above shouldn't get removed when removing unnecessary directives. If they did, their copy is at the bottom of the document
 // TODO: this guide requires a lot of work
 
+#pragma warning disable CS1587 // XML comment is not placed on a valid language element
 /// To add a new node (function, operator) follow this guide. It covers all the methods you can
 /// implement for your nodes.
 /// 
@@ -52,6 +53,7 @@ using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using An
 /// 9. Analytical Solver (if applicable) (<see cref="Sinf.InvertNode"/>)
 /// 10. ToSympy (if applicable) (<see cref="Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
 
+#pragma warning restore CS1587 // XML comment is not placed on a valid language element
 
 
 // using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using AngouriMath.Functions.Algebra;using AngouriMath.Functions.Algebra.NumericalSolving; using AngouriMath.Functions.Algebra.AnalyticalSolving;using static AngouriMath.Entity;using static AngouriMath.Entity.Number;

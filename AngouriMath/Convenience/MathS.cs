@@ -22,10 +22,26 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace AngouriMath.Core
 {
+    /// <summary>
+    /// Where to tend to the given number in limits
+    /// </summary>
     public enum ApproachFrom
     {
+        /// <summary>
+        /// Means that the limit is considered valid if and only if
+        /// Left-sided limit exists and Right-sided limit exists
+        /// and they are equal
+        /// </summary>
         BothSides,
+
+        /// <summary>
+        /// If x tends from the left, i. e. it is never greater than the destination
+        /// </summary>
         Left,
+
+        /// <summary>
+        /// If x tends from the right, i. e. it is never less than the destination
+        /// </summary>
         Right,
     }
 }
@@ -72,17 +88,6 @@ namespace AngouriMath
         public static Tensor? SolveBooleanTable(Entity expression, params Variable[] variables)
             => BooleanSolver.SolveTable(expression, variables);
 
-        // Marking small enums with ": byte" is premature optimization and shouldn't be done: https://stackoverflow.com/q/648823/5429648
-
-        [Flags]
-        public enum Inequality
-        {
-            LessThan = 0b00,
-            GreaterThan = 0b01,
-            EqualsFlag = 0b10,
-            LessEquals = 0b10,
-            GreaterEquals = 0b11,
-        }
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of sine</param>
@@ -97,7 +102,7 @@ namespace AngouriMath
         public static Entity Cos(Entity a) => new Cosf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
-        /// <param name="@base">Base node of logarithm</param>
+        /// <param name="base">Base node of logarithm</param>
         /// <param name="x">Argument node of logarithm</param>
         /// <returns>Logarithm node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -235,25 +240,29 @@ namespace AngouriMath
         public static Entity Negation(Entity a) => !a;
 
         /// <summary>https://en.wikipedia.org/wiki/Logical_disjunction</summary>
-        /// <param name="a">Argument node of which Disjunction function will be taken</param>
+        /// <param name="a">The left argument node of which Disjunction function will be taken</param>
+        /// <param name="b">The right argument node of which Disjunction function will be taken</param>
         /// <returns>Or node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Disjunction(Entity a, Entity b) => a | b;
 
         /// <summary>https://en.wikipedia.org/wiki/Logical_conjunction</summary>
-        /// <param name="a">Argument node of which Conjunction function will be taken</param>
+        /// <param name="a">Left argument node of which Conjunction function will be taken</param>
+        /// <param name="b">Right argument node of which Conjunction disjunction function will be taken</param>
         /// <returns>And node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Conjunction(Entity a, Entity b) => a & b;
 
         /// <summary>https://en.wikipedia.org/wiki/Material_implication_(rule_of_inference)</summary>
-        /// <param name="a">Argument node of which Implication function will be taken</param>
+        /// <param name="assumption">The assumption node</param>
+        /// <param name="conclusion">The conclusion node</param>
         /// <returns>Implies node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Implication(Entity a, Entity b) => a.Implies(b);
+        public static Entity Implication(Entity assumption, Entity conclusion) => assumption.Implies(conclusion);
 
         /// <summary>https://en.wikipedia.org/wiki/Exclusive_or#:~:text=Exclusive%20or%20or%20exclusive%20disjunction,⊕%2C%20↮%2C%20and%20≢.</summary>
-        /// <param name="a">Argument node of which Exclusive disjunction function will be taken</param>
+        /// <param name="a">Left argument node of which Exclusive disjunction function will be taken</param>
+        /// <param name="b">Right argument node of which Exclusive disjunction function will be taken</param>
         /// <returns>Xor node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity ExclusiveDisjunction(Entity a, Entity b) => a ^ b;
@@ -261,27 +270,49 @@ namespace AngouriMath
         /// <summary>
         /// Do NOT confuse it with Equation
         /// </summary>
+        /// <param name="a">Left argument node of which Equality function will be taken</param>
+        /// <param name="b">Right argument node of which Equality disjunction function will be taken</param>
         /// <returns>An Equals node</returns>
         public static Entity Equality(Entity a, Entity b) => a.Equalizes(b);
 
+        /// <param name="a">Left argument node of which the greater than node will be taken</param>
+        /// <param name="b">Right argument node of which the greater than node function will be taken</param>
         /// <returns>A node</returns>
         public static Entity GreaterThan(Entity a, Entity b) => a > b;
 
+        /// <param name="a">Left argument node of which the less than node will be taken</param>
+        /// <param name="b">Right argument node of which the less than node function will be taken</param>
         /// <returns>A node</returns>
         public static Entity LessThan(Entity a, Entity b) => a < b;
 
+        /// <param name="a">Left argument node of which the greter than or equal node will be taken</param>
+        /// <param name="b">Right argument node of which the greater than or equal node function will be taken</param>
         /// <returns>A node</returns>
         public static Entity GreaterOrEqualThan(Entity a, Entity b) => a >= b;
 
+        /// <param name="a">Left argument node of which the less than or equal node will be taken</param>
+        /// <param name="b">Right argument node of which the less than or equal node function will be taken</param>
         /// <returns>A node</returns>
         public static Entity LessOrEqualThan(Entity a, Entity b) => a <= b;
-        
+
+        /// <param name="a">Left argument node of which the union set node will be taken</param>
+        /// <param name="b">Right argument node of which the union set node will be taken</param>
         /// <returns>A node</returns>
         public static Set Union(Entity a, Entity b) => a.Unite(b);
 
+        /// <param name="a">Left argument node of which the intersection set node will be taken</param>
+        /// <param name="b">Right argument node of which the intersection set node will be taken</param>
         /// <returns>A node</returns>
         public static Set Intersection(Entity a, Entity b) => a.Intersect(b);
 
+        /// <param name="a">
+        /// Left argument node of which the set subtraction node will be taken
+        /// That is, the resulting set of set subtraction is necessarily superset of this set
+        /// </param>
+        /// <param name="b">
+        /// Right argument node of which the set subtraction set node will be taken
+        /// That is, there is no element in the resulting set that belong to this one
+        /// </param>
         /// <returns>A node</returns>
         public static Set SetSubtraction(Entity a, Entity b) => a.SetSubtract(b);
 
@@ -292,13 +323,31 @@ namespace AngouriMath
 
         // List of public constants
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        /// The e constant
+        /// <a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/>
+        /// </summary>
         public static readonly Variable e = Variable.e;
         // ReSharper disable once InconsistentNaming
+
+        /// <summary>
+        /// The imaginary one
+        /// <a href="https://en.wikipedia.org/wiki/Imaginary_unit"/>
+        /// </summary>
         public static readonly Complex i = Complex.ImaginaryOne;
+
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        /// The pi constant
+        /// <a href="https://en.wikipedia.org/wiki/Pi"/>
+        /// </summary>
         public static readonly Variable pi = Variable.pi;
 
         // Undefined
+        /// <summary>
+        /// That is both undefined and indeterminite
+        /// Any operation on NaN returns NaN
+        /// </summary>
         public static readonly Entity NaN = Real.NaN;
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
@@ -494,6 +543,12 @@ namespace AngouriMath
         /// </summary>
         public static partial class Settings
         {
+            /// <summary>
+            /// This class for configuring some internal mechanisms from outside
+            /// </summary>
+            /// <typeparam name="T">
+            /// Those configurations can be of different types
+            /// </typeparam>
             public sealed class Setting<T> where T : notnull
             {
                 internal Setting(T defaultValue) { Value = defaultValue; Default = defaultValue; }
@@ -542,17 +597,60 @@ namespace AngouriMath
                     }
                 }
 
+                /// <summary>
+                /// An implicit operator so that one does not have to call <see cref="Value"/>
+                /// </summary>
+                /// <param name="s">The setting</param>
                 public static implicit operator T(Setting<T> s) => s.Value;
+
+                /// <summary>
+                /// An implicit operator so that one does not have to call the ctor
+                /// </summary>
+                /// <param name="a">The value</param>
                 public static implicit operator Setting<T>(T a) => new(a);
+
+                /// <summary>
+                /// Overriden ToString so that one could see the value of the setting
+                /// (if overriden)
+                /// </summary>
                 public override string ToString() => Value.ToString();
+
+                /// <summary>
+                /// The current value of the setting
+                /// </summary>
                 public T Value { get; private set; }
+
+                /// <summary>
+                /// The default value of the setting
+                /// </summary>
                 public T Default { get; }
             }
+
+            /// <summary>
+            /// That is how we perform newton solving when no analytical solution was found
+            /// in <see cref="Entity.Solve(Variable)"/> and <see cref="Entity.SolveEquation(Variable)"/>
+            /// </summary>
             public sealed record NewtonSetting
             {
+                /// <summary>
+                /// The point where we start going from
+                /// </summary>
                 public (EDecimal Re, EDecimal Im) From { get; init; } = (-10, -10);
+
+                /// <summary>
+                /// The point after which we do not perform seach
+                /// </summary>
                 public (EDecimal Re, EDecimal Im) To { get; init; } = (10, 10);
+
+                /// <summary>
+                /// The number of steps to go through for real and for complex part
+                /// </summary>
                 public (int Re, int Im) StepCount { get; init; } = (10, 10);
+
+                /// <summary>
+                /// How precise the result is required to be. The higher, the longer 
+                /// the algorithm takes to return the result
+                /// </summary>
                 public int Precision { get; init; } = 30;
             }
             /// <summary>
@@ -711,11 +809,9 @@ namespace AngouriMath
         /// Functions and classes related to sets defined here
         /// 
         /// Class <see cref="Set"/> defines true mathematical sets
-        /// It can be empty,
-        /// it can contain <see cref="OneElementPiece"/>s,
-        /// it can contain <see cref="Core.Interval"/>s etc.
-        /// It supports intersection (with & operator), union (with | operator),
-        ///             subtraction (with - operator) as well as inversion (with ! operator).
+        /// It supports intersection, union, subtraction
+        ///             
+        /// <see cref="Set"/>
         /// </summary>
         public static class Sets
         {
@@ -723,16 +819,16 @@ namespace AngouriMath
             /// <returns>A <see cref="Set"/> with no elements</returns>
             public static Set Empty => Set.Empty;
 
-            /// <returns>A set of all <see cref="Complex"/>s</returns>
+            /// <returns>A set of all Complexes/>s</returns>
             public static Set C => SpecialSet.Create(Domain.Complex);
 
-            /// <returns>A set of all <see cref="Real"/>s</returns>
+            /// <returns>A set of all Reals/>s</returns>
             public static Set R => SpecialSet.Create(Domain.Real);
 
-            /// <returns>A set of all <see cref="Rational"/>s</returns>
+            /// <returns>A set of all Rationals/>s</returns>
             public static Set Q => SpecialSet.Create(Domain.Rational);
 
-            /// <returns>A set of all <see cref="Integers"/></returns>
+            /// <returns>A set of all Integers/></returns>
             public static Set Z => SpecialSet.Create(Domain.Integer);
 
             /// <summary>
@@ -775,6 +871,7 @@ namespace AngouriMath
             /// from one of two sides (left and right).
             /// Returns <see langword="null"/> otherwise.
             /// </summary>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Limit(Entity expr, Variable var, Entity approachDestination,
                 ApproachFrom direction)
                 => expr.Limit(var, approachDestination, direction);
@@ -784,10 +881,12 @@ namespace AngouriMath
             /// if <paramref name="var"/> approaches to <paramref name="approachDestination"/>.
             /// Returns <see langword="null"/> otherwise or if limits from left and right sides differ.
             /// </summary>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Limit(Entity expr, Variable var, Entity approachDestination)
                 => expr.Limit(var, approachDestination, ApproachFrom.BothSides);
 
             /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Derivative(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
@@ -797,11 +896,14 @@ namespace AngouriMath
             }
 
             /// <summary>Derivation over a variable (without simplification)</summary>
+            /// <param name="expr">The expression to find derivative over</param>
             /// <param name="x">The variable to derive over</param>
             /// <returns>The derived result</returns>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Derivative(Entity expr, Variable x) => expr.Differentiate(x);
 
             /// <summary>Integrates over <paramref name="x"/> <paramref name="power"/> times</summary>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Integral(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
@@ -811,36 +913,44 @@ namespace AngouriMath
             }
 
             /// <summary>Integrates over a variable (without simplification)</summary>
+            /// <param name="expr">The expression to be integrated over <paramref name="x"/></param>
             /// <param name="x">The variable to integrate over</param>
             /// <returns>The integrated result</returns>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Integral(Entity expr, Variable x) 
                 => expr.Integrate(x);
 
             /// <summary>
             /// Returns a value of a definite integral of a function. Only works for one-variable functions
             /// </summary>
+            /// <param name="expr">The expression to be numerically integrated over <paramref name="x"/></param>
             /// <param name="x">Variable to integrate over</param>
             /// <param name="from">The complex lower bound for integrating</param>
             /// <param name="to">The complex upper bound for integrating</param>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to) =>
                 Integration.Integrate(expr, x, from, to, 100);
 
             /// <summary>
             /// Returns a value of a definite integral of a function. Only works for one-variable functions
             /// </summary>
+            /// <param name="expr">The function to be numerically integrated</param>
             /// <param name="x">Variable to integrate over</param>
             /// <param name="from">The real lower bound for integrating</param>
             /// <param name="to">The real upper bound for integrating</param>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Complex DefiniteIntegral(Entity expr, Variable x, EDecimal from, EDecimal to) =>
                 Integration.Integrate(expr, x, (from, 0), (to, 0), 100);
 
             /// <summary>
             /// Returns a value of a definite integral of a function. Only works for one-variable functions
             /// </summary>
+            /// <param name="expr">The function to be numerically integrated</param>
             /// <param name="x">Variable to integrate over</param>
             /// <param name="from">The complex lower bound for integrating</param>
             /// <param name="to">The complex upper bound for integrating</param>
             /// <param name="stepCount">Accuracy (initially, amount of iterations)</param>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
                 Integration.Integrate(expr, x, from, to, stepCount);
         }
@@ -889,6 +999,7 @@ namespace AngouriMath
         public static Entity Limit(Entity expr, Entity var, Entity dest, ApproachFrom approach = ApproachFrom.BothSides)
             => new Limitf(expr, var, dest, approach);
 
+        /// <summary>Some non-symbolic constants</summary>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
             Justification = "Lowercase constants as written in Mathematics")]
         public static class DecimalConst
@@ -902,6 +1013,9 @@ namespace AngouriMath
                 NumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
         }
 
+        /// <summary>
+        /// Some operations on booleans are stored here
+        /// </summary>
         public static class Boolean
         {
 
@@ -920,6 +1034,10 @@ namespace AngouriMath
                 => Entity.Boolean.Create(b);
         }
 
+        /// <summary>
+        /// Some additional functions that would be barely
+        /// ever used by the user, but kept for "just in case" as public
+        /// </summary>
         public static class Utils
         {
             /// <summary>
@@ -933,7 +1051,7 @@ namespace AngouriMath
 
                 foreach (var linChild in linChildren)
                 {
-                    var children = TreeAnalyzer.SmartExpandOver(linChild, n => n.ContainsNode(n));
+                    var children = TreeAnalyzer.SmartExpandOver(linChild, n => n.ContainsNode(x));
                     if (children is null)
                         return expr;
                     nodes.AddRange(children);

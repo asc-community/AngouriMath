@@ -9,7 +9,8 @@ using static AngouriMath.Entity.Set;
 using System.Diagnostics;
 using System.Collections;
 using System.Numerics;
+using PeterO.Numbers;
+
+WriteLine(@"(x15 - 3^15 - 15 3^14(x - 3)) / (x - 3)2".Limit("x", "3", AngouriMath.Core.ApproachFrom.Left));
 
 
-WriteLine(@"x \/ { 1, 2 } = { 1, 2, 3 }".Solve("x"));
-WriteLine(@"x \/ { 1, 2 } = { 1, 3 }".Solve("x"));

@@ -17,13 +17,13 @@ namespace AngouriMath
     {
         // ngl; it looks awful
 
-        protected interface IBranchGetter<T>
+        private protected interface IBranchGetter<T>
         { 
             Entity Left(T node);
             Entity Right(T node);
         }
 
-        protected static IEnumerable<Entity> LinearChildren<TNode, TGetter>(Entity expr)
+        private protected static IEnumerable<Entity> LinearChildren<TNode, TGetter>(Entity expr)
             where TNode : Entity where TGetter : struct, IBranchGetter<TNode>
         {
             if (expr is not TNode node)
@@ -31,7 +31,6 @@ namespace AngouriMath
             var (left, right) = (default(TGetter).Left(node), default(TGetter).Right(node));
             return LinearChildren<TNode, TGetter>(left).Concat(LinearChildren<TNode, TGetter>(right));
         }
-
 
         partial record Orf
         {

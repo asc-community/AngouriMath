@@ -26,10 +26,10 @@ namespace AngouriMath.Functions
 
         internal static Entity SimplifyChildren(Entity expr)
         {
-            return expr.Replace(
-                    Patterns.InvertNegativePowers,
-                    Patterns.InvertNegativeMultipliers,
-                    Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL))
+            return expr.Replace(Patterns.InvertNegativePowers)
+                       .Replace(Patterns.InvertNegativeMultipliers).Replace(
+                        Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL)
+                        )
                 .InnerSimplified.Replace(Patterns.CommonRules).InnerSimplified;
         }
 
@@ -79,14 +79,14 @@ namespace AngouriMath.Functions
 
                 AddHistory(res = SimplifyChildren(res));
 
-                AddHistory(res = res.Replace(Patterns.InvertNegativePowers, Patterns.DivisionPreparingRules).InnerSimplified);
+                AddHistory(res = res.Replace(Patterns.InvertNegativePowers).Replace(Patterns.DivisionPreparingRules).InnerSimplified);
                 AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplified);
 
                 if (res.Nodes.Any(child => child is
                     Sinf or Cosf or Tanf or Cotanf or Arcsinf or Arccosf or Arctanf or Arccotanf))
                 {
                     var res1 = res.Replace(Patterns.ExpandTrigonometricRules).InnerSimplified;
-                    AddHistory(res = res.Replace(Patterns.TrigonometricRules, Patterns.CommonRules).InnerSimplified);
+                    AddHistory(res = res.Replace(Patterns.TrigonometricRules).Replace(Patterns.CommonRules).InnerSimplified);
                     AddHistory(res1);
                     res = res.Complexity > res1.Complexity ? res1 : res;
                 }
@@ -143,7 +143,7 @@ namespace AngouriMath.Functions
 
         /// <summary>
         /// Sorts an expression into a polynomial.
-        /// See more at <see cref="MathS.Utils.TryPolynomial"/>
+        /// See more at <see cref="MathS.TryPolynomial"/>
         /// </summary>
         internal static bool TryPolynomial(Entity expr, Variable variable,
             [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]

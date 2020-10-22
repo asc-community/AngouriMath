@@ -16,24 +16,30 @@ namespace AngouriMath
     {
         partial record Boolean
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => this;
+
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() => this;
         }
 
         partial record Notf
         {
+
+            /// <inheritdoc/>
             protected override Entity InnerEval()
             {
                 if (Argument.Evaled is Boolean b)
                     return !(bool)b; // there's no cost in casting
                 return New(Argument.Evaled);
             }
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() => InnerEvalWithCheck();
         }
 
         partial record Andf
         {
-            private bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
                 if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
                 {
@@ -52,12 +58,14 @@ namespace AngouriMath
                 }
             }
 
+            /// <inheritdoc/>
             protected override Entity InnerEval()
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
                 return New(Left.Evaled, Right.Evaled);
             }
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 if (GoodResult(Left, Right, out var res))
@@ -68,7 +76,7 @@ namespace AngouriMath
 
         partial record Orf
         {
-            private bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
                 if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
                 {
@@ -87,12 +95,14 @@ namespace AngouriMath
                 }
             }
 
+            /// <inheritdoc/>
             protected override Entity InnerEval()
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
                 return New(Left.Evaled, Right.Evaled);
             }
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 if (GoodResult(Left, Right, out var res))
@@ -103,7 +113,7 @@ namespace AngouriMath
 
         partial record Xorf
         {
-            private bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
                 if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
                 {
@@ -117,12 +127,14 @@ namespace AngouriMath
                 }
             }
 
+            /// <inheritdoc/>
             protected override Entity InnerEval()
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
                 return New(Left.Evaled, Right.Evaled);
             }
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 if (GoodResult(Left, Right, out var res))
@@ -133,7 +145,7 @@ namespace AngouriMath
 
         partial record Impliesf
         {
-            private bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
                 if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
                 {
@@ -152,6 +164,7 @@ namespace AngouriMath
                 }
             }
 
+            /// <inheritdoc/>
             protected override Entity InnerEval()
             {
                 if (GoodResult(Assumption, Conclusion, out var res))
@@ -159,6 +172,7 @@ namespace AngouriMath
                 return New(Assumption.Evaled, Conclusion.Evaled);
             }
 
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 if (GoodResult(Assumption, Conclusion, out var res))
@@ -169,12 +183,14 @@ namespace AngouriMath
 
         partial record Equalsf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval()
             {
                 if (!Left.IsConstant || !Right.IsConstant)
                     return New(Left.Evaled, Right.Evaled);
                 return Left.Evaled == Right.Evaled;
             }
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                if (Left == Right)
@@ -188,6 +204,7 @@ namespace AngouriMath
 
         partial record Greaterf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval()
             {
                 if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
@@ -201,6 +218,7 @@ namespace AngouriMath
                     return New(Left.Evaled, Right.Evaled);
             }
 
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 var res = InnerEval();
@@ -213,6 +231,7 @@ namespace AngouriMath
 
         partial record GreaterOrEqualf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval()
             {
                 if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
@@ -226,6 +245,7 @@ namespace AngouriMath
                     return New(Left.Evaled, Right.Evaled);
             }
 
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 var res = InnerEval();
@@ -238,6 +258,7 @@ namespace AngouriMath
 
         partial record Lessf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval()
             {
                 if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
@@ -251,6 +272,7 @@ namespace AngouriMath
                     return New(Left.Evaled, Right.Evaled);
             }
 
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 var res = InnerEval();
@@ -263,6 +285,7 @@ namespace AngouriMath
 
         partial record LessOrEqualf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval()
             {
                 if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
@@ -276,6 +299,7 @@ namespace AngouriMath
                     return New(Left.Evaled, Right.Evaled);
             }
 
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 var res = InnerEval();
@@ -290,7 +314,8 @@ namespace AngouriMath
         {
             partial record Inf
             {
-                protected override Entity InnerEval()
+                /// <inheritdoc/>
+            protected override Entity InnerEval()
                 {
                     if (SupSet.Evaled is not Set set)
                         return New(Element.Evaled, SupSet.Evaled);
@@ -299,7 +324,8 @@ namespace AngouriMath
                     return contains;
                 }
 
-                protected override Entity InnerSimplify()
+                /// <inheritdoc/>
+            protected override Entity InnerSimplify()
                 {
                     if (SupSet.InnerSimplified is not Set set)
                         return New(Element.InnerSimplified, SupSet.InnerSimplified);

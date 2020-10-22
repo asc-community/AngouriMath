@@ -14,6 +14,7 @@ using System.Linq;
 using System.Collections.Generic;
 using AngouriMath.Core.Exceptions;
 using System;
+using System.Collections;
 
 namespace AngouriMath.Extensions
 {
@@ -21,6 +22,9 @@ namespace AngouriMath.Extensions
     using static Entity;
     using static Entity.Number;
 
+    /// <summary>
+    /// Class for some convenient extensions
+    /// </summary>
     public static partial class AngouriMathExtensions
     {
         /// <summary>
@@ -31,7 +35,7 @@ namespace AngouriMath.Extensions
             => new FiniteSet(elements);
 
         /// <summary>
-        /// Unites your <see cref="IEnumerable"/> into one <see cref="SetNode"/>.
+        /// Unites your <see cref="IEnumerable"/> into one <see cref="Set"/>.
         /// Applies the "or" operator on those nodes
         /// </summary>
         /// <returns>A set of unique elements</returns>
@@ -39,7 +43,7 @@ namespace AngouriMath.Extensions
             => sets.Any() ? sets.Aggregate((a, b) => MathS.Union(a, b)) : Empty;
 
         /// <summary>
-        /// Computes the intersection of your <see cref="IEnumerable"/>'s and makes it one <see cref="SetNode"/>.
+        /// Computes the intersection of your <see cref="IEnumerable"/>'s and makes it one <see cref="Set"/>.
         /// Applies the "and" operator on those nodes
         /// </summary>
         /// <returns>A set of unique elements</returns>
@@ -60,7 +64,7 @@ namespace AngouriMath.Extensions
             => new Interval(arg.left, arg.leftClosed, arg.right, arg.rightClosed);
 
         /// <summary>
-        /// Parses this and simplifies by running <see cref="Entity.Simplify()"/>
+        /// Parses this and simplifies by running <see cref="Entity.Simplify"/>
         /// </summary>
         /// <returns>Simplified expression</returns>
         public static Entity Simplify(this string expr) => expr.ToEntity().Simplify();
@@ -102,6 +106,7 @@ namespace AngouriMath.Extensions
         /// <summary>
         /// Subsitutes a variable by replacing all its occurances with the given value
         /// </summary>
+        /// <param name="expr">The expression where to substitute the variables</param>
         /// <param name="var">A variable to substitute</param>
         /// <param name="value">A value to substitute <paramref name="var"/></param>
         /// <returns>Expression with substituted the variable</returns>
@@ -111,8 +116,9 @@ namespace AngouriMath.Extensions
         /// <summary>
         /// Solves the given equation
         /// </summary>
+        /// <param name="expr">The function of <paramref name="x"/> that is assumed to be 0</param>
         /// <param name="x">The variable to solve over</param>
-        /// <returns>A <see cref="SetNode"/> of roots</returns>
+        /// <returns>A <see cref="Set"/> of roots</returns>
         public static Set SolveEquation(this string expr, Variable x)
             => expr.ToEntity().SolveEquation(x);
 
@@ -120,8 +126,9 @@ namespace AngouriMath.Extensions
         /// Solves the statement. The given expression must be boolean type,
         /// for example, equality, or boolean operators.
         /// </summary>
-        /// <param name="vars">The variables over which to solve</param>
-        /// <returns>A <see cref="SetNode"/> of roots</returns>
+        /// <param name="expr">The statement of <paramref name="var"/> that is assumed to be true</param>
+        /// <param name="var">The variables over which to solve</param>
+        /// <returns>A <see cref="Set"/> of roots</returns>
         public static Set Solve(this string expr, Variable var)
             => expr.ToEntity().Solve(var);
 
@@ -200,11 +207,25 @@ namespace AngouriMath.Extensions
         /// AM's virtual machine. Soon will be deprecated and replaced with compilation to
         /// delegate
         /// </summary>
+        /// <param name="str">From which function to compile</param>
         /// <param name="variables">The array of variables should cover all variables from the expression</param>
         /// <returns>A compiled expression</returns>
         public static FastExpression Compile(this string str, params Variable[] variables)
             => str.ToEntity().Compile(variables);
 
+        /// <summary>
+        /// Finds the symbolical derivative of the given expression
+        /// </summary>
+        /// <param name="str">
+        /// The expresion to be parsed and differentiated
+        /// </param>
+        /// <param name="x">
+        /// Over which variable to find the derivative
+        /// </param>
+        /// <returns>
+        /// The derived expression which might contain <see cref="Derivativef"/> nodes,
+        /// or the initial one
+        /// </returns>
         [Obsolete("Renamed to Differentiate")]
         public static Entity Derive(this string str, Variable x)
             => str.ToEntity().Differentiate(x);
@@ -212,7 +233,10 @@ namespace AngouriMath.Extensions
         /// <summary>
         /// Finds the symbolical derivative of the given expression
         /// </summary>
-        /// <param name="variable">
+        /// <param name="str">
+        /// The expresion to be parsed and differentiated
+        /// </param>
+        /// <param name="x">
         /// Over which variable to find the derivative
         /// </param>
         /// <returns>
@@ -226,6 +250,9 @@ namespace AngouriMath.Extensions
         /// Integrates the given expression over the `x` variable, if can.
         /// May return an unresolved <see cref="Integralf"/> node.
         /// </summary>
+        /// <param name="str">
+        /// The expression to be parsed and integrated over <paramref name="x"/>
+        /// </param>
         /// <param name="x">Over which to integrate</param>
         /// <returns>
         /// An integrated expression. It might remain the same,
@@ -238,6 +265,9 @@ namespace AngouriMath.Extensions
         /// <summary>
         /// Finds the limit of the given expression over the given variable
         /// </summary>
+        /// <param name="str">
+        /// The expression to be parsed and whose limit to be computed
+        /// </param>
         /// <param name="x">
         /// The variable to be approaching
         /// </param>
@@ -261,6 +291,7 @@ namespace AngouriMath.Extensions
         /// <summary>
         /// Finds the limit of the given expression over the given variable
         /// </summary>
+        /// <param name="str">The expression to be parsed and whose limit to be found</param>
         /// <param name="x">
         /// The variable to be approaching
         /// </param>

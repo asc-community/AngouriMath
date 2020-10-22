@@ -19,19 +19,44 @@ namespace AngouriMath
     {
         public abstract partial record Number
         {
+            /// <summary>
+            /// Represents a real number, such complex
+            /// that its imaginary part equals 0
+            /// </summary>
             public record Real : Complex, System.IComparable<Real>
             {
                 /// <summary>
                 /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
                 /// </summary>
                 private protected Real(EDecimal @decimal) : base(null, null) => EDecimal = @decimal;
+
+                /// <summary>
+                /// The PeterO number representation in decimal
+                /// </summary>
                 public EDecimal EDecimal { get; }
+
+                /// <summary>
+                /// Deconstructs as record
+                /// </summary>
                 public void Deconstruct(out EDecimal @decimal) => @decimal = EDecimal;
+
+                /// <inheritdoc/>
                 public override Real RealPart => this;
-                public override Priority Priority => EDecimal.IsNegative ? Priority.Mul : Priority.Leaf;
+                internal override Priority Priority => EDecimal.IsNegative ? Priority.Mul : Priority.Leaf;
+
+                /// <inheritdoc/>
                 public override bool IsExact => !EDecimal.IsFinite;
+
+                /// <summary>Strictly less than 0</summary>
                 public bool IsNegative => EDecimal.IsNegative;
+
+                /// <summary>Strictly greater than 0</summary>
                 public bool IsPositive => !EDecimal.IsNegative && !EDecimal.IsZero;
+
+                /// <summary>
+                /// Creates an instance of Real
+                /// (one can do it by implicit conversation)
+                /// </summary>
                 public static Real Create(EDecimal value)
                 {
                     if (!MathS.Settings.DowncastingEnabled)
@@ -55,8 +80,10 @@ namespace AngouriMath
                         return attempt;
                 }
 
+                /// <inheritdoc/>
                 public override Real Abs() => Create(EDecimal.Abs());
 
+                /// <inheritdoc/>
                 public override string Stringize() => this switch
                 {
                     { IsFinite: true } => EDecimal.ToString(),
@@ -65,6 +92,7 @@ namespace AngouriMath
                     _ => "+oo",
                 };
 
+                /// <inheritdoc/>
                 public override string Latexise() => this switch
                 {
                     { IsFinite: true } => EDecimal.ToString(),
@@ -97,8 +125,12 @@ namespace AngouriMath
                 /// <summary>Not A Number (NaN)</summary>
                 public static readonly Real NaN = new Real(EDecimal.NaN);
 
+                /// <summary>
+                /// Converts the given number to a double (not recommended in general unless you need a built-in type)
+                /// </summary>
                 public double AsDouble() => EDecimal.ToDouble();
 
+#pragma warning disable CS1591
                 public static bool operator >(Real a, Real b) => a.EDecimal.GreaterThan(b.EDecimal);
                 public static bool operator >=(Real a, Real b) => a.EDecimal.GreaterThanOrEquals(b.EDecimal);
                 public static bool operator <(Real a, Real b) => a.EDecimal.LessThan(b.EDecimal);
@@ -124,18 +156,16 @@ namespace AngouriMath
                 public static implicit operator Real(float value) => Create(EDecimal.FromSingle(value));
                 public static implicit operator Real(double value) => Create(EDecimal.FromDouble(value));
                 public static implicit operator Real(decimal value) => Create(EDecimal.FromDecimal(value));
+#pragma warning restore CS1591
 
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Real;
 
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => this == x ? value : this;
 
-                protected override bool PrintMembers(StringBuilder builder)
-                {
-                    builder.Append(Stringize());
-                    return false;
-                }
-
+                /// <inheritdoc/>
                 public override string ToString() => Stringize();
             }
         }

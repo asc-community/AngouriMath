@@ -24,16 +24,15 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
         /// <summary>Performs a grid search with each iteration done by NewtonIter</summary>
         /// <param name="expr">The equation with one variable to be solved</param>
         /// <param name="v">The variable to solve over</param>
-        /// <param name="stepCount">
+        /// <param name="settings">
+        /// Some settings regarding how we should perform the Newton solver process
         /// A complex number, thus, if stepCount.Im == 0, no operations will be performed at all. If you
         /// need to iterate over real numbers only, set it to 1, i. e. new Number(your_number, 1)
-        /// </param>
-        /// <param name="precision">
         /// How many approximations we need to do before we reach the most precise result.
         /// </param>
         internal static HashSet<Complex> SolveNt(Entity expr, Entity.Variable v, MathS.Settings.NewtonSetting settings)
         {
-            /// <summary>Perform one iteration of searching for a root with Newton-Raphson method</summary>
+            // Perform one iteration of searching for a root with Newton-Raphson method
             static Complex NewtonIter(FastExpression f, FastExpression df, NumericsComplex value, int precision)
             {
                 var prev = value;

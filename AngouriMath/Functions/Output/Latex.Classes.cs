@@ -47,6 +47,7 @@ namespace AngouriMath
 
         public partial record Tensor
         {
+            /// <inheritdoc/>
             public override string Latexise()
             {
                 if (IsMatrix)
@@ -85,6 +86,7 @@ namespace AngouriMath
 
         public partial record Sumf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 Augend.Latexise(Augend.Priority < Priority)
                 + (Addend.Latexise(Addend.Priority < Priority) is var addend && addend.StartsWith("-")
@@ -93,6 +95,7 @@ namespace AngouriMath
 
         public partial record Minusf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 Subtrahend.Latexise(Subtrahend.Priority < Priority)
                 + "-" + Minuend.Latexise(Minuend.Priority <= Priority);
@@ -100,6 +103,7 @@ namespace AngouriMath
 
         public partial record Mulf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 (Multiplier == -1 ? "-" : Multiplier.Latexise(Multiplier.Priority < Priority) + @"\times ")
                 + Multiplicand.Latexise(Multiplicand.Priority < Priority);
@@ -107,35 +111,41 @@ namespace AngouriMath
 
         public partial record Divf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 @"\frac{" + Dividend.Latexise() + "}{" + Divisor.Latexise() + "}";
         }
 
         public partial record Sinf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 @"\sin\left(" + Argument.Latexise() + @"\right)";
         }
         public partial record Cosf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 @"\cos\left(" + Argument.Latexise() + @"\right)";
         }
 
         public partial record Tanf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 @"\tan\left(" + Argument.Latexise() + @"\right)";
         }
 
         public partial record Cotanf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 @"\cot\left(" + Argument.Latexise() + @"\right)";
         }
 
         public partial record Logf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 Base == 10
                 ? @"\log\left(" + Antilogarithm.Latexise() + @"\right)"
@@ -146,6 +156,7 @@ namespace AngouriMath
 
         public partial record Powf
         {
+            /// <inheritdoc/>
             public override string Latexise()
             {
                 if (Exponent is Rational { ERational: { Numerator: var numerator, Denominator: var denominator } }
@@ -170,36 +181,42 @@ namespace AngouriMath
 
         public partial record Arcsinf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 @"\arcsin\left(" + Argument.Latexise() + @"\right)";
         }
 
         public partial record Arccosf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 @"\arccos\left(" + Argument.Latexise() + @"\right)";
         }
 
         public partial record Arctanf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 @"\arctan\left(" + Argument.Latexise() + @"\right)";
         }
 
         public partial record Arccotanf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 @"\arccot\left(" + Argument.Latexise() + @"\right)";
         }
 
         public partial record Factorialf
         {
+            /// <inheritdoc/>
             public override string Latexise() =>
                 Argument.Latexise(Argument.Priority < Priority.Func) + "!";
         }
 
         public partial record Derivativef
         {
+            /// <inheritdoc/>
             public override string Latexise()
             {
                 var powerIfNeeded = Iterations == 1 ? "" : "^{" + Iterations + "}";
@@ -218,6 +235,7 @@ namespace AngouriMath
 
         public partial record Integralf
         {
+            /// <inheritdoc/>
             public override string Latexise()
             {
                 // Unlike derivatives, integrals do not have "power" that would be equal
@@ -256,6 +274,7 @@ namespace AngouriMath
 
         public partial record Limitf
         {
+            /// <inheritdoc/>
             public override string Latexise()
             {
                 var sb = new StringBuilder();
@@ -285,77 +304,90 @@ namespace AngouriMath
 
         partial record Signumf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"\operatorname{{sgn}}\left({Argument.Latexise()}\right)";
         }
 
         partial record Absf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"\left|{Argument.Latexise()}\right|";
         }
 
         partial record Boolean
         {
+            /// <inheritdoc/>
             public override string Latexise() => $@"\operatorname{{{(bool)this}}}";
         }
 
         partial record Notf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"\neg{{{Argument.Latexise(Argument.Priority < Priority)}}}";
         }
 
         partial record Andf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"{Left.Latexise(Left.Priority < Priority)} \land {Right.Latexise(Right.Priority < Priority)}";
         }
 
         partial record Orf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"{Left.Latexise(Left.Priority < Priority)} \lor {Right.Latexise(Right.Priority < Priority)}";
         }
 
         partial record Xorf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"{Left.Latexise(Left.Priority < Priority)} \oplus {Right.Latexise(Right.Priority < Priority)}";
         }
 
         partial record Impliesf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"{Assumption.Latexise(Assumption.Priority < Priority)} \implies {Conclusion.Latexise(Conclusion.Priority < Priority)}";
         }
 
         partial record Equalsf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"{Left.Latexise(Left.Priority < Priority)} = {Right.Latexise(Right.Priority < Priority)}";
         }
 
         partial record Greaterf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"{Left.Latexise(Left.Priority < Priority)} > {Right.Latexise(Right.Priority < Priority)}";
         }
 
         partial record GreaterOrEqualf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"{Left.Latexise(Left.Priority < Priority)} \geqslant {Right.Latexise(Right.Priority < Priority)}";
         }
 
         partial record Lessf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"{Left.Latexise(Left.Priority < Priority)} < {Right.Latexise(Right.Priority < Priority)}";
         }
 
         partial record LessOrEqualf
         {
+            /// <inheritdoc/>
             public override string Latexise()
                 => $@"{Left.Latexise(Left.Priority < Priority)} \leqslant {Right.Latexise(Right.Priority < Priority)}";
         }
@@ -364,12 +396,14 @@ namespace AngouriMath
         {
             partial record FiniteSet
             {
+                /// <inheritdoc/>
                 public override string Latexise()
                     => IsSetEmpty ? @"\emptyset" : $@"\left\{{ {string.Join(", ", Elements.Select(c => c.Latexise()))} \right\}}";
             }
 
             partial record Interval
             {
+                /// <inheritdoc/>
                 public override string Latexise()
                 {
                     var left = LeftClosed ? "[" : "(";
@@ -380,36 +414,42 @@ namespace AngouriMath
 
             partial record ConditionalSet
             {
+                /// <inheritdoc/>
                 public override string Latexise()
                     => $@"\left\{{ {Var.Latexise()} : {Predicate.Latexise()} \right\}}";
             }
 
             partial record SpecialSet
             {
+                /// <inheritdoc/>
                 public override string Latexise()
                     => $@"\mathbb{{{Stringize()[0]}}}";
             }
 
             partial record Unionf
             {
+                /// <inheritdoc/>
                 public override string Latexise()
                     => $@"{Left.Latexise(Left.Priority < Priority)} \cup {Right.Latexise(Right.Priority < Priority)}";
             }
 
             partial record Intersectionf
             {
+                /// <inheritdoc/>
                 public override string Latexise()
                     => $@"{Left.Latexise(Left.Priority < Priority)} \cap {Right.Latexise(Right.Priority < Priority)}";
             }
 
             partial record SetMinusf
             {
+                /// <inheritdoc/>
                 public override string Latexise()
                     => $@"{Left.Latexise(Left.Priority < Priority)} \setminus {Right.Latexise(Right.Priority < Priority)}";
             }
 
             partial record Inf
             {
+                /// <inheritdoc/>
                 public override string Latexise()
                     => $@"{Element.Stringize(Element.Priority < Priority)} \in {SupSet.Stringize(SupSet.Priority < Priority)}";
             }

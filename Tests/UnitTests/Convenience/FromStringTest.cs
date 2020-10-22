@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using System;
 using System.Linq;
 using Xunit;
 using static AngouriMath.Entity.Number;
@@ -150,7 +151,7 @@ namespace UnitTests.Convenience
                 ">" => x > y,
                 "<=" => x <= y,
                 ">=" => x >= y,
-                _ => throw new AngouriBugException("What the hell???")
+                _ => throw new Exception("What the hell???")
             };
             var nodeXYZ = signRight switch
             {
@@ -158,7 +159,7 @@ namespace UnitTests.Convenience
                 ">" => nodeXY > z,
                 "<=" => nodeXY <= z,
                 ">=" => nodeXY >= z,
-                _ => throw new AngouriBugException("What the hell???")
+                _ => throw new Exception("What the hell???")
             };
             var nodeYZ = signRight switch
             {
@@ -166,7 +167,7 @@ namespace UnitTests.Convenience
                 ">" => y > z,
                 "<=" => y <= z,
                 ">=" => y >= z,
-                _ => throw new AngouriBugException("What the hell???")
+                _ => throw new Exception("What the hell???")
             };
             return (nodeXY, nodeXYZ, nodeYZ, s);
         }

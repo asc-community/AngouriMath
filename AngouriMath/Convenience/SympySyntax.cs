@@ -48,6 +48,10 @@ namespace AngouriMath
         /// <summary>
         /// Attempt to find analytical roots of a custom equation
         /// </summary>
+        /// <param name="expr">
+        /// The function of <paramref name="x"/> to be solved
+        /// assuming that this function is equal to 0
+        /// </param>
         /// <param name="x"></param>
         /// <returns>
         /// Returns Set. Work with it as with a list

@@ -38,14 +38,26 @@ namespace AngouriMath
             /// <exception cref="ElementInSetAmbiguousException">Thrown when </exception>
             public bool Contains(Entity entity)
                 => TryContains(entity, out var res) ? res : throw new ElementInSetAmbiguousException("Cannot determine whether the element is in the set");
-
+            
+            /// <summary>
+            /// Returns an empty set
+            /// You can use it to compare sets to it
+            /// or to avoid allocations
+            /// </summary>
             public readonly static FiniteSet Empty = new FiniteSet();
 
+            /// <summary>
+            /// Checks that a set is finite
+            /// </summary>
             public abstract bool IsSetFinite { get; }
+
+            /// <summary>
+            /// Checks that a set does not contain any elements
+            /// </summary>
             public abstract bool IsSetEmpty { get; }
         }
 
-        public static implicit operator Entity(Domain domain) => Set.SpecialSet.Create(domain);
+        
 
         /// <summary>
         /// Creates a node of union of two nodes (sets)
@@ -65,9 +77,12 @@ namespace AngouriMath
         /// <returns>A new node</returns>
         public Set SetSubtract(Entity anotherSet) => new SetMinusf(this, anotherSet);
 
+#pragma warning disable CS1591
+        public static implicit operator Entity(Domain domain) => Set.SpecialSet.Create(domain);
         public static implicit operator Entity((Entity left, Entity right) interval) => new Interval(interval.left, true, interval.right, true);
-
         public static implicit operator Entity(Entity[] elements) => new FiniteSet(elements);
         public static implicit operator Entity(List<Entity> elements) => new FiniteSet((IEnumerable<Entity>)elements);
+#pragma warning restore CS1591
+
     }
 }

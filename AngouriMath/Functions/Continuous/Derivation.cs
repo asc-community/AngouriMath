@@ -27,20 +27,38 @@ namespace AngouriMath
         public Entity Differentiate(Variable variable)
             => InnerDifferentiate(variable).InnerSimplified;
 
+        /// <summary>
+        /// Finds the symbolical derivative of the given expression
+        /// </summary>
+        /// <param name="variable">
+        /// Over which variable to find the derivative
+        /// </param>
+        /// <returns>
+        /// The derived expression which might contain <see cref="Derivativef"/> nodes,
+        /// or the initial one
+        /// </returns>
         [System.Obsolete("Renamed to Differentiate")]
         public Entity Derive(Variable variable)
             => InnerDifferentiate(variable).InnerSimplified;
 
+        /// <summary>
+        /// Internal differentiation function
+        /// </summary>
+        /// <param name="variable">To derive over</param>
+        /// <returns>The differentiated expressoin or the Derivative node</returns>
         protected virtual Entity InnerDifferentiate(Variable variable)
             => new Derivativef(this, variable, 1);
 
         public partial record Variable
         {
+            
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) => Name == variable.Name ? 1 : 0;
         }
 
         public partial record Tensor
         {
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) => Elementwise(e => e.InnerDifferentiate(variable));
         }
 
@@ -55,6 +73,7 @@ namespace AngouriMath
 
         public partial record Number
         {
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) => EvalNumerical().IsNaN ? this : 0;
         }
 
@@ -62,6 +81,7 @@ namespace AngouriMath
         public partial record Sumf
         {
             // (a + b)' = a' + b'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Augend.InnerDifferentiate(variable) + Addend.InnerDifferentiate(variable);
         }
@@ -69,6 +89,7 @@ namespace AngouriMath
         public partial record Minusf
         {
             // (a - b)' = a' - b'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Subtrahend.InnerDifferentiate(variable) - Minuend.InnerDifferentiate(variable);
         }
@@ -76,6 +97,7 @@ namespace AngouriMath
         public partial record Mulf
         {
             // (a * b)' = a' * b + b' * a
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Multiplier.InnerDifferentiate(variable) * Multiplicand + Multiplicand.InnerDifferentiate(variable) * Multiplier;
         }
@@ -83,6 +105,7 @@ namespace AngouriMath
         public partial record Divf
         {
             // (a / b)' = (a' * b - b' * a) / b^2
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 (Dividend.InnerDifferentiate(variable) * Divisor - Divisor.InnerDifferentiate(variable) * Dividend) / Divisor.Pow(2);
         }
@@ -92,6 +115,7 @@ namespace AngouriMath
             // (a ^ b)' = e ^ (ln(a) * b) * (a' * b / a + ln(a) * b')
             // (a ^ const)' = const * a ^ (const - 1) * a'
             // (const ^ b)' = e^b * b'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Exponent is Number exp
                 ? exp * Base.Pow(exp - 1) * Base.InnerDifferentiate(variable)
@@ -103,6 +127,7 @@ namespace AngouriMath
         public partial record Sinf
         {
             // sin(a)' = cos(a) * a'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Argument.Cos() * Argument.InnerDifferentiate(variable);
         }
@@ -110,6 +135,7 @@ namespace AngouriMath
         public partial record Cosf
         {
             // cos(a)' = -sin(a) * a'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 -Argument.Sin() * Argument.InnerDifferentiate(variable);
         }
@@ -117,6 +143,7 @@ namespace AngouriMath
         public partial record Tanf
         {
             // tan(a)' = 1 / cos(a) ^ 2 * a'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 1 / Argument.Cos().Pow(2) * Argument.InnerDifferentiate(variable);
         }
@@ -124,6 +151,7 @@ namespace AngouriMath
         public partial record Cotanf
         {
             // cot(a)' = -1 / sin(a) ^ 2 * a'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 -1 / Argument.Sin().Pow(2) * Argument.InnerDifferentiate(variable);
         }
@@ -131,6 +159,7 @@ namespace AngouriMath
         public partial record Logf
         {
             // log_b(a)' = (ln(a) / ln(b))' = (ln(a)' * ln(b) - ln(a) * ln(b)') / ln(b)^2 = (a' / a * ln(b) - ln(a) * b' / b) / ln(b)^2
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 (Antilogarithm.InnerDifferentiate(variable) / Antilogarithm * MathS.Ln(Base)
                 - MathS.Ln(Antilogarithm) * Base.InnerDifferentiate(variable) / Base)
@@ -140,6 +169,7 @@ namespace AngouriMath
         public partial record Arcsinf
         {
             // arcsin(x)' = 1 / sqrt(1 - x^2) * x'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 1 / MathS.Sqrt(1 - MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
         }
@@ -147,6 +177,7 @@ namespace AngouriMath
         public partial record Arccosf
         {
             // arccos(x)' = -1 / sqrt(1 - x^2) * x'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 -1 / MathS.Sqrt(1 - MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
         }
@@ -154,6 +185,7 @@ namespace AngouriMath
         public partial record Arctanf
         {
             // arctan(x)' = 1 / (1 + x^2) * x'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 1 / (1 + MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
         }
@@ -161,6 +193,7 @@ namespace AngouriMath
         public partial record Arccotanf
         {
             // arccotan(x)' = -1 / (1 + x^2) * x'
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 -1 / (1 + MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
         }
@@ -168,6 +201,7 @@ namespace AngouriMath
         public partial record Factorialf
         {
             // (x!)' = Γ(x + 1) polygamma(0, x + 1)
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
             {
                 // TODO: Implementation of symbolic gamma function and polygamma functions needed
@@ -175,8 +209,10 @@ namespace AngouriMath
             }
         }
 
+#pragma warning disable IDE0054 // Use compound assignment
         public partial record Derivativef
         {
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Var == variable
                 ? this with { Iterations = Iterations + 1 }
@@ -185,14 +221,17 @@ namespace AngouriMath
 
         public partial record Integralf
         {
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 Var == variable
                 ? this with { Iterations = Iterations - 1 }
                 : MathS.Derivative(this, variable, 1);
         }
+#pragma warning restore IDE0054 // Use compound assignment
 
         public partial record Limitf
         {
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
                 // TODO: What is a derivative of a limit?
 
@@ -205,6 +244,7 @@ namespace AngouriMath
         {
             // TODO: the Delta function required to be defined,
             // or a piecewise definition
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
                 => MathS.Derivative(this, variable);
         }
@@ -212,6 +252,7 @@ namespace AngouriMath
         public partial record Absf
         {
             // TODO: derivative of the absolute function?
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
                 => MathS.Signum(Argument) * Argument.InnerDifferentiate(variable);
         }

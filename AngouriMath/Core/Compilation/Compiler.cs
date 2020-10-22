@@ -49,6 +49,7 @@ namespace AngouriMath
             private protected override void CompileNode(Compiler compiler) =>
                 compiler.Instructions.Add(new(InstructionType.PUSH_VAR, compiler.VarNamespace[this]));
 
+            /// <inheritdoc/>
             public override int GetHashCode()
                 => Name.GetHashCode();
         }
@@ -245,14 +246,18 @@ namespace AngouriMath
 
 namespace AngouriMath.Core
 {
+    /// <summary>
+    /// Compiled function (not to a delegate, but to AM's VM readable format)
+    /// </summary>
     public partial class FastExpression
     {
-        /// <summary>The <paramref name="Cache"/> stores the saved cache number if zero/positive,
+        /// <summary>The <ref name="Cache"/> stores the saved cache number if zero/positive,
         /// or the bitwise complement of the unsaved cache number if negative.</summary>
         internal record Compiler(List<Instruction> Instructions,
             IReadOnlyDictionary<Variable, int> VarNamespace, IDictionary<Entity, int> Cache)
         {
             /// <summary>Returns a compiled expression. Allows to boost substitution a lot</summary>
+            /// <param name="func">The function to be compiled</param>
             /// <param name="variables">Must be equal to func's variables (ignoring constants)</param>
             internal static FastExpression Compile(Entity func, IEnumerable<Variable> variables)
             {

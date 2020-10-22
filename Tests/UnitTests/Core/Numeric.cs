@@ -4,6 +4,7 @@ using Xunit;
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity.Set;
 using AngouriMath.Extensions;
+using System;
 
 namespace UnitTests.Core
 {
@@ -80,7 +81,7 @@ namespace UnitTests.Core
             Entity x = "x2 + 1/9";
             var roots = x.SolveEquation("x");
             if (roots is not FiniteSet finite)
-                throw new AngouriBugException("Mee?");
+                throw new Exception("Mee?");
             foreach (var root in finite)
             {
                 var number = Assert.IsType<Complex>(root);
