@@ -15,6 +15,9 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {
+        /// <summary>
+        /// Use this to verify whether it is safe to call <see cref="EvalNumerical"/>
+        /// </summary>
         public bool EvaluableNumerical => Evaled is Complex;
 
         /// <summary>

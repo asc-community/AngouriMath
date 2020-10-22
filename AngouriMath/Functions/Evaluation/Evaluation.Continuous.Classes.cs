@@ -446,7 +446,8 @@ namespace AngouriMath
             protected override Entity InnerSimplify() =>
                 Var.InnerSimplified switch
                 {
-                    Entity.Variable x => MathS.Compute.Limit(Expression.InnerSimplified, x, Destination.InnerSimplified, ApproachFrom) ?? this,
+                    // if it cannot compute it, it will anyway return the node
+                    Entity.Variable x => Expression.InnerSimplified.Limit(x, Destination.InnerSimplified, ApproachFrom),
                     var x => new Limitf(Expression.InnerSimplified, x, Destination.InnerSimplified, ApproachFrom)
                 };
 

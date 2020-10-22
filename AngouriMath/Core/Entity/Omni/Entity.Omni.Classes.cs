@@ -383,6 +383,7 @@ namespace AngouriMath
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
 
+                /// <inheritdoc/>
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;

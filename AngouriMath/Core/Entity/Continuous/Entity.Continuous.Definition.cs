@@ -82,18 +82,31 @@ namespace AngouriMath
         /// <param name="divisor">The right node to add</param>
         public static Entity operator /(Entity dividend, Entity divisor) => new Divf(dividend, divisor);
 
+        /// <summary><see cref="MathS.Sin(Entity)"/></summary>
         public Entity Sin() => new Sinf(this);
+        /// <summary><see cref="MathS.Cos(Entity)"/></summary>
         public Entity Cos() => new Cosf(this);
+        /// <summary><see cref="MathS.Tan(Entity)"/></summary>
         public Entity Tan() => new Tanf(this);
+        /// <summary><see cref="MathS.Cotan(Entity)"/></summary>
         public Entity Cotan() => new Cotanf(this);
+        /// <summary><see cref="MathS.Pow(Entity, Entity)"/></summary>
         public Entity Pow(Entity n) => new Powf(this, n);
+        /// <summary><see cref="MathS.Log(Entity, Entity)"/></summary>
         public Entity Log(Entity x) => new Logf(this, x);
+        /// <summary><see cref="MathS.Arcsin(Entity)"/></summary>
         public Entity Arcsin() => new Arcsinf(this);
+        /// <summary><see cref="MathS.Arccos(Entity)"/></summary>
         public Entity Arccos() => new Arccosf(this);
+        /// <summary><see cref="MathS.Arctan(Entity)"/></summary>
         public Entity Arctan() => new Arctanf(this);
+        /// <summary><see cref="MathS.Arccotan(Entity)"/></summary>
         public Entity Arccotan() => new Arccotanf(this);
+        /// <summary><see cref="MathS.Factorial(Entity)"/></summary>
         public Entity Factorial() => new Factorialf(this);
+        /// <summary><see cref="MathS.Signum(Entity)"/></summary>
         public Entity Signum() => new Signumf(this);
+        /// <summary><see cref="MathS.Abs(Entity)"/></summary>
         public Entity Abs() => new Absf(this);
 
     }

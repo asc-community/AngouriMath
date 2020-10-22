@@ -21,11 +21,34 @@ namespace AngouriMath.Core
     /// </summary>
     public enum Domain
     {
+        /// <summary>
+        /// The domain of all boolean values (true, false)
+        /// </summary>
         Boolean,
+
+        /// <summary>
+        /// The domain of all integer values
+        /// </summary>
         Integer,
+
+        /// <summary>
+        /// The domain of all rational values
+        /// </summary>
         Rational,
+
+        /// <summary>
+        /// The domain of all real values
+        /// </summary>
         Real,
+
+        /// <summary>
+        /// The domain of all complex values
+        /// </summary>
         Complex,
+
+        /// <summary>
+        /// The domain of all values (might be removed in the future)
+        /// </summary>
         Any
     }
 

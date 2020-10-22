@@ -22,10 +22,26 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace AngouriMath.Core
 {
+    /// <summary>
+    /// Where to tend to the given number in limits
+    /// </summary>
     public enum ApproachFrom
     {
+        /// <summary>
+        /// Means that the limit is considered valid if and only if
+        /// Left-sided limit exists and Right-sided limit exists
+        /// and they are equal
+        /// </summary>
         BothSides,
+
+        /// <summary>
+        /// If x tends from the left, i. e. it is never greater than the destination
+        /// </summary>
         Left,
+
+        /// <summary>
+        /// If x tends from the right, i. e. it is never less than the destination
+        /// </summary>
         Right,
     }
 }

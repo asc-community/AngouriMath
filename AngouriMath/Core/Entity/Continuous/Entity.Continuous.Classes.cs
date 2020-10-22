@@ -69,6 +69,9 @@ namespace AngouriMath
 
         #region Operators
 
+        /// <summary>
+        /// A node of sum
+        /// </summary>
         public partial record Sumf(Entity Augend, Entity Addend) : NumericNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -94,6 +97,9 @@ namespace AngouriMath
             };
         }
 
+        /// <summary>
+        /// A node of difference
+        /// </summary>
         public partial record Minusf(Entity Subtrahend, Entity Minuend) : NumericNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -106,6 +112,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Subtrahend, Minuend };
         }
 
+        /// <summary>
+        /// A node of product
+        /// </summary>
         public partial record Mulf(Entity Multiplier, Entity Multiplicand) : NumericNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -131,6 +140,9 @@ namespace AngouriMath
             };
         }
 
+        /// <summary>
+        /// A node of division
+        /// </summary>
         public partial record Divf(Entity Dividend, Entity Divisor) : NumericNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -145,6 +157,10 @@ namespace AngouriMath
 
         #endregion
 
+        /// <summary>
+        /// Describes any node that is a function (e. g. sin, cos, etc.)
+        /// but not an operator or leaf
+        /// </summary>
         public abstract record Function : NumericNode
         {
             internal override Priority Priority => Priority.Func;
@@ -152,6 +168,9 @@ namespace AngouriMath
 
         #region Trigonometry
 
+        /// <summary>
+        /// A node of sine
+        /// </summary>
         public partial record Sinf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -161,7 +180,10 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-        
+
+        /// <summary>
+        /// A node of cosine
+        /// </summary>
         public partial record Cosf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -171,7 +193,10 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-        
+
+        /// <summary>
+        /// A node of tangent
+        /// </summary>
         public partial record Tanf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -181,7 +206,10 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-        
+
+        /// <summary>
+        /// A node of cotangent
+        /// </summary>
         public partial record Cotanf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -191,11 +219,14 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-        
+
         #endregion
 
         #region Exponential
 
+        /// <summary>
+        /// A node of exponential (power)
+        /// </summary>
         public partial record Powf(Entity Base, Entity Exponent) : Entity
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -208,6 +239,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Base, Exponent };
         }
 
+        /// <summary>
+        /// A node of logarithm
+        /// </summary>
         public partial record Logf(Entity Base, Entity Antilogarithm) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -218,7 +252,13 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Base, Antilogarithm };
         }
+        #endregion
 
+        #region Arc trigonometry
+
+        /// <summary>
+        /// A node of arcsine
+        /// </summary>
         public partial record Arcsinf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -229,10 +269,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
-        #endregion
-
-        #region Arc trigonometry
-        
+        /// <summary>
+        /// A node of arccosine
+        /// </summary>
         public partial record Arccosf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -243,6 +282,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
+        /// <summary>
+        /// A node of arctangent
+        /// </summary>
         public partial record Arctanf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -253,6 +295,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
+        /// <summary>
+        /// A node of arccotangent
+        /// </summary>
         public partial record Arccotanf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -262,11 +307,14 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
-        
+
         #endregion
 
         #region Factorial
 
+        /// <summary>
+        /// A node of factorial
+        /// </summary>
         public partial record Factorialf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -284,6 +332,9 @@ namespace AngouriMath
         #region Non-numeric nodes
 
         // Iterations should be refactored? to be int instead of Entity
+        /// <summary>
+        /// A node of derivative
+        /// </summary>
         public partial record Derivativef(Entity Expression, Entity Var, int Iterations) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -297,6 +348,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
 
+        /// <summary>
+        /// A node of integral
+        /// </summary>
         public partial record Integralf(Entity Expression, Entity Var, int Iterations) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -310,6 +364,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
 
+        /// <summary>
+        /// A node of limit
+        /// </summary>
         public partial record Limitf(Entity Expression, Entity Var, Entity Destination, ApproachFrom ApproachFrom) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -327,6 +384,9 @@ namespace AngouriMath
 
         #region Discrete
 
+        /// <summary>
+        /// A node of signum
+        /// </summary>
         public partial record Signumf(Entity Argument) : Function
         {
             private Signumf New(Entity arg) =>
@@ -337,6 +397,9 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
+        /// <summary>
+        /// A node of abs
+        /// </summary>
         public partial record Absf(Entity Argument) : Function
         {
             private Absf New(Entity arg) =>
