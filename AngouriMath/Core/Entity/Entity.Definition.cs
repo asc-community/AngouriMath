@@ -17,7 +17,7 @@ using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath.Core
 {
-    public enum Priority
+    internal enum Priority
     { 
         BooleanOperation = 0x0000,
 

@@ -97,7 +97,7 @@ namespace AngouriMath
         public static Entity Cos(Entity a) => new Cosf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
-        /// <param name="@base">Base node of logarithm</param>
+        /// <param name="base">Base node of logarithm</param>
         /// <param name="x">Argument node of logarithm</param>
         /// <returns>Logarithm node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -235,25 +235,29 @@ namespace AngouriMath
         public static Entity Negation(Entity a) => !a;
 
         /// <summary>https://en.wikipedia.org/wiki/Logical_disjunction</summary>
-        /// <param name="a">Argument node of which Disjunction function will be taken</param>
+        /// <param name="a">The left argument node of which Disjunction function will be taken</param>
+        /// <param name="b">The right argument node of which Disjunction function will be taken</param>
         /// <returns>Or node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Disjunction(Entity a, Entity b) => a | b;
 
         /// <summary>https://en.wikipedia.org/wiki/Logical_conjunction</summary>
-        /// <param name="a">Argument node of which Conjunction function will be taken</param>
+        /// <param name="a">Left argument node of which Conjunction function will be taken</param>
+        /// <param name="b">Right argument node of which Conjunction disjunction function will be taken</param>
         /// <returns>And node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Conjunction(Entity a, Entity b) => a & b;
 
         /// <summary>https://en.wikipedia.org/wiki/Material_implication_(rule_of_inference)</summary>
-        /// <param name="a">Argument node of which Implication function will be taken</param>
+        /// <param name="assumption">The assumption node</param>
+        /// <param name="conclusion">The conclusion node</param>
         /// <returns>Implies node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Implication(Entity a, Entity b) => a.Implies(b);
+        public static Entity Implication(Entity assumption, Entity conclusion) => assumption.Implies(conclusion);
 
         /// <summary>https://en.wikipedia.org/wiki/Exclusive_or#:~:text=Exclusive%20or%20or%20exclusive%20disjunction,⊕%2C%20↮%2C%20and%20≢.</summary>
-        /// <param name="a">Argument node of which Exclusive disjunction function will be taken</param>
+        /// <param name="a">Left argument node of which Exclusive disjunction function will be taken</param>
+        /// <param name="b">Right argument node of which Exclusive disjunction function will be taken</param>
         /// <returns>Xor node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity ExclusiveDisjunction(Entity a, Entity b) => a ^ b;
@@ -261,27 +265,49 @@ namespace AngouriMath
         /// <summary>
         /// Do NOT confuse it with Equation
         /// </summary>
+        /// <param name="a">Left argument node of which Equality function will be taken</param>
+        /// <param name="b">Right argument node of which Equality disjunction function will be taken</param>
         /// <returns>An Equals node</returns>
         public static Entity Equality(Entity a, Entity b) => a.Equalizes(b);
 
+        /// <param name="a">Left argument node of which the greater than node will be taken</param>
+        /// <param name="b">Right argument node of which the greater than node function will be taken</param>
         /// <returns>A node</returns>
         public static Entity GreaterThan(Entity a, Entity b) => a > b;
 
+        /// <param name="a">Left argument node of which the less than node will be taken</param>
+        /// <param name="b">Right argument node of which the less than node function will be taken</param>
         /// <returns>A node</returns>
         public static Entity LessThan(Entity a, Entity b) => a < b;
 
+        /// <param name="a">Left argument node of which the greter than or equal node will be taken</param>
+        /// <param name="b">Right argument node of which the greater than or equal node function will be taken</param>
         /// <returns>A node</returns>
         public static Entity GreaterOrEqualThan(Entity a, Entity b) => a >= b;
 
+        /// <param name="a">Left argument node of which the less than or equal node will be taken</param>
+        /// <param name="b">Right argument node of which the less than or equal node function will be taken</param>
         /// <returns>A node</returns>
         public static Entity LessOrEqualThan(Entity a, Entity b) => a <= b;
-        
+
+        /// <param name="a">Left argument node of which the union set node will be taken</param>
+        /// <param name="b">Right argument node of which the union set node will be taken</param>
         /// <returns>A node</returns>
         public static Set Union(Entity a, Entity b) => a.Unite(b);
 
+        /// <param name="a">Left argument node of which the intersection set node will be taken</param>
+        /// <param name="b">Right argument node of which the intersection set node will be taken</param>
         /// <returns>A node</returns>
         public static Set Intersection(Entity a, Entity b) => a.Intersect(b);
 
+        /// <param name="a">
+        /// Left argument node of which the set subtraction node will be taken
+        /// That is, the resulting set of set subtraction is necessarily superset of this set
+        /// </param>
+        /// <param name="b">
+        /// Right argument node of which the set subtraction set node will be taken
+        /// That is, there is no element in the resulting set that belong to this one
+        /// </param>
         /// <returns>A node</returns>
         public static Set SetSubtraction(Entity a, Entity b) => a.SetSubtract(b);
 
@@ -292,13 +318,31 @@ namespace AngouriMath
 
         // List of public constants
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        /// The e constant
+        /// <a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/>
+        /// </summary>
         public static readonly Variable e = Variable.e;
         // ReSharper disable once InconsistentNaming
+
+        /// <summary>
+        /// The imaginary one
+        /// <a href="https://en.wikipedia.org/wiki/Imaginary_unit"/>
+        /// </summary>
         public static readonly Complex i = Complex.ImaginaryOne;
+
         // ReSharper disable once InconsistentNaming
+        /// <summary>
+        /// The pi constant
+        /// <a href="https://en.wikipedia.org/wiki/Pi"/>
+        /// </summary>
         public static readonly Variable pi = Variable.pi;
 
         // Undefined
+        /// <summary>
+        /// That is both undefined and indeterminite
+        /// Any operation on NaN returns NaN
+        /// </summary>
         public static readonly Entity NaN = Real.NaN;
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
