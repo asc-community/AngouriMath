@@ -35,7 +35,7 @@ namespace AngouriMath
                     numerator = ERational.Numerator.CanFitInInt32() ? ERational.Numerator.ToInt32Unchecked() : new int?();
                     denominator = ERational.Denominator.CanFitInInt32() ? ERational.Denominator.ToInt32Unchecked() : new int?();
                 }
-                public override Priority Priority => Priority.Div;
+                internal override Priority Priority => Priority.Div;
                 public override bool IsExact => true;
                 public static Rational Create(EInteger numerator, EInteger denominator) =>
                     Create(ERational.Create(numerator, denominator));

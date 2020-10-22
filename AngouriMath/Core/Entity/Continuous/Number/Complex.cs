@@ -35,7 +35,7 @@ namespace AngouriMath
                 private readonly Real? imaginary;
                 public virtual Real RealPart => real ?? Integer.Zero;
                 public Real ImaginaryPart => imaginary ?? Integer.Zero;
-                public override Priority Priority =>
+                internal override Priority Priority =>
                     (RealPart, ImaginaryPart) switch
                     {
                         ({ IsZero: false }, { IsZero: false }) => Priority.Sum,

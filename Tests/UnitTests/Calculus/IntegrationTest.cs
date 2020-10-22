@@ -13,7 +13,6 @@ namespace UnitTests.Algebra
         [InlineData("x2 + x", "(1/3) * x3 + (1/2) * x2")]
         [InlineData("x2 - x", "1/3 * x ^ 3 - 1/2 * x ^ 2")]
         [InlineData("a / x", "ln(x) * a")]
-        
         [InlineData("x cos(x)", "cos(x) + sin(x) * x")]
         [InlineData("ln(x)", "x * (ln(x) - 1)")]
         [InlineData("log(a, x)", "x * (ln(x) - 1) / ln(a)")]

@@ -12,6 +12,7 @@ using AngouriMath.Functions;
 using System;
 using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
+using System.Linq;
 
 namespace AngouriMath
 {
@@ -108,6 +109,11 @@ namespace AngouriMath
 
         public Entity Evaled 
             => caches.GetValue(this, cache => cache.innerEvaled, cache => cache.innerEvaled = InnerEvalWithCheck());
+
+        /// <summary>
+        /// Whether the expression can be collapsed to a tensor
+        /// </summary>
+        public bool IsTensoric => Nodes.Any(c => c is Tensor);
 
         /// <summary>
         /// Evaluates the entire expression into a <see cref="Tensor"/> if possible

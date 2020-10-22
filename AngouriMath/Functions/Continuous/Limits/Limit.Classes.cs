@@ -64,12 +64,17 @@ namespace AngouriMath
 
         public partial record Divf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Dividend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Dividend,
-                    Divisor.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Divisor),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (ComputeLimitImpl(this, x, dist, side) is { } lim)
+                    return lim;
+                else
+                {
+                    var dividend = Dividend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Dividend;
+                    var divisor = Divisor.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Divisor;
+                    return ComputeLimitImpl(New(dividend, divisor), x, dist, side);
+                }
+            }
         }
 
         public partial record Sinf

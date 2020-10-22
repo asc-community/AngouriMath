@@ -723,16 +723,16 @@ namespace AngouriMath
             /// <returns>A <see cref="Set"/> with no elements</returns>
             public static Set Empty => Set.Empty;
 
-            /// <returns>A set of all <see cref="Complex"/>s</returns>
+            /// <returns>A set of all Complexes/>s</returns>
             public static Set C => SpecialSet.Create(Domain.Complex);
 
-            /// <returns>A set of all <see cref="Real"/>s</returns>
+            /// <returns>A set of all Reals/>s</returns>
             public static Set R => SpecialSet.Create(Domain.Real);
 
-            /// <returns>A set of all <see cref="Rational"/>s</returns>
+            /// <returns>A set of all Rationals/>s</returns>
             public static Set Q => SpecialSet.Create(Domain.Rational);
 
-            /// <returns>A set of all <see cref="Integers"/></returns>
+            /// <returns>A set of all Integers/></returns>
             public static Set Z => SpecialSet.Create(Domain.Integer);
 
             /// <summary>
@@ -775,6 +775,7 @@ namespace AngouriMath
             /// from one of two sides (left and right).
             /// Returns <see langword="null"/> otherwise.
             /// </summary>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Limit(Entity expr, Variable var, Entity approachDestination,
                 ApproachFrom direction)
                 => expr.Limit(var, approachDestination, direction);
@@ -784,10 +785,12 @@ namespace AngouriMath
             /// if <paramref name="var"/> approaches to <paramref name="approachDestination"/>.
             /// Returns <see langword="null"/> otherwise or if limits from left and right sides differ.
             /// </summary>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Limit(Entity expr, Variable var, Entity approachDestination)
                 => expr.Limit(var, approachDestination, ApproachFrom.BothSides);
 
             /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Derivative(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
@@ -797,11 +800,14 @@ namespace AngouriMath
             }
 
             /// <summary>Derivation over a variable (without simplification)</summary>
+            /// <param name="expr">The expression to find derivative over</param>
             /// <param name="x">The variable to derive over</param>
             /// <returns>The derived result</returns>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Derivative(Entity expr, Variable x) => expr.Differentiate(x);
 
             /// <summary>Integrates over <paramref name="x"/> <paramref name="power"/> times</summary>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Integral(Entity expr, Variable x, EInteger power)
             {
                 var ent = expr;
@@ -811,36 +817,44 @@ namespace AngouriMath
             }
 
             /// <summary>Integrates over a variable (without simplification)</summary>
+            /// <param name="expr">The expression to be integrated over <paramref name="x"/></param>
             /// <param name="x">The variable to integrate over</param>
             /// <returns>The integrated result</returns>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Entity Integral(Entity expr, Variable x) 
                 => expr.Integrate(x);
 
             /// <summary>
             /// Returns a value of a definite integral of a function. Only works for one-variable functions
             /// </summary>
+            /// <param name="expr">The expression to be numerically integrated over <paramref name="x"/></param>
             /// <param name="x">Variable to integrate over</param>
             /// <param name="from">The complex lower bound for integrating</param>
             /// <param name="to">The complex upper bound for integrating</param>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to) =>
                 Integration.Integrate(expr, x, from, to, 100);
 
             /// <summary>
             /// Returns a value of a definite integral of a function. Only works for one-variable functions
             /// </summary>
+            /// <param name="expr">The function to be numerically integrated</param>
             /// <param name="x">Variable to integrate over</param>
             /// <param name="from">The real lower bound for integrating</param>
             /// <param name="to">The real upper bound for integrating</param>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Complex DefiniteIntegral(Entity expr, Variable x, EDecimal from, EDecimal to) =>
                 Integration.Integrate(expr, x, (from, 0), (to, 0), 100);
 
             /// <summary>
             /// Returns a value of a definite integral of a function. Only works for one-variable functions
             /// </summary>
+            /// <param name="expr">The function to be numerically integrated</param>
             /// <param name="x">Variable to integrate over</param>
             /// <param name="from">The complex lower bound for integrating</param>
             /// <param name="to">The complex upper bound for integrating</param>
             /// <param name="stepCount">Accuracy (initially, amount of iterations)</param>
+            [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
                 Integration.Integrate(expr, x, from, to, stepCount);
         }

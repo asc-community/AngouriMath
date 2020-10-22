@@ -61,7 +61,7 @@ namespace AngouriMath
                         return this;
                 }
 
-                public override Priority Priority => Priority.Leaf;
+                internal override Priority Priority => Priority.Leaf;
 
                 protected override Entity[] InitDirectChildren() => Elements.ToArray();
 
@@ -263,7 +263,7 @@ namespace AngouriMath
                     return true;
                 }
 
-                public override Priority Priority => Priority.Leaf;
+                internal override Priority Priority => Priority.Leaf;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
@@ -312,7 +312,7 @@ namespace AngouriMath
                     => ReferenceEquals(Var, var) && ReferenceEquals(Predicate, predicate) ?
                     this : new ConditionalSet(var, predicate);
 
-                public override Priority Priority => Priority.Leaf;
+                internal override Priority Priority => Priority.Leaf;
 
                 // TODO: Does conditional set have children?
                 protected override Entity[] InitDirectChildren() => new[] { Predicate };
@@ -361,7 +361,7 @@ namespace AngouriMath
                     return result;
                 }
 
-                public override Priority Priority => Priority.Leaf;
+                internal override Priority Priority => Priority.Leaf;
 
                 protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
 
@@ -396,7 +396,7 @@ namespace AngouriMath
                     return false;
                 }
 
-                public override Priority Priority => Priority.Union;
+                internal override Priority Priority => Priority.Union;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
     
@@ -437,7 +437,7 @@ namespace AngouriMath
                     return false;
                 }
 
-                public override Priority Priority => Priority.Intersection;
+                internal override Priority Priority => Priority.Intersection;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
@@ -477,7 +477,7 @@ namespace AngouriMath
                     return false;
                 }
 
-                public override Priority Priority => Priority.SetMinus;
+                internal override Priority Priority => Priority.SetMinus;
 
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 

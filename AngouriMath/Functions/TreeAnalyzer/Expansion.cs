@@ -63,11 +63,9 @@ namespace AngouriMath.Functions
         /// </summary>
         internal static IEnumerable<List<EInteger>> CombinateSums(EInteger itemCount, EInteger targetSum)
         {
-            /// <summary>
-            /// Combinations(2, 6, 3) ->
-            /// { 4, 3, 2 }, { 5, 3, 2 }, { 6, 3, 2 }, { 5, 4, 2 }, { 6, 4, 2 },
-            /// { 6, 5, 2 }, { 5, 4, 3 }, { 6, 4, 3 }, { 6, 5, 3 }, { 6, 5, 4 }
-            /// </summary>
+            // Combinations(2, 6, 3) ->
+            // { 4, 3, 2 }, { 5, 3, 2 }, { 6, 3, 2 }, { 5, 4, 2 }, { 6, 4, 2 },
+            // { 6, 5, 2 }, { 5, 4, 3 }, { 6, 4, 3 }, { 6, 5, 3 }, { 6, 5, 4 }
             static IEnumerable<List<EInteger>> Combinations(EInteger min, EInteger max, EInteger cellCount)
             {
                 for (EInteger i = min; i <= max; i++)

@@ -75,23 +75,28 @@ namespace AngouriMath
             => caches.GetValue(this, cache => cache.directChildren, cache => cache.directChildren = InitDirectChildren());
 
         /// <remarks>A depth-first enumeration is required by
-        /// <see cref="Core.TreeAnalysis.TreeAnalyzer.GetMinimumSubtree(Entity, Variable)"/></remarks>
+        /// <see cref="AngouriMath.Functions.TreeAnalyzer.GetMinimumSubtree"/></remarks>
         public IEnumerable<Entity> Nodes => DirectChildren.SelectMany(c => c.Nodes).Prepend(this);
 
+        /// <summary>
+        /// Applies the given function to every node starting from the leaves
+        /// </summary>
+        /// <param name="func">
+        /// The delegate that takes the current node as an argument and replaces the current node
+        /// with the result of the delegate
+        /// </param>
+        /// <returns>Processed expression</returns>
         public abstract Entity Replace(Func<Entity, Entity> func);
-        public Entity Replace(Func<Entity, Entity> func1, Func<Entity, Entity> func2) =>
-            Replace(child => func2(func1(child)));
-        public Entity Replace(Func<Entity, Entity> func1, Func<Entity, Entity> func2, Func<Entity, Entity> func3) =>
-            Replace(child => func3(func2(func1(child))));
 
-        /// <summary>Replaces all <see cref="x"/> with <see cref="value"/></summary>
+
+        /// <summary>Replaces all <param name="x"/> with <param name="value"/></summary>
         public abstract Entity Substitute(Entity x, Entity value);
 
 
         // TODO: this function has no performance beneficial anymore, 
         // maybe need to think how it can be improved without defining
         // another virtual method?
-        /// <summary>Replaces all <see cref="replacements"/></summary>
+        /// <summary>Replaces all <param name="replacements"/></summary>
         public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements) where TFrom : Entity where TTo : Entity
         {
             var res = this;
@@ -100,7 +105,7 @@ namespace AngouriMath
             return res;
         }
 
-        public abstract Priority Priority { get; }
+        internal abstract Priority Priority { get; }
 
         /// <value>
         /// Whether both parts of the complex number are finite
@@ -109,6 +114,10 @@ namespace AngouriMath
         public bool IsFinite
             => caches.GetValue(this, cache => cache.isFinite, cache => cache.isFinite =
             ThisIsFinite && DirectChildren.All(x => x.IsFinite)) ?? throw new AngouriBugException($"{IsFinite} cannot be null");
+
+        /// <summary>
+        /// Not NaN and not infinity
+        /// </summary>
         protected virtual bool ThisIsFinite => true;       
 
         /// <value>Number of nodes in tree</value>
@@ -125,7 +134,7 @@ namespace AngouriMath
         /// </summary>
         /// <returns>
         /// Set of unique variables excluding mathematical constants
-        /// such as <see cref="pi"/> and <see cref="e"/>
+        /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
         public IEnumerable<Variable> Vars => VarsAndConsts.Where(x => !x.IsConstant);
         
@@ -135,7 +144,7 @@ namespace AngouriMath
         /// </summary>
         /// <returns>
         /// Set of unique variables and mathematical constants
-        /// such as <see cref="pi"/> and <see cref="e"/>
+        /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
         public IReadOnlyCollection<Variable> VarsAndConsts 
             => caches.GetValue(this, cache => cache.vars,
@@ -146,6 +155,10 @@ namespace AngouriMath
         /// Optimized for <see cref="Variable"/>.</summary>
         public bool ContainsNode(Entity x) => x is Variable v ? VarsAndConsts.Contains(v) : Nodes.Contains(x);
 
+        /// <summary>
+        /// Implicit conversation from string to Entity
+        /// </summary>
+        /// <param name="expr">The source from which to parse</param>
         public static implicit operator Entity(string expr) => MathS.FromString(expr);
 
         /// <summary>
@@ -156,11 +169,5 @@ namespace AngouriMath
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
         /// </summary>
         public int SimplifiedRate => caches.GetValue(this, cache => cache.simplifiedRate, cache => cache.simplifiedRate = MathS.Settings.ComplexityCriteria.Value(this)) ?? throw new AngouriBugException("Sim cannot be null");
-
-        protected virtual bool PrintMembers(StringBuilder builder)
-        {
-            builder.Append(Stringize());
-            return false;
-        }
     }
 }

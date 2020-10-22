@@ -65,7 +65,7 @@ namespace AngouriMath
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Sumf New(Entity augend, Entity addend) =>
                 ReferenceEquals(Augend, augend) && ReferenceEquals(Addend, addend) ? this : new(augend, addend);
-            public override Priority Priority => Priority.Sum;
+            internal override Priority Priority => Priority.Sum;
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Augend.Replace(func), Addend.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Augend, Addend };
             /// <summary>
@@ -88,7 +88,7 @@ namespace AngouriMath
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Minusf New(Entity subtrahend, Entity minuend) =>
                 ReferenceEquals(Subtrahend, subtrahend) && ReferenceEquals(Minuend, minuend) ? this : new(subtrahend, minuend);
-            public override Priority Priority => Priority.Minus;
+            internal override Priority Priority => Priority.Minus;
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Subtrahend.Replace(func), Minuend.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Subtrahend, Minuend };
         }
@@ -98,7 +98,7 @@ namespace AngouriMath
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Mulf New(Entity multiplier, Entity multiplicand) =>
                 ReferenceEquals(Multiplier, multiplier) && ReferenceEquals(Multiplicand, multiplicand) ? this : new(multiplier, multiplicand);
-            public override Priority Priority => Priority.Mul;
+            internal override Priority Priority => Priority.Mul;
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Multiplier.Replace(func), Multiplicand.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Multiplier, Multiplicand };
             /// <summary>
@@ -121,7 +121,7 @@ namespace AngouriMath
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Divf New(Entity dividend, Entity divisor) =>
                 ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor);
-            public override Priority Priority => Priority.Div;
+            internal override Priority Priority => Priority.Div;
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Dividend.Replace(func), Divisor.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Dividend, Divisor };
         }
@@ -130,7 +130,7 @@ namespace AngouriMath
 
         public abstract record Function : NumericNode
         {
-            public override Priority Priority => Priority.Func;
+            internal override Priority Priority => Priority.Func;
         }
 
         #region Trigonometry
@@ -176,7 +176,7 @@ namespace AngouriMath
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Powf New(Entity @base, Entity exponent) =>
                 ReferenceEquals(Base, @base) && ReferenceEquals(Exponent, exponent) ? this : new(@base, exponent);
-            public override Priority Priority => Priority.Pow;
+            internal override Priority Priority => Priority.Pow;
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Base.Replace(func), Exponent.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Base, Exponent };
         }
@@ -235,7 +235,7 @@ namespace AngouriMath
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Factorialf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
             // This is still a function for pattern replacement
-            public override Priority Priority => Priority.Factorial;
+            internal override Priority Priority => Priority.Factorial;
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }

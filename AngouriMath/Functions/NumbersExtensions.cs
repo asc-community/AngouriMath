@@ -250,7 +250,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Analogy of <see cref="Math.Atan2(double, double)"/> for more see this
-        /// <seealso cref="http://i.imgur.com/TRLjs8R.png"/>
+        /// <img src="http://i.imgur.com/TRLjs8R.png"/>
         /// </summary>
         public static EDecimal Atan2(this EDecimal y, EDecimal x, EContext context)
         {

@@ -31,7 +31,7 @@ namespace AngouriMath
             internal static Variable CreateVariableUnchecked(string name) => new(name);
             private Variable(string name) => Name = name;
             public string Name { get; }
-            public override Priority Priority => Priority.Leaf;
+            internal override Priority Priority => Priority.Leaf;
             public override Entity Replace(Func<Entity, Entity> func) => func(this);
             protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
             internal static readonly Variable pi = new Variable(nameof(pi));

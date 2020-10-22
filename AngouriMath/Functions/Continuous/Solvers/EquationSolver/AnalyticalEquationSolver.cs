@@ -73,6 +73,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// and compensateSolving "compensates" this by applying expression inverter,
         /// aka compensating the equation formed by the previous solver
         /// </param>
+        /// <param name="expr">Expression</param>
+        /// <param name="x">Variable to solve over</param>
         internal static Set Solve(Entity expr, Variable x, bool compensateSolving = false)
         {
             if (expr == x)

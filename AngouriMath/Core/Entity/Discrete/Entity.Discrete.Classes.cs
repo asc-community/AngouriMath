@@ -27,7 +27,7 @@ namespace AngouriMath
 
             public override Entity Replace(Func<Entity, Entity> func) 
                 => func(this);
-            public override Priority Priority => Priority.Leaf;
+            internal override Priority Priority => Priority.Leaf;
             protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
 
             /// <summary>
@@ -69,7 +69,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Notf(Entity Argument) : Statement
         {
-            public override Priority Priority => Priority.Negation;
+            internal override Priority Priority => Priority.Negation;
             private Notf New(Entity negated) =>
                 ReferenceEquals(Argument, negated) ? this : new(negated);
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
@@ -81,7 +81,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Andf(Entity Left, Entity Right) : Statement
         {
-            public override Priority Priority => Priority.Conjunction;
+            internal override Priority Priority => Priority.Conjunction;
             private Andf New(Entity left, Entity right) =>
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
@@ -94,7 +94,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Orf(Entity Left, Entity Right) : Statement
         {
-            public override Priority Priority => Priority.Disjunction;
+            internal override Priority Priority => Priority.Disjunction;
             private Orf New(Entity left, Entity right) =>
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
@@ -107,7 +107,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Xorf(Entity Left, Entity Right) : Statement
         {
-            public override Priority Priority => Priority.XDisjunction;
+            internal override Priority Priority => Priority.XDisjunction;
             private Xorf New(Entity left, Entity right) =>
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
@@ -120,7 +120,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : Statement
         {
-            public override Priority Priority => Priority.Impliciation;
+            internal override Priority Priority => Priority.Impliciation;
             private Impliesf New(Entity left, Entity right) =>
                 ReferenceEquals(Assumption, left) && ReferenceEquals(Conclusion, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
@@ -137,7 +137,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Equalsf(Entity Left, Entity Right) : ComparisonSign
         {
-            public override Priority Priority => Priority.Equal;
+            internal override Priority Priority => Priority.Equal;
             public Equalsf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Equalsf(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
@@ -154,7 +154,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Greaterf(Entity Left, Entity Right) : ComparisonSign
         {
-            public override Priority Priority => Priority.GreaterThan;
+            internal override Priority Priority => Priority.GreaterThan;
             public Greaterf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
@@ -171,7 +171,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record GreaterOrEqualf(Entity Left, Entity Right) : ComparisonSign
         {
-            public override Priority Priority => Priority.GreaterThan;
+            internal override Priority Priority => Priority.GreaterThan;
             public GreaterOrEqualf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
@@ -188,7 +188,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Lessf(Entity Left, Entity Right) : ComparisonSign
         {
-            public override Priority Priority => Priority.GreaterThan;
+            internal override Priority Priority => Priority.GreaterThan;
             public Lessf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
@@ -205,7 +205,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record LessOrEqualf(Entity Left, Entity Right) : ComparisonSign
         {
-            public override Priority Priority => Priority.GreaterThan;
+            internal override Priority Priority => Priority.GreaterThan;
             public LessOrEqualf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             public override Entity Replace(Func<Entity, Entity> func)
@@ -223,7 +223,7 @@ namespace AngouriMath
             /// </summary>
             public sealed partial record Inf(Entity Element, Entity SupSet) : Statement
             {
-                public override Priority Priority => Priority.ContainsIn;
+                internal override Priority Priority => Priority.ContainsIn;
                 public Inf New(Entity element, Entity supSet)
                     => ReferenceEquals(Element, element) && ReferenceEquals(SupSet, supSet) ? this : new(Element, SupSet);
                 public override Entity Replace(Func<Entity, Entity> func)
