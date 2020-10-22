@@ -15,7 +15,6 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         /// <summary>
         /// This node represents all possible values a boolean node might be of
         /// </summary>
@@ -49,9 +48,11 @@ namespace AngouriMath
             /// </param>
             public static Boolean Create(bool value) => value ? True : False; // to avoid reallocation
 
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) 
                 => func(this);
             internal override Priority Priority => Priority.Leaf;
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
 
             /// <summary>
@@ -96,7 +97,9 @@ namespace AngouriMath
             internal override Priority Priority => Priority.Negation;
             private Notf New(Entity negated) =>
                 ReferenceEquals(Argument, negated) ? this : new(negated);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
@@ -108,8 +111,10 @@ namespace AngouriMath
             internal override Priority Priority => Priority.Conjunction;
             private Andf New(Entity left, Entity right) =>
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
@@ -121,8 +126,10 @@ namespace AngouriMath
             internal override Priority Priority => Priority.Disjunction;
             private Orf New(Entity left, Entity right) =>
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
@@ -134,8 +141,10 @@ namespace AngouriMath
             internal override Priority Priority => Priority.XDisjunction;
             private Xorf New(Entity left, Entity right) =>
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
@@ -147,8 +156,10 @@ namespace AngouriMath
             internal override Priority Priority => Priority.Impliciation;
             private Impliesf New(Entity left, Entity right) =>
                 ReferenceEquals(Assumption, left) && ReferenceEquals(Conclusion, right) ? this : new(left, right);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Assumption.Replace(func), Conclusion.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Assumption, Conclusion };
         }
 
@@ -164,8 +175,10 @@ namespace AngouriMath
             internal override Priority Priority => Priority.Equal;
             internal Equalsf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Equalsf(left, right);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
@@ -181,8 +194,10 @@ namespace AngouriMath
             internal override Priority Priority => Priority.GreaterThan;
             internal Greaterf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
@@ -198,8 +213,10 @@ namespace AngouriMath
             internal override Priority Priority => Priority.GreaterThan;
             internal GreaterOrEqualf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
@@ -215,8 +232,10 @@ namespace AngouriMath
             internal override Priority Priority => Priority.GreaterThan;
             internal Lessf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
@@ -232,8 +251,10 @@ namespace AngouriMath
             internal override Priority Priority => Priority.GreaterThan;
             internal LessOrEqualf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Left.Replace(func), Right.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Left, Right };
         }
 
@@ -250,12 +271,13 @@ namespace AngouriMath
                 internal override Priority Priority => Priority.ContainsIn;
                 internal Inf New(Entity element, Entity supSet)
                     => ReferenceEquals(Element, element) && ReferenceEquals(SupSet, supSet) ? this : new(Element, SupSet);
+                /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Element.Replace(func), SupSet.Replace(func)));
+                /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => new[] { Element, SupSet };
             }
         }
         #endregion
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

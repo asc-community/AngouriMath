@@ -11,185 +11,213 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         #region Simple
         partial record Variable
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : this;
         }
 
         partial record Tensor
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => x == this ? value : Elementwise(c => c.Substitute(x, value));
         }
 
         partial record Sumf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Augend.Substitute(x, value), Addend.Substitute(x, value));
         }
 
         partial record Minusf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Subtrahend.Substitute(x, value), Minuend.Substitute(x, value));
         }
 
         partial record Mulf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Multiplier.Substitute(x, value), Multiplicand.Substitute(x, value));
         }
 
         partial record Divf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Dividend.Substitute(x, value), Divisor.Substitute(x, value));
         }
 
         partial record Sinf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Cosf
         {
-
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Tanf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Cotanf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Logf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Base.Substitute(x, value), Antilogarithm.Substitute(x, value));
         }
 
         partial record Powf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Base.Substitute(x, value), Exponent.Substitute(x, value));
         }
 
         partial record Arcsinf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Arccosf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Arctanf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Arccotanf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Factorialf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Signumf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Absf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Boolean
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : this;
         }
 
         partial record Notf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
         partial record Andf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
 
         partial record Orf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
 
         partial record Xorf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
 
         partial record Impliesf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Assumption.Substitute(x, value), Conclusion.Substitute(x, value));
         }
 
         partial record Equalsf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
 
         partial record Greaterf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
 
         partial record GreaterOrEqualf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
 
         partial record Lessf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
 
         partial record LessOrEqualf
         {
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
                 => this == x ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
         }
@@ -198,42 +226,49 @@ namespace AngouriMath
         {
             partial record FiniteSet
             {
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => x == this ? value : Apply(c => c.Substitute(x, value));
             }
 
             partial record Interval
             {
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => New(Left.Substitute(x, value), Right.Substitute(x, value));
             }
 
             partial record SpecialSet
             {
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => x == this ? value : this;
             }
 
             partial record Unionf
             {
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => x == this ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
             }
 
             partial record Intersectionf
             {
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => x == this ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
             }
 
             partial record SetMinusf
             {
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => x == this ? value : New(Left.Substitute(x, value), Right.Substitute(x, value));
             }
 
             partial record Inf
             {
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                     => x == this ? value : New(Element.Substitute(x, value), SupSet.Substitute(x, value));
             }
@@ -248,6 +283,7 @@ namespace AngouriMath
             partial record ConditionalSet
             {
                 // TODO: it might be optimized
+                /// <inheritdoc/>
                 public override Entity Substitute(Entity x, Entity value)
                 {
                     if (this == x)
@@ -272,6 +308,7 @@ namespace AngouriMath
         partial record Integralf
         {
             // TODO: it might be optimized
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
             {
                 if (this == x)
@@ -295,6 +332,7 @@ namespace AngouriMath
         partial record Derivativef
         {
             // TODO: it might be optimized
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
             {
                 if (this == x)
@@ -318,6 +356,7 @@ namespace AngouriMath
         partial record Limitf
         {
             // TODO: it might be optimized
+            /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
             {
                 if (this == x)
@@ -341,6 +380,5 @@ namespace AngouriMath
         }
 
         #endregion
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

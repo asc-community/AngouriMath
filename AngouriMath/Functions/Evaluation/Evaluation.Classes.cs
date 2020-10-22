@@ -14,12 +14,18 @@ namespace AngouriMath
         public partial record Variable
         {
             // TODO: When target-typed conditional expression lands, remove the explicit conversion
+            /// <inheritdoc/>
             protected override Entity InnerEval() => ConstantList.TryGetValue(this, out var value) ? (Entity)value : this;
+
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() => this;
         }
         public partial record Tensor
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => Elementwise(e => e.Evaled);
+
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() => Elementwise(e => e.InnerSimplified);
         }
     }

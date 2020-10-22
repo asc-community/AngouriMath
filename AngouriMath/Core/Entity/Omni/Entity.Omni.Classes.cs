@@ -453,7 +453,7 @@ namespace AngouriMath
 
             #region Set Minus
             /// <summary>
-            /// Finds A & !B
+            /// Finds A &amp; !B
             /// It is true that an entity is in SetMinus if it is in Left but not in Right
             /// </summary>
             public sealed partial record SetMinusf(Entity Left, Entity Right) : Set
@@ -461,9 +461,11 @@ namespace AngouriMath
                 private SetMinusf New(Entity left, Entity right)
                     => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new SetMinusf(left, right);
 
+                /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Left.Replace(func), Right.Replace(func)));
 
+                /// <inheritdoc/>
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
@@ -479,11 +481,15 @@ namespace AngouriMath
 
                 internal override Priority Priority => Priority.SetMinus;
 
+                /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
+                /// <inheritdoc/>
                 public override bool IsSetFinite => caches.GetValue(this,
                     cache => cache.isSetFinite, cache => cache.isSetFinite =
                     Left is FiniteSet finite1 && Right is FiniteSet && finite1.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
+
+                /// <inheritdoc/>
                 public override bool IsSetEmpty => caches.GetValue(this,
                     cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2

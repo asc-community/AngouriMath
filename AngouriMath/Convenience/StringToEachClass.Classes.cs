@@ -18,23 +18,40 @@ namespace AngouriMath
 
         partial record Variable
         {
+            /// <summary>
+            /// Converts from string to specifically variable
+            /// </summary>
+            /// <param name="expr">Its future name</param>
             public static implicit operator Variable(string expr)
                 => FromString<Variable>(expr);
         }
 
         partial record Tensor
         {
+            /// <summary>
+            /// Converts from string to specifically tensor
+            /// </summary>
+            /// <param name="expr">From where to parse (available since 1.2.2)</param>
             public static implicit operator Tensor(string expr)
                 => FromString<Tensor>(expr);
         }
 
         partial record Set
         {
+            /// <summary>
+            /// Converts from string to specifically set
+            /// </summary>
+            /// <param name="expr">From where to parse</param>
+
             public static implicit operator Set(string expr)
                 => FromString<Set>(expr);
 
             partial record FiniteSet
             {
+                /// <summary>
+                /// Converts from string to specifically finite set
+                /// </summary>
+                /// <param name="expr">From where to parse</param>
                 public static implicit operator FiniteSet(string expr)
                     => FromString<FiniteSet>(expr);
             }

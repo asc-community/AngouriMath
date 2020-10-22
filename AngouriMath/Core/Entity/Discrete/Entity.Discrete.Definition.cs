@@ -22,7 +22,7 @@ namespace AngouriMath
         }
 
         /// <summary>
-        /// =, <, >, <=, >=
+        /// =, &lt;, &gt;, &gt;=, &lt;=
         /// </summary>
         public abstract partial record ComparisonSign : Statement
         {

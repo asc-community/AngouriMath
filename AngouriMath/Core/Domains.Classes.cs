@@ -15,166 +15,199 @@ namespace AngouriMath
     {
         partial record Variable
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Any;
         }
 
         partial record Tensor
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Any;
         }
 
         partial record Sumf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Minusf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Mulf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Divf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Sinf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Cosf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Tanf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Cotanf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Logf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Powf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Arcsinf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Arccosf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Arctanf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Arccotanf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Factorialf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Derivativef
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Integralf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Limitf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Signumf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
         partial record Absf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Real;
         }
 
         partial record Boolean
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
         partial record Notf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
         partial record Andf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
         partial record Orf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
         partial record Xorf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
         partial record Impliesf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
         partial record Equalsf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
         partial record Greaterf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
         partial record GreaterOrEqualf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
         partial record Lessf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
         partial record LessOrEqualf
         {
+            /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Boolean;
         }
 
@@ -182,41 +215,49 @@ namespace AngouriMath
         {
             partial record FiniteSet
             {
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Any;
             }
 
             partial record Interval
             {
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Any;
             }
 
             partial record ConditionalSet
             {
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Any;
             }
 
             partial record SpecialSet
             {
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Any;
             }
 
             partial record Unionf
             {
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Any;
             }
 
             partial record Intersectionf
             {
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Any;
             }
 
             partial record SetMinusf
             {
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Any;
             }
 
             partial record Inf
             {
+                /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Boolean;
             }
         }

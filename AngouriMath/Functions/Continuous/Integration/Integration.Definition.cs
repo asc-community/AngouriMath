@@ -55,7 +55,10 @@ namespace AngouriMath.Functions.Algebra
 
 
 
-        /// <summary>Numerical definite integration, see more in <see cref="Entity.DefiniteIntegral(Entity.Variable, EDecimal, EDecimal)"/></summary>
+        /// <summary>
+        /// Numerical definite integration
+        /// See more at <see cref="MathS.Compute.DefiniteIntegral(Entity, Entity.Variable, EDecimal, EDecimal)"/>
+        /// </summary>
         internal static Complex Integrate(Entity func, Entity.Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount)
         {
             System.Numerics.Complex res = 0;

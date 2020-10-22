@@ -793,11 +793,9 @@ namespace AngouriMath
         /// Functions and classes related to sets defined here
         /// 
         /// Class <see cref="Set"/> defines true mathematical sets
-        /// It can be empty,
-        /// it can contain <see cref="OneElementPiece"/>s,
-        /// it can contain <see cref="Core.Interval"/>s etc.
-        /// It supports intersection (with & operator), union (with | operator),
-        ///             subtraction (with - operator) as well as inversion (with ! operator).
+        /// It supports intersection, union, subtraction
+        ///             
+        /// <see cref="Set"/>
         /// </summary>
         public static class Sets
         {

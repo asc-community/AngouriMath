@@ -26,14 +26,26 @@ namespace AngouriMath
         /// </summary>
         public partial record Variable : Entity
         {
+            /// <summary>
+            /// Deconstructs Variable as follows
+            /// </summary>
+            /// <param name="name">To where the result is put</param>
             public void Deconstruct(out string name)
                 => name = Name;
             internal static Variable CreateVariableUnchecked(string name) => new(name);
             private Variable(string name) => Name = name;
+
+            /// <summary>
+            /// The name of the variable as a string
+            /// </summary>
             public string Name { get; }
             internal override Priority Priority => Priority.Leaf;
+
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(this);
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
+
             internal static readonly Variable pi = new Variable(nameof(pi));
             internal static readonly Variable e = new Variable(nameof(e));
             internal static readonly IReadOnlyDictionary<Variable, Number.Complex> ConstantList =
