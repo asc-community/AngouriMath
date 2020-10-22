@@ -18,9 +18,11 @@ namespace AngouriMath
         {
             partial record FiniteSet
             {
+                /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => Apply(el => el.Evaled);
 
+                /// <inheritdoc/>
                 protected override Entity InnerSimplify()
                     => Apply(el => el.InnerSimplified);
             }
@@ -33,18 +35,22 @@ namespace AngouriMath
                     LeftClosed && RightClosed ? new FiniteSet(Simplificator.PickSimplest(Left, Right)) : Empty)
                      : this;
 
+                /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => New(Left.Evaled, Right.Evaled).IfEqualEndsThenCollapse();
 
+                /// <inheritdoc/>
                 protected override Entity InnerSimplify()
                     => New(Left.InnerSimplified, Right.InnerSimplified).IfEqualEndsThenCollapse();
             }
 
             partial record ConditionalSet
             {
+                /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => Simplificator.PickSimplest(New(Var, Predicate.Evaled), InnerSimplifyWithCheck());
 
+                /// <inheritdoc/>
                 protected override Entity InnerSimplify()
                 {
                     if (!Predicate.EvaluableBoolean)
@@ -56,18 +62,22 @@ namespace AngouriMath
 
             partial record SpecialSet
             {
+                /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => this;
 
+                /// <inheritdoc/>
                 protected override Entity InnerSimplify()
                     => this;
             }
 
             partial record Unionf
             {
+                /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => InnerSimplified;
 
+                /// <inheritdoc/>
                 protected override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
@@ -81,9 +91,11 @@ namespace AngouriMath
 
             partial record Intersectionf
             {
+                /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => InnerSimplified;
 
+                /// <inheritdoc/>
                 protected override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
@@ -97,9 +109,11 @@ namespace AngouriMath
 
             partial record SetMinusf
             {
+                /// <inheritdoc/>
                 protected override Entity InnerEval()
                     => InnerSimplified;
 
+                /// <inheritdoc/>
                 protected override Entity InnerSimplify()
                     => (Left.InnerSimplified, Right.InnerSimplified) switch
                     {
