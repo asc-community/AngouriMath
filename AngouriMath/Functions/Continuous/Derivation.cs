@@ -27,20 +27,33 @@ namespace AngouriMath
         public Entity Differentiate(Variable variable)
             => InnerDifferentiate(variable).InnerSimplified;
 
+        /// <summary>
+        /// Finds the symbolical derivative of the given expression
+        /// </summary>
+        /// <param name="variable">
+        /// Over which variable to find the derivative
+        /// </param>
+        /// <returns>
+        /// The derived expression which might contain <see cref="Derivativef"/> nodes,
+        /// or the initial one
+        /// </returns>
         [System.Obsolete("Renamed to Differentiate")]
         public Entity Derive(Variable variable)
             => InnerDifferentiate(variable).InnerSimplified;
 
+        /// <inheritdoc/>
         protected virtual Entity InnerDifferentiate(Variable variable)
             => new Derivativef(this, variable, 1);
 
         public partial record Variable
         {
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) => Name == variable.Name ? 1 : 0;
         }
 
         public partial record Tensor
         {
+            /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) => Elementwise(e => e.InnerDifferentiate(variable));
         }
 

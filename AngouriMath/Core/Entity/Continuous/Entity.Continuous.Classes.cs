@@ -37,9 +37,17 @@ namespace AngouriMath
         /// </summary>
         public abstract partial record Number : NumericNode
         {
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(this);
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
+
+            /// <summary>
+            /// Checks whether the number is not exposed to implicit rounding
+            /// For example, integers and rationals are such
+            /// </summary>
             public abstract bool IsExact { get; }
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
             public static implicit operator Number(sbyte value) => Integer.Create(value);
             public static implicit operator Number(byte value) => Integer.Create(value);
             public static implicit operator Number(short value) => Integer.Create(value);
@@ -56,6 +64,7 @@ namespace AngouriMath
             public static implicit operator Number(decimal value) => Real.Create(EDecimal.FromDecimal(value));
             public static implicit operator Number(System.Numerics.Complex value) =>
                 Complex.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
         #region Operators
@@ -66,7 +75,9 @@ namespace AngouriMath
             private Sumf New(Entity augend, Entity addend) =>
                 ReferenceEquals(Augend, augend) && ReferenceEquals(Addend, addend) ? this : new(augend, addend);
             internal override Priority Priority => Priority.Sum;
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Augend.Replace(func), Addend.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Augend, Addend };
             /// <summary>
             /// Gathers linear children of a sum, e.g.
@@ -89,7 +100,9 @@ namespace AngouriMath
             private Minusf New(Entity subtrahend, Entity minuend) =>
                 ReferenceEquals(Subtrahend, subtrahend) && ReferenceEquals(Minuend, minuend) ? this : new(subtrahend, minuend);
             internal override Priority Priority => Priority.Minus;
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Subtrahend.Replace(func), Minuend.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Subtrahend, Minuend };
         }
 
@@ -99,7 +112,9 @@ namespace AngouriMath
             private Mulf New(Entity multiplier, Entity multiplicand) =>
                 ReferenceEquals(Multiplier, multiplier) && ReferenceEquals(Multiplicand, multiplicand) ? this : new(multiplier, multiplicand);
             internal override Priority Priority => Priority.Mul;
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Multiplier.Replace(func), Multiplicand.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Multiplier, Multiplicand };
             /// <summary>
             /// Gathers linear children of a product, e.g.
@@ -122,7 +137,9 @@ namespace AngouriMath
             private Divf New(Entity dividend, Entity divisor) =>
                 ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor);
             internal override Priority Priority => Priority.Div;
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Dividend.Replace(func), Divisor.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Dividend, Divisor };
         }
 
@@ -139,7 +156,9 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Sinf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
         
@@ -147,7 +166,9 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Cosf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
         
@@ -155,7 +176,9 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Tanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
         
@@ -163,7 +186,9 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Cotanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
         
@@ -177,7 +202,9 @@ namespace AngouriMath
             private Powf New(Entity @base, Entity exponent) =>
                 ReferenceEquals(Base, @base) && ReferenceEquals(Exponent, exponent) ? this : new(@base, exponent);
             internal override Priority Priority => Priority.Pow;
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Base.Replace(func), Exponent.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Base, Exponent };
         }
 
@@ -186,7 +213,9 @@ namespace AngouriMath
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Logf New(Entity @base, Entity antilogarithm) =>
                 ReferenceEquals(Base, @base) && ReferenceEquals(Antilogarithm, antilogarithm) ? this : new(@base, antilogarithm);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Base.Replace(func), Antilogarithm.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Base, Antilogarithm };
         }
 
@@ -194,7 +223,9 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arcsinf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
@@ -206,7 +237,9 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arccosf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
@@ -214,7 +247,9 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arctanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
@@ -222,7 +257,9 @@ namespace AngouriMath
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             Arccotanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
         
@@ -236,7 +273,9 @@ namespace AngouriMath
             private Factorialf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
             // This is still a function for pattern replacement
             internal override Priority Priority => Priority.Factorial;
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
@@ -251,8 +290,10 @@ namespace AngouriMath
             private Derivativef New(Entity expression, Entity var) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var)
                 ? this : new(expression, var, Iterations);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) =>
                 func(New(Expression.Replace(func), Var.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
 
@@ -262,8 +303,10 @@ namespace AngouriMath
             private Integralf New(Entity expression, Entity var) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var)
                 ? this : new(expression, var, Iterations);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) =>
                 func(New(Expression.Replace(func), Var.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Iterations };
         }
 
@@ -273,8 +316,10 @@ namespace AngouriMath
             private Limitf New(Entity expression, Entity var, Entity destination, ApproachFrom approachFrom) =>
                 ReferenceEquals(Expression, expression) && ReferenceEquals(Var, var) && ReferenceEquals(Destination, destination)
                 && ApproachFrom == approachFrom ? this : new(expression, var, destination, approachFrom);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) =>
                 func(New(Expression.Replace(func), Var.Replace(func), Destination.Replace(func), ApproachFrom));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Destination };
         }
 
@@ -286,7 +331,9 @@ namespace AngouriMath
         {
             private Signumf New(Entity arg) =>
                 ReferenceEquals(Argument, arg) ? this : new(arg);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
@@ -294,7 +341,9 @@ namespace AngouriMath
         {
             private Absf New(Entity arg) =>
                 ReferenceEquals(Argument, arg) ? this : new(arg);
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 

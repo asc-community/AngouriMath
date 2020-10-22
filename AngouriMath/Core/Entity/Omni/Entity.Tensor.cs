@@ -34,10 +34,12 @@ namespace AngouriMath
                 ? throw new InvalidShapeException("Arguments should be of the same shape to apply elementwise operation")
                 : New(GenTensor.CreateTensor(InnerTensor.Shape, indices =>
                         operation(InnerTensor.GetValueNoCheck(indices), other.InnerTensor.GetValueNoCheck(indices))));
+            /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => Elementwise(element => element.Replace(func));
+            /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => InnerTensor.Iterate().Select(tup => tup.Value).ToArray();
 
-            public readonly struct EntityTensorWrapperOperations : IOperations<Entity>
+            internal readonly struct EntityTensorWrapperOperations : IOperations<Entity>
             {
                 public Entity Add(Entity a, Entity b) => a + b;
                 public Entity Subtract(Entity a, Entity b) => a - b;
@@ -76,11 +78,36 @@ namespace AngouriMath
             /// </summary>
             public Tensor(Func<int[], Entity> operation, params int[] dims) : this(GenTensor.CreateTensor(new(dims), operation)) { }
 
+            /// <summary>
+            /// Access the tensor if it is a vector
+            /// </summary>
             public Entity this[int i] => InnerTensor[i];
+
+            /// <summary>
+            /// Access the tensor if it is a matrix
+            /// </summary>
             public Entity this[int x, int y] => InnerTensor[x, y];
+
+            /// <summary>
+            /// Access the tensor if it is a 3D tensor
+            /// </summary>
             public Entity this[int x, int y, int z] => InnerTensor[x, y, z];
+
+            /// <summary>
+            /// Access the tensor if it is a tensor of greater dimension than 3
+            /// </summary>
             public Entity this[params int[] dims] => InnerTensor[dims];
+
+            /// <summary>
+            /// Checks whether the tensor is one-dimensional,
+            /// that is, vector
+            /// </summary>
             public bool IsVector => InnerTensor.IsVector;
+
+            /// <summary>
+            /// Checks whether the tensor is two-dimensional,
+            /// that is, matrix
+            /// </summary>
             public bool IsMatrix => InnerTensor.IsMatrix;
 
             /// <summary>Changes the order of axes</summary>
@@ -95,6 +122,9 @@ namespace AngouriMath
 
             // We do not need to use Gaussian elimination here
             // since we anyway get N! memory use
+            /// <summary>
+            /// Finds the symbolical determinant via Laplace's method
+            /// </summary>
             public Entity Determinant() => InnerTensor.DeterminantLaplace();
 
             /// <summary>Inverts all matrices in a tensor</summary>

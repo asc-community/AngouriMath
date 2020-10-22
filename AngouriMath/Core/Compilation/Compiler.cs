@@ -49,6 +49,7 @@ namespace AngouriMath
             private protected override void CompileNode(Compiler compiler) =>
                 compiler.Instructions.Add(new(InstructionType.PUSH_VAR, compiler.VarNamespace[this]));
 
+            /// <inheritdoc/>
             public override int GetHashCode()
                 => Name.GetHashCode();
         }

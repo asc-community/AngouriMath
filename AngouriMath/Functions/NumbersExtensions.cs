@@ -478,12 +478,11 @@ namespace AngouriMath
 	     * <summary>
 	     * Calculates the gamma function of the specified <see cref="EDecimal"/>.
 	     *
-	     * <para>This implementation uses <see cref="Factorial(EDecimal, EContext)"/> internally,
+	     * This implementation uses <see cref="Factorial(EDecimal, EContext)"/> internally,
 	     * therefore the performance implications described there apply also for this method.
 	     *
-	     * <para>See: <a href="https://en.wikipedia.org/wiki/Gamma_function">Wikipedia: Gamma function</a></para>
 	     * </summary>
-	     *
+	     * <para>See: <a href="https://en.wikipedia.org/wiki/Gamma_function">Wikipedia: Gamma function</a></para>
 	     * <param name="x">The <see cref="EDecimal"/></param>
 	     * <param name="mathContext">The <see cref="EContext"/> used for the result</param>
 	     * <returns>The gamma <see cref="EDecimal"/></returns>
