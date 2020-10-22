@@ -50,7 +50,9 @@ namespace AngouriMath
                 public Entity CreateOne() => Number.Integer.One;
                 public Entity CreateZero() => Number.Integer.Zero;
                 public Entity Copy(Entity a) => a;
+#pragma warning disable CA1822 // Mark members as static
                 public Entity Forward(Entity a) => a;
+#pragma warning restore CA1822 // Mark members as static
                 public bool AreEqual(Entity a, Entity b) => a == b;
                 public bool IsZero(Entity a) => a == 0;
                 public string ToString(Entity a) => a.Stringize();

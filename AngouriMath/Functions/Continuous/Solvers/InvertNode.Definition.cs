@@ -38,15 +38,12 @@ namespace AngouriMath
         /// <summary>
         /// Returns true if <paramref name="a"/> is inside a rect with corners <paramref name="from"/>
         /// and <paramref name="to"/>, OR <paramref name="a"/> is an unevaluable expression
-        /// </summary>
+        /// </summary>        
         private protected static bool EntityInBounds(Entity a, Complex from, Complex to)
-        {
-            if (!(a.Evaled is Complex r))
-                return true;
-            return r.RealPart >= from.RealPart &&
+            => a.Evaled is not Complex r ||
+                   r.RealPart >= from.RealPart &&
                    r.ImaginaryPart >= from.ImaginaryPart &&
                    r.RealPart <= to.RealPart &&
                    r.ImaginaryPart <= to.ImaginaryPart;
-        }
     }
 }

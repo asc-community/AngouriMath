@@ -209,6 +209,7 @@ namespace AngouriMath
             }
         }
 
+#pragma warning disable IDE0054 // Use compound assignment
         public partial record Derivativef
         {
             /// <inheritdoc/>
@@ -226,6 +227,7 @@ namespace AngouriMath
                 ? this with { Iterations = Iterations - 1 }
                 : MathS.Derivative(this, variable, 1);
         }
+#pragma warning restore IDE0054 // Use compound assignment
 
         public partial record Limitf
         {

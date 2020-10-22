@@ -29,10 +29,12 @@ namespace UnitTests.Algebra
             => TestIndefinite(initial, expected);
 
         static readonly Entity.Variable x = nameof(x);
+#pragma warning disable CS0618 // Type or member is obsolete
         [Fact]
         public void Test1()
         {
             var expr = x;
+
             Assert.True((MathS.Compute.DefiniteIntegral(expr, x, 0, 1).RealPart - 1.0/2).Abs() < 0.1);
         }
         [Fact]
@@ -47,5 +49,6 @@ namespace UnitTests.Algebra
             var expr = MathS.Sin(x);
             Assert.True(MathS.Compute.DefiniteIntegral(expr, x, 0, 3).RealPart > 1.5);
         }
+#pragma warning restore CS0618 // Type or member is obsolete
     }
 }

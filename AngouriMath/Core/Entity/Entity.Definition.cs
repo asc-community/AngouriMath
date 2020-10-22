@@ -17,6 +17,7 @@ using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath.Core
 {
+#pragma warning disable CA1069 // Enums values should not be duplicated
     internal enum Priority
     { 
         BooleanOperation = 0x0000,
@@ -47,6 +48,7 @@ namespace AngouriMath.Core
         Sum = 20       | NumericalOperation,
         Minus = 20     | NumericalOperation,
         Mul = 40       | NumericalOperation,
+
         Div = 40       | NumericalOperation,
         Pow = 60       | NumericalOperation,
         Factorial = 70 | NumericalOperation,
@@ -55,6 +57,7 @@ namespace AngouriMath.Core
 
         Leaf      = 100 | NumericalOperation,
     }
+#pragma warning restore CA1069 // Enums values should not be duplicated
 
     /// <summary>
     /// Any class that supports converting to LaTeX format should implement this interface

@@ -13,3 +13,4 @@ using PeterO.Numbers;
 
 WriteLine(@"(x15 - 3^15 - 15 3^14(x - 3)) / (x - 3)2".Limit("x", "3", AngouriMath.Core.ApproachFrom.Left));
 Entity expr = "x + 2";
+

@@ -33,7 +33,7 @@ namespace AngouriMath.Functions.Algebra
         {
             if (!expr.ContainsNode(x)) return expr * x; // base case, handle here
 
-            Entity? answer = null;
+            Entity? answer;
 
             answer = IntegralPatterns.TryStandardIntegrals(expr, x);
             if (answer is { }) return answer;

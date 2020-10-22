@@ -1051,7 +1051,7 @@ namespace AngouriMath
 
                 foreach (var linChild in linChildren)
                 {
-                    var children = TreeAnalyzer.SmartExpandOver(linChild, n => n.ContainsNode(n));
+                    var children = TreeAnalyzer.SmartExpandOver(linChild, n => n.ContainsNode(x));
                     if (children is null)
                         return expr;
                     nodes.AddRange(children);

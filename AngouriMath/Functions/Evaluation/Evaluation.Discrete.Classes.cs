@@ -39,7 +39,7 @@ namespace AngouriMath
 
         partial record Andf
         {
-            private bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
                 if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
                 {
@@ -76,7 +76,7 @@ namespace AngouriMath
 
         partial record Orf
         {
-            private bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
                 if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
                 {
@@ -113,7 +113,7 @@ namespace AngouriMath
 
         partial record Xorf
         {
-            private bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
                 if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
                 {
@@ -145,7 +145,7 @@ namespace AngouriMath
 
         partial record Impliesf
         {
-            private bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
                 if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
                 {

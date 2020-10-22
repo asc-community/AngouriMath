@@ -9,7 +9,7 @@ namespace UnitTests.Algebra
     public sealed class Limits
     {
         void TestLimit(Entity expr, Entity where, ApproachFrom appr, Entity desiredOutput)
-            => Assert.Equal(desiredOutput.Simplify(), MathS.Compute.Limit(expr, "x", where, appr).Simplify());
+            => Assert.Equal(desiredOutput.Simplify(), expr.Limit("x", where, appr).Simplify());
 
         [Fact] public void Test1() => TestLimit("x", Real.PositiveInfinity, ApproachFrom.Left, Real.PositiveInfinity);
         [Fact] public void Test2() => TestLimit("-x", Real.PositiveInfinity, ApproachFrom.Left, Real.NegativeInfinity);
@@ -102,7 +102,7 @@ namespace UnitTests.Algebra
             Entity expr = MathS.Sqrt(subExpr * 3 / MathS.Sin(subExpr) + MathS.Sin("d"));
             Entity.Variable x = nameof(x);
             Entity dest = Real.PositiveInfinity;
-            var limit = MathS.Compute.Limit(expr, x, dest, ApproachFrom.Left);
+            var limit = expr.Limit(x, dest, ApproachFrom.Left);
             Assert.NotNull(limit);
             Assert.Equal("sqrt(a / c * 3 / sin(a / c) + sin(d))", limit?.Stringize());
         }
