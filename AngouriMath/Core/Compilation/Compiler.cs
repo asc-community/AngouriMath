@@ -245,6 +245,9 @@ namespace AngouriMath
 
 namespace AngouriMath.Core
 {
+    /// <summary>
+    /// Compiled function (not to a delegate, but to AM's VM readable format)
+    /// </summary>
     public partial class FastExpression
     {
         /// <summary>The <ref name="Cache"/> stores the saved cache number if zero/positive,

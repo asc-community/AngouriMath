@@ -14,6 +14,12 @@ using static AngouriMath.Entity;
 
 namespace AngouriMath.Core
 {
+    /// <summary>
+    /// A class for systems of equations
+    /// Is not part of AM's ecosystem,
+    /// that is, it is not an Entity, just an intermediate
+    /// class
+    /// </summary>
     public sealed class EquationSystem : ILatexiseable
     {
         private readonly IEnumerable<Entity> equations;

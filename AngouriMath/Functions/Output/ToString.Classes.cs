@@ -16,6 +16,7 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {
+#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         public partial record Variable
         {
             public override string Stringize() => Name;
@@ -153,7 +154,9 @@ namespace AngouriMath
 
         public partial record Limitf
         {
+
             public override string Stringize() =>
+
                 ApproachFrom switch
                 {
                     ApproachFrom.Left => "limitleft",
@@ -314,5 +317,6 @@ namespace AngouriMath
                 public override string ToString() => Stringize();
             }
         }
+#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

@@ -15,6 +15,10 @@ namespace AngouriMath.Core.Exceptions
     /// <summary>If one was thrown, the exception is probably not foreseen by AM. Report it is an issue</summary>
     public sealed class AngouriBugException : Exception { public AngouriBugException(string msg) : base(msg + "\n please report about it to the official repository") { } }
 
+    /// <summary>
+    /// Is thrown when the requested feature is still under developing
+    /// or not considered to be developed at all
+    /// </summary>
     public sealed class FutureReleaseException : NotImplementedException
     {
         private FutureReleaseException(string msg) : base(msg) {}

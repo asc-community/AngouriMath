@@ -72,17 +72,6 @@ namespace AngouriMath
         public static Tensor? SolveBooleanTable(Entity expression, params Variable[] variables)
             => BooleanSolver.SolveTable(expression, variables);
 
-        // Marking small enums with ": byte" is premature optimization and shouldn't be done: https://stackoverflow.com/q/648823/5429648
-
-        [Flags]
-        public enum Inequality
-        {
-            LessThan = 0b00,
-            GreaterThan = 0b01,
-            EqualsFlag = 0b10,
-            LessEquals = 0b10,
-            GreaterEquals = 0b11,
-        }
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of sine</param>
@@ -538,6 +527,12 @@ namespace AngouriMath
         /// </summary>
         public static partial class Settings
         {
+            /// <summary>
+            /// This class for configuring some internal mechanisms from outside
+            /// </summary>
+            /// <typeparam name="T">
+            /// Those configurations can be of different types
+            /// </typeparam>
             public sealed class Setting<T> where T : notnull
             {
                 internal Setting(T defaultValue) { Value = defaultValue; Default = defaultValue; }
@@ -586,17 +581,60 @@ namespace AngouriMath
                     }
                 }
 
+                /// <summary>
+                /// An implicit operator so that one does not have to call <see cref="Value"/>
+                /// </summary>
+                /// <param name="s">The setting</param>
                 public static implicit operator T(Setting<T> s) => s.Value;
+
+                /// <summary>
+                /// An implicit operator so that one does not have to call the ctor
+                /// </summary>
+                /// <param name="a">The value</param>
                 public static implicit operator Setting<T>(T a) => new(a);
+
+                /// <summary>
+                /// Overriden ToString so that one could see the value of the setting
+                /// (if overriden)
+                /// </summary>
                 public override string ToString() => Value.ToString();
+
+                /// <summary>
+                /// The current value of the setting
+                /// </summary>
                 public T Value { get; private set; }
+
+                /// <summary>
+                /// The default value of the setting
+                /// </summary>
                 public T Default { get; }
             }
+
+            /// <summary>
+            /// That is how we perform newton solving when no analytical solution was found
+            /// in <see cref="Entity.Solve(Variable)"/> and <see cref="Entity.SolveEquation(Variable)"/>
+            /// </summary>
             public sealed record NewtonSetting
             {
+                /// <summary>
+                /// The point where we start going from
+                /// </summary>
                 public (EDecimal Re, EDecimal Im) From { get; init; } = (-10, -10);
+
+                /// <summary>
+                /// The point after which we do not perform seach
+                /// </summary>
                 public (EDecimal Re, EDecimal Im) To { get; init; } = (10, 10);
+
+                /// <summary>
+                /// The number of steps to go through for real and for complex part
+                /// </summary>
                 public (int Re, int Im) StepCount { get; init; } = (10, 10);
+
+                /// <summary>
+                /// How precise the result is required to be. The higher, the longer 
+                /// the algorithm takes to return the result
+                /// </summary>
                 public int Precision { get; init; } = 30;
             }
             /// <summary>
@@ -947,6 +985,7 @@ namespace AngouriMath
         public static Entity Limit(Entity expr, Entity var, Entity dest, ApproachFrom approach = ApproachFrom.BothSides)
             => new Limitf(expr, var, dest, approach);
 
+        /// <summary>Some non-symbolic constants</summary>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
             Justification = "Lowercase constants as written in Mathematics")]
         public static class DecimalConst
@@ -960,6 +999,9 @@ namespace AngouriMath
                 NumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
         }
 
+        /// <summary>
+        /// Some operations on booleans are stored here
+        /// </summary>
         public static class Boolean
         {
 
@@ -978,6 +1020,10 @@ namespace AngouriMath
                 => Entity.Boolean.Create(b);
         }
 
+        /// <summary>
+        /// Some additional functions that would be barely
+        /// ever used by the user, but kept for "just in case" as public
+        /// </summary>
         public static class Utils
         {
             /// <summary>

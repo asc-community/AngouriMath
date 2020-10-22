@@ -55,7 +55,18 @@ namespace AngouriMath.Core
 
         Leaf      = 100 | NumericalOperation,
     }
-    public interface ILatexiseable { public string Latexise(); }
+
+    /// <summary>
+    /// Any class that supports converting to LaTeX format should implement this interface
+    /// </summary>
+    public interface ILatexiseable
+    { 
+        /// <summary>
+        /// Converts the object to the LaTeX format
+        /// That is, a string that can be later displayed and rendered as LaTeX
+        /// </summary>
+        public string Latexise(); 
+    }
 }
 
 namespace AngouriMath
