@@ -39,7 +39,8 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => InnerTensor.Iterate().Select(tup => tup.Value).ToArray();
 
-            internal readonly struct EntityTensorWrapperOperations : IOperations<Entity>
+#pragma warning disable CS1591
+            public readonly struct EntityTensorWrapperOperations : IOperations<Entity>
             {
                 public Entity Add(Entity a, Entity b) => a + b;
                 public Entity Subtract(Entity a, Entity b) => a - b;
@@ -64,6 +65,7 @@ namespace AngouriMath
                     throw new NotImplementedException("Deserialization is not planned");
                 }
             }
+#pragma warning restore CS1591
             /// <summary>List of <see cref="int"/>s that stand for dimensions</summary>
             public TensorShape Shape => InnerTensor.Shape;
 

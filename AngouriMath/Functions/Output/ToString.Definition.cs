@@ -13,9 +13,13 @@ namespace AngouriMath
     {
         /// <summary>
         /// Converts an expression into a string
-        /// Replacement for ToString since .NET 5 RC1
         /// </summary>
         public abstract string Stringize();
+
+        /// <summary>
+        /// Converts an expression into a string
+        /// </summary>
+        /// <param name="parenthesesRequired">Whether to wrap with '(' and ')'</param>
         protected internal string Stringize(bool parenthesesRequired) =>
             parenthesesRequired ? $"({Stringize()})" : Stringize();
     }

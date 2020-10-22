@@ -21,13 +21,16 @@ namespace AngouriMath
     {
         public partial record Number
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => this;
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() => this;
         }
             
         // Each function and operator processing
         public partial record Sumf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => (Augend.Evaled, Addend.Evaled) switch
             {
                 (Complex n1, Complex n2) => n1 + n2,
@@ -40,6 +43,7 @@ namespace AngouriMath
                 (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Evaled, (n2 + inter.Right).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : (Augend.InnerSimplified, Addend.InnerSimplified) switch
                 {
@@ -57,6 +61,7 @@ namespace AngouriMath
         }
         public partial record Minusf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => (Subtrahend.Evaled, Minuend.Evaled) switch
             {
                 (Complex n1, Complex n2) => n1 - n2,
@@ -69,6 +74,7 @@ namespace AngouriMath
                 (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Evaled, (n2 - inter.Right).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : (Subtrahend.InnerSimplified, Minuend.InnerSimplified) switch
                 {
@@ -86,6 +92,7 @@ namespace AngouriMath
         }
         public partial record Mulf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => (Multiplier.Evaled, Multiplicand.Evaled) switch
             {
                 (Complex n1, Complex n2) => n1 * n2,
@@ -96,6 +103,7 @@ namespace AngouriMath
                 (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 * c).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : (Multiplier.InnerSimplified, Multiplicand.InnerSimplified) switch
                 {
@@ -113,6 +121,7 @@ namespace AngouriMath
         }
         public partial record Divf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => (Dividend.Evaled, Divisor.Evaled) switch
             {
                 (Complex n1, Complex n2) => n1 / n2,
@@ -123,6 +132,7 @@ namespace AngouriMath
                 (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 / c).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : (Dividend.InnerSimplified, Divisor.InnerSimplified) switch
                 {
@@ -139,6 +149,7 @@ namespace AngouriMath
         }
         public partial record Powf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => (Base.Evaled, Exponent.Evaled) switch
             {
                 (Complex n1, Complex n2) => Number.Pow(n1, n2),
@@ -149,6 +160,7 @@ namespace AngouriMath
                 (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => n2.Pow(c).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : (Base.InnerSimplified, Exponent.InnerSimplified) switch
                 {
@@ -167,6 +179,7 @@ namespace AngouriMath
         }
         public partial record Sinf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Sin(n),
@@ -174,6 +187,7 @@ namespace AngouriMath
                 FiniteSet finite => finite.Apply(c => c.Sin().Evaled),
                 var n => New(n)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
@@ -185,6 +199,7 @@ namespace AngouriMath
         }
         public partial record Cosf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Cos(n),
@@ -192,6 +207,7 @@ namespace AngouriMath
                 FiniteSet finite => finite.Apply(c => c.Cos().Evaled),
                 var n => New(n)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
@@ -203,6 +219,7 @@ namespace AngouriMath
         }
         public partial record Tanf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Tan(n),
@@ -210,6 +227,7 @@ namespace AngouriMath
                 FiniteSet finite => finite.Apply(c => c.Tan().Evaled),
                 var n => New(n)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
@@ -221,6 +239,7 @@ namespace AngouriMath
         }
         public partial record Cotanf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Cotan(n),
@@ -228,6 +247,7 @@ namespace AngouriMath
                 FiniteSet finite => finite.Apply(c => c.Cotan().Evaled),
                 var n => New(n)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
@@ -239,6 +259,7 @@ namespace AngouriMath
         }
         public partial record Logf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => (Base.Evaled, Antilogarithm.Evaled) switch
             {
                 (Complex n1, Complex n2) => Number.Log(n1, n2),
@@ -249,6 +270,7 @@ namespace AngouriMath
                 (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => MathS.Log(n2, c).Evaled),
                 (var n1, var n2) => New(n1, n2)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : (Base.InnerSimplified, Antilogarithm.InnerSimplified) switch
                 {
@@ -264,6 +286,7 @@ namespace AngouriMath
         }
         public partial record Arcsinf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Arcsin(n),
@@ -271,6 +294,7 @@ namespace AngouriMath
                 FiniteSet finite => finite.Apply(c => c.Arcsin().Evaled),
                 var n => New(n)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
@@ -281,6 +305,7 @@ namespace AngouriMath
         }
         public partial record Arccosf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Arccos(n),
@@ -288,6 +313,7 @@ namespace AngouriMath
                 FiniteSet finite => finite.Apply(c => c.Arccos().Evaled),
                 var n => New(n)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
@@ -298,6 +324,7 @@ namespace AngouriMath
         }
         public partial record Arctanf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Arctan(n),
@@ -305,6 +332,7 @@ namespace AngouriMath
                 FiniteSet finite => finite.Apply(c => c.Arctan().Evaled),
                 var n => New(n)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
@@ -315,6 +343,7 @@ namespace AngouriMath
         }
         public partial record Arccotanf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Arccotan(n),
@@ -322,6 +351,7 @@ namespace AngouriMath
                 FiniteSet finite => finite.Apply(c => c.Arccotan().Evaled),
                 var n => New(n)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
@@ -332,6 +362,7 @@ namespace AngouriMath
         }
         public partial record Factorialf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Factorial(n),
@@ -339,6 +370,7 @@ namespace AngouriMath
                 FiniteSet finite => finite.Apply(c => c.Factorial().InnerSimplified),
                 var n => New(n)
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
@@ -357,6 +389,7 @@ namespace AngouriMath
         }
         public partial record Derivativef
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations) switch
             {
                 (Tensor expr, var var, var iters) => expr.Elementwise(n => new Derivativef(n, var, iters).Evaled),
@@ -365,6 +398,7 @@ namespace AngouriMath
                 (var expr, Variable var, var asInt) => expr.Derive(var, asInt),
                 _ => this
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Var.InnerSimplified is Variable var
                 ? Iterations == 0
@@ -384,6 +418,7 @@ namespace AngouriMath
                 return changed;
             }
 
+            /// <inheritdoc/>
             protected override Entity InnerEval() => (Expression.Evaled, Var.Evaled, Iterations) switch
             {
                 (Tensor expr, var var, var iters) => expr.Elementwise(n => new Integralf(n, var, iters).Evaled),
@@ -393,11 +428,13 @@ namespace AngouriMath
 
                 _ => this
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                Var.InnerSimplified is Variable var ? SequentialIntegrating(Expression.InnerSimplified, var, Iterations) : this;
         }
         public partial record Limitf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval() => ApproachFrom switch
             {
                 ApproachFrom.Left => New(Expression.Evaled, Var, Destination.Evaled, ApproachFrom),
@@ -405,6 +442,7 @@ namespace AngouriMath
                 ApproachFrom.Right => New(Expression.Evaled, Var, Destination.Evaled, ApproachFrom),
                 _ => this,
             };
+            /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Var.InnerSimplified switch
                 {
@@ -416,6 +454,7 @@ namespace AngouriMath
 
         public partial record Signumf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval()
                 => Argument.Evaled switch
                 {
@@ -426,6 +465,7 @@ namespace AngouriMath
                 };
 
             // TODO: probably we can simplify it further
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
                 => Argument.Evaled is Number { IsExact: true } ? Argument.Evaled :
                 Argument.InnerSimplified switch
@@ -438,6 +478,7 @@ namespace AngouriMath
 
         public partial record Absf
         {
+            /// <inheritdoc/>
             protected override Entity InnerEval()
                 => Argument.Evaled switch
                 {
@@ -448,6 +489,7 @@ namespace AngouriMath
                 };
 
             // TODO: probably we can simplify it further
+            /// <inheritdoc/>
             protected override Entity InnerSimplify()
                 => Argument.Evaled is Number { IsExact: true } ? Argument.Evaled :
                 Argument.InnerSimplified switch
