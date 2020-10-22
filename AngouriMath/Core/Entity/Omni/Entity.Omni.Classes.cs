@@ -225,6 +225,8 @@ namespace AngouriMath
             }
             #endregion
 
+#pragma warning disable CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
+
             #region Interval
             /// <summary>
             /// An interval represents all numbres in between two Entities
@@ -338,8 +340,7 @@ namespace AngouriMath
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
-                    var substituted = Predicate.Replace(varCandidate => 
-                        varCandidate == Var ? entity : varCandidate);
+                    var substituted = Predicate.Substitute(Var, entity);
                     substituted = substituted.InnerSimplified;
                     if (substituted.EvaluableBoolean)
                     {
@@ -377,6 +378,13 @@ namespace AngouriMath
                     var (one, two) = SetOperators.MergeToOneVariable(this, other);
                     return one.Predicate == two.Predicate;
                 }
+
+
+                private readonly static Variable universalVoidConstant = Variable.CreateVariableUnchecked("%");
+                /// <inheritdoc/>
+                public override int GetHashCode()
+                    // TODO: might not always work, requires testing
+                    => Predicate.Substitute(Var, universalVoidConstant).GetHashCode();
             }
             #endregion
 
@@ -568,5 +576,6 @@ namespace AngouriMath
             }
             #endregion
         }
+#pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
     }
 }

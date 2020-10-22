@@ -5,7 +5,7 @@ namespace UnitTests.Common
 {
     public class InnerSimplifyTest
     {
-        [Theory]
+        [Theory(Skip = "Moved to the 1.2.2 milestone, see issue here https://github.com/asc-community/AngouriMath/issues/263")]
         [InlineData("3 ^ 100")]
         [InlineData("(-3) ^ 100")]
         [InlineData("0.01 ^ 100")]

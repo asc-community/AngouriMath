@@ -15,6 +15,8 @@ namespace AngouriMath
 {
     partial record Entity
     {
+#pragma warning disable CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
+
         /// <summary>
         /// This node represents all possible values a boolean node might be of
         /// </summary>
@@ -279,5 +281,6 @@ namespace AngouriMath
             }
         }
         #endregion
+#pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
     }
 }

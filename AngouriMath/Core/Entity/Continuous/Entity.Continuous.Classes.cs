@@ -67,6 +67,8 @@ namespace AngouriMath
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
 
+#pragma warning disable CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
+
         #region Operators
 
         /// <summary>
@@ -411,5 +413,7 @@ namespace AngouriMath
         }
 
         #endregion
+
+#pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
     }
 }

@@ -18,8 +18,11 @@ namespace AngouriMath
     partial record Entity
     {
         #region Tensor
+
         /// <summary>Basic tensor implementation: <a href="https://en.wikipedia.org/wiki/Tensor"/></summary>
+#pragma warning disable CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
         public partial record Tensor(GenTensor InnerTensor) : Entity
+#pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             Tensor New(GenTensor innerTensor) =>
