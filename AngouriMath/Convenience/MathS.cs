@@ -111,7 +111,7 @@ namespace AngouriMath
         /// <param name="a">Argument node of cosecant</param>
         /// <returns>Cosine node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Csc(Entity a) => new Cosecantf(a);
+        public static Entity Cosec(Entity a) => new Cosecantf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
         /// <param name="base">Base node of logarithm</param>
@@ -162,18 +162,6 @@ namespace AngouriMath
         /// <returns>Cotangent node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cotan(Entity a) => new Cotanf(a);
-
-        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
-        /// <param name="a">Argument node of which secant will be taken</param>
-        /// <returns>Reciprocal of cosine node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Sec(Entity a) => 1 / Cos(a);
-
-        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
-        /// <param name="a">Argument node of which cosecant will be taken</param>
-        /// <returns>Reciprocal of sine node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Cosec(Entity a) => 1 / Sin(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arcsine will be taken</param>

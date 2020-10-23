@@ -123,5 +123,21 @@ namespace UnitTests.Algebra
             var derived = func.Differentiate("x");
             Assert.Equal(MathS.Signum("x + 2").Simplify(), derived.Simplify());
         }
+
+        [Fact]
+        public void TestSecant()
+        {
+            Entity func = "sec(2x)";
+            var derived = func.Differentiate("x");
+            Assert.Equal(MathS.Sec("2x") * MathS.Tan("2x") * 2, derived.Simplify());
+        }
+
+        [Fact]
+        public void TestCosecant()
+        {
+            Entity func = "csc(2x)";
+            var derived = func.Differentiate("x");
+            Assert.Equal(-MathS.Cosec("2x") * MathS.Cotan("2x") * 2, derived.Simplify());
+        }
     }
 }

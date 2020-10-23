@@ -129,5 +129,17 @@ namespace UnitTests.PatternsTest
         [InlineData("abs(sgn(x))", "1")]
         [InlineData("sgn(abs(x))", "1")]
         public void AbsTest(string input, string output) => AssertSimplifyToString(input, output);
+
+        [Theory]
+        [InlineData("sin(x) * csc(x)", "1")]
+        [InlineData("cos(x) * sec(x)", "1")]
+        [InlineData("csc(x) * sin(x)", "1")]
+        [InlineData("sec(x) * cos(x)", "1")]
+        [InlineData("a / sec(x)", "a cos(x)")]
+        [InlineData("a / sin(x)", "a csc(x)")]
+        [InlineData("a / csc(x)", "a sin(x)")]
+        [InlineData("a / cos(x)", "a sec(x)")]
+        public void TrigTest(string input, string output) => AssertSimplifyToString(input, output);
     }
 }
+
