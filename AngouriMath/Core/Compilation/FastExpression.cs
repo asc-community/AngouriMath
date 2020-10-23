@@ -57,6 +57,8 @@ namespace AngouriMath.Core
             // 1-arg functions
             CALL_SIN = 50,
             CALL_COS,
+            CALL_SECANT,
+            CALL_COSECANT,
             CALL_TAN,
             CALL_COTAN,
             CALL_ARCSIN,
@@ -149,6 +151,12 @@ namespace AngouriMath.Core
                         break;
                     case InstructionType.CALL_COS:
                         stack.Push(Complex.Cos(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_SECANT:
+                        stack.Push(1 / Complex.Cos(stack.Pop()));
+                        break;
+                    case InstructionType.CALL_COSECANT:
+                        stack.Push(1 / Complex.Sin(stack.Pop()));
                         break;
                     case InstructionType.CALL_TAN:
                         stack.Push(Complex.Tan(stack.Pop()));

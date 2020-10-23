@@ -148,6 +148,22 @@ namespace AngouriMath
                 1 / Argument.Cos().Pow(2) * Argument.InnerDifferentiate(variable);
         }
 
+        public partial record Secantf
+        {
+            // sec(a)' = sec(a) * tan(a) * a'
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                this * Argument.Tan() * Argument.Differentiate(variable);
+        }
+
+        public partial record Cosecantf
+        {
+            // csc(a)' = -csc(a) * cotan(a) * a'
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable) =>
+                -this * Argument.Cotan() * Argument.Differentiate(variable);
+        }
+
         public partial record Cotanf
         {
             // cot(a)' = -1 / sin(a) ^ 2 * a'

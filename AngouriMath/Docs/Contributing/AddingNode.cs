@@ -47,7 +47,7 @@ using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using An
 /// 
 /// Now, you might be required to complete the following steps as well:
 /// 
-/// 6. Derivation (if applicable) (<see cref="Sinf.Derive"/>)
+/// 6. Derivation (if applicable) (<see cref="Sinf.InnerDifferentiate"/>)
 /// 7. Compilation (if applicable) (<see cref="Sinf.CompileNode"/> and <see cref="FastExpression.Substitute"/>)
 /// 8. Parser (if applicable) (See ImproveParser.md in the same folder as this file)
 /// 9. Analytical Solver (if applicable) (<see cref="Sinf.InvertNode"/>)

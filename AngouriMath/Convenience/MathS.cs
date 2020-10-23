@@ -101,6 +101,18 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cos(Entity a) => new Cosf(a);
 
+        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of secant</param>
+        /// <returns>Cosine node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Sec(Entity a) => new Secantf(a);
+
+        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of cosecant</param>
+        /// <returns>Cosine node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Csc(Entity a) => new Cosecantf(a);
+
         /// <summary><a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
         /// <param name="base">Base node of logarithm</param>
         /// <param name="x">Argument node of logarithm</param>
