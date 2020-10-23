@@ -252,14 +252,24 @@ atom returns[Entity value]
     | 'ln(' args = function_arguments ')' { Assert("ln", 1, $args.list.Count); $value = MathS.Ln($args.list[0]); }
     | 'tan(' args = function_arguments ')' { Assert("tan", 1, $args.list.Count); $value = MathS.Tan($args.list[0]); }
     | 'cotan(' args = function_arguments ')' { Assert("cotan", 1, $args.list.Count); $value = MathS.Cotan($args.list[0]); }
+    | 'cot(' args = function_arguments ')' { Assert("cotan", 1, $args.list.Count); $value = MathS.Cotan($args.list[0]); }
     | 'sec(' args = function_arguments ')' { Assert("sec", 1, $args.list.Count); $value = MathS.Sec($args.list[0]); }
     | 'cosec(' args = function_arguments ')' { Assert("cosec", 1, $args.list.Count); $value = MathS.Cosec($args.list[0]); }
+    | 'csc(' args = function_arguments ')' { Assert("cosec", 1, $args.list.Count); $value = MathS.Cosec($args.list[0]); }
     | 'arcsin(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.Arcsin($args.list[0]); }
     | 'arccos(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.Arccos($args.list[0]); }
     | 'arctan(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.Arctan($args.list[0]); }
     | 'arccotan(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Arccotan($args.list[0]); }
     | 'arcsec(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Arcsec($args.list[0]); }
     | 'arccosec(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Arccosec($args.list[0]); }
+    | 'asin(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.Arcsin($args.list[0]); }
+    | 'acos(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.Arccos($args.list[0]); }
+    | 'atan(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.Arctan($args.list[0]); }
+    | 'acotan(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Arccotan($args.list[0]); }
+    | 'asec(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Arcsec($args.list[0]); }
+    | 'acosec(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Arccosec($args.list[0]); }
+    | 'acot(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Arccotan($args.list[0]); }
+    | 'arccot(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Arccotan($args.list[0]); }
     | 'gamma(' args = function_arguments ')' { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); }
     | 'derivative(' args = function_arguments ')' 
         {
