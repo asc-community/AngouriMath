@@ -86,6 +86,22 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Secantf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"sec({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Cosecantf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"csc({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Tanf
         {
             /// <inheritdoc/>

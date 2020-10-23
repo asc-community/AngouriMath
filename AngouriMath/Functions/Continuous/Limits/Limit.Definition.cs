@@ -144,7 +144,13 @@ namespace AngouriMath.Functions.Algebra
             Logf(var @base, var arg) when arg.ContainsNode(x) && !@base.ContainsNode(x) && (arg - 1).Limit(x, dest).Evaled == 0 => (arg - 1) / MathS.Ln(@base),
 
             // 1 - cos(f(x)) ~ f(x)^2 / 2
-            Minusf(Integer(1), Cosf(var arg)) when arg.Limit(x, dest).Evaled == 0 => arg.Pow(2) / 2,
+            Cosf(var arg) when arg.Limit(x, dest).Evaled == 0 => 1 - arg.Pow(2) / 2,
+
+            // sec(f(x)) = 1 / cos(f(x)) ~ 2 / (2 - f(x)2) for f(x) -> 0
+            Secantf(var arg) when arg.Limit(x, dest).Evaled == 0 => 2 / (2 - arg.Pow(2)),
+
+            // csc(f(x)) = 1 / sin(f(x)) = 1 / f(x) for f(x) -> 0
+            Cosecantf(var arg) when arg.Limit(x, dest).Evaled == 0 => 1 / arg,
 
             // (f(x) + 1) ^ c - 1 ~ c * f(x)
             Minusf(Powf(var xPlusOne, var power), Integer(1)) when xPlusOne.ContainsNode(x) && !power.ContainsNode(x) && (xPlusOne - 1).Limit(x, dest).Evaled == 0 => power * (xPlusOne - 1),
@@ -159,6 +165,8 @@ namespace AngouriMath.Functions.Algebra
             xPlusOne.ContainsNode(x) && xPower.ContainsNode(x) && 
             (xPlusOne - 1).Limit(x, dest).Evaled == Integer.Zero && IsInfiniteNode(xPower.Limit(x, dest)) => 
             MathS.e.Pow(xPower * (xPlusOne - 1)),
+
+            Secantf(var arg) when arg.Limit(x, dest).Evaled == 0 => Integer.One,
 
             _ => expr
         };

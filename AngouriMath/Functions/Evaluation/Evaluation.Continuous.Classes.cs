@@ -197,6 +197,7 @@ namespace AngouriMath
                     var n => New(n)
                 };
         }
+
         public partial record Cosf
         {
             /// <inheritdoc/>
@@ -217,6 +218,49 @@ namespace AngouriMath
                     var n => New(n)
                 };
         }
+
+        public partial record Secantf
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Secant(n),
+                Tensor n => n.Elementwise(n => n.Secant().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Secant().Evaled),
+                var n => New(n)
+            };
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                {
+                    Tensor n => n.Elementwise(n => n.Secant().InnerSimplified),
+                    { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res).InnerSimplified,
+                    FiniteSet finite => finite.Apply(c => c.Secant().InnerSimplified),
+                    var n => New(n)
+                };
+        }
+
+        public partial record Cosecantf
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Cosecant(n),
+                Tensor n => n.Elementwise(n => n.Cosecant().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Cosecant().Evaled),
+                var n => New(n)
+            };
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                {
+                    Tensor n => n.Elementwise(n => n.Cosecant().InnerSimplified),
+                    { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res).InnerSimplified,
+                    FiniteSet finite => finite.Apply(c => c.Cosecant().InnerSimplified),
+                    var n => New(n)
+                };
+        }
+
         public partial record Tanf
         {
             /// <inheritdoc/>
