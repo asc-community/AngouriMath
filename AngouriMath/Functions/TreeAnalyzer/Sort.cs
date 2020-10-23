@@ -79,6 +79,16 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level) => "cosf_";
         }
 
+        public partial record Secantf
+        {
+            private protected override string SortHashName(SortLevel level) => "cosf_secf_";
+        }
+
+        public partial record Cosecantf
+        {
+            private protected override string SortHashName(SortLevel level) => "sinf_cscf_";
+        }
+
         public partial record Tanf
         {
             private protected override string SortHashName(SortLevel level) => "tanf_";
@@ -86,7 +96,7 @@ namespace AngouriMath
 
         public partial record Cotanf
         {
-            private protected override string SortHashName(SortLevel level) => "cotanf_";
+            private protected override string SortHashName(SortLevel level) => "tanf_cotanf_";
         }
 
         public partial record Logf
