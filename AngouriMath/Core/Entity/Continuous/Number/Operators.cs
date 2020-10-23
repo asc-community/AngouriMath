@@ -427,6 +427,14 @@ namespace AngouriMath
                     re.Cos(context).Multiply(sinh, context));
             }
 
+            /// <summary>Calculates the exact value of secant of num</summary>
+            public static Complex Secant(Complex num)
+                => 1 / Cos(num);
+
+            /// <summary>Calculates the exact value of cosecant of num</summary>
+            public static Complex Cosecant(Complex num)
+                => 1 / Sin(num);
+
             /// <summary>
             /// Defines the Signum function on complex numbers
             /// Which is z / |z|

@@ -222,6 +222,32 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
+        /// <summary>
+        /// A node of secant
+        /// </summary>
+        public partial record Secantf(Entity Argument) : Function
+        {
+            /// <summary>Reuse the cache by returning the same object if possible</summary>
+            private Secantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+
+        /// <summary>
+        /// A node of secant
+        /// </summary>
+        public partial record Cosecantf(Entity Argument) : Function
+        {
+            /// <summary>Reuse the cache by returning the same object if possible</summary>
+            private Cosecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+
         #endregion
 
         #region Exponential
