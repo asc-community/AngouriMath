@@ -130,6 +130,8 @@ namespace UnitTests.Convenience
         [Fact] public void TestIntegral2Args1() => Assert.Equal(MathS.Integral("x + 2", "x"), FromString("integral(x + 2, x)"));
         [Fact] public void TestDerivative2Args2() => Assert.Equal(2 * MathS.Derivative("x + 2", "x"), FromString("2 derivative(x + 2, x)"));
         [Fact] public void TestIntegral2Args2() => Assert.Equal(2 * MathS.Integral("x + 2", "x"), FromString("2 integral(x + 2, x)"));
+        [Fact] public void TestSec() => Assert.Equal(MathS.Sec("x"), FromString("sec(x)"));
+        [Fact] public void TestCosec() => Assert.Equal(MathS.Cosec("x"), FromString("csc(x)"));
 
         [Fact] public void TestInvalidArg1() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x)"));
         [Fact] public void TestInvalidArg2() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(24)"));

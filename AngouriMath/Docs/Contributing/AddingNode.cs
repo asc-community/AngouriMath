@@ -35,23 +35,29 @@ using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using An
 /// 
 /// 3. A few essential methods
 ///     a. InnerEval and InnerSimplify (<see cref="Sinf.InnerEval"/> for numerical and <see cref="Andf.InnerEval"/> for boolean)
-///     b. Stringize (<see cref="Sinf.Stringize"/>)
-///     c. Latexise (<see cref="Sinf.Latexise"/>)
-///     d. Limit computation (<see cref="Sinf.ComputeLimitDivideEtImpera"/>)
+///     b. Stringize (<see cref="Sinf.Stringize"/>) (and tests to CircleTest.cs)
+///     c. Latexise (<see cref="Sinf.Latexise"/>) (and tests to LatexTest.cs)
+///     d. Limit computation (<see cref="Sinf.ComputeLimitDivideEtImpera"/>) (and tests to LimitTest.cs)
 ///     e. Hash for sorting (<see cref="Sinf.SortHashName"/>)
 ///     f. Default domain <see cref="Sinf.Codomain"/>
-///     g. Substitute <see cref="Sinf.Substitute"/>
+///     g. Substitute <see cref="Sinf.Substitute"/> (and tests to SubstituteTest.cs)
 /// 
 /// 4. Pattern replacer (<see cref="Patterns.CommonRules"/> and <see cref="Simplificator.Alternate"/>)
+/// (and tests to SimplifyTest.cs or PatternTest.cs)
 /// 5. Expose to the user (add it to MathS, like <see cref="MathS.Sin">this</see>)
 /// 
 /// Now, you might be required to complete the following steps as well:
 /// 
 /// 6. Derivation (if applicable) (<see cref="Sinf.InnerDifferentiate"/>)
+/// (and tests to DerivativeTest.cs)
 /// 7. Compilation (if applicable) (<see cref="Sinf.CompileNode"/> and <see cref="FastExpression.Substitute"/>)
+/// (and tests to CompilationTest.cs)
 /// 8. Parser (if applicable) (See ImproveParser.md in the same folder as this file)
+/// (and tests to FromStringTest.cs)
 /// 9. Analytical Solver (if applicable) (<see cref="Sinf.InvertNode"/>)
+/// (and tests to SolveOneEquation.cs)
 /// 10. ToSympy (if applicable) (<see cref="Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
+/// (and tests to ToSymPyTest.cs)
 
 #pragma warning restore CS1587 // XML comment is not placed on a valid language element
 
