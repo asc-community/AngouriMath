@@ -137,7 +137,7 @@ namespace UnitTests.Algebra
         {
             Entity func = "csc(2x)";
             var derived = func.Differentiate("x");
-            Assert.Equal(-MathS.Cosec("2x") * MathS.Cotan("2x") * 2, derived.Simplify());
+            Assert.Equal(-2 * MathS.Cosec("2x") * MathS.Cotan("2x"), derived.Simplify());
         }
     }
 }

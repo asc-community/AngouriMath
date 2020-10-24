@@ -89,6 +89,7 @@ namespace AngouriMath.Functions
                     AddHistory(res = res.Replace(Patterns.TrigonometricRules).Replace(Patterns.CommonRules).InnerSimplified);
                     AddHistory(res1);
                     res = res.Complexity > res1.Complexity ? res1 : res;
+                    AddHistory(res = res.Replace(Patterns.CollapseToSecCsc));
                 }
 
                 if (res.Nodes.Any(child => child is Statement))
@@ -122,8 +123,6 @@ namespace AngouriMath.Functions
 
                 AddHistory(res = res.Replace(Patterns.CommonRules));
                 AddHistory(res = res.Replace(Patterns.NumericNeatRules));
-
-                AddHistory(res = res.Replace(Patterns.CollapseToSecCsc));
                 /*
                 This was intended to simplify expressions as polynomials over nodes, some kind of
                 greatest common node and simplifying over it. However, the current algorithm does

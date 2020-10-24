@@ -112,14 +112,14 @@ namespace AngouriMath
         {
             // TODO: when arcsecant added, switch to it
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                (1 / Argument.Cos()).InvertNode(value, x);
+                (1 / Argument.Cos()).Invert(value, x);
         }
 
         partial record Cosecantf
         {
             // TODO: when arccosecant added, switch to it
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                (1 / Argument.Sin()).InvertNode(value, x);
+                (1 / Argument.Sin()).Invert(value, x);
         }
 
         partial record Tanf

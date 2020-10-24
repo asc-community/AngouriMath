@@ -24,11 +24,11 @@ namespace AngouriMath.Functions.Algebra
 
             Entity.Secantf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    MathS.Ln(MathS.Sec(arg) + MathS.Tan(x)) / a,
+                    MathS.Ln((1 + MathS.Sin(arg)) / (1 - MathS.Sin(arg))) / (2 * a),
 
             Entity.Cosecantf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>
-                    -MathS.Ln(MathS.Cosec(arg) + MathS.Cotan(x)) / a,
+                    MathS.Ln(0.5 * MathS.Tan(arg)) / a,
 
             Entity.Tanf(var arg) when
                 TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out _) =>

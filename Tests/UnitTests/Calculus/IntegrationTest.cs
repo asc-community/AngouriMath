@@ -19,8 +19,8 @@ namespace UnitTests.Algebra
         [InlineData("log(a, x)", "x * (ln(x) - 1) / ln(a)")]
         [InlineData("e ^ x", "e ^ x")]
         [InlineData("a ^ x", "a ^ x / ln(a)")]
-        [InlineData("sec(a x + b)", "ln(sec(a x) + tan(a x)) / a")]
-        [InlineData("csc(a x + b)", "-ln(csc(a x) + cotan(a x)) / a")]
+        [InlineData("sec(a x + b)", "ln((1 + sin(a x + b)) / (1 - sin(a x + b)) / (2a)")]
+        [InlineData("csc(a x + b)", "ln(tan(a x + b)) / a")]
         public void TestIndefinite(string initial, string expected)
         {
             Assert.Equal(expected.ToEntity().InnerSimplified, initial.Integrate("x").Simplify());

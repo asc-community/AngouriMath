@@ -144,7 +144,7 @@ namespace UnitTests.Convenience
         [Fact] public void Trig() =>
             TestSimplify(@"\sin\left(\cos\left(\tan\left(\cot\left(x\right)\right)\right)\right)", MathS.Sin(MathS.Cos(MathS.Tan(MathS.Cotan(x)))));
         [Fact] public void SecCosec() =>
-            TestSimplify(@"\frac{1}{\cos\left(\frac{1}{\sin\left(x\right)}\right)}", MathS.Sec(MathS.Cosec(x)));
+            TestSimplify(@"\sec\left(\csc\left(x\right)\right)", MathS.Sec(MathS.Cosec(x)));
         [Fact] public void ArcTrig() =>
             TestSimplify(@"\arcsin\left(\arccos\left(\arctan\left(\arccot\left(x\right)\right)\right)\right)", MathS.Arcsin(MathS.Arccos(MathS.Arctan(MathS.Arccotan(x)))));
         [Fact] public void ArcSecCosec() =>
