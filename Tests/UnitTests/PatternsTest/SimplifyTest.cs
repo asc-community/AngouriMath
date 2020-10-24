@@ -135,10 +135,10 @@ namespace UnitTests.PatternsTest
         [InlineData("cos(x) * sec(x)", "1")]
         [InlineData("csc(x) * sin(x)", "1")]
         [InlineData("sec(x) * cos(x)", "1")]
-        [InlineData("a / sec(x)", "a cos(x)")]
-        [InlineData("a / sin(x)", "a csc(x)")]
-        [InlineData("a / csc(x)", "a sin(x)")]
-        [InlineData("a / cos(x)", "a sec(x)")]
+        [InlineData("a / sec(x)", "cos(x) * a")]
+        [InlineData("a / sin(x)", "csc(x) * a")]
+        [InlineData("a / csc(x)", "sin(x) * a")]
+        [InlineData("a / cos(x)", "sec(x) * a")]
         public void TrigTest(string input, string output) => AssertSimplifyToString(input, output);
     }
 }

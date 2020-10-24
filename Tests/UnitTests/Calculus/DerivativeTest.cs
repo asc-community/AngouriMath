@@ -129,7 +129,7 @@ namespace UnitTests.Algebra
         {
             Entity func = "sec(2x)";
             var derived = func.Differentiate("x");
-            Assert.Equal(MathS.Sec("2x") * MathS.Tan("2x") * 2, derived.Simplify());
+            Assert.Equal(2 * MathS.Sec("2x") * MathS.Tan("2x"), derived.Simplify());
         }
 
         [Fact]

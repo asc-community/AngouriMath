@@ -82,14 +82,13 @@ namespace AngouriMath.Functions
                 AddHistory(res = res.Replace(Patterns.InvertNegativePowers).Replace(Patterns.DivisionPreparingRules).InnerSimplified);
                 AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplified);
 
-                if (res.Nodes.Any(child => child is
-                    Sinf or Cosf or Tanf or Cotanf or Arcsinf or Arccosf or Arctanf or Arccotanf))
+                if (res.Nodes.Any(child => child is TrigonometricFunction))
                 {
                     var res1 = res.Replace(Patterns.ExpandTrigonometricRules).InnerSimplified;
                     AddHistory(res = res.Replace(Patterns.TrigonometricRules).Replace(Patterns.CommonRules).InnerSimplified);
                     AddHistory(res1);
-                    res = res.Complexity > res1.Complexity ? res1 : res;
-                    AddHistory(res = res.Replace(Patterns.CollapseToSecCsc));
+                    res = PickSimplest(res, res1);
+                    AddHistory(res = res.Replace(Patterns.CollapseToSecCsc).Replace(Patterns.TrigonometricRules));
                 }
 
                 if (res.Nodes.Any(child => child is Statement))

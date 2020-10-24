@@ -68,7 +68,7 @@ namespace AngouriMath
                 // x / a = value => x = a * value
                 ? Dividend.Invert(value * Divisor, x)
                 // a / x = value => x = a / value
-                : Divisor.Invert(value / Dividend, x);
+                : Divisor.Invert(Dividend / value, x);
         }
 
         partial record Powf
@@ -112,14 +112,14 @@ namespace AngouriMath
         {
             // TODO: when arcsecant added, switch to it
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                (1 / Argument.Cos()).Invert(value, x);
+                (1 / Argument.Cos()).InvertNode(value, x);
         }
 
         partial record Cosecantf
         {
             // TODO: when arccosecant added, switch to it
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                (1 / Argument.Sin()).Invert(value, x);
+                (1 / Argument.Sin()).InvertNode(value, x);
         }
 
         partial record Tanf
