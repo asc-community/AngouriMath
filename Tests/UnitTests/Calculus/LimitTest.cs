@@ -71,6 +71,7 @@ namespace UnitTests.Algebra
         [InlineData("sin(x - a * x) / tan(b * x - x)", "(a - 1) / (1 - b)")]
         [InlineData("sin(x2) / sin(x)", "0")]
         [InlineData("(sin(x) - tan(a x)) / (sin(b x) - tan(x))", "(a - 1) / (1 - b)")]
+        [InlineData("sec(x)", "1")]
         public void TestEquivalenceTableTo0(string input, string expected)
         {
             var limit = input.ToEntity();

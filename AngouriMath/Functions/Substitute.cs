@@ -68,6 +68,20 @@ namespace AngouriMath
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
+        partial record Secantf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Argument.Substitute(x, value));
+        }
+
+        partial record Cosecantf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Argument.Substitute(x, value));
+        }
+
         partial record Tanf
         {
             /// <inheritdoc/>

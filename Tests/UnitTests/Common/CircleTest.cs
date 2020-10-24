@@ -100,5 +100,15 @@ namespace UnitTests.Common
         [InlineData("integral(y, x, 2)")]
         public void TestCalculus(string inputIsOutput) =>
             Assert.Equal(inputIsOutput, inputIsOutput.ToEntity().Stringize());
+
+        [Theory]
+        [InlineData("sec(x)")]
+        [InlineData("csc(x)")]
+        [InlineData("sin(x)")]
+        [InlineData("cos(x)")]
+        [InlineData("arcsin(x)")]
+        [InlineData("arccos(x)")]
+        public void TestTrig(string inputIsOutput) =>
+            Assert.Equal(inputIsOutput, inputIsOutput.ToEntity().Stringize());
     }
 }

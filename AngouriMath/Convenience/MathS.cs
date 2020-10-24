@@ -101,6 +101,18 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cos(Entity a) => new Cosf(a);
 
+        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of secant</param>
+        /// <returns>Cosine node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Sec(Entity a) => new Secantf(a);
+
+        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
+        /// <param name="a">Argument node of cosecant</param>
+        /// <returns>Cosine node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Entity Cosec(Entity a) => new Cosecantf(a);
+
         /// <summary><a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
         /// <param name="base">Base node of logarithm</param>
         /// <param name="x">Argument node of logarithm</param>
@@ -150,18 +162,6 @@ namespace AngouriMath
         /// <returns>Cotangent node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Cotan(Entity a) => new Cotanf(a);
-
-        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
-        /// <param name="a">Argument node of which secant will be taken</param>
-        /// <returns>Reciprocal of cosine node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Sec(Entity a) => 1 / Cos(a);
-
-        /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
-        /// <param name="a">Argument node of which cosecant will be taken</param>
-        /// <returns>Reciprocal of sine node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Cosec(Entity a) => 1 / Sin(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arcsine will be taken</param>
@@ -701,22 +701,22 @@ namespace AngouriMath
                 complexityCriteria ??= new Func<Entity, int>(expr =>
                 {
                     // Number of nodes
-                    var res = expr.Complexity;
+                    var res = expr.Complexity * 2;
 
                     // Number of variables
-                    res += expr.Nodes.Count(entity => entity is Variable);
+                    res += expr.Nodes.Count(entity => entity is Variable) * 2;
 
                     // Number of divides
-                    res += expr.Nodes.Count(entity => entity is Divf) / 2;
+                    res += expr.Nodes.Count(entity => entity is Divf);
 
                     // Number of negative powers
-                    res += expr.Nodes.Count(entity => entity is Powf(_, Real { IsNegative: true })) * 4;
+                    res += expr.Nodes.Count(entity => entity is Powf(_, Real { IsNegative: true })) * 8;
 
                     // Number of negative reals
-                    res += expr.Nodes.Count(entity => entity is Real { IsNegative: true }) * 3 /* to outweigh number of nodes */;
+                    res += expr.Nodes.Count(entity => entity is Real { IsNegative: true }) * 6 /* to outweigh number of nodes */;
 
                     // 0 < x is bad. x > 0 is good.
-                    res += expr.Nodes.Count(entity => entity is ComparisonSign && entity.DirectChildren[0] == 0);
+                    res += expr.Nodes.Count(entity => entity is ComparisonSign && entity.DirectChildren[0] == 0) * 2;
 
                     return res;
                 });

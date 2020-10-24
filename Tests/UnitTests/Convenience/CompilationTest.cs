@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using System.Numerics;
 using Xunit;
+using AngouriMath.Extensions;
 
 namespace UnitTests.Convenience
 {
@@ -108,6 +109,22 @@ namespace UnitTests.Convenience
             var expr = MathS.Abs(x) + 4;
             var func = expr.Compile(x);
             Assert.Equal(9, func.Call(new Complex(3, 4)));
+        }
+
+        [Fact]
+        public void TestSec()
+        {
+            var expr = MathS.Sec(x) + 2;
+            var func = expr.Compile(x);
+            Assert.Equal(3, func.Call(0));
+        }
+
+        [Fact]
+        public void TestCosec()
+        {
+            var expr = MathS.Cosec(x) + 2;
+            var func = expr.Compile(x);
+            Assert.Equal((Complex)"1 / sin(1) + 2".EvalNumerical(), func.Call(1));
         }
     }
 }

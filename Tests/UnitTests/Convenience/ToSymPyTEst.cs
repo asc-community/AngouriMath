@@ -63,6 +63,8 @@ namespace UnitTests.Convenience
         [InlineData(@"A \ B", "Complement(A, B)")]
         [InlineData(@"a in B", "a in B")]
         [InlineData("domain({ x : x > 0 }, RR)", "ConditionSet(x, x > 0, S.Reals)")]
+        [InlineData("sec(x)", "sympy.sec(x)")]
+        [InlineData("csc(x)", "sympy.csc(x)")]
         public void TestSymPy(string expression, string expectedToBeIn, bool contains = true)
         {
             var ent = MathS.FromString(expression);

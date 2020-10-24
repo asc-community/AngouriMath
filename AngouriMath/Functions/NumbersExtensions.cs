@@ -168,6 +168,25 @@ namespace AngouriMath
         public static EDecimal Signum(this EDecimal x, EContext _)
             => x.Sign;
 
+        /// <summary>
+        /// 1 / Cos(x)
+        /// </summary>
+        public static EDecimal Secant(this EDecimal x, EContext context)
+        {
+            if (!x.IsFinite)
+                return EDecimal.NaN;
+            return EDecimal.One.Divide(x.Cos(context), context);
+        }
+
+        /// <summary>
+        /// 1 / Sin(x)
+        /// </summary>
+        public static EDecimal Cosecant(this EDecimal x, EContext context)
+        {
+            if (!x.IsFinite)
+                return EDecimal.NaN;
+            return EDecimal.One.Divide(x.Sin(context), context);
+        }
 
         /// <summary>Truncates <paramref name="x"/> to [-2*<see cref="Math.PI"/>, 2*<see cref="Math.PI"/>] </summary>
         private static void TruncateToPeriodicInterval(ref EDecimal x, ConstantCache consts, EContext context)

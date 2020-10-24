@@ -90,6 +90,10 @@ namespace AngouriMath
         public Entity Tan() => new Tanf(this);
         /// <summary><see cref="MathS.Cotan(Entity)"/></summary>
         public Entity Cotan() => new Cotanf(this);
+        /// <summary><see cref="MathS.Secant(Entity)"/></summary>
+        public Entity Secant() => new Secantf(this);
+        /// <summary><see cref="MathS.Cosecant(Entity)"/></summary>
+        public Entity Cosecant() => new Cosecantf(this);
         /// <summary><see cref="MathS.Pow(Entity, Entity)"/></summary>
         public Entity Pow(Entity n) => new Powf(this, n);
         /// <summary><see cref="MathS.Log(Entity, Entity)"/></summary>

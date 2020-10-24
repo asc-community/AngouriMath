@@ -171,9 +171,17 @@ namespace AngouriMath
         #region Trigonometry
 
         /// <summary>
+        /// Describes any function that is related to trigonometry
+        /// </summary>
+        public abstract record TrigonometricFunction : Function
+        {
+
+        }
+
+        /// <summary>
         /// A node of sine
         /// </summary>
-        public partial record Sinf(Entity Argument) : Function
+        public partial record Sinf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Sinf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -186,7 +194,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of cosine
         /// </summary>
-        public partial record Cosf(Entity Argument) : Function
+        public partial record Cosf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Cosf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -199,7 +207,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of tangent
         /// </summary>
-        public partial record Tanf(Entity Argument) : Function
+        public partial record Tanf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Tanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -212,10 +220,36 @@ namespace AngouriMath
         /// <summary>
         /// A node of cotangent
         /// </summary>
-        public partial record Cotanf(Entity Argument) : Function
+        public partial record Cotanf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Cotanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+
+        /// <summary>
+        /// A node of secant
+        /// </summary>
+        public partial record Secantf(Entity Argument) : TrigonometricFunction
+        {
+            /// <summary>Reuse the cache by returning the same object if possible</summary>
+            private Secantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+
+        /// <summary>
+        /// A node of secant
+        /// </summary>
+        public partial record Cosecantf(Entity Argument) : TrigonometricFunction
+        {
+            /// <summary>Reuse the cache by returning the same object if possible</summary>
+            private Cosecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
@@ -261,7 +295,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arcsine
         /// </summary>
-        public partial record Arcsinf(Entity Argument) : Function
+        public partial record Arcsinf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arcsinf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -274,7 +308,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arccosine
         /// </summary>
-        public partial record Arccosf(Entity Argument) : Function
+        public partial record Arccosf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arccosf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -287,7 +321,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arctangent
         /// </summary>
-        public partial record Arctanf(Entity Argument) : Function
+        public partial record Arctanf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arctanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -300,7 +334,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arccotangent
         /// </summary>
-        public partial record Arccotanf(Entity Argument) : Function
+        public partial record Arccotanf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             Arccotanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);

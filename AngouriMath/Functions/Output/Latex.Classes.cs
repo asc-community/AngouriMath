@@ -122,11 +122,26 @@ namespace AngouriMath
             public override string Latexise() =>
                 @"\sin\left(" + Argument.Latexise() + @"\right)";
         }
+
         public partial record Cosf
         {
             /// <inheritdoc/>
             public override string Latexise() =>
                 @"\cos\left(" + Argument.Latexise() + @"\right)";
+        }
+
+        public partial record Secantf
+        {
+            /// <inheritdoc/>
+            public override string Latexise() =>
+                @"\sec\left(" + Argument.Latexise() + @"\right)";
+        }
+
+        public partial record Cosecantf
+        {
+            /// <inheritdoc/>
+            public override string Latexise() =>
+                @"\csc\left(" + Argument.Latexise() + @"\right)";
         }
 
         public partial record Tanf

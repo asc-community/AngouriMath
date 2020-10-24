@@ -18,31 +18,31 @@ namespace AngouriMath
 {
     public abstract partial record Entity : ILatexiseable
     {
-        public partial record Number
+        partial record Number
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 => throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
         }
 
-        public partial record Variable
+        partial record Variable
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) => new[] { value };
         }
 
-        public partial record Tensor : Entity
+        partial record Tensor : Entity
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) => new[] { this };
         }
 
         // Each function and operator processing
-        public partial record Sumf
+        partial record Sumf
         {
             // x + a = value => x = value - a
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Augend.ContainsNode(x) ? Augend.Invert(value - Addend, x) : Addend.Invert(value - Augend, x);
         }
 
-        public partial record Minusf
+        partial record Minusf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Subtrahend.ContainsNode(x)
@@ -52,7 +52,7 @@ namespace AngouriMath
                 : Minuend.Invert(value - Subtrahend, x);
         }
 
-        public partial record Mulf
+        partial record Mulf
         {
             // x * a = value => x = value / a
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
@@ -61,17 +61,17 @@ namespace AngouriMath
                 : Multiplicand.Invert(value / Multiplier, x);
         }
 
-        public partial record Divf
+        partial record Divf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Dividend.ContainsNode(x)
                 // x / a = value => x = a * value
                 ? Dividend.Invert(value * Divisor, x)
                 // a / x = value => x = a / value
-                : Divisor.Invert(value / Dividend, x);
+                : Divisor.Invert(Dividend / value, x);
         }
 
-        public partial record Powf
+        partial record Powf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
             {
@@ -90,7 +90,7 @@ namespace AngouriMath
         }
 
         // TODO: Consider case when sin(sin(x)) where double-mention of n occures
-        public partial record Sinf
+        partial record Sinf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 // sin(x) = value => x = arcsin(value) + 2pi * n
@@ -99,7 +99,7 @@ namespace AngouriMath
                 .Concat(Argument.Invert(MathS.pi - MathS.Arcsin(value) + 2 * MathS.pi * Variable.CreateUnique(this + value, "n"), x));
         }
 
-        public partial record Cosf
+        partial record Cosf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 // cos(x) = value => x = arccos(value) + 2pi * n
@@ -108,21 +108,35 @@ namespace AngouriMath
                 .Concat(Argument.Invert(-MathS.Arccos(value) + 2 * MathS.pi * Variable.CreateUnique(this + value, "n"), x));
         }
 
-        public partial record Tanf
+        partial record Secantf
+        {
+            // TODO: when arcsecant added, switch to it
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                (1 / Argument.Cos()).InvertNode(value, x);
+        }
+
+        partial record Cosecantf
+        {
+            // TODO: when arccosecant added, switch to it
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                (1 / Argument.Sin()).InvertNode(value, x);
+        }
+
+        partial record Tanf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 // tan(x) = value => x = arctan(value) + pi * n
                 Argument.Invert(MathS.Arctan(value) + MathS.pi * Variable.CreateUnique(this + value, "n"), x);
         }
 
-        public partial record Cotanf
+        partial record Cotanf
         {
             // cotan(x) = value => x = arccotan(value) + pi * n
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Argument.Invert(MathS.Arccotan(value) + MathS.pi * Variable.CreateUnique(this + value, "n"), x);
         }
 
-        public partial record Logf
+        partial record Logf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Base.ContainsNode(x)
@@ -132,7 +146,7 @@ namespace AngouriMath
                 : Antilogarithm.Invert(MathS.Pow(Base, value), x);
         }
 
-        public partial record Arcsinf
+        partial record Arcsinf
         {
             private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
             private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
@@ -141,7 +155,7 @@ namespace AngouriMath
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Sin(value), x) : Enumerable.Empty<Entity>();
         }
 
-        public partial record Arccosf
+        partial record Arccosf
         {
             private static readonly Complex From = Complex.Create(0, Real.NegativeInfinity.EDecimal);
             private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi, Real.PositiveInfinity.EDecimal);
@@ -150,7 +164,7 @@ namespace AngouriMath
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cos(value), x) : Enumerable.Empty<Entity>();
         }
 
-        public partial record Arctanf
+        partial record Arctanf
         {
             private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
             private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
@@ -159,7 +173,7 @@ namespace AngouriMath
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Tan(value), x) : Enumerable.Empty<Entity>();
         }
 
-        public partial record Arccotanf
+        partial record Arccotanf
         {
             // TODO: Range should exclude Re(z) = 0
             private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
@@ -169,14 +183,14 @@ namespace AngouriMath
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cotan(value), x) : Enumerable.Empty<Entity>();
         }
 
-        public partial record Factorialf
+        partial record Factorialf
         {
             // TODO: Inverse of factorial not implemented yet
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Enumerable.Empty<Entity>();
         }
 
-        public partial record Derivativef
+        partial record Derivativef
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Expression.ContainsNode(x)
@@ -184,7 +198,7 @@ namespace AngouriMath
                 : Enumerable.Empty<Entity>();
         }
 
-        public partial record Integralf
+        partial record Integralf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Expression.ContainsNode(x)
@@ -192,14 +206,14 @@ namespace AngouriMath
                 : Enumerable.Empty<Entity>();
         }
 
-        public partial record Limitf
+        partial record Limitf
         {
             // TODO: We can't just do a limit on the inverse function: https://math.stackexchange.com/q/3397326/627798
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 Enumerable.Empty<Entity>();
         }
 
-        public partial record Signumf
+        partial record Signumf
         {
             // signum(f(x)) = value
             // f(x) = value * pr
@@ -209,7 +223,7 @@ namespace AngouriMath
                 => Argument.Invert(value * Variable.CreateUnique(Argument + value, "r"), x);
         }
 
-        public partial record Absf
+        partial record Absf
         {
             // abs(f(x)) = value
             // f(x) = value * e ^ (i * n)

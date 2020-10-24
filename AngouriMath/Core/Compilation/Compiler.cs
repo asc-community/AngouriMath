@@ -130,6 +130,24 @@ namespace AngouriMath
             }
         }
 
+        public partial record Secantf
+        {
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_SECANT));
+            }
+        }
+
+        public partial record Cosecantf
+        {
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_COSECANT));
+            }
+        }
+
         public partial record Tanf
         {
             private protected override void CompileNode(Compiler compiler)

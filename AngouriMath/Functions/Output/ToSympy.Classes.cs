@@ -65,6 +65,16 @@ namespace AngouriMath
             internal override string ToSymPy() => "sympy.cos(" + Argument.ToSymPy() + ")";
         }
 
+        public partial record Secantf
+        {
+            internal override string ToSymPy() => "sympy.sec(" + Argument.ToSymPy() + ")";
+        }
+
+        public partial record Cosecantf
+        {
+            internal override string ToSymPy() => "sympy.csc(" + Argument.ToSymPy() + ")";
+        }
+
         public partial record Tanf
         {
             internal override string ToSymPy() => "sympy.tan(" + Argument.ToSymPy() + ")";

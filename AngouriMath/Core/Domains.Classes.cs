@@ -85,6 +85,18 @@ namespace AngouriMath
             public override Domain Codomain { get; protected init; } = Domain.Complex;
         }
 
+        partial record Secantf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Complex;
+        }
+
+        partial record Cosecantf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Complex;
+        }
+
         partial record Arcsinf
         {
             /// <inheritdoc/>

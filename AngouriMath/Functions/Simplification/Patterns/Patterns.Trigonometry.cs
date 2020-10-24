@@ -54,6 +54,18 @@ namespace AngouriMath.Functions
                 -1 * (new Powf(new Cosf(any1), 2) - new Powf(new Sinf(any1), 2)),
             Minusf(Powf(Cosf(var any1), Integer(2)), Powf(Sinf(var any1a), Integer(2))) when any1 == any1a =>
                 new Cosf(2 * any1),
+
+            Divf(var any1, Secantf(var any2)) => any1 * any2.Cos(),
+            Divf(var any1, Cosecantf(var any2)) => any1 * any2.Sin(),
+
+            Mulf(Secantf(var any1), Cosf(var any1a)) when any1 == any1a => 1,
+            Mulf(Cosf(var any1a), Secantf(var any1)) when any1 == any1a => 1,
+
+            Mulf(Cosecantf(var any1), Sinf(var any1a)) when any1 == any1a => 1,
+            Mulf(Sinf(var any1a), Cosecantf(var any1)) when any1 == any1a => 1,
+            
+            // TODO: add more secant/cosecant patterns
+
             _ => x
         };
         internal static Entity ExpandTrigonometricRules(Entity x) => x switch
@@ -65,6 +77,14 @@ namespace AngouriMath.Functions
 
             _ => x
         };
+
+        internal static Entity CollapseToSecCsc(Entity x) => x switch
+        {
+            Divf(var any1, Sinf(var any2)) => any1 * any2.Cosecant(),
+            Divf(var any1, Cosf(var any2)) => any1 * any2.Secant(),
+            _ => x
+        };
+
         /// <summary>
         /// Here, we replace x with t which represents e^(ix).
         /// <list type="table">
