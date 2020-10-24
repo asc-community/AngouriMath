@@ -121,7 +121,12 @@ namespace AngouriMath
         public partial record Logf
         {
             /// <inheritdoc/>
-            public override string Stringize() => $"log({Base.Stringize()}, {Antilogarithm.Stringize()})";
+            public override string Stringize() 
+                => Base == MathS.e ?
+                $"ln({Antilogarithm.Stringize()})"
+                :
+                $"log({Base.Stringize()}, {Antilogarithm.Stringize()})";
+
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
