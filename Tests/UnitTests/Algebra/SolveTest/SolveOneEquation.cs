@@ -47,9 +47,7 @@ namespace UnitTests.Algebra
         {
             var rootsRaw = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x));
             var roots = (Set)rootsRaw.InnerSimplified;
-            var rootsSimplified = (Set)rootsRaw.Simplify();
             VerifySetOfRoots(expr, roots, rootCount, toSub);
-            //VerifySetOfRoots(expr, rootsSimplified, rootCount, toSub);
 
             if (!testNewton) return;
             // TODO: Increase Newton precision
@@ -90,11 +88,23 @@ namespace UnitTests.Algebra
         // [InlineData("(x - goose) * (x - 2) * (sqr(x) - 4)", 3)] // TODO: Currently outputs 4 roots
         [InlineData("(x - goose) * (x - 3) * (sqr(x) - 4)", 4)]
         [InlineData("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)", 4)]
+        public void VarsExpanded(string expr, int rootCount)
+        {
+            var eq = MathS.FromString(expr);
+            TestSolver(eq.Expand(), rootCount);
+        }
+
+        [Theory]
+        [InlineData("(x - goose) * (x - 3)", 2)]
+        [InlineData("(x - momo) * (x - goose)", 2)]
+        [InlineData("(x - goose) * (x + goose * momo) * (x - momo * 2)", 3)]
+        // [InlineData("(x - goose) * (x - 2) * (sqr(x) - 4)", 3)] // TODO: Currently outputs 4 roots
+        [InlineData("(x - goose) * (x - 3) * (sqr(x) - 4)", 4)]
+        [InlineData("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)", 4)]
         public void Vars(string expr, int rootCount)
         {
             var eq = MathS.FromString(expr);
             TestSolver(eq, rootCount);
-            TestSolver(eq.Expand(), rootCount);
         }
 
         // TODO: Fix Newton Solver and set testNewton:true
@@ -151,24 +161,9 @@ namespace UnitTests.Algebra
         [InlineData("sin(x) + cos(x) - 0.5", 2)]
         [InlineData("sin(x) + cos(x) - 2", 2)]
         [InlineData("sin(x)^2 + cos(x) - 1", 3)] // 2 pi n, -pi/2 + 2 pi n, pi/2 + 2 pi n
-        [InlineData("3 * sin(2 * x + 1) - sin(x) - a", 4)]
-        [InlineData("3 * sin(1 + 2 * x) - sin(x) - a", 4)]
-        [InlineData("3 * sin(1 + x * 2) - sin(x) - a", 4)]
-        [InlineData("3 * sin(x * 2 + 1) - sin(x) - a", 4)]
-        [InlineData("3 * cos(2 * x + 1) - cos(x) - a", 4)]
-        [InlineData("3 * cos(1 + 2 * x) - cos(x) - a", 4)]
-        [InlineData("3 * cos(1 + x * 2) - cos(x) - a", 4)]
         [InlineData("3 * cos(x * 2 + 1) - cos(x) - a", 4)]
         [InlineData("sin(2x + 2) + sin(x + 1) - a", 4)] // Momo's Issue
-        [InlineData("sin(2*x + 1) - sin(x) - 1", 4)]
         [InlineData("3 * sin(2 * x) - sin(x) - a", 4)]
-        [InlineData("3 * sin(x * 2) - sin(x) - a", 4)]
-        [InlineData("3 * sin(1 + x) - sin(x) - a", 2)]
-        [InlineData("3 * sin(x + 1) - sin(x) - a", 2)]
-        [InlineData("3 * cos(2 * x) - cos(x) - a", 4)]
-        [InlineData("3 * cos(x * 2) - cos(x) - a", 4)]
-        [InlineData("3 * cos(1 + x) - cos(x) - a", 2)]
-        [InlineData("3 * cos(x + 1) - cos(x) - a", 2)]
         public void LinearTrigRoots(string expr, int rootCount) => TestSolver(expr, rootCount);
 
         [Theory]

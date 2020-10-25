@@ -26,4 +26,4 @@ using PeterO.Numbers;
 //WriteLine(MathS.pi.EvalNumerical() * 2);
 //var expr = "4^x + 2^x - a";
 ////WriteLine(expr.Substitute("a", n).Substitute("x", ev1).EvalNumerical());
-WriteLine("3 ^ (2 + 2 i pi)".EvalNumerical());
+WriteLine("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)".Expand().SolveEquation("x"));
