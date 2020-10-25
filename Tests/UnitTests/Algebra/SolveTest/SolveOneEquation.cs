@@ -249,8 +249,8 @@ namespace UnitTests.Algebra
         [InlineData("limit(x, x, y)2 - 2", 0)]
         [InlineData("sec(x) - a", 2)]
         [InlineData("csc(x) - a", 2)]
-        [InlineData("arcsec(x) - a", 2)]
-        [InlineData("arccsc(x) - a", 2)]
+        [InlineData("arcsec(x) - a", 1, )]
+        [InlineData("arccsc(x) - a", 1)]
         public void TestInvertNodes(string equation, int rootCount, int? toSub = null)
             => TestSolver(equation, rootCount, toSub);
     }

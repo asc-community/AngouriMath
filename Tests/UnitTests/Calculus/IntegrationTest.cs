@@ -19,11 +19,11 @@ namespace UnitTests.Algebra
         [InlineData("log(a, x)", "x * (ln(x) - 1) / ln(a)")]
         [InlineData("e ^ x", "e ^ x")]
         [InlineData("a ^ x", "a ^ x / ln(a)")]
-        [InlineData("sec(a x + b)", "ln((1 + sin(a x + b)) / (1 - sin(a x + b))) / (2a)")]
+        [InlineData("sec(a x + b)", "1/2 * ln((1 + sin(a x + b)) / (1 - sin(a x + b))) / a")]
         [InlineData("csc(a x + b)", "ln(tan(1/2(a x + b))) / a")]
         public void TestIndefinite(string initial, string expected)
         {
-            Assert.Equal(expected.ToEntity().InnerSimplified, initial.Integrate("x").Simplify());
+            Assert.Equal(expected.ToEntity().Simplify(), initial.Integrate("x").Simplify());
         }
 
         static readonly Entity.Variable x = nameof(x);

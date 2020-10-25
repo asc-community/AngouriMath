@@ -41,10 +41,10 @@ namespace UnitTests.Convenience
         {
             toSub ??= 3;
             var exprCompiled = expr.Compile(x);
-            Assert.Equal(
-                expr.Substitute("x", toSub).EvalNumerical(),
-                exprCompiled.Call((Complex)toSub)
-                );
+            var expected = (Complex)expr.Substitute("x", toSub).EvalNumerical();
+            var actual = exprCompiled.Call((Complex)toSub);
+            var error = Complex.Abs(expected - actual);
+            Assert.True(error < 0.001, $"Error: {error}\nActual: {actual}\nExpected: {expected}");
         }
     }
 }
