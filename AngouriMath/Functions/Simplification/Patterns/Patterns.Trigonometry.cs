@@ -66,6 +66,11 @@ namespace AngouriMath.Functions
             
             // TODO: add more secant/cosecant patterns
 
+            Arcsinf(Divf(var number, var notNumber)) when number is Number && notNumber is not Number => new Arccosecantf(notNumber / number),
+            Arccosf(Divf(var number, var notNumber)) when number is Number && notNumber is not Number => new Arcsecantf(notNumber / number),
+            Arccosecantf(Divf(var number, var notNumber)) when number is Number && notNumber is not Number => new Arcsinf(notNumber / number),
+            Arcsecantf(Divf(var number, var notNumber)) when number is Number && notNumber is not Number => new Arccosf(notNumber / number),
+
             _ => x
         };
         internal static Entity ExpandTrigonometricRules(Entity x) => x switch
@@ -80,8 +85,8 @@ namespace AngouriMath.Functions
 
         internal static Entity CollapseToSecCsc(Entity x) => x switch
         {
-            Divf(var any1, Sinf(var any2)) => any1 * any2.Cosecant(),
-            Divf(var any1, Cosf(var any2)) => any1 * any2.Secant(),
+            Divf(var any1, Sinf(var any2)) => any1 * any2.Cosec(),
+            Divf(var any1, Cosf(var any2)) => any1 * any2.Sec(),
             _ => x
         };
 

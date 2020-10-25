@@ -102,6 +102,22 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
+        public partial record Arcsecantf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"arcsec({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        public partial record Arccosecantf
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"arccsc({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
         public partial record Tanf
         {
             /// <inheritdoc/>

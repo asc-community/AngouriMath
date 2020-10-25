@@ -108,6 +108,8 @@ namespace UnitTests.Common
         [InlineData("cos(x)")]
         [InlineData("arcsin(x)")]
         [InlineData("arccos(x)")]
+        [InlineData("arcsec(x)")]
+        [InlineData("arccsc(x)")]
         public void TestTrig(string inputIsOutput) =>
             Assert.Equal(inputIsOutput, inputIsOutput.ToEntity().Stringize());
     }

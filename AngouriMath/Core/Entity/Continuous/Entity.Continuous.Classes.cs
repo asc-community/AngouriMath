@@ -256,6 +256,32 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
 
+        /// <summary>
+        /// A node of arcsecant
+        /// </summary>
+        public partial record Arcsecantf(Entity Argument) : TrigonometricFunction
+        {
+            /// <summary>Reuse the cache by returning the same object if possible</summary>
+            private Arcsecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+
+        /// <summary>
+        /// A node of arccosecant
+        /// </summary>
+        public partial record Arccosecantf(Entity Argument) : TrigonometricFunction
+        {
+            /// <summary>Reuse the cache by returning the same object if possible</summary>
+            private Arccosecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+
         #endregion
 
         #region Exponential

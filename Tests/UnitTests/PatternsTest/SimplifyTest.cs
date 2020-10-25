@@ -139,6 +139,7 @@ namespace UnitTests.PatternsTest
         [InlineData("a / sin(x)", "csc(x) * a")]
         [InlineData("a / csc(x)", "sin(x) * a")]
         [InlineData("a / cos(x)", "sec(x) * a")]
+        [InlineData("arcsec(1 / x)", "arccos(x)")]
         public void TrigTest(string input, string output) => AssertSimplifyToString(input, output);
     }
 }

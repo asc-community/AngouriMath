@@ -113,6 +113,24 @@ namespace AngouriMath
                     x, dist, side);
         }
 
+        public partial record Arcsecantf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
+                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
+                : ComputeLimitImpl(New(
+                    Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
+                    x, dist, side);
+        }
+
+        public partial record Arccosecantf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
+                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
+                : ComputeLimitImpl(New(
+                    Argument.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Argument),
+                    x, dist, side);
+        }
+
         public partial record Tanf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
