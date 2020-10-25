@@ -110,16 +110,20 @@ namespace AngouriMath
 
         partial record Secantf
         {
-            // TODO: when arcsecant added, switch to it
+            // sec(f(x)) = value
+            // 1 / cos(f(x)) = value
+            // 1 / value = cos(f(x))
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                (1 / Argument.Cos()).InvertNode(value, x);
+                Argument.Cos().Invert(1 / value, x);
         }
 
         partial record Cosecantf
         {
-            // TODO: when arccosecant added, switch to it
+            // csc(f(x)) = value
+            // 1 / sin(f(x)) = value
+            // 1 / value = sin(f(x))
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
-                (1 / Argument.Sin()).InvertNode(value, x);
+                Argument.Sin().Invert(1 / value, x);
         }
 
         partial record Tanf
@@ -181,6 +185,24 @@ namespace AngouriMath
             // arccotan(x) = value => x = cotan(value)
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cotan(value), x) : Enumerable.Empty<Entity>();
+        }
+
+        partial record Arcsecantf
+        {
+            // arcsec(f(x)) = value
+            // f(x) = sec(value)
+            // x = f(x).Invert(sec(value))
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                Argument.Invert(value.Sec(), x);
+        }
+
+        partial record Arccosecantf
+        {
+            // arccsc(f(x)) = value
+            // f(x) = csc(value)
+            // x = f(x).Invert(csc(value))
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
+                Argument.Invert(value.Cosec(), x);
         }
 
         partial record Factorialf
