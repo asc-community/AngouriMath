@@ -65,6 +65,8 @@ namespace AngouriMath.Core
             CALL_ARCCOS,
             CALL_ARCTAN,
             CALL_ARCCOTAN,
+            CALL_ARCSECANT,
+            CALL_ARCCOSECANT,
             CALL_FACTORIAL,
             CALL_SIGNUM,
             CALL_ABS,
@@ -178,6 +180,12 @@ namespace AngouriMath.Core
                         break;
                     case InstructionType.CALL_ARCCOTAN:
                         stack.Push(Complex.Atan(1 / stack.Pop()));
+                        break;
+                    case InstructionType.CALL_ARCSECANT:
+                        stack.Push(Complex.Acos(1 / stack.Pop()));
+                        break;
+                    case InstructionType.CALL_ARCCOSECANT:
+                        stack.Push(Complex.Asin(1 / stack.Pop()));
                         break;
                     case InstructionType.CALL_FACTORIAL:
                         // https://stackoverflow.com/a/15454784/5429648

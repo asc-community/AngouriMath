@@ -191,13 +191,13 @@ namespace AngouriMath
         /// <param name="a">Argument node of which arcsecant will be taken</param>
         /// <returns>Arccosine node with the reciprocal of the argument</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Arcsec(Entity a) => new Arccosf(1 / a);
+        public static Entity Arcsec(Entity a) => new Arcsecantf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arccosecant will be taken</param>
         /// <returns>Arcsine node with the reciprocal of the argument</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity Arccosec(Entity a) => new Arcsinf(1 / a);
+        public static Entity Arccosec(Entity a) => new Arccosecantf(a);
 
         /// <summary>
         /// Is a special case of logarithm where the base equals

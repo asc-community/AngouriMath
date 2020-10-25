@@ -139,5 +139,21 @@ namespace UnitTests.Algebra
             var derived = func.Differentiate("x");
             Assert.Equal(-2 * MathS.Cosec("2x") * MathS.Cotan("2x"), derived.Simplify());
         }
+
+        [Fact]
+        public void TestArcsecant()
+        {
+            Entity func = "arcsec(2x)";
+            var derived = func.Differentiate("x");
+            Assert.Equal((Entity)"1 / (sqrt(1 - 1/x2)x2) * 2", derived.Simplify());
+        }
+
+        [Fact]
+        public void TestArccosecant()
+        {
+            Entity func = "arccosec(2x)";
+            var derived = func.Differentiate("x");
+            Assert.Equal((Entity)"-1 / (sqrt(1 - 1/x2)x2) * 2", derived.Simplify());
+        }
     }
 }
