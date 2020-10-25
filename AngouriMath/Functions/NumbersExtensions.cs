@@ -188,6 +188,32 @@ namespace AngouriMath
             return EDecimal.One.Divide(x.Sin(context), context);
         }
 
+        /// <summary>
+        /// sec(x) = value
+        /// 1 / cos(x) = value
+        /// 1 / value = cos(x)
+        /// x = arccos(1 / value)
+        /// </summary>
+        public static EDecimal Arcsecant(this EDecimal x, EContext context)
+        {
+            if (!x.IsFinite)
+                return EDecimal.NaN;
+            return EDecimal.One.Divide(x.Acos(context), context);
+        }
+
+        /// <summary>
+        /// csc(x) = value
+        /// 1 / sin(x) = value
+        /// 1 / value = sin(x)
+        /// x = arcsin(1 / value)
+        /// </summary>
+        public static EDecimal Arccosecant(this EDecimal x, EContext context)
+        {
+            if (!x.IsFinite)
+                return EDecimal.NaN;
+            return EDecimal.One.Divide(x.Arcsin(context), context);
+        }
+
         /// <summary>Truncates <paramref name="x"/> to [-2*<see cref="Math.PI"/>, 2*<see cref="Math.PI"/>] </summary>
         private static void TruncateToPeriodicInterval(ref EDecimal x, ConstantCache consts, EContext context)
         {
@@ -205,7 +231,7 @@ namespace AngouriMath
         }
 
         /// <summary>Analogy of <see cref="Math.Asin(double)"/></summary>
-        public static EDecimal Asin(this EDecimal x, EContext context)
+        public static EDecimal Arcsin(this EDecimal x, EContext context)
         {
             if (x.GreaterThan(EDecimal.One) || x.LessThan(-EDecimal.One))
                 return EDecimal.NaN;
@@ -215,7 +241,7 @@ namespace AngouriMath
             if (x.IsZero) return x;
             if (x.Equals(EDecimal.One)) return consts.HalfPi;
             //asin function is odd function
-            if (x.IsNegative) return -Asin(-x, context);
+            if (x.IsNegative) return -Arcsin(-x, context);
 
             //my optimize trick here
 
@@ -229,7 +255,7 @@ namespace AngouriMath
             //because we gain more speed with values near to zero
             if (x.Abs().GreaterThan(newX.Abs()))
             {
-                var t = Asin(newX, context);
+                var t = Arcsin(newX, context);
                 return consts.Half.Multiply(consts.HalfPi.Subtract(t, context), context);
             }
             var result = x;
@@ -248,14 +274,14 @@ namespace AngouriMath
         }
 
         /// <summary>Analogy of <see cref="Math.Atan(double)"/></summary>
-        public static EDecimal Atan(this EDecimal x, EContext context)
+        public static EDecimal Arctan(this EDecimal x, EContext context)
         {
             if (x.IsNaN()) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
             if (x.IsInfinity()) return x.Sign * consts.HalfPi;
             if (x.IsZero) return x;
             if (x.Equals(EDecimal.One)) return consts.QuarterPi;
-            return Asin(x.Divide(x.MultiplyAndAdd(x, EDecimal.One, context).Sqrt(context), context), context);
+            return Arcsin(x.Divide(x.MultiplyAndAdd(x, EDecimal.One, context).Sqrt(context), context), context);
         }
         /// <summary>Analogy of <see cref="Math.Acos(double)"/></summary>
         public static EDecimal Acos(this EDecimal x, EContext context)
@@ -264,14 +290,14 @@ namespace AngouriMath
             if (x.IsZero) return consts.HalfPi;
             if (x.Equals(EDecimal.One)) return EDecimal.Zero;
             if (x.IsNegative) return consts.Pi.Subtract(Acos(-x, context), context);
-            return consts.HalfPi.Subtract(Asin(x, context), context);
+            return consts.HalfPi.Subtract(Arcsin(x, context), context);
         }
 
         /// <summary>
         /// Analogy of <see cref="Math.Atan2(double, double)"/> for more see this
         /// <img src="http://i.imgur.com/TRLjs8R.png"/>
         /// </summary>
-        public static EDecimal Atan2(this EDecimal y, EDecimal x, EContext context)
+        public static EDecimal Arctan2(this EDecimal y, EDecimal x, EContext context)
         {
             if (y.IsNaN() || x.IsNaN()) return EDecimal.NaN;
             var consts = ConstantCache.Lookup(context);
@@ -290,10 +316,10 @@ namespace AngouriMath
                 (-inf, 0) => y.IsNegative ? -consts.Pi : consts.Pi,
                 (-inf, 1) => consts.Pi,
                 (inf, _) => EDecimal.Zero,
-                (1, _) => Atan(y.Divide(x, context), context),
-                (-1, -1) => Atan(y.Divide(x, context), context).Subtract(consts.Pi, context),
+                (1, _) => Arctan(y.Divide(x, context), context),
+                (-1, -1) => Arctan(y.Divide(x, context), context).Subtract(consts.Pi, context),
                 (-1, 0) => y.IsNegative ? -consts.Pi : consts.Pi,
-                (-1, 1) => Atan(y.Divide(x, context), context).Add(consts.Pi, context),
+                (-1, 1) => Arctan(y.Divide(x, context), context).Add(consts.Pi, context),
                 (0, 1) => consts.HalfPi,
                 (0, -1) => -consts.HalfPi,
                 (0, 0) => (x.IsNegative, y.IsNegative) switch

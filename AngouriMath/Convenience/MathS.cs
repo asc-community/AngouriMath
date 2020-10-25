@@ -235,9 +235,64 @@ namespace AngouriMath
 
         /// <summary>https://en.wikipedia.org/wiki/Negation</summary>
         /// <param name="a">Argument node of which Negation function will be taken</param>
-        /// <returns>Not node</returns>
+        /// <returns>The Not node</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Negation(Entity a) => !a;
+
+        /// <summary>
+        /// Represents a few hyperbolic functions
+        /// </summary>
+        public static class TrigonometricHyperpolic
+        {
+            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Sinh(Entity x) => (e.Pow(x) - e.Pow(-x)) / 2;
+
+            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Cosh(Entity x) => (e.Pow(x) + e.Pow(-x)) / 2;
+
+            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Tanh(Entity x) => (e.Pow(2 * x) - 1) / (e.Pow(2 * x) + 1);
+
+            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Cotanh(Entity x) => (e.Pow(2 * x) + 1) / (e.Pow(2 * x) - 1);
+
+            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Sech(Entity x) => 1 / Cosh(x);
+
+            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Cosech(Entity x) => 1 / Sinh(x);
+
+            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Arcsinh(Entity x) => Ln(x + Sqrt(x.Pow(2) + 1));
+
+            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Arccosh(Entity x) => Ln(x + Sqrt(x.Pow(2) - 1));
+
+            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Arctanh(Entity x) => 0.5 * Ln((1 + x) / (1 - x));
+
+            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Arccotanh(Entity x) => 0.5 * Ln((1 - x) / (1 + x));
+
+            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Arcsech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) - 1));
+
+            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public static Entity Arccosech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) + 1));
+        }
+
 
         /// <summary>https://en.wikipedia.org/wiki/Logical_disjunction</summary>
         /// <param name="a">The left argument node of which Disjunction function will be taken</param>

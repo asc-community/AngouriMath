@@ -161,7 +161,7 @@ namespace AngouriMath
                 /// <summary>
                 /// The phase of a complex number (aka angle)
                 /// </summary>
-                public Real Phase() => ImaginaryPart.EDecimal.Atan2(RealPart.EDecimal, MathS.Settings.DecimalPrecisionContext);
+                public Real Phase() => ImaginaryPart.EDecimal.Arctan2(RealPart.EDecimal, MathS.Settings.DecimalPrecisionContext);
 
                 /// <summary>
                 /// Creates a normal complex from its polar representation

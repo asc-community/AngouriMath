@@ -379,7 +379,7 @@ namespace AngouriMath
                     return Integer.Zero;
 
                 var rho = @base.Abs().EDecimal;
-                var theta = baseImaginary.Atan2(baseReal, context);
+                var theta = baseImaginary.Arctan2(baseReal, context);
                 var newRho = powerReal.MultiplyAndAdd(theta, powerImaginary.Multiply(rho.Log(context), context), context);
                 var t = rho.Pow(powerReal, context).Multiply(powerImaginary.Multiply(-theta, context).Exp(context), context);
 
@@ -404,7 +404,7 @@ namespace AngouriMath
                 if (x is Real { EDecimal: { IsNegative: false } real })
                     return real.Log(context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
-                return Complex.Create(x.Abs().EDecimal.Log(context), x.ImaginaryPart.EDecimal.Atan2(x.RealPart.EDecimal, context));
+                return Complex.Create(x.Abs().EDecimal.Log(context), x.ImaginaryPart.EDecimal.Arctan2(x.RealPart.EDecimal, context));
             }
 
             /// <summary>Calculates the exact value of sine of num</summary>
@@ -434,6 +434,24 @@ namespace AngouriMath
             /// <summary>Calculates the exact value of cosecant of num</summary>
             public static Complex Cosecant(Complex num)
                 => 1 / Sin(num);
+
+            /// <summary>
+            /// sec(x) = value
+            /// 1 / cos(x) = value
+            /// 1 / value = cos(x)
+            /// x = arccos(1 / value)
+            /// </summary>
+            public static Complex Arcsecant(Complex num)
+                => Arccos(1 / num);
+
+            /// <summary>
+            /// csc(x) = value
+            /// 1 / sin(x) = value
+            /// 1 / value = sin(x)
+            /// x = arcsin(1 / value)
+            /// </summary>
+            public static Complex Arccosecant(Complex num)
+                => Arcsin(1 / num);
 
             /// <summary>
             /// Defines the Signum function on complex numbers
@@ -555,9 +573,9 @@ namespace AngouriMath
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
                 if (num is Real { EDecimal: var real } && !(real.GreaterThan(EDecimal.One) || real.LessThan(-EDecimal.One)))
-                    return real.Asin(context);
+                    return real.Arcsin(context);
                 var (beta, v) = ArcSinCosInner(num, context);
-                return Complex.Create(beta.Asin(context), v);
+                return Complex.Create(beta.Arcsin(context), v);
             }
 
             /// <summary>Calculates the exact value of arccosine of num</summary>
@@ -575,7 +593,7 @@ namespace AngouriMath
             {
                 var context = MathS.Settings.DecimalPrecisionContext;
                 if (num is Real { EDecimal: var real })
-                    return real.Atan(context);
+                    return real.Arctan(context);
                 // From https://source.dot.net/#System.Runtime.Numerics/System/Numerics/Complex.cs,cf15f2e5cc49cef1
                 var one = Integer.One;
                 var two = Integer.Create(2);
