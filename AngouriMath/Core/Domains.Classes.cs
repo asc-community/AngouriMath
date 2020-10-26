@@ -13,6 +13,33 @@ namespace AngouriMath
 {
     partial record Entity
     {
+        partial record Number
+        {
+            partial record Complex
+            {
+                /// <inheritdoc/>
+                public override Domain Codomain { get; protected init; } = Domain.Complex;
+            }
+
+            partial record Rational
+            {
+                /// <inheritdoc/>
+                public override Domain Codomain { get; protected init; } = Domain.Rational;
+            }
+
+            partial record Real
+            {
+                /// <inheritdoc/>
+                public override Domain Codomain { get; protected init; } = Domain.Real;
+            }
+
+            partial record Integer
+            {
+                /// <inheritdoc/>
+                public override Domain Codomain { get; protected init; } = Domain.Integer;
+            }
+        }
+
         partial record Variable
         {
             /// <inheritdoc/>

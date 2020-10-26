@@ -68,10 +68,10 @@ namespace UnitTests.Convenience
         [InlineData("arcsec(x)", "sympy.asec(x)")]
         [InlineData("arccsc(x)", "sympy.acsc(x)")]
         [InlineData("pi + e", "sympy.pi + sympy.E")]
-        [InlineData("1i", "sympy.I")]
+        [InlineData("1i", "1 * sympy.I")]
         [InlineData("2i", "2 * sympy.I")]
         [InlineData("3 + 2i", "3 + 2 * sympy.I")]
-        [InlineData("3 + i", "3 + sympy.I")]
+        [InlineData("3 + i", "3 + 1 * sympy.I")]
         public void TestSymPy(string expression, string expectedToBeIn, bool contains = true)
         {
             var ent = MathS.FromString(expression);

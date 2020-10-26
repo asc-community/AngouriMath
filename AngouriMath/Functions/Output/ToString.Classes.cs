@@ -16,6 +16,57 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {
+        partial record Number
+        {
+            partial record Complex
+            {
+                /// <inheritdoc/>
+                public override string Stringize()
+                {
+                    static string RenderNum(Real number)
+                    {
+                        if (number == Integer.MinusOne)
+                            return "-";
+                        else if (number == Integer.One)
+                            return "";
+                        else
+                            return number.Stringize();
+                    }
+                    if (ImaginaryPart is Integer(0))
+                        return RealPart.Stringize();
+                    else if (RealPart is Integer(0))
+                        return RenderNum(ImaginaryPart) + "i";
+                    var (l, r) = ImaginaryPart is Rational and not Integer ? ("(", ")") : ("", "");
+                    var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
+                    return RealPart.Stringize() + " " + sign + " " + l + RenderNum(im) + r + "i";
+                }
+            }
+
+            partial record Real
+            {
+                /// <inheritdoc/>
+                public override string Stringize() => this switch
+                {
+                    { IsFinite: true } => EDecimal.ToString(),
+                    { IsNaN: true } => "NaN",
+                    { IsNegative: true } => "-oo",
+                    _ => "+oo",
+                };
+            }
+
+            partial record Rational
+            {
+                /// <inheritdoc/>
+                public override string Stringize() => ERational.ToString();
+            }
+
+            partial record Integer
+            {
+                /// <inheritdoc/>
+                public override string Stringize() => EInteger.ToString();
+            }
+        }
+
         public partial record Variable
         {
             /// <inheritdoc/>

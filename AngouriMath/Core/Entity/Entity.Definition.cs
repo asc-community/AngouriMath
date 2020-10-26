@@ -109,7 +109,8 @@ namespace AngouriMath
 
 
         /// <summary>Replaces all <param name="x"/> with <param name="value"/></summary>
-        public abstract Entity Substitute(Entity x, Entity value);
+        public virtual Entity Substitute(Entity x, Entity value)
+            => this == x ? value : this;
 
 
         // TODO: this function has no performance beneficial anymore, 

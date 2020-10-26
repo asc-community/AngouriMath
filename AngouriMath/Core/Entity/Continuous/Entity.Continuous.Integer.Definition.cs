@@ -7,27 +7,27 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
 using PeterO.Numbers;
+
 namespace AngouriMath
 {
-    using Core;
-    using System.Text;
-
     partial record Entity
     {
-        public abstract partial record Number
+        partial record Number
         {
             /// <summary>Use <see cref="Create(EInteger)"/> instead of the constructor for consistency with
             /// <see cref="Rational"/>, <see cref="Real"/> and <see cref="Complex"/>.</summary>
-            public sealed record Integer : Rational, System.IComparable<Integer>
+            public sealed partial record Integer : Rational, System.IComparable<Integer>
             {
                 private Integer(EInteger value) : base(value) => EInteger = value;
+
+                internal override Priority Priority => IsNegative ? Priority.Mul : Priority.Leaf;
 
                 /// <summary>
                 /// Represents PeterO number in EInteger
                 /// </summary>
                 public EInteger EInteger { get; }
-                internal override Priority Priority => IsNegative ? Priority.Mul : Priority.Leaf;
 
                 /// <summary>
                 /// A zero, you can use it to avoid allocations
@@ -44,6 +44,7 @@ namespace AngouriMath
                 /// </summary>
                 public static readonly Integer MinusOne = new Integer(-EInteger.One);
 
+
                 /// <summary>
                 /// Creates an instance of Integer
                 /// </summary>
@@ -59,10 +60,6 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override Real Abs() => Create(EInteger.Abs());
 
-                /// <inheritdoc/>
-                public override string Stringize() => EInteger.ToString();
-                /// <inheritdoc/>
-                public override string Latexise() => EInteger.ToString();
                 internal static bool TryParse(string s,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Integer? dst)
                 {
@@ -101,15 +98,6 @@ namespace AngouriMath
                 public static implicit operator Integer(EInteger value) => Create(value);
 #pragma warning restore CS1591
 
-                /// <inheritdoc/>
-                public override Domain Codomain { get; protected init; } = Domain.Integer;
-
-                /// <inheritdoc/>
-                public override Entity Substitute(Entity x, Entity value)
-                    => this == x ? value : this;
-
-                /// <inheritdoc/>
-                public override string ToString() => Stringize();
             }
         }
     }

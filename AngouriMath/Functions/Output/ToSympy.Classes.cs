@@ -15,6 +15,33 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {   
+        partial record Number
+        {
+            partial record Complex
+            {
+                internal override string ToSymPy()
+                    => $"{RealPart.ToSymPy()} + {ImaginaryPart.ToSymPy()} * sympy.pi";
+            }
+
+            partial record Real
+            {
+                internal override string ToSymPy()
+                    => Stringize();
+            }
+
+            partial record Rational
+            {
+                internal override string ToSymPy()
+                    => $"sympy.Rational({Numerator.ToSymPy(), Denominator.ToSymPy()}";
+            }
+
+            partial record Integer
+            {
+                internal override string ToSymPy()
+                    => Stringize();
+            }
+        }
+
         public partial record Variable
         {
             internal override string ToSymPy() 
