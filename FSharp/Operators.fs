@@ -2,40 +2,21 @@
 module Operators
 
 open Core
-open FromToString
 open AngouriMath
 
-type Tending = { var: obj; destination: obj; }
+type Tending = { var: Entity; destination: Entity; }
 
-let (@?) expr x =
-    (parse expr).Solve(symbol x)
+let (@?) (expr : Entity) x = expr.Solve x
 
-let (&&&) left (right : obj) =
-    let expr = parse left
+let (&&&&) (expr : Entity) (right : obj) =
     match right with
     | :? Tending as tending -> expr.Limit(parse_symbol tending.var, parse tending.destination)
     | _ -> MathS.Conjunction(expr, parse right)
 
-let (|||) left right =
-    MathS.Disjunction(parse left, parse right)
+let (|||) left right = MathS.Disjunction(left, right)
 
-let (=>) assumption conclusion =
-    (parse assumption).Implies(parse conclusion)
+let (=>) (assumption : Entity) conclusion = assumption.Implies(conclusion)
 
-let (-->) x destination =
-    { var = x; destination = destination; }
+let (-->) x destination = { var = x; destination = destination; }
 
-let (^) base_ power =
-    (parse base_).Pow(parse power)
-
-let (+) a b =
-    (parse a) + (parse b)
-
-let (-) a b =
-    (parse a) - (parse b)
-
-let (/) a b =
-    (parse a) / (parse b)
-
-let (*) a b =
-    (parse a) * (parse b)
+let (^) (base_ : Entity) (power : Entity) = base_.Pow power

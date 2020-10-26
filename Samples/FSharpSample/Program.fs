@@ -1,14 +1,21 @@
 ﻿open Functions
 open Operators
 open FromToString
+open AngouriMath
+open Core
+open Constants
 
 let print x =
     printfn "%O" x
 
 let line() = printfn "%s" ""
 
+type StringOrEntity =
+    | AsString of string
+    | AsEntity of Entity
+
 // just built a tree
-print ("x" + 2)
+print "x + 2"
 line()
 
 // evaluation to another entity
@@ -44,7 +51,7 @@ line()
 
 // limit
 print (limit "x" "0" "sin(a x) / x")
-print ("sin(a x) / x" &&& "x" --> 0)
+print ((parse "sin(a x) / x") &&&& ((parse "x") --> zero))
 line()
 
 // LaTeX
