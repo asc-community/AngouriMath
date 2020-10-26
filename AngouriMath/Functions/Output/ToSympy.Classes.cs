@@ -17,7 +17,13 @@ namespace AngouriMath
     {   
         public partial record Variable
         {
-            internal override string ToSymPy() => Name;
+            internal override string ToSymPy() 
+                => Name switch
+                {
+                    "e" => "sympy.E",
+                    "pi" => "sympy.pi",
+                    _ => Name
+                };
         }
 
         public partial record Tensor
@@ -27,7 +33,7 @@ namespace AngouriMath
 
         public partial record Number
         {
-            internal override string ToSymPy() => Stringize().Replace("i", "sympy.I");
+
         }
 
 
