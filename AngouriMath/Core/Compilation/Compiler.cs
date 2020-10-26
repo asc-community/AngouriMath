@@ -215,6 +215,24 @@ namespace AngouriMath
             }
         }
 
+        public partial record Arcsecantf
+        {
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_ARCSECANT));
+            }
+        }
+
+        public partial record Arccosecantf
+        {
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_ARCCOSECANT));
+            }
+        }
+
         public partial record Factorialf
         {
             private protected override void CompileNode(Compiler compiler)

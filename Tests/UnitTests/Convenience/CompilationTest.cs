@@ -9,122 +9,42 @@ namespace UnitTests.Convenience
     {
         private static readonly Entity.Variable x = MathS.Var(nameof(x));
         private static readonly Entity.Variable y = MathS.Var(nameof(y));
-        [Fact]
-        public void Test1()
-        {
-            var func = (x + MathS.Sqrt(x)).Compile(x);
-            Assert.Equal(6, func.Substitute(4));
-        }
 
-        [Fact]
-        public void Test2()
+        [Theory]
+        [InlineData("x")]
+        [InlineData("x + 2")]
+        [InlineData("sin(x) + cos(x)")]
+        [InlineData("arcsin(x) + arccos(x)")]
+        [InlineData("arcsin(x) + arccos(x) / 2")]
+        [InlineData("sqrt(x) + e ^ x")]
+        [InlineData("sin(x) + 2")]
+        [InlineData("cos(x) + 2")]
+        [InlineData("tan(x) + 2")]
+        [InlineData("cot(x) + 2")]
+        [InlineData("sec(x) + 2")]
+        [InlineData("csc(x) + 2")]
+        [InlineData("arcsin(x) + 2")]
+        [InlineData("arccos(x) + 2")]
+        [InlineData("arctan(x) + 2")]
+        [InlineData("arccot(x) + 2")]
+        [InlineData("arcsec(x) + 2")]
+        [InlineData("arccsc(x) + 2")]
+        [InlineData("log(3, x) + 2")]
+        [InlineData("log(x, 3) + 2")]
+        [InlineData("3 ^ x + 2")]
+        [InlineData("1 / x")]
+        [InlineData("1 - x")]
+        [InlineData("(x + 2)!")]
+        [InlineData("sign(x + 2)")]
+        [InlineData("(|x + 2|)")]
+        public void Test(string expr, float? toSub = null)
         {
-            var func = (MathS.Sin(x) + MathS.Cos(x)).Compile(x);
-            Assert.Equal(1, func.Substitute(0));
-        }
-
-        [Fact]
-        public void Test3()
-        {
-            var func = (x / y).Compile(x, y);
-            Assert.Equal(0.5, func.Substitute(1, 2));
-        }
-
-        [Fact]
-        public void Test4()
-        {
-            var func = (x / y).Compile(y, x);
-            Assert.Equal(2.0, func.Substitute(1, 2));
-        }
-
-        [Fact]
-        public void Test5()
-        {
-            var func = ((x + y) / (x - 3)).Compile(x, y);
-            Assert.Equal(7.0, func.Substitute(4, 3));
-        }
-
-        [Fact]
-        public void Test6()
-        {
-            // Caching with one value
-            var expr = (MathS.Sqr(x) + MathS.Sqr(x)) / MathS.Sqr(x) + MathS.Sqrt(x);
-            var func = expr.Compile(x);
-            Assert.Equal(4, func.Call(4));
-        }
-
-        [Fact]
-        public void TestLong()
-        {
-            // Caching with multiple values
-            var expr = (MathS.Sqr(x) + MathS.Sqr(x)) / MathS.Sqr(x)
-                       + MathS.Sqrt(x) + MathS.Cbrt(x) * MathS.Cbrt(x) + MathS.Sqrt(x);
-            var func = expr.Compile(x);
-            Assert.Equal(34, func.Call(64));
-        }
-
-        [Fact]
-        public void TestLin()
-        {
-            var expr = MathS.pi + MathS.e + x;
-            var func = expr.Compile(x);
-            Assert.True(func.Call(3).Real > 7 && func.Call(3).Real < 10);
-        }
-
-        [Fact]
-        public void TestSignum1()
-        {
-            var expr = MathS.Signum(x) + 1;
-            var func = expr.Compile(x);
-            Assert.Equal(2, func.Call(3));
-        }
-
-        [Fact]
-        public void TestSignum2()
-        {
-            var expr = MathS.Signum(x) + 1;
-            var func = expr.Compile(x);
-            Assert.Equal(0, func.Call(-3));
-        }
-
-        [Fact]
-        public void TestAbs1()
-        {
-            var expr = MathS.Abs(x) + 4;
-            var func = expr.Compile(x);
-            Assert.Equal(4, func.Call(0));
-        }
-
-        [Fact]
-        public void TestAbs2()
-        {
-            var expr = MathS.Abs(x) + 4;
-            var func = expr.Compile(x);
-            Assert.Equal(8, func.Call(-4));
-        }
-
-        [Fact]
-        public void TestAbs3()
-        {
-            var expr = MathS.Abs(x) + 4;
-            var func = expr.Compile(x);
-            Assert.Equal(9, func.Call(new Complex(3, 4)));
-        }
-
-        [Fact]
-        public void TestSec()
-        {
-            var expr = MathS.Sec(x) + 2;
-            var func = expr.Compile(x);
-            Assert.Equal(3, func.Call(0));
-        }
-
-        [Fact]
-        public void TestCosec()
-        {
-            var expr = MathS.Cosec(x) + 2;
-            var func = expr.Compile(x);
-            Assert.Equal((Complex)"1 / sin(1) + 2".EvalNumerical(), func.Call(1));
+            toSub ??= 3;
+            var exprCompiled = expr.Compile(x);
+            var expected = (Complex)expr.Substitute("x", toSub).EvalNumerical();
+            var actual = exprCompiled.Call((Complex)toSub);
+            var error = Complex.Abs(expected - actual);
+            Assert.True(error < 0.001, $"Error: {error}\nActual: {actual}\nExpected: {expected}");
         }
     }
 }

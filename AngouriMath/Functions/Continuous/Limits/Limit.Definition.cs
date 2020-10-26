@@ -133,24 +133,32 @@ namespace AngouriMath.Functions.Algebra
 
             // sin(f(x)) ~ f(x)
             Sinf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+            // 1 - cos(f(x)) ~ f(x)^2 / 2
+            Cosf(var arg) when arg.Limit(x, dest).Evaled == 0 => 1 - arg.Pow(2) / 2,
             // tan(f(x)) ~ f(x)
             Tanf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+            // cotan(f(x)) = 1 / tan(f(x)) ~ 1 / f(x)
+            Cotanf(var arg) when arg.Limit(x, dest).Evaled == 0 => 1 / arg,
+            // sec(f(x)) = 1 / cos(f(x)) ~ 2 / (2 - f(x)2) for f(x) -> 0
+            Secantf(var arg) when arg.Limit(x, dest).Evaled == 0 => 1 / (1 - arg.Pow(2) / 2),
+            // csc(f(x)) = 1 / sin(f(x)) = 1 / f(x) for f(x) -> 0
+            Cosecantf(var arg) when arg.Limit(x, dest).Evaled == 0 => 1 / arg,
+
             // arcsin(f(x)) ~ f(x)
             Arcsinf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+            // arccos(f(x)) = pi/2 - arcsin(f(x)) ~ pi/2 - f(x)
+            Arccosf(var arg) when arg.Limit(x, dest).Evaled == 0 => MathS.pi / 2 - arg,
             // arctan(f(x)) ~ f(x)
             Arctanf(var arg) when arg.Limit(x, dest).Evaled == 0 => arg,
+            // arccotan(f(x)) = pi/2 - arctan(f(x)) ~ pi/2 - f(x)
+            Arccotanf(var arg) when arg.Limit(x, dest).Evaled == 0 => MathS.pi / 2 - arg,
+            // arccosec(f(x)) = arcsin(1 / f(x)) ~ 1 / f(x) for 1 / f(x) -> 0
+            Arccosecantf(var arg) when (1 / arg).Limit(x, dest).Evaled == 0 => 1 / arg,
+            // arcsec(f(x)) = pi / 2 - arccosec(f(x)) ~ pi / 2 - f(x) for 1 / f(x) -> 0
+            Arcsecantf(var arg) when (1 / arg).Limit(x, dest).Evaled == 0 => MathS.pi / 2 - 1 / arg,
 
             // log(c, f(x) + 1) ~ f(x) / ln(a)
             Logf(var @base, var arg) when arg.ContainsNode(x) && !@base.ContainsNode(x) && (arg - 1).Limit(x, dest).Evaled == 0 => (arg - 1) / MathS.Ln(@base),
-
-            // 1 - cos(f(x)) ~ f(x)^2 / 2
-            Cosf(var arg) when arg.Limit(x, dest).Evaled == 0 => 1 - arg.Pow(2) / 2,
-
-            // sec(f(x)) = 1 / cos(f(x)) ~ 2 / (2 - f(x)2) for f(x) -> 0
-            Secantf(var arg) when arg.Limit(x, dest).Evaled == 0 => 2 / (2 - arg.Pow(2)),
-
-            // csc(f(x)) = 1 / sin(f(x)) = 1 / f(x) for f(x) -> 0
-            Cosecantf(var arg) when arg.Limit(x, dest).Evaled == 0 => 1 / arg,
 
             // (f(x) + 1) ^ c - 1 ~ c * f(x)
             Minusf(Powf(var xPlusOne, var power), Integer(1)) when xPlusOne.ContainsNode(x) && !power.ContainsNode(x) && (xPlusOne - 1).Limit(x, dest).Evaled == 0 => power * (xPlusOne - 1),
@@ -165,8 +173,6 @@ namespace AngouriMath.Functions.Algebra
             xPlusOne.ContainsNode(x) && xPower.ContainsNode(x) && 
             (xPlusOne - 1).Limit(x, dest).Evaled == Integer.Zero && IsInfiniteNode(xPower.Limit(x, dest)) => 
             MathS.e.Pow(xPower * (xPlusOne - 1)),
-
-            Secantf(var arg) when arg.Limit(x, dest).Evaled == 0 => Integer.One,
 
             _ => expr
         };

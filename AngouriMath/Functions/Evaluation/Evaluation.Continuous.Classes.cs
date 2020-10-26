@@ -225,17 +225,17 @@ namespace AngouriMath
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Secant(n),
-                Tensor n => n.Elementwise(n => n.Secant().Evaled),
-                FiniteSet finite => finite.Apply(c => c.Secant().Evaled),
+                Tensor n => n.Elementwise(n => n.Sec().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Sec().Evaled),
                 var n => New(n)
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Secant().InnerSimplified),
+                    Tensor n => n.Elementwise(n => n.Sec().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res).InnerSimplified,
-                    FiniteSet finite => finite.Apply(c => c.Secant().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Sec().InnerSimplified),
                     var n => New(n)
                 };
         }
@@ -246,17 +246,57 @@ namespace AngouriMath
             protected override Entity InnerEval() => Argument.Evaled switch
             {
                 Complex n => Number.Cosecant(n),
-                Tensor n => n.Elementwise(n => n.Cosecant().Evaled),
-                FiniteSet finite => finite.Apply(c => c.Cosecant().Evaled),
+                Tensor n => n.Elementwise(n => n.Cosec().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Cosec().Evaled),
                 var n => New(n)
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
                 {
-                    Tensor n => n.Elementwise(n => n.Cosecant().InnerSimplified),
+                    Tensor n => n.Elementwise(n => n.Cosec().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res).InnerSimplified,
-                    FiniteSet finite => finite.Apply(c => c.Cosecant().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Cosec().InnerSimplified),
+                    var n => New(n)
+                };
+        }
+
+        public partial record Arcsecantf
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Arcsecant(n),
+                Tensor n => n.Elementwise(n => n.Arcsec().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Arcsec().Evaled),
+                var n => New(n)
+            };
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                {
+                    Tensor n => n.Elementwise(n => n.Arcsec().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Arcsec().InnerSimplified),
+                    var n => New(n)
+                };
+        }
+
+        public partial record Arccosecantf
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerEval() => Argument.Evaled switch
+            {
+                Complex n => Number.Arccosecant(n),
+                Tensor n => n.Elementwise(n => n.Arccosec().Evaled),
+                FiniteSet finite => finite.Apply(c => c.Arccosec().Evaled),
+                var n => New(n)
+            };
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify() =>
+                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                {
+                    Tensor n => n.Elementwise(n => n.Arccosec().InnerSimplified),
+                    FiniteSet finite => finite.Apply(c => c.Arccosec().InnerSimplified),
                     var n => New(n)
                 };
         }

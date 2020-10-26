@@ -1,4 +1,5 @@
 ﻿using AngouriMath;
+using AngouriMath.Extensions;
 using Xunit;
 
 namespace UnitTests.Algebra
@@ -138,6 +139,22 @@ namespace UnitTests.Algebra
             Entity func = "csc(2x)";
             var derived = func.Differentiate("x");
             Assert.Equal(-2 * MathS.Cosec("2x") * MathS.Cotan("2x"), derived.Simplify());
+        }
+
+        [Fact]
+        public void TestArcsecant()
+        {
+            Entity func = "arcsec(2x)";
+            var derived = func.Differentiate("x");
+            Assert.Equal("(1/2) / (sqrt(1 + (-1/4) / x2)x2)".Simplify(), derived.Simplify());
+        }
+
+        [Fact]
+        public void TestArccosecant()
+        {
+            Entity func = "arccosec(2x)";
+            var derived = func.Differentiate("x");
+            Assert.Equal("-1/2 / (sqrt(1 + (-1/4) / x2)x2)".Simplify(), derived.Simplify());
         }
     }
 }

@@ -49,14 +49,14 @@ namespace AngouriMath
         protected virtual Entity InnerDifferentiate(Variable variable)
             => new Derivativef(this, variable, 1);
 
-        public partial record Variable
+        partial record Variable
         {
             
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) => Name == variable.Name ? 1 : 0;
         }
 
-        public partial record Tensor
+        partial record Tensor
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) => Elementwise(e => e.InnerDifferentiate(variable));
@@ -71,14 +71,14 @@ namespace AngouriMath
             return ent;
         }
 
-        public partial record Number
+        partial record Number
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) => EvalNumerical().IsNaN ? this : 0;
         }
 
         // Each function and operator processing
-        public partial record Sumf
+        partial record Sumf
         {
             // (a + b)' = a' + b'
             /// <inheritdoc/>
@@ -86,7 +86,7 @@ namespace AngouriMath
                 Augend.InnerDifferentiate(variable) + Addend.InnerDifferentiate(variable);
         }
 
-        public partial record Minusf
+        partial record Minusf
         {
             // (a - b)' = a' - b'
             /// <inheritdoc/>
@@ -94,7 +94,7 @@ namespace AngouriMath
                 Subtrahend.InnerDifferentiate(variable) - Minuend.InnerDifferentiate(variable);
         }
 
-        public partial record Mulf
+        partial record Mulf
         {
             // (a * b)' = a' * b + b' * a
             /// <inheritdoc/>
@@ -102,7 +102,7 @@ namespace AngouriMath
                 Multiplier.InnerDifferentiate(variable) * Multiplicand + Multiplicand.InnerDifferentiate(variable) * Multiplier;
         }
 
-        public partial record Divf
+        partial record Divf
         {
             // (a / b)' = (a' * b - b' * a) / b^2
             /// <inheritdoc/>
@@ -110,7 +110,7 @@ namespace AngouriMath
                 (Dividend.InnerDifferentiate(variable) * Divisor - Divisor.InnerDifferentiate(variable) * Dividend) / Divisor.Pow(2);
         }
 
-        public partial record Powf
+        partial record Powf
         {
             // (a ^ b)' = e ^ (ln(a) * b) * (a' * b / a + ln(a) * b')
             // (a ^ const)' = const * a ^ (const - 1) * a'
@@ -124,7 +124,7 @@ namespace AngouriMath
                 : Base.Pow(Exponent) * (Base.InnerDifferentiate(variable) * Exponent / Base + MathS.Ln(Base) * Exponent.InnerDifferentiate(variable));
         }
 
-        public partial record Sinf
+        partial record Sinf
         {
             // sin(a)' = cos(a) * a'
             /// <inheritdoc/>
@@ -132,7 +132,7 @@ namespace AngouriMath
                 Argument.Cos() * Argument.InnerDifferentiate(variable);
         }
 
-        public partial record Cosf
+        partial record Cosf
         {
             // cos(a)' = -sin(a) * a'
             /// <inheritdoc/>
@@ -140,7 +140,7 @@ namespace AngouriMath
                 -Argument.Sin() * Argument.InnerDifferentiate(variable);
         }
 
-        public partial record Tanf
+        partial record Tanf
         {
             // tan(a)' = 1 / cos(a) ^ 2 * a'
             /// <inheritdoc/>
@@ -148,7 +148,7 @@ namespace AngouriMath
                 1 / Argument.Cos().Pow(2) * Argument.InnerDifferentiate(variable);
         }
 
-        public partial record Secantf
+        partial record Secantf
         {
             // sec(a)' = sec(a) * tan(a) * a'
             /// <inheritdoc/>
@@ -156,7 +156,7 @@ namespace AngouriMath
                 this * Argument.Tan() * Argument.Differentiate(variable);
         }
 
-        public partial record Cosecantf
+        partial record Cosecantf
         {
             // csc(a)' = -csc(a) * cotan(a) * a'
             /// <inheritdoc/>
@@ -164,7 +164,23 @@ namespace AngouriMath
                 -this * Argument.Cotan() * Argument.Differentiate(variable);
         }
 
-        public partial record Cotanf
+        partial record Arcsecantf
+        {
+            // asec(a) = 1 / (sqrt(1 - 1 / a2)a2) * a'
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => 1 / (MathS.Sqrt(1 - 1 / Argument.Pow(2)) * Argument.Pow(2)) * Argument.Differentiate(variable);
+        }
+
+        partial record Arccosecantf
+        {
+            // asec(a) = 1 / (sqrt(1 - 1 / a2)a2) * a'
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => -1 / (MathS.Sqrt(1 - 1 / Argument.Pow(2)) * Argument.Pow(2)) * Argument.Differentiate(variable);
+        }
+
+        partial record Cotanf
         {
             // cot(a)' = -1 / sin(a) ^ 2 * a'
             /// <inheritdoc/>
@@ -172,7 +188,7 @@ namespace AngouriMath
                 -1 / Argument.Sin().Pow(2) * Argument.InnerDifferentiate(variable);
         }
 
-        public partial record Logf
+        partial record Logf
         {
             // log_b(a)' = (ln(a) / ln(b))' = (ln(a)' * ln(b) - ln(a) * ln(b)') / ln(b)^2 = (a' / a * ln(b) - ln(a) * b' / b) / ln(b)^2
             /// <inheritdoc/>
@@ -182,7 +198,7 @@ namespace AngouriMath
                 / MathS.Ln(Base).Pow(2);
         }
 
-        public partial record Arcsinf
+        partial record Arcsinf
         {
             // arcsin(x)' = 1 / sqrt(1 - x^2) * x'
             /// <inheritdoc/>
@@ -190,7 +206,7 @@ namespace AngouriMath
                 1 / MathS.Sqrt(1 - MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
         }
 
-        public partial record Arccosf
+        partial record Arccosf
         {
             // arccos(x)' = -1 / sqrt(1 - x^2) * x'
             /// <inheritdoc/>
@@ -198,7 +214,7 @@ namespace AngouriMath
                 -1 / MathS.Sqrt(1 - MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
         }
 
-        public partial record Arctanf
+        partial record Arctanf
         {
             // arctan(x)' = 1 / (1 + x^2) * x'
             /// <inheritdoc/>
@@ -206,7 +222,7 @@ namespace AngouriMath
                 1 / (1 + MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
         }
 
-        public partial record Arccotanf
+        partial record Arccotanf
         {
             // arccotan(x)' = -1 / (1 + x^2) * x'
             /// <inheritdoc/>
@@ -214,7 +230,7 @@ namespace AngouriMath
                 -1 / (1 + MathS.Sqr(Argument)) * Argument.InnerDifferentiate(variable);
         }
 
-        public partial record Factorialf
+        partial record Factorialf
         {
             // (x!)' = Γ(x + 1) polygamma(0, x + 1)
             /// <inheritdoc/>
@@ -226,7 +242,7 @@ namespace AngouriMath
         }
 
 #pragma warning disable IDE0054 // Use compound assignment
-        public partial record Derivativef
+        partial record Derivativef
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
@@ -235,7 +251,7 @@ namespace AngouriMath
                 : MathS.Derivative(this, variable, 1);
         }
 
-        public partial record Integralf
+        partial record Integralf
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
@@ -245,7 +261,7 @@ namespace AngouriMath
         }
 #pragma warning restore IDE0054 // Use compound assignment
 
-        public partial record Limitf
+        partial record Limitf
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) =>
@@ -256,7 +272,7 @@ namespace AngouriMath
                 MathS.Derivative(this, variable);
         }
 
-        public partial record Signumf
+        partial record Signumf
         {
             // TODO: the Delta function required to be defined,
             // or a piecewise definition
@@ -265,7 +281,7 @@ namespace AngouriMath
                 => MathS.Derivative(this, variable);
         }
 
-        public partial record Absf
+        partial record Absf
         {
             // TODO: derivative of the absolute function?
             /// <inheritdoc/>

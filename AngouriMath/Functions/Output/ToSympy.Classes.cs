@@ -118,6 +118,16 @@ namespace AngouriMath
             internal override string ToSymPy() => "sympy.acot(" + Argument.ToSymPy() + ")";
         }
 
+        public partial record Arcsecantf
+        {
+            internal override string ToSymPy() => "sympy.asec(" + Argument.ToSymPy() + ")";
+        }
+
+        public partial record Arccosecantf
+        {
+            internal override string ToSymPy() => "sympy.acsc(" + Argument.ToSymPy() + ")";
+        }
+
         public partial record Factorialf
         {
             internal override string ToSymPy() => "sympy.factorial(" + Argument.ToSymPy() + ")";

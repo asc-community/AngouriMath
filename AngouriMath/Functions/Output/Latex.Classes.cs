@@ -144,6 +144,20 @@ namespace AngouriMath
                 @"\csc\left(" + Argument.Latexise() + @"\right)";
         }
 
+        public partial record Arcsecantf
+        {
+            /// <inheritdoc/>
+            public override string Latexise() =>
+                @"\arcsec\left(" + Argument.Latexise() + @"\right)";
+        }
+
+        public partial record Arccosecantf
+        {
+            /// <inheritdoc/>
+            public override string Latexise() =>
+                @"\arccsc\left(" + Argument.Latexise() + @"\right)";
+        }
+
         public partial record Tanf
         {
             /// <inheritdoc/>

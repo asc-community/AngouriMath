@@ -148,7 +148,7 @@ namespace UnitTests.Convenience
         [Fact] public void ArcTrig() =>
             TestSimplify(@"\arcsin\left(\arccos\left(\arctan\left(\arccot\left(x\right)\right)\right)\right)", MathS.Arcsin(MathS.Arccos(MathS.Arctan(MathS.Arccotan(x)))));
         [Fact] public void ArcSecCosec() =>
-            TestSimplify(@"\arccos\left(\frac{1}{\arcsin\left(\frac{1}{x}\right)}\right)", MathS.Arcsec(MathS.Arccosec(x)));
+            TestSimplify(@"\arcsec\left(\arccsc\left(x\right)\right)", MathS.Arcsec(MathS.Arccosec(x)));
         [Fact] public void Log10() => Test(@"\log\left(10\right)", MathS.Log(10, 10));
         [Fact] public void Ln() => Test(@"\ln\left(10\right)", MathS.Ln(10));
         [Fact] public void LnAlternate() => Test(@"\ln\left(10\right)", MathS.Log(MathS.e, 10));

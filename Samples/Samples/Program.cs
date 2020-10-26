@@ -26,4 +26,5 @@ using PeterO.Numbers;
 //WriteLine(MathS.pi.EvalNumerical() * 2);
 //var expr = "4^x + 2^x - a";
 ////WriteLine(expr.Substitute("a", n).Substitute("x", ev1).EvalNumerical());
-WriteLine("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)".Expand().SolveEquation("x"));
+//WriteLine("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)".Expand().SolveEquation("x"));
+WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));

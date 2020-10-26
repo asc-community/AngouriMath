@@ -33,6 +33,8 @@ namespace AngouriMath
             };
         }
 
+        // TODO: reorder all those names to make similar functions appear closer
+
         public partial record Variable
         {
             private protected override string SortHashName(SortLevel level) => "v_" + Name;
@@ -97,6 +99,16 @@ namespace AngouriMath
         public partial record Cotanf
         {
             private protected override string SortHashName(SortLevel level) => "tanf_cotanf_";
+        }
+
+        public partial record Arcsecantf
+        {
+            private protected override string SortHashName(SortLevel level) => "asecf_";
+        }
+
+        public partial record Arccosecantf
+        {
+            private protected override string SortHashName(SortLevel level) => "acosf_";
         }
 
         public partial record Logf

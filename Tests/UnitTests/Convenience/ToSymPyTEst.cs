@@ -65,6 +65,8 @@ namespace UnitTests.Convenience
         [InlineData("domain({ x : x > 0 }, RR)", "ConditionSet(x, x > 0, S.Reals)")]
         [InlineData("sec(x)", "sympy.sec(x)")]
         [InlineData("csc(x)", "sympy.csc(x)")]
+        [InlineData("arcsec(x)", "sympy.asec(x)")]
+        [InlineData("arccsc(x)", "sympy.acsc(x)")]
         public void TestSymPy(string expression, string expectedToBeIn, bool contains = true)
         {
             var ent = MathS.FromString(expression);

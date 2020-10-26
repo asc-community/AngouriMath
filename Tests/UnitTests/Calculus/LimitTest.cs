@@ -72,6 +72,11 @@ namespace UnitTests.Algebra
         [InlineData("sin(x2) / sin(x)", "0")]
         [InlineData("(sin(x) - tan(a x)) / (sin(b x) - tan(x))", "(a - 1) / (1 - b)")]
         [InlineData("sec(x)", "1")]
+        [InlineData("a x * csc(b x)", "a / b")]
+        [InlineData("(arccos(x) - pi / 2) / x", "-1")]
+        [InlineData("(arccotan(x) - pi / 2) / x", "-1")]
+        [InlineData("arccsc(1 / x)", "0")]
+        [InlineData("arcsec(1 / x) - pi / 2", "0")]
         public void TestEquivalenceTableTo0(string input, string expected)
         {
             var limit = input.ToEntity();
