@@ -170,7 +170,7 @@ namespace AngouriMath.Core
                         stack.Push(Complex.Log(stack.Pop(), stack.Pop().Real));
                         break;
                     case InstructionType.CALL_ARCSIN:
-                        stack.Push(Complex.Asin(stack.Pop()));
+                        stack.Push(Complex.Conjugate(Complex.Asin(stack.Pop())));
                         break;
                     case InstructionType.CALL_ARCCOS:
                         stack.Push(Complex.Acos(stack.Pop()));

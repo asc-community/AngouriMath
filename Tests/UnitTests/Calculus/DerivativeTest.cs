@@ -146,7 +146,7 @@ namespace UnitTests.Algebra
         {
             Entity func = "arcsec(2x)";
             var derived = func.Differentiate("x");
-            Assert.Equal("(1/2) / (sqrt(1 + 1/4 / x2)x2)".Simplify(), derived.Simplify());
+            Assert.Equal("(1/2) / (sqrt(1 + (-1/4) / x2)x2)".Simplify(), derived.Simplify());
         }
 
         [Fact]
@@ -154,7 +154,7 @@ namespace UnitTests.Algebra
         {
             Entity func = "arccosec(2x)";
             var derived = func.Differentiate("x");
-            Assert.Equal("-1/2 / (sqrt(1 + 1/4 / x2)x2)".Simplify(), derived.Simplify());
+            Assert.Equal("-1/2 / (sqrt(1 + (-1/4) / x2)x2)".Simplify(), derived.Simplify());
         }
     }
 }
