@@ -17,6 +17,7 @@ namespace AngouriMath
 {
     partial record Entity
     {
+#pragma warning disable CS1591  // only while records' parameters cannot be documented
         /// <summary>
         /// A node of sum
         /// </summary>
@@ -102,5 +103,6 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Dividend, Divisor };
         }
+#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }

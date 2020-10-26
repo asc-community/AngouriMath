@@ -18,6 +18,10 @@ namespace AngouriMath
     {
         partial record Number
         {
+            /// <summary>
+            /// Extension for <see cref="Real"/>
+            /// <a href="https://en.wikipedia.org/wiki/Complex_number"/>
+            /// </summary>
             partial record Complex
             {
                 /// <inheritdoc/>

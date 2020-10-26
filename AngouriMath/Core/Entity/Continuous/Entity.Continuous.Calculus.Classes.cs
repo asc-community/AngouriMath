@@ -15,6 +15,7 @@ namespace AngouriMath
 {
     partial record Entity
     {
+#pragma warning disable CS1591  // only while records' parameters cannot be documented
         // Iterations should be refactored? to be int instead of Entity
         /// <summary>
         /// A node of derivative
@@ -63,5 +64,6 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Expression, Var, Destination };
         }
+#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }

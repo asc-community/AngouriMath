@@ -15,6 +15,7 @@ namespace AngouriMath
 {
     partial record Entity
     {
+#pragma warning disable CS1591  // only while records' parameters cannot be documented
         /// <summary>
         /// A node of exponential (power)
         /// </summary>
@@ -43,5 +44,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Base, Antilogarithm };
         }
+
+#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }

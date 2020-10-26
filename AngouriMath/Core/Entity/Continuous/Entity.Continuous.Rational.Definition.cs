@@ -36,6 +36,18 @@ namespace AngouriMath
                 /// </summary>
                 public ERational ERational { get; }
 
+                /// <summary>
+                /// A getter for the numerator
+                /// </summary>
+                // TODO: cache it
+                public Integer Numerator => ERational.Numerator;
+
+                /// <summary>
+                /// A getter for the denominator
+                /// </summary>
+                // TODO: cache it
+                public Integer Denominator => ERational.Denominator;
+
 #pragma warning disable CS1591
 
                 public void Deconstruct(out ERational rational) => rational = ERational;

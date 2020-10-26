@@ -32,7 +32,7 @@ namespace AngouriMath
             partial record Rational
             {
                 internal override string ToSymPy()
-                    => $"sympy.Rational({Numerator.ToSymPy(), Denominator.ToSymPy()}";
+                    => $"sympy.Rational({Numerator.ToSymPy()}, {Denominator.ToSymPy()}";
             }
 
             partial record Integer
