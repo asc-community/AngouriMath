@@ -44,6 +44,8 @@ namespace AngouriMath
                     var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
                     return RealPart.Stringize() + " " + sign + " " + l + RenderNum(im) + r + "i";
                 }
+                /// <inheritdoc/>
+                public override string ToString() => Stringize();
             }
 
             partial record Real
@@ -56,18 +58,24 @@ namespace AngouriMath
                     { IsNegative: true } => "-oo",
                     _ => "+oo",
                 };
+                /// <inheritdoc/>
+                public override string ToString() => Stringize();
             }
 
             partial record Rational
             {
                 /// <inheritdoc/>
                 public override string Stringize() => ERational.ToString();
+                /// <inheritdoc/>
+                public override string ToString() => Stringize();
             }
 
             partial record Integer
             {
                 /// <inheritdoc/>
                 public override string Stringize() => EInteger.ToString();
+                /// <inheritdoc/>
+                public override string ToString() => Stringize();
             }
         }
 
