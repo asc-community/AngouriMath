@@ -29,4 +29,5 @@ using PeterO.Numbers;
 //WriteLine("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)".Expand().SolveEquation("x"));
 //WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));
 //WriteLine(ToSympyCode("3 ^ (2 * i * pi)".EvalNumerical()));
-ToSympyCode("3 + i".EvalNumerical());
+//ToSympyCode("3 + i".EvalNumerical());
+WriteLine(((FiniteSet)"sec(x) + cot(2x + c) + c = 0".Solve("x")).Count);

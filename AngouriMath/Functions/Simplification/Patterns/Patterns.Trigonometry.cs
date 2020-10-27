@@ -91,6 +91,18 @@ namespace AngouriMath.Functions
         };
 
         /// <summary>
+        /// For this it is true that any trigonometric function is either sin or cos
+        /// </summary>
+        internal static Entity NormalTrigonometricForm(Entity x) => x switch
+        {
+            Tanf(var any1) => any1.Sin() / any1.Cos(),
+            Cotanf(var any1) => any1.Cos() / any1.Sin(),
+            Secantf(var any1) => 1 / any1.Cos(),
+            Cosecantf(var any1) => 1 / any1.Sin(),
+            _ => x
+        };
+
+        /// <summary>
         /// Here, we replace x with t which represents e^(ix).
         /// <list type="table">
         /// <item>sin(ax + b) = (t^a * e^(i*b) - t^(-a) * e^(-i*b)) / (2i)</item>
