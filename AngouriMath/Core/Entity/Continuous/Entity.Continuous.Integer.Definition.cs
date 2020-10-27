@@ -49,7 +49,14 @@ namespace AngouriMath
                 /// <summary>
                 /// Creates an instance of Integer
                 /// </summary>
-                public static Integer Create(EInteger value) => new Integer(value);
+                public static Integer Create(EInteger value)
+                {
+                    if (value.IsZero)
+                        return Zero;
+                    if (value == EInteger.One)
+                        return One;
+                    return new Integer(value);
+                }
 
                 /// <summary>
                 /// Deconstructs as record
