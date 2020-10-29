@@ -427,11 +427,11 @@ namespace AngouriMath
                 internal static Domain ToDomain(string domain)
                     => domain switch
                     {
-                        "BB" => Domain.Boolean,
-                        "ZZ" => Domain.Integer,
-                        "QQ" => Domain.Rational,
-                        "RR" => Domain.Real,
-                        "CC" => Domain.Complex,
+                        "BB" or "Booleans" => Domain.Boolean,
+                        "ZZ" or "Integers" => Domain.Integer,
+                        "QQ" or "Rationals" => Domain.Rational,
+                        "RR" or "Reals" => Domain.Real,
+                        "CC" or "Complexes" => Domain.Complex,
                         _ => throw new AngouriBugException("The given domain is not presented in those possible")
                     };
 

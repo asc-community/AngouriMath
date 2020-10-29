@@ -273,7 +273,7 @@ namespace AngouriMath
             partial record Interval
             {
                 /// <inheritdoc/>
-                public override Domain Codomain { get; protected init; } = Domain.Any;
+                public override Domain Codomain { get; protected init; } = Domain.Real;
             }
 
             partial record ConditionalSet
