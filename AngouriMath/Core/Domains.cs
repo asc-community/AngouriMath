@@ -63,10 +63,7 @@ namespace AngouriMath.Core
             typeof(Entity.Number.Complex)
         };
         public static bool FitsDomainOrNonNumeric(Entity entity, Domain domain)
-            => domain == Domain.Any || 
-            entity is Entity.Variable ||
-            entity.DirectChildren.Count > 0 ||
-            Types[(int)domain].IsAssignableFrom(entity.GetType());
+            => SpecialSet.Create(domain).MayContain(entity);
 
     }
 }
