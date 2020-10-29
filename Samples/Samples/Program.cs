@@ -30,4 +30,5 @@ using PeterO.Numbers;
 //WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));
 //WriteLine(ToSympyCode("3 ^ (2 * i * pi)".EvalNumerical()));
 //ToSympyCode("3 + i".EvalNumerical());
-WriteLine(((FiniteSet)"sec(x) + cot(2x + c) + c = 0".Solve("x")).Count);
+//WriteLine("((x + 1) / (x + 2)) ^ (1 - x)".Limit("x", "+oo"));
+WriteLine("(8 ^ x - 6 ^ x) / x".Limit("x", "0"));

@@ -233,7 +233,7 @@ atom returns[Entity value]
     | '-oo' { $value = Entity.Number.Real.NegativeInfinity; }
     | NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
-    | SPECIALSET { $value = DomainsFunctional.Parse($SPECIALSET.text); }
+    | SPECIALSET { $value = Entity.Set.SpecialSet.Create($SPECIALSET.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }
     | '(' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, false, $interval_arguments.couple.to, false); }
@@ -309,7 +309,7 @@ atom returns[Entity value]
             Assert("domain", 2, $args.list.Count); 
             if ($args.list[1] is not SpecialSet ss)
                 throw new InvalidArgumentParseException($"Unrecognized special set {$args.list[1].Stringize()}");
-            $value = $args.list[0].WithCodomain(DomainsFunctional.Parse(ss.SetType));
+            $value = $args.list[0].WithCodomain(ss.ToDomain());
         }
     ;
 

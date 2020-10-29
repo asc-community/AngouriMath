@@ -454,11 +454,45 @@ namespace AngouriMath
 
             partial record SpecialSet
             {
-                /// <inheritdoc/>
-                public override string Stringize()
-                    => DomainsFunctional.DomainToString(SetType);
-                /// <inheritdoc/>
-                public override string ToString() => Stringize();
+                partial record Booleans
+                {
+                    /// <inheritdoc/>
+                    public override string Stringize() => "BB";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record Integers
+                {
+                    /// <inheritdoc/>
+                    public override string Stringize() => "ZZ";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record Rationals
+                {
+                    /// <inheritdoc/>
+                    public override string Stringize() => "QQ";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record Reals
+                {
+                    /// <inheritdoc/>
+                    public override string Stringize() => "RR";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record Complexes
+                {
+                    /// <inheritdoc/>
+                    public override string Stringize() => "CC";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
             }
 
             partial record Unionf

@@ -68,32 +68,5 @@ namespace AngouriMath.Core
             entity.DirectChildren.Count > 0 ||
             Types[(int)domain].IsAssignableFrom(entity.GetType());
 
-        // that should only be used in parser
-
-        private readonly static (Domain domain, string name)[] DomainStringPairs = new[] 
-        { 
-            (Domain.Boolean, "BB"),
-            (Domain.Integer, "ZZ"),
-            (Domain.Rational, "QQ"),
-            (Domain.Real, "RR"),
-            (Domain.Complex, "CC"),
-            (Domain.Any, "AA")
-        };
-
-        private readonly static Dictionary<string, Domain> FromStringToDomain = 
-            DomainStringPairs.ToDictionary(x => x.name, x => x.domain);
-
-        private readonly static Dictionary<Domain, string> FromDomainToString =
-            DomainStringPairs.ToDictionary(x => x.domain, x => x.name);
-
-        public static string DomainToString(Domain domain)
-            => FromDomainToString.TryGetValue(domain, out var res) ? res : throw new AngouriBugException("Unrecognized domain");
-
-        public static Domain Parse(Entity expr)
-            => expr is SpecialSet ss ? ss.SetType : (expr is Variable(var name) ? Parse(name) : throw new UnrecognizedDomainException(expr.Stringize()));
-
-        public static Domain Parse(string name)
-            => FromStringToDomain.TryGetValue(name, out var dom) ? dom :
-                throw new UnrecognizedDomainException(name);
     }
 }

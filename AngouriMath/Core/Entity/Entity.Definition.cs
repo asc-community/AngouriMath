@@ -189,5 +189,8 @@ namespace AngouriMath
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
         /// </summary>
         public int SimplifiedRate => caches.GetValue(this, cache => cache.simplifiedRate, cache => cache.simplifiedRate = MathS.Settings.ComplexityCriteria.Value(this)) ?? throw new AngouriBugException("Sim cannot be null");
+
+        /// <summary>Checks whether the given</summary>
+        public bool IsSymbolic => Vars.Any();
     }
 }

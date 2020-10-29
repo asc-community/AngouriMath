@@ -1762,7 +1762,7 @@ internal partial class AngouriMathParser : Parser {
 				EnterOuterAlt(_localctx, 5);
 				{
 				State = 330; _localctx._SPECIALSET = Match(SPECIALSET);
-				 _localctx.value =  DomainsFunctional.Parse((_localctx._SPECIALSET!=null?_localctx._SPECIALSET.Text:null)); 
+				 _localctx.value =  Entity.Set.SpecialSet.Create((_localctx._SPECIALSET!=null?_localctx._SPECIALSET.Text:null)); 
 				}
 				break;
 			case 6:
@@ -2225,7 +2225,7 @@ internal partial class AngouriMathParser : Parser {
 				            Assert("domain", 2, _localctx.args.list.Count); 
 				            if (_localctx.args.list[1] is not SpecialSet ss)
 				                throw new InvalidArgumentParseException($"Unrecognized special set {_localctx.args.list[1].Stringize()}");
-				            _localctx.value =  _localctx.args.list[0].WithCodomain(DomainsFunctional.Parse(ss.SetType));
+				            _localctx.value =  _localctx.args.list[0].WithCodomain(ss.ToDomain());
 				        
 				}
 				break;

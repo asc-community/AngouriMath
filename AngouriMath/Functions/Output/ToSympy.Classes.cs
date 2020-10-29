@@ -297,15 +297,32 @@ namespace AngouriMath
 
             partial record SpecialSet
             {
+                partial record Integers
+                {
+                    internal override string ToSymPy()
+                        => "S.Integers";
+                }
+
+                partial record Rationals
+                {
+                    internal override string ToSymPy()
+                        => "S.Rationals";
+                }
+
+                partial record Reals
+                {
+                    internal override string ToSymPy()
+                        => "S.Reals";
+                }
+
+                partial record Complexes
+                {
+                    internal override string ToSymPy()
+                        => "S.Complexes";
+                }
+
                 internal override string ToSymPy()
-                    => "S." + (SetType switch
-                    {
-                        Domain.Integer => "Integers",
-                        Domain.Rational => "Rationals",
-                        Domain.Real => "Reals",
-                        Domain.Complex => "Complexes",
-                        _ => throw new MathSException($"There is no {SetType} in either SymPy or AM's {nameof(ToSymPy)}")
-                    });
+                        => throw new MathSException($"There is no {this} in either SymPy or AM's {nameof(ToSymPy)}");
             }
 
             partial record Unionf
