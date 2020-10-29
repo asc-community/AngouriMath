@@ -475,7 +475,7 @@ namespace AngouriMath
                 {
                     /// <inheritdoc/>
                     public override bool MayContain(Entity entity)
-                        => entity.Evaled is Boolean || entity.Evaled.IsSymbolic;
+                        => entity is Boolean || !entity.IsConstantLeaf;
                     internal override Domain ToDomain() => Domain.Boolean;
                 }
 
@@ -486,7 +486,7 @@ namespace AngouriMath
                 {
                     /// <inheritdoc/>
                     public override bool MayContain(Entity entity)
-                        => entity.Evaled is Integer || entity.Evaled.IsSymbolic;
+                        => entity is Integer || !entity.IsConstantLeaf;
                     internal override Domain ToDomain() => Domain.Integer;
                 }
 
@@ -497,7 +497,7 @@ namespace AngouriMath
                 {
                     /// <inheritdoc/>
                     public override bool MayContain(Entity entity)
-                        => entity.Evaled is Rational || entity.Evaled.IsSymbolic;
+                        => entity is Rational || !entity.IsConstantLeaf;
                     internal override Domain ToDomain() => Domain.Rational;
                 }
 
@@ -508,7 +508,7 @@ namespace AngouriMath
                 {
                     /// <inheritdoc/>
                     public override bool MayContain(Entity entity)
-                        => entity.Evaled is Real || entity.Evaled.IsSymbolic;
+                        => entity is Real || !entity.IsConstantLeaf;
                     internal override Domain ToDomain() => Domain.Real;
                 }
 
@@ -519,7 +519,7 @@ namespace AngouriMath
                 {
                     /// <inheritdoc/>
                     public override bool MayContain(Entity entity)
-                        => entity.Evaled is Complex || entity.Evaled.IsSymbolic;
+                        => entity is Complex || !entity.IsConstantLeaf;
                     internal override Domain ToDomain() => Domain.Complex;
                 }
             }

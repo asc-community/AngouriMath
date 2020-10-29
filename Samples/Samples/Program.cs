@@ -31,4 +31,7 @@ using PeterO.Numbers;
 //WriteLine(ToSympyCode("3 ^ (2 * i * pi)".EvalNumerical()));
 //ToSympyCode("3 + i".EvalNumerical());
 //WriteLine("((x + 1) / (x + 2)) ^ (1 - x)".Limit("x", "+oo"));
-WriteLine("(8 ^ x - 6 ^ x) / x".Limit("x", "0"));
+var x = MathS.Var("x");
+var func = MathS.Sqr(x) + 2 * x + 1;
+var derived = func.Differentiate(x);
+derived.Simplify();

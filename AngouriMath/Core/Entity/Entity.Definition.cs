@@ -190,7 +190,12 @@ namespace AngouriMath
         /// </summary>
         public int SimplifiedRate => caches.GetValue(this, cache => cache.simplifiedRate, cache => cache.simplifiedRate = MathS.Settings.ComplexityCriteria.Value(this)) ?? throw new AngouriBugException("Sim cannot be null");
 
-        /// <summary>Checks whether the given</summary>
+        /// <summary>Checks whether the given expression contains variable</summary>
         public bool IsSymbolic => Vars.Any();
+
+        /// <summary>
+        /// Checks whether the given expression is a finite constant leaf
+        /// </summary>
+        public bool IsConstantLeaf => this is Boolean or Number;
     }
 }
