@@ -265,6 +265,7 @@ namespace AngouriMath
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
+                    entity = entity.Evaled;
                     if (entity is Complex and not Real)
                     {
                         contains = false;
@@ -462,7 +463,7 @@ namespace AngouriMath
                     contains = false;
                     if (entity.Evaled.IsSymbolic)
                         return false;
-                    contains = MayContain(entity);
+                    contains = MayContain(entity.Evaled);
                     return true;
                 }
 

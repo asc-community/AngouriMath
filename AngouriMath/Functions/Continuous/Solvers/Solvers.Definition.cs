@@ -25,10 +25,13 @@ namespace AngouriMath
         public Set Solve(Variable var)
         {
             if (this is Statement)
-                return (Set)StatementSolver.Solve(this, var).InnerSimplified;
+            {
+                var res = StatementSolver.Solve(this, var);
+                return (Set)res.InnerSimplified;
+            }
             if (this == var)
                 return new FiniteSet(Boolean.True);
-            throw new InvalidOperationException("There should be statement to be true");
+            throw new InvalidOperationException("There should be statement to be true (e. g. equality, inequality, or some other predicate)");
         }
     }
 }
