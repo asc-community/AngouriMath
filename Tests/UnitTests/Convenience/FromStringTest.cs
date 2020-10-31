@@ -145,6 +145,9 @@ namespace UnitTests.Convenience
         [Fact] public void TestInvalidArg8() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(x, x, 4, x)"));
         [Fact] public void TestInvalidArg9() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(x, x, x, x)"));
         [Fact] public void TestInvalidArg10() => Assert.Throws<InvalidArgumentParseException>(() => FromString("derivative(x, x, a)"));
+        [Fact] public void TestPowerUnary1() => Assert.Equal(Pow(x, "-5"), FromString("x^-5"));
+        [Fact] public void TestPowerUnary2() => Assert.Equal(Pow(x, -x), FromString("x^-x"));
+        [Fact] public void TestPowerUnary3() => Assert.Equal(Pow(x, -Pow(x, x)), FromString("x^ -x^x"));
 
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {
