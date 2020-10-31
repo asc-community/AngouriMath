@@ -298,13 +298,11 @@ internal partial class AngouriMathParser : Parser {
 				{
 				State = 67; _localctx._power_list = power_list();
 
-				        var list = _localctx._power_list.value;
-				        _localctx.value =  list.Last();
-				        list.RemoveAt(list.Count - 1);
-				        list.Reverse(); 
-				        list.Add(_localctx._factorial_expression.value);
-				        foreach(var p in list) { _localctx.value =  MathS.Pow(p, _localctx.value); }
-				    
+				            _localctx.value =  _localctx._power_list.value
+				                        .Prepend(_localctx._factorial_expression.value)
+				                        .Reverse()
+				                        .Aggregate((exp, @base) => @base.Pow(exp));
+				        
 				}
 			}
 

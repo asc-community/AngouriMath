@@ -10,6 +10,8 @@ using System.Diagnostics;
 using System.Collections;
 using System.Numerics;
 using PeterO.Numbers;
+using System.Collections.Generic;
+using System.Linq;
 
 //WriteLine(@"(x15 - 3^15 - 15 3^14(x - 3)) / (x - 3)2".Limit("x", "3", AngouriMath.Core.ApproachFrom.Left));
 
@@ -31,4 +33,11 @@ using PeterO.Numbers;
 //WriteLine(ToSympyCode("3 ^ (2 * i * pi)".EvalNumerical()));
 //ToSympyCode("3 + i".EvalNumerical());
 //WriteLine("((x + 1) / (x + 2)) ^ (1 - x)".Limit("x", "+oo"));
-WriteLine("x4 = 3 and x in RR".Solve("x"));
+//WriteLine("x4 = 3 and x in RR".Solve("x"));
+var power_list = new List<Entity> { "b", "c" };
+//Entity value = power_list.Last();
+//foreach (var @base in power_list)
+//    value = MathS.Pow(@base, value);
+var value = power_list.Prepend("a").Reverse().Aggregate((a, b) => b.Pow(a));
+WriteLine(value.Evaled);
+WriteLine(value.Compile("a", "b", "c"));

@@ -68,16 +68,14 @@ power_list returns[List<Entity> value]
     : ('^' factorial_expression { $value.Add($factorial_expression.value); })+
     ;
     
-// TODO: refactor
 power_expression returns[Entity value]
-    : factorial_expression { $value = $factorial_expression.value; } (power_list {
-        var list = $power_list.value;
-        $value = list.Last();
-        list.RemoveAt(list.Count - 1);
-        list.Reverse(); 
-        list.Add($factorial_expression.value);
-        foreach(var p in list) { $value = MathS.Pow(p, $value); }
-    })?
+    : factorial_expression { $value = $factorial_expression.value; }
+        (power_list {
+            $value = $power_list.value
+                        .Prepend($factorial_expression.value)
+                        .Reverse()
+                        .Aggregate((exp, @base) => @base.Pow(exp));
+        })?
     ;
     
 /*
