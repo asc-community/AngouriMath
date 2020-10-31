@@ -28,4 +28,4 @@ using PeterO.Numbers;
 ////WriteLine(expr.Substitute("a", n).Substitute("x", ev1).EvalNumerical());
 //WriteLine("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)".Expand().SolveEquation("x"));
 //WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));
-WriteLine("cos(a x)2 + sin(a x) + c = 0".Solve("x"));
+WriteLine(ReadLine()?.EvalNumerical());
