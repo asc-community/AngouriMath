@@ -17,7 +17,7 @@ namespace UnitTests.Common
         [InlineData("x * integral(x + 2, x, 1)", "1 * integral(x + 2, x, 1)")]
         [InlineData("x * limit(x + 2, x, 1)", "1 * limit(x + 2, x, 1)")]
         [InlineData("sin(cos(sec(csc(x))))", "sin(cos(sec(csc(1))))")]
-        [InlineData("arcsin(arccos(arcsec(arccsc(x))))", "arcsin(arccos(arcsec(arccsc(1))))")]
+        [InlineData("arcsin(arccos(arcsec(arccsc(x))))", "arcsin(arccos(arcsec(arccsc(1))))")]        
         public void Test(string unsubstituted, string expectedRaw)
         {
             var actual = unsubstituted.Substitute("x", 1);

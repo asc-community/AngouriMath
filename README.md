@@ -127,11 +127,9 @@ Console.WriteLine(compiled.Substitute(4));
 
 Start with boolean algebra:
 ```cs
-// Those are equal
 Entity expr1 = "a and b or c";
-Entity expr2 = "a & b | c";
 
-// as well as those
+// Those are the same
 Entity expr3 = "a -> b";
 Entity expr3 = "a implies b";
 ```
@@ -201,7 +199,7 @@ Console.WriteLine(solutions);
 Find derivatives:
 ```cs
 var func = "x2 + ln(cos(x) + 3) + 4x";
-var derivative = func.Derive("x");
+var derivative = func.Differentiate("x");
 Console.WriteLine(derivative.Simplify());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)%2B3\right)}^{2}\times \left(\cos\left(x\right)%2B3\right)}%2B2\times x">
