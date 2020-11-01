@@ -1803,7 +1803,8 @@ internal partial class AngouriMathParser : Parser {
 			case 5:
 				EnterOuterAlt(_localctx, 5);
 				{
-needs being reran
+				State = 340; _localctx._SPECIALSET = Match(SPECIALSET);
+				 _localctx.value =  Entity.Set.SpecialSet.Create((_localctx._SPECIALSET!=null?_localctx._SPECIALSET.Text:null)); 
 				}
 				break;
 			case 6:
