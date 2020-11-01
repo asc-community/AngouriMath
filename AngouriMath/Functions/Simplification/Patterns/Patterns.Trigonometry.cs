@@ -32,6 +32,10 @@ namespace AngouriMath.Functions
             Sumf(Arctanf(var any1), Arccotanf(var any1a)) when any1 == any1a => MathS.pi / 2,
             Sumf(Arccotanf(var any1), Arctanf(var any1a)) when any1 == any1a => MathS.pi / 2,
 
+            // tan * cot = 1
+            Mulf(Tanf(var any1), Cotanf(var any1a)) when any1 == any1a => 1,
+            Mulf(Cotanf(var any1), Tanf(var any1a)) when any1 == any1a => 1,
+
             // arcfunc(func(x)) = x
             Arcsinf(Sinf(var any1)) => any1,
             Arccosf(Cosf(var any1)) => any1,

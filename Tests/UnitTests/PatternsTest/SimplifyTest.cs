@@ -39,7 +39,7 @@ namespace UnitTests.PatternsTest
         [Fact] public void Patt7() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 3), 0.5 * MathS.pi);
         [Fact] public void Patt8() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 3), 0.5 * MathS.pi);
         [Fact] public void Patt9() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 6), MathS.Arccotan(3 * x) + MathS.Arctan(6 * x));
-        [Fact] public void Patt10() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 1), MathS.Arccos(x) + MathS.Arcsin(3 * x));
+        [Fact] public void Patt10() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 1), MathS.Arcsin(3 * x) + MathS.Arccos(x));
         [Fact] public void Patt11() => AssertSimplify(3 + x + 4 + x, 7 + 2 * x);
         [Fact] public void Patt12() => AssertSimplify((x * y * a * b * c) / (c * b * a * x * x), y / x, 4);
         [Fact] public void Frac1() => AssertSimplify("x / (y / z)", "x * z / y");
@@ -98,7 +98,7 @@ namespace UnitTests.PatternsTest
 
         [Fact] public void BigSimple1() => AssertSimplifyToString(
             "1+2x*-1+2x*2+x^2+2x+2x*-4+2x*4+2x*2x*-1+2x*2x*2+2x*x^2+x^2+x^2*-4+x^2*4+x^2*2*x*-1+x^2*2x*2+x^2*x^2",
-            "1 + 6 * x ^ 2 + x ^ 4 + 4 * (x + x ^ 3)");
+            "1 + 6 * x ^ 2 + x ^ 4 + 4 * (x ^ 3 + x)");
         // NOTE: Simplify should not be called both sides since does not ensure that the simplified result
         // is acceptable - we should maintain an expected result that does not change with the implementation
         // and update it when needed. Test should be more restrictive to actually catch bugs.

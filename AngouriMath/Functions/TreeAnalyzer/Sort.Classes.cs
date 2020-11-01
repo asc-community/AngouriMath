@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2019-2020 Angourisoft
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -18,19 +18,35 @@ namespace AngouriMath
     using SortLevel = Functions.TreeAnalyzer.SortLevel;
     public abstract partial record Entity
     {
-        /// <summary>Hash that is convenient to sort with</summary>
-        internal string SortHash(SortLevel level) =>
-            SortHashName(level) + string.Join("_", DirectChildren.Select(child => child.SortHash(level)).Where(x => x is not ""));
-        private protected abstract string SortHashName(SortLevel level);
+        /// <summary>
+        /// Returns the correct way for sort string
+        /// </summary>
+        /// <param name="level">The level at which we are sorting</param>
+        /// <param name="highLevel">The most general way (that is, the least uniqueness of the string)</param>
+        /// <param name="middleLevel">The one in between (for example, for grouping some functions)</param>
+        /// <param name="lowLevel">The most unique string id</param>
+        private static string Choice(SortLevel level, string highLevel, string middleLevel, string lowLevel)
+            => level switch
+            {
+                SortLevel.HIGH_LEVEL => highLevel,
+                SortLevel.MIDDLE_LEVEL => middleLevel,
+                SortLevel.LOW_LEVEL => lowLevel,
+                _ => throw new AngouriBugException($"Unrecognized SortLevel: {level}")
+            };
+
+        /// <summary>
+        /// Returns the correct way for sort string
+        /// </summary>
+        /// <param name="level">The level at which we are sorting</param>
+        /// <param name="highLevel">The most general way (that is, the least uniqueness of the string)</param>
+        /// <param name="lowLevel">The most unique string id</param>
+        private static string Choice(SortLevel level, string highLevel, string lowLevel)
+            => Choice(level, highLevel, lowLevel, lowLevel);
 
         public partial record Number
         {
-            private protected override string SortHashName(SortLevel level) => level switch
-            {
-                SortLevel.HIGH_LEVEL => "",
-                SortLevel.MIDDLE_LEVEL => Stringize(),
-                _ => Stringize() + " "
-            };
+            private protected override string SortHashName(SortLevel level) 
+                => Choice(level, "", Stringize(), Stringize() + " ");
         }
 
         // TODO: reorder all those names to make similar functions appear closer
@@ -42,98 +58,117 @@ namespace AngouriMath
 
         public partial record Tensor : Entity
         {
-            private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "tensort_" : "";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "", "tensort_");
         }
 
         // Each function and operator processing
         public partial record Sumf
         {
-            private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "sumf_" : "";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "", "summinus_", "sum_");
         }
 
         public partial record Minusf
         {
-            private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "minusf_" : "";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "", "summinus_", "min_");
         }
 
         public partial record Mulf
         {
-            private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "mulf_" : "";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "", "divmul_", "mul_");
         }
 
         public partial record Divf
         {
-            private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "divf_" : "";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "", "divmul_", "div_");
         }
 
         public partial record Powf
         {
-            private protected override string SortHashName(SortLevel level) => level == SortLevel.LOW_LEVEL ? "powf_" : "";
-        }
-
-        public partial record Sinf
-        {
-            private protected override string SortHashName(SortLevel level) => "sinf_";
-        }
-
-        public partial record Cosf
-        {
-            private protected override string SortHashName(SortLevel level) => "cosf_";
-        }
-
-        public partial record Secantf
-        {
-            private protected override string SortHashName(SortLevel level) => "cosf_secf_";
-        }
-
-        public partial record Cosecantf
-        {
-            private protected override string SortHashName(SortLevel level) => "sinf_cscf_";
-        }
-
-        public partial record Tanf
-        {
-            private protected override string SortHashName(SortLevel level) => "tanf_";
-        }
-
-        public partial record Cotanf
-        {
-            private protected override string SortHashName(SortLevel level) => "tanf_cotanf_";
-        }
-
-        public partial record Arcsecantf
-        {
-            private protected override string SortHashName(SortLevel level) => "asecf_";
-        }
-
-        public partial record Arccosecantf
-        {
-            private protected override string SortHashName(SortLevel level) => "acosf_";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "", "logpow_", "pow_");
         }
 
         public partial record Logf
         {
-            private protected override string SortHashName(SortLevel level) => "logf_";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "", "logpow_", "log_");
+        }
+
+        public partial record Sinf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "sincos_", "sin_", "sin_");
+        }
+
+        public partial record Cosf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "sincos_", "cos_", "cos_");
+        }
+
+        public partial record Secantf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "seccsc_", "sec_", "sec_");
+        }
+
+        public partial record Cosecantf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "seccsc_", "csc_", "csc_");
+        }
+
+        public partial record Tanf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "tancot_", "tan_", "tan_");
+        }
+
+        public partial record Cotanf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "tancot_", "cot_", "cot_");
+        }
+
+        public partial record Arcsecantf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "arcseccsc_", "arcseccsc_", "arcsec_");
+        }
+
+        public partial record Arccosecantf
+        {
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "arcseccsc_", "arcseccsc_", "arccsc_");
         }
 
         public partial record Arcsinf
         {
-            private protected override string SortHashName(SortLevel level) => "arcsinf_";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "arcsincos_", "arcsincos_", "arcsin_");
         }
 
         public partial record Arccosf
         {
-            private protected override string SortHashName(SortLevel level) => "arccosf_";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "arcsincos_", "arcsincos_", "arccos_");
         }
 
         public partial record Arctanf
         {
-            private protected override string SortHashName(SortLevel level) => "arctanf_";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "arctancot_", "arctancot_", "arctan_");
         }
 
         public partial record Arccotanf
         {
-            private protected override string SortHashName(SortLevel level) => "arccotanf_";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "arctancot_", "arctancot_", "arccot_");
         }
 
         public partial record Factorialf
@@ -158,12 +193,14 @@ namespace AngouriMath
 
         public partial record Signumf
         {
-            private protected override string SortHashName(SortLevel level) => "signumf_";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "sgnabs_", "sgn_", "sgn_");
         }
 
         public partial record Absf
         {
-            private protected override string SortHashName(SortLevel level) => "absf_";
+            private protected override string SortHashName(SortLevel level)
+                => Choice(level, "sgnabs_", "abs_", "abs_");
         }
 
         partial record Boolean
@@ -306,41 +343,6 @@ namespace AngouriMath
                 private protected override string SortHashName(SortLevel level)
                     => level == SortLevel.LOW_LEVEL ? "in_" : "";
             }
-        }
-    }
-}
-
-namespace AngouriMath.Functions
-{
-    internal static partial class TreeAnalyzer
-    {
-        internal static IEnumerable<Entity> SortRealsAndNonReals(IEnumerable<Entity> entities)
-        {
-            var reals = entities.OfType<Real>();
-            var nonReals = entities.Where(c => c is not Real);
-            var all = reals.OrderBy(c => c).Concat(nonReals);
-            return all;
-        }
-
-        /// <summary>Binary multi hanging: ((1 + 1) + (1 + 1))</summary>
-        internal static Entity MultiHangBinary(IReadOnlyList<Entity> children, Func<Entity, Entity, Entity> op)
-        {
-            Entity MultiHangBinary(int start, int length) =>
-                length switch
-                {
-                    0 => throw new TreeException("At least 1 child required"),
-                    1 => children[start],
-                    2 => op(children[start], children[start + 1]),
-                    _ => op(MultiHangBinary(start, length / 2),
-                            MultiHangBinary(start + length / 2, length - length / 2))
-                };
-            return MultiHangBinary(0, children.Count);
-        }
-        internal enum SortLevel
-        {
-            HIGH_LEVEL, // Variables, functions. Doesn't pay attention to constants or ops
-            MIDDLE_LEVEL, // Contants are now countable
-            LOW_LEVEL, // De facto full hash
         }
     }
 }
