@@ -84,7 +84,7 @@ namespace AngouriMath
         public partial record Divf
         {
             private protected override string SortHashName(SortLevel level)
-                => Choice(level, "", "divmul_", "div_");;
+                => Choice(level, "", "divmul_", "div_");
         }
 
         public partial record Powf
