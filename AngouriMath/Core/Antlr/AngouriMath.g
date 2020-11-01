@@ -69,16 +69,14 @@ power_list returns[List<Entity> value]
     | ('^' unary_expression { $value.Add($unary_expression.value); })+
     ;
     
-// TODO: refactor
 power_expression returns[Entity value]
-    : factorial_expression { $value = $factorial_expression.value; } (power_list {
-        var list = $power_list.value;
-        $value = list.Last();
-        list.RemoveAt(list.Count - 1);
-        list.Reverse(); 
-        list.Add($factorial_expression.value);
-        foreach(var p in list) { $value = MathS.Pow(p, $value); }
-    })?
+    : factorial_expression { $value = $factorial_expression.value; }
+        (power_list {
+            $value = $power_list.value
+                        .Prepend($factorial_expression.value)
+                        .Reverse()
+                        .Aggregate((exp, @base) => @base.Pow(exp));
+        })?
     ;
     
 /*
@@ -234,7 +232,7 @@ atom returns[Entity value]
     | '-oo' { $value = Entity.Number.Real.NegativeInfinity; }
     | NUMBER { $value = Entity.Number.Complex.Parse($NUMBER.text); }
     | BOOLEAN { $value = Entity.Boolean.Parse($BOOLEAN.text); }
-    | SPECIALSET { $value = DomainsFunctional.Parse($SPECIALSET.text); }
+    | SPECIALSET { $value = Entity.Set.SpecialSet.Create($SPECIALSET.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }
     | '(' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, false, $interval_arguments.couple.to, false); }
@@ -310,7 +308,7 @@ atom returns[Entity value]
             Assert("domain", 2, $args.list.Count); 
             if ($args.list[1] is not SpecialSet ss)
                 throw new InvalidArgumentParseException($"Unrecognized special set {$args.list[1].Stringize()}");
-            $value = $args.list[0].WithCodomain(DomainsFunctional.Parse(ss.SetType));
+            $value = $args.list[0].WithCodomain(ss.ToDomain());
         }
     ;
 

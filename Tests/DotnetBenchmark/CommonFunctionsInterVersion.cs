@@ -38,8 +38,6 @@ namespace DotnetBenchmark
         private static readonly Entity toSolveEasyMedium = "x2 + x + a";
         [Benchmark] public void SolveMedium() => toSolveMedium.SolveEquation("x");
         private static readonly Entity toSolveMedium = "(x + sqr(x) + a)2 + (x + sqr(x) + a) + b";
-        [Benchmark] public void SolveMedium2() => toSolveMedium2.SolveEquation("x");
-        private static readonly Entity toSolveMedium2 = "3arccos(2x + a)3 + 6arccos(2x + a)2 - a3 + 3";
         [Benchmark] public void SolveMediumHard() => toSolveMediumHard.SolveEquation("x");
         private static readonly Entity toSolveMediumHard = "(sin(x) + sqr(sin(x)) + a)4 + (sin(x) + sqr(sin(x)) + a) + b";
         [Benchmark] public void SolveHard() => toSolveHard.SolveEquation("x");

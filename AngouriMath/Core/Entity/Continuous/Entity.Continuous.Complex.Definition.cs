@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2019-2020 Angourisoft
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -7,24 +7,19 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-using System.Linq;
+
+using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
+using System.Linq;
 
 namespace AngouriMath
 {
-    using Core;
-    using Core.Exceptions;
-    using System.Text;
-
     partial record Entity
     {
-        public abstract partial record Number
+        partial record Number
         {
-            /// <summary>
-            /// Extension for <see cref="Real"/>
-            /// <a href="https://en.wikipedia.org/wiki/Complex_number"/>
-            /// </summary>
-            public record Complex : Number
+            public partial record Complex : Number
             {
                 /// <summary>
                 /// Constructor does not downcast automatically. Use <see cref="Create(Real, Real)"/> for automatic downcasting
@@ -104,47 +99,6 @@ namespace AngouriMath
                 public void Deconstruct(out Real realPart, out Real imaginaryPart) =>
                     (realPart, imaginaryPart) = (RealPart, ImaginaryPart);
 
-                /// <inheritdoc/>
-                public override string Stringize()
-                {
-                    static string RenderNum(Real number)
-                    {
-                        if (number == Integer.MinusOne)
-                            return "-";
-                        else if (number == Integer.One)
-                            return "";
-                        else
-                            return number.Stringize();
-                    }
-                    if (ImaginaryPart is Integer(0))
-                        return RealPart.Stringize();
-                    else if (RealPart is Integer(0))
-                        return RenderNum(ImaginaryPart) + "i";
-                    var (l, r) = ImaginaryPart is Rational and not Integer ? ("(", ")") : ("", "");
-                    var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
-                    return RealPart.Stringize() + " " + sign + " " + l + RenderNum(im) + r + "i";
-                }
-
-                /// <inheritdoc/>
-                public override string Latexise()
-                {
-                    static string RenderNum(Real number)
-                    {
-                        if (number == Integer.MinusOne)
-                            return "-";
-                        else if (number == Integer.One)
-                            return "";
-                        else
-                            return number.Latexise();
-                    }
-                    if (ImaginaryPart is Integer(0))
-                        return RealPart.Latexise();
-                    else if (RealPart is Integer(0))
-                        return RenderNum(ImaginaryPart) + "i";
-                    var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
-                    return RealPart.Latexise() + " " + sign + " " +
-                        (im == 1 ? "" : im.Latexise(ImaginaryPart is Rational and not Integer)) + "i";
-                }
 
                 /// <summary>Returns conjugate of a complex number. Given this = a + ib, Conjugate() -> a - ib</summary>
                 /// <returns>Conjugate of the number</returns>
@@ -275,15 +229,6 @@ namespace AngouriMath
 
 #pragma warning restore CS1591
 
-                /// <inheritdoc/>
-                public override Domain Codomain { get; protected init; } = Domain.Complex;
-
-                /// <inheritdoc/>
-                public override Entity Substitute(Entity x, Entity value)
-                    => this == x ? value : this;
-
-                /// <inheritdoc/>
-                public override string ToString() => Stringize();
             }
         }
     }

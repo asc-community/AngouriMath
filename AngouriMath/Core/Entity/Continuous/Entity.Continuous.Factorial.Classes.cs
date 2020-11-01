@@ -7,31 +7,29 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
+
+using AngouriMath.Core;
 using System;
-using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
+#pragma warning disable CS1591  // only while records' parameters cannot be documented
         /// <summary>
-        /// Solves a <see cref="Statement"/>
-        /// Statement is an Entity such that its value is true for
-        /// any x in X, where X is the result of this method.
-        /// See more about <see cref="Set"/>
+        /// A node of factorial
         /// </summary>
-        /// <param name="var">Over which variable to solve</param>
-        public Set Solve(Variable var)
+        public partial record Factorialf(Entity Argument) : Function
         {
-            if (this is Statement)
-            {
-                var res = StatementSolver.Solve(this, var);
-                return (Set)res.InnerSimplified;
-            }
-            if (this == var)
-                return new FiniteSet(Boolean.True);
-            throw new InvalidOperationException("There should be statement to be true (e. g. equality, inequality, or some other predicate)");
+            /// <summary>Reuse the cache by returning the same object if possible</summary>
+            private Factorialf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
+            // This is still a function for pattern replacement
+            internal override Priority Priority => Priority.Factorial;
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
         }
+#pragma warning restore CS1591  // only while records' parameters cannot be documented
     }
 }

@@ -10,6 +10,8 @@ using System.Diagnostics;
 using System.Collections;
 using System.Numerics;
 using PeterO.Numbers;
+using System.Collections.Generic;
+using System.Linq;
 
 //WriteLine(@"(x15 - 3^15 - 15 3^14(x - 3)) / (x - 3)2".Limit("x", "3", AngouriMath.Core.ApproachFrom.Left));
 
@@ -28,4 +30,5 @@ using PeterO.Numbers;
 ////WriteLine(expr.Substitute("a", n).Substitute("x", ev1).EvalNumerical());
 //WriteLine("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)".Expand().SolveEquation("x"));
 //WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));
-WriteLine(ReadLine()?.EvalNumerical());
+
+WriteLine(3);

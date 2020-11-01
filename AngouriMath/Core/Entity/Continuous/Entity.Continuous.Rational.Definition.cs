@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2019-2020 Angourisoft
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -7,20 +7,20 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+using AngouriMath.Core;
 using PeterO.Numbers;
+
 namespace AngouriMath
 {
-    using Core;
-    using System.Text;
-
     partial record Entity
     {
-        public abstract partial record Number
+        partial record Number
         {
             /// <summary>
             /// The denominator cannot be zero as the resulting value will not be a rational
             /// </summary>
-            public record Rational : Real, System.IComparable<Rational>
+            public partial record Rational : Real, System.IComparable<Rational>
             {
                 /// <summary>
                 /// Constructor does not downcast automatically.
@@ -29,10 +29,24 @@ namespace AngouriMath
                 private protected Rational(ERational value)
                     : base(value.ToEDecimal(MathS.Settings.DecimalPrecisionContext)) => ERational = value;
 
+                internal override Priority Priority => Priority.Div;
+
                 /// <summary>
                 /// The PeterO number representation in rational
                 /// </summary>
                 public ERational ERational { get; }
+
+                /// <summary>
+                /// A getter for the numerator
+                /// </summary>
+                // TODO: cache it
+                public Integer Numerator => ERational.Numerator;
+
+                /// <summary>
+                /// A getter for the denominator
+                /// </summary>
+                // TODO: cache it
+                public Integer Denominator => ERational.Denominator;
 
 #pragma warning disable CS1591
 
@@ -45,7 +59,6 @@ namespace AngouriMath
 
 #pragma warning restore CS1591
 
-                internal override Priority Priority => Priority.Div;
                 /// <inheritdoc/>
                 public override bool IsExact => true;
 
@@ -122,10 +135,7 @@ namespace AngouriMath
                         return new Rational((intPart * sign + sign / rat.ERational).ToLowestTerms());
                     }
                 }
-                /// <inheritdoc/>
-                public override string Stringize() => ERational.ToString();
-                /// <inheritdoc/>
-                public override string Latexise() => $@"\frac{{{ERational.Numerator}}}{{{ERational.Denominator}}}";
+
                 internal static bool TryParse(string s,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Rational? dst)
                 {
@@ -164,15 +174,6 @@ namespace AngouriMath
                 public static implicit operator Rational(EInteger value) => Integer.Create(value);
                 public static implicit operator Rational(ERational value) => Create(value);
 #pragma warning restore CS1591
-
-                /// <inheritdoc/>
-                public override Domain Codomain { get; protected init; } = Domain.Rational;
-                /// <inheritdoc/>
-                public override Entity Substitute(Entity x, Entity value)
-                    => this == x ? value : this;
-
-                /// <inheritdoc/>
-                public override string ToString() => Stringize();
             }
         }
     }

@@ -21,6 +21,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         {
             res = Empty;
             var replacement = Variable.CreateTemp(expr.Vars);
+            expr = expr.Replace(Patterns.NormalTrigonometricForm);
             expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
 
             // if there is still original variable after replacements,

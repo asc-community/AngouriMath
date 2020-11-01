@@ -110,10 +110,12 @@ namespace UnitTests.PatternsTest
                     "3 + (1 / (sin(x) + 8 + x) + 2 * x + y) / (2 * x + 3 / y)")]
         // TODO: What is Linch?
         public void Linch(string input, string output) => AssertSimplifyToString(input, output);
+
         [Theory]
         [InlineData("a+b+c+d+d+e+f+g", "a + b + c + 2 * d + e + f + g")]
         [InlineData("(a+b)+(c+d)+(d+e)+(f+g)", "a + b + c + 2 * d + e + f + g")]
         [InlineData("((a+b)+(c+d))+((d+e)+(f+g))", "a + b + c + 2 * d + e + f + g")]
+        [InlineData("{ (10 + 2*x) / 2 }", "{ 5 + x }")]
         public void Grouping(string input, string output) => AssertSimplifyToString(input, output);
 
         [Theory]
