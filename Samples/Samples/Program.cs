@@ -30,9 +30,4 @@ using System.Linq;
 ////WriteLine(expr.Substitute("a", n).Substitute("x", ev1).EvalNumerical());
 //WriteLine("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)".Expand().SolveEquation("x"));
 //WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));
-//WriteLine(ToSympyCode("3 ^ (2 * i * pi)".EvalNumerical()));
-//ToSympyCode("3 + i".EvalNumerical());
-//WriteLine("((x + 1) / (x + 2)) ^ (1 - x)".Limit("x", "+oo"));
-//WriteLine("x4 = 3 and x in RR".Solve("x"));
 
-WriteLine("{ (10 + 2*x) / 2 }".Simplify());

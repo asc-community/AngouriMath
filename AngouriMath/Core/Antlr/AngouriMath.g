@@ -66,6 +66,7 @@ factorial_expression returns[Entity value]
 power_list returns[List<Entity> value]
     @init { $value = new(); }
     : ('^' factorial_expression { $value.Add($factorial_expression.value); })+
+    | ('^' unary_expression { $value.Add($unary_expression.value); })+
     ;
     
 power_expression returns[Entity value]
