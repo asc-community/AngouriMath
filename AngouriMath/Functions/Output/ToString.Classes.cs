@@ -9,7 +9,6 @@
  */
 using AngouriMath.Core;
 using System.Linq;
-using System.Text;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath

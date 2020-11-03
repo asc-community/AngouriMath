@@ -1,9 +1,4 @@
-﻿using AngouriMath;
-using static AngouriMath.Entity.Number;
-using Xunit;
-using System.Collections.Generic;
-using static AngouriMath.Entity;
-using static AngouriMath.Entity.Set;
+﻿using Xunit;
 using AngouriMath.Extensions;
 
 namespace UnitTests.Common

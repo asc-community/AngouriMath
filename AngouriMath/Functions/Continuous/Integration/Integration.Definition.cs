@@ -1,9 +1,6 @@
 ﻿using AngouriMath.Extensions;
 using AngouriMath.Functions.Algebra;
 using PeterO.Numbers;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath

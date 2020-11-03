@@ -15,9 +15,7 @@ using PeterO.Numbers;
 using AngouriMath.Core;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
-using AngouriMath.Functions.Algebra.NumericalSolving;
 using AngouriMath.Functions.Boolean;
-using AngouriMath.Core.Exceptions;
 using System.Diagnostics.CodeAnalysis;
 
 namespace AngouriMath.Core

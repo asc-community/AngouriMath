@@ -10,7 +10,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 //[assembly: InternalsVisibleTo("Playground, PublicKey=")]
