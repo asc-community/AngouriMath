@@ -4,25 +4,19 @@ using System.Text;
 
 namespace AngouriMath.Core
 {
-    struct XorHashBuilder
+    internal struct XorHashBuilder
     {
         private int hash;
 
         public XorHashBuilder Combine<T>(T obj)
         {
             if (obj == null)
-            {
                 return this;
-            }
-
             hash ^= obj.GetHashCode();
             return this;
         }
 
-        public override int GetHashCode()
-        {
-            return hash;
-        }
+        public override int GetHashCode() => hash;
 
     }
 }
