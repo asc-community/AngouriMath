@@ -2,7 +2,6 @@
 using AngouriMath.Extensions;
 using static AngouriMath.MathS;
 using AngouriMath;
-using static AngouriMath.Entity.Set;
 using static AngouriMath.Entity.Number;
 
 

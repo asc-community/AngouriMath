@@ -15,9 +15,48 @@ namespace AngouriMath
 {
     public abstract partial record Entity
     {   
+        partial record Number
+        {
+            partial record Complex
+            {
+                internal override string ToSymPy()
+                {
+                    if (ImaginaryPart == 0)
+                        return RealPart.ToSymPy();
+                    if (RealPart == 0)
+                        return $"{ImaginaryPart.ToSymPy()} * sympy.I";
+                    return $"{RealPart.ToSymPy()} + {ImaginaryPart.ToSymPy()} * sympy.I";
+                }
+            }
+
+            partial record Real
+            {
+                internal override string ToSymPy()
+                    => Stringize();
+            }
+
+            partial record Rational
+            {
+                internal override string ToSymPy()
+                    => $"sympy.Rational({Numerator.ToSymPy()}, {Denominator.ToSymPy()}";
+            }
+
+            partial record Integer
+            {
+                internal override string ToSymPy()
+                    => Stringize();
+            }
+        }
+
         public partial record Variable
         {
-            internal override string ToSymPy() => Name;
+            internal override string ToSymPy() 
+                => Name switch
+                {
+                    "e" => "sympy.E",
+                    "pi" => "sympy.pi",
+                    _ => Name
+                };
         }
 
         public partial record Tensor
@@ -27,7 +66,7 @@ namespace AngouriMath
 
         public partial record Number
         {
-            internal override string ToSymPy() => Stringize().Replace("i", "sympy.I");
+
         }
 
 
@@ -258,15 +297,32 @@ namespace AngouriMath
 
             partial record SpecialSet
             {
+                partial record Integers
+                {
+                    internal override string ToSymPy()
+                        => "S.Integers";
+                }
+
+                partial record Rationals
+                {
+                    internal override string ToSymPy()
+                        => "S.Rationals";
+                }
+
+                partial record Reals
+                {
+                    internal override string ToSymPy()
+                        => "S.Reals";
+                }
+
+                partial record Complexes
+                {
+                    internal override string ToSymPy()
+                        => "S.Complexes";
+                }
+
                 internal override string ToSymPy()
-                    => "S." + (SetType switch
-                    {
-                        Domain.Integer => "Integers",
-                        Domain.Rational => "Rationals",
-                        Domain.Real => "Reals",
-                        Domain.Complex => "Complexes",
-                        _ => throw new MathSException($"There is no {SetType} in either SymPy or AM's {nameof(ToSymPy)}")
-                    });
+                        => throw new MathSException($"There is no {this} in either SymPy or AM's {nameof(ToSymPy)}");
             }
 
             partial record Unionf

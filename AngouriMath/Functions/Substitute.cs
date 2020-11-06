@@ -12,12 +12,6 @@ namespace AngouriMath
     partial record Entity
     {
         #region Simple
-        partial record Variable
-        {
-            /// <inheritdoc/>
-            public override Entity Substitute(Entity x, Entity value)
-                => this == x ? value : this;
-        }
 
         partial record Tensor
         {

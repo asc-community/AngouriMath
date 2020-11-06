@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2019-2020 Angourisoft
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -7,23 +7,21 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+using AngouriMath.Core;
 using PeterO.Numbers;
-//[assembly: InternalsVisibleTo("DotnetBenchmark")]
 
 namespace AngouriMath
 {
-    using Core;
-    using System.Text;
-
     partial record Entity
     {
-        public abstract partial record Number
+        partial record Number
         {
             /// <summary>
             /// Represents a real number, such complex
             /// that its imaginary part equals 0
             /// </summary>
-            public record Real : Complex, System.IComparable<Real>
+            public partial record Real : Complex, System.IComparable<Real>
             {
                 /// <summary>
                 /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
@@ -83,24 +81,6 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override Real Abs() => Create(EDecimal.Abs());
 
-                /// <inheritdoc/>
-                public override string Stringize() => this switch
-                {
-                    { IsFinite: true } => EDecimal.ToString(),
-                    { IsNaN: true } => "NaN",
-                    { IsNegative: true } => "-oo",
-                    _ => "+oo",
-                };
-
-                /// <inheritdoc/>
-                public override string Latexise() => this switch
-                {
-                    { IsFinite: true } => EDecimal.ToString(),
-                    { IsNaN: true } => @"\mathrm{undefined}",
-                    { IsNegative: true } => @"-\infty ",
-                    _ => @"\infty ",
-                };
-
                 internal static bool TryParse(string s,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Real? dst)
                 {
@@ -158,15 +138,6 @@ namespace AngouriMath
                 public static implicit operator Real(decimal value) => Create(EDecimal.FromDecimal(value));
 #pragma warning restore CS1591
 
-                /// <inheritdoc/>
-                public override Domain Codomain { get; protected init; } = Domain.Real;
-
-                /// <inheritdoc/>
-                public override Entity Substitute(Entity x, Entity value)
-                    => this == x ? value : this;
-
-                /// <inheritdoc/>
-                public override string ToString() => Stringize();
             }
         }
     }

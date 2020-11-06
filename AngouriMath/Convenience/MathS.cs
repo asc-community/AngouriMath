@@ -15,9 +15,7 @@ using PeterO.Numbers;
 using AngouriMath.Core;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
-using AngouriMath.Functions.Algebra.NumericalSolving;
 using AngouriMath.Functions.Boolean;
-using AngouriMath.Core.Exceptions;
 using System.Diagnostics.CodeAnalysis;
 
 namespace AngouriMath.Core
@@ -824,8 +822,8 @@ namespace AngouriMath
             ///     </item>
             /// </list>
             /// </summary>
-            public static Setting<int> MaxExpansionTermCount => maxExpansionTermCount ??= 50;
-            [ThreadStatic] private static Setting<int>? maxExpansionTermCount;
+            public static Setting<long> MaxExpansionTermCount => maxExpansionTermCount ??= 50;
+            [ThreadStatic] private static Setting<long>? maxExpansionTermCount;
 
             /// <summary>
             /// Settings for <see cref="EDecimal"/> precisions of <a href="https://github.com/peteroupc/Numbers">PeterO.Numbers</a>

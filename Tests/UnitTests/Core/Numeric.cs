@@ -1,7 +1,6 @@
 using AngouriMath;
 using static AngouriMath.Entity.Number;
 using Xunit;
-using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity.Set;
 using AngouriMath.Extensions;
 using System;

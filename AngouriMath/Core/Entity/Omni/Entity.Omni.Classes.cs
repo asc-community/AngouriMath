@@ -265,6 +265,7 @@ namespace AngouriMath
                 public override bool TryContains(Entity entity, out bool contains)
                 {
                     contains = false;
+                    entity = entity.Evaled;
                     if (entity is Complex and not Real)
                     {
                         contains = false;
@@ -393,36 +394,55 @@ namespace AngouriMath
             /// Special set is something that cannot be easily expressed in other
             /// types of sets.
             /// </summary>
-            public sealed partial record SpecialSet(Domain SetType) : Set
+            public abstract partial record SpecialSet : Set
             {
                 /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(this);
 
-                // TODO: make a more complicated check for more domains
-                /// <inheritdoc/>
-                public override bool TryContains(Entity entity, out bool contains)
-                // Should return false for non-numeric
-                {
-                    contains = DomainsFunctional.FitsDomainOrNonNumeric(entity, SetType) && entity is Boolean or Complex;
-                    return true;
-                }
-
                 // Since there's a very small number of domains, it's wiser to
                 // cache them all
-                private readonly static Dictionary<Domain, SpecialSet> innerStorage = new();
+                private static Dictionary<Domain, SpecialSet> InnerStorage => innerStorage ??= new();
+                [ThreadStatic] private static Dictionary<Domain, SpecialSet>? innerStorage = null;
 
                 /// <summary>
                 /// Creates an instance of special set from a domain
                 /// </summary>
                 public static SpecialSet Create(Domain domain)
                 { 
-                    if (innerStorage.TryGetValue(domain, out var res))
+                    if (InnerStorage.TryGetValue(domain, out var res))
                         return res;
-                    var result = new SpecialSet(domain);
-                    innerStorage[domain] = result;
+                    
+                    SpecialSet result = domain switch
+                    {
+                        Domain.Boolean => new Booleans(),
+                        Domain.Integer => new Integers(),
+                        Domain.Rational => new Rationals(),
+                        Domain.Real => new Reals(),
+                        Domain.Complex => new Complexes(),
+                        _ => throw new AngouriBugException("The given domain is not presented in those possible")
+                    };
+                    InnerStorage[domain] = result;
                     return result;
                 }
+
+                internal static Domain ToDomain(string domain)
+                    => domain switch
+                    {
+                        "BB" or "Booleans" => Domain.Boolean,
+                        "ZZ" or "Integers" => Domain.Integer,
+                        "QQ" or "Rationals" => Domain.Rational,
+                        "RR" or "Reals" => Domain.Real,
+                        "CC" or "Complexes" => Domain.Complex,
+                        _ => throw new AngouriBugException("The given domain is not presented in those possible")
+                    };
+
+                /// <summary>
+                /// Creates an instance of special set from a string
+                /// </summary>
+                public static SpecialSet Create(string domain)
+                    => Create(ToDomain(domain));
+
 
                 internal override Priority Priority => Priority.Leaf;
 
@@ -434,6 +454,76 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => false;
+
+                /// <summary>Checks whether the given element</summary>
+                public abstract bool MayContain(Entity entity);
+
+                /// <inheritdoc/>
+                public override bool TryContains(Entity entity, out bool contains)
+                {
+                    contains = false;
+                    if (entity.Evaled.IsSymbolic)
+                        return false;
+                    contains = MayContain(entity.Evaled);
+                    return true;
+                }
+
+                internal abstract Domain ToDomain();
+
+                /// <summary>
+                /// A set of all booleans
+                /// </summary>
+                public sealed partial record Booleans : SpecialSet
+                {
+                    /// <inheritdoc/>
+                    public override bool MayContain(Entity entity)
+                        => entity is Boolean || !entity.IsConstantLeaf;
+                    internal override Domain ToDomain() => Domain.Boolean;
+                }
+
+                /// <summary>
+                /// A set of all integers
+                /// </summary>
+                public sealed partial record Integers : SpecialSet
+                {
+                    /// <inheritdoc/>
+                    public override bool MayContain(Entity entity)
+                        => entity is Integer || !entity.IsConstantLeaf;
+                    internal override Domain ToDomain() => Domain.Integer;
+                }
+
+                /// <summary>
+                /// A set of all rational numbers
+                /// </summary>
+                public sealed partial record Rationals : SpecialSet
+                {
+                    /// <inheritdoc/>
+                    public override bool MayContain(Entity entity)
+                        => entity is Rational || !entity.IsConstantLeaf;
+                    internal override Domain ToDomain() => Domain.Rational;
+                }
+
+                /// <summary>
+                /// A set of all real numbers
+                /// </summary>
+                public sealed partial record Reals : SpecialSet
+                {
+                    /// <inheritdoc/>
+                    public override bool MayContain(Entity entity)
+                        => entity is Real || !entity.IsConstantLeaf;
+                    internal override Domain ToDomain() => Domain.Real;
+                }
+
+                /// <summary>
+                /// A set of all complex numbers
+                /// </summary>
+                public sealed partial record Complexes : SpecialSet
+                {
+                    /// <inheritdoc/>
+                    public override bool MayContain(Entity entity)
+                        => entity is Complex || !entity.IsConstantLeaf;
+                    internal override Domain ToDomain() => Domain.Complex;
+                }
             }
             #endregion  
 

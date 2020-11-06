@@ -9,13 +9,75 @@
  */
 using AngouriMath.Core;
 using System.Linq;
-using System.Text;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
     public abstract partial record Entity
     {
+        partial record Number
+        {
+            /// <summary>
+            /// Extension for <see cref="Real"/>
+            /// <a href="https://en.wikipedia.org/wiki/Complex_number"/>
+            /// </summary>
+            partial record Complex
+            {
+                /// <inheritdoc/>
+                public override string Stringize()
+                {
+                    static string RenderNum(Real number)
+                    {
+                        if (number == Integer.MinusOne)
+                            return "-";
+                        else if (number == Integer.One)
+                            return "";
+                        else
+                            return number.Stringize();
+                    }
+                    if (ImaginaryPart is Integer(0))
+                        return RealPart.Stringize();
+                    else if (RealPart is Integer(0))
+                        return RenderNum(ImaginaryPart) + "i";
+                    var (l, r) = ImaginaryPart is Rational and not Integer ? ("(", ")") : ("", "");
+                    var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
+                    return RealPart.Stringize() + " " + sign + " " + l + RenderNum(im) + r + "i";
+                }
+                /// <inheritdoc/>
+                public override string ToString() => Stringize();
+            }
+
+            partial record Real
+            {
+                /// <inheritdoc/>
+                public override string Stringize() => this switch
+                {
+                    { IsFinite: true } => EDecimal.ToString(),
+                    { IsNaN: true } => "NaN",
+                    { IsNegative: true } => "-oo",
+                    _ => "+oo",
+                };
+                /// <inheritdoc/>
+                public override string ToString() => Stringize();
+            }
+
+            partial record Rational
+            {
+                /// <inheritdoc/>
+                public override string Stringize() => ERational.ToString();
+                /// <inheritdoc/>
+                public override string ToString() => Stringize();
+            }
+
+            partial record Integer
+            {
+                /// <inheritdoc/>
+                public override string Stringize() => EInteger.ToString();
+                /// <inheritdoc/>
+                public override string ToString() => Stringize();
+            }
+        }
+
         public partial record Variable
         {
             /// <inheritdoc/>
@@ -391,11 +453,45 @@ namespace AngouriMath
 
             partial record SpecialSet
             {
-                /// <inheritdoc/>
-                public override string Stringize()
-                    => DomainsFunctional.DomainToString(SetType);
-                /// <inheritdoc/>
-                public override string ToString() => Stringize();
+                partial record Booleans
+                {
+                    /// <inheritdoc/>
+                    public override string Stringize() => "BB";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record Integers
+                {
+                    /// <inheritdoc/>
+                    public override string Stringize() => "ZZ";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record Rationals
+                {
+                    /// <inheritdoc/>
+                    public override string Stringize() => "QQ";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record Reals
+                {
+                    /// <inheritdoc/>
+                    public override string Stringize() => "RR";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
+
+                partial record Complexes
+                {
+                    /// <inheritdoc/>
+                    public override string Stringize() => "CC";
+                    /// <inheritdoc/>
+                    public override string ToString() => Stringize();
+                }
             }
 
             partial record Unionf

@@ -24,11 +24,11 @@
   <br>
   <br>
   <br>
-  <img src="https://github.com/asc-community/AngouriMath/workflows/Test/badge.svg"/>
-  <a href="https://codecov.io/gh/asc-community/AngouriMath"><img src="https://codecov.io/gh/asc-community/AngouriMath/branch/master/graph/badge.svg?token=XaA0JGyNrS"/></a>
-<a href="https://www.nuget.org/packages/AngouriMath"><img src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet"/></a>
-<a href="https://discord.gg/YWJEX7a"><img src="https://img.shields.io/discord/642350046213439489?color=orange&label=Discord"/></a>
-<a href="https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md"><img src="https://img.shields.io/github/license/AngouriSoft/MathS?color=purple"/></a>
+  <a href="https://github.com/asc-community/AngouriMath/tree/master/Tests/UnitTests"><img alt="GitHub Workflow Status (event)" src="https://img.shields.io/github/workflow/status/asc-community/AngouriMath/Test?label=Tests&logo=github&style=flat-square"></a>
+  <a href="https://codecov.io/gh/asc-community/AngouriMath"><img alt="Codecov" src="https://img.shields.io/codecov/c/gh/asc-community/AngouriMath?label=Coverage&logo=codecov&style=flat-square"></a>
+  <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet&logo=nuget&style=flat-square"></a>
+  <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=orange&label=Discord&logo=discord&style=flat-square"></a>
+  <a href="https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md"><img alt="GitHub" src="https://img.shields.io/github/license/asc-community/AngouriMath?color=purple&label=License&style=flat-square"></a>
 </p>
 
 ## What is it about?
@@ -127,11 +127,9 @@ Console.WriteLine(compiled.Substitute(4));
 
 Start with boolean algebra:
 ```cs
-// Those are equal
 Entity expr1 = "a and b or c";
-Entity expr2 = "a & b | c";
 
-// as well as those
+// Those are the same
 Entity expr3 = "a -> b";
 Entity expr3 = "a implies b";
 ```
@@ -201,7 +199,7 @@ Console.WriteLine(solutions);
 Find derivatives:
 ```cs
 var func = "x2 + ln(cos(x) + 3) + 4x";
-var derivative = func.Derive("x");
+var derivative = func.Differentiate("x");
 Console.WriteLine(derivative.Simplify());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)%2B3\right)}^{2}\times \left(\cos\left(x\right)%2B3\right)}%2B2\times x">

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AngouriMath.Core.Exceptions
 {
@@ -18,4 +16,7 @@ namespace AngouriMath.Core.Exceptions
 
     /// <summary> Cannot figure out whether the entity is in the set </summary>
     public sealed class ElementInSetAmbiguousException : MathSException { internal ElementInSetAmbiguousException(string msg) : base(msg) { } }
+
+    /// <summary> Thrown if instead of a statement another expression is put into Solve </summary>
+    public sealed class SolveRequiresStatement : MathSException { internal SolveRequiresStatement() : base("There should be statement to be true (e. g. equality, inequality, or some other predicate)") { } }
 }

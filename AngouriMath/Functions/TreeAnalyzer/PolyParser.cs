@@ -13,18 +13,13 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using AngouriMath.Core;
-using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 
 namespace AngouriMath.Functions
 {
     using static Entity;
-    using static Entity.Number;
     internal static partial class TreeAnalyzer
     {
         /// <summary>

@@ -8,6 +8,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 using System.Numerics;
+using AngouriMath.Core;
 using PeterO.Numbers;
 
 
@@ -20,6 +21,14 @@ namespace AngouriMath
         /// TODO
         /// </summary>
         public abstract partial record NumericNode : Entity
+        {
+
+        }
+
+        /// <summary>
+        /// Describes any function that is related to trigonometry
+        /// </summary>
+        public abstract record TrigonometricFunction : Function
         {
 
         }
@@ -117,5 +126,13 @@ namespace AngouriMath
         /// <summary><see cref="MathS.Abs(Entity)"/></summary>
         public Entity Abs() => new Absf(this);
 
+        /// <summary>
+        /// Describes any node that is a function (e. g. sin, cos, etc.)
+        /// but not an operator or leaf
+        /// </summary>
+        public abstract record Function : NumericNode
+        {
+            internal override Priority Priority => Priority.Func;
+        }
     }
 }

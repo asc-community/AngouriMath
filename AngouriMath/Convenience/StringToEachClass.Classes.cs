@@ -1,8 +1,5 @@
 ﻿using AngouriMath.Core.Exceptions;
 using AngouriMath.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace AngouriMath
 {

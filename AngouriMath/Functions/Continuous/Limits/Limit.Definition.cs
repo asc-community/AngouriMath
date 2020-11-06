@@ -10,7 +10,6 @@
 
 namespace AngouriMath
 {
-    using AngouriMath.Functions.Algebra;
     using Core;
     using static Functions.Algebra.LimitFunctional;
     partial record Entity
@@ -93,7 +92,6 @@ namespace AngouriMath
 namespace AngouriMath.Functions.Algebra
 {
     using Core;
-    using System.Linq;
     using static Entity;
     using static Entity.Number;
     internal static class LimitFunctional

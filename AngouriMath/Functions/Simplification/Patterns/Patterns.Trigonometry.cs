@@ -8,13 +8,8 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 using System;
-using System.Linq;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
-using static AngouriMath.Entity.Boolean;
-using System.Collections.Generic;
-using static AngouriMath.Entity.Set;
-using AngouriMath.Core;
 
 namespace AngouriMath.Functions
 {
@@ -31,6 +26,10 @@ namespace AngouriMath.Functions
             Sumf(Arccosf(var any1), Arcsinf(var any1a)) when any1 == any1a => MathS.pi / 2,
             Sumf(Arctanf(var any1), Arccotanf(var any1a)) when any1 == any1a => MathS.pi / 2,
             Sumf(Arccotanf(var any1), Arctanf(var any1a)) when any1 == any1a => MathS.pi / 2,
+
+            // tan * cot = 1
+            Mulf(Tanf(var any1), Cotanf(var any1a)) when any1 == any1a => 1,
+            Mulf(Cotanf(var any1), Tanf(var any1a)) when any1 == any1a => 1,
 
             // arcfunc(func(x)) = x
             Arcsinf(Sinf(var any1)) => any1,
@@ -83,10 +82,28 @@ namespace AngouriMath.Functions
             _ => x
         };
 
-        internal static Entity CollapseToSecCsc(Entity x) => x switch
+        internal static Entity CollapseTrigonometricFunctions(Entity x) => x switch
         {
+            // sin / cos = tan
+            Divf(Sinf(var any1), Cosf(var any1a)) when any1 == any1a => any1.Tan(),
+
+            // cos / sin = cotan
+            Divf(Cosf(var any1), Sinf(var any1a)) when any1 == any1a => any1.Cotan(),
+
             Divf(var any1, Sinf(var any2)) => any1 * any2.Cosec(),
             Divf(var any1, Cosf(var any2)) => any1 * any2.Sec(),
+            _ => x
+        };
+
+        /// <summary>
+        /// For this it is true that any trigonometric function is either sin or cos
+        /// </summary>
+        internal static Entity NormalTrigonometricForm(Entity x) => x switch
+        {
+            Tanf(var any1) => any1.Sin() / any1.Cos(),
+            Cotanf(var any1) => any1.Cos() / any1.Sin(),
+            Secantf(var any1) => 1 / any1.Cos(),
+            Cosecantf(var any1) => 1 / any1.Sin(),
             _ => x
         };
 

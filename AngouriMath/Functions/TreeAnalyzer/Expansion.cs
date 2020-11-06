@@ -135,7 +135,7 @@ namespace AngouriMath.Functions
                         };
                     if (power > 20 && linBaseChildren.Count > 1 ||
                         EstimateTermCount(linBaseChildren.Count, power) >
-                        EInteger.FromInt32(MathS.Settings.MaxExpansionTermCount))
+                        EInteger.FromInt64(MathS.Settings.MaxExpansionTermCount))
                         return null;
                     foreach (var powerListForTerm in CombinateSums(linBaseChildren.Count, power))
                     {

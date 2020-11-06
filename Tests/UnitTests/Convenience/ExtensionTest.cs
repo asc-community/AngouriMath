@@ -1,15 +1,6 @@
 ﻿using AngouriMath;
-using AngouriMath.Core;
-using AngouriMath.Core.Exceptions;
-using System.Linq;
-using UnitTests.Algebra;
 using Xunit;
-using static AngouriMath.Entity.Number;
-using static AngouriMath.Entity.Set;
-using static AngouriMath.MathS;
 using AngouriMath.Extensions;
-using System.Linq.Expressions;
-using System;
 
 namespace UnitTests.Convenience
 {

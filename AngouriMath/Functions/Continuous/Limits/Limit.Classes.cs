@@ -10,7 +10,6 @@
 
 namespace AngouriMath
 {
-    using AngouriMath.Functions.Algebra;
     using Core;
     using static Functions.Algebra.LimitFunctional;
     partial record Entity

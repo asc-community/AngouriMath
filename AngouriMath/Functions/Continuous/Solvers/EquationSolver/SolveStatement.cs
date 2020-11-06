@@ -55,6 +55,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
                 Variable when expr == x => new FiniteSet(true),
 
+                Inf(var var, Set set) when var == x => set,
+
                 // TODO: Although piecewise needed?
                 _ => Set.Empty
             };

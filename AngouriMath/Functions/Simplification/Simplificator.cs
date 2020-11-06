@@ -14,6 +14,7 @@ using PeterO.Numbers;
 
 namespace AngouriMath.Functions
 {
+    using static AngouriMath.Entity.Set;
     using static Entity;
     using static Entity.Number;
     internal static class Simplificator
@@ -36,6 +37,8 @@ namespace AngouriMath.Functions
         /// <summary>Finds all alternative forms of an expression</summary>
         internal static IEnumerable<Entity> Alternate(Entity src, int level)
         {
+            if (src is FiniteSet ss)
+                return new[] { ss.Apply(ent => ent.Simplify()).InnerSimplified };
             if (src is Number or Variable or Entity.Boolean)
                 return new[] { src };
             var stage1 = src.InnerSimplified;
@@ -88,7 +91,7 @@ namespace AngouriMath.Functions
                     AddHistory(res = res.Replace(Patterns.TrigonometricRules).Replace(Patterns.CommonRules).InnerSimplified);
                     AddHistory(res1);
                     res = PickSimplest(res, res1);
-                    AddHistory(res = res.Replace(Patterns.CollapseToSecCsc).Replace(Patterns.TrigonometricRules));
+                    AddHistory(res = res.Replace(Patterns.CollapseTrigonometricFunctions).Replace(Patterns.TrigonometricRules));
                 }
 
                 if (res.Nodes.Any(child => child is Statement))

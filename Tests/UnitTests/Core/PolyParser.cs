@@ -1,7 +1,5 @@
 ﻿using AngouriMath;
-using static AngouriMath.Entity.Number;
 using Xunit;
-using AngouriMath.Functions;
 
 namespace UnitTests.Core
 {

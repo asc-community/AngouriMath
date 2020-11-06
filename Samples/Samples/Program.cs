@@ -1,15 +1,6 @@
-using System;
 using AngouriMath;
-using static AngouriMath.Entity;
-using static AngouriMath.Entity.Boolean;
-using static AngouriMath.MathS;
 using AngouriMath.Extensions;
 using static System.Console;
-using static AngouriMath.Entity.Set;
-using System.Diagnostics;
-using System.Collections;
-using System.Numerics;
-using PeterO.Numbers;
 
 //WriteLine(@"(x15 - 3^15 - 15 3^14(x - 3)) / (x - 3)2".Limit("x", "3", AngouriMath.Core.ApproachFrom.Left));
 
@@ -28,4 +19,6 @@ using PeterO.Numbers;
 ////WriteLine(expr.Substitute("a", n).Substitute("x", ev1).EvalNumerical());
 //WriteLine("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)".Expand().SolveEquation("x"));
 //WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));
-WriteLine(ReadLine()?.EvalNumerical());
+
+WriteLine("sin(x) / cos(x)".Simplify());
+//WriteLine("((2x2 + 10x + 1) ^ (1/5) - (x2 + 10x + 1) ^ (1/7)) ^ 35".Expand().Simplify());

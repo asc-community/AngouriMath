@@ -10,7 +10,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 //[assembly: InternalsVisibleTo("Playground, PublicKey=")]
@@ -109,7 +108,8 @@ namespace AngouriMath
 
 
         /// <summary>Replaces all <param name="x"/> with <param name="value"/></summary>
-        public abstract Entity Substitute(Entity x, Entity value);
+        public virtual Entity Substitute(Entity x, Entity value)
+            => this == x ? value : this;
 
 
         // TODO: this function has no performance beneficial anymore, 
@@ -188,5 +188,13 @@ namespace AngouriMath
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
         /// </summary>
         public int SimplifiedRate => caches.GetValue(this, cache => cache.simplifiedRate, cache => cache.simplifiedRate = MathS.Settings.ComplexityCriteria.Value(this)) ?? throw new AngouriBugException("Sim cannot be null");
+
+        /// <summary>Checks whether the given expression contains variable</summary>
+        public bool IsSymbolic => Vars.Any();
+
+        /// <summary>
+        /// Checks whether the given expression is a finite constant leaf
+        /// </summary>
+        public bool IsConstantLeaf => this is Boolean or Number;
     }
 }

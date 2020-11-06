@@ -164,6 +164,8 @@ namespace UnitTests.Algebra
         [InlineData("3 * cos(x * 2 + 1) - cos(x) - a", 4)]
         [InlineData("sin(2x + 2) + sin(x + 1) - a", 4)] // Momo's Issue
         [InlineData("3 * sin(2 * x) - sin(x) - a", 4)]
+        [InlineData("sec(2x + c) + cosec(2x + c) + c", 4)]
+        [InlineData("sec(2x) + cot(2x + c) + c", 4)]
         public void LinearTrigRoots(string expr, int rootCount) => TestSolver(expr, rootCount);
 
         [Theory]
