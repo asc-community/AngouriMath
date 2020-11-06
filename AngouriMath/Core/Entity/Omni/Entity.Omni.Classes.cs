@@ -153,11 +153,10 @@ namespace AngouriMath
                     return true;
                 }
 
-                // TODO: how should we implement GetHashCode?
-                // Is it safe to store this hash inside?
                 /// <inheritdoc/>
                 public override int GetHashCode()
-                    => IsSetEmpty ? 0 : Elements.Select(el => el.GetHashCode()).Aggregate((acc, next) => acc + next);
+                    => IsSetEmpty ? 0 
+                    : Elements.Select(el => el.GetHashCode()).Aggregate((acc, next) => new XorHashBuilder().Combine(next).Combine(acc).GetHashCode());
 
                 /// <summary>
                 /// Checks that two FiniteSets are equal
@@ -314,7 +313,12 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override int GetHashCode()
-                    => Left.GetHashCode() + LeftClosed.GetHashCode() + Right.GetHashCode() + RightClosed.GetHashCode();
+                    => new XorHashBuilder()
+                        .Combine(Left)
+                        .Combine(LeftClosed)
+                        .Combine(Right)
+                        .Combine(RightClosed)
+                        .GetHashCode();
 
                 /// <inheritdoc/>
                 public override bool IsSetFinite => false;
