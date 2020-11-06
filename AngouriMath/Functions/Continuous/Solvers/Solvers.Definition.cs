@@ -10,6 +10,7 @@
 using AngouriMath.Functions.Algebra.AnalyticalSolving;
 using System;
 using static AngouriMath.Entity.Set;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
@@ -31,7 +32,7 @@ namespace AngouriMath
             }
             if (this == var)
                 return new FiniteSet(Boolean.True);
-            throw new InvalidOperationException("There should be statement to be true (e. g. equality, inequality, or some other predicate)");
+            throw new SolveRequiresStatement();
         }
     }
 }

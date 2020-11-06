@@ -402,14 +402,15 @@ namespace AngouriMath
 
                 // Since there's a very small number of domains, it's wiser to
                 // cache them all
-                private readonly static Dictionary<Domain, SpecialSet> innerStorage = new();
+                private static Dictionary<Domain, SpecialSet> InnerStorage => innerStorage ??= new();
+                [ThreadStatic] private static Dictionary<Domain, SpecialSet>? innerStorage = null;
 
                 /// <summary>
                 /// Creates an instance of special set from a domain
                 /// </summary>
                 public static SpecialSet Create(Domain domain)
                 { 
-                    if (innerStorage.TryGetValue(domain, out var res))
+                    if (InnerStorage.TryGetValue(domain, out var res))
                         return res;
                     
                     SpecialSet result = domain switch
@@ -421,7 +422,7 @@ namespace AngouriMath
                         Domain.Complex => new Complexes(),
                         _ => throw new AngouriBugException("The given domain is not presented in those possible")
                     };
-                    innerStorage[domain] = result;
+                    InnerStorage[domain] = result;
                     return result;
                 }
 

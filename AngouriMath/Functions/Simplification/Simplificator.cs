@@ -91,7 +91,7 @@ namespace AngouriMath.Functions
                     AddHistory(res = res.Replace(Patterns.TrigonometricRules).Replace(Patterns.CommonRules).InnerSimplified);
                     AddHistory(res1);
                     res = PickSimplest(res, res1);
-                    AddHistory(res = res.Replace(Patterns.CollapseToSecCsc).Replace(Patterns.TrigonometricRules));
+                    AddHistory(res = res.Replace(Patterns.CollapseTrigonometricFunctions).Replace(Patterns.TrigonometricRules));
                 }
 
                 if (res.Nodes.Any(child => child is Statement))

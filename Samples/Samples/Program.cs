@@ -1,3 +1,4 @@
+using AngouriMath;
 using AngouriMath.Extensions;
 using static System.Console;
 
@@ -19,5 +20,5 @@ using static System.Console;
 //WriteLine("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)".Expand().SolveEquation("x"));
 //WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));
 
-//WriteLine("(a ^ x * a ^ n - a ^ x) / n".Limit("n", 0));
-WriteLine("(sin(x + n) - sin(x)) / n".Limit("n", 0));
+WriteLine("sin(x) / cos(x)".Simplify());
+//WriteLine("((2x2 + 10x + 1) ^ (1/5) - (x2 + 10x + 1) ^ (1/7)) ^ 35".Expand().Simplify());

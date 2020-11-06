@@ -137,6 +137,8 @@ namespace UnitTests.PatternsTest
         [InlineData("cos(x) * sec(x)", "1")]
         [InlineData("csc(x) * sin(x)", "1")]
         [InlineData("sec(x) * cos(x)", "1")]
+        [InlineData("sin(x) / cos(x)", "tan(x)")]
+        [InlineData("cos(x) / sin(x)", "cotan(x)")]
         [InlineData("a / sec(x)", "cos(x) * a")]
         [InlineData("a / sin(x)", "csc(x) * a")]
         [InlineData("a / csc(x)", "sin(x) * a")]

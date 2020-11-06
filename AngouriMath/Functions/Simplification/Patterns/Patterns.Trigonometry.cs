@@ -82,8 +82,14 @@ namespace AngouriMath.Functions
             _ => x
         };
 
-        internal static Entity CollapseToSecCsc(Entity x) => x switch
+        internal static Entity CollapseTrigonometricFunctions(Entity x) => x switch
         {
+            // sin / cos = tan
+            Divf(Sinf(var any1), Cosf(var any1a)) when any1 == any1a => any1.Tan(),
+
+            // cos / sin = cotan
+            Divf(Cosf(var any1), Sinf(var any1a)) when any1 == any1a => any1.Cotan(),
+
             Divf(var any1, Sinf(var any2)) => any1 * any2.Cosec(),
             Divf(var any1, Cosf(var any2)) => any1 * any2.Sec(),
             _ => x

@@ -822,8 +822,8 @@ namespace AngouriMath
             ///     </item>
             /// </list>
             /// </summary>
-            public static Setting<int> MaxExpansionTermCount => maxExpansionTermCount ??= 50;
-            [ThreadStatic] private static Setting<int>? maxExpansionTermCount;
+            public static Setting<long> MaxExpansionTermCount => maxExpansionTermCount ??= 50;
+            [ThreadStatic] private static Setting<long>? maxExpansionTermCount;
 
             /// <summary>
             /// Settings for <see cref="EDecimal"/> precisions of <a href="https://github.com/peteroupc/Numbers">PeterO.Numbers</a>
