@@ -1,7 +1,6 @@
 ﻿using AngouriMath;
 using Xunit;
 using AngouriMath.Extensions;
-using System.Runtime.InteropServices.ComTypes;
 using static AngouriMath.Entity.Number;
 
 namespace UnitTests.Convenience
