@@ -1,5 +1,8 @@
 using AngouriMath;
 using AngouriMath.Extensions;
+using Microsoft.VisualBasic.CompilerServices;
+using System;
+using static AngouriMath.Entity.Number;
 using static System.Console;
 
 //WriteLine(@"(x15 - 3^15 - 15 3^14(x - 3)) / (x - 3)2".Limit("x", "3", AngouriMath.Core.ApproachFrom.Left));
@@ -21,4 +24,5 @@ using static System.Console;
 //WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));
 
 WriteLine("sin(x) / cos(x)".Simplify());
+
 //WriteLine("((2x2 + 10x + 1) ^ (1/5) - (x2 + 10x + 1) ^ (1/7)) ^ 35".Expand().Simplify());

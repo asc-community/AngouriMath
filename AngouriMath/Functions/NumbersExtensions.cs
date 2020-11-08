@@ -75,6 +75,79 @@ namespace AngouriMath
         public static EInteger Combinations(this EInteger n, EInteger k) =>
             n.Factorial() / ((n - k).Factorial() * k.Factorial());
 
+        /// <summary>
+        /// Computes Euler phi function
+        /// <a href="https://en.wikipedia.org/wiki/Euler%27s_totient_function"/>
+        /// </summary>
+        /// If integer x is non-positive, the result will be 0
+        public static EInteger Phi(this EInteger n)
+        {
+            if (n <= 0)
+                return 0;
+
+            var result = n.ToInt64Checked();
+            var original = result;
+
+            for (long i = 2; i * i <= result; i++) {
+                if (original % i == 0)
+                {
+                    while (original % i == 0) original /= i;
+                    result -= result / i;
+                }
+            }
+
+            if (original > 1)
+                result -= result / original;
+
+            return result;
+        }
+
+        /// <summary>
+        /// Factorization of integer
+        /// </summary>
+        public static IEnumerable<(long prime, long power)> Factorize(this EInteger n)
+        {
+            var result = n.ToInt64Checked();
+            var original = result;
+
+            for (long i = 2; i * i <= result; i++)
+            {
+                if (original % i == 0)
+                {
+                    long power = 0;
+                    while (original % i == 0)
+                    {
+                        original /= i;
+                        power++;
+                    }
+
+                    result -= result / i;
+                    yield return (i, power);
+                }
+            }
+
+            if (original > 1)
+                yield return (original, 1L);
+        }
+
+        /// <summary>
+        /// Count of all divisors of an integer
+        /// </summary>
+        /// If integer x is non-positive, the result will be 0
+        public static EInteger CountDivisors(this EInteger n)
+        {
+            if (n <= 0)
+                return 0;
+
+            EInteger result = 1;
+            foreach ((var prime, var power) in Factorize(n))
+            {
+                result *= power + 1;
+            }
+
+            return result;
+        }
+
         public static bool GreaterThan(this EDecimal bigDecimalOne, EDecimal bigDecimalTwo) =>
             bigDecimalOne.CompareTo(bigDecimalTwo) > 0;
         public static bool GreaterThanOrEquals(this EDecimal bigDecimalOne, EDecimal bigDecimalTwo) =>
@@ -121,6 +194,7 @@ namespace AngouriMath
                 xx = xx.Multiply(x.Multiply(factor, context), context);
                 y = y.Add(xx, context);
             }
+
             return y;
         }
 
@@ -151,11 +225,13 @@ namespace AngouriMath
 
                 throw new Core.Exceptions.AngouriBugException("Should not be reached");
             }
+
             var moduleOfSin = cos.MultiplyAndAdd(-cos, EDecimal.One, context).Sqrt(context);
             var sineIsPositive = IsSignOfSinePositive(x, consts, context);
             if (sineIsPositive) return moduleOfSin;
             return -moduleOfSin;
         }
+
         /// <summary>Analogy of <see cref="Math.Sin(double)"/></summary>
         public static EDecimal Sin(this EDecimal x, EContext context)
         {
@@ -258,11 +334,13 @@ namespace AngouriMath
                 var t = Arcsin(newX, context);
                 return consts.Half.Multiply(consts.HalfPi.Subtract(t, context), context);
             }
+
             var result = x;
             EDecimal cachedResult;
             var i = 1;
             var y = result;
             var xx = x.Multiply(x, context);
+
             do
             {
                 cachedResult = result;

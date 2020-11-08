@@ -10,6 +10,10 @@
 
 using AngouriMath.Core;
 using PeterO.Numbers;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace AngouriMath
 {
@@ -59,6 +63,24 @@ namespace AngouriMath
                 }
 
                 /// <summary>
+                /// Computes Euler phi function
+                /// <a href="https://en.wikipedia.org/wiki/Euler%27s_totient_function"/>
+                /// </summary>
+                /// If integer x is non-positive, the result will be 0
+                public Integer Phi() => EInteger.Phi();
+
+                /// <summary>
+                /// Factorization of integer
+                /// </summary>
+                public IEnumerable<(Integer prime, Integer power)> Factorize() =>
+                    EInteger.Factorize().Select(x => ((Integer) x.prime, (Integer) x.power));
+
+                /// <summary>
+                /// Count of all divisors of an integer
+                /// </summary>
+                public Integer CountDivisors() => EInteger.CountDivisors();
+
+                /// <summary>
                 /// Deconstructs as record
                 /// </summary>
                 public void Deconstruct(out int? value) =>
@@ -93,6 +115,7 @@ namespace AngouriMath
                 public static Integer operator -(Integer a, Integer b) => OpSub(a, b);
                 public static Integer operator *(Integer a, Integer b) => OpMul(a, b);
                 public static Real operator /(Integer a, Integer b) => (Real)OpDiv(a, b);
+                public static Integer operator %(Integer a, Integer b) => a.EInteger.Mod(b.EInteger);
                 public static Integer operator +(Integer a) => a;
                 public static Integer operator -(Integer a) => OpMul(MinusOne, a);
                 public static implicit operator Integer(sbyte value) => Create(value);

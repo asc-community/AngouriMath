@@ -55,6 +55,27 @@ namespace AngouriMath
     /// <summary>Use functions from this class</summary>
     public static class MathS
     {
+        /// <summary>Use it in order to explore further number theory</summary>
+        public static class NumberTheory
+        {
+            /// <summary>
+            /// Computes Euler phi function
+            /// <a href="https://en.wikipedia.org/wiki/Euler%27s_totient_function"/>
+            /// </summary>
+            /// If integer x is non-positive, the result will be 0
+            public static Integer Phi(Integer integer) => integer.Phi();
+
+            /// <summary>
+            /// Count of all divisors of an integer
+            /// </summary>
+            public static Integer CountDivisors(Integer integer) => integer.CountDivisors();
+
+            /// <summary>
+            /// Factorization of integer
+            /// </summary>
+            public static IEnumerable<(Integer prime, Integer power)> Factorize(Integer integer) => integer.Factorize();
+        }
+
         /// <summary>Use it to solve equations</summary>
         /// <param name="equations">
         /// An array of <see cref="Entity"/> (or <see cref="string"/>s)
