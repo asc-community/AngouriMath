@@ -15,8 +15,8 @@ using System.Threading.Tasks;
 
 namespace Analyzers
 {
-    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(AnalyzersCodeFixProvider)), Shared]
-    public class AnalyzersCodeFixProvider : CodeFixProvider
+    [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(FieldThreadSafetyCodeFixProvider)), Shared]
+    public class FieldThreadSafetyCodeFixProvider : CodeFixProvider
     {
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
@@ -33,31 +33,43 @@ namespace Analyzers
         {
             var root = await context.Document.GetSyntaxRootAsync(context.CancellationToken).ConfigureAwait(false);
 
-            // TODO: Replace the following code with your own analysis, generating a CodeAction for each fix to suggest
-            var diagnostic = context.Diagnostics.First();
+            var diagnostic = context.Diagnostics.Where(d => d.Id == "ThreadSafety").FirstOrDefault();
+
+            if (diagnostic is null)
+                return;
+
             var diagnosticSpan = diagnostic.Location.SourceSpan;
 
             // Find the type declaration identified by the diagnostic.
-            var declaration = root.FindToken(diagnosticSpan.Start).Parent.AncestorsAndSelf().OfType<TypeDeclarationSyntax>().First();
+            var declaration = root.FindToken(diagnosticSpan.Start).Parent;
+
+            if (declaration is null)
+                return;
+
+            if (declaration is not FieldDeclarationSyntax fieldDecl)
+                return;
 
             // Register a code action that will invoke the fix.
             context.RegisterCodeFix(
                 CodeAction.Create(
-                    title: CodeFixResources.CodeFixTitle,
-                    createChangedSolution: c => MakeUppercaseAsync(context.Document, declaration, c),
-                    equivalenceKey: nameof(CodeFixResources.CodeFixTitle)),
-                diagnostic);
+                    title: "Add [ConstantField] attribute",
+                    createChangedSolution: c => AddConstantFieldAttribute(context.Document, fieldDecl, c),
+                    equivalenceKey: "what is this"
+                    ),
+                    diagnostic);
         }
 
-        private async Task<Solution> MakeUppercaseAsync(Document document, TypeDeclarationSyntax typeDecl, CancellationToken cancellationToken)
+        private async Task<Solution> AddConstantFieldAttribute(Document document, FieldDeclarationSyntax fieldDecl, CancellationToken cancellationToken)
         {
-            // Compute new uppercase name.
-            var identifierToken = typeDecl.Identifier;
-            var newName = identifierToken.Text.ToUpperInvariant();
+            var nameSyntax = SyntaxFactory.IdentifierName("ConstantField");
+            var attribute = SyntaxFactory.Attribute(nameSyntax);
+            var attributeList = SyntaxFactory.AttributeList(new SeparatedSyntaxList<AttributeSyntax>().Add(attribute));
+            var newDecl = fieldDecl.AddAttributeLists(attributeList);
 
             // Get the symbol representing the type to be renamed.
             var semanticModel = await document.GetSemanticModelAsync(cancellationToken);
-            var typeSymbol = semanticModel.GetDeclaredSymbol(typeDecl, cancellationToken);
+            var typeSymbol = semanticModel.GetDeclaredSymbol(fieldDecl, cancellationToken);
+            var fieldD = (IFieldSymbol)typeSymbol;
 
             // Produce a new solution that has all references to that type renamed, including the declaration.
             var originalSolution = document.Project.Solution;

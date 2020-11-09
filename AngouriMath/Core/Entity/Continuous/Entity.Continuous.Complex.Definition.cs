@@ -50,12 +50,12 @@ namespace AngouriMath
                 /// <summary>
                 /// An imaginary one. You can use it to avoid allocations
                 /// </summary>
-                public static readonly Complex ImaginaryOne = new Complex(0, 1);
+                [ConstantField] public static readonly Complex ImaginaryOne = new Complex(0, 1);
 
                 /// <summary>
                 /// An imaginary minus one. You can use it to avoid allocations
                 /// </summary>
-                public static readonly Complex MinusImaginaryOne = new Complex(0, -1);
+                [ConstantField] public static readonly Complex MinusImaginaryOne = new Complex(0, -1);
 
                 /// <inheritdoc/>
                 protected override bool ThisIsFinite => RealPart.EDecimal.IsFinite && ImaginaryPart.EDecimal.IsFinite;
@@ -127,11 +127,11 @@ namespace AngouriMath
                 }
 
                 /// <summary>-oo + -ooi</summary>
-                public static readonly Complex NegNegInfinity =
+                [ConstantField] public static readonly Complex NegNegInfinity =
                     new Complex(Real.NegativeInfinity, Real.NegativeInfinity);
 
                 /// <summary>-oo + +ooi</summary>
-                public static readonly Complex NegPosInfinity =
+                [ConstantField] public static readonly Complex NegPosInfinity =
                     new Complex(Real.NegativeInfinity, Real.PositiveInfinity);
 
                 /// <summary>+oo + -ooi</summary>

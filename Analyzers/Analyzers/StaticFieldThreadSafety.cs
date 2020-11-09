@@ -14,7 +14,7 @@ namespace Analyzers
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
     public class StaticFieldThreadSafety : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "Analyzers";
+        public const string DiagnosticId = "ThreadSafety";
 
         // You can change these strings in the Resources.resx file. If you do not want your analyzer to be localize-able, you can use regular strings for Title and MessageFormat.
         // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/Localizing%20Analyzers.md for more on localization
@@ -37,9 +37,12 @@ namespace Analyzers
 
             context.RegisterSyntaxTreeAction(syntaxTreeContext =>
             {
+                //var document = context.RegisterSemanticModelAction
                 var root = syntaxTreeContext.Tree.GetRoot(syntaxTreeContext.CancellationToken);
                 foreach (var fieldDeclaration in root.DescendantNodes().OfType<FieldDeclarationSyntax>())
                 {
+                    //var fieldDecl = fieldDeclaration.GetSem
+
                     var isStatic = fieldDeclaration.Modifiers.Any(c => c.Kind() == SyntaxKind.StaticKeyword);
 
                     var hasThreadStaticAlready = fieldDeclaration
