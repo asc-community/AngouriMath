@@ -167,7 +167,7 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cos(value), x) : Enumerable.Empty<Entity>();
         }
-
+        
         partial record Arctanf
         {
             private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);

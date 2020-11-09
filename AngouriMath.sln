@@ -41,11 +41,9 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FSharpSample", "Samples\FSh
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "AngouriMath.FSharp", "FSharp\AngouriMath.FSharp.fsproj", "{4EB32057-7AD8-4C58-A25C-A666ACBDAA12}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers", "Analyzers\Analyzers\Analyzers.csproj", "{A37A22C6-40C6-4B11-BCF4-65A61CBD4AD5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Analyzers", "Analyzers\Analyzers\Analyzers.csproj", "{A37A22C6-40C6-4B11-BCF4-65A61CBD4AD5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers.CodeFixes", "Analyzers\Analyzers.CodeFixes\Analyzers.CodeFixes.csproj", "{DBE2D86F-482E-418F-9A6B-298B4EF1DB27}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Analyzers.Test", "Analyzers\Analyzers.Test\Analyzers.Test.csproj", "{C2F3836B-984B-499C-9CE4-98DF2DC2022B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Analyzers.CodeFixes", "Analyzers\Analyzers.CodeFixes\Analyzers.CodeFixes.csproj", "{DBE2D86F-482E-418F-9A6B-298B4EF1DB27}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analyzers", "Analyzers", "{7B0F7A1A-7C84-4B17-85D0-24BBCAA18826}"
 EndProject
@@ -153,14 +151,6 @@ Global
 		{DBE2D86F-482E-418F-9A6B-298B4EF1DB27}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DBE2D86F-482E-418F-9A6B-298B4EF1DB27}.Release|x64.ActiveCfg = Release|Any CPU
 		{DBE2D86F-482E-418F-9A6B-298B4EF1DB27}.Release|x64.Build.0 = Release|Any CPU
-		{C2F3836B-984B-499C-9CE4-98DF2DC2022B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C2F3836B-984B-499C-9CE4-98DF2DC2022B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C2F3836B-984B-499C-9CE4-98DF2DC2022B}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{C2F3836B-984B-499C-9CE4-98DF2DC2022B}.Debug|x64.Build.0 = Debug|Any CPU
-		{C2F3836B-984B-499C-9CE4-98DF2DC2022B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C2F3836B-984B-499C-9CE4-98DF2DC2022B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C2F3836B-984B-499C-9CE4-98DF2DC2022B}.Release|x64.ActiveCfg = Release|Any CPU
-		{C2F3836B-984B-499C-9CE4-98DF2DC2022B}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -175,7 +165,6 @@ Global
 		{E1848158-0D50-4762-BC06-DAC5DF47DCB2} = {D15528F2-AB50-46E2-9DB1-821B278C4931}
 		{A37A22C6-40C6-4B11-BCF4-65A61CBD4AD5} = {7B0F7A1A-7C84-4B17-85D0-24BBCAA18826}
 		{DBE2D86F-482E-418F-9A6B-298B4EF1DB27} = {7B0F7A1A-7C84-4B17-85D0-24BBCAA18826}
-		{C2F3836B-984B-499C-9CE4-98DF2DC2022B} = {7B0F7A1A-7C84-4B17-85D0-24BBCAA18826}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1CD9B3-4EAB-4B8C-BDC1-03280EB31298}

@@ -401,28 +401,28 @@ namespace AngouriMath
         /// The e constant
         /// <a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/>
         /// </summary>
-        public static readonly Variable e = Variable.e;
+        [ConstantField] public static readonly Variable e = Variable.e;
         // ReSharper disable once InconsistentNaming
 
         /// <summary>
         /// The imaginary one
         /// <a href="https://en.wikipedia.org/wiki/Imaginary_unit"/>
         /// </summary>
-        public static readonly Complex i = Complex.ImaginaryOne;
+        [ConstantField] public static readonly Complex i = Complex.ImaginaryOne;
 
         // ReSharper disable once InconsistentNaming
         /// <summary>
         /// The pi constant
         /// <a href="https://en.wikipedia.org/wiki/Pi"/>
         /// </summary>
-        public static readonly Variable pi = Variable.pi;
+        [ConstantField] public static readonly Variable pi = Variable.pi;
 
         // Undefined
         /// <summary>
         /// That is both undefined and indeterminite
         /// Any operation on NaN returns NaN
         /// </summary>
-        public static readonly Entity NaN = Real.NaN;
+        [ConstantField] public static readonly Entity NaN = Real.NaN;
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
@@ -1234,7 +1234,7 @@ namespace AngouriMath
                 -100, -10, 1, 10, 100, 1.5,
                 "-100 + i", "-10 + 2i", "30i"
             };
-            private static Setting<Entity[]>? checkPoints;
+            [ThreadStatic] private static Setting<Entity[]>? checkPoints;
         }
     }
 }
