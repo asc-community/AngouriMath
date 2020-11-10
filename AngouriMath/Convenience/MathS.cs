@@ -1234,7 +1234,7 @@ namespace AngouriMath
                 -100, -10, 1, 10, 100, 1.5,
                 "-100 + i", "-10 + 2i", "30i"
             };
-            [ThreadStatic] private static Setting<Entity[]>? checkPoints;
+            [ConstantField] private static Setting<Entity[]>? checkPoints;
         }
     }
 }

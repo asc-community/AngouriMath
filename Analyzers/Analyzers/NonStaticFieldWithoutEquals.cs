@@ -9,20 +9,24 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 
+
 namespace Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class StaticFieldThreadSafety : DiagnosticAnalyzer
+    public class NonStaticFieldWithoutEquals : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "ThreadSafety";
+        public const string DiagnosticId = "PrivateFieldsDanger";
         private static readonly string Title = "AMAnalyzer";
-        private static readonly string MessageFormat = "A static field should have either [ConstantField] attribute or [ThreadStatic] (for cache)";
-        private static readonly string Description = "Data corruption prevention";
+        private static readonly string MessageFormat = $"There should be no fields inside records unless {nameof(object.Equals)} is overriden";
+        private static readonly string Description = "Stack overflow prevention";
         private const string Category = "Security";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
+
+        private static bool IsRecord(TypeKind tk)
+            => tk == TypeKind.Unknown;
 
         public override void Initialize(AnalysisContext context)
         {
@@ -31,18 +35,14 @@ namespace Analyzers
 
             context.RegisterSymbolAction(symbolContext =>
             {
-                var fieldDecl = (IFieldSymbol)symbolContext.Symbol;
-                if (fieldDecl.IsStatic && 
-                    !fieldDecl.IsConst && 
-                    !fieldDecl.GetAttributes().Any(attr => attr.AttributeClass?.Name == "ConstantFieldAttribute")
-                    &&
-                    !fieldDecl.GetAttributes().Any(attr => attr.AttributeClass?.Name == "ThreadStaticAttribute")
-                    &&
-                    fieldDecl.Type.Name != "ConditionalWeakTable"
-                    )
+                var typeDecl = (IFieldSymbol)symbolContext.Symbol;
+                var containingType = typeDecl.ContainingType;
+
+                if (!typeDecl.IsStatic &&
+                    IsRecord(containingType.TypeKind) &&
+                    !containingType.MemberNames.Contains("Equals"))
                 {
-                    var diag = Diagnostic.Create(Rule, fieldDecl.Locations.First(), 
-                        $"Only {string.Join(", ", fieldDecl.GetAttributes().Select(c => c.AttributeClass?.Name ?? ""))} present");
+                    var diag = Diagnostic.Create(Rule, typeDecl.Locations.First());
                     symbolContext.ReportDiagnostic(diag);
                 }
             }, SymbolKind.Field);
