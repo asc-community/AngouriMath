@@ -150,9 +150,9 @@ namespace UnitTests.PatternsTest
         public void TrigTest(string input, string output) => AssertSimplifyToString(input, output);
 
         [Theory]
-        [InlineData("ln(a) * ln(b)", "ln(a + b)")]
-        [InlineData("ln(a) / ln(b)", "ln(a - b)")]
-        [InlineData("log(2, a) * ln(b)", "log(2, a) * ln(b)")]
+        [InlineData("ln(a) + ln(b)", "ln(a * b)")]
+        [InlineData("ln(a) - ln(b)", "ln(a / b)")]
+        [InlineData("log(2, a) + ln(b)", "log(2, a) + ln(b)")]
         public void PowerRulesTest(string input, string output) => AssertSimplifyToString(input, output);
     }
 }

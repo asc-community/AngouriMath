@@ -92,8 +92,8 @@ namespace AngouriMath.Functions
 
             Logf(var any1, Powf(var any2, var any3)) => any3 * MathS.Log(any1, any2),
 
-            Mulf(Logf(var any3, var any1), Logf(var any3a, var any2)) when any3 == any3a => any3.Log(any1 + any2),
-            Divf(Logf(var any3, var any1), Logf(var any3a, var any2)) when any3 == any3a => any3.Log(any1 - any2),
+            Sumf(Logf(var any3, var any1), Logf(var any3a, var any2)) when any3 == any3a => any3.Log(any1 * any2),
+            Minusf(Logf(var any3, var any1), Logf(var any3a, var any2)) when any3 == any3a => any3.Log(any1 / any2),
 
             _ => x
         };
