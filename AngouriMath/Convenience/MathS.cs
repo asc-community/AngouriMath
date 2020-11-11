@@ -771,30 +771,40 @@ namespace AngouriMath
             /// <summary>
             /// Criteria for simplifier so you could control which expressions are considered easier by you
             /// </summary>
-            public static Setting<Func<Entity, int>> ComplexityCriteria =>
-                complexityCriteria ??= new Func<Entity, int>(expr =>
+            public static Setting<Func<Entity, double>> ComplexityCriteria =>
+                complexityCriteria ??= new Func<Entity, double>(expr =>
                 {
+                    // Those are of the 2nd power to avoid problems with floating numbers
+                    static double TinyWeight(double w)  => w * 0.5;
+                    static double MinorWeight(double w) => w * 1.0;
+                    static double Weight(double w)      => w * 2.0;
+                    static double MajorWeight(double w) => w * 4.0;
+                    static double HeavyWeight(double w) => w * 8.0;
+
                     // Number of nodes
-                    var res = expr.Complexity * 2;
+                    var res = Weight(expr.Complexity);
 
                     // Number of variables
-                    res += expr.Nodes.Count(entity => entity is Variable) * 2;
+                    res += Weight(expr.Nodes.Count(entity => entity is Variable));
 
                     // Number of divides
-                    res += expr.Nodes.Count(entity => entity is Divf);
+                    res += MinorWeight(expr.Nodes.Count(entity => entity is Divf));
 
                     // Number of negative powers
-                    res += expr.Nodes.Count(entity => entity is Powf(_, Real { IsNegative: true })) * 8;
+                    res += HeavyWeight(expr.Nodes.Count(entity => entity is Powf(_, Real { IsNegative: true })));
+
+                    // Number of logarithms
+                    res += TinyWeight(expr.Nodes.Count(entity => entity is Logf));
 
                     // Number of negative reals
-                    res += expr.Nodes.Count(entity => entity is Real { IsNegative: true }) * 6 /* to outweigh number of nodes */;
+                    res += MajorWeight(expr.Nodes.Count(entity => entity is Real { IsNegative: true }));
 
                     // 0 < x is bad. x > 0 is good.
-                    res += expr.Nodes.Count(entity => entity is ComparisonSign && entity.DirectChildren[0] == 0) * 2;
+                    res += Weight(expr.Nodes.Count(entity => entity is ComparisonSign && entity.DirectChildren[0] == 0));
 
                     return res;
                 });
-            [ThreadStatic] private static Setting<Func<Entity, int>>? complexityCriteria;
+            [ThreadStatic] private static Setting<Func<Entity, double>>? complexityCriteria;
 
             /// <summary>
             /// Settings for the Newton-Raphson's root-search method
