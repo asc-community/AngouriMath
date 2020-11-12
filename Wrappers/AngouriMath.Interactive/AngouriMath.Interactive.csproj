@@ -13,6 +13,7 @@
     <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
     <PackageTags>interactive</PackageTags>
     <PackageReleaseNotes>A test version</PackageReleaseNotes>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
