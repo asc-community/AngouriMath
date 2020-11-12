@@ -33,7 +33,7 @@
 
 ## What is it about?
 
-<img src="additional/readme/side.PNG" align="right" width="25%"/>
+<a href="#jupyter"><img src="additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
 
 AngouriMath is an open source symbolic algebra library. That is, via AngouriMath,
 you can automatically solve equations, systems of equations, work with sets, differentiate,
