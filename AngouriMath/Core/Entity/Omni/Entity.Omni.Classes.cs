@@ -385,7 +385,7 @@ namespace AngouriMath
                 }
 
 
-                private readonly static Variable universalVoidConstant = Variable.CreateVariableUnchecked("%");
+                [ConstantField] private readonly static Variable universalVoidConstant = Variable.CreateVariableUnchecked("%");
                 /// <inheritdoc/>
                 public override int GetHashCode()
                     // TODO: might not always work, requires testing

@@ -127,7 +127,6 @@ namespace AngouriMath.Functions
         [ConstantField] private static readonly Entity f1_6 = Rational.Create(1, 6);
         [ConstantField] private static readonly Entity f1_8 = Rational.Create(1, 8);
         [ConstantField] private static readonly Entity f1_16 = Rational.Create(1, 16);
-        [ConstantField] private static readonly Entity f1_24 = Rational.Create(1, 24);
         [ConstantField] private static readonly Entity i = MathS.i;
         private static EDecimal TwoPiOver(int a)
             => Number.CtxDivide(Number.CtxMultiply(2, MathS.DecimalConst.pi), a);
@@ -137,7 +136,7 @@ namespace AngouriMath.Functions
         /// Although some formulas have been changed because they are wrong on Wikipedia
         /// </summary>
         // TODO: Some values here (e.g. sin(2pi/7)) are not present on Wikipedia. Needs additional reference sources.
-        private static readonly TrigTable TableSin = new()
+        [ConstantField] private static readonly TrigTable TableSin = new()
         {
             (TwoPiOver(1), 0),
             (TwoPiOver(2), 0),
@@ -166,7 +165,7 @@ namespace AngouriMath.Functions
             (TwoPiOver(24), f1_4 * (Sqrt(6) - Sqrt(2)))
         };
 
-        private static readonly TrigTable TableCos = new()
+        [ConstantField] private static readonly TrigTable TableCos = new()
         {
             (TwoPiOver(1), 1),
             (TwoPiOver(2), -1),
@@ -192,7 +191,7 @@ namespace AngouriMath.Functions
             (TwoPiOver(24), f1_4 * (Sqrt(6) + Sqrt(2)))
         };
 
-        private static readonly TrigTable TableTan = new()
+        [ConstantField] private static readonly TrigTable TableTan = new()
         {
             (TwoPiOver(1), 0),
             (TwoPiOver(2), 0),

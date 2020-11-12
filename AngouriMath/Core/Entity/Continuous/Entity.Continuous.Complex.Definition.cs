@@ -135,11 +135,11 @@ namespace AngouriMath
                     new Complex(Real.NegativeInfinity, Real.PositiveInfinity);
 
                 /// <summary>+oo + -ooi</summary>
-                public static readonly Complex PosNegInfinity =
+                [ConstantField] public static readonly Complex PosNegInfinity =
                     new Complex(Real.PositiveInfinity, Real.NegativeInfinity);
 
                 /// <summary>+oo + +ooi</summary>
-                public static readonly Complex PosPosInfinity =
+                [ConstantField] public static readonly Complex PosPosInfinity =
                     new Complex(Real.PositiveInfinity, Real.PositiveInfinity);
 
                 /// <summary>Parses a <see cref="string"/> into <see cref="Complex"/></summary>

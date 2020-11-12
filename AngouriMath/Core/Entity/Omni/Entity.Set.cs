@@ -38,13 +38,13 @@ namespace AngouriMath
             /// <exception cref="ElementInSetAmbiguousException">Thrown when </exception>
             public bool Contains(Entity entity)
                 => TryContains(entity, out var res) ? res : throw new ElementInSetAmbiguousException("Cannot determine whether the element is in the set");
-            
+
             /// <summary>
             /// Returns an empty set
             /// You can use it to compare sets to it
             /// or to avoid allocations
             /// </summary>
-            public readonly static FiniteSet Empty = new FiniteSet();
+            [ConstantField] public readonly static FiniteSet Empty = new FiniteSet();
 
             /// <summary>
             /// Checks that a set is finite

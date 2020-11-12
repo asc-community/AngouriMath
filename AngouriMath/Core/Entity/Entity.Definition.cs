@@ -81,7 +81,8 @@ namespace AngouriMath
     /// </summary>
     public abstract partial record Entity : ILatexiseable
     {
-        internal static RecordFieldCache caches = new();
+        // There should be guarantee that RecordFieldCache is thread-safe
+        [ThreadStatic] internal static RecordFieldCache caches = new();
 
         /// <inheritdoc/>
         protected abstract Entity[] InitDirectChildren();

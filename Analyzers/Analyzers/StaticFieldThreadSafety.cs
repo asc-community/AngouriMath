@@ -17,7 +17,7 @@ namespace Analyzers
         public const string DiagnosticId = "ThreadSafety";
         private static readonly string Title = "AMAnalyzer";
         private static readonly string MessageFormat = "A static field should have either [ConstantField] attribute or [ThreadStatic] (for cache)";
-        private static readonly string Description = "Data corruption prevention";
+        private static readonly string Description = "Data corruption prevention.";
         private const string Category = "Security";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);

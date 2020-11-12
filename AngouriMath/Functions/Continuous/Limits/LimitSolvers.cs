@@ -7,6 +7,7 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+using AngouriMath.Core;
 using PeterO.Numbers;
 using System.Collections.Generic;
 using System.Linq;
@@ -40,7 +41,7 @@ namespace AngouriMath.Functions.Algebra
             }
             return filteredDictionary;
         }
-        private static readonly Real Infinity = Real.PositiveInfinity;
+        [ConstantField] private static readonly Real Infinity = Real.PositiveInfinity;
         internal static Entity? SolveBySubstitution(Entity expr, Variable x)
         {
             var res = expr.Substitute(x, Infinity);

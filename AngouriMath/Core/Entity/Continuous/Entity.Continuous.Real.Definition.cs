@@ -97,13 +97,13 @@ namespace AngouriMath
                 }
 
                 /// <summary>Negative Infinity (-oo)</summary>
-                public static readonly Real NegativeInfinity = new Real(EDecimal.NegativeInfinity);
+                [ConstantField] public static readonly Real NegativeInfinity = new Real(EDecimal.NegativeInfinity);
 
                 /// <summary>Positive Infinity (+oo)</summary>
-                public static readonly Real PositiveInfinity = new Real(EDecimal.PositiveInfinity);
+                [ConstantField] public static readonly Real PositiveInfinity = new Real(EDecimal.PositiveInfinity);
 
                 /// <summary>Not A Number (NaN)</summary>
-                public static readonly Real NaN = new Real(EDecimal.NaN);
+                [ConstantField] public static readonly Real NaN = new Real(EDecimal.NaN);
 
                 /// <summary>
                 /// Converts the given number to a double (not recommended in general unless you need a built-in type)
