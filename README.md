@@ -33,6 +33,8 @@
 
 ## What is it about?
 
+<a href="#jupyter"><img src="additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
+
 AngouriMath is an open source symbolic algebra library. That is, via AngouriMath,
 you can automatically solve equations, systems of equations, work with sets, differentiate,
 parse from string, and try many other features.
@@ -61,6 +63,7 @@ optimized for F#.
   - [Sets](#sets)
   - [Neat syntax](#syntax)
   - [F#](#fsharp)
+  - [Jupyter](#jupyter)
 - [I want to contribute](#contrib)
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
@@ -288,6 +291,30 @@ limit "x" "0" "sin(a x) / x"
 
 latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)"
 ```
+
+## <a name="jupyter"></a>Jupyter integration
+
+If you already installed <a href="https://jupyter.org/install">Jupyter</a> and 
+<a href="https://github.com/dotnet/interactive/blob/main/docs/NotebooksLocalExperience.md">Interactive</a> for it, install
+<a href="https://www.nuget.org/packages/AngouriMath.Interactive">package</a> which allows this integration like this:
+
+<img src="additional/readme/instr.PNG" width="50%"/>
+
+<details>
+    <summary>Copyable</summary>
+
+```cs
+#r "nuget:AngouriMath.Interactive, 0.0.1-alpha.1"
+using AngouriMath.Extensions;
+using AngouriMath;
+new AngouriMath.Interactive.SessionRunner().Init();
+```
+
+</details>
+
+Now any `ILatexiseable` will be displayed as LaTeX:
+
+<img src="additional/readme/interactive.PNG"/>
 
 ## <a name="contrib"></a>Contribution
 
