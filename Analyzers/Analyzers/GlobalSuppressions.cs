@@ -6,4 +6,5 @@
 using System.Diagnostics.CodeAnalysis;
 
 [assembly: SuppressMessage("MicrosoftCodeAnalysisReleaseTracking", "RS2008:Enable analyzer release tracking", Justification = "<Pending>", Scope = "member", Target = "~F:Analyzers.NonStaticFieldWithoutEquals.Rule")]
-[assembly: SuppressMessage("MicrosoftCodeAnalysisReleaseTracking", "RS2008:Enable analyzer release tracking", Justification = "<Pending>", Scope = "member", Target = "~F:Analyzers.StaticFieldThreadSafety.Rule")]
+[assembly: SuppressMessage("MicrosoftCodeAnalysisReleaseTracking", "RS2008:Enable analyzer release tracking", Justification = "<Pending>", Scope = "member", Target = "~F:Analyzers.StaticFieldThreadSafety.RuleAddAttribute")]
+[assembly: SuppressMessage("MicrosoftCodeAnalysisReleaseTracking", "RS2008:Enable analyzer release tracking", Justification = "<Pending>", Scope = "member", Target = "~F:Analyzers.StaticFieldThreadSafety.RuleShouldBeNull")]

@@ -17,6 +17,7 @@ using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Boolean;
 using System.Diagnostics.CodeAnalysis;
+using AngouriMath.Convenience;
 
 namespace AngouriMath.Core
 {
@@ -617,88 +618,6 @@ namespace AngouriMath
         /// </summary>
         public static partial class Settings
         {
-            /// <summary>
-            /// This class for configuring some internal mechanisms from outside
-            /// </summary>
-            /// <typeparam name="T">
-            /// Those configurations can be of different types
-            /// </typeparam>
-            public sealed class Setting<T> where T : notnull
-            {
-                internal Setting(T defaultValue) { Value = defaultValue; Default = defaultValue; }
-
-                /// <summary>
-                /// For example,
-                /// <code>
-                /// MathS.Settings.Precision.As(100, () => { /* some code considering precision = 100 */ });
-                /// </code>
-                /// </summary>
-                /// <param name="value">New value that will be automatically reverted after action is done</param>
-                /// <param name="action">What should be done under this setting</param>
-                public void As(T value, Action action)
-                {
-                    var previousValue = Value;
-                    Value = value;
-                    try
-                    { 
-                        action(); 
-                    } 
-                    finally
-                    {
-                        Value = previousValue;
-                    }
-                }
-
-                /// <summary>
-                /// For example,
-                /// <code>
-                /// var res = MathS.Settings.Precision.As(100, () => { /* some code considering precision = 100 */ return 4; });
-                /// </code>
-                /// </summary>
-                /// <param name="value">New value that will be automatically reverted after action is done</param>
-                /// <param name="action">What should be done under this setting</param>
-                public TReturnType As<TReturnType>(T value, Func<TReturnType> action)
-                {
-                    var previousValue = Value;
-                    Value = value;
-                    try
-                    {
-                        return action(); 
-                    } 
-                    finally
-                    { 
-                        Value = previousValue;
-                    }
-                }
-
-                /// <summary>
-                /// An implicit operator so that one does not have to call <see cref="Value"/>
-                /// </summary>
-                /// <param name="s">The setting</param>
-                public static implicit operator T(Setting<T> s) => s.Value;
-
-                /// <summary>
-                /// An implicit operator so that one does not have to call the ctor
-                /// </summary>
-                /// <param name="a">The value</param>
-                public static implicit operator Setting<T>(T a) => new(a);
-
-                /// <summary>
-                /// Overriden ToString so that one could see the value of the setting
-                /// (if overriden)
-                /// </summary>
-                public override string ToString() => Value.ToString();
-
-                /// <summary>
-                /// The current value of the setting
-                /// </summary>
-                public T Value { get; private set; }
-
-                /// <summary>
-                /// The default value of the setting
-                /// </summary>
-                public T Default { get; }
-            }
 
             /// <summary>
             /// That is how we perform newton solving when no analytical solution was found

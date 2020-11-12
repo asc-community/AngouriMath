@@ -2,6 +2,7 @@ using AngouriMath;
 using AngouriMath.Extensions;
 using Microsoft.VisualBasic.CompilerServices;
 using System;
+using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static System.Console;
 
@@ -23,6 +24,30 @@ using static System.Console;
 //WriteLine("(x - goose) * (x - momo) * (x - quack) * (x - momo * goose * quack)".Expand().SolveEquation("x"));
 //WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));
 
-WriteLine("(log(e, x) * (log(e, x) + 1) * x ^ x + x ^ (x - 1)) * x ^ x ^ x".Latexise());
+//var mat = MathS.Matrices.Matrix(new Entity[,]
+//    {
+//        { "(x + 0)2", "(x + 1)2", "(x + 2)2" },
+//        { "(x + 1)2", "(x + 2)2", "(x + 3)2" },
+//        { "(x + 2)2", "(x + 3)2", "(x + 4)2" }
+//    }
+//    );
+
+//for (int i = -4; i <= 13; i++)
+//    WriteLine(((Tensor)mat.Substitute("x", $"{i} / 3")).Determinant());
+//MathS.Settings.MaxExpansionTermCount.Global(10000);
+
+//WriteLine(MathS.TryPolynomial(mat.Determinant().Expand(14), "x", out var res) ? res : null);
+
+var eqs = new Entity[6];
+for (int i = -4; i <= 1; i++)
+    eqs[i + 4] = $"({i})5 a + ({i})4 b + ({i})3 c + ({i})2 d + ({i}) f + g - (-8)".Simplify();
+
+var sys = MathS.Equations(eqs);
+
+WriteLine(sys.ToString());
+WriteLine(sys.Solve("a", "b", "c", "d", "f", "g"));
+
+
+//WriteLine("(log(e, x) * (log(e, x) + 1) * x ^ x + x ^ (x - 1)) * x ^ x ^ x".Latexise());
 
 //WriteLine("((2x2 + 10x + 1) ^ (1/5) - (x2 + 10x + 1) ^ (1/7)) ^ 35".Expand().Simplify());

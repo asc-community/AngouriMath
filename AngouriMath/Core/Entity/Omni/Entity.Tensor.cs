@@ -132,7 +132,7 @@ namespace AngouriMath
             /// <summary>
             /// Finds the symbolical determinant via Laplace's method
             /// </summary>
-            public Entity Determinant() => InnerTensor.DeterminantLaplace();
+            public Entity Determinant() => InnerTensor.DeterminantLaplace().InnerSimplified;
 
             /// <summary>Inverts all matrices in a tensor</summary>
             public Tensor Inverse()
