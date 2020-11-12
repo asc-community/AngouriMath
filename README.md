@@ -294,7 +294,10 @@ latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)"
 
 ## <a name="jupyter"></a>Jupyter integration
 
-Install <a href="https://www.nuget.org/packages/AngouriMath.Interactive">package</a> which allows this integration like this:
+If you already installed <a href="https://jupyter.org/install">Jupyter</a> and 
+<a href="https://github.com/dotnet/interactive/blob/main/docs/NotebooksLocalExperience.md">Interactive</a> for it, install
+<a href="https://www.nuget.org/packages/AngouriMath.Interactive" width="50%">package</a> which allows this integration like this:
+
 <img src="additional/readme/instr.PNG"/>
 
 <details>
