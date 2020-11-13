@@ -1121,7 +1121,7 @@ namespace AngouriMath
             /// instead and set the flag useCache to false)
             /// </summary>
             public static void ClearFromStringCache()
-                => MathS.stringToEntityCache = new();
+                => stringToEntityCache = new();
 
             /// <summary>
             /// Entities' properties are not initialized once
@@ -1130,7 +1130,7 @@ namespace AngouriMath
             /// be critical for some system. You can clean it
             /// </summary>
             public static void ClearEntityPropertyCache()
-                => Entity.Caches = new();
+                => caches = new();
         }
 
         /// <summary>

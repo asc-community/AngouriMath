@@ -18,7 +18,7 @@ namespace Analyzers
         public const string DiagnosticId = "PrivateFieldsDanger";
         private static readonly string Title = "AMAnalyzer";
         private static readonly string MessageFormat = $"There should be no fields inside records unless {nameof(object.Equals)} is overriden";
-        private static readonly string Description = "Stack overflow prevention";
+        private static readonly string Description = "Stack overflow prevention.";
         private const string Category = "Security";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);

@@ -83,7 +83,7 @@ namespace AngouriMath
     {
         // There should be guarantee that RecordFieldCache is thread-safe
         internal static RecordFieldCache Caches => caches ??= new();
-        [ThreadStatic] private static RecordFieldCache? caches;
+        [ThreadStatic] internal static RecordFieldCache? caches;
 
 
         /// <inheritdoc/>
