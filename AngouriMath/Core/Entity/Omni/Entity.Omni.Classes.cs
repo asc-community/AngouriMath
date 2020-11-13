@@ -407,7 +407,7 @@ namespace AngouriMath
                 // Since there's a very small number of domains, it's wiser to
                 // cache them all
                 private static Dictionary<Domain, SpecialSet> InnerStorage => innerStorage ??= new();
-                [ThreadStatic] private static Dictionary<Domain, SpecialSet>? innerStorage = null;
+                [ThreadStatic] private static Dictionary<Domain, SpecialSet>? innerStorage;
 
                 /// <summary>
                 /// Creates an instance of special set from a domain
@@ -565,13 +565,13 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => caches.GetValue(this,
+                public override bool IsSetFinite => Caches.GetValue(this,
                     cache => cache.isSetFinite, cache => cache.isSetFinite =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && finite1.IsSetFinite && finite2.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => caches.GetValue(this,
+                public override bool IsSetEmpty => Caches.GetValue(this,
                     cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && finite1.IsSetEmpty && finite2.IsSetEmpty) ?? throw new AngouriBugException("isSetEmpty cannot be null");
@@ -612,12 +612,12 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => caches.GetValue(this,
+                public override bool IsSetFinite => Caches.GetValue(this,
                     cache => cache.isSetFinite, cache => cache.isSetFinite = Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && (finite1.IsSetFinite || finite2.IsSetFinite)) ?? throw new AngouriBugException("isSetFinite cannot be null");
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => caches.GetValue(this,
+                public override bool IsSetEmpty => Caches.GetValue(this,
                     cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite2.IsSetEmpty)) ?? throw new AngouriBugException("isSetEmpty cannot be null");
@@ -658,12 +658,12 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => caches.GetValue(this,
+                public override bool IsSetFinite => Caches.GetValue(this,
                     cache => cache.isSetFinite, cache => cache.isSetFinite =
                     Left is FiniteSet finite1 && Right is FiniteSet && finite1.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => caches.GetValue(this,
+                public override bool IsSetEmpty => Caches.GetValue(this,
                     cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite1 == finite2)) ?? throw new AngouriBugException("isSetEmpty cannot be null");

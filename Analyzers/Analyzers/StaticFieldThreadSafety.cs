@@ -30,7 +30,7 @@ namespace Analyzers
             new DiagnosticDescriptor(
                 id: DiagnosticId,
                 title: "AMAnalyzer",
-                messageFormat: "A thread static field should have no initialization (instead, should have an additional nullable backing field) {0}",
+                messageFormat: "A thread static field should have no initialization (instead, should have an additional nullable backing field)",
                 category: "Security",
                 DiagnosticSeverity.Warning,
                 isEnabledByDefault: true,
@@ -62,9 +62,17 @@ namespace Analyzers
                 }
                 if (hasThreadStaticAttribute)
                 {
-                    var diag = Diagnostic.Create(RuleShouldBeNull, fieldDecl.Locations.First(),
-                         string.Join(", ", fieldDecl.DeclaringSyntaxReferences.Select(c => c.SyntaxTree.GetType())));
-                    symbolContext.ReportDiagnostic(diag);
+                    var syntaxTree = fieldDecl.DeclaringSyntaxReferences.First().GetSyntax();
+                    if (syntaxTree is VariableDeclaratorSyntax variableDeclarator)
+                    {
+                        if (variableDeclarator.Initializer is not null)
+                        {
+                            var diag = Diagnostic.Create(RuleShouldBeNull, fieldDecl.Locations.First());
+#pragma warning disable RS1005 // ReportDiagnostic invoked with an unsupported DiagnosticDescriptor
+                            symbolContext.ReportDiagnostic(diag);
+#pragma warning restore RS1005 // ReportDiagnostic invoked with an unsupported DiagnosticDescriptor
+                        }
+                    }
                 }
             }, SymbolKind.Field);
         }

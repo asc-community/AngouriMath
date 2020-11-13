@@ -1130,7 +1130,7 @@ namespace AngouriMath
             /// be critical for some system. You can clean it
             /// </summary>
             public static void ClearEntityPropertyCache()
-                => Entity.caches = new();
+                => Entity.Caches = new();
         }
 
         /// <summary>
