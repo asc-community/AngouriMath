@@ -15,11 +15,11 @@
   , 
   <a href="https://www.nuget.org/packages/AngouriMath.FSharp" title="Go to NuGet to get an F# version"><b>F#</b></a>
   <b>)</b>
-  <b>·</b>
+  <b>Â·</b>
   <a href="#exam"><b>Examples</b></a>
-  <b>·</b>
+  <b>Â·</b>
   <a href="#contrib"><b>Contributions</b></a>
-  <b>·</b>
+  <b>Â·</b>
   <a href="#license"><b>License</b></a>
   <br>
   <br>
@@ -48,8 +48,11 @@ It is free to use even in commercial projects. We work on it a lot, so your requ
 <a href="https://github.com/asc-community/AngouriMath/issues">issues</a> are likely to
 be considered within a few hours.
 
-Finally, if not sure about it, try it on 
-<a href="https://dotnetfiddle.net/FIcaDG">.NET Fiddle</a>!
+Finally, if still not sure about it, you can try it even before installation!
+| Try live |
+|:--------:|
+|<a href="https://dotnetfiddle.net/FIcaDG"><img src="https://img.shields.io/static/v1?label=Go%20to&message=.NET%20Fiddle&color=purple&style=for-the-badge"></a>|
+|<a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Go%20to&message=MyBinder&color=purple&style=for-the-badge"></a>|
 
 Although most functions are convenient to use only from C#, there are some
 optimized for F#.
