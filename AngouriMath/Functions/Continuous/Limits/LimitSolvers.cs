@@ -16,7 +16,7 @@ namespace AngouriMath.Functions.Algebra
 {
     using static Entity;
     using static Entity.Number;
-    class LimitSolvers
+    internal static class LimitSolvers
     {
         internal static Dictionary<EDecimal, Entity>? ParseAsPolynomial(Entity expr, Variable x)
         {

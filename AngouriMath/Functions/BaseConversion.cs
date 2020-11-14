@@ -79,7 +79,7 @@ namespace AngouriMath.Functions
         internal static string ToBaseN(EDecimal num, int N)
         {
             if (N > ALPHABET_TOCHAR.Length)
-                throw new MathSException("N should be <= than " + ALPHABET_TOCHAR.Length);
+                throw new InvalidNumericSystemException("N should be <= than " + ALPHABET_TOCHAR.Length);
             string sign = num.IsNegative ? "-" : "";
             num = num.Abs();
             var (intPart, floatPart) = num.SplitDecimal();

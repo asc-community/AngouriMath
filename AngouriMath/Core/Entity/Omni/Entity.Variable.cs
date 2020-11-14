@@ -24,7 +24,7 @@ namespace AngouriMath
         /// Construct a <see cref="Variable"/> with an implicit conversion from <see cref="string"/>.
         /// 
         /// </summary>
-        public partial record Variable : Entity
+        public sealed partial record Variable : Entity
         {
             /// <summary>
             /// Deconstructs Variable as follows

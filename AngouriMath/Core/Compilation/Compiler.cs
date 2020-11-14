@@ -289,7 +289,7 @@ namespace AngouriMath.Core
     {
         /// <summary>The <ref name="Cache"/> stores the saved cache number if zero/positive,
         /// or the bitwise complement of the unsaved cache number if negative.</summary>
-        internal record Compiler(List<Instruction> Instructions,
+        internal sealed record Compiler(List<Instruction> Instructions,
             IReadOnlyDictionary<Variable, int> VarNamespace, IDictionary<Entity, int> Cache)
         {
             /// <summary>Returns a compiled expression. Allows to boost substitution a lot</summary>

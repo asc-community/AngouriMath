@@ -20,7 +20,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of derivative
         /// </summary>
-        public partial record Derivativef(Entity Expression, Entity Var, int Iterations) : Function
+        public sealed partial record Derivativef(Entity Expression, Entity Var, int Iterations) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Derivativef New(Entity expression, Entity var) =>
@@ -36,7 +36,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of integral
         /// </summary>
-        public partial record Integralf(Entity Expression, Entity Var, int Iterations) : Function
+        public sealed partial record Integralf(Entity Expression, Entity Var, int Iterations) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Integralf New(Entity expression, Entity var) =>
@@ -52,7 +52,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of limit
         /// </summary>
-        public partial record Limitf(Entity Expression, Entity Var, Entity Destination, ApproachFrom ApproachFrom) : Function
+        public sealed partial record Limitf(Entity Expression, Entity Var, Entity Destination, ApproachFrom ApproachFrom) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Limitf New(Entity expression, Entity var, Entity destination, ApproachFrom approachFrom) =>

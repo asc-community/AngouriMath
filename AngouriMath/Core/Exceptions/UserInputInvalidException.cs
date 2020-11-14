@@ -3,10 +3,16 @@
 namespace AngouriMath.Core.Exceptions
 {
     /// <summary>If one is thrown, the user's input is invalid</summary>
-    public class MathSException : ArgumentException { internal MathSException(string message) : base(message) { } }
+    public abstract class MathSException : ArgumentException { internal MathSException(string message) : base(message) { } }
+
+    /// <summary>Thrown inside operations related to limits</summary>
+    public sealed class LimitOperationNotSupportedException : MathSException { internal LimitOperationNotSupportedException(string message) : base(message) { } }
+
+    /// <summary>Quite general, is thrown when too many or too few of whatever is provided</summary>
+    public sealed class WrongNumberOfArgumentsException : MathSException { internal WrongNumberOfArgumentsException(string message) : base(message) { } }
 
     /// <summary>Thrown when an invalid node or combination of nodes in the expression tree is encountered</summary>
-    public class TreeException : MathSException { internal TreeException(string message) : base(message) { } }
+    public abstract class TreeException : MathSException { internal TreeException(string message) : base(message) { } }
 
     /// <summary>Thrown when trying to compile and a node cannot be compiled</summary>
     public sealed class UncompilableNodeException : TreeException { internal UncompilableNodeException(string message) : base(message) { } }
@@ -18,5 +24,11 @@ namespace AngouriMath.Core.Exceptions
     public sealed class ElementInSetAmbiguousException : MathSException { internal ElementInSetAmbiguousException(string msg) : base(msg) { } }
 
     /// <summary> Thrown if instead of a statement another expression is put into Solve </summary>
-    public sealed class SolveRequiresStatement : MathSException { internal SolveRequiresStatement() : base("There should be statement to be true (e. g. equality, inequality, or some other predicate)") { } }
+    public sealed class SolveRequiresStatementException : MathSException { internal SolveRequiresStatementException() : base("There should be statement to be true (e. g. equality, inequality, or some other predicate)") { } }
+
+    /// <summary>Thrown in matrix operations</summary>
+    public sealed class InvalidMatrixOperationException : MathSException { internal InvalidMatrixOperationException(string msg) : base(msg) { } }
+
+    /// <summary></summary>
+    public sealed class InvalidNumericSystemException : MathSException { internal InvalidNumericSystemException(string msg) : base(msg) { } }
 }

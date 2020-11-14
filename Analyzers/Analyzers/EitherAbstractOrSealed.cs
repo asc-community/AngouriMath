@@ -13,20 +13,17 @@ using System.Threading;
 namespace Analyzers
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class NonStaticFieldWithoutEquals : DiagnosticAnalyzer
+    public class EitherAbstractOrSealed : DiagnosticAnalyzer
     {
-        public const string DiagnosticId = "PrivateFieldsDanger";
+        public const string DiagnosticId = "SealedOrAbstract";
         private static readonly string Title = "AMAnalyzer";
-        private static readonly string MessageFormat = $"There should be no fields inside records unless {nameof(object.Equals)} is overriden";
-        private static readonly string Description = "Stack overflow prevention.";
+        private static readonly string MessageFormat = $"If a type is not sealed, it should be either static or abstract";
+        private static readonly string Description = "Unsafe type extension prevention.";
         private const string Category = "Security";
 
         private static readonly DiagnosticDescriptor Rule = new DiagnosticDescriptor(DiagnosticId, Title, MessageFormat, Category, DiagnosticSeverity.Warning, isEnabledByDefault: true, description: Description);
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
-
-        private static bool IsRecord(TypeKind tk)
-            => tk == TypeKind.Unknown;
 
         public override void Initialize(AnalysisContext context)
         {
@@ -35,17 +32,14 @@ namespace Analyzers
 
             context.RegisterSymbolAction(symbolContext =>
             {
-                var typeDecl = (IFieldSymbol)symbolContext.Symbol;
+                var typeDecl = (INamedTypeSymbol)symbolContext.Symbol;
                 var containingType = typeDecl.ContainingType;
-
-                if (!typeDecl.IsStatic &&
-                    IsRecord(containingType.TypeKind) &&
-                    !containingType.MemberNames.Contains("Equals"))
+                if (!typeDecl.IsAbstract && !typeDecl.IsSealed && !typeDecl.IsStatic)
                 {
                     var diag = Diagnostic.Create(Rule, typeDecl.Locations.First());
                     symbolContext.ReportDiagnostic(diag);
                 }
-            }, SymbolKind.Field);
+            }, SymbolKind.NamedType);
         }
     }
 }

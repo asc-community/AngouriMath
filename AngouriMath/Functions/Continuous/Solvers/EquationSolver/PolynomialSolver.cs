@@ -26,7 +26,7 @@ namespace AngouriMath.Functions
             T Value { get; }
             bool AllowFloat { get; }
         }
-        internal class PrimitiveDecimal : IPrimitive<EDecimal>
+        internal sealed class PrimitiveDecimal : IPrimitive<EDecimal>
         {
             public void Add(Real a) => Value += a.EDecimal;
             public void AddMp(EDecimal a, Real b) => Value += a * b.EDecimal;
@@ -34,7 +34,7 @@ namespace AngouriMath.Functions
             public EDecimal Value { get; private set; } = 0;
             public bool AllowFloat => true;
         }
-        internal class PrimitiveInteger : IPrimitive<EInteger>
+        internal sealed class PrimitiveInteger : IPrimitive<EInteger>
         {
             public void Add(Real a) => Value += a.EDecimal.ToEInteger();
             public void AddMp(EInteger a, Real b) => Value += (a * b.EDecimal).ToEInteger();

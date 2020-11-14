@@ -21,7 +21,7 @@ namespace AngouriMath
 
         /// <summary>Basic tensor implementation: <a href="https://en.wikipedia.org/wiki/Tensor"/></summary>
 #pragma warning disable CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
-        public partial record Tensor(GenTensor InnerTensor) : Entity
+        public sealed partial record Tensor(GenTensor InnerTensor) : Entity
 #pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -124,7 +124,7 @@ namespace AngouriMath
             public void Transpose()
             {
                 if (IsMatrix) InnerTensor.TransposeMatrix();
-                else throw new Core.Exceptions.MathSException("Specify axes numbers for non-matrices");
+                else throw new Core.Exceptions.InvalidMatrixOperationException("Specify axes numbers for non-matrices");
             }
 
             // We do not need to use Gaussian elimination here

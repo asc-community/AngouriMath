@@ -18,7 +18,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of sine
         /// </summary>
-        public partial record Sinf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Sinf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Sinf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -31,7 +31,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of cosine
         /// </summary>
-        public partial record Cosf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Cosf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Cosf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -44,7 +44,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of tangent
         /// </summary>
-        public partial record Tanf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Tanf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Tanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -57,7 +57,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of cotangent
         /// </summary>
-        public partial record Cotanf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Cotanf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Cotanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -70,7 +70,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of secant
         /// </summary>
-        public partial record Secantf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Secantf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Secantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -83,7 +83,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of secant
         /// </summary>
-        public partial record Cosecantf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Cosecantf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Cosecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);

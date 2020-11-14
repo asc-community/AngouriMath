@@ -45,7 +45,7 @@ namespace AngouriMath
 }
 namespace AngouriMath.Core
 {
-    public partial class FastExpression
+    public sealed partial class FastExpression
     {
         internal enum InstructionType
         {
@@ -79,7 +79,7 @@ namespace AngouriMath.Core
             CALL_POW,
             CALL_LOG,
         }
-        internal partial record Instruction(InstructionType Type, int Reference = -1, Complex Value = default)
+        internal sealed partial record Instruction(InstructionType Type, int Reference = -1, Complex Value = default)
         {
             public override string ToString() =>
                 Type
