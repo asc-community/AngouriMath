@@ -24,5 +24,6 @@ using static System.Console;
 //WriteLine(Number.Arccosecant(Number.Cosecant(1.2)));
 
 WriteLine("sin(x) / cos(x)".Simplify());
+WriteLine("phi(23) * phi(11)".Simplify());
 
 //WriteLine("((2x2 + 10x + 1) ^ (1/5) - (x2 + 10x + 1) ^ (1/7)) ^ 35".Expand().Simplify());

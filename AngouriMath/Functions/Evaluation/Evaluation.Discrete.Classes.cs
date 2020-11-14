@@ -335,5 +335,30 @@ namespace AngouriMath
                 }
             }
         }
+
+        partial record Phif
+        {               
+            /// <inheritdoc/>
+            protected override Entity InnerEval()
+            {
+                if (Argument.Evaled is not Integer integer)
+                    return this;
+                else
+                {
+                    return integer.Phi();
+                }
+            }
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify()
+            {
+                if (Argument.InnerSimplified is not Integer integer)
+                    return this;
+                else
+                {
+                    return integer.Phi();
+                }
+            }
+        }
     }
 }

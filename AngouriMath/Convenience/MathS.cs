@@ -59,11 +59,11 @@ namespace AngouriMath
         public static class NumberTheory
         {
             /// <summary>
-            /// Computes Euler phi function
+            /// Returns entity standing for Euler phi function
             /// <a href="https://en.wikipedia.org/wiki/Euler%27s_totient_function"/>
             /// </summary>
             /// If integer x is non-positive, the result will be 0
-            public static Integer Phi(Integer integer) => integer.Phi();
+            public static Entity Phi(Entity integer) => new Phif(integer);
 
             /// <summary>
             /// Count of all divisors of an integer
@@ -1027,7 +1027,16 @@ namespace AngouriMath
             [Obsolete("Now these functions are available as non-static methods at Entity")]
             public static Complex DefiniteIntegral(Entity expr, Variable x, (EDecimal Re, EDecimal Im) from, (EDecimal Re, EDecimal Im) to, int stepCount) =>
                 Integration.Integrate(expr, x, from, to, stepCount);
+
+
+            /// <summary>
+            /// Computes Euler phi function
+            /// <a href="https://en.wikipedia.org/wiki/Euler%27s_totient_function"/>
+            /// </summary>
+            /// If integer x is non-positive, the result will be 0
+            public static Integer Phi(Integer integer) => integer.Phi();
         }
+
         /// <summary>
         /// Hangs your <see cref="Entity"/> to a derivative node
         /// (to evaluate instead use <see cref="Compute.Derivative(Entity, Variable)"/>)

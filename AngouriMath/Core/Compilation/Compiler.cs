@@ -277,6 +277,15 @@ namespace AngouriMath
                 compiler.Instructions.Add(new(InstructionType.CALL_ABS));
             }
         }
+
+        public partial record Phif
+        {
+            private protected override void CompileNode(Compiler compiler)
+            {
+                Argument.InnerCompile(compiler);
+                compiler.Instructions.Add(new(InstructionType.CALL_PHI));
+            }
+        }
     }
 }
 

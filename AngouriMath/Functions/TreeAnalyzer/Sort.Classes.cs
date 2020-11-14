@@ -340,5 +340,10 @@ namespace AngouriMath
                     => level == SortLevel.LOW_LEVEL ? "in_" : "";
             }
         }
+
+        partial record Phif
+        {
+            private protected override string SortHashName(SortLevel level) => "phi_";
+        }
     }
 }

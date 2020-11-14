@@ -312,5 +312,11 @@ namespace AngouriMath
                 public override Domain Codomain { get; protected init; } = Domain.Boolean;
             }
         }
+
+        partial record Phif
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Integer;
+        }
     }
 }

@@ -532,8 +532,14 @@ namespace AngouriMath
             {
                 /// <inheritdoc/>
                 public override string Latexise()
-                    => $@"{Element.Stringize(Element.Priority < Priority)} \in {SupSet.Stringize(SupSet.Priority < Priority)}";
+                    => $@"{Element.Latexise(Element.Priority < Priority)} \in {SupSet.Latexise(SupSet.Priority < Priority)}";
             }
+        }
+
+        partial record Phif
+        {
+            /// <inheritdoc/>
+            public override string Latexise() => $@"\varphi({Argument.Latexise()})";
         }
     }
 }

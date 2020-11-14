@@ -13,6 +13,7 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Extensions;
 using static AngouriMath.Core.FastExpression;
 
 namespace AngouriMath
@@ -70,6 +71,7 @@ namespace AngouriMath.Core
             CALL_FACTORIAL,
             CALL_SIGNUM,
             CALL_ABS,
+            CALL_PHI,
 
             // 2-arg functions
             CALL_SUM = 100,
@@ -79,6 +81,7 @@ namespace AngouriMath.Core
             CALL_POW,
             CALL_LOG,
         }
+
         internal partial record Instruction(InstructionType Type, int Reference = -1, Complex Value = default)
         {
             public override string ToString() =>
@@ -86,6 +89,7 @@ namespace AngouriMath.Core
                 + (Reference == -1 ? "" : Reference.ToString())
                 + (Type != InstructionType.PUSH_CONST ? "" : Value.ToString());
         }
+
         private readonly Stack<Complex> stack;
         private readonly Complex[] cache;
         private readonly List<Instruction> instructions;
@@ -212,6 +216,10 @@ namespace AngouriMath.Core
                         break;
                     case InstructionType.CALL_ABS:
                         stack.Push(stack.Pop().Abs());
+                        break;
+                    case InstructionType.CALL_PHI:
+                        var n = (long) stack.Pop().Real;
+                        stack.Push(n.Phi());
                         break;
                 }
             if (stack.Count != 1)

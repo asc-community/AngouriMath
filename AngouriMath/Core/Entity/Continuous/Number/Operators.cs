@@ -63,6 +63,7 @@ namespace AngouriMath
                 (Complex c1, Complex c2) => ifCom(c1, c2),
                 _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
             };
+
             /// <summary>
             /// This function serves not only convenience but also protects from unexpected cases, for example,
             /// if a new type added
@@ -82,6 +83,7 @@ namespace AngouriMath
                     (Complex c1, Complex c2) => ifCom(c1, c2),
                     _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
                 });
+
             internal static T OpSum<T>(T a, T b) where T : Number =>
                 SuperSwitch<T>(a, b,
                     (a, b) => Integer.Create(CtxAdd(a.EInteger, b.EInteger)),
@@ -90,6 +92,7 @@ namespace AngouriMath
                     (a, b) => Complex.Create(CtxAdd(a.RealPart.EDecimal, b.RealPart.EDecimal),
                                              CtxAdd(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
                     );
+
             internal static T OpSub<T>(T a, T b) where T : Number =>
                 SuperSwitch<T>(a, b,
                     (a, b) => Integer.Create(CtxSubtract(a.EInteger, b.EInteger)),
@@ -98,6 +101,7 @@ namespace AngouriMath
                     (a, b) => Complex.Create(CtxSubtract(a.RealPart.EDecimal, b.RealPart.EDecimal),
                                              CtxSubtract(a.ImaginaryPart.EDecimal, b.ImaginaryPart.EDecimal))
                     );
+
             internal static T OpMul<T>(T a, T b) where T : Number =>
                 SuperSwitch<T>(a, b,
                     (a, b) => Integer.Create(CtxMultiply(a.EInteger, b.EInteger)),
@@ -113,6 +117,7 @@ namespace AngouriMath
                             CtxAdd(ModifiedMultiply(a.RealPart.EDecimal, b.ImaginaryPart.EDecimal), ModifiedMultiply(a.ImaginaryPart.EDecimal, b.RealPart.EDecimal)));
                     }
                     );
+
             internal static Complex OpDiv<T>(T a, T b) where T : Number =>
                 SuperSwitch<Complex>(a, b,
                     (a, b) => CtxDivide(a.ERational, b.ERational) is { } n ? Rational.Create(n) : Real.NaN,
@@ -120,7 +125,7 @@ namespace AngouriMath
                     (a, b) => Real.Create(CtxDivide(a.EDecimal, b.EDecimal)),
                     (a, b) =>
                     {
-                    /*
+                        /*
                         * (a + ib) / (c + id) = (a + ib) * (1 / (c + id))
                         * 1 / (c + id) = (c2 + d2) / (c + id) / (c2 + d2) = (c - id) / (c2 + d2)
                         * => ans = (a + ib) * (c - id) / (c2 + d2)
@@ -134,6 +139,7 @@ namespace AngouriMath
                         return a * c;
                     }
                     );
+
             /// <summary>
             /// Checks whether a number is zero
             /// </summary>
@@ -244,6 +250,7 @@ namespace AngouriMath
                     }
                 return positive ?? real;
             }
+
             private static EDecimal Hypot(EDecimal a, EDecimal b, EContext context)
             {
                 // Using
