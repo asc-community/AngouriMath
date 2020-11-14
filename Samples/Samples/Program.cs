@@ -1,4 +1,4 @@
-using AngouriMath;
+﻿using AngouriMath;
 using AngouriMath.Extensions;
 using Microsoft.VisualBasic.CompilerServices;
 using System;
@@ -39,15 +39,7 @@ using static System.Console;
 
 //WriteLine(MathS.TryPolynomial(mat.Determinant().Expand(14), "x", out var res) ? res : null);
 
-var eqs = new Entity[6];
-for (int i = -4; i <= 1; i++)
-    eqs[i + 4] = $"({i})5 a + ({i})4 b + ({i})3 c + ({i})2 d + ({i}) f + g - (-8)".Simplify();
-
-var sys = MathS.Equations(eqs);
-
-WriteLine(sys.ToString());
-WriteLine(sys.Solve("a", "b", "c", "d", "f", "g"));
-
+WriteLine(MathS.Var("θ"));
 
 //WriteLine("(log(e, x) * (log(e, x) + 1) * x ^ x + x ^ (x - 1)) * x ^ x ^ x".Latexise());
 

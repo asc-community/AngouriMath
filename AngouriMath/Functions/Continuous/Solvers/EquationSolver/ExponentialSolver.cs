@@ -61,7 +61,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             {
                 arg = arg.Replace(GetConstantOutOfLogarithm);
                 var mults = Entity.Mulf.LinearChildren(arg);
-                if (mults.Count() == 0) return MathS.Pow(@base, arg);
+                if (!mults.Any()) return MathS.Pow(@base, arg);
 
                 Entity innerPower = 1;
                 Entity outerPower = 1;
