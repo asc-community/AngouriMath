@@ -27,9 +27,9 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '5.0.100'
-    - name: Setup 3.1 Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '3.1.x'
     - name: Build
-      run: dotnet build || dotnet build || dotnet build
+      run: |
+        dotnet build AngouriMath/AngouriMath.csproj
+        dotnet build FSharp/AngouriMath.FSharp.fsproj
+        dotnet build Analyzers/Analyzers/Analyzers.csproj
+        dotnet build Utils/Utils/Utils.csproj
