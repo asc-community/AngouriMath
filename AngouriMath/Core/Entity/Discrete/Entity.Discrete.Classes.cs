@@ -26,13 +26,13 @@ namespace AngouriMath
             /// One of the Boolean's state, which also behaves as Entity
             /// That is, hangable
             /// </summary>
-            public static readonly Boolean True = new Boolean(true);
+            [ConstantField] public static readonly Boolean True = new Boolean(true);
 
             /// <summary>
             /// One of the Boolean's state, which also behaves as Entity
             /// That is, hangable
             /// </summary>
-            public static readonly Boolean False = new Boolean(false);
+            [ConstantField] public static readonly Boolean False = new Boolean(false);
 
             /// <summary>
             /// This conversation is 100% free, no need to manually choose between

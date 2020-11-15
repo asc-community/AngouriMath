@@ -28,4 +28,8 @@ jobs:
       with:
         dotnet-version: '5.0.100'
     - name: Build
-      run: dotnet build || dotnet build || dotnet build
+      run: |
+        dotnet build AngouriMath/AngouriMath.csproj
+        dotnet build FSharp/AngouriMath.FSharp.fsproj
+        dotnet build Analyzers/Analyzers/Analyzers.csproj
+        dotnet build Utils/Utils/Utils.csproj

@@ -17,6 +17,7 @@ using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Boolean;
 using System.Diagnostics.CodeAnalysis;
+using AngouriMath.Convenience;
 
 namespace AngouriMath.Core
 {
@@ -401,28 +402,28 @@ namespace AngouriMath
         /// The e constant
         /// <a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/>
         /// </summary>
-        public static readonly Variable e = Variable.e;
+        [ConstantField] public static readonly Variable e = Variable.e;
         // ReSharper disable once InconsistentNaming
 
         /// <summary>
         /// The imaginary one
         /// <a href="https://en.wikipedia.org/wiki/Imaginary_unit"/>
         /// </summary>
-        public static readonly Complex i = Complex.ImaginaryOne;
+        [ConstantField] public static readonly Complex i = Complex.ImaginaryOne;
 
         // ReSharper disable once InconsistentNaming
         /// <summary>
         /// The pi constant
         /// <a href="https://en.wikipedia.org/wiki/Pi"/>
         /// </summary>
-        public static readonly Variable pi = Variable.pi;
+        [ConstantField] public static readonly Variable pi = Variable.pi;
 
         // Undefined
         /// <summary>
         /// That is both undefined and indeterminite
         /// Any operation on NaN returns NaN
         /// </summary>
-        public static readonly Entity NaN = Real.NaN;
+        [ConstantField] public static readonly Entity NaN = Real.NaN;
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
@@ -617,88 +618,6 @@ namespace AngouriMath
         /// </summary>
         public static partial class Settings
         {
-            /// <summary>
-            /// This class for configuring some internal mechanisms from outside
-            /// </summary>
-            /// <typeparam name="T">
-            /// Those configurations can be of different types
-            /// </typeparam>
-            public sealed class Setting<T> where T : notnull
-            {
-                internal Setting(T defaultValue) { Value = defaultValue; Default = defaultValue; }
-
-                /// <summary>
-                /// For example,
-                /// <code>
-                /// MathS.Settings.Precision.As(100, () => { /* some code considering precision = 100 */ });
-                /// </code>
-                /// </summary>
-                /// <param name="value">New value that will be automatically reverted after action is done</param>
-                /// <param name="action">What should be done under this setting</param>
-                public void As(T value, Action action)
-                {
-                    var previousValue = Value;
-                    Value = value;
-                    try
-                    { 
-                        action(); 
-                    } 
-                    finally
-                    {
-                        Value = previousValue;
-                    }
-                }
-
-                /// <summary>
-                /// For example,
-                /// <code>
-                /// var res = MathS.Settings.Precision.As(100, () => { /* some code considering precision = 100 */ return 4; });
-                /// </code>
-                /// </summary>
-                /// <param name="value">New value that will be automatically reverted after action is done</param>
-                /// <param name="action">What should be done under this setting</param>
-                public TReturnType As<TReturnType>(T value, Func<TReturnType> action)
-                {
-                    var previousValue = Value;
-                    Value = value;
-                    try
-                    {
-                        return action(); 
-                    } 
-                    finally
-                    { 
-                        Value = previousValue;
-                    }
-                }
-
-                /// <summary>
-                /// An implicit operator so that one does not have to call <see cref="Value"/>
-                /// </summary>
-                /// <param name="s">The setting</param>
-                public static implicit operator T(Setting<T> s) => s.Value;
-
-                /// <summary>
-                /// An implicit operator so that one does not have to call the ctor
-                /// </summary>
-                /// <param name="a">The value</param>
-                public static implicit operator Setting<T>(T a) => new(a);
-
-                /// <summary>
-                /// Overriden ToString so that one could see the value of the setting
-                /// (if overriden)
-                /// </summary>
-                public override string ToString() => Value.ToString();
-
-                /// <summary>
-                /// The current value of the setting
-                /// </summary>
-                public T Value { get; private set; }
-
-                /// <summary>
-                /// The default value of the setting
-                /// </summary>
-                public T Default { get; }
-            }
 
             /// <summary>
             /// That is how we perform newton solving when no analytical solution was found
@@ -771,30 +690,40 @@ namespace AngouriMath
             /// <summary>
             /// Criteria for simplifier so you could control which expressions are considered easier by you
             /// </summary>
-            public static Setting<Func<Entity, int>> ComplexityCriteria =>
-                complexityCriteria ??= new Func<Entity, int>(expr =>
+            public static Setting<Func<Entity, double>> ComplexityCriteria =>
+                complexityCriteria ??= new Func<Entity, double>(expr =>
                 {
+                    // Those are of the 2nd power to avoid problems with floating numbers
+                    static double TinyWeight(double w)  => w * 0.5;
+                    static double MinorWeight(double w) => w * 1.0;
+                    static double Weight(double w)      => w * 2.0;
+                    static double MajorWeight(double w) => w * 4.0;
+                    static double HeavyWeight(double w) => w * 8.0;
+
                     // Number of nodes
-                    var res = expr.Complexity * 2;
+                    var res = Weight(expr.Complexity);
 
                     // Number of variables
-                    res += expr.Nodes.Count(entity => entity is Variable) * 2;
+                    res += Weight(expr.Nodes.Count(entity => entity is Variable));
 
                     // Number of divides
-                    res += expr.Nodes.Count(entity => entity is Divf);
+                    res += MinorWeight(expr.Nodes.Count(entity => entity is Divf));
 
                     // Number of negative powers
-                    res += expr.Nodes.Count(entity => entity is Powf(_, Real { IsNegative: true })) * 8;
+                    res += HeavyWeight(expr.Nodes.Count(entity => entity is Powf(_, Real { IsNegative: true })));
+
+                    // Number of logarithms
+                    res += TinyWeight(expr.Nodes.Count(entity => entity is Logf));
 
                     // Number of negative reals
-                    res += expr.Nodes.Count(entity => entity is Real { IsNegative: true }) * 6 /* to outweigh number of nodes */;
+                    res += MajorWeight(expr.Nodes.Count(entity => entity is Real { IsNegative: true }));
 
                     // 0 < x is bad. x > 0 is good.
-                    res += expr.Nodes.Count(entity => entity is ComparisonSign && entity.DirectChildren[0] == 0) * 2;
+                    res += Weight(expr.Nodes.Count(entity => entity is ComparisonSign && entity.DirectChildren[0] == 0));
 
                     return res;
                 });
-            [ThreadStatic] private static Setting<Func<Entity, int>>? complexityCriteria;
+            [ThreadStatic] private static Setting<Func<Entity, double>>? complexityCriteria;
 
             /// <summary>
             /// Settings for the Newton-Raphson's root-search method
@@ -1192,7 +1121,7 @@ namespace AngouriMath
             /// instead and set the flag useCache to false)
             /// </summary>
             public static void ClearFromStringCache()
-                => MathS.stringToEntityCache = new();
+                => stringToEntityCache = new();
 
             /// <summary>
             /// Entities' properties are not initialized once
@@ -1201,7 +1130,7 @@ namespace AngouriMath
             /// be critical for some system. You can clean it
             /// </summary>
             public static void ClearEntityPropertyCache()
-                => Entity.caches = new();
+                => caches = new();
         }
 
         /// <summary>
@@ -1234,7 +1163,7 @@ namespace AngouriMath
                 -100, -10, 1, 10, 100, 1.5,
                 "-100 + i", "-10 + 2i", "30i"
             };
-            private static Setting<Entity[]>? checkPoints;
+            [ConstantField] private static Setting<Entity[]>? checkPoints;
         }
     }
 }

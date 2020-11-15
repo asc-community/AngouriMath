@@ -29,7 +29,7 @@ namespace AngouriMath
             /// <summary>
             /// A finite set is a set whose elements can be counted and enumerated
             /// </summary>
-            public partial record FiniteSet : Set, IReadOnlyCollection<Entity>, IEquatable<FiniteSet>
+            public sealed partial record FiniteSet : Set, IReadOnlyCollection<Entity>, IEquatable<FiniteSet>
             {
                 /// <summary>
                 /// The IEnumerable of elements of a finite set
@@ -162,7 +162,7 @@ namespace AngouriMath
                 /// Checks that two FiniteSets are equal
                 /// If one is not FiniteSet, the method returns false
                 /// </summary>
-                public virtual bool Equals(FiniteSet other)
+                public bool Equals(FiniteSet other)
                 {
                     if (other is null)
                         return false;
@@ -232,7 +232,7 @@ namespace AngouriMath
             /// <see cref="Interval.LeftClosed"/> stands for whether <see cref="Interval.Left"/> is included
             /// <see cref="Interval.RightClosed"/> stands for whether <see cref="Interval.Right"/> is included
             /// </summary>
-            public partial record Interval(Entity Left, bool LeftClosed, Entity Right, bool RightClosed) : Set, IEquatable<Interval>
+            public sealed partial record Interval(Entity Left, bool LeftClosed, Entity Right, bool RightClosed) : Set, IEquatable<Interval>
             {
                 /// <summary>
                 /// Checks whether the interval's ends are both numerical (convenient for some evaluations)
@@ -305,7 +305,7 @@ namespace AngouriMath
                 /// Checks that two intervals are equal
                 /// If one is not interval, false is returned
                 /// </summary>
-                public virtual bool Equals(Interval other)
+                public bool Equals(Interval other)
                     => other is not null && (Left == other.Left
                         && Right == other.Right
                         && LeftClosed == other.LeftClosed
@@ -335,7 +335,7 @@ namespace AngouriMath
             /// a condition F(x) in the following way: for each element x in 
             /// the Universal x belongs to A if and only if F(x).
             /// </summary>
-            public partial record ConditionalSet(Entity Var, Entity Predicate) : Set, IEquatable<ConditionalSet>
+            public sealed partial record ConditionalSet(Entity Var, Entity Predicate) : Set, IEquatable<ConditionalSet>
             {
                 /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
@@ -376,7 +376,7 @@ namespace AngouriMath
                 /// Compares two ConditionalSets
                 /// If one is not CSet, false is returned
                 /// </summary>
-                public virtual bool Equals(ConditionalSet other)
+                public bool Equals(ConditionalSet other)
                 {
                     if (other is null) // invalid cast
                         return false;
@@ -385,7 +385,7 @@ namespace AngouriMath
                 }
 
 
-                private readonly static Variable universalVoidConstant = Variable.CreateVariableUnchecked("%");
+                [ConstantField] private readonly static Variable universalVoidConstant = Variable.CreateVariableUnchecked("%");
                 /// <inheritdoc/>
                 public override int GetHashCode()
                     // TODO: might not always work, requires testing
@@ -407,7 +407,7 @@ namespace AngouriMath
                 // Since there's a very small number of domains, it's wiser to
                 // cache them all
                 private static Dictionary<Domain, SpecialSet> InnerStorage => innerStorage ??= new();
-                [ThreadStatic] private static Dictionary<Domain, SpecialSet>? innerStorage = null;
+                [ThreadStatic] private static Dictionary<Domain, SpecialSet>? innerStorage;
 
                 /// <summary>
                 /// Creates an instance of special set from a domain
@@ -565,13 +565,13 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => caches.GetValue(this,
+                public override bool IsSetFinite => Caches.GetValue(this,
                     cache => cache.isSetFinite, cache => cache.isSetFinite =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && finite1.IsSetFinite && finite2.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => caches.GetValue(this,
+                public override bool IsSetEmpty => Caches.GetValue(this,
                     cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && finite1.IsSetEmpty && finite2.IsSetEmpty) ?? throw new AngouriBugException("isSetEmpty cannot be null");
@@ -612,12 +612,12 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => caches.GetValue(this,
+                public override bool IsSetFinite => Caches.GetValue(this,
                     cache => cache.isSetFinite, cache => cache.isSetFinite = Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && (finite1.IsSetFinite || finite2.IsSetFinite)) ?? throw new AngouriBugException("isSetFinite cannot be null");
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => caches.GetValue(this,
+                public override bool IsSetEmpty => Caches.GetValue(this,
                     cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite2.IsSetEmpty)) ?? throw new AngouriBugException("isSetEmpty cannot be null");
@@ -658,12 +658,12 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => caches.GetValue(this,
+                public override bool IsSetFinite => Caches.GetValue(this,
                     cache => cache.isSetFinite, cache => cache.isSetFinite =
                     Left is FiniteSet finite1 && Right is FiniteSet && finite1.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => caches.GetValue(this,
+                public override bool IsSetEmpty => Caches.GetValue(this,
                     cache => cache.isSetEmpty, cache => cache.isSetEmpty =
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite1 == finite2)) ?? throw new AngouriBugException("isSetEmpty cannot be null");

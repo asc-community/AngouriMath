@@ -9,6 +9,7 @@
  */
 using System.Collections.Generic;
 using System.Linq;
+using AngouriMath.Core;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
@@ -25,7 +26,7 @@ namespace AngouriMath.Functions
             T Value { get; }
             bool AllowFloat { get; }
         }
-        internal class PrimitiveDecimal : IPrimitive<EDecimal>
+        internal sealed class PrimitiveDecimal : IPrimitive<EDecimal>
         {
             public void Add(Real a) => Value += a.EDecimal;
             public void AddMp(EDecimal a, Real b) => Value += a * b.EDecimal;
@@ -33,7 +34,7 @@ namespace AngouriMath.Functions
             public EDecimal Value { get; private set; } = 0;
             public bool AllowFloat => true;
         }
-        internal class PrimitiveInteger : IPrimitive<EInteger>
+        internal sealed class PrimitiveInteger : IPrimitive<EInteger>
         {
             public void Add(Real a) => Value += a.EDecimal.ToEInteger();
             public void AddMp(EInteger a, Real b) => Value += (a * b.EDecimal).ToEInteger();
@@ -103,7 +104,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 C.Evaled == 0 && D0.Evaled == 0 ? -(b + uk * C) / 3 / a : -(b + uk * C + D0 / C / uk) / 3 / a);
         }
 
-        static readonly int[] sqrtsOf1 = { -1, 1 };
+        [ConstantField] private static readonly int[] sqrtsOf1 = { -1, 1 };
         /// <summary>Solves ax^4 + bx^3 + cx^2 + dx + e</summary>
         /// <param name="a">Coefficient of x^4</param>
         /// <param name="b">Coefficient of x^3</param>
@@ -288,7 +289,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 else if (mp is Powf(var @base, var pow_num))
                 {
                     // x ^ a or x ^ i is bad
-                    if (!(pow_num.Evaled is Real value))
+                    if (pow_num.Evaled is not Real value)
                         return null;
                     // x ^ 0.3 is bad
                     if (!power.AllowFloat && value is not Integer)

@@ -28,7 +28,7 @@ namespace AngouriMath.Core
     static class Parser
     {
         // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
-        class AngouriMathTextWriter : TextWriter
+        internal sealed class AngouriMathTextWriter : TextWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
             public override void WriteLine(string s) => throw new UnhandledParseException(s);

@@ -152,8 +152,8 @@ namespace AngouriMath
 
         partial record Arcsinf
         {
-            private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
-            private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
+            [ConstantField] private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
+            [ConstantField] private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
             // arcsin(x) = value => x = sin(value)
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Sin(value), x) : Enumerable.Empty<Entity>();
@@ -161,17 +161,17 @@ namespace AngouriMath
 
         partial record Arccosf
         {
-            private static readonly Complex From = Complex.Create(0, Real.NegativeInfinity.EDecimal);
-            private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi, Real.PositiveInfinity.EDecimal);
+            [ConstantField] private static readonly Complex From = Complex.Create(0, Real.NegativeInfinity.EDecimal);
+            [ConstantField] private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi, Real.PositiveInfinity.EDecimal);
             // arccos(x) = value => x = cos(value)
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cos(value), x) : Enumerable.Empty<Entity>();
         }
-
+        
         partial record Arctanf
         {
-            private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
-            private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
+            [ConstantField] private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
+            [ConstantField] private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
             // arctan(x) = value => x = tan(value)
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Tan(value), x) : Enumerable.Empty<Entity>();
@@ -180,8 +180,8 @@ namespace AngouriMath
         partial record Arccotanf
         {
             // TODO: Range should exclude Re(z) = 0
-            private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
-            private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
+            [ConstantField] private static readonly Complex From = Complex.Create(-MathS.DecimalConst.pi / 2, Real.NegativeInfinity.EDecimal);
+            [ConstantField] private static readonly Complex To = Complex.Create(MathS.DecimalConst.pi / 2, Real.PositiveInfinity.EDecimal);
             // arccotan(x) = value => x = cotan(value)
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) =>
                 EntityInBounds(value, From, To) ? Argument.Invert(MathS.Cotan(value), x) : Enumerable.Empty<Entity>();

@@ -12,6 +12,7 @@
 
 using System;
 using System.Collections.Generic;
+using AngouriMath.Core;
 using PeterO.Numbers;
 //[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests")]
 
@@ -30,16 +31,17 @@ namespace AngouriMath
         {
             public static ConstantCache Lookup(EContext context)
             {
-                if (!constants.TryGetValue(context, out var cache))
-                    lock (constants)
-                        if (!constants.TryGetValue(context, out cache))
+                if (!Constants.TryGetValue(context, out var cache))
+                    lock (Constants)
+                        if (!Constants.TryGetValue(context, out cache))
                         {
                             cache = new ConstantCache(context);
-                            constants.Add(context, cache);
+                            Constants.Add(context, cache);
                         }
                 return cache;
             }
-            static readonly Dictionary<EContext, ConstantCache> constants = new Dictionary<EContext, ConstantCache>();
+            private static Dictionary<EContext, ConstantCache> Constants => constants ??= new();
+            [ThreadStatic] private static Dictionary<EContext, ConstantCache>? constants;
             ConstantCache(EContext context)
             {
                 Half = EDecimal.One.Divide(2, context);
@@ -468,9 +470,9 @@ namespace AngouriMath
             while (true)
                 yield return result *= ++i;
         }
-        static readonly IEnumerator<EInteger> factorialCacheGenerator = GenerateFactorials().GetEnumerator();
-        static readonly List<EInteger> factorialCache = new List<EInteger>();
-        static readonly Dictionary<int, EDecimal[]> spougeFactorialConstantsCache = new Dictionary<int, EDecimal[]>();
+        [ConstantField] static readonly IEnumerator<EInteger> factorialCacheGenerator = GenerateFactorials().GetEnumerator();
+        [ConstantField] static readonly List<EInteger> factorialCache = new List<EInteger>();
+        [ConstantField] static readonly Dictionary<int, EDecimal[]> spougeFactorialConstantsCache = new Dictionary<int, EDecimal[]>();
 
         /**
             <summary>

@@ -65,7 +65,7 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
                 return ChooseGood();
             }
             if (expr.Vars.Single() != v)
-                throw new Core.Exceptions.MathSException($"{nameof(expr)} should only contain {nameof(Entity.Variable)} {nameof(v)}");
+                throw new Core.Exceptions.WrongNumberOfArgumentsException($"{nameof(expr)} should only contain {nameof(Entity.Variable)} {nameof(v)}");
             return MathS.Settings.FloatToRationalIterCount.As(0, () =>
             {
                 var res = new HashSet<Complex>();

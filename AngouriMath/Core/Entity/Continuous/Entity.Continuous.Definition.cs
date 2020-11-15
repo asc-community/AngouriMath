@@ -108,8 +108,10 @@ namespace AngouriMath
         /// <summary><see cref="MathS.Arccosec(Entity)"/></summary>
         public Entity Arccosec() => new Arccosecantf(this);
         /// <summary><see cref="MathS.Pow(Entity, Entity)"/></summary>
+        /// <param name="n">Power</param>
         public Entity Pow(Entity n) => new Powf(this, n);
         /// <summary><see cref="MathS.Log(Entity, Entity)"/></summary>
+        /// <param name="x">Antilogarithm (value)</param>
         public Entity Log(Entity x) => new Logf(this, x);
         /// <summary><see cref="MathS.Arcsin(Entity)"/></summary>
         public Entity Arcsin() => new Arcsinf(this);

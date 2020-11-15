@@ -24,7 +24,7 @@ namespace AngouriMath
         /// Construct a <see cref="Variable"/> with an implicit conversion from <see cref="string"/>.
         /// 
         /// </summary>
-        public partial record Variable : Entity
+        public sealed partial record Variable : Entity
         {
             /// <summary>
             /// Deconstructs Variable as follows
@@ -46,9 +46,9 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => Array.Empty<Entity>();
 
-            internal static readonly Variable pi = new Variable(nameof(pi));
-            internal static readonly Variable e = new Variable(nameof(e));
-            internal static readonly IReadOnlyDictionary<Variable, Number.Complex> ConstantList =
+            [ConstantField] internal static readonly Variable pi = new Variable(nameof(pi));
+            [ConstantField] internal static readonly Variable e = new Variable(nameof(e));
+            [ConstantField] internal static readonly IReadOnlyDictionary<Variable, Number.Complex> ConstantList =
                 new Dictionary<Variable, Number.Complex>
                 {
                     { pi, MathS.DecimalConst.pi },

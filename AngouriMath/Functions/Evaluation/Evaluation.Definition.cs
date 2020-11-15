@@ -28,7 +28,7 @@ namespace AngouriMath
         /// symbolic algebra systems it is called "Automatic simplification"
         /// </summary>
         public Entity InnerSimplified 
-            => caches.GetValue(this, cache => cache.innerSimplified, cache => cache.innerSimplified = InnerSimplifyWithCheck());
+            => Caches.GetValue(this, cache => cache.innerSimplified, cache => cache.innerSimplified = InnerSimplifyWithCheck());
 
         /// <summary>
         /// Make sure you call this function inside of <see cref="InnerSimplify"/>
@@ -115,7 +115,7 @@ namespace AngouriMath
         /// (cached value)
         /// </summary>
         public Entity Evaled 
-            => caches.GetValue(this, cache => cache.innerEvaled, cache => cache.innerEvaled = InnerEvalWithCheck());
+            => Caches.GetValue(this, cache => cache.innerEvaled, cache => cache.innerEvaled = InnerEvalWithCheck());
 
         /// <summary>
         /// Whether the expression can be collapsed to a tensor

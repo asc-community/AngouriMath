@@ -18,7 +18,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arcsine
         /// </summary>
-        public partial record Arcsinf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Arcsinf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arcsinf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -31,7 +31,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arccosine
         /// </summary>
-        public partial record Arccosf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Arccosf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arccosf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -44,7 +44,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arctangent
         /// </summary>
-        public partial record Arctanf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Arctanf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arctanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -57,7 +57,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arccotangent
         /// </summary>
-        public partial record Arccotanf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Arccotanf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             Arccotanf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -70,7 +70,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arcsecant
         /// </summary>
-        public partial record Arcsecantf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Arcsecantf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arcsecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);
@@ -83,7 +83,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arccosecant
         /// </summary>
-        public partial record Arccosecantf(Entity Argument) : TrigonometricFunction
+        public sealed partial record Arccosecantf(Entity Argument) : TrigonometricFunction
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Arccosecantf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);

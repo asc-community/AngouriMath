@@ -81,7 +81,10 @@ namespace AngouriMath
     /// </summary>
     public abstract partial record Entity : ILatexiseable
     {
-        internal static RecordFieldCache caches = new();
+        // There should be guarantee that RecordFieldCache is thread-safe
+        internal static RecordFieldCache Caches => caches ??= new();
+        [ThreadStatic] internal static RecordFieldCache? caches;
+
 
         /// <inheritdoc/>
         protected abstract Entity[] InitDirectChildren();
@@ -90,7 +93,7 @@ namespace AngouriMath
         /// Represents all direct children of a node
         /// </summary>
         public IReadOnlyList<Entity> DirectChildren 
-            => caches.GetValue(this, cache => cache.directChildren, cache => cache.directChildren = InitDirectChildren());
+            => Caches.GetValue(this, cache => cache.directChildren, cache => cache.directChildren = InitDirectChildren());
 
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="AngouriMath.Functions.TreeAnalyzer.GetMinimumSubtree"/></remarks>
@@ -131,7 +134,7 @@ namespace AngouriMath
         /// meaning that it could be safely used for calculations
         /// </value>
         public bool IsFinite
-            => caches.GetValue(this, cache => cache.isFinite, cache => cache.isFinite =
+            => Caches.GetValue(this, cache => cache.isFinite, cache => cache.isFinite =
             ThisIsFinite && DirectChildren.All(x => x.IsFinite)) ?? throw new AngouriBugException($"{IsFinite} cannot be null");
 
         /// <summary>
@@ -143,7 +146,7 @@ namespace AngouriMath
         // TODO: improve measurement of Entity complexity, for example
         // (1 / x ^ 2).Complexity() &lt; (x ^ (-0.5)).Complexity()
         public int Complexity 
-            => caches.GetValue(this, 
+            => Caches.GetValue(this, 
             cache => cache.complexity,
             cache => cache.complexity = 1 + DirectChildren.Sum(x => x.Complexity)) ?? throw new AngouriBugException("Complexity cannot be null");
 
@@ -166,7 +169,7 @@ namespace AngouriMath
         /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
         public IReadOnlyCollection<Variable> VarsAndConsts 
-            => caches.GetValue(this, cache => cache.vars,
+            => Caches.GetValue(this, cache => cache.vars,
             cache => cache.vars = 
             new HashSet<Variable>(this is Variable v ? new[] { v } : DirectChildren.SelectMany(x => x.VarsAndConsts)));
 
@@ -187,7 +190,7 @@ namespace AngouriMath
         /// shows how convenient it is to view the expression. This depends on 
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
         /// </summary>
-        public int SimplifiedRate => caches.GetValue(this, cache => cache.simplifiedRate, cache => cache.simplifiedRate = MathS.Settings.ComplexityCriteria.Value(this)) ?? throw new AngouriBugException("Sim cannot be null");
+        public double SimplifiedRate => Caches.GetValue(this, cache => cache.simplifiedRate, cache => cache.simplifiedRate = MathS.Settings.ComplexityCriteria.Value(this)) ?? throw new AngouriBugException("Sim cannot be null");
 
         /// <summary>Checks whether the given expression contains variable</summary>
         public bool IsSymbolic => Vars.Any();
