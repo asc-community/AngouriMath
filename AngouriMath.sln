@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.codedocs = .codedocs
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
+		.github\workflows\Benchmark.yml = .github\workflows\Benchmark.yml
 		.github\workflows\Build.yml = .github\workflows\Build.yml
 		CHANGELOG.md = CHANGELOG.md
 		Directory.Build.props = Directory.Build.props
@@ -48,6 +49,12 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analyzers", "Analyzers", "{7B0F7A1A-7C84-4B17-85D0-24BBCAA18826}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Analyzers.Debug", "Analyzers\Analyzers.Debug\Analyzers.Debug.csproj", "{DAE7E49D-A474-4776-91CF-3368E9C56F3D}"
+EndProject
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "AngouriMath.FSharp", "Wrappers\FSharp\AngouriMath.FSharp.fsproj", "{4EB32057-7AD8-4C58-A25C-A666ACBDAA12}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Wrappers", "Wrappers", "{C82FFADF-2F2F-4B8D-BB32-2D2F149FED4D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AngouriMath.Interactive", "Wrappers\AngouriMath.Interactive\AngouriMath.Interactive.csproj", "{13618971-EDBB-4C64-A0FF-F66AE17778E3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -161,6 +168,14 @@ Global
 		{DAE7E49D-A474-4776-91CF-3368E9C56F3D}.Release|Any CPU.Build.0 = Release|Any CPU
 		{DAE7E49D-A474-4776-91CF-3368E9C56F3D}.Release|x64.ActiveCfg = Release|Any CPU
 		{DAE7E49D-A474-4776-91CF-3368E9C56F3D}.Release|x64.Build.0 = Release|Any CPU
+		{13618971-EDBB-4C64-A0FF-F66AE17778E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{13618971-EDBB-4C64-A0FF-F66AE17778E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{13618971-EDBB-4C64-A0FF-F66AE17778E3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{13618971-EDBB-4C64-A0FF-F66AE17778E3}.Debug|x64.Build.0 = Debug|Any CPU
+		{13618971-EDBB-4C64-A0FF-F66AE17778E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{13618971-EDBB-4C64-A0FF-F66AE17778E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{13618971-EDBB-4C64-A0FF-F66AE17778E3}.Release|x64.ActiveCfg = Release|Any CPU
+		{13618971-EDBB-4C64-A0FF-F66AE17778E3}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -176,6 +191,8 @@ Global
 		{A37A22C6-40C6-4B11-BCF4-65A61CBD4AD5} = {7B0F7A1A-7C84-4B17-85D0-24BBCAA18826}
 		{DBE2D86F-482E-418F-9A6B-298B4EF1DB27} = {7B0F7A1A-7C84-4B17-85D0-24BBCAA18826}
 		{DAE7E49D-A474-4776-91CF-3368E9C56F3D} = {7B0F7A1A-7C84-4B17-85D0-24BBCAA18826}
+		{4EB32057-7AD8-4C58-A25C-A666ACBDAA12} = {C82FFADF-2F2F-4B8D-BB32-2D2F149FED4D}
+		{13618971-EDBB-4C64-A0FF-F66AE17778E3} = {C82FFADF-2F2F-4B8D-BB32-2D2F149FED4D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1CD9B3-4EAB-4B8C-BDC1-03280EB31298}

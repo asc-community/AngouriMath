@@ -15,11 +15,11 @@
   , 
   <a href="https://www.nuget.org/packages/AngouriMath.FSharp" title="Go to NuGet to get an F# version"><b>F#</b></a>
   <b>)</b>
-  <b>·</b>
+  <b>Â·</b>
   <a href="#exam"><b>Examples</b></a>
-  <b>·</b>
+  <b>Â·</b>
   <a href="#contrib"><b>Contributions</b></a>
-  <b>·</b>
+  <b>Â·</b>
   <a href="#license"><b>License</b></a>
   <br>
   <br>
@@ -32,6 +32,8 @@
 </p>
 
 ## What is it about?
+
+<a href="#jupyter"><img src="additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
 
 AngouriMath is an open source symbolic algebra library. That is, via AngouriMath,
 you can automatically solve equations, systems of equations, work with sets, differentiate,
@@ -46,8 +48,11 @@ It is free to use even in commercial projects. We work on it a lot, so your requ
 <a href="https://github.com/asc-community/AngouriMath/issues">issues</a> are likely to
 be considered within a few hours.
 
-Finally, if not sure about it, try it on 
-<a href="https://dotnetfiddle.net/FIcaDG">.NET Fiddle</a>!
+Finally, if still not sure about it, you can try it even before installation!
+| Try live |
+|:--------:|
+|<a href="https://dotnetfiddle.net/FIcaDG"><img src="https://img.shields.io/static/v1?label=Go%20to&message=.NET%20Fiddle&color=purple&style=for-the-badge"></a>|
+|<a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Go%20to&message=MyBinder&color=purple&style=for-the-badge"></a>|
 
 Although most functions are convenient to use only from C#, there are some
 optimized for F#.
@@ -61,6 +66,7 @@ optimized for F#.
   - [Sets](#sets)
   - [Neat syntax](#syntax)
   - [F#](#fsharp)
+  - [Jupyter](#jupyter)
 - [I want to contribute](#contrib)
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
@@ -288,6 +294,30 @@ limit "x" "0" "sin(a x) / x"
 
 latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)"
 ```
+
+## <a name="jupyter"></a>Jupyter integration
+
+If you already installed <a href="https://jupyter.org/install">Jupyter</a> and 
+<a href="https://github.com/dotnet/interactive/blob/main/docs/NotebooksLocalExperience.md">Interactive</a> for it, install
+<a href="https://www.nuget.org/packages/AngouriMath.Interactive">package</a> which allows this integration like this:
+
+<img src="additional/readme/instr.PNG" width="50%"/>
+
+<details>
+    <summary>Copyable</summary>
+
+```cs
+#r "nuget:AngouriMath.Interactive, 0.0.1-alpha.1"
+using AngouriMath.Extensions;
+using AngouriMath;
+new AngouriMath.Interactive.SessionRunner().Init();
+```
+
+</details>
+
+Now any `ILatexiseable` will be displayed as LaTeX:
+
+<img src="additional/readme/interactive.PNG"/>
 
 ## <a name="contrib"></a>Contribution
 
