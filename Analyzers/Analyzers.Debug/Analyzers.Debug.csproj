@@ -6,6 +6,7 @@
     <TargetFramework>net472</TargetFramework>
     <RootNamespace>Analyzers.Debug</RootNamespace>
     <AssemblyName>Analyzers.Debug</AssemblyName>
+    <RuntimeIdentifiers>win</RuntimeIdentifiers>
   </PropertyGroup>
 
   <PropertyGroup>
