@@ -4,8 +4,8 @@
 
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
-    <RootNamespace>Analyzers.Vsix</RootNamespace>
-    <AssemblyName>Analyzers.Vsix</AssemblyName>
+    <RootNamespace>Analyzers.Debug</RootNamespace>
+    <AssemblyName>Analyzers.Debug</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup>
