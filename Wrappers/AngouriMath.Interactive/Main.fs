@@ -10,4 +10,4 @@ let magic() =
             \[{value.Latexise()}\]
             "
 
-    Formatter.Register<ILatexiseable>(register)
+    Formatter.Register<ILatexiseable>(register, "text/html")
