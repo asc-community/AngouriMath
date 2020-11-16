@@ -310,6 +310,9 @@ Now any `ILatexiseable` will be displayed as LaTeX:
 
 <img src="additional/readme/interactive.PNG"/>
 
+Check the <a href="Samples/Interactive.Sample.ipynb">F#</a> and 
+<a href="Samples/CSharp.Interactive.Sample.ipynb">C#</a> samples.
+
 ## <a name="contrib"></a>Contribution
 
 We appreciate and welcome any contributors to AngouriMath. Current tasks can be tracked
