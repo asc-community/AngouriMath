@@ -299,21 +299,12 @@ latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)"
 
 If you already installed <a href="https://jupyter.org/install">Jupyter</a> and 
 <a href="https://github.com/dotnet/interactive/blob/main/docs/NotebooksLocalExperience.md">Interactive</a> for it, install
-<a href="https://www.nuget.org/packages/AngouriMath.Interactive">package</a> which allows this integration like this:
-
-<img src="additional/readme/instr.PNG" width="50%"/>
-
-<details>
-    <summary>Copyable</summary>
+<a href="https://www.nuget.org/packages/AngouriMath.Interactive">package</a> by copying this to your first cell:
 
 ```cs
-#r "nuget:AngouriMath.Interactive, 0.0.1-alpha.1"
-using AngouriMath.Extensions;
-using AngouriMath;
-new AngouriMath.Interactive.SessionRunner().Init();
+#r "nuget:AngouriMath.Interactive, *-*"
+Interactive.magic();
 ```
-
-</details>
 
 Now any `ILatexiseable` will be displayed as LaTeX:
 
