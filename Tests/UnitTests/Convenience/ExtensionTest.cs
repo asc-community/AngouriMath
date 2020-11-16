@@ -102,6 +102,9 @@ namespace UnitTests.Convenience
         [InlineData(54654654, 8)]
         [InlineData(6, 4)]
         [InlineData(4294967296, 33)]
+        [InlineData(11, 2)]
+        [InlineData(2, 2)]
+        [InlineData(5, 2)]
         public void TestCountDivisors(long i, long expected)
         {
             Assert.Equal(expected, ((Integer)i).CountDivisors());

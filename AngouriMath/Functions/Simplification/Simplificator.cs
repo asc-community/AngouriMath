@@ -115,6 +115,9 @@ namespace AngouriMath.Functions
                 if (res.Nodes.Any(child => child is Set))
                     AddHistory(res = res.Replace(Patterns.SetOperatorRules).InnerSimplified);
 
+                if (res.Nodes.Any(child => child is Phif))
+                    AddHistory(res = res.Replace(Patterns.PhiFunctionRules).InnerSimplified);
+
                 Entity? possiblePoly = null;
                 foreach (var var in res.Vars)
                     if (TryPolynomial(res, var, out var resPoly)
