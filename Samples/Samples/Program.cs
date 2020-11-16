@@ -1,7 +1,9 @@
-using AngouriMath;
+﻿using AngouriMath;
 using AngouriMath.Extensions;
 using Microsoft.VisualBasic.CompilerServices;
 using System;
+using System.Collections.Generic;
+using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static System.Console;
 

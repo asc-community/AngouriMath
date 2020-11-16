@@ -19,7 +19,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of factorial
         /// </summary>
-        public partial record Factorialf(Entity Argument) : Function
+        public sealed partial record Factorialf(Entity Argument) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Factorialf New(Entity argument) => ReferenceEquals(Argument, argument) ? this : new(argument);

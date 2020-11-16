@@ -8,6 +8,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 using System.Collections.Generic;
+using AngouriMath.Core;
 using PeterO.Numbers;
 
 namespace AngouriMath.Functions
@@ -119,15 +120,14 @@ namespace AngouriMath.Functions
 
         private static Entity Sqrt(Entity a) => MathS.Pow(a, f1_2);
         private static Entity Cbrt(Entity a) => MathS.Pow(a, f1_3);
-        private static readonly Entity f1_2 = Rational.Create(1, 2);
-        private static readonly Entity f1_3 = Rational.Create(1, 3);
-        private static readonly Entity f1_4 = Rational.Create(1, 4);
-        private static readonly Entity f1_5 = Rational.Create(1, 5);
-        private static readonly Entity f1_6 = Rational.Create(1, 6);
-        private static readonly Entity f1_8 = Rational.Create(1, 8);
-        private static readonly Entity f1_16 = Rational.Create(1, 16);
-        private static readonly Entity f1_24 = Rational.Create(1, 24);
-        private static readonly Entity i = MathS.i;
+        [ConstantField] private static readonly Entity f1_2 = Rational.Create(1, 2);
+        [ConstantField] private static readonly Entity f1_3 = Rational.Create(1, 3);
+        [ConstantField] private static readonly Entity f1_4 = Rational.Create(1, 4);
+        [ConstantField] private static readonly Entity f1_5 = Rational.Create(1, 5);
+        [ConstantField] private static readonly Entity f1_6 = Rational.Create(1, 6);
+        [ConstantField] private static readonly Entity f1_8 = Rational.Create(1, 8);
+        [ConstantField] private static readonly Entity f1_16 = Rational.Create(1, 16);
+        [ConstantField] private static readonly Entity i = MathS.i;
         private static EDecimal TwoPiOver(int a)
             => Number.CtxDivide(Number.CtxMultiply(2, MathS.DecimalConst.pi), a);
 
@@ -136,7 +136,7 @@ namespace AngouriMath.Functions
         /// Although some formulas have been changed because they are wrong on Wikipedia
         /// </summary>
         // TODO: Some values here (e.g. sin(2pi/7)) are not present on Wikipedia. Needs additional reference sources.
-        private static readonly TrigTable TableSin = new()
+        [ConstantField] private static readonly TrigTable TableSin = new()
         {
             (TwoPiOver(1), 0),
             (TwoPiOver(2), 0),
@@ -165,7 +165,7 @@ namespace AngouriMath.Functions
             (TwoPiOver(24), f1_4 * (Sqrt(6) - Sqrt(2)))
         };
 
-        private static readonly TrigTable TableCos = new()
+        [ConstantField] private static readonly TrigTable TableCos = new()
         {
             (TwoPiOver(1), 1),
             (TwoPiOver(2), -1),
@@ -191,7 +191,7 @@ namespace AngouriMath.Functions
             (TwoPiOver(24), f1_4 * (Sqrt(6) + Sqrt(2)))
         };
 
-        private static readonly TrigTable TableTan = new()
+        [ConstantField] private static readonly TrigTable TableTan = new()
         {
             (TwoPiOver(1), 0),
             (TwoPiOver(2), 0),

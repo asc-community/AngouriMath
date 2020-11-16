@@ -19,7 +19,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of exponential (power)
         /// </summary>
-        public partial record Powf(Entity Base, Entity Exponent) : Entity
+        public sealed partial record Powf(Entity Base, Entity Exponent) : Entity
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Powf New(Entity @base, Entity exponent) =>
@@ -34,7 +34,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of logarithm
         /// </summary>
-        public partial record Logf(Entity Base, Entity Antilogarithm) : Function
+        public sealed partial record Logf(Entity Base, Entity Antilogarithm) : Function
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Logf New(Entity @base, Entity antilogarithm) =>

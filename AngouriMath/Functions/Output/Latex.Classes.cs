@@ -77,7 +77,7 @@ namespace AngouriMath
             /// Yet to be extended
             /// Case does matter, not all letters have both displays in LaTeX
             /// </summary>
-            private static readonly HashSet<string> LatexisableConstants = new HashSet<string>
+            [ConstantField] private static readonly HashSet<string> LatexisableConstants = new HashSet<string>
             {
                 "alpha", "beta", "gamma", "delta", "epsilon", "varepsilon", "zeta", "eta", "theta", "vartheta",
                 "iota", "kappa", "varkappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "varpi", "rho",

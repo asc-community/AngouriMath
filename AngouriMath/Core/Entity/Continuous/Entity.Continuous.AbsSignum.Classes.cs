@@ -18,7 +18,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of signum
         /// </summary>
-        public partial record Signumf(Entity Argument) : Function
+        public sealed partial record Signumf(Entity Argument) : Function
         {
             private Signumf New(Entity arg) =>
                 ReferenceEquals(Argument, arg) ? this : new(arg);
@@ -31,7 +31,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of abs
         /// </summary>
-        public partial record Absf(Entity Argument) : Function
+        public sealed partial record Absf(Entity Argument) : Function
         {
             private Absf New(Entity arg) =>
                 ReferenceEquals(Argument, arg) ? this : new(arg);

@@ -59,7 +59,7 @@ namespace AngouriMath.Functions.Algebra
         {
             var equations = new List<Entity>(inputEquations.Select(equation => equation.InnerSimplified));
             if (equations.Count != vars.Length)
-                throw new MathSException("Amount of equations must be equal to that of vars");
+                throw new WrongNumberOfArgumentsException("Number of equations must be equal to that of vars");
             int initVarCount = vars.Length;
 
             var res = InSolveSystem(equations, vars);

@@ -43,7 +43,7 @@ namespace AngouriMath.Functions
             Entity MultiHangBinary(int start, int length) =>
                 length switch
                 {
-                    0 => throw new TreeException("At least 1 child required"),
+                    0 => throw new AngouriBugException("At least 1 child required"),
                     1 => children[start],
                     2 => op(children[start], children[start + 1]),
                     _ => op(MultiHangBinary(start, length / 2),

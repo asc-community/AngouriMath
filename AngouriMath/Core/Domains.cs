@@ -50,14 +50,6 @@ namespace AngouriMath.Core
 
     internal static class DomainsFunctional
     {
-        public static readonly Type[] Types = new[]
-        {
-            typeof(Entity.Boolean),
-            typeof(Entity.Number.Integer),
-            typeof(Entity.Number.Rational),
-            typeof(Entity.Number.Real),
-            typeof(Entity.Number.Complex)
-        };
         public static bool FitsDomainOrNonNumeric(Entity entity, Domain domain)
             => domain == Domain.Any || SpecialSet.Create(domain).MayContain(entity);
 

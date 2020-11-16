@@ -37,17 +37,17 @@ namespace AngouriMath
                 /// <summary>
                 /// A zero, you can use it to avoid allocations
                 /// </summary>
-                public static readonly Integer Zero = new Integer(EInteger.Zero);
+                [ConstantField] public static readonly Integer Zero = new Integer(EInteger.Zero);
 
                 /// <summary>
                 /// A one, you can use it to avoid allocations
                 /// </summary>
-                public static readonly Integer One = new Integer(EInteger.One);
+                [ConstantField] public static readonly Integer One = new Integer(EInteger.One);
 
                 /// <summary>
                 /// A minus one, you can use it to avoid allocations
                 /// </summary>
-                public static readonly Integer MinusOne = new Integer(-EInteger.One);
+                [ConstantField] public static readonly Integer MinusOne = new Integer(-EInteger.One);
 
 
                 /// <summary>
