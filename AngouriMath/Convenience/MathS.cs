@@ -715,6 +715,9 @@ namespace AngouriMath
                     // Number of logarithms
                     res += TinyWeight(expr.Nodes.Count(entity => entity is Logf));
 
+                    // Number of phi functions
+                    res += HeavyWeight(expr.Nodes.Count(entity => entity is Phif));
+
                     // Number of negative reals
                     res += MajorWeight(expr.Nodes.Count(entity => entity is Real { IsNegative: true }));
 
