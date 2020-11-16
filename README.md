@@ -52,7 +52,7 @@ Finally, if still not sure about it, you can try it even before installation!
 | Try live |
 |:--------:|
 |<a href="https://dotnetfiddle.net/FIcaDG"><img src="https://img.shields.io/static/v1?label=Go%20to&message=.NET%20Fiddle&color=purple&style=for-the-badge"></a>|
-|<a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Go%20to&message=MyBinder&color=purple&style=for-the-badge"></a>|
+|<a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Go%20to&message=Jupyter%20NB&color=purple&style=for-the-badge"></a>|
 
 Although most functions are convenient to use only from C#, there are some
 optimized for F#.
