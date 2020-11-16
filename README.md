@@ -52,7 +52,7 @@ Finally, if still not sure about it, you can try it even before installation!
 | Try live |
 |:--------:|
 |<a href="https://dotnetfiddle.net/FIcaDG"><img src="https://img.shields.io/static/v1?label=Go%20to&message=.NET%20Fiddle&color=purple&style=for-the-badge"></a>|
-|<a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Go%20to&message=MyBinder&color=purple&style=for-the-badge"></a>|
+|<a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Go%20to&message=Jupyter%20NB&color=purple&style=for-the-badge"></a>|
 
 Although most functions are convenient to use only from C#, there are some
 optimized for F#.
@@ -299,25 +299,19 @@ latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)"
 
 If you already installed <a href="https://jupyter.org/install">Jupyter</a> and 
 <a href="https://github.com/dotnet/interactive/blob/main/docs/NotebooksLocalExperience.md">Interactive</a> for it, install
-<a href="https://www.nuget.org/packages/AngouriMath.Interactive">package</a> which allows this integration like this:
-
-<img src="additional/readme/instr.PNG" width="50%"/>
-
-<details>
-    <summary>Copyable</summary>
+<a href="https://www.nuget.org/packages/AngouriMath.Interactive">package</a> by copying this to your first cell:
 
 ```cs
-#r "nuget:AngouriMath.Interactive, 0.0.1-alpha.1"
-using AngouriMath.Extensions;
-using AngouriMath;
-new AngouriMath.Interactive.SessionRunner().Init();
+#r "nuget:AngouriMath.Interactive, *-*"
+Interactive.magic();
 ```
-
-</details>
 
 Now any `ILatexiseable` will be displayed as LaTeX:
 
 <img src="additional/readme/interactive.PNG"/>
+
+Check the <a href="Samples/Interactive.Sample.ipynb">F#</a> and 
+<a href="Samples/CSharp.Interactive.Sample.ipynb">C#</a> samples.
 
 ## <a name="contrib"></a>Contribution
 

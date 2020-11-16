@@ -23,3 +23,10 @@ let parse_g<'T when 'T :> Entity> x =
 
 let parse_symbol x =
     parse_g<Entity.Variable> x
+
+let symbol x =
+    parse_symbol x
+    
+let set x =
+    parse_g<Entity.Set> x
+    
