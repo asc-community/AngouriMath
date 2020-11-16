@@ -2,6 +2,7 @@
 using Xunit;
 using AngouriMath.Extensions;
 using static AngouriMath.Entity.Number;
+using System;
 
 namespace UnitTests.Convenience
 {
@@ -90,9 +91,17 @@ namespace UnitTests.Convenience
         [InlineData("phi(3 * 5 * 7 * 11 * 13 * 17)", 2 * 4 * 6 * 10 * 12 * 16)]
         [InlineData("phi(3 * 5 * 7 * 11 * 13 * 17) - 33", 2 * 4 * 6 * 10 * 12 * 16 - 33)]
         [InlineData("phi(10)^phi(10)", 4 * 4 * 4 * 4)]
-        public void TestEvalPhi(string expression, long expected)
+        public void TestEvalPhi(string expression, double expected)
         {
             Assert.Equal(expected, expression.EvalNumerical());
+        }
+
+        [Theory]
+        [InlineData("phi(2 ^ x) / 2 ^ x", "1 / 2")]
+        [InlineData("phi(5 ^ x) / 5 ^ x", "4 / 5")]
+        public void TestSimplifyPhi(string expression, string expected)
+        {
+            Assert.Equal(expected.Simplify(), expression.Simplify());
         }
 
         [Theory]
