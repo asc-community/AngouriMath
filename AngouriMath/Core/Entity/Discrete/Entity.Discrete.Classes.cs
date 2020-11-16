@@ -281,6 +281,24 @@ namespace AngouriMath
             }
         }
         #endregion
+
+        #region Number theory
+        /// <summary>
+        /// This node represents the Euler totient function (phi)
+        /// </summary>
+        public sealed partial record Phif(Entity Argument) : Function
+        {
+            internal Phif New(Entity argument)
+                   => ReferenceEquals(argument, Argument) ? this : new(argument);
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
+
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new[] { Argument };
+        }
+        #endregion
+
 #pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
     }
 }

@@ -72,6 +72,7 @@ namespace AngouriMath
             bigintFirst.IsZero && bigintSecond.IsZero
             ? EInteger.Zero
             : bigintFirst.Abs().Divide(bigintFirst.Gcd(bigintSecond)).Multiply(bigintSecond.Abs());
+
         /// <summary><a href="https://en.wikipedia.org/wiki/Combination"/>, equivalent to nCr
         /// or <a href="https://en.wikipedia.org/wiki/Binomial_coefficient"/></summary>
         public static EInteger Combinations(this EInteger n, EInteger k) =>
@@ -91,6 +92,33 @@ namespace AngouriMath
             var original = result;
 
             for (long i = 2; i * i <= result; i++) {
+                if (original % i == 0)
+                {
+                    while (original % i == 0) original /= i;
+                    result -= result / i;
+                }
+            }
+
+            if (original > 1)
+                result -= result / original;
+
+            return result;
+        }
+        /// <summary>
+        /// Computes Euler phi function (for long)
+        /// <a href="https://en.wikipedia.org/wiki/Euler%27s_totient_function"/>
+        /// </summary>
+        /// If integer x is non-positive, the result will be 0
+        public static long Phi(this long n)
+        {
+            if (n <= 0)
+                return 0;
+
+            var result = n;
+            var original = result;
+
+            for (long i = 2; i * i <= result; i++)
+            {
                 if (original % i == 0)
                 {
                     while (original % i == 0) original /= i;

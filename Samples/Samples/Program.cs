@@ -39,7 +39,7 @@ using static System.Console;
 
 //WriteLine(MathS.TryPolynomial(mat.Determinant().Expand(14), "x", out var res) ? res : null);
 
-WriteLine(MathS.Var("θ"));
+WriteLine("phi(2^x) / 2^x".Simplify());
 
 //WriteLine("(log(e, x) * (log(e, x) + 1) * x ^ x + x ^ (x - 1)) * x ^ x ^ x".Latexise());
 

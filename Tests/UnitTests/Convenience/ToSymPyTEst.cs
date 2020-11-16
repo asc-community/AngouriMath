@@ -34,6 +34,7 @@ namespace UnitTests.Convenience
         [InlineData("limitright(y, x, 2)", "sympy.limit(y, x, 2, '+')")]
         [InlineData("sgn(y)", "sympy.sign(y)")]
         [InlineData("abs(y)", "sympy.Abs(y)")]
+        [InlineData("phi(y)", "sympy.totient(y)")]
         [InlineData("true", "True")]
         [InlineData("false", "False")]
         [InlineData("not a", "not a")]

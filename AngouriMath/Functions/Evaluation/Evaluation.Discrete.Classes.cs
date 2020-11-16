@@ -335,5 +335,22 @@ namespace AngouriMath
                 }
             }
         }
+
+        partial record Phif
+        {               
+            private Entity InnerCompute(Entity entity)
+            {
+                if (entity is not Integer integer)
+                    return this;
+                else
+                    return integer.Phi();
+            }
+
+            /// <inheritdoc/>
+            protected override Entity InnerEval() => InnerCompute(Argument.Evaled);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify() => InnerCompute(Argument.InnerSimplified);
+        }
     }
 }

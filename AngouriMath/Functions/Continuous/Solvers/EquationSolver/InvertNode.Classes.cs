@@ -407,5 +407,14 @@ namespace AngouriMath
                     => throw FutureReleaseException.Raised("InvertNode should return set", "1.2");
             }
         }
+
+        partial record Phif
+        {
+            // We can't easily calculate (compute) all solutions there are for this function
+            // There is an algorithm to find exactly one solution but we can do no more.
+            // TODO: Mess with that...
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Enumerable.Empty<Entity>();
+        }
     }
 }

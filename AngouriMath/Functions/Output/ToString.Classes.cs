@@ -530,5 +530,13 @@ namespace AngouriMath
                 public override string ToString() => Stringize();
             }
         }
+
+        partial record Phif
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $@"phi({Argument.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
     }
 }
