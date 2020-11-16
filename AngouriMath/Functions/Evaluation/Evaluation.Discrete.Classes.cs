@@ -343,9 +343,7 @@ namespace AngouriMath
                 if (entity is not Integer integer)
                     return this;
                 else
-                {
                     return integer.Phi();
-                }
             }
 
             /// <inheritdoc/>
