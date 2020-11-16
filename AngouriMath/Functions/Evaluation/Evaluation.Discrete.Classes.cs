@@ -338,10 +338,9 @@ namespace AngouriMath
 
         partial record Phif
         {               
-            /// <inheritdoc/>
-            protected override Entity InnerEval()
+            private Entity InnerCompute(Entity entity)
             {
-                if (Argument.Evaled is not Integer integer)
+                if (entity is not Integer integer)
                     return this;
                 else
                 {
@@ -350,15 +349,10 @@ namespace AngouriMath
             }
 
             /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-            {
-                if (Argument.InnerSimplified is not Integer integer)
-                    return this;
-                else
-                {
-                    return integer.Phi();
-                }
-            }
+            protected override Entity InnerEval() => InnerCompute(Argument.Evaled);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify() => InnerCompute(Argument.InnerSimplified);
         }
     }
 }
