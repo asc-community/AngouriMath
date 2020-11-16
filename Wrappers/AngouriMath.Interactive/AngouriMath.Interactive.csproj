@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>0.0.1-alpha.1</Version>
+    <Version>1.0.0-preview.1</Version>
     <Authors>WhiteBlackGoose</Authors>
     <Company>Angouri</Company>
     <Product>Wrapper of AngouriMath for Interactive</Product>
@@ -12,16 +12,13 @@
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
     <PackageTags>interactive</PackageTags>
-    <PackageReleaseNotes>A test version</PackageReleaseNotes>
+    <PackageReleaseNotes>First version</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AngouriMath" Version="1.2.0-preview.4" />
     <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.20553.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj" />
   </ItemGroup>
 
   <ItemGroup>

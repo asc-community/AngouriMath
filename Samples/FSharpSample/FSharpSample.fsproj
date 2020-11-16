@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Wrappers\FSharp\AngouriMath.FSharp.fsproj" />
+    <PackageReference Include="AngouriMath.FSharp" Version="1.0.0-preview.2" />
   </ItemGroup>
 
 </Project>
