@@ -285,7 +285,6 @@ namespace AngouriMath
         #region Number theory
         /// <summary>
         /// This node represents the Euler totient function (phi)
-        /// @a
         /// </summary>
         public sealed partial record Phif(Entity Argument) : Function
         {
