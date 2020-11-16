@@ -15,6 +15,7 @@ namespace AngouriMath
     {
         partial record Number
         {
+#pragma warning disable SealedOrAbstract // The only exception: those three records are neither abstract nor sealed
             partial record Complex
             {
                 /// <inheritdoc/>
@@ -32,6 +33,7 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override Domain Codomain { get; protected init; } = Domain.Real;
             }
+#pragma warning restore SealedOrAbstract
 
             partial record Integer
             {

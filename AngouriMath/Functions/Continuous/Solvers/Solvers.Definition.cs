@@ -32,7 +32,7 @@ namespace AngouriMath
             }
             if (this == var)
                 return new FiniteSet(Boolean.True);
-            throw new SolveRequiresStatement();
+            throw new SolveRequiresStatementException();
         }
     }
 }

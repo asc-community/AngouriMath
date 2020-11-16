@@ -322,7 +322,7 @@ namespace AngouriMath
                 }
 
                 internal override string ToSymPy()
-                        => throw new MathSException($"There is no {this} in either SymPy or AM's {nameof(ToSymPy)}");
+                        => throw new NotSufficientlySupportedException($"There is no {this} in either SymPy or AM's {nameof(ToSymPy)}");
             }
 
             partial record Unionf

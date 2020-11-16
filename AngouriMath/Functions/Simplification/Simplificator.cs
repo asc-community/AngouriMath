@@ -46,15 +46,14 @@ namespace AngouriMath.Functions
                 return new[] { stage1 };
 
             // List of criteria for expr's complexity
-            var history = new SortedDictionary<int, HashSet<Entity>>();
+            var history = new SortedDictionary<double, HashSet<Entity>>();
             void AddHistory(Entity expr)
             {
                 void __IterAddHistory(Entity expr)
                 {
-                    static int CountExpressionComplexity(Entity expr) => MathS.Settings.ComplexityCriteria.Value(expr);
                     var refexpr = expr.Replace(Patterns.SortRules(TreeAnalyzer.SortLevel.HIGH_LEVEL)).InnerSimplified;
-                    var compl1 = CountExpressionComplexity(refexpr);
-                    var compl2 = CountExpressionComplexity(expr);
+                    var compl1 = refexpr.SimplifiedRate;
+                    var compl2 = expr.SimplifiedRate;
                     var n = compl1 > compl2 ? expr : refexpr;
                     var ncompl = Math.Min(compl2, compl1);
                     if (history.TryGetValue(ncompl, out var ncomplList))
@@ -109,7 +108,7 @@ namespace AngouriMath.Functions
                     AddHistory(res = res.Replace(Patterns.ExpandFactorialDivisions).InnerSimplified);
                     AddHistory(res = res.Replace(Patterns.FactorizeFactorialMultiplications).InnerSimplified);
                 }
-                if (res.Nodes.Any(child => child is Powf))
+                if (res.Nodes.Any(child => child is Powf or Logf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
 
                 if (res.Nodes.Any(child => child is Set))

@@ -37,4 +37,14 @@ namespace AngouriMath.Core.Exceptions
                 return new FutureReleaseException($"Feature {feature} will be completed by {plannedVersion}. You are on {currVersion}");
         }
     }
+
+    /// <summary>
+    /// In case if AM or other parts do not support something, 
+    /// for example, it may occur if either AM or SymPy does not
+    /// support some specific feature
+    /// </summary>
+    public sealed class NotSufficientlySupportedException : Exception
+    {
+        internal NotSufficientlySupportedException(string msg) : base(msg) { }
+    }
 }

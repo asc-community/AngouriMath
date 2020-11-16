@@ -8,15 +8,15 @@ using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
-    class ExponentialSolver
+    internal static class ExponentialSolver
     {
-        internal static Entity.Set? SolveLinear(Entity expr, Entity.Variable x)
+        internal static Set? SolveLinear(Entity expr, Entity.Variable x)
         {
-            var replacement = Entity.Variable.CreateTemp(expr.Vars);
+            var replacement = Variable.CreateTemp(expr.Vars);
 
             Func<Entity, Entity> preparator = e => e switch
             {
-                Entity.Powf(var @base, var arg) when
+                Powf(var @base, var arg) when
                     TreeAnalyzer.TryGetPolyLinear(arg, x, out var a, out var b) =>
                         MathS.Pow(@base, b) * MathS.Pow(MathS.Pow(MathS.e, x), MathS.Ln(@base) * a),
 
@@ -25,7 +25,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             Func<Entity, Entity> replacer = e => e switch
             {
-                Entity.Powf(var @base, var arg)
+                Powf(var @base, var arg)
                     when @base == MathS.e && arg == x
                         => replacement,
 
@@ -39,7 +39,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             expr = expr.InnerSimplified;
             if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els && els.Any())
-                return (Entity.Set)els.Select(sol => MathS.Pow(MathS.e, x).Invert(sol, x).ToSet()).Unite().InnerSimplified;
+                return (Set)els.Select(sol => MathS.Pow(MathS.e, x).Invert(sol, x).ToSet()).Unite().InnerSimplified;
             else
                 return null;
         }
@@ -52,7 +52,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 _ => expr
             };
 
-        internal static Entity.Set? SolveMultiplicative(Entity expr, Entity.Variable x)
+        internal static Set? SolveMultiplicative(Entity expr, Variable x)
         {
             Entity? substitution = null;
             var innerPowerList = new List<Entity>();
@@ -61,7 +61,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             {
                 arg = arg.Replace(GetConstantOutOfLogarithm);
                 var mults = Entity.Mulf.LinearChildren(arg);
-                if (mults.Count() == 0) return MathS.Pow(@base, arg);
+                if (!mults.Any()) return MathS.Pow(@base, arg);
 
                 Entity innerPower = 1;
                 Entity outerPower = 1;
@@ -80,7 +80,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             Func<Entity, Entity> powerTransform = e => e switch
             {
-                Entity.Powf(var @base, var arg)
+                Powf(var @base, var arg)
                     when @base == x && !arg.ContainsNode(x) =>
                         ApplyPowerTransform(@base, arg),
 
@@ -90,7 +90,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             expr = expr.Replace(powerTransform);
             if (substitution is null) return null;
 
-            var replacement = Entity.Variable.CreateTemp(expr.Vars);
+            var replacement = Variable.CreateTemp(expr.Vars);
             
             if(innerPowerList.Count == 0) 
                 (innerPowerList, outerPowerList) = (outerPowerList, innerPowerList);

@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using PeterO.Numbers;
 using System.Linq;
+using AngouriMath.Core;
 
 namespace AngouriMath.Functions
 {
@@ -19,8 +20,8 @@ namespace AngouriMath.Functions
     internal static class BaseConversion
     {
         // TODO: add more digits
-        internal static readonly string ALPHABET_TOCHAR = "0123456789ABCDEF";
-        internal static readonly Dictionary<char, int> ALPHABET_FROMCHAR =
+        [ConstantField] internal static readonly string ALPHABET_TOCHAR = "0123456789ABCDEF";
+        [ConstantField] internal static readonly Dictionary<char, int> ALPHABET_FROMCHAR =
             ALPHABET_TOCHAR.ToDictionary(c => c, ALPHABET_TOCHAR.IndexOf);
 
         /// <summary>Transforms an integer to the corresponding base (in string)</summary>
@@ -78,7 +79,7 @@ namespace AngouriMath.Functions
         internal static string ToBaseN(EDecimal num, int N)
         {
             if (N > ALPHABET_TOCHAR.Length)
-                throw new MathSException("N should be <= than " + ALPHABET_TOCHAR.Length);
+                throw new InvalidNumericSystemException("N should be <= than " + ALPHABET_TOCHAR.Length);
             string sign = num.IsNegative ? "-" : "";
             num = num.Abs();
             var (intPart, floatPart) = num.SplitDecimal();

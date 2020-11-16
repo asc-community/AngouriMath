@@ -23,7 +23,7 @@ namespace AngouriMath.Core
             internal Entity[]? directChildren;
             internal int? complexity;
             internal bool? isFinite;
-            internal int? simplifiedRate;
+            internal double? simplifiedRate;
             internal Entity? innerSimplified;
             internal Entity? innerEvaled;
             internal HashSet<Variable>? vars;

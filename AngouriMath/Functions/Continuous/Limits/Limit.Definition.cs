@@ -211,7 +211,7 @@ namespace AngouriMath.Functions.Algebra
             // compute limit for x -> +oo
             Real { IsFinite: false, IsNegative: false } => SimplifyAndComputeLimitToInfinity(expr, x),
             Complex { IsFinite: false } =>
-                throw new Core.Exceptions.MathSException($"complex infinities are not supported in limits: lim({x} -> {dist}) {expr}"),
+                throw new Core.Exceptions.LimitOperationNotSupportedException($"Complex infinities are not supported in limits: lim({x} -> {dist}) {expr}"),
             _ => SimplifyAndComputeLimitToInfinity(side switch
             {
                 // lim(x -> 3-) x <=> lim(x -> 0+) 3 - x <=> lim(x -> +oo) 3 - 1 / x
