@@ -97,14 +97,6 @@ namespace UnitTests.Convenience
         }
 
         [Theory]
-        [InlineData("phi(2 ^ x) / 2 ^ x", "1 / 2")]
-        [InlineData("phi(5 ^ x) / 5 ^ x", "4 / 5")]
-        public void TestSimplifyPhi(string expression, string expected)
-        {
-            Assert.Equal(expected.Simplify(), expression.Simplify());
-        }
-
-        [Theory]
         [InlineData(56456456, 64)]
         [InlineData(154564465, 16)]
         [InlineData(1, 1)]
