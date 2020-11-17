@@ -65,5 +65,15 @@ namespace AngouriMath.Core
         /// So that when records get compared, this field will not affect the result
         /// </summary>
         public override int GetHashCode() => 0;
+
+        /// <summary>
+        /// Convenient to use instead of .Value
+        /// </summary>
+        public static implicit operator T(Container<T> container) => container.Value;
+
+        /// <summary>
+        /// Convenient to use instead of new()
+        /// </summary>
+        public static implicit operator Container<T>(Func<T> action) => new(action);
     }
 }

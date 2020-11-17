@@ -42,5 +42,46 @@ namespace UnitTests.Core
 
             new ThreadingChecker(ChangeADict).Run(iterCount: 10000);
         }
+
+        private record Person(string FirstName, string LastName)
+        {
+            public string FullName => fullName;
+            private Container<string> fullName = new(() => FirstName + LastName);
+        }
+
+        [Fact]
+        public void TestEqualityPure()
+        {
+            var a = new Person("John", "Ivanov");
+            var b = new Person("John", "Ivanov");
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestEqualityOneInitted()
+        {
+            var a = new Person("John", "Ivanov");
+            Assert.Equal("JohnIvanov", a.FullName);
+            var b = new Person("John", "Ivanov");
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestEqualityBothInitted()
+        {
+            var a = new Person("John", "Ivanov");
+            Assert.Equal("JohnIvanov", a.FullName);
+            var b = new Person("John", "Ivanov");
+            Assert.Equal("JohnIvanov", b.FullName);
+            Assert.Equal(a, b);
+        }
+
+        [Fact]
+        public void TestUnequalityPure()
+        {
+            var a = new Person("Peter", "Smith");
+            var b = new Person("John", "Ivanov");
+            Assert.NotEqual(a, b);
+        }
     }
 }
