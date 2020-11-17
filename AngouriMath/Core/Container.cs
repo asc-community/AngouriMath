@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
 
 namespace AngouriMath.Core
 {
@@ -12,7 +11,10 @@ namespace AngouriMath.Core
     /// public Container int myProperty = new(() => some method);
     /// </code>
     /// </summary>
-    /// <typeparam name="T">The type to store inside</typeparam>
+    /// <typeparam name="T">
+    /// The type to store inside
+    /// If its state becomes null, it is considered to be incorrect, and <see cref="Exceptions.AngouriBugException"/>
+    /// </typeparam>
     public struct Container<T> : IEquatable<Container<T>>
     {
         /// <param name="ctor">Expression to initialize the given property</param>
@@ -43,7 +45,7 @@ namespace AngouriMath.Core
                             value = ctor();
                         }
                     }
-                return value ?? throw new AngouriMath.Core.Exceptions.AngouriBugException("T shouldn't be null!");
+                return value ?? throw new Exceptions.AngouriBugException("T shouldn't be null!");
             }
         }
 

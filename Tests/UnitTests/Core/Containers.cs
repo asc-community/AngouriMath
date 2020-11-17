@@ -17,35 +17,11 @@ namespace UnitTests.Core
         }
 
         [Fact]
-        public void TestSimpleIntNullable1()
-        {
-            var container = new Container<int?>(() => null);
-            Assert.Null(container.Value);
-            Assert.Null(container.Value);
-        }
-
-        [Fact]
-        public void TestSimpleIntNullable2()
-        {
-            var container = new Container<int?>(() => 3);
-            Assert.NotNull(container.Value);
-            Assert.NotNull(container.Value);
-        }
-
-        [Fact]
         public void TestSimpleString()
         {
             var container = new Container<string>(() => "ss");
             Assert.Equal("ss", container.Value);
             Assert.Equal("ss", container.Value);
-        }
-
-        [Fact]
-        public void TestSimpleStringNullable()
-        {
-            var container = new Container<string?>(() => null);
-            Assert.Null(container.Value);
-            Assert.Null(container.Value);
         }
 
         private record SomeTestRecord
