@@ -1134,15 +1134,6 @@ namespace AngouriMath
             /// </summary>
             public static void ClearFromStringCache()
                 => stringToEntityCache = new();
-
-            /// <summary>
-            /// Entities' properties are not initialized once
-            /// a node is created. They are stored in another
-            /// weak table, whose memory consumtion might
-            /// be critical for some system. You can clean it
-            /// </summary>
-            public static void ClearEntityPropertyCache()
-                => caches = new();
         }
 
         /// <summary>

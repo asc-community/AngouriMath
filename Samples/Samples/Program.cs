@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using AngouriMath.Extensions;
 using Microsoft.VisualBasic.CompilerServices;
+using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
 using static AngouriMath.Entity;
@@ -37,7 +38,7 @@ using static System.Console;
 //    WriteLine(((Tensor)mat.Substitute("x", $"{i} / 3")).Determinant());
 //MathS.Settings.MaxExpansionTermCount.Global(10000);
 
-//WriteLine(MathS.TryPolynomial(mat.Determinant().Expand(14), "x", out var res) ? res : null);
+//WriteLine(MathS.TryPolynomial(mat.Det
 
 WriteLine("phi(2^x) / 2^x".Simplify());
 

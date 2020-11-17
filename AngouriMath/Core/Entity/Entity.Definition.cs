@@ -81,19 +81,14 @@ namespace AngouriMath
     /// </summary>
     public abstract partial record Entity : ILatexiseable
     {
-        // There should be guarantee that RecordFieldCache is thread-safe
-        internal static RecordFieldCache Caches => caches ??= new();
-        [ThreadStatic] internal static RecordFieldCache? caches;
-
-
         /// <inheritdoc/>
         protected abstract Entity[] InitDirectChildren();
         
         /// <summary>
         /// Represents all direct children of a node
         /// </summary>
-        public IReadOnlyList<Entity> DirectChildren 
-            => Caches.GetValue(this, cache => cache.directChildren, cache => cache.directChildren = InitDirectChildren());
+        public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(InitDirectChildren);
+        private LazyContainer<IReadOnlyList<Entity>> directChildren;
 
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="AngouriMath.Functions.TreeAnalyzer.GetMinimumSubtree"/></remarks>
@@ -133,10 +128,8 @@ namespace AngouriMath
         /// Whether both parts of the complex number are finite
         /// meaning that it could be safely used for calculations
         /// </value>
-        public bool IsFinite
-            => Caches.GetValue(this, cache => cache.isFinite, cache => cache.isFinite =
-            ThisIsFinite && DirectChildren.All(x => x.IsFinite)) ?? throw new AngouriBugException($"{IsFinite} cannot be null");
-
+        public bool IsFinite => isFinite.GetValue(() => ThisIsFinite && DirectChildren.All(x => x.IsFinite));
+        private LazyContainer<bool> isFinite;
         /// <summary>
         /// Not NaN and not infinity
         /// </summary>
@@ -145,10 +138,8 @@ namespace AngouriMath
         /// <value>Number of nodes in tree</value>
         // TODO: improve measurement of Entity complexity, for example
         // (1 / x ^ 2).Complexity() &lt; (x ^ (-0.5)).Complexity()
-        public int Complexity 
-            => Caches.GetValue(this, 
-            cache => cache.complexity,
-            cache => cache.complexity = 1 + DirectChildren.Sum(x => x.Complexity)) ?? throw new AngouriBugException("Complexity cannot be null");
+        public int Complexity => complexity.GetValue(() => 1 + DirectChildren.Sum(x => x.Complexity));
+        private LazyContainer<int> complexity;
 
         /// <summary>
         /// Set of unique variables, for example 
@@ -168,10 +159,9 @@ namespace AngouriMath
         /// Set of unique variables and mathematical constants
         /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
-        public IReadOnlyCollection<Variable> VarsAndConsts 
-            => Caches.GetValue(this, cache => cache.vars,
-            cache => cache.vars = 
-            new HashSet<Variable>(this is Variable v ? new[] { v } : DirectChildren.SelectMany(x => x.VarsAndConsts)));
+        public IReadOnlyCollection<Variable> VarsAndConsts => varsAndConsts.GetValue(
+            () => new HashSet<Variable>(this is Variable v ? new[] { v } : DirectChildren.SelectMany(x => x.VarsAndConsts)));
+        private LazyContainer<IReadOnlyCollection<Variable>> varsAndConsts;
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>
@@ -190,7 +180,8 @@ namespace AngouriMath
         /// shows how convenient it is to view the expression. This depends on 
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
         /// </summary>
-        public double SimplifiedRate => Caches.GetValue(this, cache => cache.simplifiedRate, cache => cache.simplifiedRate = MathS.Settings.ComplexityCriteria.Value(this)) ?? throw new AngouriBugException("Sim cannot be null");
+        public double SimplifiedRate => simplifiedRate.GetValue(() => MathS.Settings.ComplexityCriteria.Value(this));
+        private LazyContainer<double> simplifiedRate;
 
         /// <summary>Checks whether the given expression contains variable</summary>
         public bool IsSymbolic => Vars.Any();
