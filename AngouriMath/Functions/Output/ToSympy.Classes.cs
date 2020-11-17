@@ -349,5 +349,10 @@ namespace AngouriMath
                     => $"{Element.ToSymPy(Element.Priority < Priority)} in {SupSet.ToSymPy(SupSet.Priority < Priority)}";
             }
         }
+
+        public partial record Phif
+        {
+            internal override string ToSymPy() => "sympy.totient(" + Argument.ToSymPy() + ")";
+        }
     }
 }

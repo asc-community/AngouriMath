@@ -244,5 +244,14 @@ namespace UnitTests.Convenience
             => Test(@"\operatorname{sgn}\left(x\right)", MathS.Signum(x));
         [Fact] public void Abs()
             => Test(@"\left|x\right|", MathS.Abs(x));
+        [Fact]
+        public void Phi1()
+            => Test(@"\varphi(x)", MathS.NumberTheory.Phi(x));
+        [Fact]
+        public void Phi2()
+            => Test(@"\varphi({x}^{2})", MathS.NumberTheory.Phi(MathS.Pow(x, 2)));
+        [Fact]
+        public void Phi3()
+            => Test(@"{\varphi(x)}^{\varphi({x}^{2})}", MathS.Pow(MathS.NumberTheory.Phi(x), MathS.NumberTheory.Phi(MathS.Pow(x, 2))));
     }
 }

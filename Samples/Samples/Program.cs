@@ -38,11 +38,9 @@ using static System.Console;
 //    WriteLine(((Tensor)mat.Substitute("x", $"{i} / 3")).Determinant());
 //MathS.Settings.MaxExpansionTermCount.Global(10000);
 
-//WriteLine(MathS.TryPolynomial(mat.Determinant().Expand(14), "x", out var res) ? res : null);
+//WriteLine(MathS.TryPolynomial(mat.Det
 
-MathS.Settings.DecimalPrecisionContext.Global(new(100, ERounding.HalfUp, -100, 1000, false));
-
-WriteLine(MathS.Var("θ"));
+WriteLine("phi(2^x) / 2^x".Simplify());
 
 //WriteLine("(log(e, x) * (log(e, x) + 1) * x ^ x + x ^ (x - 1)) * x ^ x ^ x".Latexise());
 

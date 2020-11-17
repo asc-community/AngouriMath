@@ -81,6 +81,11 @@ namespace AngouriMath
                 public Integer CountDivisors() => EInteger.CountDivisors();
 
                 /// <summary>
+                /// Detemine whether integer is prime or not.
+                /// </summary>
+                public bool IsPrime => CountDivisors() == 2;
+
+                /// <summary>
                 /// Deconstructs as record
                 /// </summary>
                 public void Deconstruct(out int? value) =>

@@ -46,7 +46,7 @@ using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using An
 /// 4. Pattern replacer (<see cref="Patterns.CommonRules"/> and <see cref="Simplificator.Alternate"/>)
 /// (and tests to SimplifyTest.cs or PatternTest.cs)
 /// 5. Expose to the user (add it to MathS, like <see cref="MathS.Sin">this</see>)
-/// 
+///     
 /// Now, you might be required to complete the following steps as well:
 /// 
 /// 6. Derivation (if applicable) (<see cref="Sinf.InnerDifferentiate"/>)
