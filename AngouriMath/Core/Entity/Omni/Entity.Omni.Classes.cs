@@ -565,16 +565,14 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => Caches.GetValue(this,
-                    cache => cache.isSetFinite, cache => cache.isSetFinite =
-                    Left is FiniteSet finite1 && Right is FiniteSet finite2
-                    && finite1.IsSetFinite && finite2.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
+                public override bool IsSetFinite => isSetFinite.GetValue(() =>
+                    Left is FiniteSet finite1 && Right is FiniteSet finite2 && finite1.IsSetFinite && finite2.IsSetFinite);
+                private LazyContainer<bool> isSetFinite;
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => Caches.GetValue(this,
-                    cache => cache.isSetEmpty, cache => cache.isSetEmpty =
-                    Left is FiniteSet finite1 && Right is FiniteSet finite2
-                    && finite1.IsSetEmpty && finite2.IsSetEmpty) ?? throw new AngouriBugException("isSetEmpty cannot be null");
+                public override bool IsSetEmpty => isSetEmpty.GetValue(() =>
+                    Left is FiniteSet finite1 && Right is FiniteSet finite2 && finite1.IsSetEmpty && finite2.IsSetEmpty);
+                private LazyContainer<bool> isSetEmpty;
             }
             #endregion
 
@@ -612,15 +610,16 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => Caches.GetValue(this,
-                    cache => cache.isSetFinite, cache => cache.isSetFinite = Left is FiniteSet finite1 && Right is FiniteSet finite2
-                    && (finite1.IsSetFinite || finite2.IsSetFinite)) ?? throw new AngouriBugException("isSetFinite cannot be null");
+                public override bool IsSetFinite => isSetFinite.GetValue(() => 
+                    Left is FiniteSet finite1 && Right is FiniteSet finite2
+                    && (finite1.IsSetFinite || finite2.IsSetFinite));
+                private LazyContainer<bool> isSetFinite;
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => Caches.GetValue(this,
-                    cache => cache.isSetEmpty, cache => cache.isSetEmpty =
+                public override bool IsSetEmpty => isSetEmpty.GetValue(() =>
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
-                    && (finite1.IsSetEmpty || finite2.IsSetEmpty)) ?? throw new AngouriBugException("isSetEmpty cannot be null");
+                    && (finite1.IsSetEmpty || finite2.IsSetEmpty));
+                private LazyContainer<bool> isSetEmpty;
             }
             #endregion
 
@@ -658,15 +657,15 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => Caches.GetValue(this,
-                    cache => cache.isSetFinite, cache => cache.isSetFinite =
-                    Left is FiniteSet finite1 && Right is FiniteSet && finite1.IsSetFinite) ?? throw new AngouriBugException("isSetFinite cannot be null");
+                public override bool IsSetFinite => isSetFinite.GetValue(() =>
+                    Left is FiniteSet finite1 && Right is FiniteSet && finite1.IsSetFinite);
+                private LazyContainer<bool> isSetFinite;
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => Caches.GetValue(this,
-                    cache => cache.isSetEmpty, cache => cache.isSetEmpty =
+                public override bool IsSetEmpty => isSetEmpty.GetValue(() =>
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
-                    && (finite1.IsSetEmpty || finite1 == finite2)) ?? throw new AngouriBugException("isSetEmpty cannot be null");
+                    && (finite1.IsSetEmpty || finite1 == finite2));
+                private LazyContainer<bool> isSetEmpty;
             }
             #endregion
         }

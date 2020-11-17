@@ -20,7 +20,9 @@ namespace AngouriMath
             /// <summary>
             /// The denominator cannot be zero as the resulting value will not be a rational
             /// </summary>
+#pragma warning disable SealedOrAbstract // The only few exceptions: Complex, Real, Rational
             public partial record Rational : Real, System.IComparable<Rational>
+#pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <summary>
                 /// Constructor does not downcast automatically.

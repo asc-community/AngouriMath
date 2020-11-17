@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using AngouriMath.Extensions;
 using Microsoft.VisualBasic.CompilerServices;
+using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
 using static AngouriMath.Entity;
@@ -38,6 +39,8 @@ using static System.Console;
 //MathS.Settings.MaxExpansionTermCount.Global(10000);
 
 //WriteLine(MathS.TryPolynomial(mat.Determinant().Expand(14), "x", out var res) ? res : null);
+
+MathS.Settings.DecimalPrecisionContext.Global(new(100, ERounding.HalfUp, -100, 1000, false));
 
 WriteLine(MathS.Var("θ"));
 

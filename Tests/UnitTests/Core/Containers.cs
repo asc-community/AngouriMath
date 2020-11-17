@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Extensions;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Xunit;
@@ -12,23 +13,23 @@ namespace UnitTests.Core
         [Fact]
         public void TestSimple1()
         {
-            var container = new Container<int>(() => 4);
-            Assert.Equal(4, container.Value);
-            Assert.Equal(4, container.Value);
+            var container = new LazyContainer<int>();
+            Assert.Equal(4, container.GetValue(() => 4));
+            Assert.Equal(4, container.GetValue(() => 4));
         }
 
         [Fact]
         public void TestSimpleString()
         {
-            var container = new Container<string>(() => "ss");
-            Assert.Equal("ss", container.Value);
-            Assert.Equal("ss", container.Value);
+            var container = new LazyContainer<string>();
+            Assert.Equal("ss", container.GetValue(() => "ss"));
+            Assert.Equal("ss", container.GetValue(() => "ss"));
         }
 
         private record SomeTestRecord
         {
-            public ConcurrentDictionary<string, string> Dict => dict;
-            private Container<ConcurrentDictionary<string, string>> dict = new(() => new());
+            public ConcurrentDictionary<string, string> Dict => dict.GetValue(() => new());
+            private LazyContainer<ConcurrentDictionary<string, string>> dict;
         }
 
         [Fact]
@@ -46,8 +47,8 @@ namespace UnitTests.Core
 
         private record Person(string FirstName, string LastName)
         {
-            public string FullName => fullName;
-            private Container<string> fullName = new(() => FirstName + LastName);
+            public string FullName => fullName.GetValue(() => FirstName + LastName);
+            private LazyContainer<string> fullName;
         }
 
         [Fact]

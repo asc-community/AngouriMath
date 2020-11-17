@@ -15,13 +15,16 @@ namespace AngouriMath
 {
     partial record Entity
     {
+
         partial record Number
         {
             /// <summary>
             /// Represents a real number, such complex
             /// that its imaginary part equals 0
             /// </summary>
+#pragma warning disable SealedOrAbstract // The only few exceptions: Complex, Real, Rational
             public partial record Real : Complex, System.IComparable<Real>
+#pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <summary>
                 /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.

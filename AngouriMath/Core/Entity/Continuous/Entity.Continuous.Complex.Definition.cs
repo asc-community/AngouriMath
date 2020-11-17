@@ -19,7 +19,9 @@ namespace AngouriMath
     {
         partial record Number
         {
+#pragma warning disable SealedOrAbstract // The only few exceptions: Complex, Real, Rational
             public partial record Complex : Number
+#pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <summary>
                 /// Constructor does not downcast automatically. Use <see cref="Create(Real, Real)"/> for automatic downcasting
