@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Extensions;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Xunit;
 
@@ -26,8 +27,8 @@ namespace UnitTests.Core
 
         private record SomeTestRecord
         {
-            public Dictionary<string, string> Dict => dict.Value;
-            private Container<Dictionary<string, string>> dict = new(() => new());
+            public ConcurrentDictionary<string, string> Dict => dict;
+            private Container<ConcurrentDictionary<string, string>> dict = new(() => new());
         }
 
         [Fact]
