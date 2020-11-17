@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 
 namespace AngouriMath.Core
 {
@@ -25,24 +26,27 @@ namespace AngouriMath.Core
         private T? value;
         private bool initted;
         private readonly Func<T> ctor;
+
         /// <summary>
         /// Use this in your property's getter
         /// </summary>
-        public T? Value
+        public T Value
         {
             get
             {
-                lock (ctor)
-                {
-                    if (!initted)
+                if (!initted)
+                    lock (ctor)
                     {
-                        initted = true;
-                        value = ctor();
+                        if (!initted)
+                        {
+                            initted = true;
+                            value = ctor();
+                        }
                     }
-                }
-                return value ?? throw new Exceptions.AngouriBugException("This cannot be null");
+                return value ?? throw new AngouriMath.Core.Exceptions.AngouriBugException("T shouldn't be null!");
             }
         }
+
         /// <summary>
         /// So that when records get compared, this field will not affect the result
         /// </summary>

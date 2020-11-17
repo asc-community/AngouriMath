@@ -40,7 +40,7 @@ namespace UnitTests.Core
         // are not handled by the main test thread, leading to unran tests. Using Tasks instead
         // ensures exceptions in worker threads are handled by the main test thread.
         [Fact]
-        public async Task SettingParallelSolve()
+        public void SettingParallelSolve()
         {
             static void Solve(int num) =>
                 MathS.Settings.AllowNewton.As(num % 2 == 0, () =>
@@ -49,27 +49,19 @@ namespace UnitTests.Core
                     var set = (Set)roots.Simplify();
                     Assert.Equal(num % 2 == 0, !set.IsSetEmpty);
                 });
-            var th1 = Task.Run(() => Solve(0));
-            var th2 = Task.Run(() => Solve(1));
-            var th3 = Task.Run(() => Solve(2));
-            var th4 = Task.Run(() => Solve(3));
-            await Task.WhenAll(th1, th2, th3, th4);
+            new ThreadingChecker(Solve).Run();
         }
 
         [Fact]
-        public async Task SettingParallelSeparateUse()
+        public void SettingParallelSeparateUse()
         {
             static void Checker(int num) =>
                 MathS.Settings.MaxExpansionTermCount.As(num, () =>
                 {
-                    for (int i = 0; i < 100000; i++)
+                    for (int i = 0; i < 1000; i++)
                         Assert.Equal(num, MathS.Settings.MaxExpansionTermCount.Value);
                 });
-            var th1 = Task.Run(() => Checker(0));
-            var th2 = Task.Run(() => Checker(1));
-            var th3 = Task.Run(() => Checker(2));
-            var th4 = Task.Run(() => Checker(3));
-            await Task.WhenAll(th1, th2, th3, th4);
+            new ThreadingChecker(Checker).Run(iterCount: 100);
         }
 
         [Fact]
