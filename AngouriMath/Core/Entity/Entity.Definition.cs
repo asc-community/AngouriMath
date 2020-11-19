@@ -12,6 +12,8 @@ using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using FieldCacheNamespace;
+
 //[assembly: InternalsVisibleTo("Playground, PublicKey=")]
 
 namespace AngouriMath.Core
@@ -88,7 +90,7 @@ namespace AngouriMath
         /// Represents all direct children of a node
         /// </summary>
         public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(InitDirectChildren);
-        private LazyContainer<IReadOnlyList<Entity>> directChildren;
+        private FieldCache<IReadOnlyList<Entity>> directChildren;
 
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="AngouriMath.Functions.TreeAnalyzer.GetMinimumSubtree"/></remarks>
@@ -129,7 +131,7 @@ namespace AngouriMath
         /// meaning that it could be safely used for calculations
         /// </value>
         public bool IsFinite => isFinite.GetValue(() => ThisIsFinite && DirectChildren.All(x => x.IsFinite));
-        private LazyContainer<bool> isFinite;
+        private FieldCache<bool> isFinite;
         /// <summary>
         /// Not NaN and not infinity
         /// </summary>
@@ -139,7 +141,7 @@ namespace AngouriMath
         // TODO: improve measurement of Entity complexity, for example
         // (1 / x ^ 2).Complexity() &lt; (x ^ (-0.5)).Complexity()
         public int Complexity => complexity.GetValue(() => 1 + DirectChildren.Sum(x => x.Complexity));
-        private LazyContainer<int> complexity;
+        private FieldCache<int> complexity;
 
         /// <summary>
         /// Set of unique variables, for example 
@@ -161,7 +163,7 @@ namespace AngouriMath
         /// </returns>
         public IReadOnlyCollection<Variable> VarsAndConsts => varsAndConsts.GetValue(
             () => new HashSet<Variable>(this is Variable v ? new[] { v } : DirectChildren.SelectMany(x => x.VarsAndConsts)));
-        private LazyContainer<IReadOnlyCollection<Variable>> varsAndConsts;
+        private FieldCache<IReadOnlyCollection<Variable>> varsAndConsts;
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>
@@ -181,7 +183,7 @@ namespace AngouriMath
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
         /// </summary>
         public double SimplifiedRate => simplifiedRate.GetValue(() => MathS.Settings.ComplexityCriteria.Value(this));
-        private LazyContainer<double> simplifiedRate;
+        private FieldCache<double> simplifiedRate;
 
         /// <summary>Checks whether the given expression contains variable</summary>
         public bool IsSymbolic => Vars.Any();

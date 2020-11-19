@@ -11,12 +11,16 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sets;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Boolean;
+using Antlr4.Runtime.Misc;
+using FieldCacheNamespace;
 using static AngouriMath.Entity.Number;
+using Complex = AngouriMath.Entity.Number.Complex;
 
 namespace AngouriMath
 {
@@ -567,12 +571,12 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override bool IsSetFinite => isSetFinite.GetValue(() =>
                     Left is FiniteSet finite1 && Right is FiniteSet finite2 && finite1.IsSetFinite && finite2.IsSetFinite);
-                private LazyContainer<bool> isSetFinite;
+                private FieldCache<bool> isSetFinite;
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => isSetEmpty.GetValue(() =>
                     Left is FiniteSet finite1 && Right is FiniteSet finite2 && finite1.IsSetEmpty && finite2.IsSetEmpty);
-                private LazyContainer<bool> isSetEmpty;
+                private FieldCache<bool> isSetEmpty;
             }
             #endregion
 
@@ -613,13 +617,13 @@ namespace AngouriMath
                 public override bool IsSetFinite => isSetFinite.GetValue(() => 
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && (finite1.IsSetFinite || finite2.IsSetFinite));
-                private LazyContainer<bool> isSetFinite;
+                private FieldCache<bool> isSetFinite;
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => isSetEmpty.GetValue(() =>
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite2.IsSetEmpty));
-                private LazyContainer<bool> isSetEmpty;
+                private FieldCache<bool> isSetEmpty;
             }
             #endregion
 
@@ -659,13 +663,13 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override bool IsSetFinite => isSetFinite.GetValue(() =>
                     Left is FiniteSet finite1 && Right is FiniteSet && finite1.IsSetFinite);
-                private LazyContainer<bool> isSetFinite;
+                private FieldCache<bool> isSetFinite;
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => isSetEmpty.GetValue(() =>
                     Left is FiniteSet finite1 && Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite1 == finite2));
-                private LazyContainer<bool> isSetEmpty;
+                private FieldCache<bool> isSetEmpty;
             }
             #endregion
         }

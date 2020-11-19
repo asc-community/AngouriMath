@@ -13,6 +13,8 @@ using System;
 using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using System.Linq;
+using System.Numerics;
+using FieldCacheNamespace;
 
 namespace AngouriMath
 {
@@ -28,7 +30,7 @@ namespace AngouriMath
         /// symbolic algebra systems it is called "Automatic simplification"
         /// </summary>
         public Entity InnerSimplified => innerSimplified.GetValue(InnerSimplifyWithCheck);
-        private LazyContainer<Entity> innerSimplified;
+        private FieldCache<Entity> innerSimplified;
 
         /// <summary>
         /// Make sure you call this function inside of <see cref="InnerSimplify"/>
@@ -115,7 +117,7 @@ namespace AngouriMath
         /// (cached value)
         /// </summary>
         public Entity Evaled => evaled.GetValue(InnerEvalWithCheck);
-        private LazyContainer<Entity> evaled;
+        private FieldCache<Entity> evaled;
 
 
         /// <summary>
@@ -147,6 +149,6 @@ namespace AngouriMath
         /// <summary>
         /// Determines whether a given element can be unambiguously used as a number or boolean
         /// </summary>
-        public bool IsConstant => Evaled is Complex or Boolean || Evaled is Variable v && Variable.ConstantList.ContainsKey(v);
+        public bool IsConstant => Evaled is Number.Complex or Boolean || Evaled is Variable v && Variable.ConstantList.ContainsKey(v);
     }
 }

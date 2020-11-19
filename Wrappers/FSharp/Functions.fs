@@ -37,6 +37,8 @@ let as_bool expr =
 let solve x expr =
     (parse expr).Solve(parse_symbol x)
 
-
-let latex (x : obj) =
+let latex x =
     (parse x).Latexise()
+
+let substitute x value expr =
+    (parse expr).Substitute(parse x, parse value)
