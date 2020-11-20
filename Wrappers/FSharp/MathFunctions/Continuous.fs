@@ -1,4 +1,4 @@
-﻿module MathFunctions
+﻿module Continuous
 
 open Core
 open AngouriMath
@@ -12,6 +12,8 @@ let sqr x = MathS.Sqr(parse x)
 let sqrt x = MathS.Sqrt(parse x)
 
 let cbrt x = MathS.Cbrt(parse x)
+
+let pow x power = MathS.Pow(x, power)
 
 let factorial x = MathS.Factorial(parse x)
 

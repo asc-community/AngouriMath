@@ -12,11 +12,15 @@ let simplify x =
 let differentiate x expr =
     (parse expr).Differentiate(parse_symbol x)
 
+let diff x expr = differentiate x expr
+
 let integrate x expr = 
     (parse expr).Integrate(parse_symbol x)
 
 let limit x destination expr =
     (parse expr).Limit(parse_symbol x, parse destination)
+
+let lim x destination expr = limit x destination expr
 
 let limit_sided x destination expr side =
     match side with
