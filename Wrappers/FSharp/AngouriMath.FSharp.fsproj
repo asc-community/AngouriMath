@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath" Version="1.2.0-preview.4" />
+    <PackageReference Include="AngouriMath" Version="1.2.0-preview.5" />
   </ItemGroup>
 
 </Project>

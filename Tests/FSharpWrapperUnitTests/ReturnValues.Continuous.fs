@@ -1,14 +1,8 @@
-module BasicOperations.ReturnValues
+module ReturnValues.Continuous
 
 open Core
-open Functions
-open MathFunctions
 open MathFunctions.Continuous
-open MathFunctions.Discrete
-open MathFunctions.Order
 open Xunit
-
-
 
 let x = symbol "x"
 

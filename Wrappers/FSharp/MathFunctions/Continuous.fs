@@ -55,11 +55,11 @@ let coth x = MathS.TrigonometricHyperpolic.Cotanh(parse x)
 
 let sech x = MathS.TrigonometricHyperpolic.Sech(parse x)
 
-let csch x = MathS.TrigonometricHyperpolic.Arccosech(parse x)
+let csch x = MathS.TrigonometricHyperpolic.Cosech(parse x)
 
 let asinh x = MathS.TrigonometricHyperpolic.Arcsinh(parse x)
 
-let acosh x = MathS.TrigonometricHyperpolic.Arccosech(parse x)
+let acosh x = MathS.TrigonometricHyperpolic.Arccosh(parse x)
 
 let atanh x = MathS.TrigonometricHyperpolic.Arctanh(parse x)
 
