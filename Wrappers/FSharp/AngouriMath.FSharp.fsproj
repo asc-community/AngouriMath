@@ -11,8 +11,8 @@
 	<PackageIcon>icon.png</PackageIcon>
 	<RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
 	<PackageTags>fsharp, math, calculus, symbolic algebra, computer algebra, latex</PackageTags>
-	<PackageReleaseNotes>Global obj*obj overriding removed, minor fixes</PackageReleaseNotes>
-	<Version>1.0.0-preview.2</Version>
+	<PackageReleaseNotes>Lots of functions added (so that could be called without parsing from a string)</PackageReleaseNotes>
+	<Version>1.0.0-preview.3</Version>
 	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	<Authors>WhiteBlackGoose</Authors>
 	<Company>Angouri</Company>

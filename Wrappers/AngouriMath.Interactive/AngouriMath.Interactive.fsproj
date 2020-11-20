@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.0.0-preview.3</Version>
+    <Version>1.0.0-preview.4</Version>
     <Authors>WhiteBlackGoose</Authors>
     <Company>Angouri</Company>
     <Product>Wrapper of AngouriMath for Interactive</Product>
@@ -11,7 +11,7 @@
     <PackageProjectUrl></PackageProjectUrl>
     <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
     <PackageTags>interactive</PackageTags>
-    <PackageReleaseNotes>Moved to F#</PackageReleaseNotes>
+    <PackageReleaseNotes>Dependency update</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
@@ -21,7 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath.FSharp" Version="1.0.0-preview.2" />
+    <PackageReference Include="AngouriMath.FSharp" Version="1.0.0-preview.3" />
     <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.20553.2" />
   </ItemGroup>
 
