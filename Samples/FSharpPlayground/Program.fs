@@ -1,6 +1,6 @@
 ﻿open Core
 open Functions
-open Continuous
+open MathFunctions.Continuous
 open Constants
 
 let x, y = symbol "x", symbol "y"
