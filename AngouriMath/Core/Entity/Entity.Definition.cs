@@ -89,12 +89,13 @@ namespace AngouriMath
         /// <summary>
         /// Represents all direct children of a node
         /// </summary>
-        public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(InitDirectChildren);
+        public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(@this => @this.InitDirectChildren(), this);
         private FieldCache<IReadOnlyList<Entity>> directChildren;
 
-        /// <remarks>A depth-first enumeration is required by
+    /// <remarks>A depth-first enumeration is required by
         /// <see cref="AngouriMath.Functions.TreeAnalyzer.GetMinimumSubtree"/></remarks>
-        public IEnumerable<Entity> Nodes => DirectChildren.SelectMany(c => c.Nodes).Prepend(this);
+        public IEnumerable<Entity> Nodes => nodes.GetValue(@this => @this.DirectChildren.SelectMany(c => c.Nodes).Prepend(@this), this);
+        private FieldCache<IEnumerable<Entity>> nodes;
 
         /// <summary>
         /// Applies the given function to every node starting from the leaves
@@ -130,7 +131,7 @@ namespace AngouriMath
         /// Whether both parts of the complex number are finite
         /// meaning that it could be safely used for calculations
         /// </value>
-        public bool IsFinite => isFinite.GetValue(() => ThisIsFinite && DirectChildren.All(x => x.IsFinite));
+        public bool IsFinite => isFinite.GetValue(@this => @this.ThisIsFinite && @this.DirectChildren.All(x => x.IsFinite), this);
         private FieldCache<bool> isFinite;
         /// <summary>
         /// Not NaN and not infinity
@@ -140,7 +141,7 @@ namespace AngouriMath
         /// <value>Number of nodes in tree</value>
         // TODO: improve measurement of Entity complexity, for example
         // (1 / x ^ 2).Complexity() &lt; (x ^ (-0.5)).Complexity()
-        public int Complexity => complexity.GetValue(() => 1 + DirectChildren.Sum(x => x.Complexity));
+        public int Complexity => complexity.GetValue(@this => 1 + @this.DirectChildren.Sum(x => x.Complexity), this);
         private FieldCache<int> complexity;
 
         /// <summary>
@@ -151,8 +152,9 @@ namespace AngouriMath
         /// Set of unique variables excluding mathematical constants
         /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
-        public IEnumerable<Variable> Vars => VarsAndConsts.Where(x => !x.IsConstant);
-        
+        public IEnumerable<Variable> Vars => vars.GetValue(@this => @this.VarsAndConsts.Where(x => !x.IsConstant), this);
+        private FieldCache<IEnumerable<Variable>> vars;
+
         /// <summary>
         /// Set of unique variables, for example 
         /// it extracts <c>`x`</c>, <c>`goose`</c> from <c>(x + 2 * goose) - pi * x</c>
@@ -162,7 +164,7 @@ namespace AngouriMath
         /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
         public IReadOnlyCollection<Variable> VarsAndConsts => varsAndConsts.GetValue(
-            () => new HashSet<Variable>(this is Variable v ? new[] { v } : DirectChildren.SelectMany(x => x.VarsAndConsts)));
+            @this => new HashSet<Variable>(@this is Variable v ? new[] { v } : @this.DirectChildren.SelectMany(x => x.VarsAndConsts)), this);
         private FieldCache<IReadOnlyCollection<Variable>> varsAndConsts;
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
@@ -182,7 +184,7 @@ namespace AngouriMath
         /// shows how convenient it is to view the expression. This depends on 
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
         /// </summary>
-        public double SimplifiedRate => simplifiedRate.GetValue(() => MathS.Settings.ComplexityCriteria.Value(this));
+        public double SimplifiedRate => simplifiedRate.GetValue(MathS.Settings.ComplexityCriteria.Value, this);
         private FieldCache<double> simplifiedRate;
 
         /// <summary>Checks whether the given expression contains variable</summary>
