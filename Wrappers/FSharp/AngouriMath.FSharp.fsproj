@@ -21,6 +21,10 @@
   <ItemGroup>
     <Compile Include="Constants.fs" />
     <Compile Include="Core.fs" />
+    <Compile Include="MathFunctions\Order.fs" />
+    <Compile Include="MathFunctions\Discrete.fs" />
+
+    <Compile Include="MathFunctions\Continuous.fs" />
     <Compile Include="Functions.fs" />
     <Compile Include="Operators.fs" />
   </ItemGroup>
@@ -37,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath" Version="1.2.0-preview.4" />
+    <PackageReference Include="AngouriMath" Version="1.2.0-preview.5" />
   </ItemGroup>
 
 </Project>

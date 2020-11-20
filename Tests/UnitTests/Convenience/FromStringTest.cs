@@ -135,6 +135,34 @@ namespace UnitTests.Convenience
         [Fact] public void TestArcsec() => Assert.Equal(MathS.Arcsec("x"), FromString("arcsec(x)"));
         [Fact] public void TestArccosec() => Assert.Equal(MathS.Arccosec("x"), FromString("arccsc(x)"));
 
+        [Theory]
+        [InlineData("sinh", "Sinh")]
+        [InlineData("cosh", "Cosh")]
+        [InlineData("tanh", "Tanh")]
+        [InlineData("coth", "Cotanh")]
+        [InlineData("sech", "Sech")]
+        [InlineData("csch", "Cosech")]
+        [InlineData("asinh", "Arcsinh")]
+        [InlineData("acosh", "Arccosh")]
+        [InlineData("atanh", "Arctanh")]
+        [InlineData("acoth", "Arccotanh")]
+        [InlineData("asech", "Arcsech")]
+        [InlineData("acsch", "Arccosech")]
+        public void TestHyperbolic(string parsedName, string methodName)
+        {
+            var methods = typeof(MathS.TrigonometricHyperpolic).GetMethods();
+            var withMethods = methods.Where(c => c.Name == methodName);
+            if (withMethods.Count() != 1)
+                throw new InvalidOperationException($"Incorrect method's name: {methodName}");
+            var method = withMethods.First();
+            Entity x = "x";
+            var runned = method.Invoke(null, new []{ x });
+            if (runned is not Entity expected)
+                throw new InvalidOperationException("Method returned something weird -___-");
+            var actual = MathS.FromString(parsedName + "(x)");
+            Assert.Equal(expected, actual);
+        }
+
         [Fact] public void TestInvalidArg1() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x)"));
         [Fact] public void TestInvalidArg2() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(24)"));
         [Fact] public void TestInvalidArg3() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x, x, 4, x)"));

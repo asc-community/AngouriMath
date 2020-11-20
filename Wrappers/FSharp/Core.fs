@@ -2,6 +2,7 @@
 
 open AngouriMath
 open PeterO.Numbers
+open AngouriMath.Convenience
 
 exception ExprParseException of string * obj
 
@@ -29,4 +30,10 @@ let symbol x =
     
 let set x =
     parse_g<Entity.Set> x
-    
+
+let setting<'T> (setting : Setting<'T>) (new_value : 'T) lambda =
+    setting.As(new_value, lambda)
+
+type LimSide =
+    | Left
+    | Right

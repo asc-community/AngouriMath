@@ -1,8 +1,9 @@
-﻿open Functions
+﻿open Core
+open Functions
+open MathFunctions.Continuous
+open Constants
 
-printfn "FSD"
-printfn "%O" (differentiate "x" "x + 2")
-//printfn "%O" (matrix [|
-//                [|parse 2; parse 3|]
-//                |])
-//
+let x, y = symbol "x", symbol "y"
+let expr = x * y + (sin x) * (cos x) + pow e x
+
+printfn "%O" (parse "acosh(x)")

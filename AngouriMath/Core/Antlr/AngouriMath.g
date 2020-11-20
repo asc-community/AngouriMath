@@ -242,13 +242,14 @@ atom returns[Entity value]
     | '(' expression ')' { $value = $expression.value; }
     | '{' cset_args = cset_arguments '}' { $value = new ConditionalSet($cset_args.couple.variable, $cset_args.couple.predicate); }
     | '{' args = function_arguments '}' { $value = new FiniteSet((IEnumerable<Entity>)$args.list); }
-    | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
-    | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
     | 'log(' args = function_arguments ')' { $value = Assert("log", (1, 2), $args.list.Count) ? MathS.Log(10, $args.list[0]) : MathS.Log($args.list[0], $args.list[1]); }
     | 'sqrt(' args = function_arguments ')' { Assert("sqrt", 1, $args.list.Count); $value = MathS.Sqrt($args.list[0]); }
     | 'cbrt(' args = function_arguments ')' { Assert("cbrt", 1, $args.list.Count); $value = MathS.Cbrt($args.list[0]); }
     | 'sqr(' args = function_arguments ')' { Assert("sqr", 1, $args.list.Count); $value = MathS.Sqr($args.list[0]); }
     | 'ln(' args = function_arguments ')' { Assert("ln", 1, $args.list.Count); $value = MathS.Ln($args.list[0]); }
+
+    | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
+    | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
     | 'tan(' args = function_arguments ')' { Assert("tan", 1, $args.list.Count); $value = MathS.Tan($args.list[0]); }
     | 'cotan(' args = function_arguments ')' { Assert("cotan", 1, $args.list.Count); $value = MathS.Cotan($args.list[0]); }
     | 'cot(' args = function_arguments ')' { Assert("cotan", 1, $args.list.Count); $value = MathS.Cotan($args.list[0]); }
@@ -271,6 +272,32 @@ atom returns[Entity value]
     | 'acosec(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Arccosec($args.list[0]); }
     | 'acot(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Arccotan($args.list[0]); }
     | 'arccot(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Arccotan($args.list[0]); }
+
+    | 'sinh(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Sinh($args.list[0]); }
+    | 'cosh(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Cosh($args.list[0]); }
+    | 'tanh(' args = function_arguments ')' { Assert("tan", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Tanh($args.list[0]); }
+    | 'cotanh(' args = function_arguments ')' { Assert("cotan", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Cotanh($args.list[0]); }
+    | 'coth(' args = function_arguments ')' { Assert("cotan", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Cotanh($args.list[0]); }
+    | 'sech(' args = function_arguments ')' { Assert("sec", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Sech($args.list[0]); }
+    | 'cosech(' args = function_arguments ')' { Assert("cosec", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Cosech($args.list[0]); }
+    | 'csch(' args = function_arguments ')' { Assert("cosec", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Cosech($args.list[0]); }
+    | 'arcsinh(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arcsinh($args.list[0]); }
+    | 'arccosh(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arccosh($args.list[0]); }
+    | 'arctanh(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arctanh($args.list[0]); }
+    | 'arccotanh(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arccotanh($args.list[0]); }
+    | 'arcsech(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arcsech($args.list[0]); }
+    | 'arccosech(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arccosech($args.list[0]); }
+    | 'arccsch(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arccosech($args.list[0]); }
+    | 'acsch(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arccosech($args.list[0]); }
+    | 'asinh(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arcsinh($args.list[0]); }
+    | 'acosh(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arccosh($args.list[0]); }
+    | 'atanh(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arctanh($args.list[0]); }
+    | 'acotanh(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arccotanh($args.list[0]); }
+    | 'asech(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arcsech($args.list[0]); }
+    | 'acosech(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arccosech($args.list[0]); }
+    | 'acoth(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arccotanh($args.list[0]); }
+    | 'arccoth(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.TrigonometricHyperpolic.Arccotanh($args.list[0]); }
+
     | 'gamma(' args = function_arguments ')' { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); }
     | 'derivative(' args = function_arguments ')' 
         {

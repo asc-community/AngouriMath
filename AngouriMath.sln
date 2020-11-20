@@ -28,6 +28,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.github\workflows\Build.yml = .github\workflows\Build.yml
 		CHANGELOG.md = CHANGELOG.md
 		Directory.Build.props = Directory.Build.props
+		.github\workflows\FSharpTest.yml = .github\workflows\FSharpTest.yml
 		LICENSE.md = LICENSE.md
 		README.md = README.md
 		.github\workflows\Test.yml = .github\workflows\Test.yml
@@ -52,9 +53,11 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "AngouriMath.FSharp", "Wrapp
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Wrappers", "Wrappers", "{C82FFADF-2F2F-4B8D-BB32-2D2F149FED4D}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharpPlayground", "Samples\FSharpPlayground\FSharpPlayground.fsproj", "{9EC8BBA5-D2F4-4A93-897A-945B8166A5D4}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FSharpPlayground", "Samples\FSharpPlayground\FSharpPlayground.fsproj", "{9EC8BBA5-D2F4-4A93-897A-945B8166A5D4}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AngouriMath.Interactive", "Wrappers\AngouriMath.Interactive\AngouriMath.Interactive.fsproj", "{60BB3472-1865-425F-A2F6-25E6C550EF84}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "AngouriMath.Interactive", "Wrappers\AngouriMath.Interactive\AngouriMath.Interactive.fsproj", "{60BB3472-1865-425F-A2F6-25E6C550EF84}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharpWrapperUnitTests", "Tests\FSharpWrapperUnitTests\FSharpWrapperUnitTests.fsproj", "{440FAFA2-BF69-479C-B590-600FBA146066}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -184,6 +187,14 @@ Global
 		{60BB3472-1865-425F-A2F6-25E6C550EF84}.Release|Any CPU.Build.0 = Release|Any CPU
 		{60BB3472-1865-425F-A2F6-25E6C550EF84}.Release|x64.ActiveCfg = Release|Any CPU
 		{60BB3472-1865-425F-A2F6-25E6C550EF84}.Release|x64.Build.0 = Release|Any CPU
+		{440FAFA2-BF69-479C-B590-600FBA146066}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{440FAFA2-BF69-479C-B590-600FBA146066}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{440FAFA2-BF69-479C-B590-600FBA146066}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{440FAFA2-BF69-479C-B590-600FBA146066}.Debug|x64.Build.0 = Debug|Any CPU
+		{440FAFA2-BF69-479C-B590-600FBA146066}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{440FAFA2-BF69-479C-B590-600FBA146066}.Release|Any CPU.Build.0 = Release|Any CPU
+		{440FAFA2-BF69-479C-B590-600FBA146066}.Release|x64.ActiveCfg = Release|Any CPU
+		{440FAFA2-BF69-479C-B590-600FBA146066}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -202,6 +213,7 @@ Global
 		{4A5272AD-B137-432B-8CE9-2A4AAD44AFA8} = {C82FFADF-2F2F-4B8D-BB32-2D2F149FED4D}
 		{9EC8BBA5-D2F4-4A93-897A-945B8166A5D4} = {D15528F2-AB50-46E2-9DB1-821B278C4931}
 		{60BB3472-1865-425F-A2F6-25E6C550EF84} = {C82FFADF-2F2F-4B8D-BB32-2D2F149FED4D}
+		{440FAFA2-BF69-479C-B590-600FBA146066} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1CD9B3-4EAB-4B8C-BDC1-03280EB31298}
