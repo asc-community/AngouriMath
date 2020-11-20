@@ -1,4 +1,4 @@
-﻿module Continuous
+﻿module MathFunctions.Continuous
 
 open Core
 open AngouriMath

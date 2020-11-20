@@ -1,4 +1,4 @@
-﻿module Discrete
+﻿module MathFunctions.Discrete
 
 open Core
 open AngouriMath

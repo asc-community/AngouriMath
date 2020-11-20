@@ -33,3 +33,7 @@ let set x =
 
 let setting<'T> (setting : Setting<'T>) (new_value : 'T) lambda =
     setting.As(new_value, lambda)
+
+type LimSide =
+    | Left
+    | Right
