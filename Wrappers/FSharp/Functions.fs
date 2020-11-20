@@ -2,8 +2,6 @@
 
 open Core
 
-printfn "Quack"
-
 type LimSide =
     | Left
     | Right

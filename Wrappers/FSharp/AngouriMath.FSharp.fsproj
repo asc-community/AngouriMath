@@ -21,6 +21,9 @@
   <ItemGroup>
     <Compile Include="Constants.fs" />
     <Compile Include="Core.fs" />
+    <Compile Include="MathFunctions\Discrete.fs" />
+
+    <Compile Include="MathFunctions\Continuous.fs" />
     <Compile Include="Functions.fs" />
     <Compile Include="Operators.fs" />
   </ItemGroup>
