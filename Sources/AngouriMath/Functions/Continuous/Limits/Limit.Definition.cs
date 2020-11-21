@@ -91,6 +91,7 @@ namespace AngouriMath
 
 namespace AngouriMath.Functions.Algebra
 {
+    using AngouriMath.Core.Exceptions;
     using Core;
     using static Entity;
     using static Entity.Number;
@@ -198,7 +199,7 @@ namespace AngouriMath.Functions.Algebra
                 else
                     return null;
             }
-            throw new System.ComponentModel.InvalidEnumArgumentException(nameof(side), (int)side, typeof(ApproachFrom));
+            throw new AngouriBugException($"Unresolved enum parameter {side}");
         }
 
         internal static Entity? ComputeLimitImpl(Entity expr, Variable x, Entity dist, ApproachFrom side) => dist switch

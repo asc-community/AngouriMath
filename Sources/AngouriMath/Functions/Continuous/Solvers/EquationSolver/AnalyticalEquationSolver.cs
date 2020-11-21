@@ -15,6 +15,7 @@ using AngouriMath.Core;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Extensions;
 using static AngouriMath.Entity.Set;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
@@ -46,7 +47,7 @@ namespace AngouriMath.Functions
         public static Entity GetMinimumSubtree(Entity expr, Variable x)
         {
             if (!expr.ContainsNode(x))
-                throw new ArgumentException($"{nameof(expr)} must contain {nameof(x)}", nameof(expr));
+                throw new AngouriBugException($"{nameof(expr)} must contain {nameof(x)}");
 
             // The idea is the following:
             // We must get a subtree that has more occurances than 1,

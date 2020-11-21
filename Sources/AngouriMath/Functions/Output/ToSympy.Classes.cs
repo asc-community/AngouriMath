@@ -192,8 +192,8 @@ namespace AngouriMath
                     ApproachFrom.Left => ", '-'",
                     ApproachFrom.BothSides => "",
                     ApproachFrom.Right => ", '+'",
-                    _ => throw new System.ComponentModel.InvalidEnumArgumentException
-                        (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
+                    _ => throw new AngouriBugException
+                        ($"Unresolved enum {ApproachFrom}")
                 }})";
         }
 

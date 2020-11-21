@@ -9,6 +9,7 @@
  */
 
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -73,10 +74,11 @@ namespace AngouriMath
                 /// <summary>
                 /// Creates an instance of Rational number
                 /// </summary>
+                /// <exception cref="InvalidNumberException">Thrown if </exception>
                 public static Rational Create(ERational value)
                 {
                     if (!value.IsFinite)
-                        throw new System.ArgumentException("Non-finite values are not rationals - use RealNumber.Create instead");
+                        throw new InvalidNumberException("Non-finite values are not rationals - use RealNumber.Create instead");
 
                     if (!MathS.Settings.DowncastingEnabled)
                         return new Rational(value.ToLowestTerms());
