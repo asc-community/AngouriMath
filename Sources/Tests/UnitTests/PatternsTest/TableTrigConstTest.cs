@@ -14,6 +14,7 @@ using static AngouriMath.Entity.Number;
 using System;
 using System.Linq;
 using Xunit;
+using AngouriMath.Core.Exceptions;
 
 namespace UnitTests.PatternsTest
 {
@@ -35,7 +36,7 @@ namespace UnitTests.PatternsTest
         {
             var toSimplify =
                 (Entity?)typeof(MathS).GetMethod(trigFunc)?.Invoke(null, new object[] { 2 * MathS.pi / twoPiOver })
-                ?? throw new ArgumentException($"{trigFunc} not found.", nameof(trigFunc));
+                ?? throw new Exception($"{trigFunc} not found.");
             var expected = Assert.IsAssignableFrom<Real>(toSimplify.EvalNumerical());
             var actual = Assert.IsAssignableFrom<Real>(toSimplify.InnerSimplified.EvalNumerical());
             AssertEqualWithoutLast3Digits(expected, actual);

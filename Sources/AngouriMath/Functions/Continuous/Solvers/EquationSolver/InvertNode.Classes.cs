@@ -21,7 +21,7 @@ namespace AngouriMath
         partial record Number
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
+                => throw new AngouriBugException("This function must contain " + nameof(x));
         }
 
         partial record Variable
@@ -257,7 +257,7 @@ namespace AngouriMath
         partial record Boolean
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw new ArgumentException("This function must contain " + nameof(x), nameof(x));
+                => throw new AngouriBugException("This function must contain " + nameof(x));
         }
 
         partial record Notf

@@ -13,7 +13,7 @@ using System.Reflection;
 namespace AngouriMath.Core.Exceptions
 {
     /// <summary>If one was thrown, the exception is probably not foreseen by AM. Report it is an issue</summary>
-    public sealed class AngouriBugException : Exception
+    public sealed class AngouriBugException : AngouriMathBaseException
     { 
         internal AngouriBugException(string msg) : base(msg + "\n please report about it to the official repository") { } 
     }
@@ -22,17 +22,17 @@ namespace AngouriMath.Core.Exceptions
     /// Is thrown when the requested feature is still under developing
     /// or not considered to be developed at all
     /// </summary>
-    public sealed class FutureReleaseException : NotImplementedException
+    public sealed class FutureReleaseException : AngouriMathBaseException
     {
         private FutureReleaseException(string msg) : base(msg) {}
 
-        internal static Exception Raised(string feature, string plannedVersion)
+        internal static Exception Raised(string feature, string? plannedVersion = null)
         {
             var currVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            if (plannedVersion != "?" && currVersion > new Version(plannedVersion))
-                return new AngouriBugException($"{feature} was planned for {plannedVersion} but hasn't been released by {currVersion}");
-            else if (plannedVersion == "?")
-                return new FutureReleaseException($"It is unclear when {feature} will be fixed");
+            if (plannedVersion is { } version && currVersion > new Version(version))
+                return new AngouriBugException($"{feature} was planned for {version} but hasn't been released by {version}");
+            else if (plannedVersion is null)
+                return new FutureReleaseException($"It is unclear when {feature} will be added/fixed");
             else
                 return new FutureReleaseException($"Feature {feature} will be completed by {plannedVersion}. You are on {currVersion}");
         }
@@ -43,7 +43,7 @@ namespace AngouriMath.Core.Exceptions
     /// for example, it may occur if either AM or SymPy does not
     /// support some specific feature
     /// </summary>
-    public sealed class NotSufficientlySupportedException : Exception
+    public sealed class NotSufficientlySupportedException : AngouriMathBaseException
     {
         internal NotSufficientlySupportedException(string msg) : base(msg) { }
     }

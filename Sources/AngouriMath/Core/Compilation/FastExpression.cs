@@ -113,14 +113,14 @@ namespace AngouriMath.Core
 
         /// <summary>Calls the compiled function (synonym to <see cref="Call(Complex[])"/>)</summary>
         /// <param name="values">List arguments in the same order in which you compiled the function</param>
-        /// <exception cref="System.ArgumentException">
+        /// <exception cref="WrongNumberOfArgumentsException">
         /// Thrown when the length of <paramref name="values"/> does not match the number of variables compiled.
         /// </exception>
         // TODO: Optimization
         public Complex Substitute(params Complex[] values)
         {
             if (values.Length != varCount)
-                throw new System.ArgumentException($"Wrong number of parameters: Expected {varCount} but {values.Length} provided");
+                throw new WrongNumberOfArgumentsException($"Wrong number of parameters: Expected {varCount} but {values.Length} provided");
             foreach (var instruction in instructions)
                 switch (instruction.Type)
                 {

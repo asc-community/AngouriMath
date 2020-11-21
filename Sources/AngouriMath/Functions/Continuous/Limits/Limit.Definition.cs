@@ -91,6 +91,7 @@ namespace AngouriMath
 
 namespace AngouriMath.Functions.Algebra
 {
+    using AngouriMath.Core.Exceptions;
     using Core;
     using static Entity;
     using static Entity.Number;
@@ -198,7 +199,7 @@ namespace AngouriMath.Functions.Algebra
                 else
                     return null;
             }
-            throw new System.ComponentModel.InvalidEnumArgumentException(nameof(side), (int)side, typeof(ApproachFrom));
+            throw new AngouriBugException($"Unresolved enum parameter {side}");
         }
 
         internal static Entity? ComputeLimitImpl(Entity expr, Variable x, Entity dist, ApproachFrom side) => dist switch
@@ -211,7 +212,7 @@ namespace AngouriMath.Functions.Algebra
             // compute limit for x -> +oo
             Real { IsFinite: false, IsNegative: false } => SimplifyAndComputeLimitToInfinity(expr, x),
             Complex { IsFinite: false } =>
-                throw new Core.Exceptions.LimitOperationNotSupportedException($"Complex infinities are not supported in limits: lim({x} -> {dist}) {expr}"),
+                throw new LimitOperationNotSupportedException($"Complex infinities are not supported in limits: lim({x} -> {dist}) {expr}"),
             _ => SimplifyAndComputeLimitToInfinity(side switch
             {
                 // lim(x -> 3-) x <=> lim(x -> 0+) 3 - x <=> lim(x -> +oo) 3 - 1 / x

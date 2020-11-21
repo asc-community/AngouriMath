@@ -11,6 +11,7 @@ using System;
 using System.Linq;
 using GenericTensor.Core;
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
@@ -62,12 +63,12 @@ namespace AngouriMath
 
                 public byte[] Serialize(Entity a)
                 {
-                    throw new NotImplementedException("Serialization is not planned");
+                    throw FutureReleaseException.Raised("Serialization");
                 }
 
                 public Entity Deserialize(byte[] data)
                 {
-                    throw new NotImplementedException("Deserialization is not planned");
+                    throw FutureReleaseException.Raised("Deserialization");
                 }
             }
 #pragma warning restore CS1591
@@ -124,7 +125,7 @@ namespace AngouriMath
             public void Transpose()
             {
                 if (IsMatrix) InnerTensor.TransposeMatrix();
-                else throw new Core.Exceptions.InvalidMatrixOperationException("Specify axes numbers for non-matrices");
+                else throw new InvalidMatrixOperationException("Specify axes numbers for non-matrices");
             }
 
             // We do not need to use Gaussian elimination here

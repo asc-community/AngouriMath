@@ -26,7 +26,7 @@ namespace AngouriMath
         /// <returns>
         /// <see cref="Complex"/> since new version
         /// </returns>
-        /// <exception cref="InvalidOperationException">
+        /// <exception cref="CannotEvalException">
         /// Thrown when this entity cannot be represented as a simple number.
         /// <see cref="EvaluableNumerical"/> should be used to check beforehand.
         /// </exception>

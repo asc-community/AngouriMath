@@ -8,6 +8,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -41,18 +42,19 @@ namespace AngouriMath.Functions.Boolean
             states[id] = true;
             return true;
         }
-        
+
         /// <summary>
         /// Returns a tensor of solutions over <paramref name="variables"/> so that
         /// the expression turns into a True when evaled. Computes the roots by
         /// compiling the truth table
         /// </summary>
+        /// <exception cref="WrongNumberOfArgumentsException"/>
         internal static Tensor? SolveTable(Entity expr, Variable[] variables)
         {
             var count = expr.Vars.Count();
             // TODO: we probably also should verify the uniqueness of the given variables
             if (count != variables.Length)
-                throw new ArgumentException("Number of variables must equal number of variables in the expression");
+                throw new WrongNumberOfArgumentsException("Number of variables must equal number of variables in the expression");
             var states = new bool[variables.Length];
             var tb = new TensorBuilder(count);
             var variablesStorage = new Dictionary<Variable, Entity>();
@@ -73,7 +75,7 @@ namespace AngouriMath.Functions.Boolean
             var count = expr.Vars.Count();
             // TODO: we probably also should verify the uniqueness of the given variables
             if (count != variables.Length)
-                throw new ArgumentException("Number of variables must equal number of variables in the expression");
+                throw new WrongNumberOfArgumentsException("Number of variables must equal number of variables in the expression");
             var states = new bool[variables.Length];
             var tb = new TensorBuilder(count + 1);
             var variablesStorage = new Dictionary<Variable, Entity>();

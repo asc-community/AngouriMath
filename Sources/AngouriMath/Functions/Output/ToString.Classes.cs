@@ -8,6 +8,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using System.Linq;
 using static AngouriMath.Entity.Number;
 
@@ -21,7 +22,9 @@ namespace AngouriMath
             /// Extension for <see cref="Real"/>
             /// <a href="https://en.wikipedia.org/wiki/Complex_number"/>
             /// </summary>
+#pragma warning disable SealedOrAbstract // AMAnalyzer
             partial record Complex
+#pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <inheritdoc/>
                 public override string Stringize()
@@ -47,7 +50,9 @@ namespace AngouriMath
                 public override string ToString() => Stringize();
             }
 
+#pragma warning disable SealedOrAbstract // AMAnalyzer
             partial record Real
+#pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <inheritdoc/>
                 public override string Stringize() => this switch
@@ -61,7 +66,9 @@ namespace AngouriMath
                 public override string ToString() => Stringize();
             }
 
+#pragma warning disable SealedOrAbstract // AMAnalyzer
             partial record Rational
+#pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <inheritdoc/>
                 public override string Stringize() => ERational.ToString();
@@ -298,8 +305,8 @@ namespace AngouriMath
                     ApproachFrom.Left => "limitleft",
                     ApproachFrom.BothSides => "limit",
                     ApproachFrom.Right => "limitright",
-                    _ => throw new System.ComponentModel.InvalidEnumArgumentException
-                        (nameof(ApproachFrom), (int)ApproachFrom, typeof(ApproachFrom))
+                    _ => throw new AngouriBugException
+                        ($"Unresolved enum {ApproachFrom}")
                 } + $"({Expression.Stringize()}, {Var.Stringize()}, {Destination.Stringize()})";
             /// <inheritdoc/>
             public override string ToString() => Stringize();

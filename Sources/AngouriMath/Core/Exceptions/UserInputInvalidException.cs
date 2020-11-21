@@ -3,10 +3,13 @@
 namespace AngouriMath.Core.Exceptions
 {
     /// <summary>If one is thrown, the user's input is invalid</summary>
-    public abstract class MathSException : ArgumentException { internal MathSException(string message) : base(message) { } }
+    public abstract class MathSException : AngouriMathBaseException { internal MathSException(string message) : base(message) { } }
 
     /// <summary>Thrown inside operations related to limits</summary>
     public sealed class LimitOperationNotSupportedException : MathSException { internal LimitOperationNotSupportedException(string message) : base(message) { } }
+
+    /// <summary>Thrown when an invalid number is passed as an argument</summary>
+    public sealed class InvalidNumberException : MathSException { internal InvalidNumberException(string msg) : base(msg) { } }
 
     /// <summary>Quite general, is thrown when too many or too few of whatever is provided</summary>
     public sealed class WrongNumberOfArgumentsException : MathSException { internal WrongNumberOfArgumentsException(string message) : base(message) { } }

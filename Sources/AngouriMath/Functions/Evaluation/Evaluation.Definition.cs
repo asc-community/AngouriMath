@@ -15,6 +15,7 @@ using static AngouriMath.Entity.Number;
 using System.Linq;
 using System.Numerics;
 using FieldCacheNamespace;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
@@ -136,13 +137,13 @@ namespace AngouriMath
         ///               
         /// ( 1 2 ) x ( 1 3 ) => ( 1 6 ) Vectors pointwise
         /// </summary>
-        /// <exception cref="InvalidOperationException">
+        /// <exception cref="CannotEvalException">
         /// Thrown when this entity cannot be represented as a <see cref="Tensor"/>.
         /// <see cref="IsTensoric"/> should be used to check beforehand.
         /// </exception>
         public Tensor EvalTensor() =>
             Evaled is Tensor value ? value :
-                throw new InvalidOperationException
+                throw new CannotEvalException
                     ($"Result cannot be represented as a {nameof(Tensor)}! Check the type of {nameof(Evaled)} beforehand.");
 
         /// <summary>
