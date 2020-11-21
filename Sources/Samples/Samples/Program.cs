@@ -40,7 +40,7 @@ using static System.Console;
 
 //WriteLine(MathS.TryPolynomial(mat.Det
 
-WriteLine("phi(2^x) / 2^x".Simplify());
+WriteLine("1 + 1 / x".Simplify());
 
 //WriteLine("(log(e, x) * (log(e, x) + 1) * x ^ x + x ^ (x - 1)) * x ^ x ^ x".Latexise());
 

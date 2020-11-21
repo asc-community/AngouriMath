@@ -22,7 +22,9 @@ namespace AngouriMath
             /// Extension for <see cref="Real"/>
             /// <a href="https://en.wikipedia.org/wiki/Complex_number"/>
             /// </summary>
+#pragma warning disable SealedOrAbstract // AMAnalyzer
             partial record Complex
+#pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <inheritdoc/>
                 public override string Stringize()
@@ -48,7 +50,9 @@ namespace AngouriMath
                 public override string ToString() => Stringize();
             }
 
+#pragma warning disable SealedOrAbstract // AMAnalyzer
             partial record Real
+#pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <inheritdoc/>
                 public override string Stringize() => this switch
@@ -62,7 +66,9 @@ namespace AngouriMath
                 public override string ToString() => Stringize();
             }
 
+#pragma warning disable SealedOrAbstract // AMAnalyzer
             partial record Rational
+#pragma warning restore SealedOrAbstract // AMAnalyzer
             {
                 /// <inheritdoc/>
                 public override string Stringize() => ERational.ToString();
