@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 //[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests")]
 
@@ -531,7 +532,7 @@ namespace AngouriMath
         }
 
         public static EInteger Factorial(this EInteger n) =>
-            n.CanFitInInt32() ? Factorial(n.ToInt32Checked()) : throw new OutOfMemoryException();
+            n.CanFitInInt32() ? Factorial(n.ToInt32Checked()) : throw new InvalidNumberException("The number is too huge");
 
         /**
          * <summary>
@@ -574,7 +575,7 @@ namespace AngouriMath
             catch { } // EDecimal does not fit in an int32
 
             if (!mathContext.Precision.CanFitInInt32())
-                throw new ArgumentOutOfRangeException($"The precision of the {nameof(mathContext)} is outside the int32 range");
+                throw new WrongNumberOfArgumentsException($"The precision of the {nameof(mathContext)} is outside the int32 range");
 
             // https://en.wikipedia.org/wiki/Spouge%27s_approximation
             var mc = mathContext.WithBigPrecision(mathContext.Precision << 1);

@@ -26,13 +26,13 @@ namespace AngouriMath.Core.Exceptions
     {
         private FutureReleaseException(string msg) : base(msg) {}
 
-        internal static Exception Raised(string feature, string plannedVersion)
+        internal static Exception Raised(string feature, string? plannedVersion = null)
         {
             var currVersion = Assembly.GetExecutingAssembly().GetName().Version;
-            if (plannedVersion != "?" && currVersion > new Version(plannedVersion))
-                return new AngouriBugException($"{feature} was planned for {plannedVersion} but hasn't been released by {currVersion}");
-            else if (plannedVersion == "?")
-                return new FutureReleaseException($"It is unclear when {feature} will be fixed");
+            if (plannedVersion is { } version && currVersion > new Version(version))
+                return new AngouriBugException($"{feature} was planned for {version} but hasn't been released by {version}");
+            else if (plannedVersion is null)
+                return new FutureReleaseException($"It is unclear when {feature} will be added/fixed");
             else
                 return new FutureReleaseException($"Feature {feature} will be completed by {plannedVersion}. You are on {currVersion}");
         }

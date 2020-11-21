@@ -9,6 +9,7 @@
  */
 using System;
 using System.Collections.Generic;
+using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -61,7 +62,7 @@ namespace AngouriMath
                 (Rational r1, Rational r2) => ifRat(r1, r2),
                 (Real r1, Real r2) => ifReal(r1, r2),
                 (Complex c1, Complex c2) => ifCom(c1, c2),
-                _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
+                _ => throw new AngouriBugException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
             };
 
             /// <summary>
@@ -81,7 +82,7 @@ namespace AngouriMath
                     (Rational r1, Rational r2) => ifRat(r1, r2),
                     (Real r1, Real r2) => ifReal(r1, r2),
                     (Complex c1, Complex c2) => ifCom(c1, c2),
-                    _ => throw new NotSupportedException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
+                    _ => throw new AngouriBugException($"({num1.GetType()}, {num2.GetType()}) is not supported.")
                 });
 
             internal static T OpSum<T>(T a, T b) where T : Number =>
@@ -647,7 +648,7 @@ namespace AngouriMath
                 }
 
                 if (!mathContext.Precision.CanFitInInt32())
-                    throw new ArgumentOutOfRangeException($"The precision of the {nameof(mathContext)} is outside the int32 range");
+                    throw new CannotEvalException($"The precision of the {nameof(mathContext)} is outside the int32 range");
 
                 Complex result = Real.NaN;
 

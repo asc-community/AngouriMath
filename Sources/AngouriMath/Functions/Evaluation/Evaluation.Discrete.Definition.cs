@@ -25,7 +25,7 @@ namespace AngouriMath
         /// <returns>
         /// <see cref="Boolean"/>
         /// </returns>
-        /// <exception cref="InvalidOperationException">
+        /// <exception cref="CannotEvalException">
         /// Thrown when this entity cannot be represented as a simple boolean.
         /// <see cref="EvalBoolean"/> should be used to check beforehand.
         /// </exception>
