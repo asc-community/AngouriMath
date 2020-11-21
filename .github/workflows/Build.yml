@@ -16,7 +16,9 @@ jobs:
       with:
         dotnet-version: '5.0.100'
     - name: Build
-      run: dotnet build AngouriMath || dotnet build AngouriMath || dotnet build AngouriMath
+      run: |
+        cd Sources
+        dotnet build AngouriMath || dotnet build AngouriMath || dotnet build AngouriMath
   Everything:
     runs-on: windows-latest  # Window application cannot be run on other OS
     steps:
@@ -27,9 +29,13 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '5.0.100'
-    - name: Build
-      run: |
-        dotnet build AngouriMath/AngouriMath.csproj
-        dotnet build FSharp/AngouriMath.FSharp.fsproj
-        dotnet build Analyzers/Analyzers/Analyzers.csproj
-        dotnet build Utils/Utils/Utils.csproj
+    - name: Build AM
+      run: dotnet build Sources/AngouriMath/AngouriMath.csproj
+    - name: Build FSharp
+      run: dotnet build Sources/Wrappers/FSharp/AngouriMath.FSharp.csproj
+    - name: Build Interactive
+      run: dotnet build Sources/Wrappers/AngouriMath.Interactive/AngouriMath.Interactive.csproj
+    - name: Build Analyzers
+      run: dotnet build Sources/Analyzers/Analyzers/Analyzers.csproj
+    - name: Build Utils
+      run: dotnet build Sources/Utils/Utils/Utils.csproj

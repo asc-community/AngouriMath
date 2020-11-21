@@ -17,6 +17,10 @@ jobs:
       with:
         dotnet-version: '5.0.100'
     - name: Build benchmark
-      run: dotnet build Tests/DotnetBenchmark || dotnet build Tests/DotnetBenchmark || dotnet build Tests/DotnetBenchmark
+      run: |
+        cd Sources
+        dotnet build Tests/DotnetBenchmark || dotnet build Tests/DotnetBenchmark || dotnet build Tests/DotnetBenchmark
     - name: Benchmark
-      run: dotnet run -p Tests/DotnetBenchmark -c Release
+      run: |
+        cd Sources
+        dotnet run -p Tests/DotnetBenchmark -c Release

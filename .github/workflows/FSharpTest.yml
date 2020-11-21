@@ -18,9 +18,9 @@ jobs:
         dotnet-version: '5.0.100'
     - name: Build Tests # We need it to be able to retry
       run: |
-        dotnet add "Tests/FSharpWrapperUnitTests" package Microsoft.NET.Test.Sdk # Update is required for GitHubActionsTestLogger to print anything
-        dotnet add "Tests/FSharpWrapperUnitTests" package GitHubActionsTestLogger
-        dotnet build Tests/FSharpWrapperUnitTests
+        dotnet add "Sources/Tests/FSharpWrapperUnitTests" package Microsoft.NET.Test.Sdk # Update is required for GitHubActionsTestLogger to print anything
+        dotnet add "Sources/Tests/FSharpWrapperUnitTests" package GitHubActionsTestLogger
+        dotnet build Sources/Tests/FSharpWrapperUnitTests
     - name: Test
       run: |
-        dotnet test "Tests/FSharpWrapperUnitTests" -c Release -l GitHubActions
+        dotnet test "Sources/Tests/FSharpWrapperUnitTests" -c Release -l GitHubActions
