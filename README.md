@@ -321,7 +321,7 @@ on <a href="https://github.com/asc-community/AngouriMath/projects">this page</a>
 Use pull requests to contribute to it. We also appreciate early pull requests so that we know what you are improving and
 can help you with something.
 
-Documentation for contributors and developers is <a href="./AngouriMath/Docs/Contributing/README.md">here</a>.
+Documentation for contributors and developers is <a href="./Sources/AngouriMath/Docs/Contributing/README.md">here</a>.
 
 ## License
 

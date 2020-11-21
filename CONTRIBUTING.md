@@ -2,7 +2,7 @@
 
 We warmly welcome any contributors and contributions to our project. You should not hesitate to open pull requests and ask us about any issue you encounter while writing your code. Not to break this cozy atmosphere, there are a few recommendations to follow.
 
-Links for TLDR: ![current tasks](https://github.com/asc-community/AngouriMath/projects), ![documentation](./AngouriMath/Docs/Contributing), ![rules](./AngouriMath/Docs/Contributing/coding_rules.md), 
+Links for TLDR: ![current tasks](https://github.com/asc-community/AngouriMath/projects), ![documentation](./Sources/AngouriMath/Docs/Contributing), ![rules](./Sources/AngouriMath/Docs/Contributing/coding_rules.md), 
 
 ### What should I do?
 
@@ -10,8 +10,8 @@ You do not have to do anything, so any your contribution is up to you. Nonethele
 
 ### Where do I get the documentation for contributors?
 
-You might have some questions about the way you should write your code, or how you could call a function, etc. It is recommended to check the ![documentation](./AngouriMath/Docs/Contributing).
+You might have some questions about the way you should write your code, or how you could call a function, etc. It is recommended to check the ![documentation](./Sources/AngouriMath/Docs/Contributing).
 
 ### Rules for contributors?
 
-Obviously, keeping civil and polite is quite essential. Other than that, there are some ![rules](./AngouriMath/Docs/Contributing/coding_rules.md) regarding patterns and concepts followed in AngouriMath.
+Obviously, keeping civil and polite is quite essential. Other than that, there are some ![rules](./Sources/AngouriMath/Docs/Contributing/coding_rules.md) regarding patterns and concepts followed in AngouriMath.

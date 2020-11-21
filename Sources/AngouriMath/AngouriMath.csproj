@@ -10,7 +10,6 @@
         <FileVersion>0.1.2.0</FileVersion>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageLicenseExpression></PackageLicenseExpression>
-        <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
         <PackageTags>Math, csharp, derivation, latex, calculator, parse, simplification, compute, symbol, compilation, algebra, equation system, equation</PackageTags>
         <Version>1.2.0-preview.5</Version>
         <PackageIconUrl></PackageIconUrl>
@@ -35,13 +34,17 @@ Preview 5: Hyberbolic functions are now parsable, Phi node added, a few vulnerab
 	
     <PropertyGroup>
       <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
+      <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     </PropertyGroup>
 
   <ItemGroup>
     <None Include="../icon.png" Pack="True" PackagePath="" />
-    <None Include="../LICENSE.md" Pack="True" PackagePath="" />
+    <None Include="..\..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
-    <PackageReference Include="FieldCache" Version="1.0.0-alpha.1" />
+    <PackageReference Include="FieldCache" Version="1.0.0-alpha.2" />
     <PackageReference Include="GenericTensor" Version="0.1.2.1" />
     <PackageReference Include="PeterO.Numbers" Version="1.7.4" />
     <PackageReference Include="System.Memory" Version="4.5.4" />
