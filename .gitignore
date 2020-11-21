@@ -25,3 +25,4 @@ obj/
 /Tests/DotnetBenchmark/benchmark_results.csv
 /AngouriMath/Core/Antlr/antlr4
 /Samples/.ipynb_checkpoints
+/Sources/Samples/.ipynb_checkpoints

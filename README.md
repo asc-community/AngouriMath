@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/asc-community/AngouriMath">
-    <img src="./additional/readme/icon_white.png" alt="AngouriMath logo" width="200" height="200">
+    <img src="./.github/additional/readme/icon_white.png" alt="AngouriMath logo" width="200" height="200">
   </a>
 </p>
 
@@ -24,16 +24,16 @@
   <br>
   <br>
   <br>
-  <a href="https://github.com/asc-community/AngouriMath/tree/master/Tests/UnitTests"><img alt="GitHub Workflow Status (event)" src="https://img.shields.io/github/workflow/status/asc-community/AngouriMath/Test?label=Tests&logo=github&style=flat-square"></a>
+  <a href="./Sources/Tests/UnitTests"><img alt="GitHub Workflow Status (event)" src="https://img.shields.io/github/workflow/status/asc-community/AngouriMath/Test?label=Tests&logo=github&style=flat-square"></a>
   <a href="https://codecov.io/gh/asc-community/AngouriMath"><img alt="Codecov" src="https://img.shields.io/codecov/c/gh/asc-community/AngouriMath?label=Coverage&logo=codecov&style=flat-square"></a>
   <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet&logo=nuget&style=flat-square"></a>
   <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=orange&label=Discord&logo=discord&style=flat-square"></a>
-  <a href="https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md"><img alt="GitHub" src="https://img.shields.io/github/license/asc-community/AngouriMath?color=purple&label=License&style=flat-square"></a>
+  <a href="./LICENSE.md"><img alt="GitHub" src="https://img.shields.io/github/license/asc-community/AngouriMath?color=purple&label=License&style=flat-square"></a>
 </p>
 
 ## What is it about?
 
-<a href="#jupyter"><img src="additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
+<a href="#jupyter"><img src="./.github/additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
 
 AngouriMath is an open source symbolic algebra library. That is, via AngouriMath,
 you can automatically solve equations, systems of equations, work with sets, differentiate,
@@ -74,6 +74,8 @@ documentation. If you want to contribute, we would be happy to welcome you in ou
 community.
 
 For any questions, feel free to contact us via <a href="https://discord.gg/YWJEX7a">Discord</a>.
+
+<a id="exam"></a>
 
 ## Computations
 
@@ -186,7 +188,7 @@ System:
 
 Result:
 
-<img src="additional/readme/pic1.PNG">
+<img src="./.github/additional/readme/pic1.PNG">
 
 ```cs
 var system = MathS.Equations(
@@ -308,10 +310,10 @@ Interactive.magic();
 
 Now any `ILatexiseable` will be displayed as LaTeX:
 
-<img src="additional/readme/interactive.PNG"/>
+<img src=".github/additional/readme/interactive.PNG"/>
 
-Check the <a href="Samples/Interactive.Sample.ipynb">F#</a> and 
-<a href="Samples/CSharp.Interactive.Sample.ipynb">C#</a> samples.
+Check the <a href="Sources/Samples/Interactive.Sample.ipynb">F#</a> and 
+<a href="Sources/Samples/CSharp.Interactive.Sample.ipynb">C#</a> samples.
 
 ## <a name="contrib"></a>Contribution
 
@@ -321,7 +323,7 @@ on <a href="https://github.com/asc-community/AngouriMath/projects">this page</a>
 Use pull requests to contribute to it. We also appreciate early pull requests so that we know what you are improving and
 can help you with something.
 
-Documentation for contributors and developers is <a href="./AngouriMath/Docs/Contributing/README.md">here</a>.
+Documentation for contributors and developers is <a href="./Sources/AngouriMath/Docs/Contributing/README.md">here</a>.
 
 ## License
 
