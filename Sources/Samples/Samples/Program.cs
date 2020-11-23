@@ -43,10 +43,6 @@ using static System.Console;
 
 //WriteLine("1 + 1 / x".Simplify());
 
-EInteger eint = 25380205;
-
-WriteLine(eint);
-
 //WriteLine("(log(e, x) * (log(e, x) + 1) * x ^ x + x ^ (x - 1)) * x ^ x ^ x".Latexise());
 
 //WriteLine("((2x2 + 10x + 1) ^ (1/5) - (x2 + 10x + 1) ^ (1/7)) ^ 35".Expand().Simplify());

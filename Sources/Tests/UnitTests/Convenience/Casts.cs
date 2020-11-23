@@ -18,7 +18,7 @@ namespace UnitTests.Convenience
         [Fact] public void ToInt64Success2() => Assert.Equal(-10, (long)"3 - 4 - 9".EvalNumerical());
         [Fact] public void ToBigIntegerSuccess1() => Assert.Equal(BigInteger.Parse("32758732583275823578"), (BigInteger)"32758732583275823578".EvalNumerical());
         [Fact] public void ToComplexSuccess1() => Assert.Equal(new Complex(1, 2), (Complex)"1 + 2i".EvalNumerical());
-        [Fact] public void ToComplexSuccess2() => Assert.Equal(new Complex(1, 0.5), (Complex)"1 + 1/2 i".EvalNumerical());
+        [Fact] public void ToComplexSuccess2() => Assert.Equal(new Complex(1, 0.5), (Complex)"1 + 1/2 * i".EvalNumerical());
 
         [Fact] public void ToDoubleUnsuc1() => Assert.Throws<NumberCastException>(() => (double)"1 + i".EvalNumerical());
         [Fact] public void ToDoubleUnsuc2() => Assert.Throws<NumberCastException>(() => (double)"1 + i / 2".EvalNumerical());
