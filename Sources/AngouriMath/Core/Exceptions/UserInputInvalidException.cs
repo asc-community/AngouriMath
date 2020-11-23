@@ -34,4 +34,10 @@ namespace AngouriMath.Core.Exceptions
 
     /// <summary></summary>
     public sealed class InvalidNumericSystemException : MathSException { internal InvalidNumericSystemException(string msg) : base(msg) { } }
+
+    /// <summary>Thrown when invalid cast encountered</summary>
+    public sealed class NumberCastException : MathSException { 
+        internal NumberCastException(Type expected, Type actual)
+            : base($"Cannot cast from {actual} to {expected}") { }
+    }
 }

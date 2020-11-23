@@ -44,7 +44,7 @@ Preview 5: Hyberbolic functions are now parsable, Phi node added, a few vulnerab
       <PackagePath></PackagePath>
     </None>
     <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
-    <PackageReference Include="FieldCache" Version="1.0.0-alpha.2" />
+    <PackageReference Include="FieldCache" Version="1.0.0-alpha.3" />
     <PackageReference Include="GenericTensor" Version="0.1.2.1" />
     <PackageReference Include="PeterO.Numbers" Version="1.7.4" />
     <PackageReference Include="System.Memory" Version="4.5.4" />

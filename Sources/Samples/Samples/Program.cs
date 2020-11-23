@@ -4,6 +4,7 @@ using Microsoft.VisualBasic.CompilerServices;
 using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static System.Console;
@@ -40,7 +41,11 @@ using static System.Console;
 
 //WriteLine(MathS.TryPolynomial(mat.Det
 
-WriteLine("1 + 1 / x".Simplify());
+//WriteLine("1 + 1 / x".Simplify());
+
+EInteger eint = 25380205;
+
+WriteLine(eint);
 
 //WriteLine("(log(e, x) * (log(e, x) + 1) * x ^ x + x ^ (x - 1)) * x ^ x ^ x".Latexise());
 
