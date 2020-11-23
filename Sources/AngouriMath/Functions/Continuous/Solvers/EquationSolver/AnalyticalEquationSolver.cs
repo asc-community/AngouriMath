@@ -16,6 +16,7 @@ using AngouriMath.Functions.Algebra;
 using AngouriMath.Extensions;
 using static AngouriMath.Entity.Set;
 using AngouriMath.Core.Exceptions;
+using AngouriMath.Core.Multithreading;
 
 namespace AngouriMath
 {
@@ -95,6 +96,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                        ? downcasted : root.InnerSimplified;
             }
 
+            MultithreadingFunctional.ExitIfCancelled();
+
             switch (expr)
             {
                 case Mulf(var multiplier, var multiplicand):
@@ -134,6 +137,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 // Here we find all possible replacements and find one that has at least one solution
                 foreach (var alt in expr.Alternate(4))
                 {
+                    MultithreadingFunctional.ExitIfCancelled();
                     if (!alt.ContainsNode(x))
                         return Set.Empty; // in this case there is either 0 or +oo solutions
                     var minimumSubtree = TreeAnalyzer.GetMinimumSubtree(alt, x);
@@ -155,6 +159,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             if (TrigonometricSolver.TrySolveLinear(expr, x, out var trig) && trig is FiniteSet elsTrig)
                 return (Set)elsTrig.Select(ent => TryDowncast(expr, x, ent)).ToSet().InnerSimplified;
             // // //
+
+            MultithreadingFunctional.ExitIfCancelled();
 
             // if no trigonometric rules helped, try exponential-multiplicative solver
             if (ExponentialSolver.SolveMultiplicative(expr, x) is { } expMul && expMul is FiniteSet elsExpMul)

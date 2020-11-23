@@ -18,6 +18,8 @@ using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Boolean;
 using System.Diagnostics.CodeAnalysis;
 using AngouriMath.Convenience;
+using System.Threading.Tasks;
+using AngouriMath.Core.Multithreading;
 
 namespace AngouriMath.Core
 {
@@ -1047,6 +1049,13 @@ namespace AngouriMath
             /// </summary>
             public static Entity.Boolean Create(bool b)
                 => Entity.Boolean.Create(b);
+        }
+
+        public static class Multithreading
+        {
+            public static void CancelIfRequested() => MultithreadingFunctional.ExitIfCancelled();
+            public static TaskHolder<Task> RunAsync(Action action) => MultithreadingFunctional.RunAsync(action);
+            public static TaskHolder<Task<T>> RunAsync<T>(Func<T> deleg) => MultithreadingFunctional.RunAsync(deleg);
         }
 
         /// <summary>

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AngouriMath.Core.Multithreading;
+using System;
 
 namespace AngouriMath.Core.Exceptions
 {
@@ -39,5 +40,11 @@ namespace AngouriMath.Core.Exceptions
     public sealed class NumberCastException : MathSException { 
         internal NumberCastException(Type expected, Type actual)
             : base($"Cannot cast from {actual} to {expected}") { }
+    }
+
+    /// <summary>Thrown when trying to cancel a task in <see cref="TaskHolder"/> while it does not have one </summary>
+    public sealed class NoTaskToCancelException : MathSException
+    {
+        internal NoTaskToCancelException() : base("No task to be canceled") {}
     }
 }

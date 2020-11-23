@@ -1,10 +1,13 @@
 ﻿using AngouriMath;
+using AngouriMath.Core.Multithreading;
 using AngouriMath.Extensions;
 using Microsoft.VisualBasic.CompilerServices;
 using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Numerics;
+using System.Threading.Tasks;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static System.Console;
@@ -46,3 +49,25 @@ using static System.Console;
 //WriteLine("(log(e, x) * (log(e, x) + 1) * x ^ x + x ^ (x - 1)) * x ^ x ^ x".Latexise());
 
 //WriteLine("((2x2 + 10x + 1) ^ (1/5) - (x2 + 10x + 1) ^ (1/7)) ^ 35".Expand().Simplify());
+
+TaskHolder<Task> lastTask = new();
+
+Entity expr = "a e sin(x ^ 14 + 3)3 + a b c d sin(x ^ 14 + 2)4 - k d sin(x ^ 14 + 3)2 + sin(x ^ 14 + 3) + e = 0";
+
+while (true)
+{
+    var input = ReadLine() ?? "0";
+    if (input == "stop")
+    {
+        lastTask.Cancel();
+        WriteLine("Canceled... maybe");
+    }
+    else
+    {
+        lastTask = MathS.Multithreading.RunAsync(() => {
+            WriteLine("Started computing...");
+            var res = expr.Solve("x");
+            WriteLine(res.Complexity);
+        });
+    }
+}
