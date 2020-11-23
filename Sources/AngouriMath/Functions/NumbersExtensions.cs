@@ -12,6 +12,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
@@ -643,5 +644,7 @@ namespace AngouriMath
          * <exception cref="ArgumentOutOfRangeException">Thrown when the precision of the <paramref name="mathContext"/> is outside the <see cref="int"/> range</exception>
 	     */
         public static EDecimal Gamma(this EDecimal x, EContext mathContext) => Factorial(x.Subtract(EDecimal.One), mathContext);
+
+        public static BigInteger ToBigInteger(this EInteger x) => new BigInteger(x.ToBytes(true));
     }
 }
