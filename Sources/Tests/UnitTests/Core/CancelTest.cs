@@ -16,10 +16,11 @@ namespace UnitTests.Core
                 .Solve("x");
 
         /// <summary>
-        /// We are going to cancel a long-lasting task
+        /// We are going to cancel a long-lasting task. If for some reason, it is not that long lasting,
+        /// this will become false
         /// </summary>
         public bool MakesSenseToPerformTest => makesSenseToPerformTest.GetValue(
-            @this => new TimeOutChecker().BeingCompletedForLessThan(
+            @this => !new TimeOutChecker().BeingCompletedForLessThan(
                 SomeLongLastingTask
                 , ShouldLastAtLeast), this);
         private FieldCache<bool> makesSenseToPerformTest;
