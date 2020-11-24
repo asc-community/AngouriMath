@@ -26,19 +26,19 @@ namespace UnitTests.Core
                 "x + 2 + y".Compile("x", "y").Call(3));
 
         [Fact] public void UncompilableNode1() =>
-            Assert.Throws<WrongNumberOfArgumentsException>(() =>
+            Assert.Throws<UncompilableNodeException>(() =>
                 "x + derivative(x, x)".Compile("x"));
 
         [Fact] public void UncompilableNode2() =>
-            Assert.Throws<WrongNumberOfArgumentsException>(() =>
+            Assert.Throws<UncompilableNodeException>(() =>
                 "x + integral(x, x)".Compile("x"));
 
         [Fact] public void UncompilableNode3() =>
-            Assert.Throws<WrongNumberOfArgumentsException>(() =>
+            Assert.Throws<UncompilableNodeException>(() =>
                 "x + limit(x, x, x)".Compile("x"));
 
         [Fact] public void UncompilableNode4() =>
-            Assert.Throws<WrongNumberOfArgumentsException>(() =>
+            Assert.Throws<UncompilableNodeException>(() =>
                 "x + { x, x }".Compile("x"));
 
         [Fact] public void CannotEvalNum1() =>
@@ -67,7 +67,7 @@ namespace UnitTests.Core
 
         [Fact] public void SetAmbiguous2() =>
             Assert.Throws<ElementInSetAmbiguousException>(() =>
-                ((Set)"[a; 1]").Contains("a"));
+                ((Set)"[a; 1]").Contains("b"));
 
         [Fact] public void SetAmbiguous3() =>
             Assert.Throws<ElementInSetAmbiguousException>(() =>
