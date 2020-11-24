@@ -317,12 +317,7 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override int GetHashCode()
-                    => new XorHashBuilder()
-                        .Combine(Left)
-                        .Combine(LeftClosed)
-                        .Combine(Right)
-                        .Combine(RightClosed)
-                        .GetHashCode();
+                    => (Left, LeftClosed, Right, RightClosed).GetHashCode();
 
                 /// <inheritdoc/>
                 public override bool IsSetFinite => false;

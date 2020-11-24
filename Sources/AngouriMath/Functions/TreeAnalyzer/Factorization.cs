@@ -18,6 +18,9 @@ namespace AngouriMath.Functions
     using static Entity;
     internal static partial class TreeAnalyzer
     {
+
+        // Unfortunately, for now it should be commented out until it is clear how to make it work
+        /*
         public static Entity Factorize(Entity res)
         {
             if (res is Number or Variable)
@@ -84,5 +87,6 @@ namespace AngouriMath.Functions
             }
             return res;
         }
+        */
     }
 }
