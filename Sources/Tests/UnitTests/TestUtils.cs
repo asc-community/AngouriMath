@@ -1,10 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UnitTests
 {
+    public sealed class TimeOutChecker
+    {
+        public bool BeingCompletedForLessThan(Action action, long timeoutMs)
+        {
+            var stopped = false;
+            var th = new Thread(() =>
+            {
+                action();
+                stopped = true;
+            });
+            th.Start();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            while (!stopped && stopwatch.ElapsedMilliseconds < timeoutMs)
+                Thread.Sleep(5);
+            return stopped;
+        }
+    }
+
     public sealed class ThreadingChecker
     {
         private readonly Action<int> action;

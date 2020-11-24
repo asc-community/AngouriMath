@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
@@ -50,24 +51,39 @@ using static System.Console;
 
 //WriteLine("((2x2 + 10x + 1) ^ (1/5) - (x2 + 10x + 1) ^ (1/7)) ^ 35".Expand().Simplify());
 
-TaskHolder<Task> lastTask = new();
+//Entity expr = "a e sin(x ^ 14 + 3)3 + a b c d sin(x ^ 14 + 2)4 - k d sin(x ^ 14 + 3)2 + sin(x ^ 14 + 3) + e = 0";
+//
+//var lastTask = MathS.Multithreading.RunAsync(() => {
+//    WriteLine("Started computing...");
+//    var res = expr.Solve("x");
+//    WriteLine(res.Complexity);
+//});
+//
+//var input = ReadLine() ?? "0";
+//if (input == "stop")
+//{
+//    lastTask.Cancel();
+//    WriteLine("Canceled...");
+//}
+//
 
-Entity expr = "a e sin(x ^ 14 + 3)3 + a b c d sin(x ^ 14 + 2)4 - k d sin(x ^ 14 + 3)2 + sin(x ^ 14 + 3) + e = 0";
+var ass = new AsyncLocal<string>(arg => WriteLine(arg.PreviousValue + " -> " + arg.CurrentValue))
+    { Value = "quack" };
 
-while (true)
-{
-    var input = ReadLine() ?? "0";
-    if (input == "stop")
+WriteLine();
+
+var task = Task.Run(
+    async () =>
     {
-        lastTask.Cancel();
-        WriteLine("Canceled... maybe");
-    }
-    else
-    {
-        lastTask = MathS.Multithreading.RunAsync(() => {
-            WriteLine("Started computing...");
-            var res = expr.Solve("x");
-            WriteLine(res.Complexity);
-        });
-    }
-}
+        ass.Value = "Quack 2";
+        WriteLine();
+        var task2 = Task.Run(
+            () => ass.Value = "Quack 3"
+        );
+        WriteLine();
+        await task2;
+    });
+
+WriteLine();
+await task;
+
