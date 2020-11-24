@@ -66,24 +66,3 @@ using static System.Console;
 //    WriteLine("Canceled...");
 //}
 //
-
-var ass = new AsyncLocal<string>(arg => WriteLine(arg.PreviousValue + " -> " + arg.CurrentValue))
-    { Value = "quack" };
-
-WriteLine();
-
-var task = Task.Run(
-    async () =>
-    {
-        ass.Value = "Quack 2";
-        WriteLine();
-        var task2 = Task.Run(
-            () => ass.Value = "Quack 3"
-        );
-        WriteLine();
-        await task2;
-    });
-
-WriteLine();
-await task;
-

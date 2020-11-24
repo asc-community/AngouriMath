@@ -20,6 +20,7 @@ using System.Diagnostics.CodeAnalysis;
 using AngouriMath.Convenience;
 using System.Threading.Tasks;
 using AngouriMath.Core.Multithreading;
+using System.Threading;
 
 namespace AngouriMath.Core
 {
@@ -1053,9 +1054,8 @@ namespace AngouriMath
 
         public static class Multithreading
         {
-            public static void CancelIfRequested() => MultithreadingFunctional.ExitIfCancelled();
-            public static TaskHolder<Task> RunAsync(Action action) => MultithreadingFunctional.RunAsync(action);
-            public static TaskHolder<Task<T>> RunAsync<T>(Func<T> deleg) => MultithreadingFunctional.RunAsync(deleg);
+            public static Task RunAsync(Action action, CancellationToken token) => MultithreadingFunctional.RunAsync(action, token);
+            public static Task<T> RunAsync<T>(Func<T> deleg, CancellationToken token) => MultithreadingFunctional.RunAsync(deleg, token);
         }
 
         /// <summary>

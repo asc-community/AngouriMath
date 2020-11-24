@@ -36,11 +36,24 @@ namespace UnitTests.Core
             long cancellationTimeout)
         {
             Assert.True(MakesSenseToPerformTest);
-            var task = MathS.Multithreading.RunAsync(SomeLongLastingTask);
+            var source = new CancellationTokenSource();
+            var task = MathS.Multithreading.RunAsync(SomeLongLastingTask, source.Token);
             Thread.Sleep(timeBeforeCancel);
-            Assert.False(task.Task.IsCompleted);
+            Assert.False(task.IsCompleted);
             new TimeOutChecker().BeingCompletedForLessThan(
-                () => task.Cancel(), cancellationTimeout
+                () =>
+                {
+                    try
+                    {
+                        source.Cancel();
+                        task.Wait();
+                    }
+                    catch (AggregateException aggregate)
+                    {
+                        if (aggregate.InnerException is not OperationCanceledException)
+                            throw aggregate.InnerException ?? aggregate;
+                    }
+                }, cancellationTimeout
                 );
         }
     }
