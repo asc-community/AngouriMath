@@ -41,10 +41,4 @@ namespace AngouriMath.Core.Exceptions
         internal NumberCastException(Type expected, Type actual)
             : base($"Cannot cast from {actual} to {expected}") { }
     }
-
-    /// <summary>Thrown when trying to cancel a task in <see cref="TaskHolder"/> while it does not have one </summary>
-    public sealed class NoTaskToCancelException : MathSException
-    {
-        internal NoTaskToCancelException() : base("No task to be canceled") {}
-    }
 }

@@ -66,3 +66,9 @@ using static System.Console;
 //    WriteLine("Canceled...");
 //}
 //
+
+switch ((1, 2))
+{
+    case (1, 2):
+        break;
+}
