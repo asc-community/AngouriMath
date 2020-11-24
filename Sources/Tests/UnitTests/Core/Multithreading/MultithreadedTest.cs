@@ -27,8 +27,8 @@ namespace UnitTests.Core
         [Fact]
         public async void Multiple2()
         {
-            var task1 = MathS.Multithreading.RunAsync(() => "a sin(x2 + x)2 + b sin(x2 + x) + c").Task;
-            var task2 = MathS.Multithreading.RunAsync(() => "f sin(x2 + x)2 + d sin(x2 + x) + g").Task;
+            var task1 = MathS.Multithreading.RunAsync(() => "a sin(x2 + x)2 + b sin(x2 + x) + c".Solve("x")).Task;
+            var task2 = MathS.Multithreading.RunAsync(() => "f sin(x2 + x)2 + d sin(x2 + x) + g".Solve("x")).Task;
             var results = await Task.WhenAll(task1, task2);
             Assert.NotEqual(MathS.Sets.Empty, results[0]);
             Assert.NotEqual(MathS.Sets.Empty, results[1]);
