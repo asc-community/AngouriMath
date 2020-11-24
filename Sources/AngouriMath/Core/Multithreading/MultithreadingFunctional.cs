@@ -51,6 +51,7 @@ namespace AngouriMath.Core.Multithreading
     internal static class MultithreadingFunctional
     {
         [ThreadStatic] private static CancellationToken globalCancellationToken;
+        [ConstantField] private static CancellationToken alwaysNotRequested = new CancellationTokenSource().Token;
 
         internal static TaskHolder<Task> RunAsync(Action action)
         {
@@ -60,7 +61,14 @@ namespace AngouriMath.Core.Multithreading
                 () =>
                 {
                     globalCancellationToken = token;
-                    action();
+                    try
+                    {
+                        action();
+                    }
+                    finally
+                    {
+                        globalCancellationToken = alwaysNotRequested;
+                    }
                 },
                 token), tokenToAssign);
         }
@@ -73,7 +81,14 @@ namespace AngouriMath.Core.Multithreading
                 () =>
                 {
                     globalCancellationToken = token;
-                    return action();
+                    try
+                    {
+                        return action();
+                    }
+                    finally
+                    {
+                        globalCancellationToken = alwaysNotRequested;
+                    }
                 },
                 token), tokenToAssign);
         }
