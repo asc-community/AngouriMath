@@ -21,6 +21,7 @@ namespace AngouriMath.Core.Multithreading
         public TTask Task { get; }
         /// <returns>An inner token used inside functions of AM</returns>
         public CancellationTokenSource? CancellationTokenSource { get; }
+
         internal TaskHolder(TTask task, CancellationTokenSource token)
         {
             Task = task;
