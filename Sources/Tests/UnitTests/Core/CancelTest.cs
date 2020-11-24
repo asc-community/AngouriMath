@@ -11,7 +11,7 @@ namespace UnitTests.Core
     {
         const int ShouldLastAtLeast = 10000;
 
-        public Action SomeLongLastingTask = () =>
+        public static Action SomeLongLastingTask = () =>
                 "a e sin(x ^ 14 + 3)3 + a b c d sin(x ^ 14 + 2)4 - k d sin(x ^ 14 + 3)2 + sin(x ^ 14 + 3) + e = 0"
                 .Solve("x");
 
@@ -19,11 +19,14 @@ namespace UnitTests.Core
         /// We are going to cancel a long-lasting task. If for some reason, it is not that long lasting,
         /// this will become false
         /// </summary>
-        public bool MakesSenseToPerformTest => makesSenseToPerformTest.GetValue(
+        public static bool MakesSenseToPerformTest => makesSenseToPerformTest.GetValue(
             @this => !new TimeOutChecker().BeingCompletedForLessThan(
                 SomeLongLastingTask
-                , ShouldLastAtLeast), this);
-        private FieldCache<bool> makesSenseToPerformTest;
+                , ShouldLastAtLeast), someReference);
+
+        private static object someReference = new();
+
+        private static FieldCache<bool> makesSenseToPerformTest;
 
         [Theory, CombinatorialData]
         public void Test(
