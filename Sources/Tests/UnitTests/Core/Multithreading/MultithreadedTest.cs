@@ -32,7 +32,7 @@ namespace UnitTests.Core
             var task2 = MathS.Multithreading.RunAsync(() => "f sin(x2 + x)2 + d sin(x2 + x) + g = 0".Solve("x"), new CancellationTokenSource().Token);
             var results = await Task.WhenAll(task1, task2);
             Assert.NotEqual(MathS.Sets.Empty, results[0]);
-            Assert.NotEqual(MathS.Sets.Empty, results[1]);
+            Assert.NotEqual(MathS.Sets.Empty, results[1]);  
         }
     }
 }

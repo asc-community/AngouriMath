@@ -1,8 +1,12 @@
 ﻿using AngouriMath;
+using AngouriMath.Extensions;
 using AngouriMathPlot;
 using System;
 using System.Drawing;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
+
 
 namespace GraphicExample
 {
@@ -18,7 +22,6 @@ namespace GraphicExample
         protected override void OnSizeChanged(EventArgs e)
         {
             base.OnSizeChanged(e);
-            Chart.Size = new Size(Width, Height - 104);
             button1.Location = new Point(0, Height - 98);
         }
 
@@ -36,6 +39,45 @@ namespace GraphicExample
         private void JumpClick(object sender, EventArgs e)
         {
             t += 1.0m;
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private CancellationTokenSource? cancellationTokenSource;
+        private Task<Entity.Set>? currTask;
+
+        private async void ButtonSolve_Click(object sender, EventArgs e)
+        {
+            if (cancellationTokenSource is not null)
+                return;
+            cancellationTokenSource = new();
+            LabelState.Text = "Computing...";
+            currTask = MathS.Multithreading.RunAsync(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
+            try
+            {
+                await currTask;
+                LabelState.Text = currTask.Result.ToString();
+            }
+            catch (OperationCanceledException)
+            {
+                LabelState.Text = "Operation canceled";
+            }
+            finally
+            {
+                cancellationTokenSource = null;
+            }
+        }
+            
+        private void ButtonCancel_Click(object sender, EventArgs e)
+        {
+            if (cancellationTokenSource is null || currTask is null)
+                return;
+            cancellationTokenSource.Cancel();
+            
+            // sin(sin(x + 3a b c d e )) + d sin(sin(2x + s d dj ))2 + d sin(sin(2x + s d dj ))3 = 0
         }
     }
 }

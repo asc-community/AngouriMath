@@ -6,12 +6,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath" Version="1.2.0-preview.5" />
     <PackageReference Include="ScottPlot.WinForms" Version="4.0.9" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="ScottPlot" Version="4.0.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj" />
   </ItemGroup>
 
 </Project>

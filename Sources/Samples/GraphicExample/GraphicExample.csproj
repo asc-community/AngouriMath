@@ -6,8 +6,8 @@
     <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="ScottPlot" version="4.0.9"/>
-    <PackageReference Include="ScottPlot.WinForms" version="4.0.9"/>
-    <ProjectReference Include="../../Samples/AngouriMathPlot/AngouriMathPlot.csproj"/>
+    <PackageReference Include="ScottPlot" version="4.0.9" />
+    <PackageReference Include="ScottPlot.WinForms" version="4.0.9" />
+    <ProjectReference Include="../../Samples/AngouriMathPlot/AngouriMathPlot.csproj" />
   </ItemGroup>
 </Project>
