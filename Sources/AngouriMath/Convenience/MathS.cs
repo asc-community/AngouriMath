@@ -54,7 +54,6 @@ namespace AngouriMath
     using NumericsComplex = System.Numerics.Complex;
     using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
     using static Entity.Set;
-    using static AngouriMath.MathS.Settings;
 
     /// <summary>Use functions from this class</summary>
     public static class MathS
@@ -1052,9 +1051,31 @@ namespace AngouriMath
                 => Entity.Boolean.Create(b);
         }
 
+        /// <summary>
+        /// A few functions convenient to use in industrial projects
+        /// to keep the system more reliable and distribute computations
+        /// to other threads
+        /// </summary>
         public static class Multithreading
         {
+            /// <summary>
+            /// This one is synonymous to <see cref="Task.Run(Action)"/>, but is required due to the specific design of the library.
+            /// </summary>
+            /// <param name="action">A delegate which does not return anything</param>
+            /// <param name="token">
+            /// The cancellation token to track when/whether to cancel the operation 
+            /// (generated on the user's side via <see cref="CancellationTokenSource"/></param>
+            /// <returns>Returns a task, hence, is awaitable</returns>
             public static Task RunAsync(Action action, CancellationToken token) => MultithreadingFunctional.RunAsync(action, token);
+
+            /// <summary>
+            /// This one is synonymous to <see cref="Task.Run{TResult}(Func{Task{TResult}})"/>, but is required due to the specific design of the library.
+            /// </summary>
+            /// <param name="deleg">A delegate which returns the specified type</param>
+            /// <param name="token">
+            /// The cancellation token to track when/whether to cancel the operation 
+            /// (generated on the user's side via <see cref="CancellationTokenSource"/></param>
+            /// <returns>Returns a task, hence, is awaitable</returns>
             public static Task<T> RunAsync<T>(Func<T> deleg, CancellationToken token) => MultithreadingFunctional.RunAsync(deleg, token);
         }
 

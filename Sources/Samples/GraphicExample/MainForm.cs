@@ -47,7 +47,6 @@ namespace GraphicExample
         }
 
         private CancellationTokenSource? cancellationTokenSource;
-        private Task<Entity.Set>? currTask;
 
         private async void ButtonSolve_Click(object sender, EventArgs e)
         {
@@ -55,7 +54,7 @@ namespace GraphicExample
                 return;
             cancellationTokenSource = new();
             LabelState.Text = "Computing...";
-            currTask = MathS.Multithreading.RunAsync(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
+            var currTask = MathS.Multithreading.RunAsync(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
             try
             {
                 await currTask;
@@ -67,17 +66,16 @@ namespace GraphicExample
             }
             finally
             {
+                cancellationTokenSource.Dispose();
                 cancellationTokenSource = null;
             }
         }
             
         private void ButtonCancel_Click(object sender, EventArgs e)
         {
-            if (cancellationTokenSource is null || currTask is null)
+            if (cancellationTokenSource is null)
                 return;
             cancellationTokenSource.Cancel();
-            
-            // sin(sin(x + 3a b c d e )) + d sin(sin(2x + s d dj ))2 + d sin(sin(2x + s d dj ))3 = 0
         }
     }
 }
