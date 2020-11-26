@@ -43,22 +43,20 @@ namespace UnitTests.Core.Multithreading
         {
             Assert.True(MakesSenseToPerformTest);
 
-            var tasksAndCts = Enumerable.Range(0, threadToCancel.Length).Select(
-                c => 
-                { 
-                    var cts = new CancellationTokenSource(); 
-                    var token = cts.Token;
-                    var task = Task.Run(
-                        () => { 
-                            MathS.Multithreading.SetLocalCancellationToken(token); 
-                            SomeLongLastingTask(); 
-                            }, token);
-                    var res = (cts, task);
-                    //Thread.Sleep(100);
-                    //res.Item1.Cancel();
-                    return res; 
-                });
-            tasksAndCts.First().Item1.Cancel();
+            static (CancellationTokenSource, Task) GenTask(int c)
+            {
+                var cts = new CancellationTokenSource();
+                var token = cts.Token;
+                var task = Task.Run(
+                    () => {
+                        MathS.Multithreading.SetLocalCancellationToken(token);
+                        SomeLongLastingTask();
+                    }, token);
+                var res = (cts, task);
+                return res;
+            }
+
+            var tasksAndCts = Enumerable.Range(0, threadToCancel.Length).Select(GenTask).ToArray();
             var tasks = tasksAndCts.Select(c => c.Item2).ToArray();
             var ctss = tasksAndCts.Select(c => c.Item1).ToArray();
             try
@@ -70,6 +68,7 @@ namespace UnitTests.Core.Multithreading
                 await Task.WhenAll(tasks);
             }
             catch (AggregateException) { } // we are going to check their states in finally
+            catch (OperationCanceledException) { }
             finally
             {
                 for (int i = 0; i < threadToCancel.Length; i++)
