@@ -13,9 +13,14 @@ namespace UnitTests.Core.Multithreading
 {
     public sealed class MultithreadingCancel
     {
-        private static void SomeLongLastingTask() =>
-                "b c d e f g a e cos(x ^ 4 + 3)1 + a f c d cos(x ^ 4 + 2)2 - k d cos(x ^ 4 + 3)2 + sin(x ^ 4 + 3) + e = 0"
-                .Solve("x");
+        private static void SomeLongLastingTask()
+        {
+            Entity t;
+            for (int i = 0; i < 3; i++)
+                t = 
+            "b c d e f g a e cos(x ^ 4 + 3)1 + a f c d cos(x ^ 4 + 2)2 - k d cos(x ^ 4 + 3)2 + sin(x ^ 4 + 3) + e = 0"
+            .Solve("x");
+        }
 
         const int ShouldLastAtLeast = 1000;
 
