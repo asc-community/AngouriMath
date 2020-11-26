@@ -63,7 +63,7 @@ namespace UnitTests.Core.Multithreading
             {
                 for (int i = 0; i < threadToCancel.Length; i++)
                     if (threadToCancel[i])
-                        ctss[i].CancelAfter(500);
+                        ctss[i].CancelAfter(250);
                 await Task.WhenAll(tasks);
             }
             catch (AggregateException) { } // we are going to check their states in finally
@@ -71,7 +71,7 @@ namespace UnitTests.Core.Multithreading
             finally
             {
                 for (int i = 0; i < threadToCancel.Length; i++)
-                    Assert.Equal(threadToCancel[i], tasks[i].IsCanceled);
+                    Assert.True(threadToCancel[i] == tasks[i].IsCanceled, $"Task number {i}: {threadToCancel[i]}, but instead {tasks[i].IsCanceled}. Status: {tasks[i].Status}");
             }
         }
     }
