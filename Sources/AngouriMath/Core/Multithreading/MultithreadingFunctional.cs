@@ -9,49 +9,19 @@ namespace AngouriMath.Core.Multithreading
 {
     internal static class MultithreadingFunctional
     {
-        [ThreadStatic] private static CancellationToken globalCancellationToken;
-        [ConstantField] private static CancellationToken alwaysNotRequested = new CancellationTokenSource().Token;
+#pragma warning disable ThreadSafety // Because it is AsyncLocal
+        private static readonly AsyncLocal<CancellationToken?> globalCancellationToken = new();
+#pragma warning restore ThreadSafety // AMAnalyzer
 
-        internal static Task RunAsync(Action action, CancellationToken token)
-        {
-            return Task.Run(
-                () =>
-                {
-                    globalCancellationToken = token;
-                    try
-                    {
-                        action();
-                    }
-                    finally
-                    {
-                        globalCancellationToken = alwaysNotRequested;
-                    }
-                },
-                token);
-        }
-
-        internal static Task<T> RunAsync<T>(Func<T> action, CancellationToken token)
-        {
-            return Task.Run(
-                () =>
-                {
-                    globalCancellationToken = token;
-                    try
-                    {
-                        return action();
-                    }
-                    finally
-                    {
-                        globalCancellationToken = alwaysNotRequested;
-                    }
-                },
-                token);
-        }
+        internal static void SetLocalCancellationToken(CancellationToken? token)
+            => globalCancellationToken.Value = token;
 
         // Inject this code in places where the function might potentially get stuck
         internal static void ExitIfCancelled()
         {
-            globalCancellationToken.ThrowIfCancellationRequested();
+            var token = globalCancellationToken.Value;
+            if (token is { } tok)
+                tok.ThrowIfCancellationRequested();
         }
     }
 }

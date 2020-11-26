@@ -4,8 +4,9 @@ using System;
 using AngouriMath;
 using System.Threading;
 using Xunit;
+using System.Threading.Tasks;
 
-namespace UnitTests.Core
+namespace UnitTests.Core.Multithreading
 {
     public sealed class CancelTest
     {
@@ -37,7 +38,8 @@ namespace UnitTests.Core
         {
             Assert.True(MakesSenseToPerformTest);
             var source = new CancellationTokenSource();
-            var task = MathS.Multithreading.RunAsync(SomeLongLastingTask, source.Token);
+
+            var task = Task.Run(() => { MathS.Multithreading.SetLocalCancellationToken(source.Token); SomeLongLastingTask(); }, source.Token);
             Thread.Sleep(timeBeforeCancel);
             Assert.False(task.IsCompleted);
             new TimeOutChecker().BeingCompletedForLessThan(

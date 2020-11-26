@@ -66,9 +66,21 @@ using static System.Console;
 //    WriteLine("Canceled...");
 //}
 //
+var sync = new AsyncLocal<int>();
+var tasks = Enumerable.Range(0, 4).Select(
+    c =>
+    Task.Run(() =>
+    {
+        sync.Value = c;
+        WriteLine(c + "  " + sync.Value);
+        Thread.Sleep(1000);
+        WriteLine(c + "  " + sync.Value);
+        sync.Value = c + 10;
+        Thread.Sleep(1000);
+        WriteLine(c + "  " + sync.Value);
+        Thread.Sleep(1000);
+        WriteLine(c + "  " + sync.Value);
+    }
+    ));
 
-switch ((1, 2))
-{
-    case (1, 2):
-        break;
-}
+await Task.WhenAll(tasks);
