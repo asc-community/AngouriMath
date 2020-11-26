@@ -17,7 +17,7 @@ namespace UnitTests.Core.Multithreading
                 "b c d e f g a e cos(x ^ 4 + 3)1 + a f c d cos(x ^ 4 + 2)2 - k d cos(x ^ 4 + 3)2 + sin(x ^ 4 + 3) + e = 0"
                 .Solve("x");
 
-        const int ShouldLastAtLeast = 1500;
+        const int ShouldLastAtLeast = 1000;
 
         /// <summary>
         /// We are going to cancel a long-lasting task. If for some reason, it is not that long lasting,
@@ -41,7 +41,7 @@ namespace UnitTests.Core.Multithreading
         [InlineData(true)]
         public async void TestThoseOnlyCancel(params bool[] threadToCancel)
         {
-            Assert.True(MakesSenseToPerformTest);
+            Assert.True(MakesSenseToPerformTest, $"The given task completed too soon, consider lowering the constant {ShouldLastAtLeast}");
 
             static (CancellationTokenSource, Task) GenTask(int c)
             {
@@ -63,8 +63,7 @@ namespace UnitTests.Core.Multithreading
             {
                 for (int i = 0; i < threadToCancel.Length; i++)
                     if (threadToCancel[i])
-                        //ctss[i].CancelAfter(500);
-                        ctss[i].Cancel();
+                        ctss[i].CancelAfter(500);
                 await Task.WhenAll(tasks);
             }
             catch (AggregateException) { } // we are going to check their states in finally
