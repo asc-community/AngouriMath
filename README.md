@@ -330,8 +330,10 @@ There is a sample code demonstrating cancellation:
 ```cs
 var cancellationTokenSource = new CancellationTokenSource();
 
-MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);  // That goes instead of passing your token to methods
+// That goes instead of passing your token to methods
+MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);
 
+// Then you normally run your task
 var currTask = Task.Run(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
 
 try
