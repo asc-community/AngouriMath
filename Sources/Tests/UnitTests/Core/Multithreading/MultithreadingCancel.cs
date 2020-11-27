@@ -16,13 +16,13 @@ namespace UnitTests.Core.Multithreading
         private static void SomeLongLastingTask()
         {
             Entity t;
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < 10; i++)
                 t = 
             "b c d e f g a e cos(x ^ 4 + 3)1 + a f c d cos(x ^ 4 + 2)2 - k d cos(x ^ 4 + 3)2 + sin(x ^ 4 + 3) + e = 0"
             .Solve("x");
         }
 
-        const int ShouldLastAtLeast = 1000;
+        const int ShouldLastAtLeast = 3000;
 
         /// <summary>
         /// We are going to cancel a long-lasting task. If for some reason, it is not that long lasting,
@@ -68,15 +68,21 @@ namespace UnitTests.Core.Multithreading
             {
                 for (int i = 0; i < threadToCancel.Length; i++)
                     if (threadToCancel[i])
-                        ctss[i].CancelAfter(250);
-                await Task.WhenAll(tasks);
+                        ctss[i].CancelAfter(ShouldLastAtLeast / 4);
+                Thread.Sleep(ShouldLastAtLeast / 2);
             }
-            catch (AggregateException) { } // we are going to check their states in finally
-            catch (OperationCanceledException) { }
+            catch (OperationCanceledException) { } // we are going to check their states in finally
             finally
             {
                 for (int i = 0; i < threadToCancel.Length; i++)
                     Assert.True(threadToCancel[i] == tasks[i].IsCanceled, $"Task number {i}: {threadToCancel[i]}, but instead {tasks[i].IsCanceled}. Status: {tasks[i].Status}");
+                foreach (var cts in ctss)
+                    cts.Cancel();
+                try
+                {
+                    await Task.WhenAll(tasks);
+                }
+                catch (OperationCanceledException) { }
             }
         }
     }
