@@ -20,6 +20,7 @@ Preview 2: A lot of patterns for sets added, bugs fixed, extensions for integrat
 Preview 3: Derive -&gt; Differentiate, now all calculus functions apply InnerSimplified automatically, naive set solver, bugs fixed
 Preview 4: A few security issues fixed, a few simple rules added, sorter refactored, ToSymPy fixed, Arcsecant &amp; Arccosecant
 Preview 5: Hyberbolic functions are now parsable, Phi node added, a few vulnerabilities fixed
+Preview 6: Multithreading, casts for numbers added. AngouriMathBaseException is now root of all AM's exceptions
 1.2 on its way!</PackageReleaseNotes>
         <PackageId>AngouriMath</PackageId>
         <Product>AngouriMath</Product>
