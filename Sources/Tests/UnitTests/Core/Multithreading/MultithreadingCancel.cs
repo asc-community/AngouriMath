@@ -35,8 +35,6 @@ namespace UnitTests.Core.Multithreading
         private static object someReference = new();
         private static FieldCache<bool> makesSenseToPerformTest;
 
-        private static object mutex = new();
-
         [Theory]
         [InlineData(false, false, false, false)]
         [InlineData(false, false, false, true)]
@@ -69,7 +67,10 @@ namespace UnitTests.Core.Multithreading
                 for (int i = 0; i < threadToCancel.Length; i++)
                     if (threadToCancel[i])
                         ctss[i].CancelAfter(ShouldLastAtLeast / 4);
-                Thread.Sleep(ShouldLastAtLeast / 2);
+                var waitAndSwallow = new WaiterAndSwallower(5);
+                await waitAndSwallow.Wait(ShouldLastAtLeast / 4);
+                await waitAndSwallow.WaitWhile(() => tasks.Any(c => c.Status == TaskStatus.WaitingToRun)); // wait while at least one task is waiting for execution start
+                await waitAndSwallow.Wait(ShouldLastAtLeast / 4); // wait some more time
             }
             catch (OperationCanceledException) { } // we are going to check their states in finally
             finally
