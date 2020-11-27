@@ -67,15 +67,28 @@ using static System.Console;
 //}
 //
 var sync = new AsyncLocal<int>();
+
+sync.Value = 10001;
+
 var tasks = Enumerable.Range(0, 4).Select(
     c =>
-    Task.Run(() =>
+    Task.Run(async () =>
     {
+        WriteLine(c + "  " + sync.Value);
         sync.Value = c;
         WriteLine(c + "  " + sync.Value);
         Thread.Sleep(1000);
         WriteLine(c + "  " + sync.Value);
-        sync.Value = c + 10;
+
+        var child = Task.Factory.StartNew(
+            () =>
+            {
+                WriteLine(">> " + c + "  " + sync.Value);
+                Thread.Sleep(1000);
+                WriteLine(">> " + c + "  " + sync.Value);
+            }, TaskCreationOptions.None);
+        await child;
+
         Thread.Sleep(1000);
         WriteLine(c + "  " + sync.Value);
         Thread.Sleep(1000);

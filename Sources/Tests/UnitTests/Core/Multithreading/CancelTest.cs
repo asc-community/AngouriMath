@@ -39,7 +39,9 @@ namespace UnitTests.Core.Multithreading
             Assert.True(MakesSenseToPerformTest);
             var source = new CancellationTokenSource();
 
-            var task = Task.Run(() => { MathS.Multithreading.SetLocalCancellationToken(source.Token); SomeLongLastingTask(); }, source.Token);
+            MathS.Multithreading.SetLocalCancellationToken(source.Token);
+
+            var task = Task.Run(SomeLongLastingTask, source.Token);
             Thread.Sleep(timeBeforeCancel);
             Assert.False(task.IsCompleted);
             new TimeOutChecker().BeingCompletedForLessThan(

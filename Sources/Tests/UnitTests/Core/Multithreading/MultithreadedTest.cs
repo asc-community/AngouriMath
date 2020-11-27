@@ -15,12 +15,8 @@ namespace UnitTests.Core.Multithreading
         public async void Single1()
         {
             var token = new CancellationTokenSource().Token;
-            var res = await Task.Run(
-                () =>
-                { 
-                    MathS.Multithreading.SetLocalCancellationToken(token);
-                    return "3 + 2".EvalNumerical();
-                }, token);
+            MathS.Multithreading.SetLocalCancellationToken(token);
+            var res = await Task.Run(() => "3 + 2".EvalNumerical(), token);
             Assert.Equal(MathS.FromString("5"), res);
         }
 
@@ -28,12 +24,8 @@ namespace UnitTests.Core.Multithreading
         public async void Single2()
         {
             var token = new CancellationTokenSource().Token;
-            var res = await Task.Run(
-                () =>
-                {
-                    MathS.Multithreading.SetLocalCancellationToken(token);
-                    return "1 + 2 + 3 + 4 + 5".EvalNumerical();
-                }, token);
+            MathS.Multithreading.SetLocalCancellationToken(token);
+            var res = await Task.Run(() => "1 + 2 + 3 + 4 + 5".EvalNumerical(), token);
             Assert.Equal(MathS.FromString("15"), res);
         }
 

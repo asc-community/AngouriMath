@@ -54,11 +54,8 @@ namespace GraphicExample
                 return;
             cancellationTokenSource = new();
             LabelState.Text = "Computing...";
-            var currTask = Task.Run(() =>
-            {
-                MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);
-                return InputText.Text.Solve("x");
-            }, cancellationTokenSource.Token);
+            MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);
+            var currTask = Task.Run(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
             try
             {
                 await currTask;

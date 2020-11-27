@@ -57,9 +57,10 @@ namespace UnitTests.Core.Multithreading
             {
                 var cts = new CancellationTokenSource();
                 var token = cts.Token;
+                MathS.Multithreading.SetLocalCancellationToken(token);
                 var task = Task.Run(
                     () => {
-                        MathS.Multithreading.SetLocalCancellationToken(token);
+                        
                         SomeLongLastingTask();
                     }, token);
                 var res = (cts, task);

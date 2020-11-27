@@ -323,19 +323,16 @@ functions from AM in different threads, that is, all static variables and lazy p
 
 There is also support of cancellation a task. However, to avoid injecting the cancellation token argument into all methods,
 we use `AsyncLocal<T>` instead. That is why instead of passing your token to all methods what you need is to pass it once
-to the `MathS.Multithreading.SetLocalCancellationToken(CancellationToken)` method *inside* the asynchronuous method
-(it is cruicially important, otherwise, the wrong token will be associated with it, and you won't be able to cancel the task).
+to the `MathS.Multithreading.SetLocalCancellationToken(CancellationToken)` method.
 
 There is a sample code demonstrating cancellation:
 
 ```cs
 var cancellationTokenSource = new CancellationTokenSource();
 
-var currTask = Task.Run(() =>
-{
-    MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);  // That goes instead of passing your token to methods
-    return InputText.Text.Solve("x");
-}, cancellationTokenSource.Token);
+MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);  // That goes instead of passing your token to methods
+
+var currTask = Task.Run(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
 
 try
 {
