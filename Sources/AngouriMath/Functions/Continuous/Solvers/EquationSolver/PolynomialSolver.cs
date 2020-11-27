@@ -10,6 +10,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using AngouriMath.Core;
+using AngouriMath.Core.Multithreading;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
@@ -211,6 +212,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 monomialsByPower = monomialsByPower.ToDictionary(pair => pair.Key / gcdPower, pair => pair.Value);
             }
             // // //
+
+            MultithreadingFunctional.ExitIfCancelled();
 
             var gcdPowerRoots = GetAllRootsOf1(gcdPower);
             Entity GetMonomialByPower(EInteger power) =>

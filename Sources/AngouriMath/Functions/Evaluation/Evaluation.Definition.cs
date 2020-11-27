@@ -105,7 +105,14 @@ namespace AngouriMath
         /// Increase this argument if you think the equation should be simplified better
         /// </param>
         /// <returns></returns>
-        public Entity Simplify(int level = 2) => Simplificator.Simplify(this, level);
+        public Entity Simplify(int? level = null) => level is { } levelNotNull ? Simplificator.Simplify(this, levelNotNull) : Simplified;
+
+        /// <summary>
+        /// This property returns the same what parameterless <see cref="Simplify"/> would,
+        /// with benefit of caching the result
+        /// </summary>
+        public Entity Simplified => simplified.GetValue(@this => Simplificator.Simplify(this, 2), this);
+        private FieldCache<Entity> simplified;
 
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         public IEnumerable<Entity> Alternate(int level) => Simplificator.Alternate(this, level);

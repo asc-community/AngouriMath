@@ -1,4 +1,5 @@
-﻿using AngouriMath.Extensions;
+﻿using AngouriMath.Core.Multithreading;
+using AngouriMath.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -59,6 +60,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var outerPowerList = new List<Entity>();
             Entity ApplyPowerTransform(Entity @base, Entity arg)
             {
+                MultithreadingFunctional.ExitIfCancelled();
+
                 arg = arg.Replace(GetConstantOutOfLogarithm);
                 var mults = Entity.Mulf.LinearChildren(arg);
                 if (!mults.Any()) return MathS.Pow(@base, arg);
@@ -108,6 +111,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                     var divided = (pow / minPow).InnerSimplified;
                     expr = expr.Substitute(MathS.Pow(x, pow.InnerSimplified), MathS.Pow(substitution, divided));
                 }
+
+                MultithreadingFunctional.ExitIfCancelled();
             }
             expr = expr.Substitute(substitution, replacement);
             if (expr.ContainsNode(x)) return null; // cannot be solved, not a multiplicative exponenial equation

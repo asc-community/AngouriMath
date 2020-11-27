@@ -1,10 +1,67 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace UnitTests
 {
+    /// <summary>
+    /// When waits, ignores all the operation canceled exceptions
+    /// </summary>
+    public sealed class WaiterAndSwallower
+    {
+        private int precision;
+        public WaiterAndSwallower(int precisionMs)
+        {
+            this.precision = precisionMs;
+        }
+
+        public async Task Wait(int timeMs)
+        {
+            var precLocal = precision;
+            while (timeMs > 0)
+            {
+                try
+                {
+                    await Task.Delay(precLocal);
+                    timeMs -= precLocal;
+                }
+                catch (OperationCanceledException) { }
+            }
+        }
+
+        public async Task WaitWhile(Func<bool> predicate)
+        {
+            while (predicate())
+                try
+                {
+                    await Task.Delay(10);
+                }
+                catch (OperationCanceledException) { }
+        }
+    }
+
+    public sealed class TimeOutChecker
+    {
+        public bool BeingCompletedForLessThan(Action action, long timeoutMs)
+        {
+            var stopped = false;
+            var th = new Thread(() =>
+            {
+                action();
+                stopped = true;
+            });
+            th.Start();
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            while (!stopped && stopwatch.ElapsedMilliseconds < timeoutMs)
+                Thread.Sleep(5);
+            return stopped;
+        }
+    }
+
     public sealed class ThreadingChecker
     {
         private readonly Action<int> action;

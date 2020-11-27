@@ -67,6 +67,7 @@ optimized for F#.
   - [Neat syntax](#syntax)
   - [F#](#fsharp)
   - [Jupyter](#jupyter)
+  - [Multithreading](#threads)
 - [I want to contribute](#contrib)
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
@@ -314,6 +315,37 @@ Now any `ILatexiseable` will be displayed as LaTeX:
 
 Check the <a href="Sources/Samples/Interactive.Sample.ipynb">F#</a> and 
 <a href="Sources/Samples/CSharp.Interactive.Sample.ipynb">C#</a> samples.
+
+## <a name="threads"></a>Multithreading support
+
+You are guaranteed that all functions in AM run in one thread. It is also guaranteed that you can safely run multiple 
+functions from AM in different threads, that is, all static variables and lazy properties are thread-safe.
+
+There is also support of cancellation a task. However, to avoid injecting the cancellation token argument into all methods,
+we use `AsyncLocal<T>` instead. That is why instead of passing your token to all methods what you need is to pass it once
+to the `MathS.Multithreading.SetLocalCancellationToken(CancellationToken)` method.
+
+There is a sample code demonstrating cancellation:
+
+```cs
+var cancellationTokenSource = new CancellationTokenSource();
+
+// That goes instead of passing your token to methods
+MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);
+
+// Then you normally run your task
+var currTask = Task.Run(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
+
+try
+{
+    await currTask;
+    LabelState.Text = currTask.Result.ToString();
+}
+catch (OperationCanceledException)
+{
+    LabelState.Text = "Operation canceled";
+}
+```
 
 ## <a name="contrib"></a>Contribution
 

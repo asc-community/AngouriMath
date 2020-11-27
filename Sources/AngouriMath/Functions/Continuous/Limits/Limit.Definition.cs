@@ -92,6 +92,7 @@ namespace AngouriMath
 namespace AngouriMath.Functions.Algebra
 {
     using AngouriMath.Core.Exceptions;
+    using AngouriMath.Core.Multithreading;
     using Core;
     using static Entity;
     using static Entity.Number;
@@ -183,6 +184,7 @@ namespace AngouriMath.Functions.Algebra
             if (side is ApproachFrom.BothSides)
             {
                 expr = expr.Replace(e => EquivalenceTable(e, x, dest)).InnerSimplified;
+                MultithreadingFunctional.ExitIfCancelled();
                 if (!dest.IsFinite)
                     // just compute limit with no check for left/right equality
                     // here approach left will be ignored anyways, as dist is infinite number

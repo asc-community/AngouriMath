@@ -7,6 +7,7 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+using AngouriMath.Core.Multithreading;
 using AngouriMath.Extensions;
 using System.Linq;
 
@@ -23,7 +24,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             var replacement = Variable.CreateTemp(expr.Vars);
             expr = expr.Replace(Patterns.NormalTrigonometricForm);
             expr = expr.Replace(Patterns.TrigonometricToExponentialRules(variable, replacement));
-
+            MultithreadingFunctional.ExitIfCancelled();
             // if there is still original variable after replacements,
             // equation is not in a form f(sin(x), cos(x), tan(x), cot(x))
             if (expr.ContainsNode(variable))
@@ -31,6 +32,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 
             if (AnalyticalEquationSolver.Solve(expr, replacement) is FiniteSet els)
             {
+                MultithreadingFunctional.ExitIfCancelled();
                 res = (Set)els.Select(sol => MathS.Pow(MathS.e, MathS.i * variable).Invert(sol, variable).ToSet()).Unite().InnerSimplified;
                 return true;
             }

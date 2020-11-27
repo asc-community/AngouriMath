@@ -1,6 +1,5 @@
 ﻿open Functions
 open Operators
-open FromToString
 open AngouriMath
 open Core
 open Constants

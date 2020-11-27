@@ -18,6 +18,9 @@ using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Boolean;
 using System.Diagnostics.CodeAnalysis;
 using AngouriMath.Convenience;
+using System.Threading.Tasks;
+using AngouriMath.Core.Multithreading;
+using System.Threading;
 
 namespace AngouriMath.Core
 {
@@ -51,7 +54,6 @@ namespace AngouriMath
     using NumericsComplex = System.Numerics.Complex;
     using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
     using static Entity.Set;
-    using static AngouriMath.MathS.Settings;
 
     /// <summary>Use functions from this class</summary>
     public static class MathS
@@ -1047,6 +1049,16 @@ namespace AngouriMath
             /// </summary>
             public static Entity.Boolean Create(bool b)
                 => Entity.Boolean.Create(b);
+        }
+
+        /// <summary>
+        /// A few functions convenient to use in industrial projects
+        /// to keep the system more reliable and distribute computations
+        /// to other threads
+        /// </summary>
+        public static class Multithreading
+        {
+            public static void SetLocalCancellationToken(CancellationToken token) => MultithreadingFunctional.SetLocalCancellationToken(token);
         }
 
         /// <summary>

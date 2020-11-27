@@ -10,6 +10,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using AngouriMath.Core.Multithreading;
 using PeterO.Numbers;
 
 namespace AngouriMath.Functions
@@ -63,6 +64,8 @@ namespace AngouriMath.Functions
                 }
                 __IterAddHistory(expr);
                 __IterAddHistory(expr.Replace(Patterns.InvertNegativePowers));
+
+                MultithreadingFunctional.ExitIfCancelled();
             }
 
             AddHistory(stage1);

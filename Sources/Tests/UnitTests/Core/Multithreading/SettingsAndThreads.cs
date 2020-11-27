@@ -5,7 +5,7 @@ using AngouriMath.Extensions;
 using Xunit;
 using static AngouriMath.Entity;
 
-namespace UnitTests.Core
+namespace UnitTests.Core.Multithreading
 {
     public sealed class SettingsAndThreads
     {

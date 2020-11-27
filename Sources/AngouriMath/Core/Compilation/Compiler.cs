@@ -18,7 +18,7 @@ namespace AngouriMath
     public partial record Entity
     {
         private protected virtual void CompileNode(Compiler compiler)
-            => throw new AngouriBugException($"The node of type {GetType()} does not support compilation. Feel free to report it as an issue on our official repository.");
+            => throw new UncompilableNodeException($"The node of type {GetType()} does not support compilation. Feel free to report it as an issue on our official repository.");
         /// <summary>
         /// Recursive compilation that pushes intructions to the stack (<see cref="Compiler.Instructions"/>)
         /// </summary>
