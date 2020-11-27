@@ -36,31 +36,45 @@ namespace UnitTests.Core.Multithreading
         private static FieldCache<bool> makesSenseToPerformTest;
 
         [Theory]
-        [InlineData(true)]
-        [InlineData(false)]
+        [InlineData(false, true)]
+        [InlineData(false, false)]
+        [InlineData(false, true, true)]
+        [InlineData(false, true, false)]
+        [InlineData(false, false, false)]
+        [InlineData(false, false, true)]
+        [InlineData(false, true, true, true)]
+        [InlineData(false, true, true, false)]
+        [InlineData(false, false, false, false, false)]
+        [InlineData(false, false, false, false, true)]
+        [InlineData(false, false, true, false, false)]
+        [InlineData(false, false, true, true, true)]
+        [InlineData(false, true, true, true, true)]
         [InlineData(true, true)]
         [InlineData(true, false)]
-        [InlineData(false, false)]
-        [InlineData(false, true)]
         [InlineData(true, true, true)]
         [InlineData(true, true, false)]
-        [InlineData(false, false, false, false)]
-        [InlineData(false, false, false, true)]
-        [InlineData(false, true, false, false)]
-        [InlineData(false, true, true, true)]
+        [InlineData(true, false, false)]
+        [InlineData(true, false, true)]
         [InlineData(true, true, true, true)]
-        public async void TestThoseOnlyCancel(params bool[] threadToCancel)
+        [InlineData(true, true, true, false)]
+        [InlineData(true, false, false, false, false)]
+        [InlineData(true, false, false, false, true)]
+        [InlineData(true, false, true, false, false)]
+        [InlineData(true, false, true, true, true)]
+        [InlineData(true, true, true, true, true)]
+        public async void TestThoseOnlyCancel(bool generateChild, params bool[] threadToCancel)
         {
             Assert.True(MakesSenseToPerformTest, $"The given task completed too soon, consider lowering the constant {ShouldLastAtLeast}");
 
-            static (CancellationTokenSource, Task) GenTask(int c)
+            (CancellationTokenSource, Task) GenTask(int c)
             {
                 var cts = new CancellationTokenSource();
                 var token = cts.Token;
                 MathS.Multithreading.SetLocalCancellationToken(token);
-                var task = Task.Run(
+                var task = Task.Run(async
                     () => {
-                        
+                        if (generateChild)
+                            await Task.Run(SomeLongLastingTask);
                         SomeLongLastingTask();
                     }, token);
                 var res = (cts, task);
