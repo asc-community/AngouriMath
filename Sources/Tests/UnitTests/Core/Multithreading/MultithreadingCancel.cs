@@ -36,12 +36,19 @@ namespace UnitTests.Core.Multithreading
         private static FieldCache<bool> makesSenseToPerformTest;
 
         [Theory]
+        [InlineData(true)]
+        [InlineData(false)]
+        [InlineData(true, true)]
+        [InlineData(true, false)]
+        [InlineData(false, false)]
+        [InlineData(false, true)]
+        [InlineData(true, true, true)]
+        [InlineData(true, true, false)]
         [InlineData(false, false, false, false)]
         [InlineData(false, false, false, true)]
         [InlineData(false, true, false, false)]
         [InlineData(false, true, true, true)]
         [InlineData(true, true, true, true)]
-        [InlineData(true)]
         public async void TestThoseOnlyCancel(params bool[] threadToCancel)
         {
             Assert.True(MakesSenseToPerformTest, $"The given task completed too soon, consider lowering the constant {ShouldLastAtLeast}");
