@@ -124,5 +124,30 @@ namespace AngouriMath
                     };
             }
         }
+
+        partial record DefinedWhen
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerEval()
+            {
+                var evaled = New(Expression.Evaled, Predicate.Evaled);
+                if (evaled.Predicate == Boolean.True)
+                    return evaled.Expression;
+                if (evaled.Predicate == Boolean.False)
+                    return MathS.NaN;
+                return evaled;
+            }
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify()
+            {
+                var evaled = New(Expression.InnerSimplified, Predicate.InnerSimplified);
+                if (evaled.Predicate.Evaled == Boolean.True)
+                    return evaled.Expression;
+                if (evaled.Predicate.Evaled == Boolean.False)
+                    return MathS.NaN;
+                return evaled;
+            }
+        }
     }
 }
