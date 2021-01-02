@@ -545,5 +545,13 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
+
+        partial record DefinedWhen
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $@"({Expression.Stringize()} for {Predicate.Stringize()})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
     }
 }

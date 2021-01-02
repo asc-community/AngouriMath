@@ -226,6 +226,8 @@ namespace AngouriMath.Functions
             Mulf(Signumf(var any1), Absf(var any1a)) when any1 == any1a => any1,
             Mulf(Absf(var any1a), Signumf(var any1)) when any1 == any1a => any1,
 
+            DefinedWhen(DefinedWhen(var any1, var anyPred1), var anyPred2) => new DefinedWhen(any1, anyPred1 & anyPred2),
+
             _ => x
         };
     }

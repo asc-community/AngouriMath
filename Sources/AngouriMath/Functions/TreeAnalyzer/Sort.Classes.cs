@@ -345,5 +345,10 @@ namespace AngouriMath
         {
             private protected override string SortHashName(SortLevel level) => "phi_";
         }
+
+        partial record DefinedWhen
+        {
+            private protected override string SortHashName(SortLevel level) => "provided_";
+        }
     }
 }

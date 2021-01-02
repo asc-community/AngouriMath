@@ -320,5 +320,11 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Integer;
         }
+
+        partial record DefinedWhen
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Any;
+        }
     }
 }
