@@ -38,9 +38,18 @@ namespace AngouriMath
         /// </summary>
         internal Entity InnerSimplifyWithCheck()
         {
-            var innerSimplified = InnerSimplify();
+            Entity? predicate = null;
+            Entity @this;
+            if (this is DefinedWhen definedWhen)
+            {
+                @this = definedWhen.Expression;
+                predicate = definedWhen.Predicate;
+            }
+            else
+                @this = this;
+            var innerSimplified = @this.InnerSimplify();
             if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
-                return innerSimplified;
+                return predicate is null ? innerSimplified : innerSimplified.Provided(predicate);
             else
                 return this;
         }
@@ -55,11 +64,20 @@ namespace AngouriMath
         /// </summary>
         protected Entity InnerEvalWithCheck()
         {
-            var innerEvaled = InnerEval();
-            if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Codomain))
-                return innerEvaled;
+            Entity? predicate = null;
+            Entity @this;
+            if (this is DefinedWhen definedWhen)
+            {
+                @this = definedWhen.Expression;
+                predicate = definedWhen.Predicate;
+            }
             else
-                return MathS.NaN;
+                @this = this;
+            var innerEvaled = @this.InnerEval();
+            if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Codomain))
+                return predicate is null ? innerEvaled : innerEvaled.Provided(predicate);
+            else
+                return this;
         }
 
         /// <summary>
