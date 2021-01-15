@@ -33,23 +33,15 @@ namespace AngouriMath
         public Entity InnerSimplified => innerSimplified.GetValue(@this => @this.InnerSimplifyWithCheck(), this);
         private FieldCache<Entity> innerSimplified;
 
+        
         /// <summary>
         /// Make sure you call this function inside of <see cref="InnerSimplify"/>
         /// </summary>
         internal Entity InnerSimplifyWithCheck()
         {
-            Entity? predicate = null;
-            Entity @this;
-            if (this is DefinedWhen definedWhen)
-            {
-                @this = definedWhen.Expression;
-                predicate = definedWhen.Predicate;
-            }
-            else
-                @this = this;
-            var innerSimplified = @this.InnerSimplify();
+            var innerSimplified = InnerSimplify();
             if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
-                return predicate is null ? innerSimplified : innerSimplified.Provided(predicate);
+                return innerSimplified;
             else
                 return this;
         }
@@ -64,18 +56,9 @@ namespace AngouriMath
         /// </summary>
         protected Entity InnerEvalWithCheck()
         {
-            Entity? predicate = null;
-            Entity @this;
-            if (this is DefinedWhen definedWhen)
-            {
-                @this = definedWhen.Expression;
-                predicate = definedWhen.Predicate;
-            }
-            else
-                @this = this;
-            var innerEvaled = @this.InnerEval();
+            var innerEvaled = InnerEval();
             if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Codomain))
-                return predicate is null ? innerEvaled : innerEvaled.Provided(predicate);
+                return innerEvaled;
             else
                 return this;
         }
