@@ -29,7 +29,7 @@ namespace AngouriMath
         public partial record Sumf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Augend.Evaled, Addend.Evaled) switch
+            protected override Entity InnerEval() => (Augend, Addend).Unpack2Eval() switch
             {
                 (Complex n1, Complex n2) => n1 + n2,
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).Evaled),
@@ -43,7 +43,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Augend.InnerSimplified, Addend.InnerSimplified) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Augend, Addend).Unpack2Simplify() switch
                 {
                     (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).InnerSimplified),
                     (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2).InnerSimplified),
@@ -60,7 +60,7 @@ namespace AngouriMath
         public partial record Minusf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Subtrahend.Evaled, Minuend.Evaled) switch
+            protected override Entity InnerEval() => (Subtrahend, Minuend).Unpack2Eval() switch
             {
                 (Complex n1, Complex n2) => n1 - n2,
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 - n2).Evaled),
@@ -74,7 +74,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Subtrahend.InnerSimplified, Minuend.InnerSimplified) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Subtrahend, Minuend).Unpack2Simplify() switch
                 {
                     (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 - n2).InnerSimplified),
                     (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 - n2).InnerSimplified),
@@ -91,7 +91,7 @@ namespace AngouriMath
         public partial record Mulf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Multiplier.Evaled, Multiplicand.Evaled) switch
+            protected override Entity InnerEval() => (Multiplier, Multiplicand).Unpack2Eval() switch
             {
                 (Complex n1, Complex n2) => n1 * n2,
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 * n2).Evaled),
@@ -103,7 +103,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Multiplier.InnerSimplified, Multiplicand.InnerSimplified) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Multiplier, Multiplicand).Unpack2Simplify() switch
                 {
                     (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
                     (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 * n2).InnerSimplified),
@@ -120,7 +120,7 @@ namespace AngouriMath
         public partial record Divf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Dividend.Evaled, Divisor.Evaled) switch
+            protected override Entity InnerEval() => (Dividend, Divisor).Unpack2Eval() switch
             {
                 (Complex n1, Complex n2) => n1 / n2,
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 / n2).Evaled),
@@ -132,7 +132,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Dividend.InnerSimplified, Divisor.InnerSimplified) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Dividend, Divisor).Unpack2Simplify() switch
                 {
                     (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 / n2).InnerSimplified),
                     (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 / n2).InnerSimplified),
@@ -148,7 +148,7 @@ namespace AngouriMath
         public partial record Powf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Base.Evaled, Exponent.Evaled) switch
+            protected override Entity InnerEval() => (Base, Exponent).Unpack2Eval() switch
             {
                 (Complex n1, Complex n2) => Number.Pow(n1, n2),
                 (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Pow(n2).Evaled),
@@ -160,7 +160,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Base.InnerSimplified, Exponent.InnerSimplified) switch
+                Evaled is Number { IsExact: true } ? Evaled : (Base, Exponent).Unpack2Simplify() switch
                 {
                     (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Pow(n2).InnerSimplified),
                     (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Pow(n2).InnerSimplified),
@@ -178,7 +178,7 @@ namespace AngouriMath
         public partial record Sinf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Sin(n),
                 Tensor n => n.Elementwise(n => n.Sin().Evaled),
@@ -187,7 +187,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Sin().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => res,
@@ -199,7 +199,7 @@ namespace AngouriMath
         public partial record Cosf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Cos(n),
                 Tensor n => n.Elementwise(n => n.Cos().Evaled),
@@ -208,7 +208,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Cos().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => res,
@@ -220,7 +220,7 @@ namespace AngouriMath
         public partial record Secantf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Secant(n),
                 Tensor n => n.Elementwise(n => n.Sec().Evaled),
@@ -229,7 +229,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Sec().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res).InnerSimplified,
@@ -241,7 +241,7 @@ namespace AngouriMath
         public partial record Cosecantf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Cosecant(n),
                 Tensor n => n.Elementwise(n => n.Cosec().Evaled),
@@ -250,7 +250,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Cosec().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res).InnerSimplified,
@@ -262,7 +262,7 @@ namespace AngouriMath
         public partial record Arcsecantf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Arcsecant(n),
                 Tensor n => n.Elementwise(n => n.Arcsec().Evaled),
@@ -271,7 +271,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Arcsec().InnerSimplified),
                     FiniteSet finite => finite.Apply(c => c.Arcsec().InnerSimplified),
@@ -282,7 +282,7 @@ namespace AngouriMath
         public partial record Arccosecantf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Arccosecant(n),
                 Tensor n => n.Elementwise(n => n.Arccosec().Evaled),
@@ -291,7 +291,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Arccosec().InnerSimplified),
                     FiniteSet finite => finite.Apply(c => c.Arccosec().InnerSimplified),
@@ -302,7 +302,7 @@ namespace AngouriMath
         public partial record Tanf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Tan(n),
                 Tensor n => n.Elementwise(n => n.Tan().Evaled),
@@ -311,7 +311,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Tan().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => res,
@@ -322,7 +322,7 @@ namespace AngouriMath
         public partial record Cotanf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Cotan(n),
                 Tensor n => n.Elementwise(n => n.Cotan().Evaled),
@@ -331,7 +331,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Cotan().InnerSimplified),
                     { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => 1 / res,
@@ -369,7 +369,7 @@ namespace AngouriMath
         public partial record Arcsinf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Arcsin(n),
                 Tensor n => n.Elementwise(n => n.Arcsin().Evaled),
@@ -378,7 +378,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Arcsin().InnerSimplified),
                     FiniteSet finite => finite.Apply(c => c.Arcsin().InnerSimplified),
@@ -388,7 +388,7 @@ namespace AngouriMath
         public partial record Arccosf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Arccos(n),
                 Tensor n => n.Elementwise(n => n.Arccos().Evaled),
@@ -397,7 +397,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Arccos().InnerSimplified),
                     FiniteSet finite => finite.Apply(c => c.Arccos().InnerSimplified),
@@ -407,7 +407,7 @@ namespace AngouriMath
         public partial record Arctanf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Arctan(n),
                 Tensor n => n.Elementwise(n => n.Arctan().Evaled),
@@ -416,7 +416,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Arctan().InnerSimplified),
                     FiniteSet finite => finite.Apply(c => c.Arctan().InnerSimplified),
@@ -426,7 +426,7 @@ namespace AngouriMath
         public partial record Arccotanf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Arccotan(n),
                 Tensor n => n.Elementwise(n => n.Arccotan().Evaled),
@@ -435,7 +435,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Arccotan().InnerSimplified),
                     FiniteSet finite => finite.Apply(c => c.Arccotan().InnerSimplified),
@@ -445,7 +445,7 @@ namespace AngouriMath
         public partial record Factorialf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Evaled switch
+            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
             {
                 Complex n => Number.Factorial(n),
                 Tensor n => n.Elementwise(n => n.Factorial().Evaled),
@@ -454,7 +454,7 @@ namespace AngouriMath
             };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.InnerSimplified switch
+                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
                 {
                     Tensor n => n.Elementwise(n => n.Factorial().InnerSimplified),
                     FiniteSet finite => finite.Apply(c => c.Factorial().InnerSimplified),
