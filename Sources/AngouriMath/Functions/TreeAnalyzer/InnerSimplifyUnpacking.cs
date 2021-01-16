@@ -10,7 +10,7 @@ namespace AngouriMath.Functions
         private static Entity UnpackProvided(Entity entity)
             => entity is DefinedWhen definedWhen ? definedWhen.Expression : entity;
 
-        private static Entity Unpack1(this Entity entity)
+        internal static Entity Unpack1(this Entity entity)
             => UnpackProvided(entity);
 
         internal static Entity Unpack1Simplify(this Entity entity)

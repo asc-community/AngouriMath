@@ -30,31 +30,31 @@ namespace AngouriMath
             partial record Interval
             {
                 private Entity IfEqualEndsThenCollapse()
-                    => Left.Evaled == Right.Evaled ? 
+                    => Left.Unpack1Eval() == Right.Unpack1Eval() ? 
                     (
-                    LeftClosed && RightClosed ? new FiniteSet(Simplificator.PickSimplest(Left, Right)) : Empty)
+                    LeftClosed && RightClosed ? new FiniteSet(Simplificator.PickSimplest(Left.Unpack1(), Right.Unpack1())) : Empty)
                      : this;
 
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
-                    => New(Left.Evaled, Right.Evaled).IfEqualEndsThenCollapse();
+                    => New(Left.Unpack1Eval(), Right.Unpack1Eval()).IfEqualEndsThenCollapse();
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                    => New(Left.InnerSimplified, Right.InnerSimplified).IfEqualEndsThenCollapse();
+                    => New(Left.Unpack1Simplify(), Right.Unpack1Simplify()).IfEqualEndsThenCollapse();
             }
 
             partial record ConditionalSet
             {
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
-                    => Simplificator.PickSimplest(New(Var, Predicate.Evaled), InnerSimplifyWithCheck());
+                    => Simplificator.PickSimplest(New(Var, Predicate.Unpack1Eval()), InnerSimplified);
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
                 {
                     if (!Predicate.EvaluableBoolean)
-                        return New(Var, Predicate.InnerSimplified);
+                        return New(Var, Predicate.Unpack1Simplify());
                     // so it's either U or {} if the statement is always true or false respectively
                     return Predicate.EvalBoolean() ? Codomain : Set.Empty;
                 }
@@ -79,7 +79,7 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                    => (Left.InnerSimplified, Right.InnerSimplified) switch
+                    => (Left, Right).Unpack2Simplify() switch
                     {
                         (FiniteSet setLeft, Set setRight) => SetOperators.UniteFiniteSetAndSet(setLeft, setRight),
                         (Set setLeft, FiniteSet setRight) => SetOperators.UniteFiniteSetAndSet(setRight, setLeft),
@@ -97,7 +97,7 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                    => (Left.InnerSimplified, Right.InnerSimplified) switch
+                    => (Left, Right).Unpack2Simplify() switch
                     {
                         (FiniteSet setLeft, Set setRight) => SetOperators.IntersectFiniteSetAndSet(setLeft, setRight),
                         (Set setLeft, FiniteSet setRight) => SetOperators.IntersectFiniteSetAndSet(setRight, setLeft),
@@ -115,7 +115,7 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                    => (Left.InnerSimplified, Right.InnerSimplified) switch
+                    => (Left, Right).Unpack2Simplify() switch
                     {
                         (Set setLeft, FiniteSet setRight) => SetOperators.SetSubtractSetAndFiniteSet(setLeft, setRight),
                         (Interval intLeft, Interval intRight) => SetOperators.SetSubtractIntervalAndInterval(intLeft, intRight),

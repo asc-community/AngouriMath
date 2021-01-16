@@ -80,6 +80,8 @@ namespace AngouriMath
                     Dictionary<Entity, Entity> dict = new(elements.Count());
                     foreach (var elem in elements)
                     {
+                        if (elem == MathS.NaN)
+                            continue;
                         if (noCheck)
                             dict[elem.Evaled] = elem;
                         else
