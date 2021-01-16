@@ -8,6 +8,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 using static AngouriMath.Entity.Boolean;
+using AngouriMath.Functions;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
@@ -29,9 +30,9 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerEval()
             {
-                if (Argument.Evaled is Boolean b)
+                if (Argument.Unpack1Eval() is Boolean b)
                     return !(bool)b; // there's no cost in casting
-                return New(Argument.Evaled);
+                return New(Argument.Unpack1Eval());
             }
             /// <inheritdoc/>
             protected override Entity InnerSimplify() => InnerEvalWithCheck();
@@ -41,12 +42,12 @@ namespace AngouriMath
         {
             private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
-                if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
+                if (left.Unpack1Eval() is Boolean leftBool && right.Unpack1Eval() is Boolean rightBool)
                 {
                     res = (bool)leftBool && (bool)rightBool; // there's no cost in casting
                     return true;
                 }
-                else if (left.Evaled == False || right.Evaled == False)
+                else if (left.Unpack1Eval() == False || right.Unpack1Eval() == False)
                 {
                     res = False;
                     return true;
@@ -63,14 +64,14 @@ namespace AngouriMath
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.Evaled, Right.Evaled);
+                return New(Left.Unpack1Eval(), Right.Unpack1Eval());
             }
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.InnerSimplified, Right.InnerSimplified);
+                return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
             }
         }
 
@@ -78,12 +79,12 @@ namespace AngouriMath
         {
             private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
-                if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
+                if (left.Unpack1Eval() is Boolean leftBool && right.Unpack1Eval() is Boolean rightBool)
                 {
                     res = (bool)leftBool || (bool)rightBool; // there's no cost in casting
                     return true;
                 }
-                else if (left.Evaled == True || right.Evaled == True)
+                else if (left.Unpack1Eval() == True || right.Unpack1Eval() == True)
                 {
                     res = True;
                     return true;
@@ -100,14 +101,14 @@ namespace AngouriMath
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.Evaled, Right.Evaled);
+                return New(Left.Unpack1Eval(), Right.Unpack1Eval());
             }
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.InnerSimplified, Right.InnerSimplified);
+                return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
             }
         }
 
@@ -115,7 +116,7 @@ namespace AngouriMath
         {
             private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
-                if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
+                if (left.Unpack1Eval() is Boolean leftBool && right.Unpack1Eval() is Boolean rightBool)
                 {
                     res = (bool)leftBool ^ (bool)rightBool; // there's no cost in casting
                     return true;
@@ -132,14 +133,14 @@ namespace AngouriMath
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.Evaled, Right.Evaled);
+                return New(Left.Unpack1Eval(), Right.Unpack1Eval());
             }
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                 if (GoodResult(Left, Right, out var res))
                     return res;
-                return New(Left.InnerSimplified, Right.InnerSimplified);
+                return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
             }
         }
 
@@ -147,12 +148,12 @@ namespace AngouriMath
         {
             private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
-                if (left.Evaled is Boolean leftBool && right.Evaled is Boolean rightBool)
+                if (left.Unpack1Eval() is Boolean leftBool && right.Unpack1Eval() is Boolean rightBool)
                 {
                     res = !(bool)leftBool || (bool)rightBool; // there's no cost in casting
                     return true;
                 }
-                else if (left.Evaled == False || right.Evaled == True)
+                else if (left.Unpack1Eval() == False || right.Unpack1Eval() == True)
                 {
                     res = True;
                     return true;
@@ -169,7 +170,7 @@ namespace AngouriMath
             {
                 if (GoodResult(Assumption, Conclusion, out var res))
                     return res;
-                return New(Assumption.Evaled, Conclusion.Evaled);
+                return New(Assumption.Unpack1Eval(), Conclusion.Unpack1Eval());
             }
 
             /// <inheritdoc/>
@@ -177,7 +178,7 @@ namespace AngouriMath
             {
                 if (GoodResult(Assumption, Conclusion, out var res))
                     return res;
-                return New(Assumption.InnerSimplified, Conclusion.InnerSimplified);
+                return New(Assumption.Unpack1Simplify(), Conclusion.Unpack1Simplify());
             }
         }
 
@@ -187,18 +188,18 @@ namespace AngouriMath
             protected override Entity InnerEval()
             {
                 if (!Left.IsConstant || !Right.IsConstant)
-                    return New(Left.Evaled, Right.Evaled);
-                return Left.Evaled == Right.Evaled;
+                    return New(Left.Unpack1Eval(), Right.Unpack1Eval());
+                return Left.Unpack1Eval() == Right.Unpack1Eval();
             }
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
                if (Left == Right)
                     return true;
-               if (Left.Evaled is Number && Right.Evaled is Number)
+               if (Left.Unpack1Eval() is Number && Right.Unpack1Eval() is Number)
                     return InnerEvalWithCheck();
                else
-                    return New(Left.InnerSimplified, Right.InnerSimplified);
+                    return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
             }
         }
 
@@ -207,7 +208,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerEval()
             {
-                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
+                if (Left.Unpack1Eval() is Number numLeft && Right.Unpack1Eval() is Number numRight)
                 {
                     if (numLeft is Real reLeft && numRight is Real reRight)
                         return reLeft > reRight;
@@ -215,7 +216,7 @@ namespace AngouriMath
                         return MathS.NaN;
                 }
                 else 
-                    return New(Left.Evaled, Right.Evaled);
+                    return New(Left.Unpack1Eval(), Right.Unpack1Eval());
             }
 
             /// <inheritdoc/>
@@ -225,7 +226,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplified, Right.InnerSimplified);
+                    return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
             }
         }
 
@@ -234,7 +235,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerEval()
             {
-                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
+                if (Left.Unpack1Eval() is Number numLeft && Right.Unpack1Eval() is Number numRight)
                 {
                     if (numLeft is Real reLeft && numRight is Real reRight)
                         return reLeft >= reRight;
@@ -242,7 +243,7 @@ namespace AngouriMath
                         return MathS.NaN;
                 }
                 else
-                    return New(Left.Evaled, Right.Evaled);
+                    return New(Left.Unpack1Eval(), Right.Unpack1Eval());
             }
 
             /// <inheritdoc/>
@@ -252,7 +253,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplified, Right.InnerSimplified);
+                    return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
             }
         }
 
@@ -261,7 +262,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerEval()
             {
-                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
+                if (Left.Unpack1Eval() is Number numLeft && Right.Unpack1Eval() is Number numRight)
                 {
                     if (numLeft is Real reLeft && numRight is Real reRight)
                         return reLeft < reRight;
@@ -269,7 +270,7 @@ namespace AngouriMath
                         return MathS.NaN;
                 }
                 else
-                    return New(Left.Evaled, Right.Evaled);
+                    return New(Left.Unpack1Eval(), Right.Unpack1Eval());
             }
 
             /// <inheritdoc/>
@@ -279,7 +280,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplified, Right.InnerSimplified);
+                    return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
             }
         }
 
@@ -288,7 +289,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerEval()
             {
-                if (Left.Evaled is Number numLeft && Right.Evaled is Number numRight)
+                if (Left.Unpack1Eval() is Number numLeft && Right.Unpack1Eval() is Number numRight)
                 {
                     if (numLeft is Real reLeft && numRight is Real reRight)
                         return reLeft <= reRight;
@@ -296,7 +297,7 @@ namespace AngouriMath
                         return MathS.NaN;
                 }
                 else
-                    return New(Left.Evaled, Right.Evaled);
+                    return New(Left.Unpack1Eval(), Right.Unpack1Eval());
             }
 
             /// <inheritdoc/>
@@ -306,7 +307,7 @@ namespace AngouriMath
                 if (res is Boolean)
                     return res;
                 else
-                    return New(Left.InnerSimplified, Right.InnerSimplified);
+                    return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
             }
         }
 
@@ -317,20 +318,20 @@ namespace AngouriMath
                 /// <inheritdoc/>
             protected override Entity InnerEval()
                 {
-                    if (SupSet.Evaled is not Set set)
-                        return New(Element.Evaled, SupSet.Evaled);
+                    if (SupSet.Unpack1Eval() is not Set set)
+                        return New(Element.Unpack1Eval(), SupSet.Unpack1Eval());
                     if (!set.TryContains(Element, out var contains))
-                        return New(Element.Evaled, SupSet.Evaled);
+                        return New(Element.Unpack1Eval(), SupSet.Unpack1Eval());
                     return contains;
                 }
 
                 /// <inheritdoc/>
             protected override Entity InnerSimplify()
                 {
-                    if (SupSet.InnerSimplified is not Set set)
-                        return New(Element.InnerSimplified, SupSet.InnerSimplified);
+                    if (SupSet.Unpack1Simplify() is not Set set)
+                        return New(Element.Unpack1Simplify(), SupSet.Unpack1Simplify());
                     if (!set.TryContains(Element, out var contains))
-                        return New(Element.InnerSimplified, SupSet.InnerSimplified);
+                        return New(Element.Unpack1Simplify(), SupSet.Unpack1Simplify());
                     return contains;
                 }
             }
@@ -347,10 +348,10 @@ namespace AngouriMath
             }
 
             /// <inheritdoc/>
-            protected override Entity InnerEval() => InnerCompute(Argument.Evaled);
+            protected override Entity InnerEval() => InnerCompute(Argument.Unpack1Eval());
 
             /// <inheritdoc/>
-            protected override Entity InnerSimplify() => InnerCompute(Argument.InnerSimplified);
+            protected override Entity InnerSimplify() => InnerCompute(Argument.Unpack1Simplify());
         }
     }
 }
