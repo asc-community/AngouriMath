@@ -33,5 +33,20 @@ namespace AngouriMath.Functions
             var (item1, item2) = entity.Unpack2();
             return (item1.Evaled, item2.Evaled);
         }
+
+        private static (Entity, Entity) Unpack2T(this (Entity, Entity) entity)
+            => (UnpackProvided(entity.Item1), UnpackProvided(entity.Item2));
+
+        internal static (Entity, Entity, T) Unpack3SimplifyT<T>(this (Entity, Entity, T) entity)
+        {
+            var (item1, item2) = (entity.Item1, entity.Item2).Unpack2();
+            return (item1.InnerSimplified, item2.InnerSimplified, entity.Item3);
+        }
+
+        internal static (Entity, Entity, T) Unpack3EvalT<T>(this (Entity, Entity, T) entity)
+        {
+            var (item1, item2) = (entity.Item1, entity.Item2).Unpack2();
+            return (item1.Evaled, item2.Evaled, entity.Item3);
+        }
     }
 }
