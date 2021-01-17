@@ -21,7 +21,11 @@ namespace AngouriMath.Core
 #pragma warning disable CA1069 // Enums values should not be duplicated
     internal enum Priority
     { 
-        BooleanOperation = 0x0000,
+        KeywordOperation = 0x0000,
+
+        Provided = 10 | KeywordOperation,
+
+        BooleanOperation = 0x1000,
 
         Impliciation = 10 | BooleanOperation,
         Disjunction  = 30 | BooleanOperation,
@@ -29,7 +33,7 @@ namespace AngouriMath.Core
         Conjunction  = 50 | BooleanOperation,
         Negation     = 70 | BooleanOperation,
 
-        EqualitySignsOperation = 0x1000,
+        EqualitySignsOperation = 0x2000,
 
         Equal          = 10 | EqualitySignsOperation,
         LessThan       = 20 | EqualitySignsOperation,
@@ -37,14 +41,14 @@ namespace AngouriMath.Core
         LessOrEqual    = 20 | EqualitySignsOperation,
         GreaterOrEqual = 20 | EqualitySignsOperation,
 
-        SetOperation = 0x2000,
+        SetOperation = 0x3000,
 
         ContainsIn   = 10 | SetOperation,
         SetMinus     = 20 | SetOperation,
         Union        = 30 | SetOperation,
         Intersection = 40 | SetOperation,
 
-        NumericalOperation = 0x3000,
+        NumericalOperation = 0x4000,
 
         Sum = 20       | NumericalOperation,
         Minus = 20     | NumericalOperation,

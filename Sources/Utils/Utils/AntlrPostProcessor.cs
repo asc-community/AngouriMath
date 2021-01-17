@@ -5,7 +5,7 @@ namespace Utils
 {
     public static class AntlrPostProcessorReplacePublicWithInternal
     {
-        public const string ANTLR_PATH = "../../AngouriMath/AngouriMath/Core/Antlr/";
+        public const string ANTLR_PATH = "../AngouriMath/Core/Antlr/";
 
         private static void ProcessFile(string path)
         {

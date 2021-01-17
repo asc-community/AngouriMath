@@ -220,6 +220,16 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitImplies_expression([NotNull] AngouriMathParser.Implies_expressionContext context);
 	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.provided_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterProvided_expression([NotNull] AngouriMathParser.Provided_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.provided_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitProvided_expression([NotNull] AngouriMathParser.Provided_expressionContext context);
+	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.expression"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>

@@ -32,7 +32,7 @@ namespace AngouriMath
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(func(Expression), func(Predicate)));
 
-            internal override Priority Priority => Priority.Leaf;
+            internal override Priority Priority => Priority.Provided;
 
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Expression, Predicate };

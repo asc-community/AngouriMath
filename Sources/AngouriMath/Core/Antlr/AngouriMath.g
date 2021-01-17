@@ -209,8 +209,25 @@ implies_expression returns[Entity value]
      '->' m2 = or_expression { $value = $value.Implies($m2.value); })*
     ;
 
+/*
+
+Keyword nodes
+
+*/
+
+provided_expression returns[Entity value]
+    : expr = implies_expression { $value = $expr.value; }
+    ('provided' pred = implies_expression { $value = $value.Provided($pred.value); })*
+    ;
+
+/*
+
+Nodes end
+
+*/
+
 expression returns[Entity value]
-    : s = implies_expression { $value = $s.value; }
+    : s = provided_expression { $value = $s.value; }
     ;
 
 
