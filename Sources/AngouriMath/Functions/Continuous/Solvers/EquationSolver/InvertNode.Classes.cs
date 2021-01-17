@@ -416,5 +416,13 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 => Enumerable.Empty<Entity>();
         }
+
+        partial record DefinedWhen
+        {
+            // (f(x) provided B) = value
+            // f(x) = (value provided B)
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Expression.InvertNode(value, x).Select(c => c.Provided(Predicate));
+        }
     }
 }

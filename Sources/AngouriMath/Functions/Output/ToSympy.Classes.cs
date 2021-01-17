@@ -352,7 +352,13 @@ namespace AngouriMath
 
         public partial record Phif
         {
-            internal override string ToSymPy() => "sympy.totient(" + Argument.ToSymPy() + ")";
+            internal override string ToSymPy() => $"sympy.totient({Argument.ToSymPy()})";
+        }
+
+        partial record DefinedWhen
+        {
+            // TODO: is it the right way of using refine
+            internal override string ToSymPy() => $"sympy.refine({Expression.ToSymPy()}, sympy.Q.is_true({Predicate.ToSymPy()}))";
         }
     }
 }

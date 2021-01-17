@@ -288,5 +288,12 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable)
                 => MathS.Signum(Argument) * Argument.InnerDifferentiate(variable);
         }
+
+        partial record DefinedWhen
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => Expression.InnerDifferentiate(variable).Provided(Predicate);
+        }
     }
 }
