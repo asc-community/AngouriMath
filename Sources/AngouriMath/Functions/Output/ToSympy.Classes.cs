@@ -355,7 +355,7 @@ namespace AngouriMath
             internal override string ToSymPy() => $"sympy.totient({Argument.ToSymPy()})";
         }
 
-        partial record DefinedWhen
+        partial record Providedf
         {
             // TODO: is it the right way of using refine
             internal override string ToSymPy() => $"sympy.refine({Expression.ToSymPy()}, sympy.Q.is_true({Predicate.ToSymPy()}))";

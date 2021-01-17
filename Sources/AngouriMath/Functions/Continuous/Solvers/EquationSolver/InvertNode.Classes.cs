@@ -417,7 +417,7 @@ namespace AngouriMath
                 => Enumerable.Empty<Entity>();
         }
 
-        partial record DefinedWhen
+        partial record Providedf
         {
             // (f(x) provided B) = value
             // f(x) = (value provided B)

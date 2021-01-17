@@ -289,7 +289,7 @@ namespace AngouriMath
                 => MathS.Signum(Argument) * Argument.InnerDifferentiate(variable);
         }
 
-        partial record DefinedWhen
+        partial record Providedf
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)

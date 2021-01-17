@@ -8,7 +8,7 @@ namespace AngouriMath.Functions
     partial class TreeAnalyzer
     {
         private static Entity UnpackProvided(Entity entity)
-            => entity is DefinedWhen definedWhen ? definedWhen.Expression : entity;
+            => entity is Providedf definedWhen ? definedWhen.Expression : entity;
 
         internal static Entity Unpack1(this Entity entity)
             => UnpackProvided(entity);

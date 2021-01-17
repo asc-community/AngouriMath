@@ -542,7 +542,7 @@ namespace AngouriMath
             public override string Latexise() => $@"\varphi({Argument.Latexise()})";
         }
 
-        partial record DefinedWhen
+        partial record Providedf
         {
             /// <inheritdoc/>
             public override string Latexise() => $@"({Expression.Latexise()} for {Predicate.Latexise()})";

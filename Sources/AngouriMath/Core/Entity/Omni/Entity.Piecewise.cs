@@ -22,11 +22,11 @@ namespace AngouriMath
         /// <summary>
         /// That is a node which equals Expression if Predicate is true, otherwise <see cref="MathS.NaN"/>
         /// </summary>
-        public sealed partial record DefinedWhen(Entity Expression, Entity Predicate) : Entity
+        public sealed partial record Providedf(Entity Expression, Entity Predicate) : Entity
         {
-            private DefinedWhen New(Entity expression, Entity predicate)
+            private Providedf New(Entity expression, Entity predicate)
                 => ReferenceEquals(expression, Expression) && ReferenceEquals(predicate, Predicate) ? this :
-                new DefinedWhen(expression, predicate);
+                new Providedf(expression, predicate);
 
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)

@@ -26,6 +26,6 @@ namespace AngouriMath
         /// <param name="that"></param>
         /// <returns></returns>
         public Entity Provided(Entity that)
-            => new DefinedWhen(this, that);
+            => new Providedf(this, that);
     }
 }

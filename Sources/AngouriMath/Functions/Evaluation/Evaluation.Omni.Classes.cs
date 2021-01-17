@@ -125,7 +125,7 @@ namespace AngouriMath
             }
         }
 
-        partial record DefinedWhen
+        partial record Providedf
         {
             /// <inheritdoc/>
             protected override Entity InnerEval()

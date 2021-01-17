@@ -546,7 +546,7 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
-        partial record DefinedWhen
+        partial record Providedf
         {
             /// <inheritdoc/>
             public override string Stringize() => $@"({Expression.Stringize()} for {Predicate.Stringize()})";

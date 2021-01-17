@@ -346,7 +346,7 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level) => "phi_";
         }
 
-        partial record DefinedWhen
+        partial record Providedf
         {
             private protected override string SortHashName(SortLevel level) => "provided_";
         }

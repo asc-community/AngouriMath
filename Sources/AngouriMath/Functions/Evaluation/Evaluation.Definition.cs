@@ -41,7 +41,7 @@ namespace AngouriMath
         {
             static Entity WrapWithProvidedIfNecessary(IEnumerable<Entity> predicates, Entity entity)
                 => predicates.Any() ? entity.Provided(TreeAnalyzer.MultiHangBinary(predicates.ToList(), (a, b) => a & b)) : entity;
-            var predicates = DirectChildren.Where(c => c is DefinedWhen).Select(c => ((DefinedWhen)c).Predicate);
+            var predicates = DirectChildren.Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
             var innerSimplified = InnerSimplify();
             if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
                 return WrapWithProvidedIfNecessary(predicates, innerSimplified);
@@ -61,7 +61,7 @@ namespace AngouriMath
         {
             static Entity WrapWithProvidedIfNecessary(IEnumerable<Entity> predicates, Entity entity)
                 => predicates.Any() ? entity.Provided(TreeAnalyzer.MultiHangBinary(predicates.ToList(), (a, b) => a & b)) : entity;
-            var predicates = DirectChildren.Where(c => c is DefinedWhen).Select(c => ((DefinedWhen)c).Predicate);
+            var predicates = DirectChildren.Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
             var innerEvaled = InnerEval();
             if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Codomain))
                 return WrapWithProvidedIfNecessary(predicates, innerEvaled);

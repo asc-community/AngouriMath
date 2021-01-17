@@ -303,7 +303,7 @@ namespace AngouriMath
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
-        partial record DefinedWhen
+        partial record Providedf
         {
             /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)

@@ -263,7 +263,7 @@ namespace AngouriMath
                 => Argument.ComputeLimitDivideEtImpera(x, dist, side)?.Abs();
         }
 
-        partial record DefinedWhen
+        partial record Providedf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
             {
