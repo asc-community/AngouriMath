@@ -33,7 +33,7 @@ namespace AngouriMath
         public Entity InnerSimplified => innerSimplified.GetValue(@this => @this.InnerSimplifyWithCheck(), this);
         private FieldCache<Entity> innerSimplified;
 
-        
+
         /// <summary>
         /// Make sure you call this function inside of <see cref="InnerSimplify"/>
         /// </summary>
@@ -41,12 +41,21 @@ namespace AngouriMath
         {
             static Entity WrapWithProvidedIfNecessary(IEnumerable<Entity> predicates, Entity entity)
                 => predicates.Any() ? entity.Provided(TreeAnalyzer.MultiHangBinary(predicates.ToList(), (a, b) => a & b)) : entity;
-            var predicates = DirectChildren.Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
+            var predicates = Enumerable.Empty<Entity>();
+            if (this is not Providedf)
+                predicates = DirectChildren.Select(c => c.InnerSimplified).Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
             var innerSimplified = InnerSimplify();
-            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
-                return WrapWithProvidedIfNecessary(predicates, innerSimplified);
+            if (innerSimplified.DirectChildren.Any(c => c == MathS.NaN))
+                return MathS.NaN;
+            if (innerSimplified is not Providedf)
+            {
+                if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
+                    return WrapWithProvidedIfNecessary(predicates, innerSimplified);
+                else
+                    return WrapWithProvidedIfNecessary(predicates, this);
+            }
             else
-                return WrapWithProvidedIfNecessary(predicates, this);
+                return innerSimplified;
         }
 
         /// <summary>
@@ -63,6 +72,8 @@ namespace AngouriMath
                 => predicates.Any() ? entity.Provided(TreeAnalyzer.MultiHangBinary(predicates.ToList(), (a, b) => a & b)) : entity;
             var predicates = DirectChildren.Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
             var innerEvaled = InnerEval();
+            if (innerEvaled.DirectChildren.Any(c => c == MathS.NaN))
+                return MathS.NaN;
             if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Codomain))
                 return WrapWithProvidedIfNecessary(predicates, innerEvaled);
             else

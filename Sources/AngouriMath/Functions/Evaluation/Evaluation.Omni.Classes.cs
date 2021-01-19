@@ -141,7 +141,18 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
-                var evaled = New(Expression.InnerSimplified, Predicate.InnerSimplified);
+                
+                var evaled = (Expression.InnerSimplified, Predicate.InnerSimplified) switch
+                {
+                    (Providedf exprProvided, Providedf predProvided) => 
+                        New(exprProvided.Expression, exprProvided.Predicate & predProvided.Predicate & predProvided.Expression),
+                    (var expr, Providedf predProvided) =>
+                        New(expr, predProvided.Predicate & predProvided.Expression),
+                    (Providedf exprProvided, var predicate)
+                        => New(exprProvided.Expression, predicate & exprProvided.Predicate),
+                    (var expr, var predicate)
+                        => New(expr, predicate)
+                };
                 if (evaled.Predicate.Evaled == Boolean.True)
                     return evaled.Expression;
                 if (evaled.Predicate.Evaled == Boolean.False)
