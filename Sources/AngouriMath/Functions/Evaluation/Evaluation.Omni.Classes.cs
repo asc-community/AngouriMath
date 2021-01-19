@@ -127,37 +127,40 @@ namespace AngouriMath
 
         partial record Providedf
         {
+            private Providedf SwitchOverChildren(Entity expression, Entity predicate)
+                => (expression, predicate) switch
+                {
+                    (Providedf exprProvided, Providedf predProvided) =>
+                        New(exprProvided.Expression, exprProvided.Predicate & predProvided.Predicate & predProvided.Expression),
+                    (var expr, Providedf predProvided) =>
+                        New(expr, predProvided.Predicate & predProvided.Expression),
+                    (Providedf exprProvided, var pred)
+                        => New(exprProvided.Expression, pred & exprProvided.Predicate),
+                    (var expr, var pred)
+                        => New(expr, pred)
+                };
+
+            private static Entity DecideWithPredicate(Providedf expr)
+            {
+                if (expr.Predicate == Boolean.True)
+                    return expr.Expression;
+                if (expr.Predicate == Boolean.False)
+                    return MathS.NaN;
+                return expr;
+            }
+
             /// <inheritdoc/>
             protected override Entity InnerEval()
             {
-                var evaled = New(Expression.Evaled, Predicate.Evaled);
-                if (evaled.Predicate == Boolean.True)
-                    return evaled.Expression;
-                if (evaled.Predicate == Boolean.False)
-                    return MathS.NaN;
-                return evaled;
+                var evaled = SwitchOverChildren(Expression.Evaled, Predicate.Evaled);
+                return DecideWithPredicate(evaled);
             }
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
             {
-                
-                var evaled = (Expression.InnerSimplified, Predicate.InnerSimplified) switch
-                {
-                    (Providedf exprProvided, Providedf predProvided) => 
-                        New(exprProvided.Expression, exprProvided.Predicate & predProvided.Predicate & predProvided.Expression),
-                    (var expr, Providedf predProvided) =>
-                        New(expr, predProvided.Predicate & predProvided.Expression),
-                    (Providedf exprProvided, var predicate)
-                        => New(exprProvided.Expression, predicate & exprProvided.Predicate),
-                    (var expr, var predicate)
-                        => New(expr, predicate)
-                };
-                if (evaled.Predicate.Evaled == Boolean.True)
-                    return evaled.Expression;
-                if (evaled.Predicate.Evaled == Boolean.False)
-                    return MathS.NaN;
-                return evaled;
+                var simplified = SwitchOverChildren(Expression.InnerSimplified, Predicate.InnerSimplified);
+                return DecideWithPredicate(simplified);
             }
         }
     }

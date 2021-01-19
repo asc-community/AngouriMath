@@ -262,6 +262,16 @@ namespace AngouriMath
         public static Entity Negation(Entity a) => !a;
 
         /// <summary>
+        /// This will be turned into <paramref name="expression"/> if the <paramref name="condition"/> is true,
+        /// into NaN if <paramref name="condition"/> is false, and remain the same otherwise
+        /// </summary>
+        /// <param name="expression">The expression is extracted if the predicate is true</param>
+        /// <param name="condition">Condition when the expression is defined</param>
+        /// <returns>The Provided node</returns>
+        public static Entity Provided(Entity expression, Entity condition)
+            => expression.Provided(condition);
+
+        /// <summary>
         /// Represents a few hyperbolic functions
         /// </summary>
         public static class TrigonometricHyperpolic

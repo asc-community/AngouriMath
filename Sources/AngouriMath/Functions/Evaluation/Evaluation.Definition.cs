@@ -70,14 +70,21 @@ namespace AngouriMath
         {
             static Entity WrapWithProvidedIfNecessary(IEnumerable<Entity> predicates, Entity entity)
                 => predicates.Any() ? entity.Provided(TreeAnalyzer.MultiHangBinary(predicates.ToList(), (a, b) => a & b)) : entity;
-            var predicates = DirectChildren.Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
+            var predicates = Enumerable.Empty<Entity>();
+            if (this is not Providedf)
+                predicates = DirectChildren.Select(c => c.Evaled).Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
             var innerEvaled = InnerEval();
             if (innerEvaled.DirectChildren.Any(c => c == MathS.NaN))
                 return MathS.NaN;
-            if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Codomain))
-                return WrapWithProvidedIfNecessary(predicates, innerEvaled);
+            if (innerEvaled is not Providedf)
+            {
+                if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Codomain))
+                    return WrapWithProvidedIfNecessary(predicates, innerEvaled);
+                else
+                    return WrapWithProvidedIfNecessary(predicates, this);
+            }
             else
-                return WrapWithProvidedIfNecessary(predicates, this);
+                return innerEvaled;
         }
 
         /// <summary>

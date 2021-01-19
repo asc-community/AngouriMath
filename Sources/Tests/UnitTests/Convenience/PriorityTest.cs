@@ -24,6 +24,13 @@ namespace UnitTests.Common
         [InlineData("a or b implies c or d", "(a or b) implies (c or d)")]
         [InlineData("not a or not b implies not c or not d", "((not a) or (not b)) implies ((not c) or (not d))")]
         [InlineData("a and b = c > d", "a and (b = (c > d))")]
+        [InlineData("a provided b", "a provided b")]
+        [InlineData("a provided b provided c", "(a provided b) provided c")]
+        [InlineData("a provided (b provided c)", "a provided (b provided c)")]
+        [InlineData("a provided b and c", "a provided (b and c)")]
+        [InlineData("a provided b + c > 0", "a provided (b + c > 0)")]
+        [InlineData("a + b provided b + c > 0", "(a + b) provided (b + c > 0)")]
+        [InlineData("a + b provided b + c > 0 provided d", "((a + b) provided (b + c > 0)) provided d")]
         public void Test(string implic, string explic)
         {
             Assert.Equal(explic.ToEntity(), implic.ToEntity());
