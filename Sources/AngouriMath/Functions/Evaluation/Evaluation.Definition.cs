@@ -34,29 +34,31 @@ namespace AngouriMath
         private FieldCache<Entity> innerSimplified;
 
 
-        /// <summary>
-        /// Make sure you call this function inside of <see cref="InnerSimplify"/>
-        /// </summary>
-        internal Entity InnerSimplifyWithCheck()
+        private Entity InnerActionWithCheck(IEnumerable<Entity> directChildren, Entity innerSimplifiedOrEvaled)
         {
             static Entity WrapWithProvidedIfNecessary(IEnumerable<Entity> predicates, Entity entity)
                 => predicates.Any() ? entity.Provided(TreeAnalyzer.MultiHangBinary(predicates.ToList(), (a, b) => a & b)) : entity;
             var predicates = Enumerable.Empty<Entity>();
             if (this is not Providedf)
-                predicates = DirectChildren.Select(c => c.InnerSimplified).Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
-            var innerSimplified = InnerSimplify();
-            if (innerSimplified.DirectChildren.Any(c => c == MathS.NaN))
+                predicates = directChildren.Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
+            if (innerSimplifiedOrEvaled.DirectChildren.Any(c => c == MathS.NaN))
                 return MathS.NaN;
-            if (innerSimplified is not Providedf)
+            if (innerSimplifiedOrEvaled is not Providedf)
             {
-                if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
-                    return WrapWithProvidedIfNecessary(predicates, innerSimplified);
+                if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplifiedOrEvaled, Codomain))
+                    return WrapWithProvidedIfNecessary(predicates, innerSimplifiedOrEvaled);
                 else
                     return WrapWithProvidedIfNecessary(predicates, this);
             }
             else
-                return innerSimplified;
+                return innerSimplifiedOrEvaled;
         }
+
+        /// <summary>
+        /// Make sure you call this function inside of <see cref="InnerSimplify"/>
+        /// </summary>
+        internal Entity InnerSimplifyWithCheck()
+            => InnerActionWithCheck(DirectChildren.Select(c => c.InnerSimplified), InnerSimplify());
 
         /// <summary>
         /// This should NOT be called inside itself
@@ -67,25 +69,8 @@ namespace AngouriMath
         /// Make sure you call this function inside of <see cref="InnerEval"/>
         /// </summary>
         protected Entity InnerEvalWithCheck()
-        {
-            static Entity WrapWithProvidedIfNecessary(IEnumerable<Entity> predicates, Entity entity)
-                => predicates.Any() ? entity.Provided(TreeAnalyzer.MultiHangBinary(predicates.ToList(), (a, b) => a & b)) : entity;
-            var predicates = Enumerable.Empty<Entity>();
-            if (this is not Providedf)
-                predicates = DirectChildren.Select(c => c.Evaled).Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
-            var innerEvaled = InnerEval();
-            if (innerEvaled.DirectChildren.Any(c => c == MathS.NaN))
-                return MathS.NaN;
-            if (innerEvaled is not Providedf)
-            {
-                if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Codomain))
-                    return WrapWithProvidedIfNecessary(predicates, innerEvaled);
-                else
-                    return WrapWithProvidedIfNecessary(predicates, this);
-            }
-            else
-                return innerEvaled;
-        }
+            => InnerActionWithCheck(DirectChildren.Select(c => c.Evaled), InnerEval());
+
 
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
