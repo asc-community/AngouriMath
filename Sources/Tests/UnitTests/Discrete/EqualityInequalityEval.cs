@@ -52,6 +52,9 @@ namespace UnitTests.Discrete
         [InlineData("1 <= i")]
         [InlineData("1 >= i")]
         public void IsNaN(string expr)
-            => Assert.Equal(MathS.NaN, expr.ToEntity().Evaled);
+        {
+            var ent = expr.ToEntity();
+            Assert.Equal(MathS.NaN, ent.Evaled);
+        }
     }
 }

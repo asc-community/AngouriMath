@@ -34,7 +34,7 @@ namespace AngouriMath
         private FieldCache<Entity> innerSimplified;
 
 
-        private Entity InnerActionWithCheck(IEnumerable<Entity> directChildren, Entity innerSimplifiedOrEvaled)
+        private Entity InnerActionWithCheck(IEnumerable<Entity> directChildren, Entity innerSimplifiedOrEvaled, bool returnThisIfNaN)
         {
             static Entity WrapWithProvidedIfNecessary(IEnumerable<Entity> predicates, Entity entity)
                 => predicates.Any() ? entity.Provided(TreeAnalyzer.MultiHangBinary(predicates.ToList(), (a, b) => a & b)) : entity;
@@ -48,7 +48,12 @@ namespace AngouriMath
                 if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplifiedOrEvaled, Codomain))
                     return WrapWithProvidedIfNecessary(predicates, innerSimplifiedOrEvaled);
                 else
-                    return WrapWithProvidedIfNecessary(predicates, this);
+                {
+                    if (returnThisIfNaN)
+                        return WrapWithProvidedIfNecessary(predicates, this);
+                    else
+                        return MathS.NaN;
+                }
             }
             else
                 return innerSimplifiedOrEvaled;
@@ -58,7 +63,7 @@ namespace AngouriMath
         /// Make sure you call this function inside of <see cref="InnerSimplify"/>
         /// </summary>
         internal Entity InnerSimplifyWithCheck()
-            => InnerActionWithCheck(DirectChildren.Select(c => c.InnerSimplified), InnerSimplify());
+            => InnerActionWithCheck(DirectChildren.Select(c => c.InnerSimplified), InnerSimplify(), true);
 
         /// <summary>
         /// This should NOT be called inside itself
@@ -69,7 +74,7 @@ namespace AngouriMath
         /// Make sure you call this function inside of <see cref="InnerEval"/>
         /// </summary>
         protected Entity InnerEvalWithCheck()
-            => InnerActionWithCheck(DirectChildren.Select(c => c.Evaled), InnerEval());
+            => InnerActionWithCheck(DirectChildren.Select(c => c.Evaled), InnerEval(), false);
 
 
         /// <summary>
