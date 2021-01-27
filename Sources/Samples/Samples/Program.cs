@@ -69,5 +69,5 @@ using static System.Console;
 
 //WriteLine("X + 2 / 3");
 //Entity expr = "(((x provided a) + 1) * 2 provided b) + (3 provided c) / ((4 provided 5) provided d)";
-Entity expr = "(sqrt(x) - sqrt(x)) provided sqrt(x) > 0";
-WriteLine(expr.InnerSimplified);
+Entity expr = "x2 + 2x + integral(a x, x)";
+WriteLine(expr.Latexise());

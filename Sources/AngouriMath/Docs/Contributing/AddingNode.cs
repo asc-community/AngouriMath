@@ -23,7 +23,7 @@ using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using An
 ///    file you need to add.
 /// 
 /// 1. Numerical evaluation (if appropriate)
-///     a. Implement real number evaluation (<see cref="NumbersExtensions.Sin"/>)
+///     a. Implement real number evaluation (<see cref="InternalAMExtensions.Sin"/>)
 ///     b. then complex number evaluation (<see cref="Sin"/>)
 ///
 /// 2. Next, Add a new node representing the function as a nested type in <see cref="Entity"/>

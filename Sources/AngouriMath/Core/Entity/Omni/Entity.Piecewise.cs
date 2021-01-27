@@ -9,6 +9,7 @@
  */
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
@@ -24,7 +25,7 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Providedf(Entity Expression, Entity Predicate) : Entity
         {
-            private Providedf New(Entity expression, Entity predicate)
+            internal Providedf New(Entity expression, Entity predicate)
                 => ReferenceEquals(expression, Expression) && ReferenceEquals(predicate, Predicate) ? this :
                 new Providedf(expression, predicate);
 
@@ -37,6 +38,31 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Expression, Predicate };
         }
+
+        public sealed partial record Piecewise : Entity
+        {
+            public IEnumerable<Providedf> Cases => cases;
+            private IEnumerable<Providedf> cases = Enumerable.Empty<Providedf>();
+
+            // internal override Priority Priority => Priority.Provided;
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => Cases.Select(c => (c.Expression, c.Predicate)).ConcatTuples().ToArray();
+
+            internal Piecewise New(IEnumerable<Providedf> newCases)
+                => (Cases, newCases).SequencesAreEqualReferences() ? this : new Piecewise(newCases);
+
+            /// <summary>
+            /// Creates an instance of Piecewise
+            /// </summary>
+            /// <param name="cases">
+            /// This is an ordered sequence of <see cref="Providedf"/>
+            /// </param>
+            public Piecewise(IEnumerable<Providedf> cases)
+                => this.cases = cases;
+        }
+
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
+
+    
 }

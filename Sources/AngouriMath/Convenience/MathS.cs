@@ -1033,11 +1033,11 @@ namespace AngouriMath
         {
             /// <summary><a href="https://en.wikipedia.org/wiki/Pi"/></summary>
             public static EDecimal pi =>
-                NumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).Pi;
+                InternalAMExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).Pi;
 
             /// <summary><a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/></summary>
             public static EDecimal e =>
-                NumbersExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
+                InternalAMExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
         }
 
         /// <summary>
