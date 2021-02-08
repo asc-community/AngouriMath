@@ -69,5 +69,6 @@ using static System.Console;
 
 //WriteLine("X + 2 / 3");
 //Entity expr = "(((x provided a) + 1) * 2 provided b) + (3 provided c) / ((4 provided 5) provided d)";
-Entity expr = "x2 + 2x + integral(a x, x)";
-WriteLine(expr.Latexise());
+
+Entity expr = "2x2 - 4x - 8 = A(x3 + 4x) + B(x2 + 4) + C(x3 - x2) + D(x2 - x)";
+WriteLine(expr.Substitute("x", 2).Substitute("A", 0).Substitute("B", -2).Simplify().InnerSimplified);

@@ -7,6 +7,9 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+using System;
+using static AngouriMath.Entity.Set;
+
 namespace AngouriMath
 {
     public abstract partial record Entity
@@ -27,6 +30,24 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() => Elementwise(e => e.InnerSimplified);
+        }
+
+        // used in InnerSimplify and InnerEval
+        // allows to avoid looking over all the combinations with piecewise, tensor, finiteset
+        private Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Entity @default)
+        {
+            if (operation(left, right) is { } preRes)
+                return preRes;
+            Func<Entity, Entity, Entity> ops = (a, b) => operation(a, b) is { } res ? res : @default;
+            return (left, right) switch
+            {
+                (Tensor a, Tensor b) => a.Elementwise(b, ops),
+                (Tensor a, var b) => a.Elementwise(a => ops(a, b)),
+                (var a, Tensor b) => b.Elementwise(b => ops(a, b)),
+                (FiniteSet a, var b) => a.Apply(a => ops(a, b)),
+                (var a, FiniteSet b) => b.Apply(b => ops(a, b)),
+                _ => @default
+            };
         }
     }
 }

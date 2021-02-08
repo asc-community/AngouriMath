@@ -24,23 +24,35 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerSimplify() => this;
         }
-            
+
         // Each function and operator processing
         public partial record Sumf
         {
+            // /// <inheritdoc/>
+            // protected override Entity InnerEval() => (Augend, Addend).Unpack2Eval() switch
+            // {
+            //     (Complex n1, Complex n2) => n1 + n2,
+            //     (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).Unpack1Eval()),
+            //     (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2).Unpack1Eval()),
+            //     (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 + n2).Unpack1Eval()),
+            //     (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c + n2).Unpack1Eval()),
+            //     (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 + c).Unpack1Eval()),
+            //     (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Unpack1Eval(), (inter.Right + n2).Unpack1Eval()),
+            //     (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Unpack1Eval(), (n2 + inter.Right).Unpack1Eval()),
+            //     (var n1, var n2) => New(n1, n2)
+            // };
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Augend, Addend).Unpack2Eval() switch
-            {
-                (Complex n1, Complex n2) => n1 + n2,
-                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).Unpack1Eval()),
-                (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2).Unpack1Eval()),
-                (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 + n2).Unpack1Eval()),
-                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c + n2).Unpack1Eval()),
-                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 + c).Unpack1Eval()),
-                (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Unpack1Eval(), (inter.Right + n2).Unpack1Eval()),
-                (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Unpack1Eval(), (n2 + inter.Right).Unpack1Eval()),
-                (var n1, var n2) => New(n1, n2)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnTwoArguments(Augend.Unpack1Eval(), Addend.Unpack1Eval(),
+                    (augend, addend) => (augend, addend) switch
+                    { 
+                        (Complex a, Complex b) => a + b,
+                        _ => null
+                    },
+                    Augend.Unpack1Eval() + Addend.Unpack1Eval()
+                    );
+
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : (Augend, Addend).Unpack2Simplify() switch
