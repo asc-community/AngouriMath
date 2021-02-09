@@ -7,6 +7,7 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+using AngouriMath.Functions;
 using System;
 using static AngouriMath.Entity.Set;
 
@@ -32,13 +33,32 @@ namespace AngouriMath
             protected override Entity InnerSimplify() => Elementwise(e => e.InnerSimplified);
         }
 
-        // used in InnerSimplify and InnerEval
-        // allows to avoid looking over all the combinations with piecewise, tensor, finiteset
-        private Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Entity @default)
+        /// <summary>
+        /// For two-argument nodes
+        /// Used in InnerSimplify and InnerEval
+        /// Allows to avoid looking over all the combinations with piecewise, tensor, finiteset
+        /// </summary>
+        /// <param name="left">
+        /// Left argument
+        /// </param>
+        /// <param name="right">
+        /// Right argument
+        /// </param>
+        /// <param name="operation">
+        /// That is the main switch for the types. It must return null if no suitable couple of types is found,
+        /// so that the method could move on to the matrix choice
+        /// </param>
+        /// <param name="defaultCtor">
+        /// If no suitable case in switch found, it should return the default node, for example, for sum it would be
+        /// <code>(a, b) => a + b</code>
+        /// </param>
+        private static Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity> defaultCtor)
         {
+            left = left.Unpack1();
+            right = right.Unpack1();
             if (operation(left, right) is { } preRes)
                 return preRes;
-            Func<Entity, Entity, Entity> ops = (a, b) => operation(a, b) is { } res ? res : @default;
+            Func<Entity, Entity, Entity> ops = (a, b) => operation(a, b) is { } res ? res : defaultCtor(left, right);
             return (left, right) switch
             {
                 (Tensor a, Tensor b) => a.Elementwise(b, ops),
@@ -46,7 +66,7 @@ namespace AngouriMath
                 (var a, Tensor b) => b.Elementwise(b => ops(a, b)),
                 (FiniteSet a, var b) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b) => b.Apply(b => ops(a, b)),
-                _ => @default
+                _ => defaultCtor(left, right)
             };
         }
     }

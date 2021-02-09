@@ -43,31 +43,33 @@ namespace AngouriMath
             // };
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
-                ExpandOnTwoArguments(Augend.Unpack1Eval(), Addend.Unpack1Eval(),
+                ExpandOnTwoArguments(Augend.Evaled, Addend.Evaled,
                     (augend, addend) => (augend, addend) switch
                     { 
                         (Complex a, Complex b) => a + b,
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Unpack1Eval(), (inter.Right + n2).Unpack1Eval()),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Unpack1Eval(), (n2 + inter.Right).Unpack1Eval()),
                         _ => null
                     },
-                    Augend.Unpack1Eval() + Addend.Unpack1Eval()
+                    (a, b) => a + b
                     );
 
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Augend, Addend).Unpack2Simplify() switch
-                {
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).Unpack1Simplify()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2).Unpack1Simplify()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 + n2).Unpack1Simplify()),
-                    (var n1, Integer(0)) => n1,
-                    (Integer(0), var n2) => n2,
-                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c + n2).Unpack1Simplify()),
-                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 + c).Unpack1Simplify()),
-                    (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Unpack1Simplify(), (inter.Right + n2).Unpack1Simplify()),
-                    (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Unpack1Simplify(), (n2 + inter.Right).Unpack1Simplify()),
-                    (var n1, var n2) => n1 == n2 ? (2 * n1).Unpack1Simplify() : New(n1, n2)
-                };
+                Evaled is Number { IsExact: true } ? Evaled :
+                    ExpandOnTwoArguments(Augend.InnerSimplified, Addend.InnerSimplified,
+                        (augend, addend) => (augend, addend) switch
+                        {
+                            (Complex a, Complex b) => a + b,
+                            (var n1, Integer(0)) => n1,
+                            (Integer(0), var n2) => n2,
+                            (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Unpack1Simplify(), (inter.Right + n2).Unpack1Simplify()),
+                            (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Unpack1Simplify(), (n2 + inter.Right).Unpack1Simplify()),
+                            _ => null
+                        },
+                        (a, b) => a + b
+                        );
         }
         public partial record Minusf
         {
