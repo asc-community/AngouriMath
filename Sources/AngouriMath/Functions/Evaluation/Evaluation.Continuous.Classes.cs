@@ -74,131 +74,123 @@ namespace AngouriMath
         public partial record Minusf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Subtrahend, Minuend).Unpack2Eval() switch
-            {
-                (Complex n1, Complex n2) => n1 - n2,
-                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 - n2).Unpack1Eval()),
-                (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 - n2).Unpack1Eval()),
-                (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 - n2).Unpack1Eval()),
-                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c - n2).Unpack1Eval()),
-                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 - c).Unpack1Eval()),
-                (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).Unpack1Eval(), (inter.Right - n2).Unpack1Eval()),
-                (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Unpack1Eval(), (n2 - inter.Right).Unpack1Eval()),
-                (var n1, var n2) => New(n1, n2)
-            };
+            protected override Entity InnerEval() => ExpandOnTwoArguments(Subtrahend.Evaled, Minuend.Evaled,
+                    (augend, addend) => (augend, addend) switch
+                    {
+                        (Complex a, Complex b) => a - b,
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).Unpack1Eval(), (inter.Right - n2).Unpack1Eval()),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Unpack1Eval(), (n2 - inter.Right).Unpack1Eval()),
+                        _ => null
+                    },
+                    (a, b) => a - b
+                    );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Subtrahend, Minuend).Unpack2Simplify() switch
-                {
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 - n2).Unpack1Simplify()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 - n2).Unpack1Simplify()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 - n2).Unpack1Simplify()),
-                    (var n1, Integer(0)) => n1,
-                    (Integer(0), var n2) => (-n2).Unpack1Simplify(),
-                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c - n2).Unpack1Simplify()),
-                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 - c).Unpack1Simplify()),
-                    (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).Unpack1Simplify(), (inter.Right - n2).Unpack1Simplify()),
-                    (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Unpack1Simplify(), (n2 - inter.Right).Unpack1Simplify()),
-                    (var n1, var n2) => n1 == n2 ? (Entity)0 : New(n1, n2)
-                };
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnTwoArguments(Subtrahend.InnerSimplified, Minuend.InnerSimplified,
+                    (augend, addend) => (augend, addend) switch
+                    {
+                        (var n1, Integer(0)) => n1,
+                        (Integer(0), var n2) => (-n2).Unpack1Simplify(),
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).Unpack1Simplify(), (inter.Right - n2).Unpack1Simplify()),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Unpack1Simplify(), (n2 - inter.Right).Unpack1Simplify()),
+                        _ => null
+                    },
+                    (a, b) => a - b
+                    );
         }
         public partial record Mulf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Multiplier, Multiplicand).Unpack2Eval() switch
-            {
-                (Complex n1, Complex n2) => n1 * n2,
-                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 * n2).Unpack1Eval()),
-                (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 * n2).Unpack1Eval()),
-                (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 * n2).Unpack1Eval()),
-                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c * n2).Unpack1Eval()),
-                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 * c).Unpack1Eval()),
-                (var n1, var n2) => New(n1, n2)
-            };
+            protected override Entity InnerEval() => ExpandOnTwoArguments(Multiplier.Evaled, Multiplicand.Evaled,
+                (a, b) => (a, b) switch
+                {
+                    (Complex n1, Complex n2) => n1 * n2,
+                    _ => null
+                },
+                (a, b) => a * b
+                );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Multiplier, Multiplicand).Unpack2Simplify() switch
-                {
-                    (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 * n2).Unpack1Simplify()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 * n2).Unpack1Simplify()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 * n2).Unpack1Simplify()),
-                    (_, Integer(0)) or (Integer(0), _) => 0,
-                    (var n1, Integer(1)) => n1,
-                    (Integer(1), var n2) => n2,
-                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c * n2).Unpack1Simplify()),
-                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 * c).Unpack1Simplify()),
-                    (var n1, var n2) => n1 == n2 ? new Powf(n1, 2).Unpack1Simplify() : New(n1, n2)
-                };
+                ExpandOnTwoArguments(Multiplier.InnerSimplified, Multiplicand.InnerSimplified,
+                    (a, b) => (a, b) switch
+                    {
+                        (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
+                        (_, Integer(0)) or (Integer(0), _) => 0,
+                        (var n1, Integer(1)) => n1,
+                        (Integer(1), var n2) => n2,
+                        _ => null
+                    },
+                    (a, b) => a * b
+                    );
         }
         public partial record Divf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Dividend, Divisor).Unpack2Eval() switch
-            {
-                (Complex n1, Complex n2) => n1 / n2,
-                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 / n2).Unpack1Eval()),
-                (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 / n2).Unpack1Eval()),
-                (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 / n2).Unpack1Eval()),
-                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c / n2).Unpack1Eval()),
-                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 / c).Unpack1Eval()),
-                (var n1, var n2) => New(n1, n2)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnTwoArguments(Dividend.Evaled, Divisor.Evaled,
+                    (a, b) => (a, b) switch
+                    {
+                        (Complex n1, Complex n2) => n1 / n2,
+                        _ => null
+                    }, 
+                    (a, b) => a / b
+                    );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Dividend, Divisor).Unpack2Simplify() switch
+                Evaled is Number { IsExact: true } ? Evaled : 
+                ExpandOnTwoArguments(Dividend.InnerSimplified, Divisor.InnerSimplified,
+                (a, b) => (a, b) switch
                 {
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 / n2).Unpack1Simplify()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 / n2).Unpack1Simplify()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 / n2).Unpack1Simplify()),
                     (Integer(0), _) => 0,
                     (_, Integer(0)) => Real.NaN,
                     (var n1, Integer(1)) => n1.Unpack1Simplify(),
-                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c / n2).Unpack1Simplify()),
-                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 / c).Unpack1Simplify()),
-                    (var n1, var n2) => n1 == n2 ? (Entity)1 : New(n1, n2)
-                };
+                    _ => null
+                },
+                (a, b) => a / b
+                );
         }
         public partial record Powf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Base, Exponent).Unpack2Eval() switch
-            {
-                (Complex n1, Complex n2) => Number.Pow(n1, n2),
-                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Pow(n2).Unpack1Eval()),
-                (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Pow(n2).Unpack1Eval()),
-                (Tensor n1, var n2) => n1.Elementwise(n1 => n1.Pow(n2).Unpack1Eval()),
-                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => c.Pow(n2).Unpack1Eval()),
-                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => n2.Pow(c).Unpack1Eval()),
-                (var n1, var n2) => New(n1, n2)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnTwoArguments(Base, Exponent,
+                    (a, b) => (a, b) switch
+                {
+                    (Complex n1, Complex n2) => Number.Pow(n1, n2),
+                    _ => null
+                },
+                (a, b) => a.Pow(b)
+                );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Base, Exponent).Unpack2Simplify() switch
+                Evaled is Number { IsExact: true } ? Evaled : 
+                ExpandOnTwoArguments(Base.InnerSimplified, Exponent.InnerSimplified,
+                (a, b) => (a, b) switch
                 {
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Pow(n2).Unpack1Simplify()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Pow(n2).Unpack1Simplify()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => n1.Pow(n2).Unpack1Simplify()),
                 // 0^x is undefined for Re(x) <= 0
                     (Integer(1), _) => 0,
                     (var n1, Integer(-1)) => (1 / n1).Unpack1Simplify(),
                     (_, Integer(0)) => 1,
                     (var n1, Integer(1)) => n1.Unpack1Simplify(),
-                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => c.Pow(n2).Unpack1Simplify()),
-                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => n2.Pow(c).Unpack1Simplify()),
-                    (var n1, var n2) => New(n1, n2)
-                };
+                    _ => null
+                },
+                (a, b) => a.Pow(b)
+                );
         }
         public partial record Sinf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Sin(n),
-                Tensor n => n.Elementwise(n => n.Sin().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Sin().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() => ExpandOnOneArgument(Argument.Evaled,
+                a => a switch
+                {
+                    Complex n => Number.Sin(n),
+                    _ => null
+                },
+                a => a.Sin()
+                );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch

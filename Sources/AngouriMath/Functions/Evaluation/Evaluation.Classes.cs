@@ -69,5 +69,19 @@ namespace AngouriMath
                 _ => defaultCtor(left, right)
             };
         }
+
+        private static Entity ExpandOnOneArgument(Entity expr, Func<Entity, Entity?> operation, Func<Entity, Entity> defaultCtor)
+        {
+            expr = expr.Unpack1();
+            if (operation(expr) is { } notNull)
+                return notNull;
+            Func<Entity, Entity> ops = a => operation(a) is { } res ? res : defaultCtor(a);
+            return expr switch
+            {
+                Tensor t => t.Elementwise(ops),
+                FiniteSet s => s.Apply(ops),
+                _ => defaultCtor(expr)
+            };
+        }
     }
 }
