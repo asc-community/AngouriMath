@@ -182,148 +182,181 @@ namespace AngouriMath
         public partial record Sinf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => ExpandOnOneArgument(Argument.Evaled,
-                a => a switch
-                {
-                    Complex n => Number.Sin(n),
-                    _ => null
-                },
-                a => a.Sin()
-                );
+            protected override Entity InnerEval() => 
+                ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Complex n => Number.Sin(n),
+                        _ => null
+                    },
+                    a => a.Sin()
+                    );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(n => n.Sin().Unpack1Simplify()),
-                    { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => res,
-                    FiniteSet finite => finite.Apply(c => c.Sin().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                Evaled is Number { IsExact: true } ? Evaled : 
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => res,
+                        _ => null
+                    },
+                    a => a.Sin()
+                    );
         }
 
         public partial record Cosf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Cos(n),
-                Tensor n => n.Elementwise(n => n.Cos().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Cos().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Complex n => Number.Cos(n),
+                        _ => null
+                    },
+                    a => a.Cos()
+                    );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(n => n.Cos().Unpack1Simplify()),
-                    { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => res,
-                    FiniteSet finite => finite.Apply(c => c.Cos().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => res,
+                        _ => null
+                    },
+                    a => a.Cos()
+                    );
         }
 
         public partial record Secantf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Secant(n),
-                Tensor n => n.Elementwise(n => n.Sec().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Sec().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Complex n => Number.Secant(n),
+                        _ => null
+                    },
+                    a => a.Sec()
+                    );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(n => n.Sec().Unpack1Simplify()),
-                    { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res).Unpack1Simplify(),
-                    FiniteSet finite => finite.Apply(c => c.Sec().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res).Unpack1Simplify(),
+                        _ => null
+                    },
+                    a => a.Sec()
+                    );
         }
 
         public partial record Cosecantf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Cosecant(n),
-                Tensor n => n.Elementwise(n => n.Cosec().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Cosec().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Complex n => Number.Cosecant(n),
+                        _ => null
+                    },
+                    a => a.Cosec()
+                    );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(n => n.Cosec().Unpack1Simplify()),
-                    { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res).Unpack1Simplify(),
-                    FiniteSet finite => finite.Apply(c => c.Cosec().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res).Unpack1Simplify(),
+                        _ => null
+                    },
+                    a => a.Cosec()
+                    );
         }
 
         public partial record Arcsecantf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Arcsecant(n),
-                Tensor n => n.Elementwise(n => n.Arcsec().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Arcsec().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Complex n => Number.Arcsecant(n),
+                        _ => null
+                    },
+                    a => a.Arcsec()
+                    );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(n => n.Arcsec().Unpack1Simplify()),
-                    FiniteSet finite => finite.Apply(c => c.Arcsec().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        _ => null
+                    },
+                    a => a.Arcsec()
+                    );
         }
 
         public partial record Arccosecantf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Arccosecant(n),
-                Tensor n => n.Elementwise(n => n.Arccosec().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Arccosec().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Complex n => Number.Arccosecant(n),
+                        _ => null
+                    },
+                    a => a.Arccosec()
+                    );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(n => n.Arccosec().Unpack1Simplify()),
-                    FiniteSet finite => finite.Apply(c => c.Arccosec().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        _ => null
+                    },
+                    a => a.Arccosec()
+                    );
         }
 
         public partial record Tanf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Tan(n),
-                Tensor n => n.Elementwise(n => n.Tan().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Tan().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Complex n => Number.Tan(n),
+                        _ => null
+                    },
+                    a => a.Tan()
+                    );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(n => n.Tan().Unpack1Simplify()),
-                    { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => res,
-                    FiniteSet finite => finite.Apply(c => c.Tan().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => res,
+                        _ => null
+                    },
+                    a => a.Tan()
+                    );
         }
         public partial record Cotanf
         {

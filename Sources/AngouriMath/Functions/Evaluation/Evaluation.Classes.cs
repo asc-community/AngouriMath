@@ -52,7 +52,7 @@ namespace AngouriMath
         /// If no suitable case in switch found, it should return the default node, for example, for sum it would be
         /// <code>(a, b) => a + b</code>
         /// </param>
-        private static Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity> defaultCtor)
+        private Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity> defaultCtor)
         {
             left = left.Unpack1();
             right = right.Unpack1();
@@ -66,11 +66,13 @@ namespace AngouriMath
                 (var a, Tensor b) => b.Elementwise(b => ops(a, b)),
                 (FiniteSet a, var b) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b) => b.Apply(b => ops(a, b)),
-                _ => defaultCtor(left, right)
+                _ => ReferenceEquals(left, this.DirectChildren[0]) &&
+                     ReferenceEquals(right, this.DirectChildren[1]) ?
+                     this : defaultCtor(left, right)
             };
         }
 
-        private static Entity ExpandOnOneArgument(Entity expr, Func<Entity, Entity?> operation, Func<Entity, Entity> defaultCtor)
+        private Entity ExpandOnOneArgument(Entity expr, Func<Entity, Entity?> operation, Func<Entity, Entity> defaultCtor)
         {
             expr = expr.Unpack1();
             if (operation(expr) is { } notNull)
@@ -80,7 +82,7 @@ namespace AngouriMath
             {
                 Tensor t => t.Elementwise(ops),
                 FiniteSet s => s.Apply(ops),
-                _ => defaultCtor(expr)
+                _ => ReferenceEquals(expr, this.DirectChildren[0]) ? this : defaultCtor(expr)
             };
         }
     }
