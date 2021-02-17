@@ -85,5 +85,25 @@ namespace AngouriMath
                 _ => ReferenceEquals(expr, this.DirectChildren[0]) ? this : defaultCtor(expr)
             };
         }
+
+        private Entity ExpandOnTwoAndTArguments<T>(Entity left, Entity right, T third, Func<Entity, Entity, T, Entity?> operation, Func<Entity, Entity, T, Entity> defaultCtor)
+        {
+            left = left.Unpack1();
+            right = right.Unpack1();
+            if (operation(left, right, third) is { } preRes)
+                return preRes;
+            Func<Entity, Entity, Entity> ops = (a, b) => operation(a, b, third) is { } res ? res : defaultCtor(left, right, third);
+            return (left, right, third) switch
+            {
+                (Tensor a, Tensor b, _) => a.Elementwise(b, ops),
+                (Tensor a, var b, _) => a.Elementwise(a => ops(a, b)),
+                (var a, Tensor b, _) => b.Elementwise(b => ops(a, b)),
+                (FiniteSet a, var b, _) => a.Apply(a => ops(a, b)),
+                (var a, FiniteSet b, _) => b.Apply(b => ops(a, b)),
+                _ => ReferenceEquals(left, this.DirectChildren[0]) &&
+                     ReferenceEquals(right, this.DirectChildren[1]) ?
+                     this : defaultCtor(left, right, third)
+            };
+        }
     }
 }

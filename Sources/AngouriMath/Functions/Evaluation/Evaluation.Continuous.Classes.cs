@@ -361,152 +361,176 @@ namespace AngouriMath
         public partial record Cotanf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Cotan(n),
-                Tensor n => n.Elementwise(n => n.Cotan().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Cotan().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Complex n => Number.Cotan(n),
+                        _ => null
+                    },
+                    a => a.Cotan()
+                    );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(n => n.Cotan().Unpack1Simplify()),
-                    { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => 1 / res,
-                    FiniteSet finite => finite.Apply(c => c.Cotan().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => 1 / res,
+                        _ => null
+                    },
+                    a => a.Cotan()
+                    );
         }
         public partial record Logf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Base.Unpack1Eval(), Antilogarithm.Unpack1Eval()) switch
-            {
-                (Complex n1, Complex n2) => Number.Log(n1, n2),
-                (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Log(n2).Unpack1Eval()),
-                (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Log(n2).Unpack1Eval()),
-                (Tensor n1, var n2) => n1.Elementwise(n1 => n1.Log(n2).Unpack1Eval()),
-                (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => MathS.Log(c, n2).Unpack1Eval()),
-                (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => MathS.Log(n2, c).Unpack1Eval()),
-                (var n1, var n2) => New(n1, n2)
-            };
+            protected override Entity InnerEval() => 
+                ExpandOnTwoArguments(Base.Evaled, Antilogarithm.Evaled,
+                    (a, b) => (a, b) switch
+                    {
+                        (Complex n1, Complex n2) => Number.Log(n1, n2),
+                        _ => null
+                    },
+                    (a, b) => a.Log(b)
+                    );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : (Base.Unpack1Simplify(), Antilogarithm.Unpack1Simplify()) switch
+                Evaled is Number { IsExact: true } ? Evaled : 
+                ExpandOnTwoArguments(Base.InnerSimplified, Antilogarithm.InnerSimplified,
+                (a, b) => (a, b) switch
                 {
-                    (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => n1.Log(n2).Unpack1Simplify()),
-                    (var n1, Tensor n2) => n2.Elementwise(n2 => n1.Log(n2).Unpack1Simplify()),
-                    (Tensor n1, var n2) => n1.Elementwise(n1 => n1.Log(n2).Unpack1Simplify()),
                     (_, Integer(0)) => Real.NegativeInfinity,
                     (_, Integer(1)) => 0,
-                    (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => MathS.Log(c, n2).Unpack1Simplify()),
-                    (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => MathS.Log(n2, c).Unpack1Simplify()),
-                    (var n1, var n2) => n1 == n2 ? (Entity)1 : New(n1, n2)
-                };
+                    _ => null
+                },
+                (a, b) => a.Log(b)
+                );
         }
         public partial record Arcsinf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Arcsin(n),
-                Tensor n => n.Elementwise(n => n.Arcsin().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Arcsin().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() => 
+                ExpandOnOneArgument(Argument.Evaled, 
+                a => a switch
+                {
+                    Complex n => Number.Arcsin(n),
+                    _ => null
+                },
+                a => a.Arcsin()
+                );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
+                Evaled is Number { IsExact: true } ? Evaled : 
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                a => a switch
                 {
-                    Tensor n => n.Elementwise(n => n.Arcsin().Unpack1Simplify()),
-                    FiniteSet finite => finite.Apply(c => c.Arcsin().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                    _ => null
+                },
+                a => a.Arcsin()
+                );
         }
         public partial record Arccosf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Arccos(n),
-                Tensor n => n.Elementwise(n => n.Arccos().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Arccos().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnOneArgument(Argument.Evaled,
+                a => a switch
+                {
+                    Complex n => Number.Arccos(n),
+                    _ => null
+                },
+                a => a.Arccos()
+                );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                a => a switch
                 {
-                    Tensor n => n.Elementwise(n => n.Arccos().Unpack1Simplify()),
-                    FiniteSet finite => finite.Apply(c => c.Arccos().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                    _ => null
+                },
+                a => a.Arccos()
+                );
         }
         public partial record Arctanf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Arctan(n),
-                Tensor n => n.Elementwise(n => n.Arctan().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Arctan().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnOneArgument(Argument.Evaled,
+                a => a switch
+                {
+                    Complex n => Number.Arctan(n),
+                    _ => null
+                },
+                a => a.Arctan()
+                );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                a => a switch
                 {
-                    Tensor n => n.Elementwise(n => n.Arctan().Unpack1Simplify()),
-                    FiniteSet finite => finite.Apply(c => c.Arctan().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                    _ => null
+                },
+                a => a.Arctan()
+                );
         }
         public partial record Arccotanf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Arccotan(n),
-                Tensor n => n.Elementwise(n => n.Arccotan().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Arccotan().Unpack1Eval()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnOneArgument(Argument.Evaled,
+                a => a switch
+                {
+                    Complex n => Number.Arccotan(n),
+                    _ => null
+                },
+                a => a.Arccotan()
+                );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
+                Evaled is Number { IsExact: true } ? Evaled :
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                a => a switch
                 {
-                    Tensor n => n.Elementwise(n => n.Arccotan().Unpack1Simplify()),
-                    FiniteSet finite => finite.Apply(c => c.Arccotan().Unpack1Simplify()),
-                    var n => New(n)
-                };
+                    _ => null
+                },
+                a => a.Arccotan()
+                );
         }
         public partial record Factorialf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => Argument.Unpack1Eval() switch
-            {
-                Complex n => Number.Factorial(n),
-                Tensor n => n.Elementwise(n => n.Factorial().Unpack1Eval()),
-                FiniteSet finite => finite.Apply(c => c.Factorial().Unpack1Simplify()),
-                var n => New(n)
-            };
+            protected override Entity InnerEval() => 
+                ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch                
+                    {
+                        Complex n => Number.Factorial(n),
+                        _ => null
+                    },
+                    a => a.Factorial()
+                    );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(n => n.Factorial().Unpack1Simplify()),
-                    FiniteSet finite => finite.Apply(c => c.Factorial().Unpack1Simplify()),
-                    Rational({ Numerator: var num, Denominator: var den }) when den.Equals(2) && (num + 1) / 2 is var en => (
-                        en > 0
-                        // (+n - 1/2)! = (2n-1)!/(2^(2n-1)(n-1)!)*sqrt(pi)
-                        // also 2n-1 is the numerator
-                        ? Rational.Create(num.Factorial(), PeterO.Numbers.EInteger.FromInt32(2).Pow(num) * (en - 1).Factorial())
-                        // (-n - 1/2)! = (-4)^n*n!/(2n)!*sqrt(pi)
-                        : Rational.Create(PeterO.Numbers.EInteger.FromInt32(-4).Pow(-en) * (-en).Factorial(), (2 * -en).Factorial())
-                    ) * MathS.Sqrt(MathS.pi),
-                    var n => New(n)
-                };
+                Evaled is Number { IsExact: true } ? Evaled : 
+                ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        Rational({ Numerator: var num, Denominator: var den }) when den.Equals(2) && (num + 1) / 2 is var en => (
+                            en > 0
+                            // (+n - 1/2)! = (2n-1)!/(2^(2n-1)(n-1)!)*sqrt(pi)
+                            // also 2n-1 is the numerator
+                            ? Rational.Create(num.Factorial(), PeterO.Numbers.EInteger.FromInt32(2).Pow(num) * (en - 1).Factorial())
+                            // (-n - 1/2)! = (-4)^n*n!/(2n)!*sqrt(pi)
+                            : Rational.Create(PeterO.Numbers.EInteger.FromInt32(-4).Pow(-en) * (-en).Factorial(), (2 * -en).Factorial())
+                        ) * MathS.Sqrt(MathS.pi),
+                        _ => null
+                    },
+                    a => a.Factorial()
+                    );
         }
         public partial record Derivativef
         {
