@@ -20,14 +20,14 @@
   <b>·</b>
   <a href="#contrib"><b>Contributions</b></a>
   <b>·</b>
-  <a href="#license"><b>License</b></a>
+  <a href="https://am.angouri.org/"><b>Official website</b></a>
   <br>
   <br>
   <br>
   <a href="./Sources/Tests/UnitTests"><img alt="GitHub Workflow Status (event)" src="https://img.shields.io/github/workflow/status/asc-community/AngouriMath/Test?color=darkgreen&label=Tests&logo=github&style=flat-square"></a>
   <a href="https://codecov.io/gh/asc-community/AngouriMath"><img alt="Codecov" src="https://img.shields.io/codecov/c/gh/asc-community/AngouriMath?color=orange&label=Coverage&logo=codecov&style=flat-square"></a>
   <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet&logo=nuget&style=flat-square"></a>
-  <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath?color=darkgreen&label=Downloads&style=flat-square"></a>
+  <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath?color=darkblue&label=Downloads&style=flat-square"></a>
   <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=purple&label=Discord&logo=discord&style=flat-square"></a>
 </p>
 

@@ -535,14 +535,18 @@ namespace AngouriMath
         public partial record Derivativef
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Expression, Var, Iterations).Unpack3EvalT() switch
-            {
-                (Tensor expr, var var, var iters) => expr.Elementwise(n => new Derivativef(n, var, iters).Unpack1Eval()),
-                (var expr, _, 0) => expr,
-                // TODO: consider Integral for negative cases
-                (var expr, Variable var, var asInt) => expr.Derive(var, asInt),
-                _ => this
-            };
+            protected override Entity InnerEval() =>
+                ExpandOnTwoAndTArguments(Expression.Evaled, Var.Evaled, Iterations,
+                    (a, b, c) => (a, b, c) switch
+                    {
+                        (var expr, _, 0) => expr,
+                        // TODO: consider Integral for negative cases
+                        (var expr, Variable var, var asInt) => expr.Derive(var, asInt),
+                        _ => null
+                    },
+                    (a, b, c) => new Derivativef(a, b, c)
+                    );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Var.Unpack1Simplify() is Variable var
@@ -564,19 +568,38 @@ namespace AngouriMath
             }
 
             /// <inheritdoc/>
-            protected override Entity InnerEval() => (Expression, Var, Iterations).Unpack3EvalT() switch
-            {
-                (Tensor expr, var var, var iters) => expr.Elementwise(n => new Integralf(n, var, iters).Unpack1Eval()),
-                (var expr, _, 0) => expr,
-                // TODO: consider Derivative for negative cases
-                (var expr, Variable var, int asInt) => SequentialIntegrating(expr, var, asInt),
+            protected override Entity InnerEval() =>
+                ExpandOnTwoAndTArguments(Expression.Evaled, Var.Evaled, Iterations,
+                    (a, b, c) => (a, b, c) switch
+                    {
+                        (var expr, _, 0) => expr,
+                        // TODO: consider Derivative for negative cases
+                        (var expr, Variable var, int asInt) => SequentialIntegrating(expr, var, asInt),
+                        _ => null
+                    },
+                    (a, b, c) => new Integralf(a, b, c)
+                    );
 
-                _ => this
-            };
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-               Var.Unpack1Simplify() is Variable var ? SequentialIntegrating(Expression.Unpack1Simplify(), var, Iterations) : this;
+               Var.Unpack1Simplify() is Variable var ?
+
+                ExpandOnTwoAndTArguments(Expression.InnerSimplified, Var, Iterations,
+                    (a, b, c) => (a, b, c) switch
+                    {
+                        (var expr, _, 0) => expr,
+                        // TODO: consider Derivative for negative cases
+                        (var expr, Variable var, int asInt) => SequentialIntegrating(expr, var, asInt),
+                        _ => null
+                    },
+                    (a, b, c) => new Integralf(a, b, c)
+                    )
+
+                : this;
         }
+
+
+        // TODO: rewrite this part too
         public partial record Limitf
         {
             /// <inheritdoc/>
@@ -587,6 +610,7 @@ namespace AngouriMath
                 ApproachFrom.Right => New(Expression.Unpack1Eval(), Var, Destination.Unpack1Eval(), ApproachFrom),
                 _ => this,
             };
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Var.Unpack1Simplify() switch
@@ -602,48 +626,52 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerEval()
-                => Argument.Unpack1Eval() switch
-                {
-                    Complex n => Complex.Signum(n),
-                    Tensor n => n.Elementwise(c => c.Signum().Unpack1Eval()),
-                    FiniteSet finite => finite.Apply(c => c.Signum().Unpack1Simplify()),
-                    var n => this
-                };
+                => ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Complex n => Number.Signum(n),
+                        _ => null
+                    },
+                    a => a.Signum()
+                    );
 
             // TODO: probably we can simplify it further
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => Argument.Unpack1Eval() is Number { IsExact: true } ? Argument.Unpack1Eval() :
-                Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(c => c.Signum().Unpack1Simplify()),
-                    FiniteSet finite => finite.Apply(c => c.Signum().Unpack1Simplify()),
-                    var n => this
-                };
+                => Argument.Unpack1Eval() is Number { IsExact: true } num ? num :
+                    ExpandOnOneArgument(Argument.InnerSimplified,
+                        a => a switch
+                        {
+                            _ => null
+                        },
+                        a => a.Signum()
+                        );
         }
 
         public partial record Absf
         {
             /// <inheritdoc/>
             protected override Entity InnerEval()
-                => Argument.Unpack1Eval() switch
-                {
-                    Complex n => Complex.Abs(n),
-                    Tensor n => n.Elementwise(c => c.Abs().Unpack1Eval()),
-                    FiniteSet finite => finite.Apply(c => c.Abs().Unpack1Eval()),
-                    var n => this
-                };
+                => ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Complex n => Number.Abs(n),
+                        _ => null
+                    },
+                    a => a.Abs()
+                    );
 
             // TODO: probably we can simplify it further
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => Argument.Unpack1Eval() is Number { IsExact: true } ? Argument.Unpack1Eval() :
-                Argument.Unpack1Simplify() switch
-                {
-                    Tensor n => n.Elementwise(c => c.Signum().Unpack1Simplify()),
-                    FiniteSet finite => finite.Apply(c => c.Abs().Unpack1Simplify()),
-                    var n => this
-                };
+                => Argument.Unpack1Eval() is Number { IsExact: true } num ? num :
+                    ExpandOnOneArgument(Argument.InnerSimplified,
+                        a => a switch
+                        {
+                            _ => null
+                        },
+                        a => a.Abs()
+                        );
         }
     }
 }

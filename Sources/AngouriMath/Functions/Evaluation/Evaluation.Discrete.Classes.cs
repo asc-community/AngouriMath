@@ -29,11 +29,14 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
-            {
-                if (Argument.Unpack1Eval() is Boolean b)
-                    return !(bool)b; // there's no cost in casting
-                return New(Argument.Unpack1Eval());
-            }
+                => ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Boolean b => !(bool)b,
+                        _ => null
+                    },
+                    a => MathS.Negation(a)
+                    );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() => InnerEvalWithCheck();
         }
@@ -61,18 +64,24 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
-            {
-                if (GoodResult(Left, Right, out var res))
-                    return res;
-                return New(Left.Unpack1Eval(), Right.Unpack1Eval());
-            }
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        _ => null
+                    },
+                    (a, b) => MathS.Conjunction(a.Unpack1Eval(), b.Unpack1Eval())
+                    );
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-            {
-                if (GoodResult(Left, Right, out var res))
-                    return res;
-                return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
-            }
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        _ => null
+                    },
+                    (a, b) => MathS.Conjunction(a.Unpack1Simplify(), b.Unpack1Simplify())
+                    );
         }
 
         partial record Orf
@@ -98,18 +107,24 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
-            {
-                if (GoodResult(Left, Right, out var res))
-                    return res;
-                return New(Left.Unpack1Eval(), Right.Unpack1Eval());
-            }
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        _ => null
+                    },
+                    (a, b) => MathS.Disjunction(a.Unpack1Eval(), b.Unpack1Eval())
+                    );
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-            {
-                if (GoodResult(Left, Right, out var res))
-                    return res;
-                return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
-            }
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        _ => null
+                    },
+                    (a, b) => MathS.Disjunction(a.Unpack1Simplify(), b.Unpack1Simplify())
+                    );
         }
 
         partial record Xorf
@@ -130,18 +145,24 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
-            {
-                if (GoodResult(Left, Right, out var res))
-                    return res;
-                return New(Left.Unpack1Eval(), Right.Unpack1Eval());
-            }
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        _ => null
+                    },
+                    (a, b) => MathS.ExclusiveDisjunction(a.Unpack1Eval(), b.Unpack1Eval())
+                    );
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-            {
-                if (GoodResult(Left, Right, out var res))
-                    return res;
-                return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
-            }
+                => ExpandOnTwoArguments(Left, Right,
+                    (a, b) => (a, b) switch
+                    {
+                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        _ => null
+                    },
+                    (a, b) => MathS.ExclusiveDisjunction(a.Unpack1Simplify(), b.Unpack1Simplify())
+                    );
         }
 
         partial record Impliesf
@@ -167,19 +188,24 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
-            {
-                if (GoodResult(Assumption, Conclusion, out var res))
-                    return res;
-                return New(Assumption.Unpack1Eval(), Conclusion.Unpack1Eval());
-            }
-
+                => ExpandOnTwoArguments(Assumption, Conclusion,
+                    (a, b) => (a, b) switch
+                    {
+                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        _ => null
+                    },
+                    (a, b) => MathS.Implication(a.Unpack1Eval(), b.Unpack1Eval())
+                    );
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-            {
-                if (GoodResult(Assumption, Conclusion, out var res))
-                    return res;
-                return New(Assumption.Unpack1Simplify(), Conclusion.Unpack1Simplify());
-            }
+                => ExpandOnTwoArguments(Assumption, Conclusion,
+                    (a, b) => (a, b) switch
+                    {
+                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        _ => null
+                    },
+                    (a, b) => MathS.Implication(a.Unpack1Simplify(), b.Unpack1Simplify())
+                    );
         }
 
         partial record Equalsf
