@@ -212,129 +212,131 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerEval()
-            {
-                if (!Left.IsConstant || !Right.IsConstant)
-                    return New(Left.Unpack1Eval(), Right.Unpack1Eval());
-                return Left.Unpack1Eval() == Right.Unpack1Eval();
-            }
+                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
+                    (a, b) => (a, b) switch
+                    {
+                        (var left, var right) when left == right => true,
+                        (var left, var right) when left.IsConstant && right.IsConstant => left == right,
+                        _ => null
+                    },
+                    (a, b) => a.Xor(b)
+                    );
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-            {
-               if (Left == Right)
-                    return true;
-               if (Left.Unpack1Eval() is Number && Right.Unpack1Eval() is Number)
-                    return InnerEvalWithCheck();
-               else
-                    return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
-            }
+                => Evaled is Boolean b ? b : 
+                ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                    (a, b) => (a, b) switch
+                    {
+                        (var left, var right) when left == right => true,
+                        (var left, var right) when left.IsConstant && right.IsConstant => left == right,
+                        _ => null
+                    },
+                    (a, b) => a.Xor(b)
+                    );
         }
 
         partial record Greaterf
         {
             /// <inheritdoc/>
             protected override Entity InnerEval()
-            {
-                if (Left.Unpack1Eval() is Number numLeft && Right.Unpack1Eval() is Number numRight)
-                {
-                    if (numLeft is Real reLeft && numRight is Real reRight)
-                        return reLeft > reRight;
-                    else
-                        return MathS.NaN;
-                }
-                else 
-                    return New(Left.Unpack1Eval(), Right.Unpack1Eval());
-            }
+                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
+                    (a, b) => (a, b) switch
+                    {
+                        (Real reLeft, Real reRight) => reLeft > reRight,
+                        (Number numLeft, Number numRight) => MathS.NaN,
+                        _ => null
+                    },
+                    (a, b) => MathS.GreaterThan(a, b)
+                    );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-            {
-                var res = InnerEval();
-                if (res is Boolean)
-                    return res;
-                else
-                    return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
-            }
+                => Evaled is Boolean b ? b : 
+                ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                    (a, b) => (a, b) switch
+                    {
+                        _ => null
+                    },
+                    (a, b) => MathS.GreaterThan(a, b)
+                    );
         }
 
         partial record GreaterOrEqualf
         {
             /// <inheritdoc/>
             protected override Entity InnerEval()
-            {
-                if (Left.Unpack1Eval() is Number numLeft && Right.Unpack1Eval() is Number numRight)
-                {
-                    if (numLeft is Real reLeft && numRight is Real reRight)
-                        return reLeft >= reRight;
-                    else
-                        return MathS.NaN;
-                }
-                else
-                    return New(Left.Unpack1Eval(), Right.Unpack1Eval());
-            }
+                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
+                    (a, b) => (a, b) switch
+                    {
+                        (Real reLeft, Real reRight) => reLeft >= reRight,
+                        (Number numLeft, Number numRight) => MathS.NaN,
+                        _ => null
+                    },
+                    (a, b) => MathS.GreaterThan(a, b)
+                    );
 
             /// <inheritdoc/>
-            protected override Entity InnerSimplify()
-            {
-                var res = InnerEval();
-                if (res is Boolean)
-                    return res;
-                else
-                    return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
-            }
+            protected override Entity InnerSimplify() 
+                => Evaled is Boolean b ? b :
+                ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                    (a, b) => (a, b) switch
+                    {
+                        _ => null
+                    },
+                    (a, b) => MathS.GreaterOrEqualThan(a, b)
+                    );
         }
 
         partial record Lessf
         {
             /// <inheritdoc/>
             protected override Entity InnerEval()
-            {
-                if (Left.Unpack1Eval() is Number numLeft && Right.Unpack1Eval() is Number numRight)
-                {
-                    if (numLeft is Real reLeft && numRight is Real reRight)
-                        return reLeft < reRight;
-                    else
-                        return MathS.NaN;
-                }
-                else
-                    return New(Left.Unpack1Eval(), Right.Unpack1Eval());
-            }
+                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
+                    (a, b) => (a, b) switch
+                    {
+                        (Real reLeft, Real reRight) => reLeft < reRight,
+                        (Number numLeft, Number numRight) => MathS.NaN,
+                        _ => null
+                    },
+                    (a, b) => MathS.GreaterThan(a, b)
+                    );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-            {
-                var res = InnerEval();
-                if (res is Boolean)
-                    return res;
-                else
-                    return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
-            }
+                => Evaled is Boolean b ? b :
+                ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                    (a, b) => (a, b) switch
+                    {
+                        _ => null
+                    },
+                    (a, b) => MathS.LessThan(a, b)
+                    );
         }
 
         partial record LessOrEqualf
         {
             /// <inheritdoc/>
             protected override Entity InnerEval()
-            {
-                if (Left.Unpack1Eval() is Number numLeft && Right.Unpack1Eval() is Number numRight)
-                {
-                    if (numLeft is Real reLeft && numRight is Real reRight)
-                        return reLeft <= reRight;
-                    else
-                        return MathS.NaN;
-                }
-                else
-                    return New(Left.Unpack1Eval(), Right.Unpack1Eval());
-            }
+                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
+                    (a, b) => (a, b) switch
+                    {
+                        (Real reLeft, Real reRight) => reLeft <= reRight,
+                        (Number numLeft, Number numRight) => MathS.NaN,
+                        _ => null
+                    },
+                    (a, b) => MathS.GreaterThan(a, b)
+                    );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-            {
-                var res = InnerEval();
-                if (res is Boolean)
-                    return res;
-                else
-                    return New(Left.Unpack1Simplify(), Right.Unpack1Simplify());
-            }
+                => Evaled is Boolean b ? b :
+                ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                    (a, b) => (a, b) switch
+                    {
+                        _ => null
+                    },
+                    (a, b) => MathS.LessOrEqualThan(a, b)
+                    );
         }
 
         partial record Set
@@ -342,7 +344,12 @@ namespace AngouriMath
             partial record Inf
             {
                 /// <inheritdoc/>
-            protected override Entity InnerEval()
+                protected override Entity InnerEval()
+                    => ExpandOnTwoArguments(Element.Evaled, SupSet.Evaled,
+                        (a, b) => (a, b) switch
+                        {
+
+                        }
                 {
                     if (SupSet.Unpack1Eval() is not Set set)
                         return New(Element.Unpack1Eval(), SupSet.Unpack1Eval());
@@ -352,7 +359,7 @@ namespace AngouriMath
                 }
 
                 /// <inheritdoc/>
-            protected override Entity InnerSimplify()
+                protected override Entity InnerSimplify()
                 {
                     if (SupSet.Unpack1Simplify() is not Set set)
                         return New(Element.Unpack1Simplify(), SupSet.Unpack1Simplify());
