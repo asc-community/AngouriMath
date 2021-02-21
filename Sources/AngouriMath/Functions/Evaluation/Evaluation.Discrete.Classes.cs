@@ -348,43 +348,48 @@ namespace AngouriMath
                     => ExpandOnTwoArguments(Element.Evaled, SupSet.Evaled,
                         (a, b) => (a, b) switch
                         {
-
-                        }
-                {
-                    if (SupSet.Unpack1Eval() is not Set set)
-                        return New(Element.Unpack1Eval(), SupSet.Unpack1Eval());
-                    if (!set.TryContains(Element, out var contains))
-                        return New(Element.Unpack1Eval(), SupSet.Unpack1Eval());
-                    return contains;
-                }
+                            (var el, Set set) when set.TryContains(el, out var contains) => contains,
+                            _ => null
+                        },
+                        (a, b) => a.In(b)
+                        );
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                {
-                    if (SupSet.Unpack1Simplify() is not Set set)
-                        return New(Element.Unpack1Simplify(), SupSet.Unpack1Simplify());
-                    if (!set.TryContains(Element, out var contains))
-                        return New(Element.Unpack1Simplify(), SupSet.Unpack1Simplify());
-                    return contains;
-                }
+                    => ExpandOnTwoArguments(Element.InnerSimplified, SupSet.InnerSimplified,
+                        (a, b) => (a, b) switch
+                        {
+                            (var el, Set set) when set.TryContains(el, out var contains) => contains,
+                            _ => null
+                        },
+                        (a, b) => a.In(b)
+                        );
             }
         }
 
         partial record Phif
         {               
-            private Entity InnerCompute(Entity entity)
-            {
-                if (entity is not Integer integer)
-                    return this;
-                else
-                    return integer.Phi();
-            }
+            /// <inheritdoc/>
+            protected override Entity InnerEval()
+                => ExpandOnOneArgument(Argument.Evaled,
+                    a => a switch
+                    {
+                        Integer integer => integer.Phi(),
+                        _ => null
+                    },
+                    a => new Phif(a)
+                    );
 
             /// <inheritdoc/>
-            protected override Entity InnerEval() => InnerCompute(Argument.Unpack1Eval());
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() => InnerCompute(Argument.Unpack1Simplify());
+            protected override Entity InnerSimplify()
+                => ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        Integer integer => integer.Phi(),
+                        _ => null
+                    },
+                    a => new Phif(a)
+                    );
         }
     }
 }

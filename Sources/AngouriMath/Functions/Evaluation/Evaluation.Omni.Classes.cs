@@ -16,6 +16,7 @@ namespace AngouriMath
     {
         partial record Set
         {
+            // TODO:
             partial record FiniteSet
             {
                 /// <inheritdoc/>
@@ -30,10 +31,17 @@ namespace AngouriMath
             partial record Interval
             {
                 private Entity IfEqualEndsThenCollapse()
-                    => Left.Unpack1Eval() == Right.Unpack1Eval() ? 
-                    (
-                    LeftClosed && RightClosed ? new FiniteSet(Simplificator.PickSimplest(Left.Unpack1(), Right.Unpack1())) : Empty)
-                     : this;
+                    => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (l: LeftClosed, r: RightClosed),
+                        (a, b, lr) => (a, b, lr) switch
+                        {
+                            // TODO: make it static
+                            (var left, var right, _) when left == right => lr.l && lr.r ?
+                            new FiniteSet(Simplificator.PickSimplest(left, right)) :
+                            Empty,
+                            _ => null
+                        },
+                        (a, b, lr) => new Interval(a, lr.l, b, lr.r)
+                        );
 
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
@@ -52,12 +60,15 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                {
-                    if (!Predicate.EvaluableBoolean)
-                        return New(Var, Predicate.Unpack1Simplify());
-                    // so it's either U or {} if the statement is always true or false respectively
-                    return Predicate.EvalBoolean() ? Codomain : Set.Empty;
-                }
+                    => ExpandOnTwoAndTArguments(Var, Predicate.InnerSimplified, Codomain,
+                        (a, b, cod) => (a, b, cod) switch
+                        {
+                            (var v, var pred, var codom) when pred.EvaluableBoolean && (bool)pred.EvalBoolean() => codom,
+                            (var v, var pred, var codom) when pred.EvaluableBoolean && !(bool)pred.EvalBoolean() => Empty,
+                            _ => null
+                        },
+                        (a, b, cod) => new ConditionalSet(a, b)
+                        );
             }
 
             partial record SpecialSet
@@ -79,14 +90,17 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                    => (Left, Right).Unpack2Simplify() switch
-                    {
-                        (FiniteSet setLeft, Set setRight) => SetOperators.UniteFiniteSetAndSet(setLeft, setRight),
-                        (Set setLeft, FiniteSet setRight) => SetOperators.UniteFiniteSetAndSet(setRight, setLeft),
-                        (Interval intLeft, Interval intRight) => SetOperators.UniteIntervalAndInterval(intLeft, intRight),
-                        (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.UniteCSetAndCSet(csetLeft, csetRight),
-                        (var left, var right) => New(left, right)
-                    };
+                    => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                        (a, b) => (a, b) switch
+                        {
+                            (FiniteSet setLeft, Set setRight) => SetOperators.UniteFiniteSetAndSet(setLeft, setRight),
+                            (Set setLeft, FiniteSet setRight) => SetOperators.UniteFiniteSetAndSet(setRight, setLeft),
+                            (Interval intLeft, Interval intRight) => SetOperators.UniteIntervalAndInterval(intLeft, intRight),
+                            (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.UniteCSetAndCSet(csetLeft, csetRight),
+                            _ => null
+                        },
+                        (a, b) => a.Unite(b)
+                        );
             }
 
             partial record Intersectionf
@@ -97,14 +111,17 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                    => (Left, Right).Unpack2Simplify() switch
-                    {
-                        (FiniteSet setLeft, Set setRight) => SetOperators.IntersectFiniteSetAndSet(setLeft, setRight),
-                        (Set setLeft, FiniteSet setRight) => SetOperators.IntersectFiniteSetAndSet(setRight, setLeft),
-                        (Interval intLeft, Interval intRight) => SetOperators.IntersectIntervalAndInterval(intLeft, intRight),
-                        (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.IntersectCSetAndCSet(csetLeft, csetRight),
-                        (var left, var right) => New(left, right)
-                    };
+                    => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                        (a, b) => (a, b) switch
+                        {
+                            (FiniteSet setLeft, Set setRight) => SetOperators.IntersectFiniteSetAndSet(setLeft, setRight),
+                            (Set setLeft, FiniteSet setRight) => SetOperators.IntersectFiniteSetAndSet(setRight, setLeft),
+                            (Interval intLeft, Interval intRight) => SetOperators.IntersectIntervalAndInterval(intLeft, intRight),
+                            (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.IntersectCSetAndCSet(csetLeft, csetRight),
+                            _ => null
+                        },
+                        (a, b) => a.Unite(b)
+                        );
             }
 
             partial record SetMinusf
@@ -115,13 +132,16 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                    => (Left, Right).Unpack2Simplify() switch
-                    {
-                        (Set setLeft, FiniteSet setRight) => SetOperators.SetSubtractSetAndFiniteSet(setLeft, setRight),
-                        (Interval intLeft, Interval intRight) => SetOperators.SetSubtractIntervalAndInterval(intLeft, intRight),
-                        (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.SetSubtractCSetAndCSet(csetLeft, csetRight),
-                        (var left, var right) => New(left, right)
-                    };
+                    => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                        (a, b) => (a, b) switch
+                        {
+                            (Set setLeft, FiniteSet setRight) => SetOperators.SetSubtractSetAndFiniteSet(setLeft, setRight),
+                            (Interval intLeft, Interval intRight) => SetOperators.SetSubtractIntervalAndInterval(intLeft, intRight),
+                            (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.SetSubtractCSetAndCSet(csetLeft, csetRight),
+                            _ => null
+                        },
+                        (a, b) => a.SetSubtract(b)
+                        );
             }
         }
 
