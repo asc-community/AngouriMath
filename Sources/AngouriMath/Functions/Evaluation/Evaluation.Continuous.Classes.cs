@@ -155,7 +155,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
-                ExpandOnTwoArguments(Base, Exponent,
+                ExpandOnTwoArguments(Base.Evaled, Exponent.Evaled,
                     (a, b) => (a, b) switch
                 {
                     (Complex n1, Complex n2) => Number.Pow(n1, n2),
@@ -163,6 +163,7 @@ namespace AngouriMath
                 },
                 (a, b) => a.Pow(b)
                 );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 Evaled is Number { IsExact: true } ? Evaled : 
