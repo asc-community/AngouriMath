@@ -10,7 +10,9 @@
 
 namespace AngouriMath
 {
+    using AngouriMath.Core.Exceptions;
     using Core;
+    using System.Linq;
     using static Functions.Algebra.LimitFunctional;
     partial record Entity
     {
@@ -271,6 +273,20 @@ namespace AngouriMath
                 if (lim is null)
                     return null;
                 return New(lim, Predicate);
+            }
+        }
+
+        partial record Piecewise
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                var allLims = Cases.Select(c => (c.Expression.ComputeLimitDivideEtImpera(x, dist, side), c.Predicate));
+                if (allLims.Select(c => c.Item1 is null).Any())
+                    return null;
+                return New(allLims.Select(
+                    c => c.Item1 is not null ? 
+                    new Providedf(c.Item1, c.Item2) : 
+                    throw new AngouriBugException("It's been checked before")));
             }
         }
     }

@@ -350,5 +350,10 @@ namespace AngouriMath
         {
             private protected override string SortHashName(SortLevel level) => "provided_";
         }
+
+        partial record Piecewise
+        {
+            private protected override string SortHashName(SortLevel level) => "__";
+        }
     }
 }

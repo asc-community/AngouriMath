@@ -59,6 +59,9 @@ namespace AngouriMath
             /// </param>
             public Piecewise(IEnumerable<Providedf> cases)
                 => this.cases = cases;
+
+            public Piecewise Apply(Func<Providedf, Providedf> func)
+                => New(Cases.Select(func));
         }
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

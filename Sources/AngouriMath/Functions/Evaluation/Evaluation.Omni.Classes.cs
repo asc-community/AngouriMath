@@ -183,5 +183,28 @@ namespace AngouriMath
                 return DecideWithPredicate(simplified);
             }
         }
+
+        partial record Piecewise
+        {
+            private Entity? ComputePiecewiseResultIfPossible()
+            {
+                foreach (var oneCase in Cases)
+                {
+                    if (oneCase.Predicate.Evaled is not Boolean)
+                        return null;
+                    if (oneCase.Predicate.Evaled == Boolean.True)
+                        return oneCase.Expression;
+                }
+                return MathS.NaN;
+            }
+
+            /// <inheritdoc/>
+            protected override Entity InnerEval()
+                => ComputePiecewiseResultIfPossible() is { } expr ? expr.Evaled : Apply(c => c.New(c.Expression.Evaled, c.Predicate.Evaled));
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify()
+                => ComputePiecewiseResultIfPossible() is { } expr ? expr.InnerSimplified : Apply(c => c.New(c.Expression.InnerSimplified, c.Predicate.InnerSimplified));
+        }
     }
 }

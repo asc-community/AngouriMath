@@ -15,7 +15,7 @@ namespace AngouriMath.Core.Exceptions
     /// <summary>If one was thrown, the exception is probably not foreseen by AM. Report it is an issue</summary>
     public sealed class AngouriBugException : AngouriMathBaseException
     { 
-        internal AngouriBugException(string msg) : base(msg + "\n please report about it to the official repository") { } 
+        internal AngouriBugException(string msg) : base(msg + "\n please report about it to the official repository (https://github.com/asc-community/AngouriMath, https://am.angouri.org)") { } 
     }
 
     /// <summary>
