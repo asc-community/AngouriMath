@@ -39,6 +39,17 @@ namespace AngouriMath
             protected override Entity[] InitDirectChildren() => new[] { Expression, Predicate };
         }
 
+        /// <summary>
+        /// This is a node which defined on different subsets differently. When evaluating, it will turn
+        /// into a particular case once all cases' predicates before are false, and this case's predicate is true.
+        /// 
+        /// That is, the order counts. An example:
+        /// Piecewise(a provided false, b provided true, c provided true)
+        /// Will be evaluated into b,
+        /// 
+        /// Piecewise(a provided false, b provided c, c provided false)
+        /// Will remain as it is (although unreachable cases will be removed)
+        /// </summary>
         public sealed partial record Piecewise : Entity
         {
             public IEnumerable<Providedf> Cases => cases;
@@ -62,6 +73,12 @@ namespace AngouriMath
 
             public Piecewise Apply(Func<Providedf, Providedf> func)
                 => New(Cases.Select(func));
+
+            internal override Priority Priority => Priority.Leaf;
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Cases.Select(c => c.New(func(c.Expression), func(c.Predicate)))));
         }
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

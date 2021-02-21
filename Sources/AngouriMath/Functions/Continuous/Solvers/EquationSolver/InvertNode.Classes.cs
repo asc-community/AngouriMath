@@ -424,5 +424,20 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 => Expression.InvertNode(value, x).Select(c => c.Provided(Predicate));
         }
+
+        partial record Piecewise
+        {            
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+            {
+                Entity cond = true;
+                var res = new List<Entity>();
+                foreach (var c in Cases)
+                {
+                    res.AddRange(c.Expression.InvertNode(value, x).Select(el => el.Provided(c.Predicate & cond)));
+                    cond &= !c.Predicate;
+                }
+                return res;
+            }
+        }
     }
 }

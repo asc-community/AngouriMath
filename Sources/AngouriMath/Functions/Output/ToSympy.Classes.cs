@@ -357,8 +357,13 @@ namespace AngouriMath
 
         partial record Providedf
         {
-            // TODO: is it the right way of using refine
+            // TODO: is it the right way of using refine?
             internal override string ToSymPy() => $"sympy.refine({Expression.ToSymPy()}, sympy.Q.is_true({Predicate.ToSymPy()}))";
+        }
+
+        partial record Piecewise
+        {
+            internal override string ToSymPy() => $"sympy.Piecewise({string.Join(", ", Cases.Select(c => $"({c.Expression}, {c.Predicate})"))})";
         }
     }
 }
