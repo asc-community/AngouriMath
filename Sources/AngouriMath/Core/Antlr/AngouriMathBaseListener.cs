@@ -27,6 +27,7 @@ namespace AngouriMath.Core.Antlr {
     using static AngouriMath.Entity.Number;
     using AngouriMath.Core.Exceptions;
     using static AngouriMath.Entity.Set;
+    using static AngouriMath.Entity;
 
 
 using Antlr4.Runtime.Misc;

@@ -26,6 +26,7 @@ options
     using static AngouriMath.Entity.Number;
     using AngouriMath.Core.Exceptions;
     using static AngouriMath.Entity.Set;
+    using static AngouriMath.Entity;
 }
 
 @lexer::members
@@ -354,6 +355,16 @@ atom returns[Entity value]
             if ($args.list[1] is not SpecialSet ss)
                 throw new InvalidArgumentParseException($"Unrecognized special set {$args.list[1].Stringize()}");
             $value = $args.list[0].WithCodomain(ss.ToDomain());
+        }
+    | 'piecewise(' args = function_arguments ')'
+        {
+            var cases = new List<Providedf>();
+            foreach (var arg in $args.list)
+                if (arg is Providedf provided)
+                    cases.Add(provided);
+                else
+                    cases.Add(new Providedf(arg, true));
+            $value = new Piecewise(cases);
         }
     ;
 

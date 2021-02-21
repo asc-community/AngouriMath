@@ -27,6 +27,7 @@ namespace AngouriMath.Core.Antlr {
     using static AngouriMath.Entity.Number;
     using AngouriMath.Core.Exceptions;
     using static AngouriMath.Entity.Set;
+    using static AngouriMath.Entity;
 
 using Antlr4.Runtime.Misc;
 using IParseTreeListener = Antlr4.Runtime.Tree.IParseTreeListener;
