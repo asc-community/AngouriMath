@@ -553,5 +553,13 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
+
+        partial record Piecewise
+        {
+            /// <inheritdoc/>
+            public override string Stringize() => $"({string.Join(", ", Cases.Select(n => $"{n.Expression} if {n.Predicate}"))})";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
     }
 }
