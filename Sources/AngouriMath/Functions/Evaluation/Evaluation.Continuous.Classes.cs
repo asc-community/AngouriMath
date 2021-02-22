@@ -47,8 +47,8 @@ namespace AngouriMath
                     (augend, addend) => (augend, addend) switch
                     { 
                         (Complex a, Complex b) => a + b,
-                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2), (inter.Right + n2)),
-                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left), (n2 + inter.Right)),
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Evaled, (inter.Right + n2).Evaled),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Evaled, (n2 + inter.Right).Evaled),
                         _ => null
                     },
                     (a, b) => a + b
@@ -57,19 +57,18 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                     ExpandOnTwoArguments(Augend.InnerSimplified, Addend.InnerSimplified,
                         (augend, addend) => (augend, addend) switch
                         {
                             (Complex a, Complex b) => a + b,
                             (var n1, Integer(0)) => n1,
                             (Integer(0), var n2) => n2,
-                            (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2), (inter.Right + n2)),
-                            (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left), (n2 + inter.Right)),
+                            (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).InnerSimplified, (inter.Right + n2).InnerSimplified),
+                            (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).InnerSimplified, (n2 + inter.Right).InnerSimplified),
                             _ => null
                         },
-                        (a, b) => a + b
-                        );
+                        (a, b) => a + b,
+                        true);
         }
         public partial record Minusf
         {
@@ -78,8 +77,8 @@ namespace AngouriMath
                     (augend, addend) => (augend, addend) switch
                     {
                         (Complex a, Complex b) => a - b,
-                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2), (inter.Right - n2)),
-                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left), (n2 - inter.Right)),
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).Evaled, (inter.Right - n2).Evaled),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Evaled, (n2 - inter.Right).Evaled),
                         _ => null
                     },
                     (a, b) => a - b
@@ -87,18 +86,17 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnTwoArguments(Subtrahend.InnerSimplified, Minuend.InnerSimplified,
                     (augend, addend) => (augend, addend) switch
                     {
                         (var n1, Integer(0)) => n1,
                         (Integer(0), var n2) => (-n2),
-                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2), (inter.Right - n2)),
-                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left), (n2 - inter.Right)),
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).InnerSimplified, (inter.Right - n2).InnerSimplified),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).InnerSimplified, (n2 - inter.Right).InnerSimplified),
                         _ => null
                     },
-                    (a, b) => a - b
-                    );
+                    (a, b) => a - b,
+                    true);
         }
         public partial record Mulf
         {
@@ -120,10 +118,11 @@ namespace AngouriMath
                         (_, Integer(0)) or (Integer(0), _) => 0,
                         (var n1, Integer(1)) => n1,
                         (Integer(1), var n2) => n2,
+                        (var n1, var n2) when n1 == n2 => new Powf(n1, 2).InnerSimplified,
                         _ => null
                     },
-                    (a, b) => a * b
-                    );
+                    (a, b) => a * b,
+                    true);
         }
         public partial record Divf
         {
@@ -139,7 +138,6 @@ namespace AngouriMath
                     );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : 
                 ExpandOnTwoArguments(Dividend.InnerSimplified, Divisor.InnerSimplified,
                 (a, b) => (a, b) switch
                 {
@@ -148,8 +146,8 @@ namespace AngouriMath
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },
-                (a, b) => a / b
-                );
+                (a, b) => a / b,
+                true);
         }
         public partial record Powf
         {
@@ -166,19 +164,18 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : 
                 ExpandOnTwoArguments(Base.InnerSimplified, Exponent.InnerSimplified,
                 (a, b) => (a, b) switch
                 {
                 // 0^x is undefined for Re(x) <= 0
                     (Integer(1), _) => 0,
-                    (var n1, Integer(-1)) => (1 / n1),
+                    (var n1, Integer(-1)) => (1 / n1).InnerSimplified,
                     (_, Integer(0)) => 1,
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },
-                (a, b) => a.Pow(b)
-                );
+                (a, b) => a.Pow(b),
+                true);
         }
         public partial record Sinf
         {
@@ -195,15 +192,14 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : 
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
                         { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => res,
                         _ => null
                     },
-                    a => a.Sin()
-                    );
+                    a => a.Sin(),
+                    true);
         }
 
         public partial record Cosf
@@ -221,15 +217,14 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
                         { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => res,
                         _ => null
                     },
-                    a => a.Cos()
-                    );
+                    a => a.Cos(),
+                    true);
         }
 
         public partial record Secantf
@@ -247,15 +242,14 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res),
+                        { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res).InnerSimplified,
                         _ => null
                     },
-                    a => a.Sec()
-                    );
+                    a => a.Sec(),
+                    true);
         }
 
         public partial record Cosecantf
@@ -273,15 +267,14 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res),
+                        { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res).InnerSimplified,
                         _ => null
                     },
                     a => a.Cosec()
-                    );
+                    , true);
         }
 
         public partial record Arcsecantf
@@ -299,14 +292,13 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
                         _ => null
                     },
-                    a => a.Arcsec()
-                    );
+                    a => a.Arcsec(),
+                    true);
         }
 
         public partial record Arccosecantf
@@ -324,14 +316,13 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
                         _ => null
                     },
-                    a => a.Arccosec()
-                    );
+                    a => a.Arccosec(),
+                    true);
         }
 
         public partial record Tanf
@@ -349,7 +340,6 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
@@ -357,7 +347,7 @@ namespace AngouriMath
                         _ => null
                     },
                     a => a.Tan()
-                    );
+                    , true);
         }
         public partial record Cotanf
         {
@@ -374,15 +364,14 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => 1 / res,
+                        { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => (1 / res).InnerSimplified,
                         _ => null
                     },
                     a => a.Cotan()
-                    );
+                    , true);
         }
         public partial record Logf
         {
@@ -399,7 +388,6 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : 
                 ExpandOnTwoArguments(Base.InnerSimplified, Antilogarithm.InnerSimplified,
                 (a, b) => (a, b) switch
                 {
@@ -407,8 +395,8 @@ namespace AngouriMath
                     (_, Integer(1)) => 0,
                     _ => null
                 },
-                (a, b) => a.Log(b)
-                );
+                (a, b) => a.Log(b),
+                    true);
         }
         public partial record Arcsinf
         {
@@ -424,14 +412,13 @@ namespace AngouriMath
                 );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : 
                 ExpandOnOneArgument(Argument.InnerSimplified,
                 a => a switch
                 {
                     _ => null
                 },
-                a => a.Arcsin()
-                );
+                a => a.Arcsin(), 
+                    true);
         }
         public partial record Arccosf
         {
@@ -447,14 +434,13 @@ namespace AngouriMath
                 );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnOneArgument(Argument.InnerSimplified,
                 a => a switch
                 {
                     _ => null
                 },
-                a => a.Arccos()
-                );
+                a => a.Arccos(), 
+                    true);
         }
         public partial record Arctanf
         {
@@ -470,14 +456,13 @@ namespace AngouriMath
                 );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnOneArgument(Argument.InnerSimplified,
                 a => a switch
                 {
                     _ => null
                 },
                 a => a.Arctan()
-                );
+                , true);
         }
         public partial record Arccotanf
         {
@@ -493,14 +478,13 @@ namespace AngouriMath
                 );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled :
                 ExpandOnOneArgument(Argument.InnerSimplified,
                 a => a switch
                 {
                     _ => null
                 },
                 a => a.Arccotan()
-                );
+                , true);
         }
         public partial record Factorialf
         {
@@ -516,7 +500,6 @@ namespace AngouriMath
                     );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Evaled is Number { IsExact: true } ? Evaled : 
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
@@ -531,7 +514,7 @@ namespace AngouriMath
                         _ => null
                     },
                     a => a.Factorial()
-                    );
+                    , true);
         }
         public partial record Derivativef
         {
@@ -542,6 +525,7 @@ namespace AngouriMath
                     {
                         (var expr, _, 0) => expr,
                         // TODO: consider Integral for negative cases
+                        // TODO: should we call InnerSimlified here?
                         (var expr, Variable var, var asInt) => expr.Derive(var, asInt),
                         _ => null
                     },
@@ -590,6 +574,7 @@ namespace AngouriMath
                     {
                         (var expr, _, 0) => expr,
                         // TODO: consider Derivative for negative cases
+                        // TODO: should we apply InnerSimplified?
                         (var expr, Variable var, int asInt) => SequentialIntegrating(expr, var, asInt),
                         _ => null
                     },
@@ -617,8 +602,8 @@ namespace AngouriMath
                 Var switch
                 {
                     // if it cannot compute it, it will anyway return the node
-                    Entity.Variable x => Expression.Limit(x, Destination, ApproachFrom),
-                    var x => new Limitf(Expression, x, Destination, ApproachFrom)
+                    Variable x => Expression.InnerSimplified.Limit(x, Destination.InnerSimplified, ApproachFrom),
+                    var x => new Limitf(Expression.InnerSimplified, x, Destination.InnerSimplified, ApproachFrom)
                 };
 
         }
@@ -639,14 +624,13 @@ namespace AngouriMath
             // TODO: probably we can simplify it further
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => Argument is Number { IsExact: true } num ? num :
-                    ExpandOnOneArgument(Argument.InnerSimplified,
+                => ExpandOnOneArgument(Argument.InnerSimplified,
                         a => a switch
                         {
                             _ => null
                         },
                         a => a.Signum()
-                        );
+                        , true);
         }
 
         public partial record Absf
@@ -665,14 +649,13 @@ namespace AngouriMath
             // TODO: probably we can simplify it further
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => Argument is Number { IsExact: true } num ? num :
-                    ExpandOnOneArgument(Argument.InnerSimplified,
+                   => ExpandOnOneArgument(Argument.InnerSimplified,
                         a => a switch
                         {
                             _ => null
                         },
                         a => a.Abs()
-                        );
+                        , true);
         }
     }
 }

@@ -21,7 +21,10 @@ namespace UnitTests.Core.Sets
         [InlineData("{ 1, 2, 5 }!", "{ 1, 2, 120 }")]
         public void TestSimplify(string unsimplified, string expected)
         {
-            Assert.Equal(expected.ToEntity(), unsimplified.Simplify());
+            var exp = expected.ToEntity();
+            var actUnsim = unsimplified.ToEntity();
+            var act = actUnsim.Simplify();
+            Assert.Equal(exp, act);
         }
     }
 }

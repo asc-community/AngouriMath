@@ -52,13 +52,25 @@ namespace AngouriMath
         /// If no suitable case in switch found, it should return the default node, for example, for sum it would be
         /// <code>(a, b) => a + b</code>
         /// </param>
-        private Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity> defaultCtor)
+        private Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
             left = left.Unpack1();
             right = right.Unpack1();
             if (operation(left, right) is { } preRes)
                 return preRes;
-            Func<Entity, Entity, Entity> ops = (a, b) => operation(a, b) is { } res ? res : defaultCtor(left, right);
+
+            if (checkIfExactEvaled && this is Number { IsExact: true } n)
+                return n;
+
+            Entity ops(Entity a, Entity b)
+            {
+                if (operation(a, b) is { } res)
+                    return res;
+                if (checkIfExactEvaled && this is Number { IsExact: true } n)
+                    return n;
+                return defaultCtor(a, b);
+            }
+
             return (left, right) switch
             {
                 (Tensor a, Tensor b) => a.Elementwise(b, ops),
@@ -72,12 +84,24 @@ namespace AngouriMath
             };
         }
 
-        private Entity ExpandOnOneArgument(Entity expr, Func<Entity, Entity?> operation, Func<Entity, Entity> defaultCtor)
+        private Entity ExpandOnOneArgument(Entity expr, Func<Entity, Entity?> operation, Func<Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
             expr = expr.Unpack1();
             if (operation(expr) is { } notNull)
                 return notNull;
-            Func<Entity, Entity> ops = a => operation(a) is { } res ? res : defaultCtor(a);
+
+            if (checkIfExactEvaled && this is Number { IsExact: true } n)
+                return n;
+
+            Entity ops(Entity a)
+            {
+                if (operation(a) is { } res)
+                    return res;
+                if (checkIfExactEvaled && this is Number { IsExact: true } n)
+                    return n;
+                return defaultCtor(a);
+            }
+
             return expr switch
             {
                 Tensor t => t.Elementwise(ops),
@@ -86,13 +110,25 @@ namespace AngouriMath
             };
         }
 
-        private Entity ExpandOnTwoAndTArguments<T>(Entity left, Entity right, T third, Func<Entity, Entity, T, Entity?> operation, Func<Entity, Entity, T, Entity> defaultCtor)
+        private Entity ExpandOnTwoAndTArguments<T>(Entity left, Entity right, T third, Func<Entity, Entity, T, Entity?> operation, Func<Entity, Entity, T, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
             left = left.Unpack1();
             right = right.Unpack1();
             if (operation(left, right, third) is { } preRes)
                 return preRes;
-            Func<Entity, Entity, Entity> ops = (a, b) => operation(a, b, third) is { } res ? res : defaultCtor(left, right, third);
+
+            if (checkIfExactEvaled && this is Number { IsExact: true } n)
+                return n;
+
+            Entity ops(Entity a, Entity b)
+            {
+                if (operation(a, b, third) is { } res)
+                    return res;
+                if (checkIfExactEvaled && this is Number { IsExact: true } n)
+                    return n;
+                return defaultCtor(left, right, third);
+            }
+
             return (left, right, third) switch
             {
                 (Tensor a, Tensor b, _) => a.Elementwise(b, ops),

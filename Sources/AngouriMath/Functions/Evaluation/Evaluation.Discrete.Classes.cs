@@ -38,7 +38,8 @@ namespace AngouriMath
                     a => MathS.Negation(a)
                     );
             /// <inheritdoc/>
-            protected override Entity InnerSimplify() => InnerEvalWithCheck();
+            protected override Entity InnerSimplify()
+                => Evaled is Boolean b ? b : New(Argument.InnerSimplified);
         }
 
         partial record Andf
@@ -202,7 +203,7 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => ExpandOnTwoAndTArguments(Assumption.Evaled, Conclusion.Evaled, (Assumption.InnerSimplified, Conc.InnerSimplified),
+                => ExpandOnTwoAndTArguments(Assumption.Evaled, Conclusion.Evaled, (Assumption.InnerSimplified, Conclusion.InnerSimplified),
                     (a, b, _) => (a, b) switch
                     {
                         (var left, var right) when GoodResult(left, right, out var res) => res,

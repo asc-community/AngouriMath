@@ -21,6 +21,6 @@ namespace AngouriMath
         /// </summary>
         /// <param name="parenthesesRequired">Whether to wrap with '(' and ')'</param>
         protected internal string Stringize(bool parenthesesRequired) =>
-            parenthesesRequired ? $"({Stringize()})" : Stringize();
+            parenthesesRequired || MathS.Settings.OutputExplicit ? $"({Stringize()})" : Stringize();
     }
 }

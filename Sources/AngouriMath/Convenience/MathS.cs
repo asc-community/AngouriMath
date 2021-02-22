@@ -796,6 +796,13 @@ namespace AngouriMath
             public static Setting<EContext> DecimalPrecisionContext =>
                 decimalPrecisionContext ??= new EContext(100, ERounding.HalfUp, -100, 1000, false);
             [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;
+
+            /// <summary>
+            /// Explicit output for ToString, that is, no signs or parentheses will be omitted. Useful
+            /// for debugging and diagnostic.
+            /// </summary>
+            public static Setting<bool> OutputExplicit => outputExplicit ??= false;
+            [ThreadStatic] private static Setting<bool>? outputExplicit;
         }
 
         /// <summary>Returns an <see cref="Entity"/> in polynomial order if possible</summary>
