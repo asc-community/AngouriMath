@@ -45,12 +45,12 @@ namespace AngouriMath
         {
             private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
-                if (left.Unpack1Eval() is Boolean leftBool && right.Unpack1Eval() is Boolean rightBool)
+                if (left is Boolean leftBool && right is Boolean rightBool)
                 {
                     res = (bool)leftBool && (bool)rightBool; // there's no cost in casting
                     return true;
                 }
-                else if (left.Unpack1Eval() == False || right.Unpack1Eval() == False)
+                else if (left == False || right == False)
                 {
                     res = False;
                     return true;
@@ -64,23 +64,24 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left, Right,
+                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
                     (a, b) => (a, b) switch
                     {
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.Conjunction(a.Unpack1Eval(), b.Unpack1Eval())
+                    (a, b) => MathS.Conjunction(a, b)
                     );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => ExpandOnTwoArguments(Left, Right,
-                    (a, b) => (a, b) switch
+                => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (Left.InnerSimplified, Right.InnerSimplified),
+                    (a, b, _) => (a, b) switch
                     {
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.Conjunction(a.Unpack1Simplify(), b.Unpack1Simplify())
+                    (_, _, cr) => MathS.Conjunction(cr.Item1, cr.Item2)
                     );
         }
 
@@ -88,12 +89,12 @@ namespace AngouriMath
         {
             private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
-                if (left.Unpack1Eval() is Boolean leftBool && right.Unpack1Eval() is Boolean rightBool)
+                if (left is Boolean leftBool && right is Boolean rightBool)
                 {
                     res = (bool)leftBool || (bool)rightBool; // there's no cost in casting
                     return true;
                 }
-                else if (left.Unpack1Eval() == True || right.Unpack1Eval() == True)
+                else if (left == True || right == True)
                 {
                     res = True;
                     return true;
@@ -107,23 +108,24 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left, Right,
+                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
                     (a, b) => (a, b) switch
                     {
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.Disjunction(a.Unpack1Eval(), b.Unpack1Eval())
+                    (a, b) => MathS.Disjunction(a, b)
                     );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => ExpandOnTwoArguments(Left, Right,
-                    (a, b) => (a, b) switch
+                => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (Left.InnerSimplified, Right.InnerSimplified),
+                    (a, b, _) => (a, b) switch
                     {
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.Disjunction(a.Unpack1Simplify(), b.Unpack1Simplify())
+                    (_, _, cr) => MathS.Disjunction(cr.Item1, cr.Item2)
                     );
         }
 
@@ -131,7 +133,7 @@ namespace AngouriMath
         {
             private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
-                if (left.Unpack1Eval() is Boolean leftBool && right.Unpack1Eval() is Boolean rightBool)
+                if (left is Boolean leftBool && right is Boolean rightBool)
                 {
                     res = (bool)leftBool ^ (bool)rightBool; // there's no cost in casting
                     return true;
@@ -145,23 +147,24 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left, Right,
+                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
                     (a, b) => (a, b) switch
                     {
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.ExclusiveDisjunction(a.Unpack1Eval(), b.Unpack1Eval())
+                    (a, b) => MathS.ExclusiveDisjunction(a, b)
                     );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => ExpandOnTwoArguments(Left, Right,
-                    (a, b) => (a, b) switch
+                => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (Left.InnerSimplified, Right.InnerSimplified),
+                    (a, b, _) => (a, b) switch
                     {
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.ExclusiveDisjunction(a.Unpack1Simplify(), b.Unpack1Simplify())
+                    (_, _, cr) => MathS.ExclusiveDisjunction(cr.Item1, cr.Item2)
                     );
         }
 
@@ -169,12 +172,12 @@ namespace AngouriMath
         {
             private static bool GoodResult(Entity left, Entity right, out Entity res)
             {
-                if (left.Unpack1Eval() is Boolean leftBool && right.Unpack1Eval() is Boolean rightBool)
+                if (left is Boolean leftBool && right is Boolean rightBool)
                 {
                     res = !(bool)leftBool || (bool)rightBool; // there's no cost in casting
                     return true;
                 }
-                else if (left.Unpack1Eval() == False || right.Unpack1Eval() == True)
+                else if (left == False || right == True)
                 {
                     res = True;
                     return true;
@@ -188,23 +191,24 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Assumption, Conclusion,
+                => ExpandOnTwoArguments(Assumption.Evaled, Conclusion.Evaled,
                     (a, b) => (a, b) switch
                     {
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.Implication(a.Unpack1Eval(), b.Unpack1Eval())
+                    (a, b) => MathS.Implication(a, b)
                     );
+
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => ExpandOnTwoArguments(Assumption, Conclusion,
-                    (a, b) => (a, b) switch
+                => ExpandOnTwoAndTArguments(Assumption.Evaled, Conclusion.Evaled, (Assumption.InnerSimplified, Conc.InnerSimplified),
+                    (a, b, _) => (a, b) switch
                     {
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.Implication(a.Unpack1Simplify(), b.Unpack1Simplify())
+                    (_, _, cr) => MathS.Implication(cr.Item1, cr.Item2)
                     );
         }
 
@@ -212,27 +216,16 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerEval()
-                => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
-                    (a, b) => (a, b) switch
-                    {
-                        (var left, var right) when left == right => true,
-                        (var left, var right) when left.IsConstant && right.IsConstant => left == right,
-                        _ => null
-                    },
-                    (a, b) => a.Xor(b)
-                    );
+                => (Left.Evaled, Right.Evaled) switch
+                {
+                    
+                    (var left, var right) when left == right => true,
+                    (var left, var right) when left.IsConstant && right.IsConstant => left == right,
+                    (var left, var right) => MathS.Equality(left, right)
+                };
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => Evaled is Boolean b ? b : 
-                ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
-                    (a, b) => (a, b) switch
-                    {
-                        (var left, var right) when left == right => true,
-                        (var left, var right) when left.IsConstant && right.IsConstant => left == right,
-                        _ => null
-                    },
-                    (a, b) => a.Xor(b)
-                    );
+                => Evaled is Boolean b ? b : MathS.Equality(Left.InnerSimplified, Right.InnerSimplified);
         }
 
         partial record Greaterf

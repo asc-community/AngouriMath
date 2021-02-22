@@ -32,13 +32,13 @@ namespace AngouriMath
             // protected override Entity InnerEval() => (Augend, Addend).Unpack2Eval() switch
             // {
             //     (Complex n1, Complex n2) => n1 + n2,
-            //     (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2).Unpack1Eval()),
-            //     (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2).Unpack1Eval()),
-            //     (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 + n2).Unpack1Eval()),
-            //     (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c + n2).Unpack1Eval()),
-            //     (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 + c).Unpack1Eval()),
-            //     (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Unpack1Eval(), (inter.Right + n2).Unpack1Eval()),
-            //     (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Unpack1Eval(), (n2 + inter.Right).Unpack1Eval()),
+            //     (Tensor n1, Tensor n2) => n1.Elementwise(n2, (n1, n2) => (n1 + n2)),
+            //     (var n1, Tensor n2) => n2.Elementwise(n2 => (n1 + n2)),
+            //     (Tensor n1, var n2) => n1.Elementwise(n1 => (n1 + n2)),
+            //     (FiniteSet finite, var n2) when n2 is not Set => finite.Apply(c => (c + n2)),
+            //     (var n2, FiniteSet finite) when n2 is not Set => finite.Apply(c => (n2 + c)),
+            //     (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2), (inter.Right + n2)),
+            //     (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left), (n2 + inter.Right)),
             //     (var n1, var n2) => New(n1, n2)
             // };
             /// <inheritdoc/>
@@ -47,8 +47,8 @@ namespace AngouriMath
                     (augend, addend) => (augend, addend) switch
                     { 
                         (Complex a, Complex b) => a + b,
-                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Unpack1Eval(), (inter.Right + n2).Unpack1Eval()),
-                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Unpack1Eval(), (n2 + inter.Right).Unpack1Eval()),
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2), (inter.Right + n2)),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left), (n2 + inter.Right)),
                         _ => null
                     },
                     (a, b) => a + b
@@ -64,8 +64,8 @@ namespace AngouriMath
                             (Complex a, Complex b) => a + b,
                             (var n1, Integer(0)) => n1,
                             (Integer(0), var n2) => n2,
-                            (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2).Unpack1Simplify(), (inter.Right + n2).Unpack1Simplify()),
-                            (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Unpack1Simplify(), (n2 + inter.Right).Unpack1Simplify()),
+                            (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left + n2), (inter.Right + n2)),
+                            (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left), (n2 + inter.Right)),
                             _ => null
                         },
                         (a, b) => a + b
@@ -78,8 +78,8 @@ namespace AngouriMath
                     (augend, addend) => (augend, addend) switch
                     {
                         (Complex a, Complex b) => a - b,
-                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).Unpack1Eval(), (inter.Right - n2).Unpack1Eval()),
-                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Unpack1Eval(), (n2 - inter.Right).Unpack1Eval()),
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2), (inter.Right - n2)),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left), (n2 - inter.Right)),
                         _ => null
                     },
                     (a, b) => a - b
@@ -92,9 +92,9 @@ namespace AngouriMath
                     (augend, addend) => (augend, addend) switch
                     {
                         (var n1, Integer(0)) => n1,
-                        (Integer(0), var n2) => (-n2).Unpack1Simplify(),
-                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2).Unpack1Simplify(), (inter.Right - n2).Unpack1Simplify()),
-                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Unpack1Simplify(), (n2 - inter.Right).Unpack1Simplify()),
+                        (Integer(0), var n2) => (-n2),
+                        (Interval inter, var n2) when n2 is not Set => inter.New((inter.Left - n2), (inter.Right - n2)),
+                        (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left), (n2 - inter.Right)),
                         _ => null
                     },
                     (a, b) => a - b
@@ -145,7 +145,7 @@ namespace AngouriMath
                 {
                     (Integer(0), _) => 0,
                     (_, Integer(0)) => Real.NaN,
-                    (var n1, Integer(1)) => n1.Unpack1Simplify(),
+                    (var n1, Integer(1)) => n1,
                     _ => null
                 },
                 (a, b) => a / b
@@ -172,9 +172,9 @@ namespace AngouriMath
                 {
                 // 0^x is undefined for Re(x) <= 0
                     (Integer(1), _) => 0,
-                    (var n1, Integer(-1)) => (1 / n1).Unpack1Simplify(),
+                    (var n1, Integer(-1)) => (1 / n1),
                     (_, Integer(0)) => 1,
-                    (var n1, Integer(1)) => n1.Unpack1Simplify(),
+                    (var n1, Integer(1)) => n1,
                     _ => null
                 },
                 (a, b) => a.Pow(b)
@@ -251,7 +251,7 @@ namespace AngouriMath
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res).Unpack1Simplify(),
+                        { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res),
                         _ => null
                     },
                     a => a.Sec()
@@ -277,7 +277,7 @@ namespace AngouriMath
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res).Unpack1Simplify(),
+                        { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res),
                         _ => null
                     },
                     a => a.Cosec()
@@ -550,9 +550,9 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Var.Unpack1Simplify() is Variable var
+                Var is Variable var
                 ? Iterations == 0
-                    ? Expression.Unpack1Simplify()
+                    ? Expression
                     : Expression.Derive(var, Iterations)
                 : this;
         }
@@ -564,7 +564,7 @@ namespace AngouriMath
                     return this;
                 var changed = expr;
                 for (int i = 0; i < iterations; i++)
-                    changed = Integration.ComputeIndefiniteIntegral(changed.Unpack1Simplify(), var);
+                    changed = Integration.ComputeIndefiniteIntegral(changed, var);
                 return changed;
             }
 
@@ -583,7 +583,7 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-               Var.Unpack1Simplify() is Variable var ?
+               Var is Variable var ?
 
                 ExpandOnTwoAndTArguments(Expression.InnerSimplified, Var, Iterations,
                     (a, b, c) => (a, b, c) switch
@@ -614,11 +614,11 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Var.Unpack1Simplify() switch
+                Var switch
                 {
                     // if it cannot compute it, it will anyway return the node
-                    Entity.Variable x => Expression.Unpack1Simplify().Limit(x, Destination.Unpack1Simplify(), ApproachFrom),
-                    var x => new Limitf(Expression.Unpack1Simplify(), x, Destination.Unpack1Simplify(), ApproachFrom)
+                    Entity.Variable x => Expression.Limit(x, Destination, ApproachFrom),
+                    var x => new Limitf(Expression, x, Destination, ApproachFrom)
                 };
 
         }
@@ -639,7 +639,7 @@ namespace AngouriMath
             // TODO: probably we can simplify it further
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => Argument.Unpack1Eval() is Number { IsExact: true } num ? num :
+                => Argument is Number { IsExact: true } num ? num :
                     ExpandOnOneArgument(Argument.InnerSimplified,
                         a => a switch
                         {
@@ -665,7 +665,7 @@ namespace AngouriMath
             // TODO: probably we can simplify it further
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => Argument.Unpack1Eval() is Number { IsExact: true } num ? num :
+                => Argument is Number { IsExact: true } num ? num :
                     ExpandOnOneArgument(Argument.InnerSimplified,
                         a => a switch
                         {
