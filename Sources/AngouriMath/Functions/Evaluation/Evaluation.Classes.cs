@@ -56,9 +56,6 @@ namespace AngouriMath
         /// </param>
         private Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
-            left = left.Unpack1();
-            right = right.Unpack1();
-
             if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
 
@@ -76,6 +73,9 @@ namespace AngouriMath
 
             return (left, right) switch
             {
+                (Providedf a, Providedf b) => ops(a.Expression, b.Expression).Provided(a.Predicate & b.Predicate),
+                (Providedf a, var b) => ExpandOnTwoArguments(a.Expression, b, operation, defaultCtor, checkIfExactEvaled).Provided(a.Predicate),
+                (var a, Providedf b) => ExpandOnTwoArguments(a, b.Expression, operation, defaultCtor, checkIfExactEvaled).Provided(b.Predicate),
                 (Tensor a, Tensor b) => a.Elementwise(b, ops),
                 (Tensor a, var b) => a.Elementwise(a => ops(a, b)),
                 (var a, Tensor b) => b.Elementwise(b => ops(a, b)),
@@ -90,8 +90,6 @@ namespace AngouriMath
 
         private Entity ExpandOnOneArgument(Entity expr, Func<Entity, Entity?> operation, Func<Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
-            expr = expr.Unpack1();
-
             if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
 
@@ -109,6 +107,7 @@ namespace AngouriMath
 
             return expr switch
             {
+                Providedf p => ExpandOnOneArgument(p.Expression, operation, defaultCtor, checkIfExactEvaled).Provided(p.Predicate),
                 Tensor t => t.Elementwise(ops),
                 FiniteSet s => s.Apply(ops),
                 _ => ReferenceEquals(expr, this.DirectChildren[0]) ? this : defaultCtor(expr)
@@ -117,9 +116,6 @@ namespace AngouriMath
 
         private Entity ExpandOnTwoAndTArguments<T>(Entity left, Entity right, T third, Func<Entity, Entity, T, Entity?> operation, Func<Entity, Entity, T, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
-            left = left.Unpack1();
-            right = right.Unpack1();
-
             if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
 
@@ -137,6 +133,9 @@ namespace AngouriMath
 
             return (left, right, third) switch
             {
+                (Providedf a, Providedf b, _) => ops(a.Expression, b.Expression).Provided(a.Predicate & b.Predicate),
+                (Providedf a, var b, _) => ExpandOnTwoAndTArguments(a.Expression, b, third, operation, defaultCtor, checkIfExactEvaled).Provided(a.Predicate),
+                (var a, Providedf b, _) => ExpandOnTwoAndTArguments(a, b.Expression, third, operation, defaultCtor, checkIfExactEvaled).Provided(b.Predicate),
                 (Tensor a, Tensor b, _) => a.Elementwise(b, ops),
                 (Tensor a, var b, _) => a.Elementwise(a => ops(a, b)),
                 (var a, Tensor b, _) => b.Elementwise(b => ops(a, b)),
