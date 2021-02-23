@@ -590,13 +590,17 @@ namespace AngouriMath
         public partial record Limitf
         {
             /// <inheritdoc/>
-            protected override Entity InnerEval() => ApproachFrom switch
-            {
-                ApproachFrom.Left => New(Expression.Unpack1Eval(), Var, Destination.Unpack1Eval(), ApproachFrom),
-                ApproachFrom.BothSides => New(Expression.Unpack1Eval(), Var, Destination.Unpack1Eval(), ApproachFrom),
-                ApproachFrom.Right => New(Expression.Unpack1Eval(), Var, Destination.Unpack1Eval(), ApproachFrom),
-                _ => this,
-            };
+            protected override Entity InnerEval() => ExpandOnTwoAndTArguments(
+                Expression.Evaled, Destination.Evaled, (v: Var, ap: ApproachFrom),
+                (expr, dest, vap) => vap.ap switch
+                {
+                    ApproachFrom.Left => New(expr, Var, dest, ApproachFrom),
+                    ApproachFrom.BothSides => New(expr, Var, dest, ApproachFrom),
+                    ApproachFrom.Right => New(expr, Var, dest, ApproachFrom),
+                    _ => this,
+                },
+                (expr, dest, vap) => new Limitf(expr, vap.v, dest, vap.ap)
+                );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>

@@ -30,8 +30,8 @@ namespace AngouriMath
 
             partial record Interval
             {
-                private Entity IfEqualEndsThenCollapse()
-                    => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (l: LeftClosed, r: RightClosed),
+                private Entity IfEqualEndsThenCollapse(Entity leftUnchanged, Entity rightUnchanged)
+                    => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (l: LeftClosed, r: RightClosed, lu: leftUnchanged, ru: rightUnchanged),
                         (a, b, lr) => (a, b, lr) switch
                         {
                             // TODO: make it static
@@ -40,23 +40,27 @@ namespace AngouriMath
                             Empty,
                             _ => null
                         },
-                        (a, b, lr) => new Interval(a, lr.l, b, lr.r)
+                        (a, b, lr) => new Interval(lr.lu, lr.l, lr.ru, lr.r)
                         );
 
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
-                    => New(Left.Unpack1Eval(), Right.Unpack1Eval()).IfEqualEndsThenCollapse();
+                    => IfEqualEndsThenCollapse(Left.Evaled, Right.Evaled);
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                    => New(Left.Unpack1Simplify(), Right.Unpack1Simplify()).IfEqualEndsThenCollapse();
+                    => IfEqualEndsThenCollapse(Left.InnerSimplified, Right.InnerSimplified);
             }
 
             partial record ConditionalSet
             {
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
-                    => Simplificator.PickSimplest(New(Var, Predicate.Unpack1Eval()), InnerSimplified);
+                    => ExpandOnTwoAndTArguments(Var, Predicate.Evaled, this,
+                        (@var, pred, @this) => 
+                    Simplificator.PickSimplest(@this.New(@var, pred), @this),
+                        (@var, pred, _) => new ConditionalSet(@var, pred)
+                        );
 
                 /// <inheritdoc/>
                 protected override Entity InnerSimplify()

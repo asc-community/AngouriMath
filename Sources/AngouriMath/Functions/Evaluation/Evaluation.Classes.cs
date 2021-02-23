@@ -82,9 +82,10 @@ namespace AngouriMath
                 (FiniteSet a, FiniteSet b) => TreeAnalyzer.ApplyX2(a, b, ops),
                 (FiniteSet a, var b) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b) => b.Apply(b => ops(a, b)),
-                _ => ReferenceEquals(left, this.DirectChildren[0]) &&
-                     ReferenceEquals(right, this.DirectChildren[1]) ?
-                     this : defaultCtor(left, right)
+                // _ => ReferenceEquals(left, this.DirectChildren[0]) &&
+                //      ReferenceEquals(right, this.DirectChildren[1]) ?
+                //      this : defaultCtor(left, right)
+                _ => defaultCtor(left, right)
             };
         }
 
@@ -110,7 +111,8 @@ namespace AngouriMath
                 Providedf p => ExpandOnOneArgument(p.Expression, operation, defaultCtor, checkIfExactEvaled).Provided(p.Predicate),
                 Tensor t => t.Elementwise(ops),
                 FiniteSet s => s.Apply(ops),
-                _ => ReferenceEquals(expr, this.DirectChildren[0]) ? this : defaultCtor(expr)
+                // _ => ReferenceEquals(expr, this.DirectChildren[0]) ? this : defaultCtor(expr)
+                _ => defaultCtor(expr)
             };
         }
 
@@ -142,9 +144,12 @@ namespace AngouriMath
                 (FiniteSet a, FiniteSet b, _) => TreeAnalyzer.ApplyX2(a, b, ops),
                 (FiniteSet a, var b, _) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b, _) => b.Apply(b => ops(a, b)),
+                /*
                 _ => ReferenceEquals(left, this.DirectChildren[0]) &&
                      ReferenceEquals(right, this.DirectChildren[1]) ?
                      this : defaultCtor(left, right, third)
+                */
+                _ => defaultCtor(left, right, third)
             };
         }
     }

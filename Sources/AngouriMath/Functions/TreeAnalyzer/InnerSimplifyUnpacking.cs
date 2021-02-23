@@ -19,6 +19,7 @@ namespace AngouriMath.Functions
             return new FiniteSet((IEnumerable<Entity>)els);
         }
 
+        /*
         private static Entity UnpackProvided(Entity entity)
             => entity is Providedf definedWhen ? definedWhen.Expression : entity;
 
@@ -47,6 +48,6 @@ namespace AngouriMath.Functions
         {
             var (item1, item2) = (entity.Item1, entity.Item2).Unpack2Eval();
             return (item1.Evaled, item2.Evaled, entity.Item3);
-        }
+        }*/
     }
 }

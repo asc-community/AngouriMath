@@ -36,27 +36,14 @@ namespace AngouriMath
 
         private Entity InnerActionWithCheck(IEnumerable<Entity> directChildren, Entity innerSimplifiedOrEvaled, bool returnThisIfNaN)
         {
-            static Entity WrapWithProvidedIfNecessary(IEnumerable<Entity> predicates, Entity entity)
-                => predicates.Any() ? entity.Provided(TreeAnalyzer.MultiHangBinary(predicates.ToList(), (a, b) => a & b)) : entity;
-            var predicates = Enumerable.Empty<Entity>();
-            if (this is not Providedf)
-                predicates = directChildren.Where(c => c is Providedf).Select(c => ((Providedf)c).Predicate);
             if (innerSimplifiedOrEvaled.DirectChildren.Any(c => c == MathS.NaN))
                 return MathS.NaN;
-            if (innerSimplifiedOrEvaled is not Providedf)
-            {
-                if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplifiedOrEvaled, Codomain))
-                    return WrapWithProvidedIfNecessary(predicates, innerSimplifiedOrEvaled);
-                else
-                {
-                    if (returnThisIfNaN)
-                        return WrapWithProvidedIfNecessary(predicates, this);
-                    else
-                        return MathS.NaN;
-                }
-            }
-            else
+            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplifiedOrEvaled, Codomain))
                 return innerSimplifiedOrEvaled;
+            if (returnThisIfNaN)
+                return this;
+            else
+                return MathS.NaN;
         }
 
         /// <summary>
