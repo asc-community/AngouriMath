@@ -60,7 +60,7 @@ namespace AngouriMath
             {
                 yield return (iterLeft.Current, iterRight.Current);
             }
-            while ((leftAdv = iterLeft.MoveNext()) && (rightAdv = iterRight.MoveNext()));
+            while ((leftAdv = iterLeft.MoveNext()) & (rightAdv = iterRight.MoveNext()));
 
             if (leftAdv != rightAdv)
                 throw new AngouriBugException("Collections should have the same size");

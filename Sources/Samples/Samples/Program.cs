@@ -70,5 +70,9 @@ using static System.Console;
 //WriteLine("X + 2 / 3");
 //Entity expr = "(((x provided a) + 1) * 2 provided b) + (3 provided c) / ((4 provided 5) provided d)";
 
-Entity expr = "2x2 - 4x - 8 = A(x3 + 4x) + B(x2 + 4) + C(x3 - x2) + D(x2 - x)";
-WriteLine(expr.Substitute("x", 2).Substitute("A", 0).Substitute("B", -2).Simplify().InnerSimplified);
+// Entity expr = "2x2 - 4x - 8 = A(x3 + 4x) + B(x2 + 4) + C(x3 - x2) + D(x2 - x)";
+// WriteLine(expr.Substitute("x", 2).Substitute("A", 0).Substitute("B", -2).Simplify().InnerSimplified);
+
+Entity eq = "piecewise(x2 provided b, (x + 1)2 provided d, (x + 2)2 provided g) = 4";
+var x = MathS.Var("x");
+WriteLine(eq.Solve(x));

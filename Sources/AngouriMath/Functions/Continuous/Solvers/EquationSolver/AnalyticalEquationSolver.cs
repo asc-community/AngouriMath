@@ -17,6 +17,7 @@ using AngouriMath.Extensions;
 using static AngouriMath.Entity.Set;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Multithreading;
+using System.Collections.Generic;
 
 namespace AngouriMath
 {
@@ -69,6 +70,18 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
     internal static class AnalyticalEquationSolver
     {
+        private static Set PiecewiseIntoIndependentEquations(Piecewise leftPart, Variable x, Entity rightPart)
+        {
+            Entity cond = true;
+            var res = new List<Set>();
+            foreach (var c in leftPart.Cases)
+            {
+                res.Add(Solve(c.Expression - rightPart, x).Filter(c.Predicate & cond, x));
+                cond &= !c.Predicate;
+            }
+            return res.Unite();
+        }
+
         /// <summary>Equation solver</summary>
         /// <param name="compensateSolving">
         /// Compensate solving is needed when you formatted an equation to (something - const)
@@ -109,6 +122,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                 case Minusf(var subtrahend, var minuend) when !minuend.ContainsNode(x) && compensateSolving:
                     if (subtrahend == x)
                         return new[] { minuend }.ToSet();
+                    if (subtrahend is Piecewise piecewise)
+                        return PiecewiseIntoIndependentEquations(piecewise, x, minuend);
                     Entity? lastChild = null;
                     foreach (var child in subtrahend.DirectChildren)
                         if (child.ContainsNode(x))
@@ -150,6 +165,8 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
                         var solutions = enums.Select(solution => Solve(minimumSubtree - solution, x, compensateSolving: true)).Unite().InnerSimplified;
                         if (solutions is FiniteSet els)
                             return els.Select(ent => TryDowncast(expr, x, ent)).ToSet();
+                        else if (solutions is Set { IsSetEmpty: false } set)
+                            return set;
                     }
                 }
                 // // //

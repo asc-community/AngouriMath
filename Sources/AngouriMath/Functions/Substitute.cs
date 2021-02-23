@@ -314,7 +314,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)
-                => Apply(c => c.New(c.Expression.Substitute(x, value), c.Predicate.Substitute(x, value)));
+                => x == this ? value : Apply(c => c.New(c.Expression.Substitute(x, value), c.Predicate.Substitute(x, value)));
         }
 
         #endregion

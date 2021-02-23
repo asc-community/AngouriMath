@@ -227,6 +227,9 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => Count == 0;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over) => Apply(c => c.Provided(predicate.Substitute(over, c)));
             }
             #endregion
 
@@ -326,6 +329,9 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => false;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over) => new ConditionalSet(over, predicate & over.In(this));
             }
             #endregion
 
@@ -391,6 +397,9 @@ namespace AngouriMath
                 public override int GetHashCode()
                     // TODO: might not always work, requires testing
                     => Predicate.Substitute(Var, universalVoidConstant).GetHashCode();
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over) => new ConditionalSet(Var, Predicate & predicate.Substitute(over, Var));
             }
             #endregion
 
@@ -529,6 +538,9 @@ namespace AngouriMath
                         => entity is Complex || !entity.IsConstantLeaf;
                     internal override Domain ToDomain() => Domain.Complex;
                 }
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over) => new ConditionalSet(over, predicate & over.In(this));
             }
             #endregion  
 
@@ -574,6 +586,13 @@ namespace AngouriMath
                 public override bool IsSetEmpty => isSetEmpty.GetValue(@this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2 && finite1.IsSetEmpty && finite2.IsSetEmpty, this);
                 private FieldCache<bool> isSetEmpty;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over)
+                    => MathS.Union(
+                        Left is Set setLeft ? setLeft.Filter(predicate, over) : Left,
+                        Right is Set setRight ? setRight.Filter(predicate, over) : Right
+                        );
             }
             #endregion
 
@@ -621,6 +640,13 @@ namespace AngouriMath
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite2.IsSetEmpty), this);
                 private FieldCache<bool> isSetEmpty;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over)
+                    => MathS.Intersection(
+                        Left is Set setLeft ? setLeft.Filter(predicate, over) : Left,
+                        Right is Set setRight ? setRight.Filter(predicate, over) : Right
+                        );
             }
             #endregion
 
@@ -667,6 +693,13 @@ namespace AngouriMath
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite1 == finite2), this);
                 private FieldCache<bool> isSetEmpty;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over)
+                    => MathS.SetSubtraction(
+                        Left is Set setLeft ? setLeft.Filter(predicate, over) : Left,
+                        Right is Set setRight ? setRight.Filter(predicate, over) : Right
+                        );
             }
             #endregion
         }
