@@ -36,7 +36,7 @@ namespace AngouriMath
                         {
                             // TODO: make it static
                             (var left, var right, _) when left == right => lr.l && lr.r ?
-                            new FiniteSet(Simplificator.PickSimplest(left, right)) :
+                            new FiniteSet(Simplificator.PickSimplest(lr.lu, lr.ru)) :
                             Empty,
                             _ => null
                         },

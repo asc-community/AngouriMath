@@ -594,10 +594,7 @@ namespace AngouriMath
                 Expression.Evaled, Destination.Evaled, (v: Var, ap: ApproachFrom),
                 (expr, dest, vap) => vap.ap switch
                 {
-                    ApproachFrom.Left => New(expr, Var, dest, ApproachFrom),
-                    ApproachFrom.BothSides => New(expr, Var, dest, ApproachFrom),
-                    ApproachFrom.Right => New(expr, Var, dest, ApproachFrom),
-                    _ => this,
+                    _ => null
                 },
                 (expr, dest, vap) => new Limitf(expr, vap.v, dest, vap.ap)
                 );
