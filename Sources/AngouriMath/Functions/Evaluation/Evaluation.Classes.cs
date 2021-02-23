@@ -9,6 +9,8 @@
  */
 using AngouriMath.Functions;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
@@ -56,11 +58,12 @@ namespace AngouriMath
         {
             left = left.Unpack1();
             right = right.Unpack1();
-            if (operation(left, right) is { } preRes)
-                return preRes;
 
             if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
+
+            if (operation(left, right) is { } preRes)
+                return preRes;
 
             Entity ops(Entity a, Entity b)
             {
@@ -76,6 +79,7 @@ namespace AngouriMath
                 (Tensor a, Tensor b) => a.Elementwise(b, ops),
                 (Tensor a, var b) => a.Elementwise(a => ops(a, b)),
                 (var a, Tensor b) => b.Elementwise(b => ops(a, b)),
+                (FiniteSet a, FiniteSet b) => TreeAnalyzer.ApplyX2(a, b, ops),
                 (FiniteSet a, var b) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b) => b.Apply(b => ops(a, b)),
                 _ => ReferenceEquals(left, this.DirectChildren[0]) &&
@@ -87,11 +91,12 @@ namespace AngouriMath
         private Entity ExpandOnOneArgument(Entity expr, Func<Entity, Entity?> operation, Func<Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
             expr = expr.Unpack1();
-            if (operation(expr) is { } notNull)
-                return notNull;
 
             if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
+
+            if (operation(expr) is { } notNull)
+                return notNull;
 
             Entity ops(Entity a)
             {
@@ -114,11 +119,12 @@ namespace AngouriMath
         {
             left = left.Unpack1();
             right = right.Unpack1();
-            if (operation(left, right, third) is { } preRes)
-                return preRes;
 
             if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
+
+            if (operation(left, right, third) is { } preRes)
+                return preRes;
 
             Entity ops(Entity a, Entity b)
             {
@@ -134,6 +140,7 @@ namespace AngouriMath
                 (Tensor a, Tensor b, _) => a.Elementwise(b, ops),
                 (Tensor a, var b, _) => a.Elementwise(a => ops(a, b)),
                 (var a, Tensor b, _) => b.Elementwise(b => ops(a, b)),
+                (FiniteSet a, FiniteSet b, _) => TreeAnalyzer.ApplyX2(a, b, ops),
                 (FiniteSet a, var b, _) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b, _) => b.Apply(b => ops(a, b)),
                 _ => ReferenceEquals(left, this.DirectChildren[0]) &&

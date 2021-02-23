@@ -14,7 +14,7 @@ namespace UnitTests.Core.Sets
         [InlineData(@"(2; 3]", "(2; 3]")]
         [InlineData(@"3 + {2}", "{5}")]
         [InlineData(@"1 + [2; 3]", "[3; 4]")]
-        [InlineData(@"[{1, 2}; {3, 4}]", "[{1, 2}; {3, 4}]")]
+        [InlineData(@"[{1, 2}; {3, 4}]", "{[1; 3], [1; 4], [2; 3], [2; 4]}")]
         [InlineData(@"{[1; 2], [3; 4]}", "{[1; 2], [3; 4]}")]
         [InlineData(@"{ x : x }", "{ x : x }")]
         [InlineData(@"{ 1, 2, 3 } \/ { 4 }", "{ 1, 2, 3, 4 }")]
@@ -53,7 +53,8 @@ namespace UnitTests.Core.Sets
         [InlineData(@"{ x : 2 = 4 }", @"{}")]
         public void TestSimplify(string unsimplified, string simplified)
         {
-            var actual = unsimplified.ToEntity().Simplify();
+            var actual = unsimplified.ToEntity();
+            actual = actual.Simplify();
             Assert.Equal(simplified.ToEntity(), actual);
         }
 

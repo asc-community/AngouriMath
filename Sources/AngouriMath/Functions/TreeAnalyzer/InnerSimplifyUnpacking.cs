@@ -1,12 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace AngouriMath.Functions
 {
+    using static AngouriMath.Entity.Set;
     using static Entity;
     partial class TreeAnalyzer
     {
+        internal static Entity ApplyX2(FiniteSet oneSet, FiniteSet secondSet, Func<Entity, Entity, Entity> op)
+        {
+            var els = new List<Entity>();
+            var secondSetEls = secondSet.Elements.ToArray(); // we do it to avoid reallocation every iteration
+            foreach (var elA in oneSet)
+                foreach (var elB in secondSetEls)
+                    els.Add(op(elA, elB));
+            return new FiniteSet((IEnumerable<Entity>)els);
+        }
+
         private static Entity UnpackProvided(Entity entity)
             => entity is Providedf definedWhen ? definedWhen.Expression : entity;
 
