@@ -59,14 +59,14 @@ namespace AngouriMath
             if (operation(left, right) is { } preRes)
                 return preRes;
 
-            if (checkIfExactEvaled && this is Number { IsExact: true } n)
+            if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
 
             Entity ops(Entity a, Entity b)
             {
                 if (operation(a, b) is { } res)
                     return res;
-                if (checkIfExactEvaled && this is Number { IsExact: true } n)
+                if (checkIfExactEvaled && defaultCtor(a, b).Evaled is Number { IsExact: true } n)
                     return n;
                 return defaultCtor(a, b);
             }
@@ -90,14 +90,14 @@ namespace AngouriMath
             if (operation(expr) is { } notNull)
                 return notNull;
 
-            if (checkIfExactEvaled && this is Number { IsExact: true } n)
+            if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
 
             Entity ops(Entity a)
             {
                 if (operation(a) is { } res)
                     return res;
-                if (checkIfExactEvaled && this is Number { IsExact: true } n)
+                if (checkIfExactEvaled && defaultCtor(a).Evaled is Number { IsExact: true } n)
                     return n;
                 return defaultCtor(a);
             }
@@ -117,16 +117,16 @@ namespace AngouriMath
             if (operation(left, right, third) is { } preRes)
                 return preRes;
 
-            if (checkIfExactEvaled && this is Number { IsExact: true } n)
+            if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
 
             Entity ops(Entity a, Entity b)
             {
                 if (operation(a, b, third) is { } res)
                     return res;
-                if (checkIfExactEvaled && this is Number { IsExact: true } n)
+                if (checkIfExactEvaled && defaultCtor(a, b, third).Evaled is Number { IsExact: true } n)
                     return n;
-                return defaultCtor(left, right, third);
+                return defaultCtor(a, b, third);
             }
 
             return (left, right, third) switch

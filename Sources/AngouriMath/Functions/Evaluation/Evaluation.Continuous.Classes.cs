@@ -167,8 +167,9 @@ namespace AngouriMath
                 ExpandOnTwoArguments(Base.InnerSimplified, Exponent.InnerSimplified,
                 (a, b) => (a, b) switch
                 {
-                // 0^x is undefined for Re(x) <= 0
-                    (Integer(1), _) => 0,
+                    (Integer(1), _) => 1,
+                    (Integer(0), Integer(0)) => 1,
+                    (Integer(0), _) => 0,
                     (var n1, Integer(-1)) => (1 / n1).InnerSimplified,
                     (_, Integer(0)) => 1,
                     (var n1, Integer(1)) => n1,
