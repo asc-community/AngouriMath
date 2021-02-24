@@ -30,13 +30,13 @@ namespace AngouriMath
 
             partial record Interval
             {
-                private Entity IfEqualEndsThenCollapse(Entity leftUnchanged, Entity rightUnchanged)
-                    => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (l: LeftClosed, r: RightClosed, lu: leftUnchanged, ru: rightUnchanged),
+                /// <inheritdoc/>
+                protected override Entity InnerEval()
+                    => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (l: LeftClosed, r: RightClosed),
                         (a, b, lr) => (a, b, lr) switch
                         {
-                            // TODO: make it static
                             (var left, var right, _) when left == right => lr.l && lr.r ?
-                            new FiniteSet(Simplificator.PickSimplest(lr.lu, lr.ru)) :
+                            new FiniteSet(Simplificator.PickSimplest(a, b)) :
                             Empty,
                             _ => null
                         },
@@ -44,12 +44,17 @@ namespace AngouriMath
                         false);
 
                 /// <inheritdoc/>
-                protected override Entity InnerEval()
-                    => IfEqualEndsThenCollapse(Left.Evaled, Right.Evaled);
-
-                /// <inheritdoc/>
                 protected override Entity InnerSimplify()
-                    => IfEqualEndsThenCollapse(Left.InnerSimplified, Right.InnerSimplified);
+                    => ExpandOnTwoAndTArguments(Left.InnerSimplified, Right.InnerSimplified, (l: LeftClosed, r: RightClosed),
+                        (a, b, lr) => (a, b, lr) switch
+                        {
+                            (var left, var right, _) when left.Evaled == right.Evaled => lr.l && lr.r ?
+                            new FiniteSet(Simplificator.PickSimplest(left, right)) :
+                            Empty,
+                            _ => null
+                        },
+                        (a, b, lr) => new Interval(a, lr.l, b, lr.r),
+                        true);
             }
 
             partial record ConditionalSet

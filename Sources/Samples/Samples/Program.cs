@@ -73,6 +73,8 @@ using static System.Console;
 // Entity expr = "2x2 - 4x - 8 = A(x3 + 4x) + B(x2 + 4) + C(x3 - x2) + D(x2 - x)";
 // WriteLine(expr.Substitute("x", 2).Substitute("A", 0).Substitute("B", -2).Simplify().InnerSimplified);
 
-Entity eq = "piecewise(x2 provided b, (x + 1)2 provided d, (x + 2)2 provided g) = 4";
-var x = MathS.Var("x");
-WriteLine(eq.Solve(x));
+// Entity eq = "piecewise(x2 provided b, (x + 1)2 provided d, (x + 2)2 provided g) = 4";
+// var x = MathS.Var("x");
+// WriteLine(eq.Solve(x));
+
+WriteLine("[{sqrt(3), sqrt(5)}; sqrt(10)]".Simplify());
