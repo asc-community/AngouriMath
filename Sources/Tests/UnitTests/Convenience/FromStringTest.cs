@@ -4,6 +4,7 @@ using AngouriMath.Core.Exceptions;
 using System;
 using System.Linq;
 using Xunit;
+using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 using static AngouriMath.MathS;
@@ -178,6 +179,8 @@ namespace UnitTests.Convenience
         [Fact] public void TestPowerUnary1() => Assert.Equal(Pow(x, "-5"), FromString("x^-5"));
         [Fact] public void TestPowerUnary2() => Assert.Equal(Pow(x, -x), FromString("x^-x"));
         [Fact] public void TestPowerUnary3() => Assert.Equal(Pow(x, -Pow(x, x)), FromString("x^ -x^x"));
+        [Fact] public void TestPiecewise1() => Assert.Equal(Piecewise((x, y), (y, x), (x + 2, y + 2)), FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2)"));
+        [Fact] public void TestPiecewise2() => Assert.Equal(Piecewise(new[] { new Providedf(x, y), new Providedf(y, x), new Providedf(x + 2, y + 2) }, 3), FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2, 3)"));
 
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {

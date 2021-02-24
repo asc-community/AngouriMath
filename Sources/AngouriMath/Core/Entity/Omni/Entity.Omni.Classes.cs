@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using AngouriMath.Core;
+using AngouriMath.Core.HashCode;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sets;
 using AngouriMath.Functions;
@@ -161,8 +162,7 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override int GetHashCode()
-                    => IsSetEmpty ? 0 
-                    : Elements.Select(el => el.GetHashCode()).Aggregate((acc, next) => new XorHashBuilder().Combine(next).Combine(acc).GetHashCode());
+                    => Elements.Multielement(HashCodeFunctional.HashCodeShifts.FiniteSet);
 
                 /// <summary>
                 /// Checks that two FiniteSets are equal

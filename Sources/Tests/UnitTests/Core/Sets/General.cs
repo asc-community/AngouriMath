@@ -51,6 +51,9 @@ namespace UnitTests.Core.Sets
         [InlineData(@"{ x : x2 = 4 } /\ { 2 }", @"{ 2 }")]
         [InlineData(@"{ x : false }", @"{}")]
         [InlineData(@"{ x : 2 = 4 }", @"{}")]
+        [InlineData(@"[ { sqrt(3), sqrt(5) }; sqrt(10) ]", @"{ [ sqrt(3); sqrt(10) ], [ sqrt(5); sqrt(10) ] }")]
+        [InlineData(@"[ sqrt(3); { sqrt(5), sqrt(10) } ]", @"{ [ sqrt(3); sqrt(5) ], [ sqrt(3); sqrt(10) ] }")]
+        [InlineData(@"[ { sqrt(2), sqrt(3) }; { sqrt(5), sqrt(10) } ]", @"{ [ sqrt(2); sqrt(5) ], [ sqrt(3); sqrt(5) ], [ sqrt(2); sqrt(10) ], [ sqrt(3); sqrt(10) ] }")]
         public void TestSimplify(string unsimplified, string simplified)
         {
             var actual = unsimplified.ToEntity();

@@ -272,6 +272,49 @@ namespace AngouriMath
             => expression.Provided(condition);
 
         /// <summary>
+        /// This is a piecewisely defined function, which turns into a particular definition
+        /// once there exists a case number N such that case[N].Predicate is turned into true and
+        /// for all i less than N : case[i].Predicate is turned into false.
+        /// 
+        /// For example, Piecewise(new Providedf(a, b), new Providedf(d, false), new Providedf(f, true))
+        /// will remain unchanged, because the first case is uncertain.
+        /// 
+        /// Piecewise(new Providedf(a, false), new Providedf(d, false), new Providedf(f, true))
+        /// will turn into f
+        /// 
+        /// Piecewise(new Providedf(a, false), new Providedf(d, false), new Providedf(f, false))
+        /// will turn into NaN
+        /// </summary>
+        /// <param name="cases">
+        /// Cases, each of type Provided.
+        /// </param>
+        /// <param name="otherwise">
+        /// An otherwise case. Will be intepreted as otherwise.Provided(true). Optional.
+        /// </param>
+        public static Entity Piecewise(IEnumerable<Providedf> cases, Entity? otherwise = null)
+            => new Piecewise(otherwise is null ? cases : cases.Append(new Providedf(otherwise, true)));
+
+        /// <summary>
+        /// This is a piecewisely defined function, which turns into a particular definition
+        /// once there exists a case number N such that case[N].Predicate is turned into true and
+        /// for all i less than N : case[i].Predicate is turned into false.
+        /// 
+        /// For example, Piecewise((a, b), (d, false), (f, true))
+        /// will remain unchanged, because the first case is uncertain.
+        /// 
+        /// Piecewise((a, false), (d, false), (f, true))
+        /// will turn into f
+        /// 
+        /// Piecewise((a, false), (d, false), (f, false))
+        /// will turn into NaN
+        /// </summary>
+        /// <param name="cases">
+        /// Tuples of two expressions: an expression and a predicate
+        /// </param>
+        public static Entity Piecewise(params (Entity expression, Entity predicate)[] cases)
+            => new Piecewise(cases.Select(c => new Providedf(c.expression, c.predicate)));
+
+        /// <summary>
         /// Represents a few hyperbolic functions
         /// </summary>
         public static class TrigonometricHyperpolic

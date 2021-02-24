@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using AngouriMath;
 using AngouriMath.Core;
+using AngouriMath.Core.HashCode;
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity.Set;
 
@@ -50,7 +51,7 @@ namespace AngouriMath
         /// Piecewise(a provided false, b provided c, c provided false)
         /// Will remain as it is (although unreachable cases will be removed)
         /// </summary>
-        public sealed partial record Piecewise : Entity
+        public sealed partial record Piecewise : Entity, IEquatable<Piecewise>
         {
             public IEnumerable<Providedf> Cases => cases;
             private IEnumerable<Providedf> cases = Enumerable.Empty<Providedf>();
@@ -79,6 +80,26 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func)
                 => func(New(Cases.Select(c => c.New(func(c.Expression), func(c.Predicate)))));
+
+            /// <summary>
+            /// Checks that two Piecewise are equal
+            /// If one is not Piecewise, the method returns false
+            /// </summary>
+            public bool Equals(Piecewise other)
+            {
+                if (other is null)
+                    return false;
+                if (Cases.Count() != other.Cases.Count())
+                    return false;
+                foreach (var (l, r) in (Cases, other.Cases).Zip())
+                    if (l != r)
+                        return false;
+                return true;
+            }
+
+            /// <inheritdoc/>
+            public override int GetHashCode()
+                => Cases.Multielement(HashCodeFunctional.HashCodeShifts.Piecewise);
         }
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member

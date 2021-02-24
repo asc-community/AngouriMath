@@ -77,4 +77,8 @@ using static System.Console;
 // var x = MathS.Var("x");
 // WriteLine(eq.Solve(x));
 
-WriteLine("[{sqrt(3), sqrt(5)}; sqrt(10)]".Simplify());
+// WriteLine("[{sqrt(3), sqrt(2)}; {sqrt(5), sqrt(10)}]".Simplify());
+var (x, y) = (MathS.Var("x"), MathS.Var("y"));
+var a = MathS.Piecewise(new[] { new Providedf(x, y), new Providedf(y, x), new Providedf(x + 333, y + 2) }, 3); 
+var b = MathS.FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2, 3)");
+WriteLine(a == b);
