@@ -40,8 +40,8 @@ namespace AngouriMath
                             Empty,
                             _ => null
                         },
-                        (a, b, lr) => new Interval(lr.lu, lr.l, lr.ru, lr.r)
-                        );
+                        (a, b, lr) => new Interval(a, lr.l, b, lr.r),
+                        false);
 
                 /// <inheritdoc/>
                 protected override Entity InnerEval()
