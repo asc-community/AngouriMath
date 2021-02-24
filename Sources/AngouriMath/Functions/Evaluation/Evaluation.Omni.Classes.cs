@@ -9,6 +9,8 @@
  */
 using AngouriMath.Core.Sets;
 using AngouriMath.Functions;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace AngouriMath
 {
@@ -207,13 +209,35 @@ namespace AngouriMath
                 return MathS.NaN;
             }
 
+            private IEnumerable<Providedf> ProcessPiecewise(IEnumerable<Providedf> source)
+            {
+                var res = new List<Providedf>();
+                foreach (var (@case, srcCase) in (Cases, source).Zip())
+                    if (@case.Evaled == Boolean.True)
+                    {
+                        res.Add(srcCase);
+                        break;
+                    }
+                    else if (@case.Evaled != Boolean.False)
+                        res.Add(srcCase);
+                return res;
+            }
+
             /// <inheritdoc/>
             protected override Entity InnerEval()
-                => ComputePiecewiseResultIfPossible() is { } expr ? expr.Evaled : Apply(c => c.New(c.Expression.Evaled, c.Predicate.Evaled));
+                => ComputePiecewiseResultIfPossible() is { } expr
+                ?
+                expr.Evaled
+                :
+                New(ProcessPiecewise(Cases.Select(c => c.New(c.Expression.Evaled, c.Predicate.Evaled))));
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => ComputePiecewiseResultIfPossible() is { } expr ? expr.InnerSimplified : Apply(c => c.New(c.Expression.InnerSimplified, c.Predicate.InnerSimplified));
+                => ComputePiecewiseResultIfPossible() is { } expr 
+                ?
+                expr.InnerSimplified
+                :
+                New(ProcessPiecewise(Cases.Select(c => c.New(c.Expression.InnerSimplified, c.Predicate.InnerSimplified))));
         }
     }
 }
