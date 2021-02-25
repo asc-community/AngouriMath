@@ -90,4 +90,6 @@ using static System.Console;
 // var actual = initial.InnerSimplified;
 
 // WriteLine("piecewise(a provided b, c provided d, e)".Latexise());
-WriteLine(MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)).Latexise());
+// WriteLine(MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)).Latexise());
+WriteLine("(|x|) = a".Solve("x").InnerSimplified);
+// Entity e = "(b implies a) and (b or c)"

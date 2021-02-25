@@ -251,7 +251,11 @@ namespace AngouriMath
             // f(x) = value * e ^ (i * n)
             // x = f(x).InvertNode(value * e ^ (i * n), x)
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => Argument.Invert(value * MathS.e.Pow(MathS.i * Variable.CreateUnique(value + Argument, "r")), x);
+            {
+                var @var = Variable.CreateUnique(value + Argument, "r");
+                return Argument.Invert(value * MathS.e.Pow(MathS.i * @var), x)
+                    .Select(c => c.Provided(@var.In(MathS.Sets.R)));
+            }
         }
 
         partial record Boolean
@@ -271,58 +275,130 @@ namespace AngouriMath
 
         partial record Andf
         {
-            // f(x) & b = value
-            // f(x) = Piecewise...
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+            {
+                var (cont, notCont) = Left.ContainsNode(x) ? (Left, Right) : (Right, Left);
+
+                // x and true = true => x = true
+                var contInvTrue = cont.Invert(true, x);
+                var ifThoseTT = contInvTrue.Select(c => c.Provided(value & notCont));
+
+                // x and true = false => x = false
+                var contInvFalse = cont.Invert(false, x);
+                var ifThoseTF = contInvFalse.Select(c => c.Provided(notCont & !value));
+
+                // x and false = false => x is any
+                var ifThoseFF = contInvTrue.Concat(contInvFalse).Select(c => c.Provided(!notCont & !value));
+
+                return ifThoseTT.Concat(ifThoseTF).Concat(ifThoseFF);
+            }
         }
 
         partial record Orf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+            {
+                var (cont, notCont) = Left.ContainsNode(x) ? (Left, Right) : (Right, Left);
+
+                // x and false = true => x = true
+                var contInvTrue = cont.Invert(true, x);
+                var ifThoseFT = contInvTrue.Select(c => c.Provided(!notCont & value));
+
+                // x and false = false => x = false
+                var contInvFalse = cont.Invert(false, x);
+                var ifThoseFF = contInvFalse.Select(c => c.Provided(!notCont & !value));
+
+                // x and true = true => x is any
+                var ifThoseTT = contInvTrue.Concat(contInvFalse).Select(c => c.Provided(notCont & value));
+
+                return ifThoseTT.Concat(ifThoseFT).Concat(ifThoseFF);
+            }
         }
 
         partial record Xorf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+            {
+                var (cont, notCont) = Left.ContainsNode(x) ? (Left, Right) : (Right, Left);
+                var ifBFalse = cont.Invert(value, x).Select(c => c.Provided(!notCont));
+                var ifBTrue = cont.Invert(!value, x).Select(c => c.Provided(notCont));
+                return ifBFalse.Concat(ifBTrue);
+            }
         }
 
         partial record Impliesf
         {
+            
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+            {
+                // f(x) implies b = value
+                if (Assumption.ContainsNode(x))
+                {
+                    var rootsIfFXFalse = Assumption.Invert(false, x);
+                    var rootsIfFXTrue = Assumption.Invert(true, x);
+                    // thoseIf{A}{B} is A == b, B == value
+
+                    // b = true, value = true => f(x) can be any
+                    var thoseIfTT = rootsIfFXFalse.Concat(rootsIfFXTrue).Select(c => c.Provided(Conclusion & value));
+
+                    // b = false, value = true => f(x) is false
+                    var thoseIfFT = rootsIfFXFalse.Select(c => c.Provided(!Conclusion & value));
+
+                    // b = false, value = false => f(x) is true
+                    var thoseIfFF = rootsIfFXTrue.Select(c => c.Provided(!Conclusion & !value));
+
+                    return thoseIfTT.Concat(thoseIfFT).Concat(thoseIfFF);
+                }
+                // a implies f(x) = value
+                else
+                {
+                    var rootsIfFXFalse = Conclusion.Invert(false, x);
+                    var rootsIfFXTrue = Conclusion.Invert(true, x);
+                    // thoseIf{A}{B} is A == a, B == value
+
+                    // a = true, value = true
+                    var thoseIfTT = rootsIfFXTrue.Select(c => c.Provided(Assumption & value));
+
+                    // a = false, value = true
+                    var thoseIfFT = rootsIfFXFalse.Concat(rootsIfFXTrue).Select(c => c.Provided(!Conclusion & value));
+
+                    // a = true, value = false
+                    var thoseIfTF = rootsIfFXFalse.Select(c => c.Provided(Conclusion & !value));
+
+                    return thoseIfTT.Concat(thoseIfFT).Concat(thoseIfTF);
+                }
+            }
+
         }
 
         partial record Equalsf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+                => throw FutureReleaseException.Raised("We should be able to return sets from invertnode", "1.2");
         }
 
         partial record Greaterf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+                => throw FutureReleaseException.Raised("We should be able to return sets from invertnode", "1.2");
         }
 
         partial record GreaterOrEqualf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+                => throw FutureReleaseException.Raised("We should be able to return sets from invertnode", "1.2");
         }
 
         partial record Lessf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+                => throw FutureReleaseException.Raised("We should be able to return sets from invertnode", "1.2");
         }
 
         partial record LessOrEqualf
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                => throw FutureReleaseException.Raised("Requires Intervals to be Entities", "1.2");
+                => throw FutureReleaseException.Raised("We should be able to return sets from invertnode", "1.2");
         }
 
         partial record Set
@@ -336,12 +412,17 @@ namespace AngouriMath
 
             partial record Interval
             {
+                // [f(x), b] = value
+                // [a, f(x)] = value
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
                 {
                     if (this == x)
                         return new[] { value };
-                    if (x is FiniteSet fs && fs.Count == 1)
-                        throw FutureReleaseException.Raised("Piecewise required", "1.2");
+                    if (x is FiniteSet fs && fs.Count == 1 && LeftClosed && RightClosed)
+                        if (Left.ContainsNode(x))
+                            return Left.Invert(Right, x).Select(c => c.Provided(MathS.Equality(Right, value)));
+                        else
+                            return Right.Invert(Left, x).Select(c => c.Provided(MathS.Equality(Left, value)));
                     return Enumerable.Empty<Entity>();
                 }
             }
@@ -389,14 +470,14 @@ namespace AngouriMath
             {
                 // f(x) /\ A = value
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                    => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.2");
+                    => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.3");
             }
 
             partial record SetMinusf
             {
                 // f(x) \ A = value
                 private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
-                    => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.2");
+                    => throw FutureReleaseException.Raised("Piecewise to check whether value is subset of A", "1.3");
             }
 
             partial record Inf
