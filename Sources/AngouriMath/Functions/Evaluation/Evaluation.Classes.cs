@@ -7,6 +7,7 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+using AngouriMath.Extensions;
 using AngouriMath.Functions;
 using System;
 using System.Collections.Generic;
@@ -76,10 +77,22 @@ namespace AngouriMath
                 (Providedf a, Providedf b) => ops(a.Expression, b.Expression).Provided(a.Predicate & b.Predicate),
                 (Providedf a, var b) => ExpandOnTwoArguments(a.Expression, b, operation, defaultCtor, checkIfExactEvaled).Provided(a.Predicate),
                 (var a, Providedf b) => ExpandOnTwoArguments(a, b.Expression, operation, defaultCtor, checkIfExactEvaled).Provided(b.Predicate),
+                (Piecewise a, Piecewise b) => 
+                    MathS.Piecewise(
+
+                        (a.Cases, b.Cases).EachForEach((c1, c2) => 
+                        (
+                        ExpandOnTwoArguments(c1.Expression, c2.Expression, operation, defaultCtor, checkIfExactEvaled)
+                        , c1.Predicate & c2.Predicate).ToProvided()
+                        )
+
+                        ),
+                (Piecewise a, var b) => a.ApplyToValues(a => ops(a, b)),
+                (var a, Piecewise b) => b.ApplyToValues(b => ops(a, b)),
                 (Tensor a, Tensor b) => a.Elementwise(b, ops),
                 (Tensor a, var b) => a.Elementwise(a => ops(a, b)),
                 (var a, Tensor b) => b.Elementwise(b => ops(a, b)),
-                (FiniteSet a, FiniteSet b) => TreeAnalyzer.ApplyX2(a, b, ops),
+                (FiniteSet a, FiniteSet b) => new FiniteSet((a, b).EachForEach().Select(s => ops(s.Item1, s.Item2))),
                 (FiniteSet a, var b) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b) => b.Apply(b => ops(a, b)),
                 _ => defaultCtor(this, left, right)
@@ -106,6 +119,7 @@ namespace AngouriMath
             return expr switch
             {
                 Providedf p => ExpandOnOneArgument(p.Expression, operation, defaultCtor, checkIfExactEvaled).Provided(p.Predicate),
+                Piecewise p => p.ApplyToValues(ops),
                 Tensor t => t.Elementwise(ops),
                 FiniteSet s => s.Apply(ops),
                 _ => defaultCtor(this, expr)
@@ -134,10 +148,22 @@ namespace AngouriMath
                 (Providedf a, Providedf b, _) => ops(a.Expression, b.Expression).Provided(a.Predicate & b.Predicate),
                 (Providedf a, var b, _) => ExpandOnTwoAndTArguments(a.Expression, b, third, operation, defaultCtor, checkIfExactEvaled).Provided(a.Predicate),
                 (var a, Providedf b, _) => ExpandOnTwoAndTArguments(a, b.Expression, third, operation, defaultCtor, checkIfExactEvaled).Provided(b.Predicate),
+                (Piecewise a, Piecewise b, _) =>
+                    MathS.Piecewise(
+
+                        (a.Cases, b.Cases).EachForEach((c1, c2) =>
+                        (
+                        ExpandOnTwoAndTArguments(c1.Expression, c2.Expression, third, operation, defaultCtor, checkIfExactEvaled)
+                        , c1.Predicate & c2.Predicate).ToProvided()
+                        )
+
+                        ),
+                (Piecewise a, var b, _) => a.ApplyToValues(a => ops(a, b)),
+                (var a, Piecewise b, _) => b.ApplyToValues(b => ops(a, b)),
                 (Tensor a, Tensor b, _) => a.Elementwise(b, ops),
                 (Tensor a, var b, _) => a.Elementwise(a => ops(a, b)),
                 (var a, Tensor b, _) => b.Elementwise(b => ops(a, b)),
-                (FiniteSet a, FiniteSet b, _) => TreeAnalyzer.ApplyX2(a, b, ops),
+                (FiniteSet a, FiniteSet b, _) => new FiniteSet((a, b).EachForEach().Select(s => ops(s.Item1, s.Item2))),
                 (FiniteSet a, var b, _) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b, _) => b.Apply(b => ops(a, b)),
                 _ => defaultCtor(this, left, right, third)

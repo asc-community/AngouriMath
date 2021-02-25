@@ -35,6 +35,14 @@ namespace AngouriMath.Extensions
             => new Piecewise(cases);
 
         /// <summary>
+        /// Converts a tuple of an expression and its predicate to a 
+        /// Provided node
+        /// </summary>
+        /// <returns>Providedf node</returns>
+        public static Providedf ToProvided(this (Entity expr, Entity pred) @this)
+            => new Providedf(@this.expr, @this.pred);
+
+        /// <summary>
         /// Converts your <see cref="IEnumerable"/> into a set of unique values.
         /// </summary>
         /// <returns>A Set</returns>

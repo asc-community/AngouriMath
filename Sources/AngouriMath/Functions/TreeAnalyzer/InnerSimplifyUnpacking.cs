@@ -9,14 +9,14 @@ namespace AngouriMath.Functions
     using static Entity;
     partial class TreeAnalyzer
     {
-        internal static Entity ApplyX2(FiniteSet oneSet, FiniteSet secondSet, Func<Entity, Entity, Entity> op)
+        internal static IEnumerable<Entity> ApplyX2(FiniteSet oneSet, FiniteSet secondSet, Func<Entity, Entity, Entity> op)
         {
             var els = new List<Entity>();
             var secondSetEls = secondSet.Elements.ToArray(); // we do it to avoid reallocation every iteration
             foreach (var elA in oneSet)
                 foreach (var elB in secondSetEls)
                     els.Add(op(elA, elB));
-            return new FiniteSet((IEnumerable<Entity>)els);
+            return els;
         }
 
         /*

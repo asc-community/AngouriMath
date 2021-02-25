@@ -63,6 +63,20 @@ namespace AngouriMath
                 throw new AngouriBugException("Collections should have the same size");
         }
 
+        public static IEnumerable<(T1 left, T2 right)> EachForEach<T1, T2>(this (IEnumerable<T1>, IEnumerable<T2>) seqs)
+        {
+            foreach (var a in seqs.Item1)
+                foreach (var b in seqs.Item2)
+                    yield return (a, b);
+        }
+
+        public static IEnumerable<TResult> EachForEach<T1, T2, TResult>(this (IEnumerable<T1>, IEnumerable<T2>) seqs, Func<T1, T2, TResult> op)
+        {
+            foreach (var a in seqs.Item1)
+                foreach (var b in seqs.Item2)
+                    yield return op(a, b);
+        }
+
         public static System.Numerics.Complex Signum(this System.Numerics.Complex z)
             => z == 0 ? 0 : z / z.Magnitude;
 

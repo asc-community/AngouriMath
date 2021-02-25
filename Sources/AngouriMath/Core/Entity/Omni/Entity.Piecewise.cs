@@ -15,6 +15,7 @@ using AngouriMath.Core;
 using AngouriMath.Core.HashCode;
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity.Set;
+using AngouriMath.Extensions;
 
 namespace AngouriMath
 {
@@ -100,6 +101,13 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override int GetHashCode()
                 => Cases.HashCodeOfSequence(HashCodeFunctional.HashCodeShifts.Piecewise);
+
+            /// <summary>
+            /// Applies the given transformation to every expression of each case
+            /// Predicates, however, remain unchanged
+            /// </summary>
+            public Piecewise ApplyToValues(Func<Entity, Entity> transformation)
+                => Cases.Select(c => c.New(transformation(c.Expression), c.Predicate)).ToPiecewise();
         }
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
