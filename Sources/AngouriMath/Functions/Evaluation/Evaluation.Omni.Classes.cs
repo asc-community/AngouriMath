@@ -42,7 +42,7 @@ namespace AngouriMath
                             Empty,
                             _ => null
                         },
-                        (a, b, lr) => new Interval(a, lr.l, b, lr.r),
+                        (@this, a, b, lr) => ((Interval)@this).New(a, lr.l, b, lr.r),
                         false);
 
                 /// <inheritdoc/>
@@ -55,7 +55,7 @@ namespace AngouriMath
                             Empty,
                             _ => null
                         },
-                        (a, b, lr) => new Interval(a, lr.l, b, lr.r),
+                        (@this, a, b, lr) => ((Interval)@this).New(a, lr.l, b, lr.r),
                         true);
             }
 
@@ -66,7 +66,7 @@ namespace AngouriMath
                     => ExpandOnTwoAndTArguments(Var, Predicate.Evaled, this,
                         (@var, pred, @this) => 
                     Simplificator.PickSimplest(@this.New(@var, pred), @this),
-                        (@var, pred, _) => new ConditionalSet(@var, pred)
+                        (@this, @var, pred, _) => ((ConditionalSet)@this).New(@var, pred)
                         );
 
                 /// <inheritdoc/>
@@ -78,7 +78,7 @@ namespace AngouriMath
                             (var v, var pred, var codom) when pred.EvaluableBoolean && !(bool)pred.EvalBoolean() => Empty,
                             _ => null
                         },
-                        (a, b, cod) => new ConditionalSet(a, b)
+                        (@this, @var, pred, _) => ((ConditionalSet)@this).New(@var, pred)
                         );
             }
 
@@ -110,7 +110,7 @@ namespace AngouriMath
                             (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.UniteCSetAndCSet(csetLeft, csetRight),
                             _ => null
                         },
-                        (a, b) => a.Unite(b)
+                        (@this, a, b) => ((Unionf)@this).New(a, b)
                         );
             }
 
@@ -131,7 +131,7 @@ namespace AngouriMath
                             (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.IntersectCSetAndCSet(csetLeft, csetRight),
                             _ => null
                         },
-                        (a, b) => a.Unite(b)
+                        (@this, a, b) => ((Intersectionf)@this).New(a, b)
                         );
             }
 
@@ -151,7 +151,7 @@ namespace AngouriMath
                             (ConditionalSet csetLeft, ConditionalSet csetRight) => SetOperators.SetSubtractCSetAndCSet(csetLeft, csetRight),
                             _ => null
                         },
-                        (a, b) => a.SetSubtract(b)
+                        (@this, a, b) => ((SetMinusf)@this).New(a, b)
                         );
             }
         }

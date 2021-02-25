@@ -35,7 +35,7 @@ namespace AngouriMath
                         Boolean b => !(bool)b,
                         _ => null
                     },
-                    a => MathS.Negation(a)
+                    (@this, a) => ((Notf)@this).New(a)
                     );
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
@@ -71,18 +71,18 @@ namespace AngouriMath
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.Conjunction(a, b)
+                    (@this, a, b) => ((Andf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (Left.InnerSimplified, Right.InnerSimplified),
-                    (a, b, _) => (a, b) switch
+                => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                    (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        (var left, var right) when GoodResult(left.Evaled, right.Evaled, out var res) => res,
                         _ => null
                     },
-                    (_, _, cr) => MathS.Conjunction(cr.Item1, cr.Item2)
+                    (@this, a, b) => ((Andf)@this).New(a, b)
                     );
         }
 
@@ -115,18 +115,18 @@ namespace AngouriMath
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.Disjunction(a, b)
+                    (@this, a, b) => ((Orf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (Left.InnerSimplified, Right.InnerSimplified),
-                    (a, b, _) => (a, b) switch
+                => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                    (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        (var left, var right) when GoodResult(left.Evaled, right.Evaled, out var res) => res,
                         _ => null
                     },
-                    (_, _, cr) => MathS.Disjunction(cr.Item1, cr.Item2)
+                    (@this, a, b) => ((Orf)@this).New(a, b)
                     );
         }
 
@@ -154,18 +154,18 @@ namespace AngouriMath
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.ExclusiveDisjunction(a, b)
+                    (@this, a, b) => ((Xorf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => ExpandOnTwoAndTArguments(Left.Evaled, Right.Evaled, (Left.InnerSimplified, Right.InnerSimplified),
-                    (a, b, _) => (a, b) switch
+                => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
+                    (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        (var left, var right) when GoodResult(left.Evaled, right.Evaled, out var res) => res,
                         _ => null
                     },
-                    (_, _, cr) => MathS.ExclusiveDisjunction(cr.Item1, cr.Item2)
+                    (@this, a, b) => ((Xorf)@this).New(a, b)
                     );
         }
 
@@ -198,18 +198,18 @@ namespace AngouriMath
                         (var left, var right) when GoodResult(left, right, out var res) => res,
                         _ => null
                     },
-                    (a, b) => MathS.Implication(a, b)
+                    (@this, a, b) => ((Impliesf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => ExpandOnTwoAndTArguments(Assumption.Evaled, Conclusion.Evaled, (Assumption.InnerSimplified, Conclusion.InnerSimplified),
-                    (a, b, _) => (a, b) switch
+                => ExpandOnTwoArguments(Assumption.InnerSimplified, Conclusion.InnerSimplified,
+                    (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        (var left, var right) when GoodResult(left.Evaled, right.Evaled, out var res) => res,
                         _ => null
                     },
-                    (_, _, cr) => MathS.Implication(cr.Item1, cr.Item2)
+                    (@this, a, b) => ((Impliesf)@this).New(a, b)
                     );
         }
 
@@ -240,7 +240,7 @@ namespace AngouriMath
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
-                    (a, b) => MathS.GreaterThan(a, b)
+                    (@this, a, b) => ((Greaterf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
@@ -251,7 +251,7 @@ namespace AngouriMath
                     {
                         _ => null
                     },
-                    (a, b) => MathS.GreaterThan(a, b)
+                    (@this, a, b) => ((Greaterf)@this).New(a, b)
                     );
         }
 
@@ -266,7 +266,7 @@ namespace AngouriMath
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
-                    (a, b) => MathS.GreaterThan(a, b)
+                    (@this, a, b) => ((GreaterOrEqualf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
@@ -277,7 +277,7 @@ namespace AngouriMath
                     {
                         _ => null
                     },
-                    (a, b) => MathS.GreaterOrEqualThan(a, b)
+                    (@this, a, b) => ((GreaterOrEqualf)@this).New(a, b)
                     );
         }
 
@@ -292,7 +292,7 @@ namespace AngouriMath
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
-                    (a, b) => MathS.GreaterThan(a, b)
+                    (@this, a, b) => ((Lessf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
@@ -303,7 +303,7 @@ namespace AngouriMath
                     {
                         _ => null
                     },
-                    (a, b) => MathS.LessThan(a, b)
+                    (@this, a, b) => ((Lessf)@this).New(a, b)
                     );
         }
 
@@ -318,7 +318,7 @@ namespace AngouriMath
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
                     },
-                    (a, b) => MathS.GreaterThan(a, b)
+                    (@this, a, b) => ((LessOrEqualf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
@@ -329,7 +329,7 @@ namespace AngouriMath
                     {
                         _ => null
                     },
-                    (a, b) => MathS.LessOrEqualThan(a, b)
+                    (@this, a, b) => ((LessOrEqualf)@this).New(a, b)
                     );
         }
 
@@ -345,7 +345,7 @@ namespace AngouriMath
                             (var el, Set set) when set.TryContains(el, out var contains) => contains,
                             _ => null
                         },
-                        (a, b) => a.In(b)
+                        (@this, a, b) => ((Inf)@this).New(a, b)
                         );
 
                 /// <inheritdoc/>
@@ -356,7 +356,7 @@ namespace AngouriMath
                             (var el, Set set) when set.TryContains(el, out var contains) => contains,
                             _ => null
                         },
-                        (a, b) => a.In(b)
+                        (@this, a, b) => ((Inf)@this).New(a, b)
                         );
             }
         }
@@ -371,7 +371,7 @@ namespace AngouriMath
                         Integer integer => integer.Phi(),
                         _ => null
                     },
-                    a => new Phif(a)
+                    (@this, a) => ((Phif)@this).New(a)
                     );
 
             /// <inheritdoc/>
@@ -382,7 +382,7 @@ namespace AngouriMath
                         Integer integer => integer.Phi(),
                         _ => null
                     },
-                    a => new Phif(a)
+                    (@this, a) => ((Phif)@this).New(a)
                     );
         }
     }
