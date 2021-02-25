@@ -77,8 +77,9 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
                 => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
-                    (a, b) => (a, b) switch
+                    (a, b) => (a.Evaled, b.Evaled) switch
                     {
+                        // (True, True) => true,
                         (var left, var right) when GoodResult(left.Evaled, right.Evaled, out var res) => res,
                         _ => null
                     },

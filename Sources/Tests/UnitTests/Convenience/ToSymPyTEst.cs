@@ -70,6 +70,7 @@ namespace UnitTests.Convenience
         [InlineData("2i", "2 * sympy.I")]
         [InlineData("3 + 2i", "3 + 2 * sympy.I")]
         [InlineData("3 + i", "3 + 1 * sympy.I")]
+        [InlineData("piecewise(a provided b, c provided d)", @"Piecewise((a, b), (c, d))")]
         public void TestSymPy(string expression, string expectedToBeIn, bool contains = true)
         {
             var ent = MathS.FromString(expression);

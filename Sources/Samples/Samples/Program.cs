@@ -89,5 +89,5 @@ using static System.Console;
 // Entity expected = @$"piecewise(({func}(a) provided b), ({func}(c) provided d), ({func}(e) provided f))";
 // var actual = initial.InnerSimplified;
 
-Entity s = "{ -2, 2, 2 }";
-WriteLine(s.InnerSimplified);
+// WriteLine("piecewise(a provided b, c provided d, e)".Latexise());
+WriteLine(MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)).Latexise());

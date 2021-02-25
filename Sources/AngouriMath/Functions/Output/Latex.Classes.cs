@@ -551,10 +551,17 @@ namespace AngouriMath
         partial record Piecewise
         {
             /// <inheritdoc/>
-            public override string Latexise() => $@"\begin{{cases}} {string.Join(@"\\", 
-                Cases.Select(c => $@"{c.Expression} \mbox{{if}} {c.Predicate}")
-                )}
-                \end{{cases}}";
+            public override string Latexise() => $@"\begin{{cases}}" +
+                string.Join(@"\\", 
+                Cases.Select(c =>
+                {
+                    if (c.Predicate == Boolean.True)
+                        return $@"{c.Expression.Latexise()} \: \text{{otherwise}}";
+                    return $@"{c.Expression.Latexise()} \: \text{{for}} \: {c.Predicate.Latexise()}";
+                }
+                ))
+                +
+                @"\end{cases}";
         }
     }
 }
