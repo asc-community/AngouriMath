@@ -83,8 +83,11 @@ using static System.Console;
 // var b = MathS.FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2, 3)");
 // WriteLine(a == b);
 
-var func = "arccos";
+// var func = "arccos";
+// 
+// Entity initial = @$"{func}(piecewise(a provided b, c provided d, e provided f))";
+// Entity expected = @$"piecewise(({func}(a) provided b), ({func}(c) provided d), ({func}(e) provided f))";
+// var actual = initial.InnerSimplified;
 
-Entity initial = @$"{func}(piecewise(a provided b, c provided d, e provided f))";
-Entity expected = @$"piecewise(({func}(a) provided b), ({func}(c) provided d), ({func}(e) provided f))";
-var actual = initial.InnerSimplified;
+Entity s = "{ -2, 2, 2 }";
+WriteLine(s.InnerSimplified);

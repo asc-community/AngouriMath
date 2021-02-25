@@ -16,6 +16,7 @@ using System.Numerics;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
+using System.Linq;
 //[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests")]
 
 namespace AngouriMath
@@ -45,6 +46,8 @@ namespace AngouriMath
         {
             if (ReferenceEquals(seqs.Item1, seqs.Item2))
                 return true;
+            if (seqs.Item1.Count() != seqs.Item2.Count())
+                return false;
             foreach (var (left, right) in seqs.Zip())
                 if (!ReferenceEquals(left, right))
                     return false;

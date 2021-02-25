@@ -83,7 +83,7 @@ namespace AngouriMath
                         (a.Cases, b.Cases).EachForEach((c1, c2) => 
                         (
                         ExpandOnTwoArguments(c1.Expression, c2.Expression, operation, defaultCtor, checkIfExactEvaled)
-                        , c1.Predicate & c2.Predicate).ToProvided()
+                        , (c1.Predicate & c2.Predicate).InnerSimplified).ToProvided()
                         )
 
                         ),
@@ -154,7 +154,7 @@ namespace AngouriMath
                         (a.Cases, b.Cases).EachForEach((c1, c2) =>
                         (
                         ExpandOnTwoAndTArguments(c1.Expression, c2.Expression, third, operation, defaultCtor, checkIfExactEvaled)
-                        , c1.Predicate & c2.Predicate).ToProvided()
+                        , (c1.Predicate & c2.Predicate).InnerSimplified).ToProvided()
                         )
 
                         ),

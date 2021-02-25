@@ -40,7 +40,8 @@ namespace UnitTests.Common
         public void ShouldChangeTo(string from, string to)
         {
             var expected = to.ToEntity().Replace(c => c == "NaN" ? MathS.NaN : c);
-            var actualInnerSimplified = from.ToEntity().InnerSimplified;
+            var fromEntity = from.ToEntity();
+            var actualInnerSimplified = fromEntity.InnerSimplified;
             var actualInnerEvaled = from.ToEntity().Evaled;
             Assert.Equal(expected, actualInnerSimplified);
             Assert.Equal(expected, actualInnerEvaled);

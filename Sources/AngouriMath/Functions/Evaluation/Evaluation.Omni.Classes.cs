@@ -213,12 +213,12 @@ namespace AngouriMath
             {
                 var res = new List<Providedf>();
                 foreach (var (@case, srcCase) in (Cases, source).Zip())
-                    if (@case.Evaled == Boolean.True)
+                    if (@case.Predicate.Evaled == Boolean.True)
                     {
                         res.Add(srcCase);
                         break;
                     }
-                    else if (@case.Evaled != Boolean.False)
+                    else if (@case.Predicate.Evaled != Boolean.False)
                         res.Add(srcCase);
                 return res;
             }
