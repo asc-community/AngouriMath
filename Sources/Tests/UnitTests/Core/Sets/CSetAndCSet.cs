@@ -24,12 +24,12 @@ namespace UnitTests.Core.Sets
         }
 
         [Fact] public void VarDoesntMatter1() => Test(A, new("y", "y > 0")); // { x | f(x) } == { y | f(y) }
-        [Fact] public void VarDoesntMatter2() => Test(B, new("y", "y xor true"));
+        [Fact] public void VarDoesntMatter2() => Test(B, new("y", "not y"));
 
         [Fact] public void Union1() => Test(A.Unite(A1), new("x", "x > 0"));
         [Fact] public void Union2() => Test(A1.Unite(A), new("x", "x > 0"));
-        [Fact] public void Union3() => Test(A.Unite(B), new("x", "x > 0 or x xor true"));
-        [Fact] public void Union4() => Test(B.Unite(A), new("x", "x xor true or x > 0"));
+        [Fact] public void Union3() => Test(A.Unite(B), new("x", "x implies x > 0"));
+        [Fact] public void Union4() => Test(B.Unite(A), new("x", "x implies x > 0"));
 
         [Fact] public void Intersection1() => Test(A1.Intersect(A), new("x", "x > 0"));
         [Fact] public void Intersection2() => Test(A.Intersect(A1), new("x", "x > 0"));
