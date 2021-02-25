@@ -401,7 +401,8 @@ namespace AngouriMath
 
             //known values
             if (x.IsZero) return x;
-            if (x.Equals(EDecimal.One)) return consts.HalfPi;
+            if ((x - EDecimal.One).Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
+                return consts.HalfPi;
             //asin function is odd function
             if (x.IsNegative) return -Arcsin(-x, context);
 

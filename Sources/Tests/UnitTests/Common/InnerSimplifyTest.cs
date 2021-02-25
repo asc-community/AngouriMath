@@ -48,7 +48,7 @@ namespace UnitTests.Common
 
         [Theory, CombinatorialData]
         public void PiecewiseInnerSimplifyOneArgumentFunction(
-            [CombinatorialValues("sin", "cos", "arcsin", "arccos", 
+            [CombinatorialValues("arcsin", "arccos", "sin", "cos", 
             "tan", "cotan", "arctan", "arccotan", "sec", "cosec",
             "arcsec", "arccosec")]
             string func)
