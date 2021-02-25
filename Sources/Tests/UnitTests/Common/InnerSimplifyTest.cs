@@ -37,6 +37,26 @@ namespace UnitTests.Common
         [InlineData(@"piecewise((a provided false), (c provided f),     (g provided false), d)",         "piecewise((c provided f), d)")]
         [InlineData(@"piecewise((a provided false), (c provided true),  (g provided k),     d)", "c")]
         [InlineData(@"piecewise((a provided h),     (c provided true),  (g provided k),     d)", "piecewise((a provided h), c)")]
+
+        [InlineData("a and true", "a")]
+        [InlineData("a and false", "false")]
+        [InlineData("true and a", "a")]
+        [InlineData("false and a", "false")]
+
+        [InlineData("a or true", "true")]
+        [InlineData("a or false", "a")]
+        [InlineData("true or a", "true")]
+        [InlineData("false or a", "a")]
+
+        [InlineData("a xor true", "not a")]
+        [InlineData("a xor false", "a")]
+        [InlineData("true xor a", "not a")]
+        [InlineData("false xor a", "a")]
+
+        [InlineData("a implies true", "true")]
+        [InlineData("a implies false", "not a")]
+        [InlineData("true implies a", "a")]
+        [InlineData("false implies a", "true")]
         public void ShouldChangeTo(string from, string to)
         {
             var expected = to.ToEntity().Replace(c => c == "NaN" ? MathS.NaN : c);

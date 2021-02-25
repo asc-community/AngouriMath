@@ -8,7 +8,9 @@ namespace UnitTests.Algebra
     {
         [Theory]
         [InlineData("piecewise((x + 2)2 provided y > 0, (x + 1)2 provided y = 0, x2 provided y < 0) = 9",
-            "1 provided y > 0", "-5 provided y > 0", "2 provided y = 0", "-4 provided y = 0", "3 provided y < 0", "-3 provided y < 0")]
+            "1 provided y > 0", "-5 provided y > 0", 
+            "2 provided y = 0 and not y > 0", "-4 provided y = 0 and not y > 0",
+            "3 provided y < 0 and (not y > 0 and not y = 0)", "-3 provided y < 0 and (not y > 0 and not y = 0)")]
         public void CheckIfRootWasObtained(string eq,
             string? r1 = null, string? r2 = null,
             string? r3 = null, string? r4 = null,

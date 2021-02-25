@@ -44,16 +44,26 @@ namespace AngouriMath
 
         partial record Andf
         {
-            private static bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
             {
-                if (left is Boolean leftBool && right is Boolean rightBool)
+                if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
                 {
                     res = (bool)leftBool && (bool)rightBool; // there's no cost in casting
                     return true;
                 }
-                else if (left == False || right == False)
+                else if (leftEvaled == False || rightEvaled == False)
                 {
                     res = False;
+                    return true;
+                }
+                else if (leftEvaled == True)
+                {
+                    res = right;
+                    return true;
+                }
+                else if (rightEvaled == True)
+                {
+                    res = left;
                     return true;
                 }
                 else
@@ -68,7 +78,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
                     (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        (var left, var right) when GoodResult(left, right, left, right, out var res) => res,
                         _ => null
                     },
                     (@this, a, b) => ((Andf)@this).New(a, b)
@@ -77,10 +87,9 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
                 => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
-                    (a, b) => (a.Evaled, b.Evaled) switch
+                    (a, b) => (a, b) switch
                     {
-                        // (True, True) => true,
-                        (var left, var right) when GoodResult(left.Evaled, right.Evaled, out var res) => res,
+                        (var left, var right) when GoodResult(left, right, left.Evaled, right.Evaled, out var res) => res,
                         _ => null
                     },
                     (@this, a, b) => ((Andf)@this).New(a, b)
@@ -89,16 +98,26 @@ namespace AngouriMath
 
         partial record Orf
         {
-            private static bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
             {
-                if (left is Boolean leftBool && right is Boolean rightBool)
+                if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
                 {
                     res = (bool)leftBool || (bool)rightBool; // there's no cost in casting
                     return true;
                 }
-                else if (left == True || right == True)
+                else if (leftEvaled == True || rightEvaled == True)
                 {
                     res = True;
+                    return true;
+                }
+                else if (leftEvaled == False)
+                {
+                    res = right;
+                    return true;
+                }
+                else if (rightEvaled == False)
+                {
+                    res = left;
                     return true;
                 }
                 else
@@ -113,7 +132,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
                     (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        (var left, var right) when GoodResult(left, right, left, right, out var res) => res,
                         _ => null
                     },
                     (@this, a, b) => ((Orf)@this).New(a, b)
@@ -124,7 +143,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
                     (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left.Evaled, right.Evaled, out var res) => res,
+                        (var left, var right) when GoodResult(left, right, left.Evaled, right.Evaled, out var res) => res,
                         _ => null
                     },
                     (@this, a, b) => ((Orf)@this).New(a, b)
@@ -133,11 +152,21 @@ namespace AngouriMath
 
         partial record Xorf
         {
-            private static bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
             {
-                if (left is Boolean leftBool && right is Boolean rightBool)
+                if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
                 {
                     res = (bool)leftBool ^ (bool)rightBool; // there's no cost in casting
+                    return true;
+                }
+                else if (leftEvaled is Boolean leftBoolOnly)
+                {
+                    res = leftBoolOnly ? !right : right;
+                    return true;
+                }
+                else if (rightEvaled is Boolean rightBoolOnly)
+                {
+                    res = rightBoolOnly ? !left : left;
                     return true;
                 }
                 else
@@ -152,7 +181,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
                     (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        (var left, var right) when GoodResult(left, right, left, right, out var res) => res,
                         _ => null
                     },
                     (@this, a, b) => ((Xorf)@this).New(a, b)
@@ -163,7 +192,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left.InnerSimplified, Right.InnerSimplified,
                     (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left.Evaled, right.Evaled, out var res) => res,
+                        (var left, var right) when GoodResult(left, right, left.Evaled, right.Evaled, out var res) => res,
                         _ => null
                     },
                     (@this, a, b) => ((Xorf)@this).New(a, b)
@@ -172,16 +201,26 @@ namespace AngouriMath
 
         partial record Impliesf
         {
-            private static bool GoodResult(Entity left, Entity right, out Entity res)
+            private static bool GoodResult(Entity left, Entity right, Entity leftEvaled, Entity rightEvaled, out Entity res)
             {
-                if (left is Boolean leftBool && right is Boolean rightBool)
+                if (leftEvaled is Boolean leftBool && rightEvaled is Boolean rightBool)
                 {
                     res = !(bool)leftBool || (bool)rightBool; // there's no cost in casting
                     return true;
                 }
-                else if (left == False || right == True)
+                else if (leftEvaled == False || rightEvaled == True)
                 {
                     res = True;
+                    return true;
+                }
+                else if (leftEvaled == True)
+                {
+                    res = right;
+                    return true;
+                }
+                else if (rightEvaled == False)
+                {
+                    res = !left;
                     return true;
                 }
                 else
@@ -196,7 +235,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Assumption.Evaled, Conclusion.Evaled,
                     (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left, right, out var res) => res,
+                        (var left, var right) when GoodResult(left, right, left, right, out var res) => res,
                         _ => null
                     },
                     (@this, a, b) => ((Impliesf)@this).New(a, b)
@@ -207,7 +246,7 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Assumption.InnerSimplified, Conclusion.InnerSimplified,
                     (a, b) => (a, b) switch
                     {
-                        (var left, var right) when GoodResult(left.Evaled, right.Evaled, out var res) => res,
+                        (var left, var right) when GoodResult(left, right, left.Evaled, right.Evaled, out var res) => res,
                         _ => null
                     },
                     (@this, a, b) => ((Impliesf)@this).New(a, b)
