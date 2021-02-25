@@ -50,11 +50,11 @@ namespace UnitTests.Common
         public void PiecewiseInnerSimplifyOneArgumentFunction(
             [CombinatorialValues("sin", "cos", "arcsin", "arccos", 
             "tan", "cotan", "arctan", "arccotan", "sec", "cosec",
-            "arcsec, arccosec")]
+            "arcsec", "arccosec")]
             string func)
         {
-            Entity initial = @$"{func}(piecewise((a, b), (c, d), (e, f)))";
-            Entity expected = @$"piecewise(({func}(a), b), ({func}(c), d), ({func}(e), f))";
+            Entity initial = @$"{func}(piecewise(a provided b, c provided d, e provided f))";
+            Entity expected = @$"piecewise(({func}(a) provided b), ({func}(c) provided d), ({func}(e) provided f))";
             var actual = initial.InnerSimplified;
             Assert.Equal(expected, actual);
         }
@@ -70,11 +70,29 @@ namespace UnitTests.Common
         [InlineData("log(4, ", ")")]
         public void PiecewiseInnerSimplifyTwoArgumentFunction(string before, string after)
         {
-            Entity initial = @$"{before}piecewise((a, b), (c, d), (e, f)){after}";
-            Entity expected = @$"piecewise(({before}a{after}, b), ({before}c{after}, d), ({before}e{after}, f))";
+            Entity initial = @$"{before}piecewise((a provided b), (c provided d), (e provided f)){after}";
+            Entity expected = @$"piecewise(({before}a{after} provided b), ({before}c{after} provided d), ({before}e{after} provided f))";
+            var actual = initial.InnerSimplified;
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData("", " + ")]
+        [InlineData("", " - ")]
+        [InlineData("", " * ")]
+        [InlineData("", " / ")]
+        [InlineData("", " ^ ")]
+        [InlineData("log", ", ")]
+        public void PiecewiseAndPiecewise(string before, string inBetween)
+        {
+            var rawInitial = @$"{before}(piecewise(a provided b, c provided d) {inBetween} piecewise(k provided f, g provided j))";
+            var rawExpected = @$"piecewise({before}(a {inBetween} k) provided b and f, {before}(a {inBetween} g) provided b and j, {before}(c {inBetween} k) provided d and f, {before}(c {inBetween} g) provided d and j)";
+            var initial = (Entity)rawInitial;
+            var expected = (Entity)rawExpected;
             var actual = initial.InnerSimplified;
             Assert.Equal(expected, actual);
         }
     }
 }
+
 
