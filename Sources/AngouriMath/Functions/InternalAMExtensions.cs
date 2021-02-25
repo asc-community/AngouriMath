@@ -55,12 +55,9 @@ namespace AngouriMath
         {
             var iterLeft = seqs.Item1.GetEnumerator();
             var iterRight = seqs.Item2.GetEnumerator();
-            bool leftAdv = true, rightAdv = true;
-            do
-            {
+            bool leftAdv, rightAdv;
+            while ((leftAdv = iterLeft.MoveNext()) & (rightAdv = iterRight.MoveNext()))
                 yield return (iterLeft.Current, iterRight.Current);
-            }
-            while ((leftAdv = iterLeft.MoveNext()) & (rightAdv = iterRight.MoveNext()));
 
             if (leftAdv != rightAdv)
                 throw new AngouriBugException("Collections should have the same size");

@@ -70,7 +70,7 @@ namespace UnitTests.Common
         [InlineData("log(4, ", ")")]
         public void PiecewiseInnerSimplifyTwoArgumentFunction(string before, string after)
         {
-            Entity initial = @$"{before}(piecewise((a, b), (c, d), (e, f))){after}";
+            Entity initial = @$"{before}piecewise((a, b), (c, d), (e, f)){after}";
             Entity expected = @$"piecewise(({before}a{after}, b), ({before}c{after}, d), ({before}e{after}, f))";
             var actual = initial.InnerSimplified;
             Assert.Equal(expected, actual);

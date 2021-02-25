@@ -51,7 +51,7 @@ namespace AngouriMath
                         (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).Evaled, (n2 + inter.Right).Evaled),
                         _ => null
                     },
-                    (a, b) => a + b
+                    (@this, a, b) => ((Sumf)@this).New(a, b)
                     );
 
 
@@ -67,7 +67,7 @@ namespace AngouriMath
                             (var n2, Interval inter) when n2 is not Set => inter.New((n2 + inter.Left).InnerSimplified, (n2 + inter.Right).InnerSimplified),
                             _ => null
                         },
-                        (a, b) => a + b,
+                        (@this, a, b) => ((Sumf)@this).New(a, b),
                         true);
         }
         public partial record Minusf
@@ -81,7 +81,7 @@ namespace AngouriMath
                         (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).Evaled, (n2 - inter.Right).Evaled),
                         _ => null
                     },
-                    (a, b) => a - b
+                    (@this, a, b) => ((Minusf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
@@ -95,7 +95,7 @@ namespace AngouriMath
                         (var n2, Interval inter) when n2 is not Set => inter.New((n2 - inter.Left).InnerSimplified, (n2 - inter.Right).InnerSimplified),
                         _ => null
                     },
-                    (a, b) => a - b,
+                    (@this, a, b) => ((Minusf)@this).New(a, b),
                     true);
         }
         public partial record Mulf
@@ -107,7 +107,7 @@ namespace AngouriMath
                     (Complex n1, Complex n2) => n1 * n2,
                     _ => null
                 },
-                (a, b) => a * b
+                (@this, a, b) => ((Mulf)@this).New(a, b)
                 );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
@@ -121,7 +121,7 @@ namespace AngouriMath
                         (var n1, var n2) when n1 == n2 => new Powf(n1, 2).InnerSimplified,
                         _ => null
                     },
-                    (a, b) => a * b,
+                    (@this, a, b) => ((Mulf)@this).New(a, b),
                     true);
         }
         public partial record Divf
@@ -133,8 +133,8 @@ namespace AngouriMath
                     {
                         (Complex n1, Complex n2) => n1 / n2,
                         _ => null
-                    }, 
-                    (a, b) => a / b
+                    },
+                    (@this, a, b) => ((Divf)@this).New(a, b)
                     );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
@@ -146,7 +146,7 @@ namespace AngouriMath
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },
-                (a, b) => a / b,
+                (@this, a, b) => ((Divf)@this).New(a, b),
                 true);
         }
         public partial record Powf
@@ -159,7 +159,7 @@ namespace AngouriMath
                     (Complex n1, Complex n2) => Number.Pow(n1, n2),
                     _ => null
                 },
-                (a, b) => a.Pow(b)
+                (@this, a, b) => ((Powf)@this).New(a, b)
                 );
 
             /// <inheritdoc/>
@@ -175,7 +175,7 @@ namespace AngouriMath
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },
-                (a, b) => a.Pow(b),
+                (@this, a, b) => ((Powf)@this).New(a, b),
                 true);
         }
         public partial record Sinf
@@ -188,7 +188,7 @@ namespace AngouriMath
                         Complex n => Number.Sin(n),
                         _ => null
                     },
-                    a => a.Sin()
+                    (@this, a) => ((Sinf)@this).New(a)
                     );
 
             /// <inheritdoc/>
@@ -199,7 +199,7 @@ namespace AngouriMath
                         { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => res,
                         _ => null
                     },
-                    a => a.Sin(),
+                    (@this, a) => ((Sinf)@this).New(a),
                     true);
         }
 
@@ -213,7 +213,7 @@ namespace AngouriMath
                         Complex n => Number.Cos(n),
                         _ => null
                     },
-                    a => a.Cos()
+                    (@this, a) => ((Cosf)@this).New(a)
                     );
 
             /// <inheritdoc/>
@@ -224,7 +224,7 @@ namespace AngouriMath
                         { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => res,
                         _ => null
                     },
-                    a => a.Cos(),
+                    (@this, a) => ((Cosf)@this).New(a),
                     true);
         }
 
@@ -238,7 +238,7 @@ namespace AngouriMath
                         Complex n => Number.Secant(n),
                         _ => null
                     },
-                    a => a.Sec()
+                    (@this, a) => ((Secantf)@this).New(a)
                     );
 
             /// <inheritdoc/>
@@ -249,7 +249,7 @@ namespace AngouriMath
                         { Evaled: Complex n } when TrigonometryTableValues.PullCos(n, out var res) => (1 / res).InnerSimplified,
                         _ => null
                     },
-                    a => a.Sec(),
+                    (@this, a) => ((Secantf)@this).New(a),
                     true);
         }
 
@@ -263,7 +263,7 @@ namespace AngouriMath
                         Complex n => Number.Cosecant(n),
                         _ => null
                     },
-                    a => a.Cosec()
+                    (@this, a) => ((Cosecantf)@this).New(a)
                     );
 
             /// <inheritdoc/>
@@ -274,7 +274,7 @@ namespace AngouriMath
                         { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => (1 / res).InnerSimplified,
                         _ => null
                     },
-                    a => a.Cosec()
+                    (@this, a) => ((Cosecantf)@this).New(a)
                     , true);
         }
 
@@ -288,7 +288,7 @@ namespace AngouriMath
                         Complex n => Number.Arcsecant(n),
                         _ => null
                     },
-                    a => a.Arcsec()
+                    (@this, a) => ((Arcsecantf)@this).New(a)
                     );
 
             /// <inheritdoc/>
@@ -298,7 +298,7 @@ namespace AngouriMath
                     {
                         _ => null
                     },
-                    a => a.Arcsec(),
+                    (@this, a) => ((Arcsecantf)@this).New(a),
                     true);
         }
 
@@ -312,7 +312,7 @@ namespace AngouriMath
                         Complex n => Number.Arccosecant(n),
                         _ => null
                     },
-                    a => a.Arccosec()
+                    (@this, a) => ((Arccosecantf)@this).New(a)
                     );
 
             /// <inheritdoc/>
@@ -322,7 +322,7 @@ namespace AngouriMath
                     {
                         _ => null
                     },
-                    a => a.Arccosec(),
+                    (@this, a) => ((Arccosecantf)@this).New(a),
                     true);
         }
 
@@ -336,7 +336,7 @@ namespace AngouriMath
                         Complex n => Number.Tan(n),
                         _ => null
                     },
-                    a => a.Tan()
+                    (@this, a) => ((Tanf)@this).New(a)
                     );
 
             /// <inheritdoc/>
@@ -347,7 +347,7 @@ namespace AngouriMath
                         { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => res,
                         _ => null
                     },
-                    a => a.Tan()
+                    (@this, a) => ((Tanf)@this).New(a)
                     , true);
         }
         public partial record Cotanf
@@ -360,7 +360,7 @@ namespace AngouriMath
                         Complex n => Number.Cotan(n),
                         _ => null
                     },
-                    a => a.Cotan()
+                    (@this, a) => ((Cotanf)@this).New(a)
                     );
 
             /// <inheritdoc/>
@@ -371,7 +371,7 @@ namespace AngouriMath
                         { Evaled: Complex n } when TrigonometryTableValues.PullTan(n, out var res) => (1 / res).InnerSimplified,
                         _ => null
                     },
-                    a => a.Cotan()
+                    (@this, a) => ((Cotanf)@this).New(a)
                     , true);
         }
         public partial record Logf
@@ -384,19 +384,19 @@ namespace AngouriMath
                         (Complex n1, Complex n2) => Number.Log(n1, n2),
                         _ => null
                     },
-                    (a, b) => a.Log(b)
+                    (@this, a, b) => ((Logf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
                 ExpandOnTwoArguments(Base.InnerSimplified, Antilogarithm.InnerSimplified,
-                (a, b) => (a, b) switch
-                {
-                    (_, Integer(0)) => Real.NegativeInfinity,
-                    (_, Integer(1)) => 0,
-                    _ => null
-                },
-                (a, b) => a.Log(b),
+                    (a, b) => (a, b) switch
+                    {
+                        (_, Integer(0)) => Real.NegativeInfinity,
+                        (_, Integer(1)) => 0,
+                        _ => null
+                    },
+                    (@this, a, b) => ((Logf)@this).New(a, b),
                     true);
         }
         public partial record Arcsinf
@@ -409,7 +409,7 @@ namespace AngouriMath
                     Complex n => Number.Arcsin(n),
                     _ => null
                 },
-                a => a.Arcsin()
+                (@this, a) => ((Arcsinf)@this).New(a)
                 );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
@@ -418,8 +418,8 @@ namespace AngouriMath
                 {
                     _ => null
                 },
-                a => a.Arcsin(), 
-                    true);
+                (@this, a) => ((Arcsinf)@this).New(a), 
+                true);
         }
         public partial record Arccosf
         {
@@ -431,7 +431,7 @@ namespace AngouriMath
                     Complex n => Number.Arccos(n),
                     _ => null
                 },
-                a => a.Arccos()
+                (@this, a) => ((Arccosf)@this).New(a)
                 );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
@@ -440,8 +440,8 @@ namespace AngouriMath
                 {
                     _ => null
                 },
-                a => a.Arccos(), 
-                    true);
+                (@this, a) => ((Arccosf)@this).New(a), 
+                true);
         }
         public partial record Arctanf
         {
@@ -453,7 +453,7 @@ namespace AngouriMath
                     Complex n => Number.Arctan(n),
                     _ => null
                 },
-                a => a.Arctan()
+                (@this, a) => ((Arctanf)@this).New(a)
                 );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
@@ -462,7 +462,7 @@ namespace AngouriMath
                 {
                     _ => null
                 },
-                a => a.Arctan()
+                (@this, a) => ((Arctanf)@this).New(a)
                 , true);
         }
         public partial record Arccotanf
@@ -475,7 +475,7 @@ namespace AngouriMath
                     Complex n => Number.Arccotan(n),
                     _ => null
                 },
-                a => a.Arccotan()
+                (@this, a) => ((Arccotanf)@this).New(a)
                 );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
@@ -484,7 +484,7 @@ namespace AngouriMath
                 {
                     _ => null
                 },
-                a => a.Arccotan()
+                (@this, a) => ((Arccotanf)@this).New(a)
                 , true);
         }
         public partial record Factorialf
@@ -497,7 +497,7 @@ namespace AngouriMath
                         Complex n => Number.Factorial(n),
                         _ => null
                     },
-                    a => a.Factorial()
+                    (@this, a) => ((Factorialf)@this).New(a)
                     );
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
@@ -514,7 +514,7 @@ namespace AngouriMath
                         ) * MathS.Sqrt(MathS.pi),
                         _ => null
                     },
-                    a => a.Factorial()
+                    (@this, a) => ((Factorialf)@this).New(a)
                     , true);
         }
         public partial record Derivativef
@@ -530,7 +530,7 @@ namespace AngouriMath
                         (var expr, Variable var, var asInt) => expr.Derive(var, asInt),
                         _ => null
                     },
-                    (a, b, c) => new Derivativef(a, b, c)
+                    (@this, a, b, _) => ((Derivativef)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
@@ -563,7 +563,7 @@ namespace AngouriMath
                         (var expr, Variable var, int asInt) => SequentialIntegrating(expr, var, asInt),
                         _ => null
                     },
-                    (a, b, c) => new Integralf(a, b, c)
+                    (@this, a, b, _) => ((Integralf)@this).New(a, b)
                     );
 
             /// <inheritdoc/>
@@ -579,7 +579,7 @@ namespace AngouriMath
                         (var expr, Variable var, int asInt) => SequentialIntegrating(expr, var, asInt),
                         _ => null
                     },
-                    (a, b, c) => new Integralf(a, b, c)
+                    (@this, a, b, _) => ((Integralf)@this).New(a, b)
                     )
 
                 : this;
@@ -596,7 +596,7 @@ namespace AngouriMath
                 {
                     _ => null
                 },
-                (expr, dest, vap) => new Limitf(expr, vap.v, dest, vap.ap)
+                (@this, expr, dest, vap) => ((Limitf)@this).New(expr, vap.v, dest, vap.ap)
                 );
 
             /// <inheritdoc/>
@@ -620,19 +620,19 @@ namespace AngouriMath
                         Complex n => Number.Signum(n),
                         _ => null
                     },
-                    a => a.Signum()
+                    (@this, a) => ((Signumf)@this).New(a)
                     );
 
             // TODO: probably we can simplify it further
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
                 => ExpandOnOneArgument(Argument.InnerSimplified,
-                        a => a switch
-                        {
-                            _ => null
-                        },
-                        a => a.Signum()
-                        , true);
+                    a => a switch
+                    {
+                        _ => null
+                    },
+                    (@this, a) => ((Signumf)@this).New(a)
+                    , true);
         }
 
         public partial record Absf
@@ -645,19 +645,19 @@ namespace AngouriMath
                         Complex n => Number.Abs(n),
                         _ => null
                     },
-                    a => a.Abs()
+                    (@this, a) => ((Absf)@this).New(a)
                     );
 
             // TODO: probably we can simplify it further
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                   => ExpandOnOneArgument(Argument.InnerSimplified,
-                        a => a switch
-                        {
-                            _ => null
-                        },
-                        a => a.Abs()
-                        , true);
+                => ExpandOnOneArgument(Argument.InnerSimplified,
+                    a => a switch
+                    {
+                        _ => null
+                    },
+                    (@this, a) => ((Absf)@this).New(a)
+                    , true);
         }
     }
 }

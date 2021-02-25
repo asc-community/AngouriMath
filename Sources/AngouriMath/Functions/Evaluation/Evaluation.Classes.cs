@@ -54,7 +54,7 @@ namespace AngouriMath
         /// If no suitable case in switch found, it should return the default node, for example, for sum it would be
         /// <code>(a, b) => a + b</code>
         /// </param>
-        private Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
+        private Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
             if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
@@ -66,9 +66,9 @@ namespace AngouriMath
             {
                 if (operation(a, b) is { } res)
                     return res;
-                if (checkIfExactEvaled && defaultCtor(a, b).Evaled is Number { IsExact: true } n)
+                if (checkIfExactEvaled && defaultCtor(this, a, b).Evaled is Number { IsExact: true } n)
                     return n;
-                return defaultCtor(a, b);
+                return defaultCtor(this, a, b);
             }
 
             return (left, right) switch
@@ -82,14 +82,11 @@ namespace AngouriMath
                 (FiniteSet a, FiniteSet b) => TreeAnalyzer.ApplyX2(a, b, ops),
                 (FiniteSet a, var b) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b) => b.Apply(b => ops(a, b)),
-                // _ => ReferenceEquals(left, this.DirectChildren[0]) &&
-                //      ReferenceEquals(right, this.DirectChildren[1]) ?
-                //      this : defaultCtor(left, right)
-                _ => defaultCtor(left, right)
+                _ => defaultCtor(this, left, right)
             };
         }
 
-        private Entity ExpandOnOneArgument(Entity expr, Func<Entity, Entity?> operation, Func<Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
+        private Entity ExpandOnOneArgument(Entity expr, Func<Entity, Entity?> operation, Func<Entity, Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
             if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
@@ -101,9 +98,9 @@ namespace AngouriMath
             {
                 if (operation(a) is { } res)
                     return res;
-                if (checkIfExactEvaled && defaultCtor(a).Evaled is Number { IsExact: true } n)
+                if (checkIfExactEvaled && defaultCtor(this, a).Evaled is Number { IsExact: true } n)
                     return n;
-                return defaultCtor(a);
+                return defaultCtor(this, a);
             }
 
             return expr switch
@@ -111,12 +108,11 @@ namespace AngouriMath
                 Providedf p => ExpandOnOneArgument(p.Expression, operation, defaultCtor, checkIfExactEvaled).Provided(p.Predicate),
                 Tensor t => t.Elementwise(ops),
                 FiniteSet s => s.Apply(ops),
-                // _ => ReferenceEquals(expr, this.DirectChildren[0]) ? this : defaultCtor(expr)
-                _ => defaultCtor(expr)
+                _ => defaultCtor(this, expr)
             };
         }
 
-        private Entity ExpandOnTwoAndTArguments<T>(Entity left, Entity right, T third, Func<Entity, Entity, T, Entity?> operation, Func<Entity, Entity, T, Entity> defaultCtor, bool checkIfExactEvaled = false)
+        private Entity ExpandOnTwoAndTArguments<T>(Entity left, Entity right, T third, Func<Entity, Entity, T, Entity?> operation, Func<Entity, Entity, Entity, T, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
             if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
                 return n;
@@ -128,9 +124,9 @@ namespace AngouriMath
             {
                 if (operation(a, b, third) is { } res)
                     return res;
-                if (checkIfExactEvaled && defaultCtor(a, b, third).Evaled is Number { IsExact: true } n)
+                if (checkIfExactEvaled && defaultCtor(this, a, b, third).Evaled is Number { IsExact: true } n)
                     return n;
-                return defaultCtor(a, b, third);
+                return defaultCtor(this, a, b, third);
             }
 
             return (left, right, third) switch
@@ -144,12 +140,7 @@ namespace AngouriMath
                 (FiniteSet a, FiniteSet b, _) => TreeAnalyzer.ApplyX2(a, b, ops),
                 (FiniteSet a, var b, _) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b, _) => b.Apply(b => ops(a, b)),
-                /*
-                _ => ReferenceEquals(left, this.DirectChildren[0]) &&
-                     ReferenceEquals(right, this.DirectChildren[1]) ?
-                     this : defaultCtor(left, right, third)
-                */
-                _ => defaultCtor(left, right, third)
+                _ => defaultCtor(this, left, right, third)
             };
         }
     }

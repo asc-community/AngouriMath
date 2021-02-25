@@ -162,7 +162,10 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override int GetHashCode()
-                    => Elements.Multielement(HashCodeFunctional.HashCodeShifts.FiniteSet);
+                    => hashCode.GetValue(@this =>
+                        Elements.OrderBy(el => el.GetHashCode()).HashCodeOfSequence(HashCodeFunctional.HashCodeShifts.FiniteSet), 
+                        this);
+                private FieldCache<int> hashCode;
 
                 /// <summary>
                 /// Checks that two FiniteSets are equal

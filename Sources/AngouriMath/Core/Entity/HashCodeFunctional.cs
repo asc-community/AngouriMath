@@ -23,7 +23,7 @@ namespace AngouriMath.Core.HashCode
                 _ => objects.Select(c => c?.GetHashCode() ?? throw new AngouriBugException("Can't be null here")).Aggregate((acc, next) => (acc, next).GetHashCode())
             };
 
-        public static int Multielement<T>(this IEnumerable<T> @this, HashCodeShifts type)
+        public static int HashCodeOfSequence<T>(this IEnumerable<T> @this, HashCodeShifts type)
             => Multielement(type, @this);
     }
 }

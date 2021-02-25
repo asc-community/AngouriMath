@@ -99,7 +99,7 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             public override int GetHashCode()
-                => Cases.Multielement(HashCodeFunctional.HashCodeShifts.Piecewise);
+                => Cases.HashCodeOfSequence(HashCodeFunctional.HashCodeShifts.Piecewise);
         }
 
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
