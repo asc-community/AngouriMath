@@ -10,28 +10,30 @@
 
 namespace AngouriMath
 {
+    using AngouriMath.Core.Exceptions;
     using Core;
+    using System.Linq;
     using static Functions.Algebra.LimitFunctional;
     partial record Entity
     {
-        public partial record Number
+        partial record Number
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) => this;
         }
 
-        public partial record Variable
+        partial record Variable
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side);
         }
 
-        public partial record Tensor
+        partial record Tensor
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 null; // TODO
         }
 
-        public partial record Sumf
+        partial record Sumf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -41,7 +43,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Minusf
+        partial record Minusf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -51,7 +53,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Mulf
+        partial record Mulf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -61,7 +63,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Divf
+        partial record Divf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
             {
@@ -76,7 +78,7 @@ namespace AngouriMath
             }
         }
 
-        public partial record Sinf
+        partial record Sinf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -85,7 +87,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Cosf
+        partial record Cosf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -94,7 +96,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Secantf
+        partial record Secantf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -103,7 +105,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Cosecantf
+        partial record Cosecantf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -112,7 +114,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Arcsecantf
+        partial record Arcsecantf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -121,7 +123,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Arccosecantf
+        partial record Arccosecantf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -130,7 +132,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Tanf
+        partial record Tanf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -139,7 +141,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Cotanf
+        partial record Cotanf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -148,7 +150,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Logf
+        partial record Logf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
             {
@@ -163,7 +165,7 @@ namespace AngouriMath
             }
         }
 
-        public partial record Powf
+        partial record Powf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -173,7 +175,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Arcsinf
+        partial record Arcsinf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -182,7 +184,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Arccosf
+        partial record Arccosf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -191,7 +193,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Arctanf
+        partial record Arctanf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -200,7 +202,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Arccotanf
+        partial record Arccotanf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -209,7 +211,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Factorialf
+        partial record Factorialf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -218,7 +220,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Derivativef
+        partial record Derivativef
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -228,7 +230,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Integralf
+        partial record Integralf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -238,7 +240,7 @@ namespace AngouriMath
                     x, dist, side);
         }
 
-        public partial record Limitf
+        partial record Limitf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
@@ -250,17 +252,42 @@ namespace AngouriMath
                 x, dist, side);
         }
 
-        public partial record Signumf
+        partial record Signumf
         {
             // TODO:
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
                 => new Limitf(this, x, dist, side);
         }
 
-        public partial record Absf
+        partial record Absf
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
                 => Argument.ComputeLimitDivideEtImpera(x, dist, side)?.Abs();
+        }
+
+        partial record Providedf
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                var lim = Expression.ComputeLimitDivideEtImpera(x, dist, side);
+                if (lim is null)
+                    return null;
+                return New(lim, Predicate);
+            }
+        }
+
+        partial record Piecewise
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                var allLims = Cases.Select(c => (c.Expression.ComputeLimitDivideEtImpera(x, dist, side), c.Predicate));
+                if (allLims.Select(c => c.Item1 is null).Any())
+                    return null;
+                return New(allLims.Select(
+                    c => c.Item1 is not null ? 
+                    new Providedf(c.Item1, c.Item2) : 
+                    throw new AngouriBugException("It's been checked before")));
+            }
         }
     }
 }

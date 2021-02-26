@@ -30,6 +30,7 @@ namespace UnitTests.PatternsTest
         public static readonly System.Collections.Generic.IEnumerable<object[]> TrigTestData =
             new[] { nameof(MathS.Sin), nameof(MathS.Cos), nameof(MathS.Tan), nameof(MathS.Cotan) }
             .SelectMany(_ => Enumerable.Range(1, 29), (func, i) => new object[] { func, i });
+
         [Theory]
         [MemberData(nameof(TrigTestData))]
         public void TrigTest(string trigFunc, int twoPiOver)

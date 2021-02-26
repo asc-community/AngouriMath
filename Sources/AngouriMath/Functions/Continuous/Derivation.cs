@@ -8,6 +8,7 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 using PeterO.Numbers;
+using System.Linq;
 
 namespace AngouriMath
 {
@@ -287,6 +288,20 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable)
                 => MathS.Signum(Argument) * Argument.InnerDifferentiate(variable);
+        }
+
+        partial record Providedf
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => Expression.InnerDifferentiate(variable).Provided(Predicate);
+        }
+
+        partial record Piecewise
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => New(Cases.Select(c => c.New(c.Expression.InnerDifferentiate(variable), c.Predicate)));
         }
     }
 }

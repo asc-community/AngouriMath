@@ -19,5 +19,13 @@ namespace AngouriMath
         /// <returns>A node</returns>
         public Entity In(Entity supSet)
             => new Inf(this, supSet);
+
+        /// <summary>
+        /// Creates a node of a expression assuming some condition
+        /// </summary>
+        /// <param name="that"></param>
+        /// <returns></returns>
+        public Entity Provided(Entity that)
+            => new Providedf(this, that);
     }
 }

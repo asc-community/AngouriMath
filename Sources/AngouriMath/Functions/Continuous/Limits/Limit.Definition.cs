@@ -8,6 +8,32 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
+namespace AngouriMath.Core
+{
+    /// <summary>
+    /// Where to tend to the given number in limits
+    /// </summary>
+    public enum ApproachFrom
+    {
+        /// <summary>
+        /// Means that the limit is considered valid if and only if
+        /// Left-sided limit exists and Right-sided limit exists
+        /// and they are equal
+        /// </summary>
+        BothSides,
+
+        /// <summary>
+        /// If x tends from the left, i. e. it is never greater than the destination
+        /// </summary>
+        Left,
+
+        /// <summary>
+        /// If x tends from the right, i. e. it is never less than the destination
+        /// </summary>
+        Right,
+    }
+}
+
 namespace AngouriMath
 {
     using Core;

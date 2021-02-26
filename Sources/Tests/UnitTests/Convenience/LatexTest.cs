@@ -253,5 +253,11 @@ namespace UnitTests.Convenience
         [Fact]
         public void Phi3()
             => Test(@"{\varphi(x)}^{\varphi({x}^{2})}", MathS.Pow(MathS.NumberTheory.Phi(x), MathS.NumberTheory.Phi(MathS.Pow(x, 2))));
+        [Fact]
+        public void Piecewise1()
+            => Test(@"\begin{cases}a \: \text{for} \: b\\c \: \text{for} \: e\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e")));
+        [Fact]
+        public void Piecewise2()
+            => Test(@"\begin{cases}a \: \text{for} \: b\\c \: \text{for} \: e\\g \: \text{otherwise}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)));
     }
 }

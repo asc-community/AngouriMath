@@ -633,7 +633,7 @@ namespace AngouriMath
             /// </summary>
             /// <param name="x">The <see cref="Complex"/></param>
             /// <returns>The factorial <see cref="Complex"/></returns>
-            /// <seealso cref="NumbersExtensions.Factorial(EDecimal, EContext)"/>
+            /// <seealso cref="InternalAMExtensions.Factorial(EDecimal, EContext)"/>
             /// <seealso cref="Gamma(Complex)"/>
             /// 
             public static Complex Factorial(Complex x)
@@ -658,7 +658,7 @@ namespace AngouriMath
                 // https://en.wikipedia.org/wiki/Spouge%27s_approximation
                 int a = mathContext.Precision.ToInt32Checked() * 13 / 10;
 
-                    var constants = NumbersExtensions.GetSpougeFactorialConstants(a);
+                    var constants = InternalAMExtensions.GetSpougeFactorialConstants(a);
 
                     var negative = false;
                     var factor = Complex.Create(constants[0], 0);
@@ -684,7 +684,7 @@ namespace AngouriMath
             /// </summary>
             /// <param name="x">The <see cref="Complex"/></param>
             /// <returns>The gamma <see cref="Complex"/></returns>
-            /// <seealso cref="NumbersExtensions.Gamma(EDecimal, EContext)"/>
+            /// <seealso cref="InternalAMExtensions.Gamma(EDecimal, EContext)"/>
             /// <seealso cref="Factorial(Complex)"/>
             public static Complex Gamma(Complex x) => Factorial(x - Integer.One);
 

@@ -33,17 +33,24 @@ namespace AngouriMath
         public Entity InnerSimplified => innerSimplified.GetValue(@this => @this.InnerSimplifyWithCheck(), this);
         private FieldCache<Entity> innerSimplified;
 
+
+        private Entity InnerActionWithCheck(IEnumerable<Entity> directChildren, Entity innerSimplifiedOrEvaled, bool returnThisIfNaN)
+        {
+            if (innerSimplifiedOrEvaled.DirectChildren.Any(c => c == MathS.NaN))
+                return MathS.NaN;
+            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplifiedOrEvaled, Codomain))
+                return innerSimplifiedOrEvaled;
+            if (returnThisIfNaN)
+                return this;
+            else
+                return MathS.NaN;
+        }
+
         /// <summary>
         /// Make sure you call this function inside of <see cref="InnerSimplify"/>
         /// </summary>
         internal Entity InnerSimplifyWithCheck()
-        {
-            var innerSimplified = InnerSimplify();
-            if (DomainsFunctional.FitsDomainOrNonNumeric(innerSimplified, Codomain))
-                return innerSimplified;
-            else
-                return this;
-        }
+            => InnerActionWithCheck(DirectChildren.Select(c => c.InnerSimplified), InnerSimplify(), true);
 
         /// <summary>
         /// This should NOT be called inside itself
@@ -54,13 +61,8 @@ namespace AngouriMath
         /// Make sure you call this function inside of <see cref="InnerEval"/>
         /// </summary>
         protected Entity InnerEvalWithCheck()
-        {
-            var innerEvaled = InnerEval();
-            if (DomainsFunctional.FitsDomainOrNonNumeric(innerEvaled, Codomain))
-                return innerEvaled;
-            else
-                return MathS.NaN;
-        }
+            => InnerActionWithCheck(DirectChildren.Select(c => c.Evaled), InnerEval(), false);
+
 
         /// <summary>
         /// Expands an equation trying to eliminate all the parentheses ( e. g. 2 * (x + 3) = 2 * x + 2 * 3 )
@@ -105,14 +107,7 @@ namespace AngouriMath
         /// Increase this argument if you think the equation should be simplified better
         /// </param>
         /// <returns></returns>
-        public Entity Simplify(int? level = null) => level is { } levelNotNull ? Simplificator.Simplify(this, levelNotNull) : Simplified;
-
-        /// <summary>
-        /// This property returns the same what parameterless <see cref="Simplify"/> would,
-        /// with benefit of caching the result
-        /// </summary>
-        public Entity Simplified => simplified.GetValue(@this => Simplificator.Simplify(this, 2), this);
-        private FieldCache<Entity> simplified;
+        public Entity Simplify(int level = 2) => Simplificator.Simplify(this, level);
 
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         public IEnumerable<Entity> Alternate(int level) => Simplificator.Alternate(this, level);

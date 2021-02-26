@@ -541,5 +541,27 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string Latexise() => $@"\varphi({Argument.Latexise()})";
         }
+
+        partial record Providedf
+        {
+            /// <inheritdoc/>
+            public override string Latexise() => $@"\left\({Expression.Latexise()} \: \text{{for}} \: {Predicate.Latexise()}\right\)";
+        }
+
+        partial record Piecewise
+        {
+            /// <inheritdoc/>
+            public override string Latexise() => $@"\begin{{cases}}" +
+                string.Join(@"\\", 
+                Cases.Select(c =>
+                {
+                    if (c.Predicate == Boolean.True)
+                        return $@"{c.Expression.Latexise()} \: \text{{otherwise}}";
+                    return $@"{c.Expression.Latexise()} \: \text{{for}} \: {c.Predicate.Latexise()}";
+                }
+                ))
+                +
+                @"\end{cases}";
+        }
     }
 }

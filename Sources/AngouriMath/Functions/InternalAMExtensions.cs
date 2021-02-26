@@ -16,13 +16,70 @@ using System.Numerics;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
+using System.Linq;
 //[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests")]
 
 namespace AngouriMath
 {
     // Visibility for the class is internal so we can use public for methods as we like
-    internal static class NumbersExtensions
+    internal static class InternalAMExtensions
     {
+        /// <summary>
+        /// Concatenates 2-element tuples into an IEnumerable
+        /// { (1, 2), (3, 4), (5, 6) } -> { 1, 2, 3, 4, 5, 6 }
+        /// </summary>
+        public static IEnumerable<T> ConcatTuples<T>(this IEnumerable<(T, T)> arrOfTuplesToConcat)
+        {
+            var l = new List<T>();
+            foreach (var el in arrOfTuplesToConcat)
+            {
+                l.Add(el.Item1);
+                l.Add(el.Item2);
+            }
+            return l;
+        }
+
+        /// <summary>
+        /// Checks that if the sequences point to the same object or that all elements of them point to the same objects
+        /// </summary>
+        public static bool SequencesAreEqualReferences<T>(this (IEnumerable<T>, IEnumerable<T>) seqs)
+        {
+            if (ReferenceEquals(seqs.Item1, seqs.Item2))
+                return true;
+            if (seqs.Item1.Count() != seqs.Item2.Count())
+                return false;
+            foreach (var (left, right) in seqs.Zip())
+                if (!ReferenceEquals(left, right))
+                    return false;
+            return true;
+        }
+
+        public static IEnumerable<(T1 left, T2 right)> Zip<T1, T2>(this (IEnumerable<T1>, IEnumerable<T2>) seqs)
+        {
+            var iterLeft = seqs.Item1.GetEnumerator();
+            var iterRight = seqs.Item2.GetEnumerator();
+            bool leftAdv, rightAdv;
+            while ((leftAdv = iterLeft.MoveNext()) & (rightAdv = iterRight.MoveNext()))
+                yield return (iterLeft.Current, iterRight.Current);
+
+            if (leftAdv != rightAdv)
+                throw new AngouriBugException("Collections should have the same size");
+        }
+
+        public static IEnumerable<(T1 left, T2 right)> EachForEach<T1, T2>(this (IEnumerable<T1>, IEnumerable<T2>) seqs)
+        {
+            foreach (var a in seqs.Item1)
+                foreach (var b in seqs.Item2)
+                    yield return (a, b);
+        }
+
+        public static IEnumerable<TResult> EachForEach<T1, T2, TResult>(this (IEnumerable<T1>, IEnumerable<T2>) seqs, Func<T1, T2, TResult> op)
+        {
+            foreach (var a in seqs.Item1)
+                foreach (var b in seqs.Item2)
+                    yield return op(a, b);
+        }
+
         public static System.Numerics.Complex Signum(this System.Numerics.Complex z)
             => z == 0 ? 0 : z / z.Magnitude;
 
@@ -347,7 +404,8 @@ namespace AngouriMath
 
             //known values
             if (x.IsZero) return x;
-            if (x.Equals(EDecimal.One)) return consts.HalfPi;
+            if ((x - EDecimal.One).Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
+                return consts.HalfPi;
             //asin function is odd function
             if (x.IsNegative) return -Arcsin(-x, context);
 

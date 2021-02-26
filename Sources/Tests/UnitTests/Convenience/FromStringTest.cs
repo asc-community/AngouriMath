@@ -4,6 +4,7 @@ using AngouriMath.Core.Exceptions;
 using System;
 using System.Linq;
 using Xunit;
+using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 using static AngouriMath.MathS;
@@ -79,7 +80,7 @@ namespace UnitTests.Convenience
         [Fact] public void TestFormula24() => Assert.Equal(Pow(MathS.Factorial(2), MathS.Factorial(3)), FromString("2!^3!"));
         [Fact] public void TestFormula25() => Assert.Equal(Pow(MathS.Factorial(2), Factorial(x + 2)), FromString("2!^(x+2)!"));
         [Fact] public void TestFormula26() => Assert.Equal(-MathS.Factorial(1), FromString("-1!"));
-        [Fact(Skip = "Why StackOverflow here?")] public void TestFormula27() => Assert.Equal(MathS.Factorial(-1), FromString("(-1)!"));
+        [Fact] public void TestFormula27() => Assert.Equal(MathS.Factorial("-1"), FromString("(-1)!"));
         [Fact] public void TestFormulaSys() => Assert.Equal(Sqr(x), FromString("x2"));
         [Fact] public void TestNode28() => Assert.Equal(Derivative("x + 1", x), FromString("derivative(x + 1, x, 1)"));
         [Fact] public void TestNode29() => Assert.Equal(Derivative("x + 1", x, 5), FromString("derivative(x + 1, x, 5)"));
@@ -95,6 +96,10 @@ namespace UnitTests.Convenience
         [Fact] public void TestBool39() => Assert.Equal(x & x | x.Implies(x), FromString("x and x or (x -> x)"));
         [Fact] public void TestBool40() => Assert.Equal(x & x & x & x, FromString("x and x and x and x"));
         [Fact] public void TestBool41() => Assert.Equal(x | x | x | x, FromString("x or x or x or x"));
+        [Fact] public void TestBoolConstants1() => Assert.Equal(Entity.Boolean.True, FromString("true"));
+        [Fact] public void TestBoolConstants2() => Assert.Equal(Entity.Boolean.True, FromString("True"));
+        [Fact] public void TestBoolConstants3() => Assert.Equal(Entity.Boolean.False, FromString("false"));
+        [Fact] public void TestBoolConstants4() => Assert.Equal(Entity.Boolean.False, FromString("False"));
         [Fact] public void TestAbs42() => Assert.Equal(Abs(x), FromString("(|x|)"));
         [Fact] public void TestAbs43() => Assert.Equal(Abs(Abs(x) + 2).Pow(2), FromString("(|(|x|) + 2|) ^ 2"));
         [Fact] public void TestCoDomain44() => Assert.Equal(Sqrt(x).WithCodomain(Domain.Real), FromString("domain(sqrt(x), RR)"));
@@ -134,6 +139,8 @@ namespace UnitTests.Convenience
         [Fact] public void TestCosec() => Assert.Equal(MathS.Cosec("x"), FromString("csc(x)"));
         [Fact] public void TestArcsec() => Assert.Equal(MathS.Arcsec("x"), FromString("arcsec(x)"));
         [Fact] public void TestArccosec() => Assert.Equal(MathS.Arccosec("x"), FromString("arccsc(x)"));
+        [Fact] public void TestProvided1() => Assert.Equal(MathS.Provided("a", "b"), FromString("a provided b"));
+        [Fact] public void TestProvided2() => Assert.Equal(MathS.Provided(MathS.Provided("a", "b"), "c"), FromString("a provided b provided c"));
 
         [Theory]
         [InlineData("sinh", "Sinh")]
@@ -176,6 +183,8 @@ namespace UnitTests.Convenience
         [Fact] public void TestPowerUnary1() => Assert.Equal(Pow(x, "-5"), FromString("x^-5"));
         [Fact] public void TestPowerUnary2() => Assert.Equal(Pow(x, -x), FromString("x^-x"));
         [Fact] public void TestPowerUnary3() => Assert.Equal(Pow(x, -Pow(x, x)), FromString("x^ -x^x"));
+        [Fact] public void TestPiecewise1() => Assert.Equal(Piecewise((x, y), (y, x), (x + 2, y + 2)), FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2)"));
+        [Fact] public void TestPiecewise2() => Assert.Equal(Piecewise(new[] { new Providedf(x, y), new Providedf(y, x), new Providedf(x + 2, y + 2) }, 3), FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2, 3)"));
 
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {

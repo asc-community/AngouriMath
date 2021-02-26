@@ -26,6 +26,7 @@ options
     using static AngouriMath.Entity.Number;
     using AngouriMath.Core.Exceptions;
     using static AngouriMath.Entity.Set;
+    using static AngouriMath.Entity;
 }
 
 @lexer::members
@@ -209,8 +210,25 @@ implies_expression returns[Entity value]
      '->' m2 = or_expression { $value = $value.Implies($m2.value); })*
     ;
 
+/*
+
+Keyword nodes
+
+*/
+
+provided_expression returns[Entity value]
+    : expr = implies_expression { $value = $expr.value; }
+    ('provided' pred = implies_expression { $value = $value.Provided($pred.value); })*
+    ;
+
+/*
+
+Nodes end
+
+*/
+
 expression returns[Entity value]
-    : s = implies_expression { $value = $s.value; }
+    : s = provided_expression { $value = $s.value; }
     ;
 
 
@@ -338,6 +356,16 @@ atom returns[Entity value]
                 throw new InvalidArgumentParseException($"Unrecognized special set {$args.list[1].Stringize()}");
             $value = $args.list[0].WithCodomain(ss.ToDomain());
         }
+    | 'piecewise(' args = function_arguments ')'
+        {
+            var cases = new List<Providedf>();
+            foreach (var arg in $args.list)
+                if (arg is Providedf provided)
+                    cases.Add(provided);
+                else
+                    cases.Add(new Providedf(arg, true));
+            $value = new Piecewise(cases);
+        }
     ;
 
 statement: expression EOF { Result = $expression.value; } ;
@@ -351,7 +379,7 @@ NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 
 
 SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB') ;
 
-BOOLEAN: ('true' | 'false') ;
+BOOLEAN: ('true' | 'True' | 'false' | 'False') ;
 
 VARIABLE: ('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
   

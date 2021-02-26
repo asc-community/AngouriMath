@@ -7,6 +7,7 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+using System;
 using System.Collections.Generic;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
@@ -55,6 +56,14 @@ namespace AngouriMath
             /// Checks that a set does not contain any elements
             /// </summary>
             public abstract bool IsSetEmpty { get; }
+
+            /// <summary>
+            /// Adds a constraint to every element of a set.
+            /// 1) For a finite set, it will add Provided for every element
+            /// 2) For an interval and special set, it will wrap it with a cset (e. g. [a; b].Filter(x > 0, x) -> { x : x in [a; b] and x > 0 })
+            /// 3) For a cset, it will add a predicate (e. g. { y : y2 = 3 }.Filter(x > 0, x) -> { y : y2 = 3 and y > 0 })
+            /// </summary>
+            public abstract Set Filter(Entity predicate, Variable over);
         }
 
         

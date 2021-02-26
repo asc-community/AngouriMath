@@ -27,6 +27,7 @@ namespace AngouriMath.Core.Antlr {
     using static AngouriMath.Entity.Number;
     using AngouriMath.Core.Exceptions;
     using static AngouriMath.Entity.Set;
+    using static AngouriMath.Entity;
 
 using Antlr4.Runtime.Misc;
 using IParseTreeListener = Antlr4.Runtime.Tree.IParseTreeListener;
@@ -219,6 +220,16 @@ internal interface IAngouriMathListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitImplies_expression([NotNull] AngouriMathParser.Implies_expressionContext context);
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="AngouriMathParser.provided_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterProvided_expression([NotNull] AngouriMathParser.Provided_expressionContext context);
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="AngouriMathParser.provided_expression"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitProvided_expression([NotNull] AngouriMathParser.Provided_expressionContext context);
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="AngouriMathParser.expression"/>.
 	/// </summary>

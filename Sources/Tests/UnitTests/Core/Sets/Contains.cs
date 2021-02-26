@@ -55,7 +55,7 @@ namespace UnitTests.Core.Sets
             Assert.Equal(containsExpected, containsActual);
         }
 
-        [Theory(Skip = "Unclear how it should be implemented")]
+        [Theory]
         [InlineData("{ x : x = a and x > a }", "a", false)]
         public void TestSkip(string given, string expected, bool containsExpected)
             => Test(given, expected, containsExpected);

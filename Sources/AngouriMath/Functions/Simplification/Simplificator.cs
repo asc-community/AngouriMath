@@ -43,6 +43,12 @@ namespace AngouriMath.Functions
             if (src is Number or Variable or Entity.Boolean)
                 return new[] { src };
             var stage1 = src.InnerSimplified;
+
+#if DEBUG
+            if (stage1.ToString() == MathS.Diagnostic.CatchOnSimplify)
+                throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
             if (stage1 is Number or Variable or Entity.Boolean)
                 return new[] { stage1 };
 
@@ -82,10 +88,27 @@ namespace AngouriMath.Functions
                 if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
 
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 AddHistory(res = SimplifyChildren(res));
 
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 AddHistory(res = res.Replace(Patterns.InvertNegativePowers).Replace(Patterns.DivisionPreparingRules).InnerSimplified);
+
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplified);
+
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
 
                 if (res.Nodes.Any(child => child is TrigonometricFunction))
                 {
@@ -96,29 +119,66 @@ namespace AngouriMath.Functions
                     AddHistory(res = res.Replace(Patterns.CollapseTrigonometricFunctions).Replace(Patterns.TrigonometricRules));
                 }
 
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 if (res.Nodes.Any(child => child is Statement))
                 {
                     AddHistory(res = res.Replace(Patterns.BooleanRules).InnerSimplified);
                 }
+
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
 
                 if (res.Nodes.Any(child => child is ComparisonSign))
                 {
                     AddHistory(res = res.Replace(Patterns.InequalityEqualityRules).InnerSimplified);
                 }
 
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 if (res.Nodes.Any(child => child is Factorialf))
                 {
                     AddHistory(res = res.Replace(Patterns.ExpandFactorialDivisions).InnerSimplified);
                     AddHistory(res = res.Replace(Patterns.FactorizeFactorialMultiplications).InnerSimplified);
                 }
+
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 if (res.Nodes.Any(child => child is Powf or Logf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
 
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 if (res.Nodes.Any(child => child is Set))
-                    AddHistory(res = res.Replace(Patterns.SetOperatorRules).InnerSimplified);
+                {
+                    var replaced = res.Replace(Patterns.SetOperatorRules);
+
+#if DEBUG
+                    if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
+                    AddHistory(res = replaced.InnerSimplified);
+                }
+
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
 
                 if (res.Nodes.Any(child => child is Phif))
                     AddHistory(res = res.Replace(Patterns.PhiFunctionRules).InnerSimplified);
+
+#if DEBUG 
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException(); 
+#endif
 
                 Entity? possiblePoly = null;
                 foreach (var var in res.Vars)
@@ -128,8 +188,21 @@ namespace AngouriMath.Functions
                 if (possiblePoly is { } && possiblePoly.Complexity < res.Complexity)
                     res = possiblePoly;
 
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 AddHistory(res = res.Replace(Patterns.CommonRules));
+
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 AddHistory(res = res.Replace(Patterns.NumericNeatRules));
+
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
                 /*
                 This was intended to simplify expressions as polynomials over nodes, some kind of
                 greatest common node and simplifying over it. However, the current algorithm does
@@ -143,7 +216,16 @@ namespace AngouriMath.Functions
             if (level > 0) // if level < 0 we don't check whether expanded version is better
             {
                 AddHistory(res.Expand().Simplify(-level));
+
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 AddHistory(res.Factorize().Simplify(-level));
+
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
             }
 
             return history.Values.SelectMany(x => x);

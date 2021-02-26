@@ -303,6 +303,19 @@ namespace AngouriMath
                 => this == x ? value : New(Argument.Substitute(x, value));
         }
 
+        partial record Providedf
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => this == x ? value : New(Expression.Substitute(x, value), Predicate.Substitute(x, value));
+        }
+
+        partial record Piecewise
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => x == this ? value : Apply(c => c.New(c.Expression.Substitute(x, value), c.Predicate.Substitute(x, value)));
+        }
 
         #endregion
 

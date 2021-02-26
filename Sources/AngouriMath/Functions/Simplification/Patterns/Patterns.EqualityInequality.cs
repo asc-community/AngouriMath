@@ -90,6 +90,11 @@ namespace AngouriMath.Functions
             Lessf(Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 < Integer.Zero,
             LessOrEqualf(Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 <= Integer.Zero,
 
+            Greaterf(var any1, var any1a) when any1 == any1a => false,
+            Lessf(var any1, var any1a) when any1 == any1a => false,
+            GreaterOrEqualf(var any1, var any1a) when any1 == any1a => true,
+            LessOrEqualf(var any1, var any1a) when any1 == any1a => true,
+
             _ => x
         };
     }

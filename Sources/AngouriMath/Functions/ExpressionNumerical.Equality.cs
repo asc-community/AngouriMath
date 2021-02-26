@@ -54,6 +54,6 @@ namespace AngouriMath.Functions
         /// expected response
         /// </summary>
         internal static bool AreEqual(Entity expr1, Entity expr2)
-            => AreEqual(expr1, expr2, MathS.Internal.CheckPoints);
+            => AreEqual(expr1, expr2, MathS.UnsafeAndInternal.CheckPoints);
     }
 }

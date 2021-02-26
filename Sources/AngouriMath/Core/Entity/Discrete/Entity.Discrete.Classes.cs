@@ -68,7 +68,7 @@ namespace AngouriMath
             /// </returns>
             public static bool TryParse(string expr, out Boolean dst)
             {
-                switch (expr)
+                switch (expr.ToLower())
                 {
                     case "false":
                         dst = False;
@@ -272,7 +272,7 @@ namespace AngouriMath
             {
                 internal override Priority Priority => Priority.ContainsIn;
                 internal Inf New(Entity element, Entity supSet)
-                    => ReferenceEquals(Element, element) && ReferenceEquals(SupSet, supSet) ? this : new(Element, SupSet);
+                    => ReferenceEquals(Element, element) && ReferenceEquals(SupSet, supSet) ? this : new(element, supSet);
                 /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(New(Element.Replace(func), SupSet.Replace(func)));

@@ -28,6 +28,21 @@ namespace AngouriMath.Extensions
     public static partial class AngouriMathExtensions
     {
         /// <summary>
+        /// Converts an <see cref="IEnumerable"/> into a piecewise function
+        /// </summary>
+        /// <returns>A Piecewise node</returns>
+        public static Piecewise ToPiecewise(this IEnumerable<Providedf> cases)
+            => new Piecewise(cases);
+
+        /// <summary>
+        /// Converts a tuple of an expression and its predicate to a 
+        /// Provided node
+        /// </summary>
+        /// <returns>Providedf node</returns>
+        public static Providedf ToProvided(this (Entity expr, Entity pred) @this)
+            => new Providedf(@this.expr, @this.pred);
+
+        /// <summary>
         /// Converts your <see cref="IEnumerable"/> into a set of unique values.
         /// </summary>
         /// <returns>A Set</returns>

@@ -66,34 +66,33 @@ using static System.Console;
 //    WriteLine("Canceled...");
 //}
 //
-var sync = new AsyncLocal<int>();
 
-sync.Value = 10001;
+//WriteLine("X + 2 / 3");
+//Entity expr = "(((x provided a) + 1) * 2 provided b) + (3 provided c) / ((4 provided 5) provided d)";
 
-var tasks = Enumerable.Range(0, 4).Select(
-    c =>
-    Task.Run(async () =>
-    {
-        WriteLine(c + "  " + sync.Value);
-        sync.Value = c;
-        WriteLine(c + "  " + sync.Value);
-        Thread.Sleep(1000);
-        WriteLine(c + "  " + sync.Value);
+// Entity expr = "2x2 - 4x - 8 = A(x3 + 4x) + B(x2 + 4) + C(x3 - x2) + D(x2 - x)";
+// WriteLine(expr.Substitute("x", 2).Substitute("A", 0).Substitute("B", -2).Simplify().InnerSimplified);
 
-        var child = Task.Factory.StartNew(
-            () =>
-            {
-                WriteLine(">> " + c + "  " + sync.Value);
-                Thread.Sleep(1000);
-                WriteLine(">> " + c + "  " + sync.Value);
-            }, TaskCreationOptions.None);
-        await child;
+// Entity eq = "piecewise(x2 provided b, (x + 1)2 provided d, (x + 2)2 provided g) = 4";
+// var x = MathS.Var("x");
+// WriteLine(eq.Solve(x));
 
-        Thread.Sleep(1000);
-        WriteLine(c + "  " + sync.Value);
-        Thread.Sleep(1000);
-        WriteLine(c + "  " + sync.Value);
-    }
-    ));
+// WriteLine("[{sqrt(3), sqrt(2)}; {sqrt(5), sqrt(10)}]".Simplify());
+// var (x, y) = (MathS.Var("x"), MathS.Var("y"));
+// var a = MathS.Piecewise(new[] { new Providedf(x, y), new Providedf(y, x), new Providedf(x + 333, y + 2) }, 3); 
+// var b = MathS.FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2, 3)");
+// WriteLine(a == b);
 
-await Task.WhenAll(tasks);
+// var func = "arccos";
+// 
+// Entity initial = @$"{func}(piecewise(a provided b, c provided d, e provided f))";
+// Entity expected = @$"piecewise(({func}(a) provided b), ({func}(c) provided d), ({func}(e) provided f))";
+// var actual = initial.InnerSimplified;
+
+// WriteLine("piecewise(a provided b, c provided d, e)".Latexise());
+// WriteLine(MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)).Latexise());
+// WriteLine("(|x|) = a".Solve("x").InnerSimplified.Provided(MathS.Piecewise(("integral(x + 3, x)", "x > 0"), ("derivative(x + 3, x)", "x < 0"))).Latexise());
+// Entity e = "(b implies a) and (b or c)"
+Entity abs = "piecewise(x provided x > 0, -x provided x <= 0)";
+WriteLine(abs.Substitute("x", 3).EvalNumerical());
+WriteLine(abs.Substitute("x", -3).EvalNumerical());

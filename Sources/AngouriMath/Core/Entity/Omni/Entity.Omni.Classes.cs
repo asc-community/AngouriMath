@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using AngouriMath.Core;
+using AngouriMath.Core.HashCode;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sets;
 using AngouriMath.Functions;
@@ -43,7 +44,6 @@ namespace AngouriMath
 
                 private readonly Dictionary<Entity, Entity> elements;
 
-                // TODO: refactor
                 /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(Apply(el => el.Replace(func)));
@@ -80,6 +80,8 @@ namespace AngouriMath
                     Dictionary<Entity, Entity> dict = new(elements.Count());
                     foreach (var elem in elements)
                     {
+                        if (elem == MathS.NaN)
+                            continue;
                         if (noCheck)
                             dict[elem.Evaled] = elem;
                         else
@@ -94,7 +96,6 @@ namespace AngouriMath
                 /// </summary>
                 public FiniteSet(IEnumerable<Entity> elements) : this(elements, noCheck: false) { }
 
-                // TODO: can we somehow add { } syntax but avoid inheriting from collection?
                 /// <summary>
                 /// Constructor of a finite set
                 /// Use <see cref="Empty"/> to create an empty set
@@ -159,8 +160,10 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override int GetHashCode()
-                    => IsSetEmpty ? 0 
-                    : Elements.Select(el => el.GetHashCode()).Aggregate((acc, next) => new XorHashBuilder().Combine(next).Combine(acc).GetHashCode());
+                    => hashCode.GetValue(@this =>
+                        Elements.OrderBy(el => el.GetHashCode()).HashCodeOfSequence(HashCodeFunctional.HashCodeShifts.FiniteSet), 
+                        this);
+                private FieldCache<int> hashCode;
 
                 /// <summary>
                 /// Checks that two FiniteSets are equal
@@ -225,6 +228,9 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => Count == 0;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over) => Apply(c => c.Provided(predicate.Substitute(over, c)));
             }
             #endregion
 
@@ -241,11 +247,12 @@ namespace AngouriMath
                 /// <summary>
                 /// Checks whether the interval's ends are both numerical (convenient for some evaluations)
                 /// </summary>
-                public bool IsNumeric => !left.Value.IsNaN && !right.Value.IsNaN;
+                public bool IsNumeric => !left.IsNaN && !right.IsNaN;
 
-                // TODO: maybe it's not good to create an object just to lazily initialize and we need to write our own wheel?
-                private readonly Lazy<Real> left = new Lazy<Real>(() => Left.EvaluableNumerical && Left.Evaled is Real re ? re : Real.NaN);
-                private readonly Lazy<Real> right = new Lazy<Real>(() => Right.EvaluableNumerical && Right.Evaled is Real re ? re : Real.NaN);
+                private Real left => fLeft.GetValue(static @this => @this.Left.EvaluableNumerical && @this.Left.Evaled is Real re ? re : Real.NaN, this);
+                private FieldCache<Real> fLeft;
+                private Real right => fRight.GetValue(static @this => @this.Right.EvaluableNumerical && @this.Right.Evaled is Real re ? re : Real.NaN, this);
+                private FieldCache<Real> fRight;
 
                 private static bool IsALessThanB(Real A, Real B, bool closed)
                     => A < B || closed && A == B;
@@ -296,7 +303,7 @@ namespace AngouriMath
                         return false;
                     if (!IsNumeric)
                         return false;
-                    contains = IsALessThanB(left.Value, re, LeftClosed) && IsALessThanB(re, right.Value, RightClosed);
+                    contains = IsALessThanB(left, re, LeftClosed) && IsALessThanB(re, right, RightClosed);
                     return true;
                 }
 
@@ -324,6 +331,9 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => false;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over) => new ConditionalSet(over, predicate & over.In(this));
             }
             #endregion
 
@@ -345,7 +355,7 @@ namespace AngouriMath
                 {
                     contains = false;
                     var substituted = Predicate.Substitute(Var, entity);
-                    substituted = substituted.InnerSimplified;
+                    substituted = substituted.Simplify();
                     if (substituted.EvaluableBoolean)
                     {
                         contains = substituted.EvalBoolean();
@@ -361,9 +371,10 @@ namespace AngouriMath
 
                 internal override Priority Priority => Priority.Leaf;
 
-                // TODO: Does conditional set have children?
+                // The predicate is the child, but the set variable X is not the same as X out of the set,
+                // so to avoid ambiguity, we replace it with a random variable name
                 /// <inheritdoc/>
-                protected override Entity[] InitDirectChildren() => new[] { Predicate };
+                protected override Entity[] InitDirectChildren() => new[] { Predicate.Substitute(Var, Variable.CreateRandom(Predicate)) };
 
                 // TODO:
                 /// <inheritdoc/>
@@ -389,6 +400,9 @@ namespace AngouriMath
                 public override int GetHashCode()
                     // TODO: might not always work, requires testing
                     => Predicate.Substitute(Var, universalVoidConstant).GetHashCode();
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over) => new ConditionalSet(Var, Predicate & predicate.Substitute(over, Var));
             }
             #endregion
 
@@ -527,6 +541,9 @@ namespace AngouriMath
                         => entity is Complex || !entity.IsConstantLeaf;
                     internal override Domain ToDomain() => Domain.Complex;
                 }
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over) => new ConditionalSet(over, predicate & over.In(this));
             }
             #endregion  
 
@@ -572,6 +589,13 @@ namespace AngouriMath
                 public override bool IsSetEmpty => isSetEmpty.GetValue(@this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2 && finite1.IsSetEmpty && finite2.IsSetEmpty, this);
                 private FieldCache<bool> isSetEmpty;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over)
+                    => MathS.Union(
+                        Left is Set setLeft ? setLeft.Filter(predicate, over) : Left,
+                        Right is Set setRight ? setRight.Filter(predicate, over) : Right
+                        );
             }
             #endregion
 
@@ -619,6 +643,13 @@ namespace AngouriMath
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite2.IsSetEmpty), this);
                 private FieldCache<bool> isSetEmpty;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over)
+                    => MathS.Intersection(
+                        Left is Set setLeft ? setLeft.Filter(predicate, over) : Left,
+                        Right is Set setRight ? setRight.Filter(predicate, over) : Right
+                        );
             }
             #endregion
 
@@ -665,6 +696,13 @@ namespace AngouriMath
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite1 == finite2), this);
                 private FieldCache<bool> isSetEmpty;
+
+                /// <inheritdoc/>
+                public override Set Filter(Entity predicate, Variable over)
+                    => MathS.SetSubtraction(
+                        Left is Set setLeft ? setLeft.Filter(predicate, over) : Left,
+                        Right is Set setRight ? setRight.Filter(predicate, over) : Right
+                        );
             }
             #endregion
         }

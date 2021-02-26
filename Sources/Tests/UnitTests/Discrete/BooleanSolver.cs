@@ -49,5 +49,18 @@ namespace UnitTests.Discrete
                 Assert.True(expr.Substitute(dict).EvalBoolean());
             }
         }
+
+        [Theory]
+        [InlineData("(x implies a) = b", "{ False provided a and b, True provided a and b, False provided not a and b, True provided not a and not b }")]
+        [InlineData("(x and a) = b", "{ True provided b and a, False provided a and not b, True provided not a and not b, False provided not a and not b }")]
+        [InlineData("(x or a) = b", "{ True provided a and b, False provided a and b, True provided not a and b, False provided not a and not b }")]
+        [InlineData("(x xor a) = b", "{ b provided not a, not b provided a }")]
+        public void TestSymbolicSolver(string statementRaw, string expectedRaw)
+        {
+            Entity expected = expectedRaw;
+            Entity statement = statementRaw;
+            var solSet = statement.Solve("x");
+            Assert.Equal(expected, solSet.InnerSimplified);
+        }
     }
 }

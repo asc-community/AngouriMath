@@ -14,7 +14,7 @@ namespace UnitTests.Core.Sets
         [InlineData(@"(2; 3]", "(2; 3]")]
         [InlineData(@"3 + {2}", "{5}")]
         [InlineData(@"1 + [2; 3]", "[3; 4]")]
-        [InlineData(@"[{1, 2}; {3, 4}]", "[{1, 2}; {3, 4}]")]
+        [InlineData(@"[{1, 2}; {3, 4}]", "{[1; 3], [1; 4], [2; 3], [2; 4]}")]
         [InlineData(@"{[1; 2], [3; 4]}", "{[1; 2], [3; 4]}")]
         [InlineData(@"{ x : x }", "{ x : x }")]
         [InlineData(@"{ 1, 2, 3 } \/ { 4 }", "{ 1, 2, 3, 4 }")]
@@ -51,15 +51,19 @@ namespace UnitTests.Core.Sets
         [InlineData(@"{ x : x2 = 4 } /\ { 2 }", @"{ 2 }")]
         [InlineData(@"{ x : false }", @"{}")]
         [InlineData(@"{ x : 2 = 4 }", @"{}")]
+        [InlineData(@"[ { sqrt(3), sqrt(5) }; sqrt(10) ]", @"{ [ sqrt(3); sqrt(10) ], [ sqrt(5); sqrt(10) ] }")]
+        [InlineData(@"[ sqrt(3); { sqrt(5), sqrt(10) } ]", @"{ [ sqrt(3); sqrt(5) ], [ sqrt(3); sqrt(10) ] }")]
+        [InlineData(@"[ { sqrt(2), sqrt(3) }; { sqrt(5), sqrt(10) } ]", @"{ [ sqrt(2); sqrt(5) ], [ sqrt(3); sqrt(5) ], [ sqrt(2); sqrt(10) ], [ sqrt(3); sqrt(10) ] }")]
         public void TestSimplify(string unsimplified, string simplified)
         {
-            var actual = unsimplified.ToEntity().Simplify();
+            var actual = unsimplified.ToEntity();
+            actual = actual.Simplify();
             Assert.Equal(simplified.ToEntity(), actual);
         }
 
-        [Theory(Skip = "Smarter simplification algorithms needed")]
-        [InlineData(@"{ x : x >= 0 } \/ { z : z <= 0 }", @"{ 0 }")]
-        [InlineData(@"[0; +oo) /\ { x : x2 = 4 }", @"{ 5 } \/ [0; 4]")]
+        [Theory(Skip = "Not working for now")]
+        [InlineData(@"{ x : x >= 0 } \/ { z : z <= 0 }", @"RR")]
+        [InlineData(@"[0; +oo) /\ { x : x2 = 4 }", @"{ 2 }")]
         public void TestSimplifySkip(string unexpected, string expected)
             => TestSimplify(unexpected, expected);
     }

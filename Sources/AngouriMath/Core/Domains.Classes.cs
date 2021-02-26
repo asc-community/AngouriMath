@@ -320,5 +320,17 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Integer;
         }
+
+        partial record Providedf
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Any;
+        }
+
+        partial record Piecewise
+        {
+            /// <inheritdoc/>
+            public override Domain Codomain { get; protected init; } = Domain.Any;
+        }
     }
 }
