@@ -197,6 +197,6 @@ namespace AngouriMath
         /// <summary>
         /// Checks whether the given expression is a finite constant leaf
         /// </summary>
-        public bool IsConstantLeaf => this is Boolean or Number;
+        public bool IsConstantLeaf => this is Boolean or Number or Set.SpecialSet;
     }
 }

@@ -311,7 +311,7 @@ namespace UnitTests.Core
         {
             var left = one.ToEntity();
             var right = another.ToEntity();
-            Assert.True(MathS.Internal.AreEqualNumerically(left, right));
+            Assert.True(MathS.UnsafeAndInternal.AreEqualNumerically(left, right));
         }
 
         [Theory]
@@ -321,7 +321,7 @@ namespace UnitTests.Core
         {
             var left = one.ToEntity();
             var right = another.ToEntity();
-            Assert.False(MathS.Internal.AreEqualNumerically(left, right));
+            Assert.False(MathS.UnsafeAndInternal.AreEqualNumerically(left, right));
         }
     }
 }

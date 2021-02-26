@@ -106,6 +106,19 @@ namespace AngouriMath
                     i++;
                 return new Variable("%" + i);
             }
+
+            /// <summary>
+            /// Used for cases, when the variable should be valid, yet should have no intersection with those existing in the expression
+            /// </summary>
+            internal static Variable CreateRandom(Entity expr)
+            {
+                static char IntToChar(uint c)
+                    => (char)(c % (122 - 97 + 1) + 97);
+
+                var hs = (uint)(expr.GetHashCode());
+                var s = new string(new[]{ IntToChar(hs >> 24), IntToChar(hs << 8 >> 24), IntToChar(hs << 16 >> 24), IntToChar(hs << 24 >> 24)});
+                return MathS.Var(s);
+            }
         }
         #endregion
     }

@@ -18,35 +18,9 @@ using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Boolean;
 using System.Diagnostics.CodeAnalysis;
 using AngouriMath.Convenience;
-using System.Threading.Tasks;
 using AngouriMath.Core.Multithreading;
 using System.Threading;
 
-namespace AngouriMath.Core
-{
-    /// <summary>
-    /// Where to tend to the given number in limits
-    /// </summary>
-    public enum ApproachFrom
-    {
-        /// <summary>
-        /// Means that the limit is considered valid if and only if
-        /// Left-sided limit exists and Right-sided limit exists
-        /// and they are equal
-        /// </summary>
-        BothSides,
-
-        /// <summary>
-        /// If x tends from the left, i. e. it is never greater than the destination
-        /// </summary>
-        Left,
-
-        /// <summary>
-        /// If x tends from the right, i. e. it is never less than the destination
-        /// </summary>
-        Right,
-    }
-}
 namespace AngouriMath
 {
     using static Entity;
@@ -56,7 +30,7 @@ namespace AngouriMath
     using static Entity.Set;
 
     /// <summary>Use functions from this class</summary>
-    public static class MathS
+    public static partial class MathS
     {
         /// <summary>Use it in order to explore further number theory</summary>
         public static class NumberTheory
@@ -839,13 +813,6 @@ namespace AngouriMath
             public static Setting<EContext> DecimalPrecisionContext =>
                 decimalPrecisionContext ??= new EContext(100, ERounding.HalfUp, -100, 1000, false);
             [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;
-
-            /// <summary>
-            /// Explicit output for ToString, that is, no signs or parentheses will be omitted. Useful
-            /// for debugging and diagnostic.
-            /// </summary>
-            public static Setting<bool> OutputExplicit => outputExplicit ??= false;
-            [ThreadStatic] private static Setting<bool>? outputExplicit;
         }
 
         /// <summary>Returns an <see cref="Entity"/> in polynomial order if possible</summary>
@@ -1118,6 +1085,10 @@ namespace AngouriMath
         /// </summary>
         public static class Multithreading
         {
+            /// <summary>
+            /// Sets the thread-local cancellation token
+            /// </summary>
+            /// <param name="token"></param>
             public static void SetLocalCancellationToken(CancellationToken token) => MultithreadingFunctional.SetLocalCancellationToken(token);
         }
 
@@ -1190,55 +1161,6 @@ namespace AngouriMath
             [NotNullWhen(true)] out Entity? b,
             [NotNullWhen(true)] out Entity? c)
                 => TreeAnalyzer.TryGetPolyQuadratic(expr, variable, out a, out b, out c);
-        }
-
-        /// <summary>
-        /// You may need it to manually manage some issues
-        /// </summary>
-        public static class Unsafe
-        {
-            /// <summary>
-            /// When you implicitly convert string to an Entity,
-            /// it caches the result by the string's reference.
-            /// If very strict about RAM usage, you can manually
-            /// clean it (or use <see cref="MathS.FromString(string, bool)"/>
-            /// instead and set the flag useCache to false)
-            /// </summary>
-            public static void ClearFromStringCache()
-                => stringToEntityCache = new();
-        }
-
-        /// <summary>
-        /// Although those functions might be used inside the library
-        /// only, the user may want to use them for some reason
-        /// </summary>
-        public static class Internal
-        {
-            /// <summary>
-            /// Checks if two expressions are equivalent if 
-            /// <see cref="Entity.Simplify"/> does not give the
-            /// expected response
-            /// </summary>
-            public static bool AreEqualNumerically(Entity expr1, Entity expr2, Entity[] checkPoints)
-                => ExpressionNumerical.AreEqual(expr1, expr2, checkPoints);
-
-            /// <summary>
-            /// Checks if two expressions are equivalent if 
-            /// <see cref="Entity.Simplify"/> does not give the
-            /// expected response
-            /// </summary>
-            public static bool AreEqualNumerically(Entity expr1, Entity expr2)
-                => ExpressionNumerical.AreEqual(expr1, expr2);
-
-            /// <summary>
-            /// Checkpoints for numerical equality check
-            /// </summary>
-            public static Setting<Entity[]> CheckPoints => checkPoints ??= new Entity[]
-            {
-                -100, -10, 1, 10, 100, 1.5,
-                "-100 + i", "-10 + 2i", "30i"
-            };
-            [ConstantField] private static Setting<Entity[]>? checkPoints;
         }
     }
 }

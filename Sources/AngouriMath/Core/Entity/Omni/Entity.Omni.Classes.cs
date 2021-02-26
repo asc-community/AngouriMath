@@ -44,7 +44,6 @@ namespace AngouriMath
 
                 private readonly Dictionary<Entity, Entity> elements;
 
-                // TODO: refactor
                 /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
                     => func(Apply(el => el.Replace(func)));
@@ -97,7 +96,6 @@ namespace AngouriMath
                 /// </summary>
                 public FiniteSet(IEnumerable<Entity> elements) : this(elements, noCheck: false) { }
 
-                // TODO: can we somehow add { } syntax but avoid inheriting from collection?
                 /// <summary>
                 /// Constructor of a finite set
                 /// Use <see cref="Empty"/> to create an empty set
@@ -249,11 +247,12 @@ namespace AngouriMath
                 /// <summary>
                 /// Checks whether the interval's ends are both numerical (convenient for some evaluations)
                 /// </summary>
-                public bool IsNumeric => !left.Value.IsNaN && !right.Value.IsNaN;
+                public bool IsNumeric => !left.IsNaN && !right.IsNaN;
 
-                // TODO: maybe it's not good to create an object just to lazily initialize and we need to write our own wheel?
-                private readonly Lazy<Real> left = new Lazy<Real>(() => Left.EvaluableNumerical && Left.Evaled is Real re ? re : Real.NaN);
-                private readonly Lazy<Real> right = new Lazy<Real>(() => Right.EvaluableNumerical && Right.Evaled is Real re ? re : Real.NaN);
+                private Real left => fLeft.GetValue(static @this => @this.Left.EvaluableNumerical && @this.Left.Evaled is Real re ? re : Real.NaN, this);
+                private FieldCache<Real> fLeft;
+                private Real right => fRight.GetValue(static @this => @this.Right.EvaluableNumerical && @this.Right.Evaled is Real re ? re : Real.NaN, this);
+                private FieldCache<Real> fRight;
 
                 private static bool IsALessThanB(Real A, Real B, bool closed)
                     => A < B || closed && A == B;
@@ -304,7 +303,7 @@ namespace AngouriMath
                         return false;
                     if (!IsNumeric)
                         return false;
-                    contains = IsALessThanB(left.Value, re, LeftClosed) && IsALessThanB(re, right.Value, RightClosed);
+                    contains = IsALessThanB(left, re, LeftClosed) && IsALessThanB(re, right, RightClosed);
                     return true;
                 }
 
@@ -372,9 +371,10 @@ namespace AngouriMath
 
                 internal override Priority Priority => Priority.Leaf;
 
-                // TODO: Does conditional set have children?
+                // The predicate is the child, but the set variable X is not the same as X out of the set,
+                // so to avoid ambiguity, we replace it with a random variable name
                 /// <inheritdoc/>
-                protected override Entity[] InitDirectChildren() => new[] { Predicate };
+                protected override Entity[] InitDirectChildren() => new[] { Predicate.Substitute(Var, Variable.CreateRandom(Predicate)) };
 
                 // TODO:
                 /// <inheritdoc/>
