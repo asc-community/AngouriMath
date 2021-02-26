@@ -7,31 +7,42 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
-using static AngouriMath.Entity.Set;
-using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
     partial record Entity
     {
-        /// <summary>
-        /// Solves a <see cref="Statement"/>
-        /// Statement is an Entity such that its value is true for
-        /// any x in X, where X is the result of this method.
-        /// See more about <see cref="Set"/>
-        /// </summary>
-        /// <param name="var">Over which variable to solve</param>
-        public Set Solve(Variable var)
+        partial record Number
         {
-            if (this is Statement)
+            partial record Complex
             {
-                var res = StatementSolver.Solve(this, var);
-                return (Set)res.InnerSimplified;
+                internal override string ToSymPy()
+                {
+                    if (ImaginaryPart == 0)
+                        return RealPart.ToSymPy();
+                    if (RealPart == 0)
+                        return $"{ImaginaryPart.ToSymPy()} * sympy.I";
+                    return $"{RealPart.ToSymPy()} + {ImaginaryPart.ToSymPy()} * sympy.I";
+                }
             }
-            if (this == var)
-                return new FiniteSet(Boolean.True);
-            throw new SolveRequiresStatementException();
+
+            partial record Real
+            {
+                internal override string ToSymPy()
+                    => Stringize();
+            }
+
+            partial record Rational
+            {
+                internal override string ToSymPy()
+                    => $"sympy.Rational({Numerator.ToSymPy()}, {Denominator.ToSymPy()}";
+            }
+
+            partial record Integer
+            {
+                internal override string ToSymPy()
+                    => Stringize();
+            }
         }
     }
 }

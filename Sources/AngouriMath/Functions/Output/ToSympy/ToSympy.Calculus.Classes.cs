@@ -7,31 +7,36 @@
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-using AngouriMath.Functions.Algebra.AnalyticalSolving;
-using static AngouriMath.Entity.Set;
+using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
     partial record Entity
     {
-        /// <summary>
-        /// Solves a <see cref="Statement"/>
-        /// Statement is an Entity such that its value is true for
-        /// any x in X, where X is the result of this method.
-        /// See more about <see cref="Set"/>
-        /// </summary>
-        /// <param name="var">Over which variable to solve</param>
-        public Set Solve(Variable var)
+        public partial record Derivativef
         {
-            if (this is Statement)
-            {
-                var res = StatementSolver.Solve(this, var);
-                return (Set)res.InnerSimplified;
-            }
-            if (this == var)
-                return new FiniteSet(Boolean.True);
-            throw new SolveRequiresStatementException();
+            internal override string ToSymPy() => $"sympy.diff({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations})";
+        }
+
+        public partial record Integralf
+        {
+            // TODO: The 3rd parameter of sympy.integrate is not interpreted as iterations, unlike sympy.diff
+            // which allows both sympy.diff(expr, var, iterations) and sympy.diff(expr, var1, var2, var3...)
+            internal override string ToSymPy() => $"sympy.integrate({Expression.ToSymPy()}, {Var.ToSymPy()}, {Iterations})";
+        }
+
+        public partial record Limitf
+        {
+            internal override string ToSymPy() =>
+                @$"sympy.limit({Expression.ToSymPy()}, {Var.ToSymPy()}, {Destination.ToSymPy()}{ApproachFrom switch
+                {
+                    ApproachFrom.Left => ", '-'",
+                    ApproachFrom.BothSides => "",
+                    ApproachFrom.Right => ", '+'",
+                    _ => throw new AngouriBugException
+                        ($"Unresolved enum {ApproachFrom}")
+                }})";
         }
     }
 }

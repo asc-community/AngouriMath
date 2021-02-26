@@ -52,8 +52,4 @@ Preview 6: Multithreading, casts for numbers added. AngouriMathBaseException is 
     <PackageReference Include="Nullable" Version="1.3.0" PrivateAssets="all" />
 	<ProjectReference Include="../Analyzers/Analyzers/Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Functions\Output\ToSymPy\" />
-  </ItemGroup>
 </Project>

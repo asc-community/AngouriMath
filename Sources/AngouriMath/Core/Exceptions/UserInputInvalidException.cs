@@ -1,5 +1,4 @@
-﻿using AngouriMath.Core.Multithreading;
-using System;
+﻿using System;
 
 namespace AngouriMath.Core.Exceptions
 {

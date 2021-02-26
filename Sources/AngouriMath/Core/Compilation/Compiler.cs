@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity;
 using static AngouriMath.Core.FastExpression;
-using System;
 
 namespace AngouriMath
 {
