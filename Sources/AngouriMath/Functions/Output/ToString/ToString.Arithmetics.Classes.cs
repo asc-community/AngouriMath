@@ -103,7 +103,7 @@ namespace AngouriMath
         public partial record Factorialf
         {
             /// <inheritdoc/>
-            public override string Stringize() => Argument.Stringize(Argument.Priority < Priority.Leaf) + "!";
+            public override string Stringize() => Argument.Stringize(Argument.Priority <= Priority) + "!";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

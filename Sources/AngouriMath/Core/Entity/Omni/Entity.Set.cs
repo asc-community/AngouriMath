@@ -65,8 +65,6 @@ namespace AngouriMath
             public abstract Set Filter(Entity predicate, Variable over);
         }
 
-        
-
         /// <summary>
         /// Creates a node of union of two nodes (sets)
         /// </summary>

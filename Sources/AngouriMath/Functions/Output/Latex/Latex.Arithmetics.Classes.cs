@@ -86,7 +86,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Latexise() =>
-                Argument.Latexise(Argument.Priority < Priority) + "!";
+                Argument.Latexise(Argument.Priority <= Priority) + "!";
         }
 
         partial record Signumf
