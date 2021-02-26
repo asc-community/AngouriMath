@@ -80,7 +80,7 @@ namespace UnitTests.Convenience
         [Fact] public void TestFormula24() => Assert.Equal(Pow(MathS.Factorial(2), MathS.Factorial(3)), FromString("2!^3!"));
         [Fact] public void TestFormula25() => Assert.Equal(Pow(MathS.Factorial(2), Factorial(x + 2)), FromString("2!^(x+2)!"));
         [Fact] public void TestFormula26() => Assert.Equal(-MathS.Factorial(1), FromString("-1!"));
-        [Fact(Skip = "Why StackOverflow here?")] public void TestFormula27() => Assert.Equal(MathS.Factorial(-1), FromString("(-1)!"));
+        [Fact] public void TestFormula27() => Assert.Equal(MathS.Factorial("-1"), FromString("(-1)!"));
         [Fact] public void TestFormulaSys() => Assert.Equal(Sqr(x), FromString("x2"));
         [Fact] public void TestNode28() => Assert.Equal(Derivative("x + 1", x), FromString("derivative(x + 1, x, 1)"));
         [Fact] public void TestNode29() => Assert.Equal(Derivative("x + 1", x, 5), FromString("derivative(x + 1, x, 5)"));
@@ -96,6 +96,10 @@ namespace UnitTests.Convenience
         [Fact] public void TestBool39() => Assert.Equal(x & x | x.Implies(x), FromString("x and x or (x -> x)"));
         [Fact] public void TestBool40() => Assert.Equal(x & x & x & x, FromString("x and x and x and x"));
         [Fact] public void TestBool41() => Assert.Equal(x | x | x | x, FromString("x or x or x or x"));
+        [Fact] public void TestBoolConstants1() => Assert.Equal(Entity.Boolean.True, FromString("true"));
+        [Fact] public void TestBoolConstants2() => Assert.Equal(Entity.Boolean.True, FromString("True"));
+        [Fact] public void TestBoolConstants3() => Assert.Equal(Entity.Boolean.False, FromString("false"));
+        [Fact] public void TestBoolConstants4() => Assert.Equal(Entity.Boolean.False, FromString("False"));
         [Fact] public void TestAbs42() => Assert.Equal(Abs(x), FromString("(|x|)"));
         [Fact] public void TestAbs43() => Assert.Equal(Abs(Abs(x) + 2).Pow(2), FromString("(|(|x|) + 2|) ^ 2"));
         [Fact] public void TestCoDomain44() => Assert.Equal(Sqrt(x).WithCodomain(Domain.Real), FromString("domain(sqrt(x), RR)"));

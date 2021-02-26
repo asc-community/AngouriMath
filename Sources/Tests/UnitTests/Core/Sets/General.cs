@@ -61,9 +61,9 @@ namespace UnitTests.Core.Sets
             Assert.Equal(simplified.ToEntity(), actual);
         }
 
-        [Theory(Skip = "Smarter simplification algorithms needed")]
-        [InlineData(@"{ x : x >= 0 } \/ { z : z <= 0 }", @"{ 0 }")]
-        [InlineData(@"[0; +oo) /\ { x : x2 = 4 }", @"{ 5 } \/ [0; 4]")]
+        [Theory(Skip = "Not working for now")]
+        [InlineData(@"{ x : x >= 0 } \/ { z : z <= 0 }", @"RR")]
+        [InlineData(@"[0; +oo) /\ { x : x2 = 4 }", @"{ 2 }")]
         public void TestSimplifySkip(string unexpected, string expected)
             => TestSimplify(unexpected, expected);
     }

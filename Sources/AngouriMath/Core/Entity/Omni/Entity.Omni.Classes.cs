@@ -356,7 +356,7 @@ namespace AngouriMath
                 {
                     contains = false;
                     var substituted = Predicate.Substitute(Var, entity);
-                    substituted = substituted.InnerSimplified;
+                    substituted = substituted.Simplify();
                     if (substituted.EvaluableBoolean)
                     {
                         contains = substituted.EvalBoolean();

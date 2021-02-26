@@ -379,7 +379,7 @@ NUMBER: ('0'..'9')+ '.' ('0'..'9')* EXPONENT? 'i'? | '.'? ('0'..'9')+ EXPONENT? 
 
 SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB') ;
 
-BOOLEAN: ('true' | 'false') ;
+BOOLEAN: ('true' | 'True' | 'false' | 'False') ;
 
 VARIABLE: ('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
   

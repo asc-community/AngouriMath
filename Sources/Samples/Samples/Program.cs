@@ -93,4 +93,4 @@ using static System.Console;
 // WriteLine(MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)).Latexise());
 // WriteLine("(|x|) = a".Solve("x").InnerSimplified.Provided(MathS.Piecewise(("integral(x + 3, x)", "x > 0"), ("derivative(x + 3, x)", "x < 0"))).Latexise());
 // Entity e = "(b implies a) and (b or c)"
-WriteLine("a provided b".ToEntity() == "a provided b".ToEntity());
+WriteLine(MathS.FromString("a provided b", false) == MathS.FromString("a provided b", false));
