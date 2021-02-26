@@ -14,7 +14,7 @@ using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>
         /// Solves a <see cref="Statement"/>

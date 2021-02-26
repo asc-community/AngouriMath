@@ -9,15 +9,18 @@
  */
 namespace AngouriMath
 {
-    using Core;
-    public abstract partial record Entity : ILatexiseable
+    partial record Entity
     {
-        /// <summary>Returns the expression in LaTeX (for example, a / b -> \frac{a}{b})</summary>
-        public abstract string Latexise();
+        /// <summary>
+        /// Converts an expression into a string
+        /// </summary>
+        public abstract string Stringize();
 
-        /// <summary>Returns the expression in LaTeX (for example, a / b -> \frac{a}{b})</summary>
-        /// <param name="parenthesesRequired">Whether to wrap it with parentheses</param>
-        protected internal string Latexise(bool parenthesesRequired) =>
-            parenthesesRequired ? @$"\left({Latexise()}\right)" : Latexise();
+        /// <summary>
+        /// Converts an expression into a string
+        /// </summary>
+        /// <param name="parenthesesRequired">Whether to wrap with '(' and ')'</param>
+        protected internal string Stringize(bool parenthesesRequired) =>
+            parenthesesRequired || MathS.Diagnostic.OutputExplicit ? $"({Stringize()})" : Stringize();
     }
 }

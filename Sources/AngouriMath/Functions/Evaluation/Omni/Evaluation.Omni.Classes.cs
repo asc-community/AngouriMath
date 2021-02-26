@@ -14,7 +14,7 @@ using System.Linq;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         partial record Set
         {

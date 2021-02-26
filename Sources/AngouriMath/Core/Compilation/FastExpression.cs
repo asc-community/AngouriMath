@@ -18,7 +18,7 @@ using static AngouriMath.Core.FastExpression;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>
         /// Compile function so you can evaluate numerical value 15x faster,

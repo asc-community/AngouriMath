@@ -16,7 +16,7 @@ using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity : ILatexiseable
+    partial record Entity : ILatexiseable
     {
         partial record Number
         {

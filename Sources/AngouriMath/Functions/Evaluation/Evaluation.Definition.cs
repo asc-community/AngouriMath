@@ -19,7 +19,7 @@ using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>
         /// This should NOT be called inside itself

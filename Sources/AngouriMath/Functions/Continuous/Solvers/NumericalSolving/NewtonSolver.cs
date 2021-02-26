@@ -92,7 +92,7 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
 
 namespace AngouriMath
 {
-    public abstract partial record Entity : ILatexiseable
+    partial record Entity : ILatexiseable
     {
         /// <summary>
         /// Searches for numerical solutions via Newton's method

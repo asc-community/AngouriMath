@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity : ILatexiseable
+    partial record Entity : ILatexiseable
     {
         /// <summary>
         /// Attempt to find analytical roots of a custom equation

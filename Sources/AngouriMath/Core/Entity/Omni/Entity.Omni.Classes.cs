@@ -247,11 +247,11 @@ namespace AngouriMath
                 /// <summary>
                 /// Checks whether the interval's ends are both numerical (convenient for some evaluations)
                 /// </summary>
-                public bool IsNumeric => !left.IsNaN && !right.IsNaN;
+                public bool IsNumeric => !LeftReal.IsNaN && !RightReal.IsNaN;
 
-                private Real left => fLeft.GetValue(static @this => @this.Left.EvaluableNumerical && @this.Left.Evaled is Real re ? re : Real.NaN, this);
+                private Real LeftReal => fLeft.GetValue(static @this => @this.Left.EvaluableNumerical && @this.Left.Evaled is Real re ? re : Real.NaN, this);
                 private FieldCache<Real> fLeft;
-                private Real right => fRight.GetValue(static @this => @this.Right.EvaluableNumerical && @this.Right.Evaled is Real re ? re : Real.NaN, this);
+                private Real RightReal => fRight.GetValue(static @this => @this.Right.EvaluableNumerical && @this.Right.Evaled is Real re ? re : Real.NaN, this);
                 private FieldCache<Real> fRight;
 
                 private static bool IsALessThanB(Real A, Real B, bool closed)
@@ -303,7 +303,7 @@ namespace AngouriMath
                         return false;
                     if (!IsNumeric)
                         return false;
-                    contains = IsALessThanB(left, re, LeftClosed) && IsALessThanB(re, right, RightClosed);
+                    contains = IsALessThanB(LeftReal, re, LeftClosed) && IsALessThanB(re, RightReal, RightClosed);
                     return true;
                 }
 

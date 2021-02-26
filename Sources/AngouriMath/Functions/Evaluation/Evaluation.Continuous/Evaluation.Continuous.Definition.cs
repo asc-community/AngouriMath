@@ -13,7 +13,7 @@ using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>
         /// Use this to verify whether it is safe to call <see cref="EvalNumerical"/>
