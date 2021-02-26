@@ -9,7 +9,7 @@
  */
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>
         /// Converts an expression into a string

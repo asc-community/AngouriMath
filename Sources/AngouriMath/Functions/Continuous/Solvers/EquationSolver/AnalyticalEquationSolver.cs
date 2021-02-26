@@ -9,7 +9,6 @@
  */
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
-using System;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Functions.Algebra;
@@ -21,7 +20,7 @@ using System.Collections.Generic;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity : ILatexiseable
+    partial record Entity : ILatexiseable
     {
         /// <summary>
         /// Attempt to find analytical roots of a custom equation

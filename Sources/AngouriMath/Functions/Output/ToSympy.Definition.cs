@@ -9,7 +9,7 @@
  */
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>Generates Python code that you can use with sympy</summary>
         internal abstract string ToSymPy();

@@ -13,7 +13,7 @@ using System.Linq;
 namespace AngouriMath
 {
     // Adding function Derive to Entity
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>
         /// Finds the symbolical derivative of the given expression

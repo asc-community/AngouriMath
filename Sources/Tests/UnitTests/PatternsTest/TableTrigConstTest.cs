@@ -14,7 +14,6 @@ using static AngouriMath.Entity.Number;
 using System;
 using System.Linq;
 using Xunit;
-using AngouriMath.Core.Exceptions;
 
 namespace UnitTests.PatternsTest
 {

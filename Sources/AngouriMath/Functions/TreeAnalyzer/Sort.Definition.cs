@@ -16,7 +16,7 @@ using static AngouriMath.Entity.Number;
 namespace AngouriMath
 {
     using SortLevel = Functions.TreeAnalyzer.SortLevel;
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>Hash that is convenient to sort with</summary>
         internal string SortHash(SortLevel level) =>

@@ -9,17 +9,14 @@
  */
 using System.Collections.Generic;
 using AngouriMath.Functions;
-using System;
 using AngouriMath.Core;
-using static AngouriMath.Entity.Number;
 using System.Linq;
-using System.Numerics;
 using FieldCacheNamespace;
 using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>
         /// This should NOT be called inside itself

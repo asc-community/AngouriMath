@@ -11,11 +11,10 @@ using System.Collections.Generic;
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity;
 using static AngouriMath.Core.FastExpression;
-using System;
 
 namespace AngouriMath
 {
-    public partial record Entity
+    partial record Entity
     {
         private protected virtual void CompileNode(Compiler compiler)
             => throw new UncompilableNodeException($"The node of type {GetType()} does not support compilation. Feel free to report it as an issue on our official repository.");

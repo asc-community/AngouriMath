@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 
 namespace AngouriMath.Functions
 {
     using static AngouriMath.Entity.Set;
-    using static Entity;
     partial class TreeAnalyzer
     {
         internal static IEnumerable<Entity> ApplyX2(FiniteSet oneSet, FiniteSet secondSet, Func<Entity, Entity, Entity> op)

@@ -8,30 +8,30 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 using AngouriMath.Core.Exceptions;
-using System;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>
-        /// Use this to verify whether it is safe to call <see cref="EvalBoolean"/>
+        /// Use this to verify whether it is safe to call <see cref="EvalNumerical"/>
         /// </summary>
-        public bool EvaluableBoolean => Evaled is Boolean;
+        public bool EvaluableNumerical => Evaled is Complex;
 
         /// <summary>
-        /// Evaluates a given expression to one boolean or throws exception
+        /// Evaluates a given expression to one number or throws exception
         /// </summary>
         /// <returns>
-        /// <see cref="Boolean"/>
+        /// <see cref="Complex"/> since new version
         /// </returns>
         /// <exception cref="CannotEvalException">
-        /// Thrown when this entity cannot be represented as a simple boolean.
-        /// <see cref="EvalBoolean"/> should be used to check beforehand.
+        /// Thrown when this entity cannot be represented as a simple number.
+        /// <see cref="EvaluableNumerical"/> should be used to check beforehand.
         /// </exception>
-        public Boolean EvalBoolean() =>
-            Evaled is Boolean value ? value :
+        public Complex EvalNumerical() =>
+            Evaled is Complex value ? value :
                 throw new CannotEvalException
-                    ($"Result cannot be represented as a simple boolean! Use {nameof(EvaluableBoolean)} to check beforehand.");
+                    ($"Result cannot be represented as a simple number! Use {nameof(EvaluableNumerical)} to check beforehand.");
     }
 }

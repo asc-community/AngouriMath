@@ -13,12 +13,11 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using AngouriMath.Extensions;
 using static AngouriMath.Core.FastExpression;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>
         /// Compile function so you can evaluate numerical value 15x faster,

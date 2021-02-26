@@ -10,10 +10,8 @@
 
 using AngouriMath.Core;
 using PeterO.Numbers;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace AngouriMath
 {

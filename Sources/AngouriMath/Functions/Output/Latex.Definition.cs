@@ -10,7 +10,7 @@
 namespace AngouriMath
 {
     using Core;
-    public abstract partial record Entity : ILatexiseable
+    partial record Entity : ILatexiseable
     {
         /// <summary>Returns the expression in LaTeX (for example, a / b -> \frac{a}{b})</summary>
         public abstract string Latexise();

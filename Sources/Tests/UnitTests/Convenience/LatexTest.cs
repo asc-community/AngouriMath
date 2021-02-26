@@ -162,7 +162,7 @@ namespace UnitTests.Convenience
         [Fact] public void Factorial1PI() => Test(@"\left(1 + i\right)!", MathS.Factorial(1 + MathS.i));
         [Fact] public void FactorialX() => Test(@"x!", MathS.Factorial(x));
         [Fact] public void FactorialSinX() => Test(@"\sin\left(x\right)!", MathS.Factorial(MathS.Sin(x)));
-        // x!! is the double factorial, (x!)! is factorial appplied twice which is different
+        // x!! is the double factorial, (x!)! is factorial applied twice which is different
         [Fact] public void FactorialFactorialX() => Test(@"\left(x!\right)!", MathS.Factorial(MathS.Factorial(x)));
         [Fact] public void OO() => Test(@"\infty ", Real.PositiveInfinity);
         [Fact] public void MOO() => Test(@"-\infty ", Real.NegativeInfinity);

@@ -12,7 +12,7 @@ using AngouriMath.Core.Exceptions;
 namespace AngouriMath
 {
     using SortLevel = Functions.TreeAnalyzer.SortLevel;
-    public abstract partial record Entity
+    partial record Entity
     {
         /// <summary>
         /// Returns the correct way for sort string

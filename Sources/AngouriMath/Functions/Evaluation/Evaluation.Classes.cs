@@ -8,15 +8,13 @@
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 using AngouriMath.Extensions;
-using AngouriMath.Functions;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath
 {
-    public abstract partial record Entity
+    partial record Entity
     {
         public partial record Variable
         {
@@ -55,6 +53,9 @@ namespace AngouriMath
         /// If no suitable case in switch found, it should return the default node, for example, for sum it would be
         /// <code>(a, b) => a + b</code>
         /// </param>
+        /// <param name="checkIfExactEvaled">
+        /// Check if the number is exact and, if so, return it.
+        /// </param>
         private Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
         {
             if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
@@ -92,7 +93,7 @@ namespace AngouriMath
                 (Tensor a, Tensor b) => a.Elementwise(b, ops),
                 (Tensor a, var b) => a.Elementwise(a => ops(a, b)),
                 (var a, Tensor b) => b.Elementwise(b => ops(a, b)),
-                (FiniteSet a, FiniteSet b) => new FiniteSet((a, b).EachForEach().Select(s => ops(s.Item1, s.Item2))),
+                (FiniteSet a, FiniteSet b) => new FiniteSet((a, b).EachForEach().Select(s => ops(s.left, s.right))),
                 (FiniteSet a, var b) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b) => b.Apply(b => ops(a, b)),
                 _ => defaultCtor(this, left, right)
@@ -163,7 +164,7 @@ namespace AngouriMath
                 (Tensor a, Tensor b, _) => a.Elementwise(b, ops),
                 (Tensor a, var b, _) => a.Elementwise(a => ops(a, b)),
                 (var a, Tensor b, _) => b.Elementwise(b => ops(a, b)),
-                (FiniteSet a, FiniteSet b, _) => new FiniteSet((a, b).EachForEach().Select(s => ops(s.Item1, s.Item2))),
+                (FiniteSet a, FiniteSet b, _) => new FiniteSet((a, b).EachForEach().Select(s => ops(s.left, s.right))),
                 (FiniteSet a, var b, _) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b, _) => b.Apply(b => ops(a, b)),
                 _ => defaultCtor(this, left, right, third)

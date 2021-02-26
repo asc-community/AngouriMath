@@ -1,7 +1,4 @@
-﻿using System;
-using Xunit;
-using System.Diagnostics;
-using System.Threading;
+﻿using Xunit;
 using AngouriMath.Extensions;
 
 namespace UnitTests.PatternsTest

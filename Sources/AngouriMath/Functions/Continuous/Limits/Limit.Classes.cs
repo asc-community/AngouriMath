@@ -280,12 +280,12 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
             {
-                var allLims = Cases.Select(c => (c.Expression.ComputeLimitDivideEtImpera(x, dist, side), c.Predicate));
-                if (allLims.Select(c => c.Item1 is null).Any())
+                var allLims = Cases.Select(c => (lim: c.Expression.ComputeLimitDivideEtImpera(x, dist, side), pred: c.Predicate));
+                if (allLims.Select(c => c.lim is null).Any())
                     return null;
                 return New(allLims.Select(
-                    c => c.Item1 is not null ? 
-                    new Providedf(c.Item1, c.Item2) : 
+                    c => c.lim is not null ? 
+                    new Providedf(c.lim, c.pred) : 
                     throw new AngouriBugException("It's been checked before")));
             }
         }
