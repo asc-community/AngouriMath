@@ -116,6 +116,7 @@ namespace AngouriMath.Functions.Algebra
     using AngouriMath.Core.Exceptions;
     using AngouriMath.Core.Multithreading;
     using Core;
+    using System;
     using static Entity;
     using static Entity.Number;
     internal static class LimitFunctional
@@ -146,17 +147,60 @@ namespace AngouriMath.Functions.Algebra
             return null;
         }
 
+        private static Entity EquivalenceRules(Entity expr, Variable x, Entity dest)
+            => expr switch
+            {
+                Sinf or Tanf or Arcsinf or Arctanf => expr.DirectChildren[0],
+                _ => expr
+            };
+
+        private static Entity FindEquivalence(Entity expr, Variable x, Entity dest)
+            => expr switch
+            {
+                Divf(var a, var b) div
+                    when a.Limit(x, dest).Evaled == 0 && b.Limit(x, dest).Evaled == 0
+                        => div.New(EquivalenceRules(a, x, dest), EquivalenceRules(b, x, dest)),
+
+                _ => expr
+            };
+        
         private static bool IsInfiniteNode(Entity expr)
             => expr.ContainsNode("+oo") || expr.ContainsNode("-oo"); // TODO: is it correct?
 
+        private static bool IsFiniteNode(Entity expr)
+            => !IsInfiniteNode(expr) && expr != MathS.NaN;
+
         private static Entity ApplylHopitalRule(Entity expr, Variable x, Entity dest)
+        {
+            if (expr is Divf(var num, var den))
+                if (num.Limit(x, dest).Evaled is var numLimit && den.Limit(x, dest).Evaled is var denLimit)
+                    if (numLimit == 0 && denLimit == 0 ||
+                            IsInfiniteNode(numLimit) && IsInfiniteNode(denLimit))
+                        if (num is not Number && den is not Number)
+                            if (num.ContainsNode(x) && den.ContainsNode(x))
+                            {
+                                var applied = num.Differentiate(x) / den.Differentiate(x);
+                                if (ComputeLimit(applied, x, dest) is { } resLim)
+                                    return resLim;
+                            }
+            return expr;
+        }
+
+        private static Entity ApplyTrivialTransformations(Entity expr, Variable x, Entity dest, Func<Entity, Entity, Entity> transformation)
             => expr switch
             {
-                Divf(var num, var den) 
-                    when num.Limit(x, dest).Evaled is var numLimit && den.Limit(x, dest).Evaled is var denLimit &&
-                        (numLimit == 0 && denLimit == 0 ||
-                         IsInfiniteNode(numLimit) && IsInfiniteNode(denLimit)) =>
-                             (num.Differentiate(x) / den.Differentiate(x)).Limit(x, dest),
+                Sumf(var a, var b)
+                    when ComputeLimit(a, x, dest) is { } aLim && ComputeLimit(b, x, dest) is { } bLim &&
+                        IsFiniteNode(aLim.Evaled) && IsFiniteNode(bLim.Evaled)
+                        => transformation(a, aLim) + transformation(b, bLim),
+                Minusf(var a, var b)
+                    when ComputeLimit(a, x, dest) is { } aLim && ComputeLimit(b, x, dest) is { } bLim &&
+                        IsFiniteNode(aLim.Evaled) && IsFiniteNode(bLim.Evaled)
+                        => transformation(a, aLim) - transformation(b, bLim),
+                Mulf(var a, var b)
+                    when ComputeLimit(a, x, dest) is { } aLim && ComputeLimit(b, x, dest) is { } bLim &&
+                        IsFiniteNode(aLim.Evaled) && IsFiniteNode(bLim.Evaled)
+                        => transformation(a, aLim) * transformation(b, bLim),
                 _ => expr
             };
 
@@ -166,7 +210,10 @@ namespace AngouriMath.Functions.Algebra
                 return expr.ComputeLimitDivideEtImpera(x, dest, side);
             if (side is ApproachFrom.BothSides)
             {
-                expr = expr.Replace(e => ApplylHopitalRule(e, x, dest)).InnerSimplified;
+                expr = ApplyTrivialTransformations(expr, x, dest, (_, exprLim) => exprLim);
+                expr = FindEquivalence(expr, x, dest);
+                expr = ApplylHopitalRule(expr, x, dest);
+                // expr = expr.Replace(e => ApplylHopitalRule(e, x, dest)).InnerSimplified;
                 MultithreadingFunctional.ExitIfCancelled();
                 if (!dest.IsFinite)
                     // just compute limit with no check for left/right equality

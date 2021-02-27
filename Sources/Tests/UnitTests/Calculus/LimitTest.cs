@@ -62,7 +62,7 @@ namespace UnitTests.Calculus
         [InlineData("arctan(2x) / x", "2")]
         [InlineData("arctan(a x) / x", "a")]
         [InlineData("arctan(a x) / (a x)", "1")]
-        [InlineData("(tan(a x) - sin(b x)) / (a x)", "1 + -(b / a)")]
+        [InlineData("(tan(a x) - sin(b x)) / (a x)", "(a - b) / a")]
         [InlineData("sin(a^x - 1) / tan(b^x - 1)", "ln(a) / ln(b)")]
         [InlineData("(1 - cos(x)) / x2", "1/2")]
         [InlineData("((1 + x)^4 - 1) / x", "4")]

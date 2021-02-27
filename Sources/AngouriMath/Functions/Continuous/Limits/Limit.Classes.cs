@@ -67,8 +67,16 @@ namespace AngouriMath
                     return lim;
                 else
                 {
-                    var dividend = Dividend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Dividend;
-                    var divisor = Divisor.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Divisor;
+                    var (dividend, divisor) =
+                        (Dividend.ComputeLimitDivideEtImpera(x, dist, side), Divisor.ComputeLimitDivideEtImpera(x, dist, side)) switch
+                        {
+                            ({ IsFinite: true } lim1, { IsFinite: true } lim2) => (lim1, lim2),
+                            (_, { } l2) when !Dividend.ContainsNode(x) => (Dividend, l2),
+                            ({ } l1, _) when !Divisor.ContainsNode(x) => (l1, Divisor),
+                            ({ IsFinite: true } lim1, { } exp) => (lim1, exp),
+                            ({ } bas, { IsFinite: true } lim2) => (bas, lim2),
+                            _ => (Dividend, Divisor)
+                        };
                     return ComputeLimitImpl(New(dividend, divisor), x, dist, side);
                 }
             }
@@ -165,9 +173,16 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Base.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Base,
-                    Exponent.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Exponent),
+                : ComputeLimitImpl(
+                    (Base.ComputeLimitDivideEtImpera(x, dist, side), Exponent.ComputeLimitDivideEtImpera(x, dist, side))
+                    switch {
+                        ({ IsFinite: true } lim1, { IsFinite: true } lim2) => New(lim1, lim2),
+                        (_, { } l2) when !Base.ContainsNode(x) => New(Base, l2),
+                        ({ } l1, _) when !Exponent.ContainsNode(x) => New(l1, Exponent),
+                        ({ IsFinite: true } lim1, { } exp) => New(lim1, exp),
+                        ({ } bas, { IsFinite: true } lim2) => New(bas, lim2),
+                        _ => New(Base, Exponent)
+                    },
                     x, dist, side);
         }
 

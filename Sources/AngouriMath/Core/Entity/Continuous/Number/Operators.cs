@@ -607,7 +607,7 @@ namespace AngouriMath
             }
 
             /// <summary>Calculates the exact value of arccotangent of num</summary>
-            public static Complex Arccotan(Complex num) => Arctan(1 / num);
+            public static Complex Arccotan(Complex num) => num == 0 ? MathS.DecimalConst.pi / 2 : Arctan(1 / num);
 
             // From https://github.com/eobermuhlner/big-math/blob/ba75e9a80f040224cfeef3c2ac06390179712443/ch.obermuhlner.math.big/src/main/java/ch/obermuhlner/math/big/BigComplexMath.java
             /// 

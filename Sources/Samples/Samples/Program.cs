@@ -106,7 +106,8 @@ using static System.Console;
 
 // (t - sin(t)) / (t3)
 
-WriteLine("(a t - b sin(c t)) / t".Limit("t", 0));
+// WriteLine("(3t)^(2t2)".Limit("t", 0));
+WriteLine("arccotan(0)".EvalNumerical());
 
 
 //WriteLine("sin(t) / t".Limit("t", 0).Simplify());

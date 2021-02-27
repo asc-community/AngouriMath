@@ -91,7 +91,7 @@ namespace AngouriMath
         public sealed partial record Divf(Entity Dividend, Entity Divisor) : NumericNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            private Divf New(Entity dividend, Entity divisor) =>
+            internal Divf New(Entity dividend, Entity divisor) =>
                 ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor);
             internal override Priority Priority => Priority.Div;
             /// <inheritdoc/>
