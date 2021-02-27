@@ -101,4 +101,9 @@ using static System.Console;
 // WriteLine("x!!".ToEntity());
 
 // WriteLine(Series.TaylorExpansion("a t3 + b t2 + c t + d", "t", "x", "0", 4));
-WriteLine("sqrt(x - 1) / e ^ (x - 1) + sin(x)".Differentiate("x").Differentiate("x").Differentiate("x").Differentiate("x").Differentiate("x"));
+// WriteLine("sqrt(x - 1) / e ^ (x - 1) + sin(x)".Differentiate("x").Differentiate("x").Differentiate("x").Differentiate("x").Differentiate("x"));
+
+// (t - sin(t)) / (t3)
+
+WriteLine("(t - sin(t)) / (t3)".Limit("t", 0).Simplify());
+//WriteLine("sin(t) / t".Limit("t", 0).Simplify());
