@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.MathS;
+using static AngouriMath.MathS.TrigonometricHyperpolic;
 using static System.Console;
 
 //WriteLine(@"(x15 - 3^15 - 15 3^14(x - 3)) / (x - 3)2".Limit("x", "3", AngouriMath.Core.ApproachFrom.Left));
@@ -105,5 +106,7 @@ using static System.Console;
 
 // (t - sin(t)) / (t3)
 
-WriteLine("(t - sin(t)) / (t3)".Limit("t", 0).Simplify());
+WriteLine("(a t - b sin(c t)) / t".Limit("t", 0));
+
+
 //WriteLine("sin(t) / t".Limit("t", 0).Simplify());

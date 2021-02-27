@@ -3,8 +3,8 @@
         <OutputType>Library</OutputType>
         <TargetFramework>netstandard2.0</TargetFramework>
         <Authors>WhiteBlackGoose</Authors>
-        <Company>Angourisoft</Company>
-        <Copyright>Angourisoft</Copyright>
+        <Company>Angouri</Company>
+        <Copyright>Angouri</Copyright>
         <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
         <AssemblyVersion>0.1.2.0</AssemblyVersion>
         <FileVersion>0.1.2.0</FileVersion>
@@ -44,7 +44,7 @@ Preview 6: Multithreading, casts for numbers added. AngouriMathBaseException is 
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.8.0" />
+    <PackageReference Include="Antlr4.Runtime.Standard" Version="4.9.1" />
     <PackageReference Include="FieldCache" Version="1.0.0-alpha.3" />
     <PackageReference Include="GenericTensor" Version="0.1.2.1" />
     <PackageReference Include="PeterO.Numbers" Version="1.7.4" />
