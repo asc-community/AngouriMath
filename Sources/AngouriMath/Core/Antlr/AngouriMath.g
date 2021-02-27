@@ -87,7 +87,7 @@ Numerical nodes
 */
 
 unary_expression returns[Entity value]
-    : ('-' p = power_expression { $value = -$p.value; } | 
+    : ('-' p = power_expression { $value = $p.value is Number num ? -num : -$p.value; } | 
        '+' p = power_expression { $value = $p.value; })
     | ('-' u = unary_expression { $value = -$u.value; } | 
        '+' u = unary_expression { $value = $u.value; })

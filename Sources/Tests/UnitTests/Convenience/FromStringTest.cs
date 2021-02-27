@@ -8,6 +8,7 @@ using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 using static AngouriMath.MathS;
+using AngouriMath.Extensions;
 
 namespace UnitTests.Convenience
 {
@@ -185,6 +186,10 @@ namespace UnitTests.Convenience
         [Fact] public void TestPowerUnary3() => Assert.Equal(Pow(x, -Pow(x, x)), FromString("x^ -x^x"));
         [Fact] public void TestPiecewise1() => Assert.Equal(Piecewise((x, y), (y, x), (x + 2, y + 2)), FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2)"));
         [Fact] public void TestPiecewise2() => Assert.Equal(Piecewise(new[] { new Providedf(x, y), new Providedf(y, x), new Providedf(x + 2, y + 2) }, 3), FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2, 3)"));
+        [Fact] public void TestNegativeNumberParsing1() => Assert.Equal(-1, FromString("-1"));
+        [Fact] public void TestNegativeNumberParsing2() => Assert.Equal(-234.2m, FromString("-234.2"));
+        [Fact] public void TestNegativeNumberParsing3() => Assert.Equal(234.2m, FromString("+234.2"));
+        [Fact] public void TestNegativeNumberParsing4() => Assert.Equal((Entity)(-1).ToNumber() * (Entity)(-2).ToNumber(), FromString("--2"));
 
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {
@@ -235,3 +240,4 @@ namespace UnitTests.Convenience
         }
     }
 }
+

@@ -1,11 +1,8 @@
-/*
- * Copyright (c) 2019-2020 Angourisoft
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+/* 
+ * Copyright (c) 2019-2021 Angouri.
+ * AngouriMath is licensed under MIT. 
+ * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+ * Website: https://am.angouri.org.
  */
 using System;
 using System.Collections.Generic;
@@ -340,6 +337,72 @@ namespace AngouriMath
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public static Entity Arccosech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) + 1));
+        }
+
+        /// <summary>
+        /// That is a collection of some series, expressed in a symbolic form
+        /// </summary>
+        public static class Series
+        {
+            /// <summary>
+            /// Finds the symbolic expression of terms of the Taylor expansion of the given function,
+            /// https://en.wikipedia.org/wiki/Taylor_series
+            /// 
+            /// Do NOT call ToArray() or anything like this on the result of this method. It is 
+            /// infinite iterator. To get a finite result as in a sum of finite number of terms,
+            /// call TaylorExpansion
+            /// </summary>
+            /// <param name="expr">
+            /// The function, to find Taylor expansion of
+            /// </param>
+            /// <param name="exprVariable">
+            /// The variable of this function
+            /// (e. g. if you have expr = Sin("t"), then you may want to use "t" for this argument)
+            /// </param>
+            /// <param name="polyVariable">
+            /// The variable over which you want to see the series
+            /// (e. g. if you want to see the result as f(...) + f(...) * x / ... + f(...) * x^2 / ...,
+            /// then you may want to use "x" for this argument)
+            /// </param>
+            /// <param name="point">
+            /// The point to differentiate the function at. If it equals 0, you will get
+            /// Maclaurin series.
+            /// </param>
+            /// <returns>
+            /// An infinite iterator over the terms of Taylor series of the given expression.
+            /// </returns>
+            public static IEnumerable<Entity> TaylorExpansionTerms(Entity expr, Variable exprVariable, Variable polyVariable, Entity point)
+                => Functions.Series.TaylorExpansionTerms(expr, exprVariable, polyVariable, point);
+
+
+            /// <summary>
+            /// Finds the symbolic expression the Taylor expansion of the given function,
+            /// https://en.wikipedia.org/wiki/Taylor_series
+            /// </summary>
+            /// <param name="expr">
+            /// The function, to find Taylor expansion of
+            /// </param>
+            /// <param name="exprVariable">
+            /// The variable of this function
+            /// (e. g. if you have expr = Sin("t"), then you may want to use "t" for this argument)
+            /// </param>
+            /// <param name="polyVariable">
+            /// The variable over which you want to see the series
+            /// (e. g. if you want to see the result as f(...) + f(...) * x / ... + f(...) * x^2 / ...,
+            /// then you may want to use "x" for this argument)
+            /// </param>
+            /// <param name="point">
+            /// The point to differentiate the function at. If it equals 0, you will get
+            /// Maclaurin series.
+            /// </param>
+            /// <param name="termCount">
+            /// The number of terms you want to get
+            /// </param>
+            /// <returns>
+            /// An expression in the polynomial form over <paramref name="polyVariable"/>
+            /// </returns>
+            public static Entity TaylorExpansion(Entity expr, Variable exprVariable, Variable polyVariable, Entity point, int termCount)
+                => Functions.Series.TaylorExpansion(expr, exprVariable, polyVariable, point, termCount);
         }
 
 

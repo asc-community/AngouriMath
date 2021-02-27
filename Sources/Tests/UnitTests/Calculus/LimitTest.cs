@@ -4,7 +4,7 @@ using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
 
-namespace UnitTests.Algebra
+namespace UnitTests.Calculus
 {
     public sealed class Limits
     {

@@ -419,7 +419,7 @@ internal partial class AngouriMathParser : Parser {
 					{
 					State = 84; Match(T__2);
 					State = 85; _localctx.p = power_expression();
-					 _localctx.value =  -_localctx.p.value; 
+					 _localctx.value =  _localctx.p.value is Number num ? -num : -_localctx.p.value; 
 					}
 					break;
 				case T__3:
