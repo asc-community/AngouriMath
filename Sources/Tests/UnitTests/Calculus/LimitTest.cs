@@ -93,6 +93,7 @@ namespace UnitTests.Calculus
         [InlineData("(1 + a/x)^x", "e^a")]
         [InlineData("(1 + a/x)^(b x)", "e^(a * b)")]
         [InlineData("(1 + a/(2x))^(b x + c x)", "e^(a * (b + c) / 2)")]
+        [InlineData("e^x / x", "+oo")]
         public void TestEquivalenceTableToInfinity(string input, string expected)
         {
             var limit = input.ToEntity();
