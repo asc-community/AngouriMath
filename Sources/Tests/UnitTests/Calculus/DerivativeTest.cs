@@ -2,7 +2,7 @@
 using AngouriMath.Extensions;
 using Xunit;
 
-namespace UnitTests.Algebra
+namespace UnitTests.Calculus
 {
     public sealed class DerivativeTest
     {

@@ -1,11 +1,8 @@
-/*
- * Copyright (c) 2019-2020 Angourisoft
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+/* 
+ * Copyright (c) 2019-2021 Angouri.
+ * AngouriMath is licensed under MIT. 
+ * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+ * Website: https://am.angouri.org.
  */
 using System;
 using System.Collections.Generic;
@@ -610,7 +607,7 @@ namespace AngouriMath
             }
 
             /// <summary>Calculates the exact value of arccotangent of num</summary>
-            public static Complex Arccotan(Complex num) => Arctan(1 / num);
+            public static Complex Arccotan(Complex num) => num == 0 ? MathS.DecimalConst.pi / 2 : Arctan(1 / num);
 
             // From https://github.com/eobermuhlner/big-math/blob/ba75e9a80f040224cfeef3c2ac06390179712443/ch.obermuhlner.math.big/src/main/java/ch/obermuhlner/math/big/BigComplexMath.java
             /// 

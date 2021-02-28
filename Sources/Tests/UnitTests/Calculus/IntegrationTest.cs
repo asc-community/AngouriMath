@@ -2,7 +2,7 @@
 using Xunit;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Algebra
+namespace UnitTests.Calculus
 {
     public sealed class IntegrationTest
     {

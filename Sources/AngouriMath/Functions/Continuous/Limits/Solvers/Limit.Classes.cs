@@ -1,13 +1,9 @@
-﻿/*
- * Copyright (c) 2019-2020 Angourisoft
- * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+﻿/* 
+ * Copyright (c) 2019-2021 Angouri.
+ * AngouriMath is licensed under MIT. 
+ * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+ * Website: https://am.angouri.org.
  */
-
 namespace AngouriMath
 {
     using AngouriMath.Core.Exceptions;
@@ -55,12 +51,25 @@ namespace AngouriMath
 
         partial record Mulf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Multiplier.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Multiplier,
-                    Multiplicand.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Multiplicand),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (ComputeLimitImpl(this, x, dist, side) is { } lim)
+                    return lim;
+                else
+                {
+                    var (mp, md) =
+                        (Multiplier.ComputeLimitDivideEtImpera(x, dist, side), Multiplicand.ComputeLimitDivideEtImpera(x, dist, side)) switch
+                        {
+                            ({ IsFinite: true } lim1, { IsFinite: true } lim2) => (lim1, lim2),
+                            (_, { } l2) when !Multiplier.ContainsNode(x) => (Multiplier, l2),
+                            ({ } l1, _) when !Multiplicand.ContainsNode(x) => (l1, Multiplicand),
+                            ({ IsFinite: true } lim1, { } exp) => (lim1, exp),
+                            ({ } bas, { IsFinite: true } lim2) => (bas, lim2),
+                            _ => (Multiplier, Multiplicand)
+                        };
+                    return ComputeLimitImpl(New(mp, md), x, dist, side);
+                }
+            }
         }
 
         partial record Divf
@@ -71,8 +80,16 @@ namespace AngouriMath
                     return lim;
                 else
                 {
-                    var dividend = Dividend.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Dividend;
-                    var divisor = Divisor.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Divisor;
+                    var (dividend, divisor) =
+                        (Dividend.ComputeLimitDivideEtImpera(x, dist, side), Divisor.ComputeLimitDivideEtImpera(x, dist, side)) switch
+                        {
+                            ({ IsFinite: true } lim1, { IsFinite: true } lim2) => (lim1, lim2),
+                            (_, { } l2) when !Dividend.ContainsNode(x) => (Dividend, l2),
+                            ({ } l1, _) when !Divisor.ContainsNode(x) => (l1, Divisor),
+                            ({ IsFinite: true } lim1, { } exp) => (lim1, exp),
+                            ({ } bas, { IsFinite: true } lim2) => (bas, lim2),
+                            _ => (Dividend, Divisor)
+                        };
                     return ComputeLimitImpl(New(dividend, divisor), x, dist, side);
                 }
             }
@@ -169,9 +186,16 @@ namespace AngouriMath
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Base.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Base,
-                    Exponent.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Exponent),
+                : ComputeLimitImpl(
+                    (Base.ComputeLimitDivideEtImpera(x, dist, side), Exponent.ComputeLimitDivideEtImpera(x, dist, side))
+                    switch {
+                        ({ IsFinite: true } lim1, { IsFinite: true } lim2) => New(lim1, lim2),
+                        (_, { } l2) when !Base.ContainsNode(x) => New(Base, l2),
+                        ({ } l1, _) when !Exponent.ContainsNode(x) => New(l1, Exponent),
+                        ({ IsFinite: true } lim1, { } exp) => New(lim1, exp),
+                        ({ } bas, { IsFinite: true } lim2) => New(bas, lim2),
+                        _ => New(Base, Exponent)
+                    },
                     x, dist, side);
         }
 

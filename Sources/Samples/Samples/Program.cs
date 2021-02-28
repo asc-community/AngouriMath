@@ -11,6 +11,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
+using static AngouriMath.MathS;
+using static AngouriMath.MathS.Hyperbolic;
 using static System.Console;
 
 //WriteLine(@"(x15 - 3^15 - 15 3^14(x - 3)) / (x - 3)2".Limit("x", "3", AngouriMath.Core.ApproachFrom.Left));
@@ -97,4 +99,16 @@ using static System.Console;
 //WriteLine(abs.Substitute("x", 3).EvalNumerical());
 //WriteLine(abs.Substitute("x", -3).EvalNumerical());
 
-WriteLine("x!!".ToEntity());
+// WriteLine("x!!".ToEntity());
+
+// WriteLine(Series.TaylorExpansion("a t3 + b t2 + c t + d", "t", "x", "0", 4));
+// WriteLine("sqrt(x - 1) / e ^ (x - 1) + sin(x)".Differentiate("x").Differentiate("x").Differentiate("x").Differentiate("x").Differentiate("x"));
+
+// (t - sin(t)) / (t3)
+
+// WriteLine("(3t)^(2t2)".Limit("t", 0));
+// WriteLine("arccotan(0)".EvalNumerical());
+
+var r = "e^x / x".Limit("x", "+oo");
+WriteLine(r);
+//WriteLine("sin(t) / t".Limit("t", 0).Simplify());

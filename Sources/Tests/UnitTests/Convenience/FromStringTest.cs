@@ -8,6 +8,7 @@ using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 using static AngouriMath.MathS;
+using AngouriMath.Extensions;
 
 namespace UnitTests.Convenience
 {
@@ -149,15 +150,15 @@ namespace UnitTests.Convenience
         [InlineData("coth", "Cotanh")]
         [InlineData("sech", "Sech")]
         [InlineData("csch", "Cosech")]
-        [InlineData("asinh", "Arcsinh")]
-        [InlineData("acosh", "Arccosh")]
-        [InlineData("atanh", "Arctanh")]
-        [InlineData("acoth", "Arccotanh")]
-        [InlineData("asech", "Arcsech")]
-        [InlineData("acsch", "Arccosech")]
+        [InlineData("asinh", "Arsinh")]
+        [InlineData("acosh", "Arcosh")]
+        [InlineData("atanh", "Artanh")]
+        [InlineData("acoth", "Arcotanh")]
+        [InlineData("asech", "Arsech")]
+        [InlineData("acsch", "Arcosech")]
         public void TestHyperbolic(string parsedName, string methodName)
         {
-            var methods = typeof(MathS.TrigonometricHyperpolic).GetMethods();
+            var methods = typeof(MathS.Hyperbolic).GetMethods();
             var withMethods = methods.Where(c => c.Name == methodName);
             if (withMethods.Count() != 1)
                 throw new InvalidOperationException($"Incorrect method's name: {methodName}");
@@ -185,6 +186,10 @@ namespace UnitTests.Convenience
         [Fact] public void TestPowerUnary3() => Assert.Equal(Pow(x, -Pow(x, x)), FromString("x^ -x^x"));
         [Fact] public void TestPiecewise1() => Assert.Equal(Piecewise((x, y), (y, x), (x + 2, y + 2)), FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2)"));
         [Fact] public void TestPiecewise2() => Assert.Equal(Piecewise(new[] { new Providedf(x, y), new Providedf(y, x), new Providedf(x + 2, y + 2) }, 3), FromString("piecewise(x provided y, y provided x, x + 2 provided y + 2, 3)"));
+        [Fact] public void TestNegativeNumberParsing1() => Assert.Equal(-1, FromString("-1"));
+        [Fact] public void TestNegativeNumberParsing2() => Assert.Equal(-234.2m, FromString("-234.2"));
+        [Fact] public void TestNegativeNumberParsing3() => Assert.Equal(234.2m, FromString("+234.2"));
+        [Fact] public void TestNegativeNumberParsing4() => Assert.Equal((Entity)(-1).ToNumber() * (Entity)(-2).ToNumber(), FromString("--2"));
 
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {
@@ -235,3 +240,4 @@ namespace UnitTests.Convenience
         }
     }
 }
+
