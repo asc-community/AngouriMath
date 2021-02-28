@@ -154,7 +154,7 @@ namespace AngouriMath.Functions.Algebra
                 _ => expr
             };
 
-        private static Entity FindEquivalence(Entity expr, Variable x, Entity dest)
+        private static Entity ApplyFirstRemarkable(Entity expr, Variable x, Entity dest)
             => expr switch
             {
                 Divf(var a, var b) div
@@ -163,7 +163,21 @@ namespace AngouriMath.Functions.Algebra
 
                 _ => expr
             };
-        
+
+        private static Entity ApplySecondRemarkable(Entity expr, Variable x, Entity dest)
+            => expr switch
+            {
+                // f(x)^g(x) for f(x) -> 1, g(x) -> +oo
+                // => (1 + (f(x) - 1)) ^ g(x) = ((1 - (f(x) - 1)) ^ (1 / (f(x) - 1))) ^ (g(x) (f(x) - 1))
+                // e ^ (g(x) * (f(x) - 1))
+                Powf(var xPlusOne, var xPower) when
+                xPlusOne.ContainsNode(x) && xPower.ContainsNode(x) &&
+                (xPlusOne - 1).Limit(x, dest).Evaled == 0 && IsInfiniteNode(xPower.Limit(x, dest)) =>
+                MathS.e.Pow(xPower * (xPlusOne - 1)),
+
+                _ => expr
+            };
+
         private static bool IsInfiniteNode(Entity expr)
             => expr.ContainsNode("+oo") || expr.ContainsNode("-oo"); // TODO: is it correct?
 
@@ -220,9 +234,11 @@ namespace AngouriMath.Functions.Algebra
             {
                 expr = expr.Replace(a => TrivialTrigonometricReplacement(a, x));
                 expr = ApplyTrivialTransformations(expr, x, dest, (_, exprLim) => exprLim);
-                expr = FindEquivalence(expr, x, dest);
+                expr = ApplyFirstRemarkable(expr, x, dest);
+                expr = ApplySecondRemarkable(expr, x, dest);
                 expr = ApplylHopitalRule(expr, x, dest);
                 
+
                 MultithreadingFunctional.ExitIfCancelled();
                 if (!dest.IsFinite)
                     // just compute limit with no check for left/right equality
