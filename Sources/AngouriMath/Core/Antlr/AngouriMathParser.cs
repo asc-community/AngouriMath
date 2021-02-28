@@ -2229,7 +2229,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 542; Match(T__70);
 				State = 543; _localctx.args = function_arguments();
 				State = 544; Match(T__36);
-				 Assert("sin", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Sinh(_localctx.args.list[0]); 
+				 Assert("sin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Sinh(_localctx.args.list[0]); 
 				}
 				break;
 			case 45:
@@ -2238,7 +2238,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 547; Match(T__71);
 				State = 548; _localctx.args = function_arguments();
 				State = 549; Match(T__36);
-				 Assert("cos", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Cosh(_localctx.args.list[0]); 
+				 Assert("cos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cosh(_localctx.args.list[0]); 
 				}
 				break;
 			case 46:
@@ -2247,7 +2247,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 552; Match(T__72);
 				State = 553; _localctx.args = function_arguments();
 				State = 554; Match(T__36);
-				 Assert("tan", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Tanh(_localctx.args.list[0]); 
+				 Assert("tan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Tanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 47:
@@ -2256,7 +2256,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 557; Match(T__73);
 				State = 558; _localctx.args = function_arguments();
 				State = 559; Match(T__36);
-				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Cotanh(_localctx.args.list[0]); 
+				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 48:
@@ -2265,7 +2265,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 562; Match(T__74);
 				State = 563; _localctx.args = function_arguments();
 				State = 564; Match(T__36);
-				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Cotanh(_localctx.args.list[0]); 
+				 Assert("cotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 49:
@@ -2274,7 +2274,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 567; Match(T__75);
 				State = 568; _localctx.args = function_arguments();
 				State = 569; Match(T__36);
-				 Assert("sec", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Sech(_localctx.args.list[0]); 
+				 Assert("sec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Sech(_localctx.args.list[0]); 
 				}
 				break;
 			case 50:
@@ -2283,7 +2283,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 572; Match(T__76);
 				State = 573; _localctx.args = function_arguments();
 				State = 574; Match(T__36);
-				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Cosech(_localctx.args.list[0]); 
+				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 51:
@@ -2292,7 +2292,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 577; Match(T__77);
 				State = 578; _localctx.args = function_arguments();
 				State = 579; Match(T__36);
-				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Cosech(_localctx.args.list[0]); 
+				 Assert("cosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Cosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 52:
@@ -2301,7 +2301,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 582; Match(T__78);
 				State = 583; _localctx.args = function_arguments();
 				State = 584; Match(T__36);
-				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arcsinh(_localctx.args.list[0]); 
+				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsinh(_localctx.args.list[0]); 
 				}
 				break;
 			case 53:
@@ -2310,7 +2310,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 587; Match(T__79);
 				State = 588; _localctx.args = function_arguments();
 				State = 589; Match(T__36);
-				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arccosh(_localctx.args.list[0]); 
+				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosh(_localctx.args.list[0]); 
 				}
 				break;
 			case 54:
@@ -2319,7 +2319,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 592; Match(T__80);
 				State = 593; _localctx.args = function_arguments();
 				State = 594; Match(T__36);
-				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arctanh(_localctx.args.list[0]); 
+				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Artanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 55:
@@ -2328,7 +2328,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 597; Match(T__81);
 				State = 598; _localctx.args = function_arguments();
 				State = 599; Match(T__36);
-				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arccotanh(_localctx.args.list[0]); 
+				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 56:
@@ -2337,7 +2337,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 602; Match(T__82);
 				State = 603; _localctx.args = function_arguments();
 				State = 604; Match(T__36);
-				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arcsech(_localctx.args.list[0]); 
+				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsech(_localctx.args.list[0]); 
 				}
 				break;
 			case 57:
@@ -2346,7 +2346,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 607; Match(T__83);
 				State = 608; _localctx.args = function_arguments();
 				State = 609; Match(T__36);
-				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arccosech(_localctx.args.list[0]); 
+				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 58:
@@ -2355,7 +2355,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 612; Match(T__84);
 				State = 613; _localctx.args = function_arguments();
 				State = 614; Match(T__36);
-				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arccosech(_localctx.args.list[0]); 
+				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 59:
@@ -2364,7 +2364,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 617; Match(T__85);
 				State = 618; _localctx.args = function_arguments();
 				State = 619; Match(T__36);
-				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arccosech(_localctx.args.list[0]); 
+				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 60:
@@ -2373,7 +2373,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 622; Match(T__86);
 				State = 623; _localctx.args = function_arguments();
 				State = 624; Match(T__36);
-				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arcsinh(_localctx.args.list[0]); 
+				 Assert("arcsin", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsinh(_localctx.args.list[0]); 
 				}
 				break;
 			case 61:
@@ -2382,7 +2382,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 627; Match(T__87);
 				State = 628; _localctx.args = function_arguments();
 				State = 629; Match(T__36);
-				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arccosh(_localctx.args.list[0]); 
+				 Assert("arccos", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosh(_localctx.args.list[0]); 
 				}
 				break;
 			case 62:
@@ -2391,7 +2391,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 632; Match(T__88);
 				State = 633; _localctx.args = function_arguments();
 				State = 634; Match(T__36);
-				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arctanh(_localctx.args.list[0]); 
+				 Assert("arctan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Artanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 63:
@@ -2400,7 +2400,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 637; Match(T__89);
 				State = 638; _localctx.args = function_arguments();
 				State = 639; Match(T__36);
-				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arccotanh(_localctx.args.list[0]); 
+				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 64:
@@ -2409,7 +2409,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 642; Match(T__90);
 				State = 643; _localctx.args = function_arguments();
 				State = 644; Match(T__36);
-				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arcsech(_localctx.args.list[0]); 
+				 Assert("arcsec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arsech(_localctx.args.list[0]); 
 				}
 				break;
 			case 65:
@@ -2418,7 +2418,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 647; Match(T__91);
 				State = 648; _localctx.args = function_arguments();
 				State = 649; Match(T__36);
-				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arccosech(_localctx.args.list[0]); 
+				 Assert("arccosec", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcosech(_localctx.args.list[0]); 
 				}
 				break;
 			case 66:
@@ -2427,7 +2427,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 652; Match(T__92);
 				State = 653; _localctx.args = function_arguments();
 				State = 654; Match(T__36);
-				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arccotanh(_localctx.args.list[0]); 
+				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 67:
@@ -2436,7 +2436,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 657; Match(T__93);
 				State = 658; _localctx.args = function_arguments();
 				State = 659; Match(T__36);
-				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.TrigonometricHyperpolic.Arccotanh(_localctx.args.list[0]); 
+				 Assert("arccotan", 1, _localctx.args.list.Count); _localctx.value =  MathS.Hyperbolic.Arcotanh(_localctx.args.list[0]); 
 				}
 				break;
 			case 68:

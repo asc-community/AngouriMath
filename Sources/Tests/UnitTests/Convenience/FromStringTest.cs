@@ -158,7 +158,7 @@ namespace UnitTests.Convenience
         [InlineData("acsch", "Arccosech")]
         public void TestHyperbolic(string parsedName, string methodName)
         {
-            var methods = typeof(MathS.TrigonometricHyperpolic).GetMethods();
+            var methods = typeof(MathS.Hyperbolic).GetMethods();
             var withMethods = methods.Where(c => c.Name == methodName);
             if (withMethods.Count() != 1)
                 throw new InvalidOperationException($"Incorrect method's name: {methodName}");

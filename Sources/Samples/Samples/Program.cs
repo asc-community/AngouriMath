@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.MathS;
-using static AngouriMath.MathS.TrigonometricHyperpolic;
+using static AngouriMath.MathS.Hyperbolic;
 using static System.Console;
 
 //WriteLine(@"(x15 - 3^15 - 15 3^14(x - 3)) / (x - 3)2".Limit("x", "3", AngouriMath.Core.ApproachFrom.Left));

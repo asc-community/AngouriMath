@@ -68,7 +68,7 @@ namespace UnitTests.Calculus
         [InlineData("((1 + x)^4 - 1) / x", "4")]
         [InlineData("((1 + x)^a - 1) / x", "a")]
         [InlineData("((1 + c x2 + b x)^a - 1)", "0")]
-        [InlineData("sin(x - a * x) / tan(b * x - x)", "(a - 1) / (1 - b)")]
+        [InlineData("sin(x - a * x) / tan(b * x - x)", "(1 - a) / (b - 1)")]
         [InlineData("sin(x2) / sin(x)", "0")]
         [InlineData("(sin(x) - tan(a x)) / (sin(b x) - tan(x))", "(a - 1) / (1 - b)")]
         [InlineData("sec(x)", "1")]

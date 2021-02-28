@@ -204,16 +204,25 @@ namespace AngouriMath.Functions.Algebra
                 _ => expr
             };
 
+        private static Entity TrivialTrigonometricReplacement(Entity expr, Variable x)
+            => expr switch
+            {
+                Secantf(var arg) when arg.ContainsNode(x) => 1 / MathS.Cos(arg),
+                Cosecantf(var arg) when arg.ContainsNode(x) => 1 / MathS.Sin(arg),
+                _ => expr
+            };
+
         public static Entity? ComputeLimit(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides)
         {
             if (side is ApproachFrom.Left or ApproachFrom.Right)
                 return expr.ComputeLimitDivideEtImpera(x, dest, side);
             if (side is ApproachFrom.BothSides)
             {
+                expr = expr.Replace(a => TrivialTrigonometricReplacement(a, x));
                 expr = ApplyTrivialTransformations(expr, x, dest, (_, exprLim) => exprLim);
                 expr = FindEquivalence(expr, x, dest);
                 expr = ApplylHopitalRule(expr, x, dest);
-                // expr = expr.Replace(e => ApplylHopitalRule(e, x, dest)).InnerSimplified;
+                
                 MultithreadingFunctional.ExitIfCancelled();
                 if (!dest.IsFinite)
                     // just compute limit with no check for left/right equality

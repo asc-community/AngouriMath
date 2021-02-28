@@ -288,7 +288,7 @@ namespace AngouriMath
         /// <summary>
         /// Represents a few hyperbolic functions
         /// </summary>
-        public static class TrigonometricHyperpolic
+        public static class Hyperbolic
         {
             /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -316,27 +316,27 @@ namespace AngouriMath
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static Entity Arcsinh(Entity x) => Ln(x + Sqrt(x.Pow(2) + 1));
+            public static Entity Arsinh(Entity x) => Ln(x + Sqrt(x.Pow(2) + 1));
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static Entity Arccosh(Entity x) => Ln(x + Sqrt(x.Pow(2) - 1));
+            public static Entity Arcosh(Entity x) => Ln(x + Sqrt(x.Pow(2) - 1));
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static Entity Arctanh(Entity x) => 0.5 * Ln((1 + x) / (1 - x));
+            public static Entity Artanh(Entity x) => 0.5 * Ln((1 + x) / (1 - x));
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static Entity Arccotanh(Entity x) => 0.5 * Ln((1 - x) / (1 + x));
+            public static Entity Arcotanh(Entity x) => 0.5 * Ln((1 - x) / (1 + x));
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static Entity Arcsech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) - 1));
+            public static Entity Arsech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) - 1));
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public static Entity Arccosech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) + 1));
+            public static Entity Arcosech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) + 1));
         }
 
         /// <summary>
@@ -1107,7 +1107,7 @@ namespace AngouriMath
             => new Limitf(expr, var, dest, approach);
 
         /// <summary>Some non-symbolic constants</summary>
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles",
+        [SuppressMessage("Style", "IDE1006:Naming Styles",
             Justification = "Lowercase constants as written in Mathematics")]
         public static class DecimalConst
         {

@@ -51,12 +51,25 @@ namespace AngouriMath
 
         partial record Mulf
         {
-            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
-                ComputeLimitImpl(this, x, dist, side) is { } lim ? lim
-                : ComputeLimitImpl(New(
-                    Multiplier.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 ? lim1 : Multiplier,
-                    Multiplicand.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 ? lim2 : Multiplicand),
-                    x, dist, side);
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+            {
+                if (ComputeLimitImpl(this, x, dist, side) is { } lim)
+                    return lim;
+                else
+                {
+                    var (mp, md) =
+                        (Multiplier.ComputeLimitDivideEtImpera(x, dist, side), Multiplicand.ComputeLimitDivideEtImpera(x, dist, side)) switch
+                        {
+                            ({ IsFinite: true } lim1, { IsFinite: true } lim2) => (lim1, lim2),
+                            (_, { } l2) when !Multiplier.ContainsNode(x) => (Multiplier, l2),
+                            ({ } l1, _) when !Multiplicand.ContainsNode(x) => (l1, Multiplicand),
+                            ({ IsFinite: true } lim1, { } exp) => (lim1, exp),
+                            ({ } bas, { IsFinite: true } lim2) => (bas, lim2),
+                            _ => (Multiplier, Multiplicand)
+                        };
+                    return ComputeLimitImpl(New(mp, md), x, dist, side);
+                }
+            }
         }
 
         partial record Divf
