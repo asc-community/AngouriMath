@@ -150,12 +150,12 @@ namespace UnitTests.Convenience
         [InlineData("coth", "Cotanh")]
         [InlineData("sech", "Sech")]
         [InlineData("csch", "Cosech")]
-        [InlineData("asinh", "Arcsinh")]
-        [InlineData("acosh", "Arccosh")]
-        [InlineData("atanh", "Arctanh")]
-        [InlineData("acoth", "Arccotanh")]
-        [InlineData("asech", "Arcsech")]
-        [InlineData("acsch", "Arccosech")]
+        [InlineData("asinh", "Arsinh")]
+        [InlineData("acosh", "Arcosh")]
+        [InlineData("atanh", "Artanh")]
+        [InlineData("acoth", "Arcotanh")]
+        [InlineData("asech", "Arsech")]
+        [InlineData("acsch", "Arcosech")]
         public void TestHyperbolic(string parsedName, string methodName)
         {
             var methods = typeof(MathS.Hyperbolic).GetMethods();

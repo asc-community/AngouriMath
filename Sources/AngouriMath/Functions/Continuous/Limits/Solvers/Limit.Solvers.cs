@@ -24,7 +24,7 @@ namespace AngouriMath.Functions.Algebra
             if (children is null)
                 return null;
 
-            var monomials = Algebra.AnalyticalSolving.PolynomialSolver.GatherMonomialInformation
+            var monomials = AnalyticalSolving.PolynomialSolver.GatherMonomialInformation
                 <EDecimal, TreeAnalyzer.PrimitiveDecimal>(children, x);
             if (monomials is null) return null;
             var filteredDictionary = new Dictionary<EDecimal, Entity>();
@@ -41,7 +41,9 @@ namespace AngouriMath.Functions.Algebra
         [ConstantField] private static readonly Real Infinity = Real.PositiveInfinity;
         internal static Entity? SolveBySubstitution(Entity expr, Variable x)
         {
-            var res = expr.Substitute(x, Infinity);
+            // For now we remove all provideds from an expression
+            // Is it a correct thing to do?
+            var res = expr.Replace(e => e is Providedf(var expr, _) ? expr : e).Substitute(x, Infinity);
             if (res.Evaled is Complex limit)
             {
                 if (limit == Real.NaN) return null;
