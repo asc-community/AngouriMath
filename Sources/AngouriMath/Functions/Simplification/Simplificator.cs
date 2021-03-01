@@ -76,12 +76,13 @@ namespace AngouriMath.Functions
 
             for (int i = 0; i < Math.Abs(level); i++)
             {
-                res = res.Replace(Patterns.SortRules(i switch
+                var sortLevel = i switch
                 {
                     1 => TreeAnalyzer.SortLevel.MIDDLE_LEVEL,
                     2 => TreeAnalyzer.SortLevel.LOW_LEVEL,
                     _ => TreeAnalyzer.SortLevel.HIGH_LEVEL
-                })).InnerSimplified;
+                };
+                res = res.Replace(Patterns.SortRules(sortLevel)).InnerSimplified;
                 if (res.Nodes.Any(child => child is Powf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
 
@@ -107,8 +108,8 @@ namespace AngouriMath.Functions
                 if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
-                AddHistory(res = res.Replace(Patterns.FractionCommonDenominatorRules).InnerSimplified);
-
+                AddHistory(res = res.Replace(e => Patterns.FractionCommonDenominatorRules(e, sortLevel)).InnerSimplified);
+                AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
 #if DEBUG
                 if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif

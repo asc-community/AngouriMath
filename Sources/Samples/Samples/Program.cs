@@ -114,4 +114,4 @@ using static System.Console;
 //WriteLine("sin(t) / t".Limit("t", 0).Simplify());
 
 
-WriteLine("(a - 1) / (1 - b) - (1 - a) / (b - 1)".Simplify());
+WriteLine("sin(a) * cos(b) * tan(c) / (tan(c)3 * sin(a)2 * cos(b)^(-2))".Simplify());
