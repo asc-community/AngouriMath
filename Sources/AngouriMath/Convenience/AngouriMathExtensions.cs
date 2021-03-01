@@ -82,6 +82,12 @@ namespace AngouriMath.Extensions
         public static Entity Simplify(this string expr) => expr.ToEntity().Simplify();
 
         /// <summary>
+        /// Parses this and simplifies by running <see cref="Entity.Simplify"/>
+        /// </summary>
+        /// <returns>Simplified expression</returns>
+        public static Entity Simplify(this string expr, int level) => expr.ToEntity().Simplify(level);
+
+        /// <summary>
         /// Parses this and evals into a number by running <see cref="Entity.EvalNumerical"/>
         /// </summary>
         /// <exception cref="CannotEvalException">
