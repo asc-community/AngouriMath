@@ -77,6 +77,18 @@ namespace AngouriMath
                     yield return op(a, b);
         }
 
+
+        public static IEnumerable<T> IntersectSequences<T>(this (IEnumerable<T>, IEnumerable<T>) seqs)
+        {
+            var tempSet = new HashSet<T>();
+            tempSet.Clear();
+            foreach (var s in seqs.Item1)
+                tempSet.Add(s);
+            foreach (var s in seqs.Item2)
+                if (tempSet.Contains(s))
+                    yield return s;
+        }
+
         public static System.Numerics.Complex Signum(this System.Numerics.Complex z)
             => z == 0 ? 0 : z / z.Magnitude;
 

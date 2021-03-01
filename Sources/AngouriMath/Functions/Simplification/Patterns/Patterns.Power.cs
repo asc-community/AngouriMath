@@ -9,7 +9,7 @@ using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {
-    internal static partial class Patterns
+    partial class Patterns
     {
         /// <summary>a ^ (-1) => 1 / a</summary>
         internal static Entity InvertNegativePowers(Entity expr) =>
@@ -24,6 +24,9 @@ namespace AngouriMath.Functions
 
         internal static Entity PowerRules(Entity x) => x switch
         {
+            // {} / {} = 1
+            Divf(var any1, var any1a) when any1 == any1a => 1,
+
             // {1}^({2} / log({3}, {1})) = {3}^{2}
             Powf(var any1, Divf(var any2, Logf(var any3, var any1a))) when any1 == any1a => new Powf(any3, any2),
 

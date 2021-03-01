@@ -95,13 +95,13 @@ namespace AngouriMath
         public partial record Sinf
         {
             private protected override string SortHashName(SortLevel level)
-                => Choice(level, "sincos_", "sin_", "sin_");
+                => Choice(level, "sincoss_", "sin_", "sin_");
         }
 
         public partial record Cosf
         {
             private protected override string SortHashName(SortLevel level)
-                => Choice(level, "sincos_", "cos_", "cos_");
+                => Choice(level, "sincosc_", "cos_", "cos_");
         }
 
         public partial record Secantf

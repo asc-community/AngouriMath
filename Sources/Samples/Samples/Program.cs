@@ -109,6 +109,16 @@ using static System.Console;
 // WriteLine("(3t)^(2t2)".Limit("t", 0));
 // WriteLine("arccotan(0)".EvalNumerical());
 
-var r = "e^x / x".Limit("x", "+oo");
-WriteLine(r);
+// var a = "c and (c or (a > 0)) and (c or (a < 0)) and (c or (a > 0) | (a < 0)) and (c or (a < x ^ 2*(1 - x))) and (c or (a < 0) or (a < x^2*(1 - x)))".Simplify();
+// WriteLine(a);
 //WriteLine("sin(t) / t".Limit("t", 0).Simplify());
+
+
+// WriteLine("sin(a) * cos(b) * tan(c) / (tan(c)3 * sin(a)2 * cos(b)^(-2))".Simplify());
+
+Entity withPhi = "phi(5 ^ x) * 1 / 5 ^ x".ToEntity();
+Entity withoutPhi = "5 ^ (x - 1) * 4 * 1 / 5 ^ x".ToEntity();
+WriteLine(withPhi.SimplifiedRate);
+WriteLine(withoutPhi.SimplifiedRate);
+
+// WriteLine("phi(5^x) / 5^x".Simplify(5));

@@ -791,6 +791,7 @@ namespace AngouriMath
                     static double Weight(double w)      => w * 2.0;
                     static double MajorWeight(double w) => w * 4.0;
                     static double HeavyWeight(double w) => w * 8.0;
+                    static double ExtraHeavyWeight(double w) => w * 12.0;
 
                     // Number of nodes
                     var res = Weight(expr.Complexity);
@@ -808,7 +809,7 @@ namespace AngouriMath
                     res += TinyWeight(expr.Nodes.Count(entity => entity is Logf));
 
                     // Number of phi functions
-                    res += HeavyWeight(expr.Nodes.Count(entity => entity is Phif));
+                    res += ExtraHeavyWeight(expr.Nodes.Count(entity => entity is Phif));
 
                     // Number of negative reals
                     res += MajorWeight(expr.Nodes.Count(entity => entity is Real { IsNegative: true }));
