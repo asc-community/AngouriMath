@@ -7,6 +7,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {
@@ -56,6 +57,23 @@ namespace AngouriMath.Functions
                     => SumOfFractions(expr, leftNum, leftDen, -rightNum, rightDen),
                 Divf(var num, var den) when num.Vars.Any() && den.Vars.Any()
                     => PairwiseGrouping(num, den, level),
+                _ => expr
+            };
+
+        internal static Entity CollapseMultipleFractions(Entity expr)
+            => expr switch
+            {
+                Powf(Divf(var a, var b), Integer { IsPositive: true } c) => a.Pow(c) / b.Pow(c),
+                Powf(Mulf(var a, var b), Integer { IsPositive: true } c) => a.Pow(c) * b.Pow(c),
+
+                Mulf(Divf(var a, var b), Divf(var c, var d)) => (a * c) / (b * d),
+                Mulf(var a, Divf(var b, var c)) => (a * b) / c,
+                Mulf(Divf(var a, var b), var c) => (a * c) / b,
+
+                Divf(Divf(var a, var b), Divf(var c, var d)) => (a * d) / (b * c),
+                Divf(Divf(var a, var b), var c) => a / (b * c),
+                Divf(var a, Divf(var b, var c)) => (a * c) / b,
+
                 _ => expr
             };
     }
