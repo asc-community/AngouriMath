@@ -157,7 +157,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Set of unique variables, for example 
-        /// it extracts <c>`x`</c>, <c>`goose`</c> from <c>(x + 2 * goose) - pi * x</c>
+        /// it extracts <c>`x`</c>, <c>`goose`</c>, <c>`pi`</c> from <c>(x + 2 * goose) - pi * x</c>
         /// </summary>
         /// <returns>
         /// Set of unique variables and mathematical constants

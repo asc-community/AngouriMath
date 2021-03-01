@@ -9,7 +9,7 @@ using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {
-    internal static partial class Patterns
+    partial class Patterns
     {
         /// <summary>a ^ (-1) => 1 / a</summary>
         internal static Entity InvertNegativePowers(Entity expr) =>

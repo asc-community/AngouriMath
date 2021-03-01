@@ -109,6 +109,8 @@ using static System.Console;
 // WriteLine("(3t)^(2t2)".Limit("t", 0));
 // WriteLine("arccotan(0)".EvalNumerical());
 
-var r = "e^x / x".Limit("x", "+oo");
-WriteLine(r);
+// var a = "c and (c or (a > 0)) and (c or (a < 0)) and (c or (a > 0) | (a < 0)) and (c or (a < x ^ 2*(1 - x))) and (c or (a < 0) or (a < x^2*(1 - x)))".Simplify();
+// WriteLine(a);
 //WriteLine("sin(t) / t".Limit("t", 0).Simplify());
+
+WriteLine("(a - 1) / (1 - b) - (1 - a) / (b - 1)".Simplify());

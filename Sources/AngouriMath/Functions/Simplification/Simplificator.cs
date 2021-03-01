@@ -107,6 +107,12 @@ namespace AngouriMath.Functions
                 if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
+                AddHistory(res = res.Replace(Patterns.FractionCommonDenominatorRules).InnerSimplified);
+
+#if DEBUG
+                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+#endif
+
                 if (res.Nodes.Any(child => child is TrigonometricFunction))
                 {
                     var res1 = res.Replace(Patterns.ExpandTrigonometricRules).InnerSimplified;
