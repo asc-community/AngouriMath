@@ -31,13 +31,18 @@ namespace AngouriMath.Functions
             var denFactors = Mulf.LinearChildren(den);
             var factors = new Dictionary<string, Entity>();
             foreach (var numFactor in numFactors)
-                factors[numFactor.SortHash(level)] = numFactor;
+            {
+                var sorted = numFactor.SortHash(level);
+                if (!factors.ContainsKey(sorted))
+                    factors[sorted] = 1;
+                factors[sorted] = (factors[sorted] * numFactor).InnerSimplified;
+            }
             foreach (var denFactor in denFactors)
             {
                 var sorted = denFactor.SortHash(level);
                 if (!factors.ContainsKey(sorted))
                     factors[sorted] = 1;
-                factors[sorted] /= denFactor;
+                factors[sorted] = (factors[sorted] / denFactor).InnerSimplified;
             }
             return TreeAnalyzer.MultiHangBinary(factors.Values.ToArray(), (a, b) => a * b);
         }

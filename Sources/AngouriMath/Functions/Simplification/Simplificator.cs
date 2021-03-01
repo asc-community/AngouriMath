@@ -42,7 +42,7 @@ namespace AngouriMath.Functions
             var stage1 = src.InnerSimplified;
 
 #if DEBUG
-            if (stage1.ToString() == MathS.Diagnostic.CatchOnSimplify)
+            if (MathS.Diagnostic.CatchOnSimplify.Value(stage1))
                 throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
@@ -87,31 +87,31 @@ namespace AngouriMath.Functions
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 AddHistory(res = SimplifyChildren(res));
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 AddHistory(res = res.Replace(Patterns.InvertNegativePowers).Replace(Patterns.DivisionPreparingRules).InnerSimplified);
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 AddHistory(res = res.Replace(Patterns.PolynomialLongDivision).InnerSimplified);
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
-
+                AddHistory(res = res.Replace(Patterns.NormalTrigonometricForm).InnerSimplified);
                 AddHistory(res = res.Replace(e => Patterns.FractionCommonDenominatorRules(e, sortLevel)).InnerSimplified);
                 AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 if (res.Nodes.Any(child => child is TrigonometricFunction))
@@ -124,7 +124,7 @@ namespace AngouriMath.Functions
                 }
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 if (res.Nodes.Any(child => child is Statement))
@@ -133,7 +133,7 @@ namespace AngouriMath.Functions
                 }
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 if (res.Nodes.Any(child => child is ComparisonSign))
@@ -142,7 +142,7 @@ namespace AngouriMath.Functions
                 }
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 if (res.Nodes.Any(child => child is Factorialf))
@@ -152,14 +152,14 @@ namespace AngouriMath.Functions
                 }
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 if (res.Nodes.Any(child => child is Powf or Logf))
                     AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 if (res.Nodes.Any(child => child is Set))
@@ -167,21 +167,21 @@ namespace AngouriMath.Functions
                     var replaced = res.Replace(Patterns.SetOperatorRules);
 
 #if DEBUG
-                    if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                    if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                     AddHistory(res = replaced.InnerSimplified);
                 }
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 if (res.Nodes.Any(child => child is Phif))
                     AddHistory(res = res.Replace(Patterns.PhiFunctionRules).InnerSimplified);
 
 #if DEBUG 
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException(); 
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException(); 
 #endif
 
                 Entity? possiblePoly = null;
@@ -193,19 +193,19 @@ namespace AngouriMath.Functions
                     res = possiblePoly;
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 AddHistory(res = res.Replace(Patterns.CommonRules));
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 AddHistory(res = res.Replace(Patterns.NumericNeatRules));
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
                 /*
                 This was intended to simplify expressions as polynomials over nodes, some kind of
@@ -222,13 +222,13 @@ namespace AngouriMath.Functions
                 AddHistory(res.Expand().Simplify(-level));
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
 
                 AddHistory(res.Factorize().Simplify(-level));
 
 #if DEBUG
-                if (res.ToString() == MathS.Diagnostic.CatchOnSimplify) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
             }
 

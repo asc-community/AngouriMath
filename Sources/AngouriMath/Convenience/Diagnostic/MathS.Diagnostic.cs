@@ -6,6 +6,8 @@
  */
 using AngouriMath.Convenience;
 using System;
+using System.Linq;
+using static AngouriMath.Entity;
 
 namespace AngouriMath
 {
@@ -27,8 +29,8 @@ namespace AngouriMath
             /// <summary>
             /// 
             /// </summary>
-            public static Setting<string> CatchOnSimplify => catchOnSimplify ??= "";
-            [ThreadStatic] private static Setting<string>? catchOnSimplify;
+            public static Setting<Func<Entity, bool>> CatchOnSimplify => catchOnSimplify ??= (Func<Entity, bool>)(a => false);
+            [ThreadStatic] private static Setting<Func<Entity, bool>>? catchOnSimplify;
 
             /// <summary>
             /// Will only occur in debug mode,
