@@ -110,8 +110,10 @@ namespace AngouriMath.Functions
                 AddHistory(res = res.Replace(Patterns.NormalTrigonometricForm).InnerSimplified);
                 AddHistory(res = res.Replace(Patterns.CollapseMultipleFractions).InnerSimplified);
                 AddHistory(res = res.Replace(e => Patterns.FractionCommonDenominatorRules(e, sortLevel)).InnerSimplified);
+                AddHistory(res = res.Replace(Patterns.InvertNegativePowers).Replace(Patterns.DivisionPreparingRules).InnerSimplified);
                 AddHistory(res = res.Replace(Patterns.PowerRules).InnerSimplified);
                 AddHistory(res = res.Replace(Patterns.TrigonometricRules).InnerSimplified);
+                AddHistory(res = res.Replace(Patterns.CollapseTrigonometricFunctions).InnerSimplified);
 #if DEBUG
                 if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif

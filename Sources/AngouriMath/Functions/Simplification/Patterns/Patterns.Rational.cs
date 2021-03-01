@@ -4,6 +4,7 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
+using AngouriMath.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using static AngouriMath.Entity;
@@ -26,7 +27,7 @@ namespace AngouriMath.Functions
         // a * b * c / (b * c * d)
         // =>
         // a * (b / b) * (c / c) * 1/d
-        private static Entity PairwiseGrouping(Entity num, Entity den, TreeAnalyzer.SortLevel level)
+        private static IEnumerable<Entity> PairwiseGrouping(Entity num, Entity den, TreeAnalyzer.SortLevel level)
         {
             var numFactors = Mulf.LinearChildren(num);
             var denFactors = Mulf.LinearChildren(den);
@@ -45,7 +46,7 @@ namespace AngouriMath.Functions
                     factors[sorted] = 1;
                 factors[sorted] = (factors[sorted] / denFactor).InnerSimplified;
             }
-            return TreeAnalyzer.MultiHangBinary(factors.Values.ToArray(), (a, b) => a * b);
+            return factors.Values;
         }
 
         internal static Entity FractionCommonDenominatorRules(Entity expr, TreeAnalyzer.SortLevel level)
@@ -56,7 +57,7 @@ namespace AngouriMath.Functions
                 Minusf(Divf(var leftNum, var leftDen), Divf(var rightNum, var rightDen))
                     => SumOfFractions(expr, leftNum, leftDen, -rightNum, rightDen),
                 Divf(var num, var den) when num.Vars.Any() && den.Vars.Any()
-                    => PairwiseGrouping(num, den, level),
+                    => PairwiseGrouping(num, den, level).Select(PowerRules).MultiplyAll().InnerSimplified.Replace(CollapseMultipleFractions),
                 _ => expr
             };
 

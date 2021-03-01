@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections;
+using AngouriMath.Functions;
 
 namespace AngouriMath.Extensions
 {
@@ -24,6 +25,20 @@ namespace AngouriMath.Extensions
     /// </summary>
     public static partial class AngouriMathExtensions
     {
+        /// <summary>
+        /// Sums all the given terms and returns the resulting expression
+        /// new Entity[]{ 1, 2, 3 }.SumAll() -> "1 + 2 + 3"
+        /// </summary>
+        public static Entity SumAll(this IEnumerable<Entity> terms)
+            => TreeAnalyzer.MultiHangBinary(terms.ToArray(), (a, b) => a + b);
+
+        /// <summary>
+        /// Multiplies all the given terms and returns the resulting expression
+        /// new Entity[]{ 1, 2, 3 }.MultiplyAll() -> "1 * 2 * 3"
+        /// </summary>
+        public static Entity MultiplyAll(this IEnumerable<Entity> terms)
+            => TreeAnalyzer.MultiHangBinary(terms.ToArray(), (a, b) => a * b);
+
         /// <summary>
         /// Converts an <see cref="IEnumerable"/> into a piecewise function
         /// </summary>
