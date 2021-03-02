@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>New, leading symbolic algebra library in .NET. Everything one would need.</b>
-  <br>
+  <br><br>
   <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>Download</b></a>
   <b>(</b>
   <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>C#</b></a>
@@ -23,7 +23,6 @@
   <a href="https://am.angouri.org/#whatsnew"><b>What's new</b></a>
   <b>·</b>
   <a href="https://am.angouri.org/"><b>Official website</b></a>
-  <br>
   <br>
   <br>
   <a href="./Sources/Tests/UnitTests"><img alt="GitHub Workflow Status (event)" src="https://img.shields.io/github/workflow/status/asc-community/AngouriMath/Test?color=darkgreen&label=Tests&logo=github&style=flat-square"></a>
