@@ -12,10 +12,12 @@ namespace UnitTests.Core
     {
         [Fact] public void PrecisionTooHigh() => 
             Assert.Throws<InvalidNumberException>(() =>
-            MathS.Settings.DecimalPrecisionContext.As(
-                new EContext(EInteger.FromString("9184210498091248901840921124"), ERounding.HalfDown, EInteger.FromString("9184210498091248901840921124"), EInteger.FromString("9184210498091248901840921124"), true),
-                () => (BigInteger)(Number)"98492148914"
-                ));
+            {
+                using var _ = MathS.Settings.DecimalPrecisionContext.Set(
+                    new EContext(EInteger.FromString("9184210498091248901840921124"), ERounding.HalfDown, EInteger.FromString("9184210498091248901840921124"), EInteger.FromString("9184210498091248901840921124"), true)
+                    );
+                return (BigInteger)(Number)"98492148914";
+            });
 
         [Fact] public void InvalidNumberOfArguments1() =>
             Assert.Throws<WrongNumberOfArgumentsException>(() =>

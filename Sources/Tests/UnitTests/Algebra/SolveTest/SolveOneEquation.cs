@@ -45,13 +45,15 @@ namespace UnitTests.Algebra
 
         void TestSolver(Entity expr, int rootCount, Integer? toSub = null, bool testNewton = false)
         {
-            var rootsRaw = MathS.Settings.AllowNewton.As(false, () => expr.SolveEquation(x));
+            using var _ = MathS.Settings.AllowNewton.Set(false);
+            var rootsRaw = expr.SolveEquation(x);
             var roots = (Set)rootsRaw.InnerSimplified;
             VerifySetOfRoots(expr, roots, rootCount, toSub);
 
             if (!testNewton) return;
             // TODO: Increase Newton precision
-            var ntRoots = MathS.Settings.PrecisionErrorZeroRange.As(2e-16m, () => expr.SolveNt(x));
+            using var __ = MathS.Settings.PrecisionErrorZeroRange.Set(2e-16m);
+            var ntRoots = expr.SolveNt(x);
             Assert.Equal(rootCount, ntRoots.Count);
             foreach (var root in ntRoots)
                 AssertRoots(expr, x, root, toSub);
@@ -61,10 +63,9 @@ namespace UnitTests.Algebra
         public void TestPolynomialToFix()
         {
             var eq = x.Pow(2) + 2 * x + 1;
-            var roots = MathS.Settings.PrecisionErrorCommon.As(1e-8m, () =>
-                MathS.Settings.NewtonSolver.As(new() { Precision = 100 }, () =>
-                    eq.SolveNt(x)
-                ));
+            using var _ = MathS.Settings.PrecisionErrorCommon.Set(1e-8m);
+            using var __ = MathS.Settings.NewtonSolver.Set(new() { Precision = 100 });
+            var roots = eq.SolveNt(x);
             // AssertRootCount(roots, 1); TODO: remove // after fix
             foreach (var root in roots)
                 AssertRoots(eq, x, root);
