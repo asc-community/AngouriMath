@@ -13,7 +13,7 @@ let sqrt x = MathS.Sqrt(parse x)
 
 let cbrt x = MathS.Cbrt(parse x)
 
-let pow x power = MathS.Pow(x, power)
+let pow x power = MathS.Pow(parse x, parse power)
 
 let factorial x = MathS.Factorial(parse x)
 

@@ -17,3 +17,13 @@ let ``Impl test`` () = Assert.Equal(parse "a implies b", impl a b)
 let ``Neg test`` () = Assert.Equal(parse "not a", neg a)
 [<Fact>]
 let ``Xor test`` () = Assert.Equal(parse "a xor b", xor a b)
+[<Fact>]
+let ``Equality test`` () = Assert.Equal(parse "a = b", equal a b)
+[<Fact>]
+let ``Greater test`` () = Assert.Equal(parse "a > b", greater a b)
+[<Fact>]
+let ``Less test`` () = Assert.Equal(parse "a < b", less a b)
+[<Fact>]
+let ``Greater or equal test`` () = Assert.Equal(parse "a >= b", greater_equal a b)
+[<Fact>]
+let ``Less or equal test`` () = Assert.Equal(parse "a <= b", less_equal a b)
