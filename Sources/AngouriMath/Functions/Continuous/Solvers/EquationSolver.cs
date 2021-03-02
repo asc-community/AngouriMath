@@ -21,10 +21,9 @@ namespace AngouriMath.Functions.Algebra
         /// <summary>Solves one equation</summary>
         internal static Set Solve(Entity equation, Variable x)
         {
-            var solutions = MathS.Settings.PrecisionErrorZeroRange.As(1e-12m, () =>
-                MathS.Settings.FloatToRationalIterCount.As(0, () =>
-                    AnalyticalEquationSolver.Solve(equation, x)
-                ));
+            using var _ = MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
+            using var __ = MathS.Settings.FloatToRationalIterCount.Set(0);
+            var solutions = AnalyticalEquationSolver.Solve(equation, x);
 
             static Entity simplifier(Entity entity) => entity.InnerSimplified;
             static Entity evaluator(Entity entity) => entity.Evaled;

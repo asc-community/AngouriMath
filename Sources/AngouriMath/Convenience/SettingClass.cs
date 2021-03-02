@@ -70,7 +70,8 @@ namespace AngouriMath.Convenience
         /// <summary>
         /// For example,
         /// <code>
-        /// MathS.Settings.Precision.As(100, () => { /* some code considering precision = 100 */ });
+        /// using var _ = MathS.Settings.Precision.Set(100);
+        /// // your code here
         /// </code>
         /// </summary>
         /// <param name="value">New value that will be automatically reverted after action is done</param>
