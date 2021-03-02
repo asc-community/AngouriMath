@@ -148,9 +148,6 @@ namespace AngouriMath.Convenience
             {
                 if (disposed)
                     return;
-#if DEBUG
-                // Console.WriteLine($"Disposed: {setting} {guid}");
-#endif
                 setting.values.Remove(guid);
                 disposed = true;
             }

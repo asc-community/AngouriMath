@@ -112,7 +112,6 @@ namespace AngouriMath.Core
         /// <exception cref="WrongNumberOfArgumentsException">
         /// Thrown when the length of <paramref name="values"/> does not match the number of variables compiled.
         /// </exception>
-        // TODO: Optimization
         public Complex Substitute(params Complex[] values)
         {
             if (values.Length != varCount)

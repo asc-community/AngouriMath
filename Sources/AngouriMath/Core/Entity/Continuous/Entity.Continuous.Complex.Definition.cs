@@ -153,7 +153,6 @@ namespace AngouriMath
                 /// if it was not, do not access this variable
                 /// </param>
                 /// <returns>If parsing was successful - <see langword="true"/>, <see langword="false"/> otherwise</returns>
-                // TODO: parse more possible values of complex numbers
                 public static bool TryParse(string source,
                     [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out Complex? dst)
                 {

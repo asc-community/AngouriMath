@@ -371,7 +371,6 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 protected override Entity[] InitDirectChildren() => new[] { Predicate.Substitute(Var, Variable.CreateRandom(Predicate)) };
 
-                // TODO:
                 /// <inheritdoc/>
                 public override bool IsSetFinite => false;
                 /// <inheritdoc/>
@@ -393,7 +392,6 @@ namespace AngouriMath
                 [ConstantField] private readonly static Variable universalVoidConstant = Variable.CreateVariableUnchecked("%");
                 /// <inheritdoc/>
                 public override int GetHashCode()
-                    // TODO: might not always work, requires testing
                     => Predicate.Substitute(Var, universalVoidConstant).GetHashCode();
 
                 /// <inheritdoc/>

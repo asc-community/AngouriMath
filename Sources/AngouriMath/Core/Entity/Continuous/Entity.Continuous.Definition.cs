@@ -15,7 +15,6 @@ namespace AngouriMath
     {
         /// <summary>
         /// Any node that might be counted as a number, derived, etc. is continuous
-        /// TODO
         /// </summary>
         public abstract partial record NumericNode : Entity
         {
