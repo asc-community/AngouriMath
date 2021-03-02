@@ -207,25 +207,22 @@ namespace AngouriMath
             public static HashSet<Complex> GetAllRoots(Complex value, EInteger rootPower)
             {
                 // Avoid infinite recursion from Abs to GetAllRoots again
-                var res = MathS.Settings.FloatToRationalIterCount.As(0, () =>
+                using var _ = MathS.Settings.FloatToRationalIterCount.Set(0);
+                var res = new HashSet<Complex>();
+                EDecimal phi = (Ln(value / value.Abs()) / MathS.i).RealPart.EDecimal;
+                if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
+                    phi = EDecimal.Zero;
+
+                EDecimal newMod = Pow(value.Abs(), CtxDivide(EDecimal.One, rootPower)).RealPart.EDecimal;
+
+                var i = Complex.ImaginaryOne;
+                for (int n = 0; n < rootPower; n++)
                 {
-                    var res = new HashSet<Complex>();
-                    EDecimal phi = (Ln(value / value.Abs()) / MathS.i).RealPart.EDecimal;
-                    if (phi.IsNaN()) // (value / value.Abs()) is NaN when value is zero
-                        phi = EDecimal.Zero;
-
-                    EDecimal newMod = Pow(value.Abs(), CtxDivide(EDecimal.One, rootPower)).RealPart.EDecimal;
-
-                    var i = Complex.ImaginaryOne;
-                    for (int n = 0; n < rootPower; n++)
-                    {
-                        EDecimal newPow = CtxAdd(CtxDivide(phi, rootPower),
-                            CtxDivide(CtxMultiply(CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
-                        var root = newMod * Exp(i * newPow);
-                        res.Add(root);
-                    }
-                    return res;
-                });
+                    EDecimal newPow = CtxAdd(CtxDivide(phi, rootPower),
+                        CtxDivide(CtxMultiply(CtxMultiply(2, MathS.DecimalConst.pi), n), rootPower));
+                    var root = newMod * Exp(i * newPow);
+                    res.Add(root);
+                }
                 return res;
             }
 
@@ -233,9 +230,11 @@ namespace AngouriMath
             {
                 Real? positive = null, real = null;
                 foreach (var root in GetAllRoots(@base, power.EInteger))
-                    switch (MathS.Settings.FloatToRationalIterCount.As(15, () =>
-                        MathS.Settings.PrecisionErrorZeroRange.As(1e-6m, () =>
-                            Complex.Create(root.RealPart, root.ImaginaryPart))))
+                {
+                    using var _ = MathS.Settings.FloatToRationalIterCount.Set(15);
+                    using var __ = MathS.Settings.PrecisionErrorZeroRange.Set(1e-6m);
+                    var toCheck = Complex.Create(root.RealPart, root.ImaginaryPart);
+                    switch (toCheck)
                     {
                         case Rational rational when IsZero(Pow(rational, power) - @base):  // To keep user's desired precision
                             return rational;
@@ -246,6 +245,7 @@ namespace AngouriMath
                             real ??= r;
                             break;
                     }
+                }
                 return positive ?? real;
             }
 
@@ -647,26 +647,23 @@ namespace AngouriMath
                 if (!mathContext.Precision.CanFitInInt32())
                     throw new CannotEvalException($"The precision of the {nameof(mathContext)} is outside the int32 range");
 
-                Complex result = Real.NaN;
-
-                MathS.Settings.DowncastingEnabled.As(false, () =>
-                MathS.Settings.DecimalPrecisionContext.As(mathContext.WithBigPrecision(mathContext.Precision << 1), () =>
-                {
+                using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+                using var __ = MathS.Settings.DecimalPrecisionContext.Set(mathContext.WithBigPrecision(mathContext.Precision << 1));
                 // https://en.wikipedia.org/wiki/Spouge%27s_approximation
                 int a = mathContext.Precision.ToInt32Checked() * 13 / 10;
 
-                    var constants = InternalAMExtensions.GetSpougeFactorialConstants(a);
+                var constants = InternalAMExtensions.GetSpougeFactorialConstants(a);
 
-                    var negative = false;
-                    var factor = Complex.Create(constants[0], 0);
-                    for (int k = 1; k < a; k++)
-                    {
-                        factor += constants[k] / (x + k);
-                        negative = !negative;
-                    }
+                var negative = false;
+                var factor = Complex.Create(constants[0], 0);
+                for (int k = 1; k < a; k++)
+                {
+                    factor += constants[k] / (x + k);
+                    negative = !negative;
+                }
 
-                    result = Pow(x + a, x + 0.5m) * Exp(-x - a) * factor;
-                }));
+                var result = Pow(x + a, x + 0.5m) * Exp(-x - a) * factor;
+
                 return Complex.Create(result.RealPart.EDecimal.RoundToPrecision(mathContext),
                                         result.ImaginaryPart.EDecimal.RoundToPrecision(mathContext));
             }

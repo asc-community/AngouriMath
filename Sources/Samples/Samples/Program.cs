@@ -116,9 +116,21 @@ using static System.Console;
 
 // WriteLine("sin(a) * cos(b) * tan(c) / (tan(c)3 * sin(a)2 * cos(b)^(-2))".Simplify());
 
-Entity withPhi = "phi(5 ^ x) * 1 / 5 ^ x".ToEntity();
-Entity withoutPhi = "5 ^ (x - 1) * 4 * 1 / 5 ^ x".ToEntity();
-WriteLine(withPhi.SimplifiedRate);
-WriteLine(withoutPhi.SimplifiedRate);
+// Entity withPhi = "phi(5 ^ x) * 1 / 5 ^ x".ToEntity();
+// Entity withoutPhi = "5 ^ (x - 1) * 4 * 1 / 5 ^ x".ToEntity();
+// WriteLine(withPhi.SimplifiedRate);
+// WriteLine(withoutPhi.SimplifiedRate);
 
 // WriteLine("phi(5^x) / 5^x".Simplify(5));
+
+WriteLine(Settings.FloatToRationalIterCount.Value);
+SomeMethod();
+WriteLine(Settings.FloatToRationalIterCount.Value);
+
+
+static void SomeMethod()
+{
+    using var a1 = Settings.FloatToRationalIterCount.Set(5);
+    using var a2 = Settings.FloatToRationalIterCount.Set(3);
+    a1.Dispose();
+}

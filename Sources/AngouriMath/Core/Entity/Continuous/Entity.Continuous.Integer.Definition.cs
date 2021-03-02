@@ -85,7 +85,6 @@ namespace AngouriMath
                 public void Deconstruct(out int? value) =>
                     value = EInteger.CanFitInInt32() ? EInteger.ToInt32Unchecked() : new int?();
 
-                // TODO: When we target .NET 5, remember to use covariant return types
                 /// <inheritdoc/>
                 public override Real Abs() => Create(EInteger.Abs());
 

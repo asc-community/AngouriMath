@@ -10,7 +10,7 @@ namespace UnitTests
     /// </summary>
     public sealed class WaiterAndSwallower
     {
-        private int precision;
+        private readonly int precision;
         public WaiterAndSwallower(int precisionMs)
         {
             this.precision = precisionMs;

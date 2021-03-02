@@ -566,10 +566,8 @@ namespace AngouriMath
         /// so <code>Number.Create(1.0);</code> is an <see cref="Integer"/>.
         /// To avoid it, you may temporarily disable it
         /// <code>
-        ///  MathS.Settings.DowncastingEnabled.As(false, () =>
-        /// {
-        ///    var yourNum = Number.Create(1.0);
-        /// });
+        /// using var _ = MathS.Settings.DowncastingEnabled.Set(false);
+        /// var yourNum = Number.Create(1.0);
         /// </code>
         /// and the result will be a <see cref="Real"/>.
         /// </summary>
@@ -705,7 +703,8 @@ namespace AngouriMath
         /// A couple of settings allowing you to set some preferences for AM's algorithms
         /// To use these settings the syntax is
         /// <code>
-        /// MathS.Settings.SomeSetting.As(5 /* Here you set a value to the setting */, () => { ... /* your code */ });
+        /// using var _ = MathS.Settings.SomeSetting.Set(5 /* Here you set a value to the setting */);
+        /// // here you write your code normally
         /// </code>
         /// </summary>
         public static partial class Settings
@@ -825,14 +824,13 @@ namespace AngouriMath
             /// Settings for the Newton-Raphson's root-search method
             /// e.g.
             /// <code>
-            /// MathS.Settings.NewtonSolver.As(new NewtonSetting {
+            /// using var _ = MathS.Settings.NewtonSolver.Set(new NewtonSetting {
             ///     From = (-10, -10),
             ///     To = (10, 10),
             ///     StepCount = (10, 10),
             ///     Precision = 30
-            /// }, () =>
+            /// });
             /// ...
-            /// );
             /// </code>
             /// </summary>
             public static Setting<NewtonSetting> NewtonSolver => newtonSolver ??= new NewtonSetting();

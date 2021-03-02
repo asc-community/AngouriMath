@@ -9,7 +9,6 @@ using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Core
 {
-    // TODO: is it useful for the user to have this class?
     /// <summary>
     /// Use this class for solvers and other places when a set needs to be built
     /// and you want to avoid using lists

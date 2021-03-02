@@ -33,7 +33,7 @@ namespace UnitTests.Convenience
         [InlineData("_", "line 1:0")]
         [InlineData("()", "line 1:1")]
         public void Error(string input, string errorPrefix) =>
-            Assert.StartsWith(errorPrefix, 
+            Assert.StartsWith(errorPrefix,
                 Assert.Throws<UnhandledParseException>(() => (Entity)input).Message);
         [Theory]
         [InlineData("limitleft()", "limitleft should have exactly 3 arguments but 0 arguments are provided")]
@@ -58,11 +58,13 @@ namespace UnitTests.Convenience
         [Fact] public void TestFormula5() => Assert.Equal(Cos(x), FromString("sin(x)").Differentiate(x).Simplify());
         [Fact] public void TestFormula6() => Assert.Equal(7625597484987L, FromString("3 ^ 3 ^ 3").EvalNumerical());
         [Fact] public void TestFormula7() => Assert.Equal(6, FromString("2 + 2 * 2").EvalNumerical());
-        [Fact] public void TestFormula8() =>
+        [Fact] 
+        public void TestFormula8()
+        {
             // Only needed for Mac
-            Settings.PrecisionErrorZeroRange.As(2e-16m, () =>
-                Assert.Equal(i, FromString("x^2+1").SolveNt(x).First())
-            );
+            using var _ = Settings.PrecisionErrorZeroRange.Set(2e-16m);
+            Assert.Equal(i, FromString("x^2+1").SolveNt(x).First());
+        }
         [Fact] public void TestFormula9() => Assert.Equal(1, FromString("cos(sin(0))").EvalNumerical());
         [Fact] public void TestFormula10() => Assert.Equal(Entity.Number.Complex.Create(4, 1), FromString("2i + 2 * 2 - 1i").EvalNumerical());
         [Fact] public void TestFormula11() => Assert.Equal(-1, FromString("i^2").EvalNumerical());

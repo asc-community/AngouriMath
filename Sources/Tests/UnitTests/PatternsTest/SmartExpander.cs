@@ -24,10 +24,8 @@ namespace UnitTests.PatternsTest
 
         void AssertExpander(Entity expr, Complex[] toSubs, bool nullExpansion = false)
         {
-            var expanded = MathS.Settings.MaxExpansionTermCount.As(3000, () =>
-            {
-                return MathS.Utils.SmartExpandOver(expr, "x");
-            });
+            using var _ = MathS.Settings.MaxExpansionTermCount.Set(3000);
+            var expanded =  MathS.Utils.SmartExpandOver(expr, "x");
             foreach (var toSub in toSubs)
             {
                 if (nullExpansion)

@@ -96,9 +96,9 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             {
                 if (root.Evaled is not Complex preciseValue)
                     return root;
-                var downcasted = MathS.Settings.FloatToRationalIterCount.As(20, () =>
-                    MathS.Settings.PrecisionErrorZeroRange.As(1e-7m, () =>
-                        Complex.Create(preciseValue.RealPart, preciseValue.ImaginaryPart)));
+                using var _ = MathS.Settings.FloatToRationalIterCount.Set(20);
+                using var __ = MathS.Settings.PrecisionErrorZeroRange.Set(1e-7m);
+                var downcasted = Complex.Create(preciseValue.RealPart, preciseValue.ImaginaryPart);
                 if (equation.Substitute(x, downcasted).Evaled is not Complex error)
                     return root;
                 return IsZero(error) && downcasted.RealPart is Rational && downcasted.ImaginaryPart is Rational

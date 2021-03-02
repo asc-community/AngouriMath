@@ -112,10 +112,6 @@ namespace AngouriMath
         public virtual Entity Substitute(Entity x, Entity value)
             => this == x ? value : this;
 
-
-        // TODO: this function has no performance beneficial anymore, 
-        // maybe need to think how it can be improved without defining
-        // another virtual method?
         /// <summary>Replaces all <param name="replacements"/></summary>
         public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements) where TFrom : Entity where TTo : Entity
         {
@@ -139,8 +135,6 @@ namespace AngouriMath
         protected virtual bool ThisIsFinite => true;       
 
         /// <value>Number of nodes in tree</value>
-        // TODO: improve measurement of Entity complexity, for example
-        // (1 / x ^ 2).Complexity() &lt; (x ^ (-0.5)).Complexity()
         public int Complexity => complexity.GetValue(@this => 1 + @this.DirectChildren.Sum(x => x.Complexity), this);
         private FieldCache<int> complexity;
 

@@ -6,6 +6,7 @@
  */
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using FieldCacheNamespace;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -38,14 +39,14 @@ namespace AngouriMath
                 /// <summary>
                 /// A getter for the numerator
                 /// </summary>
-                // TODO: cache it
-                public Integer Numerator => ERational.Numerator;
+                public Integer Numerator => numerator.GetValue(@this => ERational.Numerator, this);
+                private FieldCache<Integer> numerator;
 
                 /// <summary>
                 /// A getter for the denominator
                 /// </summary>
-                // TODO: cache it
-                public Integer Denominator => ERational.Denominator;
+                public Integer Denominator => denominator.GetValue(@this => ERational.Denominator, this);
+                private FieldCache<Integer> denominator;
 
 #pragma warning disable CS1591
 

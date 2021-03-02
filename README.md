@@ -20,8 +20,9 @@
   <b>·</b>
   <a href="#contrib"><b>Contributions</b></a>
   <b>·</b>
+  <a href="https://am.angouri.org/#whatsnew"><b>What's new</b></a>
+  <b>·</b>
   <a href="https://am.angouri.org/"><b>Official website</b></a>
-  <br>
   <br>
   <br>
   <a href="./Sources/Tests/UnitTests"><img alt="GitHub Workflow Status (event)" src="https://img.shields.io/github/workflow/status/asc-community/AngouriMath/Test?color=darkgreen&label=Tests&logo=github&style=flat-square"></a>
@@ -57,18 +58,15 @@ Finally, if still not sure about it, you can try it even before installation!
 Although most functions are convenient to use only from C#, there are some
 optimized for F#.
 
-## README navigation:
-- [Installation](#inst)
-- [Examples](#exam)
-  - [Computations](#computations)
-  - [Algebra](#algebra)
-  - [Calculus](#calculus)
-  - [Sets](#sets)
-  - [Neat syntax](#syntax)
-  - [F#](#fsharp)
-  - [Jupyter](#jupyter)
-  - [Multithreading](#threads)
-- [I want to contribute](#contrib)
+## Quick start
+1. Install AngouriMath from NuGet ([Visual Studio](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-in-visual-studio), [JB Rider](https://www.jetbrains.com/help/rider/Using_NuGet.html#finding), [NuGet](https://www.nuget.org/packages/AngouriMath))
+2. Write the following code:
+```cs
+using AngouriMath; using System;
+Entity expr = "x + sin(y)";
+Console.WriteLine(expr);
+```
+3. Run.
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
 documentation. If you want to contribute, we would be happy to welcome you in our
@@ -76,9 +74,15 @@ community.
 
 For any questions, feel free to contact us via <a href="https://discord.gg/YWJEX7a">Discord</a>.
 
+Official website: [am.angouri.org](https://am.angouri.org/).
+
 <a id="exam"></a>
 
-## Computations
+## Examples
+
+Expand any section to see. Examples with live shell are on the [website](https://am.angouri.org/).
+
+<details><summary><strong>Computations</strong></summary>
 
 Use as a simple calculator:
 ```cs
@@ -132,7 +136,9 @@ var compiled = expr.Compile("x");
 Console.WriteLine(compiled.Substitute(4));
 ```
 
-## Algebra
+</details>
+
+<details><summary><strong>Algebra</strong></summary>
 
 Start with boolean algebra:
 ```cs
@@ -203,7 +209,9 @@ Console.WriteLine(solutions);
 <img src="https://render.githubusercontent.com/render/math?math=\begin{cases}{\cos\left({x}^{2}%2B1\right)}^{2}%2B3\times y = 0\\y\times -1%2B4\times \cos\left({x}^{2}%2B1\right) = 0\\\end{cases}">
 (solution matrix is too complicated to show)
 
-## Calculus
+</details>
+
+<details><summary><strong>Calculus</strong></summary>
 
 Find derivatives:
 ```cs
@@ -225,7 +233,9 @@ WriteLine("x2 + a x".Integrate("x").InnerSimplified);
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{{x}^{3}}{3}%2Ba\times \frac{{x}^{2}}{2}">
 
-## Sets
+</details>
+
+<details><summary><strong>Sets</strong></summary>
 
 There are four types of sets:
 ```cs
@@ -251,7 +261,9 @@ WriteLine(@"A \ B".Latexise());
 <img src="https://render.githubusercontent.com/render/math?math=A\cap B">
 <img src="https://render.githubusercontent.com/render/math?math=A\setminus B">
 
-## Syntax
+</details>
+
+<details><summary><strong>Syntax</strong></summary>
 
 You can build LaTeX with AngouriMath:
 ```cs
@@ -269,8 +281,9 @@ Entity expr = "x + 2 + sqrt(x)";
 
 A few convenient features: `x2` => `x^2`, `a x` => `a * x`, `(...)2` => `(...)^2`, `2(...)` => `2 * (...)`
 
+</details>
 
-## <a name="fsharp"></a>F\#
+<details><summary><strong>F#</strong></summary>
 
 <a href="https://www.nuget.org/packages/AngouriMath.FSharp">Download</a>
 
@@ -298,7 +311,9 @@ limit "x" "0" "sin(a x) / x"
 latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)"
 ```
 
-## <a name="jupyter"></a>Jupyter integration
+</details>
+
+<details><summary><strong>AM in Jupyter</strong></summary>
 
 If you already installed <a href="https://jupyter.org/install">Jupyter</a> and 
 <a href="https://github.com/dotnet/interactive/blob/main/docs/NotebooksLocalExperience.md">Interactive</a> for it, install
@@ -316,7 +331,9 @@ Now any `ILatexiseable` will be displayed as LaTeX:
 Check the <a href="Sources/Samples/Interactive.Sample.ipynb">F#</a> and 
 <a href="Sources/Samples/CSharp.Interactive.Sample.ipynb">C#</a> samples.
 
-## <a name="threads"></a>Multithreading support
+</details>
+
+<details><summary><strong>Multithreading</strong></summary>
 
 You are guaranteed that all functions in AM run in one thread. It is also guaranteed that you can safely run multiple 
 functions from AM in different threads, that is, all static variables and lazy properties are thread-safe.
@@ -347,6 +364,8 @@ catch (OperationCanceledException)
 }
 ```
 
+</details>
+
 ## <a name="contrib"></a>Contribution
 
 We appreciate and welcome any contributors to AngouriMath. Current tasks can be tracked
@@ -357,7 +376,7 @@ can help you with something.
 
 Documentation for contributors and developers is <a href="./Sources/AngouriMath/Docs/Contributing/README.md">here</a>.
 
-## License
+## <a name="license"></a>License
 
 <a href="./LICENSE.md"><img alt="GitHub" src="https://img.shields.io/github/license/asc-community/AngouriMath?color=purple&label=License&style=flat-square"></a>
 
