@@ -45,26 +45,26 @@ let asec x = (parse x).Arcsec()
 
 let acsc x = (parse x).Arccosec()
 
-let sinh x = MathS.TrigonometricHyperpolic.Sinh(parse x)
+let sinh x = MathS.Hyperbolic.Sinh(parse x)
 
-let cosh x = MathS.TrigonometricHyperpolic.Cosh(parse x)
+let cosh x = MathS.Hyperbolic.Cosh(parse x)
 
-let tanh x = MathS.TrigonometricHyperpolic.Tanh(parse x)
+let tanh x = MathS.Hyperbolic.Tanh(parse x)
 
-let coth x = MathS.TrigonometricHyperpolic.Cotanh(parse x)
+let coth x = MathS.Hyperbolic.Cotanh(parse x)
 
-let sech x = MathS.TrigonometricHyperpolic.Sech(parse x)
+let sech x = MathS.Hyperbolic.Sech(parse x)
 
-let csch x = MathS.TrigonometricHyperpolic.Cosech(parse x)
+let csch x = MathS.Hyperbolic.Cosech(parse x)
 
-let asinh x = MathS.TrigonometricHyperpolic.Arcsinh(parse x)
+let asinh x = MathS.Hyperbolic.Arsinh(parse x)
 
-let acosh x = MathS.TrigonometricHyperpolic.Arccosh(parse x)
+let acosh x = MathS.Hyperbolic.Arcosh(parse x)
 
-let atanh x = MathS.TrigonometricHyperpolic.Arctanh(parse x)
+let atanh x = MathS.Hyperbolic.Artanh(parse x)
 
-let acoth x = MathS.TrigonometricHyperpolic.Arccotanh(parse x)
+let acoth x = MathS.Hyperbolic.Arcotanh(parse x)
 
-let asech x = MathS.TrigonometricHyperpolic.Arcsech(parse x)
+let asech x = MathS.Hyperbolic.Arsech(parse x)
 
-let acsch x = MathS.TrigonometricHyperpolic.Arccosech(parse x)
+let acsch x = MathS.Hyperbolic.Arcosech(parse x)

@@ -4,15 +4,15 @@
     <TargetFramework>netstandard2.0</TargetFramework>
 	<SignAssembly>true</SignAssembly>
 	<AssemblyOriginatorKeyFile>fsharp.key</AssemblyOriginatorKeyFile>
-	<Description>F# wrapper for some functions from AngouriMath</Description>
+	<Description>F# wrapper for some functions from AngouriMath. https://am.angouri.org/#inter</Description>
 	<Copyright>Angouri</Copyright>
 	<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-	<PackageProjectUrl>https://github.com/asc-community/AngouriMath</PackageProjectUrl>
+	<PackageProjectUrl>https://am.angouri.org</PackageProjectUrl>
 	<PackageIcon>icon.png</PackageIcon>
 	<RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
 	<PackageTags>fsharp, math, calculus, symbolic algebra, computer algebra, latex</PackageTags>
-	<PackageReleaseNotes>Lots of functions added (so that could be called without parsing from a string)</PackageReleaseNotes>
-	<Version>1.0.0-preview.3</Version>
+	<PackageReleaseNotes>https://am.angouri.org/#whatsnew</PackageReleaseNotes>
+	<Version>1.0.0</Version>
 	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	<Authors>WhiteBlackGoose</Authors>
 	<Company>Angouri</Company>
@@ -41,7 +41,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath" Version="1.2.0-preview.5" />
+    <PackageReference Include="AngouriMath" Version="1.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.1" />
   </ItemGroup>
 
 </Project>
