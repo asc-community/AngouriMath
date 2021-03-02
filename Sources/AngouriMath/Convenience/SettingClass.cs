@@ -78,8 +78,8 @@ namespace AngouriMath.Convenience
         [Obsolete("Method `As` is not threadsafe and inconvenient. Use method `Set` instead.")]
         public void As(T value, Action action)
         {
-            using (var _ = Set(value))
-                action();
+            using var _ = Set(value);
+            action();
         }
 
         /// <summary>
@@ -93,8 +93,8 @@ namespace AngouriMath.Convenience
         [Obsolete("Method `As` is not threadsafe and inconvenient. Use method `Set` instead.")]
         public TReturnType As<TReturnType>(T value, Func<TReturnType> action)
         {
-            using (var _ = Set(value))
-                return action();
+            using var _ = Set(value);
+            return action();
         }
 
         /// <summary>

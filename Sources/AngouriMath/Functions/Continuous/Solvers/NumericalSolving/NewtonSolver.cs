@@ -63,26 +63,25 @@ namespace AngouriMath.Functions.Algebra.NumericalSolving
             }
             if (expr.Vars.Single() != v)
                 throw new Core.Exceptions.WrongNumberOfArgumentsException($"{nameof(expr)} should only contain {nameof(Entity.Variable)} {nameof(v)}");
-            return MathS.Settings.FloatToRationalIterCount.As(0, () =>
-            {
-                var res = new HashSet<Complex>();
-                var df = expr.Differentiate(v).Simplify().Compile(v);
-                var f = expr.Simplify().Compile(v);
-                for (int x = 0; x < settings.StepCount.Re; x++)
-                    for (int y = 0; y < settings.StepCount.Im; y++)
-                    {
-                        var xShare = ((EDecimal)x) / settings.StepCount.Re;
-                        var yShare = ((EDecimal)y) / settings.StepCount.Im;
-                        var value = Complex.Create(
-                            settings.From.Re * xShare + settings.To.Re * (1 - xShare),
-                            settings.From.Im * yShare + settings.To.Im * (1 - yShare));
-                        var root = NewtonIter(f, df, value.ToNumerics(), settings.Precision);
-                        if (root.IsFinite && f.Call(root.ToNumerics()).ToNumber().Abs() <
-                            MathS.Settings.PrecisionErrorCommon.Value)
-                            res.Add(root);
-                    }
-                return res;
-            });
+
+            using var _ = MathS.Settings.FloatToRationalIterCount.Set(0);
+            var res = new HashSet<Complex>();
+            var df = expr.Differentiate(v).Simplify().Compile(v);
+            var f = expr.Simplify().Compile(v);
+            for (int x = 0; x < settings.StepCount.Re; x++)
+                for (int y = 0; y < settings.StepCount.Im; y++)
+                {
+                    var xShare = ((EDecimal)x) / settings.StepCount.Re;
+                    var yShare = ((EDecimal)y) / settings.StepCount.Im;
+                    var value = Complex.Create(
+                        settings.From.Re * xShare + settings.To.Re * (1 - xShare),
+                        settings.From.Im * yShare + settings.To.Im * (1 - yShare));
+                    var root = NewtonIter(f, df, value.ToNumerics(), settings.Precision);
+                    if (root.IsFinite && f.Call(root.ToNumerics()).ToNumber().Abs() <
+                        MathS.Settings.PrecisionErrorCommon.Value)
+                        res.Add(root);
+                }
+            return res;
         }
     }
 }
