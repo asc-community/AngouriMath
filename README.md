@@ -227,6 +227,8 @@ WriteLine("x2 + a x".Integrate("x").InnerSimplified);
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{{x}^{3}}{3}%2Ba\times \frac{{x}^{2}}{2}">
 
+</details>
+
 <details><summary><strong>Sets</strong></summary>
 
 There are four types of sets:
