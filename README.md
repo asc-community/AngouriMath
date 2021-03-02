@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>New, leading symbolic algebra library in .NET. Everything one would need.</b>
-  <br><br>
+  <br>
   <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>Download</b></a>
   <b>(</b>
   <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>C#</b></a>
@@ -58,10 +58,15 @@ Finally, if still not sure about it, you can try it even before installation!
 Although most functions are convenient to use only from C#, there are some
 optimized for F#.
 
-## README navigation:
-- [Examples](#exam)
-- [I want to contribute](#contrib)
-- [License](#license)
+## Quick start
+1. Install AngouriMath from NuGet ([Visual Studio](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-in-visual-studio), [JB Rider](https://www.jetbrains.com/help/rider/Using_NuGet.html#finding), [NuGet](https://www.nuget.org/packages/AngouriMath))
+2. Write the following code:
+```cs
+using AngouriMath; using System;
+Entity expr = "x + sin(y)";
+Console.WriteLine(expr);
+```
+3. Run.
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
 documentation. If you want to contribute, we would be happy to welcome you in our
@@ -74,6 +79,8 @@ Official website: [am.angouri.org](https://am.angouri.org/).
 <a id="exam"></a>
 
 ## Examples
+
+Expand any section to see. Examples with live shell are on the [website](https://am.angouri.org/).
 
 <details><summary><strong>Computations</strong></summary>
 
