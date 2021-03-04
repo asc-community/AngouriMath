@@ -4,6 +4,7 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
+using AngouriMath.Core.Multithreading;
 using System;
 using static AngouriMath.Entity;
 
@@ -58,6 +59,7 @@ namespace AngouriMath.Functions.Algebra
                             if (num.ContainsNode(x) && den.ContainsNode(x))
                             {
                                 var applied = num.Differentiate(x) / den.Differentiate(x);
+                                MultithreadingFunctional.ExitIfCancelled();
                                 if (ComputeLimit(applied, x, dest) is { } resLim)
                                     return resLim;
                             }
