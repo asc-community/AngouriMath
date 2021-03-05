@@ -123,14 +123,6 @@ using static System.Console;
 
 // WriteLine("phi(5^x) / 5^x".Simplify(5));
 
-WriteLine(Settings.FloatToRationalIterCount.Value);
-SomeMethod();
-WriteLine(Settings.FloatToRationalIterCount.Value);
 
-
-static void SomeMethod()
-{
-    using var a1 = Settings.FloatToRationalIterCount.Set(5);
-    using var a2 = Settings.FloatToRationalIterCount.Set(3);
-    a1.Dispose();
-}
+WriteLine("log(x3, x)".Limit("x", "+oo"));
+// WriteLine("(log(x3, x) - 1/3) < eps".Solve("x"));

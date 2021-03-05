@@ -61,7 +61,7 @@ namespace AngouriMath
             var res = ComputeLimit(this, x, destination, side); 
             if (res is null || res == MathS.NaN)
                 return new Limitf(this, x, destination, side);
-            return res;
+            return res.InnerSimplified;
         }
 
         /// <summary>
