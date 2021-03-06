@@ -47,11 +47,25 @@ namespace AngouriMath
                 /// <summary>
                 /// Creates an instance of Integer
                 /// </summary>
+                public static Integer Create(int value)
+                {
+                    if (value == 0)
+                        return Zero;
+                    if (value == 1)
+                        return One;
+                    if (value == -1)
+                        return MinusOne;
+                    return new Integer(value);
+                }
+
+                /// <summary>
+                /// Creates an instance of Integer
+                /// </summary>
                 public static Integer Create(EInteger value)
                 {
                     if (value.IsZero)
                         return Zero;
-                    if (value == EInteger.One)
+                    if (value.Equals(EInteger.One))
                         return One;
                     return new Integer(value);
                 }

@@ -222,6 +222,12 @@ namespace AngouriMath.Functions
             Mulf(Signumf(var any1), Absf(var any1a)) when any1 == any1a => any1,
             Mulf(Absf(var any1a), Signumf(var any1)) when any1 == any1a => any1,
 
+            Mulf(Rational(var one, var den), var any1) when one == 1 && den != 1 => any1 / den,
+            Mulf(var any1, Rational(var one, var den)) when one == 1 && den != 1 => any1 / den,
+
+            Mulf(Rational(var mOne, var den), var any1) when mOne == -1 && den != 1 => -(any1 / den),
+            Mulf(var any1, Rational(var mOne, var den)) when mOne == -1 && den != 1 => -(any1 / den),
+
             _ => x
         };
     }

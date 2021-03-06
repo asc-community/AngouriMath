@@ -154,13 +154,18 @@ namespace AngouriMath.Functions.Algebra
                     return LimitFunctional.ComputeLimit(p / q, x, Real.PositiveInfinity);
                 }
                 else
-                    return (MathS.Ln(upperLogLimit) / MathS.Ln(lowerLogLimit)) switch
+
+                {
+                    var div = (MathS.Ln(upperLogLimit) / MathS.Ln(lowerLogLimit));
+                    var divEvaled = div.Evaled;
+                    return divEvaled switch
                     {
                         { Evaled: Complex { IsNaN: true } } => null,
-                        { Evaled: (Complex { IsFinite: false } or Integer(0)) and var res } => res,
+                        { } res when res.ContainsNode("+oo") || res.ContainsNode("-oo") => div.InnerSimplified,
                         { Evaled: Complex } limit => limit,
                         _ => upperLogLimit / lowerLogLimit,
                     };
+                }
             }
 
             return null;

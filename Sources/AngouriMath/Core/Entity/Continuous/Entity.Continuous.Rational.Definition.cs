@@ -51,10 +51,11 @@ namespace AngouriMath
 #pragma warning disable CS1591
 
                 public void Deconstruct(out ERational rational) => rational = ERational;
-                public void Deconstruct(out int? numerator, out int? denominator)
+
+                public void Deconstruct(out Integer numerator, out Integer denominator)
                 {
-                    numerator = ERational.Numerator.CanFitInInt32() ? ERational.Numerator.ToInt32Unchecked() : new int?();
-                    denominator = ERational.Denominator.CanFitInInt32() ? ERational.Denominator.ToInt32Unchecked() : new int?();
+                    numerator = Numerator;
+                    denominator = Denominator;
                 }
 
 #pragma warning restore CS1591

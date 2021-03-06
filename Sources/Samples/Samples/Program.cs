@@ -122,7 +122,10 @@ using static System.Console;
 // WriteLine(withoutPhi.SimplifiedRate);
 
 // WriteLine("phi(5^x) / 5^x".Simplify(5));
+WriteLine("a / 3".ToEntity());
+WriteLine("a / 3".ToEntity().SimplifiedRate);
+WriteLine("(1/3) * a".Simplify());
+WriteLine("(1/3) * a".Simplify().SimplifiedRate);
 
-
-WriteLine("log(x3, x)".Limit("x", "+oo"));
+// WriteLine("log(x3, x ^a)".Limit("x", "+oo").Simplify());
 // WriteLine("(log(x3, x) - 1/3) < eps".Solve("x"));

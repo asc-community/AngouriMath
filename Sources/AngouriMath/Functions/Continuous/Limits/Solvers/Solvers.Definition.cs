@@ -40,9 +40,17 @@ namespace AngouriMath.Functions.Algebra
             return null;
         }
 
+        private static Entity ExpandLogarithm(Entity expr)
+            => expr switch
+            {
+                Logf(var @base, var antilog) when @base != MathS.e => MathS.Ln(antilog) / MathS.Ln(@base),
+                _ => expr
+            };
 
         public static Entity? ComputeLimit(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides)
         {
+            expr = expr.Replace(ExpandLogarithm).Simplify();
+
             if (side is ApproachFrom.Left or ApproachFrom.Right)
                 return expr.ComputeLimitDivideEtImpera(x, dest, side);
             if (side is ApproachFrom.BothSides)

@@ -54,7 +54,7 @@ namespace AngouriMath.Functions
             void AddHistory(Entity expr)
             {
 #if DEBUG
-                if (MathS.Diagnostic.CatchOnSimplify.Value(res)) throw new MathS.Diagnostic.DiagnosticCatchException();
+                if (MathS.Diagnostic.CatchOnSimplify.Value(expr)) throw new MathS.Diagnostic.DiagnosticCatchException();
 #endif
                 void __IterAddHistory(Entity expr)
                 {
