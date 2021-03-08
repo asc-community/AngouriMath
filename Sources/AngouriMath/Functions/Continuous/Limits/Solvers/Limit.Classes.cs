@@ -81,9 +81,11 @@ namespace AngouriMath
                     return lim;
                 else
                 {
+
                     var (dividend, divisor) =
                         (Dividend.ComputeLimitDivideEtImpera(x, dist, side), Divisor.ComputeLimitDivideEtImpera(x, dist, side)) switch
                         {
+                            ({ } lim1, { } lim2) when lim1.InnerSimplified.IsFinite && lim2.InnerSimplified.IsFinite && lim2.InnerSimplified != 0 => (lim1, lim2),
                             ({ IsFinite: true } lim1, { IsFinite: true } lim2) => (lim1, lim2),
                             (_, { } l2) when !Dividend.ContainsNode(x) => (Dividend, l2),
                             ({ } l1, _) when !Divisor.ContainsNode(x) => (l1, Divisor),

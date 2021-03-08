@@ -138,6 +138,10 @@ namespace AngouriMath
                     (a, b) => (a, b) switch
                 {
                     (Complex n1, Complex n2) => Number.Pow(n1, n2),
+                    (Integer(1), _) => 1,
+                    (Integer(0), _) => 0,
+                    (var n1, Integer(-1)) => (1 / n1).Evaled,
+                    (_, Integer(0)) => 1,
                     _ => null
                 },
                 (@this, a, b) => ((Powf)@this).New(a, b)

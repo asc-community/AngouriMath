@@ -15,6 +15,12 @@ namespace AngouriMath.Functions
         private static bool IsRealPositive(Entity entity)
             => entity is Real re && re > 0;
 
+        private static bool IsRealNegative(Entity entity)
+            => entity is Real re && re < 0;
+
+        private static bool IsNonZero(Entity entity)
+             => !IsZero(entity);
+
         private static bool IsZero(Entity entity)
             => entity is Real re && Real.IsZero(re);
 
@@ -75,17 +81,49 @@ namespace AngouriMath.Functions
 
             Equalsf(Powf(var any1, var rePo), var zero) when IsRealPositive(rePo) && IsZero(zero) => any1.Equalizes(zero),
 
-            Equalsf(Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1.Equalizes(Integer.Zero),
-            Greaterf(Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 > Integer.Zero,
-            GreaterOrEqualf(Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 >= Integer.Zero,
-            Lessf(Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 < Integer.Zero,
-            LessOrEqualf(Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 <= Integer.Zero,
+            // The following set of patterns might be simplified
 
-            Equalsf(Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1.Equalizes(Integer.Zero),
-            Greaterf(Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 > Integer.Zero,
+            // 4 * a ? 0
+            Equalsf        (Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1.Equalizes(Integer.Zero),
+            Greaterf       (Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 > Integer.Zero,
+            GreaterOrEqualf(Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 >= Integer.Zero,
+            Lessf          (Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 < Integer.Zero,
+            LessOrEqualf   (Mulf(var rePo, var any1), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 <= Integer.Zero,
+
+            // a * 4 ? 0
+            Equalsf        (Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1.Equalizes(Integer.Zero),
+            Greaterf       (Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 > Integer.Zero,
             GreaterOrEqualf(Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 >= Integer.Zero,
-            Lessf(Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 < Integer.Zero,
-            LessOrEqualf(Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 <= Integer.Zero,
+            Lessf          (Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 < Integer.Zero,
+            LessOrEqualf   (Mulf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 <= Integer.Zero,
+
+            // -4 * a ? 0
+            Equalsf        (Mulf(var rePo, var any1), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1.Equalizes(Integer.Zero),
+            Greaterf       (Mulf(var rePo, var any1), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 < Integer.Zero,
+            GreaterOrEqualf(Mulf(var rePo, var any1), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 <= Integer.Zero,
+            Lessf          (Mulf(var rePo, var any1), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 > Integer.Zero,
+            LessOrEqualf   (Mulf(var rePo, var any1), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 >= Integer.Zero,
+
+            // a * -4 ? 0
+            Equalsf        (Mulf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1.Equalizes(Integer.Zero),
+            Greaterf       (Mulf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 < Integer.Zero,
+            GreaterOrEqualf(Mulf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 <= Integer.Zero,
+            Lessf          (Mulf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 > Integer.Zero,
+            LessOrEqualf   (Mulf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 >= Integer.Zero,
+
+            // a / 4 ? 0
+            Equalsf        (Divf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1.Equalizes(Integer.Zero),
+            Greaterf       (Divf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 > Integer.Zero,
+            GreaterOrEqualf(Divf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 >= Integer.Zero,
+            Lessf          (Divf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 < Integer.Zero,
+            LessOrEqualf   (Divf(var any1, var rePo), var zeroEnt) when IsRealPositive(rePo) && IsZero(zeroEnt) => any1 <= Integer.Zero,
+
+            // a / -4 ? 0
+            Equalsf        (Divf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1.Equalizes(Integer.Zero),
+            Greaterf       (Divf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 < Integer.Zero,
+            GreaterOrEqualf(Divf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 <= Integer.Zero,
+            Lessf          (Divf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 > Integer.Zero,
+            LessOrEqualf   (Divf(var any1, var rePo), var zeroEnt) when IsRealNegative(rePo) && IsZero(zeroEnt) => any1 >= Integer.Zero,
 
             Greaterf(var any1, var any1a) when any1 == any1a => false,
             Lessf(var any1, var any1a) when any1 == any1a => false,

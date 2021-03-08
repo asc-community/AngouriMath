@@ -36,8 +36,8 @@ namespace UnitTests.PatternsTest
         [Fact] public void Patt4() => AssertSimplify((x - y) * (x + y) / (x * x - y * y), 1);
         [Fact] public void Patt5() => AssertSimplify((x + 3) * (3 / (x + 3)), 3);
         [Fact] public void Patt6() => AssertSimplify((x + 1) * (x + 2) * (x + 3) / ((x + 2) * (x + 3)), 1 + x);
-        [Fact] public void Patt7() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 3), 0.5 * MathS.pi);
-        [Fact] public void Patt8() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 3), 0.5 * MathS.pi);
+        [Fact] public void Patt7() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 3), MathS.pi / 2);
+        [Fact] public void Patt8() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 3), MathS.pi / 2);
         [Fact] public void Patt9() => AssertSimplify(MathS.Arccotan(x * 3) + MathS.Arctan(x * 6), MathS.Arccotan(3 * x) + MathS.Arctan(6 * x));
         [Fact] public void Patt10() => AssertSimplify(MathS.Arcsin(x * 3) + MathS.Arccos(x * 1), MathS.Arcsin(3 * x) + MathS.Arccos(x));
         [Fact] public void Patt11() => AssertSimplify(3 + x + 4 + x, 7 + 2 * x);
@@ -47,7 +47,7 @@ namespace UnitTests.PatternsTest
         [Fact] public void Factorial2() => AssertSimplify(MathS.Factorial(2), 2);
         [Fact] public void Factorial1_5() => AssertSimplify(MathS.Factorial(1.5m), 0.75m * MathS.Sqrt(MathS.pi));
         [Fact] public void Factorial1() => AssertSimplify(MathS.Factorial(1), 1);
-        [Fact] public void Factorial0_5() => AssertSimplify(MathS.Factorial(0.5m), 0.5m * MathS.Sqrt(MathS.pi));
+        [Fact] public void Factorial0_5() => AssertSimplify(MathS.Factorial(0.5m), MathS.Sqrt(MathS.pi) / 2);
         [Fact] public void Factorial0() => AssertSimplify(MathS.Factorial(0), 1);
         [Fact] public void FactorialM0_5() => AssertSimplify(MathS.Factorial(-0.5m), MathS.Sqrt(MathS.pi));
         [Fact] public void FactorialM1() => AssertSimplify(MathS.Factorial(-1), double.NaN);
