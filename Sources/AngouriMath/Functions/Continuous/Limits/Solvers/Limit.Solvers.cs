@@ -5,6 +5,7 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core;
+using AngouriMath.Core.Multithreading;
 using PeterO.Numbers;
 using System.Collections.Generic;
 using System.Linq;
@@ -46,6 +47,7 @@ namespace AngouriMath.Functions.Algebra
             var res = expr.Replace(e => e is Providedf(var expr, _) ? expr : e).Substitute(x, Infinity);
             if (res.Evaled is Complex limit)
             {
+                MultithreadingFunctional.ExitIfCancelled();
                 if (limit == Real.NaN) return null;
                 if (!limit.RealPart.IsFinite)
                     return limit.RealPart; // TODO: sometimes we get { oo + value * i } so we assume it is just infinity
@@ -60,6 +62,7 @@ namespace AngouriMath.Functions.Algebra
         {
             if (ParseAsPolynomial(expr, x) is { } mono)
             {
+                MultithreadingFunctional.ExitIfCancelled();
                 var maxPower = mono.Keys.Max();
                 return
                     maxPower.IsZero
@@ -84,7 +87,7 @@ namespace AngouriMath.Functions.Algebra
                 {
                     var maxPowerP = monoP.Keys.Max();
                     var maxPowerQ = monoQ.Keys.Max();
-
+                    MultithreadingFunctional.ExitIfCancelled();
                     var maxTermP = monoP[maxPowerP];
                     var maxTermQ = monoQ[maxPowerQ];
                     if (maxPowerP.CompareTo(maxPowerQ) > 0)
@@ -99,6 +102,7 @@ namespace AngouriMath.Functions.Algebra
                     }
                     else if (maxPowerP.CompareTo(maxPowerQ) == 0)
                     {
+                        MultithreadingFunctional.ExitIfCancelled();
                         var termPSimplified = maxTermP.InnerSimplified;
                         var termQSimplified = maxTermQ.InnerSimplified;
                         return termPSimplified / termQSimplified;
@@ -117,6 +121,7 @@ namespace AngouriMath.Functions.Algebra
                     return SolveAsLogarithmDivision(MathS.Ln(logArgument) / MathS.Ln(logBase), x);
                 else
                 {
+                    MultithreadingFunctional.ExitIfCancelled();
                     var innerLimit = LimitFunctional.ComputeLimit(logArgument, x, Real.PositiveInfinity);
                     if (innerLimit is null) return null;
                     // do same as wolframalpha: https://www.wolframalpha.com/input/?i=ln%28-inf%29
@@ -134,29 +139,33 @@ namespace AngouriMath.Functions.Algebra
             if (expr is Divf(Logf(var upperLogBase, var upperLogArgument), Logf(var lowerLogBase, var lowerLogArgument)))
             {
                 if (lowerLogBase.ContainsNode(x) || upperLogBase.ContainsNode(x)) return null;
-
+                MultithreadingFunctional.ExitIfCancelled();
                 var upperLogLimit = LimitFunctional.ComputeLimit(upperLogArgument, x, Real.PositiveInfinity);
                 var lowerLogLimit = LimitFunctional.ComputeLimit(lowerLogArgument, x, Real.PositiveInfinity);
                 if (upperLogLimit is null || lowerLogLimit is null) return null;
-
+                MultithreadingFunctional.ExitIfCancelled();
                 if ((upperLogLimit.Nodes.Any(child => child == Real.PositiveInfinity || child == Real.NegativeInfinity)
                      || upperLogLimit == Integer.Zero)
                     && (lowerLogLimit.Nodes.Any(child => child == Real.PositiveInfinity || child == Real.NegativeInfinity)
                      || lowerLogLimit == Integer.Zero))
                 {
-                    // apply L'Hôpital's rule for lim(x -> +oo) log(f(x), g(x))
                     var p = (upperLogArgument.Differentiate(x) / upperLogArgument).InnerSimplified;
                     var q = (lowerLogArgument.Differentiate(x) / lowerLogArgument).InnerSimplified;
                     return LimitFunctional.ComputeLimit(p / q, x, Real.PositiveInfinity);
                 }
                 else
-                    return (MathS.Ln(upperLogLimit) / MathS.Ln(lowerLogLimit)) switch
+
+                {
+                    var div = (MathS.Ln(upperLogLimit) / MathS.Ln(lowerLogLimit));
+                    var divEvaled = div.Evaled;
+                    return divEvaled switch
                     {
                         { Evaled: Complex { IsNaN: true } } => null,
-                        { Evaled: (Complex { IsFinite: false } or Integer(0)) and var res } => res,
+                        { } res when res.ContainsNode("+oo") || res.ContainsNode("-oo") => div.InnerSimplified,
                         { Evaled: Complex } limit => limit,
                         _ => upperLogLimit / lowerLogLimit,
                     };
+                }
             }
 
             return null;

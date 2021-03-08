@@ -7,6 +7,7 @@
 namespace AngouriMath
 {
     using AngouriMath.Core.Exceptions;
+    using AngouriMath.Core.Multithreading;
     using Core;
     using System.Linq;
     using static Functions.Algebra.LimitFunctional;
@@ -80,9 +81,11 @@ namespace AngouriMath
                     return lim;
                 else
                 {
+
                     var (dividend, divisor) =
                         (Dividend.ComputeLimitDivideEtImpera(x, dist, side), Divisor.ComputeLimitDivideEtImpera(x, dist, side)) switch
                         {
+                            ({ } lim1, { } lim2) when lim1.InnerSimplified.IsFinite && lim2.InnerSimplified.IsFinite && lim2.InnerSimplified != 0 => (lim1, lim2),
                             ({ IsFinite: true } lim1, { IsFinite: true } lim2) => (lim1, lim2),
                             (_, { } l2) when !Dividend.ContainsNode(x) => (Dividend, l2),
                             ({ } l1, _) when !Divisor.ContainsNode(x) => (l1, Divisor),
@@ -177,6 +180,7 @@ namespace AngouriMath
                 {
                     var @base = Base.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim1 && lim1 != 0 ? lim1 : Base;
                     var power = Antilogarithm.ComputeLimitDivideEtImpera(x, dist, side) is { IsFinite: true } lim2 && lim2 != 0 ? lim2 : Antilogarithm;
+                    MultithreadingFunctional.ExitIfCancelled();
                     return ComputeLimitImpl(New(@base, power), x, dist, side);
                 }
             }

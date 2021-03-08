@@ -71,7 +71,7 @@ namespace AngouriMath.Functions
         };
         internal static Entity ExpandTrigonometricRules(Entity x) => x switch
         {
-            Mulf(Rational(1, 2), Sinf(Mulf(Integer(2), var any1))) => new Sinf(any1) * new Cosf(any1),
+            Mulf(Rational(Integer(1), Integer(2)), Sinf(Mulf(Integer(2), var any1))) => new Sinf(any1) * new Cosf(any1),
 
             Cosf(Mulf(Integer(2), var any1)) =>
                 new Powf(new Cosf(any1), Integer.Create(2)) - new Powf(new Sinf(any1), 2),

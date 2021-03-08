@@ -526,8 +526,20 @@ namespace AngouriMath
         /// </param>
         /// <returns>The parsed expression</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static Entity FromString(string expr, bool useCache) => 
-            useCache ? stringToEntityCache.GetValue(expr, key => Parser.Parse(key)) : Parser.Parse(expr);
+        public static Entity FromString(string expr, bool useCache)
+        {
+            if (useCache)
+                return expr switch
+                {
+                    "0" => Integer.Create(0),
+                    "1" => Integer.Create(1),
+                    "-1" => Integer.Create(-1),
+                    "+oo" => Real.PositiveInfinity,
+                    "-oo" => Real.NegativeInfinity,
+                    _ => stringToEntityCache.GetValue(expr, key => Parser.Parse(key))
+                };
+            return Parser.Parse(expr);
+        }
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
@@ -800,6 +812,10 @@ namespace AngouriMath
 
                     // Number of divides
                     res += MinorWeight(expr.Nodes.Count(entity => entity is Divf));
+
+                    // Number of rationals with unit numerator
+                    res += Weight(expr.Nodes.Count(entity => entity is Rational rat and not Integer 
+                        && (rat.Numerator == 1 || rat.Numerator == -1)));
 
                     // Number of negative powers
                     res += HeavyWeight(expr.Nodes.Count(entity => entity is Powf(_, Real { IsNegative: true })));

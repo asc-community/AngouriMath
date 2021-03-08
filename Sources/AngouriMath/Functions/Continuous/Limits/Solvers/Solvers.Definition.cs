@@ -40,9 +40,17 @@ namespace AngouriMath.Functions.Algebra
             return null;
         }
 
+        private static Entity ExpandLogarithm(Entity expr)
+            => expr switch
+            {
+                Logf(var @base, var antilog) when @base != MathS.e => MathS.Ln(antilog) / MathS.Ln(@base),
+                _ => expr
+            };
 
-        public static Entity? ComputeLimit(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides)
+        public static Entity? ComputeLimit(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides, bool acceptNaN = false)
         {
+            expr = expr.Replace(ExpandLogarithm);
+
             if (side is ApproachFrom.Left or ApproachFrom.Right)
                 return expr.ComputeLimitDivideEtImpera(x, dest, side);
             if (side is ApproachFrom.BothSides)
@@ -50,26 +58,29 @@ namespace AngouriMath.Functions.Algebra
                 expr = expr.Replace(a => TrivialTrigonometricReplacement(a, x));
                 expr = ApplyTrivialTransformations(expr, x, dest, (_, exprLim) => exprLim);
                 expr = ApplyFirstRemarkable(expr, x, dest);
-                expr = ApplySecondRemarkable(expr, x, dest);
-                expr = ApplylHopitalRule(expr, x, dest);
-
+                // expr = ApplySecondRemarkable(expr, x, dest);
+                expr = expr.Replace(c => ApplySecondRemarkable(c, x, dest));
 
                 MultithreadingFunctional.ExitIfCancelled();
                 if (!dest.IsFinite)
                     // just compute limit with no check for left/right equality
-                    // here approach left will be ignored anyways, as dist is infinite number
+                    // here approach left will be ignored anyways, as dest is infinite number
                     return expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left);
                 else if (expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Left) is { } fromLeft
                   && expr.ComputeLimitDivideEtImpera(x, dest, ApproachFrom.Right) is { } fromRight)
                 {
-                    if (fromLeft == fromRight)
+                    if (fromLeft == fromRight && (acceptNaN || fromLeft.Evaled != MathS.NaN))
                         return fromLeft;
-                    if (ExpressionNumerical.AreEqual(fromLeft, fromRight))
+                    if (ExpressionNumerical.AreEqual(fromLeft, fromRight) && (acceptNaN || fromLeft.Evaled != MathS.NaN))
                         return fromLeft;
-                    return Real.NaN;
+                    expr = ApplylHopitalRule(expr, x, dest);
+                    return ComputeLimit(expr, x, dest, acceptNaN: true);
                 }
                 else
-                    return null;
+                {
+                    expr = ApplylHopitalRule(expr, x, dest);
+                    return ComputeLimit(expr, x, dest);
+                }
             }
             throw new AngouriBugException($"Unresolved enum parameter {side}");
         }
