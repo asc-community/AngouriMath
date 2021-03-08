@@ -20,7 +20,7 @@
   <b>·</b>
   <a href="#contrib"><b>Contributions</b></a>
   <b>·</b>
-  <a href="https://am.angouri.org/#whatsnew"><b>What's new</b></a>
+  <a href="https://am.angouri.org/whatsnew/"><b>What's new</b></a>
   <b>·</b>
   <a href="https://am.angouri.org/"><b>Official website</b></a>
   <br>
@@ -59,7 +59,7 @@ Although most functions are convenient to use only from C#, there are some
 optimized for F#.
 
 ## Quick start
-1. Install AngouriMath from NuGet ([Visual Studio](https://docs.microsoft.com/en-us/nuget/quickstart/install-and-use-a-package-in-visual-studio), [JB Rider](https://www.jetbrains.com/help/rider/Using_NuGet.html#finding), [NuGet](https://www.nuget.org/packages/AngouriMath))
+1. Install AngouriMath from [NuGet](https://www.nuget.org/packages/AngouriMath).
 2. Write the following code:
 ```cs
 using AngouriMath; using System;
@@ -67,6 +67,8 @@ Entity expr = "x + sin(y)";
 Console.WriteLine(expr);
 ```
 3. Run.
+
+<a href="https://am.angouri.org/quickstart/"><strong>More detailed Quick Start</strong></a>.
 
 If you are new to AM, we suggest you checking out some samples instead of reading boring 
 documentation. If you want to contribute, we would be happy to welcome you in our
