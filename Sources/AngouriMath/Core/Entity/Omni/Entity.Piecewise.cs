@@ -49,7 +49,7 @@ namespace AngouriMath
         public sealed partial record Piecewise : Entity, IEquatable<Piecewise>
         {
             public IEnumerable<Providedf> Cases => cases;
-            private IEnumerable<Providedf> cases = Enumerable.Empty<Providedf>();
+            private readonly IEnumerable<Providedf> cases = Enumerable.Empty<Providedf>();
 
             // internal override Priority Priority => Priority.Provided;
             /// <inheritdoc/>

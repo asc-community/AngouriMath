@@ -146,18 +146,45 @@ namespace UnitTests.Convenience
         [Fact] public void TestProvided2() => Assert.Equal(MathS.Provided(MathS.Provided("a", "b"), "c"), FromString("a provided b provided c"));
 
         [Theory]
+        [InlineData("sh", "Sinh")]
         [InlineData("sinh", "Sinh")]
+
+        [InlineData("ch", "Cosh")]
         [InlineData("cosh", "Cosh")]
+
         [InlineData("tanh", "Tanh")]
+        [InlineData("th", "Tanh")]
+
         [InlineData("coth", "Cotanh")]
+        [InlineData("cth", "Cotanh")]
+
         [InlineData("sech", "Sech")]
+        [InlineData("sch", "Sech")]
+
         [InlineData("csch", "Cosech")]
+
         [InlineData("asinh", "Arsinh")]
+        [InlineData("arsinh", "Arsinh")]
+        [InlineData("arsh", "Arsinh")]
+
         [InlineData("acosh", "Arcosh")]
+        [InlineData("arcosh", "Arcosh")]
+        [InlineData("arch", "Arcosh")]
+
         [InlineData("atanh", "Artanh")]
+        [InlineData("artanh", "Artanh")]
+        [InlineData("arth", "Artanh")]
+
         [InlineData("acoth", "Arcotanh")]
+        [InlineData("arcoth", "Arcotanh")]
+        [InlineData("arcth", "Arcotanh")]
+
         [InlineData("asech", "Arsech")]
+        [InlineData("arsech", "Arsech")]
+        [InlineData("arsch", "Arsech")]
+
         [InlineData("acsch", "Arcosech")]
+        [InlineData("arcsch", "Arcosech")]
         public void TestHyperbolic(string parsedName, string methodName)
         {
             var methods = typeof(MathS.Hyperbolic).GetMethods();

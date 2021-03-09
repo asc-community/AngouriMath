@@ -266,6 +266,7 @@ atom returns[Entity value]
     | 'sqr(' args = function_arguments ')' { Assert("sqr", 1, $args.list.Count); $value = MathS.Sqr($args.list[0]); }
     | 'ln(' args = function_arguments ')' { Assert("ln", 1, $args.list.Count); $value = MathS.Ln($args.list[0]); }
 
+    /* Trigonometric functions */
     | 'sin(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Sin($args.list[0]); }
     | 'cos(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Cos($args.list[0]); }
     | 'tan(' args = function_arguments ')' { Assert("tan", 1, $args.list.Count); $value = MathS.Tan($args.list[0]); }
@@ -290,31 +291,56 @@ atom returns[Entity value]
     | 'acosec(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Arccosec($args.list[0]); }
     | 'acot(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Arccotan($args.list[0]); }
     | 'arccot(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Arccotan($args.list[0]); }
+    /* End */
 
+
+    /* Hyperbolic functions */
     | 'sinh(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Hyperbolic.Sinh($args.list[0]); }
+    | 'sh(' args = function_arguments ')' { Assert("sin", 1, $args.list.Count); $value = MathS.Hyperbolic.Sinh($args.list[0]); }
+
     | 'cosh(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Hyperbolic.Cosh($args.list[0]); }
+    | 'ch(' args = function_arguments ')' { Assert("cos", 1, $args.list.Count); $value = MathS.Hyperbolic.Cosh($args.list[0]); }
+
     | 'tanh(' args = function_arguments ')' { Assert("tan", 1, $args.list.Count); $value = MathS.Hyperbolic.Tanh($args.list[0]); }
+    | 'th(' args = function_arguments ')' { Assert("tan", 1, $args.list.Count); $value = MathS.Hyperbolic.Tanh($args.list[0]); }
+
     | 'cotanh(' args = function_arguments ')' { Assert("cotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Cotanh($args.list[0]); }
     | 'coth(' args = function_arguments ')' { Assert("cotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Cotanh($args.list[0]); }
+    | 'cth(' args = function_arguments ')' { Assert("cotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Cotanh($args.list[0]); }
+
     | 'sech(' args = function_arguments ')' { Assert("sec", 1, $args.list.Count); $value = MathS.Hyperbolic.Sech($args.list[0]); }
+    | 'sch(' args = function_arguments ')' { Assert("sec", 1, $args.list.Count); $value = MathS.Hyperbolic.Sech($args.list[0]); }
+
     | 'cosech(' args = function_arguments ')' { Assert("cosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Cosech($args.list[0]); }
     | 'csch(' args = function_arguments ')' { Assert("cosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Cosech($args.list[0]); }
-    | 'arcsinh(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsinh($args.list[0]); }
-    | 'arccosh(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosh($args.list[0]); }
-    | 'arctanh(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.Hyperbolic.Artanh($args.list[0]); }
-    | 'arccotanh(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
-    | 'arcsech(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsech($args.list[0]); }
-    | 'arccosech(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
-    | 'arccsch(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
-    | 'acsch(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
+
     | 'asinh(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsinh($args.list[0]); }
+    | 'arsinh(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsinh($args.list[0]); }
+    | 'arsh(' args = function_arguments ')' { Assert("arcsin", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsinh($args.list[0]); }
+
     | 'acosh(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosh($args.list[0]); }
+    | 'arcosh(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosh($args.list[0]); }
+    | 'arch(' args = function_arguments ')' { Assert("arccos", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosh($args.list[0]); }
+
     | 'atanh(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.Hyperbolic.Artanh($args.list[0]); }
-    | 'acotanh(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
-    | 'asech(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsech($args.list[0]); }
-    | 'acosech(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
+    | 'artanh(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.Hyperbolic.Artanh($args.list[0]); }
+    | 'arth(' args = function_arguments ')' { Assert("arctan", 1, $args.list.Count); $value = MathS.Hyperbolic.Artanh($args.list[0]); }
+
     | 'acoth(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
-    | 'arccoth(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
+    | 'arcoth(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
+    | 'acotanh(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
+    | 'arcotanh(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
+    | 'arcth(' args = function_arguments ')' { Assert("arccotan", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcotanh($args.list[0]); }
+
+    | 'asech(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsech($args.list[0]); }
+    | 'arsech(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsech($args.list[0]); }
+    | 'arsch(' args = function_arguments ')' { Assert("arcsec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arsech($args.list[0]); }
+
+    | 'acosech(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
+    | 'arcosech(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
+    | 'arcsch(' args = function_arguments ')' { Assert("arccosec", 1, $args.list.Count); $value = MathS.Hyperbolic.Arcosech($args.list[0]); }
+    /* End */
+
 
     | 'gamma(' args = function_arguments ')' { Assert("gamma", 1, $args.list.Count); $value = MathS.Gamma($args.list[0]); }
     | 'derivative(' args = function_arguments ')' 
