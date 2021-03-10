@@ -6,6 +6,7 @@ using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -122,7 +123,47 @@ using static System.Console;
 // WriteLine(withoutPhi.SimplifiedRate);
 
 // WriteLine("((a^x - 1) - (b^x - 1)) / x".Limit("x", 0));
-WriteLine("((1 + x)^a - 1)^x".Limit("x", 0));
 
-// WriteLine("log(x3, x ^a)".Limit("x", "+oo").Simplify());
-// WriteLine("(log(x3, x) - 1/3) < eps".Solve("x"));
+
+Entity expr = "3 + 2 * x";
+var c = Compile<Func<int, int>>(expr, n => (int)n, (typeof(int), "x"));
+WriteLine(c(0));
+WriteLine(c(1));
+WriteLine(c(4));
+
+static TDelegate Compile<TDelegate>(Entity expr, Func<Number, object> numberConvert, params (Type type, Variable variable)[] typesAndNames) where TDelegate : Delegate
+{
+    Dictionary<Entity, ParameterExpression> args = new();
+    foreach (var (type, @var) in typesAndNames)
+        args[@var] = Expression.Parameter(type, @var.Name);
+
+    var argParams = args.Values.ToArray(); // copying
+    List<ParameterExpression> localVars = new();
+
+    List<Expression> instructionSet = new();
+    var tree = BuildTree(expr, args);
+
+    var finalExpr = Expression.Block(localVars, instructionSet.Append(tree));
+    var finalFunction = Expression.Lambda<TDelegate>(finalExpr, argParams);
+
+    return finalFunction.Compile();
+
+    Expression BuildTree(Entity expr, Dictionary<Entity, ParameterExpression> vars)
+    {
+        if (vars.TryGetValue(expr, out var readyVar))
+            return readyVar;
+        Expression subTree = expr switch
+        {
+            Variable x => vars[x],
+            Number n => Expression.Constant(numberConvert(n)),
+            Sumf(var a, var b) => Expression.Add(BuildTree(a, vars), BuildTree(b, vars)),
+            Mulf(var a, var b) => Expression.Multiply(BuildTree(a, vars), BuildTree(b, vars)),
+            _ => throw new Exception()
+        };
+        var newVar = Expression.Variable(subTree.Type);
+        instructionSet.Add(Expression.Assign(newVar, subTree));
+        vars[expr] = newVar;
+        localVars.Add(newVar);
+        return newVar;
+    }
+}
