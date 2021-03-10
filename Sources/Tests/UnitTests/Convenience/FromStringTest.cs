@@ -267,6 +267,31 @@ namespace UnitTests.Convenience
             var (nodeXY, _, nodeYZ, str) = Extract(signLeft, signRight);
             Assert.Equal(nodeXY & nodeYZ, FromString(str));
         }
+
+        [Theory]
+        [InlineData("α", "α")]
+        [InlineData("αb", "αb")]
+        [InlineData("αb_3", "αb_3")]
+        [InlineData("1 + α", "α")]
+        [InlineData("1 + αb", "αb")]
+        [InlineData("1 + αb_3", "αb_3")]
+        [InlineData("αβγδεζηθικλμνξοπρσςτυφχψω", "αβγδεζηθικλμνξοπρσςτυφχψω")]
+        [InlineData("sin(αβγδεζηθικλμ)", "αβγδεζηθικλμ")]
+        [InlineData("ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ")]
+        [InlineData("1 + ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ + 1", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ")]
+        [InlineData("йцукенгшщзхъфывапролджэячсмитьбю", "йцукенгшщзхъфывапролджэячсмитьбю")]
+        [InlineData("ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ", "ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ")]
+        [InlineData("cos(АнгуриMath)", "АнгуриMath")]
+        [InlineData("ΑγγούριMath + 11", "ΑγγούριMath")]
+        [InlineData("БЕZHΘГIM_64 ^ 2", "БЕZHΘГIM_64")]
+        [InlineData("ВсЕмПрИвЕтВэТоМчАтИкЕ < 3", "ВсЕмПрИвЕтВэТоМчАтИкЕ")]
+        [InlineData("йА кΨеВеТкΩ", "йА")]
+        public void TestUnicodeVariablesParser(string exprRaw, string expectedName)
+        {
+            Entity actual = exprRaw;
+            var any = actual.Vars.First();
+            Assert.Equal(expectedName, any.Name);
+        }
     }
 }
 

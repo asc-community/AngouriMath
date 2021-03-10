@@ -408,7 +408,7 @@ SPECIALSET: ('CC' | 'RR' | 'QQ' | 'ZZ' | 'BB') ;
 
 BOOLEAN: ('true' | 'True' | 'false' | 'False') ;
 
-VARIABLE: ('a'..'z'|'A'..'Z')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9')+)? ;
+VARIABLE: ('a'..'z'|'A'..'Z'|'\u0370'..'\u03FF'|'\u1F00'..'\u1FFF'|'\u0400'..'\u04FF')+ ('_' ('a'..'z'|'A'..'Z'|'0'..'9'|'\u0370'..'\u03FF'|'\u1F00'..'\u1FFF'|'\u0400'..'\u04FF')+)? ;
   
 COMMENT: ('//' ~[\r\n]* '\r'? '\n' | '/*' .*? '*/') -> skip ;
     
