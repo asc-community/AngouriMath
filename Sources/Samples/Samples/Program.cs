@@ -125,11 +125,12 @@ using static System.Console;
 // WriteLine("((a^x - 1) - (b^x - 1)) / x".Limit("x", 0));
 
 
-Entity expr = "3 + 2 * x";
-var c = Compile<Func<int, int>>(expr, n => (int)n, (typeof(int), "x"));
-WriteLine(c(0));
-WriteLine(c(1));
-WriteLine(c(4));
+Entity expr = "a and b";
+var c = Compile<Func<bool, bool, bool>>(expr, n => (int)n, (typeof(bool), "a"), (typeof(bool), "b"));
+WriteLine(c(true, true));
+WriteLine(c(true, false));
+WriteLine(c(false, false));
+WriteLine(c(false, true));
 
 static TDelegate Compile<TDelegate>(Entity expr, Func<Number, object> numberConvert, params (Type type, Variable variable)[] typesAndNames) where TDelegate : Delegate
 {
@@ -155,7 +156,9 @@ static TDelegate Compile<TDelegate>(Entity expr, Func<Number, object> numberConv
         Expression subTree = expr switch
         {
             Variable x => vars[x],
+            Entity.Boolean b => Expression.Constant((bool)b),
             Number n => Expression.Constant(numberConvert(n)),
+            Andf(var a, var b) => Expression.And(BuildTree(a, vars), BuildTree(b, vars)),
             Sumf(var a, var b) => Expression.Add(BuildTree(a, vars), BuildTree(b, vars)),
             Mulf(var a, var b) => Expression.Multiply(BuildTree(a, vars), BuildTree(b, vars)),
             _ => throw new Exception()
