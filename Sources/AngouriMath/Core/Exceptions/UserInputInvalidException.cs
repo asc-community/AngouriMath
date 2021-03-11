@@ -4,6 +4,7 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
+using AngouriMath.Core.Compilation.IntoLinq;
 using System;
 
 namespace AngouriMath.Core.Exceptions
@@ -42,8 +43,19 @@ namespace AngouriMath.Core.Exceptions
     public sealed class InvalidNumericSystemException : MathSException { internal InvalidNumericSystemException(string msg) : base(msg) { } }
 
     /// <summary>Thrown when invalid cast encountered</summary>
-    public sealed class NumberCastException : MathSException { 
+    public sealed class NumberCastException : MathSException
+    { 
         internal NumberCastException(Type expected, Type actual)
             : base($"Cannot cast from {actual} to {expected}") { }
+    }
+
+    /// <summary>
+    /// Occurs when no custom compilation protocol was provided, while the built-in one
+    /// does not have the given type defined for the given operator. To resolve it,
+    /// create your own <see cref="CompilationProtocol"/>.
+    /// </summary>
+    public sealed class InvalidProtocolProvided : MathSException
+    {
+        internal InvalidProtocolProvided(string msg) : base(msg) { }
     }
 }

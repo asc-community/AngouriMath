@@ -50,8 +50,9 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             {
                 Variable x => vars[x],
                 Entity.Boolean or Number => prot.ConstantConverter(expr),
+                IOneArgumentNode oneArg => prot.OneArgumentConverter(BuildTree(oneArg.NodeChild, ot), expr),
                 ITwoArgumentNode twoArg => prot.TwoArgumentConverter(BuildTree(twoArg.NodeFirstChild, ot), BuildTree(twoArg.NodeSecondChild, ot), expr),
-                _ => throw new Exception()
+                var other => prot.AnyArgumentConverter(other.DirectChildren.Select(c => BuildTree(c, ot)), expr)
             };
             var newVar = Expression.Variable(subTree.Type);
             instructionSet.Add(Expression.Assign(newVar, subTree));
