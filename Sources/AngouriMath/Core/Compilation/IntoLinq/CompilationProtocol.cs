@@ -16,7 +16,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// Change this method if you want a custom converter from number and boolean into the necessary type
         /// </summary>
-        public Func<Entity, Expression> ConstantConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.ConverterConstant;
+        public Func<Entity, Expression> ConstantConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateConverterConstant<Complex>();
 
         /// <summary>
         /// Change this if you want to override compilation node for binary nodes
@@ -33,5 +33,13 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// </summary>
         public Func<IEnumerable<Expression>, Entity, Expression> AnyArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateAnyArgumentEntity<Complex>();
 
+        internal static CompilationProtocol Assume<T>()
+            => new()
+            {
+                ConstantConverter = CompilationProtocolBuiltinConstantConverters.CreateConverterConstant<T>(),
+                TwoArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateTwoArgumentEntity<T>(),
+                OneArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateOneArgumentEntity<T>(),
+                AnyArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateAnyArgumentEntity<T>()
+            };
     }
 }

@@ -14,15 +14,30 @@ namespace AngouriMath.Core.Compilation.IntoLinq
     /// </summary>
     public static class CompilationProtocolBuiltinConstantConverters
     {
+        private static object CastToT<T>(Number num)
+        {
+            if (typeof(T) == typeof(Complex))
+                return (Complex)num;
+            if (typeof(T) == typeof(double))
+                return (double)num;
+            if (typeof(T) == typeof(float))
+                return (float)num;
+            if (typeof(T) == typeof(int))
+                return (int)num;
+            if (typeof(T) == typeof(long))
+                return (long)num;
+            if (typeof(T) == typeof(BigInteger))
+                return (BigInteger)num;
+            throw new InvalidProtocolProvided("Undefined type, provide valid compilation protocol");
+        }
+
         /// <summary>
         /// This treats any number as <see cref="Complex"/> and any boolean as <see cref="bool"/>
         /// </summary>
-        /// <param name="entity"></param>
-        /// <returns></returns>
-        public static Expression ConverterConstant(Entity entity)
-            => entity switch
+        public static Func<Entity, Expression> CreateConverterConstant<T>()
+            => e => e switch
             {
-                Number n => Expression.Constant((Complex)n),
+                Number n => Expression.Constant(CastToT<T>(n)),
                 Entity.Boolean b => Expression.Constant((bool)b),
                 _ => throw new AngouriBugException("Undefined constant type")
             };
@@ -54,7 +69,9 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Mulf => Expression.Multiply(left, right),
                 Divf => Expression.Divide(left, right),
                 Powf => Expression.Call(GetDef<T>("Pow", 2), left, right),
-                Logf => Expression.Call(GetDef<T>("Log", 2), left, right),
+                Logf => Expression.Divide(
+                    Expression.Call(GetDef<T>("Log", 1), right),
+                    Expression.Call(GetDef<T>("Log", 1), left)),
 
                 Andf => Expression.And(left, right),
                 Orf => Expression.Or(left, right),
@@ -71,12 +88,26 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             };
 
         private static Expression InvExpression<T>(Expression expr)
-            =>
-            Expression.Divide(
-                Expression.Constant(
-                    typeof(T) == typeof(Complex) ? new Complex(1, 0) : 1
-                ),
-            expr);
+        {
+            object? c = null;
+
+            if (typeof(T) == typeof(Complex))
+                c = new Complex(1, 0);
+            if (typeof(T) == typeof(double))
+                c = 1d;
+            if (typeof(T) == typeof(float))
+                c = 1f;
+            if (typeof(T) == typeof(long))
+                c = 1L;
+            if (typeof(T) == typeof(int))
+                c = 1;
+            if (typeof(T) == typeof(BigInteger))
+                c = new BigInteger(1);
+
+            if (c is null)
+                throw new InvalidProtocolProvided($"The given type {typeof(T)} is not supported by default. Provide a custom compilation protocol to resolve the issue");
+            return Expression.Divide(Expression.Constant(c), expr);
+        }
 
         /// <summary>
         /// This is a default converter for unary nodes (for those inherited from <see cref="IOneArgumentNode"/>)
@@ -87,7 +118,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Sinf =>   Expression.Call(GetDef<T>("Sin", 1), e),
                 Cosf =>   Expression.Call(GetDef<T>("Cos", 1), e),
                 Tanf =>   Expression.Call(GetDef<T>("Tan", 1), e),
-                Cotanf => Expression.Call(GetDef<T>("Cotan", 1), e),
+                Cotanf => InvExpression<T>(Expression.Call(GetDef<T>("Tan", 1), e)),
                 Secantf => Expression.Divide(Expression.Constant(1), Expression.Call(GetDef<T>("Cos", 1))),
                 Cosecantf => Expression.Divide(Expression.Constant(1), Expression.Call(GetDef<T>("Sin", 1))),
 

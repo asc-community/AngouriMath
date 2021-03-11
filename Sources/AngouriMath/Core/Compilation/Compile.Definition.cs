@@ -136,6 +136,31 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TOut> Compile<TIn1, TOut>(Variable var1)
-            => IntoLinqCompiler.Compile<Func<TIn1, TOut>>(this, typeof(TOut), new(), new[] { (typeof(TIn1), var1) });
+            => IntoLinqCompiler.Compile<Func<TIn1, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TOut>(), new[] { (typeof(TIn1), var1) });
+
+        /// <summary>
+        /// Compiles a given expression into a native lambda. We use the default protocol.
+        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// </summary>
+        /// <typeparam name="TIn1">
+        /// The type of the passed argument
+        /// </typeparam>
+        /// <typeparam name="TIn2">
+        /// The type of the passed argument
+        /// </typeparam>
+        /// <typeparam name="TOut">
+        /// The return type
+        /// </typeparam>
+        /// <param name="var1">
+        /// The variable corresponding to the first function's argument
+        /// </param>
+        /// <param name="var2">
+        /// The variable corresponding to the second function's argument
+        /// </param>
+        /// <returns>
+        /// Returns a natively-compiled delegate
+        /// </returns>
+        public Func<TIn1, TIn2, TOut> Compile<TIn1, TIn2, TOut>(Variable var1, Variable var2)
+            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TOut>(), new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) });
     }
 }

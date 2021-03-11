@@ -27,7 +27,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             var tree = BuildTree(expr, (args, instructionSet, localVars, protocol));
 
             var finalExpr = Expression.Block(localVars, instructionSet.Append(tree));
-            var finalExprWithCast = returnType is not null ? Expression.TypeAs(finalExpr, returnType) : finalExpr;
+            Expression finalExprWithCast = returnType is not null ? Expression.Convert(finalExpr, returnType) : finalExpr;
             var finalFunction = Expression.Lambda<TDelegate>(finalExprWithCast, argParams);
 
             return finalFunction.Compile();
@@ -50,6 +50,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
             Expression subTree = expr switch
             {
+                Variable { IsConstant: true } c => BuildTree(c.Evaled, ot),
                 Variable x => vars[x],
                 Entity.Boolean or Number => prot.ConstantConverter(expr),
                 IOneArgumentNode oneArg => prot.OneArgumentConverter(BuildTree(oneArg.NodeChild, ot), expr),
