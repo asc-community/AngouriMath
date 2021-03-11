@@ -5,7 +5,7 @@ using AngouriMath.Extensions;
 
 namespace UnitTests.Convenience
 {
-    public sealed class CompilationTest
+    public sealed class CompilationFETest
     {
         private static readonly Entity.Variable x = MathS.Var(nameof(x));
         private static readonly Entity.Variable y = MathS.Var(nameof(y));

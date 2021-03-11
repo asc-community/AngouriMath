@@ -126,47 +126,8 @@ using static System.Console;
 
 
 Entity expr = "a and b";
-var c = Compile<Func<bool, bool, bool>>(expr, n => (int)n, (typeof(bool), "a"), (typeof(bool), "b"));
+var c = expr.Compile<Func<bool, bool, bool>>((typeof(bool), "a"), (typeof(bool), "b"));
 WriteLine(c(true, true));
 WriteLine(c(true, false));
 WriteLine(c(false, false));
 WriteLine(c(false, true));
-
-static TDelegate Compile<TDelegate>(Entity expr, Func<Number, object> numberConvert, params (Type type, Variable variable)[] typesAndNames) where TDelegate : Delegate
-{
-    Dictionary<Entity, ParameterExpression> args = new();
-    foreach (var (type, @var) in typesAndNames)
-        args[@var] = Expression.Parameter(type, @var.Name);
-
-    var argParams = args.Values.ToArray(); // copying
-    List<ParameterExpression> localVars = new();
-
-    List<Expression> instructionSet = new();
-    var tree = BuildTree(expr, args);
-
-    var finalExpr = Expression.Block(localVars, instructionSet.Append(tree));
-    var finalFunction = Expression.Lambda<TDelegate>(finalExpr, argParams);
-
-    return finalFunction.Compile();
-
-    Expression BuildTree(Entity expr, Dictionary<Entity, ParameterExpression> vars)
-    {
-        if (vars.TryGetValue(expr, out var readyVar))
-            return readyVar;
-        Expression subTree = expr switch
-        {
-            Variable x => vars[x],
-            Entity.Boolean b => Expression.Constant((bool)b),
-            Number n => Expression.Constant(numberConvert(n)),
-            Andf(var a, var b) => Expression.And(BuildTree(a, vars), BuildTree(b, vars)),
-            Sumf(var a, var b) => Expression.Add(BuildTree(a, vars), BuildTree(b, vars)),
-            Mulf(var a, var b) => Expression.Multiply(BuildTree(a, vars), BuildTree(b, vars)),
-            _ => throw new Exception()
-        };
-        var newVar = Expression.Variable(subTree.Type);
-        instructionSet.Add(Expression.Assign(newVar, subTree));
-        vars[expr] = newVar;
-        localVars.Add(newVar);
-        return newVar;
-    }
-}

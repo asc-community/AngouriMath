@@ -91,23 +91,32 @@ namespace AngouriMath
         /// <summary>
         /// Whatever its argument is, the result will be inverted
         /// </summary>
-        public sealed partial record Notf(Entity Argument) : Statement
+        public sealed partial record Notf(Entity Argument) : Statement, IOneArgumentNode
         {
             internal override Priority Priority => Priority.Negation;
+
+            public Entity NodeChild => Argument;
+
             private Notf New(Entity negated) =>
                 ReferenceEquals(Argument, negated) ? this : new(negated);
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Argument.Replace(func)));
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => new[] { Argument };
+
         }
 
         /// <summary>
         /// Is true iff both operands are true
         /// </summary>
-        public sealed partial record Andf(Entity Left, Entity Right) : Statement
+        public sealed partial record Andf(Entity Left, Entity Right) : Statement, ITwoArgumentNode
         {
             internal override Priority Priority => Priority.Conjunction;
+
+            public Entity NodeFirstChild => Left;
+
+            public Entity NodeSecondChild => Right;
+
             private Andf New(Entity left, Entity right) =>
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             /// <inheritdoc/>
@@ -120,9 +129,14 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff at least one operand is true,
         /// </summary>
-        public sealed partial record Orf(Entity Left, Entity Right) : Statement
+        public sealed partial record Orf(Entity Left, Entity Right) : Statement, ITwoArgumentNode
         {
             internal override Priority Priority => Priority.Disjunction;
+
+            public Entity NodeFirstChild => Left;
+
+            public Entity NodeSecondChild => Right;
+
             private Orf New(Entity left, Entity right) =>
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             /// <inheritdoc/>
@@ -135,9 +149,14 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff one operand is true
         /// </summary>
-        public sealed partial record Xorf(Entity Left, Entity Right) : Statement
+        public sealed partial record Xorf(Entity Left, Entity Right) : Statement, ITwoArgumentNode
         {
             internal override Priority Priority => Priority.XDisjunction;
+
+            public Entity NodeFirstChild => Left;
+
+            public Entity NodeSecondChild => Right;
+
             private Xorf New(Entity left, Entity right) =>
                 ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             /// <inheritdoc/>
@@ -150,9 +169,14 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff assumption is false or conclusion is true
         /// </summary>
-        public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : Statement
+        public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : Statement, ITwoArgumentNode
         {
             internal override Priority Priority => Priority.Impliciation;
+
+            public Entity NodeFirstChild => Assumption;
+
+            public Entity NodeSecondChild => Conclusion;
+
             private Impliesf New(Entity left, Entity right) =>
                 ReferenceEquals(Assumption, left) && ReferenceEquals(Conclusion, right) ? this : new(left, right);
             /// <inheritdoc/>
@@ -169,9 +193,14 @@ namespace AngouriMath
         /// <summary>
         /// It is true if left and right are equal
         /// </summary>
-        public sealed partial record Equalsf(Entity Left, Entity Right) : ComparisonSign
+        public sealed partial record Equalsf(Entity Left, Entity Right) : ComparisonSign, ITwoArgumentNode
         {
             internal override Priority Priority => Priority.Equal;
+
+            public Entity NodeFirstChild => Left;
+
+            public Entity NodeSecondChild => Right;
+
             internal Equalsf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new Equalsf(left, right);
             /// <inheritdoc/>
@@ -188,9 +217,14 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record Greaterf(Entity Left, Entity Right) : ComparisonSign
+        public sealed partial record Greaterf(Entity Left, Entity Right) : ComparisonSign, ITwoArgumentNode
         {
             internal override Priority Priority => Priority.GreaterThan;
+
+            public Entity NodeFirstChild => Left;
+
+            public Entity NodeSecondChild => Right;
+
             internal Greaterf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             /// <inheritdoc/>
@@ -207,9 +241,14 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record GreaterOrEqualf(Entity Left, Entity Right) : ComparisonSign
+        public sealed partial record GreaterOrEqualf(Entity Left, Entity Right) : ComparisonSign, ITwoArgumentNode
         {
             internal override Priority Priority => Priority.GreaterThan;
+
+            public Entity NodeFirstChild => Left;
+
+            public Entity NodeSecondChild => Right;
+
             internal GreaterOrEqualf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             /// <inheritdoc/>
@@ -226,9 +265,14 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record Lessf(Entity Left, Entity Right) : ComparisonSign
+        public sealed partial record Lessf(Entity Left, Entity Right) : ComparisonSign, ITwoArgumentNode
         {
             internal override Priority Priority => Priority.GreaterThan;
+
+            public Entity NodeFirstChild => Left;
+
+            public Entity NodeSecondChild => Right;
+
             internal Lessf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             /// <inheritdoc/>
@@ -245,9 +289,14 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record LessOrEqualf(Entity Left, Entity Right) : ComparisonSign
+        public sealed partial record LessOrEqualf(Entity Left, Entity Right) : ComparisonSign, ITwoArgumentNode
         {
             internal override Priority Priority => Priority.GreaterThan;
+
+            public Entity NodeFirstChild => Left;
+
+            public Entity NodeSecondChild => Right;
+
             internal LessOrEqualf New(Entity left, Entity right)
                 => ReferenceEquals(Left, left) && ReferenceEquals(Right, right) ? this : new(left, right);
             /// <inheritdoc/>
@@ -265,9 +314,14 @@ namespace AngouriMath
             /// <summary>
             /// This node represents whether the given element is in the set
             /// </summary>
-            public sealed partial record Inf(Entity Element, Entity SupSet) : Statement
+            public sealed partial record Inf(Entity Element, Entity SupSet) : Statement, ITwoArgumentNode
             {
                 internal override Priority Priority => Priority.ContainsIn;
+
+                public Entity NodeFirstChild => Element;
+
+                public Entity NodeSecondChild => SupSet;
+
                 internal Inf New(Entity element, Entity supSet)
                     => ReferenceEquals(Element, element) && ReferenceEquals(SupSet, supSet) ? this : new(element, supSet);
                 /// <inheritdoc/>
@@ -283,8 +337,10 @@ namespace AngouriMath
         /// <summary>
         /// This node represents the Euler totient function (phi)
         /// </summary>
-        public sealed partial record Phif(Entity Argument) : Function
+        public sealed partial record Phif(Entity Argument) : Function, IOneArgumentNode
         {
+            public Entity NodeChild => Argument;
+
             internal Phif New(Entity argument)
                    => ReferenceEquals(argument, Argument) ? this : new(argument);
 

@@ -4,6 +4,7 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
+using AngouriMath.Core;
 using System;
 
 namespace AngouriMath
@@ -14,8 +15,10 @@ namespace AngouriMath
         /// <summary>
         /// A node of signum
         /// </summary>
-        public sealed partial record Signumf(Entity Argument) : Function
+        public sealed partial record Signumf(Entity Argument) : Function, IOneArgumentNode
         {
+            public Entity NodeChild => Argument;
+
             private Signumf New(Entity arg) =>
                 ReferenceEquals(Argument, arg) ? this : new(arg);
             /// <inheritdoc/>
@@ -27,8 +30,10 @@ namespace AngouriMath
         /// <summary>
         /// A node of abs
         /// </summary>
-        public sealed partial record Absf(Entity Argument) : Function
+        public sealed partial record Absf(Entity Argument) : Function, IOneArgumentNode
         {
+            public Entity NodeChild => Argument;
+
             private Absf New(Entity arg) =>
                 ReferenceEquals(Argument, arg) ? this : new(arg);
             /// <inheritdoc/>

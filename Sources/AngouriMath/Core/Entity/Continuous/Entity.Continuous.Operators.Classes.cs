@@ -17,12 +17,17 @@ namespace AngouriMath
         /// <summary>
         /// A node of sum
         /// </summary>
-        public sealed partial record Sumf(Entity Augend, Entity Addend) : NumericNode
+        public sealed partial record Sumf(Entity Augend, Entity Addend) : NumericNode, ITwoArgumentNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Sumf New(Entity augend, Entity addend) =>
                 ReferenceEquals(Augend, augend) && ReferenceEquals(Addend, addend) ? this : new(augend, addend);
             internal override Priority Priority => Priority.Sum;
+
+            public Entity NodeFirstChild => Augend;
+
+            public Entity NodeSecondChild => Addend;
+
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Augend.Replace(func), Addend.Replace(func)));
             /// <inheritdoc/>
@@ -45,12 +50,17 @@ namespace AngouriMath
         /// <summary>
         /// A node of difference
         /// </summary>
-        public sealed partial record Minusf(Entity Subtrahend, Entity Minuend) : NumericNode
+        public sealed partial record Minusf(Entity Subtrahend, Entity Minuend) : NumericNode, ITwoArgumentNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Minusf New(Entity subtrahend, Entity minuend) =>
                 ReferenceEquals(Subtrahend, subtrahend) && ReferenceEquals(Minuend, minuend) ? this : new(subtrahend, minuend);
             internal override Priority Priority => Priority.Minus;
+
+            public Entity NodeFirstChild => Subtrahend;
+
+            public Entity NodeSecondChild => Minuend;
+
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Subtrahend.Replace(func), Minuend.Replace(func)));
             /// <inheritdoc/>
@@ -60,12 +70,17 @@ namespace AngouriMath
         /// <summary>
         /// A node of product
         /// </summary>
-        public sealed partial record Mulf(Entity Multiplier, Entity Multiplicand) : NumericNode
+        public sealed partial record Mulf(Entity Multiplier, Entity Multiplicand) : NumericNode, ITwoArgumentNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Mulf New(Entity multiplier, Entity multiplicand) =>
                 ReferenceEquals(Multiplier, multiplier) && ReferenceEquals(Multiplicand, multiplicand) ? this : new(multiplier, multiplicand);
             internal override Priority Priority => Priority.Mul;
+
+            public Entity NodeFirstChild => Multiplier;
+
+            public Entity NodeSecondChild => Multiplicand;
+
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Multiplier.Replace(func), Multiplicand.Replace(func)));
             /// <inheritdoc/>
@@ -88,12 +103,17 @@ namespace AngouriMath
         /// <summary>
         /// A node of division
         /// </summary>
-        public sealed partial record Divf(Entity Dividend, Entity Divisor) : NumericNode
+        public sealed partial record Divf(Entity Dividend, Entity Divisor) : NumericNode, ITwoArgumentNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             internal Divf New(Entity dividend, Entity divisor) =>
                 ReferenceEquals(Dividend, dividend) && ReferenceEquals(Divisor, divisor) ? this : new(dividend, divisor);
             internal override Priority Priority => Priority.Div;
+
+            public Entity NodeFirstChild => Dividend;
+
+            public Entity NodeSecondChild => Divisor;
+
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Dividend.Replace(func), Divisor.Replace(func)));
             /// <inheritdoc/>
