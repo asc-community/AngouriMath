@@ -1,0 +1,102 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using System.Text;
+
+namespace AngouriMath.Core.Compilation.IntoLinq
+{
+    // TODO: to improve some of those functions
+    internal static class MathAllMethods
+    {
+
+        /* POWERS */
+
+        internal static Complex Log(Complex a, Complex b)
+            => Complex.Log(a) / Complex.Log(b);
+        internal static double Log(double a, double b)
+            => Math.Log(a, b);
+        internal static float Log(float a, float b)
+            => (float)Math.Log(a, b);
+        internal static long Log(long a, long b)
+            => (long)Math.Log(a, b);
+        internal static int Log(int a, int b)
+            => (int)Math.Log(a, b);
+        internal static BigInteger Log(BigInteger a, BigInteger b)
+            => (BigInteger)Math.Log((double)a, (double)b);
+
+
+        internal static Complex Pow(Complex a, Complex b)
+            => Complex.Pow(a, b);
+        internal static double Pow(double a, double b)
+            => Math.Pow(a, b);
+        internal static float Pow(float a, float b)
+            => (float)Math.Pow(a, b);
+        internal static long Pow(long a, long b)
+            => (long)Math.Pow(a, b);
+        internal static int Pow(int a, int b)
+            => (int)Math.Pow(a, b);
+        internal static BigInteger Pow(BigInteger a, BigInteger b)
+            => (BigInteger)Math.Pow((double)a, (double)b);
+
+        /* BUILT-IN TRIGONOMETRY */
+
+<# foreach (var name in new[]{ "Sin", "Cos", "Tan", "Asin", "Acos", "Atan" }) { #>
+
+        internal static Complex <#= name #>(Complex a)
+            => Complex.<#= name #>(a);
+        internal static double <#= name #>(double a)
+            => Math.<#= name #>(a);
+        internal static float <#= name #>(float a)
+            => (float)Math.<#= name #>(a);
+        internal static long <#= name #>(long a)
+            => (long)Math.<#= name #>(a);
+        internal static int <#= name #>(int a)
+            => (int)Math.<#= name #>(a);
+        internal static BigInteger <#= name #>(BigInteger a)
+            => (BigInteger)Math.<#= name #>((double)a);
+
+<# } #>
+
+        /* POST-INVERSE TRIGONOMETRY */
+
+<# foreach (var name in new[]{ ("Cotan", "Tan"), ("Sec", "Cos"), ("Cosec", "Sin") }) { #>
+
+        internal static Complex <#= name.Item1 #>(Complex a)
+            => 1 / Complex.<#= name.Item2 #>(a);
+        internal static double <#= name.Item1 #>(double a)
+            => 1 / Math.<#= name.Item2 #>(a);
+        internal static float <#= name.Item1 #>(float a)
+            => (float)(1 / Math.<#= name.Item2 #>(a));
+        internal static long <#= name.Item1 #>(long a)
+            => (long)(1 / Math.<#= name.Item2 #>(a));
+        internal static int <#= name.Item1 #>(int a)
+            => (int)(1 / Math.<#= name.Item2 #>(a));
+        internal static BigInteger <#= name.Item1 #>(BigInteger a)
+            => (BigInteger)(1 / Math.<#= name.Item2 #>((double)a));
+
+<# } #>
+
+        /* PRE-INVERSE TRIGONOMETRY */
+
+<# foreach (var name in new[]{ ("Acot", "Atan"), ("Asec", "Acos"), ("Acsc", "Asin") }) { #>
+
+        internal static Complex <#= name.Item1 #>(Complex a)
+            => Complex.<#= name.Item2 #>(1 / a);
+        internal static double <#= name.Item1 #>(double a)
+            => Math.<#= name.Item2 #>(1 / a);
+        internal static float <#= name.Item1 #>(float a)
+            => (float)Math.<#= name.Item2 #>(1 / a);
+        internal static long <#= name.Item1 #>(long a)
+            => (long)Math.<#= name.Item2 #>(1 / a);
+        internal static int <#= name.Item1 #>(int a)
+            => (int)Math.<#= name.Item2 #>(1 / a);
+        internal static BigInteger <#= name.Item1 #>(BigInteger a)
+            => (BigInteger)Math.<#= name.Item2 #>(1 / (double)a);
+
+<# } #>
+
+    }
+}
