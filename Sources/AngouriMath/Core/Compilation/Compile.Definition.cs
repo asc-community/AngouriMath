@@ -69,46 +69,6 @@ namespace AngouriMath
         /// <typeparam name="TDelegate">
         /// The type of your delegate to convert to
         /// </typeparam>
-        /// <param name="returnType">
-        /// The type to which the resulting type will be casted
-        /// </param>
-        /// <param name="typesAndNames">
-        /// An <see cref="IEnumerable"/> of pairs, where the first element is the type of your argument,
-        /// and the second one is the corresponding variable from the expression
-        /// </param>
-        /// <returns>
-        /// Returnes a natively compiled expression of type <typeparamref name="TDelegate"/>
-        /// </returns>
-        public TDelegate Compile<TDelegate>(Type returnType, IEnumerable<(Type type, Variable variable)> typesAndNames) where TDelegate : Delegate
-            => IntoLinqCompiler.Compile<TDelegate>(this, returnType, new(), typesAndNames);
-
-        /// <summary>
-        /// Compiles a given expression into a native lambda. We use the default protocol.
-        /// If you plan using non-standard types, consider passing a compilation protocol
-        /// </summary>
-        /// <typeparam name="TDelegate">
-        /// The type of your delegate to convert to
-        /// </typeparam>
-        /// <param name="returnType">
-        /// The type to which the resulting type will be casted
-        /// </param>
-        /// <param name="typesAndNames">
-        /// An array of pairs, where the first element is the type of your argument,
-        /// and the second one is the corresponding variable from the expression
-        /// </param>
-        /// <returns>
-        /// Returnes a natively compiled expression of type <typeparamref name="TDelegate"/>
-        /// </returns>
-        public TDelegate Compile<TDelegate>(Type returnType, params (Type type, Variable variable)[] typesAndNames) where TDelegate : Delegate
-            => IntoLinqCompiler.Compile<TDelegate>(this, returnType, new(), typesAndNames);
-
-        /// <summary>
-        /// Compiles a given expression into a native lambda. We use the default protocol.
-        /// If you plan using non-standard types, consider passing a compilation protocol
-        /// </summary>
-        /// <typeparam name="TDelegate">
-        /// The type of your delegate to convert to
-        /// </typeparam>
         /// <param name="typesAndNames">
         /// An array of pairs, where the first element is the type of your argument,
         /// and the second one is the corresponding variable from the expression
@@ -136,7 +96,7 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TOut> Compile<TIn1, TOut>(Variable var1)
-            => IntoLinqCompiler.Compile<Func<TIn1, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TOut>(), new[] { (typeof(TIn1), var1) });
+            => IntoLinqCompiler.Compile<Func<TIn1, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TOut>(), new[] { (typeof(TIn1), var1) });
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
@@ -161,6 +121,37 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TIn2, TOut> Compile<TIn1, TIn2, TOut>(Variable var1, Variable var2)
-            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TOut>(), new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) });
+            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TIn2, TOut>(), new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) });
+
+        /// <summary>
+        /// Compiles a given expression into a native lambda. We use the default protocol.
+        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// </summary>
+        /// <typeparam name="TIn1">
+        /// The type of the passed argument
+        /// </typeparam>
+        /// <typeparam name="TIn2">
+        /// The type of the passed argument
+        /// </typeparam>
+        /// <typeparam name="TIn3">
+        /// The type of the passed argument
+        /// </typeparam>
+        /// <typeparam name="TOut">
+        /// The return type
+        /// </typeparam>
+        /// <param name="var1">
+        /// The variable corresponding to the first function's argument
+        /// </param>
+        /// <param name="var2">
+        /// The variable corresponding to the second function's argument
+        /// </param>
+        /// <param name="var3">
+        /// The variable corresponding to the third function's argument
+        /// </param>
+        /// <returns>
+        /// Returns a natively-compiled delegate
+        /// </returns>
+        public Func<TIn1, TIn2, TIn3, TOut> Compile<TIn1, TIn2, TIn3, TOut>(Variable var1, Variable var2, Variable var3)
+            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TIn2, TIn3, TOut>(), new[] { (typeof(TIn1), var1), (typeof(TIn2), var2), (typeof(TIn3), var3) });
     }
 }

@@ -240,5 +240,55 @@ namespace UnitTests.Common
 
             Assert.Equal(expected, actual);
         }
+
+        [Theory]
+        [InlineData("a", "0", true, true)]
+        [InlineData("not a", "0", false, true)]
+        [InlineData("b", "0", true, true)]
+        [InlineData("not b", "0", false, false)]
+        
+        [InlineData("a and b", "0", true, true)]
+        [InlineData("a and not b", "0", true, false)]
+        [InlineData("not a and b", "0", false, true)]
+        [InlineData("not a and not b", "0", true, true)]
+
+        [InlineData("a or b", "0", true, true)]
+        [InlineData("a or b", "0", true, false)]
+        [InlineData("a or b", "0", false, true)]
+        [InlineData("a or not b", "0", false, false)]
+
+        [InlineData("a xor b", "0", true, true)]
+        [InlineData("a xor b", "0", true, false)]
+        [InlineData("a xor b", "0", false, true)]
+        [InlineData("a xor not b", "0", false, false)]
+
+        [InlineData("a implies b", "0", false, true)]
+        [InlineData("a implies b", "0", false, false)]
+        [InlineData("a implies b", "0", true, true)]
+        [InlineData("a implies not b", "0", true, false)]
+
+        [InlineData("sin(x) > 0", "pi / 4", true, true)]
+        [InlineData("sin(x) < 0", "-pi / 4", true, true)]
+        [InlineData("sin(x) < 0 and a and b", "-pi / 4", true, true)]
+        [InlineData("sin(x) < 0 and not a and b", "-pi / 4", false, true)]
+
+        [InlineData("sin(x)2 + cos(x)2 = 1", "0.25", true, true)]
+        [InlineData("sin(x)2 + cos(x)2 = 1", "1.25", true, true)]
+        [InlineData("sin(x)2 + cos(x)2 = 1", "2.25", true, true)]
+        [InlineData("(|sin(x)2 - cos(x)2|) < 0.0001", "3.25", true, true)]
+        public void TestBool(string exprRaw, string xRaw, bool aRaw, bool bRaw)
+        {
+            Entity expr = exprRaw;
+            var expected = (bool)expr.Substitute("x", xRaw)
+                    .Substitute("a", aRaw).Substitute("b", bRaw).EvalBoolean();
+
+
+            Entity x = xRaw;
+            var evX = (float)x.EvalNumerical();
+            var func = expr.Compile<float, bool, bool, bool>("x", "a", "b");
+            var actual = func(evX, aRaw, bRaw);
+
+            Assert.Equal(expected, actual);
+        }
     }
 }

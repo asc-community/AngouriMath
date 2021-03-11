@@ -34,10 +34,10 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// This treats any number as <see cref="Complex"/> and any boolean as <see cref="bool"/>
         /// </summary>
-        public static Func<Entity, Expression> CreateConverterConstant<T>()
+        public static Func<Entity, Expression> CreateConverterConstant<TNumeric>()
             => e => e switch
             {
-                Number n => Expression.Constant(CastToT<T>(n)),
+                Number n => Expression.Constant(CastToT<TNumeric>(n)),
                 Entity.Boolean b => Expression.Constant((bool)b),
                 _ => throw new AngouriBugException("Undefined constant type")
             };
@@ -50,8 +50,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             return l.ToArray();
         }
 
-        private static MethodInfo GetDef<T>(string name, int argCount)
-            => typeof(MathAllMethods).GetMethod(name, GenerateArrayOfType(argCount, typeof(T)));            
+        private static MethodInfo GetDef(string name, int argCount, Type type)
+            => typeof(MathAllMethods).GetMethod(name, GenerateArrayOfType(argCount, type));            
 
         /// <summary>
         /// This is a default converter for binary nodes (for those inherited from <see cref="ITwoArgumentNode"/>)
@@ -63,8 +63,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Minusf => Expression.Subtract(left, right),
                 Mulf => Expression.Multiply(left, right),
                 Divf => Expression.Divide(left, right),
-                Powf => Expression.Call(GetDef<T>("Pow", 2), left, right),
-                Logf => Expression.Call(GetDef<T>("Log", 2), left, right),
+                Powf => Expression.Call(GetDef("Pow", 2, left.Type), left, right),
+                Logf => Expression.Call(GetDef("Log", 2, right.Type), left, right),
 
                 Andf => Expression.And(left, right),
                 Orf => Expression.Or(left, right),
@@ -86,22 +86,24 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         public static Func<Expression, Entity, Expression> CreateOneArgumentEntity<T>()
             => (e, typeHolder) => typeHolder switch
             {
-                Sinf =>         Expression.Call(GetDef<T>("Sin", 1), e),
-                Cosf =>         Expression.Call(GetDef<T>("Cos", 1), e),
-                Tanf =>         Expression.Call(GetDef<T>("Tan", 1), e),
-                Cotanf =>       Expression.Call(GetDef<T>("Cot", 1), e),
-                Secantf =>      Expression.Call(GetDef<T>("Sec", 1), e),
-                Cosecantf =>    Expression.Call(GetDef<T>("Csc", 1), e),
+                Sinf =>         Expression.Call(GetDef("Sin", 1, e.Type), e),
+                Cosf =>         Expression.Call(GetDef("Cos", 1, e.Type), e),
+                Tanf =>         Expression.Call(GetDef("Tan", 1, e.Type), e),
+                Cotanf =>       Expression.Call(GetDef("Cot", 1, e.Type), e),
+                Secantf =>      Expression.Call(GetDef("Sec", 1, e.Type), e),
+                Cosecantf =>    Expression.Call(GetDef("Csc", 1, e.Type), e),
 
-                Arcsinf =>      Expression.Call(GetDef<T>("Asin", 1), e),
-                Arccosf =>      Expression.Call(GetDef<T>("Acos", 1), e),
-                Arctanf =>      Expression.Call(GetDef<T>("Atan", 1), e),
-                Arccotanf =>    Expression.Call(GetDef<T>("Acot", 1), e),
-                Arcsecantf =>   Expression.Call(GetDef<T>("Asec", 1), e),
-                Arccosecantf => Expression.Call(GetDef<T>("Acsc", 1), e),
+                Arcsinf =>      Expression.Call(GetDef("Asin", 1, e.Type), e),
+                Arccosf =>      Expression.Call(GetDef("Acos", 1, e.Type), e),
+                Arctanf =>      Expression.Call(GetDef("Atan", 1, e.Type), e),
+                Arccotanf =>    Expression.Call(GetDef("Acot", 1, e.Type), e),
+                Arcsecantf =>   Expression.Call(GetDef("Asec", 1, e.Type), e),
+                Arccosecantf => Expression.Call(GetDef("Acsc", 1, e.Type), e),
 
-                Absf =>         Expression.Call(GetDef<T>("Abs", 1), e),
-                Signumf =>      Expression.Call(GetDef<T>("Sgn", 1), e),
+                Absf =>         Expression.Call(GetDef("Abs", 1, e.Type), e),
+                Signumf =>      Expression.Call(GetDef("Sgn", 1, e.Type), e),
+
+                Notf =>         Expression.Not(e),
 
                 _ => throw new AngouriBugException("A node seems to be not added")
             };
