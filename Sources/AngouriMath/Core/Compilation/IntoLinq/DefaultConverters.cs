@@ -51,12 +51,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         }
 
         private static MethodInfo GetDef<T>(string name, int argCount)
-            => (typeof(T) == typeof(Complex)) ?
-                    (typeof(Complex).GetMethod(name, GenerateArrayOfType(argCount, typeof(Complex))) 
-                    ?? throw new AngouriBugException("Wrong method for Complex was chosen"))
-                :
-                    (typeof(Math).GetMethod(name, GenerateArrayOfType(argCount, typeof(T)))
-                    ?? throw new InvalidProtocolProvided($"The given type {typeof(T)} is not supported by default. Provide a custom compilation protocol to resolve the issue"));
+            => typeof(MathAllMethods).GetMethod(name, GenerateArrayOfType(argCount, typeof(T)));            
 
         /// <summary>
         /// This is a default converter for binary nodes (for those inherited from <see cref="ITwoArgumentNode"/>)
@@ -69,9 +64,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Mulf => Expression.Multiply(left, right),
                 Divf => Expression.Divide(left, right),
                 Powf => Expression.Call(GetDef<T>("Pow", 2), left, right),
-                Logf => Expression.Divide(
-                    Expression.Call(GetDef<T>("Log", 1), right),
-                    Expression.Call(GetDef<T>("Log", 1), left)),
+                Logf => Expression.Call(GetDef<T>("Log", 2), left, right),
 
                 Andf => Expression.And(left, right),
                 Orf => Expression.Or(left, right),
@@ -115,22 +108,22 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         public static Func<Expression, Entity, Expression> CreateOneArgumentEntity<T>()
             => (e, typeHolder) => typeHolder switch
             {
-                Sinf =>   Expression.Call(GetDef<T>("Sin", 1), e),
-                Cosf =>   Expression.Call(GetDef<T>("Cos", 1), e),
-                Tanf =>   Expression.Call(GetDef<T>("Tan", 1), e),
-                Cotanf => InvExpression<T>(Expression.Call(GetDef<T>("Tan", 1), e)),
-                Secantf => Expression.Divide(Expression.Constant(1), Expression.Call(GetDef<T>("Cos", 1))),
-                Cosecantf => Expression.Divide(Expression.Constant(1), Expression.Call(GetDef<T>("Sin", 1))),
+                Sinf =>         Expression.Call(GetDef<T>("Sin", 1), e),
+                Cosf =>         Expression.Call(GetDef<T>("Cos", 1), e),
+                Tanf =>         Expression.Call(GetDef<T>("Tan", 1), e),
+                Cotanf =>       Expression.Call(GetDef<T>("Cot", 1), e),
+                Secantf =>      Expression.Call(GetDef<T>("Sec", 1), e),
+                Cosecantf =>    Expression.Call(GetDef<T>("Csc", 1), e),
 
                 Arcsinf =>      Expression.Call(GetDef<T>("Asin", 1), e),
                 Arccosf =>      Expression.Call(GetDef<T>("Acos", 1), e),
                 Arctanf =>      Expression.Call(GetDef<T>("Atan", 1), e),
-                Arccotanf =>    Expression.Call(GetDef<T>("Atan", 1), InvExpression<T>(e)),
-                Arcsecantf =>   Expression.Call(GetDef<T>("Acos", 1), InvExpression<T>(e)),
-                Arccosecantf => Expression.Call(GetDef<T>("Asin", 1), InvExpression<T>(e)),
+                Arccotanf =>    Expression.Call(GetDef<T>("Acot", 1), e),
+                Arcsecantf =>   Expression.Call(GetDef<T>("Asec", 1), e),
+                Arccosecantf => Expression.Call(GetDef<T>("Acsc", 1), e),
 
-                Absf => Expression.Call(GetDef<T>("Abs", 1), e),
-                Signumf => Expression.Divide(e, Expression.Call(GetDef<T>("Abs", 1), e)),
+                Absf =>         Expression.Call(GetDef<T>("Abs", 1), e),
+                Signumf =>      Expression.Call(GetDef<T>("Sgn", 1), e),
 
                 _ => throw new AngouriBugException("A node seems to be not added")
             };

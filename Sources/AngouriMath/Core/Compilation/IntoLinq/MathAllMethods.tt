@@ -1,10 +1,17 @@
-﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+﻿/* 
+ * Copyright (c) 2019-2021 Angouri.
+ * AngouriMath is licensed under MIT. 
+ * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+ * Website: https://am.angouri.org.
+ */
+
+<#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ output extension=".cs" #>
 
+/* THIS FILE IS AUTO-GENERATED */
+
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 
 namespace AngouriMath.Core.Compilation.IntoLinq
 {
@@ -62,7 +69,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
         /* POST-INVERSE TRIGONOMETRY */
 
-<# foreach (var name in new[]{ ("Cotan", "Tan"), ("Sec", "Cos"), ("Cosec", "Sin") }) { #>
+<# foreach (var name in new[]{ ("Cot", "Tan"), ("Sec", "Cos"), ("Csc", "Sin") }) { #>
 
         internal static Complex <#= name.Item1 #>(Complex a)
             => 1 / Complex.<#= name.Item2 #>(a);
@@ -97,6 +104,27 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)Math.<#= name.Item2 #>(1 / (double)a);
 
 <# } #>
+        
+        /* OTHER */
+        internal static Complex Abs(Complex a) => Complex.Abs(a);
+        internal static double Abs(double a) => Math.Abs(a);
+        internal static float Abs(float a) => Math.Abs(a);
+        internal static long Abs(long a) => Math.Abs(a);
+        internal static int Abs(int a) => Math.Abs(a);
+        internal static BigInteger Abs(BigInteger a) => BigInteger.Abs(a);
 
+        internal static Complex Sgn(Complex a) => a / Complex.Abs(a);
+        internal static double Sgn(double a) => a switch { > 0 or double.PositiveInfinity => 1, 0 => 0, < 0 or double.NegativeInfinity => 1, _ => double.NaN };
+        internal static float Sgn(float a) => a switch { > 0 or float.PositiveInfinity => 1, 0 => 0, < 0 or float.NegativeInfinity => 1, _ => float.NaN };
+        internal static long Sgn(long a) => a switch { > 0 => 1, 0 => 0, < 0 => 1 };
+        internal static int Sgn(int a) => a switch { > 0 => 1, 0 => 0, < 0 => 1 };
+        internal static BigInteger Sgn(BigInteger a)
+        {
+            if (a > BigInteger.Zero)
+                return 1;
+            if (a < BigInteger.Zero)
+                return -1;
+            return 0;
+        }
     }
 }

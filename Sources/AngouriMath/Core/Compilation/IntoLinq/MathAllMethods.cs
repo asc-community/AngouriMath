@@ -1,8 +1,15 @@
-﻿
+﻿/* 
+ * Copyright (c) 2019-2021 Angouri.
+ * AngouriMath is licensed under MIT. 
+ * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+ * Website: https://am.angouri.org.
+ */
+
+
+/* THIS FILE IS AUTO-GENERATED */
+
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 
 namespace AngouriMath.Core.Compilation.IntoLinq
 {
@@ -129,17 +136,17 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /* POST-INVERSE TRIGONOMETRY */
 
 
-        internal static Complex Cotan(Complex a)
+        internal static Complex Cot(Complex a)
             => 1 / Complex.Tan(a);
-        internal static double Cotan(double a)
+        internal static double Cot(double a)
             => 1 / Math.Tan(a);
-        internal static float Cotan(float a)
+        internal static float Cot(float a)
             => (float)(1 / Math.Tan(a));
-        internal static long Cotan(long a)
+        internal static long Cot(long a)
             => (long)(1 / Math.Tan(a));
-        internal static int Cotan(int a)
+        internal static int Cot(int a)
             => (int)(1 / Math.Tan(a));
-        internal static BigInteger Cotan(BigInteger a)
+        internal static BigInteger Cot(BigInteger a)
             => (BigInteger)(1 / Math.Tan((double)a));
 
 
@@ -157,17 +164,17 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)(1 / Math.Cos((double)a));
 
 
-        internal static Complex Cosec(Complex a)
+        internal static Complex Csc(Complex a)
             => 1 / Complex.Sin(a);
-        internal static double Cosec(double a)
+        internal static double Csc(double a)
             => 1 / Math.Sin(a);
-        internal static float Cosec(float a)
+        internal static float Csc(float a)
             => (float)(1 / Math.Sin(a));
-        internal static long Cosec(long a)
+        internal static long Csc(long a)
             => (long)(1 / Math.Sin(a));
-        internal static int Cosec(int a)
+        internal static int Csc(int a)
             => (int)(1 / Math.Sin(a));
-        internal static BigInteger Cosec(BigInteger a)
+        internal static BigInteger Csc(BigInteger a)
             => (BigInteger)(1 / Math.Sin((double)a));
 
 
@@ -215,6 +222,27 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         internal static BigInteger Acsc(BigInteger a)
             => (BigInteger)Math.Asin(1 / (double)a);
 
+        
+        /* OTHER */
+        internal static Complex Abs(Complex a) => Complex.Abs(a);
+        internal static double Abs(double a) => Math.Abs(a);
+        internal static float Abs(float a) => Math.Abs(a);
+        internal static long Abs(long a) => Math.Abs(a);
+        internal static int Abs(int a) => Math.Abs(a);
+        internal static BigInteger Abs(BigInteger a) => BigInteger.Abs(a);
 
+        internal static Complex Sgn(Complex a) => a / Complex.Abs(a);
+        internal static double Sgn(double a) => a switch { > 0 or double.PositiveInfinity => 1, 0 => 0, < 0 or double.NegativeInfinity => 1, _ => double.NaN };
+        internal static float Sgn(float a) => a switch { > 0 or float.PositiveInfinity => 1, 0 => 0, < 0 or float.NegativeInfinity => 1, _ => float.NaN };
+        internal static long Sgn(long a) => a switch { > 0 => 1, 0 => 0, < 0 => 1 };
+        internal static int Sgn(int a) => a switch { > 0 => 1, 0 => 0, < 0 => 1 };
+        internal static BigInteger Sgn(BigInteger a)
+        {
+            if (a > BigInteger.Zero)
+                return 1;
+            if (a < BigInteger.Zero)
+                return -1;
+            return 0;
+        }
     }
 }
