@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using AngouriMath;
 using AngouriMath.Core;
 using AngouriMath.Extensions;
@@ -48,19 +49,19 @@ namespace DotnetBenchmark
         private static readonly Entity evalEasy = "1 + 2 + log(2, 3) + sqrt(4) - 4 ^ 7 + e * pi";
 
         // Testing compilation
-        [Benchmark] public void CompileEasy() => toCompileEasy.Compile("x");
+        [Benchmark] public void CompileEasy() => toCompileEasy.Compile<Complex, Complex>("x");
         private static readonly Entity toCompileEasy = "x + x / 2 + sin(x)";
-        [Benchmark] public void CompileHard() => toCompileHard.Compile("x");
+        [Benchmark] public void CompileHard() => toCompileHard.Compile<Complex, Complex>("x");
         private static readonly Entity toCompileHard = "(x + log(2, x) + sin(x + cos(x))3) / sqrt(x + tan(x))";
 
         // Testing compiled functions
         private readonly Complex toSub = new Complex(3, -1);
-        [Benchmark] public void RunEasy() => toRunEasy.Call(toSub);
-        private readonly FastExpression toRunEasy = "x + sin(x) + 3".Compile("x");
-        [Benchmark] public void RunMedium() => toRunMedium.Call(toSub);
-        private readonly FastExpression toRunMedium = "x + sin(x) + 3 / sin(x + cos(x)) + sqrt(x3) / e ^ x + x * log(e, 4)".Compile("x");
-        [Benchmark] public void RunHard() => toRunHard.Call(toSub);
+        [Benchmark] public void RunEasy() => toRunEasy(toSub);
+        private readonly Func<Complex, Complex> toRunEasy = "x + sin(x) + 3".ToEntity().Compile<Complex, Complex>("x");
+        [Benchmark] public void RunMedium() => toRunMedium(toSub);
+        private readonly Func<Complex, Complex> toRunMedium = "x + sin(x) + 3 / sin(x + cos(x)) + sqrt(x3) / e ^ x + x * log(e, 4)".ToEntity().Compile<Complex, Complex>("x");
+        [Benchmark] public void RunHard() => toRunHard(toSub);
         private static readonly Entity toRunHardEntity = "x + sin(x) + 3 / sin(x + cos(x)) + sqrt(x3) / e ^ x + x * log(e, 4)";
-        private static readonly FastExpression toRunHard = (MathS.Sqr(toRunHardEntity) + MathS.Sqrt(toRunHardEntity) + MathS.Sin(toRunHardEntity) / (MathS.Sqrt(toRunHardEntity) + MathS.Sin(toRunHardEntity) + MathS.Tan(toRunHardEntity))).Compile("x");
+        private static readonly Func<Complex, Complex> toRunHard = (MathS.Sqr(toRunHardEntity) + MathS.Sqrt(toRunHardEntity) + MathS.Sin(toRunHardEntity) / (MathS.Sqrt(toRunHardEntity) + MathS.Sin(toRunHardEntity) + MathS.Tan(toRunHardEntity))).Compile<Complex, Complex>("x");
     }
 }

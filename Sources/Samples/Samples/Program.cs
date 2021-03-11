@@ -6,6 +6,7 @@ using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Numerics;
 using System.Threading;
 using System.Threading.Tasks;
@@ -122,7 +123,11 @@ using static System.Console;
 // WriteLine(withoutPhi.SimplifiedRate);
 
 // WriteLine("((a^x - 1) - (b^x - 1)) / x".Limit("x", 0));
-WriteLine("((1 + x)^a - 1)^x".Limit("x", 0));
 
-// WriteLine("log(x3, x ^a)".Limit("x", "+oo").Simplify());
-// WriteLine("(log(x3, x) - 1/3) < eps".Solve("x"));
+
+Entity expr = "a and x > 3";
+var func = expr.Compile<bool, double, bool>("a", "x");
+WriteLine(func(true, 6));
+WriteLine(func(false, 6));
+WriteLine(func(true, 2));
+WriteLine(func(false, 2));

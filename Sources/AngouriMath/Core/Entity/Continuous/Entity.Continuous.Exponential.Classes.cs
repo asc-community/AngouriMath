@@ -15,12 +15,17 @@ namespace AngouriMath
         /// <summary>
         /// A node of exponential (power)
         /// </summary>
-        public sealed partial record Powf(Entity Base, Entity Exponent) : Entity
+        public sealed partial record Powf(Entity Base, Entity Exponent) : Entity, ITwoArgumentNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Powf New(Entity @base, Entity exponent) =>
                 ReferenceEquals(Base, @base) && ReferenceEquals(Exponent, exponent) ? this : new(@base, exponent);
             internal override Priority Priority => Priority.Pow;
+
+            public Entity NodeFirstChild => Base;
+
+            public Entity NodeSecondChild => Exponent;
+
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Base.Replace(func), Exponent.Replace(func)));
             /// <inheritdoc/>
@@ -30,11 +35,16 @@ namespace AngouriMath
         /// <summary>
         /// A node of logarithm
         /// </summary>
-        public sealed partial record Logf(Entity Base, Entity Antilogarithm) : Function
+        public sealed partial record Logf(Entity Base, Entity Antilogarithm) : Function, ITwoArgumentNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Logf New(Entity @base, Entity antilogarithm) =>
                 ReferenceEquals(Base, @base) && ReferenceEquals(Antilogarithm, antilogarithm) ? this : new(@base, antilogarithm);
+
+            public Entity NodeFirstChild => Base;
+
+            public Entity NodeSecondChild => Antilogarithm;
+
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(New(Base.Replace(func), Antilogarithm.Replace(func)));
             /// <inheritdoc/>

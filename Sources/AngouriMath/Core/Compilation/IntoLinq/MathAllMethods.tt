@@ -1,0 +1,130 @@
+﻿/* 
+ * Copyright (c) 2019-2021 Angouri.
+ * AngouriMath is licensed under MIT. 
+ * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+ * Website: https://am.angouri.org.
+ */
+
+<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ output extension=".cs" #>
+
+/* THIS FILE IS AUTO-GENERATED */
+
+using System;
+using System.Numerics;
+
+namespace AngouriMath.Core.Compilation.IntoLinq
+{
+    // TODO: to improve some of those functions
+    internal static class MathAllMethods
+    {
+
+        /* POWERS */
+
+        public static Complex Log(Complex a, Complex b)
+            => Complex.Log(b) / Complex.Log(a);
+        public static double Log(double a, double b)
+            => Math.Log(b, a);
+        public static float Log(float a, float b)
+            => (float)Math.Log(b, a);
+        public static long Log(long a, long b)
+            => (long)Math.Log(b, a);
+        public static int Log(int a, int b)
+            => (int)Math.Log(b, a);
+        public static BigInteger Log(BigInteger a, BigInteger b)
+            => (BigInteger)Math.Log((double)b, (double)a);
+
+
+        public static Complex Pow(Complex a, Complex b)
+            => Complex.Pow(a, b);
+        public static double Pow(double a, double b)
+            => Math.Pow(a, b);
+        public static float Pow(float a, float b)
+            => (float)Math.Pow(a, b);
+        public static long Pow(long a, long b)
+            => (long)Math.Pow(a, b);
+        public static int Pow(int a, int b)
+            => (int)Math.Pow(a, b);
+        public static BigInteger Pow(BigInteger a, BigInteger b)
+            => (BigInteger)Math.Pow((double)a, (double)b);
+
+        /* BUILT-IN TRIGONOMETRY */
+
+<# foreach (var name in new[]{ "Sin", "Cos", "Tan", "Asin", "Acos", "Atan" }) { #>
+
+        public static Complex <#= name #>(Complex a)
+            => Complex.<#= name #>(a);
+        public static double <#= name #>(double a)
+            => Math.<#= name #>(a);
+        public static float <#= name #>(float a)
+            => (float)Math.<#= name #>(a);
+        public static long <#= name #>(long a)
+            => (long)Math.<#= name #>(a);
+        public static int <#= name #>(int a)
+            => (int)Math.<#= name #>(a);
+        public static BigInteger <#= name #>(BigInteger a)
+            => (BigInteger)Math.<#= name #>((double)a);
+
+<# } #>
+
+        /* POST-INVERSE TRIGONOMETRY */
+
+<# foreach (var name in new[]{ ("Cot", "Tan"), ("Sec", "Cos"), ("Csc", "Sin") }) { #>
+
+        public static Complex <#= name.Item1 #>(Complex a)
+            => 1 / Complex.<#= name.Item2 #>(a);
+        public static double <#= name.Item1 #>(double a)
+            => 1 / Math.<#= name.Item2 #>(a);
+        public static float <#= name.Item1 #>(float a)
+            => (float)(1 / Math.<#= name.Item2 #>(a));
+        public static long <#= name.Item1 #>(long a)
+            => (long)(1 / Math.<#= name.Item2 #>(a));
+        public static int <#= name.Item1 #>(int a)
+            => (int)(1 / Math.<#= name.Item2 #>(a));
+        public static BigInteger <#= name.Item1 #>(BigInteger a)
+            => (BigInteger)(1 / Math.<#= name.Item2 #>((double)a));
+
+<# } #>
+
+        /* PRE-INVERSE TRIGONOMETRY */
+
+<# foreach (var name in new[]{ ("Acot", "Atan"), ("Asec", "Acos"), ("Acsc", "Asin") }) { #>
+
+        public static Complex <#= name.Item1 #>(Complex a)
+            => Complex.<#= name.Item2 #>(1 / a);
+        public static double <#= name.Item1 #>(double a)
+            => Math.<#= name.Item2 #>(1 / a);
+        public static float <#= name.Item1 #>(float a)
+            => (float)Math.<#= name.Item2 #>(1 / a);
+        public static long <#= name.Item1 #>(long a)
+            => (long)Math.<#= name.Item2 #>(1 / a);
+        public static int <#= name.Item1 #>(int a)
+            => (int)Math.<#= name.Item2 #>(1 / a);
+        public static BigInteger <#= name.Item1 #>(BigInteger a)
+            => (BigInteger)Math.<#= name.Item2 #>(1 / (double)a);
+
+<# } #>
+        
+        /* OTHER */
+        public static Complex Abs(Complex a) => Complex.Abs(a);
+        public static double Abs(double a) => Math.Abs(a);
+        public static float Abs(float a) => Math.Abs(a);
+        public static long Abs(long a) => Math.Abs(a);
+        public static int Abs(int a) => Math.Abs(a);
+        public static BigInteger Abs(BigInteger a) => BigInteger.Abs(a);
+
+        public static Complex Sgn(Complex a) => a / Complex.Abs(a);
+        public static double Sgn(double a) => a switch { > 0 or double.PositiveInfinity => 1, 0 => 0, < 0 or double.NegativeInfinity => -1, _ => double.NaN };
+        public static float Sgn(float a) => a switch { > 0 or float.PositiveInfinity => 1, 0 => 0, < 0 or float.NegativeInfinity => -1, _ => float.NaN };
+        public static long Sgn(long a) => a switch { > 0 => 1, 0 => 0, < 0 => -1 };
+        public static int Sgn(int a) => a switch { > 0 => 1, 0 => 0, < 0 => -1 };
+        public static BigInteger Sgn(BigInteger a)
+        {
+            if (a > BigInteger.Zero)
+                return 1;
+            if (a < BigInteger.Zero)
+                return -1;
+            return 0;
+        }
+    }
+}
