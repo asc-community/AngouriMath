@@ -7,9 +7,10 @@ using System.Linq.Expressions;
 
 namespace DotnetBenchmark
 {
-    public sealed class CacheCompiledFunc
+    public class CacheCompiledFunc
     {
         private readonly FastExpression complexFunc;
+        private readonly Func<Complex, Complex> myCompiledIntoLinq;
         private readonly Func<Complex, Complex> linqComp;
         private readonly Entity notCompiled;
         private readonly Entity.Variable x = MathS.Var("x");
@@ -23,8 +24,11 @@ namespace DotnetBenchmark
 
             Expression<Func<Complex, Complex>> linqExpr = x => Complex.Sin(Complex.Pow(x, 2)) + Complex.Cos(Complex.Pow(x, 2)) + Complex.Pow(x, 2) + Complex.Sin(Complex.Pow(x, 2));
             linqComp = linqExpr.Compile();
+
+            myCompiledIntoLinq = notCompiled.Compile<Complex, Complex>(x);
         }
         [Benchmark] public Complex MyCompiled() => complexFunc.Call(ComToSub);
+        [Benchmark] public Complex MyLinqCompiled() => myCompiledIntoLinq(ComToSub);
         [Benchmark] public Complex SysIncode() => Complex.Sin(Complex.Pow(3, 2)) + Complex.Cos(Complex.Pow(3, 2)) + Complex.Pow(3, 2) + Complex.Sin(Complex.Pow(3, 2));
         [Benchmark] public Complex LinqCompiled() => linqComp.Invoke(3);
         [Benchmark] public Entity.Number.Complex NotCompiled() => notCompiled.Substitute(x, 3).EvalNumerical();
