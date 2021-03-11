@@ -11,6 +11,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
     {
         internal static TDelegate Compile<TDelegate>(
             Entity expr, 
+            Type? returnType,
             CompilationProtocol protocol,
             IEnumerable<(Type type, Variable variable)> typesAndNames
             ) where TDelegate : Delegate
@@ -26,7 +27,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             var tree = BuildTree(expr, (args, instructionSet, localVars, protocol));
 
             var finalExpr = Expression.Block(localVars, instructionSet.Append(tree));
-            var finalFunction = Expression.Lambda<TDelegate>(finalExpr, argParams);
+            var finalExprWithCast = returnType is not null ? Expression.TypeAs(finalExpr, returnType) : finalExpr;
+            var finalFunction = Expression.Lambda<TDelegate>(finalExprWithCast, argParams);
 
             return finalFunction.Compile();
         }

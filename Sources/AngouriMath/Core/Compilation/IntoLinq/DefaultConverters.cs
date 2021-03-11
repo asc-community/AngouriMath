@@ -84,19 +84,22 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         public static Func<Expression, Entity, Expression> CreateOneArgumentEntity<T>()
             => (e, typeHolder) => typeHolder switch
             {
-                Sinf => Expression.Call(GetDef<T>("Sin", 1), e),
-                Cosf => Expression.Call(GetDef<T>("Cos", 1), e),
-                Tanf => Expression.Call(GetDef<T>("Tan", 1), e),
+                Sinf =>   Expression.Call(GetDef<T>("Sin", 1), e),
+                Cosf =>   Expression.Call(GetDef<T>("Cos", 1), e),
+                Tanf =>   Expression.Call(GetDef<T>("Tan", 1), e),
                 Cotanf => Expression.Call(GetDef<T>("Cotan", 1), e),
                 Secantf => Expression.Divide(Expression.Constant(1), Expression.Call(GetDef<T>("Cos", 1))),
                 Cosecantf => Expression.Divide(Expression.Constant(1), Expression.Call(GetDef<T>("Sin", 1))),
 
-                Arcsinf => Expression.Call(GetDef<T>("Asin", 1), e),
-                Arccosf => Expression.Call(GetDef<T>("Acos", 1), e),
-                Arctanf => Expression.Call(GetDef<T>("Atan", 1), e),
-                Arccotanf => Expression.Call(GetDef<T>("Atan", 1), InvExpression<T>(e)),
-                Arcsecantf => Expression.Call(GetDef<T>("Acos", 1), InvExpression<T>(e)),
+                Arcsinf =>      Expression.Call(GetDef<T>("Asin", 1), e),
+                Arccosf =>      Expression.Call(GetDef<T>("Acos", 1), e),
+                Arctanf =>      Expression.Call(GetDef<T>("Atan", 1), e),
+                Arccotanf =>    Expression.Call(GetDef<T>("Atan", 1), InvExpression<T>(e)),
+                Arcsecantf =>   Expression.Call(GetDef<T>("Acos", 1), InvExpression<T>(e)),
                 Arccosecantf => Expression.Call(GetDef<T>("Asin", 1), InvExpression<T>(e)),
+
+                Absf => Expression.Call(GetDef<T>("Abs", 1), e),
+                Signumf => Expression.Divide(e, Expression.Call(GetDef<T>("Abs", 1), e)),
 
                 _ => throw new AngouriBugException("A node seems to be not added")
             };

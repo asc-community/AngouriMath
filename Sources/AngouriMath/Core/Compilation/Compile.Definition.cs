@@ -49,6 +49,9 @@ namespace AngouriMath
         /// This is a protocol, according to which all nodes get compiled. Use this
         /// if you want to use the compilation for types different from those standard
         /// </param>
+        /// <param name="returnType">
+        /// The type to which the resulting type will be casted
+        /// </param>
         /// <param name="typesAndNames">
         /// An <see cref="IEnumerable"/> of pairs, where the first element is the type of your argument,
         /// and the second one is the corresponding variable from the expression
@@ -56,8 +59,8 @@ namespace AngouriMath
         /// <returns>
         /// Returnes a natively compiled expression of type <typeparamref name="TDelegate"/>
         /// </returns>
-        public TDelegate Compile<TDelegate>(CompilationProtocol protocol, IEnumerable<(Type type, Variable variable)> typesAndNames) where TDelegate : Delegate
-            => IntoLinqCompiler.Compile<TDelegate>(this, protocol, typesAndNames);
+        public TDelegate Compile<TDelegate>(CompilationProtocol protocol, Type returnType, IEnumerable<(Type type, Variable variable)> typesAndNames) where TDelegate : Delegate
+            => IntoLinqCompiler.Compile<TDelegate>(this, returnType, protocol, typesAndNames);
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
@@ -66,6 +69,9 @@ namespace AngouriMath
         /// <typeparam name="TDelegate">
         /// The type of your delegate to convert to
         /// </typeparam>
+        /// <param name="returnType">
+        /// The type to which the resulting type will be casted
+        /// </param>
         /// <param name="typesAndNames">
         /// An <see cref="IEnumerable"/> of pairs, where the first element is the type of your argument,
         /// and the second one is the corresponding variable from the expression
@@ -73,8 +79,28 @@ namespace AngouriMath
         /// <returns>
         /// Returnes a natively compiled expression of type <typeparamref name="TDelegate"/>
         /// </returns>
-        public TDelegate Compile<TDelegate>(IEnumerable<(Type type, Variable variable)> typesAndNames) where TDelegate : Delegate
-            => IntoLinqCompiler.Compile<TDelegate>(this, new(), typesAndNames);
+        public TDelegate Compile<TDelegate>(Type returnType, IEnumerable<(Type type, Variable variable)> typesAndNames) where TDelegate : Delegate
+            => IntoLinqCompiler.Compile<TDelegate>(this, returnType, new(), typesAndNames);
+
+        /// <summary>
+        /// Compiles a given expression into a native lambda. We use the default protocol.
+        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// </summary>
+        /// <typeparam name="TDelegate">
+        /// The type of your delegate to convert to
+        /// </typeparam>
+        /// <param name="returnType">
+        /// The type to which the resulting type will be casted
+        /// </param>
+        /// <param name="typesAndNames">
+        /// An array of pairs, where the first element is the type of your argument,
+        /// and the second one is the corresponding variable from the expression
+        /// </param>
+        /// <returns>
+        /// Returnes a natively compiled expression of type <typeparamref name="TDelegate"/>
+        /// </returns>
+        public TDelegate Compile<TDelegate>(Type returnType, params (Type type, Variable variable)[] typesAndNames) where TDelegate : Delegate
+            => IntoLinqCompiler.Compile<TDelegate>(this, returnType, new(), typesAndNames);
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
@@ -91,6 +117,25 @@ namespace AngouriMath
         /// Returnes a natively compiled expression of type <typeparamref name="TDelegate"/>
         /// </returns>
         public TDelegate Compile<TDelegate>(params (Type type, Variable variable)[] typesAndNames) where TDelegate : Delegate
-            => IntoLinqCompiler.Compile<TDelegate>(this, new(), typesAndNames);
+            => IntoLinqCompiler.Compile<TDelegate>(this, null, new(), typesAndNames);
+
+        /// <summary>
+        /// Compiles a given expression into a native lambda. We use the default protocol.
+        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// </summary>
+        /// <typeparam name="TIn1">
+        /// The type of the passed argument
+        /// </typeparam>
+        /// <typeparam name="TOut">
+        /// The return type
+        /// </typeparam>
+        /// <param name="var1">
+        /// The variable corresponding to the function's argument
+        /// </param>
+        /// <returns>
+        /// Returns a natively-compiled delegate
+        /// </returns>
+        public Func<TIn1, TOut> Compile<TIn1, TOut>(Variable var1)
+            => IntoLinqCompiler.Compile<Func<TIn1, TOut>>(this, typeof(TOut), new(), new[] { (typeof(TIn1), var1) });
     }
 }

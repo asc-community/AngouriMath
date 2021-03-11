@@ -93,7 +93,7 @@ namespace UnitTests.Convenience
 
 
             var toSubComplex = (Complex)toSub.EvalNumerical();
-            var func = expr.Compile<Func<Complex, Complex>>((typeof(Complex), "x"));
+            var func = expr.Compile<Complex, Complex>("x");
             var actual = func(toSubComplex);
 
 
