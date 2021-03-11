@@ -5,7 +5,7 @@ using System.Numerics;
 using System.Text;
 using Xunit;
 
-namespace UnitTests.Convenience
+namespace UnitTests.Common
 {
     public sealed class CompilationIntoLinqTest
     {

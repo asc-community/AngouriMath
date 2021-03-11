@@ -19,224 +19,224 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
         /* POWERS */
 
-        internal static Complex Log(Complex a, Complex b)
-            => Complex.Log(a) / Complex.Log(b);
-        internal static double Log(double a, double b)
-            => Math.Log(a, b);
-        internal static float Log(float a, float b)
-            => (float)Math.Log(a, b);
-        internal static long Log(long a, long b)
-            => (long)Math.Log(a, b);
-        internal static int Log(int a, int b)
-            => (int)Math.Log(a, b);
-        internal static BigInteger Log(BigInteger a, BigInteger b)
-            => (BigInteger)Math.Log((double)a, (double)b);
+        public static Complex Log(Complex a, Complex b)
+            => Complex.Log(b) / Complex.Log(a);
+        public static double Log(double a, double b)
+            => Math.Log(b, a);
+        public static float Log(float a, float b)
+            => (float)Math.Log(b, a);
+        public static long Log(long a, long b)
+            => (long)Math.Log(b, a);
+        public static int Log(int a, int b)
+            => (int)Math.Log(b, a);
+        public static BigInteger Log(BigInteger a, BigInteger b)
+            => (BigInteger)Math.Log((double)b, (double)a);
 
 
-        internal static Complex Pow(Complex a, Complex b)
+        public static Complex Pow(Complex a, Complex b)
             => Complex.Pow(a, b);
-        internal static double Pow(double a, double b)
+        public static double Pow(double a, double b)
             => Math.Pow(a, b);
-        internal static float Pow(float a, float b)
+        public static float Pow(float a, float b)
             => (float)Math.Pow(a, b);
-        internal static long Pow(long a, long b)
+        public static long Pow(long a, long b)
             => (long)Math.Pow(a, b);
-        internal static int Pow(int a, int b)
+        public static int Pow(int a, int b)
             => (int)Math.Pow(a, b);
-        internal static BigInteger Pow(BigInteger a, BigInteger b)
+        public static BigInteger Pow(BigInteger a, BigInteger b)
             => (BigInteger)Math.Pow((double)a, (double)b);
 
         /* BUILT-IN TRIGONOMETRY */
 
 
-        internal static Complex Sin(Complex a)
+        public static Complex Sin(Complex a)
             => Complex.Sin(a);
-        internal static double Sin(double a)
+        public static double Sin(double a)
             => Math.Sin(a);
-        internal static float Sin(float a)
+        public static float Sin(float a)
             => (float)Math.Sin(a);
-        internal static long Sin(long a)
+        public static long Sin(long a)
             => (long)Math.Sin(a);
-        internal static int Sin(int a)
+        public static int Sin(int a)
             => (int)Math.Sin(a);
-        internal static BigInteger Sin(BigInteger a)
+        public static BigInteger Sin(BigInteger a)
             => (BigInteger)Math.Sin((double)a);
 
 
-        internal static Complex Cos(Complex a)
+        public static Complex Cos(Complex a)
             => Complex.Cos(a);
-        internal static double Cos(double a)
+        public static double Cos(double a)
             => Math.Cos(a);
-        internal static float Cos(float a)
+        public static float Cos(float a)
             => (float)Math.Cos(a);
-        internal static long Cos(long a)
+        public static long Cos(long a)
             => (long)Math.Cos(a);
-        internal static int Cos(int a)
+        public static int Cos(int a)
             => (int)Math.Cos(a);
-        internal static BigInteger Cos(BigInteger a)
+        public static BigInteger Cos(BigInteger a)
             => (BigInteger)Math.Cos((double)a);
 
 
-        internal static Complex Tan(Complex a)
+        public static Complex Tan(Complex a)
             => Complex.Tan(a);
-        internal static double Tan(double a)
+        public static double Tan(double a)
             => Math.Tan(a);
-        internal static float Tan(float a)
+        public static float Tan(float a)
             => (float)Math.Tan(a);
-        internal static long Tan(long a)
+        public static long Tan(long a)
             => (long)Math.Tan(a);
-        internal static int Tan(int a)
+        public static int Tan(int a)
             => (int)Math.Tan(a);
-        internal static BigInteger Tan(BigInteger a)
+        public static BigInteger Tan(BigInteger a)
             => (BigInteger)Math.Tan((double)a);
 
 
-        internal static Complex Asin(Complex a)
+        public static Complex Asin(Complex a)
             => Complex.Asin(a);
-        internal static double Asin(double a)
+        public static double Asin(double a)
             => Math.Asin(a);
-        internal static float Asin(float a)
+        public static float Asin(float a)
             => (float)Math.Asin(a);
-        internal static long Asin(long a)
+        public static long Asin(long a)
             => (long)Math.Asin(a);
-        internal static int Asin(int a)
+        public static int Asin(int a)
             => (int)Math.Asin(a);
-        internal static BigInteger Asin(BigInteger a)
+        public static BigInteger Asin(BigInteger a)
             => (BigInteger)Math.Asin((double)a);
 
 
-        internal static Complex Acos(Complex a)
+        public static Complex Acos(Complex a)
             => Complex.Acos(a);
-        internal static double Acos(double a)
+        public static double Acos(double a)
             => Math.Acos(a);
-        internal static float Acos(float a)
+        public static float Acos(float a)
             => (float)Math.Acos(a);
-        internal static long Acos(long a)
+        public static long Acos(long a)
             => (long)Math.Acos(a);
-        internal static int Acos(int a)
+        public static int Acos(int a)
             => (int)Math.Acos(a);
-        internal static BigInteger Acos(BigInteger a)
+        public static BigInteger Acos(BigInteger a)
             => (BigInteger)Math.Acos((double)a);
 
 
-        internal static Complex Atan(Complex a)
+        public static Complex Atan(Complex a)
             => Complex.Atan(a);
-        internal static double Atan(double a)
+        public static double Atan(double a)
             => Math.Atan(a);
-        internal static float Atan(float a)
+        public static float Atan(float a)
             => (float)Math.Atan(a);
-        internal static long Atan(long a)
+        public static long Atan(long a)
             => (long)Math.Atan(a);
-        internal static int Atan(int a)
+        public static int Atan(int a)
             => (int)Math.Atan(a);
-        internal static BigInteger Atan(BigInteger a)
+        public static BigInteger Atan(BigInteger a)
             => (BigInteger)Math.Atan((double)a);
 
 
         /* POST-INVERSE TRIGONOMETRY */
 
 
-        internal static Complex Cot(Complex a)
+        public static Complex Cot(Complex a)
             => 1 / Complex.Tan(a);
-        internal static double Cot(double a)
+        public static double Cot(double a)
             => 1 / Math.Tan(a);
-        internal static float Cot(float a)
+        public static float Cot(float a)
             => (float)(1 / Math.Tan(a));
-        internal static long Cot(long a)
+        public static long Cot(long a)
             => (long)(1 / Math.Tan(a));
-        internal static int Cot(int a)
+        public static int Cot(int a)
             => (int)(1 / Math.Tan(a));
-        internal static BigInteger Cot(BigInteger a)
+        public static BigInteger Cot(BigInteger a)
             => (BigInteger)(1 / Math.Tan((double)a));
 
 
-        internal static Complex Sec(Complex a)
+        public static Complex Sec(Complex a)
             => 1 / Complex.Cos(a);
-        internal static double Sec(double a)
+        public static double Sec(double a)
             => 1 / Math.Cos(a);
-        internal static float Sec(float a)
+        public static float Sec(float a)
             => (float)(1 / Math.Cos(a));
-        internal static long Sec(long a)
+        public static long Sec(long a)
             => (long)(1 / Math.Cos(a));
-        internal static int Sec(int a)
+        public static int Sec(int a)
             => (int)(1 / Math.Cos(a));
-        internal static BigInteger Sec(BigInteger a)
+        public static BigInteger Sec(BigInteger a)
             => (BigInteger)(1 / Math.Cos((double)a));
 
 
-        internal static Complex Csc(Complex a)
+        public static Complex Csc(Complex a)
             => 1 / Complex.Sin(a);
-        internal static double Csc(double a)
+        public static double Csc(double a)
             => 1 / Math.Sin(a);
-        internal static float Csc(float a)
+        public static float Csc(float a)
             => (float)(1 / Math.Sin(a));
-        internal static long Csc(long a)
+        public static long Csc(long a)
             => (long)(1 / Math.Sin(a));
-        internal static int Csc(int a)
+        public static int Csc(int a)
             => (int)(1 / Math.Sin(a));
-        internal static BigInteger Csc(BigInteger a)
+        public static BigInteger Csc(BigInteger a)
             => (BigInteger)(1 / Math.Sin((double)a));
 
 
         /* PRE-INVERSE TRIGONOMETRY */
 
 
-        internal static Complex Acot(Complex a)
+        public static Complex Acot(Complex a)
             => Complex.Atan(1 / a);
-        internal static double Acot(double a)
+        public static double Acot(double a)
             => Math.Atan(1 / a);
-        internal static float Acot(float a)
+        public static float Acot(float a)
             => (float)Math.Atan(1 / a);
-        internal static long Acot(long a)
+        public static long Acot(long a)
             => (long)Math.Atan(1 / a);
-        internal static int Acot(int a)
+        public static int Acot(int a)
             => (int)Math.Atan(1 / a);
-        internal static BigInteger Acot(BigInteger a)
+        public static BigInteger Acot(BigInteger a)
             => (BigInteger)Math.Atan(1 / (double)a);
 
 
-        internal static Complex Asec(Complex a)
+        public static Complex Asec(Complex a)
             => Complex.Acos(1 / a);
-        internal static double Asec(double a)
+        public static double Asec(double a)
             => Math.Acos(1 / a);
-        internal static float Asec(float a)
+        public static float Asec(float a)
             => (float)Math.Acos(1 / a);
-        internal static long Asec(long a)
+        public static long Asec(long a)
             => (long)Math.Acos(1 / a);
-        internal static int Asec(int a)
+        public static int Asec(int a)
             => (int)Math.Acos(1 / a);
-        internal static BigInteger Asec(BigInteger a)
+        public static BigInteger Asec(BigInteger a)
             => (BigInteger)Math.Acos(1 / (double)a);
 
 
-        internal static Complex Acsc(Complex a)
+        public static Complex Acsc(Complex a)
             => Complex.Asin(1 / a);
-        internal static double Acsc(double a)
+        public static double Acsc(double a)
             => Math.Asin(1 / a);
-        internal static float Acsc(float a)
+        public static float Acsc(float a)
             => (float)Math.Asin(1 / a);
-        internal static long Acsc(long a)
+        public static long Acsc(long a)
             => (long)Math.Asin(1 / a);
-        internal static int Acsc(int a)
+        public static int Acsc(int a)
             => (int)Math.Asin(1 / a);
-        internal static BigInteger Acsc(BigInteger a)
+        public static BigInteger Acsc(BigInteger a)
             => (BigInteger)Math.Asin(1 / (double)a);
 
         
         /* OTHER */
-        internal static Complex Abs(Complex a) => Complex.Abs(a);
-        internal static double Abs(double a) => Math.Abs(a);
-        internal static float Abs(float a) => Math.Abs(a);
-        internal static long Abs(long a) => Math.Abs(a);
-        internal static int Abs(int a) => Math.Abs(a);
-        internal static BigInteger Abs(BigInteger a) => BigInteger.Abs(a);
+        public static Complex Abs(Complex a) => Complex.Abs(a);
+        public static double Abs(double a) => Math.Abs(a);
+        public static float Abs(float a) => Math.Abs(a);
+        public static long Abs(long a) => Math.Abs(a);
+        public static int Abs(int a) => Math.Abs(a);
+        public static BigInteger Abs(BigInteger a) => BigInteger.Abs(a);
 
-        internal static Complex Sgn(Complex a) => a / Complex.Abs(a);
-        internal static double Sgn(double a) => a switch { > 0 or double.PositiveInfinity => 1, 0 => 0, < 0 or double.NegativeInfinity => 1, _ => double.NaN };
-        internal static float Sgn(float a) => a switch { > 0 or float.PositiveInfinity => 1, 0 => 0, < 0 or float.NegativeInfinity => 1, _ => float.NaN };
-        internal static long Sgn(long a) => a switch { > 0 => 1, 0 => 0, < 0 => 1 };
-        internal static int Sgn(int a) => a switch { > 0 => 1, 0 => 0, < 0 => 1 };
-        internal static BigInteger Sgn(BigInteger a)
+        public static Complex Sgn(Complex a) => a / Complex.Abs(a);
+        public static double Sgn(double a) => a switch { > 0 or double.PositiveInfinity => 1, 0 => 0, < 0 or double.NegativeInfinity => -1, _ => double.NaN };
+        public static float Sgn(float a) => a switch { > 0 or float.PositiveInfinity => 1, 0 => 0, < 0 or float.NegativeInfinity => -1, _ => float.NaN };
+        public static long Sgn(long a) => a switch { > 0 => 1, 0 => 0, < 0 => -1 };
+        public static int Sgn(int a) => a switch { > 0 => 1, 0 => 0, < 0 => -1 };
+        public static BigInteger Sgn(BigInteger a)
         {
             if (a > BigInteger.Zero)
                 return 1;

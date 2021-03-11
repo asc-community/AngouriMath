@@ -80,28 +80,6 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 _ => throw new AngouriBugException("A node seems to be not added")
             };
 
-        private static Expression InvExpression<T>(Expression expr)
-        {
-            object? c = null;
-
-            if (typeof(T) == typeof(Complex))
-                c = new Complex(1, 0);
-            if (typeof(T) == typeof(double))
-                c = 1d;
-            if (typeof(T) == typeof(float))
-                c = 1f;
-            if (typeof(T) == typeof(long))
-                c = 1L;
-            if (typeof(T) == typeof(int))
-                c = 1;
-            if (typeof(T) == typeof(BigInteger))
-                c = new BigInteger(1);
-
-            if (c is null)
-                throw new InvalidProtocolProvided($"The given type {typeof(T)} is not supported by default. Provide a custom compilation protocol to resolve the issue");
-            return Expression.Divide(Expression.Constant(c), expr);
-        }
-
         /// <summary>
         /// This is a default converter for unary nodes (for those inherited from <see cref="IOneArgumentNode"/>)
         /// </summary>

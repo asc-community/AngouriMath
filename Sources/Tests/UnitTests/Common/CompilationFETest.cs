@@ -3,7 +3,7 @@ using System.Numerics;
 using Xunit;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Convenience
+namespace UnitTests.Common
 {
     public sealed class CompilationFETest
     {
