@@ -285,6 +285,32 @@ A few convenient features: `x2` => `x^2`, `a x` => `a * x`, `(...)2` => `(...)^2
 
 </details>
 
+<details><summary><strong>Compilation</strong></summary>
+
+Now you can compile expressions with pritimives into native lambdas. They will be
+at least as fast as if you wrote them in line in code, or faster if you have
+same subexpressions in your expression.
+
+```cs
+Entity expr = "a and x > 3";
+var func = expr.Compile<bool, double, bool>("a", "x");
+WriteLine(func(true, 6));
+WriteLine(func(false, 6));
+WriteLine(func(true, 2));
+WriteLine(func(false, 2));
+```
+
+Output:
+
+```
+True
+False
+False
+False
+```
+
+</details>
+
 <details><summary><strong>F#</strong></summary>
 
 <a href="https://www.nuget.org/packages/AngouriMath.FSharp">Download</a>

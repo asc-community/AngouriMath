@@ -125,10 +125,9 @@ using static System.Console;
 // WriteLine("((a^x - 1) - (b^x - 1)) / x".Limit("x", 0));
 
 
-Entity expr = "a and b";
-var c = expr.Compile<Func<bool, bool, bool>>((typeof(bool), "a"), (typeof(bool), "b"));
-WriteLine(c(true, true));
-WriteLine(c(true, false));
-WriteLine(c(false, false));
-WriteLine(c(false, true));
-
+Entity expr = "a and x > 3";
+var func = expr.Compile<bool, double, bool>("a", "x");
+WriteLine(func(true, 6));
+WriteLine(func(false, 6));
+WriteLine(func(true, 2));
+WriteLine(func(false, 2));
