@@ -55,7 +55,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Core\Compilation\IntoLinq\MathAllMethods.cs">
+    <Compile Update="Functions\Compilation\IntoLinq\MathAllMethods.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>MathAllMethods.tt</DependentUpon>
@@ -63,7 +63,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Core\Compilation\IntoLinq\MathAllMethods.tt">
+    <None Update="Functions\Compilation\IntoLinq\MathAllMethods.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>MathAllMethods.cs</LastGenOutput>
     </None>

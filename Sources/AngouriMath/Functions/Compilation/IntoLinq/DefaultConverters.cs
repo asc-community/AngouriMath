@@ -1,6 +1,7 @@
 ﻿using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
@@ -51,33 +52,66 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         }
 
         private static MethodInfo GetDef(string name, int argCount, Type type)
-            => typeof(MathAllMethods).GetMethod(name, GenerateArrayOfType(argCount, type));            
+            => typeof(MathAllMethods).GetMethod(name, GenerateArrayOfType(argCount, type));
+
+
+        [ConstantField] private static readonly Dictionary<Type, int> typeLevelInHierarchy = new()
+            {
+                { typeof(Complex), 10 },
+                { typeof(double), 9 },
+                { typeof(float), 8 },
+                { typeof(long), 8 },
+                { typeof(BigInteger), 8 },
+                { typeof(int), 7 }
+            };
+        private static Type MaxType(Type a, Type b)
+        {
+            if (a == b)
+                return a;
+            if (typeLevelInHierarchy[a] < typeLevelInHierarchy[b])
+                return b;
+            if (typeLevelInHierarchy[a] > typeLevelInHierarchy[b])
+                return a;
+            var level = typeLevelInHierarchy[a];
+            var res = typeLevelInHierarchy.Where(p => p.Value == level + 1);
+            if (res.Count() != 1)
+                throw new AngouriBugException("Ambiguous upcast class");
+            return res.First().Key;
+        }
 
         /// <summary>
         /// This is a default converter for binary nodes (for those inherited from <see cref="ITwoArgumentNode"/>)
         /// </summary>
         public static Func<Expression, Expression, Entity, Expression> CreateTwoArgumentEntity<T>()
-            => (left, right, typeHolder) => typeHolder switch
+            => (left, right, typeHolder) =>
             {
-                Sumf => Expression.Add(left, right),
-                Minusf => Expression.Subtract(left, right),
-                Mulf => Expression.Multiply(left, right),
-                Divf => Expression.Divide(left, right),
-                Powf => Expression.Call(GetDef("Pow", 2, left.Type), left, right),
-                Logf => Expression.Call(GetDef("Log", 2, right.Type), left, right),
+                var typeToCastTo = MaxType(left.Type, right.Type);
+                if (left.Type != typeToCastTo)
+                    left = Expression.Convert(left, typeToCastTo);
+                if (right.Type != typeToCastTo)
+                    right = Expression.Convert(right, typeToCastTo);
+                return typeHolder switch
+                {
+                    Sumf => Expression.Add(left, right),
+                    Minusf => Expression.Subtract(left, right),
+                    Mulf => Expression.Multiply(left, right),
+                    Divf => Expression.Divide(left, right),
+                    Powf => Expression.Call(GetDef("Pow", 2, left.Type), left, right),
+                    Logf => Expression.Call(GetDef("Log", 2, right.Type), left, right),
 
-                Andf => Expression.And(left, right),
-                Orf => Expression.Or(left, right),
-                Xorf => Expression.ExclusiveOr(left, right),
-                Impliesf => Expression.Or(Expression.Not(left), right),
+                    Andf => Expression.And(left, right),
+                    Orf => Expression.Or(left, right),
+                    Xorf => Expression.ExclusiveOr(left, right),
+                    Impliesf => Expression.Or(Expression.Not(left), right),
 
-                Lessf => Expression.LessThan(left, right),
-                LessOrEqualf => Expression.LessThanOrEqual(left, right),
-                Greaterf => Expression.GreaterThan(left, right),
-                GreaterOrEqualf => Expression.GreaterThanOrEqual(left, right),
-                Equalsf => Expression.Equal(left, right),
+                    Lessf => Expression.LessThan(left, right),
+                    LessOrEqualf => Expression.LessThanOrEqual(left, right),
+                    Greaterf => Expression.GreaterThan(left, right),
+                    GreaterOrEqualf => Expression.GreaterThanOrEqual(left, right),
+                    Equalsf => Expression.Equal(left, right),
 
-                _ => throw new AngouriBugException("A node seems to be not added")
+                    _ => throw new AngouriBugException("A node seems to be not added")
+                };
             };
 
         /// <summary>
