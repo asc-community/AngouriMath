@@ -1,8 +1,7 @@
 ﻿using AngouriMath;
+using AngouriMath.Extensions;
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 using Xunit;
 
 namespace UnitTests.Common
@@ -291,6 +290,16 @@ namespace UnitTests.Common
             Assert.Equal(expected, actual);
         }
 
+        [Fact]
+        public void TestManyArgs1()
+            => Assert.Equal(6, "a + b + c".Compile<int, int, int, int>("a", "b", "c")(1, 2, 3));
 
+        [Fact]
+        public void TestManyArgs2()
+            => Assert.Equal(10, "a + b + c + d".Compile<int, int, int, int, int>("a", "b", "c", "d")(1, 2, 3, 4));
+
+        [Fact]
+        public void TestManyArgs3()
+            => Assert.Equal(15, "a + b + c + d + f".Compile<int, int, int, int, int, int>("a", "b", "c", "d", "f")(1, 2, 3, 4, 5));
     }
 }
