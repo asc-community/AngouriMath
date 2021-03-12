@@ -271,9 +271,9 @@ namespace UnitTests.Common
         [InlineData("sin(x) < 0 and a and b", "-pi / 4", true, true)]
         [InlineData("sin(x) < 0 and not a and b", "-pi / 4", false, true)]
 
-        [InlineData("sin(x)2 + cos(x)2 = 1", "0.25", true, true)]
-        [InlineData("sin(x)2 + cos(x)2 = 1", "1.25", true, true)]
-        [InlineData("sin(x)2 + cos(x)2 = 1", "2.25", true, true)]
+        [InlineData("(|sin(x)2 - cos(x)2|) < 0.0001", "0.25", true, true)]
+        [InlineData("(|sin(x)2 - cos(x)2|) < 0.0001", "1.25", true, true)]
+        [InlineData("(|sin(x)2 - cos(x)2|) < 0.0001", "2.25", true, true)]
         [InlineData("(|sin(x)2 - cos(x)2|) < 0.0001", "3.25", true, true)]
         public void TestBool(string exprRaw, string xRaw, bool aRaw, bool bRaw)
         {
