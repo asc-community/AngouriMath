@@ -10,57 +10,62 @@ namespace AngouriMath.Core.Compilation.IntoLinq
     internal static class IntoLinqCompiler
     {
         internal static TDelegate Compile<TDelegate>(
-            Entity expr, 
+            Entity expr,
             Type? returnType,
             CompilationProtocol protocol,
             IEnumerable<(Type type, Variable variable)> typesAndNames
             ) where TDelegate : Delegate
         {
-            Dictionary<Entity, ParameterExpression> args = new();
-            foreach (var (type, @var) in typesAndNames)
-                args[@var] = Expression.Parameter(type, @var.Name);
+            var subexpressionsCache = typesAndNames.ToDictionary(c => (Entity)c.variable, c => Expression.Parameter(c.type));
+            var functionArguments = subexpressionsCache.Select(c => c.Value).ToArray(); // copying
+            var localVars = new List<ParameterExpression>();
+            var variableAssignments = new List<Expression>();
 
-            var argParams = args.Values.ToArray(); // copying
-            List<ParameterExpression> localVars = new();
+            var tree = BuildTree(expr, subexpressionsCache, variableAssignments, localVars, protocol);
+            var treeWithLocals = Expression.Block(localVars, variableAssignments.Append(tree));
+            Expression entireExpresion = returnType is not null ? Expression.Convert(treeWithLocals, returnType) : treeWithLocals;
+            var finalLambda = Expression.Lambda<TDelegate>(entireExpresion, functionArguments);
 
-            List<Expression> instructionSet = new();
-            var tree = BuildTree(expr, (args, instructionSet, localVars, protocol));
-
-            var finalExpr = Expression.Block(localVars, instructionSet.Append(tree));
-            Expression finalExprWithCast = returnType is not null ? Expression.Convert(finalExpr, returnType) : finalExpr;
-            var finalFunction = Expression.Lambda<TDelegate>(finalExprWithCast, argParams);
-
-            return finalFunction.Compile();
+            return finalLambda.Compile();
         }
 
         internal static Expression BuildTree(
             Entity expr, 
-            (Dictionary<Entity, ParameterExpression> vars, 
+            Dictionary<Entity, ParameterExpression> cachedSubexpressions, 
             List<Expression> variableAssignments, 
-            List<ParameterExpression> localVars, 
-            CompilationProtocol protocol) ot)
+            List<ParameterExpression> newLocalVars,
+            CompilationProtocol protocol)
         {
-            var vars = ot.vars;
-            var prot = ot.protocol;
-            var instructionSet = ot.variableAssignments;
-            var localVars = ot.localVars;
-
-            if (vars.TryGetValue(expr, out var readyVar))
+            if (cachedSubexpressions.TryGetValue(expr, out var readyVar))
                 return readyVar;
 
             Expression subTree = expr switch
             {
-                Variable { IsConstant: true } c => BuildTree(c.Evaled, ot),
-                Variable x => vars[x],
-                Entity.Boolean or Number => prot.ConstantConverter(expr),
-                IUnaryNode oneArg => prot.UnaryNodeConverter(BuildTree(oneArg.NodeChild, ot), expr),
-                IBinaryNode twoArg => prot.BinaryNodeConverter(BuildTree(twoArg.NodeFirstChild, ot), BuildTree(twoArg.NodeSecondChild, ot), expr),
-                var other => prot.AnyArgumentConverter(other.DirectChildren.Select(c => BuildTree(c, ot)), expr)
+                Variable { IsConstant: true } c
+                    => BuildTree(c.Evaled, cachedSubexpressions, variableAssignments, newLocalVars, protocol),
+
+                Variable x => cachedSubexpressions[x],
+
+                Entity.Boolean or Number => protocol.ConstantConverter(expr),
+
+                IUnaryNode oneArg
+                    => protocol.UnaryNodeConverter(
+                        BuildTree(oneArg.NodeChild, cachedSubexpressions, variableAssignments, newLocalVars, protocol),
+                        expr),
+
+                IBinaryNode twoArg
+                    => protocol.BinaryNodeConverter(
+                        BuildTree(twoArg.NodeFirstChild, cachedSubexpressions, variableAssignments, newLocalVars, protocol), 
+                        BuildTree(twoArg.NodeSecondChild, cachedSubexpressions, variableAssignments, newLocalVars, protocol), 
+                        expr),
+
+                var other => protocol.AnyArgumentConverter(other.DirectChildren.Select(c => BuildTree(c, cachedSubexpressions, variableAssignments, newLocalVars, protocol)), expr)
             };
+
             var newVar = Expression.Variable(subTree.Type);
-            instructionSet.Add(Expression.Assign(newVar, subTree));
-            vars[expr] = newVar;
-            localVars.Add(newVar);
+            variableAssignments.Add(Expression.Assign(newVar, subTree));
+            cachedSubexpressions[expr] = newVar;
+            newLocalVars.Add(newVar);
             return newVar;
         }
     }

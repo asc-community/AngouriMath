@@ -30,8 +30,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// This treats any number as <see cref="Complex"/> and any boolean as <see cref="bool"/>
         /// </summary>
-        public static Func<Entity, Expression> CreateConverterConstant()
-            => e => e switch
+        public static Expression ConverterConstant(Entity e)
+            => e switch
             {
                 Number n => Expression.Constant(DownCast(n)),
                 Entity.Boolean b => Expression.Constant((bool)b),
@@ -77,43 +77,42 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// This is a default converter for binary nodes (for those inherited from <see cref="IBinaryNode"/>)
         /// </summary>
-        public static Func<Expression, Expression, Entity, Expression> CreateTwoArgumentEntity()
-            => (left, right, typeHolder) =>
+        public static Expression TwoArgumentEntity(Expression left, Expression right, Entity typeHolder)
+        {
+            var typeToCastTo = MaxType(left.Type, right.Type);
+            if (left.Type != typeToCastTo)
+                left = Expression.Convert(left, typeToCastTo);
+            if (right.Type != typeToCastTo)
+                right = Expression.Convert(right, typeToCastTo);
+            return typeHolder switch
             {
-                var typeToCastTo = MaxType(left.Type, right.Type);
-                if (left.Type != typeToCastTo)
-                    left = Expression.Convert(left, typeToCastTo);
-                if (right.Type != typeToCastTo)
-                    right = Expression.Convert(right, typeToCastTo);
-                return typeHolder switch
-                {
-                    Sumf => Expression.Add(left, right),
-                    Minusf => Expression.Subtract(left, right),
-                    Mulf => Expression.Multiply(left, right),
-                    Divf => Expression.Divide(left, right),
-                    Powf => Expression.Call(GetDef("Pow", 2, left.Type), left, right),
-                    Logf => Expression.Call(GetDef("Log", 2, right.Type), left, right),
+                Sumf => Expression.Add(left, right),
+                Minusf => Expression.Subtract(left, right),
+                Mulf => Expression.Multiply(left, right),
+                Divf => Expression.Divide(left, right),
+                Powf => Expression.Call(GetDef("Pow", 2, left.Type), left, right),
+                Logf => Expression.Call(GetDef("Log", 2, right.Type), left, right),
 
-                    Andf => Expression.And(left, right),
-                    Orf => Expression.Or(left, right),
-                    Xorf => Expression.ExclusiveOr(left, right),
-                    Impliesf => Expression.Or(Expression.Not(left), right),
+                Andf => Expression.And(left, right),
+                Orf => Expression.Or(left, right),
+                Xorf => Expression.ExclusiveOr(left, right),
+                Impliesf => Expression.Or(Expression.Not(left), right),
 
-                    Lessf => Expression.LessThan(left, right),
-                    LessOrEqualf => Expression.LessThanOrEqual(left, right),
-                    Greaterf => Expression.GreaterThan(left, right),
-                    GreaterOrEqualf => Expression.GreaterThanOrEqual(left, right),
-                    Equalsf => Expression.Equal(left, right),
+                Lessf => Expression.LessThan(left, right),
+                LessOrEqualf => Expression.LessThanOrEqual(left, right),
+                Greaterf => Expression.GreaterThan(left, right),
+                GreaterOrEqualf => Expression.GreaterThanOrEqual(left, right),
+                Equalsf => Expression.Equal(left, right),
 
-                    _ => throw new AngouriBugException("A node seems to be not added")
-                };
+                _ => throw new AngouriBugException("A node seems to be not added")
             };
+        }
 
         /// <summary>
         /// This is a default converter for unary nodes (for those inherited from <see cref="IUnaryNode"/>)
         /// </summary>
-        public static Func<Expression, Entity, Expression> CreateOneArgumentEntity()
-            => (e, typeHolder) => typeHolder switch
+        public static Expression OneArgumentEntity(Expression e, Entity typeHolder)
+            => typeHolder switch
             {
                 Sinf =>         Expression.Call(GetDef("Sin", 1, e.Type), e),
                 Cosf =>         Expression.Call(GetDef("Cos", 1, e.Type), e),
@@ -140,8 +139,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// This is a default converter for other (non-unary and non-binary) nodes
         /// </summary>
-        public static Func<IEnumerable<Expression>, Entity, Expression> CreateAnyArgumentEntity()
-            => (en, typeHolder) => typeHolder switch
+        public static Expression AnyArgumentEntity(IEnumerable<Expression> en, Entity typeHolder)
+            => typeHolder switch
             {
                 // TODO: finite set -> hash set
                 _ => throw new AngouriBugException("A node seems to be not added")
