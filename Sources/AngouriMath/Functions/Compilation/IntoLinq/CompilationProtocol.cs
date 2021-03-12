@@ -21,12 +21,12 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// Change this if you want to override compilation node for binary nodes
         /// </summary>
-        public Func<Expression, Expression, Entity, Expression> TwoArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateTwoArgumentEntity();
+        public Func<Expression, Expression, Entity, Expression> BinaryNodeConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateTwoArgumentEntity();
 
         /// <summary>
         /// Change this if you want to override compilation node for unary nodes
         /// </summary>
-        public Func<Expression, Entity, Expression> OneArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateOneArgumentEntity();
+        public Func<Expression, Entity, Expression> UnaryNodeConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateOneArgumentEntity();
 
         /// <summary>
         /// Change this if you want to override compilation node for non-unary and non-binary nodes
@@ -37,8 +37,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => new()
             {
                 ConstantConverter = CompilationProtocolBuiltinConstantConverters.CreateConverterConstant(),
-                TwoArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateTwoArgumentEntity(),
-                OneArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateOneArgumentEntity(),
+                BinaryNodeConverter = CompilationProtocolBuiltinConstantConverters.CreateTwoArgumentEntity(),
+                UnaryNodeConverter = CompilationProtocolBuiltinConstantConverters.CreateOneArgumentEntity(),
                 AnyArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateAnyArgumentEntity()
             };        
     }
