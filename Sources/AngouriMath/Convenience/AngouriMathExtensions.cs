@@ -246,6 +246,8 @@ namespace AngouriMath.Extensions
         public static FastExpression Compile(this string str, params Variable[] variables)
             => str.ToEntity().Compile(variables);
 
+
+
         /// <summary>
         /// Finds the symbolical derivative of the given expression
         /// </summary>
