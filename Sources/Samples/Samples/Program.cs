@@ -128,5 +128,11 @@ using static System.Console;
 // var func = "x > 3 and (a implies b)".Compile<int, bool, bool, bool>("x", "a", "b");
 // Console.WriteLine(func(4, false, true));
 
-var func = "x + sin(y) + 2ch(0)".Compile<System.Numerics.Complex, double, System.Numerics.Complex>("x", "y");
-Console.WriteLine(func(new(3, 4), 1.2d));
+// var func = "x + sin(y) + 2ch(0)".Compile<System.Numerics.Complex, double, System.Numerics.Complex>("x", "y");
+// Console.WriteLine(func(new(3, 4), 1.2d));
+
+var func = ("sin(a + b + cos(c)) * 6 +" +
+                         "3 ^ sin(a + b + cos(c)) +" +
+                         "tan(sin(a + b + cos(c)))-" +
+                         "log(3, sin(a + b + cos(c)))")
+                         .Compile<double, double, double, double>("a", "b", "c");
