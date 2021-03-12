@@ -55,6 +55,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Convenience\CompilationExtensions.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CompilationExtensions.tt</DependentUpon>
+    </Compile>
     <Compile Update="Functions\Compilation\Compile.Linq.Definition.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -73,6 +78,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="Convenience\CompilationExtensions.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CompilationExtensions.cs</LastGenOutput>
+    </None>
     <None Update="Functions\Compilation\Compile.Linq.Definition.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Compile.Linq.Definition.cs</LastGenOutput>
