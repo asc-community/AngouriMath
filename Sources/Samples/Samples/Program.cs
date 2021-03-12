@@ -125,6 +125,5 @@ using static System.Console;
 // WriteLine("((a^x - 1) - (b^x - 1)) / x".Limit("x", 0));
 
 
-Entity expr = "x + y";
-var func = expr.Compile<System.Numerics.Complex, int, System.Numerics.Complex>("x", "y");
-WriteLine(func(new System.Numerics.Complex(5, 6), 4));
+var func = "x + y + a + b / c + sin(d)".Compile<int, double, float, long, double, double, double>("x", "y", "a", "b", "c", "d");
+WriteLine(func(3, 4, 5, 6, 7, 8));

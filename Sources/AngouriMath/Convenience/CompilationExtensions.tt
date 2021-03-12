@@ -38,7 +38,7 @@ namespace AngouriMath.Extensions
         /// <returns>
         /// Returnes a natively compiled expression of type <typeparamref name="TDelegate"/>
         /// </returns>
-        public static TDelegate Compile<TDelegate>(this Entity @this, CompilationProtocol protocol, Type returnType, IEnumerable<(Type type, Variable variable)> typesAndNames) where TDelegate : Delegate
+        public static TDelegate Compile<TDelegate>(this string @this, CompilationProtocol protocol, Type returnType, IEnumerable<(Type type, Variable variable)> typesAndNames) where TDelegate : Delegate
             => IntoLinqCompiler.Compile<TDelegate>(@this, returnType, protocol, typesAndNames);
 
 <# for (var i = 1; i <= 8; i++) { #>
@@ -66,7 +66,7 @@ namespace AngouriMath.Extensions
     /// <returns>
         /// Returns a natively-compiled delegate
         /// </returns>
-        public static Func<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut> Compile<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>(this Entity @this, Variable var1<# for(var t=2; t<=i; t++){ #>, Variable var<#= t #><# } #>)
+        public static Func<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut> Compile<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>(this string @this, Variable var1<# for(var t=2; t<=i; t++){ #>, Variable var<#= t #><# } #>)
             => IntoLinqCompiler.Compile<Func<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>>(@this, typeof(TOut), CompilationProtocol.Assume<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>(), 
                 new[] { (typeof(TIn1), var1)<# for(var t=2;t<=i;t++){ #>, (typeof(TIn<#= t #>), var<#= t #>) <# } #> });
 
