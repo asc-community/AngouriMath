@@ -301,5 +301,33 @@ namespace UnitTests.Common
         [Fact]
         public void TestManyArgs3()
             => Assert.Equal(15, "a + b + c + d + f".Compile<int, int, int, int, int, int>("a", "b", "c", "d", "f")(1, 2, 3, 4, 5));
+
+        [Fact]
+        public void TestManyArgs4()
+            => Assert.Equal(21, "a + b + c + d + f + g".Compile<int, int, int, int, int, int, int>("a", "b", "c", "d", "f", "g")(1, 2, 3, 4, 5, 6));
+
+        [Fact]
+        public void TestUpcast1()
+            => Assert.Equal(10.5d, "a + b".Compile<int, double, double>("a", "b")(4, 6.5));
+
+        [Fact]
+        public void TestUpcast2()
+            => Assert.Equal(15.5d, "a + b + c".Compile<int, double, float, double>("a", "b", "c")(4, 6.5, 5f));
+
+        [Fact]
+        public void TestUpcast3()
+            => Assert.Equal((double)(int)Math.Sin(4), "sin(a)".Compile<int, double>("a")(4));
+
+        [Fact]
+        public void TestUpcastDowncast4()
+            => Assert.Equal((int)Math.Sin(4), "sin(a)".Compile<int, int>("a")(4));
+
+        [Fact]
+        public void TestUpcastDowncast5()
+            => Assert.Equal(Complex.Pow(new(4, 3), 2), "a ^ 2".Compile<Complex, Complex>("a")(new(4, 3)));
+
+        [Fact]
+        public void TestUpcastDowncast6()   //    |   |   |   |   |
+            => Assert.Equal(BigInteger.Parse("100000000000000000000"), "a ^ b".Compile<int, BigInteger, BigInteger>("a", "b")(10, 20));
     }
 }

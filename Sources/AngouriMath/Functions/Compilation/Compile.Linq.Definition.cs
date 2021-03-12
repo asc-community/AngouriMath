@@ -57,7 +57,7 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TOut> Compile<TIn1, TOut>(Variable var1)
-            => IntoLinqCompiler.Compile<Func<TIn1, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TOut>(), 
+            => IntoLinqCompiler.Compile<Func<TIn1, TOut>>(this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1) });
 
 
@@ -84,7 +84,7 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TIn2, TOut> Compile<TIn1, TIn2, TOut>(Variable var1, Variable var2)
-            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TIn2, TOut>(), 
+            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TOut>>(this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2)  });
 
 
@@ -117,7 +117,7 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TIn2, TIn3, TOut> Compile<TIn1, TIn2, TIn3, TOut>(Variable var1, Variable var2, Variable var3)
-            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TIn2, TIn3, TOut>(), 
+            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TOut>>(this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3)  });
 
 
@@ -156,7 +156,7 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TIn2, TIn3, TIn4, TOut> Compile<TIn1, TIn2, TIn3, TIn4, TOut>(Variable var1, Variable var2, Variable var3, Variable var4)
-            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TIn2, TIn3, TIn4, TOut>(), 
+            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TOut>>(this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3) , (typeof(TIn4), var4)  });
 
 
@@ -201,7 +201,7 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TIn2, TIn3, TIn4, TIn5, TOut> Compile<TIn1, TIn2, TIn3, TIn4, TIn5, TOut>(Variable var1, Variable var2, Variable var3, Variable var4, Variable var5)
-            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TIn2, TIn3, TIn4, TIn5, TOut>(), 
+            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TOut>>(this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3) , (typeof(TIn4), var4) , (typeof(TIn5), var5)  });
 
 
@@ -252,7 +252,7 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TOut> Compile<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TOut>(Variable var1, Variable var2, Variable var3, Variable var4, Variable var5, Variable var6)
-            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TOut>(), 
+            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TOut>>(this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3) , (typeof(TIn4), var4) , (typeof(TIn5), var5) , (typeof(TIn6), var6)  });
 
 
@@ -309,7 +309,7 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TOut> Compile<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TOut>(Variable var1, Variable var2, Variable var3, Variable var4, Variable var5, Variable var6, Variable var7)
-            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TOut>(), 
+            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TOut>>(this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3) , (typeof(TIn4), var4) , (typeof(TIn5), var5) , (typeof(TIn6), var6) , (typeof(TIn7), var7)  });
 
 
@@ -372,7 +372,7 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TIn8, TOut> Compile<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TIn8, TOut>(Variable var1, Variable var2, Variable var3, Variable var4, Variable var5, Variable var6, Variable var7, Variable var8)
-            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TIn8, TOut>>(this, typeof(TOut), CompilationProtocol.Assume<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TIn8, TOut>(), 
+            => IntoLinqCompiler.Compile<Func<TIn1, TIn2, TIn3, TIn4, TIn5, TIn6, TIn7, TIn8, TOut>>(this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1), (typeof(TIn2), var2) , (typeof(TIn3), var3) , (typeof(TIn4), var4) , (typeof(TIn5), var5) , (typeof(TIn6), var6) , (typeof(TIn7), var7) , (typeof(TIn8), var8)  });
 
     }

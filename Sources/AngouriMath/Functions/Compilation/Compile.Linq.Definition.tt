@@ -62,7 +62,7 @@ namespace AngouriMath
         /// Returns a natively-compiled delegate
         /// </returns>
         public Func<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut> Compile<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>(Variable var1<# for(var t=2; t<=i; t++){ #>, Variable var<#= t #><# } #>)
-            => IntoLinqCompiler.Compile<Func<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>>(this, typeof(TOut), CompilationProtocol.Assume<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>(), 
+            => IntoLinqCompiler.Compile<Func<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>>(this, typeof(TOut), new(), 
                 new[] { (typeof(TIn1), var1)<# for(var t=2;t<=i;t++){ #>, (typeof(TIn<#= t #>), var<#= t #>) <# } #> });
 
 <# } #>

@@ -7,6 +7,7 @@ using System.Numerics;
 using System.Reflection;
 using System.Text;
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Core.Compilation.IntoLinq
 {
@@ -15,30 +16,24 @@ namespace AngouriMath.Core.Compilation.IntoLinq
     /// </summary>
     public static class CompilationProtocolBuiltinConstantConverters
     {
-        private static object CastToT<T>(Number num)
+        private static object DownCast(Number num)
         {
-            if (typeof(T) == typeof(Complex))
-                return (Complex)num;
-            if (typeof(T) == typeof(double))
-                return (double)num;
-            if (typeof(T) == typeof(float))
-                return (float)num;
-            if (typeof(T) == typeof(int))
-                return (int)num;
-            if (typeof(T) == typeof(long))
+            if (num is Integer)
                 return (long)num;
-            if (typeof(T) == typeof(BigInteger))
-                return (BigInteger)num;
+            if (num is Real)
+                return (double)num;
+            if (num is Number.Complex)
+                return (System.Numerics.Complex)num;
             throw new InvalidProtocolProvided("Undefined type, provide valid compilation protocol");
         }
 
         /// <summary>
         /// This treats any number as <see cref="Complex"/> and any boolean as <see cref="bool"/>
         /// </summary>
-        public static Func<Entity, Expression> CreateConverterConstant<TNumeric>()
+        public static Func<Entity, Expression> CreateConverterConstant()
             => e => e switch
             {
-                Number n => Expression.Constant(CastToT<TNumeric>(n)),
+                Number n => Expression.Constant(DownCast(n)),
                 Entity.Boolean b => Expression.Constant((bool)b),
                 _ => throw new AngouriBugException("Undefined constant type")
             };
@@ -57,7 +52,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
         [ConstantField] private static readonly Dictionary<Type, int> typeLevelInHierarchy = new()
             {
-                { typeof(Complex), 10 },
+                { typeof(System.Numerics.Complex), 10 },
                 { typeof(double), 9 },
                 { typeof(float), 8 },
                 { typeof(long), 8 },
@@ -82,7 +77,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// This is a default converter for binary nodes (for those inherited from <see cref="ITwoArgumentNode"/>)
         /// </summary>
-        public static Func<Expression, Expression, Entity, Expression> CreateTwoArgumentEntity<T>()
+        public static Func<Expression, Expression, Entity, Expression> CreateTwoArgumentEntity()
             => (left, right, typeHolder) =>
             {
                 var typeToCastTo = MaxType(left.Type, right.Type);
@@ -117,7 +112,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// This is a default converter for unary nodes (for those inherited from <see cref="IOneArgumentNode"/>)
         /// </summary>
-        public static Func<Expression, Entity, Expression> CreateOneArgumentEntity<T>()
+        public static Func<Expression, Entity, Expression> CreateOneArgumentEntity()
             => (e, typeHolder) => typeHolder switch
             {
                 Sinf =>         Expression.Call(GetDef("Sin", 1, e.Type), e),
@@ -145,7 +140,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// This is a default converter for other (non-unary and non-binary) nodes
         /// </summary>
-        public static Func<IEnumerable<Expression>, Entity, Expression> CreateAnyArgumentEntity<T>()
+        public static Func<IEnumerable<Expression>, Entity, Expression> CreateAnyArgumentEntity()
             => (en, typeHolder) => typeHolder switch
             {
                 // TODO: finite set -> hash set

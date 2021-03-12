@@ -65,11 +65,6 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Compile.Linq.Definition.tt</DependentUpon>
     </Compile>
-    <Compile Update="Functions\Compilation\IntoLinq\CompilationProtocol.Assumptions.cs">
-      <DesignTime>True</DesignTime>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>CompilationProtocol.Assumptions.tt</DependentUpon>
-    </Compile>
     <Compile Update="Functions\Compilation\IntoLinq\MathAllMethods.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -85,10 +80,6 @@
     <None Update="Functions\Compilation\Compile.Linq.Definition.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Compile.Linq.Definition.cs</LastGenOutput>
-    </None>
-    <None Update="Functions\Compilation\IntoLinq\CompilationProtocol.Assumptions.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <LastGenOutput>CompilationProtocol.Assumptions.cs</LastGenOutput>
     </None>
     <None Update="Functions\Compilation\IntoLinq\MathAllMethods.tt">
       <Generator>TextTemplatingFileGenerator</Generator>

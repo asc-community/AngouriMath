@@ -16,34 +16,30 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// Change this method if you want a custom converter from number and boolean into the necessary type
         /// </summary>
-        public Func<Entity, Expression> ConstantConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateConverterConstant<Complex>();
+        public Func<Entity, Expression> ConstantConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateConverterConstant();
 
         /// <summary>
         /// Change this if you want to override compilation node for binary nodes
         /// </summary>
-        public Func<Expression, Expression, Entity, Expression> TwoArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateTwoArgumentEntity<Complex>();
+        public Func<Expression, Expression, Entity, Expression> TwoArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateTwoArgumentEntity();
 
         /// <summary>
         /// Change this if you want to override compilation node for unary nodes
         /// </summary>
-        public Func<Expression, Entity, Expression> OneArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateOneArgumentEntity<Complex>();
+        public Func<Expression, Entity, Expression> OneArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateOneArgumentEntity();
 
         /// <summary>
         /// Change this if you want to override compilation node for non-unary and non-binary nodes
         /// </summary>
-        public Func<IEnumerable<Expression>, Entity, Expression> AnyArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateAnyArgumentEntity<Complex>();
+        public Func<IEnumerable<Expression>, Entity, Expression> AnyArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.CreateAnyArgumentEntity();
 
-        [ConstantField] private static readonly HashSet<Type> numericTypes = 
-            new() { typeof(Complex), typeof(double), typeof(float),
-                    typeof(long), typeof(int),  typeof(BigInteger)};
-
-        internal static CompilationProtocol Create<T>()
+        internal static CompilationProtocol Create()
             => new()
             {
-                ConstantConverter = CompilationProtocolBuiltinConstantConverters.CreateConverterConstant<T>(),
-                TwoArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateTwoArgumentEntity<T>(),
-                OneArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateOneArgumentEntity<T>(),
-                AnyArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateAnyArgumentEntity<T>()
+                ConstantConverter = CompilationProtocolBuiltinConstantConverters.CreateConverterConstant(),
+                TwoArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateTwoArgumentEntity(),
+                OneArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateOneArgumentEntity(),
+                AnyArgumentConverter = CompilationProtocolBuiltinConstantConverters.CreateAnyArgumentEntity()
             };        
     }
 }
