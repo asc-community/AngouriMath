@@ -1,8 +1,7 @@
 ﻿using AngouriMath;
+using AngouriMath.Extensions;
 using System;
-using System.Collections.Generic;
 using System.Numerics;
-using System.Text;
 using Xunit;
 
 namespace UnitTests.Common
@@ -272,9 +271,9 @@ namespace UnitTests.Common
         [InlineData("sin(x) < 0 and a and b", "-pi / 4", true, true)]
         [InlineData("sin(x) < 0 and not a and b", "-pi / 4", false, true)]
 
-        [InlineData("sin(x)2 + cos(x)2 = 1", "0.25", true, true)]
-        [InlineData("sin(x)2 + cos(x)2 = 1", "1.25", true, true)]
-        [InlineData("sin(x)2 + cos(x)2 = 1", "2.25", true, true)]
+        [InlineData("(|sin(x)2 - cos(x)2|) < 0.0001", "0.25", true, true)]
+        [InlineData("(|sin(x)2 - cos(x)2|) < 0.0001", "1.25", true, true)]
+        [InlineData("(|sin(x)2 - cos(x)2|) < 0.0001", "2.25", true, true)]
         [InlineData("(|sin(x)2 - cos(x)2|) < 0.0001", "3.25", true, true)]
         public void TestBool(string exprRaw, string xRaw, bool aRaw, bool bRaw)
         {
@@ -290,5 +289,45 @@ namespace UnitTests.Common
 
             Assert.Equal(expected, actual);
         }
+
+        [Fact]
+        public void TestManyArgs1()
+            => Assert.Equal(6, "a + b + c".Compile<int, int, int, int>("a", "b", "c")(1, 2, 3));
+
+        [Fact]
+        public void TestManyArgs2()
+            => Assert.Equal(10, "a + b + c + d".Compile<int, int, int, int, int>("a", "b", "c", "d")(1, 2, 3, 4));
+
+        [Fact]
+        public void TestManyArgs3()
+            => Assert.Equal(15, "a + b + c + d + f".Compile<int, int, int, int, int, int>("a", "b", "c", "d", "f")(1, 2, 3, 4, 5));
+
+        [Fact]
+        public void TestManyArgs4()
+            => Assert.Equal(21, "a + b + c + d + f + g".Compile<int, int, int, int, int, int, int>("a", "b", "c", "d", "f", "g")(1, 2, 3, 4, 5, 6));
+
+        [Fact]
+        public void TestUpcast1()
+            => Assert.Equal(10.5d, "a + b".Compile<int, double, double>("a", "b")(4, 6.5));
+
+        [Fact]
+        public void TestUpcast2()
+            => Assert.Equal(15.5d, "a + b + c".Compile<int, double, float, double>("a", "b", "c")(4, 6.5, 5f));
+
+        [Fact]
+        public void TestUpcast3()
+            => Assert.Equal((double)(int)Math.Sin(4), "sin(a)".Compile<int, double>("a")(4));
+
+        [Fact]
+        public void TestUpcastDowncast4()
+            => Assert.Equal((int)Math.Sin(4), "sin(a)".Compile<int, int>("a")(4));
+
+        [Fact]
+        public void TestUpcastDowncast5()
+            => Assert.Equal(Complex.Pow(new(4, 3), 2), "a ^ 2".Compile<Complex, Complex>("a")(new(4, 3)));
+
+        [Fact]
+        public void TestUpcastDowncast6()   //    |   |   |   |   |
+            => Assert.Equal(BigInteger.Parse("100000000000000000000"), "a ^ b".Compile<int, BigInteger, BigInteger>("a", "b")(10, 20));
     }
 }

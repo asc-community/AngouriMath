@@ -55,7 +55,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Update="Core\Compilation\IntoLinq\MathAllMethods.cs">
+    <Compile Update="Convenience\CompilationExtensions.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>CompilationExtensions.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Functions\Compilation\Compile.Linq.Definition.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Compile.Linq.Definition.tt</DependentUpon>
+    </Compile>
+    <Compile Update="Functions\Compilation\IntoLinq\MathAllMethods.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
       <DependentUpon>MathAllMethods.tt</DependentUpon>
@@ -63,7 +73,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Core\Compilation\IntoLinq\MathAllMethods.tt">
+    <None Update="Convenience\CompilationExtensions.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>CompilationExtensions.cs</LastGenOutput>
+    </None>
+    <None Update="Functions\Compilation\Compile.Linq.Definition.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Compile.Linq.Definition.cs</LastGenOutput>
+    </None>
+    <None Update="Functions\Compilation\IntoLinq\MathAllMethods.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>MathAllMethods.cs</LastGenOutput>
     </None>

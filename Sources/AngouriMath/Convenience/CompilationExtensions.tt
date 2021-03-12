@@ -1,0 +1,75 @@
+﻿/* 
+ * Copyright (c) 2019-2021 Angouri.
+ * AngouriMath is licensed under MIT. 
+ * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+ * Website: https://am.angouri.org.
+ */
+
+using static AngouriMath.Entity;
+using AngouriMath.Core.Compilation.IntoLinq;
+using System.Collections.Generic;
+using System.Collections;
+using System;
+
+namespace AngouriMath.Extensions
+{
+    public static partial class AngouriMathExtensions
+    {
+        /// <summary>
+        /// Compiles a given expression into a native lambda
+        /// </summary>
+        /// <typeparam name="TDelegate">
+        /// The type of your delegate to convert to
+        /// </typeparam>
+        /// <param name="this">
+        /// The object of which the method is called
+        /// </param>
+        /// <param name="protocol">
+        /// This is a protocol, according to which all nodes get compiled. Use this
+        /// if you want to use the compilation for types different from those standard
+        /// </param>
+        /// <param name="returnType">
+        /// The type to which the resulting type will be casted
+        /// </param>
+        /// <param name="typesAndNames">
+        /// An <see cref="IEnumerable"/> of pairs, where the first element is the type of your argument,
+        /// and the second one is the corresponding variable from the expression
+        /// </param>
+        /// <returns>
+        /// Returnes a natively compiled expression of type <typeparamref name="TDelegate"/>
+        /// </returns>
+        public static TDelegate Compile<TDelegate>(this string @this, CompilationProtocol protocol, Type returnType, IEnumerable<(Type type, Variable variable)> typesAndNames) where TDelegate : Delegate
+            => IntoLinqCompiler.Compile<TDelegate>(@this, returnType, protocol, typesAndNames);
+
+<# for (var i = 1; i <= 8; i++) { #>
+
+        /// <summary>
+        /// Compiles a given expression into a native lambda. We use the default protocol.
+        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// </summary>
+        /// <param name="this">
+        /// The object of which the method is called
+        /// </param>
+    <# for (var t = 1; t <= i; t++) { #>
+    /// <typeparam name="TIn<#= t #>">
+        /// The type of the passed argument number <#= t #>
+        /// </typeparam>
+    <# } #>
+    /// <typeparam name="TOut">
+        /// The return type
+        /// </typeparam>
+    <# for (var t = 1; t <= i; t++) { #>
+    /// <param name="var<#= t #>">
+        /// The variable corresponding to the function's argument number <#= t #>
+        /// </param>
+    <# } #>
+    /// <returns>
+        /// Returns a natively-compiled delegate
+        /// </returns>
+        public static Func<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut> Compile<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>(this string @this, Variable var1<# for(var t=2; t<=i; t++){ #>, Variable var<#= t #><# } #>)
+            => IntoLinqCompiler.Compile<Func<<# for(var t=1;t<=i;t++){ #>TIn<#= t #>, <# } #>TOut>>(@this, typeof(TOut), new(), 
+                new[] { (typeof(TIn1), var1)<# for(var t=2;t<=i;t++){ #>, (typeof(TIn<#= t #>), var<#= t #>) <# } #> });
+
+<# } #>
+    }
+}
