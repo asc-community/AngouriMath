@@ -15,7 +15,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arcsine
         /// </summary>
-        public sealed partial record Arcsinf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Arcsinf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -30,7 +30,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arccosine
         /// </summary>
-        public sealed partial record Arccosf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Arccosf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -45,7 +45,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arctangent
         /// </summary>
-        public sealed partial record Arctanf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Arctanf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -60,7 +60,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arccotangent
         /// </summary>
-        public sealed partial record Arccotanf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Arccotanf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -75,7 +75,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arcsecant
         /// </summary>
-        public sealed partial record Arcsecantf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Arcsecantf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -90,7 +90,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of arccosecant
         /// </summary>
-        public sealed partial record Arccosecantf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Arccosecantf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 

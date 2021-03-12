@@ -15,7 +15,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of sine
         /// </summary>
-        public sealed partial record Sinf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Sinf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -30,7 +30,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of cosine
         /// </summary>
-        public sealed partial record Cosf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Cosf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -45,7 +45,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of tangent
         /// </summary>
-        public sealed partial record Tanf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Tanf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -60,7 +60,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of cotangent
         /// </summary>
-        public sealed partial record Cotanf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Cotanf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -75,7 +75,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of secant
         /// </summary>
-        public sealed partial record Secantf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Secantf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -90,7 +90,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of secant
         /// </summary>
-        public sealed partial record Cosecantf(Entity Argument) : TrigonometricFunction, IOneArgumentNode
+        public sealed partial record Cosecantf(Entity Argument) : TrigonometricFunction, IUnaryNode
         {
             public Entity NodeChild => Argument;
 

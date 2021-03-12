@@ -91,7 +91,7 @@ namespace AngouriMath
         /// <summary>
         /// Whatever its argument is, the result will be inverted
         /// </summary>
-        public sealed partial record Notf(Entity Argument) : Statement, IOneArgumentNode
+        public sealed partial record Notf(Entity Argument) : Statement, IUnaryNode
         {
             internal override Priority Priority => Priority.Negation;
 
@@ -109,7 +109,7 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff both operands are true
         /// </summary>
-        public sealed partial record Andf(Entity Left, Entity Right) : Statement, ITwoArgumentNode
+        public sealed partial record Andf(Entity Left, Entity Right) : Statement, IBinaryNode
         {
             internal override Priority Priority => Priority.Conjunction;
 
@@ -129,7 +129,7 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff at least one operand is true,
         /// </summary>
-        public sealed partial record Orf(Entity Left, Entity Right) : Statement, ITwoArgumentNode
+        public sealed partial record Orf(Entity Left, Entity Right) : Statement, IBinaryNode
         {
             internal override Priority Priority => Priority.Disjunction;
 
@@ -149,7 +149,7 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff one operand is true
         /// </summary>
-        public sealed partial record Xorf(Entity Left, Entity Right) : Statement, ITwoArgumentNode
+        public sealed partial record Xorf(Entity Left, Entity Right) : Statement, IBinaryNode
         {
             internal override Priority Priority => Priority.XDisjunction;
 
@@ -169,7 +169,7 @@ namespace AngouriMath
         /// <summary>
         /// Is true iff assumption is false or conclusion is true
         /// </summary>
-        public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : Statement, ITwoArgumentNode
+        public sealed partial record Impliesf(Entity Assumption, Entity Conclusion) : Statement, IBinaryNode
         {
             internal override Priority Priority => Priority.Impliciation;
 
@@ -193,7 +193,7 @@ namespace AngouriMath
         /// <summary>
         /// It is true if left and right are equal
         /// </summary>
-        public sealed partial record Equalsf(Entity Left, Entity Right) : ComparisonSign, ITwoArgumentNode
+        public sealed partial record Equalsf(Entity Left, Entity Right) : ComparisonSign, IBinaryNode
         {
             internal override Priority Priority => Priority.Equal;
 
@@ -217,7 +217,7 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record Greaterf(Entity Left, Entity Right) : ComparisonSign, ITwoArgumentNode
+        public sealed partial record Greaterf(Entity Left, Entity Right) : ComparisonSign, IBinaryNode
         {
             internal override Priority Priority => Priority.GreaterThan;
 
@@ -241,7 +241,7 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record GreaterOrEqualf(Entity Left, Entity Right) : ComparisonSign, ITwoArgumentNode
+        public sealed partial record GreaterOrEqualf(Entity Left, Entity Right) : ComparisonSign, IBinaryNode
         {
             internal override Priority Priority => Priority.GreaterThan;
 
@@ -265,7 +265,7 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record Lessf(Entity Left, Entity Right) : ComparisonSign, ITwoArgumentNode
+        public sealed partial record Lessf(Entity Left, Entity Right) : ComparisonSign, IBinaryNode
         {
             internal override Priority Priority => Priority.GreaterThan;
 
@@ -289,7 +289,7 @@ namespace AngouriMath
         /// the right one
         /// It is NaN/unsimplified otherwise.
         /// </summary>
-        public sealed partial record LessOrEqualf(Entity Left, Entity Right) : ComparisonSign, ITwoArgumentNode
+        public sealed partial record LessOrEqualf(Entity Left, Entity Right) : ComparisonSign, IBinaryNode
         {
             internal override Priority Priority => Priority.GreaterThan;
 
@@ -314,7 +314,7 @@ namespace AngouriMath
             /// <summary>
             /// This node represents whether the given element is in the set
             /// </summary>
-            public sealed partial record Inf(Entity Element, Entity SupSet) : Statement, ITwoArgumentNode
+            public sealed partial record Inf(Entity Element, Entity SupSet) : Statement, IBinaryNode
             {
                 internal override Priority Priority => Priority.ContainsIn;
 
@@ -337,7 +337,7 @@ namespace AngouriMath
         /// <summary>
         /// This node represents the Euler totient function (phi)
         /// </summary>
-        public sealed partial record Phif(Entity Argument) : Function, IOneArgumentNode
+        public sealed partial record Phif(Entity Argument) : Function, IUnaryNode
         {
             public Entity NodeChild => Argument;
 

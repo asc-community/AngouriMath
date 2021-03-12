@@ -125,5 +125,8 @@ using static System.Console;
 // WriteLine("((a^x - 1) - (b^x - 1)) / x".Limit("x", 0));
 
 
-var func = "x + y + a + b / c + sin(d)".Compile<int, double, float, long, double, double, double>("x", "y", "a", "b", "c", "d");
-WriteLine(func(3, 4, 5, 6, 7, 8));
+// var func = "x > 3 and (a implies b)".Compile<int, bool, bool, bool>("x", "a", "b");
+// Console.WriteLine(func(4, false, true));
+
+var func = "x + sin(y) + 2ch(0)".Compile<System.Numerics.Complex, double, System.Numerics.Complex>("x", "y");
+Console.WriteLine(func(new(3, 4), 1.2d));

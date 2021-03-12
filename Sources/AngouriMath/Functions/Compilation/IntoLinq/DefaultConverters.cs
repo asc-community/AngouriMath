@@ -75,7 +75,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         }
 
         /// <summary>
-        /// This is a default converter for binary nodes (for those inherited from <see cref="ITwoArgumentNode"/>)
+        /// This is a default converter for binary nodes (for those inherited from <see cref="IBinaryNode"/>)
         /// </summary>
         public static Func<Expression, Expression, Entity, Expression> CreateTwoArgumentEntity()
             => (left, right, typeHolder) =>
@@ -110,7 +110,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             };
 
         /// <summary>
-        /// This is a default converter for unary nodes (for those inherited from <see cref="IOneArgumentNode"/>)
+        /// This is a default converter for unary nodes (for those inherited from <see cref="IUnaryNode"/>)
         /// </summary>
         public static Func<Expression, Entity, Expression> CreateOneArgumentEntity()
             => (e, typeHolder) => typeHolder switch

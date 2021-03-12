@@ -7,7 +7,7 @@ namespace AngouriMath.Core
     /// <summary>
     /// From this interface all single-argument nodes are inherited
     /// </summary>
-    public interface IOneArgumentNode
+    public interface IUnaryNode
     {
         /// <summary>
         /// The only child of the node
@@ -18,7 +18,7 @@ namespace AngouriMath.Core
     /// <summary>
     /// From this interface all double-argument nodes are inherited
     /// </summary>
-    public interface ITwoArgumentNode
+    public interface IBinaryNode
     {
         /// <summary>
         /// The left child of the node

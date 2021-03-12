@@ -15,7 +15,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of signum
         /// </summary>
-        public sealed partial record Signumf(Entity Argument) : Function, IOneArgumentNode
+        public sealed partial record Signumf(Entity Argument) : Function, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
@@ -30,7 +30,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of abs
         /// </summary>
-        public sealed partial record Absf(Entity Argument) : Function, IOneArgumentNode
+        public sealed partial record Absf(Entity Argument) : Function, IUnaryNode
         {
             public Entity NodeChild => Argument;
 
