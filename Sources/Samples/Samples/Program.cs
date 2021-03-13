@@ -1,4 +1,5 @@
 ﻿using AngouriMath;
+using AngouriMath.Core.Compilation.IntoLinq;
 using AngouriMath.Core.Multithreading;
 using AngouriMath.Extensions;
 using Microsoft.VisualBasic.CompilerServices;
@@ -8,6 +9,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using static AngouriMath.Entity;
@@ -131,8 +134,6 @@ using static System.Console;
 // var func = "x + sin(y) + 2ch(0)".Compile<System.Numerics.Complex, double, System.Numerics.Complex>("x", "y");
 // Console.WriteLine(func(new(3, 4), 1.2d));
 
-var func = ("sin(a + b + cos(c)) * 6 +" +
-                         "3 ^ sin(a + b + cos(c)) +" +
-                         "tan(sin(a + b + cos(c)))-" +
-                         "log(3, sin(a + b + cos(c)))")
-                         .Compile<double, double, double, double>("a", "b", "c");
+
+Entity expr = "x + 8 - 4";
+Console.WriteLine(expr.SolveEquation("x"));

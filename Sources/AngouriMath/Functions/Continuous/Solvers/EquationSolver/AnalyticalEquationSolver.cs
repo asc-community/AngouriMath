@@ -20,11 +20,24 @@ namespace AngouriMath
     partial record Entity : ILatexiseable
     {
         /// <summary>
-        /// Attempt to find analytical roots of a custom equation
+        /// Attempt to find analytical roots of a custom equation.
+        /// It solves the given expression assuming that it is
+        /// equal to zero. No need to make it equal to 0 yourself;
+        /// however, if you prefer so, consider using the .Solve()
+        /// method instead
         /// </summary>
-        /// <param name="x"></param>
+        /// <param name="x">
+        /// The variable over which to solve the equation
+        /// </param>
+        /// <example>
+        /// <code>
+        /// Entity expr = "x + 8 - 4";
+        /// Console.WriteLine(expr.SolveEquation("x"));
+        /// </code>
+        /// Will print "{ -4 }"
+        /// </example>
         /// <returns>
-        /// Returns Set. Work with it as with a list
+        /// Returns <see cref="Set"/>
         /// </returns>
         public Set SolveEquation(Variable x) => EquationSolver.Solve(this, x);
     }
