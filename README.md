@@ -217,8 +217,8 @@ Console.WriteLine(solutions);
 
 Find derivatives:
 ```cs
-var func = "x2 + ln(cos(x) + 3) + 4x";
-var derivative = func.Differentiate("x");
+Entity func = "x2 + ln(cos(x) + 3) + 4x";
+Entity derivative = func.Differentiate("x");
 Console.WriteLine(derivative.Simplify());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=4%2B\frac{\sin\left(x\right)}{{\ln\left(\cos\left(x\right)%2B3\right)}^{2}\times \left(\cos\left(x\right)%2B3\right)}%2B2\times x">
