@@ -17,7 +17,7 @@ namespace AngouriMath
         /// Integrates the given expression over the `x` variable, if can.
         /// May return an unresolved <see cref="Integralf"/> node.
         /// </summary>
-        /// <param name="x">Over which to integrate</param>
+        /// <param name="x">Over which variable to integrate</param>
         /// <returns>
         /// An integrated expression. It might remain the same,
         /// it might have no integrals, and it might be transformed so that

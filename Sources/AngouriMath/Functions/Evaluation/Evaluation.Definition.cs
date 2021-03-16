@@ -22,7 +22,11 @@ namespace AngouriMath
 
         /// <summary>
         /// This is the result of naive simplifications. In other 
-        /// symbolic algebra systems it is called "Automatic simplification"
+        /// symbolic algebra systems it is called "Automatic simplification".
+        /// It only performs an active operation in the first call,
+        /// next time it is free to call it in terms of CPU usage. For
+        /// consistency's sake, consider the call of this property
+        /// as free as the addressing of a field.
         /// </summary>
         public Entity InnerSimplified => innerSimplified.GetValue(@this => @this.InnerSimplifyWithCheck(), this);
         private FieldCache<Entity> innerSimplified;
@@ -110,8 +114,12 @@ namespace AngouriMath
         /// Represents the evaluated value of the given expression
         /// Unlike the result of <see cref="EvalNumerical"/>,
         /// <see cref="EvalBoolean"/> and <see cref="EvalTensor"/>,
-        /// this is not constrained by any type
-        /// (cached value)
+        /// this is not constrained by any type.
+        /// 
+        /// It only performs an active operation in the first call,
+        /// next time it is free to call it in terms of CPU usage. For
+        /// consistency's sake, consider the call of this property
+        /// as free as the addressing of a field.
         /// </summary>
         public Entity Evaled => evaled.GetValue(@this => @this.InnerEvalWithCheck(), this);
         private FieldCache<Entity> evaled;
@@ -128,7 +136,7 @@ namespace AngouriMath
         /// ( 1 2 ) + ( 3 4 ) => ( 4 6 ) vectors pointwise
         /// 
         ///              (( 3 )
-        /// (( 1 2 3 )) x ( 4 ) => (( 26 )) Matrices dot product
+        /// (( 1 2 3 )) x ( 4 ) => Invalid operation
         ///               ( 5 ))
         ///               
         /// ( 1 2 ) x ( 1 3 ) => ( 1 6 ) Vectors pointwise

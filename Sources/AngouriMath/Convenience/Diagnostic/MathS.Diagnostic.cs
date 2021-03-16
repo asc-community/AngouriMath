@@ -27,7 +27,9 @@ namespace AngouriMath
             [ThreadStatic] private static Setting<bool>? outputExplicit;
 
             /// <summary>
-            /// 
+            /// Set a predicate on the state of <see cref="Entity"/> so that once
+            /// the predicate turns true in method <see cref="Entity.Simplify"/>,
+            /// an exception <see cref="DiagnosticCatchException"/> is thrown.
             /// </summary>
             public static Setting<Func<Entity, bool>> CatchOnSimplify => catchOnSimplify ??= (Func<Entity, bool>)(a => false);
             [ThreadStatic] private static Setting<Func<Entity, bool>>? catchOnSimplify;

@@ -25,16 +25,23 @@ namespace AngouriMath.Core.Exceptions
 
     /// <summary>
     /// May be thrown when trying to parse an instance from a string
+    /// </summary>
+    /// <example>
+    /// <code>
     /// Set set = "{ 1, 2 }"; // not thrown
     /// Set set = "1 + 2"; // thrown
-    /// </summary>
+    /// </code>
+    /// </example>
     public sealed class CannotParseInstanceException : ParseException
     {
         internal CannotParseInstanceException(Type type, string expr)
             : base($"Cannot parse an instance of {type.Name} from `{expr}`") { }
     }
 
-    /// <summary>Thrown when a wrong number of arguments are encountered when parsing a function</summary>
+    /// <summary>
+    /// Thrown when a wrong number of arguments are encountered when parsing a function
+    /// from a string.
+    /// </summary>
     public sealed class FunctionArgumentCountException : ParseException
     {
         private FunctionArgumentCountException(string msg) : base(msg) { }

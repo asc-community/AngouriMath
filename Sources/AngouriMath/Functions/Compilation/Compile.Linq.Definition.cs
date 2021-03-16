@@ -42,7 +42,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
-        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// If you plan using non-standard types, consider passing a custom compilation protocol.
         /// </summary>
         /// <typeparam name="TIn1">
         /// The type of the passed argument number 1
@@ -63,7 +63,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
-        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// If you plan using non-standard types, consider passing a custom compilation protocol.
         /// </summary>
         /// <typeparam name="TIn1">
         /// The type of the passed argument number 1
@@ -90,7 +90,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
-        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// If you plan using non-standard types, consider passing a custom compilation protocol.
         /// </summary>
         /// <typeparam name="TIn1">
         /// The type of the passed argument number 1
@@ -123,7 +123,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
-        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// If you plan using non-standard types, consider passing a custom compilation protocol.
         /// </summary>
         /// <typeparam name="TIn1">
         /// The type of the passed argument number 1
@@ -162,7 +162,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
-        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// If you plan using non-standard types, consider passing a custom compilation protocol.
         /// </summary>
         /// <typeparam name="TIn1">
         /// The type of the passed argument number 1
@@ -207,7 +207,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
-        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// If you plan using non-standard types, consider passing a custom compilation protocol.
         /// </summary>
         /// <typeparam name="TIn1">
         /// The type of the passed argument number 1
@@ -258,7 +258,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
-        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// If you plan using non-standard types, consider passing a custom compilation protocol.
         /// </summary>
         /// <typeparam name="TIn1">
         /// The type of the passed argument number 1
@@ -315,7 +315,7 @@ namespace AngouriMath
 
         /// <summary>
         /// Compiles a given expression into a native lambda. We use the default protocol.
-        /// If you plan using non-standard types, consider passing a compilation protocol
+        /// If you plan using non-standard types, consider passing a custom compilation protocol.
         /// </summary>
         /// <typeparam name="TIn1">
         /// The type of the passed argument number 1

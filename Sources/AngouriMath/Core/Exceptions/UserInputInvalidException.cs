@@ -36,10 +36,15 @@ namespace AngouriMath.Core.Exceptions
     /// <summary> Thrown if instead of a statement another expression is put into Solve </summary>
     public sealed class SolveRequiresStatementException : MathSException { internal SolveRequiresStatementException() : base("There should be statement to be true (e. g. equality, inequality, or some other predicate)") { } }
 
-    /// <summary>Thrown in matrix operations</summary>
+    /// <summary>
+    /// Thrown in matrix operations
+    /// </summary>
     public sealed class InvalidMatrixOperationException : MathSException { internal InvalidMatrixOperationException(string msg) : base(msg) { } }
 
-    /// <summary></summary>
+    /// <summary>
+    /// Occurs when an invalid numeric system was provided to functions 
+    /// <see cref="MathS.ToBaseN(Entity.Number.Real, int)"/> or <see cref="MathS.FromBaseN(string, int)"/>
+    /// </summary>
     public sealed class InvalidNumericSystemException : MathSException { internal InvalidNumericSystemException(string msg) : base(msg) { } }
 
     /// <summary>Thrown when invalid cast encountered</summary>

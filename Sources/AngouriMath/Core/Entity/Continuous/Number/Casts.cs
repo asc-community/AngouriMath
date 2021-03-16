@@ -12,9 +12,14 @@ namespace AngouriMath
 {
     partial record Entity
     {
-#pragma warning disable CS1591 // Missing XML comment for publicly visible type or member
         partial record Number
         {
+            /// <summary>
+            /// Casts a <see cref="Number"/> into a primitive.
+            /// </summary>
+            /// <exception cref="NumberCastException">
+            /// Thrown when either overflow or the instance of <see cref="Number"/> cannot be downcasted.
+            /// </exception>
             public static explicit operator double(Number num)
             {
                 if (num is not Real re)
@@ -22,6 +27,12 @@ namespace AngouriMath
                 return re.EDecimal.ToDouble();
             }
 
+            /// <summary>
+            /// Casts a <see cref="Number"/> into a primitive.
+            /// </summary>
+            /// <exception cref="NumberCastException">
+            /// Thrown when either overflow or the instance of <see cref="Number"/> cannot be downcasted.
+            /// </exception>
             public static explicit operator float(Number num)
             {
                 if (num is not Real re)
@@ -29,6 +40,12 @@ namespace AngouriMath
                 return (float)re.EDecimal.ToDouble();
             }
 
+            /// <summary>
+            /// Casts a <see cref="Number"/> into a primitive.
+            /// </summary>
+            /// <exception cref="NumberCastException">
+            /// Thrown when either overflow or the instance of <see cref="Number"/> cannot be downcasted.
+            /// </exception>
             public static explicit operator int(Number num)
             {
                 if (num is not Real re)
@@ -36,6 +53,12 @@ namespace AngouriMath
                 return re.EDecimal.ToInt32Checked();
             }
 
+            /// <summary>
+            /// Casts a <see cref="Number"/> into a primitive.
+            /// </summary>
+            /// <exception cref="NumberCastException">
+            /// Thrown when either overflow or the instance of <see cref="Number"/> cannot be downcasted.
+            /// </exception>
             public static explicit operator long(Number num)
             {
                 if (num is not Real re)
@@ -43,6 +66,12 @@ namespace AngouriMath
                 return re.EDecimal.ToInt64Checked();
             }
 
+            /// <summary>
+            /// Casts a <see cref="Number"/> into a primitive.
+            /// </summary>
+            /// <exception cref="NumberCastException">
+            /// Thrown when either overflow or the instance of <see cref="Number"/> cannot be downcasted.
+            /// </exception>
             public static explicit operator BigInteger(Number num)
             {
                 if (num is not Real re)
@@ -61,6 +90,12 @@ namespace AngouriMath
                 return re.EDecimal.ToSizedEInteger(plannedPrecision * 3).ToBigInteger();
             }
 
+            /// <summary>
+            /// Casts a <see cref="Number"/> into a primitive.
+            /// </summary>
+            /// <exception cref="NumberCastException">
+            /// Thrown when either overflow or the instance of <see cref="Number"/> cannot be downcasted.
+            /// </exception>
             public static explicit operator System.Numerics.Complex(Number num)
             {
                 if (num is not Complex c)
@@ -68,6 +103,5 @@ namespace AngouriMath
                 return new System.Numerics.Complex((double)c.RealPart, (double)c.ImaginaryPart);
             }
         }
-#pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
     }
 }

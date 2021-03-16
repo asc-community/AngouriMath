@@ -13,41 +13,70 @@ using static AngouriMath.Entity;
 namespace AngouriMath.Core
 {
     /// <summary>
-    /// A class for systems of equations
-    /// Is not part of AM's ecosystem,
-    /// that is, it is not an Entity, just an intermediate
-    /// class
+    /// A class for systems of equations. Is not part of AM's ecosystem,
+    /// that is, it is not an Entity, just an intermediate class.
+    /// It is a system of arbitrary equations, not only those linear. However,
+    /// it is not a system of <see cref="Statement"/>s.
     /// </summary>
     public sealed class EquationSystem : ILatexiseable
     {
         private readonly IEnumerable<Entity> equations;
 
-        /// <summary>After having created a system of equations, you may solve or latexise it</summary>
+        /// <summary>
+        /// The equations you pass should not have an <see cref="MathS.Equality"/> node.
+        /// After having created a system of equations, you may solve or latexise it.
+        /// </summary>
         /// <param name="equations">
-        /// Any <see cref="IEnumerable{T}"/> parameter, such as <see cref="List{T}"/> or <see cref="System.Array"/>
+        /// Any <see cref="IEnumerable{T}"/> parameter, such as <see cref="List{T}"/> or <see cref="System.Array"/>.
         /// </param>
+        /// <example>
+        /// <code>
+        /// var eq = new EquationSystem(new Entity[] {
+        ///     "x + sin(y)2 + 3",
+        ///     "y - a"
+        /// });
+        /// </code>
+        /// </example>
         public EquationSystem(IEnumerable<Entity> equations) => this.equations = equations;
 
-        /// <summary>After having created a system of equations, you may solve or latexise it</summary>
-        /// <param name="equations">An arbitrary number of equations</param>
+        /// <summary>
+        /// The equations you pass should not have an <see cref="MathS.Equality"/> node.
+        /// After having created a system of equations, you may solve or latexise it.
+        /// </summary>
+        /// <param name="equations">
+        /// An <see cref="System.Array"/>
+        /// </param>
+        /// <example>
+        /// <code>
+        /// var eq = new EquationSystem(
+        ///     "x + sin(y)2 + 3",
+        ///     "y - a"
+        /// );
+        /// </code>
+        /// </example>
         public EquationSystem(params Entity[] equations) => this.equations = equations;
 
         /// <summary>
-        /// Returns a solution matrix
+        /// Solves a system of equations, if possible.
+        /// </summary>
+        /// <param name="vars">
+        /// The umber of variables must match number of equations
+        /// </param>
+        /// <return>
+        /// If there exists at least one solution, returns a solution matrix
         /// The first axis of the matrix corresponds to the number of solutions,
         /// the second one corresponds to the number of variables.
-        /// </summary>
-        /// <param name="vars">Number of variables must match number of equations</param>
+        /// 
+        /// The i-th column of the matrix represents the possible values of the i-th variable.
+        /// 
+        /// If no solution was found, returns a null.
+        /// </return>
         public Tensor? Solve(params Variable[] vars) => EquationSolver.SolveSystem(equations, vars);
-        /// <summary>
-        /// Returns a solution matrix
-        /// The first axis of the matrix corresponds to the number of solutions,
-        /// the second one corresponds to the number of variables.
-        /// </summary>
-        /// <param name="vars">Number of variables must match number of equations</param>
-        public Tensor? Solve(System.ReadOnlySpan<Variable> vars) => EquationSolver.SolveSystem(equations, vars);
 
-        /// <returns>Latexised version of the system</returns>
+        /// <returns>
+        /// Latexised version of the system. It adds
+        /// zero equality to all the provided expressions
+        /// </returns>
         public string Latexise()
         {
             using var enumerator = equations.GetEnumerator();

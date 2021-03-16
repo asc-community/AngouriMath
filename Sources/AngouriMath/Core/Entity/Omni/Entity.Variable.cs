@@ -19,7 +19,7 @@ namespace AngouriMath
         /// <summary>
         /// Variable node. It only has a name.
         /// Construct a <see cref="Variable"/> with an implicit conversion from <see cref="string"/>.
-        /// 
+        /// It has no type, so you can substitute any value under a given variable.
         /// </summary>
         public sealed partial record Variable : Entity
         {

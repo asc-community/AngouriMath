@@ -14,11 +14,16 @@ using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 using System.Linq;
+using AngouriMath.Extensions;
 //[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests")]
 
 namespace AngouriMath
 {
     // Visibility for the class is internal so we can use public for methods as we like
+    /// <summary>
+    /// This is a set of extensions for internal use. You might be more interested
+    /// in publicly exposed <see cref="AngouriMathExtensions"/> or function class <see cref="MathS"/>
+    /// </summary>
     internal static class InternalAMExtensions
     {
         /// <summary>

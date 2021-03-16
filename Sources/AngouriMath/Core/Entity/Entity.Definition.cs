@@ -92,8 +92,21 @@ namespace AngouriMath
         public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(@this => @this.InitDirectChildren(), this);
         private FieldCache<IReadOnlyList<Entity>> directChildren;
 
-    /// <remarks>A depth-first enumeration is required by
+        /// <remarks>A depth-first enumeration is required by
         /// <see cref="AngouriMath.Functions.TreeAnalyzer.GetMinimumSubtree"/></remarks>
+        /// <summary>
+        /// The list of all nodes of the given expression
+        /// </summary>
+        /// <example>
+        /// <code>
+        /// Entity expr = "a + b / 2 ^ 3";
+        /// Console.WriteLine(string.Join(", ", expr.Nodes));
+        /// </code>
+        /// Output:
+        /// <code>
+        /// a + b / 2 ^ 3, a, b / 2 ^ 3, b, 2 ^ 3, 2, 3
+        /// </code>
+        /// </example>
         public IEnumerable<Entity> Nodes => nodes.GetValue(@this => @this.DirectChildren.SelectMany(c => c.Nodes).Prepend(@this), this);
         private FieldCache<IEnumerable<Entity>> nodes;
 

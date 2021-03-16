@@ -11,8 +11,19 @@ namespace AngouriMath
     partial record Entity
     {
         /// <summary>
-        /// This class describes every node whose value is boolean, that is, true or false
+        /// This class describes every node whose value is boolean, that is, true or false.
         /// </summary>
+        /// <example>
+        /// <code>
+        /// Entity t1 = "a and b"; // Statement
+        /// Entity t2 = "a > b > c"; // Statement
+        /// Entity t3 = "a or b implies x > 0"; // Statement
+        /// 
+        /// Entity t4 = "a"; // Not Statement
+        /// Entity t5 = "a + 3"; // Not Statement
+        /// Entity t6 = "a provided c and d"; // Not Statement
+        /// </code>
+        /// </example>
         public abstract partial record Statement : Entity
         {
             
@@ -20,12 +31,20 @@ namespace AngouriMath
 
         /// <summary>
         /// =, &lt;, &gt;, &gt;=, &lt;=
+        /// Nodes <see cref="Equalsf"/>, <see cref="Lessf"/>, <see cref="LessOrEqualf"/>, <see cref="Greaterf"/>, <see cref="GreaterOrEqualf"/>
+        /// are assignable to this type.
         /// </summary>
         public abstract partial record ComparisonSign : Statement
         {
 
         }
 
+        /// <summary>
+        /// Note, that this operator does not create a new entity. Since
+        /// all entities are immutable, it returns an existing either
+        /// <see cref="Boolean.True"/> or <see cref="Boolean.False"/>
+        /// depending on the value of the argument.
+        /// </summary>
         /// <returns>A node</returns>
         public static implicit operator Entity(bool v) => Boolean.Create(v);
 

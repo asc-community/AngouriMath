@@ -9,7 +9,7 @@ namespace AngouriMath
     partial record Entity
     {
         /// <summary>
-        /// Converts an expression into a string
+        /// Converts an expression into a string. Works synonymically into <see cref="Entity.ToString"/>.
         /// </summary>
         public abstract string Stringize();
 

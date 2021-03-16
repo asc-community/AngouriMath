@@ -12,18 +12,36 @@ using static AngouriMath.Entity;
 namespace AngouriMath.Core
 {
     /// <summary>
-    /// Use this class for solvers and other places when a matrix needs to be built
+    /// Use this class for solvers and other places when a matrix needs to be built without
+    /// recreating an instance multiple times. It builds an instance of <see cref="Tensor"/>.
+    /// It enables to build a tensor row-by-row.
     /// </summary>
-    internal sealed class TensorBuilder
+    public sealed class TensorBuilder
     {
         private readonly List<List<Entity>> raw = new();
         private readonly int columnCount;
 
+        /// <summary>
+        /// Creates a builder with the given number of column and no rows.
+        /// </summary>
+        /// <param name="columnCount">
+        /// The number of columns the tensor will have (you cannot change it after creation).
+        /// </param>
         public TensorBuilder(int columnCount)
         {
             this.columnCount = columnCount;
         }
 
+        /// <summary>
+        /// Creates a builder with the given number of column and no rows.
+        /// </summary>
+        /// <param name="alreadyHas">
+        /// The list of rows to put in the builder. All lists in this list
+        /// must have the same length as columnCount.
+        /// </param>
+        /// <param name="columnCount">
+        /// The number of columns the tensor will have (you cannot change it after creation).
+        /// </param>
         public TensorBuilder(List<List<Entity>>? alreadyHas, int columnCount) : this(columnCount)
         {
             if (alreadyHas is not null)
@@ -35,17 +53,42 @@ namespace AngouriMath.Core
             }
         }
 
+        /// <summary>
+        /// Adds a row to the builder.
+        /// </summary>
+        /// <param name="row">
+        /// A row to add. Make sure it has the same length as columnCount.
+        /// </param>
+        /// <exception cref="InvalidMatrixOperationException">
+        /// Is thrown if the given row has a wrong length.
+        /// </exception>
         public void Add(List<Entity> row)
         { 
             if (row.Count == columnCount)
                 raw.Add(row);
             else
-                throw new AngouriBugException($"Incorrect usage of {nameof(TensorBuilder)}"); 
+                throw new InvalidMatrixOperationException($"Incorrect usage of {nameof(TensorBuilder)}"); 
         }
 
+        /// <summary>
+        /// Adds a row to the builder.
+        /// </summary>
+        /// <param name="row">
+        /// A row to add. Make sure it has the same length as columnCount.
+        /// </param>
+        /// <exception cref="InvalidMatrixOperationException">
+        /// Is thrown if the given row has a wrong length.
+        /// </exception>
         public void Add(IEnumerable<Entity> row)
             => Add(row.ToList());
 
+        /// <summary>
+        /// Builds itself into a <see cref="Tensor"/>.
+        /// </summary>
+        /// <returns>
+        /// An immutable <see cref="Tensor"/> if there exists at least one row.
+        /// Null otherwise.
+        /// </returns>
         public Tensor? ToTensor()
         {
             if (raw.Count == 0)

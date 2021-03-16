@@ -1,4 +1,5 @@
 ﻿using AngouriMath;
+using AngouriMath.Core;
 using AngouriMath.Core.Compilation.IntoLinq;
 using AngouriMath.Core.Multithreading;
 using AngouriMath.Extensions;
@@ -135,5 +136,17 @@ using static System.Console;
 // Console.WriteLine(func(new(3, 4), 1.2d));
 
 
-Entity expr = "x + 8 - 4";
-Console.WriteLine(expr.SolveEquation("x"));
+/// Entity t1 = "a and b"; // Statement
+/// Entity t2 = "a > b > c"; // Statement
+/// Entity t3 = "a or b implies x > 0"; // Statement
+/// 
+/// Entity t4 = "a"; // Not Statement
+/// Entity t5 = "a + 3"; // Not Statement
+/// Entity t6 = "a provided c and d"; // Not Statement
+/// 
+
+/// Entity expr = "a + b / 2 ^ 3";
+/// Console.WriteLine(string.Join(", ", expr.Nodes));
+/// 
+/// Entity expr = "a / b + sqrt(c)";
+/// Console.WriteLine(expr.Latexise());
