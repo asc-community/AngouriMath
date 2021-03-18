@@ -36,9 +36,11 @@
 
 <a href="#jupyter"><img src="./.github/additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
 
-AngouriMath is an open source symbolic algebra library. That is, via AngouriMath,
-you can automatically solve equations, systems of equations, work with sets, differentiate,
-parse from string, and try many other features.
+<a href="https://am.angouri.org">AngouriMath</a> is an open source symbolic algebra library. That is, via AngouriMath, you can
+automatically <a href="https://am.angouri.org/wiki/07.-Solvers.html">solve</a> equations, 
+systems of equations, work with sets, <a href="https://am.angouri.org/wiki/05.-Differentiation.html">differentiate</a>,
+<a href="https://am.angouri.org/wiki/01.-Expressions.html">parse</a> from string,
+<a href="https://am.angouri.org/wiki/09.-Compilation.html">compile expressions</a>.
 
 It is not a CAS, so you can use it in any your project by installing it from 
 <a href="https://www.nuget.org/packages/AngouriMath">NuGet</a>. AngouriMath
@@ -55,8 +57,7 @@ Finally, if still not sure about it, you can try it even before installation!
 |<a href="https://dotnetfiddle.net/FIcaDG"><img src="https://img.shields.io/static/v1?label=Go%20to&message=.NET%20Fiddle&color=purple&style=for-the-badge"></a>|
 |<a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Go%20to&message=Jupyter%20NB&color=purple&style=for-the-badge"></a>|
 
-Although most functions are convenient to use only from C#, there are some
-optimized for F#.
+
 
 ## Quick start
 1. Install AngouriMath from [NuGet](https://www.nuget.org/packages/AngouriMath).

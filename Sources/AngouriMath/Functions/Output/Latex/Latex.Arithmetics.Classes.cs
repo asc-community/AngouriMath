@@ -35,6 +35,7 @@ namespace AngouriMath
                 => (Multiplier, Multiplicand) switch
                 {
                     (Integer(-1), Complex n) => (-n).Latexise(Multiplier.Priority < Priority),
+                    (Integer(-1), var other) => $"-{other.Latexise(other.Priority < Priority)}",
                     (Number a, Number b) => $@"{a.Latexise(a.Priority < Priority)} \cdot {b.Latexise(b.Priority < Priority)}",
                     (var mp, var md) => $"{mp.Latexise(mp.Priority < Priority)} {md.Latexise(md.Priority < Priority)}"
                 };
