@@ -31,9 +31,13 @@ namespace AngouriMath
         public partial record Mulf
         {
             /// <inheritdoc/>
-            public override string Latexise() =>
-                (Multiplier == -1 ? "-" : Multiplier.Latexise(Multiplier.Priority < Priority) + @"\times ")
-                + Multiplicand.Latexise(Multiplicand.Priority < Priority);
+            public override string Latexise()
+                => (Multiplier, Multiplicand) switch
+                {
+                    (Integer(-1), Complex n) => (-n).Latexise(Multiplier.Priority < Priority),
+                    (Number a, Number b) => $@"{a.Latexise(a.Priority < Priority)} \cdot {b.Latexise(b.Priority < Priority)}",
+                    (var mp, var md) => $"{mp.Latexise(mp.Priority < Priority)} {md.Latexise(md.Priority < Priority)}"
+                };
         }
 
         public partial record Divf
