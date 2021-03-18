@@ -20,6 +20,19 @@ namespace AngouriMath
             /// <exception cref="NumberCastException">
             /// Thrown when either overflow or the instance of <see cref="Number"/> cannot be downcasted.
             /// </exception>
+            public static explicit operator decimal(Number num)
+            {
+                if (num is not Real re)
+                    throw new NumberCastException(typeof(decimal), num.GetType());
+                return re.EDecimal.ToDecimal();
+            }
+
+            /// <summary>
+            /// Casts a <see cref="Number"/> into a primitive.
+            /// </summary>
+            /// <exception cref="NumberCastException">
+            /// Thrown when either overflow or the instance of <see cref="Number"/> cannot be downcasted.
+            /// </exception>
             public static explicit operator double(Number num)
             {
                 if (num is not Real re)

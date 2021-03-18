@@ -427,7 +427,7 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Implication(Entity assumption, Entity conclusion) => assumption.Implies(conclusion);
 
-        /// <summary>https://en.wikipedia.org/wiki/Exclusive_or#:~:text=Exclusive%20or%20or%20exclusive%20disjunction,⊕%2C%20↮%2C%20and%20≢.</summary>
+        /// <summary>https://en.wikipedia.org/wiki/Exclusive_or</summary>
         /// <param name="a">Left argument node of which Exclusive disjunction function will be taken</param>
         /// <param name="b">Right argument node of which Exclusive disjunction function will be taken</param>
         /// <returns>Xor node</returns>
