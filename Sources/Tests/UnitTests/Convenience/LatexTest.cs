@@ -62,7 +62,7 @@ namespace UnitTests.Convenience
         [Fact] public void PowPowNumber() => Test(@"{\left({12}^{23}\right)}^{34}", MathS.Pow(MathS.Pow(12, 23), 34));
         [Fact] public void MPow() => Test(@"{\left(-x\right)}^{x}", MathS.Pow(-x, x));
         [Fact] public void AddMultiply() =>
-            Test(@"\left(1+2\right) \cdot \left(3+4\right)", ((Entity)1 + 2) * ((Entity)3 + 4));
+            Test(@"\left(1+2\right) \left(3+4\right)", ((Entity)1 + 2) * ((Entity)3 + 4));
         [Fact] public void SubtractMultiply() =>
             Test(@"\left(1-2\right) \left(3-4\right)", ((Entity)1 - 2) * ((Entity)3 - 4));
         [Fact] public void AddPow() => Test(@"{\left(3+4\right)}^{x}", MathS.Pow("3+4", x));
