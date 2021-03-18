@@ -5,5 +5,4 @@ using static AngouriMath.MathS;
 using static AngouriMath.Entity;
 using System.Numerics;
 
-var expr = (decimal)"2 / 3".EvalNumerical();
-Console.WriteLine(expr);
+Console.WriteLine("a ^ b".Latexise());
