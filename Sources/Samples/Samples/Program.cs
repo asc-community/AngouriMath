@@ -5,4 +5,6 @@ using static AngouriMath.MathS;
 using static AngouriMath.Entity;
 using System.Numerics;
 
-Console.WriteLine("a ^ b".Latexise());
+
+Entity expr = "alpha_beta";
+Console.WriteLine(expr.Latexise());

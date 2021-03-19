@@ -30,15 +30,19 @@ namespace AngouriMath
                 "Gamma", "Delta", "Theta", "Lambda", "Xi", "Pi", "Sigma", "Upsilon", "Phi", "Psi", "Omega",
             };
 
+            private static string LatexiseIfCan(string symbol)
+                => LatexisableConstants.Contains(symbol) ? $@"\{symbol}" : symbol;
+
             /// <summary>
             /// Returns latexised const if it is possible to latexise it,
             /// or its original name otherwise
             /// </summary>
             public override string Latexise() =>
                 SplitIndex() is var (prefix, index)
-                ? (LatexisableConstants.Contains(prefix) ? @"\" + prefix : prefix)
-                  + "_{" + index + "}"
-                : LatexisableConstants.Contains(Name) ? @"\" + Name : Name;
+                ?
+                $"{LatexiseIfCan(prefix)}_{{{LatexiseIfCan(index)}}}"
+                :
+                LatexiseIfCan(Name);
         }
 
         public partial record Tensor

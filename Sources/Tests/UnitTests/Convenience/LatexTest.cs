@@ -41,7 +41,12 @@ namespace UnitTests.Convenience
         [Fact] public void Divide() => Test(@"\frac{x}{x}", x / x);
         [Fact] public void DivideDivide() => Test(@"\frac{\frac{x}{x}}{x}", x / x / x);
         [Fact] public void DivideSimplify() => TestSimplify(@"1", x / x);
-        [Fact] public void Greek() => Test(@"\alpha", MathS.Var("alpha"));
+        [Fact] public void Greek1() => Test(@"\alpha", MathS.Var("alpha"));
+        [Fact] public void Greek2() => Test(@"\beta", MathS.Var("beta"));
+        [Fact] public void Greek3() => Test(@"a_{\beta}", MathS.Var("a_beta"));
+        [Fact] public void Greek4() => Test(@"\alpha_{3}", MathS.Var("alpha_3"));
+        [Fact] public void Greek5() => Test(@"\alpha_{\beta}", MathS.Var("alpha_beta"));
+        [Fact] public void Greek6() => Test(@"\beta_{\alpha}", MathS.Var("beta_alpha"));
         [Fact] public void SubscriptSingle() => Test(@"c_{e}", MathS.Var("c_e"));
         [Fact] public void SubscriptDuo() => Test(@"\Delta_{a2}", MathS.Var("Delta_a2"));
         [Fact] public void SubscriptDuoPlus() => TestSimplify(@"6+\Delta_{a2}", "Delta_a2+6");
@@ -261,3 +266,4 @@ namespace UnitTests.Convenience
             => Test(@"\begin{cases}a \: \text{for} \: b\\c \: \text{for} \: e\\g \: \text{otherwise}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)));
     }
 }
+
