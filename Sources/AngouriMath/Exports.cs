@@ -11,6 +11,7 @@
  *
  */
 
+using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using GenericTensor.Core;
 using GenericTensor.Functions;
@@ -24,6 +25,36 @@ namespace AngouriMath
 {
     public static class Exports
     {
+        private static class ExposedObjects<T>
+        {
+            private static ulong lastId = 0;
+            private readonly static Dictionary<ulong, T> allocations = new();
+            internal static ulong Alloc(T obj)
+            {
+                lastId++;
+                allocations[lastId] = obj;
+                return lastId;
+            }
+            internal static void Dealloc(ulong ptr)
+                => allocations.Remove(ptr);
+            internal static T Get(ulong ptr)
+                => allocations[ptr];
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "parse")]
+        public static ulong Parse(IntPtr strPtr)
+        {
+            return 0;
+            var str = Marshal.PtrToStringAnsi(strPtr);
+            return ExposedObjects<Entity>.Alloc(str);
+        }
+
+        [UnmanagedCallersOnly(EntryPoint = "free")]
+        public static void Free(ulong handle)
+        {
+            ExposedObjects<Entity>.Dealloc(handle);
+        }
+
         [UnmanagedCallersOnly(EntryPoint = "add")]
         public static int Add(int a, int b)
         {
@@ -48,7 +79,7 @@ namespace AngouriMath
 
             return resPtr;
         }
-
+        /*
         [UnmanagedCallersOnly(EntryPoint = "scalar")]
         public static (int, int) ScalarProduct(int a1, int a2, int b1, int b2)
         {
@@ -60,6 +91,6 @@ namespace AngouriMath
             var c2 = v3[1];
 
             return (c1, c2);
-        }
+        }*/
     }
 }

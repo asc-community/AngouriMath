@@ -30,12 +30,18 @@
 #define F_OK    0
 #endif
 
-typedef char*(*func)(char*,char*);
+#include <stdint.h>
 
-func import(char *path, char *funcName);
+// typedef struct { int64_t handle; } Entity;
+
+typedef uint64_t(*func)(char*);
+typedef char*(*func2)(char*, char*);
+
+void* import(char *path, char *funcName);
 
 int main()
 {
+	// printf("%d", sizeof(Entity));
     // Check if the library file exists
     if (access(PathToLibrary, F_OK) == -1)
     {
@@ -43,18 +49,17 @@ int main()
         return 0;
     }
 
-    // Sum two integers
-    func diff = import(PathToLibrary, "diff");
-	char expr[1000];
-	char line[100];
-	// scanf("%[^\n]", expr);
-	// scanf("%[^\n]", line);
-	gets(expr); gets(line);
-    printf("\nThe diff is %s \n", diff(expr, line));
+	func2 diff = (func2)import(PathToLibrary, "diff");
+	char* entity = diff("sin(x) + 2x", "x");
+	printf("%s", entity);
 
+    // Sum two integers
+	// func parse = import(PathToLibrary, "parse");
+	// uint64_t entity = parse("sin(x) + 2");
+	// printf("%lld", entity);
 }
 
-func import(char *path, char *funcName)
+void* import(char *path, char *funcName)
 {
     // Call sum function defined in C# shared library
     #ifdef _WIN32
@@ -71,7 +76,13 @@ func import(char *path, char *funcName)
 	}
 	
     
-    func MyImport = (func)symLoad(handle, funcName);
+	void* sym = symLoad(handle, funcName);
 	
-	return MyImport;
+	// if ((int)sym == 0)
+	// {
+	// 	printf("Quacksdj jksdf panic!!11");
+	// 	return 0;
+	// }
+	
+    return sym;
 }
