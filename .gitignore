@@ -28,3 +28,5 @@ obj/
 /Sources/Samples/.ipynb_checkpoints
 /Sources/Samples/CPlusPlusPlayground/load.obj
 /Sources/Samples/CPlusPlusPlayground/load.exe
+/Sources/Samples/CPlusPlusPlayground/out/build/x64-Debug (default)
+out/

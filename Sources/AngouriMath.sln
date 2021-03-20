@@ -32,6 +32,9 @@ EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FSharpWrapperUnitTests", "Tests\FSharpWrapperUnitTests\FSharpWrapperUnitTests.fsproj", "{440FAFA2-BF69-479C-B590-600FBA146066}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_Items", "_Items", "{AC3DBEC4-E0A4-4457-9446-C49E6D487E48}"
+	ProjectSection(SolutionItems) = preProject
+		..\.gitignore = ..\.gitignore
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Markdowns", "Markdowns", "{1C0BDFDE-D7B6-4343-AF9E-5BCAC51AA6A3}"
 	ProjectSection(SolutionItems) = preProject
