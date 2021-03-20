@@ -36,6 +36,7 @@
 
 typedef uint64_t(*func)(char*);
 typedef char*(*func2)(char*, char*);
+typedef int32_t(*func3)(int32_t, int32_t);
 
 void* import(char *path, char *funcName);
 
@@ -49,11 +50,14 @@ int main()
         return 0;
     }
 
-	func2 diff = (func2)import(PathToLibrary, "diff");
-	char* entity = diff("sin(x) + 2x", "x");
-	printf("%s", entity);
+	func3 diff = (func3)import(PathToLibrary, "add");
+	int entity = diff(2, 3);
+	printf("%d", entity);
 
-    // Sum two integers
+	// func2 diff = (func2)import(PathToLibrary, "diff");
+	// char* entity = diff("sin(x) + 2x", "x");
+	// printf("%s", entity);
+
 	// func parse = import(PathToLibrary, "parse");
 	// uint64_t entity = parse("sin(x) + 2");
 	// printf("%lld", entity);
@@ -78,11 +82,11 @@ void* import(char *path, char *funcName)
     
 	void* sym = symLoad(handle, funcName);
 	
-	// if ((int)sym == 0)
-	// {
-	// 	printf("Quacksdj jksdf panic!!11");
-	// 	return 0;
-	// }
+	if ((int)sym == 0)
+	{
+		printf("Quacksdj jksdf panic!!11");
+		return 0;
+	}
 	
     return sym;
 }

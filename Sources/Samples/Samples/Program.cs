@@ -10,7 +10,5 @@ using System.Runtime.CompilerServices;
 // Entity expr = "alpha_beta";
 // Console.WriteLine(Unsafe.SizeOf<GCHandle>());
 
-Entity expr = "a + b";
-var handle = GCHandle.Alloc(expr);
-Console.WriteLine(handle);
-Console.WriteLine();
+Entity expr = "cos(theta / 2) ^ 2 + (e^(-i phi) * e^(i phi)) sin(theta / 2)^2";
+Console.WriteLine(expr.Latexise());

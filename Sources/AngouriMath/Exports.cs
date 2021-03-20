@@ -25,6 +25,7 @@ namespace AngouriMath
 {
     public static class Exports
     {
+		
         private static class ExposedObjects<T>
         {
             private static ulong lastId = 0;
@@ -49,7 +50,7 @@ namespace AngouriMath
             return ExposedObjects<Entity>.Alloc(str);
         }
 
-        [UnmanagedCallersOnly(EntryPoint = "free")]
+        [UnmanagedCallersOnly(EntryPoint = "free_entity")]
         public static void Free(ulong handle)
         {
             ExposedObjects<Entity>.Dealloc(handle);
@@ -79,18 +80,5 @@ namespace AngouriMath
 
             return resPtr;
         }
-        /*
-        [UnmanagedCallersOnly(EntryPoint = "scalar")]
-        public static (int, int) ScalarProduct(int a1, int a2, int b1, int b2)
-        {
-            var v1 = GenTensor<int, IntWrapper>.CreateVector(a1, a2);
-            var v2 = GenTensor<int, IntWrapper>.CreateVector(b1, b2);
-            var v3 = GenTensor<int, IntWrapper>.PiecewiseMultiply(v1, v2);
-
-            var c1 = v3[0];
-            var c2 = v3[1];
-
-            return (c1, c2);
-        }*/
     }
 }
