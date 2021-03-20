@@ -2,11 +2,14 @@
 //
 
 #include "CPlusPlusPlayground.h"
+#include "../../Wrappers/AngouriMath.CPP/AngouriMath.CPP.h"
 
 using namespace std;
 
 int main()
 {
-	cout << "Hello CMake." << endl;
+	Entity expr = "sin(x) + x";
+	auto newExpr = expr.diff(Entity("x"));
+	std::cout << newExpr.to_string();
 	return 0;
 }

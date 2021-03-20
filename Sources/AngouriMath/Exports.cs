@@ -23,35 +23,45 @@ using static AngouriMath.Entity;
 
 namespace AngouriMath
 {
+    using EntityRef = System.UInt64;
+
     public static class Exports
     {
 		
+
         private static class ExposedObjects<T>
         {
-            private static ulong lastId = 0;
-            private readonly static Dictionary<ulong, T> allocations = new();
-            internal static ulong Alloc(T obj)
+            private static EntityRef lastId = 0;
+            private readonly static Dictionary<EntityRef, T> allocations = new();
+            internal static EntityRef Alloc(T obj)
             {
                 lastId++;
                 allocations[lastId] = obj;
                 return lastId;
             }
-            internal static void Dealloc(ulong ptr)
+            internal static void Dealloc(EntityRef ptr)
                 => allocations.Remove(ptr);
-            internal static T Get(ulong ptr)
+            internal static T Get(EntityRef ptr)
                 => allocations[ptr];
         }
 
         [UnmanagedCallersOnly(EntryPoint = "parse")]
-        public static ulong Parse(IntPtr strPtr)
+        public static EntityRef Parse(IntPtr strPtr)
         {
-            return 0;
             var str = Marshal.PtrToStringAnsi(strPtr);
             return ExposedObjects<Entity>.Alloc(str);
         }
 
+        [UnmanagedCallersOnly(EntryPoint = "entity_to_string")]
+        public static IntPtr EntityToString(EntityRef exprPtr)
+        {
+            var expr = ExposedObjects<Entity>.Get(exprPtr);
+            var strPtr = Marshal.StringToHGlobalAnsi(expr.ToString());
+            return strPtr;
+        }
+
         [UnmanagedCallersOnly(EntryPoint = "free_entity")]
-        public static void Free(ulong handle)
+        public static void Free(EntityRef handle)
         {
             ExposedObjects<Entity>.Dealloc(handle);
         }
@@ -63,22 +73,13 @@ namespace AngouriMath
         }
 
         [UnmanagedCallersOnly(EntryPoint = "diff")]
-        public static IntPtr Differentiate(IntPtr exprPtr, IntPtr varPtr)
+        public static EntityRef Differentiate(EntityRef exprPtr, EntityRef varPtr)
         {
-            // Parse strings from the passed pointers 
-            var exprRaw = Marshal.PtrToStringAnsi(exprPtr);
-            var varRaw = Marshal.PtrToStringAnsi(varPtr);
-
-            Entity expr = exprRaw;
-            Entity.Variable var = varRaw;
-
-            var diffed = expr.Differentiate(var);
-
-            var resRaw = diffed.ToString();
-
-            var resPtr = Marshal.StringToHGlobalAnsi(resRaw);
-
-            return resPtr;
+            var expr = ExposedObjects<Entity>.Get(exprPtr);
+            var varRaw = (Variable)ExposedObjects<Entity>.Get(varPtr);
+            return ExposedObjects<Entity>.Alloc(expr.Differentiate(varRaw));
         }
+
+
     }
 }
