@@ -5,7 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
     <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj" />
   </ItemGroup>
+
 
 </Project>

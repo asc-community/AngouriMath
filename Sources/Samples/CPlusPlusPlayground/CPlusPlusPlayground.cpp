@@ -2,7 +2,7 @@
 //
 
 #include "CPlusPlusPlayground.h"
-#include "../../Wrappers/AngouriMath.CPP/AngouriMath.CPP.h"
+#include "../../Wrappers/AngouriMath.CPP.Importing/AngouriMath.CPP.h"
 
 using namespace std;
 

@@ -1,7 +1,7 @@
 ﻿// AngouriMath.CPP.cpp : Defines the entry point for the application.
 //
 
-#define AM_PATH "D:\\main\\vs_prj\\AngouriMath\\AngouriMath\\Sources\\AngouriMath\\bin\\x64\\release\\netstandard2.0\\win-x64\\publish\\AngouriMath.dll"
+#define AM_PATH "D:\\main\\vs_prj\\AngouriMath\\AngouriMath\\Sources\\Wrappers\\AngouriMath.CPP.Exporting\\bin\\x64\\release\\netstandard2.0\\win-x64\\publish\\AngouriMath.CPP.Exporting.dll"
 
 #include "AngouriMath.CPP.h"
 #include "utils.h"
