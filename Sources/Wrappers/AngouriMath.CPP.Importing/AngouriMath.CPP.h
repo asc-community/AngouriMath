@@ -2,8 +2,11 @@
 
 #include <stdint.h>
 #include <string>
+#include <memory>
 
 typedef uint64_t EntityRef;
+
+class _EntityRefWrapper;
 
 class Entity
 {
@@ -12,6 +15,19 @@ public:
     Entity(const std::string& str);
     std::string to_string();
 private:
+    std::shared_ptr < _EntityRefWrapper > handle_ptr;
+
+    EntityRef handle();
+    void set_handle(EntityRef new_handle);
+    Entity(EntityRef __handle);
+};
+
+
+class _EntityRefWrapper
+{
+    friend Entity;
+public:
+    _EntityRefWrapper(EntityRef handle) : handle(handle) { }
     EntityRef handle;
-    Entity(EntityRef handle) : handle(handle) { }
+    ~_EntityRefWrapper();
 };

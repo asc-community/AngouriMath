@@ -2,6 +2,14 @@
 
 ErrorCode::~ErrorCode()
 {
-    delete name;
-    delete stackTrace;
+    if (is_ok())
+        return;
+    // TODO: delete name and stacktrace
+    // delete _name;
+    // delete _stackTrace;
+}
+
+bool ErrorCode::is_ok() const
+{
+    return _name == nullptr;
 }
