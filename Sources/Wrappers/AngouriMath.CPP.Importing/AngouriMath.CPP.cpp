@@ -37,11 +37,3 @@ std::string Entity::to_string()
         cache = (e2s)import(AM_PATH, "entity_to_string");
     return std::string(cache(handle));
 }
-
-int main()
-{
-    Entity expr = "sin(x) + x";
-    auto newExpr = expr.diff(Entity("x"));
-    std::cout << newExpr.to_string() << "\n";
-    return 0;
-}
