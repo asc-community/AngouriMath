@@ -2,13 +2,13 @@
 //
 
 #include "CPlusPlusPlayground.h"
-#include "../../Wrappers/AngouriMath.CPP.Importing/AngouriMath.CPP.h"
+#include "AngouriMath.CPP.h"
 
 using namespace std;
 
 int main()
 {
-	Entity expr = "sin(x) + tan(x)^2 + sqrt(a x) +";
+	Entity expr = "sin(x) + tan(x)^2 + sqrt(a x)";
 	auto newExpr = expr.diff(Entity("x"));
 	std::cout << newExpr.to_string();
 	return 0;

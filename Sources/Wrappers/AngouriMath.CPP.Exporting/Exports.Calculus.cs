@@ -28,5 +28,11 @@ namespace AngouriMath.CPP.Exporting
                 return NErrorCode.Thrown(e);
             }
         }
+		
+		[UnmanagedCallersOnly(EntryPoint = "add")]
+        public static int Add(int x, int y)
+        {
+            return x + y;
+        }
     }
 }

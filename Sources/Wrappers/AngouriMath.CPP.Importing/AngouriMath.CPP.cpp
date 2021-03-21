@@ -1,19 +1,31 @@
 ﻿// AngouriMath.CPP.cpp : Defines the entry point for the application.
 //
 
-
 #include "AngouriMath.CPP.h"
 #include "ErrorCode.h"
 #include <iostream>
+
+typedef ErrorCode(ee2e)(EntityRef, EntityRef, EntityRef&);
+typedef ErrorCode(s2e)(char*, EntityRef&);
+typedef ErrorCode(e2s)(EntityRef, char*&);
+typedef ErrorCode(e2)(EntityRef);
+
+extern "C"
+{
+    __declspec(dllimport) e2 free_entity;
+    __declspec(dllimport) e2s entity_to_string;
+    __declspec(dllimport) ee2e diff;
+    __declspec(dllimport) s2e parse;
+
+    __declspec(dllimport) int add(int, int);
+}
 
 void throw_if_needed(const ErrorCode& error);
 
 _EntityRefWrapper::~_EntityRefWrapper()
 {
-    static e2 cache = nullptr;
-    if (cache == nullptr)
-        cache = (e2)import(AM_PATH, "free_entity");
-    cache(handle);
+    int x = add(0, 1);
+    free_entity(handle);
 }
 
 Entity::Entity(EntityRef __handle)
@@ -33,36 +45,27 @@ void Entity::set_handle(EntityRef ref)
 
 Entity Entity::diff(Entity var)
 {
-    static ee2e cache = nullptr;
-    if (cache == nullptr)
-        cache = (ee2e)import(AM_PATH, "diff");
     EntityRef res;
-    auto error = cache(this->handle(), var.handle(), res);
+    auto error = ::diff(this->handle(), var.handle(), res);
     throw_if_needed(error);
     return Entity(res);
 }
 
 Entity::Entity(const std::string& str)
 {
-    static s2e cache = nullptr;
-    if (cache == nullptr)
-        cache = (s2e)import(AM_PATH, "parse");
     auto newStr = new char[str.size() + 1];
     memcpy(newStr, &str[0], str.size());
     newStr[str.size()] = 0;
     EntityRef newHandle;
-    auto error = cache(newStr, newHandle);
+    auto error = parse(newStr, newHandle);
     throw_if_needed(error);
     set_handle(newHandle);
 }
 
 std::string Entity::to_string()
 {
-    static e2s cache = nullptr;
-    if (cache == nullptr)
-        cache = (e2s)import(AM_PATH, "entity_to_string");
     char* res = nullptr;
-    auto error = cache(handle(), res);
+    auto error = entity_to_string(handle(), res);
     throw_if_needed(error);
     return std::string(res);
 }
