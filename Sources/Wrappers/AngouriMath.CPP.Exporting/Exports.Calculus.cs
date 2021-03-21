@@ -5,12 +5,6 @@
  * Website: https://am.angouri.org.
  */
 
-/*
- *
- * Great thanks to Andrey Kurdyumov for help! 
- *
- */
-
 using System;
 using System.Runtime.InteropServices;
 using static AngouriMath.Entity;

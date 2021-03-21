@@ -7,30 +7,33 @@
 #define symLoad dlsym
 #endif
 
-void* import(char* path, char* funcName)
+namespace am_utils
 {
-    // Call sum function defined in C# shared library
+    void* import(char* path, char* funcName)
+    {
+        // Call sum function defined in C# shared library
 #ifdef _WIN32
-    HINSTANCE handle = LoadLibrary(path);
+        HINSTANCE handle = LoadLibrary(path);
 #else
-    void* handle = dlopen(path, RTLD_LAZY);
+        void* handle = dlopen(path, RTLD_LAZY);
 #endif
 
-    if ((int)handle == 0)
-    {
-        printf("\nLast error: %d", GetLastError());
-        printf("\nHandle: %d", (int)handle);
-        return 0;
+        if ((int)handle == 0)
+        {
+            printf("\nLast error: %d", GetLastError());
+            printf("\nHandle: %d", (int)handle);
+            return 0;
+        }
+
+
+        void* sym = symLoad(handle, funcName);
+
+        if ((int)sym == 0)
+        {
+            printf("Quacksdj jksdf panic!!11");
+            return 0;
+        }
+
+        return sym;
     }
-
-
-    void* sym = symLoad(handle, funcName);
-
-    if ((int)sym == 0)
-    {
-        printf("Quacksdj jksdf panic!!11");
-        return 0;
-    }
-
-    return sym;
 }

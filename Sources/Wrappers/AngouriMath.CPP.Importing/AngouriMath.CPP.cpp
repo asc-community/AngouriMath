@@ -1,17 +1,10 @@
 ﻿// AngouriMath.CPP.cpp : Defines the entry point for the application.
 //
 
-#define AM_PATH "D:\\main\\vs_prj\\AngouriMath\\AngouriMath\\Sources\\Wrappers\\AngouriMath.CPP.Exporting\\bin\\x64\\release\\netstandard2.0\\win-x64\\publish\\AngouriMath.CPP.Exporting.dll"
 
 #include "AngouriMath.CPP.h"
-#include "utils.h"
 #include "ErrorCode.h"
 #include <iostream>
-
-typedef ErrorCode(*ee2e)(EntityRef, EntityRef, EntityRef&);
-typedef ErrorCode(*s2e)(char*, EntityRef&);
-typedef ErrorCode(*e2s)(EntityRef, char*&);
-typedef ErrorCode(*e2)(EntityRef);
 
 void throw_if_needed(const ErrorCode& error);
 
@@ -35,8 +28,7 @@ EntityRef Entity::handle()
 
 void Entity::set_handle(EntityRef ref)
 {
-    handle_ptr = std::shared_ptr< _EntityRefWrapper>(new _EntityRefWrapper(ref));
-    // handle_ptr = std::make_shared< _EntityRefWrapper>(new _EntityRefWrapper(ref));
+    handle_ptr = std::shared_ptr< _EntityRefWrapper>(new _EntityRefWrapper(ref));    
 }
 
 Entity Entity::diff(Entity var)
