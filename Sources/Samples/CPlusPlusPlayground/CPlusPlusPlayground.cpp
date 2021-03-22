@@ -8,8 +8,9 @@ using namespace std;
 
 int main()
 {
-	Entity expr = "sin(x)";
-	auto newExpr = expr.diff(Entity("x"));
-	std::cout << newExpr.to_string();
+	AngouriMath::Entity expr;
+	//expr = AngouriMath::Entity("sin(x)");
+	auto newExpr = expr.Differentiate("x");
+	std::cout << newExpr;
 	return 0;
 }

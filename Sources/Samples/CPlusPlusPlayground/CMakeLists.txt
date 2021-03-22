@@ -5,6 +5,9 @@ cmake_minimum_required (VERSION 3.8)
 
 project ("CPlusPlusPlayground")
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(ANGOURIMATH_CPP_IMPORTING_PATH "../../Wrappers/AngouriMath.CPP.Importing")
 
 add_subdirectory(${ANGOURIMATH_CPP_IMPORTING_PATH} ${CMAKE_CURRENT_BINARY_DIR}/AngouriMath.CPP.Importing)

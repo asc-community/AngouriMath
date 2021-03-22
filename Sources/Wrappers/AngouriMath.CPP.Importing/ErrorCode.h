@@ -1,12 +1,29 @@
+#pragma once
 
-struct ErrorCode
+#include <string>
+
+namespace AngouriMath
 {
-public:
-    ~ErrorCode();
-    bool is_ok() const;
-    char* name() const { return _name; }
-    char* stack_trace() const { return _stackTrace; }
-private:
-    char* _name;
-    char* _stackTrace;
-};
+    struct ErrorCode
+    {
+    public:
+        ErrorCode(std::string name, std::string stackTrace)
+            : name(name), stackTrace(stackTrace) { }
+
+        bool IsOk() const { return this->name.empty(); }
+        const std::string& Name() const { return this->name; }
+        const std::string& StackTrace() const { return this->stackTrace; }
+
+    private:
+        std::string name;
+        std::string stackTrace;
+    };
+}
+
+namespace std
+{
+    inline std::string to_string(AngouriMath::ErrorCode e)
+    {
+        return e.Name();
+    }
+}

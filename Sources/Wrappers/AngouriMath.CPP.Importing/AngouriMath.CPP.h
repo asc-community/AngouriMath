@@ -1,33 +1,38 @@
 ﻿#pragma once
 
-#include <stdint.h>
-#include <string>
+#include "TypeAliases.h"
 #include <memory>
+#include <string>
+#include <ostream>
 
-typedef uint64_t EntityRef;
-
-class _EntityRefWrapper;
-
-class Entity
+namespace AngouriMath
 {
-public:
-    Entity diff(Entity var);
-    Entity(const std::string& str);
-    std::string to_string();
-private:
-    std::shared_ptr < _EntityRefWrapper > handle_ptr;
+    class Entity
+    {
+    public:        
+        Entity();
+        Entity(const std::string& expr);
+        Entity(const char* expr);
 
-    EntityRef handle();
-    void set_handle(EntityRef new_handle);
-    Entity(EntityRef __handle);
-};
+        std::string ToString() const;
 
+        Entity Differentiate(const Entity& var) const;
+    private:
+        explicit Entity(Internal::EntityRef handle);
+        std::shared_ptr<Internal::EntityRef> handle;
+    };
 
-class _EntityRefWrapper
+    inline std::ostream& operator<<(std::ostream& out, const AngouriMath::Entity& e)
+    {
+        out << e.ToString();
+        return out;
+    }
+}
+
+namespace std
 {
-    friend Entity;
-public:
-    _EntityRefWrapper(EntityRef handle) : handle(handle) { }
-    EntityRef handle;
-    ~_EntityRefWrapper();
-};
+    inline std::string to_string(const AngouriMath::Entity& e)
+    {
+        return e.ToString();
+    }
+}

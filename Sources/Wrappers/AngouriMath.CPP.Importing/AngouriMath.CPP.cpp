@@ -2,65 +2,63 @@
 //
 
 #include "AngouriMath.CPP.h"
-#include "ErrorCode.h"
-#include <iostream>
-#include "imports.h"
+#include "Imports.h"
 
-void throw_if_needed(const ErrorCode& error);
-
-_EntityRefWrapper::~_EntityRefWrapper()
+namespace AngouriMath
 {
-    Imports::free_entity(handle);
-}
+    struct HandleDeleter
+    {
+        void operator()(const Internal::EntityRef* handle)
+        {
+            if (handle != nullptr)
+            {
+                auto error = free_entity(*handle);
+                delete handle;
+            }
+        }
+    };
 
-Entity::Entity(EntityRef __handle)
-{
-    set_handle(__handle);
-}
+    Entity::Entity(Internal::EntityRef handle)
+        : handle(new Internal::EntityRef(handle), HandleDeleter())
+    {
+        *this->handle = handle;
+    }
 
-EntityRef Entity::handle()
-{
-    return handle_ptr.get()->handle;
-}
+    Internal::EntityRef ParseString(const char* expr)
+    {
+        Internal::EntityRef result;
+        // TODO handle errors
+        auto error = maths_from_string(expr, &result);
+        return result;
+    }
 
-void Entity::set_handle(EntityRef ref)
-{
-    handle_ptr = std::shared_ptr< _EntityRefWrapper>(new _EntityRefWrapper(ref));    
-}
+    Entity::Entity()
+        : handle(nullptr, HandleDeleter())
+    {
+    }
 
-Entity Entity::diff(Entity var)
-{
-    EntityRef res;
-    Imports::EntityOut resPtr = &res;
-    auto error = Imports::entity_differentiate(this->handle(), var.handle(), resPtr);
-    throw_if_needed(error);
-    return Entity(res);
-}
+    Entity::Entity(const std::string& expr)
+        : Entity(expr.c_str())
+    {
+    }
 
-Entity::Entity(const std::string& str)
-{
-    auto newStr = new char[str.size() + 1];
-    memcpy(newStr, &str[0], str.size());
-    newStr[str.size()] = 0;
-    EntityRef res;
-    Imports::EntityOut newHandle = &res;
-    auto error = Imports::maths_from_string(newStr, newHandle);
-    throw_if_needed(error);
-    set_handle(res);
-}
+    Entity::Entity(const char* expr)
+        : Entity(ParseString(expr))
+    {
+    }
 
-std::string Entity::to_string()
-{
-    char* str;
-    Imports::StringOut res = &str;
-    auto error = Imports::entity_to_string(handle(), res);
-    throw_if_needed(error);
-    return std::string(*res);
-}
+    std::string Entity::ToString() const
+    {
+        char* buff = nullptr;
+        auto error = entity_to_string(*this->handle, &buff);
+        
+        return buff != nullptr ? std::string(buff) : std::string();
+    }
 
-
-void throw_if_needed(const ErrorCode& error)
-{
-    if (!error.is_ok())
-        throw std::exception(error.name());
+    Entity Entity::Differentiate(const Entity& var) const
+    {
+        Internal::EntityRef result;
+        auto error = entity_differentiate(*this->handle, *var.handle, &result);
+        return Entity(result);
+    }
 }
