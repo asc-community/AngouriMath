@@ -82,7 +82,27 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleNet5", "Samples\Sampl
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Playground", "Samples\Samples\Playground.csproj", "{F5B5E6CF-58CA-4DF6-BB03-84C69228B22C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AngouriMath.CPP.Exporting", "Wrappers\AngouriMath.CPP.Exporting\AngouriMath.CPP.Exporting.csproj", "{4B568C2A-264A-4811-8F95-864AC59F3CCD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath.CPP.Exporting", "Wrappers\AngouriMath.CPP.Exporting\AngouriMath.CPP.Exporting.csproj", "{4B568C2A-264A-4811-8F95-864AC59F3CCD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AngouriMath.CPP.Importing", "AngouriMath.CPP.Importing", "{DC167CB5-37D6-4391-B751-0979195ACBC4}"
+	ProjectSection(SolutionItems) = preProject
+		Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.cpp = Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.cpp
+		Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.Exporting.dll = Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.Exporting.dll
+		Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.h = Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.h
+		Wrappers\AngouriMath.CPP.Importing\CMakeLists.txt = Wrappers\AngouriMath.CPP.Importing\CMakeLists.txt
+		Wrappers\AngouriMath.CPP.Importing\CMakeSettings.json = Wrappers\AngouriMath.CPP.Importing\CMakeSettings.json
+		Wrappers\AngouriMath.CPP.Importing\ErrorCode.h = Wrappers\AngouriMath.CPP.Importing\ErrorCode.h
+		Wrappers\AngouriMath.CPP.Importing\imports.h = Wrappers\AngouriMath.CPP.Importing\imports.h
+		Wrappers\AngouriMath.CPP.Importing\TypeAliases.h = Wrappers\AngouriMath.CPP.Importing\TypeAliases.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CPlusPlusPlayground", "CPlusPlusPlayground", "{A2A2D155-C21D-4022-91E4-9516015281E7}"
+	ProjectSection(SolutionItems) = preProject
+		Samples\CPlusPlusPlayground\CMakeLists.txt = Samples\CPlusPlusPlayground\CMakeLists.txt
+		Samples\CPlusPlusPlayground\CMakeSettings.json = Samples\CPlusPlusPlayground\CMakeSettings.json
+		Samples\CPlusPlusPlayground\CPlusPlusPlayground.cpp = Samples\CPlusPlusPlayground\CPlusPlusPlayground.cpp
+		Samples\CPlusPlusPlayground\CPlusPlusPlayground.h = Samples\CPlusPlusPlayground\CPlusPlusPlayground.h
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -252,6 +272,8 @@ Global
 		{7F3C2F1A-2BFD-449D-A5E3-62514C5EAE96} = {D15528F2-AB50-46E2-9DB1-821B278C4931}
 		{F5B5E6CF-58CA-4DF6-BB03-84C69228B22C} = {D15528F2-AB50-46E2-9DB1-821B278C4931}
 		{4B568C2A-264A-4811-8F95-864AC59F3CCD} = {C82FFADF-2F2F-4B8D-BB32-2D2F149FED4D}
+		{DC167CB5-37D6-4391-B751-0979195ACBC4} = {C82FFADF-2F2F-4B8D-BB32-2D2F149FED4D}
+		{A2A2D155-C21D-4022-91E4-9516015281E7} = {D15528F2-AB50-46E2-9DB1-821B278C4931}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1CD9B3-4EAB-4B8C-BDC1-03280EB31298}

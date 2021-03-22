@@ -8,9 +8,7 @@ using namespace std;
 
 int main()
 {
-	AngouriMath::Entity expr;
-	//expr = AngouriMath::Entity("sin(x)");
+	AngouriMath::Entity expr("x + 2sin(x)");
 	auto newExpr = expr.Differentiate("x");
-	std::cout << newExpr;
 	return 0;
 }

@@ -70,7 +70,7 @@ namespace AngouriMath
         /// <param name="equation">An equation that is assumed to equal 0</param>
         /// <param name="var">Variable whose values we are looking for</param>
         /// <returns>A <see cref="Set"/> of possible values or intervals of values</returns>
-        public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
+        [NativeExport] public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
 
         /// <summary>
         /// Solves a boolean expression. That is, finds all values for
@@ -85,111 +85,111 @@ namespace AngouriMath
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of sine</param>
         /// <returns>Sine node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Sin(Entity a) => new Sinf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of cosine</param>
         /// <returns>Cosine node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Cos(Entity a) => new Cosf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of secant</param>
         /// <returns>Cosine node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Sec(Entity a) => new Secantf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of cosecant</param>
         /// <returns>Cosine node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Cosec(Entity a) => new Cosecantf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
         /// <param name="base">Base node of logarithm</param>
         /// <param name="x">Argument node of logarithm</param>
         /// <returns>Logarithm node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Log(Entity @base, Entity x) => new Logf(@base, x);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
         /// <param name="x">Argument node of logarithm</param>
         /// <returns>Logarithm node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Log(Entity x) => new Logf(10, x);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
         /// <param name="base">Base node of power</param>
         /// <param name="power">Argument node of power</param>
         /// <returns>Power node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Pow(Entity @base, Entity power) => new Powf(@base, power);
 
         /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
         /// <param name="a">The argument of which square root will be taken</param>
         /// <returns>Power node with (1/2) as the power</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Sqrt(Entity a) => new Powf(a, Number.Rational.Create(1, 2));
 
         /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
         /// <param name="a">The argument of which cube root will be taken</param>
         /// <returns>Power node with (1/3) as the power</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Cbrt(Entity a) => new Powf(a, Number.Rational.Create(1, 3));
 
         /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
         /// <param name="a">Argument to be squared</param>
         /// <returns>Power node with 2 as the power</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Sqr(Entity a) => new Powf(a, 2);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which tangent will be taken</param>
         /// <returns>Tangent node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Tan(Entity a) => new Tanf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which cotangent will be taken</param>
         /// <returns>Cotangent node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Cotan(Entity a) => new Cotanf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arcsine will be taken</param>
         /// <returns>Arcsine node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arcsin(Entity a) => new Arcsinf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arccosine will be taken</param>
         /// <returns>Arccosine node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arccos(Entity a) => new Arccosf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arctangent will be taken</param>
         /// <returns>Arctangent node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arctan(Entity a) => new Arctanf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arccotangent will be taken</param>
         /// <returns>Arccotangent node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arccotan(Entity a) => new Arccotanf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arcsecant will be taken</param>
         /// <returns>Arccosine node with the reciprocal of the argument</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arcsec(Entity a) => new Arcsecantf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arccosecant will be taken</param>
         /// <returns>Arcsine node with the reciprocal of the argument</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arccosec(Entity a) => new Arccosecantf(a);
 
         /// <summary>
@@ -199,37 +199,37 @@ namespace AngouriMath
         /// </summary>
         /// <param name="a">Argument node of which natural logarithm will be taken</param>
         /// <returns>Logarithm node with base equal to e</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Ln(Entity a) => new Logf(e, a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Factorial"/></summary>
         /// <param name="a">Argument node of which factorial will be taken</param>
         /// <returns>Factorial node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Factorial(Entity a) => new Factorialf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Gamma_function"/></summary>
         /// <param name="a">Argument node of which gamma function will be taken</param>
         /// <returns>Factorial node with one added to the argument</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Gamma(Entity a) => new Factorialf(a + 1);
 
         /// <summary>https://en.wikipedia.org/wiki/Sign_function</summary>
         /// <param name="a">Argument node of which Signum function will be taken</param>
         /// <returns>Signum node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Signum(Entity a) => new Signumf(a);
 
         /// <summary>https://en.wikipedia.org/wiki/Absolute_value</summary>
         /// <param name="a">Argument node of which Abs function will be taken</param>
         /// <returns>Abs node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Abs(Entity a) => new Absf(a);
 
         /// <summary>https://en.wikipedia.org/wiki/Negation</summary>
         /// <param name="a">Argument node of which Negation function will be taken</param>
         /// <returns>The Not node</returns>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Negation(Entity a) => !a;
 
         /// <summary>
@@ -239,6 +239,7 @@ namespace AngouriMath
         /// <param name="expression">The expression is extracted if the predicate is true</param>
         /// <param name="condition">Condition when the expression is defined</param>
         /// <returns>The Provided node</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Provided(Entity expression, Entity condition)
             => expression.Provided(condition);
 
@@ -291,51 +292,51 @@ namespace AngouriMath
         public static class Hyperbolic
         {
             /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Sinh(Entity x) => (e.Pow(x) - e.Pow(-x)) / 2;
 
             /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Cosh(Entity x) => (e.Pow(x) + e.Pow(-x)) / 2;
 
             /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Tanh(Entity x) => (e.Pow(2 * x) - 1) / (e.Pow(2 * x) + 1);
 
             /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Cotanh(Entity x) => (e.Pow(2 * x) + 1) / (e.Pow(2 * x) - 1);
 
             /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Sech(Entity x) => 1 / Cosh(x);
 
             /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Cosech(Entity x) => 1 / Sinh(x);
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arsinh(Entity x) => Ln(x + Sqrt(x.Pow(2) + 1));
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arcosh(Entity x) => Ln(x + Sqrt(x.Pow(2) - 1));
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Artanh(Entity x) => 0.5 * Ln((1 + x) / (1 - x));
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arcotanh(Entity x) => 0.5 * Ln((1 - x) / (1 + x));
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arsech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) - 1));
 
             /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arcosech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) + 1));
         }
 
