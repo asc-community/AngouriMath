@@ -8,7 +8,7 @@ using namespace std;
 
 int main()
 {
-	Entity expr = "sin(x) + tan(x)^2 + sqrt(a x)";
+	Entity expr = "sin(x)";
 	auto newExpr = expr.diff(Entity("x"));
 	std::cout << newExpr.to_string();
 	return 0;

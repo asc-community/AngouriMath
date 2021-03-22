@@ -30,10 +30,11 @@ void Entity::set_handle(EntityRef ref)
 
 Entity Entity::diff(Entity var)
 {
-    Imports::EntityOut res = nullptr;
-    auto error = Imports::entity_differentiate(this->handle(), var.handle(), res);
+    EntityRef res;
+    Imports::EntityOut resPtr = &res;
+    auto error = Imports::entity_differentiate(this->handle(), var.handle(), resPtr);
     throw_if_needed(error);
-    return Entity(*res);
+    return Entity(res);
 }
 
 Entity::Entity(const std::string& str)
@@ -41,15 +42,17 @@ Entity::Entity(const std::string& str)
     auto newStr = new char[str.size() + 1];
     memcpy(newStr, &str[0], str.size());
     newStr[str.size()] = 0;
-    Imports::EntityOut newHandle = nullptr;
+    EntityRef res;
+    Imports::EntityOut newHandle = &res;
     auto error = Imports::maths_from_string(newStr, newHandle);
     throw_if_needed(error);
-    set_handle(*newHandle);
+    set_handle(res);
 }
 
 std::string Entity::to_string()
 {
-    Imports::StringOut res = nullptr;
+    char* str;
+    Imports::StringOut res = &str;
     auto error = Imports::entity_to_string(handle(), res);
     throw_if_needed(error);
     return std::string(*res);
