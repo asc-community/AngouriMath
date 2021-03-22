@@ -5,6 +5,9 @@
  * Website: https://am.angouri.org.
  */
 
+
+// This file is auto-generated.
+
 #pragma once
 
 #include "TypeAliases.h"

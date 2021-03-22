@@ -78,7 +78,7 @@ namespace Utils
             }
             
             return sg.Generate(
-                "export_cs_build.bat",
+                "generate_exports.bat",
                 "using System.Runtime.InteropServices;",
                 "AngouriMath.CPP.Exporting",
                 "partial class Exports", 
@@ -102,27 +102,65 @@ namespace Utils
             return sg.Generate(sb.ToString());
         }
 
+        public static string SaveUsingCode(IEnumerable<(string name, string exportName, int parCount)> methods, string path)
+        {
+            var sg = new SourceGenerator(Pattern("ExportsGenerator/UsingFile"), "%importfile%", "%content%");
+            var sb = new StringBuilder();
+            foreach (var method in methods)
+            {
+                var name = method.name;
+                var exportName = method.exportName;
+                var pars = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"const Entity& arg{c}"));
+                var parsWithoutType = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"arg{c}"));
+                var methodSg = new SourceGenerator(
+                    Pattern("ExportsGenerator/UsingFunctions"), 
+                    "%name%", "%exportname%", "%params%", "%paramswithouttype%");
+                sb.Append(methodSg.Generate(name, exportName, pars, parsWithoutType));
+            }
+            return sg.Generate(path, sb.ToString());
+        }
+
         private static void Export(Type type)
         {
+            Console.WriteLine($"Exporting {type.FullName}...");
             var nativeExports = DetectNativeExports(type);
+            Console.WriteLine($"{nativeExports.Count()} native methods detected");
 
             var csCode = SaveExportingCode(nativeExports, type);
+            var path = $"Wrappers/AngouriMath.CPP.Exporting/A.Exports.{type.Name}.Functions.cs";
             File.WriteAllText(
                 Path.Combine(
                     Program.GetPathIntoSources(),
-                    $"Wrappers/AngouriMath.CPP.Exporting/A.Exports.{type.Name}.Functions.cs"
+                    path
                 ),
                 csCode
             );
+            Console.WriteLine($"{csCode.Length}-long C# exporting code was generated and saved to {path}");
 
             var cppCode = SaveImportingCode(nativeExports, type);
+            path = $"Wrappers/AngouriMath.CPP.Importing/A.Imports.{type.Name}.Functions.h";
             File.WriteAllText(
                 Path.Combine(
                     Program.GetPathIntoSources(),
-                    $"Wrappers/AngouriMath.CPP.Importing/A.Imports.{type.Name}.Functions.h"
+                    path
                 ),
                 cppCode
             );
+            Console.WriteLine($"{cppCode.Length}-long C++ importing code was generated and saved to {path}");
+
+            var name = $"A.Usages.{type.Name}.Functions.h";
+            path = "Wrappers/AngouriMath.CPP.Importing/" + name;
+            var cppAMCode = SaveUsingCode(nativeExports, name);
+            File.WriteAllText(
+                Path.Combine(
+                    Program.GetPathIntoSources(),
+                    path
+                ),
+                cppAMCode
+            );
+            Console.WriteLine($"{cppAMCode.Length}-long C++ API code was generated and saved to {path}");
+
+            Console.WriteLine($"Done exporting {type.FullName}\n\n");
         }
 
         public static void Do()

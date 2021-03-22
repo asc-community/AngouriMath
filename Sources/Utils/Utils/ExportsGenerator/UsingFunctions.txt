@@ -1,0 +1,6 @@
+﻿    Entity %name%(%params%)
+    {
+        EntityRef res;
+        auto error = %exportname%(%paramswithouttype%, &res);
+        return res;
+    }

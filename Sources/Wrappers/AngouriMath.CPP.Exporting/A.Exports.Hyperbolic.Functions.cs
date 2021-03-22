@@ -5,7 +5,7 @@
  * Website: https://am.angouri.org.
  */
 
-// This file is auto-generated. Use export_cs_build.bat to re-generate it, do not edit the file itself.
+// This file is auto-generated. Use generate_exports.bat to re-generate it, do not edit the file itself.
 
 using System.Runtime.InteropServices;
 

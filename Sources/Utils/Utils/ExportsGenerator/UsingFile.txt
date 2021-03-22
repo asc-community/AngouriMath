@@ -5,16 +5,12 @@
  * Website: https://am.angouri.org.
  */
 
-
 // This file is auto-generated.
 
-#pragma once
+#include "AngouriMath.CPP.h"
+#include "%importfile%"
 
-#include "TypeAliases.h"
-
-using namespace AngouriMath::Internal;
-
-extern "C"
+namespace AngouriMath
 {
 %content%
 }
