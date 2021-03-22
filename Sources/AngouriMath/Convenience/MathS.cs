@@ -25,6 +25,7 @@ namespace AngouriMath
     using NumericsComplex = System.Numerics.Complex;
     using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
     using static Entity.Set;
+    using static AngouriMath.MathS.UnsafeAndInternal;
 
     /// <summary>Use functions from this class</summary>
     public static partial class MathS

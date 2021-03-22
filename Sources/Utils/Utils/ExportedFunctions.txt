@@ -1,0 +1,3 @@
+﻿        [UnmanagedCallersOnly(EntryPoint = %exportedname%)]
+        public static NErrorCode %name%(%params%, ref EntityRef res)
+            => ExceptionEncode(ref res, (%paramswithouttype%), e => %localname%(%paramswithe));

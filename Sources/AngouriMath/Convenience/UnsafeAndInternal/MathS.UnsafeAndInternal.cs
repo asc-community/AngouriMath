@@ -7,6 +7,7 @@
 using AngouriMath.Convenience;
 using AngouriMath.Core;
 using AngouriMath.Functions;
+using System;
 
 namespace AngouriMath
 {
@@ -55,6 +56,14 @@ namespace AngouriMath
             };
             [ConstantField] private static Setting<Entity[]>? checkPoints;
 
+            /// <summary>
+            /// This attribute is applied to methods which are exported natively.
+            /// </summary>
+            [AttributeUsage(AttributeTargets.Method)]
+            public sealed class NativeExportAttribute : Attribute
+            {
+                internal NativeExportAttribute() { }
+            }
         }
     }
 }
