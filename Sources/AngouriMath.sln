@@ -86,6 +86,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath.CPP.Exporting",
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AngouriMath.CPP.Importing", "AngouriMath.CPP.Importing", "{DC167CB5-37D6-4391-B751-0979195ACBC4}"
 	ProjectSection(SolutionItems) = preProject
+		Wrappers\AngouriMath.CPP.Importing\A.Imports.Hyperbolic.Functions.h = Wrappers\AngouriMath.CPP.Importing\A.Imports.Hyperbolic.Functions.h
+		Wrappers\AngouriMath.CPP.Importing\A.Imports.MathS.Functions.h = Wrappers\AngouriMath.CPP.Importing\A.Imports.MathS.Functions.h
 		Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.cpp = Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.cpp
 		Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.Exporting.dll = Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.Exporting.dll
 		Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.h = Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.h

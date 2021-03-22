@@ -60,7 +60,7 @@ namespace AngouriMath
             /// This attribute is applied to methods which are exported natively.
             /// </summary>
             [AttributeUsage(AttributeTargets.Method)]
-            public sealed class NativeExportAttribute : Attribute
+            internal sealed class NativeExportAttribute : Attribute
             {
                 internal NativeExportAttribute() { }
             }

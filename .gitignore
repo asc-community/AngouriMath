@@ -30,3 +30,4 @@ obj/
 /Sources/Samples/CPlusPlusPlayground/load.exe
 /Sources/Samples/CPlusPlusPlayground/out/build/x64-Debug (default)
 out/
+/Sources/Utils/Utils/Properties/launchSettings.json
