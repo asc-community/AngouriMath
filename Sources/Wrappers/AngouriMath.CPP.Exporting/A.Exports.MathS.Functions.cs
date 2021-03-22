@@ -33,10 +33,6 @@ namespace AngouriMath.CPP.Exporting
         public static NErrorCode ELog(EntityRef arg0, EntityRef arg1, ref EntityRef res)
             => ExceptionEncode(ref res, (arg0, arg1), e => AngouriMath.MathS.Log(e.arg0.Entity, e.arg1.Entity));
 
-        [UnmanagedCallersOnly(EntryPoint = "math_s_log")]
-        public static NErrorCode ELog(EntityRef arg0, ref EntityRef res)
-            => ExceptionEncode(ref res, (arg0), e => AngouriMath.MathS.Log(e.Entity));
-
         [UnmanagedCallersOnly(EntryPoint = "math_s_pow")]
         public static NErrorCode EPow(EntityRef arg0, EntityRef arg1, ref EntityRef res)
             => ExceptionEncode(ref res, (arg0, arg1), e => AngouriMath.MathS.Pow(e.arg0.Entity, e.arg1.Entity));

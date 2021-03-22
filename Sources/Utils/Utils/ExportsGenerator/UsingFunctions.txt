@@ -2,5 +2,5 @@
     {
         EntityRef res;
         auto error = %exportname%(%paramswithouttype%, &res);
-        return res;
+        return Entity(res);
     }

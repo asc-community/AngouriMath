@@ -13,7 +13,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
 "AngouriMath.CPP.cpp"
-
+"A.Usages.MathS.Functions.h"
+"A.Usages.Hyperbolic.Functions.h"
+"A.Imports.MathS.Functions.h"
+"A.Imports.Hyperbolic.Functions.h"
 )
 
 add_library(${PROJECT_NAME} ${SOURCES} "Imports.h")

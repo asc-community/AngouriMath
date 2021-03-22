@@ -17,8 +17,12 @@ namespace AngouriMath
         std::string ToString() const;
 
         Entity Differentiate(const Entity& var) const;
-    private:
+
+        // TODO: make private and solve issues with outer functions
+        Internal::EntityRef Handle() const { return *this->handle; }
         explicit Entity(Internal::EntityRef handle);
+    private:
+        
         std::shared_ptr<Internal::EntityRef> handle;
     };
 

@@ -7,6 +7,8 @@
 
 // This file is auto-generated.
 
+#pragma once
+
 #include "AngouriMath.CPP.h"
 #include "%importfile%"
 

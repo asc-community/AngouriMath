@@ -111,7 +111,7 @@ namespace Utils
                 var name = method.name;
                 var exportName = method.exportName;
                 var pars = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"const Entity& arg{c}"));
-                var parsWithoutType = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"arg{c}"));
+                var parsWithoutType = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"arg{c}.Handle()"));
                 var methodSg = new SourceGenerator(
                     Pattern("ExportsGenerator/UsingFunctions"), 
                     "%name%", "%exportname%", "%params%", "%paramswithouttype%");
@@ -149,8 +149,9 @@ namespace Utils
             Console.WriteLine($"{cppCode.Length}-long C++ importing code was generated and saved to {path}");
 
             var name = $"A.Usages.{type.Name}.Functions.h";
+            var importName = $"A.Imports.{type.Name}.Functions.h";
             path = "Wrappers/AngouriMath.CPP.Importing/" + name;
-            var cppAMCode = SaveUsingCode(nativeExports, name);
+            var cppAMCode = SaveUsingCode(nativeExports, importName);
             File.WriteAllText(
                 Path.Combine(
                     Program.GetPathIntoSources(),

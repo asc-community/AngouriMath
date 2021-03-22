@@ -21,7 +21,6 @@ extern "C"
     __declspec(dllimport) NativeErrorCode math_s_sec(EntityRef, EntityOut);
     __declspec(dllimport) NativeErrorCode math_s_cosec(EntityRef, EntityOut);
     __declspec(dllimport) NativeErrorCode math_s_log(EntityRef, EntityRef, EntityOut);
-    __declspec(dllimport) NativeErrorCode math_s_log(EntityRef, EntityOut);
     __declspec(dllimport) NativeErrorCode math_s_pow(EntityRef, EntityRef, EntityOut);
     __declspec(dllimport) NativeErrorCode math_s_sqrt(EntityRef, EntityOut);
     __declspec(dllimport) NativeErrorCode math_s_cbrt(EntityRef, EntityOut);
