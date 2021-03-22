@@ -12,24 +12,20 @@ namespace AngouriMath.CPP.Exporting
             => ExceptionEncode(ref res, strPtr, static strPtr =>
             {
                 var str = Marshal.PtrToStringAnsi(strPtr);
-                return ExposedObjects<Entity>.Alloc(str);
+                return ObjStorage<Entity>.Alloc(str);
             });
 
         [UnmanagedCallersOnly(EntryPoint = "entity_to_string")]
         public static NErrorCode EntityToString(EntityRef exprPtr, ref IntPtr res)
-            => ExceptionEncode(ref res, exprPtr, exprPtr =>
-            {
-                var expr = ExposedObjects<Entity>.Get(exprPtr);
-                return Marshal.StringToHGlobalAnsi(expr.ToString());
-            });
+            => ExceptionEncode(ref res, exprPtr,
+                exprPtr => Marshal.StringToHGlobalAnsi(exprPtr.Entity.ToString())
+            );
 
         [UnmanagedCallersOnly(EntryPoint = "entity_latexise")]
         public static NErrorCode EntityToLatex(EntityRef exprPtr, ref IntPtr res)
-            => ExceptionEncode(ref res, exprPtr, exprPtr =>
-            {
-                var expr = ExposedObjects<Entity>.Get(exprPtr);
-                return Marshal.StringToHGlobalAnsi(expr.Latexise());
-            });
+            => ExceptionEncode(ref res, exprPtr,
+                exprPtr => Marshal.StringToHGlobalAnsi(exprPtr.Entity.Latexise())
+            );
 
     }
 }

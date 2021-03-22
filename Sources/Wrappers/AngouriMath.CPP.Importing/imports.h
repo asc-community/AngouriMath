@@ -1,22 +1,27 @@
 namespace Imports
 {
-    typedef ErrorCode(ee2e)(EntityRef, EntityRef, EntityRef&);
-    typedef ErrorCode(s2e)(char*, EntityRef&);
-    typedef ErrorCode(e2s)(EntityRef, char*&);
-    typedef ErrorCode(e2)(EntityRef);
-    typedef ErrorCode(eeei2e)(EntityRef, EntityRef, EntityRef, int, EntityRef&);
+    typedef EntityRef* EntityOut;
+    typedef char** StringOut;
+
+    typedef char* String;
+    typedef int ApproachFrom; // in the outer API, it should be a enum
 
 
     extern "C"
     {
-        __declspec(dllimport) e2 free_entity;
+        __declspec(dllimport) ErrorCode free_entity(EntityRef);
 
-        __declspec(dllimport) e2s entity_to_string;
-        __declspec(dllimport) e2s entity_latexise;
-        __declspec(dllimport) s2e maths_from_string;
+        __declspec(dllimport) ErrorCode entity_to_string(EntityRef, StringOut);
+        __declspec(dllimport) ErrorCode entity_latexise(EntityRef, StringOut);
+        __declspec(dllimport) ErrorCode maths_from_string(String, EntityOut);
 
-        __declspec(dllimport) ee2e entity_differentiate;
-        __declspec(dllimport) ee2e entity_integrate;
-        __declspec(dllimport) eeei2e entity_limit;
+        __declspec(dllimport) ErrorCode entity_differentiate(EntityRef, EntityRef, EntityOut);
+        __declspec(dllimport) ErrorCode entity_integrate(EntityRef, EntityRef, EntityOut);
+        __declspec(dllimport) ErrorCode entity_limit(EntityRef, EntityRef, EntityRef, ApproachFrom, EntityOut);
+
+        __declspec(dllimport) ErrorCode op_entity_add(EntityRef, EntityRef, EntityOut);
+        __declspec(dllimport) ErrorCode op_entity_sub(EntityRef, EntityRef, EntityOut);
+        __declspec(dllimport) ErrorCode op_entity_mul(EntityRef, EntityRef, EntityOut);
+        __declspec(dllimport) ErrorCode op_entity_div(EntityRef, EntityRef, EntityOut);
     }
 }

@@ -18,28 +18,28 @@ namespace AngouriMath.CPP.Exporting
         public static NErrorCode Differentiate(EntityRef exprPtr, EntityRef varPtr, ref EntityRef res)
             => ExceptionEncode(ref res, (exprPtr, varPtr), static e =>
                 {
-                    var expr = ExposedObjects<Entity>.Get(e.exprPtr);
-                    var var = (Variable)ExposedObjects<Entity>.Get(e.varPtr);
-                    return ExposedObjects<Entity>.Alloc(expr.Differentiate(var));
+                    var expr = e.exprPtr.Entity;
+                    var var = (Variable)e.varPtr.Entity;
+                    return expr.Differentiate(var);
                 });
 
         [UnmanagedCallersOnly(EntryPoint = "entity_integrate")]
         public static NErrorCode Integrate(EntityRef exprPtr, EntityRef varPtr, ref EntityRef res)
             => ExceptionEncode(ref res, (exprPtr, varPtr), static e =>
             {
-                var expr = ExposedObjects<Entity>.Get(e.exprPtr);
-                var var = (Variable)ExposedObjects<Entity>.Get(e.varPtr);
-                return ExposedObjects<Entity>.Alloc(expr.Integrate(var));
+                var expr = e.exprPtr.Entity;
+                var var = (Variable)e.varPtr.Entity;
+                return expr.Integrate(var);
             });
 
         [UnmanagedCallersOnly(EntryPoint = "entity_limit")]
         public static NErrorCode Limit(EntityRef exprPtr, EntityRef varPtr, EntityRef dest, ApproachFrom from, ref EntityRef res)
             => ExceptionEncode(ref res, (exprPtr, varPtr, dest, from), static e =>
             {
-                var expr = ExposedObjects<Entity>.Get(e.exprPtr);
-                var var = (Variable)ExposedObjects<Entity>.Get(e.varPtr);
-                var dest = ExposedObjects<Entity>.Get(e.dest);
-                return ExposedObjects<Entity>.Alloc(expr.Limit(var, dest, e.from));
+                var expr = e.exprPtr.Entity;
+                var var = (Variable)e.varPtr.Entity;
+                var dest = e.dest.Entity;
+                return expr.Limit(var, dest, e.from);
             });
     }
 }
