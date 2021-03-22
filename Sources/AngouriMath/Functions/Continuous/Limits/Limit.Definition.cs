@@ -9,24 +9,24 @@ namespace AngouriMath.Core
     /// <summary>
     /// Where to tend to the given number in limits
     /// </summary>
-    public enum ApproachFrom
+    public enum ApproachFrom : int // explicit size and enumerating for native exports
     {
         /// <summary>
         /// Means that the limit is considered valid if and only if
         /// Left-sided limit exists and Right-sided limit exists
         /// and they are equal
         /// </summary>
-        BothSides,
+        BothSides = 0,
 
         /// <summary>
         /// If x tends from the left, i. e. it is never greater than the destination
         /// </summary>
-        Left,
+        Left = 1,
 
         /// <summary>
         /// If x tends from the right, i. e. it is never less than the destination
         /// </summary>
-        Right,
+        Right = 2,
     }
 }
 

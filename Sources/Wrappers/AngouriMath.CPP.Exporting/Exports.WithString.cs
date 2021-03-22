@@ -7,34 +7,29 @@ namespace AngouriMath.CPP.Exporting
 {
     partial class Exports
     {
-        [UnmanagedCallersOnly(EntryPoint = "parse")]
+        [UnmanagedCallersOnly(EntryPoint = "maths_from_string")]
         public static NErrorCode Parse(IntPtr strPtr, ref EntityRef res)
-        {
-            try
+            => ExceptionEncode(ref res, strPtr, static strPtr =>
             {
                 var str = Marshal.PtrToStringAnsi(strPtr);
-                res = ExposedObjects<Entity>.Alloc(str);
-                return NErrorCode.Ok;
-            }
-            catch (Exception e)
-            {
-                return NErrorCode.Thrown(e);
-            }
-        }
+                return ExposedObjects<Entity>.Alloc(str);
+            });
 
         [UnmanagedCallersOnly(EntryPoint = "entity_to_string")]
         public static NErrorCode EntityToString(EntityRef exprPtr, ref IntPtr res)
-        {
-            try
+            => ExceptionEncode(ref res, exprPtr, exprPtr =>
             {
                 var expr = ExposedObjects<Entity>.Get(exprPtr);
-                res = Marshal.StringToHGlobalAnsi(expr.ToString());
-                return NErrorCode.Ok;
-            }
-            catch (Exception e)
+                return Marshal.StringToHGlobalAnsi(expr.ToString());
+            });
+
+        [UnmanagedCallersOnly(EntryPoint = "entity_latexise")]
+        public static NErrorCode EntityToLatex(EntityRef exprPtr, ref IntPtr res)
+            => ExceptionEncode(ref res, exprPtr, exprPtr =>
             {
-                return NErrorCode.Thrown(e);
-            }
-        }
+                var expr = ExposedObjects<Entity>.Get(exprPtr);
+                return Marshal.StringToHGlobalAnsi(expr.Latexise());
+            });
+
     }
-    }
+}

@@ -9,16 +9,6 @@ namespace AngouriMath.CPP.Exporting
     {
         [UnmanagedCallersOnly(EntryPoint = "free_entity")]
         public static NErrorCode Free(EntityRef handle)
-        {
-            try
-            {
-                ExposedObjects<Entity>.Dealloc(handle);
-            }
-            catch (Exception exc)
-            {
-                return NErrorCode.Thrown(exc);
-            }
-            return NErrorCode.Ok;
-        }
+            => ExceptionEncode(handle, static h => ExposedObjects<Entity>.Dealloc(h));
     }
 }
