@@ -51,7 +51,7 @@ namespace AngouriMath.Functions.Algebra
         /// Then we substitute back <br/>
         /// y = -3a + a = -2a <br/>
         /// </summary>
-        internal static Tensor? SolveSystem(IEnumerable<Entity> inputEquations, ReadOnlySpan<Variable> vars)
+        internal static Matrix? SolveSystem(IEnumerable<Entity> inputEquations, ReadOnlySpan<Variable> vars)
         {
             var equations = new List<Entity>(inputEquations.Select(equation => equation.InnerSimplified));
             if (equations.Count != vars.Length)

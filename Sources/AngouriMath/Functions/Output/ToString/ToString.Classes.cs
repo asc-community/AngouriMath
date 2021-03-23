@@ -16,10 +16,10 @@ namespace AngouriMath
             public override string ToString() => Stringize();
         }
 
-        public partial record Tensor
+        partial record Matrix
         {
             /// <inheritdoc/>
-            public override string Stringize() => InnerTensor.ToString();
+            public override string Stringize() => InnerMatrix.ToString();
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

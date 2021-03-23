@@ -127,10 +127,10 @@ namespace AngouriMath
         /// <summary>
         /// Whether the expression can be collapsed to a tensor
         /// </summary>
-        public bool IsTensoric => Nodes.Any(c => c is Tensor);
+        public bool IsTensoric => Nodes.Any(c => c is Matrix);
 
         /// <summary>
-        /// Evaluates the entire expression into a <see cref="Tensor"/> if possible
+        /// Evaluates the entire expression into a <see cref="Matrix"/> if possible
         /// ( x y ) + 1 => ( x+1 y+1 )
         /// 
         /// ( 1 2 ) + ( 3 4 ) => ( 4 6 ) vectors pointwise
@@ -142,13 +142,13 @@ namespace AngouriMath
         /// ( 1 2 ) x ( 1 3 ) => ( 1 6 ) Vectors pointwise
         /// </summary>
         /// <exception cref="CannotEvalException">
-        /// Thrown when this entity cannot be represented as a <see cref="Tensor"/>.
+        /// Thrown when this entity cannot be represented as a <see cref="Matrix"/>.
         /// <see cref="IsTensoric"/> should be used to check beforehand.
         /// </exception>
-        public Tensor EvalTensor() =>
-            Evaled is Tensor value ? value :
+        public Matrix EvalTensor() =>
+            Evaled is Matrix value ? value :
                 throw new CannotEvalException
-                    ($"Result cannot be represented as a {nameof(Tensor)}! Check the type of {nameof(Evaled)} beforehand.");
+                    ($"Result cannot be represented as a {nameof(Matrix)}! Check the type of {nameof(Evaled)} beforehand.");
 
         /// <summary>
         /// Determines whether a given element can be unambiguously used as a number or boolean

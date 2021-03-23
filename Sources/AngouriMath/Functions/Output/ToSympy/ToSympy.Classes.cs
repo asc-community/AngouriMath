@@ -19,9 +19,9 @@ namespace AngouriMath
                 };
         }
 
-        public partial record Tensor
+        partial record Matrix
         {
-            internal override string ToSymPy() => InnerTensor.ToString();
+            internal override string ToSymPy() => InnerMatrix.ToString();
         }
     }
 }

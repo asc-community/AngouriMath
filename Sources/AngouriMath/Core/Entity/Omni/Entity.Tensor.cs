@@ -9,36 +9,63 @@ using System.Linq;
 using GenericTensor.Core;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using FieldCacheNamespace;
 
 namespace AngouriMath
 {
-    using GenTensor = GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
+    using GenTensor = GenTensor<Entity, Entity.Matrix.EntityTensorWrapperOperations>;
     partial record Entity
     {
         #region Tensor
 
-        /// <summary>Basic tensor implementation: <a href="https://en.wikipedia.org/wiki/Tensor"/></summary>
+        /// <summary>Basic matrix implementation: <a href="https://en.wikipedia.org/wiki/Matrix_(mathematics)"/></summary>
 #pragma warning disable CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
-        public sealed partial record Tensor(GenTensor InnerTensor) : Entity
+        public sealed partial record Matrix : Entity
 #pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
         {
+            /// <summary>
+            /// The inner matrix of type <see cref="GenTensor"/>.
+            /// </summary>
+            internal GenTensor InnerMatrix { get; }
+
+            /// <summary>
+            /// Creates a <see cref="Matrix"/> from an instance of <see cref="GenTensor"/>.
+            /// Since only 2-dimensional matrices are supported, it will throw an exception if the number
+            /// of dimensions is too high or too low.
+            /// </summary>
+            /// <param name="innerMatrix">
+            /// The instance of a matrix. It will be copied inside. Make sure,
+            /// that it has exactly two dimensions. If a vector needs to be
+            /// created, make it a normal matrix with one column.
+            /// </param>
+            /// <exception cref="InvalidMatrixOperationException">
+            /// Is thrown if the number of dimensions of the passed
+            /// tensor is not 2.
+            /// </exception>
+            public Matrix(GenTensor innerMatrix)
+            {
+                if (innerMatrix.Shape.Length != 2)
+                    throw new InvalidMatrixOperationException("Only matrices and vectors are supported");
+                InnerMatrix = innerMatrix.Copy(false);
+            }
+
             /// <summary>Reuse the cache by returning the same object if possible</summary>
-            Tensor New(GenTensor innerTensor) =>
-                innerTensor.Iterate().All(tup => ReferenceEquals(InnerTensor.GetValueNoCheck(tup.Index), tup.Value))
+            Matrix New(GenTensor innerMatrix) =>
+                innerMatrix.Iterate().All(tup => ReferenceEquals(InnerMatrix.GetValueNoCheck(tup.Index), tup.Value))
                 ? this
-                : new Tensor(innerTensor);
+                : new Matrix(innerMatrix);
             internal override Priority Priority => Priority.Leaf;
-            internal Tensor Elementwise(Func<Entity, Entity> operation) =>
-                New(GenTensor.CreateTensor(InnerTensor.Shape, indices => operation(InnerTensor.GetValueNoCheck(indices))));
-            internal Tensor Elementwise(Tensor other, Func<Entity, Entity, Entity> operation) =>
+            internal Matrix Elementwise(Func<Entity, Entity> operation) =>
+                New(GenTensor.CreateTensor(InnerMatrix.Shape, indices => operation(InnerMatrix.GetValueNoCheck(indices))));
+            internal Matrix Elementwise(Matrix other, Func<Entity, Entity, Entity> operation) =>
                 Shape != other.Shape
                 ? throw new InvalidShapeException("Arguments should be of the same shape to apply elementwise operation")
-                : New(GenTensor.CreateTensor(InnerTensor.Shape, indices =>
-                        operation(InnerTensor.GetValueNoCheck(indices), other.InnerTensor.GetValueNoCheck(indices))));
+                : New(GenTensor.CreateTensor(InnerMatrix.Shape, indices =>
+                        operation(InnerMatrix.GetValueNoCheck(indices), other.InnerMatrix.GetValueNoCheck(indices))));
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => Elementwise(element => element.Replace(func));
             /// <inheritdoc/>
-            protected override Entity[] InitDirectChildren() => InnerTensor.Iterate().Select(tup => tup.Value).ToArray();
+            protected override Entity[] InitDirectChildren() => InnerMatrix.Iterate().Select(tup => tup.Value).ToArray();
 
 #pragma warning disable CS1591
             public readonly struct EntityTensorWrapperOperations : IOperations<Entity>
@@ -70,10 +97,7 @@ namespace AngouriMath
             }
 #pragma warning restore CS1591
             /// <summary>List of <see cref="int"/>s that stand for dimensions</summary>
-            public TensorShape Shape => InnerTensor.Shape;
-
-            /// <summary>Number of dimensions: 2 for matrix, 1 for vector</summary>
-            public int Dimensions => Shape.Count;
+            public TensorShape Shape => InnerMatrix.Shape;
 
             /// <summary>
             /// List of dimensions
@@ -81,63 +105,175 @@ namespace AngouriMath
             /// If you need vector, list 1 dimension (length of the vector)
             /// You can't list 0 dimensions
             /// </summary>
-            public Tensor(Func<int[], Entity> operation, params int[] dims) : this(GenTensor.CreateTensor(new(dims), operation)) { }
+            public Matrix(Func<int[], Entity> operation, params int[] dims) : this(GenTensor.CreateTensor(new(dims), operation)) { }
 
             /// <summary>
             /// Access the tensor if it is a vector
             /// </summary>
-            public Entity this[int i] => InnerTensor[i];
+            public Entity this[int i] => InnerMatrix[i];
 
             /// <summary>
             /// Access the tensor if it is a matrix
             /// </summary>
-            public Entity this[int x, int y] => InnerTensor[x, y];
+            public Entity this[int x, int y] => InnerMatrix[x, y];
 
             /// <summary>
-            /// Access the tensor if it is a 3D tensor
+            /// Checks whether the matrix only contains one
+            /// column
             /// </summary>
-            public Entity this[int x, int y, int z] => InnerTensor[x, y, z];
+            public bool IsVector => InnerMatrix.Shape[1] == 1;
 
             /// <summary>
-            /// Access the tensor if it is a tensor of greater dimension than 3
+            /// Checks whether the matrix is square (has as many rows as columns)
             /// </summary>
-            public Entity this[params int[] dims] => InnerTensor[dims];
-
-            /// <summary>
-            /// Checks whether the tensor is one-dimensional,
-            /// that is, vector
-            /// </summary>
-            public bool IsVector => InnerTensor.IsVector;
-
-            /// <summary>
-            /// Checks whether the tensor is two-dimensional,
-            /// that is, matrix
-            /// </summary>
-            public bool IsMatrix => InnerTensor.IsMatrix;
-
-            /// <summary>Changes the order of axes</summary>
-            public void Transpose(int a, int b) => InnerTensor.Transpose(a, b);
+            public bool IsSquare => InnerMatrix.Shape[0] == InnerMatrix.Shape[1];
 
             /// <summary>Changes the order of axes in matrix</summary>
-            public void Transpose()
-            {
-                if (IsMatrix) InnerTensor.TransposeMatrix();
-                else throw new InvalidMatrixOperationException("Specify axes numbers for non-matrices");
-            }
+            public Matrix T => t.GetValue(static @this =>
+                {
+                    var newInner = @this.InnerMatrix.Copy(true);
+                    newInner.TransposeMatrix();
+                    return new(newInner);
+                },
+            this);
+            private FieldCache<Matrix> t;
 
             // We do not need to use Gaussian elimination here
             // since we anyway get N! memory use
             /// <summary>
             /// Finds the symbolical determinant via Laplace's method
             /// </summary>
-            public Entity Determinant() => InnerTensor.DeterminantLaplace().InnerSimplified;
+            public Entity Determinant => determinant.GetValue(
+                static @this => @this.InnerMatrix.DeterminantLaplace().InnerSimplified,
+                this
+                );
+            private FieldCache<Entity> determinant;
 
-            /// <summary>Inverts all matrices in a tensor</summary>
-            public Tensor Inverse()
+            // The reason it's not cached is because it throws exceptions.
+            /// <summary>Inverts the matrix</summary>
+            public Matrix ComputeInverse()
             {
-                var cp = InnerTensor.Copy(false);
-                cp.TensorMatrixInvert();
-                return new Tensor(cp);
+                var cp = InnerMatrix.Copy(false);
+                try
+                {
+                    cp.TensorMatrixInvert();
+                }
+                catch (InvalidShapeException)
+                {
+                    throw new InvalidMatrixOperationException("Cannot inverse a non-square matrix!");
+                }
+                catch (InvalidDeterminantException)
+                {
+                    throw new InvalidMatrixOperationException("Cannot inverse a singular matrix!");
+                }
+                return new Matrix(cp);
+            }
+
+            /// <summary>Inverts the matrix</summary>
+            [Obsolete("Use ComputeInverse() instead")]
+            public Matrix Inverse() => ComputeInverse();
+
+            /// <summary>
+            /// The Add operator. Performs an active operation
+            /// (elementwise addition of two matrices or vectors)
+            /// and then applies inner simplification
+            /// </summary>
+            public static Matrix operator +(Matrix m1, Matrix m2)
+                =>
+                m1.InnerMatrix.Shape != m2.InnerMatrix.Shape
+                ?
+                throw new InvalidMatrixOperationException("Cannot apply the operator to matrices or vectors of different shapes")
+                :
+                (Matrix)new Matrix(GenTensor.PiecewiseAdd(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+
+            /// <summary>
+            /// The Subtract operator. Performs an active operation
+            /// (elementwise subtraction of two matrices or vectors)
+            /// and then applies inner simplification
+            /// </summary>
+            public static Matrix operator -(Matrix m1, Matrix m2)
+                =>
+                m1.InnerMatrix.Shape != m2.InnerMatrix.Shape
+                ?
+                throw new InvalidMatrixOperationException("Cannot apply the operator to matrices or vectors of different shapes")
+                :
+                (Matrix)new Matrix(GenTensor.PiecewiseSubtract(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+
+            /// <summary>
+            /// The Multiply operator. Performs an active operation
+            /// (matrix multiplication of two matrices)
+            /// and then applies inner simplification
+            /// </summary>
+            public static Matrix operator *(Matrix m1, Matrix m2)
+            {
+                try
+                {
+                    return (Matrix)new Matrix(GenTensor.MatrixMultiply(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+                }
+                catch (InvalidShapeException)
+                {
+                    throw new InvalidMatrixOperationException(
+                        $"Cannot multiply matrices of shapes {m1.InnerMatrix.Shape} and {m2.InnerMatrix.Shape}"
+                        );
+                }
+            }
+
+            /// <summary>
+            /// The Multiply operator. Performs an active operation.
+            /// 1. Finds the inverse of the divisor
+            /// 2. Multiplies the dividend by the inverse of the divisor
+            /// and then applies inner simplification.
+            /// The operator only works with square matrices of the same size
+            /// </summary>
+            /// <exception cref="InvalidMatrixOperationException">
+            /// May be thrown if no inverse was found.
+            /// </exception>
+            public static Matrix operator /(Matrix m1, Matrix m2)
+            {
+                var inv = m2.ComputeInverse();
+                return m1 * inv;
+            }
+
+            /// <summary>
+            /// Performs a binary power of the matrix.
+            /// The matrix must be a square matrix.
+            /// </summary>
+            /// <returns>
+            /// A matrix to the given power with InnerSimplified
+            /// applied.
+            /// </returns>
+            public Matrix Pow(uint exp)
+            {
+                if (!IsSquare)
+                    throw new InvalidMatrixOperationException("Cannot find power of a non-square matrix");
+                var size = (uint)Shape[0];
+                if (exp == 0)
+                    return I(size);
+                if (exp == 1)
+                    return this;
+                var p2 = Pow(exp / 2);
+                if (exp % 2 == 0)
+                    return p2 * p2;
+                else
+                    return p2 * p2 * this;
+            }
+
+            /// <summary>
+            /// Creates a square identity matrix
+            /// </summary>
+            public static Matrix I(uint size)
+                => new(GenTensor.CreateIdentityMatrix((int)size));
+
+            /// <summary>
+            /// Creates a rectangular identity matrix
+            /// with the given size
+            /// </summary>
+            public static Matrix I(uint rowCount, uint colCount)
+            {
+                var inn = GenTensor.CreateMatrix((int)rowCount, (int)colCount);
+                for (int i = 0; i < Math.Min(rowCount, colCount); i++)
+                    inn[i, i] = 1;
+                return new(inn);
             }
         }
         #endregion

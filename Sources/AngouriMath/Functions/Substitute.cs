@@ -10,7 +10,7 @@ namespace AngouriMath
     {
         #region Simple
 
-        partial record Tensor
+        partial record Matrix
         {
             /// <inheritdoc/>
             public override Entity Substitute(Entity x, Entity value)

@@ -13,7 +13,7 @@ namespace AngouriMath.Core
 {
     /// <summary>
     /// Use this class for solvers and other places when a matrix needs to be built without
-    /// recreating an instance multiple times. It builds an instance of <see cref="Tensor"/>.
+    /// recreating an instance multiple times. It builds an instance of <see cref="Matrix"/>.
     /// It enables to build a tensor row-by-row.
     /// </summary>
     public sealed class TensorBuilder
@@ -83,17 +83,17 @@ namespace AngouriMath.Core
             => Add(row.ToList());
 
         /// <summary>
-        /// Builds itself into a <see cref="Tensor"/>.
+        /// Builds itself into a <see cref="Matrix"/>.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="Tensor"/> if there exists at least one row.
+        /// An immutable <see cref="Matrix"/> if there exists at least one row.
         /// Null otherwise.
         /// </returns>
-        public Tensor? ToTensor()
+        public Matrix? ToTensor()
         {
             if (raw.Count == 0)
                 return null;
-            return new Tensor(indices => raw[indices[0]][indices[1]], raw.Count, columnCount);
+            return new Matrix(indices => raw[indices[0]][indices[1]], raw.Count, columnCount);
         }
     }
 }

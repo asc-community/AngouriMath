@@ -50,7 +50,7 @@ namespace AngouriMath
                 => Name.GetHashCode();
         }
 
-        public partial record Tensor : Entity
+        partial record Matrix
         {
             private protected override void CompileNode(Compiler compiler) =>
                 throw new UncompilableNodeException($"Tensors cannot be compiled");

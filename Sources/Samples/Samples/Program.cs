@@ -8,7 +8,9 @@ using System.Numerics;
 
 // Imagine this API
 
-var H = MathS.Matrix(new Entity[,] { { 1, 1 }, { 1, -1 } }) * "sqrt(2) / 2";
-var q = MathS.Vector(1, 0);
-var res = H * q;
-Console.WriteLine();
+var H = MathS.Matrices.Matrix(new Entity[,] { { 1, 0 }, { 0, "x" } });
+var q = MathS.Matrices.Vector(1, 3);
+Console.WriteLine(H);
+Console.WriteLine(H * q);
+Console.WriteLine(q * q.T);
+Console.WriteLine(H.Pow(31).Simplify());

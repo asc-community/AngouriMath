@@ -22,7 +22,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerSimplify() => this;
         }
-        public partial record Tensor
+        partial record Matrix
         {
             /// <inheritdoc/>
             protected override Entity InnerEval() => Elementwise(e => e.Evaled);
@@ -87,9 +87,9 @@ namespace AngouriMath
                         ),
                 (Piecewise a, var b) => a.ApplyToValues(a => ops(a, b)),
                 (var a, Piecewise b) => b.ApplyToValues(b => ops(a, b)),
-                (Tensor a, Tensor b) => a.Elementwise(b, ops),
-                (Tensor a, var b) => a.Elementwise(a => ops(a, b)),
-                (var a, Tensor b) => b.Elementwise(b => ops(a, b)),
+                (Matrix a, Matrix b) => a.Elementwise(b, ops),
+                (Matrix a, var b) => a.Elementwise(a => ops(a, b)),
+                (var a, Matrix b) => b.Elementwise(b => ops(a, b)),
                 (FiniteSet a, FiniteSet b) => new FiniteSet((a, b).EachForEach().Select(s => ops(s.left, s.right))),
                 (FiniteSet a, var b) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b) => b.Apply(b => ops(a, b)),
@@ -118,7 +118,7 @@ namespace AngouriMath
             {
                 Providedf p => ExpandOnOneArgument(p.Expression, operation, defaultCtor, checkIfExactEvaled).Provided(p.Predicate),
                 Piecewise p => p.ApplyToValues(ops),
-                Tensor t => t.Elementwise(ops),
+                Matrix t => t.Elementwise(ops),
                 FiniteSet s => s.Apply(ops),
                 _ => defaultCtor(this, expr)
             };
@@ -158,9 +158,9 @@ namespace AngouriMath
                         ),
                 (Piecewise a, var b, _) => a.ApplyToValues(a => ops(a, b)),
                 (var a, Piecewise b, _) => b.ApplyToValues(b => ops(a, b)),
-                (Tensor a, Tensor b, _) => a.Elementwise(b, ops),
-                (Tensor a, var b, _) => a.Elementwise(a => ops(a, b)),
-                (var a, Tensor b, _) => b.Elementwise(b => ops(a, b)),
+                (Matrix a, Matrix b, _) => a.Elementwise(b, ops),
+                (Matrix a, var b, _) => a.Elementwise(a => ops(a, b)),
+                (var a, Matrix b, _) => b.Elementwise(b => ops(a, b)),
                 (FiniteSet a, FiniteSet b, _) => new FiniteSet((a, b).EachForEach().Select(s => ops(s.left, s.right))),
                 (FiniteSet a, var b, _) => a.Apply(a => ops(a, b)),
                 (var a, FiniteSet b, _) => b.Apply(b => ops(a, b)),

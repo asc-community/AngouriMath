@@ -46,7 +46,7 @@ namespace AngouriMath.Functions.Boolean
         /// compiling the truth table
         /// </summary>
         /// <exception cref="WrongNumberOfArgumentsException"/>
-        internal static Tensor? SolveTable(Entity expr, Variable[] variables)
+        internal static Matrix? SolveTable(Entity expr, Variable[] variables)
         {
             var count = expr.Vars.Count();
             // TODO: we probably also should verify the uniqueness of the given variables
@@ -67,7 +67,7 @@ namespace AngouriMath.Functions.Boolean
             return tb.ToTensor();
         }
 
-        internal static Tensor? BuildTruthTable(Entity expr, Variable[] variables)
+        internal static Matrix? BuildTruthTable(Entity expr, Variable[] variables)
         {
             var count = expr.Vars.Count();
             // TODO: we probably also should verify the uniqueness of the given variables

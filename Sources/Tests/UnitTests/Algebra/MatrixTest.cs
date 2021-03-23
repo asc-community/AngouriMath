@@ -5,19 +5,19 @@ namespace UnitTests.Algebra
 {
     public sealed class MatrixTest
     {
-        public static readonly Entity.Tensor A = MathS.Matrices.Matrix(4, 2,
+        public static readonly Entity.Matrix A = MathS.Matrices.Matrix(4, 2,
             1, 2,
             3, 4,
             5, 6,
             7, 8
         );
-        public static readonly Entity.Tensor B = MathS.Matrices.Matrix(4, 2,
+        public static readonly Entity.Matrix B = MathS.Matrices.Matrix(4, 2,
             1, 2,
             3, 4,
             5, 6,
             7, 8
             );
-        public static readonly Entity.Tensor C = MathS.Matrices.Matrix(2, 4,
+        public static readonly Entity.Matrix C = MathS.Matrices.Matrix(2, 4,
             1, 2, 3, 4,
             5, 6, 7, 8
         );

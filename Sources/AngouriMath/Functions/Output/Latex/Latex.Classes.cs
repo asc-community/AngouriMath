@@ -45,12 +45,19 @@ namespace AngouriMath
                 LatexiseIfCan(Name);
         }
 
-        public partial record Tensor
+        partial record Matrix
         {
             /// <inheritdoc/>
             public override string Latexise()
             {
-                if (IsMatrix)
+                if (IsVector)
+                {
+                    var sb = new StringBuilder();
+                    sb.Append(@"\begin{bmatrix}");
+                    sb.Append(string.Join(" & ", InnerMatrix.Iterate().Select(k => k.Value.Latexise())));
+                    sb.Append(@"\end{bmatrix}");
+                    return sb.ToString();
+                }
                 {
                     var sb = new StringBuilder();
                     sb.Append(@"\begin{pmatrix}");
@@ -68,18 +75,6 @@ namespace AngouriMath
                     sb.Append(string.Join(@"\\", lines));
                     sb.Append(@"\end{pmatrix}");
                     return sb.ToString();
-                }
-                else if (IsVector)
-                {
-                    var sb = new StringBuilder();
-                    sb.Append(@"\begin{bmatrix}");
-                    sb.Append(string.Join(" & ", InnerTensor.Iterate().Select(k => k.Value.Latexise())));
-                    sb.Append(@"\end{bmatrix}");
-                    return sb.ToString();
-                }
-                else
-                {
-                    return this.Stringize();
                 }
             }
         }
