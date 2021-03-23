@@ -26,3 +26,5 @@ obj/
 /AngouriMath/Core/Antlr/antlr4
 /Samples/.ipynb_checkpoints
 /Sources/Samples/.ipynb_checkpoints
+/Sources/Utils/Utils/Properties/launchSettings.json
+out/
