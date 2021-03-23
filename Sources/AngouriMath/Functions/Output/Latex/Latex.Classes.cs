@@ -44,39 +44,5 @@ namespace AngouriMath
                 :
                 LatexiseIfCan(Name);
         }
-
-        partial record Matrix
-        {
-            /// <inheritdoc/>
-            public override string Latexise()
-            {
-                if (IsVector)
-                {
-                    var sb = new StringBuilder();
-                    sb.Append(@"\begin{bmatrix}");
-                    sb.Append(string.Join(" & ", InnerMatrix.Iterate().Select(k => k.Value.Latexise())));
-                    sb.Append(@"\end{bmatrix}");
-                    return sb.ToString();
-                }
-                {
-                    var sb = new StringBuilder();
-                    sb.Append(@"\begin{pmatrix}");
-                    var lines = new List<string>();
-                    for (int x = 0; x < Shape[0]; x++)
-                    {
-                        var items = new List<string>();
-
-                        for (int y = 0; y < Shape[1]; y++)
-                            items.Add(this[x, y].Latexise());
-
-                        var line = string.Join(" & ", items);
-                        lines.Add(line);
-                    }
-                    sb.Append(string.Join(@"\\", lines));
-                    sb.Append(@"\end{pmatrix}");
-                    return sb.ToString();
-                }
-            }
-        }
     }
 }

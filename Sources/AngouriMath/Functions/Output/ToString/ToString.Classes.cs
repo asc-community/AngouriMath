@@ -4,6 +4,8 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
+using System.Linq;
+
 namespace AngouriMath
 {
     partial record Entity
@@ -12,14 +14,6 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Stringize() => Name;
-            /// <inheritdoc/>
-            public override string ToString() => Stringize();
-        }
-
-        partial record Matrix
-        {
-            /// <inheritdoc/>
-            public override string Stringize() => InnerMatrix.ToString();
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }

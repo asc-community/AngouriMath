@@ -22,14 +22,6 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity InnerSimplify() => this;
         }
-        partial record Matrix
-        {
-            /// <inheritdoc/>
-            protected override Entity InnerEval() => Elementwise(e => e.Evaled);
-
-            /// <inheritdoc/>
-            protected override Entity InnerSimplify() => Elementwise(e => e.InnerSimplified);
-        }
 
         /// <summary>
         /// For two-argument nodes
@@ -87,7 +79,7 @@ namespace AngouriMath
                         ),
                 (Piecewise a, var b) => a.ApplyToValues(a => ops(a, b)),
                 (var a, Piecewise b) => b.ApplyToValues(b => ops(a, b)),
-                (Matrix a, Matrix b) => a.Elementwise(b, ops),
+                (Matrix a, Matrix b) => a.InnerMatrix.Shape == b.InnerMatrix.Shape ? a.Elementwise(b, ops) : defaultCtor(this, left, right),
                 (Matrix a, var b) => a.Elementwise(a => ops(a, b)),
                 (var a, Matrix b) => b.Elementwise(b => ops(a, b)),
                 (FiniteSet a, FiniteSet b) => new FiniteSet((a, b).EachForEach().Select(s => ops(s.left, s.right))),
@@ -158,7 +150,7 @@ namespace AngouriMath
                         ),
                 (Piecewise a, var b, _) => a.ApplyToValues(a => ops(a, b)),
                 (var a, Piecewise b, _) => b.ApplyToValues(b => ops(a, b)),
-                (Matrix a, Matrix b, _) => a.Elementwise(b, ops),
+                (Matrix a, Matrix b, _) => a.InnerMatrix.Shape == b.InnerMatrix.Shape ? a.Elementwise(b, ops) : defaultCtor(this, left, right, third),
                 (Matrix a, var b, _) => a.Elementwise(a => ops(a, b)),
                 (var a, Matrix b, _) => b.Elementwise(b => ops(a, b)),
                 (FiniteSet a, FiniteSet b, _) => new FiniteSet((a, b).EachForEach().Select(s => ops(s.left, s.right))),

@@ -156,6 +156,16 @@ namespace AngouriMath
             /// </summary>
             public bool IsScalar => RowCount == 1 && ColumnCount == 1;
 
+            /// <summary>
+            /// Casts the matrix to a scalar. It is only
+            /// possible if the matrix is 1x1 size.
+            /// </summary>
+            /// <exception cref="InvalidMatrixOperationException">
+            /// Thrown if the matrix has size different from 1x1.
+            /// </exception>
+            public Entity AsScalar()
+                => IsScalar ? this[0] : throw new InvalidMatrixOperationException("A 1x1 matrix expected");
+
             /// <summary>Changes the order of axes in matrix</summary>
             public Matrix T => t.GetValue(static @this =>
                 {
