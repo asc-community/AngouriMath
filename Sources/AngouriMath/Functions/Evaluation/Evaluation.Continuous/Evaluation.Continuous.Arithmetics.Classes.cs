@@ -298,7 +298,7 @@ namespace AngouriMath
                 => ExpandOnOneArgument(Argument.Evaled,
                     a => a switch
                     {
-                        Matrix m when m.IsVector => Sumf.Sum(m.Select(c => c.Pow(2))).Evaled,
+                        Matrix m when m.IsVector => Sumf.Sum(m.Select(c => c.Pow(2))).Pow(0.5).Evaled,
                         Complex n => Number.Abs(n),
                         _ => null
                     },
@@ -311,7 +311,7 @@ namespace AngouriMath
                 => ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        Matrix m when m.IsVector => Sumf.Sum(m.Select(c => c.Pow(2))).InnerSimplified,
+                        Matrix m when m.IsVector => Sumf.Sum(m.Select(c => c.Pow(2))).Pow(0.5).InnerSimplified,
                         _ => null
                     },
                     (@this, a) => ((Absf)@this).New(a)

@@ -127,6 +127,8 @@ namespace UnitTests.Common
         [InlineData("[ [1] ]", "1")]
         [InlineData("[ 1, 2, 3 ]T * [ a , b , c ]", "a + 2b + 3c")]
         [InlineData("[[1, 0], [0, 1]] ^ 12", "[[1, 0], [0, 1]]")]
+        [InlineData("(|[3, 4]|)", "5")]
+        [InlineData("(|[2, 3, 6]|)", "7")]
         public void TestMatrices(string before, string after)
             => ShouldChangeTo(before, after);
     }
