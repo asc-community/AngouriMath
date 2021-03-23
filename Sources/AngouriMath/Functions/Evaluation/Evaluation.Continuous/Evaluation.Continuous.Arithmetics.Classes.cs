@@ -196,7 +196,7 @@ namespace AngouriMath
                 ExpandOnTwoArguments(Base.InnerSimplified, Exponent.InnerSimplified,
                 (a, b) => (a, b) switch
                 {
-                    (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res,
+                    (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.InnerSimplified,
                     (Integer(1), _) => 1,
                     (Integer(0), Integer(0)) => 1,
                     (Integer(0), _) => 0,
