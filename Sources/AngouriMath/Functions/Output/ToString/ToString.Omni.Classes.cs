@@ -146,7 +146,7 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string Stringize()
                 => "[" +
-                    string.Join("; ",
+                    string.Join(", ",
                         IsVector switch
                         {
                             true => this.Select(c => c.ToSymPy()),

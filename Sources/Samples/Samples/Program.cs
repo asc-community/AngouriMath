@@ -6,17 +6,11 @@ using static AngouriMath.Entity;
 using System.Numerics;
 
 
-// Imagine this API
+// Console.WriteLine("[ [ 1, 2 ] ; [ 3, 4 ] ]".ToEntity());
+var t = "[ [1, 3] , [3, 5] ]T".ToEntity();
+Console.WriteLine(t);
+Console.WriteLine(t.GetType());
 
-var H = Matrix(new Entity[,]
-    {
-        { "1", "2", "6" },
-        { "3", "2", "9" },
-        { "1", "1", "9" },
-    });
-// Console.WriteLine((H.Adjugate / H.Determinant).Evaled);
-// Console.WriteLine(H.ComputeInverse());
-Console.WriteLine(MathS.ToSympyCode(H));
 // Console.WriteLine(Det(H - "x" * I_3).Simplify());
 /*
 Console.WriteLine(H);

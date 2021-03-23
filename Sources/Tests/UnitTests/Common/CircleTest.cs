@@ -115,8 +115,8 @@ namespace UnitTests.Common
 
         [Theory]
         [InlineData("[ 1, 2, 3 ]")]
-        [InlineData("[ 1 ; 2 ; 3 ]")]
-        [InlineData("[ [ 2, 3 ] ; [ 5, 6 ] ]")]
+        [InlineData("[ 1, 2, 3 ]T")]
+        [InlineData("[ [ 2, 3 ], [ 5, 6 ] ]")]
         public void TestMatrix(string inputIsOutput) =>
             Assert.Equal(inputIsOutput.ToEntity(), inputIsOutput.ToEntity().Stringize().ToEntity());
     }

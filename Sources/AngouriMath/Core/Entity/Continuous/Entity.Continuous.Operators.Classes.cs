@@ -95,7 +95,7 @@ namespace AngouriMath
             /// Multiplies all the terms.
             /// </summary>
             public static Entity Multiply(IEnumerable<Entity> terms)
-                => Sum(terms.ToList());
+                => Multiply(terms.ToList());
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Mulf New(Entity multiplier, Entity multiplicand) =>

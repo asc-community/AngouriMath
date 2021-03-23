@@ -17,6 +17,7 @@ using System.Diagnostics.CodeAnalysis;
 using AngouriMath.Convenience;
 using AngouriMath.Core.Multithreading;
 using System.Threading;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
@@ -683,6 +684,42 @@ namespace AngouriMath
             for (int i = 0; i < values.Length; i++)
                 arr[i, 0] = values[i];
             return new(GenTensor.CreateMatrix(arr));
+        }
+
+        /// <summary>
+        /// Creates a matrix from given rows
+        /// </summary>
+        /// <param name="vectors">
+        /// There should be at least one row.
+        /// All rows must have the same number
+        /// of columns
+        /// </param>
+        public static Matrix MatrixFromRows(IEnumerable<Matrix> vectors)
+        {
+            if (vectors.Count() == 0)
+                throw new InvalidMatrixOperationException("No rows were provided");
+            var tb = new MatrixBuilder(vectors.First().ColumnCount);
+            foreach (var v in vectors)
+                tb.Add(v);
+            return tb.ToMatrix() ?? throw new AngouriBugException("Nullability should have been checked before");
+        }
+
+        /// <summary>
+        /// Creates a matrix from given elements
+        /// </summary>
+        /// <param name="elements">
+        /// There should be at least one row.
+        /// All rows must have the same number
+        /// of columns
+        /// </param>
+        public static Matrix MatrixFromIEnum2x2(IEnumerable<IEnumerable<Entity>> elements)
+        {
+            if (elements.Count() == 0)
+                throw new InvalidMatrixOperationException("No rows were provided");
+            var tb = new MatrixBuilder(elements.First().Count());
+            foreach (var v in elements)
+                tb.Add(v);
+            return tb.ToMatrix() ?? throw new AngouriBugException("Nullability should have been checked before");
         }
 
         /// <summary>

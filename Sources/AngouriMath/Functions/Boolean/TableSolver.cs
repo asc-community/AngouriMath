@@ -53,7 +53,7 @@ namespace AngouriMath.Functions.Boolean
             if (count != variables.Length)
                 throw new WrongNumberOfArgumentsException("Number of variables must equal number of variables in the expression");
             var states = new bool[variables.Length];
-            var tb = new TensorBuilder(count);
+            var tb = new MatrixBuilder(count);
             var variablesStorage = new Dictionary<Variable, Entity>();
             do
             {
@@ -64,7 +64,7 @@ namespace AngouriMath.Functions.Boolean
             }
             while (Next(states));
 
-            return tb.ToTensor();
+            return tb.ToMatrix();
         }
 
         internal static Matrix? BuildTruthTable(Entity expr, Variable[] variables)
@@ -74,7 +74,7 @@ namespace AngouriMath.Functions.Boolean
             if (count != variables.Length)
                 throw new WrongNumberOfArgumentsException("Number of variables must equal number of variables in the expression");
             var states = new bool[variables.Length];
-            var tb = new TensorBuilder(count + 1);
+            var tb = new MatrixBuilder(count + 1);
             var variablesStorage = new Dictionary<Variable, Entity>();
             do
             {
@@ -84,7 +84,7 @@ namespace AngouriMath.Functions.Boolean
             }
             while (Next(states));
 
-            return tb.ToTensor();
+            return tb.ToMatrix();
         }
     }
 }
