@@ -643,6 +643,45 @@ namespace AngouriMath
             public static Complex Create(EDecimal re, EDecimal im) => Complex.Create(re, im);
         }
 
+        /// <summary>Creates an instance of <see cref="Entity.Matrix"/>.</summary>
+        /// <param name="values">A two-dimensional array of values</param>
+        /// <returns>A two-dimensional <see cref="Entity.Matrix"/> which is a matrix</returns>
+        public static Matrix Matrix(Entity[,] values) => new(GenTensor.CreateMatrix(values));
+
+        /// <summary>Creates an instance of <see cref="Entity.Matrix"/> that has one column.</summary>
+        /// <param name="values">The cells of the <see cref="Entity.Matrix"/></param>
+        /// <returns>A one-dimensional <see cref="Entity.Matrix"/> which is a vector</returns>
+        public static Matrix Vector(params Entity[] values)
+        {
+            var arr = new Entity[values.Length, 1];
+            for (int i = 0; i < values.Length; i++)
+                arr[i, 0] = values[i];
+            return new(GenTensor.CreateMatrix(arr));
+        }
+
+        /// <summary>
+        /// Creates a closed interval (segment)
+        /// </summary>
+        public static Interval Interval(Entity left, Entity right) => new Interval(left, true, right, true);
+
+        /// <summary>
+        /// Creates an interval with custom endings
+        /// </summary>
+        public static Interval Interval(Entity left, bool leftClosed, Entity right, bool rightClosed) => new Interval(left, leftClosed, right, rightClosed);
+
+        /// <summary>
+        /// Creates a square identity matrix
+        /// </summary>
+        public static Matrix IdentityMatrix(uint size)
+            => Entity.Matrix.I(size);
+
+        /// <summary>
+        /// Creates a rectangular identity matrix
+        /// with the given size
+        /// </summary>
+        public static Matrix IdentityMatrix(uint rowCount, uint columnCount)
+            => Entity.Matrix.I(rowCount, columnCount);
+
         /// <summary>Classes and functions related to matrices are defined here</summary>
         public static class Matrices
         {
@@ -674,11 +713,13 @@ namespace AngouriMath
             /// <summary>Creates an instance of <see cref="Entity.Matrix"/> that is a matrix.</summary>
             /// <param name="values">A two-dimensional array of values</param>
             /// <returns>A two-dimensional <see cref="Entity.Matrix"/> which is a matrix</returns>
+            [Obsolete("Use MathS.Matrix instead")]
             public static Matrix Matrix(Entity[,] values) => new(GenTensor.CreateMatrix(values));
 
             /// <summary>Creates an instance of <see cref="Entity.Matrix"/> that is a vector.</summary>
             /// <param name="values">The cells of the <see cref="Entity.Matrix"/></param>
             /// <returns>A one-dimensional <see cref="Entity.Matrix"/> which is a vector</returns>
+            [Obsolete("Use MathS.Vector instead")]
             public static Matrix Vector(params Entity[] values)
             {
                 var arr = new Entity[values.Length, 1];
@@ -691,13 +732,14 @@ namespace AngouriMath
             /// <param name="A">First matrix (its width is the result's width)</param>
             /// <param name="B">Second matrix (its height is the result's height)</param>
             /// <returns>A two-dimensional <see cref="Entity.Matrix"/> (matrix) as a result of symbolic multiplication</returns>
-            [Obsolete("Use MatrixMultiplication instead")]
+            [Obsolete("Use operator * instead")]
             public static Matrix DotProduct(Matrix A, Matrix B) => new(GenTensor.MatrixMultiply(A.InnerMatrix, B.InnerMatrix));
 
             /// <summary>Returns the dot product of two <see cref="Entity.Matrix"/>s that are matrices.</summary>
             /// <param name="A">First matrix (its width is the result's width)</param>
             /// <param name="B">Second matrix (its height is the result's height)</param>
             /// <returns>A two-dimensional <see cref="Entity.Matrix"/> (matrix) as a result of symbolic multiplication</returns>
+            [Obsolete("Use operator * instead")]
             public static Matrix MatrixMultiplication(Matrix A, Matrix B) => new(GenTensor.TensorMatrixMultiply(A.InnerMatrix, B.InnerMatrix));
 
             /// <summary>Returns the scalar product of two <see cref="Entity.Matrix"/>s that are vectors with the same length.</summary>
@@ -709,11 +751,13 @@ namespace AngouriMath
             /// <summary>
             /// Creates a closed interval (segment)
             /// </summary>
+            [Obsolete("Use MathS.Interval instead")]
             public static Interval Interval(Entity left, Entity right) => new Interval(left, true, right, true);
 
             /// <summary>
             /// Creates an interval with custom endings
             /// </summary>
+            [Obsolete("Use MathS.Interval instead")]
             public static Interval Interval(Entity left, bool leftClosed, Entity right, bool rightClosed) => new Interval(left, leftClosed, right, rightClosed);
         }
 

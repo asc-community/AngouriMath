@@ -26,6 +26,13 @@ namespace AngouriMath.Extensions
     public static partial class AngouriMathExtensions
     {
         /// <summary>
+        /// Converts a given sequence of elements into a vector,
+        /// which is a one-column matrix
+        /// </summary>
+        public static Matrix ToVector(this IEnumerable<Entity> elements)
+            => MathS.Matrices.Vector(elements.ToArray());
+
+        /// <summary>
         /// Sums all the given terms and returns the resulting expression
         /// new Entity[]{ 1, 2, 3 }.SumAll() -> "1 + 2 + 3"
         /// </summary>

@@ -10,6 +10,7 @@ using GenericTensor.Core;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using FieldCacheNamespace;
+using AngouriMath.Extensions;
 
 namespace AngouriMath
 {
@@ -59,7 +60,7 @@ namespace AngouriMath
                 New(GenTensor.CreateTensor(InnerMatrix.Shape, indices => operation(InnerMatrix.GetValueNoCheck(indices))));
             internal Matrix Elementwise(Matrix other, Func<Entity, Entity, Entity> operation) =>
                 Shape != other.Shape
-                ? throw new InvalidShapeException("Arguments should be of the same shape to apply elementwise operation")
+                ? throw new InvalidMatrixOperationException("Arguments should be of the same shape to apply elementwise operation")
                 : New(GenTensor.CreateTensor(InnerMatrix.Shape, indices =>
                         operation(InnerMatrix.GetValueNoCheck(indices), other.InnerMatrix.GetValueNoCheck(indices))));
             /// <inheritdoc/>
@@ -96,7 +97,18 @@ namespace AngouriMath
                 }
             }
 #pragma warning restore CS1591
+            /// <summary>
+            /// The number of columns of a matrix. It is 1 for vectors.
+            /// </summary>
+            public int ColumnCount => InnerMatrix.Shape[1];
+
+            /// <summary>
+            /// The number of rows for matrices. The number of elements for vectors.
+            /// </summary>
+            public int RowCount => InnerMatrix.Shape[0];
+            
             /// <summary>List of <see cref="int"/>s that stand for dimensions</summary>
+            [Obsolete("Use ColumnCount and RowCount instead")]
             public TensorShape Shape => InnerMatrix.Shape;
 
             /// <summary>
@@ -108,9 +120,17 @@ namespace AngouriMath
             public Matrix(Func<int[], Entity> operation, params int[] dims) : this(GenTensor.CreateTensor(new(dims), operation)) { }
 
             /// <summary>
-            /// Access the tensor if it is a vector
+            /// Returns the i-th element of a vector, or the i-th row of a matrix.
             /// </summary>
-            public Entity this[int i] => InnerMatrix[i];
+            public Entity this[int i] 
+                => IsVector switch
+                {
+                    true => InnerMatrix[i, 0],
+                    false => Enumerable
+                                    .Range(0, ColumnCount)
+                                    .Select(id => InnerMatrix[i, id])
+                                    .ToVector().T
+                };
 
             /// <summary>
             /// Access the tensor if it is a matrix
@@ -127,6 +147,11 @@ namespace AngouriMath
             /// Checks whether the matrix is square (has as many rows as columns)
             /// </summary>
             public bool IsSquare => InnerMatrix.Shape[0] == InnerMatrix.Shape[1];
+
+            /// <summary>
+            /// Determines whether a matrix is a scalar, that is, a one-by-one matrix
+            /// </summary>
+            public bool IsScalar => RowCount == 1 && ColumnCount == 1;
 
             /// <summary>Changes the order of axes in matrix</summary>
             public Matrix T => t.GetValue(static @this =>
@@ -156,7 +181,7 @@ namespace AngouriMath
                 var cp = InnerMatrix.Copy(false);
                 try
                 {
-                    cp.TensorMatrixInvert();
+                    cp.InvertMatrix();
                 }
                 catch (InvalidShapeException)
                 {
