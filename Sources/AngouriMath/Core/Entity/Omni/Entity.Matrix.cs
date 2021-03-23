@@ -287,19 +287,9 @@ namespace AngouriMath
             public Matrix Pow(int exp)
             {
                 if (!IsSquare)
-                    throw new InvalidMatrixOperationException("Cannot find power of a non-square matrix");                
-                var size = RowCount;
-                if (exp < 0)
-                    return ComputeInverse().Pow(-exp);
-                if (exp == 0)
-                    return I((uint)size);
-                if (exp == 1)
-                    return this;
-                var p2 = Pow(exp / 2);
-                if (exp % 2 == 0)
-                    return p2 * p2;
-                else
-                    return p2 * p2 * this;
+                    throw new InvalidMatrixOperationException("Cannot find power of a non-square matrix");
+                var mat = InnerMatrix.MatrixPower(exp);
+                return new(mat);
             }
 
             /// <summary>
