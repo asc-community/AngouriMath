@@ -1,14 +1,17 @@
 #pragma once
 
 #include <string>
+#include "TypeAliases.h"
 
 namespace AngouriMath
 {
     struct ErrorCode
     {
     public:
+        ErrorCode() { }
+
         ErrorCode(std::string name, std::string stackTrace)
-            : name(name), stackTrace(stackTrace) { }
+            : name(std::move(name)), stackTrace(std::move(stackTrace)) { }
 
         bool IsOk() const { return this->name.empty(); }
         const std::string& Name() const { return this->name; }
@@ -18,6 +21,12 @@ namespace AngouriMath
         std::string name;
         std::string stackTrace;
     };
+
+    namespace Internal
+    {
+        void HandleErrorCode(NativeErrorCode nec);
+        void HandleErrorCode(NativeErrorCode nec, ErrorCode& ec);
+    }
 }
 
 namespace std

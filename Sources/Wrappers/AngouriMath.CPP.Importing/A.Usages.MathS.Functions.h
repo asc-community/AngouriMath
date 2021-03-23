@@ -17,146 +17,338 @@ namespace AngouriMath
     Entity Sin(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_sin(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_sin(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Sin(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_sin(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Cos(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_cos(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_cos(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Cos(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_cos(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Sec(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_sec(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_sec(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Sec(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_sec(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Cosec(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_cosec(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_cosec(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Cosec(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_cosec(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Log(const Entity& arg0, const Entity& arg1)
     {
         EntityRef res;
-        auto error = math_s_log(arg0.Handle(), arg1.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_log(GetHandle(arg0), GetHandle(arg1), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Log(const Entity& arg0, const Entity& arg1, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_log(GetHandle(arg0), GetHandle(arg1), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Pow(const Entity& arg0, const Entity& arg1)
     {
         EntityRef res;
-        auto error = math_s_pow(arg0.Handle(), arg1.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_pow(GetHandle(arg0), GetHandle(arg1), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Pow(const Entity& arg0, const Entity& arg1, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_pow(GetHandle(arg0), GetHandle(arg1), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Sqrt(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_sqrt(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_sqrt(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Sqrt(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_sqrt(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Cbrt(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_cbrt(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_cbrt(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Cbrt(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_cbrt(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Sqr(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_sqr(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_sqr(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Sqr(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_sqr(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Tan(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_tan(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_tan(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Tan(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_tan(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Cotan(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_cotan(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_cotan(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Cotan(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_cotan(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Arcsin(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_arcsin(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_arcsin(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Arcsin(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_arcsin(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Arccos(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_arccos(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_arccos(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Arccos(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_arccos(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Arctan(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_arctan(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_arctan(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Arctan(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_arctan(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Arccotan(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_arccotan(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_arccotan(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Arccotan(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_arccotan(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Arcsec(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_arcsec(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_arcsec(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Arcsec(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_arcsec(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Arccosec(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_arccosec(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_arccosec(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Arccosec(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_arccosec(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Ln(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_ln(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_ln(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Ln(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_ln(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Factorial(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_factorial(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_factorial(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Factorial(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_factorial(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Gamma(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_gamma(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_gamma(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Gamma(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_gamma(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Signum(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_signum(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_signum(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Signum(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_signum(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Abs(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_abs(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_abs(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Abs(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_abs(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Negation(const Entity& arg0)
     {
         EntityRef res;
-        auto error = math_s_negation(arg0.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_negation(GetHandle(arg0), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Negation(const Entity& arg0, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_negation(GetHandle(arg0), &res), e);
+        return CreateByHandle(res);
+    }
+    
     Entity Provided(const Entity& arg0, const Entity& arg1)
     {
         EntityRef res;
-        auto error = math_s_provided(arg0.Handle(), arg1.Handle(), &res);
-        return Entity(res);
+        HandleErrorCode(math_s_provided(GetHandle(arg0), GetHandle(arg1), &res));
+        return CreateByHandle(res);
     }
+
+    Entity Provided(const Entity& arg0, const Entity& arg1, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(math_s_provided(GetHandle(arg0), GetHandle(arg1), &res), e);
+        return CreateByHandle(res);
+    }
+    
 
 }

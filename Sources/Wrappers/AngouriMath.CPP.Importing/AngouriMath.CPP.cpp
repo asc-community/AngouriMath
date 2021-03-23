@@ -31,8 +31,14 @@ namespace AngouriMath
     Internal::EntityRef ParseString(const char* expr)
     {
         Internal::EntityRef result;
-        // TODO handle errors
-        auto error = maths_from_string(expr, &result);
+        HandleErrorCode(maths_from_string(expr, &result));
+        return result;
+    }
+
+    Internal::EntityRef ParseString(const char* expr, ErrorCode& e)
+    {
+        Internal::EntityRef result;
+        HandleErrorCode(maths_from_string(expr, &result), e);
         return result;
     }
 
@@ -51,18 +57,51 @@ namespace AngouriMath
     {
     }
 
+    Entity::Entity(const std::string& expr, ErrorCode& e)
+        : Entity(expr.c_str(), e)
+    {
+    }
+
+    Entity::Entity(const char* expr, ErrorCode& e)
+        : Entity(ParseString(expr, e))
+    {
+    }
+
     std::string Entity::ToString() const
     {
         char* buff = nullptr;
-        auto error = entity_to_string(*this->handle, &buff);
-        
+        HandleErrorCode(entity_to_string(*this->handle, &buff));
+        return buff != nullptr ? std::string(buff) : std::string();
+    }
+
+    std::string Entity::ToString(ErrorCode& ec) const
+    {
+        char* buff = nullptr;
+        HandleErrorCode(entity_to_string(*this->handle, &buff), ec);
         return buff != nullptr ? std::string(buff) : std::string();
     }
 
     Entity Entity::Differentiate(const Entity& var) const
     {
         Internal::EntityRef result;
-        auto error = entity_differentiate(*this->handle, *var.handle, &result);
+        HandleErrorCode(entity_differentiate(*this->handle, *var.handle, &result));
         return Entity(result);
+    }
+
+    Entity Entity::Differentiate(const Entity& var, ErrorCode& ec) const
+    {
+        Internal::EntityRef result;
+        HandleErrorCode(entity_differentiate(*this->handle, *var.handle, &result), ec);
+        return Entity(result);
+    }
+
+    Internal::EntityRef GetHandle(const Entity& e)
+    {
+        return *e.handle;
+    }
+
+    Entity CreateByHandle(Internal::EntityRef handle)
+    {
+        return Entity(handle);
     }
 }

@@ -13,13 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(SOURCES
 "AngouriMath.CPP.cpp"
-"A.Usages.MathS.Functions.h"
-"A.Usages.Hyperbolic.Functions.h"
-"A.Imports.MathS.Functions.h"
-"A.Imports.Hyperbolic.Functions.h"
-)
+ "ErrorCode.cpp")
 
-add_library(${PROJECT_NAME} ${SOURCES} "Imports.h")
-
-target_link_directories(${PROJECT_NAME} PUBLIC "./")
+add_library(${PROJECT_NAME} ${SOURCES})
+target_link_directories(${PROJECT_NAME} PUBLIC win-x64)
 target_link_libraries(${PROJECT_NAME} PUBLIC AngouriMath.CPP.Exporting)

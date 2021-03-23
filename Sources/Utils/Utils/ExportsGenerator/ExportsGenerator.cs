@@ -3,9 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Text;
-using static AngouriMath.MathS.UnsafeAndInternal;
 
 namespace Utils
 {
@@ -111,7 +109,7 @@ namespace Utils
                 var name = method.name;
                 var exportName = method.exportName;
                 var pars = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"const Entity& arg{c}"));
-                var parsWithoutType = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"arg{c}.Handle()"));
+                var parsWithoutType = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"GetHandle(arg{c})"));
                 var methodSg = new SourceGenerator(
                     Pattern("ExportsGenerator/UsingFunctions"), 
                     "%name%", "%exportname%", "%params%", "%paramswithouttype%");
