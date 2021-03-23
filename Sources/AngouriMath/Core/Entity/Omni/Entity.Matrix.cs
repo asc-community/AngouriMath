@@ -62,7 +62,7 @@ namespace AngouriMath
             internal Matrix Elementwise(Func<Entity, Entity> operation) =>
                 New(GenTensor.CreateTensor(InnerMatrix.Shape, indices => operation(InnerMatrix.GetValueNoCheck(indices))));
             internal Matrix Elementwise(Matrix other, Func<Entity, Entity, Entity> operation) =>
-                Shape != other.Shape
+                InnerMatrix.Shape != other.InnerMatrix.Shape
                 ? throw new InvalidMatrixOperationException("Arguments should be of the same shape to apply elementwise operation")
                 : New(GenTensor.CreateTensor(InnerMatrix.Shape, indices =>
                         operation(InnerMatrix.GetValueNoCheck(indices), other.InnerMatrix.GetValueNoCheck(indices))));
@@ -311,13 +311,13 @@ namespace AngouriMath
             /// IEnumerable, which lets us enumerate over the matrix or vector
             /// </summary>
             /// <returns></returns>
-            public IEnumerator<Entity> GenEnumerator()
+            public IEnumerator<Entity> GetEnumerator()
             {
                 for (int i = 0; i < RowCount; i++)
                     yield return this[i];
             }
 
-            IEnumerator IEnumerable.GetEnumerator() => GenEnumerator();
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
             /// <summary>
             /// Matrix's form, transformed via Gaussian elimination.

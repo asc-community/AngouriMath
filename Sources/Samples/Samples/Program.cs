@@ -16,7 +16,7 @@ var H = Matrix(new Entity[,]
     });
 // Console.WriteLine((H.Adjugate / H.Determinant).Evaled);
 // Console.WriteLine(H.ComputeInverse());
-Console.WriteLine(I_2.Adjugate);
+Console.WriteLine(H.MainDiagonal);
 // Console.WriteLine(Det(H - "x" * I_3).Simplify());
 /*
 Console.WriteLine(H);

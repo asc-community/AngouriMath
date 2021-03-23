@@ -217,11 +217,29 @@ namespace UnitTests.Algebra
         [Fact] public void MatrixMultiplication2()
             => Assert.Equal(MathS.I_2 + MathS.I_2, H * H);
 
+        [Fact] public void UnsuccessfulMultiplicationEvaled()
+            => Assert.Equal(A * (Entity)B, (A * (Entity)B).Evaled);
+
+        [Fact] public void UnsuccessfulMultiplicationInnerSimplified()
+            => Assert.Equal(A * (Entity)B, (A * (Entity)B).InnerSimplified);
+
         [Fact] public void MatrixAddition1()
             => Assert.Equal(MathS.Vector(3, 2), MathS.Vector(1, 2) + MathS.Vector(2, 0));
 
+        [Fact] public void UnsuccessfulMatrixAddition2Evaled()
+            => Assert.Equal(MathS.Vector(1, 2) + (Entity)MathS.Vector(2, 0, 3), (MathS.Vector(1, 2) + (Entity)MathS.Vector(2, 0, 3)).Evaled);
+
+        [Fact] public void UnsuccessfulMatrixAddition2InnerSimplified()
+            => Assert.Equal(MathS.Vector(1, 2) + (Entity)MathS.Vector(2, 0, 3), (MathS.Vector(1, 2) + (Entity)MathS.Vector(2, 0, 3)).InnerSimplified);
+
         [Fact] public void MatrixSubtraction1()
             => Assert.Equal(MathS.Vector(-1, 2), MathS.Vector(1, 2) - MathS.Vector(2, 0));
+
+        [Fact] public void UnsuccessfulMatrixSubtraction2Evaled()
+            => Assert.Equal(MathS.Vector(1, 2) - (Entity)MathS.Vector(2, 0, 3), (MathS.Vector(1, 2) - (Entity)MathS.Vector(2, 0, 3)).Evaled);
+
+        [Fact] public void UnsuccessfulMatrixSubtraction2InnerSimplified()
+            => Assert.Equal(MathS.Vector(1, 2) - (Entity)MathS.Vector(2, 0, 3), (MathS.Vector(1, 2) - (Entity)MathS.Vector(2, 0, 3)).InnerSimplified);
 
         [Fact] public void MatrixDivision1()
             => Assert.Equal(H, H / MathS.I_2);
@@ -233,6 +251,26 @@ namespace UnitTests.Algebra
                     { "1 / 2", "-1 / 2" }
                 }).InnerSimplified,
                 MathS.I_2 / H);
+
+        [Fact] public void UnsuccessfulMatrixDivisionEvaled()
+        {
+            var singularMatrix = MathS.Matrix(new Entity[,]
+                {
+                    { 1, 2 },
+                    { 2, 4 }
+                });
+            Assert.Equal(MathS.I_2 / (Entity)singularMatrix, (MathS.I_2 / (Entity)singularMatrix).Evaled);
+        }
+
+        [Fact] public void UnsuccessfulMatrixDivisionInnerSimplified()
+        {
+            var singularMatrix = MathS.Matrix(new Entity[,]
+                {
+                    { 1, 2 },
+                    { 2, 4 }
+                });
+            Assert.Equal(MathS.I_2 / (Entity)singularMatrix, (MathS.I_2 / (Entity)singularMatrix).InnerSimplified);
+        }
 
         [Fact] public void MatrixDivision3()
             => Assert.Equal(MathS.I_2, H / H);
@@ -276,6 +314,12 @@ namespace UnitTests.Algebra
 
         [Fact] public void RightScalarSubtraction()
             => Assert.Equal(MathS.Vector(1, 2), (MathS.Vector(3, 4) - 2).InnerSimplified);
+
+        [Fact] public void LeftScalarDivisionUnsuccessfulEvaled()
+            => Assert.Equal(2 / MathS.Vector(3, 4), (2 / MathS.Vector(3, 4)).Evaled);
+
+        [Fact] public void LeftScalarDivisionUnsuccessfulInnerSimplified()
+            => Assert.Equal(2 / MathS.Vector(3, 4), (2 / MathS.Vector(3, 4)).InnerSimplified);
 
         [Fact] public void Adjugate1()
         {
