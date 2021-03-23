@@ -46,14 +46,14 @@ namespace AngouriMath.Functions.Boolean
         /// compiling the truth table
         /// </summary>
         /// <exception cref="WrongNumberOfArgumentsException"/>
-        internal static Tensor? SolveTable(Entity expr, Variable[] variables)
+        internal static Matrix? SolveTable(Entity expr, Variable[] variables)
         {
             var count = expr.Vars.Count();
             // TODO: we probably also should verify the uniqueness of the given variables
             if (count != variables.Length)
                 throw new WrongNumberOfArgumentsException("Number of variables must equal number of variables in the expression");
             var states = new bool[variables.Length];
-            var tb = new TensorBuilder(count);
+            var tb = new MatrixBuilder(count);
             var variablesStorage = new Dictionary<Variable, Entity>();
             do
             {
@@ -64,17 +64,17 @@ namespace AngouriMath.Functions.Boolean
             }
             while (Next(states));
 
-            return tb.ToTensor();
+            return tb.ToMatrix();
         }
 
-        internal static Tensor? BuildTruthTable(Entity expr, Variable[] variables)
+        internal static Matrix? BuildTruthTable(Entity expr, Variable[] variables)
         {
             var count = expr.Vars.Count();
             // TODO: we probably also should verify the uniqueness of the given variables
             if (count != variables.Length)
                 throw new WrongNumberOfArgumentsException("Number of variables must equal number of variables in the expression");
             var states = new bool[variables.Length];
-            var tb = new TensorBuilder(count + 1);
+            var tb = new MatrixBuilder(count + 1);
             var variablesStorage = new Dictionary<Variable, Entity>();
             do
             {
@@ -84,7 +84,7 @@ namespace AngouriMath.Functions.Boolean
             }
             while (Next(states));
 
-            return tb.ToTensor();
+            return tb.ToMatrix();
         }
     }
 }

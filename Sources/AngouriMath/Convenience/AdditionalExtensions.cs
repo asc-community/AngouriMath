@@ -16,42 +16,42 @@ namespace AngouriMath.Extensions
     {
         ///<summary>Solves a given set of arbitrary equations</summary>
         ///<returns>A tensor whose width is 2 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2) eqs, string var1, string var2)
+        public static Matrix? SolveSystem(this (string eq1, string eq2) eqs, string var1, string var2)
             => MathS.Equations(eqs.eq1, eqs.eq2).Solve(var1, var2);
 
         ///<summary>Solves a given set of arbitrary equations</summary>
         ///<returns>A tensor whose width is 3 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3) eqs, string var1, string var2, string var3)
+        public static Matrix? SolveSystem(this (string eq1, string eq2, string eq3) eqs, string var1, string var2, string var3)
             => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3).Solve(var1, var2, var3);
 
         ///<summary>Solves a given set of arbitrary equations</summary>
         ///<returns>A tensor whose width is 4 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4) eqs, string var1, string var2, string var3, string var4)
+        public static Matrix? SolveSystem(this (string eq1, string eq2, string eq3, string eq4) eqs, string var1, string var2, string var3, string var4)
             => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4).Solve(var1, var2, var3, var4);
 
         ///<summary>Solves a given set of arbitrary equations</summary>
         ///<returns>A tensor whose width is 5 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5) eqs, string var1, string var2, string var3, string var4, string var5)
+        public static Matrix? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5) eqs, string var1, string var2, string var3, string var4, string var5)
             => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5).Solve(var1, var2, var3, var4, var5);
 
         ///<summary>Solves a given set of arbitrary equations</summary>
         ///<returns>A tensor whose width is 6 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6) eqs, string var1, string var2, string var3, string var4, string var5, string var6)
+        public static Matrix? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6) eqs, string var1, string var2, string var3, string var4, string var5, string var6)
             => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6).Solve(var1, var2, var3, var4, var5, var6);
 
         ///<summary>Solves a given set of arbitrary equations</summary>
         ///<returns>A tensor whose width is 7 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7)
+        public static Matrix? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7)
             => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7).Solve(var1, var2, var3, var4, var5, var6, var7);
 
         ///<summary>Solves a given set of arbitrary equations</summary>
         ///<returns>A tensor whose width is 8 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7, string eq8) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7, string var8)
+        public static Matrix? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7, string eq8) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7, string var8)
             => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7, eqs.eq8).Solve(var1, var2, var3, var4, var5, var6, var7, var8);
 
         ///<summary>Solves a given set of arbitrary equations</summary>
         ///<returns>A tensor whose width is 9 columns long or null if no solutions were found</returns>
-        public static Tensor? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7, string eq8, string eq9) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7, string var8, string var9)
+        public static Matrix? SolveSystem(this (string eq1, string eq2, string eq3, string eq4, string eq5, string eq6, string eq7, string eq8, string eq9) eqs, string var1, string var2, string var3, string var4, string var5, string var6, string var7, string var8, string var9)
             => MathS.Equations(eqs.eq1, eqs.eq2, eqs.eq3, eqs.eq4, eqs.eq5, eqs.eq6, eqs.eq7, eqs.eq8, eqs.eq9).Solve(var1, var2, var3, var4, var5, var6, var7, var8, var9);
 
         /// <summary>

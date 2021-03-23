@@ -17,13 +17,14 @@ using System.Diagnostics.CodeAnalysis;
 using AngouriMath.Convenience;
 using AngouriMath.Core.Multithreading;
 using System.Threading;
+using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath
 {
     using static Entity;
     using static Entity.Number;
     using NumericsComplex = System.Numerics.Complex;
-    using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Tensor.EntityTensorWrapperOperations>;
+    using GenTensor = GenericTensor.Core.GenTensor<Entity, Entity.Matrix.EntityTensorWrapperOperations>;
     using static Entity.Set;
 
     /// <summary>Use functions from this class</summary>
@@ -78,7 +79,7 @@ namespace AngouriMath
         /// Uses a simple table of truth
         /// Use <see cref="Entity.SolveBoolean(Variable)"/> for smart solving
         /// </summary>
-        public static Tensor? SolveBooleanTable(Entity expression, params Variable[] variables)
+        public static Matrix? SolveBooleanTable(Entity expression, params Variable[] variables)
             => BooleanSolver.SolveTable(expression, variables);
 
 
@@ -517,6 +518,26 @@ namespace AngouriMath
         /// </summary>
         [ConstantField] public static readonly Entity NaN = Real.NaN;
 
+        /// <summary>
+        /// The square identity matrix of size 1
+        /// </summary>
+        [ConstantField] public static readonly Matrix I_1 = IdentityMatrix(1);
+
+        /// <summary>
+        /// The square identity matrix of size 2
+        /// </summary>
+        [ConstantField] public static readonly Matrix I_2 = IdentityMatrix(2);
+
+        /// <summary>
+        /// The square identity matrix of size 3
+        /// </summary>
+        [ConstantField] public static readonly Matrix I_3 = IdentityMatrix(3);
+
+        /// <summary>
+        /// The square identity matrix of size 4
+        /// </summary>
+        [ConstantField] public static readonly Matrix I_4 = IdentityMatrix(4);
+
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
         /// <param name="useCache">By default is true, it boosts performance if you have multiple uses of the same string,
@@ -643,11 +664,109 @@ namespace AngouriMath
             public static Complex Create(EDecimal re, EDecimal im) => Complex.Create(re, im);
         }
 
+        /// <summary>
+        /// Finds the determinant of the given matrix
+        /// </summary>
+        public static Entity Det(Matrix m)
+            => m.Determinant;
+
+        /// <summary>Creates an instance of <see cref="Entity.Matrix"/>.</summary>
+        /// <param name="values">A two-dimensional array of values</param>
+        /// <returns>A two-dimensional <see cref="Entity.Matrix"/> which is a matrix</returns>
+        public static Matrix Matrix(Entity[,] values) => new(GenTensor.CreateMatrix(values));
+
+        /// <summary>Creates an instance of <see cref="Entity.Matrix"/> that has one column.</summary>
+        /// <param name="values">The cells of the <see cref="Entity.Matrix"/></param>
+        /// <returns>A one-dimensional <see cref="Entity.Matrix"/> which is a vector</returns>
+        public static Matrix Vector(params Entity[] values)
+        {
+            var arr = new Entity[values.Length, 1];
+            for (int i = 0; i < values.Length; i++)
+                arr[i, 0] = values[i];
+            return new(GenTensor.CreateMatrix(arr));
+        }
+
+        /// <summary>
+        /// Creates a 1x1 matrix of a given value. It will be simplified
+        /// once InnerSimplified or Evaled are addressed
+        /// </summary>
+        /// <returns>
+        /// A 1x1 matrix, which is also a 1-long vector, or just a scalar.
+        /// </returns>
+        public static Matrix Scalar(Entity value)
+            => Vector(value);
+
+        /// <summary>
+        /// Creates a matrix from given rows
+        /// </summary>
+        /// <param name="vectors">
+        /// There should be at least one row.
+        /// All rows must have the same number
+        /// of columns
+        /// </param>
+        public static Matrix MatrixFromRows(IEnumerable<Matrix> vectors)
+        {
+            if (!vectors.Any())
+                throw new InvalidMatrixOperationException("No rows were provided");
+            var tb = new MatrixBuilder(vectors.First().ColumnCount);
+            foreach (var v in vectors)
+                tb.Add(v);
+            return tb.ToMatrix() ?? throw new AngouriBugException("Nullability should have been checked before");
+        }
+
+        /// <summary>
+        /// Creates a matrix from given elements
+        /// </summary>
+        /// <param name="elements">
+        /// There should be at least one row.
+        /// All rows must have the same number
+        /// of columns
+        /// </param>
+        public static Matrix MatrixFromIEnum2x2(IEnumerable<IEnumerable<Entity>> elements)
+        {
+            if (!elements.Any())
+                throw new InvalidMatrixOperationException("No rows were provided");
+            var tb = new MatrixBuilder(elements.First().Count());
+            foreach (var v in elements)
+                tb.Add(v);
+            return tb.ToMatrix() ?? throw new AngouriBugException("Nullability should have been checked before");
+        }
+
+        /// <summary>
+        /// Creates a closed interval (segment)
+        /// </summary>
+        public static Interval Interval(Entity left, Entity right) => new Interval(left, true, right, true);
+
+        /// <summary>
+        /// Creates an interval with custom endings
+        /// </summary>
+        public static Interval Interval(Entity left, bool leftClosed, Entity right, bool rightClosed) => new Interval(left, leftClosed, right, rightClosed);
+
+        /// <summary>
+        /// Creates a square identity matrix
+        /// </summary>
+        public static Matrix IdentityMatrix(uint size)
+            => Entity.Matrix.I(size);
+
+        /// <summary>
+        /// Creates a rectangular identity matrix
+        /// with the given size
+        /// </summary>
+        public static Matrix IdentityMatrix(uint rowCount, uint columnCount)
+            => Entity.Matrix.I(rowCount, columnCount);
+
         /// <summary>Classes and functions related to matrices are defined here</summary>
         public static class Matrices
         {
             /// <summary>
-            /// Creates an instance of <see cref="Tensor"/> that is a matrix.
+            /// Performs a pointwise multiplication operation,
+            /// or throws exception if shapes mismatch
+            /// </summary>
+            public static Matrix PointwiseMultiplication(Matrix m1, Matrix m2)
+                => (Matrix)new Matrix(GenTensor.PiecewiseMultiply(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+
+            /// <summary>
+            /// Creates an instance of <see cref="Entity.Matrix"/> that is a matrix.
             /// Usage example:
             /// <code>
             /// var t = MathS.Matrix(5, 3,<br/>
@@ -667,47 +786,59 @@ namespace AngouriMath
             /// Array of values of the matrix so that its length is equal to
             /// the product of <paramref name="rows"/> and <paramref name="columns"/>
             /// </param>
-            /// <returns>A two-dimensional <see cref="Tensor"/> which is a matrix</returns>
-            public static Tensor Matrix(int rows, int columns, params Entity[] values) =>
+            /// <returns>A two-dimensional <see cref="Entity.Matrix"/> which is a matrix</returns>
+            public static Matrix Matrix(int rows, int columns, params Entity[] values) =>
                 new(GenTensor.CreateMatrix(rows, columns, (x, y) => values[x * columns + y]));
 
-            /// <summary>Creates an instance of <see cref="Tensor"/> that is a matrix.</summary>
+            /// <summary>Creates an instance of <see cref="Entity.Matrix"/> that is a matrix.</summary>
             /// <param name="values">A two-dimensional array of values</param>
-            /// <returns>A two-dimensional <see cref="Tensor"/> which is a matrix</returns>
-            public static Tensor Matrix(Entity[,] values) => new(GenTensor.CreateMatrix(values));
+            /// <returns>A two-dimensional <see cref="Entity.Matrix"/> which is a matrix</returns>
+            [Obsolete("Use MathS.Matrix instead")]
+            public static Matrix Matrix(Entity[,] values) => new(GenTensor.CreateMatrix(values));
 
-            /// <summary>Creates an instance of <see cref="Tensor"/> that is a vector.</summary>
-            /// <param name="values">The cells of the <see cref="Tensor"/></param>
-            /// <returns>A one-dimensional <see cref="Tensor"/> which is a vector</returns>
-            public static Tensor Vector(params Entity[] values) => new(GenTensor.CreateVector(values));
+            /// <summary>Creates an instance of <see cref="Entity.Matrix"/> that is a vector.</summary>
+            /// <param name="values">The cells of the <see cref="Entity.Matrix"/></param>
+            /// <returns>A one-dimensional <see cref="Entity.Matrix"/> which is a vector</returns>
+            [Obsolete("Use MathS.Vector instead")]
+            public static Matrix Vector(params Entity[] values)
+            {
+                var arr = new Entity[values.Length, 1];
+                for (int i = 0; i < values.Length; i++)
+                    arr[i, 0] = values[i];
+                return new(GenTensor.CreateMatrix(arr));
+            }
 
-            /// <summary>Returns the dot product of two <see cref="Tensor"/>s that are matrices.</summary>
+            /// <summary>Returns the dot product of two <see cref="Entity.Matrix"/>s that are matrices.</summary>
             /// <param name="A">First matrix (its width is the result's width)</param>
             /// <param name="B">Second matrix (its height is the result's height)</param>
-            /// <returns>A two-dimensional <see cref="Tensor"/> (matrix) as a result of symbolic multiplication</returns>
-            [Obsolete("Use MatrixMultiplication instead")]
-            public static Tensor DotProduct(Tensor A, Tensor B) => new(GenTensor.MatrixMultiply(A.InnerTensor, B.InnerTensor));
+            /// <returns>A two-dimensional <see cref="Entity.Matrix"/> (matrix) as a result of symbolic multiplication</returns>
+            [Obsolete("Use operator * instead")]
+            public static Matrix DotProduct(Matrix A, Matrix B) => new(GenTensor.MatrixMultiply(A.InnerMatrix, B.InnerMatrix));
 
-            /// <summary>Returns the dot product of two <see cref="Tensor"/>s that are matrices.</summary>
+            /// <summary>Returns the dot product of two <see cref="Entity.Matrix"/>s that are matrices.</summary>
             /// <param name="A">First matrix (its width is the result's width)</param>
             /// <param name="B">Second matrix (its height is the result's height)</param>
-            /// <returns>A two-dimensional <see cref="Tensor"/> (matrix) as a result of symbolic multiplication</returns>
-            public static Tensor MatrixMultiplication(Tensor A, Tensor B) => new(GenTensor.TensorMatrixMultiply(A.InnerTensor, B.InnerTensor));
+            /// <returns>A two-dimensional <see cref="Entity.Matrix"/> (matrix) as a result of symbolic multiplication</returns>
+            [Obsolete("Use operator * instead")]
+            public static Matrix MatrixMultiplication(Matrix A, Matrix B) => new(GenTensor.TensorMatrixMultiply(A.InnerMatrix, B.InnerMatrix));
 
-            /// <summary>Returns the scalar product of two <see cref="Tensor"/>s that are vectors with the same length.</summary>
+            /// <summary>Returns the scalar product of two <see cref="Entity.Matrix"/>s that are vectors with the same length.</summary>
             /// <param name="a">First vector (order does not matter)</param>
             /// <param name="b">Second vector</param>
-            /// <returns>The resulting scalar which is an <see cref="Entity"/> and not a <see cref="Tensor"/></returns>
-            public static Entity ScalarProduct(Tensor a, Tensor b) => GenTensor.VectorDotProduct(a.InnerTensor, b.InnerTensor);
+            /// <returns>The resulting scalar which is an <see cref="Entity"/> and not a <see cref="Entity.Matrix"/></returns>
+            [Obsolete("Use a.T * b for the same purpose")]
+            public static Entity ScalarProduct(Matrix a, Matrix b) => GenTensor.VectorDotProduct(a.InnerMatrix, b.InnerMatrix);
 
             /// <summary>
             /// Creates a closed interval (segment)
             /// </summary>
+            [Obsolete("Use MathS.Interval instead")]
             public static Interval Interval(Entity left, Entity right) => new Interval(left, true, right, true);
 
             /// <summary>
             /// Creates an interval with custom endings
             /// </summary>
+            [Obsolete("Use MathS.Interval instead")]
             public static Interval Interval(Entity left, bool leftClosed, Entity right, bool rightClosed) => new Interval(left, leftClosed, right, rightClosed);
         }
 
@@ -1145,7 +1276,7 @@ namespace AngouriMath
             /// Combines all possible values of <paramref name="variables"/>
             /// and has the last column as the result of the function
             /// </summary>
-            public static Tensor? BuildTruthTable(Entity expression, params Variable[] variables)
+            public static Matrix? BuildTruthTable(Entity expression, params Variable[] variables)
                 => BooleanSolver.BuildTruthTable(expression, variables);
 
 

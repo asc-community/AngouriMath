@@ -4,6 +4,9 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
+using AngouriMath.Core.Exceptions;
+using AngouriMath.Functions;
+using System.Linq;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 
@@ -85,6 +88,8 @@ namespace AngouriMath
             protected override Entity InnerEval() => ExpandOnTwoArguments(Multiplier.Evaled, Multiplicand.Evaled,
                 (a, b) => (a, b) switch
                 {
+                    (Matrix m1, Matrix m2) when m1.ColumnCount == m2.RowCount => (m1 * m2).Evaled,
+                    (Matrix m1, Matrix m2) => a * b,
                     (Complex n1, Complex n2) => n1 * n2,
                     _ => null
                 },
@@ -95,6 +100,8 @@ namespace AngouriMath
                 ExpandOnTwoArguments(Multiplier.InnerSimplified, Multiplicand.InnerSimplified,
                     (a, b) => (a, b) switch
                     {
+                        (Matrix m1, Matrix m2) when m1.ColumnCount == m2.RowCount => (m1 * m2).InnerSimplified,
+                        (Matrix m1, Matrix m2) => a * b,
                         (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
                         (_, Integer(0)) or (Integer(0), _) => 0,
                         (var n1, Integer(1)) => n1,
@@ -107,11 +114,31 @@ namespace AngouriMath
         }
         public partial record Divf
         {
+            private static bool TryDivide(Matrix m1, Matrix m2, out Entity res)
+            {
+                res = 0;
+                if (!m1.IsSquare)
+                    return false;
+                if (m1.InnerMatrix.Shape != m2.InnerMatrix.Shape)
+                    return false;
+                try
+                {
+                    res = m1 / m2;
+                    return true;
+                }
+                catch (InvalidMatrixOperationException)
+                {
+                    return false;
+                }
+            }
+
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnTwoArguments(Dividend.Evaled, Divisor.Evaled,
                     (a, b) => (a, b) switch
                     {
+                        (Matrix m1, Matrix m2) when TryDivide(m1, m2, out var res) => res.Evaled,
+                        (var any, Matrix m) => (any / m),
                         (Complex n1, Complex n2) => n1 / n2,
                         _ => null
                     },
@@ -122,6 +149,8 @@ namespace AngouriMath
                 ExpandOnTwoArguments(Dividend.InnerSimplified, Divisor.InnerSimplified,
                 (a, b) => (a, b) switch
                 {
+                    (Matrix m1, Matrix m2) when TryDivide(m1, m2, out var res) => res,
+                    (var any, Matrix m) => (any / m),
                     (Integer(0), _) => 0,
                     (_, Integer(0)) => Real.NaN,
                     (var n1, Integer(1)) => n1,
@@ -132,11 +161,26 @@ namespace AngouriMath
         }
         public partial record Powf
         {
+            private static bool TryPower(Matrix m, int exp, out Entity res)
+            {
+                res = 0;
+                try
+                {
+                    res = m.Pow(exp);
+                    return true;
+                }
+                catch (InvalidMatrixOperationException)
+                {
+                    return false;
+                }
+            }
+
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnTwoArguments(Base.Evaled, Exponent.Evaled,
                     (a, b) => (a, b) switch
                 {
+                    (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.Evaled,
                     (Complex n1, Complex n2) => Number.Pow(n1, n2),
                     (Integer(1), _) => 1,
                     (Integer(0), _) => 0,
@@ -152,6 +196,7 @@ namespace AngouriMath
                 ExpandOnTwoArguments(Base.InnerSimplified, Exponent.InnerSimplified,
                 (a, b) => (a, b) switch
                 {
+                    (Matrix m, Integer(var exp)) when exp is { } expNotNull && TryPower(m, expNotNull, out var res) => res.InnerSimplified,
                     (Integer(1), _) => 1,
                     (Integer(0), Integer(0)) => 1,
                     (Integer(0), _) => 0,
@@ -253,6 +298,7 @@ namespace AngouriMath
                 => ExpandOnOneArgument(Argument.Evaled,
                     a => a switch
                     {
+                        Matrix m when m.IsVector => Sumf.Sum(m.Select(c => c.Pow(2))).Evaled,
                         Complex n => Number.Abs(n),
                         _ => null
                     },
@@ -265,6 +311,7 @@ namespace AngouriMath
                 => ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
+                        Matrix m when m.IsVector => Sumf.Sum(m.Select(c => c.Pow(2))).InnerSimplified,
                         _ => null
                     },
                     (@this, a) => ((Absf)@this).New(a)

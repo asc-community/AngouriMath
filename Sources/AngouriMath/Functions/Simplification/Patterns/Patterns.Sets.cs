@@ -25,7 +25,7 @@ namespace AngouriMath.Functions
             ConditionalSet(var var1, Inf(var var1a, var set)) when var1 == var1a => set,
 
             Inf(var var1, FiniteSet finite) when finite.Count == 1 => var1.Equalizes(finite.First()),
-            Inf(not Set and not Tensor and var var, Interval(var left, var leftClosed, var right, var rightClosed)) => 
+            Inf(not Set and not Matrix and var var, Interval(var left, var leftClosed, var right, var rightClosed)) => 
             Simplificator.ParaphraseInterval(var, left, leftClosed, right, rightClosed),
 
             FiniteSet potentialBB when potentialBB == FullBooleanSet => SpecialSet.Create(Domain.Boolean),

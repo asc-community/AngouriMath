@@ -112,8 +112,8 @@ namespace AngouriMath
 
         /// <summary>
         /// Represents the evaluated value of the given expression
-        /// Unlike the result of <see cref="EvalNumerical"/>,
-        /// <see cref="EvalBoolean"/> and <see cref="EvalTensor"/>,
+        /// Unlike the result of <see cref="EvalNumerical"/> and
+        /// <see cref="EvalBoolean"/>
         /// this is not constrained by any type.
         /// 
         /// It only performs an active operation in the first call,
@@ -123,32 +123,6 @@ namespace AngouriMath
         /// </summary>
         public Entity Evaled => evaled.GetValue(@this => @this.InnerEvalWithCheck(), this);
         private FieldCache<Entity> evaled;
-
-        /// <summary>
-        /// Whether the expression can be collapsed to a tensor
-        /// </summary>
-        public bool IsTensoric => Nodes.Any(c => c is Tensor);
-
-        /// <summary>
-        /// Evaluates the entire expression into a <see cref="Tensor"/> if possible
-        /// ( x y ) + 1 => ( x+1 y+1 )
-        /// 
-        /// ( 1 2 ) + ( 3 4 ) => ( 4 6 ) vectors pointwise
-        /// 
-        ///              (( 3 )
-        /// (( 1 2 3 )) x ( 4 ) => Invalid operation
-        ///               ( 5 ))
-        ///               
-        /// ( 1 2 ) x ( 1 3 ) => ( 1 6 ) Vectors pointwise
-        /// </summary>
-        /// <exception cref="CannotEvalException">
-        /// Thrown when this entity cannot be represented as a <see cref="Tensor"/>.
-        /// <see cref="IsTensoric"/> should be used to check beforehand.
-        /// </exception>
-        public Tensor EvalTensor() =>
-            Evaled is Tensor value ? value :
-                throw new CannotEvalException
-                    ($"Result cannot be represented as a {nameof(Tensor)}! Check the type of {nameof(Evaled)} beforehand.");
 
         /// <summary>
         /// Determines whether a given element can be unambiguously used as a number or boolean

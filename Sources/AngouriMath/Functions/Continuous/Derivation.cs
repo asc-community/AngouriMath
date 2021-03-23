@@ -54,7 +54,7 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable) => Name == variable.Name ? 1 : 0;
         }
 
-        partial record Tensor
+        partial record Matrix
         {
             /// <inheritdoc/>
             protected override Entity InnerDifferentiate(Variable variable) => Elementwise(e => e.InnerDifferentiate(variable));

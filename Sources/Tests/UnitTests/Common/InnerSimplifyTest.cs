@@ -113,6 +113,22 @@ namespace UnitTests.Common
             var actual = initial.InnerSimplified;
             Assert.Equal(expected, actual);
         }
+
+        [Theory]
+        [InlineData("[ 1 , 3 , 5 ] * 3", "[ 3 , 9 , 15 ]")]
+        [InlineData("3 * [ 1 , 3 , 5 ]", "[ 3 , 9 , 15 ]")]
+        [InlineData("[ 1 , 3 , 5 ] + 3", "[ 4 , 6 , 8 ]")]
+        [InlineData("3 + [ 1 , 3 , 5 ]", "[ 4 , 6 , 8 ]")]
+        [InlineData("[ 1 , 3 , 5 ] - 3", "[ -2 , 0 , 2 ]")]
+        [InlineData("3 - [ 1 , 3 , 5 ]", "[ 2 , 0 , -2 ]")]
+        [InlineData("[ 6 , 3 , 18 ] / 3", "[ 2 , 1 , 6 ]")]
+        [InlineData("[ [ 1, 0, 0 ] , [ 0, 1, 0 ] , [ 0, 0, 1 ] ] * [ 6 , 3 , 18 ]", "[ 6 , 3 , 18 ]")]
+        [InlineData("[ 1 ]", "1")]
+        [InlineData("[ [1] ]", "1")]
+        [InlineData("[ 1, 2, 3 ]T * [ a , b , c ]", "a + 2b + 3c")]
+        [InlineData("[[1, 0], [0, 1]] ^ 12", "[[1, 0], [0, 1]]")]
+        public void TestMatrices(string before, string after)
+            => ShouldChangeTo(before, after);
     }
 }
 

@@ -71,7 +71,7 @@ namespace AngouriMath.Core
         /// 
         /// If no solution was found, returns a null.
         /// </return>
-        public Tensor? Solve(params Variable[] vars) => EquationSolver.SolveSystem(equations, vars);
+        public Matrix? Solve(params Variable[] vars) => EquationSolver.SolveSystem(equations, vars);
 
         /// <returns>
         /// Latexised version of the system. It adds

@@ -45,7 +45,7 @@ namespace AngouriMath
             public override Domain Codomain { get; protected init; } = Domain.Any;
         }
 
-        partial record Tensor
+        partial record Matrix
         {
             /// <inheritdoc/>
             public override Domain Codomain { get; protected init; } = Domain.Any;

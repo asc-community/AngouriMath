@@ -25,7 +25,7 @@ namespace AngouriMath
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) => new[] { value };
         }
 
-        partial record Tensor : Entity
+        partial record Matrix
         {
             private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x) => new[] { this };
         }
