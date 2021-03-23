@@ -21,5 +21,5 @@ set(SOURCES
 
 add_library(${PROJECT_NAME} ${SOURCES} "Imports.h")
 
-target_link_directories(${PROJECT_NAME} PUBLIC "../AngouriMath.CPP.Exporting/bin/x64/release/netstandard2.0/win-x64/native")
+target_link_directories(${PROJECT_NAME} PUBLIC "./")
 target_link_libraries(${PROJECT_NAME} PUBLIC AngouriMath.CPP.Exporting)
