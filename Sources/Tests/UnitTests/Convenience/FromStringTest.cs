@@ -219,6 +219,10 @@ namespace UnitTests.Convenience
         [Fact] public void TestNegativeNumberParsing2() => Assert.Equal(-234.2m, FromString("-234.2"));
         [Fact] public void TestNegativeNumberParsing3() => Assert.Equal(234.2m, FromString("+234.2"));
         [Fact] public void TestNegativeNumberParsing4() => Assert.Equal((Entity)(-1).ToNumber() * (Entity)(-2).ToNumber(), FromString("--2"));
+        [Fact] public void TestMatrix2x2() => Assert.Equal(Matrix(new Entity[,] { { 1, 2 }, { 3, 4 } }), FromString("[ [ 1, 2 ] ; [ 3, 4 ] ]"));
+        [Fact] public void TestMatrix3x3() => Assert.Equal(I_3, FromString("[ [ 1, 0, 0 ] ; [ 0, 1, 0 ] ; [ 0, 0, 1 ] ]"));
+        [Fact] public void TestMatrix4Vector1() => Assert.Equal(Vector(1, 2, 3), FromString("[ 1 ; 2 ; 3 ]"));
+        [Fact] public void TestMatrix4Vector2() => Assert.Equal(Vector(1, 2, 3).T, FromString("[ 1 , 2 , 3 ]"));
 
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {

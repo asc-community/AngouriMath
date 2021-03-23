@@ -112,5 +112,12 @@ namespace UnitTests.Common
         [InlineData("arccsc(x)")]
         public void TestTrig(string inputIsOutput) =>
             Assert.Equal(inputIsOutput, inputIsOutput.ToEntity().Stringize());
+
+        [Theory]
+        [InlineData("[ 1, 2, 3 ]")]
+        [InlineData("[ 1 ; 2 ; 3 ]")]
+        [InlineData("[ [ 2, 3 ] ; [ 5, 6 ] ]")]
+        public void TestMatrix(string inputIsOutput) =>
+            Assert.Equal(inputIsOutput.ToEntity(), inputIsOutput.ToEntity().Stringize().ToEntity());
     }
 }

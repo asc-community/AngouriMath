@@ -71,6 +71,9 @@ namespace UnitTests.Convenience
         [InlineData("3 + 2i", "3 + 2 * sympy.I")]
         [InlineData("3 + i", "3 + 1 * sympy.I")]
         [InlineData("piecewise(a provided b, c provided d)", @"Piecewise((a, b), (c, d))")]
+        [InlineData("[1 ; 2 ; 3]", "ImmutableMatrix")]
+        [InlineData("[1 ; 2 ; 3]", "ImmutableMatrix([1, 2, 3])")]
+        [InlineData("[1 , 2 , 3]", "ImmutableMatrix([[1, 2, 3]])")]
         public void TestSymPy(string expression, string expectedToBeIn, bool contains = true)
         {
             var ent = MathS.FromString(expression);

@@ -18,10 +18,5 @@ namespace AngouriMath
                     _ => Name
                 };
         }
-
-        partial record Matrix
-        {
-            internal override string ToSymPy() => InnerMatrix.ToString();
-        }
     }
 }
