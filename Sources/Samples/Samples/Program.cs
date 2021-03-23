@@ -8,11 +8,16 @@ using System.Numerics;
 
 // Imagine this API
 
-var H = MathS.Matrices.Matrix(new Entity[,] { { 1, 1 }, { 0, "x" } });
-var q = MathS.Matrices.Vector(1, 3);
-Console.WriteLine(q[0]);
-Console.WriteLine(H[0]);
-Console.WriteLine(H[0, 0]);
+var H = Matrix(new Entity[,]
+    {
+        { "1", "2", "6" },
+        { "3", "2", "9" },
+        { "1", "1", "9" },
+    });
+// Console.WriteLine((H.Adjugate / H.Determinant).Evaled);
+// Console.WriteLine(H.ComputeInverse());
+Console.WriteLine(I_2.Adjugate);
+// Console.WriteLine(Det(H - "x" * I_3).Simplify());
 /*
 Console.WriteLine(H);
 Console.WriteLine(H * q);

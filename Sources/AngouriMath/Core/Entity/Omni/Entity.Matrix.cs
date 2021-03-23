@@ -11,6 +11,9 @@ using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using FieldCacheNamespace;
 using AngouriMath.Extensions;
+using AngouriMath.Functions;
+using System.Collections.Generic;
+using System.Collections;
 
 namespace AngouriMath
 {
@@ -21,7 +24,7 @@ namespace AngouriMath
 
         /// <summary>Basic matrix implementation: <a href="https://en.wikipedia.org/wiki/Matrix_(mathematics)"/></summary>
 #pragma warning disable CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
-        public sealed partial record Matrix : Entity
+        public sealed partial record Matrix : Entity, IEnumerable<Entity>
 #pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
         {
             /// <summary>
@@ -191,7 +194,7 @@ namespace AngouriMath
                 {
                     throw new InvalidMatrixOperationException("Cannot inverse a singular matrix!");
                 }
-                return new Matrix(cp);
+                return (Matrix)new Matrix(cp).InnerSimplified;
             }
 
             /// <summary>Inverts the matrix</summary>
@@ -267,13 +270,15 @@ namespace AngouriMath
             /// A matrix to the given power with InnerSimplified
             /// applied.
             /// </returns>
-            public Matrix Pow(uint exp)
+            public Matrix Pow(int exp)
             {
                 if (!IsSquare)
-                    throw new InvalidMatrixOperationException("Cannot find power of a non-square matrix");
-                var size = (uint)Shape[0];
+                    throw new InvalidMatrixOperationException("Cannot find power of a non-square matrix");                
+                var size = RowCount;
+                if (exp < 0)
+                    return ComputeInverse().Pow(-exp);
                 if (exp == 0)
-                    return I(size);
+                    return I((uint)size);
                 if (exp == 1)
                     return this;
                 var p2 = Pow(exp / 2);
@@ -300,6 +305,59 @@ namespace AngouriMath
                     inn[i, i] = 1;
                 return new(inn);
             }
+
+            /// <summary>
+            /// Gets the enumerator. It is required by the interface
+            /// IEnumerable, which lets us enumerate over the matrix or vector
+            /// </summary>
+            /// <returns></returns>
+            public IEnumerator<Entity> GenEnumerator()
+            {
+                for (int i = 0; i < RowCount; i++)
+                    yield return this[i];
+            }
+
+            IEnumerator IEnumerable.GetEnumerator() => GenEnumerator();
+
+            /// <summary>
+            /// Matrix's form, transformed via Gaussian elimination.
+            /// </summary>
+            public Matrix GaussianEliminated =>
+                @ref.GetValue(static @this =>
+                    (Matrix)new Matrix(@this.InnerMatrix.GaussianEliminationSafeDivision()).InnerSimplified,
+                    this);
+            private FieldCache<Matrix> @ref;
+
+
+            /// <summary>
+            /// Adjugate form of a matrix
+            /// </summary>
+            public Matrix Adjugate =>
+                adjugate.GetValue(static @this =>
+                    (Matrix)new Matrix(@this.InnerMatrix.Adjoint()).InnerSimplified,
+                    this);
+            private FieldCache<Matrix> adjugate;
+
+            /// <summary>
+            /// Returns a vector, where the i-th element
+            /// is the [i, i] element of the matrix. The number
+            /// of elements in it equals the minimum of <see cref="RowCount"/> and <see cref="ColumnCount"/>
+            /// </summary>
+            public Matrix MainDiagonal =>
+                mainDiagonal.GetValue(static @this =>
+                    Enumerable.Range(0, Math.Min(@this.RowCount, @this.ColumnCount))
+                        .Select(i => @this[i, i]).ToVector()
+                , this);
+            private FieldCache<Matrix> mainDiagonal;
+
+            /// <summary>
+            /// The trace of a matrix. It is a sum of
+            /// all elements on the main diagonal
+            /// </summary>
+            public Entity Trace => trace.GetValue(static @this =>
+                TreeAnalyzer.MultiHangBinary(@this.MainDiagonal.ToList(), (a, b) => a + b),
+                this);
+            private FieldCache<Entity> trace;
         }
         #endregion
     }

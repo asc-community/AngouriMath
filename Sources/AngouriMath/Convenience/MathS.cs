@@ -520,22 +520,22 @@ namespace AngouriMath
         /// <summary>
         /// The square identity matrix of size 1
         /// </summary>
-        [ConstantField] public static readonly Entity I_1 = IdentityMatrix(1);
+        [ConstantField] public static readonly Matrix I_1 = IdentityMatrix(1);
 
         /// <summary>
         /// The square identity matrix of size 2
         /// </summary>
-        [ConstantField] public static readonly Entity I_2 = IdentityMatrix(2);
+        [ConstantField] public static readonly Matrix I_2 = IdentityMatrix(2);
 
         /// <summary>
         /// The square identity matrix of size 3
         /// </summary>
-        [ConstantField] public static readonly Entity I_3 = IdentityMatrix(3);
+        [ConstantField] public static readonly Matrix I_3 = IdentityMatrix(3);
 
         /// <summary>
         /// The square identity matrix of size 4
         /// </summary>
-        [ConstantField] public static readonly Entity I_4 = IdentityMatrix(4);
+        [ConstantField] public static readonly Matrix I_4 = IdentityMatrix(4);
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
@@ -662,6 +662,12 @@ namespace AngouriMath
             /// <returns>The resulting <see cref="Complex"/></returns>
             public static Complex Create(EDecimal re, EDecimal im) => Complex.Create(re, im);
         }
+
+        /// <summary>
+        /// Finds the determinant of the given matrix
+        /// </summary>
+        public static Entity Det(Matrix m)
+            => m.Determinant;
 
         /// <summary>Creates an instance of <see cref="Entity.Matrix"/>.</summary>
         /// <param name="values">A two-dimensional array of values</param>

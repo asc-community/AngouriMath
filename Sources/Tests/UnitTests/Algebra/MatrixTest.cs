@@ -276,5 +276,33 @@ namespace UnitTests.Algebra
 
         [Fact] public void RightScalarSubtraction()
             => Assert.Equal(MathS.Vector(1, 2), (MathS.Vector(3, 4) - 2).InnerSimplified);
+
+        [Fact] public void Adjugate1()
+        {
+            var H = MathS.Matrix(new Entity[,]
+            {
+                { "1", "2", "6" },
+                { "3", "2", "9" },
+                { "1", "1", "9" },
+            });
+            var actual = (H.Adjugate / H.Determinant).Evaled;
+            var expected = H.ComputeInverse();
+
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact] public void Adjugate2()
+            => Assert.Equal(MathS.I_2, MathS.I_2.Adjugate);
+
+        [Fact] public void GaussianElimination()
+        {
+            var m = MathS.Matrix(new Entity[,] {
+                    { 32, 41, 1 },
+                    { 3,  4,  1 },
+                    { 3,  1,  4 }
+                });
+            var g = m.GaussianEliminated;
+            Assert.Equal(m.Determinant, g.MainDiagonal[0] * g.MainDiagonal[1] * g.MainDiagonal[2]);
+        }
     }
 }
