@@ -89,6 +89,7 @@ namespace AngouriMath
                 (a, b) => (a, b) switch
                 {
                     (Matrix m1, Matrix m2) when m1.ColumnCount == m2.RowCount => (m1 * m2).Evaled,
+                    (Matrix m1, Matrix m2) => a * b,
                     (Complex n1, Complex n2) => n1 * n2,
                     _ => null
                 },
@@ -100,6 +101,7 @@ namespace AngouriMath
                     (a, b) => (a, b) switch
                     {
                         (Matrix m1, Matrix m2) when m1.ColumnCount == m2.RowCount => (m1 * m2).InnerSimplified,
+                        (Matrix m1, Matrix m2) => a * b,
                         (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
                         (_, Integer(0)) or (Integer(0), _) => 0,
                         (var n1, Integer(1)) => n1,
@@ -136,6 +138,7 @@ namespace AngouriMath
                     (a, b) => (a, b) switch
                     {
                         (Matrix m1, Matrix m2) when TryDivide(m1, m2, out var res) => res.Evaled,
+                        (var any, Matrix m) => (any / m),
                         (Complex n1, Complex n2) => n1 / n2,
                         _ => null
                     },
@@ -147,6 +150,7 @@ namespace AngouriMath
                 (a, b) => (a, b) switch
                 {
                     (Matrix m1, Matrix m2) when TryDivide(m1, m2, out var res) => res,
+                    (var any, Matrix m) => (any / m),
                     (Integer(0), _) => 0,
                     (_, Integer(0)) => Real.NaN,
                     (var n1, Integer(1)) => n1,

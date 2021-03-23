@@ -687,6 +687,16 @@ namespace AngouriMath
         }
 
         /// <summary>
+        /// Creates a 1x1 matrix of a given value. It will be simplified
+        /// once InnerSimplified or Evaled are addressed
+        /// </summary>
+        /// <returns>
+        /// A 1x1 matrix, which is also a 1-long vector, or just a scalar.
+        /// </returns>
+        public static Matrix Scalar(Entity value)
+            => Vector(value);
+
+        /// <summary>
         /// Creates a matrix from given rows
         /// </summary>
         /// <param name="vectors">
@@ -696,7 +706,7 @@ namespace AngouriMath
         /// </param>
         public static Matrix MatrixFromRows(IEnumerable<Matrix> vectors)
         {
-            if (vectors.Count() == 0)
+            if (!vectors.Any())
                 throw new InvalidMatrixOperationException("No rows were provided");
             var tb = new MatrixBuilder(vectors.First().ColumnCount);
             foreach (var v in vectors)
@@ -714,7 +724,7 @@ namespace AngouriMath
         /// </param>
         public static Matrix MatrixFromIEnum2x2(IEnumerable<IEnumerable<Entity>> elements)
         {
-            if (elements.Count() == 0)
+            if (!elements.Any())
                 throw new InvalidMatrixOperationException("No rows were provided");
             var tb = new MatrixBuilder(elements.First().Count());
             foreach (var v in elements)
@@ -748,6 +758,13 @@ namespace AngouriMath
         /// <summary>Classes and functions related to matrices are defined here</summary>
         public static class Matrices
         {
+            /// <summary>
+            /// Performs a pointwise multiplication operation,
+            /// or throws exception if shapes mismatch
+            /// </summary>
+            public static Matrix PointwiseMultiplication(Matrix m1, Matrix m2)
+                => (Matrix)new Matrix(GenTensor.PiecewiseMultiply(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+
             /// <summary>
             /// Creates an instance of <see cref="Entity.Matrix"/> that is a matrix.
             /// Usage example:
@@ -809,6 +826,7 @@ namespace AngouriMath
             /// <param name="a">First vector (order does not matter)</param>
             /// <param name="b">Second vector</param>
             /// <returns>The resulting scalar which is an <see cref="Entity"/> and not a <see cref="Entity.Matrix"/></returns>
+            [Obsolete("Use a.T * b for the same purpose")]
             public static Entity ScalarProduct(Matrix a, Matrix b) => GenTensor.VectorDotProduct(a.InnerMatrix, b.InnerMatrix);
 
             /// <summary>

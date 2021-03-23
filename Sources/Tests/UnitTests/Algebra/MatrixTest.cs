@@ -27,10 +27,10 @@ namespace UnitTests.Algebra
         public void DotProduct()
         {
             var R = MathS.Matrices.Matrix(2, 2,
-                50, 60,
-                114, 140
+                84, 100,
+                100, 120
             );
-            Assert.Equal(R, A * B);
+            Assert.Equal(R, A.T * B);
         }
         [Fact]
         public void DotPointwiseProduct1()
@@ -41,7 +41,7 @@ namespace UnitTests.Algebra
                 25, 36,
                 49, 64
                 );
-            Assert.Equal(C, A * B);
+            Assert.Equal(C, MathS.Matrices.PointwiseMultiplication(A, B));
         }
 
         [Fact]
@@ -52,7 +52,6 @@ namespace UnitTests.Algebra
         {
             var a = MathS.Vector(1, 2, 3);
             var b = MathS.Vector(1, 2, 4);
-            Assert.Equal(17, MathS.Matrices.ScalarProduct(a, b).EvalNumerical());
             Assert.Equal(17, (a.T * b).EvalNumerical());
         }
 
@@ -212,7 +211,7 @@ namespace UnitTests.Algebra
             });
 
         [Fact] public void MatrixMultiplication1()
-            => Assert.Equal(MathS.Vector(1, 1), H * MathS.Vector(0, 1));
+            => Assert.Equal(MathS.Vector(1, -1), H * MathS.Vector(0, 1));
 
         [Fact] public void MatrixMultiplication2()
             => Assert.Equal(MathS.I_2 + MathS.I_2, H * H);
@@ -310,7 +309,7 @@ namespace UnitTests.Algebra
             => Assert.Equal(MathS.Vector(5, 6), (MathS.Vector(3, 4) + 2).InnerSimplified);
 
         [Fact] public void LeftScalarSubtraction()
-            => Assert.Equal(MathS.Vector(-3, -2), (2 - MathS.Vector(3, 4)).InnerSimplified);
+            => Assert.Equal(MathS.Vector(-1, -2), (2 - MathS.Vector(3, 4)).InnerSimplified);
 
         [Fact] public void RightScalarSubtraction()
             => Assert.Equal(MathS.Vector(1, 2), (MathS.Vector(3, 4) - 2).InnerSimplified);
@@ -346,7 +345,7 @@ namespace UnitTests.Algebra
                     { 3,  1,  4 }
                 });
             var g = m.GaussianEliminated;
-            Assert.Equal(m.Determinant, g.MainDiagonal[0] * g.MainDiagonal[1] * g.MainDiagonal[2]);
+            Assert.Equal(m.Determinant, (g.MainDiagonal[0] * g.MainDiagonal[1] * g.MainDiagonal[2]).InnerSimplified);
         }
     }
 }

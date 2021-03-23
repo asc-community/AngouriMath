@@ -182,19 +182,22 @@ namespace UnitTests.Convenience
         [Fact] public void Set0() => Test(@"\emptyset", MathS.Sets.Empty);
         [Fact] public void Set0Alternate() => Test(@"\emptyset", MathS.Sets.Finite());
         [Fact] public void Matrix() =>
-            Test(@"\begin{pmatrix}11 & 12\\21 & 22\\31 & 32\end{pmatrix}", MathS.Matrices.Matrix(3, 2, 11, 12, 21, 22, 31, 32));
+            Test(@"\begin{bmatrix}11 & 12 \\ 21 & 22 \\ 31 & 32\end{bmatrix}", MathS.Matrix(new Entity[,]
+                {
+                    { 11, 12 },
+                    { 21, 22 },
+                    { 31, 32 }
+                }));
         [Fact] public void MatrixRow() =>
-            Test(@"\begin{pmatrix}11 & 12 & 21 & 22 & 31 & 32\end{pmatrix}", MathS.Matrices.Matrix(1, 6, 11, 12, 21, 22, 31, 32));
+            Test(@"\begin{bmatrix}11 & 12 & 21 & 22 & 31 & 32\end{bmatrix}", MathS.Vector(11, 12, 21, 22, 31, 32).T);
         [Fact] public void MatrixColumn() =>
-            Test(@"\begin{pmatrix}11\\12\\21\\22\\31\\32\end{pmatrix}", MathS.Matrices.Matrix(6, 1, 11, 12, 21, 22, 31, 32));
+            Test(@"\begin{bmatrix}11 \\ 12 \\ 21 \\ 22 \\ 31 \\ 32\end{bmatrix}", MathS.Vector(11, 12, 21, 22, 31, 32));
         [Fact] public void MatrixSingle() =>
-            Test(@"\begin{pmatrix}x\end{pmatrix}", MathS.Matrices.Matrix(1, 1, x));
-        [Fact] public void MatrixEmpty() =>
-            Test(@"\begin{pmatrix}\end{pmatrix}", MathS.Matrices.Matrix(0, 0));
+            Test(@"\begin{bmatrix}x\end{bmatrix}", MathS.Vector(x));
         [Fact] public void Vector() =>
-            Test(@"\begin{bmatrix}11 & 12 & 21 & 22 & 31 & 32\end{bmatrix}", MathS.Matrices.Vector(11, 12, 21, 22, 31, 32));
+            Test(@"\begin{bmatrix}11 & 12 & 21 & 22 & 31 & 32\end{bmatrix}", MathS.Vector(11, 12, 21, 22, 31, 32).T);
         [Fact] public void VectorSingle() =>
-            Test(@"\begin{bmatrix}x\end{bmatrix}", MathS.Matrices.Vector(x));
+            Test(@"\begin{bmatrix}x\end{bmatrix}", MathS.Vector(x));
         [Fact] public void Derivative1() =>
             Test(@"\frac{d\left[x+1\right]}{dx}", MathS.Derivative("x + 1", x));
         [Fact] public void Derivative2() =>

@@ -14,14 +14,6 @@ namespace UnitTests.Common
         }
 
         [Fact]
-        public void TensorFull()
-        {
-            var tens = new Entity.Matrix(indices => indices[0] * indices[1] * indices[2], 3, 4, 5);
-            var tens2S = tens.Stringize();
-            Assert.True(tens2S.Length > 16);
-        }
-
-        [Fact]
         public void EqSysLatex()
         {
             var eq = MathS.Equations(

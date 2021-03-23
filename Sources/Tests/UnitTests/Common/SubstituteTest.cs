@@ -18,8 +18,8 @@ namespace UnitTests.Common
         [InlineData("x * limit(x + 2, x, 1)", "1 * limit(x + 2, x, 1)")]
         [InlineData("sin(cos(sec(csc(x))))", "sin(cos(sec(csc(1))))")]
         [InlineData("arcsin(arccos(arcsec(arccsc(x))))", "arcsin(arccos(arcsec(arccsc(1))))")] 
-        [InlineData("[ i ; 3 ; x ]", "[ i ; 3 ; 1 ]")]
-        [InlineData("[ [ 1, 2, x ] ; [ 4, x^2, 3 ] ; [ x, x, x ] ]", "[ [ 1, 2, 1 ] ; [ 4, 1^2, 3 ] ; [ 1, 1, 1 ] ]")]
+        [InlineData("[ i , 3 , x ]", "[ i , 3 , 1 ]")]
+        [InlineData("[ [ 1, 2, x ] , [ 4, x^2, 3 ] , [ x, x, x ] ]", "[ [ 1, 2, 1 ] , [ 4, 1^2, 3 ] , [ 1, 1, 1 ] ]")]
         public void Test(string unsubstituted, string expectedRaw)
         {
             var actual = unsubstituted.Substitute("x", 1);

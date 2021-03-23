@@ -16,15 +16,15 @@ namespace UnitTests.Algebra
                     return;
                 else throw new Xunit.Sdk.XunitException($"{nameof(sol)} is null but {nameof(rootCount)} is {rootCount}");
             if (rootCount != -1)
-                Assert.Equal(rootCount, sol.Shape[0]);
+                Assert.Equal(rootCount, sol.RowCount);
             var substitutions = new Dictionary<Entity.Variable, Entity>();
-            for (int i = 0; i < sol.Shape[0]; i++)
+            for (int i = 0; i < sol.RowCount; i++)
                 foreach (var equation in equations)
                 {
                     var eqCopy = equation;
-                    Assert.Equal(sol.Shape[1], vars.Length);
+                    Assert.Equal(sol.ColumnCount, vars.Length);
                     substitutions.Clear();
-                    for (int rootid = 0; rootid < sol.Shape[1]; rootid++)
+                    for (int rootid = 0; rootid < sol.ColumnCount; rootid++)
                         substitutions.Add(vars[rootid], sol[i, rootid]);
                     eqCopy = eqCopy.Substitute(substitutions);
 

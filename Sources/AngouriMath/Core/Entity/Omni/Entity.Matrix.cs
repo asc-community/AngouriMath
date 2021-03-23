@@ -135,6 +135,9 @@ namespace AngouriMath
                                     .ToVector().T
                 };
 
+            private static Matrix ToMatrix(Entity entity)
+                => entity is Matrix m ? m : MathS.Scalar(entity);
+
             /// <summary>
             /// Access the tensor if it is a matrix
             /// </summary>
@@ -204,7 +207,7 @@ namespace AngouriMath
                 {
                     throw new InvalidMatrixOperationException("Cannot inverse a singular matrix!");
                 }
-                return (Matrix)new Matrix(cp).InnerSimplified;
+                return ToMatrix(new Matrix(cp).InnerSimplified);
             }
 
             /// <summary>Inverts the matrix</summary>
@@ -222,7 +225,7 @@ namespace AngouriMath
                 ?
                 throw new InvalidMatrixOperationException("Cannot apply the operator to matrices or vectors of different shapes")
                 :
-                (Matrix)new Matrix(GenTensor.PiecewiseAdd(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+                ToMatrix(new Matrix(GenTensor.PiecewiseAdd(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified);
 
             /// <summary>
             /// The Subtract operator. Performs an active operation
@@ -235,7 +238,7 @@ namespace AngouriMath
                 ?
                 throw new InvalidMatrixOperationException("Cannot apply the operator to matrices or vectors of different shapes")
                 :
-                (Matrix)new Matrix(GenTensor.PiecewiseSubtract(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+                ToMatrix(new Matrix(GenTensor.PiecewiseSubtract(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified);
 
             /// <summary>
             /// The Multiply operator. Performs an active operation
@@ -246,7 +249,8 @@ namespace AngouriMath
             {
                 try
                 {
-                    return (Matrix)new Matrix(GenTensor.MatrixMultiply(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+                    var simplified = new Matrix(GenTensor.MatrixMultiply(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
+                    return ToMatrix(simplified);
                 }
                 catch (InvalidShapeException)
                 {
@@ -311,8 +315,9 @@ namespace AngouriMath
             public static Matrix I(uint rowCount, uint colCount)
             {
                 var inn = GenTensor.CreateMatrix((int)rowCount, (int)colCount);
-                for (int i = 0; i < Math.Min(rowCount, colCount); i++)
-                    inn[i, i] = 1;
+                for (int x = 0; x < rowCount; x++)
+                    for (int y = 0; y < colCount; y++)
+                        inn[x, y] = x == y ? 1 : 0;
                 return new(inn);
             }
 
