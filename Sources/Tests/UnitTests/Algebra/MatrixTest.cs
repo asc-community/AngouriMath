@@ -1,5 +1,6 @@
 ﻿using AngouriMath;
 using Xunit;
+using static AngouriMath.Entity;
 
 namespace UnitTests.Algebra
 {
@@ -39,7 +40,7 @@ namespace UnitTests.Algebra
                 9, 16,
                 25, 36,
                 49, 64
-                ); 
+                );
             Assert.Equal(C, A * B);
         }
 
@@ -195,10 +196,85 @@ namespace UnitTests.Algebra
                 MathS.IdentityMatrix(3, 2));
         }
 
-        [Fact]
-        public void MatrixMultiplication()
-        {
-            
-        }
+        [Fact] public void MatrixMultiplicationIdentity()
+            => Assert.Equal(MathS.I_3, MathS.I_3 * MathS.I_3);
+
+        [Fact] public void MatrixIdentityT()
+            => Assert.Equal(Matrix.I(3), Matrix.I(3).T);
+
+        [Fact] public void MatrixIdentityT2x3()
+            => Assert.Equal(Matrix.I(2, 3), Matrix.I(3, 2).T);
+
+        public static readonly Matrix H = MathS.Matrix(new Entity[,]
+            {
+                { 1, 1 },
+                { 1, -1 },
+            });
+
+        [Fact] public void MatrixMultiplication1()
+            => Assert.Equal(MathS.Vector(1, 1), H * MathS.Vector(0, 1));
+
+        [Fact] public void MatrixMultiplication2()
+            => Assert.Equal(MathS.I_2 + MathS.I_2, H * H);
+
+        [Fact] public void MatrixAddition1()
+            => Assert.Equal(MathS.Vector(3, 2), MathS.Vector(1, 2) + MathS.Vector(2, 0));
+
+        [Fact] public void MatrixSubtraction1()
+            => Assert.Equal(MathS.Vector(-1, 2), MathS.Vector(1, 2) - MathS.Vector(2, 0));
+
+        [Fact] public void MatrixDivision1()
+            => Assert.Equal(H, H / MathS.I_2);
+
+        [Fact] public void MatrixDivision2()
+            => Assert.Equal(
+                MathS.Matrix(new Entity[,]{
+                    { "1 / 2", "1 / 2" },
+                    { "1 / 2", "-1 / 2" }
+                }).InnerSimplified,
+                MathS.I_2 / H);
+
+        [Fact] public void MatrixDivision3()
+            => Assert.Equal(MathS.I_2, H / H);
+
+        [Fact] public void MatrixDivision3x3()
+            => Assert.Equal(
+                MathS.Matrix(new Entity[,] {
+                        { 1, -3 },
+                        { 3, -8 }
+                    }),
+
+                MathS.Matrix(new Entity[,] {
+                        { 1, 0 },
+                        { 3, 1 }
+                    })
+                /
+                MathS.Matrix(new Entity[,] {
+                        { 1, 3 },
+                        { 0, 1 }
+                    })
+
+                );
+
+        [Fact] public void LeftScalarMulitiplication()
+            => Assert.Equal(MathS.Vector(6, 8), (2 * MathS.Vector(3, 4)).InnerSimplified);
+
+        [Fact] public void RightScalarMulitiplication()
+            => Assert.Equal(MathS.Vector(6, 8), (MathS.Vector(3, 4) * 2).InnerSimplified);
+
+        [Fact] public void RightScalarDivision()
+            => Assert.Equal(MathS.Vector("1.5", 2), (MathS.Vector(3, 4) / 2).InnerSimplified);
+
+        [Fact] public void LeftScalarAddition()
+            => Assert.Equal(MathS.Vector(5, 6), (2 + MathS.Vector(3, 4)).InnerSimplified);
+
+        [Fact] public void RightScalarAddition()
+            => Assert.Equal(MathS.Vector(5, 6), (MathS.Vector(3, 4) + 2).InnerSimplified);
+
+        [Fact] public void LeftScalarSubtraction()
+            => Assert.Equal(MathS.Vector(-3, -2), (2 - MathS.Vector(3, 4)).InnerSimplified);
+
+        [Fact] public void RightScalarSubtraction()
+            => Assert.Equal(MathS.Vector(1, 2), (MathS.Vector(3, 4) - 2).InnerSimplified);
     }
 }

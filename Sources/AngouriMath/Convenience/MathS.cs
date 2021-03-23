@@ -517,6 +517,26 @@ namespace AngouriMath
         /// </summary>
         [ConstantField] public static readonly Entity NaN = Real.NaN;
 
+        /// <summary>
+        /// The square identity matrix of size 1
+        /// </summary>
+        [ConstantField] public static readonly Entity I_1 = IdentityMatrix(1);
+
+        /// <summary>
+        /// The square identity matrix of size 2
+        /// </summary>
+        [ConstantField] public static readonly Entity I_2 = IdentityMatrix(2);
+
+        /// <summary>
+        /// The square identity matrix of size 3
+        /// </summary>
+        [ConstantField] public static readonly Entity I_3 = IdentityMatrix(3);
+
+        /// <summary>
+        /// The square identity matrix of size 4
+        /// </summary>
+        [ConstantField] public static readonly Entity I_4 = IdentityMatrix(4);
+
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
         /// <param name="useCache">By default is true, it boosts performance if you have multiple uses of the same string,
