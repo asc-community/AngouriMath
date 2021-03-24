@@ -15,6 +15,7 @@ namespace AngouriMath::Internal
     struct NativeErrorCode
     {
         const char* Name;
+        const char* Message;
         const char* StackTrace;
     };
 
