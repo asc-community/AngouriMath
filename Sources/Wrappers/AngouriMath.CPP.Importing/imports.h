@@ -7,6 +7,9 @@ using namespace AngouriMath::Internal;
 extern "C"
 {
     __declspec(dllimport) NativeErrorCode free_entity(EntityRef);
+    __declspec(dllimport) NativeErrorCode free_native_array(NativeArray);
+    __declspec(dllimport) NativeErrorCode free_error_code(NativeErrorCode);
+    __declspec(dllimport) NativeErrorCode free_string(String);
 
     __declspec(dllimport) NativeErrorCode entity_to_string(EntityRef, StringOut);
     __declspec(dllimport) NativeErrorCode entity_latexise(EntityRef, StringOut);

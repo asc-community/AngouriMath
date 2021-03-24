@@ -18,7 +18,7 @@ namespace AngouriMath
             if (handle != nullptr)
             {
                 auto error = free_entity(*handle);
-                delete handle;
+                // TODO: shall we throw exception here?
             }
         }
     };
@@ -72,14 +72,18 @@ namespace AngouriMath
     {
         char* buff = nullptr;
         HandleErrorCode(entity_to_string(*this->handle, &buff));
-        return buff != nullptr ? std::string(buff) : std::string();
+        auto res = buff != nullptr ? std::string(buff) : std::string();
+        free_string(buff);
+        return res;
     }
 
     std::string Entity::ToString(ErrorCode& ec) const
     {
         char* buff = nullptr;
         HandleErrorCode(entity_to_string(*this->handle, &buff), ec);
-        return buff != nullptr ? std::string(buff) : std::string();
+        auto res = buff != nullptr ? std::string(buff) : std::string();
+        free_string(buff);
+        return res;
     }
 
     Entity Entity::Differentiate(const Entity& var) const
@@ -110,10 +114,12 @@ namespace AngouriMath
     std::vector<Entity> Entity::Nodes() const
     {
         NativeArray nRes;
-        HandleErrorCode(entity_nodes(*this->handle, &nRes));
+        auto handle = *this->handle;
+        HandleErrorCode(entity_nodes(handle, &nRes));
         std::vector<Entity> res(nRes.length);
         for (size_t i = 0; i < nRes.length; i++)
             res[i] = Entity(nRes.refs[i]);
+        free_native_array(nRes);
         return res;
     }
 }

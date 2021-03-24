@@ -9,16 +9,18 @@ namespace AngouriMath.CPP.Exporting
 {
     partial class Exports
     {
-        public struct NativeArray
+        public struct NativeArray : IFreeable
         {
-            private int Length;
-            private IntPtr Ptr;
+            public int Length { get; init; }
+            public IntPtr Ptr { get; init; }
             internal static NativeArray Alloc<T>(IEnumerable<T> elements)
             {
                 var arr = elements.Select(c => ObjStorage<T>.Alloc(c)).ToArray();
                 var allocated = GCHandle.Alloc(arr, GCHandleType.Pinned);
                 return new() { Length = arr.Length, Ptr = allocated.AddrOfPinnedObject() };
             }
+            public void Free()
+                => Exports.Free(Ptr);
         }
     }
 }
