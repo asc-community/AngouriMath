@@ -8,7 +8,8 @@ namespace AngouriMath::Internal
         #if defined(ANGOURIMATH_DISABLE_EXCEPTIONS)
         assert(false);
         #else
-        throw AngouriMathException(ErrorCode(nec.Name, nec.StackTrace));
+        if (nec.Name != nullptr)
+            throw AngouriMathException(ErrorCode(nec.Name, nec.StackTrace));
         #endif
     }
 
