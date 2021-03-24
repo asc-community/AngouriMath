@@ -39,4 +39,4 @@ out/
 /Sources/Wrappers/AngouriMath.CPP.Importing/win-x64/
 /Sources/Wrappers/AngouriMath.CPP.Importing/linux-x64/
 /Sources/Wrappers/AngouriMath.CPP.Importing/mac-x64/
-/Sources/Wrappers/AngouriMath-Win-x64.zip
+*.zip
