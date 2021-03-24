@@ -62,13 +62,13 @@ namespace Utils
                     "%paramswithe%", "%localname%");
                 var exportedName = method.exportName;
                 var name = method.name;
-                var pars = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"EntityRef arg{c}"));
+                var pars = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"ObjRef arg{c}"));
                 var parsWithoutType = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"arg{c}"));
                 string parsWithE = "";
                 if (method.parCount > 1)
-                    parsWithE = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"e.arg{c}.Entity"));
+                    parsWithE = string.Join(", ", Enumerable.Range(0, method.parCount).Select(c => $"e.arg{c}.AsEntity"));
                 else
-                    parsWithE = "e.Entity";
+                    parsWithE = "e.AsEntity";
                 sb.Append(methodSg.Generate(
                     exportedName, "E" + name, pars, parsWithoutType, parsWithE, $"{type.FullName?.Replace("+", ".")}.{name}"
                     ));

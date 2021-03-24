@@ -91,7 +91,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AngouriMath.CPP.Importing",
 		Wrappers\AngouriMath.CPP.Importing\A.Usages.Hyperbolic.Functions.h = Wrappers\AngouriMath.CPP.Importing\A.Usages.Hyperbolic.Functions.h
 		Wrappers\AngouriMath.CPP.Importing\A.Usages.MathS.Functions.h = Wrappers\AngouriMath.CPP.Importing\A.Usages.MathS.Functions.h
 		Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.cpp = Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.cpp
-		Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.Exporting.dll = Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.Exporting.dll
 		Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.h = Wrappers\AngouriMath.CPP.Importing\AngouriMath.CPP.h
 		Wrappers\AngouriMath.CPP.Importing\CMakeLists.txt = Wrappers\AngouriMath.CPP.Importing\CMakeLists.txt
 		Wrappers\AngouriMath.CPP.Importing\CMakeSettings.json = Wrappers\AngouriMath.CPP.Importing\CMakeSettings.json

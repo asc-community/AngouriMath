@@ -6,15 +6,15 @@ namespace AngouriMath.CPP.Exporting
 {
     partial class Exports
     {
-        internal struct EntityRef
+        internal struct ObjRef
         {
             private readonly ulong handle;
-            public EntityRef(ulong handle)
+            public ObjRef(ulong handle)
                 => this.handle = handle;
-            public EntityRef Next()
-                => new EntityRef(handle + 1);
-            public Entity Entity => ObjStorage<Entity>.Get(this);
-            public static implicit operator EntityRef(Entity entity)
+            public ObjRef Next()
+                => new ObjRef(handle + 1);
+            public Entity AsEntity => ObjStorage<Entity>.Get(this);
+            public static implicit operator ObjRef(Entity entity)
                 => ObjStorage<Entity>.Alloc(entity);
         }
     }

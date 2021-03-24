@@ -6,7 +6,7 @@
 
   <Target Name="Copy" Condition="$(OS) == 'Windows_NT'" AfterTargets="ComputeFilesToPublish">
     <Exec Command="
-          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\win-x64 /H
+          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\win-x64 /H /Y
           "/>
   </Target>
 

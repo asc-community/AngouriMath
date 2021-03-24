@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <ostream>
+#include <vector>
 
 namespace AngouriMath
 {
@@ -22,6 +23,9 @@ namespace AngouriMath
 
         Entity Differentiate(const Entity& var) const;
         Entity Differentiate(const Entity& var, ErrorCode& ec) const;
+
+        // TODO: to be rewritten!
+        std::vector<Entity> Nodes() const;
 
         friend Internal::EntityRef GetHandle(const Entity& e);
         friend Entity CreateByHandle(Internal::EntityRef handle);

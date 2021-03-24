@@ -2,7 +2,7 @@
 //
 
 #include "CPlusPlusPlayground.h"
-#include "AngouriMath.CPP.h"
+#include "AngouriMath.h"
 #include "A.Usages.MathS.Functions.h"
 
 using namespace std;
@@ -11,6 +11,8 @@ int main()
 {
 	AngouriMath::Entity expr("x + 2sin(x)");
 	auto newExpr = expr.Differentiate("x");
-	std::cout << AngouriMath::Sin(newExpr);
+	// std::cout << AngouriMath::Abs(newExpr);
+	for (auto ent : newExpr.Nodes())
+		std::cout << ent << "\n";
 	return 0;
 }

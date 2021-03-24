@@ -5,8 +5,9 @@
  * Website: https://am.angouri.org.
  */
 
-#include "AngouriMath.CPP.h"
+#include "AngouriMath.h"
 #include "Imports.h"
+#include <vector>
 
 namespace AngouriMath
 {
@@ -103,5 +104,16 @@ namespace AngouriMath
     Entity CreateByHandle(Internal::EntityRef handle)
     {
         return Entity(handle);
+    }
+
+    // TODO: to be rewritten!
+    std::vector<Entity> Entity::Nodes() const
+    {
+        NativeArray nRes;
+        HandleErrorCode(entity_nodes(*this->handle, &nRes));
+        std::vector<Entity> res(nRes.length);
+        for (size_t i = 0; i < nRes.length; i++)
+            res[i] = Entity(nRes.refs[i]);
+        return res;
     }
 }

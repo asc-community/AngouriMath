@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "AngouriMath.CPP.h"
+#include "AngouriMath.h"
 #include "A.Imports.Hyperbolic.Functions.h"
 
 namespace AngouriMath

@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # TODO: Add tests and install targets if needed.
 
 set(SOURCES
-"AngouriMath.CPP.cpp"
+"AngouriMath.cpp"
  "ErrorCode.cpp")
 
 add_library(${PROJECT_NAME} ${SOURCES})

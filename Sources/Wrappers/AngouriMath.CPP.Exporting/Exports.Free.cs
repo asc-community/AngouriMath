@@ -8,7 +8,7 @@ namespace AngouriMath.CPP.Exporting
     partial class Exports
     {
         [UnmanagedCallersOnly(EntryPoint = "free_entity")]
-        public static NErrorCode Free(EntityRef handle)
+        public static NErrorCode Free(ObjRef handle)
             => ExceptionEncode(handle, static h => ObjStorage<Entity>.Dealloc(h));
     }
 }

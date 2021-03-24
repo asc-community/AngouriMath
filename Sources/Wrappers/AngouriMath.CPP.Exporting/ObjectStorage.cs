@@ -8,21 +8,21 @@ namespace AngouriMath.CPP.Exporting
     {
         internal static class ObjStorage<T>
         {
-            private static EntityRef lastId = new(0);
-            private readonly static Dictionary<EntityRef, T> allocations = new();
-            internal static EntityRef Alloc(T obj)
+            private static ObjRef lastId = new(0);
+            private readonly static Dictionary<ObjRef, T> allocations = new();
+            internal static ObjRef Alloc(T obj)
             {
                 lastId = lastId.Next();
                 allocations[lastId] = obj;
                 return lastId;
             }
-            internal static void Dealloc(EntityRef ptr)
+            internal static void Dealloc(ObjRef ptr)
             {
                 if (!allocations.ContainsKey(ptr))
                     throw new DeallocationException();
                 allocations.Remove(ptr);
             }
-            internal static T Get(EntityRef ptr)
+            internal static T Get(ObjRef ptr)
             {
                 if (!allocations.ContainsKey(ptr))
                     throw new NonExistentObjectAddressingException();
