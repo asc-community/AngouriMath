@@ -52,7 +52,8 @@ namespace UnitTests.Algebra
         {
             var a = MathS.Vector(1, 2, 3);
             var b = MathS.Vector(1, 2, 4);
-            Assert.Equal(17, (a.T * b).EvalNumerical());
+            var scalar = a.T * b;
+            Assert.Equal(17, scalar.EvalNumerical());
         }
 
         [Fact]
@@ -376,7 +377,7 @@ namespace UnitTests.Algebra
         {
             var v = MathS.ZeroVector(5);
             Assert.Equal(MathS.Vector(0, 0, 5, 6, 0), v.WithElement(2, 5).WithElement(3, 6));
-            Assert.Equal(MathS.Vector(1, 2, 3), v);
+            Assert.Equal(MathS.Vector(0, 0, 0, 0, 0), v);
         }
 
         [Fact] public void WithElementMatrix1()
@@ -435,7 +436,7 @@ namespace UnitTests.Algebra
                     { 0, 1, 0, 0, 0 },
                     { 1, 2, 3, 4, 5 },
                     { 0, 0, 0, 1, 0 },
-                    { 4, 6, 7, 8, 9 }
+                    { 5, 6, 7, 8, 9 }
                 }),
                 m);
         }
@@ -460,9 +461,9 @@ namespace UnitTests.Algebra
         [Fact] public void WithColumnMatrix2()
         {
             var m = MathS.IdentityMatrix(5)
-                .WithRow(2, MathS.Vector(1, 2, 3, 4, 5))
-                .WithRow(4, MathS.Vector(1, 3, 5, 9, 1))
-                .WithRow(4, MathS.Vector(5, 6, 7, 8, 9));
+                .WithColumn(2, MathS.Vector(1, 2, 3, 4, 5))
+                .WithColumn(4, MathS.Vector(1, 3, 5, 9, 1))
+                .WithColumn(4, MathS.Vector(5, 6, 7, 8, 9));
             Assert.Equal(
                 MathS.Matrix(new Entity[,]
                 {
@@ -494,7 +495,7 @@ namespace UnitTests.Algebra
                     { 1, 2, 2, 2, 3, 3 },
                     { 1, 2, 2, 2, 3, 3 },
                     { 1, 2, 2, 2, 3, 3 },
-                    { 1, 0, 0, 0, 0, 5 },
+                    { 1, 0, 0, 0, 0, 4 },
                 }),
                 m);
         }
