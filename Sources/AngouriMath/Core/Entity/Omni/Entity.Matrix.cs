@@ -30,7 +30,7 @@ namespace AngouriMath
             /// <summary>
             /// The inner matrix of type <see cref="GenTensor"/>.
             /// </summary>
-            internal GenTensor InnerMatrix { get; }
+            public GenTensor InnerMatrix { internal get; init; }
 
             /// <summary>
             /// Creates a <see cref="Matrix"/> from an instance of <see cref="GenTensor"/>.
@@ -46,11 +46,16 @@ namespace AngouriMath
             /// Is thrown if the number of dimensions of the passed
             /// tensor is not 2.
             /// </exception>
-            public Matrix(GenTensor innerMatrix)
+            public Matrix(GenTensor innerMatrix) : this(innerMatrix, toCopy: true) { }
+
+            private Matrix(GenTensor innerMatrix, bool toCopy)
             {
                 if (innerMatrix.Shape.Length != 2)
                     throw new InvalidMatrixOperationException("Only matrices and vectors are supported");
-                InnerMatrix = innerMatrix.Copy(false);
+                if (toCopy)
+                    InnerMatrix = innerMatrix.Copy(false);
+                else
+                    InnerMatrix = innerMatrix;
             }
 
             /// <summary>Reuse the cache by returning the same object if possible</summary>
@@ -109,7 +114,7 @@ namespace AngouriMath
             /// The number of rows for matrices. The number of elements for vectors.
             /// </summary>
             public int RowCount => InnerMatrix.Shape[0];
-            
+
             /// <summary>List of <see cref="int"/>s that stand for dimensions</summary>
             [Obsolete("Use ColumnCount and RowCount instead")]
             public TensorShape Shape => InnerMatrix.Shape;
@@ -125,14 +130,16 @@ namespace AngouriMath
             /// <summary>
             /// Returns the i-th element of a vector, or the i-th row of a matrix.
             /// </summary>
-            public Entity this[int i] 
-                => IsVector switch
+            public Entity this[int i] =>
+                (IsVector, IsRowVector) switch
                 {
-                    true => InnerMatrix[i, 0],
-                    false => Enumerable
-                                    .Range(0, ColumnCount)
-                                    .Select(id => InnerMatrix[i, id])
-                                    .ToVector().T
+                    (true, false) => InnerMatrix[i, 0],
+                    (false, true) => InnerMatrix[0, i],
+                    (true, true) => AsScalar(),
+                    (false, false) => Enumerable
+                                .Range(0, ColumnCount)
+                                .Select(id => InnerMatrix[i, id])
+                                .ToVector().T
                 };
 
             private static Matrix ToMatrix(Entity entity)
@@ -145,9 +152,15 @@ namespace AngouriMath
 
             /// <summary>
             /// Checks whether the matrix only contains one
-            /// column
+            /// column.
             /// </summary>
             public bool IsVector => InnerMatrix.Shape[1] == 1;
+
+            /// <summary>
+            /// Checks whether it is a row vector, that is,
+            /// the matrix has only one row
+            /// </summary>
+            public bool IsRowVector => InnerMatrix.Shape[0] == 1;
 
             /// <summary>
             /// Checks whether the matrix is square (has as many rows as columns)
@@ -363,6 +376,139 @@ namespace AngouriMath
                 TreeAnalyzer.MultiHangBinary(@this.MainDiagonal.ToList(), (a, b) => a + b),
                 this);
             private FieldCache<Entity> trace;
+
+            /// <summary>
+            /// Creates a new vector with the specified element being
+            /// set to a new value
+            /// </summary>
+            public Matrix WithElement(int index, Entity newElement)
+            {
+                if (!IsVector && !IsRowVector)
+                    throw new InvalidMatrixOperationException("Should be vector or row vector");
+                var newInner = InnerMatrix.Copy(false);
+                if (IsVector)
+                    newInner[index, 0] = newElement;
+                else
+                    newInner[0, index] = newElement;
+                return new(newInner, toCopy: false);
+            }
+
+            /// <summary>
+            /// Creates a new matrix with the specified element being
+            /// set to a new value
+            /// </summary>
+            public Matrix WithElement(int x, int y, Entity newElement)
+            {
+                var newInner = InnerMatrix.Copy(false);
+                newInner[x, y] = newElement;
+                return new(newInner, toCopy: false);
+            }
+
+            /// <summary>
+            /// Creates a new matrix with the specified row
+            /// set to a new row
+            /// </summary>
+            public Matrix WithRow(int rowId, Matrix newRow)
+            {
+                var newInner = InnerMatrix.Copy(false);
+                WithRow(newInner, rowId, newRow);
+                return new(newInner, toCopy: false);
+            }
+
+            /// <summary>
+            /// Creates a new matrix with the specified row
+            /// set to a new row
+            /// </summary>
+            private static void WithRow(GenTensor newInner, int rowId, Matrix newRow)
+            {
+                if (!newRow.IsRowVector)
+                    throw new InvalidMatrixOperationException("Must be a row vector");
+                for (int i = 0; i < newInner.Shape[1]; i++)
+                    newInner[rowId, i] = newRow[i];
+            }
+
+            /// <summary>
+            /// Creates a new matrix with the specified column
+            /// set to a new column
+            /// </summary>
+            public Matrix WithColumn(int colId, Matrix newCol)
+            {
+                var newInner = InnerMatrix.Copy(false);
+                WithColumn(newInner, colId, newCol);
+                return new(newInner, toCopy: false);
+            }
+
+            /// <summary>
+            /// Creates a new matrix with the specified column
+            /// set to a new column
+            /// </summary>
+            private static void WithColumn(GenTensor newInner, int colId, Matrix newCol)
+            {
+                if (!newCol.IsVector)
+                    throw new InvalidMatrixOperationException("Must be a column vector vector");
+                for (int i = 0; i < newInner.Shape[0]; i++)
+                    newInner[i, colId] = newCol[i];
+            }
+
+            /// <summary>
+            /// Returns a new matrix/vector of the same shape,
+            /// but with each element replaced by the user.
+            /// </summary>
+            /// <param name="elementByIndex">
+            /// Takes 2 ints which are row number and column
+            /// number of an element, and the current element
+            /// as the third argument.
+            /// </param>
+            /// <example>
+            /// <code>
+            /// var re = O_4.With
+            ///     ((rowId, colId, element) => (rowId, colId, element) switch
+            ///     {
+            ///         (0, 1, _) => 1,
+            ///         (1, 2, _) => 2,
+            ///         (>1, 3, _) => 6,
+            ///         (var a, var b, _) when a + b &lt; 3 => 8,
+            ///         _ => element
+            ///     });
+            /// Console.WriteLine(re.ToString(multilineFormat: true));
+            /// </code>
+            /// The output is going to be:
+            /// <code>
+            /// Matrix[4 x 4]
+            /// 8   1   8   0
+            /// 8   8   2   0
+            /// 8   0   0   6
+            /// 0   0   0   6
+            /// </code>
+            /// </example>
+            /// <returns>
+            /// A new matrix or vector with the same shape
+            /// (row count and column count).
+            /// </returns>
+            public Matrix With(Func<int, int, Entity, Entity> elementByIndex)
+            {
+                var newInner = InnerMatrix.Copy(false);
+                for (int x = 0; x < RowCount; x++)
+                    for (int y = 0; y < ColumnCount; y++)
+                        newInner[x, y] = elementByIndex(x, y, newInner[x, y]);
+                return new(newInner, toCopy: false);
+            }
+
+            /// <summary>
+            /// Gets a string representation of the
+            /// given matrix/vector. If true is
+            /// passed, it will format the inner matrix
+            /// with new lines and paddings to make it
+            /// look like a matrix in plain monospace
+            /// text.
+            /// </summary>
+            /// <param name="multilineFormat">
+            /// Whether to format it into a matrix
+            /// format. If false is passed, it will
+            /// return the same as normal <see cref="ToString()"/>.
+            /// </param>
+            public string ToString(bool multilineFormat)
+                => multilineFormat ? InnerMatrix.ToString() : ToString();
         }
         #endregion
     }

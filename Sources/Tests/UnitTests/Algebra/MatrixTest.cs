@@ -347,5 +347,156 @@ namespace UnitTests.Algebra
             var g = m.GaussianEliminated;
             Assert.Equal(m.Determinant, (g.MainDiagonal[0] * g.MainDiagonal[1] * g.MainDiagonal[2]).InnerSimplified);
         }
+
+        [Fact] public void ZeroSquareMatrix1()
+            => Assert.Equal(MathS.O_3, (MathS.I_3 * 0).InnerSimplified);
+
+        [Fact] public void ZeroSquareMatrix2()
+            => Assert.Equal(MathS.O_4, (MathS.I_4 * 0).InnerSimplified);
+
+        [Fact] public void ZeroVector()
+            => Assert.Equal(MathS.Vector(0, 0, 0, 0), MathS.ZeroVector(4));
+
+        [Fact] public void ZeroRectMatrix()
+        {
+            var m = MathS.Matrix(new Entity[,]{
+                { 0, 0, 0 },
+                { 0, 0, 0 }
+            });
+            Assert.Equal(m, MathS.ZeroMatrix(2, 3));
+        }
+
+        [Fact] public void WithElementVector1()
+        {
+            var v = MathS.Vector(1, 2, 3);
+            Assert.Equal(5, v.WithElement(2, 5)[2]);
+            Assert.Equal(MathS.Vector(1, 2, 3), v);
+        }
+        [Fact] public void WithElementVector2()
+        {
+            var v = MathS.ZeroVector(5);
+            Assert.Equal(MathS.Vector(0, 0, 5, 6, 0), v.WithElement(2, 5).WithElement(3, 6));
+            Assert.Equal(MathS.Vector(1, 2, 3), v);
+        }
+
+        [Fact] public void WithElementMatrix1()
+        {
+            var jordan = MathS.I_3.WithElement(0, 1, 1).WithElement(1, 2, 1);
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 1, 1, 0 },
+                    { 0, 1, 1 },
+                    { 0, 0, 1 }
+                }),
+                jordan);
+        }
+
+        [Fact] public void WithElementMatrix2()
+        {
+            var jordan = MathS.I_3.WithElement(0, 1, 5).WithElement(1, 2, 8);
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 1, 5, 0 },
+                    { 0, 1, 8 },
+                    { 0, 0, 1 }
+                }),
+                jordan);
+        }
+
+        [Fact] public void WithRowVector()
+            => Assert.Equal(MathS.Vector(0, 0, 3, 0), MathS.ZeroVector(4).WithRow(2, MathS.Vector(3)));
+
+        [Fact] public void WithRowMatrix1()
+        {
+            var m = MathS.I_4.WithRow(2, MathS.Vector(1, 2, 3, 4).T);
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 1, 0, 0, 0 },
+                    { 0, 1, 0, 0 },
+                    { 1, 2, 3, 4 },
+                    { 0, 0, 0, 1 }
+                }),
+                m);
+        }
+
+        [Fact] public void WithRowMatrix2()
+        {
+            var m = MathS.IdentityMatrix(5)
+                .WithRow(2, MathS.Vector(1, 2, 3, 4, 5).T)
+                .WithRow(4, MathS.Vector(1, 3, 5, 9, 1).T)
+                .WithRow(4, MathS.Vector(5, 6, 7, 8, 9).T);
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 1, 0, 0, 0, 0 },
+                    { 0, 1, 0, 0, 0 },
+                    { 1, 2, 3, 4, 5 },
+                    { 0, 0, 0, 1, 0 },
+                    { 4, 6, 7, 8, 9 }
+                }),
+                m);
+        }
+
+        [Fact] public void WithColumnVector()
+            => Assert.Equal(MathS.Vector(1, 2, 3), MathS.ZeroVector(3).WithColumn(0, MathS.Vector(1, 2, 3)));
+
+        [Fact] public void WithColumnMatrix1()
+        {
+            var m = MathS.I_4.WithColumn(2, MathS.Vector(1, 2, 3, 4));
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 1, 0, 1, 0 },
+                    { 0, 1, 2, 0 },
+                    { 0, 0, 3, 0 },
+                    { 0, 0, 4, 1 }
+                }),
+                m);
+        }
+
+        [Fact] public void WithColumnMatrix2()
+        {
+            var m = MathS.IdentityMatrix(5)
+                .WithRow(2, MathS.Vector(1, 2, 3, 4, 5))
+                .WithRow(4, MathS.Vector(1, 3, 5, 9, 1))
+                .WithRow(4, MathS.Vector(5, 6, 7, 8, 9));
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 1, 0, 1, 0, 5 },
+                    { 0, 1, 2, 0, 6 },
+                    { 0, 0, 3, 0, 7 },
+                    { 0, 0, 4, 1, 8 },
+                    { 0, 0, 5, 0, 9 }
+                }),
+                m);
+        }
+
+        [Fact] public void WithMatrix1()
+        {
+            var m = MathS.ZeroMatrix(6).With
+                ((r, c, e) => (r, c, e) switch
+                {
+                    (_, < 1, _) => 1,
+                    (>= 1 and <= 4, >= 1 and <= 3, _) => 2,
+                    (>= 1 and <= 4, > 3, _) => 3,
+                    (5, 5, _) => 4,
+                    _ => e
+                });
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 1, 0, 0, 0, 0, 0 },
+                    { 1, 2, 2, 2, 3, 3 },
+                    { 1, 2, 2, 2, 3, 3 },
+                    { 1, 2, 2, 2, 3, 3 },
+                    { 1, 2, 2, 2, 3, 3 },
+                    { 1, 0, 0, 0, 0, 5 },
+                }),
+                m);
+        }
     }
 }
