@@ -423,7 +423,7 @@ namespace AngouriMath
                 if (!newRow.IsRowVector)
                     throw new InvalidMatrixOperationException("Must be a row vector");
                 for (int i = 0; i < newInner.Shape[1]; i++)
-                    newInner[rowId, i] = newRow[i];
+                    newInner[rowId, i] = newRow[0, i];
             }
 
             /// <summary>
