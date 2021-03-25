@@ -22,8 +22,12 @@ var re = O_4.With
         (var a, var b, _) when a + b < 3 => 8,
         _ => element
     });
-Console.WriteLine(re.ToString(multilineFormat: true));
-
+// Console.WriteLine(re.ToString(multilineFormat: true));
+// Console.WriteLine(MathS.Vector(1, 2, 3));
+var t = Vector(1, 2, 3).T;
+Console.WriteLine(t);
+foreach (var row in t)
+    Console.WriteLine(row);
 
 
 namespace System.Runtime.CompilerServices

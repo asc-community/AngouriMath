@@ -134,9 +134,8 @@ namespace AngouriMath
                 (IsVector, IsRowVector) switch
                 {
                     (true, false) => InnerMatrix[i, 0],
-                    (false, true) => InnerMatrix[0, i],
                     (true, true) => AsScalar(),
-                    (false, false) => Enumerable
+                    _ => Enumerable
                                 .Range(0, ColumnCount)
                                 .Select(id => InnerMatrix[i, id])
                                 .ToVector().T
