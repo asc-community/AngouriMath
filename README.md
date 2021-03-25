@@ -36,11 +36,15 @@
 
 <a href="#jupyter"><img src="./.github/additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
 
-<a href="https://am.angouri.org">AngouriMath</a> is an open source symbolic algebra library. That is, via AngouriMath, you can
-automatically <a href="https://am.angouri.org/wiki/07.-Solvers.html">solve</a> equations, 
-systems of equations, work with sets, <a href="https://am.angouri.org/wiki/05.-Differentiation.html">differentiate</a>,
+<a href="https://am.angouri.org">AngouriMath</a> is an open source symbolic algebra library.
+That is, via AngouriMath, you can
+automatically <a href="https://am.angouri.org/wiki/07.-Solvers.html">solve</a> 
+equations, systems of equations, work with sets,
+<a href="https://am.angouri.org/wiki/05.-Differentiation.html">differentiate</a>,
 <a href="https://am.angouri.org/wiki/01.-Expressions.html">parse</a> from string,
-<a href="https://am.angouri.org/wiki/09.-Compilation.html">compile expressions</a>.
+<a href="https://am.angouri.org/wiki/09.-Compilation.html">compile expressions</a>, work
+with <a href="https://am.angouri.org/wiki/10.-Matrices.html">matrices</a>, find limits,
+convert an expression to LaTeX, and <a href="https://am.angouri.org/wiki/">many other things</a>.
 
 It is not a CAS, so you can use it in any your project by installing it from 
 <a href="https://www.nuget.org/packages/AngouriMath">NuGet</a>. AngouriMath
