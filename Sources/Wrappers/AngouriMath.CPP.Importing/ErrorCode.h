@@ -10,8 +10,8 @@ namespace AngouriMath
     public:
         ErrorCode() { }
 
-        ErrorCode(std::string name, std::string stackTrace)
-            : name(std::move(name)), stackTrace(std::move(stackTrace)) { }
+        ErrorCode(std::string name, std::string message, std::string stackTrace)
+            : name(std::move(name)), message(std::move(message)), stackTrace(std::move(stackTrace)) { }
 
         bool IsOk() const { return this->name.empty(); }
         const std::string& Name() const { return this->name; }

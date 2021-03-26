@@ -17,8 +17,8 @@ namespace AngouriMath
         {
             if (handle != nullptr)
             {
-                auto error = free_entity(*handle);
-                // TODO: shall we throw exception here?
+                (void)free_entity(*handle);
+                delete handle;
             }
         }
     };

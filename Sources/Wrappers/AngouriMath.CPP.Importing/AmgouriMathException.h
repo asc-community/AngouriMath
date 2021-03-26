@@ -21,6 +21,11 @@ namespace AngouriMath
             return this->error.Name();
         }
 
+        const std::string& Message() const
+        {
+            return this->error.Message();
+        }
+
         const std::string& StackTrace() const
         {
             return this->error.StackTrace();
