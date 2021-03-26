@@ -30,7 +30,7 @@ namespace AngouriMath.Extensions
         /// which is a one-column matrix
         /// </summary>
         public static Matrix ToVector(this IEnumerable<Entity> elements)
-            => MathS.Matrices.Vector(elements.ToArray());
+            => MathS.Vector(elements.ToArray());
 
         /// <summary>
         /// Sums all the given terms and returns the resulting expression

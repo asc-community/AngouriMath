@@ -125,6 +125,13 @@ namespace AngouriMath
         public virtual Entity Substitute(Entity x, Entity value)
             => this == x ? value : this;
 
+        /// <summary>
+        /// Replaces x.x1 with value.v1 and
+        /// x.x2 with value.v2
+        /// </summary>
+        public Entity Substitute((Entity x1, Entity x2) x, (Entity v1, Entity v2) value)
+            => Substitute(x.x1, value.v1).Substitute(x.x2, value.v2);
+
         /// <summary>Replaces all <param name="replacements"/></summary>
         public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements) where TFrom : Entity where TTo : Entity
         {

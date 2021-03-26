@@ -5,6 +5,8 @@ using static AngouriMath.MathS;
 using static AngouriMath.Entity;
 using System.Numerics;
 using System.ComponentModel;
+using System.Linq;
+using static AngouriMath.Entity.Set;
 
 
 // Console.WriteLine("[ [ 1, 2 ] ; [ 3, 4 ] ]".ToEntity());
@@ -12,23 +14,33 @@ using System.ComponentModel;
 // Console.WriteLine(Fn.Substitute("n", 1_000_000).EvalNumerical().ToString().Length);
 // Console.WriteLine(I_3.WithElement(0, 1, 1).WithElement(1, 2, 1));
 
-var v = O_3;
-var re = O_4.With
-    ((rowId, colId, element) => (rowId, colId, element) switch
-    {
-        (0, 1, _) => 1,
-        (1, 2, _) => 2,
-        (>1, 3, _) => 6,
-        (var a, var b, _) when a + b < 3 => 8,
-        _ => element
-    });
-// Console.WriteLine(re.ToString(multilineFormat: true));
-// Console.WriteLine(MathS.Vector(1, 2, 3));
-var t = Vector(1, 2, 3).T;
-Console.WriteLine(t);
-foreach (var row in t)
-    Console.WriteLine(row);
+// Console.WriteLine("(| [ a, b, c ] |)".Simplify());
+// Console.WriteLine("(| [ 2, 3, 6 ] |)".EvalNumerical());
 
+
+var matrix = MathS.Matrix(
+    new Entity[,]
+    {
+        { 546, 43 },
+        { 23, 9 },
+        { 134, 67 }
+    });
+var indexer = Indexer(matrix, "x", "y");
+Console.WriteLine(indexer.Latexise());
+return;
+Console.WriteLine(indexer.Substitute(("x", "y"), (2.3, 1)).InnerSimplified);
+
+
+static Entity Indexer(Matrix m, Variable rowId, Variable colId)
+{
+    Entity before =
+        Enumerable.Range(0, m.RowCount)
+        .Select(c => Piecewise((1, rowId.Equalizes(c)), (0, true))).ToVector().T;
+    Entity after =
+        Enumerable.Range(0, m.ColumnCount)
+        .Select(c => Piecewise((1, colId.Equalizes(c)), (0, true))).ToVector();
+    return (before * m * after).Provided(rowId.In("ZZ") & colId.In("ZZ") & (rowId >= 0) & (rowId < m.RowCount) & (colId >= 0) & (colId < m.ColumnCount));
+}
 
 namespace System.Runtime.CompilerServices
 {
