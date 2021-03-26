@@ -16,6 +16,11 @@ namespace AngouriMath.CPP.Exporting
                 allocations[lastId] = obj;
                 return lastId;
             }
+            internal static ObjRef Alloc(ObjRef ptr, T obj)
+            {
+                allocations[ptr] = obj;
+                return ptr;
+            }
             internal static void Dealloc(ObjRef ptr)
             {
                 if (!allocations.ContainsKey(ptr))

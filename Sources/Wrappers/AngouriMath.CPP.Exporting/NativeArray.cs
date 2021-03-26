@@ -17,10 +17,16 @@ namespace AngouriMath.CPP.Exporting
             {
                 var arr = elements.Select(c => ObjStorage<T>.Alloc(c)).ToArray();
                 var allocated = GCHandle.Alloc(arr, GCHandleType.Pinned);
-                return new() { Length = arr.Length, Ptr = allocated.AddrOfPinnedObject() };
+                var ptr = allocated.AddrOfPinnedObject();
+                ObjStorage<GCHandle>.Alloc(new((ulong)ptr), allocated);
+                return new() { Length = arr.Length, Ptr = ptr };
             }
             public void Free()
-                => Exports.Free(Ptr);
+            {
+                var handle = ObjStorage<GCHandle>.Get(new((ulong)Ptr));
+                handle.Free();
+                ObjStorage<GCHandle>.Dealloc(new((ulong)Ptr));
+            }
         }
     }
 }

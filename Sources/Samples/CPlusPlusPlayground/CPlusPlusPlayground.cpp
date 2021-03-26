@@ -12,10 +12,10 @@ int main()
     AngouriMath::ErrorCode err;
     AngouriMath::Entity expr("x + 2 sin(x) + 2", err);
     
-    // auto newExpr = expr.Differentiate("x", err);
+    auto newExpr = expr.Differentiate("x", err);
     std::cout << err.Name() << "\n" << err.Message() << "\n" << err.StackTrace();
     // std::cout << AngouriMath::Abs(newExpr);
-    // for (auto ent : newExpr.Nodes())
-    //     std::cout << ent << "\n";
+    for (auto ent : newExpr.Nodes())
+        std::cout << ent << "\n";
     return 0;
 }
