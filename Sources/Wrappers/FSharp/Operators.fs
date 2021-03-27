@@ -10,7 +10,7 @@ let (@?) (expr : Entity) x = expr.Solve x
 
 let (&&&&) (expr : Entity) (right : obj) =
     match right with
-    | :? Tending as tending -> expr.Limit(parse_symbol tending.var, parse tending.destination)
+    | :? Tending as tending -> expr.Limit(parseSymbol tending.var, parse tending.destination)
     | _ -> MathS.Conjunction(expr, parse right)
 
 let (|||) left right = MathS.Disjunction(left, right)

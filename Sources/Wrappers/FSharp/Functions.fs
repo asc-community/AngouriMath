@@ -8,23 +8,23 @@ let simplify x =
 
 /// Computes the derivative of the given variable and expression
 let differentiate x expr =
-    (parse expr).Differentiate(parse_symbol x)
+    (parse expr).Differentiate(parseSymbol x)
 
 let diff x expr = differentiate x expr
 
 /// Computes the integral of the given variable and expression
 let integrate x expr = 
-    (parse expr).Integrate(parse_symbol x)
+    (parse expr).Integrate(parseSymbol x)
 
 /// Computes the limit of the given variable, destination to where it approaches, and expression
 let limit x destination expr =
-    (parse expr).Limit(parse_symbol x, parse destination)
+    (parse expr).Limit(parseSymbol x, parse destination)
 
 /// Computes the limit of the given variable, destination to where it approaches, expression itself, and the origin side
 let limitSided x destination expr side =
     match side with
-    | Left -> (parse expr).Limit(parse_symbol x, parse destination, AngouriMath.Core.ApproachFrom.Left)
-    | Right -> (parse expr).Limit(parse_symbol x, parse destination, AngouriMath.Core.ApproachFrom.Right)
+    | Left -> (parse expr).Limit(parseSymbol x, parse destination, AngouriMath.Core.ApproachFrom.Left)
+    | Right -> (parse expr).Limit(parseSymbol x, parse destination, AngouriMath.Core.ApproachFrom.Right)
 
 /// Takes the evaluated form of an expression (preserving the type)
 let evaled expr =
@@ -40,15 +40,14 @@ let asBool expr =
 
 /// Solves the statement/predicate over the given variable
 let solve x expr =
-    (parse expr).Solve(parse_symbol x)
+    (parse expr).Solve(parseSymbol x)
 
 /// Gets the LaTeX form of an expression
 let latex x =
     (parse x).Latexise()
 
 /// Substitutes the given variable with the given value in the given expression
-let substitute x value expr =
-    (parse expr).Substitute(parse x, parse value)
+let substitute x value expr = (parse expr).Substitute(parse x, parse value)
 
 /// Returns a multiline string representation of matrix
 let matrixToString (x: AngouriMath.Entity.Matrix) = x.ToString(true)

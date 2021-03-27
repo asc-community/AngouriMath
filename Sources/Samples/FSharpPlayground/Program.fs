@@ -4,16 +4,17 @@ open AngouriMath
 open Core
 open Constants
 open FSharp.Collections
+open Option
 
 
-let m = matrix (array2D [
-    [ parse 1; parse 0 ] ;
-    [ parse "x"; parse "y" ]
+let m = matrix ([
+    [ "1"; "0" ] ;
+    [ "x"; "y" ]
     ])
 
 printfn "%O" (matrixToString m)
 
-let v = vector [| parse 2 ; parse 3 |]
+let v = vector [ 2 ; 3 ]
 
 printfn "%O" (matrixToString v)
 
@@ -29,9 +30,9 @@ printfn "%O" (matrixToString n)
 
 printfn "%O" (matrixToString (transposed n))
 
-printfn "%O" (matrixToString(matrix "[ 1, 2, 3 ]"))
+// printfn "%O" (matrixToString(matrix "[ 1, 2, 3 ]"))
 
-printfn "%O" (vector [| parse 2, parse 3 |])
+printfn "%O" (vector [ 2; 3 ])
 
 //      
 // let modifier r c (e: AngouriMath.Entity) =
