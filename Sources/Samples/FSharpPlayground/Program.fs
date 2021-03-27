@@ -5,6 +5,11 @@ open Core
 open Constants
 open FSharp.Collections
 open Option
+open Compilation
+
+let compiled = compile<int, int> "x" "x + 2"
+
+printfn "%O" (compiled 5)
 
 
 let m = matrix ([

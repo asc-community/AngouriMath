@@ -23,8 +23,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Constants.fs" />
     <Compile Include="Core.fs" />
+    <Compile Include="Compilation.fs" />
+    <Compile Include="Constants.fs" />
     <Compile Include="Functions.fs" />
     <Compile Include="Operators.fs" />
   </ItemGroup>
