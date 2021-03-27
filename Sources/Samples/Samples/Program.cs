@@ -18,6 +18,12 @@ using static AngouriMath.Entity.Set;
 // Console.WriteLine("(| [ 2, 3, 6 ] |)".EvalNumerical());
 
 
+return;
+
+Console.WriteLine(Fib(4));
+
+return;
+
 var matrix = MathS.Matrix(
     new Entity[,]
     {
@@ -41,6 +47,13 @@ static Entity Indexer(Matrix m, Variable rowId, Variable colId)
         .Select(c => Piecewise((1, colId.Equalizes(c)), (0, true))).ToVector();
     return (before * m * after).Provided(rowId.In("ZZ") & colId.In("ZZ") & (rowId >= 0) & (rowId < m.RowCount) & (colId >= 0) & (colId < m.ColumnCount));
 }
+
+int Fib(int n) => n switch
+    {
+        0 => 0,
+        1 => 1,
+        _ => Fib(n - 1) + Fib(n - 2)
+    };
 
 namespace System.Runtime.CompilerServices
 {

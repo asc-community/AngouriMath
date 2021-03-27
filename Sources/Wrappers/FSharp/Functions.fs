@@ -21,7 +21,7 @@ let limit x destination expr =
     (parse expr).Limit(parse_symbol x, parse destination)
 
 /// Computes the limit of the given variable, destination to where it approaches, expression itself, and the origin side
-let limit_sided x destination expr side =
+let limitSided x destination expr side =
     match side with
     | Left -> (parse expr).Limit(parse_symbol x, parse destination, AngouriMath.Core.ApproachFrom.Left)
     | Right -> (parse expr).Limit(parse_symbol x, parse destination, AngouriMath.Core.ApproachFrom.Right)
@@ -31,11 +31,11 @@ let evaled expr =
     (parse expr).Evaled
 
 /// Takes the evaluated form of an expression (as a number; if it cannot, an exception is thrown)
-let as_number expr =
+let asNumber expr =
     (parse expr).EvalNumerical()
 
 /// Takes the evaluated form of an expression (as a boolean; if it cannot, an exception is thrown)
-let as_bool expr =
+let asBool expr =
     (parse expr).EvalBoolean()
 
 /// Solves the statement/predicate over the given variable
@@ -50,11 +50,12 @@ let latex x =
 let substitute x value expr =
     (parse expr).Substitute(parse x, parse value)
 
-/// Creates a rectangular matrix from a 2-dimensional array
-let matrix x = AngouriMath.MathS.Matrix(x)
-
-/// Creates a column vector from a 1-dimensional array
-let vector x = AngouriMath.MathS.Vector(x)
-
 /// Returns a multiline string representation of matrix
-let matrix_to_string (x: AngouriMath.Entity.Matrix) = x.ToString(true)
+let matrixToString (x: AngouriMath.Entity.Matrix) = x.ToString(true)
+
+/// Returns a matrix modified according to the modifier
+let modifiedMatrix (x: AngouriMath.Entity.Matrix) m =
+    x.With(new System.Func<int, int, AngouriMath.Entity, AngouriMath.Entity>(m))
+
+/// Gets the transposed form of a matrix or vector
+let transposed (m: AngouriMath.Entity.Matrix) = m.T

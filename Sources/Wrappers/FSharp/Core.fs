@@ -3,6 +3,7 @@
 open AngouriMath
 open PeterO.Numbers
 open AngouriMath.Convenience
+open System.Linq
 
 exception ExprParseException of string * obj
 
@@ -36,6 +37,17 @@ let symbol x =
 /// Creates a set from string
 let set x =
     parse_g<Entity.Set> x
+
+/// Creates a rectangular matrix from a 2-dimensional array
+let matrix (x : obj) =
+    match x with
+    | :? 'EntityArr as arr -> MathS.Matrix(arr)
+    | _ -> parse_g<AngouriMath.Entity.Matrix>(x)
+
+/// Creates a column vector from a 1-dimensional array
+let vector (li : List<'T>) = MathS.Vector([for el in li do yield (parse el)].ToArray())
+
+let m ad = Array2D.init 2 3
 
 type LimSide =
     | Left
