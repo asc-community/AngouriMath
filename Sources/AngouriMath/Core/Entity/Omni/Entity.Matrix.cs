@@ -23,9 +23,7 @@ namespace AngouriMath
         #region Tensor
 
         /// <summary>Basic matrix implementation: <a href="https://en.wikipedia.org/wiki/Matrix_(mathematics)"/></summary>
-#pragma warning disable CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
         public sealed partial record Matrix : Entity, IEnumerable<Entity>
-#pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
         {
             /// <summary>
             /// The inner matrix of type <see cref="GenTensor"/>.

@@ -188,16 +188,34 @@ let acsch x = MathS.Hyperbolic.Arcosech(parse x)
 let differentiate x expr =
     (parse expr).Differentiate(parseSymbol x)
 
+/// Returns a derivative node
+let derivative x expr =
+    MathS.Derivative(parse expr, parse x)
+
 /// Computes the integral of the given variable and expression
 let integrate x expr = 
     (parse expr).Integrate(parseSymbol x)
+
+/// Returns an integral node
+let integral x expr =
+    MathS.Integral(parse expr, parse x)
 
 /// Computes the limit of the given variable, destination to where it approaches, and expression
 let limit x destination expr =
     (parse expr).Limit(parseSymbol x, parse destination)
 
+/// Returns a limit node
+let limited x destination expr =
+    MathS.Limit(parse expr, parse x, parse destination)
+
 /// Computes the limit of the given variable, destination to where it approaches, expression itself, and the origin side
-let limitSided x destination expr side =
+let limitSided x destination side expr =
     match side with
     | Left -> (parse expr).Limit(parseSymbol x, parse destination, AngouriMath.Core.ApproachFrom.Left)
     | Right -> (parse expr).Limit(parseSymbol x, parse destination, AngouriMath.Core.ApproachFrom.Right)
+
+/// Returns a limit node with a side from which to approach specified
+let limitedSided x destination side expr =
+    match side with
+    | Left -> MathS.Limit(parse expr, parse x, parse destination, AngouriMath.Core.ApproachFrom.Left)
+    | Right -> MathS.Limit(parse expr, parse x, parse destination, AngouriMath.Core.ApproachFrom.Right)
