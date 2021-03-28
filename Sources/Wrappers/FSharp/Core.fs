@@ -51,16 +51,8 @@ type Lengths =
     | Invalid
     | Fixed of int
 
-let rec parseRow = function
-| [] -> Some([])
-| hd::tl ->
-    match parseSilent hd with
-    | None -> None
-    | Some(parsedHead) -> 
-        match parseRow tl with
-        | None -> None
-        | Some(parsedTail) -> Some(parsedHead::parsedTail)
-
+/// Creates a matrix from a list of lists
+/// of objects (which are parsed into Entities)
 let matrix x = 
     let rec columnCount (x : 'T list list) =
         match x with
@@ -72,27 +64,16 @@ let matrix x =
             | Fixed len -> if len = hd.Length then Fixed(len) else Invalid
 
     let parseListOfLists li =
-        let rec build = function
-            | [] -> Some([])
-            | hd::tl ->
-                match build tl with
-                | None -> None
-                | Some(row) -> 
-                    match parseRow hd with
-                    | None -> None
-                    | Some(good) -> Some(good::row)
-        build li
+        [ for row in li do yield [ for el in row do yield (parse el) ] ]
 
-    match parseListOfLists x with
-    | None -> raise ParseException
-    | Some(good) -> MathS.Matrix(array2D good)
+    match columnCount x with
+    | Any | Invalid -> raise ParseException
+    | Fixed _ -> MathS.Matrix(array2D (parseListOfLists x))
 
 
-/// Creates a column vector from a 1-dimensional array
-let vector (li : List<'T>) =
-    match parseRow li with
-    | None -> raise ParseException
-    | Some(parsed) -> MathS.Vector(parsed.ToArray())
+/// Creates a column vector from a 1-dimensional list
+let vector li =
+    MathS.Vector([ for el in li do yield parse el ].ToArray())
 
 type LimSide =
     | Left

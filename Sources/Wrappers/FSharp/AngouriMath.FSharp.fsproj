@@ -28,7 +28,6 @@
     <Compile Include="Functions.fs" />
     <Compile Include="Compilation.fs" />
     <Compile Include="Constants.fs" />
-    <Compile Include="Operators.fs" />
     <Compile Include="Shortcuts.fs" />
   </ItemGroup>
 

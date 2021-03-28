@@ -4,6 +4,7 @@
 // being set to default (for example, it might be variable `x` in many cases)
 
 open Functions
+open Core
 
 /// Finds the derivative of the given expression
 /// over x
@@ -23,3 +24,11 @@ let ``lim x->+oo`` expr = limit "x" "+oo" expr
 /// Finds the both-sided limit of the given expression
 /// for x approaching negative infinity
 let ``lim x->-oo`` expr = limit "x" "-oo" expr
+
+/// Substitutes the first argument from the tuple with the second
+/// argument in the tuple in the given expression
+let (-|>) (x, v) expr = (substitute (symbol x) (parse v) expr).InnerSimplified
+
+/// In the given expresion, substitutes the first argument from the tuple
+/// with the second argument from the tuple
+let (<|-) expr (x, v) = (substitute (symbol x) (parse v) expr).InnerSimplified

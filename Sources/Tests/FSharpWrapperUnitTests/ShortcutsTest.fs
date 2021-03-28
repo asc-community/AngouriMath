@@ -19,3 +19,12 @@ let ``Test lim x->-oo`` () =
 [<Fact>]
 let ``Test lim x->0`` () =
     Assert.Equal((parse "-1/6").InnerSimplified, ``lim x->0`` "(sin(x) - x) / x3")
+[<Fact>]
+let ``Test -|>``() =
+    Assert.Equal(parse "25", ("x", 5) -|> (parse "5x"))
+[<Fact>]
+let ``Test <|-``() =
+    Assert.Equal(parse "25",  (parse "5x") <|- ("x", 5))
+[<Fact>]
+let ``Test -|><|-``() =
+    Assert.Equal(parse "125",  ("y", 100) -|> (parse "5x + y") <|- ("x", 5))

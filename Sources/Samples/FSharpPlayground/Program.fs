@@ -9,6 +9,7 @@ open Option
 open Compilation
 open Shortcuts
 
-let expr = parse "x + 12"
+let expr = parse "x + 12y"
 
-printfn "%O" (("x", 13) -|> expr)
+printfn "%O" (("y", 243) -|> (("x", 13) -|> expr))
+printfn "%O" (("y", 24) -|> expr <|- ("x", 244))
