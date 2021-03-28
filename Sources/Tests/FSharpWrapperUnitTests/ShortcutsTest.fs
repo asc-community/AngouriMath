@@ -1,4 +1,4 @@
-﻿module ShortcutsTest
+﻿module ReturnValues.ShortcutsTest
 
 open Xunit
 open Shortcuts

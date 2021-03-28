@@ -1,4 +1,4 @@
-﻿module CompilationTest
+﻿module ReturnValues.CompilationTest
 
 open Compilation
 open Xunit

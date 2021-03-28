@@ -181,6 +181,44 @@ let asech x = MathS.Hyperbolic.Arsech(parsed x)
 /// Returns a hyperbolic arcosecant node
 let acsch x = MathS.Hyperbolic.Arcosech(parsed x)
 
+
+
+/// Returns a bounded closed interval
+let closedInterval from ``to`` =
+    MathS.Interval(parsed from, parsed ``to``)
+
+/// Returns a bounded open interval
+let openInterval from ``to`` =
+    MathS.Interval(parsed from, false, parsed ``to``, false)
+
+/// Returns a bounded interval with left point included and right point excluded
+let leftInclusiveRightExclusive from ``to`` =
+    MathS.Interval(parsed from, true, parsed ``to``, false)
+
+/// Returns a bounded interval with right point included and left point excluded
+let leftExclusiveRightInclusive from ``to`` =
+    MathS.Interval(parsed from, false, parsed ``to``, true)
+
+/// Returns a half-bounded with left point included
+let leftInclusive from =
+    MathS.Interval(parsed from, true, parsed "+oo", false)
+
+/// Returns a half-bounded with left point excluded
+let leftExclusive from =
+    MathS.Interval(parsed from, false, parsed "+oo", false)
+
+/// Returns a half-bounded with right point included
+let rightInclusive ``to`` =
+    MathS.Interval(parsed "-oo", false, parsed ``to``, true)
+
+/// Returns a half-bounded with right point excluded
+let rightExclusive ``to`` =
+    MathS.Interval(parsed "-oo", false, parsed ``to``, false)
+
+
+    
+
+
 /// Computes the derivative of the given variable and expression
 let derivative x expr =
     (parsed expr).Differentiate(symbol x)

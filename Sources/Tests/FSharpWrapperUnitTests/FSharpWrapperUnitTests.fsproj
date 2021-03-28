@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Functions.Sets.fs" />
     <Compile Include="CoreTest.fs" />
     <Compile Include="ShortcutsTest.fs" />
     <Compile Include="CompilationTest.fs" />

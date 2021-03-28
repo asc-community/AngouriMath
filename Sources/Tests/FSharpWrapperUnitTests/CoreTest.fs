@@ -1,4 +1,4 @@
-﻿module CoreTest
+﻿module ReturnValues.CoreTest
 
 open Xunit
 open Core
