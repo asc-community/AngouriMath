@@ -42,21 +42,21 @@ let transposed (m: AngouriMath.Entity.Matrix) = m.T
 
 
 /// Returns a conjunction node of two nodes
-let conj a b = MathS.Conjunction(parse a, parse b)
+let conjunction a b = MathS.Conjunction(parse a, parse b)
 
 /// Returns a disjunction node of two nodes
-let disj a b = MathS.Disjunction(parse a, parse b)
+let disjunction a b = MathS.Disjunction(parse a, parse b)
 
 /// Returns a implication node of two nodes
 /// Where the first one is the assumption,
 /// and the second one is the conclusion
-let impl assum concl = MathS.Implication(parse assum, parse concl)
+let implication assum concl = MathS.Implication(parse assum, parse concl)
 
 /// Returns a negation node of a node
-let neg a = MathS.Negation(parse a)
+let negation a = MathS.Negation(parse a)
 
 /// Returns an exclusive disjunction node of two nodes
-let xor a b = MathS.ExclusiveDisjunction(parse a, parse b)
+let exDisjunction a b = MathS.ExclusiveDisjunction(parse a, parse b)
 
 /// Returns a union node of two nodes
 let union a b = MathS.Union(parse a, parse b)

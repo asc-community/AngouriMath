@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="ShortcutsTest.fs" />
+    <Compile Include="CompilationTest.fs" />
     <Compile Include="Functions.Matrices.fs" />
     <Compile Include="Functions.Order.fs" />
     <Compile Include="Common.fs" />
