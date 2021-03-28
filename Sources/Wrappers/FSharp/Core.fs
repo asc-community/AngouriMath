@@ -2,7 +2,6 @@
 
 open AngouriMath
 open PeterO.Numbers
-open System.Linq
 
 exception ParseException
 
@@ -46,35 +45,12 @@ let symbol x = parseSymbol x
 /// Creates a set from string
 let set x = parseTypeSilent<Entity.Set> x
 
-type Lengths =
-    | Any
-    | Invalid
-    | Fixed of int
-
-/// Creates a matrix from a list of lists
-/// of objects (which are parsed into Entities)
-let matrix x = 
-    let rec columnCount (x : 'T list list) =
-        match x with
-        | [] -> Any
-        | hd::tl ->
-            match columnCount tl with
-            | Any -> Fixed(hd.Length)
-            | Invalid -> Invalid
-            | Fixed len -> if len = hd.Length then Fixed(len) else Invalid
-
-    let parseListOfLists li =
-        [ for row in li do yield [ for el in row do yield (parse el) ] ]
-
-    match columnCount x with
-    | Any | Invalid -> raise ParseException
-    | Fixed _ -> MathS.Matrix(array2D (parseListOfLists x))
-
-
-/// Creates a column vector from a 1-dimensional list
-let vector li =
-    MathS.Vector([ for el in li do yield parse el ].ToArray())
-
-type LimSide =
-    | Left
-    | Right
+/// The first argument is the setting to change
+/// The second argument is the new value of the setting
+/// The third argument is what to execute under
+/// the selected settings.
+let withSetting (setting: AngouriMath.Convenience.Setting<'T>) newValue f =
+    let unit = setting.Set(newValue)
+    let res = f()
+    unit.Dispose()
+    res

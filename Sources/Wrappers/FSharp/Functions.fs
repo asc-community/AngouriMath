@@ -2,6 +2,7 @@
 
 open Core
 open AngouriMath
+open System.Linq
 
 /// simplifies the given expression
 let simplify x =
@@ -208,6 +209,10 @@ let limit x destination expr =
 let limited x destination expr =
     MathS.Limit(parse expr, parse x, parse destination)
 
+type LimSide =
+    | Left
+    | Right
+
 /// Computes the limit of the given variable, destination to where it approaches, expression itself, and the origin side
 let limitSided x destination side expr =
     match side with
@@ -219,3 +224,38 @@ let limitedSided x destination side expr =
     match side with
     | Left -> MathS.Limit(parse expr, parse x, parse destination, AngouriMath.Core.ApproachFrom.Left)
     | Right -> MathS.Limit(parse expr, parse x, parse destination, AngouriMath.Core.ApproachFrom.Right)
+
+
+
+
+
+
+type Lengths =
+    | Any
+    | Invalid
+    | Fixed of int
+    
+/// Creates a matrix from a list of lists
+/// of objects (which are parsed into Entities)
+let matrix x = 
+    let rec columnCount (x : 'T list list) =
+        match x with
+        | [] -> Any
+        | hd::tl ->
+            match columnCount tl with
+            | Any -> Fixed(hd.Length)
+            | Invalid -> Invalid
+            | Fixed len -> if len = hd.Length then Fixed(len) else Invalid
+    
+    let parseListOfLists li =
+        [ for row in li do yield [ for el in row do yield (parse el) ] ]
+    
+    match columnCount x with
+    | Any | Invalid -> raise ParseException
+    | Fixed _ -> MathS.Matrix(array2D (parseListOfLists x))
+    
+    
+/// Creates a column vector from a 1-dimensional list
+let vector li =
+    MathS.Vector([ for el in li do yield parse el ].ToArray())
+    
