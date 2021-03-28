@@ -17,9 +17,6 @@ using static AngouriMath.Entity.Set;
 // Console.WriteLine("(| [ a, b, c ] |)".Simplify());
 // Console.WriteLine("(| [ 2, 3, 6 ] |)".EvalNumerical());
 
-
-return;
-
 Console.WriteLine(Fib(4));
 
 return;

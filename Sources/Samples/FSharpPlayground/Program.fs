@@ -9,13 +9,6 @@ open Option
 open Compilation
 open Shortcuts
 
-let expr = parsed "x + 12y"
+let expr = parsed "a + b + c"
 
-let s = substituted "x" 3 expr
-
-printfn "%O" (("y", 243) -|> (("x", 13) -|> expr))
-
-printfn "%O" (("y", 24) -|> expr <|- ("x", 244))
-
-let i = ``int [dx]`` expr
 
