@@ -7,7 +7,7 @@ exception ParseException
 
 /// Parses the given object (be that string, number, or something else)
 /// into an Entity. In case it cannot, an exception is thrown
-let parseSilent (x : obj) =
+let parsedSilent (x : obj) =
     match x with
     | :? Entity as e -> Some(e)
     | :? string as s -> Some(MathS.FromString(s))
@@ -17,33 +17,34 @@ let parseSilent (x : obj) =
     | :? decimal as d -> Some(upcast MathS.Numbers.Create(EDecimal.FromDecimal(d)) : Entity)
     | unresolved -> None
 
-let parse s =
-    match parseSilent s with
+let parsed s =
+    match parsedSilent s with
     | None -> raise ParseException
     | Some(res) -> res
 
 /// Parses into arbitrary type
-let parseTypeSilent<'T when 'T :> Entity> x =
-    match parseSilent x with
+let parsedTypeSilent<'T when 'T :> Entity> x =
+    match parsedSilent x with
     | None -> None
     | Some(v) ->
         match v with
         | :? 'T as correct -> Some(correct)
         | _ -> None
    
-let parseType x =
-    match parseTypeSilent x with
+let parsedType x =
+    match parsedTypeSilent x with
     | None -> raise ParseException
     | Some(v) -> v
 
-/// Parses into a variable
-let parseSymbol x : Entity.Variable = parseType x
-
 /// Creates a variable from string
-let symbol x = parseSymbol x
+let symbol x : Entity.Variable = parsedType x
     
 /// Creates a set from string
-let set x = parseTypeSilent<Entity.Set> x
+let set x = parsedTypeSilent<Entity.Set> x
+
+/// Returns nodes (subexpressions) of the given expression
+let nodesOf expr =
+    (parsed expr).Nodes
 
 /// The first argument is the setting to change
 /// The second argument is the new value of the setting

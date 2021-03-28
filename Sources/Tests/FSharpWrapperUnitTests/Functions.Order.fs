@@ -9,14 +9,14 @@ let y = symbol "y"
 let z = symbol "z"
 
 [<Fact>]
-let ``Derivative test`` () = Assert.Equal(parse "derivative(x, y)", derivative y x)
+let ``Derivative test`` () = Assert.Equal(parsed "derivative(x, y)", derivativeNode y x)
 [<Fact>]
-let ``Integral test`` () = Assert.Equal(parse "integral(x, y)", integral y x)
+let ``Integral test`` () = Assert.Equal(parsed "integral(x, y)", integralNode y x)
 [<Fact>]
-let ``Limit test`` () = Assert.Equal(parse "limit(x, y, z)", limited y z x)
+let ``Limit test`` () = Assert.Equal(parsed "limit(x, y, z)", limitNode y z x)
 [<Fact>]
-let ``Differentiate test`` () = Assert.Equal(parse "2x + 2", differentiate x "x2 + 2x")
+let ``Differentiate test`` () = Assert.Equal(parsed "2x + 2", derivative x "x2 + 2x")
 [<Fact>]
-let ``Integrate test`` () = Assert.Equal(parse "sin(x) + x", integrate x "1 + cos(x)")
+let ``Integrate test`` () = Assert.Equal(parsed "sin(x) + x", integral x "1 + cos(x)")
 [<Fact>]
-let ``Limited test`` () = Assert.Equal(parse "a", limit x 0 "a x / sin(x)")
+let ``Limited test`` () = Assert.Equal(parsed "a", limit x 0 "a x / sin(x)")

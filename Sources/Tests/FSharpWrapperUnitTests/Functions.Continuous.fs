@@ -7,54 +7,54 @@ open Xunit
 let x = symbol "x"
 
 [<Fact>]
-let ``Test symbol x`` () = Assert.Equal(parse "x", symbol "x")
+let ``Test symbol x`` () = Assert.Equal(parsed "x", symbol "x")
 [<Fact>]
-let ``Test symbol y`` () = Assert.Equal(parse "y", symbol "y")
+let ``Test symbol y`` () = Assert.Equal(parsed "y", symbol "y")
 [<Fact>]
-let ``Sin test`` () = Assert.Equal(parse "sin(x)", sin x)
+let ``Sin test`` () = Assert.Equal(parsed "sin(x)", sin x)
 [<Fact>]
-let ``Cos test`` () = Assert.Equal(parse "cos(x)", cos x)
+let ``Cos test`` () = Assert.Equal(parsed "cos(x)", cos x)
 [<Fact>]
-let ``Tan test`` () = Assert.Equal(parse "tan(x)", tan x)
+let ``Tan test`` () = Assert.Equal(parsed "tan(x)", tan x)
 [<Fact>]
-let ``Cot test`` () = Assert.Equal(parse "cot(x)", cot x)
+let ``Cot test`` () = Assert.Equal(parsed "cot(x)", cot x)
 [<Fact>]
-let ``Sec test`` () = Assert.Equal(parse "sec(x)", sec x)
+let ``Sec test`` () = Assert.Equal(parsed "sec(x)", sec x)
 [<Fact>]
-let ``Csc test`` () = Assert.Equal(parse "csc(x)", csc x)
+let ``Csc test`` () = Assert.Equal(parsed "csc(x)", csc x)
 [<Fact>]
-let ``Asin test`` () = Assert.Equal(parse "asin(x)", asin x)
+let ``Asin test`` () = Assert.Equal(parsed "asin(x)", asin x)
 [<Fact>]
-let ``Acos test`` () = Assert.Equal(parse "acos(x)", acos x)
+let ``Acos test`` () = Assert.Equal(parsed "acos(x)", acos x)
 [<Fact>]
-let ``Atan test`` () = Assert.Equal(parse "atan(x)", atan x)
+let ``Atan test`` () = Assert.Equal(parsed "atan(x)", atan x)
 [<Fact>]
-let ``Acot test`` () = Assert.Equal(parse "acot(x)", acot x)
+let ``Acot test`` () = Assert.Equal(parsed "acot(x)", acot x)
 [<Fact>]
-let ``Asec test`` () = Assert.Equal(parse "asec(x)", asec x)
+let ``Asec test`` () = Assert.Equal(parsed "asec(x)", asec x)
 [<Fact>]
-let ``Acsc test`` () = Assert.Equal(parse "acsc(x)", acsc x)
+let ``Acsc test`` () = Assert.Equal(parsed "acsc(x)", acsc x)
 [<Fact>]
-let ``Sinh test`` () = Assert.Equal(parse "sinh(x)", sinh x)
+let ``Sinh test`` () = Assert.Equal(parsed "sinh(x)", sinh x)
 [<Fact>]
-let ``Cosh test`` () = Assert.Equal(parse "cosh(x)", cosh x)
+let ``Cosh test`` () = Assert.Equal(parsed "cosh(x)", cosh x)
 [<Fact>]
-let ``Tanh test`` () = Assert.Equal(parse "tanh(x)", tanh x)
+let ``Tanh test`` () = Assert.Equal(parsed "tanh(x)", tanh x)
 [<Fact>]
-let ``Coth test`` () = Assert.Equal(parse "coth(x)", coth x)
+let ``Coth test`` () = Assert.Equal(parsed "coth(x)", coth x)
 [<Fact>]
-let ``Sech test`` () = Assert.Equal(parse "sech(x)", sech x)
+let ``Sech test`` () = Assert.Equal(parsed "sech(x)", sech x)
 [<Fact>]
-let ``Csch test`` () = Assert.Equal(parse "csch(x)", csch x)
+let ``Csch test`` () = Assert.Equal(parsed "csch(x)", csch x)
 [<Fact>]
-let ``Asinh test`` () = Assert.Equal(parse "asinh(x)", asinh x)
+let ``Asinh test`` () = Assert.Equal(parsed "asinh(x)", asinh x)
 [<Fact>]
-let ``Acosh test`` () = Assert.Equal(parse "acosh(x)", acosh x)
+let ``Acosh test`` () = Assert.Equal(parsed "acosh(x)", acosh x)
 [<Fact>]
-let ``Atanh test`` () = Assert.Equal(parse "atanh(x)", atanh x)
+let ``Atanh test`` () = Assert.Equal(parsed "atanh(x)", atanh x)
 [<Fact>]
-let ``Acoth test`` () = Assert.Equal(parse "acoth(x)", acoth x)
+let ``Acoth test`` () = Assert.Equal(parsed "acoth(x)", acoth x)
 [<Fact>]
-let ``Asech test`` () = Assert.Equal(parse "asech(x)", asech x)
+let ``Asech test`` () = Assert.Equal(parsed "asech(x)", asech x)
 [<Fact>]
-let ``Acsch test`` () = Assert.Equal(parse "acsch(x)", acsch x)
+let ``Acsch test`` () = Assert.Equal(parsed "acsch(x)", acsch x)

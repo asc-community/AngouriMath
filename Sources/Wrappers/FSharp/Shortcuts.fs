@@ -8,10 +8,10 @@ open Core
 
 /// Finds the derivative of the given expression
 /// over x
-let ``dy/dx`` expr = differentiate "x" expr
+let ``dy/dx`` expr = derivative "x" expr
 
 /// Finds the integral of the given expression
-let ``int [dx]`` expr = integrate "x" expr
+let ``int [dx]`` expr = integral "x" expr
 
 /// Finds the both-sided limit of the given expression
 /// for x approaching 0
@@ -27,8 +27,8 @@ let ``lim x->-oo`` expr = limit "x" "-oo" expr
 
 /// Substitutes the first argument from the tuple with the second
 /// argument in the tuple in the given expression
-let (-|>) (x, v) expr = (substitute (symbol x) (parse v) expr).InnerSimplified
+let (-|>) (x, v) expr = (substituted (symbol x) (parsed v) expr).InnerSimplified
 
 /// In the given expresion, substitutes the first argument from the tuple
 /// with the second argument from the tuple
-let (<|-) expr (x, v) = (substitute (symbol x) (parse v) expr).InnerSimplified
+let (<|-) expr (x, v) = (substituted (symbol x) (parsed v) expr).InnerSimplified
