@@ -17,6 +17,10 @@ using static AngouriMath.Entity.Set;
 // Console.WriteLine("(| [ a, b, c ] |)".Simplify());
 // Console.WriteLine("(| [ 2, 3, 6 ] |)".EvalNumerical());
 
+Console.WriteLine(("a b - 169", "a + b - 26").SolveSystem("a", "b"));
+
+return;
+
 Console.WriteLine(Fib(4));
 
 return;

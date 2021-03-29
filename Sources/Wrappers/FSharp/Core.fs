@@ -51,7 +51,5 @@ let nodesOf expr =
 /// The third argument is what to execute under
 /// the selected settings.
 let withSetting (setting: AngouriMath.Convenience.Setting<'T>) newValue f =
-    let unit = setting.Set(newValue)
-    let res = f()
-    unit.Dispose()
-    res
+    use unit = setting.Set(newValue)
+    f()
