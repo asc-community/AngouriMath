@@ -10,7 +10,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath.FSharp" Version="1.0.0-preview.3" />
+    <PackageReference Include="AngouriMath.FSharp" Version="1.3.0-preview.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.2-beta.21102.10" />
   </ItemGroup>
 
 </Project>
