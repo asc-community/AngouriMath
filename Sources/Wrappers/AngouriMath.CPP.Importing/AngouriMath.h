@@ -22,7 +22,7 @@ namespace AngouriMath::Internal
     public:
         EntityRef reference;
         EntityInstance(EntityRef reference) : reference(reference) { }
-        std::vector<Entity> CachedNodes();
+        const std::vector<Entity>& CachedNodes();
     };
 }
 
@@ -44,11 +44,7 @@ namespace AngouriMath
         Entity Differentiate(const Entity& var, ErrorCode& ec) const;
 
         // TODO: to be rewritten!
-        std::vector<Entity> Nodes()
-        {
-            const auto& inner = innerEntityInstance.get();
-            return inner->CachedNodes(); 
-        }
+        const std::vector<Entity>& Nodes() { return innerEntityInstance.get()->CachedNodes(); }
 
         friend Internal::EntityRef GetHandle(const Entity& e);
         friend Entity CreateByHandle(Internal::EntityRef handle);

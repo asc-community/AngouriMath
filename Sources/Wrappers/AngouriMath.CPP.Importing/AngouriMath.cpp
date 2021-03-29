@@ -112,7 +112,7 @@ namespace AngouriMath
 
     namespace Internal
     {
-        std::vector<Entity> EntityInstance::CachedNodes()
+        const std::vector<Entity>& EntityInstance::CachedNodes()
         {
             auto lambda = [](AngouriMath::Internal::EntityRef _this) {
                 NativeArray nRes;
