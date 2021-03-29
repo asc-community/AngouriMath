@@ -1,6 +1,6 @@
 #include "AmgouriMathException.h"
 #include <cassert>
-#include "imports.h"
+#include "Imports.h"
 
 namespace AngouriMath::Internal
 {

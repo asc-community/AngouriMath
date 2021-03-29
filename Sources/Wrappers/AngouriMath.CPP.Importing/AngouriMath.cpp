@@ -6,7 +6,7 @@
  */
 
 #include "AngouriMath.h"
-#include "imports.h"
+#include "Imports.h"
 #include <vector>
 
 namespace AngouriMath
