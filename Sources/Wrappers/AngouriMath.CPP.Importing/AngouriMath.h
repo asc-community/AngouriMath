@@ -26,14 +26,14 @@ namespace AngouriMath
         Entity Differentiate(const Entity& var, ErrorCode& ec) const;
 
         // TODO: to be rewritten!
-        const std::vector<Entity> Nodes() const { return (*handle).CachedNodes(); }
+        const std::vector<Entity>& Nodes() const { return innerEntityInstance.get()->CachedNodes(); }
 
         friend Internal::EntityRef GetHandle(const Entity& e);
         friend Entity CreateByHandle(Internal::EntityRef handle);
     private:
         explicit Entity(Internal::EntityRef handle);
         
-        std::shared_ptr<Internal::EntityInstance> handle;
+        std::shared_ptr<Internal::EntityInstance> innerEntityInstance;
     };
 
     inline std::ostream& operator<<(std::ostream& out, const AngouriMath::Entity& e)

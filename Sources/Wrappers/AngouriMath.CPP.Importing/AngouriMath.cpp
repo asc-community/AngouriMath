@@ -13,18 +13,18 @@ namespace AngouriMath
 {
     struct HandleDeleter
     {
-        void operator()(const Internal::EntityRef* handle)
+        void operator()(const Internal::EntityInstance* inner)
         {
-            if (handle != nullptr)
+            if (inner != nullptr)
             {
-                (void)free_entity(*handle);
-                delete handle;
+                (void)free_entity(inner->ref);
+                delete inner;
             }
         }
     };
 
     Entity::Entity(Internal::EntityRef handle)
-        : innerEntityInstance(new Internal::EntityInstance(innerEntityInstance), HandleDeleter())
+        : innerEntityInstance(new Internal::EntityInstance(innerEntityInstance->ref), HandleDeleter())
     {
         
     }
@@ -71,7 +71,7 @@ namespace AngouriMath
     std::string Entity::ToString() const
     {
         char* buff = nullptr;
-        HandleErrorCode(entity_to_string(*this->innerEntityInstance, &buff));
+        HandleErrorCode(entity_to_string(innerEntityInstance->ref, &buff));
         auto res = buff != nullptr ? std::string(buff) : std::string();
         free_string(buff);
         return res;
@@ -80,7 +80,7 @@ namespace AngouriMath
     std::string Entity::ToString(ErrorCode& ec) const
     {
         char* buff = nullptr;
-        HandleErrorCode(entity_to_string(*this->innerEntityInstance, &buff), ec);
+        HandleErrorCode(entity_to_string(innerEntityInstance->ref, &buff), ec);
         auto res = buff != nullptr ? std::string(buff) : std::string();
         free_string(buff);
         return res;
@@ -89,7 +89,7 @@ namespace AngouriMath
     Entity Entity::Differentiate(const Entity& var) const
     {
         Internal::EntityRef result;
-        HandleErrorCode(entity_differentiate(*this->innerEntityInstance, *var.innerEntityInstance, &result));
+        HandleErrorCode(entity_differentiate(innerEntityInstance->ref, var.innerEntityInstance->ref, &result));
         return Entity(result);
     }
 

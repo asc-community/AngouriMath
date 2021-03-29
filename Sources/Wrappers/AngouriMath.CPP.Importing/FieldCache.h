@@ -12,7 +12,7 @@ namespace AngouriMath::Internal
         T value;
         bool isValid = false;
     public:
-        // make thread-safe
+        // TODO: make thread-safe
         T GetValue(std::function<T(EntityRef)> factory, EntityRef ref)
         {
             if (!isValid)
