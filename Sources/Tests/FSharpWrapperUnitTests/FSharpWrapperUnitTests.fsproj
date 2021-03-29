@@ -8,15 +8,20 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ReturnValues.Order.fs" />
+    <Compile Include="Functions.Sets.fs" />
+    <Compile Include="CoreTest.fs" />
+    <Compile Include="ShortcutsTest.fs" />
+    <Compile Include="CompilationTest.fs" />
+    <Compile Include="Functions.Matrices.fs" />
+    <Compile Include="Functions.Order.fs" />
     <Compile Include="Common.fs" />
-    <Compile Include="ReturnValues.Discrete.fs" />
-    <Compile Include="ReturnValues.Continuous.fs" />
+    <Compile Include="Functions.Discrete.fs" />
+    <Compile Include="Functions.Continuous.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0-preview-20210219-03" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -30,6 +35,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Wrappers\FSharp\AngouriMath.FSharp.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.2-beta.21102.10" />
   </ItemGroup>
 
 </Project>

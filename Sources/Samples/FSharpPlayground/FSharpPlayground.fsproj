@@ -13,4 +13,8 @@
     <ProjectReference Include="..\..\Wrappers\FSharp\AngouriMath.FSharp.fsproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="5.0.2-beta.21102.10" />
+  </ItemGroup>
+
 </Project>

@@ -1,10 +1,16 @@
 ﻿open Functions
 open Operators
-open AngouriMath
-open Core
-open Constants
+open Shortcuts
 
-printfn "%O" (as_number "2 + 3")
-printfn "%O" (differentiate "x" "x2 + a x")
-printfn "%O" (integrate "x" "x2 + e")
-printfn "%O" (limit "x" "0" "sin(a x) / x")
+
+printfn "%O" (solutions "x" "x + 2 = 0")
+
+printfn "%O" (simplified (solutions "x" "x2 + 2 a x + a2 = 0"))
+
+printfn "%O" (``dy/dx`` "x2 + a x")
+
+printfn "%O" (integral "x" "x2 + e")
+
+printfn "%O" (``lim x->0`` "sin(a x) / x")
+
+printfn "%O" (latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)")

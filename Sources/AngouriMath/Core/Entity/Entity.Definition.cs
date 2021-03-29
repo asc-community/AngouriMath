@@ -125,6 +125,30 @@ namespace AngouriMath
         public virtual Entity Substitute(Entity x, Entity value)
             => this == x ? value : this;
 
+        /// <summary>
+        /// Replaces x.x1 with value.v1 and
+        /// x.x2 with value.v2
+        /// </summary>
+        public Entity Substitute((Entity x1, Entity x2) x, (Entity v1, Entity v2) value)
+            => Substitute(x.x1, value.v1).Substitute(x.x2, value.v2);
+
+        /// <summary>
+        /// Replaces x.x1 with value.v1 and
+        /// x.x2 with value.v2 and
+        /// x.x3 with value.v3
+        /// </summary>
+        public Entity Substitute((Entity x1, Entity x2, Entity x3) x, (Entity v1, Entity v2, Entity v3) value)
+            => Substitute(x.x1, value.v1).Substitute(x.x2, value.v2).Substitute(x.x3, value.v3);
+
+        /// <summary>
+        /// Replaces x.x1 with value.v1 and
+        /// x.x2 with value.v2 and
+        /// x.x3 with value.v3 and
+        /// x.x4 with value.v4
+        /// </summary>
+        public Entity Substitute((Entity x1, Entity x2, Entity x3, Entity x4) x, (Entity v1, Entity v2, Entity v3, Entity v4) value)
+            => Substitute(x.x1, value.v1).Substitute(x.x2, value.v2).Substitute(x.x3, value.v3).Substitute(x.x4, value.v4);
+
         /// <summary>Replaces all <param name="replacements"/></summary>
         public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements) where TFrom : Entity where TTo : Entity
         {

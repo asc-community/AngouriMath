@@ -321,27 +321,25 @@ False
 <a href="https://www.nuget.org/packages/AngouriMath.FSharp">Download</a>
 
 Not everything is supported directly from F#, so if something missing, you will need
-to address that functional from AngouriMath.
+to call the necessary methods from AngouriMath.
 
 ```fs
 open Functions
 open Operators
-open FromToString
+open Shortcuts
 
+printfn "%O" (solutions "x" "x + 2 = 0")
 
-solve "x" "x + 2 = 0"
+printfn "%O" (simplified (solutions "x" "x2 + 2 a x + a2 = 0"))
 
-simplify (solve "x" "x2 + 2 a x + a2 = 0")
+printfn "%O" (``dy/dx`` "x2 + a x")
 
-differentiate "x" "x2 + a x"
+printfn "%O" (integral "x" "x2 + e")
 
-integrate "x" "x2 + e"
+printfn "%O" (``lim x->0`` "sin(a x) / x")
 
-limit "x" "0" "sin(a x) / x"
+printfn "%O" (latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)")
 
-"sin(a x) / x" &&& "x" --> 0
-
-latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)"
 ```
 
 </details>

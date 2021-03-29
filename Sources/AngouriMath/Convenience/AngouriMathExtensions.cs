@@ -30,7 +30,7 @@ namespace AngouriMath.Extensions
         /// which is a one-column matrix
         /// </summary>
         public static Matrix ToVector(this IEnumerable<Entity> elements)
-            => MathS.Matrices.Vector(elements.ToArray());
+            => MathS.Vector(elements.ToArray());
 
         /// <summary>
         /// Sums all the given terms and returns the resulting expression
@@ -152,6 +152,30 @@ namespace AngouriMath.Extensions
         /// <returns>Expression with substituted the variable</returns>
         public static Entity Substitute(this string expr, Variable var, Entity value)
             => expr.ToEntity().Substitute(var, value);
+
+        /// <summary>
+        /// Replaces x.x1 with value.v1 and
+        /// x.x2 with value.v2
+        /// </summary>
+        public static Entity Substitute(this string expr, (Entity x1, Entity x2) x, (Entity v1, Entity v2) value)
+            => expr.ToEntity().Substitute(x.x1, value.v1).Substitute(x.x2, value.v2);
+
+        /// <summary>
+        /// Replaces x.x1 with value.v1 and
+        /// x.x2 with value.v2 and
+        /// x.x3 with value.v3
+        /// </summary>
+        public static Entity Substitute(this string expr, (Entity x1, Entity x2, Entity x3) x, (Entity v1, Entity v2, Entity v3) value)
+            => expr.ToEntity().Substitute(x.x1, value.v1).Substitute(x.x2, value.v2).Substitute(x.x3, value.v3);
+
+        /// <summary>
+        /// Replaces x.x1 with value.v1 and
+        /// x.x2 with value.v2 and
+        /// x.x3 with value.v3 and
+        /// x.x4 with value.v4
+        /// </summary>
+        public static Entity Substitute(this string expr, (Entity x1, Entity x2, Entity x3, Entity x4) x, (Entity v1, Entity v2, Entity v3, Entity v4) value)
+            => expr.ToEntity().Substitute(x.x1, value.v1).Substitute(x.x2, value.v2).Substitute(x.x3, value.v3).Substitute(x.x4, value.v4);
 
         /// <summary>
         /// Solves the given equation
