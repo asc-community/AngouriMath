@@ -6,7 +6,7 @@
  */
 
 #include "AngouriMath.h"
-#include "Imports.h"
+#include "imports.h"
 #include <vector>
 
 namespace AngouriMath
@@ -17,14 +17,14 @@ namespace AngouriMath
         {
             if (inner != nullptr)
             {
-                (void)free_entity(inner->ref);
+                (void)free_entity(inner->reference);
                 delete inner;
             }
         }
     };
 
     Entity::Entity(Internal::EntityRef handle)
-        : innerEntityInstance(new Internal::EntityInstance(innerEntityInstance->ref), HandleDeleter())
+        : innerEntityInstance(new Internal::EntityInstance(handle), HandleDeleter())
     {
         
     }
@@ -71,7 +71,7 @@ namespace AngouriMath
     std::string Entity::ToString() const
     {
         char* buff = nullptr;
-        HandleErrorCode(entity_to_string(innerEntityInstance->ref, &buff));
+        HandleErrorCode(entity_to_string(innerEntityInstance.get()->reference, &buff));
         auto res = buff != nullptr ? std::string(buff) : std::string();
         free_string(buff);
         return res;
@@ -80,7 +80,7 @@ namespace AngouriMath
     std::string Entity::ToString(ErrorCode& ec) const
     {
         char* buff = nullptr;
-        HandleErrorCode(entity_to_string(innerEntityInstance->ref, &buff), ec);
+        HandleErrorCode(entity_to_string(innerEntityInstance.get()->reference, &buff), ec);
         auto res = buff != nullptr ? std::string(buff) : std::string();
         free_string(buff);
         return res;
@@ -89,24 +89,44 @@ namespace AngouriMath
     Entity Entity::Differentiate(const Entity& var) const
     {
         Internal::EntityRef result;
-        HandleErrorCode(entity_differentiate(innerEntityInstance->ref, var.innerEntityInstance->ref, &result));
+        HandleErrorCode(entity_differentiate(innerEntityInstance.get()->reference, var.innerEntityInstance.get()->reference, &result));
         return Entity(result);
     }
 
     Entity Entity::Differentiate(const Entity& var, ErrorCode& ec) const
     {
         Internal::EntityRef result;
-        HandleErrorCode(entity_differentiate(innerEntityInstance->ref, var.innerEntityInstance->ref, &result), ec);
+        HandleErrorCode(entity_differentiate(innerEntityInstance.get()->reference, var.innerEntityInstance.get()->reference, &result), ec);
         return Entity(result);
     }
 
     Internal::EntityRef GetHandle(const Entity& e)
     {
-        return e.innerEntityInstance->ref;
+        return e.innerEntityInstance.get()->reference;
     }
 
     Entity CreateByHandle(Internal::EntityRef handle)
     {
         return Entity(handle);
+    }
+
+    namespace Internal
+    {
+        std::vector<Entity> EntityInstance::CachedNodes()
+        {
+            auto lambda = [](AngouriMath::Internal::EntityRef _this) {
+                NativeArray nRes;
+                auto handle = _this;
+                HandleErrorCode(entity_nodes(handle, &nRes));
+                std::vector<Entity> res(nRes.length);
+                for (size_t i = 0; i < nRes.length; i++)
+                    res[i] = CreateByHandle(nRes.refs[i]);
+                free_native_array(nRes);
+                const std::vector<AngouriMath::Entity> resFinal = res;
+                return resFinal;
+            };
+            const auto& res = nodes.GetValue(lambda, reference);
+            return res;
+        }
     }
 }

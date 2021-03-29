@@ -7,7 +7,6 @@ namespace AngouriMath::Internal
     typedef uint64_t EntityRef;
     typedef EntityRef* EntityOut;
     typedef char** StringOut;
-    // typedef NativeArray ArrayOut;
 
     typedef const char* String;
     typedef int ApproachFrom; // in the outer API, it should be a enum

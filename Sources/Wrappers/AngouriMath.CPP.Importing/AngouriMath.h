@@ -6,7 +6,25 @@
 #include <string>
 #include <ostream>
 #include <vector>
-#include "EntityInstance.h"
+#include "FieldCache.h"
+
+namespace AngouriMath
+{
+    class Entity;
+}
+
+namespace AngouriMath::Internal
+{
+    class EntityInstance
+    {
+    private:
+        FieldCache<std::vector<Entity>> nodes;
+    public:
+        EntityRef reference;
+        EntityInstance(EntityRef reference) : reference(reference) { }
+        std::vector<Entity> CachedNodes();
+    };
+}
 
 namespace AngouriMath
 {
@@ -26,7 +44,11 @@ namespace AngouriMath
         Entity Differentiate(const Entity& var, ErrorCode& ec) const;
 
         // TODO: to be rewritten!
-        const std::vector<Entity>& Nodes() const { return innerEntityInstance.get()->CachedNodes(); }
+        std::vector<Entity> Nodes()
+        {
+            const auto& inner = innerEntityInstance.get();
+            return inner->CachedNodes(); 
+        }
 
         friend Internal::EntityRef GetHandle(const Entity& e);
         friend Entity CreateByHandle(Internal::EntityRef handle);

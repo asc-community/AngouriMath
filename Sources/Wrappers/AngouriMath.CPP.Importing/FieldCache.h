@@ -22,5 +22,7 @@ namespace AngouriMath::Internal
             }
             return value;
         }
+
+        FieldCache() { }
     };
 }
