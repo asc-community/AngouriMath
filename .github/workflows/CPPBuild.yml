@@ -1,0 +1,24 @@
+name: 'C++ build'
+
+on: [push, pull_request]
+jobs:
+  Building:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET 5
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.0.100'
+    - name: 'Generating exports'
+      run: |
+        cd Sources/Wrappers/AngouriMath.CPP.Exporting/Build
+        start 1.generate-exports.bat
+    - name: 'Building the library into native'
+      run: |
+        start 2.build-win-x64.bat
+    - name: 'Building AngouriMath.Importing'
+      run: |
+        cd ../AngouriMath.CPP.Importing
+        cmake
+  
