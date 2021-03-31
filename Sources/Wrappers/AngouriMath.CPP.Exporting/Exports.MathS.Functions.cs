@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AngouriMath.Core.Exceptions;
+using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -15,8 +16,26 @@ namespace AngouriMath.CPP.Exporting
                 return ObjStorage<Entity>.Alloc(str);
             });
 
-        [UnmanagedCallersOnly(EntryPoint = "maths_sin")]
-        public static NErrorCode Sin(ObjRef expr, ref ObjRef res)
-            => ExceptionEncode(ref res, expr, expr => MathS.Sin(expr.AsEntity));
+        [UnmanagedCallersOnly(EntryPoint = "matrix_from_vector_of_vectors")]
+        public static NErrorCode MatrixFromVectorOfVectors(NativeArray arr, ref ObjRef res)
+            => ExceptionEncode(ref res, arr, static arr =>
+            {
+                // TODO:
+                throw new InvalidOperationException("This method should be implemented after native-aot-attempt-2 is merged into master");
+            });
+
+        [UnmanagedCallersOnly(EntryPoint = "matrix_transpose")]
+        public static NErrorCode MatrixTranspose(ObjRef m, ref ObjRef res)
+            => ExceptionEncode(ref res, m, static m =>
+            {
+                // TODO:
+                throw new InvalidOperationException("This method should be implemented after native-aot-attempt-2 is merged into master");
+            });
+
+        [UnmanagedCallersOnly(EntryPoint = "finite_set_to_vector")]
+        public static NErrorCode FiniteSetToVector(ObjRef m, ref NativeArray res)
+            => ExceptionEncode(ref res, m, static m 
+                => NativeArray.Alloc((Entity.Set.FiniteSet)m.AsEntity)
+            );
     }
 }
