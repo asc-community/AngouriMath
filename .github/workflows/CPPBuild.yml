@@ -12,13 +12,12 @@ jobs:
         dotnet-version: '5.0.100'
     - name: 'Generating exports'
       run: |
-        cd Sources/Wrappers/AngouriMath.CPP.Exporting/Build
-        cd ../../../Utils
+        cd Sources/Utils
         dotnet run -p Utils ExportsGenerator
     - name: 'Building the library into native'
       run: |
-        cd Sources/Wrappers/AngouriMath.CPP.Exporting/Build
-        cd ../
+        cd Sources/Wrappers/AngouriMath.CPP.Exporting
+        mkdir ../AngouriMath.CPP.Importing/win-x64
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r win-x64 -c release
     - name: 'Building AngouriMath.Importing'
       run: |
