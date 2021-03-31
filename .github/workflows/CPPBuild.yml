@@ -21,10 +21,6 @@ jobs:
         cd Sources/Utils
         dotnet run -p Utils ExportsGenerator
         
-    - name: 'Call vcvars'
-      run: |
-        start "%VCVARS_PATH%"
-        
     - name: 'Building the library into native'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
