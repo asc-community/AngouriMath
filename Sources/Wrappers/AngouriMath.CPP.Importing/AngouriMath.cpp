@@ -67,6 +67,15 @@ namespace AngouriMath
         return res;
     }
 
+    std::string Entity::Latexise() const
+    {
+        char* buff = nullptr;
+        HandleErrorCode(entity_latexise(innerEntityInstance.get()->reference, &buff));
+        auto res = buff != nullptr ? std::string(buff) : std::string();
+        free_string(buff);
+        return res;
+    }
+
 
     Entity Entity::Differentiate(const Entity& var) const
     {
@@ -115,12 +124,12 @@ namespace AngouriMath
 
     namespace Internal
     {
-        const std::vector<Entity>& EntityInstance::CachedNodes()
+        std::function<std::vector<AngouriMath::Entity>(AngouriMath::Internal::EntityRef)> GetLambdaByArrayFactory(std::function<NativeErrorCode(EntityRef, NativeArray*)> factory)
         {
-            auto lambda = [](AngouriMath::Internal::EntityRef _this) {
+            return [&](AngouriMath::Internal::EntityRef _this) {
                 NativeArray nRes;
                 auto handle = _this;
-                HandleErrorCode(entity_nodes(handle, &nRes));
+                HandleErrorCode(factory(handle, &nRes));
                 std::vector<Entity> res(nRes.length);
                 for (size_t i = 0; i < nRes.length; i++)
                     res[i] = CreateByHandle(nRes.refs[i]);
@@ -128,7 +137,23 @@ namespace AngouriMath
                 const std::vector<AngouriMath::Entity> resFinal = res;
                 return resFinal;
             };
-            const auto& res = nodes.GetValue(lambda, reference);
+        }
+
+        const std::vector<Entity>& EntityInstance::CachedNodes()
+        {
+            const auto& res = nodes.GetValue(GetLambdaByArrayFactory(entity_nodes), reference);
+            return res;
+        }
+
+        const std::vector<Entity>& EntityInstance::CachedVars()
+        {
+            const auto& res = nodes.GetValue(GetLambdaByArrayFactory(entity_vars), reference);
+            return res;
+        }
+
+        const std::vector<Entity>& EntityInstance::CachedVarsAndConstants()
+        {
+            const auto& res = nodes.GetValue(GetLambdaByArrayFactory(entity_vars_and_constants), reference);
             return res;
         }
     }

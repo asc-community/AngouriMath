@@ -25,4 +25,6 @@ extern "C"
     __declspec(dllimport) NativeErrorCode op_entity_div(EntityRef, EntityRef, EntityOut);
 
     __declspec(dllimport) NativeErrorCode entity_nodes(EntityRef, NativeArray*);
+    __declspec(dllimport) NativeErrorCode entity_vars(EntityRef, NativeArray*);
+    __declspec(dllimport) NativeErrorCode entity_vars_and_constants(EntityRef, NativeArray*);
 }

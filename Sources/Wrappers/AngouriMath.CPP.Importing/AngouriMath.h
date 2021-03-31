@@ -23,6 +23,8 @@ namespace AngouriMath::Internal
         EntityRef reference;
         EntityInstance(EntityRef reference) : reference(reference) { }
         const std::vector<Entity>& CachedNodes();
+        const std::vector<Entity>& CachedVars();
+        const std::vector<Entity>& CachedVarsAndConstants();
     };
 }
 
@@ -36,13 +38,15 @@ namespace AngouriMath
         Entity(const char* expr);
 
         std::string ToString() const;
+        std::string Latexise() const;
         Entity Differentiate(const Entity& var) const;
         Entity Integrate(const Entity& var) const;
         Entity Limit(const Entity& var, const Entity& dest) const;
         Entity Limit(const Entity& var, const Entity& dest, ApproachFrom from) const;
 
-        // TODO: to be rewritten!
         const std::vector<Entity>& Nodes() { return innerEntityInstance.get()->CachedNodes(); }
+        const std::vector<Entity>& Vars() { return innerEntityInstance.get()->CachedVars(); }
+        const std::vector<Entity>& VarsAndConstants() { return innerEntityInstance.get()->CachedVarsAndConstants(); }
 
         friend Internal::EntityRef GetHandle(const Entity& e);
         friend Entity CreateByHandle(Internal::EntityRef handle);
