@@ -16,9 +16,10 @@ jobs:
         start 1.generate-exports.bat
     - name: 'Building the library into native'
       run: |
+        cd Sources/Wrappers/AngouriMath.CPP.Exporting/Build
         start 2.build-win-x64.bat
     - name: 'Building AngouriMath.Importing'
       run: |
-        cd ../AngouriMath.CPP.Importing
+        cd Sources/Wrappers/AngouriMath.CPP.Importing
         cmake
   
