@@ -11,9 +11,6 @@ namespace AngouriMath::Internal
 
     void HandleErrorCode(NativeErrorCode nec)
     {
-        #if defined(ANGOURIMATH_DISABLE_EXCEPTIONS)
-        assert(false);
-        #else
         if (nec.Name != nullptr)
         {
             auto ec = ErrorCode(
@@ -24,7 +21,6 @@ namespace AngouriMath::Internal
             DeleteNativeErrorCode(nec);
             throw AngouriMathException(ec);
         }
-        #endif
     }
 
     void HandleErrorCode(NativeErrorCode nec, ErrorCode& ec)

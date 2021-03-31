@@ -58,16 +58,6 @@ namespace AngouriMath
     {
     }
 
-    Entity::Entity(const std::string& expr, ErrorCode& e)
-        : Entity(expr.c_str(), e)
-    {
-    }
-
-    Entity::Entity(const char* expr, ErrorCode& e)
-        : Entity(ParseString(expr, e))
-    {
-    }
-
     std::string Entity::ToString() const
     {
         char* buff = nullptr;
@@ -77,14 +67,6 @@ namespace AngouriMath
         return res;
     }
 
-    std::string Entity::ToString(ErrorCode& ec) const
-    {
-        char* buff = nullptr;
-        HandleErrorCode(entity_to_string(innerEntityInstance.get()->reference, &buff), ec);
-        auto res = buff != nullptr ? std::string(buff) : std::string();
-        free_string(buff);
-        return res;
-    }
 
     Entity Entity::Differentiate(const Entity& var) const
     {
@@ -93,11 +75,32 @@ namespace AngouriMath
         return Entity(result);
     }
 
-    Entity Entity::Differentiate(const Entity& var, ErrorCode& ec) const
+    Entity Entity::Integrate(const Entity& var) const
     {
         Internal::EntityRef result;
-        HandleErrorCode(entity_differentiate(innerEntityInstance.get()->reference, var.innerEntityInstance.get()->reference, &result), ec);
+        HandleErrorCode(entity_integrate(innerEntityInstance.get()->reference, var.innerEntityInstance.get()->reference, &result));
         return Entity(result);
+    }
+
+
+    Entity Entity::Limit(const Entity& var, const Entity& dest, ApproachFrom from) const
+    {
+        Internal::EntityRef result;
+        HandleErrorCode(
+            entity_limit(
+                innerEntityInstance.get()->reference,
+                var.innerEntityInstance.get()->reference,
+                dest.innerEntityInstance.get()->reference,
+                from,
+                &result
+            )
+        );
+        return Entity(result);
+    }
+
+    Entity Entity::Limit(const Entity& var, const Entity& dest) const
+    {
+        return Limit(var, dest, ApproachFrom::BothSides);
     }
 
     Internal::EntityRef GetHandle(const Entity& e)

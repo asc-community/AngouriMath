@@ -34,14 +34,12 @@ namespace AngouriMath
         Entity();
         Entity(const std::string& expr);
         Entity(const char* expr);
-        Entity(const std::string& expr, ErrorCode& e);
-        Entity(const char* expr, ErrorCode& e);
 
         std::string ToString() const;
-        std::string ToString(ErrorCode& ec) const;
-
         Entity Differentiate(const Entity& var) const;
-        Entity Differentiate(const Entity& var, ErrorCode& ec) const;
+        Entity Integrate(const Entity& var) const;
+        Entity Limit(const Entity& var, const Entity& dest) const;
+        Entity Limit(const Entity& var, const Entity& dest, ApproachFrom from) const;
 
         // TODO: to be rewritten!
         const std::vector<Entity>& Nodes() { return innerEntityInstance.get()->CachedNodes(); }
@@ -59,6 +57,13 @@ namespace AngouriMath
         out << e.ToString();
         return out;
     }
+
+    enum ApproachFrom : int
+    {
+        BothSides = 0,
+        Left = 1,
+        Right = 2
+    };
 }
 
 namespace std

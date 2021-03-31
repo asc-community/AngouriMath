@@ -25,6 +25,7 @@ namespace AngouriMath
 
     namespace Internal
     {
+        void HandleErrorCode(ErrorCode ec);
         void HandleErrorCode(NativeErrorCode nec);
         void HandleErrorCode(NativeErrorCode nec, ErrorCode& ec);
     }

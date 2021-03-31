@@ -110,7 +110,6 @@ namespace AngouriMath.CPP.Exporting
 
         #endregion
 
-
         #region Simplification
 
         [UnmanagedCallersOnly(EntryPoint = "entity_alternate")]
