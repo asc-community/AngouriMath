@@ -79,5 +79,35 @@ namespace AngouriMath.CPP.Exporting
                 return ObjStorage<Entity>.Alloc(expr.SolveEquation(var));
             });
         #endregion
+
+        #region Casts
+
+        [UnmanagedCallersOnly(EntryPoint = "entity_to_long")]
+        public static NErrorCode ToLong(ObjRef expr, ref long res)
+            => ExceptionEncode(ref res, expr, static e => (long)(Number)e.AsEntity);
+
+
+        [UnmanagedCallersOnly(EntryPoint = "entity_to_rational")]
+        public static NErrorCode ToRational(ObjRef expr, ref (long, long) res)
+            => ExceptionEncode(ref res, expr, static e =>
+            {
+                var rat = (Number.Rational)e.AsEntity;
+                return ((long)rat.Numerator, (long)rat.Denominator);
+            });
+
+        [UnmanagedCallersOnly(EntryPoint = "entity_to_double")]
+        public static NErrorCode ToDouble(ObjRef expr, ref double res)
+            => ExceptionEncode(ref res, expr, static e => (double)(Number)e.AsEntity);
+
+
+        [UnmanagedCallersOnly(EntryPoint = "entity_to_complex")]
+        public static NErrorCode ToComplex(ObjRef expr, ref (double, double) res)
+            => ExceptionEncode(ref res, expr, static e =>
+            {
+                var rat = (Number.Complex)e.AsEntity;
+                return ((double)rat.RealPart, (double)rat.ImaginaryPart);
+            });
+
+        #endregion
     }
 }
