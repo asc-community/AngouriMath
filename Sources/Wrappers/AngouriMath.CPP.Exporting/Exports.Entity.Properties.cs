@@ -25,10 +25,16 @@ namespace AngouriMath.CPP.Exporting
                 exprPtr => NativeArray.Alloc(exprPtr.AsEntity.VarsAndConsts)
             );
 
-        [UnmanagedCallersOnly(EntryPoint = "entity_alternate")]
-        public static NErrorCode EntityVarsAdndConstants(ObjRef exprPtr, ref NativeArray res)
+        [UnmanagedCallersOnly(EntryPoint = "entity_evaled")]
+        public static NErrorCode EntityEvaled(ObjRef exprPtr, ref ObjRef res)
             => ExceptionEncode(ref res, exprPtr,
-                exprPtr => NativeArray.Alloc(exprPtr.AsEntity.Alternate(4))
+                exprPtr => exprPtr.AsEntity.Evaled
+            );
+
+        [UnmanagedCallersOnly(EntryPoint = "entity_inner_simplified")]
+        public static NErrorCode EntityInnerSimplified(ObjRef exprPtr, ref ObjRef res)
+            => ExceptionEncode(ref res, exprPtr,
+                exprPtr => exprPtr.AsEntity.InnerSimplified
             );
     }
 }

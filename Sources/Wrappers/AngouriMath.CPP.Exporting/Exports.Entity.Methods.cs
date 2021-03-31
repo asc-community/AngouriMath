@@ -109,5 +109,21 @@ namespace AngouriMath.CPP.Exporting
             });
 
         #endregion
+
+
+        #region Simplification
+
+        [UnmanagedCallersOnly(EntryPoint = "entity_alternate")]
+        public static NErrorCode EntityAlternate(ObjRef exprPtr, ref NativeArray res)
+            => ExceptionEncode(ref res, exprPtr,
+                exprPtr => NativeArray.Alloc(exprPtr.AsEntity.Alternate(4))
+            );
+
+        [UnmanagedCallersOnly(EntryPoint = "entity_simplify")]
+        public static NErrorCode EntitySimplify(ObjRef exprPtr, ref ObjRef res)
+            => ExceptionEncode(ref res, exprPtr,
+                exprPtr => exprPtr.AsEntity.Simplify()
+            );
+        #endregion
     }
 }
