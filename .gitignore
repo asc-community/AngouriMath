@@ -41,3 +41,4 @@ out/
 /Sources/Wrappers/AngouriMath.CPP.Importing/mac-x64/
 *.zip
 /Sources/Tests/CPPWrapperUnitTests/tests/build
+/Sources/Wrappers/AngouriMath.CPP.Importing/CMakeFiles
