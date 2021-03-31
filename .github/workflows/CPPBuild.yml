@@ -30,5 +30,6 @@ jobs:
     - name: 'Building AngouriMath.Importing'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Importing
-        cmake CMakeLists.txt
+        cmake -S . -B build
+        cmake --build build
   
