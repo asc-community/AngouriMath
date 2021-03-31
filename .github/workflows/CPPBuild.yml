@@ -23,7 +23,7 @@ jobs:
         
     - name: 'Call vcvars'
       run: |
-        call "%VCVARS_PATH%"
+        start "%VCVARS_PATH%"
         
     - name: 'Building the library into native'
       run: |
