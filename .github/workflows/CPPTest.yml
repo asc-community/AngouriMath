@@ -2,10 +2,6 @@ name: 'C++ test'
 
 on: [push, pull_request]
 
-env:
-  BUILD_TYPE: Release
-  VCVARS_PATH: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat"
-
 jobs:
   Testing:
     runs-on: windows-latest
@@ -18,9 +14,6 @@ jobs:
       with:
         dotnet-version: '5.0.100'
         
-    - name: Create Build Environment
-      run: cmake -E make_directory ${{github.workspace}}/build
-        
     - name: 'Building the library into native'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
@@ -28,10 +21,10 @@ jobs:
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r win-x64 -c release
         
     - name: 'Running tests'
-      working-directory: ${{github.workspace}}/build
       run: |
         cd Sources/Tests/CPPWrapperUnitTests/tests
         cmake -S . -B build
+        copy "../../../Wrappers/AngouriMath.CPP.Importing/win-x64/AngouriMath.CPP.Exporting.dll" "build/Debug/AngouriMath.CPP.Exporting.dll"
         cmake --build build
         cd build
         ctest
