@@ -1,21 +1,34 @@
 name: 'C++ test'
 
 on: [push, pull_request]
+
+env:
+  BUILD_TYPE: Release
+  VCVARS_PATH: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat"
+
 jobs:
   Testing:
     runs-on: windows-latest
+    
     steps:
     - uses: actions/checkout@v2
+    
     - name: Setup .NET 5
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '5.0.100'
+        
+    - name: Create Build Environment
+      run: cmake -E make_directory ${{github.workspace}}/build
+        
     - name: 'Building the library into native'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/win-x64
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r win-x64 -c release
+        
     - name: 'Running tests'
+      working-directory: ${{github.workspace}}/build
       run: |
         cd Sources/Tests/CPPWrapperUnitTests/tests
         cmake -S . -B build
