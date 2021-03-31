@@ -13,11 +13,13 @@ jobs:
     - name: 'Generating exports'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting/Build
-        start 1.generate-exports.bat
+        cd ../../../Utils
+        dotnet run -p Utils ExportsGenerator
     - name: 'Building the library into native'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting/Build
-        start 2.build-win-x64.bat
+        cd ../
+        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r win-x64 -c release
     - name: 'Building AngouriMath.Importing'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Importing
