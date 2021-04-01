@@ -50,6 +50,13 @@ namespace AngouriMath
         Entity Integrate(const Entity& var) const;
         Entity Limit(const Entity& var, const Entity& dest) const;
         Entity Limit(const Entity& var, const Entity& dest, ApproachFrom from) const;
+        Entity Simplify() const;
+        std::vector<Entity> Alternate() const;
+
+        long AsInteger() const;
+        std::tuple<long, long> AsRational() const;
+        double AsReal() const;
+        std::tuple<double, double> AsComplex() const;
 
         const std::vector<Entity>& Nodes() { return innerEntityInstance.get()->CachedNodes(); }
         const std::vector<Entity>& Vars() { return innerEntityInstance.get()->CachedVars(); }

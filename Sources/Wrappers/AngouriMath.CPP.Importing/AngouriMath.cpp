@@ -112,6 +112,34 @@ namespace AngouriMath
         return Limit(var, dest, ApproachFrom::BothSides);
     }
 
+    long Entity::AsInteger() const
+    {
+        long res;
+        HandleErrorCode(entity_to_long(innerEntityInstance.get()->reference, &res));
+        return res;
+    }
+
+    std::tuple<long, long> Entity::AsRational() const
+    {
+        Internal::LongTuple res;
+        HandleErrorCode(entity_to_rational(innerEntityInstance.get()->reference, &res));
+        return std::tuple<long, long>(res.first, res.second);
+    }
+
+    double Entity::AsReal() const
+    {
+        double res;
+        HandleErrorCode(entity_to_double(innerEntityInstance.get()->reference, &res));
+        return res;
+    }
+
+    std::tuple<double, double> Entity::AsComplex() const
+    {
+        Internal::DoubleTuple res;
+        HandleErrorCode(entity_to_complex(innerEntityInstance.get()->reference, &res));
+        return std::tuple<double, double>(res.first, res.second);
+    }
+
     Internal::EntityRef GetHandle(const Entity& e)
     {
         return e.innerEntityInstance.get()->reference;

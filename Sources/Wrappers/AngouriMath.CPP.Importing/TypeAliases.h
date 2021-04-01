@@ -11,6 +11,9 @@ namespace AngouriMath::Internal
     typedef const char* String;
     typedef int ApproachFrom; // in the outer API, it should be a enum
 
+    typedef struct { long first; long second; } LongTuple;
+    typedef struct { double first; double second; } DoubleTuple;
+
     struct NativeErrorCode
     {
         const char* Name;
