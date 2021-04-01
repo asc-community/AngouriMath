@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
   Testing:
     runs-on: windows-latest
-    
+
     steps:
     - uses: actions/checkout@v2
     

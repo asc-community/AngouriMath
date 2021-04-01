@@ -16,5 +16,6 @@ set(SOURCES
 "ErrorCode.cpp")
 
 add_library(${PROJECT_NAME} ${SOURCES})
-target_link_directories(${PROJECT_NAME} PUBLIC win-x64)
+
+target_link_directories(${PROJECT_NAME} PUBLIC out-x64)
 target_link_libraries(${PROJECT_NAME} PUBLIC AngouriMath.CPP.Exporting)

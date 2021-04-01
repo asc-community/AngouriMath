@@ -49,6 +49,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Ymls", "Ymls", "{AB2B0D73-3
 	ProjectSection(SolutionItems) = preProject
 		..\.github\workflows\Benchmark.yml = ..\.github\workflows\Benchmark.yml
 		..\.github\workflows\Build.yml = ..\.github\workflows\Build.yml
+		..\.github\workflows\CPPBuild.yml = ..\.github\workflows\CPPBuild.yml
+		..\.github\workflows\CPPTest.yml = ..\.github\workflows\CPPTest.yml
 		..\.github\workflows\FSharpTest.yml = ..\.github\workflows\FSharpTest.yml
 		..\.github\workflows\Test.yml = ..\.github\workflows\Test.yml
 	EndProjectSection

@@ -4,8 +4,8 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
-  <Target Name="Copy" Condition="$(OS) == 'Windows_NT'" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="&#xD;&#xA;          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\win-x64 /H /Y&#xD;&#xA;          " />
+  <Target Name="Copy" AfterTargets="ComputeFilesToPublish">
+    <Exec Command="&#xD;&#xA;          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\out-x64 /H /Y&#xD;&#xA;          " />
   </Target>
 
   

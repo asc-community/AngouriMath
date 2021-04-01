@@ -1,13 +1,21 @@
 name: 'C++ build'
 
-env:
-  VCVARS_PATH: "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Enterprise\\VC\\Auxiliary\\Build\\vcvars64.bat"
-
 on: [push, pull_request]
 jobs:
-  Building:
-    runs-on: windows-latest
-    
+  AngouriMathCpp:
+
+    strategy:
+        matrix:
+          include:
+          - os: windows-latest
+            flag: win-x64
+          - os: ubuntu-latest
+            flag: linux-x64
+          - os: macos-latest
+            flag: mac-x64
+  
+    runs-on: ${{ matrix.os }}
+
     steps:
     - uses: actions/checkout@v2
     
@@ -24,12 +32,12 @@ jobs:
     - name: 'Building the library into native'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
-        mkdir ../AngouriMath.CPP.Importing/win-x64
-        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r win-x64 -c release
+        mkdir ../AngouriMath.CPP.Importing/out-x64
+        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
         
     - name: 'Building AngouriMath.Importing'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Importing
         cmake -S . -B build
         cmake --build build
-  
+
