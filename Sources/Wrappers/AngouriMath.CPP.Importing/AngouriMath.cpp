@@ -123,7 +123,7 @@ namespace AngouriMath
     {
         Internal::LongTuple res;
         HandleErrorCode(entity_to_rational(innerEntityInstance.get()->reference, &res));
-        return std::tuple<long, long>(res.first, res.second);
+        return std::make_tuple(res.first, res.second);
     }
 
     double Entity::AsReal() const
@@ -137,7 +137,7 @@ namespace AngouriMath
     {
         Internal::DoubleTuple res;
         HandleErrorCode(entity_to_complex(innerEntityInstance.get()->reference, &res));
-        return std::tuple<double, double>(res.first, res.second);
+        return std::make_tuple(res.first, res.second);
     }
 
     Internal::EntityRef GetHandle(const Entity& e)
@@ -154,17 +154,17 @@ namespace AngouriMath
     {
         std::function<std::vector<AngouriMath::Entity>(AngouriMath::Internal::EntityRef)> GetLambdaByArrayFactory(std::function<NativeErrorCode(EntityRef, NativeArray*)> factory)
         {
-            return [&](AngouriMath::Internal::EntityRef _this) {
+            auto res = [factory = std::move(factory)](AngouriMath::Internal::EntityRef _this) -> std::vector<AngouriMath::Entity> {
                 NativeArray nRes;
-                auto handle = _this;
-                HandleErrorCode(factory(handle, &nRes));
+                HandleErrorCode(factory(_this, &nRes));
                 std::vector<Entity> res(nRes.length);
                 for (size_t i = 0; i < nRes.length; i++)
                     res[i] = CreateByHandle(nRes.refs[i]);
                 free_native_array(nRes);
-                const std::vector<AngouriMath::Entity> resFinal = res;
-                return resFinal;
+                return res;
             };
+            auto fun = std::function<std::vector<AngouriMath::Entity>(AngouriMath::Internal::EntityRef)>{ res };
+            return res;
         }
 
         const std::vector<Entity>& EntityInstance::CachedNodes()
@@ -175,13 +175,13 @@ namespace AngouriMath
 
         const std::vector<Entity>& EntityInstance::CachedVars()
         {
-            const auto& res = nodes.GetValue(GetLambdaByArrayFactory(entity_vars), reference);
+            const auto& res = vars.GetValue(GetLambdaByArrayFactory(entity_vars), reference);
             return res;
         }
 
         const std::vector<Entity>& EntityInstance::CachedVarsAndConstants()
         {
-            const auto& res = nodes.GetValue(GetLambdaByArrayFactory(entity_vars_and_constants), reference);
+            const auto& res = varsAndConstants.GetValue(GetLambdaByArrayFactory(entity_vars_and_constants), reference);
             return res;
         }
     }

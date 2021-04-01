@@ -9,10 +9,12 @@ using namespace std;
 
 int main()
 {
-    AngouriMath::ErrorCode err;
-    AngouriMath::Entity expr("x + 2 sin(x) + 2", err);
+    AngouriMath::Entity expr("x + 2 sin(x) + 2y");
     auto newExpr = expr.Differentiate("x");
     for (auto ent : newExpr.Nodes())
+        std::cout << ent << "\n";
+    std::cout << "\n\n";
+    for (auto ent : newExpr.Vars())
         std::cout << ent << "\n";
     return 0;
 }
