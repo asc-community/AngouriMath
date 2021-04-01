@@ -42,3 +42,15 @@ out/
 *.zip
 /Sources/Tests/CPPWrapperUnitTests/tests/build
 /Sources/Wrappers/AngouriMath.CPP.Importing/CMakeFiles
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/ZERO_CHECK.vcxproj.filters
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/ZERO_CHECK.vcxproj
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/x64/Debug/ZERO_CHECK
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/cmake_install.cmake
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/CMakeFiles
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/CMakeCache.txt
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/AngouriMath.CPP.Importing.vcxproj.filters
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/AngouriMath.CPP.Importing.vcxproj
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/AngouriMath.CPP.Importing.sln
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/AngouriMath.CPP.Importing.dir/Debug
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/ALL_BUILD.vcxproj.filters
+/Sources/Wrappers/AngouriMath.CPP.Importing/build/ALL_BUILD.vcxproj

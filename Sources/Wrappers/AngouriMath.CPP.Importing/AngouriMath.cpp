@@ -100,7 +100,7 @@ namespace AngouriMath
                 innerEntityInstance.get()->reference,
                 var.innerEntityInstance.get()->reference,
                 dest.innerEntityInstance.get()->reference,
-                from,
+                (Internal::ApproachFrom)from,
                 &result
             )
         );

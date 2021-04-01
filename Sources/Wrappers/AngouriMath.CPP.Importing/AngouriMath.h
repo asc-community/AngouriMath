@@ -30,6 +30,13 @@ namespace AngouriMath::Internal
 
 namespace AngouriMath
 {
+    enum class ApproachFrom : int
+    {
+        BothSides = 0,
+        Left = 1,
+        Right = 2
+    };
+
     class Entity
     {
     public:
@@ -61,13 +68,6 @@ namespace AngouriMath
         out << e.ToString();
         return out;
     }
-
-    enum ApproachFrom : int
-    {
-        BothSides = 0,
-        Left = 1,
-        Right = 2
-    };
 }
 
 namespace std
