@@ -12,7 +12,7 @@ jobs:
           - os: ubuntu-latest
             flag: linux-x64
           - os: macos-latest
-            flag: mac-x64
+            flag: osx-x64
   
     runs-on: ${{ matrix.os }}
 
@@ -29,10 +29,16 @@ jobs:
         cd Sources/Utils
         dotnet run -p Utils ExportsGenerator
         
+    - name: 'Install some libs for Linux'
+      if: ${{ matrix.os = 'ubuntu-latest' }}
+      run: |
+        sudo apt-get install libcurl4-openssl-dev zlib1g-dev libkrb5-dev
+
     - name: 'Building the library into native'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/out-x64
+        
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
         
     - name: 'Building AngouriMath.Importing'
