@@ -1,4 +1,4 @@
-name: 'C++ build'
+name: 'C++ Build'
 
 on: [push, pull_request]
 jobs:

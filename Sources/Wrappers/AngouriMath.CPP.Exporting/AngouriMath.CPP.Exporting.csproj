@@ -4,8 +4,16 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
-  <Target Name="Copy" AfterTargets="ComputeFilesToPublish">
+  <Target Name="Copy" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="ComputeFilesToPublish">
     <Exec Command="&#xD;&#xA;          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\out-x64 /H /Y&#xD;&#xA;          " />
+  </Target>
+
+  <Target Name="Copy" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="ComputeFilesToPublish">
+    <Exec Command="cp -a $(OutDir)native/. ../AngouriMath.CPP.Importing/out-x64/" />
+  </Target>
+
+  <Target Name="Copy" Condition="$([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="ComputeFilesToPublish">
+    <Exec Command="cp -r $(OutDir)native/* ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
   

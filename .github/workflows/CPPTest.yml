@@ -1,4 +1,4 @@
-name: 'C++ test'
+name: 'C++ Test'
 
 on: [push, pull_request]
 

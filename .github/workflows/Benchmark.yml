@@ -1,4 +1,4 @@
-name: Benchmark
+name: '.NET Benchmark'
 
 on: [push, pull_request]
 jobs:

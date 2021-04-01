@@ -1,4 +1,4 @@
-name: FSharpTest
+name: 'F# Test'
 
 on: [push, pull_request]
 jobs:
