@@ -17,7 +17,7 @@ jobs:
     - name: 'Building the library into native'
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
-        mkdir ../AngouriMath.CPP.Importing/win-x64
+        mkdir ../AngouriMath.CPP.Importing/out-x64
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r win-x64 -c release
         
     - name: 'Running tests'
@@ -25,7 +25,7 @@ jobs:
         cd Sources/Tests/CPPWrapperUnitTests/tests
         cmake -S . -B build
         mkdir "build\Debug"
-        copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\win-x64\AngouriMath.CPP.Exporting.dll" "build\Debug\AngouriMath.CPP.Exporting.dll"
+        copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\out-x64\AngouriMath.CPP.Exporting.dll" "build\Debug\AngouriMath.CPP.Exporting.dll"
         cmake --build build
         cd build
         ctest
