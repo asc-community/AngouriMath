@@ -1,4 +1,4 @@
-name: 'F# Test'
+name: 'F# Build'
 
 on: [push, pull_request]
 jobs:
@@ -24,12 +24,7 @@ jobs:
       with:
         dotnet-version: '5.0.100'
 
-    - name: Build Tests # We need it to be able to retry
+    - name: Build
       run: |
-        dotnet add "Sources/Tests/FSharpWrapperUnitTests" package Microsoft.NET.Test.Sdk # Update is required for GitHubActionsTestLogger to print anything
-        dotnet add "Sources/Tests/FSharpWrapperUnitTests" package GitHubActionsTestLogger
-        dotnet build Sources/Tests/FSharpWrapperUnitTests
-
-    - name: Test
-      run: |
-        dotnet test "Sources/Tests/FSharpWrapperUnitTests" -c Release -l GitHubActions
+        cd Sources/Wrappers
+        dotnet build AngouriMath.FSharp
