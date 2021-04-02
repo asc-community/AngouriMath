@@ -32,7 +32,6 @@ jobs:
     - name: 'Install some libs for Linux'
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
-        sudo apt-get install libcurl4-openssl-dev
         sudo apt-get install zlib1g-dev
         sudo apt-get install libkrb5-dev
 
