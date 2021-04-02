@@ -3,7 +3,11 @@ name: 'C# Test'
 on: [push, pull_request]
 jobs:
   Test:
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v2
