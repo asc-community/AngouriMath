@@ -64,6 +64,7 @@ jobs:
         cp -r "../../../Wrappers/AngouriMath.CPP.Importing/out-x64/AngouriMath.CPP.Exporting.so" "build/Debug/libAngouriMath.CPP.Exporting.so"
 
     - name: 'Building and running tests'
+      run: |
         cmake --build build
         cd build
         ctest
