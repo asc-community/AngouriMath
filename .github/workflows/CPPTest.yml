@@ -61,7 +61,7 @@ jobs:
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
         cd ${{ env.tests_path }}
-        cp -r "../../../Wrappers/AngouriMath.CPP.Importing/out-x64/AngouriMath.CPP.Exporting.so" "build/Debug/libAngouriMath.CPP.Exporting.so"
+        cp -r "../../../Wrappers/AngouriMath.CPP.Importing/out-x64/AngouriMath.CPP.Exporting.dylib" "build/Debug/libAngouriMath.CPP.Exporting.dylib"
 
     - name: 'Building and running tests'
       run: |
