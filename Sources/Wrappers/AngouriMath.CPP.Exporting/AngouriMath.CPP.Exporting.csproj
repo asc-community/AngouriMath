@@ -4,19 +4,21 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
-  <Target Name="Copy" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="&#xD;&#xA;          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\out-x64 /H /Y&#xD;&#xA;          " />
+  <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="ComputeFilesToPublish">
+    <Exec Command="
+          mkdir ..\AngouriMath.CPP.Importing\out-x64
+          &#xD;&#xA;
+          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
   </Target>
 
-  <Target Name="Copy" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="ComputeFilesToPublish">
+  <Target Name="Copy for Linux" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="ComputeFilesToPublish">
     <Exec Command="cp -a $(OutDir)native/. ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
-  <Target Name="Copy" Condition="$([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="ComputeFilesToPublish">
+  <Target Name="Copy for OS X" Condition="$([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="ComputeFilesToPublish">
     <Exec Command="cp -r $(OutDir)native/* ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
-  
   <ItemGroup>
     <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-*" />
     <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj" />
