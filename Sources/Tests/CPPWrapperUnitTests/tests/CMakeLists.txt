@@ -22,15 +22,11 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-
-
-
 ### AngouriMath 1/2
 
 set(ANGOURIMATH_CPP_IMPORTING_PATH "../../../Wrappers/AngouriMath.CPP.Importing")
-
 add_subdirectory(${ANGOURIMATH_CPP_IMPORTING_PATH} ${CMAKE_CURRENT_BINARY_DIR}/AngouriMath.CPP.Importing)
-
+link_directories(./build/Debug/)
 
 ### Shared
 
@@ -45,10 +41,9 @@ target_link_libraries(
 )
 
 target_link_libraries(
-	${PROJECT_NAME}
-	AngouriMath.CPP.Importing
+  ${PROJECT_NAME}
+  AngouriMath.CPP.Importing
 )
-
 
 ### GoogleTest 2/2
 
