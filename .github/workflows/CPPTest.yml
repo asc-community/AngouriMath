@@ -65,6 +65,7 @@ jobs:
 
     - name: 'Building and running tests'
       run: |
+        cd ${{ env.tests_path }}
         cmake --build build
         cd build
         ctest
