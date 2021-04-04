@@ -17,5 +17,6 @@ set(SOURCES
 
 add_library(${PROJECT_NAME} ${SOURCES})
 
+# link_directories(./out-x64/)
 target_link_directories(${PROJECT_NAME} PUBLIC out-x64)
-target_link_libraries(${PROJECT_NAME} PUBLIC AngouriMath.CPP.Exporting)
+target_link_libraries(${PROJECT_NAME} PUBLIC -lAngouriMath.CPP.Exporting)
