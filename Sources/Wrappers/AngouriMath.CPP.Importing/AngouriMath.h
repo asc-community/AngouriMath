@@ -21,12 +21,16 @@ namespace AngouriMath::Internal
         FieldCache<std::vector<Entity>> nodes;
         FieldCache<std::vector<Entity>> vars;
         FieldCache<std::vector<Entity>> varsAndConstants;
+        FieldCache<Entity> innerEvaled;
+        FieldCache<Entity> innerSimplified;
     public:
         EntityRef reference;
         EntityInstance(EntityRef reference) : reference(reference) { }
         const std::vector<Entity>& CachedNodes();
         const std::vector<Entity>& CachedVars();
         const std::vector<Entity>& CachedVarsAndConstants();
+        const Entity& CachedEvaled();
+        const Entity& CachedInnerSimplified();
     };
 }
 
@@ -42,10 +46,12 @@ namespace AngouriMath
     class Entity
     {
     public:
+        // Constructors
         Entity();
         Entity(const std::string& expr);
         Entity(const char* expr);
 
+        // Methods
         std::string ToString() const;
         std::string Latexise() const;
         Entity Differentiate(const Entity& var) const;
@@ -55,14 +61,19 @@ namespace AngouriMath
         Entity Simplify() const;
         std::vector<Entity> Alternate() const;
 
+
+        // Casts
         long AsInteger() const;
         std::tuple<long, long> AsRational() const;
         double AsReal() const;
         std::tuple<double, double> AsComplex() const;
 
-        const std::vector<Entity>& Nodes() { return innerEntityInstance.get()->CachedNodes(); }
-        const std::vector<Entity>& Vars() { return innerEntityInstance.get()->CachedVars(); }
-        const std::vector<Entity>& VarsAndConstants() { return innerEntityInstance.get()->CachedVarsAndConstants(); }
+        // Properties
+        const std::vector<Entity>& Nodes() const { return innerEntityInstance.get()->CachedNodes(); }
+        const std::vector<Entity>& Vars() const { return innerEntityInstance.get()->CachedVars(); }
+        const std::vector<Entity>& VarsAndConstants() const { return innerEntityInstance.get()->CachedVarsAndConstants(); }
+        const Entity InnerSimplified() const { return innerEntityInstance.get()->CachedInnerSimplified(); }
+        const Entity Evaled() const { return innerEntityInstance.get()->CachedEvaled(); }
 
         friend Internal::EntityRef GetHandle(const Entity& e);
         friend Entity CreateByHandle(Internal::EntityRef handle);

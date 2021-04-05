@@ -36,13 +36,6 @@ namespace AngouriMath
         return result;
     }
 
-    Internal::EntityRef ParseString(const char* expr, ErrorCode& e)
-    {
-        Internal::EntityRef result;
-        HandleErrorCode(maths_from_string(expr, &result), e);
-        return result;
-    }
-
     Entity::Entity()
         : innerEntityInstance(nullptr, HandleDeleter())
     {
@@ -110,6 +103,19 @@ namespace AngouriMath
     Entity Entity::Limit(const Entity& var, const Entity& dest) const
     {
         return Limit(var, dest, ApproachFrom::BothSides);
+    }
+
+    Entity Entity::Simplify() const
+    {
+        Internal::EntityRef res;
+        HandleErrorCode(entity_simplify(innerEntityInstance.get()->reference, &res));
+        return Entity(res);
+    }
+
+    std::vector<Entity> Entity::Alternate() const
+    {
+        auto lambda = Internal::GetLambdaByArrayFactory(entity_alternate);
+        return lambda(innerEntityInstance.get()->reference);
     }
 
     long Entity::AsInteger() const
@@ -182,6 +188,28 @@ namespace AngouriMath
         const std::vector<Entity>& EntityInstance::CachedVarsAndConstants()
         {
             const auto& res = varsAndConstants.GetValue(GetLambdaByArrayFactory(entity_vars_and_constants), reference);
+            return res;
+        }
+
+        const Entity& EntityInstance::CachedEvaled()
+        {
+            std::function<Entity(EntityRef)> fact = [](EntityRef ref) -> Entity {
+                EntityRef res;
+                HandleErrorCode(entity_evaled(ref, &res));
+                return CreateByHandle(res);
+            };
+            const auto& res = innerEvaled.GetValue(fact, reference);
+            return res;
+        }
+
+        const Entity& EntityInstance::CachedInnerSimplified()
+        {
+            std::function<Entity(EntityRef)> fact = [](EntityRef ref) -> Entity {
+                EntityRef res;
+                HandleErrorCode(entity_evaled(ref, &res));
+                return CreateByHandle(res);
+            };
+            const auto& res = innerSimplified.GetValue(fact, reference);
             return res;
         }
     }
