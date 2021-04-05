@@ -21,8 +21,8 @@ namespace AngouriMath::Internal
         FieldCache<std::vector<Entity>> nodes;
         FieldCache<std::vector<Entity>> vars;
         FieldCache<std::vector<Entity>> varsAndConstants;
-        FieldCache<Entity> innerEvaled;
-        FieldCache<Entity> innerSimplified;
+        FieldCache<std::shared_ptr<Entity>> innerEvaled;
+        FieldCache< std::shared_ptr<Entity>> innerSimplified;
     public:
         EntityRef reference;
         EntityInstance(EntityRef reference) : reference(reference) { }

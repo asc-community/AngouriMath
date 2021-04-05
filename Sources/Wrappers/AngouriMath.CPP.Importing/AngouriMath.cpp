@@ -11,6 +11,29 @@
 
 namespace AngouriMath
 {
+    Entity CreateByHandle(Internal::EntityRef handle)
+    {
+        return Entity(handle);
+    }
+
+    namespace Internal
+    {
+        std::function<std::vector<AngouriMath::Entity>(AngouriMath::Internal::EntityRef)> GetLambdaByArrayFactory(std::function<NativeErrorCode(EntityRef, NativeArray*)> factory)
+        {
+            auto res = [factory = std::move(factory)](AngouriMath::Internal::EntityRef _this)->std::vector<AngouriMath::Entity> {
+                NativeArray nRes;
+                HandleErrorCode(factory(_this, &nRes));
+                std::vector<Entity> res(nRes.length);
+                for (size_t i = 0; i < nRes.length; i++)
+                    res[i] = CreateByHandle(nRes.refs[i]);
+                free_native_array(nRes);
+                return res;
+            };
+            auto fun = std::function<std::vector<AngouriMath::Entity>(AngouriMath::Internal::EntityRef)>{ res };
+            return res;
+        }
+    }
+
     struct HandleDeleter
     {
         void operator()(const Internal::EntityInstance* inner)
@@ -151,28 +174,8 @@ namespace AngouriMath
         return e.innerEntityInstance.get()->reference;
     }
 
-    Entity CreateByHandle(Internal::EntityRef handle)
-    {
-        return Entity(handle);
-    }
-
     namespace Internal
     {
-        std::function<std::vector<AngouriMath::Entity>(AngouriMath::Internal::EntityRef)> GetLambdaByArrayFactory(std::function<NativeErrorCode(EntityRef, NativeArray*)> factory)
-        {
-            auto res = [factory = std::move(factory)](AngouriMath::Internal::EntityRef _this) -> std::vector<AngouriMath::Entity> {
-                NativeArray nRes;
-                HandleErrorCode(factory(_this, &nRes));
-                std::vector<Entity> res(nRes.length);
-                for (size_t i = 0; i < nRes.length; i++)
-                    res[i] = CreateByHandle(nRes.refs[i]);
-                free_native_array(nRes);
-                return res;
-            };
-            auto fun = std::function<std::vector<AngouriMath::Entity>(AngouriMath::Internal::EntityRef)>{ res };
-            return res;
-        }
-
         const std::vector<Entity>& EntityInstance::CachedNodes()
         {
             const auto& res = nodes.GetValue(GetLambdaByArrayFactory(entity_nodes), reference);
@@ -193,24 +196,24 @@ namespace AngouriMath
 
         const Entity& EntityInstance::CachedEvaled()
         {
-            std::function<Entity(EntityRef)> fact = [](EntityRef ref) -> Entity {
+            std::function<std::shared_ptr<Entity>(EntityRef)> fact = [](EntityRef ref) -> std::shared_ptr<Entity> {
                 EntityRef res;
                 HandleErrorCode(entity_evaled(ref, &res));
-                return CreateByHandle(res);
+                return std::make_shared<Entity>(CreateByHandle(res));
             };
             const auto& res = innerEvaled.GetValue(fact, reference);
-            return res;
+            return (const Entity&)res;
         }
 
         const Entity& EntityInstance::CachedInnerSimplified()
         {
-            std::function<Entity(EntityRef)> fact = [](EntityRef ref) -> Entity {
+            std::function<std::shared_ptr<Entity>(EntityRef)> fact = [](EntityRef ref) -> std::shared_ptr<Entity> {
                 EntityRef res;
                 HandleErrorCode(entity_evaled(ref, &res));
-                return CreateByHandle(res);
+                return std::make_shared<Entity>(CreateByHandle(res));
             };
             const auto& res = innerSimplified.GetValue(fact, reference);
-            return res;
+            return (const Entity&)res;
         }
     }
 }
