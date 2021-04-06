@@ -25,12 +25,36 @@
   <a href="https://am.angouri.org/"><b>Official website</b></a>
   <br>
   <br>
-  <a href="./Sources/Tests/UnitTests"><img alt="GitHub Workflow Status (event)" src="https://img.shields.io/github/workflow/status/asc-community/AngouriMath/Test?color=darkgreen&label=Tests&logo=github&style=flat-square"></a>
-  <a href="https://codecov.io/gh/asc-community/AngouriMath"><img alt="Codecov" src="https://img.shields.io/codecov/c/gh/asc-community/AngouriMath?color=orange&label=Coverage&logo=codecov&style=flat-square"></a>
-  <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet&logo=nuget&style=flat-square"></a>
   <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath?color=darkblue&label=Downloads&style=flat-square"></a>
-  <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=purple&label=Discord&logo=discord&style=flat-square"></a>
+  <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=purple&label=Chat&logo=discord&style=flat-square"></a>
 </p>
+
+<details><summary><strong>Status</strong></summary>
+
+
+![Solution Build](https://github.com/asc-community/AngouriMath/actions/workflows/EverythingBuild.yml/badge.svg)
+
+#### Builds and tests
+|       | Kernel/C# | F# | C++ |
+|-------|-----------|----|-----|
+| Build | ![C#/Kernel Build](https://github.com/asc-community/AngouriMath/actions/workflows/CSharpBuild.yml/badge.svg) | ![F# Build](https://github.com/asc-community/AngouriMath/actions/workflows/FSharpBuild.yml/badge.svg) | ![C++ Build](https://github.com/asc-community/AngouriMath/actions/workflows/CPPBuild.yml/badge.svg) | 
+| Test  | ![C# Test](https://github.com/asc-community/AngouriMath/actions/workflows/CSharpTest.yml/badge.svg) | ![F# Test](https://github.com/asc-community/AngouriMath/actions/workflows/FSharpTest.yml/badge.svg) | ![C++ Test](https://github.com/asc-community/AngouriMath/actions/workflows/CPPTest.yml/badge.svg) |
+
+Note, that all tests and builds are tested for the following three operating systems: Windows, Ubuntu, Mac OS.
+
+#### Coverage
+| Kernel/C# | F# | C++ |
+|-----------|----|-----|
+| <a href="https://codecov.io/gh/asc-community/AngouriMath"><img alt="Codecov" src="https://img.shields.io/codecov/c/gh/asc-community/AngouriMath?color=orange&label=Coverage&logo=codecov&style=flat-square"></a> | ??? | ??? |
+
+#### Versions
+
+|     | Kernel/C# | F# | Interactive | C++ |
+|-----|-----------|----|-------------|-----|
+| Prerelease | <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.FSharp"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath.FSharp?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Interactive"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath.Interactive?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | WIP |
+| Stable | <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget" src="https://img.shields.io/nuget/v/AngouriMath?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.FSharp"><img alt="Nuget" src="https://img.shields.io/nuget/v/AngouriMath.FSharp?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Interactive"><img alt="Nuget" src="https://img.shields.io/nuget/v/AngouriMath.Interactive?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | WIP |
+
+</details>
 
 ## What is it about?
 
