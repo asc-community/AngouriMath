@@ -7,7 +7,7 @@
 <h2 align="center">AngouriMath</h2>
 
 <p align="center">
-  <b>New symbolic algebra library for C# · F# · Jupyter · C++ WIP.</b>
+  <i>New open-source cross-platform symbolic algebra library for </i><b>C# · F# · Jupyter · C++ (WIP)</b>
   <br>
   <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>Download</b></a>
   <b>(</b>
