@@ -1,0 +1,4 @@
+﻿        [UnmanagedCallersOnly(EntryPoint = "%exportedname%")]
+        public static NErrorCode %name%(%params%, ref ObjRef res)
+            => ExceptionEncode(ref res, (%paramswithouttype%), e => %localname%(%paramswithe%));
+

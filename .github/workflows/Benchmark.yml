@@ -1,4 +1,4 @@
-name: Benchmark
+name: 'Kernel Benchmark'
 
 on: [push, pull_request]
 jobs:

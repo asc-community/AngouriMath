@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Reflection;
 using System.Runtime;
 
@@ -6,6 +7,14 @@ namespace Utils
 {
     class Program
     {
+        public static string GetPathIntoSources()
+        {
+            var path = Directory.GetCurrentDirectory();
+            while (Path.GetFileName(path) != "Sources" && path is not "")
+                path = Path.GetDirectoryName(path);
+            return path ?? "";
+        }
+
         static void Main(string[] args)
         {
             if (args.Length != 1)

@@ -1,0 +1,14 @@
+﻿    Entity %name%(%params%)
+    {
+        EntityRef res;
+        HandleErrorCode(%exportname%(%paramswithouttype%, &res));
+        return CreateByHandle(res);
+    }
+
+    Entity %name%(%params%, ErrorCode& e)
+    {
+        EntityRef res;
+        HandleErrorCode(%exportname%(%paramswithouttype%, &res), e);
+        return CreateByHandle(res);
+    }
+    
