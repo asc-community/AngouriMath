@@ -149,7 +149,7 @@ namespace AngouriMath
                     string.Join(", ",
                         IsVector switch
                         {
-                            true => this.Select(c => c.ToSymPy()),
+                            true => this.Select(c => c.ToString()),
                             false => this.Select(c => $"[{string.Join(", ", ((Matrix)c).T)}]"),
                         }) +
                    "]";

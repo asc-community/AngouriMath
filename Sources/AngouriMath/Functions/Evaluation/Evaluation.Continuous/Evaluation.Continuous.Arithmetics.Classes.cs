@@ -103,6 +103,8 @@ namespace AngouriMath
                         (Matrix m1, Matrix m2) when m1.ColumnCount == m2.RowCount => (m1 * m2).InnerSimplified,
                         (Matrix m1, Matrix m2) => a * b,
                         (Integer minusOne, Mulf(var minusOne1, var any1)) when minusOne == Integer.MinusOne && minusOne1 == Integer.MinusOne => any1,
+                        (Matrix m, Integer(0)) => m.With((_, _, _) => 0),
+                        (Integer(0), Matrix m) => m.With((_, _, _) => 0),
                         (_, Integer(0)) or (Integer(0), _) => 0,
                         (var n1, Integer(1)) => n1,
                         (Integer(1), var n2) => n2,

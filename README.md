@@ -63,11 +63,15 @@ Note, that all tests and builds are tested for the following three operating sys
 
 <a href="#jupyter"><img src="./.github/additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
 
-<a href="https://am.angouri.org">AngouriMath</a> is an open source symbolic algebra library. That is, via AngouriMath, you can
-automatically <a href="https://am.angouri.org/wiki/07.-Solvers.html">solve</a> equations, 
-systems of equations, work with sets, <a href="https://am.angouri.org/wiki/05.-Differentiation.html">differentiate</a>,
+<a href="https://am.angouri.org">AngouriMath</a> is an open source symbolic algebra library.
+That is, via AngouriMath, you can
+automatically <a href="https://am.angouri.org/wiki/07.-Solvers.html">solve</a> 
+equations, systems of equations, work with sets,
+<a href="https://am.angouri.org/wiki/05.-Differentiation.html">differentiate</a>,
 <a href="https://am.angouri.org/wiki/01.-Expressions.html">parse</a> from string,
-<a href="https://am.angouri.org/wiki/09.-Compilation.html">compile expressions</a>.
+<a href="https://am.angouri.org/wiki/09.-Compilation.html">compile expressions</a>, work
+with <a href="https://am.angouri.org/wiki/10.-Matrices.html">matrices</a>, find limits,
+convert an expression to LaTeX, and <a href="https://am.angouri.org/wiki/">many other things</a>.
 
 It is not a CAS, so you can use it in any your project by installing it from 
 <a href="https://www.nuget.org/packages/AngouriMath">NuGet</a>. AngouriMath
@@ -344,27 +348,25 @@ False
 <a href="https://www.nuget.org/packages/AngouriMath.FSharp">Download</a>
 
 Not everything is supported directly from F#, so if something missing, you will need
-to address that functional from AngouriMath.
+to call the necessary methods from AngouriMath.
 
 ```fs
 open Functions
 open Operators
-open FromToString
+open Shortcuts
 
+printfn "%O" (solutions "x" "x + 2 = 0")
 
-solve "x" "x + 2 = 0"
+printfn "%O" (simplified (solutions "x" "x2 + 2 a x + a2 = 0"))
 
-simplify (solve "x" "x2 + 2 a x + a2 = 0")
+printfn "%O" (``dy/dx`` "x2 + a x")
 
-differentiate "x" "x2 + a x"
+printfn "%O" (integral "x" "x2 + e")
 
-integrate "x" "x2 + e"
+printfn "%O" (``lim x->0`` "sin(a x) / x")
 
-limit "x" "0" "sin(a x) / x"
+printfn "%O" (latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)")
 
-"sin(a x) / x" &&& "x" --> 0
-
-latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)"
 ```
 
 </details>

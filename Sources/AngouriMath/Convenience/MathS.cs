@@ -540,6 +540,27 @@ namespace AngouriMath
         /// </summary>
         [ConstantField] public static readonly Matrix I_4 = IdentityMatrix(4);
 
+        /// <summary>
+        /// The square zero matrix of size 1
+        /// </summary>
+        [ConstantField] public static readonly Matrix O_1 = ZeroMatrix(1);
+
+        /// <summary>
+        /// The square zero matrix of size 2
+        /// </summary>
+        [ConstantField] public static readonly Matrix O_2 = ZeroMatrix(2);
+
+        /// <summary>
+        /// The square zero matrix of size 3
+        /// </summary>
+        [ConstantField] public static readonly Matrix O_3 = ZeroMatrix(3);
+
+        /// <summary>
+        /// The square zero matrix of size 4
+        /// </summary>
+        [ConstantField] public static readonly Matrix O_4 = ZeroMatrix(4);
+
+
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
         /// <param name="useCache">By default is true, it boosts performance if you have multiple uses of the same string,
@@ -681,12 +702,25 @@ namespace AngouriMath
         /// <param name="values">The cells of the <see cref="Entity.Matrix"/></param>
         /// <returns>A one-dimensional <see cref="Entity.Matrix"/> which is a vector</returns>
         public static Matrix Vector(params Entity[] values)
-        {
-            var arr = new Entity[values.Length, 1];
-            for (int i = 0; i < values.Length; i++)
-                arr[i, 0] = values[i];
-            return new(GenTensor.CreateMatrix(arr));
-        }
+            => new Matrix(GenTensor.CreateTensor(new(values.Length, 1), arr => values[arr[0]]));
+
+        /// <summary>
+        /// Creates a zero square matrix
+        /// </summary>
+        public static Matrix ZeroMatrix(int size)
+            => ZeroMatrix(size, size);
+
+        /// <summary>
+        /// Creates a zero square matrix
+        /// </summary>
+        public static Matrix ZeroMatrix(int rowCount, int columnCount)
+            => new Matrix(GenTensor.CreateTensor(new(rowCount, columnCount), arr => 0));
+
+        /// <summary>
+        /// Creates a zero vector
+        /// </summary>
+        public static Matrix ZeroVector(int size)
+            => new Matrix(GenTensor.CreateTensor(new(size, 1), arr => 0));
 
         /// <summary>
         /// Creates a 1x1 matrix of a given value. It will be simplified

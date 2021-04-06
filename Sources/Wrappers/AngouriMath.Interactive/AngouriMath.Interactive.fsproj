@@ -2,18 +2,20 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <Version>1.0.0</Version>
+    <Version>1.3.0-preview.2</Version>
     <Authors>WhiteBlackGoose</Authors>
     <Company>Angouri</Company>
-    <Product>Wrapper of AngouriMath for Interactive</Product>
-    <Description>Wrapper of AngouriMath for Interactive. https://am.angouri.org/#inter</Description>
-    <Copyright>Angouri 2019-2020</Copyright>
+    <Product>Wrapper of AngouriMath for Jupyter Interactive</Product>
+    <Description>Wrapper of AngouriMath for Jupyter Interactive. https://am.angouri.org/</Description>
+    <Copyright>Angouri 2019-2021</Copyright>
     <PackageProjectUrl>https://am.angouri.org</PackageProjectUrl>
     <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
     <PackageTags>interactive, fsharp, math</PackageTags>
-    <PackageReleaseNotes>https://am.angouri.org/#whatsnew</PackageReleaseNotes>
+    <PackageReleaseNotes>Dependency update: moved to AngouriMath.FSharp 1.3.0-preview.2
+https://am.angouri.org/whatsnew</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <RepositoryType>public</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -21,7 +23,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath.FSharp" Version="1.0.0" />
+    <PackageReference Include="AngouriMath.FSharp" Version="1.3.0-preview.2" />
     <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.21108.3" />
   </ItemGroup>
 

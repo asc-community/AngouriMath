@@ -26,5 +26,9 @@ namespace UnitTests.Common
             var expected = expectedRaw.ToEntity();
             Assert.Equal(expected, actual);
         }
+
+        [Fact] public void TupleSub1() => Assert.Equal("3 + 2 * 6", "x + 2y".Substitute(("x", "y"), (3, 6)));
+        [Fact] public void TupleSub2() => Assert.Equal("3 + 2 * 6 + 8", "x + 2y + z".Substitute(("x", "y", "z"), (3, 6, 8)));
+        [Fact] public void TupleSub3() => Assert.Equal("3 + 2 * 6 + 8 / 11", "x + 2y + z / d".Substitute(("x", "y", "z", "d"), (3, 6, 8, 11)));
     }
 }

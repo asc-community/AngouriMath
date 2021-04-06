@@ -2,35 +2,54 @@
 
 open AngouriMath
 open PeterO.Numbers
-open AngouriMath.Convenience
 
-exception ExprParseException of string * obj
+exception ParseException
 
-let parse (x : obj) =
+/// Parses the given object (be that string, number, or something else)
+/// into an Entity. In case it cannot, an exception is thrown
+let parsedSilent (x : obj) =
     match x with
-    | :? Entity as e -> e
-    | :? string as s -> MathS.FromString(s)
-    | :? int as i -> upcast MathS.Numbers.Create(i)
-    | :? bool as b -> upcast MathS.Boolean.Create(b)
-    | :? double as d -> upcast MathS.Numbers.Create(d)
-    | :? decimal as d -> upcast MathS.Numbers.Create(EDecimal.FromDecimal(d))
-    | unresolved -> raise (ExprParseException("", unresolved))
+    | :? Entity as e -> Some(e)
+    | :? string as s -> Some(MathS.FromString(s))
+    | :? int as i -> Some(upcast MathS.Numbers.Create(i) : Entity)
+    | :? bool as b -> Some(upcast MathS.Boolean.Create(b) : Entity)
+    | :? double as d -> Some(upcast MathS.Numbers.Create(d) : Entity)
+    | :? decimal as d -> Some(upcast MathS.Numbers.Create(EDecimal.FromDecimal(d)) : Entity)
+    | unresolved -> None
 
-let parse_g<'T when 'T :> Entity> x =
-    let parsed = parse x
-    match parsed with
-    | :? 'T as correct -> correct
-    | _ -> raise (ExprParseException("Cannot parse ", x))
+let parsed s =
+    match parsedSilent s with
+    | None -> raise ParseException
+    | Some(res) -> res
 
-let parse_symbol x =
-    parse_g<Entity.Variable> x
+/// Parses into arbitrary type
+let parsedTypeSilent<'T when 'T :> Entity> x =
+    match parsedSilent x with
+    | None -> None
+    | Some(v) ->
+        match v with
+        | :? 'T as correct -> Some(correct)
+        | _ -> None
+   
+let parsedType x =
+    match parsedTypeSilent x with
+    | None -> raise ParseException
+    | Some(v) -> v
 
-let symbol x =
-    parse_symbol x
+/// Creates a variable from string
+let symbol x : Entity.Variable = parsedType x
     
-let set x =
-    parse_g<Entity.Set> x
+/// Creates a set from string
+let set x = parsedTypeSilent<Entity.Set> x
 
-type LimSide =
-    | Left
-    | Right
+/// Returns nodes (subexpressions) of the given expression
+let nodesOf expr =
+    (parsed expr).Nodes
+
+/// The first argument is the setting to change
+/// The second argument is the new value of the setting
+/// The third argument is what to execute under
+/// the selected settings.
+let withSetting (setting: AngouriMath.Convenience.Setting<'T>) newValue f =
+    use unit = setting.Set(newValue)
+    f()

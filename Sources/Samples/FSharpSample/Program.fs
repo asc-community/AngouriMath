@@ -1,58 +1,46 @@
-﻿open Functions
-open Operators
-open AngouriMath
-open Core
-open Constants
+﻿open Core
+open Functions
+open Shortcuts
 
-let print x =
-    printfn "%O" x
+// build an expression manually
+let x = symbol "x"
+let y = symbol "y"
+let expr = x / y + x * y
+printfn "%O" expr
 
-let line() = printfn "%s" ""
+// just print a parsed expression
+printfn "%O" (parsed "x + 2")
 
-type StringOrEntity =
-    | AsString of string
-    | AsEntity of Entity
-
-// just built a tree
-print "x + 2"
-line()
+// substitute a value
+printfn "%O" (("x", 3) -|> "x + 2")
 
 // evaluation to another entity
-print (evaled "2 + 3 or false")
-line()
+printfn "%O" (evaled "2 + 3 > 0 or false")
 
 // evaluation to AM's number
-print (as_number "2 + 3")
-line()
+printfn "%O" (asNumber "2 + 3")
 
 // evaluation to AM's boolean
-print (as_bool "true or false implies true")
-line()
+printfn "%O" (asBool "true or false implies true")
 
 // solving
-print (solve "x" "x + 2 = 0")
-print (simplify (solve "x" "x2 + 2 a x + a2 = 0"))
-print (solve "x" "(x - 3)(x + a) = 0 and (x - 3)(x + 3) = 0 or x > a")
-//print (solve "x" "(x - 3)(x + a) = 0")
-line()
+printfn "%O" (solutions "x" "x + 2 = 0")
+printfn "%O" (simplified (solutions "x" "x2 + 2 a x + a2 = 0"))
+printfn "%O" (solutions "x" "(x - 3)(x + a) = 0 and (x - 3)(x + 3) = 0 or x > a")
 
 // differentiation
-print (differentiate "x" "x2 + a x")
-print (differentiate "x" "e^x + ln(x) + log(2, x)")
-print (differentiate "y" "sin(sin(y))")
-line()
+printfn "%O" (``dy/dx`` "x2 + a x")
+printfn "%O" (``dy/dx`` "e^x + ln(x) + log(2, x)")
+printfn "%O" (derivative "y" "sin(sin(y))")
 
 // integration
-print (integrate "x" "x2 + e")
-print (integrate "x" "a x")
-print (integrate "x" "a x + b e ^ x + ln(x)")
-line()
+printfn "%O" (integral "x" "x2 + e")
+printfn "%O" (integral "x" "a x")
+printfn "%O" (integral "x" "a x + b e ^ x + ln(x)")
 
 // limit
-print (limit "x" "0" "sin(a x) / x")
-print ((parse "sin(a x) / x") &&&& ((parse "x") --> zero))
-line()
+printfn "%O" (``lim x->0`` "sin(a x) / x")
+printfn "%O" (limit "x" 0 "sin(a x) / x")
 
 // LaTeX
-print (latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)")
-line()
+printfn "%O" (latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)")

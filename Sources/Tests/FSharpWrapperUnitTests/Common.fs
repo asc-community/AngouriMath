@@ -1,4 +1,4 @@
-﻿module Common
+﻿module ReturnValues.Common
 
 open Core
 open Xunit
