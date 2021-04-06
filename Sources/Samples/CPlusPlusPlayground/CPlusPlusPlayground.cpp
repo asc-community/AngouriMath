@@ -14,7 +14,8 @@ int main()
     for (auto ent : newExpr.Nodes())
         std::cout << ent << "\n";
     std::cout << "\n\n";
-    for (auto ent : newExpr.Vars())
+    auto ex = AngouriMath::Entity("x + y");
+    for (auto ent : ex.Vars())
         std::cout << ent << "\n";
     return 0;
 }

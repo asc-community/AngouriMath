@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -16,13 +17,13 @@ namespace AngouriMath.CPP.Exporting
         [UnmanagedCallersOnly(EntryPoint = "entity_vars")]
         public static NErrorCode EntityVars(ObjRef exprPtr, ref NativeArray res)
             => ExceptionEncode(ref res, exprPtr,
-                exprPtr => NativeArray.Alloc(exprPtr.AsEntity.Vars)
+                exprPtr => NativeArray.Alloc(exprPtr.AsEntity.Vars.Select(v => (Entity)v))
             );
 
         [UnmanagedCallersOnly(EntryPoint = "entity_vars_and_constants")]
         public static NErrorCode EntityVarsAndConstants(ObjRef exprPtr, ref NativeArray res)
             => ExceptionEncode(ref res, exprPtr,
-                exprPtr => NativeArray.Alloc(exprPtr.AsEntity.VarsAndConsts)
+                exprPtr => NativeArray.Alloc(exprPtr.AsEntity.VarsAndConsts.Select(v => (Entity)v))
             );
 
         [UnmanagedCallersOnly(EntryPoint = "entity_evaled")]
