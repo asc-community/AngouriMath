@@ -64,9 +64,9 @@ namespace AngouriMath
 
         // Casts
         long AsInteger() const;
-        std::tuple<long, long> AsRational() const;
+        std::pair<long, long> AsRational() const;
         double AsReal() const;
-        std::tuple<double, double> AsComplex() const;
+        std::pair<double, double> AsComplex() const;
 
         // Properties
         const std::vector<Entity>& Nodes() const { return innerEntityInstance.get()->CachedNodes(); }

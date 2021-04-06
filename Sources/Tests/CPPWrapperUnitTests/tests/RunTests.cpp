@@ -109,3 +109,65 @@ TEST(RunTests, VarsAndConstants1) {
     EXPECT_EQ(AngouriMath::Entity("pi").ToString(), nodes[1].ToString());
     EXPECT_EQ(AngouriMath::Entity("y").ToString(), nodes[2].ToString());
 }
+
+
+TEST(RunTests, Alternate1) {
+    auto expr = AngouriMath::Entity("x + sin(x / 2)");
+    auto nodes = expr.Alternate();
+    EXPECT_EQ(2, nodes.size());
+    EXPECT_EQ(AngouriMath::Entity("x + sin(x / 2)").ToString(), nodes[0].ToString());
+    EXPECT_EQ(AngouriMath::Entity("sin(x / 2) + x").ToString(), nodes[1].ToString());
+}
+
+TEST(RunTests, Simplify1) {
+    auto expr = AngouriMath::Entity("sin(a)2 + cos(a)2");
+    EXPECT_EQ(expr.Simplify().ToString(), AngouriMath::Entity("1").ToString());
+}
+
+/*
+
+TEST(RunTests, Evaluate1) {
+    auto expr = AngouriMath::Entity("sqrt(2)");
+    auto evaled = expr.Evaled();
+    auto ans = evaled.ToString();
+    EXPECT_EQ(ans, "1.4142");
+}
+
+TEST(RunTests, InnerSimplified1) {
+    auto expr = AngouriMath::Entity("1 * 0");
+    auto innerSimplified = expr.InnerSimplified();
+    EXPECT_EQ(innerSimplified.ToString(), "0");
+}
+
+*/
+
+TEST(RunTests, ToLong1) {
+    auto expr = AngouriMath::Entity("116");
+    EXPECT_EQ(116l, expr.AsInteger());
+}
+
+/*
+
+TEST(RunTests, ToRational1) {
+    auto expr = AngouriMath::Entity("5 / 30");
+    auto sim = expr.Simplify(); 
+    auto rat = sim.AsRational();
+    EXPECT_EQ(1l, rat.first);
+    EXPECT_EQ(6l, rat.second);
+}
+
+*/
+
+TEST(RunTests, ToDouble) {
+    auto expr = AngouriMath::Entity("6");
+    EXPECT_EQ(6.0, expr.AsReal());
+}
+
+TEST(RunTests, ToComplex) {
+    auto expr = AngouriMath::Entity("6 + i");
+    auto comSim = expr.Simplify();
+    auto com = comSim.AsComplex();
+    EXPECT_EQ(6.0, com.first);
+    EXPECT_EQ(1, com.second);
+}
+

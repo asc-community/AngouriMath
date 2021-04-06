@@ -24,6 +24,7 @@
   <b>·</b>
   <a href="https://am.angouri.org/"><b>Website</b></a>
   <br>
+  <br>
   <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=purple&label=Join+our+chat!&logo=discord&style=flat-square"></a>
 </p>
 

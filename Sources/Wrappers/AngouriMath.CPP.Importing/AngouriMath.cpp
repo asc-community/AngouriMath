@@ -148,11 +148,11 @@ namespace AngouriMath
         return res;
     }
 
-    std::tuple<long, long> Entity::AsRational() const
+    std::pair<long, long> Entity::AsRational() const
     {
         Internal::LongTuple res;
         HandleErrorCode(entity_to_rational(innerEntityInstance.get()->reference, &res));
-        return std::make_tuple(res.first, res.second);
+        return std::make_pair(res.first, res.second);
     }
 
     double Entity::AsReal() const
@@ -162,11 +162,11 @@ namespace AngouriMath
         return res;
     }
 
-    std::tuple<double, double> Entity::AsComplex() const
+    std::pair<double, double> Entity::AsComplex() const
     {
         Internal::DoubleTuple res;
         HandleErrorCode(entity_to_complex(innerEntityInstance.get()->reference, &res));
-        return std::make_tuple(res.first, res.second);
+        return std::make_pair(res.first, res.second);
     }
 
     Internal::EntityRef GetHandle(const Entity& e)
