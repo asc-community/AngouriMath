@@ -141,10 +141,14 @@ TEST(RunTests, InnerSimplified1) {
 
 */
 
+/*
+
 TEST(RunTests, ToLong1) {
     auto expr = AngouriMath::Entity("116");
     EXPECT_EQ(116l, expr.AsInteger());
 }
+
+*/
 
 /*
 
@@ -170,4 +174,3 @@ TEST(RunTests, ToComplex) {
     EXPECT_EQ(6.0, com.first);
     EXPECT_EQ(1, com.second);
 }
-
