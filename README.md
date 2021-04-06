@@ -7,7 +7,7 @@
 <h2 align="center">AngouriMath</h2>
 
 <p align="center">
-  <b>New symbolic algebra library for C#/F#/(C++ WIP).</b>
+  <b>New symbolic algebra library for C# · F# · Jupyter · C++ WIP.</b>
   <br>
   <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>Download</b></a>
   <b>(</b>
@@ -22,10 +22,8 @@
   <b>·</b>
   <a href="https://am.angouri.org/whatsnew/"><b>What's new</b></a>
   <b>·</b>
-  <a href="https://am.angouri.org/"><b>Official website</b></a>
+  <a href="https://am.angouri.org/"><b>Website</b></a>
   <br>
-  <br>
-  <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath?color=darkblue&label=Downloads&style=flat-square"></a>
   <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=purple&label=Chat&logo=discord&style=flat-square"></a>
 </p>
 
@@ -53,6 +51,7 @@ Note, that all tests and builds are tested for the following three operating sys
 |-----|-----------|----|-------------|-----|
 | Prerelease | <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.FSharp"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath.FSharp?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Interactive"><img alt="Nuget (with prereleases)" src="https://img.shields.io/nuget/vpre/AngouriMath.Interactive?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | WIP |
 | Stable | <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget" src="https://img.shields.io/nuget/v/AngouriMath?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.FSharp"><img alt="Nuget" src="https://img.shields.io/nuget/v/AngouriMath.FSharp?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Interactive"><img alt="Nuget" src="https://img.shields.io/nuget/v/AngouriMath.Interactive?color=blue&label=NuGet&logo=nuget&style=flat-square"></a> | WIP |
+| Downloads | <a href="https://www.nuget.org/packages/AngouriMath"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath?color=darkblue&label=Downloads&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.FSharp"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath.FSharp?color=darkblue&label=Downloads&style=flat-square"></a> | <a href="https://www.nuget.org/packages/AngouriMath.Interactive"><img alt="Nuget" src="https://img.shields.io/nuget/dt/AngouriMath.Interactive?color=darkblue&label=Downloads&style=flat-square"></a> | WIP |
 
 </details>
 
