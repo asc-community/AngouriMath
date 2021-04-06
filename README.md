@@ -7,7 +7,7 @@
 <h2 align="center">AngouriMath</h2>
 
 <p align="center">
-  <b>New, leading symbolic algebra library in .NET. Everything one would need.</b>
+  <b>New symbolic algebra library for C#/F#/(C++ WIP).</b>
   <br>
   <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>Download</b></a>
   <b>(</b>
@@ -338,6 +338,18 @@ limit "x" "0" "sin(a x) / x"
 "sin(a x) / x" &&& "x" --> 0
 
 latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)"
+```
+
+</details>
+
+<details><summary><strong>C++ (WIP)</strong></summary>
+
+There will be support for C++ as soon as the essential minimum part of AngouriMath's kernel API is exposed.
+```cpp
+#include <AngouriMath.h>
+
+AngouriMath::Entity expr = "x y + 2";
+std::cout << expr.Differentiate("x");
 ```
 
 </details>
