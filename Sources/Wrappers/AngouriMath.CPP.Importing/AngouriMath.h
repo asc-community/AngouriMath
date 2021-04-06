@@ -71,7 +71,7 @@ namespace AngouriMath
         // Properties
         const std::vector<Entity>& Nodes() const { return innerEntityInstance.get()->CachedNodes(); }
         const std::vector<Entity>& Vars() const { return innerEntityInstance.get()->CachedVars(); }
-        const std::vector<Entity>& VarsAndConstants() const { return innerEntityInstance.get()->CachedVarsAndConstants(); }
+        const std::vector<Entity>& VarsAndConsts() const { return innerEntityInstance.get()->CachedVarsAndConstants(); }
         const Entity InnerSimplified() const { return innerEntityInstance.get()->CachedInnerSimplified(); }
         const Entity Evaled() const { return innerEntityInstance.get()->CachedEvaled(); }
 

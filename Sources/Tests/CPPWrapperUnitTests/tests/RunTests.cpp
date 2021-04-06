@@ -94,14 +94,16 @@ TEST(RunTests, Nodes1) {
 }
 
 TEST(RunTests, Vars1) {
-    auto nodes = AngouriMath::Entity("x + pi + y").Nodes();
+    auto expr = AngouriMath::Entity("x + pi + y");
+    auto nodes = expr.Vars();
     EXPECT_EQ(2, nodes.size());
     EXPECT_EQ(AngouriMath::Entity("x").ToString(), nodes[0].ToString());
     EXPECT_EQ(AngouriMath::Entity("y").ToString(), nodes[1].ToString());
 }
 
 TEST(RunTests, VarsAndConstants1) {
-    auto nodes = AngouriMath::Entity("x + pi + y").Nodes();
+    auto expr = AngouriMath::Entity("x + pi + y");
+    auto nodes = expr.VarsAndConsts();
     EXPECT_EQ(3, nodes.size());
     EXPECT_EQ(AngouriMath::Entity("x").ToString(), nodes[0].ToString());
     EXPECT_EQ(AngouriMath::Entity("pi").ToString(), nodes[1].ToString());
