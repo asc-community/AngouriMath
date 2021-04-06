@@ -13,10 +13,10 @@ namespace AngouriMath.Core
 {
     /// <summary>
     /// Use this class for solvers and other places when a matrix needs to be built without
-    /// recreating an instance multiple times. It builds an instance of <see cref="Tensor"/>.
+    /// recreating an instance multiple times. It builds an instance of <see cref="Matrix"/>.
     /// It enables to build a tensor row-by-row.
     /// </summary>
-    public sealed class TensorBuilder
+    public sealed class MatrixBuilder
     {
         private readonly List<List<Entity>> raw = new();
         private readonly int columnCount;
@@ -27,7 +27,7 @@ namespace AngouriMath.Core
         /// <param name="columnCount">
         /// The number of columns the tensor will have (you cannot change it after creation).
         /// </param>
-        public TensorBuilder(int columnCount)
+        public MatrixBuilder(int columnCount)
         {
             this.columnCount = columnCount;
         }
@@ -42,13 +42,13 @@ namespace AngouriMath.Core
         /// <param name="columnCount">
         /// The number of columns the tensor will have (you cannot change it after creation).
         /// </param>
-        public TensorBuilder(List<List<Entity>>? alreadyHas, int columnCount) : this(columnCount)
+        public MatrixBuilder(List<List<Entity>>? alreadyHas, int columnCount) : this(columnCount)
         {
             if (alreadyHas is not null)
             {
                 foreach (var row in alreadyHas)
                     if (row.Count != columnCount)
-                        throw new AngouriBugException($"Invalid usage of {nameof(TensorBuilder)}");
+                        throw new AngouriBugException($"Invalid usage of {nameof(MatrixBuilder)}");
                 raw = alreadyHas;
             }
         }
@@ -67,7 +67,7 @@ namespace AngouriMath.Core
             if (row.Count == columnCount)
                 raw.Add(row);
             else
-                throw new InvalidMatrixOperationException($"Incorrect usage of {nameof(TensorBuilder)}"); 
+                throw new InvalidMatrixOperationException($"Incorrect usage of {nameof(MatrixBuilder)}"); 
         }
 
         /// <summary>
@@ -83,17 +83,17 @@ namespace AngouriMath.Core
             => Add(row.ToList());
 
         /// <summary>
-        /// Builds itself into a <see cref="Tensor"/>.
+        /// Builds itself into a <see cref="Matrix"/>.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="Tensor"/> if there exists at least one row.
+        /// An immutable <see cref="Matrix"/> if there exists at least one row.
         /// Null otherwise.
         /// </returns>
-        public Tensor? ToTensor()
+        public Matrix? ToMatrix()
         {
             if (raw.Count == 0)
                 return null;
-            return new Tensor(indices => raw[indices[0]][indices[1]], raw.Count, columnCount);
+            return new Matrix(indices => raw[indices[0]][indices[1]], raw.Count, columnCount);
         }
     }
 }

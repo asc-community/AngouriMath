@@ -38,11 +38,11 @@ namespace UnitTests.Discrete
                 return;
             }
 
-            Assert.Equal(rootNumber, res.Shape[0]);
+            Assert.Equal(rootNumber, res.RowCount);
 
             var dict = new Dictionary<Variable, Entity>();
             var count = vars.Length;
-            for (int i = 0; i < res.Shape[0]; i++)
+            for (int i = 0; i < res.RowCount; i++)
             {
                 for (int j = 0; j < count; j++)
                     dict[vars[j]] = res[i, j];

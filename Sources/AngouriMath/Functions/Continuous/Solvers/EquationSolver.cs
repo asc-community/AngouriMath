@@ -51,7 +51,7 @@ namespace AngouriMath.Functions.Algebra
         /// Then we substitute back <br/>
         /// y = -3a + a = -2a <br/>
         /// </summary>
-        internal static Tensor? SolveSystem(IEnumerable<Entity> inputEquations, ReadOnlySpan<Variable> vars)
+        internal static Matrix? SolveSystem(IEnumerable<Entity> inputEquations, ReadOnlySpan<Variable> vars)
         {
             var equations = new List<Entity>(inputEquations.Select(equation => equation.InnerSimplified));
             if (equations.Count != vars.Length)
@@ -64,8 +64,8 @@ namespace AngouriMath.Functions.Algebra
                     throw new AngouriBugException("InSolveSystem incorrect output");
             if (res.Count == 0)
                 return null;
-            var tb = new TensorBuilder(res, initVarCount);
-            return tb.ToTensor();
+            var tb = new MatrixBuilder(res, initVarCount);
+            return tb.ToMatrix();
         }
 
         /// <summary>Solves system of equations</summary>

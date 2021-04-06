@@ -18,10 +18,5 @@ namespace AngouriMath
                     _ => Name
                 };
         }
-
-        public partial record Tensor
-        {
-            internal override string ToSymPy() => InnerTensor.ToString();
-        }
     }
 }

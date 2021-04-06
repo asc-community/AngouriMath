@@ -55,3 +55,5 @@ out/
 /Sources/Wrappers/AngouriMath.CPP.Importing/build/ALL_BUILD.vcxproj.filters
 /Sources/Wrappers/AngouriMath.CPP.Importing/build/ALL_BUILD.vcxproj
 /Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
+/Sources/Utils/Utils/Properties/launchSettings.json
+out/

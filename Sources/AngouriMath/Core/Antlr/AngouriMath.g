@@ -253,6 +253,10 @@ atom returns[Entity value]
     | SPECIALSET { $value = Entity.Set.SpecialSet.Create($SPECIALSET.text); }
     | VARIABLE { $value = Entity.Variable.CreateVariableUnchecked($VARIABLE.text); }
     | '(|' expression '|)' { $value = $expression.value.Abs(); }
+
+    | '[' function_arguments ']T' { $value = ParsingHelpers.TryBuildingMatrix($function_arguments.list).T; }
+    | '[' function_arguments ']' { $value = ParsingHelpers.TryBuildingMatrix($function_arguments.list); }
+
     | '(' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, false, $interval_arguments.couple.to, false); }
     | '[' interval_arguments ')' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, false); }
     | '[' interval_arguments ']' { $value = new Entity.Set.Interval($interval_arguments.couple.from, true, $interval_arguments.couple.to, true); }

@@ -49,7 +49,7 @@ namespace AngouriMath
             private protected override string SortHashName(SortLevel level) => "v_" + Name;
         }
 
-        public partial record Tensor : Entity
+        partial record Matrix
         {
             private protected override string SortHashName(SortLevel level)
                 => Choice(level, "", "tensort_");

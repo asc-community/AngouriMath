@@ -10,5 +10,7 @@ using System.Runtime.CompilerServices;
 // Entity expr = "alpha_beta";
 // Console.WriteLine(Unsafe.SizeOf<GCHandle>());
 
-Entity expr = "cos(theta / 2) ^ 2 + (e^(-i phi) * e^(i phi)) sin(theta / 2)^2";
-Console.WriteLine(expr.Latexise());
+
+// Console.WriteLine("[ [ 1, 2 ] ; [ 3, 4 ] ]".ToEntity());
+var Fn = "[ 1, 0 ]T * ([ [ 1, 1 ], [ 1, 0 ] ] ^ n * [ 1, 0 ])".ToEntity();
+Console.WriteLine(Fn.Substitute("n", 1_000_000).EvalNumerical().ToString().Length);

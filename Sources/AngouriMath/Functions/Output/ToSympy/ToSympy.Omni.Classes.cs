@@ -98,5 +98,18 @@ namespace AngouriMath
         {
             internal override string ToSymPy() => $"sympy.Piecewise({string.Join(", ", Cases.Select(c => $"({c.Expression}, {c.Predicate})"))})";
         }
+        
+        partial record Matrix
+        {
+            internal override string ToSymPy()
+                => "sympy.ImmutableMatrix([" +
+                    string.Join(", ",
+                        IsVector switch
+                        {
+                            true => this.Select(c => c.ToSymPy()),
+                            false => this.Select(c => $"[{string.Join(", ", ((Matrix)c).T)}]"),
+                        }) +
+                   "])";
+        }
     }
 }

@@ -5,6 +5,7 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core;
+using AngouriMath.Functions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,18 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Sumf(Entity Augend, Entity Addend) : NumericNode, IBinaryNode
         {
+            /// <summary>
+            /// Sums all the terms.
+            /// </summary>
+            public static Entity Sum(IReadOnlyList<Entity> terms)
+                => TreeAnalyzer.MultiHangBinary(terms, (a, b) => a + b);
+
+            /// <summary>
+            /// Sums all the terms.
+            /// </summary>
+            public static Entity Sum(IEnumerable<Entity> terms)
+                => Sum(terms.ToList());
+
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Sumf New(Entity augend, Entity addend) =>
                 ReferenceEquals(Augend, augend) && ReferenceEquals(Addend, addend) ? this : new(augend, addend);
@@ -72,6 +85,18 @@ namespace AngouriMath
         /// </summary>
         public sealed partial record Mulf(Entity Multiplier, Entity Multiplicand) : NumericNode, IBinaryNode
         {
+            /// <summary>
+            /// Multiplies all the terms.
+            /// </summary>
+            public static Entity Multiply(IReadOnlyList<Entity> terms)
+                => TreeAnalyzer.MultiHangBinary(terms, (a, b) => a * b);
+
+            /// <summary>
+            /// Multiplies all the terms.
+            /// </summary>
+            public static Entity Multiply(IEnumerable<Entity> terms)
+                => Multiply(terms.ToList());
+
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Mulf New(Entity multiplier, Entity multiplicand) =>
                 ReferenceEquals(Multiplier, multiplier) && ReferenceEquals(Multiplicand, multiplicand) ? this : new(multiplier, multiplicand);

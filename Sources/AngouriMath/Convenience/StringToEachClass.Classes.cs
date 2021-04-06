@@ -29,14 +29,14 @@ namespace AngouriMath
                 => FromString<Variable>(expr);
         }
 
-        partial record Tensor
+        partial record Matrix
         {
             /// <summary>
             /// Converts from string to specifically tensor
             /// </summary>
-            /// <param name="expr">From where to parse (available since 1.2.2)</param>
-            public static implicit operator Tensor(string expr)
-                => FromString<Tensor>(expr);
+            /// <param name="expr">From where to parse (available since 1.3)</param>
+            public static implicit operator Matrix(string expr)
+                => FromString<Matrix>(expr);
         }
 
         partial record Set

@@ -236,5 +236,19 @@ namespace AngouriMath
                 :
                 New(ProcessPiecewise(Cases.Select(c => c.New(c.Expression.InnerSimplified, c.Predicate.InnerSimplified))));
         }
+
+
+        partial record Matrix
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerEval()
+                => IsScalar ? AsScalar().Evaled :
+                Elementwise(e => e.Evaled);
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify()
+                => IsScalar ? AsScalar().InnerSimplified :
+                Elementwise(e => e.InnerSimplified);
+        }
     }
 }

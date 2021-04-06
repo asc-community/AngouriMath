@@ -140,5 +140,21 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
+
+        partial record Matrix
+        {
+            /// <inheritdoc/>
+            public override string Stringize()
+                => "[" +
+                    string.Join(", ",
+                        IsVector switch
+                        {
+                            true => this.Select(c => c.ToSymPy()),
+                            false => this.Select(c => $"[{string.Join(", ", ((Matrix)c).T)}]"),
+                        }) +
+                   "]";
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
     }
 }

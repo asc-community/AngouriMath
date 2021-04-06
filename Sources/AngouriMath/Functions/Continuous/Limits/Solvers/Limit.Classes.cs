@@ -24,7 +24,7 @@ namespace AngouriMath
                 ComputeLimitImpl(this, x, dist, side);
         }
 
-        partial record Tensor
+        partial record Matrix
         {
             internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side) =>
                 null; // TODO
