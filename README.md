@@ -14,6 +14,10 @@
   <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>C#</b></a>
   , 
   <a href="https://www.nuget.org/packages/AngouriMath.FSharp" title="Go to NuGet to get an F# version"><b>F#</b></a>
+  ,
+  <a href="https://www.nuget.org/packages/AngouriMath.FSharp" title="Go to NuGet to get a Jupyter version"><b>Jupyter</b></a>
+  ,
+  C++ (WIP)
   <b>)</b>
   <b>·</b>
   <a href="#exam"><b>Examples</b></a>
@@ -25,6 +29,8 @@
   <a href="https://am.angouri.org/"><b>Website</b></a>
   <br>
   <br>
+  <a href="https://dotnetfiddle.net/u901sI"><img src="https://img.shields.io/static/v1?label=Try%20online&message=.NET%20Fiddle&color=purple&style=flat-square"></a>
+  <a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Try%20online&message=Jupyter%20NB&color=purple&style=flat-square"></a>
   <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=purple&label=Join+our+chat!&logo=discord&style=flat-square"></a>
 </p>
 
@@ -81,14 +87,6 @@ TeX rendering applications, etc.
 It is free to use even in commercial projects. We work on it a lot, so your requests on 
 <a href="https://github.com/asc-community/AngouriMath/issues">issues</a> are likely to
 be considered within a few hours.
-
-Finally, if still not sure about it, you can try it even before installation!
-| Try live |
-|:--------:|
-|<a href="https://dotnetfiddle.net/FIcaDG"><img src="https://img.shields.io/static/v1?label=Go%20to&message=.NET%20Fiddle&color=purple&style=for-the-badge"></a>|
-|<a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Go%20to&message=Jupyter%20NB&color=purple&style=for-the-badge"></a>|
-
-
 
 ## Quick start
 1. Install AngouriMath from [NuGet](https://www.nuget.org/packages/AngouriMath).

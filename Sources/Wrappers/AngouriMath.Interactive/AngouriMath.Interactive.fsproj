@@ -24,7 +24,7 @@ https://am.angouri.org/whatsnew</PackageReleaseNotes>
 
   <ItemGroup>
     <PackageReference Include="AngouriMath.FSharp" Version="1.3.0-preview.2" />
-    <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.21108.3" />
+    <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.21181.2" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,7 +35,7 @@ https://am.angouri.org/whatsnew</PackageReleaseNotes>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="5.0.1" />
+    <PackageReference Update="FSharp.Core" Version="5.0.0" />
   </ItemGroup>
 
 </Project>

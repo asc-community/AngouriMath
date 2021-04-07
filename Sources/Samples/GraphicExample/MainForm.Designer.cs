@@ -138,11 +138,8 @@
         private ScottPlot.FormsPlot Chart;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.TextBox textBox1;
         private System.Windows.Forms.Label LabelTitle;
-        private System.Windows.Forms.TextBox In;
         private System.Windows.Forms.Label LabelState;
-        private System.Windows.Forms.TextBox Input;
         private System.Windows.Forms.TextBox InputText;
         private System.Windows.Forms.Button ButtonCancel;
         private System.Windows.Forms.Button ButtonSolve;
