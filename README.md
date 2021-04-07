@@ -15,7 +15,7 @@
   , 
   <a href="https://www.nuget.org/packages/AngouriMath.FSharp" title="Go to NuGet to get an F# version"><b>F#</b></a>
   ,
-  <a href="https://www.nuget.org/packages/AngouriMath.FSharp" title="Go to NuGet to get a Jupyter version"><b>Jupyter</b></a>
+  <a href="https://www.nuget.org/packages/AngouriMath.Interactive" title="Go to NuGet to get a Jupyter version"><b>Jupyter</b></a>
   ,
   C++ (WIP)
   <b>)</b>
