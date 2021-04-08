@@ -12,5 +12,9 @@ using System.Runtime.CompilerServices;
 
 
 // Console.WriteLine("[ [ 1, 2 ] ; [ 3, 4 ] ]".ToEntity());
-var Fn = "[ 1, 0 ]T * ([ [ 1, 1 ], [ 1, 0 ] ] ^ n * [ 1, 0 ])".ToEntity();
-Console.WriteLine(Fn.Substitute("n", 1_000_000).EvalNumerical().ToString().Length);
+// var piecewise = (Piecewise)"piecewise(x provided a, y + x provided b, 3)";
+// var var = Var("d");
+// Console.WriteLine(piecewise.Integrate(var));
+
+Console.WriteLine("a and b".Limit("x", "+oo"));
+

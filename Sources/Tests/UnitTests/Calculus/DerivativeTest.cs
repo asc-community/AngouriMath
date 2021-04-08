@@ -106,7 +106,7 @@ namespace UnitTests.Calculus
         {
             var func = MathS.Derivative("x + 2", "y");
             var derFunc = func.Differentiate(x);
-            Assert.Equal(MathS.Derivative(func, x), derFunc);
+            Assert.Equal(0, derFunc);
         }
 
         [Fact]
