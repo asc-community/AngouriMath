@@ -1,10 +1,20 @@
-﻿using System;
+﻿using AngouriMath;
+using System;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Xunit;
 
 namespace UnitTests
 {
+    public static class TestExtensions
+    {
+        public static void ShouldBe(this Entity @this, Entity other)
+        {
+            Assert.Equal(other, @this);
+        }
+    }
+
     /// <summary>
     /// When waits, ignores all the operation canceled exceptions
     /// </summary>

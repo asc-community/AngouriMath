@@ -131,6 +131,37 @@ namespace UnitTests.Common
         [InlineData("(|[2, 3, 6]|)", "7")]
         public void TestMatrices(string before, string after)
             => ShouldChangeTo(before, after);
+
+        [Fact]
+        public void PiecewiseIntegrate1() =>
+            "piecewise(2 provided a, 3)".Integrate("x")
+            .ShouldBe("piecewise(2x provided a, 3x)");
+
+        [Fact]
+        public void PiecewiseIntegrate2() =>
+            "piecewise(2 provided a, 3)".Integrate("d")
+            .ShouldBe("piecewise(2d provided a, 3d)");
+
+        [Fact]
+        public void PiecewiseIntegrate3() =>
+            "piecewise(x provided a, 1/x)".Integrate("x")
+            .ShouldBe("piecewise(x ^ 2 / 2 provided a, ln(x))");
+
+        [Fact]
+        public void PiecewiseDerivative1() =>
+            "piecewise(x provided a, 1/x)".Integrate("x")
+            .ShouldBe("piecewise(1 provided a, -1 / x2)");
+
+        
+        [Fact] // although this one will be collapsed into 0 with #327 implemented
+        public void PiecewiseDerivative2() =>
+            "piecewise(x provided a, 1/x)".Integrate("y")
+            .ShouldBe("piecewise(0 provided a, 0)");
+
+        [Fact]
+        public void PiecewiseLimit1() =>
+            "piecewise(sin(a x) / (b x) provided a, sin(b x) / sin(a x))".Limit("x", "0")
+            .ShouldBe("piecewise(a / b provided a, b / a)");
     }
 }
 
