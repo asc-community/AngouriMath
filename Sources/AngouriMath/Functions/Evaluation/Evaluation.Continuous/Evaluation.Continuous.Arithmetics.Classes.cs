@@ -90,12 +90,12 @@ namespace AngouriMath
                 {
                     (Matrix m1, Matrix m2) when m1.ColumnCount == m2.RowCount => (m1 * m2).Evaled,
                     (Matrix m1, Matrix m2) => a * b,
-                    // TODO: QUAСK (Matrix m, Integer(0)) => m.With((_, _, _) => 0),
-                    // TODO: QUAСK (Integer(0), Matrix m) => m.With((_, _, _) => 0),
+                    (Matrix m, Integer(0)) => m.With((_, _, _) => 0),
+                    (Integer(0), Matrix m) => m.With((_, _, _) => 0),
                     (Complex n1, Complex n2) => n1 * n2,
-                    // TODO: QUAСK (_, Integer(0)) or (Integer(0), _) => 0,
-                    // TODO: QUAСK (var n1, Integer(1)) => n1,
-                    // TODO: QUAСK (Integer(1), var n2) => n2,
+                    (_, Integer(0)) or (Integer(0), _) => 0,
+                    (var n1, Integer(1)) => n1,
+                    (Integer(1), var n2) => n2,
                     _ => null
                 },
                 (@this, a, b) => ((Mulf)@this).New(a, b)
@@ -147,8 +147,8 @@ namespace AngouriMath
                         (Matrix m1, Matrix m2) when TryDivide(m1, m2, out var res) => res.Evaled,
                         (var any, Matrix m) => (any / m),
                         (Complex n1, Complex n2) => n1 / n2,
-                        // TODO: QUACK (Integer(0), _) => 0,
-                        // TODO: QUACK (_, Integer(0)) => Real.NaN,
+                        (Integer(0), _) => 0,
+                        (_, Integer(0)) => Real.NaN,
                         _ => null
                     },
                     (@this, a, b) => ((Divf)@this).New(a, b)

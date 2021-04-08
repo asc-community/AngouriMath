@@ -12,6 +12,9 @@ using System.Runtime.CompilerServices;
 
 
 // Console.WriteLine("[ [ 1, 2 ] ; [ 3, 4 ] ]".ToEntity());
-var piecewise = (Piecewise)"piecewise(x provided a, y + x provided b, 3)";
-var var = Var("d");
-Console.WriteLine(piecewise.Integrate(var));
+// var piecewise = (Piecewise)"piecewise(x provided a, y + x provided b, 3)";
+// var var = Var("d");
+// Console.WriteLine(piecewise.Integrate(var));
+
+Console.WriteLine("a and b".Limit("x", "+oo"));
+
