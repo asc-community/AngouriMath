@@ -94,6 +94,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
+                /* TODO: QUACK
                 ExpandOnTwoAndTArguments(
                     Expression.Evaled, Destination.Evaled, (v: Var, ap: ApproachFrom),
                     (expr, dest, vap) => vap.v switch
@@ -104,6 +105,15 @@ namespace AngouriMath
                     },
                     (@this, expr, dest, vap) => ((Limitf)@this).New(expr, vap.v, dest, vap.ap)
                     );
+                */
+                ExpandOnTwoAndTArguments(
+                Expression.Evaled, Destination.Evaled, (v: Var, ap: ApproachFrom),
+                (expr, dest, vap) => vap.ap switch
+                {
+                    _ => null
+                },
+                (@this, expr, dest, vap) => ((Limitf)@this).New(expr, vap.v, dest, vap.ap)
+                );
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>

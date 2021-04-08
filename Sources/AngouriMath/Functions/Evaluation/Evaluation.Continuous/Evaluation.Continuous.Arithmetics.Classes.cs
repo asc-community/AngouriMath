@@ -92,7 +92,7 @@ namespace AngouriMath
                     (Matrix m1, Matrix m2) => a * b,
                     // TODO: QUAСK (Matrix m, Integer(0)) => m.With((_, _, _) => 0),
                     // TODO: QUAСK (Integer(0), Matrix m) => m.With((_, _, _) => 0),
-                    // TODO: QUAСK (Complex n1, Complex n2) => n1 * n2,
+                    (Complex n1, Complex n2) => n1 * n2,
                     // TODO: QUAСK (_, Integer(0)) or (Integer(0), _) => 0,
                     // TODO: QUAСK (var n1, Integer(1)) => n1,
                     // TODO: QUAСK (Integer(1), var n2) => n2,
