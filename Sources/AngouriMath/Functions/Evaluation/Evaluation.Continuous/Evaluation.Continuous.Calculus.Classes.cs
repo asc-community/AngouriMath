@@ -98,8 +98,8 @@ namespace AngouriMath
                     Expression.Evaled, Destination.Evaled, (v: Var, ap: ApproachFrom),
                     (expr, dest, vap) => vap.v switch
                     {
-                        Variable v when expr.Limit(v, dest, vap.ap) is var res and not Limitf 
-                            => res.Evaled,
+                        // TODO: QUACK Variable v when expr.Limit(v, dest, vap.ap) is var res and not Limitf 
+                        // TODO: QUACK     => res.Evaled,
                         _ => null
                     },
                     (@this, expr, dest, vap) => ((Limitf)@this).New(expr, vap.v, dest, vap.ap)
@@ -107,8 +107,9 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
+                /* TODO: QUACK
                 ExpandOnTwoAndTArguments(
-                    Expression.Evaled, Destination.Evaled, (v: Var, ap: ApproachFrom),
+                    Expression.InnerSimplified, Destination.InnerSimplified, (v: Var, ap: ApproachFrom),
                     (expr, dest, vap) => vap.v switch
                     {
                         Variable v when expr.Limit(v, dest, vap.ap) is var res and not Limitf
@@ -116,7 +117,13 @@ namespace AngouriMath
                         _ => null
                     },
                     (@this, expr, dest, vap) => ((Limitf)@this).New(expr, vap.v, dest, vap.ap)
-                    );
+                    );*/
+                Var switch
+                {
+                    // if it cannot compute it, it will anyway return the node
+                    Variable x => Expression.InnerSimplified.Limit(x, Destination.InnerSimplified, ApproachFrom),
+                    var x => new Limitf(Expression.InnerSimplified, x, Destination.InnerSimplified, ApproachFrom)
+                };
 
         }
     }

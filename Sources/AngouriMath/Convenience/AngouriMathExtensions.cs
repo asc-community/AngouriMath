@@ -352,7 +352,7 @@ namespace AngouriMath.Extensions
         /// cannot be determined
         /// </returns>
         public static Entity Limit(this string str, Variable x, Entity destination, ApproachFrom side)
-            => str.ToEntity().Limit(x, destination, side).InnerSimplified;
+            => str.ToEntity().Limit(x, destination, side);
 
         /// <summary>
         /// Finds the limit of the given expression over the given variable
@@ -371,6 +371,6 @@ namespace AngouriMath.Extensions
         /// cannot be determined
         /// </returns>
         public static Entity Limit(this string str, Variable x, Entity destination)
-            => str.ToEntity().Limit(x, destination).InnerSimplified;
+            => str.ToEntity().Limit(x, destination);
     }
 }
