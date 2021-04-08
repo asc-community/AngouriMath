@@ -21,8 +21,8 @@ namespace AngouriMath
                         // TODO: consider Integral for negative cases
                         // TODO: should we call InnerSimlified here?
                         (var expr, Variable var, int asInt)
-                            when expr is ContinuousNode or Variable
-                            => expr.Derive(var, asInt).Evaled,
+                            when expr.Derive(var, asInt) is var res and not Derivativef
+                            => res.Evaled,
                         _ => null
                     },
                     (@this, a, b, _) => ((Derivativef)@this).New(a, b)
@@ -37,8 +37,8 @@ namespace AngouriMath
                         // TODO: consider Integral for negative cases
                         // TODO: should we call InnerSimlified here?
                         (var expr, Variable var, int asInt)
-                            when expr is ContinuousNode or Variable
-                            => expr.Derive(var, asInt).InnerSimplified,
+                            when expr.Derive(var, asInt) is var res and not Derivativef
+                            => res.InnerSimplified,
                         _ => null
                     },
                     (@this, a, b, _) => ((Derivativef)@this).New(a, b)
@@ -64,8 +64,8 @@ namespace AngouriMath
                         (var expr, _, 0) => expr,
                         // TODO: consider Derivative for negative cases
                         (var expr, Variable var, int asInt)
-                            when expr is ContinuousNode or Variable
-                            => SequentialIntegrating(expr, var, asInt),
+                            when SequentialIntegrating(expr, var, asInt) is var res and not Integralf
+                            => res.Evaled,
                         _ => null
                     },
                     (@this, a, b, _) => ((Integralf)@this).New(a, b)
@@ -80,8 +80,8 @@ namespace AngouriMath
                         // TODO: consider Derivative for negative cases
                         // TODO: should we apply InnerSimplified?
                         (var expr, Variable var, int asInt)
-                            when SequentialIntegrating(expr, var, asInt) is not Integralf res
-                            => res,
+                            when SequentialIntegrating(expr, var, asInt) is var res and not Integralf
+                            => res.InnerSimplified,
                         _ => null
                     },
                     (@this, a, b, _) => ((Integralf)@this).New(a, b)
@@ -96,9 +96,10 @@ namespace AngouriMath
             protected override Entity InnerEval() =>
                 ExpandOnTwoAndTArguments(
                     Expression.Evaled, Destination.Evaled, (v: Var, ap: ApproachFrom),
-                    (expr, dest, vap) => expr switch
+                    (expr, dest, vap) => vap.v switch
                     {
-                        
+                        Variable v when expr.Limit(v, dest, vap.ap) is var res and not Limitf 
+                            => res.Evaled,
                         _ => null
                     },
                     (@this, expr, dest, vap) => ((Limitf)@this).New(expr, vap.v, dest, vap.ap)
@@ -106,12 +107,16 @@ namespace AngouriMath
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() =>
-                Var switch
-                {
-                    // if it cannot compute it, it will anyway return the node
-                    Variable x => Expression.InnerSimplified.Limit(x, Destination.InnerSimplified, ApproachFrom),
-                    var x => new Limitf(Expression.InnerSimplified, x, Destination.InnerSimplified, ApproachFrom)
-                };
+                ExpandOnTwoAndTArguments(
+                    Expression.Evaled, Destination.Evaled, (v: Var, ap: ApproachFrom),
+                    (expr, dest, vap) => vap.v switch
+                    {
+                        Variable v when expr.Limit(v, dest, vap.ap) is var res and not Limitf
+                            => res.InnerSimplified,
+                        _ => null
+                    },
+                    (@this, expr, dest, vap) => ((Limitf)@this).New(expr, vap.v, dest, vap.ap)
+                    );
 
         }
     }

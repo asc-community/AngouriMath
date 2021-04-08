@@ -132,35 +132,85 @@ namespace UnitTests.Common
         public void TestMatrices(string before, string after)
             => ShouldChangeTo(before, after);
 
-        [Fact]
-        public void PiecewiseIntegrate1() =>
+        [Fact] public void PiecewiseIntegrate1() =>
             "piecewise(2 provided a, 3)".Integrate("x")
             .ShouldBe("piecewise(2x provided a, 3x)");
 
-        [Fact]
-        public void PiecewiseIntegrate2() =>
+        [Fact] public void PiecewiseIntegrate2() =>
             "piecewise(2 provided a, 3)".Integrate("d")
             .ShouldBe("piecewise(2d provided a, 3d)");
 
-        [Fact]
-        public void PiecewiseIntegrate3() =>
+        [Fact] public void PiecewiseIntegrate3() =>
             "piecewise(x provided a, 1/x)".Integrate("x")
             .ShouldBe("piecewise(x ^ 2 / 2 provided a, ln(x))");
 
-        [Fact]
-        public void PiecewiseDerivative1() =>
-            "piecewise(x provided a, 1/x)".Integrate("x")
-            .ShouldBe("piecewise(1 provided a, -1 / x2)");
+        [Fact] public void PiecewiseDerivative1() =>
+            "piecewise(x provided a, 1/x)".Differentiate("x")
+            .ShouldBe("piecewise(1 provided a, ((-1) * (1)) / ((x) ^ (2)))");
 
-        
-        [Fact] // although this one will be collapsed into 0 with #327 implemented
-        public void PiecewiseDerivative2() =>
-            "piecewise(x provided a, 1/x)".Integrate("y")
+        // although this one will be collapsed into 0 with #327 implemented
+        [Fact] public void PiecewiseDerivative2() =>
+            "piecewise(x provided a, 1/x)".Differentiate("y")
             .ShouldBe("piecewise(0 provided a, 0)");
 
-        [Fact]
-        public void PiecewiseLimit1() =>
+        [Fact] public void PiecewiseLimit1() =>
             "piecewise(sin(a x) / (b x) provided a, sin(b x) / sin(a x))".Limit("x", "0")
+            .ShouldBe("piecewise(a / b provided a, b / a)");
+
+
+
+
+        [Fact] public void PiecewiseIntegrate1NodeEvaled() =>
+            "integral(piecewise(2 provided a, 3), x)".ToEntity().Evaled
+            .ShouldBe("piecewise(2x provided a, 3x)");
+
+        [Fact] public void PiecewiseIntegrate2NodeEvaled() =>
+            "integral(piecewise(2 provided a, 3), d)".ToEntity().Evaled
+            .ShouldBe("piecewise(2d provided a, 3d)");
+
+        [Fact] public void PiecewiseIntegrate3NodeEvaled() =>
+            "integral(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
+            .ShouldBe("piecewise(x ^ 2 / 2 provided a, ln(x))");
+
+        [Fact] public void PiecewiseDerivative1NodeEvaled() =>
+            "derivative(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
+            .ShouldBe("piecewise(1 provided a, ((-1) * (1)) / ((x) ^ (2)))");
+
+        // although this one will be collapsed into 0 with #327 implemented
+        [Fact] public void PiecewiseDerivative2NodeEvaled() =>
+            "derivative(piecewise(x provided a, 1/x), y)".ToEntity().Evaled
+            .ShouldBe("piecewise(0 provided a, 0)");
+
+        [Fact] public void PiecewiseLimit1NodeEvaled() =>
+            "limit(piecewise(sin(a x) / (b x) provided a, sin(b x) / sin(a x)), x, 0)".ToEntity().Evaled
+            .ShouldBe("piecewise(a / b provided a, b / a)");
+
+
+
+
+        [Fact] public void PiecewiseIntegrate1NodeInnerSimplified() =>
+            "integral(piecewise(2 provided a, 3), x)".ToEntity().InnerSimplified
+            .ShouldBe("piecewise(2x provided a, 3x)");
+
+        [Fact] public void PiecewiseIntegrate2NodeInnerSimplified() =>
+            "integral(piecewise(2 provided a, 3), d)".ToEntity().InnerSimplified
+            .ShouldBe("piecewise(2d provided a, 3d)");
+
+        [Fact] public void PiecewiseIntegrate3NodeInnerSimplified() =>
+            "integral(piecewise(x provided a, 1/x), x)".ToEntity().InnerSimplified
+            .ShouldBe("piecewise(x ^ 2 / 2 provided a, ln(x))");
+
+        [Fact] public void PiecewiseDerivative1NodeInnerSimplified() =>
+            "derivative(piecewise(x provided a, 1/x), x)".ToEntity().InnerSimplified
+            .ShouldBe("piecewise(1 provided a, ((-1) * (1)) / ((x) ^ (2)))");
+
+        // although this one will be collapsed into 0 with #327 implemented
+        [Fact] public void PiecewiseDerivative2NodeInnerSimplified() =>
+            "derivative(piecewise(x provided a, 1/x), y)".ToEntity().InnerSimplified
+            .ShouldBe("piecewise(0 provided a, 0)");
+
+        [Fact] public void PiecewiseLimit1NodeInnerSimplified() =>
+            "limit(piecewise(sin(a x) / (b x) provided a, sin(b x) / sin(a x)), x, 0)".ToEntity().InnerSimplified
             .ShouldBe("piecewise(a / b provided a, b / a)");
     }
 }

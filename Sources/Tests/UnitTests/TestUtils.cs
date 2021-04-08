@@ -11,6 +11,7 @@ namespace UnitTests
     {
         public static void ShouldBe(this Entity @this, Entity other)
         {
+            using var _ = MathS.Diagnostic.OutputExplicit.Set(true);
             Assert.Equal(other, @this);
         }
     }
