@@ -21,7 +21,7 @@ namespace AngouriMath
                         // TODO: consider Integral for negative cases
                         // TODO: should we call InnerSimlified here?
                         (var expr, Variable var, int asInt)
-                            when expr.Derive(var, asInt) is var res and not Derivativef
+                            when expr.Differentiate(var, asInt) is var res and not Derivativef
                             => res.Evaled,
                         _ => null
                     },
@@ -37,7 +37,7 @@ namespace AngouriMath
                         // TODO: consider Integral for negative cases
                         // TODO: should we call InnerSimlified here?
                         (var expr, Variable var, int asInt)
-                            when expr.Derive(var, asInt) is var res and not Derivativef
+                            when expr.Differentiate(var, asInt) is var res and not Derivativef
                             => res.InnerSimplified,
                         _ => null
                     },
