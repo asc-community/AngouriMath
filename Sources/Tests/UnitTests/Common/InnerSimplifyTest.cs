@@ -146,7 +146,7 @@ namespace UnitTests.Common
 
         [Fact] public void PiecewiseDerivative1() =>
             "piecewise(x provided a, 1/x)".Differentiate("x")
-            .ShouldBe("piecewise(1 provided a, ((-1) * (1)) / ((x) ^ (2)))");
+            .ShouldBe("piecewise(1 provided a, ((-1)) / ((x) ^ (2)))");
 
         // although this one will be collapsed into 0 with #327 implemented
         [Fact] public void PiecewiseDerivative2() =>
@@ -170,11 +170,11 @@ namespace UnitTests.Common
 
         [Fact] public void PiecewiseIntegrate3NodeEvaled() =>
             "integral(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
-            .ShouldBe("piecewise(x ^ 2 / 2 provided a, ln(x))");
+            .ShouldBe("piecewise(x ^ 2 / 2 provided a, ln(x))".ToEntity().Evaled);
 
         [Fact] public void PiecewiseDerivative1NodeEvaled() =>
             "derivative(piecewise(x provided a, 1/x), x)".ToEntity().Evaled
-            .ShouldBe("piecewise(1 provided a, ((-1) * (1)) / ((x) ^ (2)))");
+            .ShouldBe("piecewise(1 provided a, ((-1)) / ((x) ^ (2)))");
 
         // although this one will be collapsed into 0 with #327 implemented
         [Fact] public void PiecewiseDerivative2NodeEvaled() =>
@@ -202,7 +202,7 @@ namespace UnitTests.Common
 
         [Fact] public void PiecewiseDerivative1NodeInnerSimplified() =>
             "derivative(piecewise(x provided a, 1/x), x)".ToEntity().InnerSimplified
-            .ShouldBe("piecewise(1 provided a, ((-1) * (1)) / ((x) ^ (2)))");
+            .ShouldBe("piecewise(1 provided a, ((-1)) / ((x) ^ (2)))");
 
         // although this one will be collapsed into 0 with #327 implemented
         [Fact] public void PiecewiseDerivative2NodeInnerSimplified() =>
