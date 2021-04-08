@@ -29,9 +29,9 @@
   <a href="https://am.angouri.org/"><b>Website</b></a>
   <br>
   <br>
-  <a href="https://dotnetfiddle.net/u901sI"><img src="https://img.shields.io/static/v1?label=Try%20online&message=.NET%20Fiddle&color=purple&style=flat-square"></a>
-  <a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Try%20online&message=Jupyter%20NB&color=purple&style=flat-square"></a>
-  <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=purple&label=Join+our+chat!&logo=discord&style=flat-square"></a>
+  <a href="https://dotnetfiddle.net/u901sI"><img src="https://img.shields.io/static/v1?label=Fiddle&message=Try%21&color=purple&style=flat-square&logo=.NET"></a>
+  <a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Jupyter&message=Try%21&color=purple&style=flat-square&logo=Jupyter"></a>
+  <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=darkgreen&label=Join+our+chat!&logo=discord&style=flat-square"></a>
 </p>
 
 <details><summary><strong>Status</strong></summary>
@@ -381,7 +381,7 @@ std::cout << expr.Differentiate("x");
 
 </details>
 
-<details><summary><strong>AM in Jupyter</strong></summary>
+<details><summary><strong>Jupyter</strong></summary>
 
 If you already installed <a href="https://jupyter.org/install">Jupyter</a> and 
 <a href="https://github.com/dotnet/interactive/blob/main/docs/NotebooksLocalExperience.md">Interactive</a> for it, install
