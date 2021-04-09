@@ -1049,7 +1049,7 @@ namespace AngouriMath
             ///     </item>
             /// </list>
             /// </summary>
-            public static Setting<long> MaxExpansionTermCount => maxExpansionTermCount ??= 1_000;
+            public static Setting<long> MaxExpansionTermCount => maxExpansionTermCount ??= 10_000;
             [ThreadStatic] private static Setting<long>? maxExpansionTermCount;
 
             /// <summary>
