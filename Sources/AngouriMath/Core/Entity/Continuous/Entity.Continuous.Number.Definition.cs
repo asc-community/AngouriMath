@@ -29,7 +29,7 @@ namespace AngouriMath
         ///     </list>
         ///   </list>
         /// </summary>
-        public abstract partial record Number : NumericNode
+        public abstract partial record Number : ContinuousNode
         {
             /// <inheritdoc/>
             public override Entity Replace(Func<Entity, Entity> func) => func(this);

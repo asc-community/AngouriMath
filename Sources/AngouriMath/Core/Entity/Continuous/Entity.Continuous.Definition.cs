@@ -16,7 +16,7 @@ namespace AngouriMath
         /// <summary>
         /// Any node that might be counted as a number, derived, etc. is continuous
         /// </summary>
-        public abstract partial record NumericNode : Entity
+        public abstract partial record ContinuousNode : Entity
         {
 
         }
@@ -128,7 +128,7 @@ namespace AngouriMath
         /// Describes any node that is a function (e. g. sin, cos, etc.)
         /// but not an operator or leaf
         /// </summary>
-        public abstract record Function : NumericNode
+        public abstract record Function : ContinuousNode
         {
             internal override Priority Priority => Priority.Func;
         }

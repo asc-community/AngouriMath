@@ -18,7 +18,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of sum
         /// </summary>
-        public sealed partial record Sumf(Entity Augend, Entity Addend) : NumericNode, IBinaryNode
+        public sealed partial record Sumf(Entity Augend, Entity Addend) : ContinuousNode, IBinaryNode
         {
             /// <summary>
             /// Sums all the terms.
@@ -63,7 +63,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of difference
         /// </summary>
-        public sealed partial record Minusf(Entity Subtrahend, Entity Minuend) : NumericNode, IBinaryNode
+        public sealed partial record Minusf(Entity Subtrahend, Entity Minuend) : ContinuousNode, IBinaryNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Minusf New(Entity subtrahend, Entity minuend) =>
@@ -83,7 +83,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of product
         /// </summary>
-        public sealed partial record Mulf(Entity Multiplier, Entity Multiplicand) : NumericNode, IBinaryNode
+        public sealed partial record Mulf(Entity Multiplier, Entity Multiplicand) : ContinuousNode, IBinaryNode
         {
             /// <summary>
             /// Multiplies all the terms.
@@ -128,7 +128,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of division
         /// </summary>
-        public sealed partial record Divf(Entity Dividend, Entity Divisor) : NumericNode, IBinaryNode
+        public sealed partial record Divf(Entity Dividend, Entity Divisor) : ContinuousNode, IBinaryNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             internal Divf New(Entity dividend, Entity divisor) =>
