@@ -23,7 +23,7 @@ namespace AngouriMath.Functions.Algebra
         {
             using var _ = MathS.Settings.PrecisionErrorZeroRange.Set(1e-12m);
             using var __ = MathS.Settings.FloatToRationalIterCount.Set(0);
-            using var ___ = MathS.Settings.MaxExpansionTermCount.Set(100);
+            using var ___ = MathS.Settings.MaxExpansionTermCount.Set(50);
             var solutions = AnalyticalEquationSolver.Solve(equation, x);
 
             static Entity simplifier(Entity entity) => entity.InnerSimplified;
