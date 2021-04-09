@@ -12,5 +12,5 @@ using System.Runtime.CompilerServices;
 
 
 // Console.WriteLine("[ [ 1, 2 ] ; [ 3, 4 ] ]".ToEntity());
-var Fn = "[ 1, 0 ]T * ([ [ 1, 1 ], [ 1, 0 ] ] ^ n * [ 1, 0 ])".ToEntity();
-Console.WriteLine(Fn.Substitute("n", 1_000_000).EvalNumerical().ToString().Length);
+Matrix m = "[[3 - lambda, -1, 0, -2, 0], [-3, -4 - lambda, -2, 1, 3], [0, -7, 1 - lambda, -5, 2], [3, 4, 1, 1 - lambda, -2], [-6, -19, -5, -3, 10 - lambda]]";
+Console.WriteLine(m.Determinant.Expand().Simplify());
