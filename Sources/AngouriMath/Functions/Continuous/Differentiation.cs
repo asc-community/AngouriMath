@@ -61,7 +61,7 @@ namespace AngouriMath
         }
 
         /// <summary>Derives over <paramref name="x"/> <paramref name="power"/> times</summary>
-        public Entity Derive(Variable x, EInteger power)
+        public Entity Differentiate(Variable x, EInteger power)
         {
             var ent = this;
             for (var _ = 0; _ < power; _++)

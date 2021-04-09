@@ -49,6 +49,8 @@ namespace AngouriMath.Functions.Algebra
 
         public static Entity? ComputeLimit(Entity expr, Variable x, Entity dest, ApproachFrom side = ApproachFrom.BothSides, bool acceptNaN = false)
         {
+            if (expr is not ContinuousNode and not Variable)
+                return null;
             expr = expr.Replace(ExpandLogarithm);
 
             if (side is ApproachFrom.Left or ApproachFrom.Right)

@@ -15,7 +15,7 @@ namespace AngouriMath
         /// <summary>
         /// A node of exponential (power)
         /// </summary>
-        public sealed partial record Powf(Entity Base, Entity Exponent) : Entity, IBinaryNode
+        public sealed partial record Powf(Entity Base, Entity Exponent) : Function, IBinaryNode
         {
             /// <summary>Reuse the cache by returning the same object if possible</summary>
             private Powf New(Entity @base, Entity exponent) =>
