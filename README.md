@@ -9,16 +9,7 @@
 <p align="center">
   <i>New open-source cross-platform symbolic algebra library for </i><b>C# · F# · Jupyter · C++ (WIP)</b>
   <br>
-  <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>Download</b></a>
-  <b>(</b>
-  <a href="https://www.nuget.org/packages/AngouriMath" title="Go to NuGet"><b>C#</b></a>
-  , 
-  <a href="https://www.nuget.org/packages/AngouriMath.FSharp" title="Go to NuGet to get an F# version"><b>F#</b></a>
-  ,
-  <a href="https://www.nuget.org/packages/AngouriMath.Interactive" title="Go to NuGet to get a Jupyter version"><b>Jupyter</b></a>
-  ,
-  C++ (WIP)
-  <b>)</b>
+  <a href="https://am.angouri.org/quickstart/"><b>Get started</b></a>
   <b>·</b>
   <a href="#exam"><b>Examples</b></a>
   <b>·</b>
@@ -433,6 +424,12 @@ catch (OperationCanceledException)
 ```
 
 </details>
+
+If you want, you can add a badge to your repo:
+```
+[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
+```
+[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
 
 ## <a name="contrib"></a>Contribution
 
