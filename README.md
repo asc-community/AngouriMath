@@ -25,7 +25,7 @@
   <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=darkgreen&label=Join+our+chat!&logo=discord&style=flat-square&labelColor=474"></a>
 </p>
 
-<details><summary><strong>Status</strong></summary>
+<details><summary><strong>Status board</strong></summary>
 
 
 ![Solution Build](https://github.com/asc-community/AngouriMath/actions/workflows/EverythingBuild.yml/badge.svg)
