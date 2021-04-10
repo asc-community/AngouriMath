@@ -130,8 +130,7 @@ namespace AngouriMath.Functions
                                 new List<Entity> { new Powf(baseDividend, power) / new Powf(baseDivisor, power) },
                             _ => new List<Entity> { expr }
                         };
-                    if (power > 20 && linBaseChildren.Count > 1 ||
-                        EstimateTermCount(linBaseChildren.Count, power) >
+                    if (EstimateTermCount(linBaseChildren.Count, power) >
                         EInteger.FromInt64(MathS.Settings.MaxExpansionTermCount))
                         return null;
                     foreach (var powerListForTerm in CombinateSums(linBaseChildren.Count, power))
