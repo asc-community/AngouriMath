@@ -4,7 +4,7 @@ using System.Text;
 using AngouriMath.Convenience;
 using AngouriMath.Core.Exceptions;
 
-namespace AngouriMath.Core.QuotaGC
+namespace AngouriMath.Core
 {
     internal sealed class QuotaLeft
     {
@@ -23,13 +23,13 @@ namespace AngouriMath.Core.QuotaGC
                 return;
             left--;
             if (left is 0)
-                throw new OutOfQuotaException();
+                throw OutOfQuotaException.Instance;
         }
     }
 
     internal static class QuotaCounter
     {
-        internal static Setting<QuotaLeft> QuotaLeft => quotaLeft ??= new(QuotaLeft.CreateInfinite());
+        internal static Setting<QuotaLeft> QuotaLeft => quotaLeft ??= new(Core.QuotaLeft.CreateInfinite());
         [ThreadStatic] internal static Setting<QuotaLeft>? quotaLeft;
     }
 }
