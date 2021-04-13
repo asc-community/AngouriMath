@@ -16,3 +16,5 @@ Matrix m = "[[3 - lambda, -1, 0, -2, 0], [-3, -4 - lambda, -2, 1, 3], [0, -7, 1 
 Console.WriteLine(m.Determinant.Simplify());
 // using var _ = MathS.Settings.MaxExpansionTermCount.Set(50);
 // Console.WriteLine("(a + b)100".Expand());
+
+

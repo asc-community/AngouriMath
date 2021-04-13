@@ -23,6 +23,7 @@ namespace AngouriMath.Core.Multithreading
             var token = globalCancellationToken.Value;
             if (token is { } tok)
                 tok.ThrowIfCancellationRequested();
+            System.Console.WriteLine($"Token check at {System.DateTime.Now.Millisecond}");
         }
     }
 }
