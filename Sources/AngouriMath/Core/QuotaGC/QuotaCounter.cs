@@ -6,18 +6,21 @@ using AngouriMath.Core.Exceptions;
 
 namespace AngouriMath.Core
 {
-    internal sealed class QuotaLeft
+    public sealed class QuotaLeft
     {
         private int left;
+        private int initial;
         private bool infinite;
 
-        internal static QuotaLeft CreateFinite(int quotaInitial)
-            => new() { left = quotaInitial, infinite = false };
+        public static QuotaLeft CreateFinite(int quotaInitial)
+            => new() { left = quotaInitial, initial = quotaInitial, infinite = false };
 
-        internal static QuotaLeft CreateInfinite()
+        public static QuotaLeft CreateInfinite()
             => new() { left = 0, infinite = true };
 
-        internal void DecreaseAndCheck()
+        public void Reset() => left = initial;
+
+        public void DecreaseAndCheck()
         {
             if (infinite)
                 return;
@@ -27,9 +30,9 @@ namespace AngouriMath.Core
         }
     }
 
-    internal static class QuotaCounter
+    public static class QuotaCounter
     {
-        internal static Setting<QuotaLeft> QuotaLeft => quotaLeft ??= new(Core.QuotaLeft.CreateInfinite());
+        public static Setting<QuotaLeft> QuotaLeft => quotaLeft ??= new(Core.QuotaLeft.CreateInfinite());
         [ThreadStatic] internal static Setting<QuotaLeft>? quotaLeft;
     }
 }
