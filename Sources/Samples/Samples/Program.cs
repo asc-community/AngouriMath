@@ -1,18 +1,62 @@
 ﻿using System;
-using AngouriMath;
-using AngouriMath.Extensions;
-using static AngouriMath.MathS;
-using static AngouriMath.Entity;
-using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
-
-// Entity expr = "alpha_beta";
-// Console.WriteLine(Unsafe.SizeOf<GCHandle>());
+using AngouriMath.Core;
+using AngouriMath.Core.Exceptions;
+using System.Collections.Generic;
+using System.Linq;
 
 
-// Console.WriteLine("[ [ 1, 2 ] ; [ 3, 4 ] ]".ToEntity());
-Matrix m = "[[3 - lambda, -1, 0, -2, 0], [-3, -4 - lambda, -2, 1, 3], [0, -7, 1 - lambda, -5, 2], [3, 4, 1, 1 - lambda, -2], [-6, -19, -5, -3, 10 - lambda]]";
-Console.WriteLine(m.Determinant.Simplify());
-// using var _ = MathS.Settings.MaxExpansionTermCount.Set(50);
-// Console.WriteLine("(a + b)100".Expand());
+Console.WriteLine(Simplify(expr: 0, quota: 40));
+
+
+static TOut? TryExecuteConstrained<TIn, TOut>(TIn input, int quota, Func<TIn, TOut> alg)
+{
+    using var _ = QuotaCounter.QuotaLeft.Set(QuotaLeft.CreateFinite(quota));
+    try
+    {
+        return alg(input);
+    }
+    catch (OutOfQuotaInterruption)
+    {
+        return default;
+    }
+}
+
+static void AssignIfCan<TIn>(ref TIn toWhat, TIn? value)
+{
+    if (value is { } valid)
+        toWhat = valid;
+}
+
+static int Simplify(int expr, int quota)
+{
+    var subQuota = 5;
+    while (quota > 0)
+    {
+        AssignIfCan(ref expr, TryExecuteConstrained(expr, subQuota, SubSim1));
+        AssignIfCan(ref expr, TryExecuteConstrained(expr, subQuota, SubSim2));
+        quota -= subQuota * 2; 
+        subQuota += 2;
+    }
+    return expr;
+
+    static int SubSim1(int curr)
+    {
+        for (int i = 0; i < 100; i++)
+        {
+            QuotaCounter.QuotaLeft.Value.DecreaseAndCheck();
+            curr++;
+        }
+        return curr;
+    }
+
+    static int SubSim2(int curr)
+    {
+        for (int i = 0; i < 70; i++)
+        {
+            QuotaCounter.QuotaLeft.Value.DecreaseAndCheck();
+            curr += 2;
+        }
+        return curr;
+    }
+}
+
