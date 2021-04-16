@@ -117,6 +117,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CPPWrapperUnitTests", "CPPW
 		Tests\CPPWrapperUnitTests\tests\RunTests.cpp = Tests\CPPWrapperUnitTests\tests\RunTests.cpp
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEMPLATE", "{D691F587-E095-42D4-9FB7-A5A3D8725471}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\ISSUE_TEMPLATE\ask_question.md = ..\.github\ISSUE_TEMPLATE\ask_question.md
+		..\.github\ISSUE_TEMPLATE\bug_report.md = ..\.github\ISSUE_TEMPLATE\bug_report.md
+		..\.github\ISSUE_TEMPLATE\suggest_idea.md = ..\.github\ISSUE_TEMPLATE\suggest_idea.md
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -288,6 +295,7 @@ Global
 		{A2A2D155-C21D-4022-91E4-9516015281E7} = {D15528F2-AB50-46E2-9DB1-821B278C4931}
 		{602429CC-6BB5-4BF2-91DA-C6B0FF4399E5} = {C82FFADF-2F2F-4B8D-BB32-2D2F149FED4D}
 		{58DA6B29-2597-4D78-8938-97DB784293DB} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
+		{D691F587-E095-42D4-9FB7-A5A3D8725471} = {1C0BDFDE-D7B6-4343-AF9E-5BCAC51AA6A3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1CD9B3-4EAB-4B8C-BDC1-03280EB31298}

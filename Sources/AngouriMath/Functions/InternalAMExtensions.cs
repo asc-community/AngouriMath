@@ -26,6 +26,9 @@ namespace AngouriMath
     /// </summary>
     internal static class InternalAMExtensions
     {
+        public static TOut AggregateIndexed<TIn, TOut>(this TIn[] arr, TOut seed, Func<TOut, int, TIn, TOut> func)
+            => Enumerable.Range(1, arr.Length - 1).Select(id => (id, arr[id])).Aggregate(func(seed, 0, arr[0]), (acc, pair) => func(acc, pair.Item1, pair.Item2));
+
         /// <summary>
         /// Concatenates 2-element tuples into an IEnumerable
         /// { (1, 2), (3, 4), (5, 6) } -> { 1, 2, 3, 4, 5, 6 }

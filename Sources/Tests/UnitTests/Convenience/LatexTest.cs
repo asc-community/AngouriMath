@@ -80,7 +80,7 @@ namespace UnitTests.Convenience
         [Fact] public void M1() => Test("-1", (Complex)(-1));
         [Fact] public void M1Entity() => Test("-1", m1);
         [Fact] public void M1Add() => Test(@"-1-1", m1 + m1);
-        [Fact] public void M1Subtract() => Test(@"-1--1", m1 - m1);
+        [Fact] public void M1Subtract() => Test(@"-1-\left(-1\right)", m1 - m1);
         [Fact] public void M1Multiply() => Test(@"1", m1 * m1);
         [Fact] public void M1Divide() => Test(@"\frac{-1}{-1}", m1 / m1);
         [Fact] public void PowM1() => Test(@"{x}^{-1}", MathS.Pow(x, m1));
@@ -95,8 +95,8 @@ namespace UnitTests.Convenience
         [Fact] public void NumPiPow() => Test(@"{3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068}^{x}", MathS.Pow(numPi, x));
         [Fact] public void PowNumPi() => Test(@"{x}^{3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068}", MathS.Pow(x, numPi));
         [Fact] public void MNumPiAdd() => Test(@"-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068", mNumPi + mNumPi);
-        [Fact] public void MNumPiSubtract() => Test(@"-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068--3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068", mNumPi - mNumPi);
-        [Fact] public void MNumPiMultiply() => Test(@"-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068 \cdot -3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068", mNumPi * mNumPi);
+        [Fact] public void MNumPiSubtract() => Test(@"-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068-\left(-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068\right)", mNumPi - mNumPi);
+        [Fact] public void MNumPiMultiply() => Test(@"\left(-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068\right) \cdot \left(-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068\right)", mNumPi * mNumPi);
         [Fact] public void MNumPiDivide() => Test(@"\frac{-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068}{-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068}", mNumPi / mNumPi);
         [Fact] public void MNumPiPow() => Test(@"{\left(-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068\right)}^{x}", MathS.Pow(mNumPi, x));
         [Fact] public void PowMNumPi() => Test(@"{x}^{-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068}", MathS.Pow(x, mNumPi));
@@ -252,21 +252,18 @@ namespace UnitTests.Convenience
             => Test(@"\operatorname{sgn}\left(x\right)", MathS.Signum(x));
         [Fact] public void Abs()
             => Test(@"\left|x\right|", MathS.Abs(x));
-        [Fact]
-        public void Phi1()
+        [Fact] public void Phi1()
             => Test(@"\varphi(x)", MathS.NumberTheory.Phi(x));
-        [Fact]
-        public void Phi2()
+        [Fact] public void Phi2()
             => Test(@"\varphi({x}^{2})", MathS.NumberTheory.Phi(MathS.Pow(x, 2)));
-        [Fact]
-        public void Phi3()
+        [Fact] public void Phi3()
             => Test(@"{\varphi(x)}^{\varphi({x}^{2})}", MathS.Pow(MathS.NumberTheory.Phi(x), MathS.NumberTheory.Phi(MathS.Pow(x, 2))));
-        [Fact]
-        public void Piecewise1()
+        [Fact] public void Piecewise1()
             => Test(@"\begin{cases}a \: \text{for} \: b\\c \: \text{for} \: e\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e")));
-        [Fact]
-        public void Piecewise2()
+        [Fact] public void Piecewise2()
             => Test(@"\begin{cases}a \: \text{for} \: b\\c \: \text{for} \: e\\g \: \text{otherwise}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)));
+        [Fact] public void M1InTheMiddle()
+            => Test(@"x \cdot \left(-1\right) \cdot x", (x * (-1)) * x);
     }
 }
 
