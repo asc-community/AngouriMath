@@ -20,13 +20,14 @@ namespace AngouriMath.Core
 
         public void Reset() => left = initial;
 
-        public void DecreaseAndCheck()
+        public bool DecreaseAndCheck()
         {
             if (infinite)
-                return;
+                return true;
             left--;
             if (left is 0)
-                throw OutOfQuotaException.Instance;
+                throw OutOfQuotaInterruption.Instance;
+            return true;
         }
     }
 

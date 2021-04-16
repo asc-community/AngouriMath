@@ -1,55 +1,62 @@
 ﻿using System;
-using AngouriMath;
-using AngouriMath.Extensions;
-using static AngouriMath.MathS;
-using static AngouriMath.Entity;
-using System.Numerics;
-using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using System.Collections.Generic;
 using System.Linq;
 
 
-foreach (var res in ComputeMaxInt(40).Take(10))
-    Console.WriteLine(res);
+Console.WriteLine(Simplify(expr: 0, quota: 40));
 
 
-static Exception? Except(Action action)
+static TOut? TryExecuteConstrained<TIn, TOut>(TIn input, int quota, Func<TIn, TOut> alg)
 {
+    using var _ = QuotaCounter.QuotaLeft.Set(QuotaLeft.CreateFinite(quota));
     try
     {
-        action();
+        return alg(input);
     }
-    catch (Exception e)
+    catch (OutOfQuotaInterruption)
     {
-        return e;
+        return default;
     }
-    return null;
 }
 
-
-static IEnumerable<int> ComputeMaxInt(int quota)
+static void AssignIfCan<TIn>(ref TIn toWhat, TIn? value)
 {
-    static int SubAlgo(int curr)
+    if (value is { } valid)
+        toWhat = valid;
+}
+
+static int Simplify(int expr, int quota)
+{
+    var subQuota = 5;
+    while (quota > 0)
     {
-        for (int i = 0; i < 15; i++)
+        AssignIfCan(ref expr, TryExecuteConstrained(expr, subQuota, SubSim1));
+        AssignIfCan(ref expr, TryExecuteConstrained(expr, subQuota, SubSim2));
+        quota -= subQuota * 2; 
+        subQuota += 2;
+    }
+    return expr;
+
+    static int SubSim1(int curr)
+    {
+        for (int i = 0; i < 100; i++)
         {
-            curr++;
             QuotaCounter.QuotaLeft.Value.DecreaseAndCheck();
+            curr++;
         }
         return curr;
     }
-    using var _ = QuotaCounter.QuotaLeft.Set(QuotaLeft.CreateFinite(quota));
-    var curr = 0;
-    while (true)
+
+    static int SubSim2(int curr)
     {
-        if (Except(() => curr = SubAlgo(curr)) is OutOfQuotaException)
+        for (int i = 0; i < 70; i++)
         {
-            yield return curr;
-            QuotaCounter.QuotaLeft.Value.Reset();
+            QuotaCounter.QuotaLeft.Value.DecreaseAndCheck();
+            curr += 2;
         }
+        return curr;
     }
 }
 

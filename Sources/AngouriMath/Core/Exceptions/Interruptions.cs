@@ -4,8 +4,8 @@ using System.Text;
 
 namespace AngouriMath.Core.Exceptions
 {
-    public sealed class OutOfQuotaException : Exception
+    public sealed class OutOfQuotaInterruption : Exception
     {
-        [ConstantField] internal static OutOfQuotaException Instance = new();
+        [ConstantField] internal static OutOfQuotaInterruption Instance = new();
     }
 }
