@@ -5,6 +5,8 @@
  * Website: https://am.angouri.org.
  */
 using PeterO.Numbers;
+using System.Collections.Generic;
+using System.Linq;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
@@ -32,15 +34,41 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Latexise()
-                => (Multiplier, Multiplicand) switch
+            {
+                return GatherProducts(this).ToArray() switch
                 {
-                    (Integer(-1), Complex n) => (-n).Latexise(Multiplier.Priority < Priority),
-                    (Integer(-1), var other) => $"-{other.Latexise(other.Priority < Priority)}",
-                    (Number a, Number b) => $@"{a.Latexise(a.Priority < Priority)} \cdot {b.Latexise(b.Priority < Priority)}",
-                    (var mp, var md) when md.Latexise(md.Priority < Priority) is var mdLatex && mdLatex.StartsWith("-") 
-                        => $@"{mp.Latexise(mp.Priority < Priority)} \cdot \left\({mdLatex}\right\)",
-                    (var mp, var md) => $@"{mp.Latexise(mp.Priority < Priority)} \cdot {md.Latexise(md.Priority < Priority)}",
+                    var onlyTwoElements when onlyTwoElements.Length == 2 =>
+                        (onlyTwoElements[0], onlyTwoElements[1]) switch
+                        {
+                            (Integer(-1), Complex n) => (-n).Latexise(parenthesesRequired: false),
+                            (Integer(-1), var other) => $"-{other.Latexise(other.Priority < Priority)}",
+                            (Number a, Number b) => $@"{a.Latexise(a.Priority < Priority)} \cdot {b.Latexise(b.Priority < Priority)}",
+                            (var mp, var md) when mp.Priority >= md.Priority => $@"{mp.Latexise(mp.Priority < Priority)} {md.Latexise(md.Priority < Priority)}",
+                            (var mp, var md) => $@"{mp.Latexise(mp.Priority < Priority)} \cdot {md.Latexise(md.Priority < Priority)}"
+                        },
+                    var longArray => 
+                        longArray.AggregateIndexed("",
+                            (prevOut, index, currIn) => 
+                            {
+                                if (index == 0)
+                                    return currIn.Latexise(currIn.Priority < Priority);
+                                var currOut = currIn.Latexise(currIn.Priority < Priority);
+                                return (longArray[index - 1], currIn) switch
+                                {
+                                    (var a, var b) when a.Priority == b.Priority => $@"{prevOut} {currOut}",
+                                    (Variable, Variable) => $@"{prevOut} {currOut}",
+                                    _ => $@"{prevOut} \cdot {currOut}"
+                                };
+                            })
                 };
+
+                static IEnumerable<Entity> GatherProducts(Entity expr)
+                    => expr switch
+                    {
+                        Mulf(var a, var b) => GatherProducts(a).Concat(GatherProducts(b)),
+                        var other => new[]{ other }
+                    };
+            }
         }
 
         public partial record Divf

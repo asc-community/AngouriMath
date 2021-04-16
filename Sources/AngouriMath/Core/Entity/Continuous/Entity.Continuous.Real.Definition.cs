@@ -39,7 +39,7 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override Real RealPart => this;
-                internal override Priority Priority => EDecimal.IsNegative ? Priority.Mul : Priority.Leaf;
+                internal override Priority Priority => EDecimal.IsNegative ? Priority.Sum : Priority.Leaf;
 
                 /// <inheritdoc/>
                 public override bool IsExact => !EDecimal.IsFinite;

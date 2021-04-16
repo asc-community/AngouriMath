@@ -21,7 +21,7 @@ namespace AngouriMath
             {
                 private Integer(EInteger value) : base(value) => EInteger = value;
 
-                internal override Priority Priority => IsNegative ? Priority.Mul : Priority.Leaf;
+                internal override Priority Priority => IsNegative ? Priority.Sum : Priority.Leaf;
 
                 /// <summary>
                 /// Represents PeterO number in EInteger
