@@ -305,16 +305,16 @@ namespace AngouriMath
             /// <summary>
             /// Creates a square identity matrix
             /// </summary>
-            public static Matrix I(uint size)
+            public static Matrix I(int size)
                 => new(GenTensor.CreateIdentityMatrix((int)size));
 
             /// <summary>
             /// Creates a rectangular identity matrix
             /// with the given size
             /// </summary>
-            public static Matrix I(uint rowCount, uint colCount)
+            public static Matrix I(int rowCount, int colCount)
             {
-                var inn = GenTensor.CreateMatrix((int)rowCount, (int)colCount);
+                var inn = GenTensor.CreateMatrix(rowCount, colCount);
                 for (int x = 0; x < rowCount; x++)
                     for (int y = 0; y < colCount; y++)
                         inn[x, y] = x == y ? 1 : 0;
@@ -365,7 +365,6 @@ namespace AngouriMath
                 }
                 , this);
             private FieldCache<int> rank;
-
 
             /// <summary>
             /// Adjugate form of a matrix
