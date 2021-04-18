@@ -781,14 +781,14 @@ namespace AngouriMath
         /// <summary>
         /// Creates a square identity matrix
         /// </summary>
-        public static Matrix IdentityMatrix(uint size)
+        public static Matrix IdentityMatrix(int size)
             => Entity.Matrix.I(size);
 
         /// <summary>
         /// Creates a rectangular identity matrix
         /// with the given size
         /// </summary>
-        public static Matrix IdentityMatrix(uint rowCount, uint columnCount)
+        public static Matrix IdentityMatrix(int rowCount, int columnCount)
             => Entity.Matrix.I(rowCount, columnCount);
 
         /// <summary>Classes and functions related to matrices are defined here</summary>
@@ -1069,7 +1069,7 @@ namespace AngouriMath
         /// <see langword="false"/> otherwise (<paramref name="dst"/> will be <see langword="null"/>)
         /// </returns>
         public static bool TryPolynomial(Entity expr, Variable variable,
-            [System.Diagnostics.CodeAnalysis.NotNullWhen(true)]
+            [NotNullWhen(true)]
             out Entity? dst) => Simplificator.TryPolynomial(expr, variable, out dst);
 
         /// <returns>sympy interpretable format</returns>

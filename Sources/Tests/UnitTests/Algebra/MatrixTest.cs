@@ -1,6 +1,7 @@
 ﻿using AngouriMath;
 using Xunit;
 using static AngouriMath.Entity;
+using AngouriMath.Extensions;
 
 namespace UnitTests.Algebra
 {
@@ -345,7 +346,7 @@ namespace UnitTests.Algebra
                     { 3,  4,  1 },
                     { 3,  1,  4 }
                 });
-            var g = m.GaussianEliminated;
+            var g = m.RowEchelonForm;
             Assert.Equal(m.Determinant, (g.MainDiagonal[0] * g.MainDiagonal[1] * g.MainDiagonal[2]).InnerSimplified);
         }
 
@@ -498,6 +499,109 @@ namespace UnitTests.Algebra
                     { 1, 0, 0, 0, 0, 4 },
                 }),
                 m);
+        }
+
+        [Fact] public void ReducedRowEchelonForm1()
+        {
+            var m2 = MathS.Matrix(new Entity[,]
+                {
+                    {  1,  -1,  0, -2,  0 },
+                    { -3,  -6, -2,  1,  3 },
+                    {  0,  -7, -1, -5,  2 },
+                    {  3,   4,  1, -1, -2 },
+                    { -6, -19, -5, -3,  8 }
+                }
+            );
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 1, 0, 0, -1, "-1/5".Simplify() },
+                    { 0, 1, 0,  1, "-1/5".Simplify() },
+                    { 0, 0, 1, -2, "-3/5".Simplify() },
+                    { 0, 0, 0,  0, 0 },
+                    { 0, 0, 0,  0, 0 },
+                }),
+                m2.ReducedRowEchelonForm);
+        }
+
+        [Fact] public void ReducedRowEchelonForm2()
+        {
+            var m2 = MathS.Matrix(new Entity[,]
+                {
+                    { 1,  3,  1,  9 },
+                    { 1,  1, -1,  1 },
+                    { 3, 11,  5, 25 },
+                    { 5, 6,  78, 23 }
+                }
+            );
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 1,  0,  0,  0 },
+                    { 0,  1,  0,  0 },
+                    { 0,  0,  1,  0 },
+                    { 0,  0,  0,  1 }
+                }),
+                m2.ReducedRowEchelonForm);
+        }
+
+        [Fact] public void RowEchelonForm1()
+        {   
+            var m2 = MathS.Matrix(new Entity[,]
+                {
+                    { 1,  3,  0,  9 },
+                    { 0,  0,  0,  1 },
+                    { 3, 11,  0, 25 },
+                }
+            );
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 1, 3, 0,  9 },
+                    { 0, 2, 0, -2 },
+                    { 0, 0, 0,  1 }
+                }),
+                m2.RowEchelonForm);
+        }
+
+        [Fact] public void RowEchelonForm2()
+        {   
+            var m2 = MathS.Matrix(new Entity[,]
+                {
+                    { 8,  3 },
+                    { 9,  1 },
+                    { 3,  7 },
+                    { 5,  6 }
+                }
+            );
+            Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                {
+                    { 8,  3 },
+                    { 0, "-19/8".Simplify() },
+                    { 0,  0 },
+                    { 0,  0 }
+                }),
+                m2.RowEchelonForm);
+        }
+
+        [Fact] public void Rank1()
+        {
+            var m2 = MathS.Matrix(new Entity[,]
+                {
+                    {  1,  -1,  0, -2,  0 },
+                    { -3,  -6, -2,  1,  3 },
+                    {  0,  -7, -1, -5,  2 },
+                    {  3,   4,  1, -1, -2 },
+                    { -6, -19, -5, -3,  8 }
+                }
+            );
+            Assert.Equal(3, m2.Rank);
+        }
+
+        [Fact] public void Rank2()
+        {
+            Assert.Equal(6, MathS.IdentityMatrix(6).Rank);
         }
     }
 }

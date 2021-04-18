@@ -77,11 +77,11 @@ namespace AngouriMath
 #pragma warning disable CS1591
             public readonly struct EntityTensorWrapperOperations : IOperations<Entity>
             {
-                public Entity Add(Entity a, Entity b) => a + b;
-                public Entity Subtract(Entity a, Entity b) => a - b;
-                public Entity Multiply(Entity a, Entity b) => a * b;
-                public Entity Negate(Entity a) => -a;
-                public Entity Divide(Entity a, Entity b) => a / b;
+                public Entity Add(Entity a, Entity b) => (a + b).InnerSimplified;
+                public Entity Subtract(Entity a, Entity b) => (a - b).InnerSimplified;
+                public Entity Multiply(Entity a, Entity b) => (a * b).InnerSimplified;
+                public Entity Negate(Entity a) => (-a).InnerSimplified;
+                public Entity Divide(Entity a, Entity b) => (a / b).InnerSimplified;
                 public Entity CreateOne() => Number.Integer.One;
                 public Entity CreateZero() => Number.Integer.Zero;
                 public Entity Copy(Entity a) => a;
@@ -195,7 +195,7 @@ namespace AngouriMath
             /// Finds the symbolical determinant via Laplace's method
             /// </summary>
             public Entity Determinant => determinant.GetValue(
-                static @this => @this.InnerMatrix.DeterminantLaplace().InnerSimplified,
+                static @this => @this.InnerMatrix.DeterminantGaussianSafeDivision().InnerSimplified,
                 this
                 );
             private FieldCache<Entity> determinant;
@@ -305,16 +305,16 @@ namespace AngouriMath
             /// <summary>
             /// Creates a square identity matrix
             /// </summary>
-            public static Matrix I(uint size)
+            public static Matrix I(int size)
                 => new(GenTensor.CreateIdentityMatrix((int)size));
 
             /// <summary>
             /// Creates a rectangular identity matrix
             /// with the given size
             /// </summary>
-            public static Matrix I(uint rowCount, uint colCount)
+            public static Matrix I(int rowCount, int colCount)
             {
-                var inn = GenTensor.CreateMatrix((int)rowCount, (int)colCount);
+                var inn = GenTensor.CreateMatrix(rowCount, colCount);
                 for (int x = 0; x < rowCount; x++)
                     for (int y = 0; y < colCount; y++)
                         inn[x, y] = x == y ? 1 : 0;
@@ -337,12 +337,34 @@ namespace AngouriMath
             /// <summary>
             /// Matrix's form, transformed via Gaussian elimination.
             /// </summary>
-            public Matrix GaussianEliminated =>
+            public Matrix RowEchelonForm =>
                 @ref.GetValue(static @this =>
-                    (Matrix)new Matrix(@this.InnerMatrix.GaussianEliminationSafeDivision()).InnerSimplified,
+                    (Matrix)new Matrix(@this.InnerMatrix.RowEchelonFormSafeDivision()).InnerSimplified,
                     this);
             private FieldCache<Matrix> @ref;
 
+            /// <summary>
+            /// Reduced row echelon form via Gaussian elimination.
+            /// </summary>
+            public Matrix ReducedRowEchelonForm =>
+                rref.GetValue(static @this =>
+                    (Matrix)new Matrix(@this.InnerMatrix.ReducedRowEchelonFormSafeDivision()).InnerSimplified,
+                    this);
+            private FieldCache<Matrix> rref;
+
+            /// <summary>
+            /// The number of linearly independent rows
+            /// </summary>
+            public int Rank =>
+                rank.GetValue(static @this =>
+                {
+                    for (int i = 0; i < @this.RowCount; i++)
+                        if (@this.ReducedRowEchelonForm.InnerMatrix.RowGetLeadingElement(i) is null)
+                            return i;
+                    return @this.RowCount;
+                }
+                , this);
+            private FieldCache<int> rank;
 
             /// <summary>
             /// Adjugate form of a matrix
