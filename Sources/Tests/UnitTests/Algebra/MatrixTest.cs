@@ -558,7 +558,7 @@ namespace UnitTests.Algebra
                 MathS.Matrix(new Entity[,]
                 {
                     { 1, 3, 0,  9 },
-                    { 0, 1, 0, -1 },
+                    { 0, 2, 0, -2 },
                     { 0, 0, 0,  1 }
                 }),
                 m2.RowEchelonForm);
@@ -577,8 +577,8 @@ namespace UnitTests.Algebra
             Assert.Equal(
                 MathS.Matrix(new Entity[,]
                 {
-                    { 1,  3.0 / 8 },
-                    { 0,  1 },
+                    { 8,  3 },
+                    { 0, "-19/8".Simplify() },
                     { 0,  0 },
                     { 0,  0 }
                 }),
