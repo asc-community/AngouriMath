@@ -345,7 +345,7 @@ namespace UnitTests.Algebra
                     { 3,  4,  1 },
                     { 3,  1,  4 }
                 });
-            var g = m.GaussianEliminated;
+            var g = m.RowEchelonForm;
             Assert.Equal(m.Determinant, (g.MainDiagonal[0] * g.MainDiagonal[1] * g.MainDiagonal[2]).InnerSimplified);
         }
 

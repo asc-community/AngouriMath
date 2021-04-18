@@ -337,11 +337,34 @@ namespace AngouriMath
             /// <summary>
             /// Matrix's form, transformed via Gaussian elimination.
             /// </summary>
-            public Matrix GaussianEliminated =>
+            public Matrix RowEchelonForm =>
                 @ref.GetValue(static @this =>
-                    (Matrix)new Matrix(@this.InnerMatrix.GaussianEliminationSafeDivision()).InnerSimplified,
+                    (Matrix)new Matrix(@this.InnerMatrix.RowEchelonFormSafeDivision()).InnerSimplified,
                     this);
             private FieldCache<Matrix> @ref;
+
+            /// <summary>
+            /// Reduced row echelon form via Gaussian elimination.
+            /// </summary>
+            public Matrix ReducedRowEchelonForm =>
+                rref.GetValue(static @this =>
+                    (Matrix)new Matrix(@this.InnerMatrix.ReducedRowEchelonFormSafeDivision()).InnerSimplified,
+                    this);
+            private FieldCache<Matrix> rref;
+
+            /// <summary>
+            /// The number of linearly independent rows
+            /// </summary>
+            public int Rank =>
+                rank.GetValue(static @this =>
+                {
+                    for (int i = 0; i < @this.RowCount; i++)
+                        if (@this.InnerMatrix.RowGetLeadingElement(i) is null)
+                            return i;
+                    return @this.RowCount;
+                }
+                , this);
+            private FieldCache<int> rank;
 
 
             /// <summary>
