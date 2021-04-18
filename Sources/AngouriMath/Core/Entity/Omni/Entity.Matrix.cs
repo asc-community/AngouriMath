@@ -77,11 +77,11 @@ namespace AngouriMath
 #pragma warning disable CS1591
             public readonly struct EntityTensorWrapperOperations : IOperations<Entity>
             {
-                public Entity Add(Entity a, Entity b) => a + b;
-                public Entity Subtract(Entity a, Entity b) => a - b;
-                public Entity Multiply(Entity a, Entity b) => a * b;
-                public Entity Negate(Entity a) => -a;
-                public Entity Divide(Entity a, Entity b) => a / b;
+                public Entity Add(Entity a, Entity b) => (a + b).InnerSimplified;
+                public Entity Subtract(Entity a, Entity b) => (a - b).InnerSimplified;
+                public Entity Multiply(Entity a, Entity b) => (a * b).InnerSimplified;
+                public Entity Negate(Entity a) => (-a).InnerSimplified;
+                public Entity Divide(Entity a, Entity b) => (a / b).InnerSimplified;
                 public Entity CreateOne() => Number.Integer.One;
                 public Entity CreateZero() => Number.Integer.Zero;
                 public Entity Copy(Entity a) => a;
@@ -195,7 +195,7 @@ namespace AngouriMath
             /// Finds the symbolical determinant via Laplace's method
             /// </summary>
             public Entity Determinant => determinant.GetValue(
-                static @this => @this.InnerMatrix.DeterminantLaplace().InnerSimplified,
+                static @this => @this.InnerMatrix.DeterminantGaussianSafeDivision().InnerSimplified,
                 this
                 );
             private FieldCache<Entity> determinant;
@@ -359,7 +359,7 @@ namespace AngouriMath
                 rank.GetValue(static @this =>
                 {
                     for (int i = 0; i < @this.RowCount; i++)
-                        if (@this.InnerMatrix.RowGetLeadingElement(i) is null)
+                        if (@this.ReducedRowEchelonForm.InnerMatrix.RowGetLeadingElement(i) is null)
                             return i;
                     return @this.RowCount;
                 }
