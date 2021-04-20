@@ -1,4 +1,4 @@
-﻿module Interactive.AggressiveOperators
+﻿module AngouriMath.Interactive.AggressiveOperators
 
 open Core
 

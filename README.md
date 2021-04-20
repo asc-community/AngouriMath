@@ -23,7 +23,6 @@
   <a href="https://dotnetfiddle.net/u901sI"><img src="https://img.shields.io/static/v1?label=Fiddle&message=Try%21&color=purple&style=flat&logo=.NET&labelColor=646"></a>
   <a href="https://mybinder.org/v2/gh/asc-community/Try/main"><img src="https://img.shields.io/static/v1?label=Jupyter&message=Try%21&color=purple&style=flat&logo=Jupyter&labelColor=646"></a>
   <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=darkgreen&label=Join+our+chat!&logo=discord&style=flat&labelColor=474"></a>
-  <a href="https://patreon.com/AngouriMath"><img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3DAngouriMath%26type%3Dpledges&style=flat" alt="Support me on Patreon"></a>
 </p>
 
 <details><summary><strong>Status board</strong></summary>
