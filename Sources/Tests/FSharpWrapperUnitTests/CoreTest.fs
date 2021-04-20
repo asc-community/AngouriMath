@@ -1,7 +1,7 @@
 ﻿module ReturnValues.CoreTest
 
 open Xunit
-open Core
+open AngouriMath.FSharp.Core
 open AngouriMath
 
 [<Fact>]

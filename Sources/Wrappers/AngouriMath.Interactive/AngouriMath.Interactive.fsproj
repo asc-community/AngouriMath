@@ -16,10 +16,12 @@ https://am.angouri.org/whatsnew</PackageReleaseNotes>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RepositoryType>public</RepositoryType>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Include="Main.fs" />
+    <Compile Include="AggressiveOperators.fs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,6 +31,10 @@ https://am.angouri.org/whatsnew</PackageReleaseNotes>
 
   <ItemGroup>
     <None Include="..\..\..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+    <None Include="icon.png">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>

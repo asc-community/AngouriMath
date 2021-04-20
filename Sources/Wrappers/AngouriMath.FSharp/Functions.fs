@@ -1,8 +1,12 @@
-﻿module Functions
+﻿module AngouriMath.FSharp.Functions
 
 open Core
 open AngouriMath
 open System.Linq
+
+/// Creates a node of power and inner simplifies it
+let ( ** ) a b =
+    MathS.Pow(a, b).InnerSimplified
 
 /// simplifies the given expression
 let simplified x =

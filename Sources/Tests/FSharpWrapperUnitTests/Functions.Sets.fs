@@ -1,8 +1,8 @@
 ﻿module ReturnValues.FunctionsTest
 
 open Xunit
-open Functions
-open Core
+open AngouriMath.FSharp.Functions
+open AngouriMath.FSharp.Core
 
 [<Fact>]
 let ``Closed interval test`` () =

@@ -1,4 +1,4 @@
-﻿module Compilation
+﻿module AngouriMath.FSharp.Compilation
 
 open Core
 

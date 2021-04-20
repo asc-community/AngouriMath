@@ -1,4 +1,4 @@
-﻿module Constants
+﻿module AngouriMath.FSharp.Constants
 
 open AngouriMath
 
