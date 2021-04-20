@@ -1,7 +1,10 @@
-﻿module Interactive
+﻿module Interactive.Jupyter
 
 open AngouriMath.Core
+open Microsoft.DotNet.Interactive
+open Microsoft.DotNet.Interactive.Commands
 open Microsoft.DotNet.Interactive.Formatting
+
 
 let magic() =
     let register (value : ILatexiseable) = $@"
@@ -10,3 +13,11 @@ let magic() =
 \[{value.Latexise()}\]"
 
     Formatter.Register<ILatexiseable>(register, "text/html")
+
+    
+type KernelExtension = 
+    interface IKernelExtension with
+        member this.OnLoadAsync (kernel : Kernel) =
+            magic()
+            let quack = System.Action<System.Threading.Tasks.Task<KernelCommandResult>>(fun _ -> ())
+            kernel.SendAsync(DisplayValue(FormattedValue("text/html", "Quack!"))).ContinueWith(quack)

@@ -1,4 +1,4 @@
-﻿module AggressiveOperators
+﻿module Interactive.AggressiveOperators
 
 open Core
 

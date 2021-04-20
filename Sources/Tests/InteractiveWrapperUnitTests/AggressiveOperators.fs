@@ -3,7 +3,7 @@
 open Xunit
 open Functions
 open Core
-open AggressiveOperators
+open Interactive.AggressiveOperators
 
 [<Fact>]
 let ``Int / int is rational`` () =

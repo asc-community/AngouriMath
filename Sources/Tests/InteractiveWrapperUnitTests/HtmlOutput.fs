@@ -12,7 +12,7 @@ let ``No latex without magic`` () =
 
 [<Fact>]
 let ``Latex with magic`` () =
-    Interactive.magic()
+    Interactive.Jupyter.magic()
     let entity = parsed "x / 2"
     let html = entity.ToDisplayString("text/html")
     Assert.Equal(@"
