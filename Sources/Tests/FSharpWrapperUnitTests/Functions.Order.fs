@@ -1,7 +1,7 @@
 ﻿module ReturnValues.Order
 
-open Core
-open Functions
+open AngouriMath.FSharp.Core
+open AngouriMath.FSharp.Functions
 open Xunit
 
 let x = symbol "x"

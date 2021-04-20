@@ -1,4 +1,4 @@
-﻿module Shortcuts
+﻿module AngouriMath.FSharp.Shortcuts
 
 // Here we will store "overloads" and short forms of functions with some parameters
 // being set to default (for example, it might be variable `x` in many cases)

@@ -1,7 +1,7 @@
 module ReturnValues.Continuous
 
-open Core
-open Functions
+open AngouriMath.FSharp.Core
+open AngouriMath.FSharp.Functions
 open Xunit
 
 let x = symbol "x"
@@ -58,3 +58,5 @@ let ``Acoth test`` () = Assert.Equal(parsed "acoth(x)", acoth x)
 let ``Asech test`` () = Assert.Equal(parsed "asech(x)", asech x)
 [<Fact>]
 let ``Acsch test`` () = Assert.Equal(parsed "acsch(x)", acsch x)
+[<Fact>]
+let ``Pow test`` () = Assert.Equal((parsed 2) ** (parsed 5), parsed 32)

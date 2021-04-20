@@ -1,7 +1,7 @@
 ﻿module ReturnValues.Discrete
 
-open Core
-open Functions
+open AngouriMath.FSharp.Core
+open AngouriMath.FSharp.Functions
 open Xunit
 
 let a = symbol "a"

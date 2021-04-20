@@ -1,6 +1,6 @@
 ﻿module ReturnValues.Common
 
-open Core
+open AngouriMath.FSharp.Core
 open Xunit
 
 

@@ -1,4 +1,4 @@
-﻿module Core
+﻿module AngouriMath.FSharp.Core
 
 open AngouriMath
 open PeterO.Numbers

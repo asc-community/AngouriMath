@@ -1,6 +1,6 @@
 ﻿module ReturnValues.CompilationTest
 
-open Compilation
+open AngouriMath.FSharp.Compilation
 open Xunit
 
 [<Fact>]

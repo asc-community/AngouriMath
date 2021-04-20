@@ -1,8 +1,8 @@
 ﻿module ReturnValues.ShortcutsTest
 
 open Xunit
-open Shortcuts
-open Core
+open AngouriMath.FSharp.Shortcuts
+open AngouriMath.FSharp.Core
 
 [<Fact>]
 let ``Test dy/dx`` () =
