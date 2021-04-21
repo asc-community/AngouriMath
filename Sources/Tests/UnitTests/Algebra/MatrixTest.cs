@@ -603,5 +603,16 @@ namespace UnitTests.Algebra
         {
             Assert.Equal(6, MathS.IdentityMatrix(6).Rank);
         }
+
+        [Theory]
+        [InlineData("[a, b]", "[c, d]", "[a c, a d, b c, b d]")]
+        public void TensorProductTest(string a, string b, string expectedRaw)
+        {
+            Matrix A = a;
+            Matrix B = b;
+            Matrix expected = expectedRaw;
+            var actual = Matrix.TensorProduct(A, B);
+            Assert.Equal(expected, actual);
+        }
     }
 }
