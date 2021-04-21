@@ -5,5 +5,5 @@ Remove-Item -Recurse ~\.nuget\packages\AngouriMath.FSharp* -Force
 # build AngouriMath.Interactive
 dotnet restore
 dotnet clean
-dotnet build
-# dotnet pack
+dotnet build -c release
+dotnet pack
