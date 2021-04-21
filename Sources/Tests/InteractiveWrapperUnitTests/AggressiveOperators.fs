@@ -1,8 +1,8 @@
 ﻿module Tests.AggressiveOperators
 
 open Xunit
-open Functions
-open Core
+open AngouriMath.FSharp.Functions
+open AngouriMath.FSharp.Core
 open AngouriMath.Interactive.AggressiveOperators
 
 [<Fact>]

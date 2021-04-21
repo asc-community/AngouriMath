@@ -305,5 +305,4 @@ let vector li =
 
 /// Finds the tensor product of two given matrices
 let ( *** ) (a: Entity.Matrix) (b: Entity.Matrix) : Entity.Matrix =
-    downcast (modifiedMatrix (MathS.ZeroMatrix(a.RowCount * b.RowCount, a.ColumnCount * b.ColumnCount))
-                                (fun x y _ -> a.[x / b.RowCount, y / b.ColumnCount] * b.[x % b.RowCount, y % b.ColumnCount])).InnerSimplified
+    downcast (Entity.Matrix.TensorProduct(a, b)).InnerSimplified

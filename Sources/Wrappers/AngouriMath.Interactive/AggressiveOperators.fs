@@ -1,6 +1,6 @@
 ﻿module AngouriMath.Interactive.AggressiveOperators
 
-open Core
+open AngouriMath.FSharp.Core
 
 let ( + ) a b =
     ((parsed a) + (parsed b)).InnerSimplified

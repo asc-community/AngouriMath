@@ -2,7 +2,7 @@ module Tests.HtmlOutput
 
 open Xunit
 open Microsoft.DotNet.Interactive.Formatting
-open Core
+open AngouriMath.FSharp.Core
 open Microsoft.DotNet.Interactive.FSharp
 open Microsoft.DotNet.Interactive.Commands
 open Microsoft.DotNet.Interactive.Events
