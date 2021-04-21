@@ -514,6 +514,14 @@ namespace AngouriMath
             }
 
             /// <summary>
+            /// Finds a tensor product of two matrices
+            /// https://en.wikipedia.org/wiki/Tensor_product
+            /// </summary>
+            public static Matrix TensorProduct(Matrix a, Matrix b)
+                => MathS.ZeroMatrix(a.RowCount * b.RowCount, a.ColumnCount * b.ColumnCount)
+                    .With((x, y, _) => a[x / b.RowCount, y / b.ColumnCount] * b[x % b.RowCount, y % b.ColumnCount]);
+
+            /// <summary>
             /// Gets a string representation of the
             /// given matrix/vector. If true is
             /// passed, it will format the inner matrix

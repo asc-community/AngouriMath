@@ -302,3 +302,7 @@ let matrix x =
 let vector li =
     MathS.Vector([ for el in li do yield parsed el ].ToArray())
     
+
+/// Finds the tensor product of two given matrices
+let ( *** ) (a: Entity.Matrix) (b: Entity.Matrix) : Entity.Matrix =
+    downcast (Entity.Matrix.TensorProduct(a, b)).InnerSimplified

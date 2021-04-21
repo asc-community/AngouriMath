@@ -5,8 +5,8 @@ open AngouriMath.FSharp.Shortcuts
 open AngouriMath.FSharp.Core
 
 [<Fact>]
-let ``Test dy/dx`` () =
-    Assert.Equal(parsed "a + cos(x)", ``dy/dx`` "a x + sin(x)")
+let ``Test d/dx`` () =
+    Assert.Equal(parsed "a + cos(x)", ``d/dx`` "a x + sin(x)")
 [<Fact>]
 let ``Test int [dx]`` () =
     Assert.Equal(parsed "sin(x) + a x", ``int [dx]`` "a + cos(x)")

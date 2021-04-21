@@ -53,6 +53,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Ymls", "Ymls", "{AB2B0D73-3
 		..\.github\workflows\EverythingBuild.yml = ..\.github\workflows\EverythingBuild.yml
 		..\.github\workflows\FSharpBuild.yml = ..\.github\workflows\FSharpBuild.yml
 		..\.github\workflows\FSharpTest.yml = ..\.github\workflows\FSharpTest.yml
+		..\.github\workflows\InteractiveBuild.yml = ..\.github\workflows\InteractiveBuild.yml
+		..\.github\workflows\InteractiveTest.yml = ..\.github\workflows\InteractiveTest.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pictures", "Pictures", "{8996D472-25ED-498F-8ED2-999B9DFA11C5}"
@@ -124,7 +126,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ISSUE_TEMPLATE", "ISSUE_TEM
 		..\.github\ISSUE_TEMPLATE\suggest_idea.md = ..\.github\ISSUE_TEMPLATE\suggest_idea.md
 	EndProjectSection
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "InteractiveWrapperUnitTests", "Tests\InteractiveWrapperUnitTests\InteractiveWrapperUnitTests.fsproj", "{F182838C-116D-4FED-BC33-6B39FA3D66C0}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "InteractiveWrapperUnitTests", "Tests\InteractiveWrapperUnitTests\InteractiveWrapperUnitTests.fsproj", "{F182838C-116D-4FED-BC33-6B39FA3D66C0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

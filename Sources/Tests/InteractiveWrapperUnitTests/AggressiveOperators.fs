@@ -1,9 +1,9 @@
 ﻿module Tests.AggressiveOperators
 
 open Xunit
-open Functions
-open Core
-open AggressiveOperators
+open AngouriMath.FSharp.Functions
+open AngouriMath.FSharp.Core
+open AngouriMath.Interactive.AggressiveOperators
 
 [<Fact>]
 let ``Int / int is rational`` () =

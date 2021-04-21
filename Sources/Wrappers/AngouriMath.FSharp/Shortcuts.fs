@@ -8,7 +8,7 @@ open Core
 
 /// Finds the derivative of the given expression
 /// over x
-let ``dy/dx`` expr = derivative "x" expr
+let ``d/dx`` expr = derivative "x" expr
 
 /// Finds the integral of the given expression
 let ``int [dx]`` expr = integral "x" expr
