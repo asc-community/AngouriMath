@@ -6,3 +6,4 @@ Remove-Item -Recurse ~\.nuget\packages\AngouriMath.FSharp* -Force
 dotnet restore
 dotnet clean
 dotnet build
+# dotnet pack

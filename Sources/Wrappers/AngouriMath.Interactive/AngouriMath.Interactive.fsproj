@@ -27,9 +27,9 @@ https://am.angouri.org/whatsnew</PackageReleaseNotes>
 
   <ItemGroup>
     <None Include="Repack.ps1" />
+    
     <Compile Include="KernelExtension.fs" />
     <Compile Include="AggressiveOperators.fs" />
-    <None Include="$(OutDir)AngouriMath.Interactive.dll" Pack="true" PackagePath="interactive-extensions/dotnet" />
   </ItemGroup>
 
   <ItemGroup>
@@ -45,6 +45,10 @@ https://am.angouri.org/whatsnew</PackageReleaseNotes>
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="$(OutputPath)/AngouriMath.Interactive.dll">
+      <Pack>True</Pack>
+      <PackagePath>interactive-extensions/dotnet</PackagePath>
+    </None>
     <None Include="..\..\..\LICENSE.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
