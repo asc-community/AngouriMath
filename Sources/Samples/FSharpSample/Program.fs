@@ -1,6 +1,6 @@
-﻿open Core
-open Functions
-open Shortcuts
+﻿open AngouriMath.FSharp.Core
+open AngouriMath.FSharp.Functions
+open AngouriMath.FSharp.Shortcuts
 
 // build an expression manually
 let x = symbol "x"
@@ -29,8 +29,8 @@ printfn "%O" (simplified (solutions "x" "x2 + 2 a x + a2 = 0"))
 printfn "%O" (solutions "x" "(x - 3)(x + a) = 0 and (x - 3)(x + 3) = 0 or x > a")
 
 // differentiation
-printfn "%O" (``dy/dx`` "x2 + a x")
-printfn "%O" (``dy/dx`` "e^x + ln(x) + log(2, x)")
+printfn "%O" (``d/dx`` "x2 + a x")
+printfn "%O" (``d/dx`` "e^x + ln(x) + log(2, x)")
 printfn "%O" (derivative "y" "sin(sin(y))")
 
 // integration
