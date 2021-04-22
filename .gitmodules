@@ -1,3 +1,0 @@
-[submodule "Sources/Tests/CPPWrapperUnitTests/googletest"]
-	path = Sources/Tests/CPPWrapperUnitTests/googletest
-	url = https://github.com/google/googletest
