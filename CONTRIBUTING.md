@@ -60,6 +60,16 @@ Then, when you started working on it, we highly recommend opening a draft pull r
 
 It is highly encouraged to open an issue first. Once opened, follow the approach described above.
 
+### Types of issues
+
+Issues marked with `Proposal` are those suggesting ideas. If the idea is a good one and is going to be implemented, it is marked as `Accepted`. If an idea cannot be implemented any time soon, it is marked as `Not now`.
+
+`Minor bug` and `Bug` are applied to an issue after it's clear, that the behaviour is not desired. `Minor bug` is for cases, when despite that the behaviour is undesired, the impact is low (for example, in case if a simplificator doesn't simplify well enough). `Bug` reflects serious issues.
+
+`Opinions wanted` - anybody is welcomed to share their opinion on a subject.
+
+`Area: *` - a number of labels for issues, which are only specific to one of the wrappers: AngouriMath.FSharp, AngouriMath.Interactive, AngouriMath.CPP.
+
 ### Contributing details
 
 You might have some questions about the way you should write your code, or how you could call a function, etc. It is recommended to check the [documentation](./Sources/AngouriMath/Docs/Contributing).
