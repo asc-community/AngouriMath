@@ -7,13 +7,26 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
-var m2 = MathS.Matrix(new Entity[,]
-                {
-                    {  1,  -1,  0, -2,  0 },
-                    { -3,  -6, -2,  1,  3 },
-                    {  0,  -7, -1, -5,  2 },
-                    {  3,   4,  1, -1, -2 },
-                    { -6, -19, -5, -3,  8 }
-                }
-            );
-Console.WriteLine(m2.ReducedRowEchelonForm.Determinant);
+
+Console.WriteLine("Stack ptr: " + LastStackPointer());
+MakeLambda()(12);
+
+static unsafe Action<int> MakeLambda()
+{
+    Console.WriteLine("Stack ptr: " + LastStackPointer());
+    var localVar = 0;
+    Action<int> res = a =>
+    {
+        localVar = a;
+        Console.WriteLine("Ptr: " + (nint)Unsafe.AsPointer(ref localVar));
+        Console.WriteLine("New value: " + localVar);
+    };
+    res(6);
+    return res;
+}
+
+static unsafe nint LastStackPointer()
+{
+    byte a = 0;
+    return (nint)Unsafe.AsPointer(ref a);
+}

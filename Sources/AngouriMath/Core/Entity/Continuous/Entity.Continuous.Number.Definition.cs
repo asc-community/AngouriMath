@@ -56,8 +56,10 @@ namespace AngouriMath
             public static implicit operator Number(float value) => Real.Create(EDecimal.FromSingle(value));
             public static implicit operator Number(double value) => Real.Create(EDecimal.FromDouble(value));
             public static implicit operator Number(decimal value) => Real.Create(EDecimal.FromDecimal(value));
-            public static implicit operator Number(System.Numerics.Complex value) =>
-                Complex.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
+            public static implicit operator Number(System.Numerics.Complex value)
+                => Complex.Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
+            public static implicit operator Number(System.Numerics.BigInteger bigInt)
+                => Integer.Create(EInteger.FromString(bigInt.ToByteArray()));
 #pragma warning restore CS1591 // Missing XML comment for publicly visible type or member
         }
     }

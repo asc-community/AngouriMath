@@ -2,6 +2,8 @@
 
 open AngouriMath
 open PeterO.Numbers
+open System
+open System.Numerics
 
 exception ParseException
 
@@ -10,11 +12,19 @@ exception ParseException
 let parsedSilent (x : obj) =
     match x with
     | :? Entity as e -> Some(e)
-    | :? string as s -> Some(MathS.FromString(s))
-    | :? int as i -> Some(upcast MathS.Numbers.Create(i) : Entity)
-    | :? bool as b -> Some(upcast MathS.Boolean.Create(b) : Entity)
-    | :? double as d -> Some(upcast MathS.Numbers.Create(d) : Entity)
-    | :? decimal as d -> Some(upcast MathS.Numbers.Create(EDecimal.FromDecimal(d)) : Entity)
+    | :? string as s -> Some(Entity.op_Implicit(s))
+    | :? Byte  as i ->  Some(Entity.op_Implicit(i))
+    | :? SByte as i ->  Some(Entity.op_Implicit(i))
+    | :? Int16  as i -> Some(Entity.op_Implicit(i))
+    | :? UInt16 as i -> Some(Entity.op_Implicit(i))
+    | :? Int32  as i -> Some(Entity.op_Implicit(i))
+    | :? UInt32 as i -> Some(Entity.op_Implicit(i))
+    | :? Int64  as i -> Some(Entity.op_Implicit(i))
+    | :? UInt64 as i -> Some(Entity.op_Implicit(i))
+    | :? BigInteger as b -> Some(Entity.op_Implicit(b))
+    | :? bool as b -> Some(Entity.op_Implicit(b))
+    | :? double as d -> Some(Entity.op_Implicit(d))
+    | :? decimal as d -> Some(Entity.op_Implicit(d))
     | unresolved -> None
 
 /// Returns a parsed expression from an arbitrary type (be that string, number, or something else)
