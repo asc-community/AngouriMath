@@ -5,8 +5,8 @@ open PeterO.Numbers
 
 exception ParseException
 
-/// Parses the given object (be that string, number, or something else)
-/// into an Entity. In case it cannot, an exception is thrown
+/// Returns a parsed expression from an arbitrary type (be that string, number, or something else)
+/// into an Entity. In case it cannot, a None is returned.
 let parsedSilent (x : obj) =
     match x with
     | :? Entity as e -> Some(e)
@@ -17,12 +17,15 @@ let parsedSilent (x : obj) =
     | :? decimal as d -> Some(upcast MathS.Numbers.Create(EDecimal.FromDecimal(d)) : Entity)
     | unresolved -> None
 
+/// Returns a parsed expression from an arbitrary type (be that string, number, or something else)
+/// into an Entity. In case it cannot, an exception is thrown.
 let parsed s =
     match parsedSilent s with
     | None -> raise ParseException
     | Some(res) -> res
 
-/// Parses into arbitrary type
+/// Returns a parsed expression from an arbitrary type (be that string, number, or something else)
+/// into an arbitrary type derived from Entity. In case it cannot, a None is returned.
 let parsedTypeSilent<'T when 'T :> Entity> x =
     match parsedSilent x with
     | None -> None
@@ -30,7 +33,9 @@ let parsedTypeSilent<'T when 'T :> Entity> x =
         match v with
         | :? 'T as correct -> Some(correct)
         | _ -> None
-   
+  
+/// Returns a parsed expression from an arbitrary type (be that string, number, or something else)
+/// into an arbitrary type derived from Entity. In case it cannot, an exception is thrown.
 let parsedType x =
     match parsedTypeSilent x with
     | None -> raise ParseException
