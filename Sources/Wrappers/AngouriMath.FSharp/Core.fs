@@ -1,7 +1,6 @@
 ﻿module AngouriMath.FSharp.Core
 
 open AngouriMath
-open PeterO.Numbers
 open System
 open System.Numerics
 
@@ -21,7 +20,6 @@ let parsedSilent (x : obj) =
     | :? UInt32 as i -> Some(Entity.op_Implicit(i))
     | :? Int64  as i -> Some(Entity.op_Implicit(i))
     | :? UInt64 as i -> Some(Entity.op_Implicit(i))
-    | :? BigInteger as b -> Some(Entity.op_Implicit(b))
     | :? bool as b -> Some(Entity.op_Implicit(b))
     | :? double as d -> Some(Entity.op_Implicit(d))
     | :? decimal as d -> Some(Entity.op_Implicit(d))
