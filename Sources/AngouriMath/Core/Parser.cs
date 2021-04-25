@@ -36,7 +36,7 @@ namespace AngouriMath.Core
             var tokenStream = new CommonTokenStream(lexer);
             tokenStream.Fill();
             var tokenList = tokenStream.GetTokens();
-
+        
             const string NUMBER = nameof(NUMBER);
             const string VARIABLE = nameof(VARIABLE);
             const string PARENTHESIS_OPEN = "'('";
@@ -65,8 +65,8 @@ namespace AngouriMath.Core
                     // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
                     (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) =>
                         lexer.Multiply,
-                    // 3 2 -> 3 ^ 2      x2 -> x ^ 2             )2 -> ) ^ 2
-                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) => lexer.Power,
+                    // 3 2 -> 3 ^ 2                 )2 -> ) ^ 2
+                    (NUMBER or PARENTHESIS_CLOSE, NUMBER) => lexer.Power,
                     _ => null
                 } is { } insertToken)
                     // Insert at j because we need to keep the first one behind
