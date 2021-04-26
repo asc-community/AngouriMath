@@ -16,6 +16,7 @@ namespace Utils
 
         public static void Do()
         {
+            Log("We are in " + Path.GetFullPath("./"));
             var root = "../../../../../Tests/UnitTests";
             var testResults = Path.Join(root, "TestResults");
             Log("Path to take results from: " + Path.GetFullPath(testResults));
