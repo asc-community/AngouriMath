@@ -22,7 +22,7 @@
   <br>
   <a href="https://dotnetfiddle.net/u901sI"><img src="https://img.shields.io/static/v1?label=Fiddle&message=Try%21&color=purple&style=flat&logo=.NET&labelColor=646"></a>
   <a href="https://mybinder.org/v2/gh/asc-community/Try/main?filepath=HelloBook.AngouriMath.Interactive.ipynb"><img src="https://img.shields.io/static/v1?label=Jupyter&message=Try%21&color=purple&style=flat&logo=Jupyter&labelColor=646"></a>
-  <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=darkgreen&label=Join+our+chat!&logo=discord&style=flat&labelColor=474"></a>
+  <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=darkgreen&label=Join+our+chat!&logo=discord&style=flat&labelColor=474&logoColor=white"></a>
 </p>
 
 <details><summary><strong>Status board</strong></summary>
@@ -375,17 +375,16 @@ std::cout << expr.Differentiate("x");
 <details><summary><strong>Jupyter</strong></summary>
 
 If you already installed <a href="https://jupyter.org/install">Jupyter</a> and 
-<a href="https://github.com/dotnet/interactive/blob/main/docs/NotebooksLocalExperience.md">Interactive</a> for it, install
+<a href="https://github.com/dotnet/interactive">Interactive</a> for it, install
 <a href="https://www.nuget.org/packages/AngouriMath.Interactive">package</a> by copying this to your first cell:
 
 ```cs
 #r "nuget:AngouriMath.Interactive, *-*"
-Interactive.magic();
 ```
 
-Now any `ILatexiseable` will be displayed as LaTeX:
-
-<img src=".github/additional/readme/interactive.PNG"/>
+Now any `ILatexiseable` will be displayed as LaTeX. Try example
+<a href="https://mybinder.org/v2/gh/asc-community/Try/main?filepath=HelloBook.AngouriMath.Interactive.ipynb">here</a>, or 
+<a href="https://nbviewer.jupyter.org/github/asc-community/Try/blob/main/notebooks/HelloBook.AngouriMath.Interactive.ipynb">view</a> it
 
 Check the <a href="Sources/Samples/Interactive.Sample.ipynb">F#</a> and 
 <a href="Sources/Samples/CSharp.Interactive.Sample.ipynb">C#</a> samples.
