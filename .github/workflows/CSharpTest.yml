@@ -26,14 +26,21 @@ jobs:
 
     - name: Build Tests # We need it to be able to retry
       run: |
-        dotnet add "Sources/Tests/UnitTests" package Microsoft.NET.Test.Sdk # Update is required for GitHubActionsTestLogger to print anything
         dotnet add "Sources/Tests/UnitTests" package GitHubActionsTestLogger
-        dotnet add "Sources/Tests/UnitTests" package coverlet.msbuild
-        dotnet build Sources/Tests/UnitTests || dotnet build Tests/UnitTests || dotnet build Tests/UnitTests
+        dotnet build Sources/Tests/UnitTests
 
-    - name: Test
+    - name: Test if not to send
+      if: ${{ matrix.os != 'windows-latest' }}
       run: |
         dotnet test "Sources/Tests/UnitTests" -c Release -l GitHubActions /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+
+    - name: Test if to send
+      if: ${{ matrix.os == 'windows-latest' }}
+      run: |
+        cd Sources/Tests/UnitTests
+        dotnet test --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=opencover
+        cd ../../Utils/Utils
+        dotnet run CopyCovReport
 
     - name: Info about the coverage report
       if: ${{ matrix.os == 'windows-latest' }}
