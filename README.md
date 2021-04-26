@@ -41,7 +41,7 @@ Note, that all tests and builds are tested for the following three operating sys
 #### Coverage
 | Kernel/C# | F# | C++ |
 |-----------|----|-----|
-| <a href="https://codecov.io/gh/asc-community/AngouriMath"><img alt="Codecov" src="https://img.shields.io/codecov/c/gh/asc-community/AngouriMath?color=orange&label=Coverage&logo=codecov&style=flat-square"></a> | ??? | ??? |
+| <a href="https://codecov.io/gh/asc-community/AngouriMath"><img src="https://codecov.io/gh/asc-community/AngouriMath/branch/master/graph/badge.svg?token=XaA0JGyNrS"/></a> | ??? | ??? |
 
 #### Versions
 |     | Kernel/C# | F# | Interactive | C++ |
