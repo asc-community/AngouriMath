@@ -34,7 +34,7 @@ namespace AngouriMath.Core
         }
         public static Entity Parse(string source)
         {
-            AngouriMathTextWriter angouriMathTextWriter = new AngouriMathTextWriter();
+            var angouriMathTextWriter = new AngouriMathTextWriter();
             var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, angouriMathTextWriter);
             var tokenStream = new CommonTokenStream(lexer);
             tokenStream.Fill();
@@ -54,15 +54,12 @@ namespace AngouriMath.Core
             {
                 if (MathS.Settings.ExplicitParsingOnly && tokenType == VARIABLE)
                 {
-                    angouriMathTextWriter.WriteLine("Cannot power a number without '^' When SetExplicitParsingOnly(true)  has been called"+ $"\n"+ 
-                        "If you want to power a number without '^' Dont call SetExplicitParsingOnly(true) ");
+                    throw new InvalidArgumentParseException("Cannot power a number without '^' When  MathS.Settings.ExplicitParsingOnly.Set(true)  has been called" + $"\n" +
+                        "If you want to power a number without '^' Don't call MathS.Settings.ExplicitParsingOnly.Set(true)");
                 }
                 return lexer.Power;
             }
-            CommonToken GetMultiplyToken(AngouriMathLexer lexer )
-            {
-                return lexer.Multiply;
-            }
+      
             if (tokenList.Count == 0)
                 throw new AngouriBugException($"{nameof(ParseException)} should have been thrown");
             int i = 0;
@@ -80,9 +77,7 @@ namespace AngouriMath.Core
                     // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
                     // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
                     // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
-                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) =>
-                        GetMultiplyToken(lexer),
-
+                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) => lexer.Multiply,
                     // 3 2 -> 3 ^ 2                 )2 -> ) ^ 2
                     (NUMBER or PARENTHESIS_CLOSE, NUMBER) => GetPowerToken(lexer,NUMBER),
                     //x2 ->x ^ 2

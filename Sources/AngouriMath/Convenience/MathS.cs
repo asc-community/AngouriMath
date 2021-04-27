@@ -1062,20 +1062,7 @@ namespace AngouriMath
             /// </summary>
             public static Setting<EContext> DecimalPrecisionContext =>
                 decimalPrecisionContext ??= new EContext(100, ERounding.HalfUp, -100, 1000, false);
-
-           
-
-            [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;
-
-            /// <summary>
-            /// When value is set to true , user must use The caret symbol (^) to power a number 
-            /// ExplicitParsingOnly is set to False by default
-            /// </summary>
-            /// <param name="value"></param>
-            public static void SetExplicitParsingOnly(bool value)
-            {
-                explicitParsingOnly = value;
-            }
+            [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;           
         }
 
         /// <summary>Returns an <see cref="Entity"/> in polynomial order if possible</summary>
