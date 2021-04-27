@@ -888,12 +888,12 @@ namespace AngouriMath
         /// </summary>
         public static partial class Settings
         {
-            [ConstantField]
-            private static bool explicitParsingOnly=false;
+
             /// <summary>
             /// Determine if it should only parse if it is explicit
             /// </summary>
-            public static bool ExplicitParsingOnly { get => explicitParsingOnly;}
+            public static Setting<bool> ExplicitParsingOnly => explicitParsingOnly ??= false;
+            [ThreadStatic] private static Setting<bool>? explicitParsingOnly;
             /// <summary>
             /// That is how we perform newton solving when no analytical solution was found
             /// in <see cref="Entity.Solve(Variable)"/> and <see cref="Entity.SolveEquation(Variable)"/>
