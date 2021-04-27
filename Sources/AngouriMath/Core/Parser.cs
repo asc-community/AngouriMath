@@ -22,6 +22,8 @@ namespace AngouriMath.Core
 {
     using Antlr;
     using Exceptions;
+    using System;
+
     static class Parser
     {
         // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
@@ -32,11 +34,12 @@ namespace AngouriMath.Core
         }
         public static Entity Parse(string source)
         {
-            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, new AngouriMathTextWriter());
+            AngouriMathTextWriter angouriMathTextWriter = new AngouriMathTextWriter();
+            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, angouriMathTextWriter);
             var tokenStream = new CommonTokenStream(lexer);
             tokenStream.Fill();
             var tokenList = tokenStream.GetTokens();
-        
+
             const string NUMBER = nameof(NUMBER);
             const string VARIABLE = nameof(VARIABLE);
             const string PARENTHESIS_OPEN = "'('";
@@ -47,6 +50,19 @@ namespace AngouriMath.Core
                 AngouriMathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type
                 && type is not PARENTHESIS_OPEN && type.EndsWith("('") ? FUNCTION_OPEN : type;
 
+            CommonToken GetPowerToken(AngouriMathLexer lexer, string tokenType)
+            {
+                if (MathS.Settings.ExplicitParsingOnly && tokenType == VARIABLE)
+                {
+                    angouriMathTextWriter.WriteLine("Cannot power a number without '^' When SetExplicitParsingOnly(true)  has been called"+ $"\n"+ 
+                        "If you want to power a number without '^' Dont call SetExplicitParsingOnly(true) ");
+                }
+                return lexer.Power;
+            }
+            CommonToken GetMultiplyToken(AngouriMathLexer lexer )
+            {
+                return lexer.Multiply;
+            }
             if (tokenList.Count == 0)
                 throw new AngouriBugException($"{nameof(ParseException)} should have been thrown");
             int i = 0;
@@ -60,23 +76,31 @@ namespace AngouriMath.Core
                         goto endTokenInsertion;
                 if ((GetType(tokenList[i]), GetType(tokenList[j])) switch
                 {
+
                     // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
                     // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
                     // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
                     (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) =>
-                        lexer.Multiply,
+                        GetMultiplyToken(lexer),
+
                     // 3 2 -> 3 ^ 2                 )2 -> ) ^ 2
-                    (NUMBER or PARENTHESIS_CLOSE, NUMBER) => lexer.Power,
+                    (NUMBER or PARENTHESIS_CLOSE, NUMBER) => GetPowerToken(lexer,NUMBER),
+                    //x2 ->x ^ 2
+                    (VARIABLE or PARENTHESIS_CLOSE, NUMBER) => GetPowerToken(lexer,VARIABLE),
                     _ => null
+
+
                 } is { } insertToken)
                     // Insert at j because we need to keep the first one behind
                     tokenList.Insert(j, insertToken);
             }
-            endTokenInsertion:
+        endTokenInsertion:
+
 
             var parser = new AngouriMathParser(tokenStream, null, new AngouriMathTextWriter());
             parser.Parse();
             return parser.Result;
         }
+
     }
 }
