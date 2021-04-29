@@ -22,6 +22,8 @@ namespace AngouriMath.Core
 {
     using Antlr;
     using Exceptions;
+    using System;
+
     static class Parser
     {
         // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
@@ -60,23 +62,29 @@ namespace AngouriMath.Core
                         goto endTokenInsertion;
                 if ((GetType(tokenList[i]), GetType(tokenList[j])) switch
                 {
+
                     // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
                     // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
                     // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
-                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) =>
-                        lexer.Multiply,
+                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) => lexer.Multiply,
                     // 3 2 -> 3 ^ 2      x2 -> x ^ 2             )2 -> ) ^ 2
-                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) => lexer.Power,
+                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) => MathS.Settings.ExplicitParsingOnly ? throw new InvalidArgumentParseException("Cannot power a number without '^' When  MathS.Settings.ExplicitParsingOnly.Set(true)  has been called" + $"\n" +
+                        "If you want to power a number without '^' Don't call MathS.Settings.ExplicitParsingOnly.Set(true)") : lexer.Power,
+
                     _ => null
+
+
                 } is { } insertToken)
                     // Insert at j because we need to keep the first one behind
                     tokenList.Insert(j, insertToken);
             }
-            endTokenInsertion:
+        endTokenInsertion:
+
 
             var parser = new AngouriMathParser(tokenStream, null, new AngouriMathTextWriter());
             parser.Parse();
             return parser.Result;
         }
+
     }
 }

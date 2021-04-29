@@ -1,4 +1,6 @@
-﻿using Xunit;
+﻿using AngouriMath;
+using AngouriMath.Core.Exceptions;
+using Xunit;
 using static AngouriMath.MathS.Settings;
 
 namespace UnitTests.Core
@@ -49,7 +51,7 @@ namespace UnitTests.Core
                 using var d2 = MaxExpansionTermCount.Set(87);
 
                 // normally, it is called after d2.Dispose(), but what if we call it here...
-                d1.Dispose(); 
+                d1.Dispose();
 
                 // d1 was disposed, but d2 was not.
                 // Since it was the last one, 
@@ -57,6 +59,19 @@ namespace UnitTests.Core
                 Assert.Equal(87, MaxExpansionTermCount.Value);
             }
             Assert.Equal(67, MaxExpansionTermCount.Value);
+        }
+        
+        [Theory]
+        [InlineData("x2=16")]
+        [InlineData("x2 + 4x +4 = 0")]
+        [InlineData("(a + 2) 2")]
+        [InlineData("3 2")]
+        public void AssertErrorWhenPoweringNumberAccordingToSetting(string expr)
+        {
+            using var _ = ExplicitParsingOnly.Set(true);
+
+            Assert.Throws<InvalidArgumentParseException>(() => MathS.FromString(expr));
+
         }
     }
 }

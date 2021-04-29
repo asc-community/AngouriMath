@@ -890,6 +890,11 @@ namespace AngouriMath
         {
 
             /// <summary>
+            /// Determine if it should only parse if it is explicit
+            /// </summary>
+            public static Setting<bool> ExplicitParsingOnly => explicitParsingOnly ??= false;
+            [ThreadStatic] private static Setting<bool>? explicitParsingOnly;
+            /// <summary>
             /// That is how we perform newton solving when no analytical solution was found
             /// in <see cref="Entity.Solve(Variable)"/> and <see cref="Entity.SolveEquation(Variable)"/>
             /// </summary>
@@ -1057,7 +1062,7 @@ namespace AngouriMath
             /// </summary>
             public static Setting<EContext> DecimalPrecisionContext =>
                 decimalPrecisionContext ??= new EContext(100, ERounding.HalfUp, -100, 1000, false);
-            [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;
+            [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;           
         }
 
         /// <summary>Returns an <see cref="Entity"/> in polynomial order if possible</summary>
