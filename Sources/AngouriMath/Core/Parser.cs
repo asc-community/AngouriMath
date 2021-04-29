@@ -34,8 +34,7 @@ namespace AngouriMath.Core
         }
         public static Entity Parse(string source)
         {
-            var angouriMathTextWriter = new AngouriMathTextWriter();
-            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, angouriMathTextWriter);
+            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, new AngouriMathTextWriter());
             var tokenStream = new CommonTokenStream(lexer);
             tokenStream.Fill();
             var tokenList = tokenStream.GetTokens();
@@ -50,16 +49,6 @@ namespace AngouriMath.Core
                 AngouriMathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type
                 && type is not PARENTHESIS_OPEN && type.EndsWith("('") ? FUNCTION_OPEN : type;
 
-            CommonToken GetPowerToken(AngouriMathLexer lexer, string tokenType)
-            {
-                if (MathS.Settings.ExplicitParsingOnly && tokenType == VARIABLE)
-                {
-                    throw new InvalidArgumentParseException("Cannot power a number without '^' When  MathS.Settings.ExplicitParsingOnly.Set(true)  has been called" + $"\n" +
-                        "If you want to power a number without '^' Don't call MathS.Settings.ExplicitParsingOnly.Set(true)");
-                }
-                return lexer.Power;
-            }
-      
             if (tokenList.Count == 0)
                 throw new AngouriBugException($"{nameof(ParseException)} should have been thrown");
             int i = 0;
@@ -78,10 +67,10 @@ namespace AngouriMath.Core
                     // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
                     // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
                     (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) => lexer.Multiply,
-                    // 3 2 -> 3 ^ 2                 )2 -> ) ^ 2
-                    (NUMBER or PARENTHESIS_CLOSE, NUMBER) => GetPowerToken(lexer,NUMBER),
-                    //x2 ->x ^ 2
-                    (VARIABLE or PARENTHESIS_CLOSE, NUMBER) => GetPowerToken(lexer,VARIABLE),
+                    // 3 2 -> 3 ^ 2      x2 -> x ^ 2             )2 -> ) ^ 2
+                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) => MathS.Settings.ExplicitParsingOnly ? throw new InvalidArgumentParseException("Cannot power a number without '^' When  MathS.Settings.ExplicitParsingOnly.Set(true)  has been called" + $"\n" +
+                        "If you want to power a number without '^' Don't call MathS.Settings.ExplicitParsingOnly.Set(true)") : lexer.Power,
+
                     _ => null
 
 

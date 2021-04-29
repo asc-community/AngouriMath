@@ -60,10 +60,14 @@ namespace UnitTests.Core
             }
             Assert.Equal(67, MaxExpansionTermCount.Value);
         }
-
+        
         [Theory]
         [InlineData("x2=16")]
         [InlineData("x2 + 4x +4 = 0")]
+        [InlineData("x2 3")]
+        [InlineData("x2 0.5")]
+        [InlineData("integral(x3)")]
+        [InlineData("derivative(x2)")]
         public void AssertErrorWhenPoweringNumberAccordingToSetting(string expr)
         {
             using var _ = ExplicitParsingOnly.Set(true);
