@@ -64,10 +64,8 @@ namespace UnitTests.Core
         [Theory]
         [InlineData("x2=16")]
         [InlineData("x2 + 4x +4 = 0")]
-        [InlineData("(x2+5)(x2+5)")]
-        [InlineData("3(x2+5)")]
-        [InlineData("integral(x3)")]
-        [InlineData("derivative(x2)")]
+        [InlineData("(a + 2) 2")]
+        [InlineData("3 2")]
         public void AssertErrorWhenPoweringNumberAccordingToSetting(string expr)
         {
             using var _ = ExplicitParsingOnly.Set(true);
