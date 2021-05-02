@@ -2,10 +2,9 @@
 
 open AngouriMath.FSharp.Core
 open AngouriMath.FSharp.Functions
-open AngouriMath.FSharp.MatrixOperators
 open Xunit
 open AngouriMath
-
+open AngouriMath.FSharp.MatrixOperators
 (*
 
  Matrix and matrix operators
