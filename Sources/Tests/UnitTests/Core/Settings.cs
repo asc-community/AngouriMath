@@ -73,5 +73,18 @@ namespace UnitTests.Core
             Assert.Throws<InvalidArgumentParseException>(() => MathS.FromString(expr));
 
         }
+
+        [Theory]
+        [InlineData("2x")]
+        [InlineData("2(a + x)")]
+        [InlineData("(x+2)(x+5)")]
+        [InlineData("4(8+3)")]
+        public void AssertErrorWhenMultiplyingNumberAccordingToSetting(string expr)
+        {
+            using var _ = ExplicitParsingOnly.Set(true);
+
+            Assert.Throws<InvalidArgumentParseException>(() => MathS.FromString(expr));
+
+        }
     }
 }
