@@ -66,11 +66,17 @@ namespace AngouriMath.Core
                     // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
                     // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
                     // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
-                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) => MathS.Settings.ExplicitParsingOnly ? throw new InvalidArgumentParseException("Cannot Multiply '*' When  MathS.Settings.ExplicitParsingOnly.Set(true)  has been called" + $"\n" +
-                        "If you want to Multiply without '*' Don't call MathS.Settings.ExplicitParsingOnly.Set(true)") : lexer.Multiply,
+                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) => 
+                    MathS.Settings.ExplicitParsingOnly 
+                    ? throw new InvalidArgumentParseException("Cannot Multiply '*' When  MathS.Settings.ExplicitParsingOnly.Set(true)  has been called" + $"\n" +
+                        "If you want to Multiply without '*' Don't call MathS.Settings.ExplicitParsingOnly.Set(true)") 
+                    : lexer.Multiply,
                     // 3 2 -> 3 ^ 2      x2 -> x ^ 2             )2 -> ) ^ 2
-                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) => MathS.Settings.ExplicitParsingOnly ? throw new InvalidArgumentParseException("Cannot power a number without '^' When  MathS.Settings.ExplicitParsingOnly.Set(true)  has been called" + $"\n" +
-                        "If you want to power a number without '^' Don't call MathS.Settings.ExplicitParsingOnly.Set(true)") : lexer.Power,
+                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) =>
+                    MathS.Settings.ExplicitParsingOnly 
+                    ? throw new InvalidArgumentParseException("Cannot power a number without '^' When  MathS.Settings.ExplicitParsingOnly.Set(true)  has been called" + $"\n" +
+                        "If you want to power a number without '^' Don't call MathS.Settings.ExplicitParsingOnly.Set(true)") 
+                    : lexer.Power,
 
                     _ => null
 

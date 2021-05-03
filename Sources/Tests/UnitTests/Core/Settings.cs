@@ -69,9 +69,7 @@ namespace UnitTests.Core
         public void AssertErrorWhenPoweringNumberAccordingToSetting(string expr)
         {
             using var _ = ExplicitParsingOnly.Set(true);
-
             Assert.Throws<InvalidArgumentParseException>(() => MathS.FromString(expr));
-
         }
 
         [Theory]
@@ -82,9 +80,7 @@ namespace UnitTests.Core
         public void AssertErrorWhenMultiplyingNumberAccordingToSetting(string expr)
         {
             using var _ = ExplicitParsingOnly.Set(true);
-
             Assert.Throws<InvalidArgumentParseException>(() => MathS.FromString(expr));
-
         }
     }
 }
