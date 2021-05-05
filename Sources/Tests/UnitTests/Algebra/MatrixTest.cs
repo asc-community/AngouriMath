@@ -618,5 +618,18 @@ namespace UnitTests.Algebra
             var actual = Matrix.TensorProduct(A, B);
             Assert.Equal(expected, actual);
         }
+
+        [Theory]
+        [InlineData("[[1, 0, 70], [0, 1, 0], [0, 0, 1]]")]
+        [InlineData("[[1, 70, 0], [0, 1, 0], [0, 0, 1]]")]
+        [InlineData("[[1, 70], [0, 1]]")]
+        [InlineData("[[1, 0, 0, 0], [0, 1, 70, 0], [0, 0, 1, 0], [0, 0, 0, 1]]")]
+        public void TestInverseWithGT101Issue400(string matrixRaw)
+        {
+            Matrix a = matrixRaw;
+            var inverse = a.ComputeInverse();
+            var product = (a * inverse).Simplify();
+            Assert.Equal(MathS.IdentityMatrix(a.RowCount), product);
+        }
     }
 }
