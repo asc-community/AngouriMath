@@ -627,9 +627,30 @@ namespace UnitTests.Algebra
         public void TestInverseWithGT101Issue400(string matrixRaw)
         {
             Matrix a = matrixRaw;
-            var inverse = a.ComputeInverse();
+            var inverse = a.Inverse!;
             var product = (a * inverse).Simplify();
             Assert.Equal(MathS.IdentityMatrix(a.RowCount), product);
+        }
+
+        [Theory]
+        [InlineData("[1, 2, 3]")]
+        [InlineData("[1, 2, 3]T")]
+        [InlineData("[[1, 3], [2, 5], [3, 6]]")]
+        public void CasesWhenDeterminantIsNull(string matrixRaw)
+        {
+            Matrix m = matrixRaw;
+            Assert.Null(m.Determinant);
+        }
+
+        [Theory]
+        [InlineData("[1, 2, 3]")]
+        [InlineData("[1, 2, 3]T")]
+        [InlineData("[[1, 3], [2, 5], [3, 6]]")]
+        [InlineData("[[0, 0, 0], [3, 4, 5], [6, 7, 81]]")]
+        public void CasesWhenInverseIsNull(string matrixRaw)
+        {
+            Matrix m = matrixRaw;
+            Assert.Null(m.Inverse);
         }
     }
 }

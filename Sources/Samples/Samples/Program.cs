@@ -7,5 +7,5 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
-
-Console.WriteLine("Ducks.");
+Matrix m = "[1]";
+Console.WriteLine(m.Adjugate);
