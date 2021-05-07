@@ -20,3 +20,4 @@ let (|+) a b = (parsed a + parsed b).InnerSimplified |> asMatrix
 
 let (|-) a b = (parsed a - parsed b).InnerSimplified |> asMatrix
 
+let (|/) a b = (parsed a - parsed b).InnerSimplified |> asMatrix
