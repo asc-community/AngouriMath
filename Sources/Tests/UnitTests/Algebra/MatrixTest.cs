@@ -65,13 +65,12 @@ namespace UnitTests.Algebra
                 {"A", "B"},
                 {"C", "D"}
             });
-            var v = A.Determinant?
+            var v = TestExtensions.AsNotNull(A.Determinant)
                 .Substitute("A", 1)
                 .Substitute("B", 2)
                 .Substitute("C", 3)
-                .Substitute("D", 4);
-            Assert.NotNull(v);
-            Assert.Equal(-2, v!.EvalNumerical());
+                .Substitute("D", 4);           
+            Assert.Equal(-2, v.EvalNumerical());
         }
 
         [Fact]
@@ -570,7 +569,7 @@ namespace UnitTests.Algebra
         public void TestInverseWithGT101Issue400(string matrixRaw)
         {
             Matrix a = matrixRaw;
-            var inverse = a.Inverse!;
+            var inverse = TestExtensions.AsNotNull(a.Inverse);
             var product = (a * inverse).Simplify();
             Assert.Equal(MathS.IdentityMatrix(a.RowCount), product);
         }

@@ -14,6 +14,12 @@ namespace UnitTests
             using var _ = MathS.Diagnostic.OutputExplicit.Set(true);
             Assert.Equal(other, @this);
         }
+
+        public static T AsNotNull<T>(T? value)
+        {
+            Assert.NotNull(value);
+            return value!;
+        }
     }
 
     /// <summary>
