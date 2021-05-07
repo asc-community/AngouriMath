@@ -7,5 +7,5 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
-Matrix m = "[1]";
-Console.WriteLine(m.Adjugate);
+Console.WriteLine(5);
+Console.WriteLine(5);
