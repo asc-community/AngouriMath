@@ -65,11 +65,13 @@ namespace UnitTests.Algebra
                 {"A", "B"},
                 {"C", "D"}
             });
-            var v = A.Determinant.Substitute("A", 1)
+            var v = A.Determinant?
+                .Substitute("A", 1)
                 .Substitute("B", 2)
                 .Substitute("C", 3)
                 .Substitute("D", 4);
-            Assert.Equal(-2, v.EvalNumerical());
+            Assert.NotNull(v);
+            Assert.Equal(-2, v!.EvalNumerical());
         }
 
         [Fact]
@@ -330,8 +332,8 @@ namespace UnitTests.Algebra
                 { "3", "2", "9" },
                 { "1", "1", "9" },
             });
-            var actual = (H.Adjugate / H.Determinant).Evaled;
-            var expected = H.ComputeInverse();
+            var actual = H.Adjugate is { } adj && H.Determinant is { } det ? (adj / det).Evaled : null;
+            var expected = H.Inverse;
 
             Assert.Equal(expected, actual);
         }

@@ -688,9 +688,10 @@ namespace AngouriMath
         }
 
         /// <summary>
-        /// Finds the determinant of the given matrix
+        /// Finds the determinant of the given matrix. If
+        /// the matrix is non-square, returns null
         /// </summary>
-        public static Entity Det(Matrix m)
+        public static Entity? Det(Matrix m)
             => m.Determinant;
 
         /// <summary>Creates an instance of <see cref="Entity.Matrix"/>.</summary>
