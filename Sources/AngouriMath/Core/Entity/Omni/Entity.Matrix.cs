@@ -356,10 +356,7 @@ namespace AngouriMath
                         if (!@this.IsSquare)
                             return null;
                         var innerSimplified = new Matrix(@this.InnerMatrix.Adjoint()).InnerSimplified;
-                        if (innerSimplified is Matrix m)
-                            return m;
-                        else
-                            return MathS.Vector(innerSimplified);
+                        return ToMatrix(innerSimplified);
                     },
                     this);
             private FieldCache<Matrix?> adjugate;

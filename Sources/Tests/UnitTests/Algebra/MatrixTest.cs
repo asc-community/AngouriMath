@@ -566,12 +566,16 @@ namespace UnitTests.Algebra
         [InlineData("[[1, 70, 0], [0, 1, 0], [0, 0, 1]]")]
         [InlineData("[[1, 70], [0, 1]]")]
         [InlineData("[[1, 0, 0, 0], [0, 1, 70, 0], [0, 0, 1, 0], [0, 0, 0, 1]]")]
+        [InlineData("[6]")]
         public void TestInverseWithGT101Issue400(string matrixRaw)
         {
             Matrix a = matrixRaw;
             var inverse = TestExtensions.AsNotNull(a.Inverse);
             var product = (a * inverse).Simplify();
-            Assert.Equal(MathS.IdentityMatrix(a.RowCount), product);
+            if (a.RowCount == 1)
+                Assert.Equal(1, product);
+            else
+                Assert.Equal(MathS.IdentityMatrix(a.RowCount), product);
         }
 
         [Theory]
