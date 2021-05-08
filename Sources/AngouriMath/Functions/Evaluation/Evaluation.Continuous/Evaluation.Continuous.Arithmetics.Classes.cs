@@ -121,31 +121,11 @@ namespace AngouriMath
         }
         public partial record Divf
         {
-            private static bool TryDivide(Matrix m1, Matrix m2, out Entity res)
-            {
-                res = 0;
-                if (!m1.IsSquare)
-                    return false;
-                if (m1.InnerMatrix.Shape != m2.InnerMatrix.Shape)
-                    return false;
-                try
-                {
-                    res = m1 / m2;
-                    return true;
-                }
-                catch (InvalidMatrixOperationException)
-                {
-                    return false;
-                }
-            }
-
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
                 ExpandOnTwoArguments(Dividend.Evaled, Divisor.Evaled,
                     (a, b) => (a, b) switch
                     {
-                        (Matrix m1, Matrix m2) when TryDivide(m1, m2, out var res) => res.Evaled,
-                        (var any, Matrix m) => (any / m),
                         (Complex n1, Complex n2) => n1 / n2,
                         (Integer(0), _) => 0,
                         (_, Integer(0)) => Real.NaN,
@@ -158,8 +138,6 @@ namespace AngouriMath
                 ExpandOnTwoArguments(Dividend.InnerSimplified, Divisor.InnerSimplified,
                 (a, b) => (a, b) switch
                 {
-                    (Matrix m1, Matrix m2) when TryDivide(m1, m2, out var res) => res,
-                    (var any, Matrix m) => (any / m),
                     (Integer(0), _) => 0,
                     (_, Integer(0)) => Real.NaN,
                     (var n1, Integer(1)) => n1,

@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="MatrixOperatorsTest.fs" />
     <None Include="coverlet.runsettings" />
     <Compile Include="Functions.Sets.fs" />
     <Compile Include="CoreTest.fs" />
@@ -20,8 +21,6 @@
     <Compile Include="Functions.Continuous.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
-
-  <ItemGroup />
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0-preview-20210219-03" />

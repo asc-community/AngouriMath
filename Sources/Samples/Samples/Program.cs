@@ -7,5 +7,6 @@ using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.CompilerServices;
 
-
-Console.WriteLine("Ducks.");
+Matrix m = "[5]";
+Console.WriteLine(m.Determinant);
+Console.WriteLine(5);

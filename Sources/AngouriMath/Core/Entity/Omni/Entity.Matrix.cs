@@ -194,35 +194,32 @@ namespace AngouriMath
             /// <summary>
             /// Finds the symbolical determinant via Laplace's method
             /// </summary>
-            public Entity Determinant => determinant.GetValue(
-                static @this => @this.InnerMatrix.DeterminantGaussianSafeDivision().InnerSimplified,
+            public Entity? Determinant => determinant.GetValue(
+                static @this => 
+                {
+                    if (!@this.IsSquare) 
+                        return null;
+                    return @this.InnerMatrix.DeterminantGaussianSafeDivision().InnerSimplified;
+                },
                 this
                 );
-            private FieldCache<Entity> determinant;
+            private FieldCache<Entity?> determinant;
 
-            // The reason it's not cached is because it throws exceptions.
-            /// <summary>Inverts the matrix</summary>
-            public Matrix ComputeInverse()
+            /// <summary>Returns an inverse matrix if it exists</summary>
+            public Matrix? Inverse => inverse.GetValue(static @this =>
             {
-                var cp = InnerMatrix.Copy(false);
-                try
-                {
-                    cp.InvertMatrix();
-                }
-                catch (InvalidShapeException)
-                {
-                    throw new InvalidMatrixOperationException("Cannot inverse a non-square matrix!");
-                }
-                catch (InvalidDeterminantException)
-                {
-                    throw new InvalidMatrixOperationException("Cannot inverse a singular matrix!");
-                }
+                var cp = @this.InnerMatrix.Copy(false);
+                if (!@this.IsSquare)
+                    return null;
+                if (@this.Determinant is null)
+                    return null;
+                if (@this.Determinant == 0)
+                    return null;
+                cp.InvertMatrix();
                 return ToMatrix(new Matrix(cp).InnerSimplified);
-            }
+            }, this);
+            private FieldCache<Matrix?> inverse;
 
-            /// <summary>Inverts the matrix</summary>
-            [Obsolete("Use ComputeInverse() instead")]
-            public Matrix Inverse() => ComputeInverse();
 
             /// <summary>
             /// The Add operator. Performs an active operation
@@ -268,22 +265,6 @@ namespace AngouriMath
                         $"Cannot multiply matrices of shapes {m1.InnerMatrix.Shape} and {m2.InnerMatrix.Shape}"
                         );
                 }
-            }
-
-            /// <summary>
-            /// The Multiply operator. Performs an active operation.
-            /// 1. Finds the inverse of the divisor
-            /// 2. Multiplies the dividend by the inverse of the divisor
-            /// and then applies inner simplification.
-            /// The operator only works with square matrices of the same size
-            /// </summary>
-            /// <exception cref="InvalidMatrixOperationException">
-            /// May be thrown if no inverse was found.
-            /// </exception>
-            public static Matrix operator /(Matrix m1, Matrix m2)
-            {
-                var inv = m2.ComputeInverse();
-                return m1 * inv;
             }
 
             /// <summary>
@@ -369,11 +350,16 @@ namespace AngouriMath
             /// <summary>
             /// Adjugate form of a matrix
             /// </summary>
-            public Matrix Adjugate =>
+            public Matrix? Adjugate =>
                 adjugate.GetValue(static @this =>
-                    (Matrix)new Matrix(@this.InnerMatrix.Adjoint()).InnerSimplified,
+                    {
+                        if (!@this.IsSquare)
+                            return null;
+                        var innerSimplified = new Matrix(@this.InnerMatrix.Adjoint()).InnerSimplified;
+                        return ToMatrix(innerSimplified);
+                    },
                     this);
-            private FieldCache<Matrix> adjugate;
+            private FieldCache<Matrix?> adjugate;
 
             /// <summary>
             /// Returns a vector, where the i-th element

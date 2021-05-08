@@ -65,10 +65,11 @@ namespace UnitTests.Algebra
                 {"A", "B"},
                 {"C", "D"}
             });
-            var v = A.Determinant.Substitute("A", 1)
+            var v = TestExtensions.AsNotNull(A.Determinant)
+                .Substitute("A", 1)
                 .Substitute("B", 2)
                 .Substitute("C", 3)
-                .Substitute("D", 4);
+                .Substitute("D", 4);           
             Assert.Equal(-2, v.EvalNumerical());
         }
 
@@ -242,59 +243,6 @@ namespace UnitTests.Algebra
         [Fact] public void UnsuccessfulMatrixSubtraction2InnerSimplified()
             => Assert.Equal(MathS.Vector(1, 2) - (Entity)MathS.Vector(2, 0, 3), (MathS.Vector(1, 2) - (Entity)MathS.Vector(2, 0, 3)).InnerSimplified);
 
-        [Fact] public void MatrixDivision1()
-            => Assert.Equal(H, H / MathS.I_2);
-
-        [Fact] public void MatrixDivision2()
-            => Assert.Equal(
-                MathS.Matrix(new Entity[,]{
-                    { "1 / 2", "1 / 2" },
-                    { "1 / 2", "-1 / 2" }
-                }).InnerSimplified,
-                MathS.I_2 / H);
-
-        [Fact] public void UnsuccessfulMatrixDivisionEvaled()
-        {
-            var singularMatrix = MathS.Matrix(new Entity[,]
-                {
-                    { 1, 2 },
-                    { 2, 4 }
-                });
-            Assert.Equal(MathS.I_2 / (Entity)singularMatrix, (MathS.I_2 / (Entity)singularMatrix).Evaled);
-        }
-
-        [Fact] public void UnsuccessfulMatrixDivisionInnerSimplified()
-        {
-            var singularMatrix = MathS.Matrix(new Entity[,]
-                {
-                    { 1, 2 },
-                    { 2, 4 }
-                });
-            Assert.Equal(MathS.I_2 / (Entity)singularMatrix, (MathS.I_2 / (Entity)singularMatrix).InnerSimplified);
-        }
-
-        [Fact] public void MatrixDivision3()
-            => Assert.Equal(MathS.I_2, H / H);
-
-        [Fact] public void MatrixDivision3x3()
-            => Assert.Equal(
-                MathS.Matrix(new Entity[,] {
-                        { 1, -3 },
-                        { 3, -8 }
-                    }),
-
-                MathS.Matrix(new Entity[,] {
-                        { 1, 0 },
-                        { 3, 1 }
-                    })
-                /
-                MathS.Matrix(new Entity[,] {
-                        { 1, 3 },
-                        { 0, 1 }
-                    })
-
-                );
-
         [Fact] public void LeftScalarMulitiplication()
             => Assert.Equal(MathS.Vector(6, 8), (2 * MathS.Vector(3, 4)).InnerSimplified);
 
@@ -316,12 +264,6 @@ namespace UnitTests.Algebra
         [Fact] public void RightScalarSubtraction()
             => Assert.Equal(MathS.Vector(1, 2), (MathS.Vector(3, 4) - 2).InnerSimplified);
 
-        [Fact] public void LeftScalarDivisionUnsuccessfulEvaled()
-            => Assert.Equal(2 / MathS.Vector(3, 4), (2 / MathS.Vector(3, 4)).Evaled);
-
-        [Fact] public void LeftScalarDivisionUnsuccessfulInnerSimplified()
-            => Assert.Equal(2 / MathS.Vector(3, 4), (2 / MathS.Vector(3, 4)).InnerSimplified);
-
         [Fact] public void Adjugate1()
         {
             var H = MathS.Matrix(new Entity[,]
@@ -330,8 +272,8 @@ namespace UnitTests.Algebra
                 { "3", "2", "9" },
                 { "1", "1", "9" },
             });
-            var actual = (H.Adjugate / H.Determinant).Evaled;
-            var expected = H.ComputeInverse();
+            var actual = H.Adjugate is { } adj && H.Determinant is { } det ? (adj / det).Evaled : null;
+            var expected = H.Inverse;
 
             Assert.Equal(expected, actual);
         }
@@ -617,6 +559,44 @@ namespace UnitTests.Algebra
             Matrix expected = expectedRaw;
             var actual = Matrix.TensorProduct(A, B);
             Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData("[[1, 0, 70], [0, 1, 0], [0, 0, 1]]")]
+        [InlineData("[[1, 70, 0], [0, 1, 0], [0, 0, 1]]")]
+        [InlineData("[[1, 70], [0, 1]]")]
+        [InlineData("[[1, 0, 0, 0], [0, 1, 70, 0], [0, 0, 1, 0], [0, 0, 0, 1]]")]
+        [InlineData("[6]")]
+        public void TestInverseWithGT101Issue400(string matrixRaw)
+        {
+            Matrix a = matrixRaw;
+            var inverse = TestExtensions.AsNotNull(a.Inverse);
+            var product = (a * inverse).Simplify();
+            if (a.RowCount == 1)
+                Assert.Equal(1, product);
+            else
+                Assert.Equal(MathS.IdentityMatrix(a.RowCount), product);
+        }
+
+        [Theory]
+        [InlineData("[1, 2, 3]")]
+        [InlineData("[1, 2, 3]T")]
+        [InlineData("[[1, 3], [2, 5], [3, 6]]")]
+        public void CasesWhenDeterminantIsNull(string matrixRaw)
+        {
+            Matrix m = matrixRaw;
+            Assert.Null(m.Determinant);
+        }
+
+        [Theory]
+        [InlineData("[1, 2, 3]")]
+        [InlineData("[1, 2, 3]T")]
+        [InlineData("[[1, 3], [2, 5], [3, 6]]")]
+        [InlineData("[[0, 0, 0], [3, 4, 5], [6, 7, 81]]")]
+        public void CasesWhenInverseIsNull(string matrixRaw)
+        {
+            Matrix m = matrixRaw;
+            Assert.Null(m.Inverse);
         }
     }
 }

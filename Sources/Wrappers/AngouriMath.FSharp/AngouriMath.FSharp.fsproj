@@ -33,6 +33,7 @@
     <Compile Include="Compilation.fs" />
     <Compile Include="Constants.fs" />
     <Compile Include="Shortcuts.fs" />
+    <Compile Include="MatrixOperators.fs" />
   </ItemGroup>
 
   <ItemGroup>
