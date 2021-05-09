@@ -185,13 +185,13 @@ Console.WriteLine(MathS.SolveBooleanTable(expr, "a"));
 
 Next, solve some equations:
 ```cs
-Console.WriteLine("x2 + x + a".SolveEquation("x"));
+Console.WriteLine("x^2 + x + a".SolveEquation("x"));
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\left\{\frac{-1-\sqrt{1-4\times a}}{2},\frac{-1%2B\sqrt{1-4\times a}}{2}\right\}">
 
 Under developing now and forever (always available)
 ```cs
-Entity expr = "(sin(x)2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
+Entity expr = "(sin(x)^2 - sin(x) + a)(b - x)((-3) * x + 2 + 3 * x ^ 2 + (x + (-3)) * x ^ 3)";
 Console.WriteLine(expr.SolveEquation("x").Latexise());
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\left\{-\left(-\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1-\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\arcsin\left(\frac{1%2B\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),-\left(-\pi--\arcsin\left(\frac{1%2B\sqrt{1-4\times a}}{2}\right)-2\times \pi\times n_{1}\right),\frac{-b}{-1},-i,i,1,2\right\}">
@@ -205,7 +205,7 @@ Console.WriteLine("(x - 6)(x + 9) >= 0".Solve("x"));
 Systems of equations:
 ```cs
 var system = MathS.Equations(
-    "x2 + y + a",
+    "x^2 + y + a",
     "y - 0.1x + b"
 );
 Console.WriteLine(system);
@@ -238,7 +238,7 @@ Console.WriteLine(solutions);
 
 Find derivatives:
 ```cs
-Entity func = "x2 + ln(cos(x) + 3) + 4x";
+Entity func = "x^2 + ln(cos(x) + 3) + 4x";
 Entity derivative = func.Differentiate("x");
 Console.WriteLine(derivative.Simplify());
 ```
@@ -246,13 +246,13 @@ Console.WriteLine(derivative.Simplify());
 
 Find limits:
 ```cs
-WriteLine("(a x2 + b x) / (e x - h x2 - 3)".Limit("x", "+oo").InnerSimplified);
+WriteLine("(a x^2 + b x) / (e x - h x^2 - 3)".Limit("x", "+oo").InnerSimplified);
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{a}{-h}">
 
 Find integrals:
 ```cs
-WriteLine("x2 + a x".Integrate("x").InnerSimplified);
+WriteLine("x^2 + a x".Integrate("x").InnerSimplified);
 ```
 <img src="https://render.githubusercontent.com/render/math?math=\frac{{x}^{3}}{3}%2Ba\times \frac{{x}^{2}}{2}">
 
@@ -265,7 +265,7 @@ There are four types of sets:
 WriteLine("{ 1, 2 }".Latexise());
 WriteLine("[3; +oo)".Latexise());
 WriteLine("RR".Latexise());
-WriteLine("{ x : x8 + a x < 0 }".Latexise());
+WriteLine("{ x : x^8 + a x < 0 }".Latexise());
 ```
 
 <img src="https://render.githubusercontent.com/render/math?math=\left\{ 1, 2 \right\}">
@@ -302,7 +302,7 @@ var expr = MathS.FromString("x + 2 + sqrt(x)");
 Entity expr = "x + 2 + sqrt(x)";
 ```
 
-A few convenient features: `x2` => `x^2`, `a x` => `a * x`, `(...)2` => `(...)^2`, `2(...)` => `2 * (...)`
+A few convenient features: `a x` => `a * x`, `2(...)` => `2 * (...)`
 
 </details>
 
@@ -346,9 +346,9 @@ open Shortcuts
 
 printfn "%O" (solutions "x" "x + 2 = 0")
 
-printfn "%O" (simplified (solutions "x" "x2 + 2 a x + a2 = 0"))
+printfn "%O" (simplified (solutions "x" "x^2 + 2 a x + a^2 = 0"))
 
-printfn "%O" (``dy/dx`` "x2 + a x")
+printfn "%O" (``dy/dx`` "x^2 + a x")
 
 printfn "%O" (integral "x" "x2 + e")
 
