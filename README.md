@@ -302,7 +302,7 @@ var expr = MathS.FromString("x + 2 + sqrt(x)");
 Entity expr = "x + 2 + sqrt(x)";
 ```
 
-A few convenient features: `a x` => `a * x`, `2(...)` => `2 * (...)`
+A few convenient features: `x2` => `x^2`, `a x` => `a * x`, `(...)2` => `(...)^2`, `2(...)` => `2 * (...)`
 
 </details>
 
