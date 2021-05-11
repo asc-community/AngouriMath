@@ -41,13 +41,12 @@ jobs:
         mkdir ../AngouriMath.CPP.Importing/out-x64
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
         cd ../AngouriMath.CPP.Importing
-        tar -c -f AngouriMath.CPP-${{ matrix.os }}-x64.zip ./
 
     - name: 'Uploading artifacts'
       uses: actions/upload-artifact@v2
       with:
-        name: AngouriMath.CPP package
-        path: ./Sources/Wrappers/AngouriMath.CPP.Importing/AngouriMath.CPP-${{ matrix.os }}-x64.zip
+        name: AngouriMath.CPP-${{ matrix.os }}-x64
+        path: ./Sources/Wrappers/AngouriMath.CPP.Importing
         
     - name: 'Building AngouriMath.Importing'
       run: |
