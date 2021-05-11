@@ -40,7 +40,6 @@ jobs:
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/out-x64
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
-        cd ../AngouriMath.CPP.Importing
 
     - name: 'Uploading artifacts'
       uses: actions/upload-artifact@v2
