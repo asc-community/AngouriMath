@@ -47,6 +47,7 @@ jobs:
       with:
         name: AngouriMath.CPP-${{ matrix.os }}-x64
         path: ./Sources/Wrappers/AngouriMath.CPP.Importing
+        retention-days: 3
         
     - name: 'Building AngouriMath.Importing'
       run: |
