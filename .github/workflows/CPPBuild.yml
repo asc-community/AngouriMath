@@ -52,7 +52,7 @@ jobs:
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
-        cp -r AngouriMath.CPP.Exporting.so libAngouriMath.CPP.Exporting.dylib
+        cp -r AngouriMath.CPP.Exporting.dylib libAngouriMath.CPP.Exporting.dylib
         
         
 
