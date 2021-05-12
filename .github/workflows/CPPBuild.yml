@@ -46,13 +46,13 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
-        cp -a AngouriMath.CPP.Exporting.so libAngouriMath.CPP.Exporting.so
+        mv AngouriMath.CPP.Exporting.so libAngouriMath.CPP.Exporting.so
         
     - name: 'Renaming the library for OS X'
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
-        cp -r AngouriMath.CPP.Exporting.dylib libAngouriMath.CPP.Exporting.dylib
+        mv AngouriMath.CPP.Exporting.dylib libAngouriMath.CPP.Exporting.dylib
         
         
 
