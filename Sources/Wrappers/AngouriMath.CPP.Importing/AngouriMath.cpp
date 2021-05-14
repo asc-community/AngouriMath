@@ -8,6 +8,7 @@
 #include "AngouriMath.h"
 #include "Imports.h"
 #include <vector>
+#include <cassert>
 
 namespace AngouriMath
 {
@@ -54,6 +55,7 @@ namespace AngouriMath
 
     Internal::EntityRef ParseString(const char* expr)
     {
+        assert(expr != nullptr);
         Internal::EntityRef result;
         HandleErrorCode(maths_from_string(expr, &result));
         return result;
