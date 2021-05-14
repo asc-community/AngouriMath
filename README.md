@@ -360,14 +360,17 @@ printfn "%O" (latex "x / e + alpha + sqrt(x) + integral(y + 3, y, 1)")
 
 </details>
 
-<details><summary><strong>C++ (WIP)</strong></summary>
+<details><summary><strong>C++ (Experimental)</strong></summary>
 
-There will be support for C++ as soon as the essential minimum part of AngouriMath's kernel API is exposed.
+At the moment, AngouriMath.CPP is in the experimental phase. See <a href="https://am.angouri.org/quickstart/#cpp">how to get AngouriMath for C++</a>.
 ```cpp
 #include <AngouriMath.h>
 
-AngouriMath::Entity expr = "x y + 2";
-std::cout << expr.Differentiate("x");
+int main()
+{
+    AngouriMath::Entity expr = "x y + 2";
+    std::cout << expr.Differentiate("x");
+}
 ```
 
 </details>
