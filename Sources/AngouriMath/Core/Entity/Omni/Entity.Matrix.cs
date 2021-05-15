@@ -276,12 +276,36 @@ namespace AngouriMath
             /// applied.
             /// </returns>
             public Matrix Pow(int exp)
-            {
-                if (!IsSquare)
-                    throw new InvalidMatrixOperationException("Cannot find power of a non-square matrix");
-                var mat = InnerMatrix.MatrixPower(exp);
-                return new(mat);
-            }
+                => IsSquare switch
+                {
+                    false => throw new InvalidMatrixOperationException("Cannot find power of a non-square matrix"),
+                    true => new(InnerMatrix.MatrixPower(exp))
+                };
+
+            /// <summary>
+            /// Returns the n-th power of the
+            /// given vector or matrix. It is
+            /// the same as sequential applying 
+            /// n-1 <see cref="TensorProduct"/> to this.
+            /// </summary>
+            /// <param name="exp">
+            /// The power, or the number
+            /// of operands in the a *** a *** ... *** a expression
+            /// </param>
+            /// <returns>
+            /// Non-simplified tensor
+            /// powered vector or matrix. If it
+            /// initially had size n x m, it will have
+            /// the size of 2^n x 2^m.
+            /// </returns>
+            public Matrix TensorPower(int exp)
+                => exp switch
+                {
+                    <= 0 => throw new InvalidMatrixOperationException("Tensor power argument must be positive"),
+                    1 => this,
+                    _ when exp % 2 is 0 => TensorProduct(this, this).TensorPower(exp / 2),
+                    _ => TensorProduct(TensorProduct(this, this).TensorPower(exp / 2), this)
+                };
 
             /// <summary>
             /// Creates a square identity matrix
