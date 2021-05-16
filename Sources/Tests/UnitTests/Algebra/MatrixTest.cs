@@ -562,6 +562,47 @@ namespace UnitTests.Algebra
         }
 
         [Theory]
+        [InlineData("[2]", 6, "[64]")]
+        [InlineData("[2, 3]", 2, "[4, 6, 6, 9]")]
+        [InlineData("[a, b]", 2, "[a a, a b, b a, b b]")]
+        [InlineData("[[a, b], [c, d]]", 2, "[[a a, a b, b c, b d], [a c, a d, b c, b d], [c a, c b, d a, d b], [c c, c d, d c, d d]]")]
+        [InlineData("[a, b]T", 2, "[a a, a b, b a, b b]T")]
+        [InlineData("[a, b, c]T", 2, "[a a, a b, a c, b a, b b, b c, c a, c b, c c]T")]
+        [InlineData("[[a, b], [c, d], [e, f]]T", 2, "[[a a, a b, b a, b b], [a c, a d, b c, b d], [a e, a f, b e, b f], [c a, c b, d a, d b], [c c, c d, d c, d d], [c e, c f, d e, d f], [e a, e b, f a, f b], [e c, e d, f c, f d], [e e, e f, f e, f f]]T")]
+        public void TensorPowerTest(string baseRaw, int power, string expectedRaw)
+        {
+            Matrix @base = baseRaw;
+            var actual = @base.TensorPower(power).InnerSimplified;
+            Matrix expected = expectedRaw;
+
+            actual.ShouldBe(expected);
+        }
+
+        [Theory]
+        [InlineData(1, 1, 2)]
+        [InlineData(1, 2, 2)]
+        [InlineData(2, 1, 2)]
+        [InlineData(3, 4, 2)]
+        [InlineData(3, 4, 3)]
+        [InlineData(3, 4, 4)]
+        [InlineData(1, 2, 3)]
+        [InlineData(2, 1, 3)]
+        [InlineData(1, 2, 4)]
+        [InlineData(2, 1, 4)]
+        [InlineData(1, 2, 5)]
+        [InlineData(2, 1, 5)]
+        [InlineData(1, 2, 6)]
+        [InlineData(2, 1, 6)]
+        [InlineData(2, 3, 5)]
+        public void TensorPowerSizeTest(int rowCount, int columnCount, int n)
+        {
+            var m = MathS.ZeroMatrix(rowCount, columnCount);
+            var actual = m.TensorPower(n);
+            Assert.Equal((int)System.Math.Pow(rowCount, n), actual.RowCount);
+            Assert.Equal((int)System.Math.Pow(columnCount, n), actual.ColumnCount);
+        }
+
+        [Theory]
         [InlineData("[[1, 0, 70], [0, 1, 0], [0, 0, 1]]")]
         [InlineData("[[1, 70, 0], [0, 1, 0], [0, 0, 1]]")]
         [InlineData("[[1, 70], [0, 1]]")]
