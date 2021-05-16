@@ -12,7 +12,10 @@ namespace UnitTests
         public static void ShouldBe(this Entity @this, Entity other)
         {
             using var _ = MathS.Diagnostic.OutputExplicit.Set(true);
-            Assert.Equal(other, @this);
+            Assert.True(@this == other, $"\nExpected: {PrettyOutput(other)}\n\nActual: {PrettyOutput(@this)}\n");
+
+            static string PrettyOutput(Entity entity)
+                => entity is Entity.Matrix m ? m.ToString(multilineFormat: true) : entity.ToString();
         }
 
         public static T AsNotNull<T>(T? value)

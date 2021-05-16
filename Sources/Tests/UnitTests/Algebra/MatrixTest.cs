@@ -564,18 +564,18 @@ namespace UnitTests.Algebra
         [Theory]
         [InlineData("[2]", 6, "[64]")]
         [InlineData("[2, 3]", 2, "[4, 6, 6, 9]")]
-        [InlineData("[a, b]", 2, "[a a, a b, b a, b b]")]
-        [InlineData("[[a, b], [c, d]]", 2, "[[a a, a b, b c, b d], [a c, a d, b c, b d], [c a, c b, d a, d b], [c c, c d, d c, d d]]")]
-        [InlineData("[a, b]T", 2, "[a a, a b, b a, b b]T")]
-        [InlineData("[a, b, c]T", 2, "[a a, a b, a c, b a, b b, b c, c a, c b, c c]T")]
-        [InlineData("[[a, b], [c, d], [e, f]]T", 2, "[[a a, a b, b a, b b], [a c, a d, b c, b d], [a e, a f, b e, b f], [c a, c b, d a, d b], [c c, c d, d c, d d], [c e, c f, d e, d f], [e a, e b, f a, f b], [e c, e d, f c, f d], [e e, e f, f e, f f]]T")]
+        [InlineData("[a, b]", 2, "[a 2, a b, b a, b 2]")]
+        [InlineData("[[a, b], [c, d]]", 2, "[[a 2, a b, b a, b 2], [a c, a d, b c, b d], [c a, c b, d a, d b], [c 2, c d, d c, d 2]]")]
+        [InlineData("[a, b]T", 2, "[a 2, a b, b a, b 2]T")]
+        [InlineData("[a, b, c]T", 2, "[a 2, a b, a c, b a, b 2, b c, c a, c b, c 2]T")]
+        [InlineData("[[a, b], [c, d], [e, f]]T", 2, "[[a 2, a b, b a, b 2], [a c, a d, b c, b d], [a e, a f, b e, b f], [c a, c b, d a, d b], [c 2, c d, d c, d 2], [c e, c f, d e, d f], [e a, e b, f a, f b], [e c, e d, f c, f d], [e 2, e f, f e, f 2]]T")]
         public void TensorPowerTest(string baseRaw, int power, string expectedRaw)
         {
             Matrix @base = baseRaw;
             var actual = @base.TensorPower(power).InnerSimplified;
             Matrix expected = expectedRaw;
 
-            actual.ShouldBe(expected);
+            actual.ShouldBe(expected.InnerSimplified);
         }
 
         [Theory]
