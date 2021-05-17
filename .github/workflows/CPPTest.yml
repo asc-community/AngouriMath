@@ -72,3 +72,10 @@ jobs:
         cmake --build build
         cd build
         ctest
+      
+    - name: 'Upload logs'
+      if: failure()
+      uses: actions/upload-artifact@v2
+      with:
+        name: Logs
+        path: ./Sources/Tests/CPPWrapperUnitTests/tests/build/Testing/Temporary
