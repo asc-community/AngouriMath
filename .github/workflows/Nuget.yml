@@ -1,9 +1,9 @@
-name: 'Upload last-master versions to GH Packages'
+name: 'Upload last-master versions to MyGet'
 
 on:
   push:
     branches:
-      - publish-nuget-test   # for a test
+      - gh-packages-preview   # for a test
 
 jobs:
   main:
@@ -14,8 +14,7 @@ jobs:
         with:
           dotnet-version: '5.0.202'
           
-      - name: 'Clone AngouriMath'   # will be via github's checkout actions
-        run: git clone https://github.com/asc-community/AngouriMath .
+      - name: actions/checkout@v2
         
       - name: 'Pack AngouriMath'
         run: |
@@ -24,8 +23,10 @@ jobs:
           
           # versioning
           commithash=$(git rev-parse --short HEAD)
+          currtime=$(date +%s)
           echo "commit hash is $commithash"
-          name=0.0.0-master$commithash
+          echo "time is $currtime"
+          name=0.0.0-master-$currtime-$commithash
           echo "name is $name"
           
           # AngouriMath
@@ -34,7 +35,7 @@ jobs:
           dotnet build -c release
           dotnet pack -c release -p:PackageVersion=$name
           cd bin/release
-          dotnet nuget push AngouriMath.$name.nupkg --api-key ${{ secrets.PACKAGES }} --source "myget"
+          dotnet nuget push AngouriMath.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
           cd ../../..
           
           # AngouriMath.FSharp
@@ -43,7 +44,7 @@ jobs:
           dotnet build -c Release
           dotnet pack -c Release -p:PackageVersion=$name
           cd bin/Release
-          dotnet nuget push AngouriMath.FSharp.$name.nupkg --api-key ${{ secrets.PACKAGES }} --source "myget"
+          dotnet nuget push AngouriMath.FSharp.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
           cd ../../../..
           
           # AngouriMath.Interactive
@@ -52,5 +53,5 @@ jobs:
           dotnet build -c Release
           dotnet pack -c Release -p:PackageVersion=$name
           cd bin/Release
-          dotnet nuget push AngouriMath.Interactive.$name.nupkg --api-key ${{ secrets.PACKAGES }} --source "myget"
+          dotnet nuget push AngouriMath.Interactive.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
           cd ../../../..
