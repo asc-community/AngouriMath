@@ -15,7 +15,7 @@ jobs:
           dotnet-version: '5.0.202'
       - uses: actions/checkout@v2
       - name: 'Pack AngouriMath'
-        runs: |
+        run: |
           cd Sources/AngouriMath
           dotnet --pack -c release
           dotnet nuget add source --username WhiteBlackGoose --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name github "https://nuget.pkg.github.com/OWNER/index.json"
