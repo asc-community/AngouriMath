@@ -19,7 +19,9 @@ jobs:
       - name: 'Pack AngouriMath'
         run: |
           cd Sources
-          dotnet nuget add source --username WhiteBlackGoose --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name myget "https://www.myget.org/F/angourimath/api/v3/index.json"
+          
+          # No need to add myget as a source, since it is already added. However, if the key is changed or removed, uncomment this line
+          # dotnet nuget add source --username WhiteBlackGoose --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name myget "https://www.myget.org/F/angourimath/api/v3/index.json"
           
           # versioning
           commithash=$(git rev-parse --short HEAD)
