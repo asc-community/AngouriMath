@@ -270,9 +270,6 @@ let solutions x expr =
     | :? Entity.Statement as statement -> statement.Solve(symbol x)
     | func -> (equality func 0).Solve(symbol x)
 
-
-
-
 type Lengths =
     | Any
     | Invalid
@@ -301,8 +298,20 @@ let matrix x =
 /// Creates a column vector from a 1-dimensional list
 let vector li =
     MathS.Vector([ for el in li do yield parsed el ].ToArray())
-    
+   
+/// If the provided entity is a matrix,
+/// it is returned downcasted. Otherwise,
+/// a 1x1 matrix containing the entity is returned.
+let asMatrix a = 
+    match parsed a with
+    | :? Entity.Matrix as m -> m
+    | other -> vector [other]
 
 /// Finds the tensor product of two given matrices
-let ( *** ) (a: Entity.Matrix) (b: Entity.Matrix) : Entity.Matrix =
-    downcast (Entity.Matrix.TensorProduct(a, b)).InnerSimplified
+let ( *** ) a b =
+    Entity.Matrix.TensorProduct(a, b).InnerSimplified |> asMatrix
+
+/// Finds the tensor power of a given matrix. The
+/// power must be positive/
+let ( **** ) (a: Entity.Matrix) b =
+    a.TensorPower(b).InnerSimplified |> asMatrix
