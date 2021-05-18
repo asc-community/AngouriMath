@@ -20,7 +20,8 @@ jobs:
         run: |
           cd Sources
           
-          dotnet nuget add source --username WhiteBlackGoose --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name mygetpushsource "https://www.myget.org/F/angourimath/api/v3/index.json"
+          dotnet nuget remove source myget
+          dotnet nuget add source --username WhiteBlackGoose --password ${{ secrets.GITHUB_TOKEN }} --store-password-in-clear-text --name myget "https://www.myget.org/F/angourimath/api/v3/index.json"
           
           # versioning
           commithash=$(git rev-parse --short HEAD)
@@ -36,7 +37,7 @@ jobs:
           dotnet build -c release
           dotnet pack -c release -p:PackageVersion=$name
           cd bin/release
-          dotnet nuget push AngouriMath.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "mygetpushsource"
+          dotnet nuget push AngouriMath.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
           cd ../../..
           
           # AngouriMath.FSharp
@@ -45,7 +46,7 @@ jobs:
           dotnet build -c Release
           dotnet pack -c Release -p:PackageVersion=$name
           cd bin/Release
-          dotnet nuget push AngouriMath.FSharp.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "mygetpushsource"
+          dotnet nuget push AngouriMath.FSharp.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
           cd ../../../..
           
           # AngouriMath.Interactive
@@ -54,5 +55,5 @@ jobs:
           dotnet build -c Release
           dotnet pack -c Release -p:PackageVersion=$name
           cd bin/Release
-          dotnet nuget push AngouriMath.Interactive.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "mygetpushsource"
+          dotnet nuget push AngouriMath.Interactive.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
           cd ../../../..
