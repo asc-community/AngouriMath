@@ -21,4 +21,4 @@ let ``Tensor product 2`` () = Assert.Equal(parsed "[a b]", (asMatrix "a") *** (a
 [<Fact>]
 let ``Tensor power 1`` () = Assert.Equal(parsed "[a2, a b, b a, b2]", (asMatrix "[a, b]") **** 2)
 [<Fact>]
-let ``Tensor power 2`` () = Assert.Equal(parsed "[a3]", (asMatrix "a") **** 3)
+let ``Tensor power 2`` () = Assert.Equal(parsed "[a2 * a]", (asMatrix "a") **** 3)
