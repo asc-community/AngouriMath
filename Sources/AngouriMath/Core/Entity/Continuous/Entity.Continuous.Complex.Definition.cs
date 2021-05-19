@@ -7,6 +7,7 @@
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
+using FieldCacheNamespace;
 using System.Linq;
 
 namespace AngouriMath
@@ -36,6 +37,12 @@ namespace AngouriMath
                 /// Imaginary part of a complex number
                 /// </summary>
                 public Real ImaginaryPart => imaginary ?? Integer.Zero;
+                
+                /// <summary>
+                /// Conjugate of a complex number. Given this = a + ib, Conjugate = a - ib
+                /// </summary>
+                public Complex Conjugate => conjugate.GetValue(static @this => Create(@this.RealPart, -@this.ImaginaryPart), this);
+                private FieldCache<Complex> conjugate;
 
                 internal override Priority Priority =>
                     (RealPart, ImaginaryPart) switch
@@ -96,11 +103,6 @@ namespace AngouriMath
                 /// </summary>
                 public void Deconstruct(out Real realPart, out Real imaginaryPart) =>
                     (realPart, imaginaryPart) = (RealPart, ImaginaryPart);
-
-
-                /// <summary>Returns conjugate of a complex number. Given this = a + ib, Conjugate() -> a - ib</summary>
-                /// <returns>Conjugate of the number</returns>
-                public Complex Conjugate() => Create(RealPart, -ImaginaryPart);
 
                 /// <summary>The magnitude of this <see cref="Complex"/>.</summary>
                 /// <returns>
@@ -188,7 +190,7 @@ namespace AngouriMath
                 }
 
                 /// <summary>
-                /// Convers the Complex to its of the system module Numerics
+                /// Converts the Complex to its of the system module Numerics
                 /// </summary>
                 public System.Numerics.Complex ToNumerics() =>
                     new System.Numerics.Complex(RealPart.EDecimal.ToDouble(), ImaginaryPart.EDecimal.ToDouble());

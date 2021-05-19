@@ -128,7 +128,7 @@ namespace AngouriMath
                         * 1 / (c + id) = (c2 + d2) / (c + id) / (c2 + d2) = (c - id) / (c2 + d2)
                         * => ans = (a + ib) * (c - id) / (c2 + d2)
                         */
-                        var conj = b.Conjugate();
+                        var conj = b.Conjugate;
                         var bAbs = b.Abs().EDecimal;
                         var abs2 = CtxMultiply(bAbs, bAbs);
                         var Re = CtxDivide(conj.RealPart.EDecimal, abs2);
