@@ -188,7 +188,7 @@ namespace AngouriMath
                 }
 
                 /// <summary>
-                /// Convers the Complex to its of the system module Numerics
+                /// Converts the Complex to its of the system module Numerics
                 /// </summary>
                 public System.Numerics.Complex ToNumerics() =>
                     new System.Numerics.Complex(RealPart.EDecimal.ToDouble(), ImaginaryPart.EDecimal.ToDouble());
