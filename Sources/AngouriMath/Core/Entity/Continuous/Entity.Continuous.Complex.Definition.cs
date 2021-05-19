@@ -41,7 +41,7 @@ namespace AngouriMath
                 /// <summary>
                 /// Conjugate of a complex number. Given this = a + ib, Conjugate = a - ib
                 /// </summary>
-                public Complex Conjugate => conjugate.GetValue(@this => Create(RealPart, -ImaginaryPart), this);
+                public Complex Conjugate => conjugate.GetValue(static @this => Create(@this.RealPart, -@this.ImaginaryPart), this);
                 private FieldCache<Complex> conjugate;
 
                 internal override Priority Priority =>
