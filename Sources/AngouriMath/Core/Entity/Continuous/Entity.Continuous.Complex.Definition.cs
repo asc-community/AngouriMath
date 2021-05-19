@@ -11,6 +11,8 @@ using System.Linq;
 
 namespace AngouriMath
 {
+    using FieldCacheNamespace;
+
     partial record Entity
     {
         partial record Number
@@ -40,7 +42,8 @@ namespace AngouriMath
                 /// <summary>
                 /// Conjugate of a complex number. Given this = a + ib, Conjugate = a - ib
                 /// </summary>
-                public Complex Conjugate => Create(RealPart, -ImaginaryPart);
+                public Complex Conjugate => conjugate.GetValue(@this => Create(RealPart, -ImaginaryPart), this);
+                private FieldCache<Complex> conjugate;
 
                 internal override Priority Priority =>
                     (RealPart, ImaginaryPart) switch
