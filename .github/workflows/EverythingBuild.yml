@@ -1,6 +1,13 @@
 name: 'Solution Build'
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+
 jobs:
   Everything:
     runs-on: windows-latest  # Window application cannot be run on other OS
