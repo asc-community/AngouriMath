@@ -1,6 +1,13 @@
 name: 'C#/Kernel Build'
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+
 jobs:
   AngouriMath:
     runs-on: ${{ matrix.os }}

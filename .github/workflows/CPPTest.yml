@@ -1,6 +1,13 @@
 name: 'C++ Test'
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+
 
 env:
   tests_path: Sources/Tests/CPPWrapperUnitTests/tests
