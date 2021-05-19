@@ -8,10 +8,10 @@
         <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
         <AssemblyVersion>0.1.3.0</AssemblyVersion>
         <FileVersion>0.1.3.0</FileVersion>
-        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <PackageLicenseExpression></PackageLicenseExpression>
         <PackageTags>Math, csharp, derivation, latex, calculator, parse, simplification, compute, symbol, compilation, algebra, equation system, equation</PackageTags>
-        <Version>1.3.0-preview.4</Version>
+        <Version>1.3.0-preview.3</Version>
         <PackageIconUrl></PackageIconUrl>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <Description>Enables to work with formulas built in the code or from a string. Computing, derivating, latex rendering, compilation, solving equations and systems of equations analytycally, simplification, and much more. Read more on https://am.angouri.org.</Description>
