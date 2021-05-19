@@ -7,12 +7,11 @@
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
+using FieldCacheNamespace;
 using System.Linq;
 
 namespace AngouriMath
 {
-    using FieldCacheNamespace;
-
     partial record Entity
     {
         partial record Number
