@@ -20,7 +20,7 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-preview.5.21227.7" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-preview.5.21266.2" />
     <PackageReference Include="AngouriMath" Version="1.3.0-preview.4" />
   </ItemGroup>
 
