@@ -14,7 +14,7 @@ let (|-) a b = (parsed a - parsed b).InnerSimplified |> asMatrix
 
 let (|/) a b = (parsed a / parsed b).InnerSimplified |> asMatrix
 
-(*
+
 /// Creates a square 2x2 matrix, with four elements
 /// in the following order: left-top, right-top,
 /// left-bottom, right-bottom
@@ -45,5 +45,3 @@ let newMatrix rows cols map = MathS.Matrix(rows, cols, new System.Func<int, int,
 /// position (indexed from 0)
 /// to the value via the map function
 let newVector count map = newMatrix count 1 (fun r _ -> map r)
-
-*)

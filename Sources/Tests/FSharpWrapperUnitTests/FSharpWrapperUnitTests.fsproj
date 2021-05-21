@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Utils.fs" />
     <Compile Include="MatrixOperatorsTest.fs" />
     <None Include="coverlet.runsettings" />
     <Compile Include="Functions.Sets.fs" />
