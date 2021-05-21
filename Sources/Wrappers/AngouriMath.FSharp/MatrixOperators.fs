@@ -38,10 +38,10 @@ let vector3 a b c = vector [a; b; c]
 /// an element (first comes the number of
 /// the row, then the number of column,
 /// starting from 0)
-let newMatrix rows cols map = MathS.Matrix(rows, cols, new System.Func<int, int, Entity>(map))
+let matrixWith rows cols map = MathS.Matrix(rows, cols, new System.Func<int, int, Entity>(map))
 
 /// Creates a new vector with
 /// each element mapped from its
 /// position (indexed from 0)
 /// to the value via the map function
-let newVector count map = newMatrix count 1 (fun r _ -> map r)
+let vectorWith count map = matrixWith count 1 (fun r _ -> map r)
