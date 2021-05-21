@@ -23,7 +23,7 @@ let ``Tensor power 1`` () = Assert.Equal(parsed "[a2, a b, b a, b2]", (asMatrix 
 [<Fact>]
 let ``Tensor power 2`` () = Assert.Equal(parsed "[a2 * a]", (asMatrix "a") **** 3)
 
-
+(*
 open AngouriMath.FSharp.MatrixOperators
 
 [<Fact>]
@@ -41,4 +41,4 @@ let ``newMatrix func 2`` () = Assert.Equal(parsed "[[a_11, a_12], [a_21, a_22], 
 [<Fact>]
 let ``newMatrix func 3`` () = Assert.Equal(parsed "[66]", newMatrix 1 1 (fun r c -> parsed 66))
 [<Fact>]
-let ``newVector func`` () = Assert.Equal(parsed "[1, 2, 3, 4]", newVector 4 (fun r -> parsed (r + 1)))
+let ``newVector func`` () = Assert.Equal(parsed "[1, 2, 3, 4]", newVector 4 (fun r -> parsed (r + 1)))*)
