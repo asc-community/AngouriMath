@@ -48,7 +48,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath" Version="0.0.0-master-1621280613-564474d" />
+    <PackageReference Include="AngouriMath" Version="0.0.0-master-1621602884-e042027" />
   </ItemGroup>
 
   <ItemGroup>

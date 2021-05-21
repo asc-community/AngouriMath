@@ -52,6 +52,9 @@ let parsedType x =
 /// Creates a variable from string
 let symbol x : Entity.Variable = parsedType x
     
+/// Creates a variable with index from string
+let symbolIndexed x index : Entity.Variable = parsedType (x.ToString() + "_" + index.ToString())
+
 /// Creates a set from string
 let set x = parsedTypeSilent<Entity.Set> x
 
