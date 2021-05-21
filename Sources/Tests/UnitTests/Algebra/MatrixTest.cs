@@ -639,5 +639,17 @@ namespace UnitTests.Algebra
             Matrix m = matrixRaw;
             Assert.Null(m.Inverse);
         }
+
+        [Fact] public void TestMatrixMapped1()
+            => Assert.Equal(MathS.I_3, MathS.Matrix(3, 3, (a, b) => a == b ? 1 : 0));
+
+        [Fact] public void TestMatrixMapped2()
+            => Assert.Equal("[[11, 12, 13], [21, 22, 23], [31, 32, 33]]", MathS.Matrix(3, 3, (a, b) => (a + 1) * 10 + (b + 1)));
+
+        [Fact] public void TestMatrixMapped3()
+            => Assert.Equal("[1616]", MathS.Matrix(1, 1, (a, b) => 1616));
+
+        [Fact] public void TestMatrixMapped4()
+            => Assert.Equal("[[1, 2], [3, 4], [5, 6]]", MathS.Matrix(3, 2, (a, b) => 1 + a * 2 + b));
     }
 }
