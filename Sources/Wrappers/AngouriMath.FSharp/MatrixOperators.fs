@@ -28,4 +28,4 @@ let vector2 a b = vector [a; b]
 /// an element (first comes the number of
 /// the row, then the number of column,
 /// starting from 0)
-let newMatrix rows cols map = MathS.ZeroMatrix(rows, cols).With(new System.Func<int, int, int, Entity>(fun a b _ -> map a b))
+let newMatrix rows cols map = MathS.ZeroMatrix(rows, cols).With(new System.Func<int, int, Entity, Entity>(fun a b _ -> map a b))
