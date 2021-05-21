@@ -695,9 +695,37 @@ namespace AngouriMath
             => m.Determinant;
 
         /// <summary>Creates an instance of <see cref="Entity.Matrix"/>.</summary>
-        /// <param name="values">A two-dimensional array of values</param>
+        /// <param name="values">
+        /// A two-dimensional array of values.
+        /// The first dimension is the row count, the second one is for columns.
+        /// </param>
         /// <returns>A two-dimensional <see cref="Entity.Matrix"/> which is a matrix</returns>
         public static Matrix Matrix(Entity[,] values) => new(GenTensor.CreateMatrix(values));
+
+        /// <summary>
+        /// Creates an instance of matrix, where each cell's
+        /// index is mapped to a value with the help of the
+        /// mapping function.
+        /// </summary>
+        /// <param name="rowCount">
+        /// The number of rows (corresponds to the first index).
+        /// </param>
+        /// <param name="colCount">
+        /// The number of columns (corresponds to the second index).
+        /// </param>
+        /// <param name="map">
+        /// The first argument of the mapping function
+        /// function is the index of row, the second one for the 
+        /// column index.
+        /// 
+        /// Indexing starts from 0.
+        /// </param>
+        /// <returns>
+        /// A newly created matrix of the given size.
+        /// </returns>
+        public static Matrix Matrix(int rowCount, int colCount, Func<int, int, Entity> map)
+            => new(GenTensor.CreateMatrix(rowCount, colCount, map));
+
 
         /// <summary>Creates an instance of <see cref="Entity.Matrix"/> that has one column.</summary>
         /// <param name="values">The cells of the <see cref="Entity.Matrix"/></param>
