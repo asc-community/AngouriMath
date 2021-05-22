@@ -21,26 +21,26 @@ jobs:
           dotnet-version: '5.0.202'
           
       - name: 'Pack AngouriMath'
-        run:
+        run: |
           cd Sources/AngouriMath
           dotnet restore
           dotnet build -c release
           dotnet pack -c release -p:PackageVersion=${{ env.package_version }}
         
       - name: 'Create hello world'
-        run:
+        run: |
           mkdir IntTest
           cd IntTest
           dotnet new console
           echo using System; using AngouriMath; Console.WriteLine(MathS.I_3); > Program.cs
         
       - name: 'Add it as a source'
-        run:
+        run: |
           cd Sources
           dotnet nuget add source ../Sources/AngouriMath/bin/release
         
       - name: 'Add AngouriMath as a package'
-        run:
+        run: |
           cd IntTest
           dotnet add package AngouriMath -v ${{ env.package_version }}
           dotnet restore
