@@ -84,7 +84,7 @@ jobs:
           cd testlib
           dotnet new nugetconfig
           dotnet nuget add source --configfile nuget.config "${{ env.packed_path }}"
-          dotnet package add AngouriMath -v ${{ env.package_version }}
+          dotnet add package AngouriMath -v ${{ env.package_version }}
           dotnet restore
         
       - name: 'Pack library'
@@ -102,7 +102,7 @@ jobs:
           cd testconsole
           dotnet new nugetconfig
           dotnet nuget add source --configfile nuget.config "${{ env.library_packed_path }}"
-          dotnet package add testlib -v ${{ env.library_version }}
+          dotnet add package testlib -v ${{ env.library_version }}
           dotnet restore
         
       - name: 'Build and run app'
