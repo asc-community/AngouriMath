@@ -10,10 +10,10 @@ on:
 
 env:
   package_version: 99.99.99
-  packed_path: "D:/a/AngouriMath/AngouriMath/Sources/AngouriMath/bin/release"
+  packed_path: r"D:\a\AngouriMath\AngouriMath\Sources\AngouriMath\bin\release"
   
   library_version: 33.33.33
-  library_packed_path: "D:/a/AngouriMath/AngouriMath/testlib/bin/release"
+  library_packed_path: r"D:\a\AngouriMath\AngouriMath\testlib\bin\release"
 
 
 jobs:
