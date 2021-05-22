@@ -37,7 +37,8 @@ jobs:
       - name: 'Add it as a source'
         run: |
           cd Sources
-          dotnet nuget add source ../Sources/AngouriMath/bin/release
+          dotnet nuget add source "D:\a\AngouriMath\AngouriMath\Sources\AngouriMath\bin\release"
+          dir D:\a\AngouriMath\AngouriMath\Sources\AngouriMath\bin\release
         
       - name: 'Add AngouriMath as a package'
         run: |
