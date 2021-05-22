@@ -1,0 +1,114 @@
+name: 'Integration Test'
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+
+env:
+  package_version: 99.99.99
+  packed_path: D:\a\AngouriMath\AngouriMath\Sources\AngouriMath\bin\release
+  
+  library_version: 33.33.33
+  library_packed_path: D:\a\AngouriMath\AngouriMath\testlib\bin\release
+
+
+jobs:
+  ConsoleApp:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.202'
+          
+      - name: 'Pack AngouriMath'
+        run: |
+          cd Sources/AngouriMath
+          dotnet restore
+          dotnet build -c release
+          dotnet pack -c release -p:PackageVersion=${{ env.package_version }}
+        
+      - name: 'Create hello world'
+        run: |
+          mkdir IntTest
+          cd IntTest
+          dotnet new console
+          "using System; using AngouriMath; Console.WriteLine(MathS.I_3);" | Out-File -FilePath Program.cs
+        
+      - name: 'Add it as a source'
+        run: |
+          cd IntTest
+          dotnet new nugetconfig
+          dotnet nuget add source --configfile nuget.config "${{ env.packed_path }}"
+          dir ${{ env.packed_path }}
+        
+      - name: 'Add AngouriMath as a package'
+        run: |
+          cd IntTest
+          dotnet add package AngouriMath -v ${{ env.package_version }}
+          dotnet restore
+        
+      - name: 'Build and run'
+        run: |
+          cd IntTest
+          dotnet build
+          dotnet run
+          
+  ClassLibConsoleApp:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.202'
+          
+      - name: 'Pack AngouriMath'
+        run: |
+          cd Sources/AngouriMath
+          dotnet restore
+          dotnet build -c release
+          dotnet pack -c release -p:PackageVersion=${{ env.package_version }}
+      
+      - name: 'Create library'
+        run: |
+          dotnet new classlib --name testlib --framework netstandard2.0
+          cd testlib
+          "using AngouriMath; namespace TestLib { public class TestType { public static void TestMethod() => System.Console.WriteLine(MathS.I_3); } }" | Out-File -FilePath Class1.cs
+        
+      - name: 'Add AngouriMath to library'
+        run: |
+          cd testlib
+          dotnet new nugetconfig
+          dotnet nuget add source --configfile nuget.config "${{ env.packed_path }}"
+          dotnet add package AngouriMath -v ${{ env.package_version }}
+          dotnet restore
+        
+      - name: 'Pack library'
+        run: |
+          cd testlib
+          dotnet pack -c release -p:PackageVersion=${{ env.library_version }}
+        
+      - name: 'Create console app'
+        run: |
+          dotnet new console --name testconsole --framework net5.0
+          cd testconsole
+          "using TestLib; TestType.TestMethod();" | Out-File -FilePath Program.cs
+      
+      - name: 'Add library to console app'
+        run: |
+          cd testconsole
+          dotnet new nugetconfig
+          dotnet nuget add source --configfile nuget.config "${{ env.library_packed_path }}"
+          dotnet add package testlib -v ${{ env.library_version }}
+          dotnet restore
+        
+      - name: 'Build and run app'
+        run: |
+          cd testconsole
+          dotnet build
+          dotnet run
+        
