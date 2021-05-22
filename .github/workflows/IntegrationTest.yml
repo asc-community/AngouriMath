@@ -25,7 +25,7 @@ jobs:
           cd Sources/AngouriMath
           dotnet restore
           dotnet build -c release
-          dotnet pack -c release -p:PackageVersion=${{ package_version }}
+          dotnet pack -c release -p:PackageVersion=${{ env.package_version }}
         
       - name: 'Create hello world'
         run:
@@ -42,7 +42,7 @@ jobs:
       - name: 'Add AngouriMath as a package'
         run:
           cd IntTest
-          dotnet add package AngouriMath -v ${{ package_version }}
+          dotnet add package AngouriMath -v ${{ env.package_version }}
           dotnet restore
           dotnet build
           dotnet run
