@@ -9,7 +9,7 @@ on:
       - '*'
 
 env:
-  package_version: 99.99.99-quack
+  package_version: 99.99.99
 
 jobs:
   AngouriMath:
@@ -25,7 +25,7 @@ jobs:
           cd Sources/AngouriMath
           dotnet restore
           dotnet build -c release
-          dotnet pack -c release -p:PackageVersion=${{ env.package_version }}
+          dotnet pack -c release /p:PackageVersion=${{ env.package_version }}
         
       - name: 'Create hello world'
         run:
