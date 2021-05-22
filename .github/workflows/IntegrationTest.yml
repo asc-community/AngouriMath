@@ -77,7 +77,7 @@ jobs:
         run: |
           dotnet new classlib --name testlib --framework netstandard2.0
           cd testlib
-          "using AngouriMath; namespace TestLib { public class TestType { public static void TestMethod() => Console.WriteLine(MathS.I_3); } } }" | Out-File -FilePath Class1.cs
+          "using AngouriMath; namespace TestLib { public class TestType { public static void TestMethod() => System.Console.WriteLine(MathS.I_3); } }" | Out-File -FilePath Class1.cs
         
       - name: 'Add AngouriMath to library'
         run: |
