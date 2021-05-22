@@ -1,0 +1,48 @@
+name: 'Integration Test'
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - '*'
+
+env:
+  package_version: 99.99.99-quack
+
+jobs:
+  AngouriMath:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: '5.0.202'
+          
+      - name: 'Pack AngouriMath'
+        runs:
+          cd Sources/AngouriMath
+          dotnet restore
+          dotnet build -c release
+          dotnet pack -c release -p:PackageVersion=${{ package_version }}
+        
+      - name: 'Create hello world'
+        runs:
+          mkdir IntTest
+          cd IntTest
+          dotnet new console
+          echo using System; using AngouriMath; Console.WriteLine(MathS.I_3); > Program.cs
+        
+      - name: 'Add it as a source'
+        runs:
+          cd Sources
+          dotnet nuget add source ../Sources/AngouriMath/bin/release
+        
+      - name: 'Add AngouriMath as a package'
+        run:
+          cd IntTest
+          dotnet add package AngouriMath -v ${{ package_version }}
+          dotnet restore
+          dotnet build
+          dotnet run
