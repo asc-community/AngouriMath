@@ -36,7 +36,8 @@ jobs:
         
       - name: 'Add it as a source'
         run: |
-          cd Sources
+          cd IntTest
+          dotnet new nugetconfig
           dotnet nuget add source "D:\a\AngouriMath\AngouriMath\Sources\AngouriMath\bin\release"
           dir D:\a\AngouriMath\AngouriMath\Sources\AngouriMath\bin\release
         
@@ -45,5 +46,9 @@ jobs:
           cd IntTest
           dotnet add package AngouriMath -v ${{ env.package_version }}
           dotnet restore
+        
+      - name: 'Build and run'
+        run: |
+          cd IntTest
           dotnet build
           dotnet run
