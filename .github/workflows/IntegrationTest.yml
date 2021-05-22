@@ -32,7 +32,7 @@ jobs:
           mkdir IntTest
           cd IntTest
           dotnet new console
-          echo using System; using AngouriMath; Console.WriteLine(MathS.I_3); > Program.cs
+          "using System; using AngouriMath; Console.WriteLine(MathS.I_3);" | Out-File -FilePath Program.cs
         
       - name: 'Add it as a source'
         run: |
