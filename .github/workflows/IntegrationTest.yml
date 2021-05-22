@@ -43,7 +43,7 @@ jobs:
         run: |
           cd IntTest
           dotnet new nugetconfig
-          dotnet nuget add source ${{ env.packed_path }} --configfile nuget.config
+          dotnet nuget add source --configfile nuget.config ${{ env.packed_path }}
           dir ${{ env.packed_path }}
         
       - name: 'Add AngouriMath as a package'
@@ -83,7 +83,7 @@ jobs:
         run: |
           cd testlib
           dotnet new nugetconfig
-          dotnet nuget add source ${{ env.packed_path }} --configfile nuget.config
+          dotnet nuget add source --configfile nuget.config ${{ env.packed_path }}
           dotnet package add AngouriMath -v ${{ env.package_version }}
           dotnet restore
         
@@ -101,7 +101,7 @@ jobs:
         run: |
           cd testconsole
           dotnet new nugetconfig
-          dotnet nuget add source ${{ env.library_packed_path }} --configfile nuget.config
+          dotnet nuget add source --configfile nuget.config ${{ env.library_packed_path }}
           dotnet package add testlib -v ${{ env.library_version }}
           dotnet restore
         
