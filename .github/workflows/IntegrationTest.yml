@@ -90,7 +90,7 @@ jobs:
       - name: 'Pack library'
         run: |
           cd testlib
-          dotnet pack -c release -p:PackageVersion=${{ library_version }}
+          dotnet pack -c release -p:PackageVersion=${{ env.library_version }}
         
       - name: 'Create console app'
         run: |
@@ -102,7 +102,7 @@ jobs:
           cd testconsole
           dotnet new nugetconfig
           dotnet nuget add source ${{ env.library_packed_path }} --configfile nuget.config
-          dotnet package add testlib -v ${{ library_version }}
+          dotnet package add testlib -v ${{ env.library_version }}
           dotnet restore
         
       - name: 'Build and run app'
