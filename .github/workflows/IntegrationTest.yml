@@ -95,6 +95,7 @@ jobs:
       - name: 'Create console app'
         run: |
           dotnet new console --name testconsole --framework net5.0
+          cd testconsole
           "using TestLib; TestType.TestMethod();" | Out-File -FilePath Program.cs
       
       - name: 'Add library to console app'
