@@ -29,10 +29,11 @@ namespace AngouriMath
                 ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        { Evaled: Complex n } when TrigonometryTableValues.PullSin(n, out var res) => res,
+                        { Evaled: Complex n } arg when TrigonometryTableValues.PullSin(n, out var res) => res,
                         _ => null
                     },
                     (@this, a) => ((Sinf)@this).New(a),
+                    //false /* because we check it manually */);
                     true);
         }
 

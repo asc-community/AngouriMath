@@ -1,6 +1,8 @@
 ﻿using AngouriMath;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
@@ -29,6 +31,13 @@ namespace UnitTests
 
         public static void ShouldBeNull<T>(this T? value)
             => Assert.Null(value);
+
+        // okay; this one makes an unnecessary allocation
+        public static IEnumerable<T> ShouldCountTo<T>(this IEnumerable<T> value, int target)
+        {
+            Assert.Equal(target, value.Count());
+            return value;
+        }
     }
 
     /// <summary>

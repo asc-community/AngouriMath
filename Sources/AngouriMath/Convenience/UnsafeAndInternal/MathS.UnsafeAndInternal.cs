@@ -8,6 +8,8 @@ using AngouriMath.Convenience;
 using AngouriMath.Core;
 using AngouriMath.Functions;
 using System;
+using System.Collections.Generic;
+using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
@@ -75,6 +77,20 @@ namespace AngouriMath
             /// <returns>The result if valid, null otherwise</returns>
             public static Entity? DivideByEntityStrict(Entity expr, Entity divisor)
                 => Simplificator.DivideByEntityStrict(expr, divisor);
+
+            /// <summary>
+            /// If it can, it will find coefficients 
+            /// [a_1, a_2, ..., a_n] such that for
+            /// given rational forms [p_1, p_2, ..., p_n]
+            /// it is true that 
+            /// q = a_1 * p_1 + a_2 * p_2 + ... + a_n * p_n
+            /// </summary>
+            /// <returns>
+            /// The sequence of pairs coef-form or
+            /// null if it cannot find them
+            /// </returns>
+            public static IEnumerable<(Integer coef, Rational form)>? RepresentRational(Rational q, IEnumerable<Rational> forms)
+                => Simplificator.RepresentRational(q, forms);
         }
     }
 }

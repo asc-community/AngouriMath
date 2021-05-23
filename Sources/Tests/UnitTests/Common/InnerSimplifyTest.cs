@@ -1,6 +1,8 @@
 ﻿using AngouriMath;
 using AngouriMath.Extensions;
+using System.Linq;
 using Xunit;
+using static AngouriMath.Entity.Number;
 
 namespace UnitTests.Common
 {
@@ -244,6 +246,35 @@ namespace UnitTests.Common
         {
             Entity input = inputRaw;
             MathS.UnsafeAndInternal.DivideByEntityStrict(input, "pi").ShouldBeNull();
+        }
+
+        [Theory]
+        [InlineData("0", 0)]
+        [InlineData("1/3", 1)]
+        [InlineData("1/6", 1)]
+        [InlineData("2/3", 2)]
+        [InlineData("1/2 + 1/3", 2)]
+        [InlineData("19", 1)]
+        [InlineData("3/2 + 1/3", 2)]
+        [InlineData("3/2 + 1/3 + 4/17", -1 /* current algo cannot take this */)]
+        [InlineData("3/2 + 1/3 + 1/19", -1)]
+        public void TestRepresentRational(string ratRaw, int countOfForms)
+        {
+            var rat = (Rational)ratRaw.ToEntity().InnerSimplified;
+
+            var forms = new[] { "1/2", "1/3", "1/6", "1/17" }.Select(c => (Rational)c.ToEntity().InnerSimplified);
+
+            var repr = MathS.UnsafeAndInternal.RepresentRational(rat, forms);
+
+            if (countOfForms is -1)
+                repr.ShouldBeNull();
+            else
+            {
+                Rational res = 0;
+                foreach (var (coef, form) in repr.ShouldBeNotNull().ShouldCountTo(countOfForms))
+                    res += coef * form;
+                res.ShouldBe(rat);
+            }
         }
     }
 }
