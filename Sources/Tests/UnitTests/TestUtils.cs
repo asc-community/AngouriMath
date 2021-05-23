@@ -23,6 +23,12 @@ namespace UnitTests
             Assert.NotNull(value);
             return value!;
         }
+
+        public static T ShouldBeNotNull<T>(this T? value)
+            => AsNotNull(value);
+
+        public static void ShouldBeNull<T>(this T? value)
+            => Assert.Null(value);
     }
 
     /// <summary>

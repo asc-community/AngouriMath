@@ -237,8 +237,43 @@ namespace AngouriMath.Functions
         }
 
         internal static Entity ConditionallyGreater(Entity left, Entity right)
-        {
-            return SimplifyChildren(left - right) > 0;
-        }
+            => SimplifyChildren(left - right) > 0;
+
+        /// <summary>
+        /// Divides the given expression by the divisor.
+        /// Requires a given node to exactly match the divisor,
+        /// so no "smart" division can be applied.
+        /// (e. g. pi / 2 divide by pi would work, but
+        /// (2 a) / 2 won't be divided by 4a)
+        /// </summary>
+        /// <returns>The result if valid, null otherwise</returns>
+        internal static Entity? DivideByEntityStrict(Entity expr, Entity divisor)
+            => expr switch
+            {
+                var same when same == divisor => 1,
+                Sumf(var left, var right) => 
+                    DivideByEntityStrict(left, divisor) is { } l && 
+                    DivideByEntityStrict(right, divisor) is { } r
+                    ? l + r
+                    : null,
+                Minusf(var left, var right) => 
+                    DivideByEntityStrict(left, divisor) is { } l && 
+                    DivideByEntityStrict(right, divisor) is { } r
+                    ? l - r
+                    : null,
+                Mulf(var left, var right) =>
+                    DivideByEntityStrict(left, divisor) is { } l
+                    ? l * right 
+                    : DivideByEntityStrict(right, divisor) is { } r
+                        ? left * r
+                        : null,
+                Divf(var left, var right) =>
+                    DivideByEntityStrict(left, divisor) is { } l
+                    ? l / right
+                    : DivideByEntityStrict(right, divisor is Powf(var newDiv, Integer(-1)) ? newDiv : divisor.Pow(-1)) is { } r
+                        ? left / r
+                        : null,
+                _ => null
+            };
     }
 }

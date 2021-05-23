@@ -212,6 +212,39 @@ namespace UnitTests.Common
         [Fact] public void PiecewiseLimit1NodeInnerSimplified() =>
             "limit(piecewise(sin(a x) / (b x) provided a, sin(b x) / sin(a x)), x, 0)".ToEntity().InnerSimplified
             .ShouldBe("piecewise(a / b provided a, b / a)");
+
+        [Theory]
+        [InlineData("pi", "1")]
+        [InlineData("pi / 2", "1 / 2")]
+        [InlineData("2pi", "2 * 1")]
+        [InlineData("pi * 2", "1 * 2")]
+        [InlineData("pi + pi / 2", "1 + 1 / 2")]
+        [InlineData("pi / 2 + pi / 3", "1 / 2 + 1 / 3")]
+        [InlineData("pi / 2 - 2 pi", "1 / 2 - 2 * 1")]
+        [InlineData("pi / 2 - pi * 2", "1 / 2 - 1 * 2")]
+        [InlineData("1 / (2 / pi)", "1 / (2 / 1)")]
+        [InlineData("1 / (2 / pi) + pi / 2", "1 / (2 / 1) + 1 / 2")]
+        [InlineData("1 / (2 / (3 / (4 / pi)))", "1 / (2 / (3 / (4 / 1)))")]
+        [InlineData("pi * pi", "1 * pi")]
+        public void TestDivideByEntityStrict(string inputRaw, string expectedRaw)
+        {
+            Entity input = inputRaw;
+            var actual = MathS.UnsafeAndInternal.DivideByEntityStrict(input, "pi");
+            actual.ShouldBeNotNull().ShouldBe(expectedRaw);
+        }
+
+        [Theory]
+        [InlineData("1")]
+        [InlineData("1 + pi")]
+        [InlineData("1 / pi")]
+        [InlineData("2 - pi")]
+        [InlineData("pi ^ 2")]
+        [InlineData("sin(pi)")]
+        public void TestDivideByEntityStrictShouldBeNull(string inputRaw)
+        {
+            Entity input = inputRaw;
+            MathS.UnsafeAndInternal.DivideByEntityStrict(input, "pi").ShouldBeNull();
+        }
     }
 }
 

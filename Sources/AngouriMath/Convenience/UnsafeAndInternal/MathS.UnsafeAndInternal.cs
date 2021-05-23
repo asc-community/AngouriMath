@@ -64,6 +64,17 @@ namespace AngouriMath
             {
                 internal NativeExportAttribute() { }
             }
+
+            /// <summary>
+            /// Divides the given expression by the divisor.
+            /// Requires a given node to exactly match the divisor,
+            /// so no "smart" division can be applied.
+            /// (e. g. pi / 2 divide by pi would work, but
+            /// (2 a) / 2 won't be divided by 4a)
+            /// </summary>
+            /// <returns>The result if valid, null otherwise</returns>
+            public static Entity? DivideByEntityStrict(Entity expr, Entity divisor)
+                => Simplificator.DivideByEntityStrict(expr, divisor);
         }
     }
 }
