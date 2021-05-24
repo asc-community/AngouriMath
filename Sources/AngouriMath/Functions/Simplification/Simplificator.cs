@@ -292,11 +292,12 @@ namespace AngouriMath.Functions
             if (q.Denominator > 600)
                 return null;
             var res = new List<(Integer coef, Rational form)>();
-            foreach (var form in forms.OrderBy(f => -f.AsDouble()))
+            foreach (var form in forms.OrderBy(c => -c.AsDouble()))
             {
                 if (form > q)
                     continue;
-
+                //if (q.Denominator % form.Denominator != 0)
+                //    continue;
                 /*
                  * a/b = k * c/d + e/f
                  * 
@@ -316,12 +317,34 @@ namespace AngouriMath.Functions
                 var bd = q.Denominator * form.Denominator;
                 var (ad, cb) = ((Integer)(q * bd), (Integer)(form * bd));
                 var (k, e) = (ad.IntegerDiv(cb), ad % cb);
-                q = (Rational)(e / bd);
-                res.Add((k, form));
+                var newQ = (Rational)(e / bd);
+
+                if (q.Denominator % newQ.Denominator == 0)
+                {
+                    q = newQ;
+                    res.Add((k, form));
+                }
             }
             if (q.IsZero)
                 return res;
             return null;
         }
+        /*
+        internal readonly struct FastRational
+        {
+            public int Numerator { get; }
+            public int Denominator { get; }
+            public FastRational(int numerator, int denominator)
+            {
+                if (denominator < 0)
+                {
+                    denominator *= -1;
+                    numerator *= -1;
+                }
+                //var gcd = 
+                (Numerator, Denominator) = (numerator, denominator);
+            }
+            public static operator 
+        }*/
     }
 }

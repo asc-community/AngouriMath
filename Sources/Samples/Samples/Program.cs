@@ -13,4 +13,4 @@ using System.Linq;
 
 Matrix m = "[[a, b], [c, d]]";
 
-Console.WriteLine(m.TensorPower(2).ToString(true));
+Console.WriteLine(MathS.NumberTheory.SolveDiophantineEquation(8633, 8051, 97));
