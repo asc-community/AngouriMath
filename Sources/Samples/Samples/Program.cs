@@ -13,4 +13,6 @@ using System.Linq;
 
 Matrix m = "[[a, b], [c, d]]";
 
-Console.WriteLine(MathS.NumberTheory.SolveDiophantineEquation(8633, 8051, 97));
+//Console.WriteLine(MathS.NumberTheory.SolveDiophantineEquation(8633, 8051, 97));
+
+foreach (var _ in MathS.NumberTheory.DecomposeRational(17, 12)) {}
