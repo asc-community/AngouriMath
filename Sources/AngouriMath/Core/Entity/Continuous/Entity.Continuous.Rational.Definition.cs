@@ -39,13 +39,13 @@ namespace AngouriMath
                 /// <summary>
                 /// A getter for the numerator
                 /// </summary>
-                public Integer Numerator => numerator.GetValue(@this => ERational.Numerator, this);
+                public Integer Numerator => numerator.GetValue(static @this => @this.ERational.Numerator, this);
                 private FieldCache<Integer> numerator;
 
                 /// <summary>
                 /// A getter for the denominator
                 /// </summary>
-                public Integer Denominator => denominator.GetValue(@this => ERational.Denominator, this);
+                public Integer Denominator => denominator.GetValue(static @this => @this.ERational.Denominator, this);
                 private FieldCache<Integer> denominator;
 
 #pragma warning disable CS1591
