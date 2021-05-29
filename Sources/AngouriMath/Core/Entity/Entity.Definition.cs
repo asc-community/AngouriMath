@@ -89,7 +89,7 @@ namespace AngouriMath
         /// <summary>
         /// Represents all direct children of a node
         /// </summary>
-        public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(@this => @this.InitDirectChildren(), this);
+        public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(static @this => @this.InitDirectChildren(), this);
         private FieldCache<IReadOnlyList<Entity>> directChildren;
 
         /// <remarks>A depth-first enumeration is required by
@@ -107,7 +107,7 @@ namespace AngouriMath
         /// a + b / 2 ^ 3, a, b / 2 ^ 3, b, 2 ^ 3, 2, 3
         /// </code>
         /// </example>
-        public IEnumerable<Entity> Nodes => nodes.GetValue(@this => @this.DirectChildren.SelectMany(c => c.Nodes).Prepend(@this), this);
+        public IEnumerable<Entity> Nodes => nodes.GetValue(static @this => @this.DirectChildren.SelectMany(c => c.Nodes).Prepend(@this), this);
         private FieldCache<IEnumerable<Entity>> nodes;
 
         /// <summary>
@@ -164,7 +164,7 @@ namespace AngouriMath
         /// Whether both parts of the complex number are finite
         /// meaning that it could be safely used for calculations
         /// </value>
-        public bool IsFinite => isFinite.GetValue(@this => @this.ThisIsFinite && @this.DirectChildren.All(x => x.IsFinite), this);
+        public bool IsFinite => isFinite.GetValue(static @this => @this.ThisIsFinite && @this.DirectChildren.All(x => x.IsFinite), this);
         private FieldCache<bool> isFinite;
         /// <summary>
         /// Not NaN and not infinity
@@ -172,7 +172,7 @@ namespace AngouriMath
         protected virtual bool ThisIsFinite => true;       
 
         /// <value>Number of nodes in tree</value>
-        public int Complexity => complexity.GetValue(@this => 1 + @this.DirectChildren.Sum(x => x.Complexity), this);
+        public int Complexity => complexity.GetValue(static @this => 1 + @this.DirectChildren.Sum(x => x.Complexity), this);
         private FieldCache<int> complexity;
 
         /// <summary>
@@ -183,7 +183,7 @@ namespace AngouriMath
         /// Set of unique variables excluding mathematical constants
         /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
-        public IEnumerable<Variable> Vars => vars.GetValue(@this => @this.VarsAndConsts.Where(x => !x.IsConstant), this);
+        public IEnumerable<Variable> Vars => vars.GetValue(static @this => @this.VarsAndConsts.Where(x => !x.IsConstant), this);
         private FieldCache<IEnumerable<Variable>> vars;
 
         /// <summary>
@@ -195,7 +195,7 @@ namespace AngouriMath
         /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
         public IReadOnlyCollection<Variable> VarsAndConsts => varsAndConsts.GetValue(
-            @this => new HashSet<Variable>(@this is Variable v ? new[] { v } : @this.DirectChildren.SelectMany(x => x.VarsAndConsts)), this);
+            static @this => new HashSet<Variable>(@this is Variable v ? new[] { v } : @this.DirectChildren.SelectMany(x => x.VarsAndConsts)), this);
         private FieldCache<IReadOnlyCollection<Variable>> varsAndConsts;
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
