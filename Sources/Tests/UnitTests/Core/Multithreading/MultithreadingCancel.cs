@@ -27,7 +27,7 @@ namespace UnitTests.Core.Multithreading
         /// this will become false
         /// </summary>
         public static bool MakesSenseToPerformTest => makesSenseToPerformTest.GetValue(
-            @this => !new TimeOutChecker().BeingCompletedForLessThan(
+            static @this => !new TimeOutChecker().BeingCompletedForLessThan(
                 SomeLongLastingTask
                 , ShouldLastAtLeast), someReference);
         private static object someReference = new();
