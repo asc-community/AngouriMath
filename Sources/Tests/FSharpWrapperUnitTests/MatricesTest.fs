@@ -1,8 +1,8 @@
-﻿module MatrixOperatorsTest
+﻿module MatricesTest
 
 open AngouriMath
 open AngouriMath.FSharp.Functions
-open AngouriMath.FSharp.MatrixOperators
+open AngouriMath.FSharp.Matrices
 open Xunit
 
 (*
