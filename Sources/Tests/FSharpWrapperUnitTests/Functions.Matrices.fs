@@ -25,7 +25,7 @@ let ``Tensor power 1`` () = Assert.Equal(parsed "[a2, a b, b a, b2]", (asMatrix 
 let ``Tensor power 2`` () = Assert.Equal(parsed "[a2 * a]", (asMatrix "a") **** 3)
 
 
-open AngouriMath.FSharp.MatrixOperators
+open AngouriMath.FSharp.Matrices
 
 [<Fact>]
 let ``matrix 2x2 func`` () = testEqual (parsed "[[a, b], [c, d]]", matrix2x2 "a" "b" "c" "d")
