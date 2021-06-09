@@ -48,7 +48,21 @@ namespace AngouriMath.Functions
             }
 
             var coef = c.IntegerDiv(gcd);
-            return info.Compensate(x * coef, y * coef);
+            x *= coef;
+            y *= coef;
+
+            while (true)
+            {
+                var newX = x - b;
+                var newY = y + a;
+                if (newX.Abs() + newY.Abs() >= x.Abs() + y.Abs() || x < 0)
+                    break;
+                x = newX;
+                y = newY;
+            }
+
+            
+            return info.Compensate(x, y);
         }
 
         internal struct NormalInfo

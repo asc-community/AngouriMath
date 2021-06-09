@@ -11,8 +11,11 @@ using static AngouriMath.Entity.Set;
 using AngouriMath.Core;
 using System.Linq;
 
-Matrix m = "[[a, b], [c, d]]";
 
-//Console.WriteLine(MathS.NumberTheory.SolveDiophantineEquation(8633, 8051, 97));
+Matrix m = @"
+[[1, 2, 3],
+ [4, 5, 6],
+ [7, 8, 9]]
+";
 
-foreach (var _ in MathS.NumberTheory.DecomposeRational(17, 12)) {}
+Console.WriteLine(m);

@@ -17,6 +17,7 @@ namespace UnitTests.Algebra
         [InlineData(8633, 8051, -97, -14, 15)]
         [InlineData(8633, -8051, 97, 14, 15)]
         [InlineData(-8633, 8051, 97, -14, -15)]
+        [InlineData(4, 3, 7, 1, 1)]
         public void DiophantineEquationTest(int a, int b, int c, int x, int y)
         {
             Integer A = a; Integer B = b; Integer C = c;
