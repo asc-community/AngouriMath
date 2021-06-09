@@ -32,20 +32,20 @@ namespace AngouriMath.Functions
 
             static bool IsPrimeC(int num)
             {
-                var max = (int)Math.Sqrt(num);
+                var max = (int)Math.Sqrt(num) + 1;
                 for (int i = 0; primes[i].cache < max; i++)
                     if (num % primes[i].cache == 0)
-                        return true;
-                return false;
+                        return false;
+                return true;
             }
 
             static bool IsPrimeI(Integer num)
             {
-                var max = (EInteger)EFloat.FromEInteger(num.EInteger).Sqrt(MathS.Settings.DecimalPrecisionContext).RoundToIntegerExact(MathS.Settings.DecimalPrecisionContext);
+                var max = (EInteger)EFloat.FromEInteger(num.EInteger).Sqrt(MathS.Settings.DecimalPrecisionContext).RoundToIntegerExact(MathS.Settings.DecimalPrecisionContext) + 1;
                 for (int i = 0; primes[i].actual < max; i++)
                     if (num % primes[i].actual == Integer.Zero)
-                        return true;
-                return false;
+                        return false;
+                return true;
             }
 
             static void AddPrimeC()

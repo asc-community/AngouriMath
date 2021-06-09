@@ -29,6 +29,10 @@ namespace UnitTests.Algebra
 
         [Theory]
         [InlineData("1/3 + 1/2", 2)]
+        [InlineData("1/7 + 1/2", 2)]
+        [InlineData("1/3", 1)]
+        [InlineData("1/9", 1)]
+        [InlineData("1/17 + 1/3", 2)]
         public void RationalDecompositionTest(string rationalRaw, int count)
         {
             var input = (Rational)rationalRaw.ToEntity().InnerSimplified;

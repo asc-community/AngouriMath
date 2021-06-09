@@ -19,14 +19,15 @@ namespace AngouriMath.Functions
             var primeId = 0;
             while (num != 0)
             {
-                var (newNum, y, denPrime, denPower, newDen) = Expand(num, den, primeId);
-                yield return (y, denPrime, denPower);
-                num = newNum;
-                den = newDen;
+                if (Expand(num, den, primeId) is var (newNum, y, denPrime, denPower, _, _))
+                {
+                    yield return (y, denPrime, denPower);
+                    num = newNum;
+                }
                 primeId++;
             }
 
-            static (Integer x, Integer y, Integer denPrime, Integer denPower, Integer newDen) Expand(Integer num, Integer den, int primeId)
+            static (Integer newNum, Integer resNum, Integer denPrime, Integer denPower, Integer resDen, Integer newDen)? Expand(Integer num, Integer den, int primeId)
             {
                 var prime = Primes.GetPrime(primeId);
                 int denPower = 0;
@@ -36,24 +37,14 @@ namespace AngouriMath.Functions
                     denPower++;
                 }
 
-                /* 
-                 * c / (a b) = x / b + y / a    <=>    a x + b y = c
-                 * 
-                 * a = p ^ k
-                 * b = den / p^k
-                 * 
-                 * gcd(a, b) = 1 so there always should be a solution over x and y
-                 * 
-                */
-                
-                var a = (Integer)prime.EInteger.Pow(denPower);
-                var b = den;
-                var c = num;
+                if (denPower == 0)
+                    return null;
 
-                if (Diophantine.Solve(a, b, c) is not var (x, y))
-                    throw new AngouriBugException("There should always be a solution");
+                var resDen = (Integer)prime.EInteger.Pow(denPower);
+                var newNum = num % den;
+                var resNum = num.IntegerDiv(den);
 
-                return (x, y, prime, denPower, den);
+                return (newNum, resNum, prime, denPower, resDen, den);
             }
         }
     }
