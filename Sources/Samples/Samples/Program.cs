@@ -12,10 +12,4 @@ using AngouriMath.Core;
 using System.Linq;
 
 
-Matrix m = @"
-[[1, 2, 3],
- [4, 5, 6],
- [7, 8, 9]]
-";
-
-Console.WriteLine(m);
+Console.Write(4);

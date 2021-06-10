@@ -42,7 +42,7 @@ namespace AngouriMath.Functions
             static bool IsPrimeI(Integer num)
             {
                 var max = (EInteger)EFloat.FromEInteger(num.EInteger).Sqrt(MathS.Settings.DecimalPrecisionContext).RoundToIntegerExact(MathS.Settings.DecimalPrecisionContext) + 1;
-                for (int i = 0; primes[i].actual < max; i++)
+                for (var i = 0; primes[i].actual < max; i++)
                     if (num % primes[i].actual == Integer.Zero)
                         return false;
                 return true;
