@@ -43,10 +43,18 @@ namespace AngouriMath.Functions
                 if (den % resDen != 0)
                     return null;
 
-                den = den.IntegerDiv(resDen);
+                var newDen = den.IntegerDiv(resDen);
                 
-                var newNum = num % den;
-                var resNum = (num - newNum).IntegerDiv(den);
+                // den = prime ^ power * newDen = resDen * newDen
+                // num / den = a / resDen + b / newden
+                // num = a * newDen + b * resDen
+                if (Diophantine.Solve(newDen, resDen, num) is not var (a, b))
+                    return null;
+
+                // a is numerator to yield return
+                // b is the new numerator
+                var resNum = a;
+                var newNum = b;
 
                 return (newNum, resNum, prime, resDen, den);
             }
