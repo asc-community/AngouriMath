@@ -33,11 +33,19 @@ namespace UnitTests.Algebra
         [InlineData("1/3", 1)]
         [InlineData("1/9", 1)]
         [InlineData("1/17 + 1/3", 2)]
+        [InlineData("2/17 + 1/3", 2)]
+        [InlineData("5/17 + 1/3", 2)]
+        [InlineData("1/(17^2) + 1/3", 2)]
+        [InlineData("1/3 + 1/9 + 1/27 + 1/81", 4)]
+        [InlineData("11/3 + 4/9 + 5/27 + 7/81", 3)]
+        [InlineData("1/17 - 1/3", 2)]
+        [InlineData("-2/17 + 1/3", 2)]
+        [InlineData("-1/17 - 2/3", 2)]
         public void RationalDecompositionTest(string rationalRaw, int count)
         {
             var input = (Rational)rationalRaw.ToEntity().InnerSimplified;
-            var decomposed = MathS.NumberTheory.DecomposeRational(input);
-            Assert.Equal(count, decomposed.Count());
+            var decomposed = MathS.NumberTheory.DecomposeRational(input).ToArray();
+            Assert.True(count == decomposed.Length, $"Expected: {count}\nActual: {decomposed.Length}\nElements: {string.Join(", ", decomposed)}");
             var sum = decomposed.Select(c => c.numerator / c.denPrime.Pow(c.denPower)).Aggregate((a, b) => a + b).InnerSimplified;
             Assert.Equal(input, sum);
         }

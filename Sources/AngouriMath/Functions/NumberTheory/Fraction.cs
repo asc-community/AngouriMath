@@ -17,34 +17,38 @@ namespace AngouriMath.Functions
         internal static IEnumerable<(Integer numerator, Integer denPrime, Integer denPower)> Decompose(Integer num, Integer den)
         {
             var primeId = 0;
+            var power = 1;
             while (num != 0)
             {
-                if (Expand(num, den, primeId) is var (newNum, y, denPrime, denPower, _, _))
+                if (Expand(num, den, primeId, power) is var (newNum, y, denPrime, _, _))
                 {
-                    yield return (y, denPrime, denPower);
+                    if (y != 0)
+                        yield return (y, denPrime, power);
                     num = newNum;
+                    power++;
                 }
-                primeId++;
+                else
+                {
+                    power = 1;
+                    primeId++;
+                }
             }
 
-            static (Integer newNum, Integer resNum, Integer denPrime, Integer denPower, Integer resDen, Integer newDen)? Expand(Integer num, Integer den, int primeId)
+            static (Integer newNum, Integer resNum, Integer denPrime, Integer resDen, Integer newDen)? Expand(Integer num, Integer den, int primeId, int power)
             {
                 var prime = Primes.GetPrime(primeId);
-                int denPower = 0;
-                while (den % prime == 0)
-                {
-                    den = den.IntegerDiv(prime);
-                    denPower++;
-                }
-
-                if (denPower == 0)
+                
+                var resDen = (Integer)prime.EInteger.Pow(power);
+                
+                if (den % resDen != 0)
                     return null;
 
-                var resDen = (Integer)prime.EInteger.Pow(denPower);
+                den = den.IntegerDiv(resDen);
+                
                 var newNum = num % den;
-                var resNum = num.IntegerDiv(den);
+                var resNum = (num - newNum).IntegerDiv(den);
 
-                return (newNum, resNum, prime, denPower, resDen, den);
+                return (newNum, resNum, prime, resDen, den);
             }
         }
     }
