@@ -7,12 +7,6 @@ namespace AngouriMath.Functions
 {
     internal static class Fraction
     {
-        private enum NextAction
-        {
-            GiveItAChance,
-            MoveOver
-        }
-        
         /// <summary>
         /// Decomposes an arbitrary rational
         /// number into sum of rationals a_i / p_i^k,
@@ -21,51 +15,86 @@ namespace AngouriMath.Functions
         /// </summary>
         internal static IEnumerable<(Integer numerator, Integer denPrime, Integer denPower)> Decompose(Integer num, Integer den)
         {
+            // Statements are referenced with [i].
+            //
+            // The algorithm works as follows.
+            // `num` and `den` are current numerator and denominator.
+            // By default, they equal those of the rational we want
+            // to decompose. The algorithm finishes when the
+            // numerator is zeroed [1].
+            
+            // newNum - the new numerator (replaces the current with this one)
+            // newDen - the new denominator
+            // resNum - the result numerator (the one to yield)
+            // resDenPrime - the exp base of the result denominator
+            // resDenPower - the exp power of the result denominator
+            
+            //
+            // For each prime `prime`,
+            //     Find the highest power `power` such that
+            //     `den` is divided by `power` [2]. If it equals
+            //     0, then we move to the next prime [3].
+            //
+            //     Now we have `resDen` = `prime` ^ `power`
+            //     `newDen` = `den` / `prime` ^ `power`
+            //     we need to find `resNum` and `newNum` by
+            //     solving a diophantine equation:
+            //     `num` / `den` = `resNum` / `resDen` + `newNum` / `newDen` [4]
+
             var primeId = 0;
-            var power = 1;
-            while (num != 0)
+            while (num != 0) // [1]
             {
-                if (Expand(num, den, primeId, power).Alias(out var expansion).Is<(Integer, Integer, Integer, Integer, Integer)>(out var valid))
+                // [4]
+                // Assume num and den are current numerator and denominator, then
+                // num / den  = newNum / newDen + resNum / resDenPrime ^ resDenPower
+                //
+                // Hence, here is how we move:
+                // num <- newNum
+                // den <- newDen
+                // yield resNum, resDenPrime, resDenPower
+                if (Expand(num, den, primeId) is var (newNum, newDen, resNum, resDenPrime, resDenPower))
                 {
-                    var (newNum, y, denPrime, _, newDen) = valid;
-                    if (y != 0)
-                        yield return (y, denPrime, power);
+                    if (resNum != 0)
+                        yield return (resNum, resDenPrime, resDenPower);
                     num = newNum;
                     den = newDen;
-                    power++;
                 }
-                else if (expansion.As<NextAction>().AssumeBest() == NextAction.GiveItAChance)
-                    power++;
-                else
-                {
-                    power = 1;
-                    primeId++;
-                }
+                primeId++;
             }
 
-            static Either<(Integer newNum, Integer resNum, Integer denPrime, Integer resDen, Integer newDen), NextAction> Expand(Integer num, Integer den, int primeId, int power)
+            
+            static (Integer newNum, Integer newDen, Integer resNum, Integer resDenPrime, Integer resDenPower)? Expand(Integer num, Integer den, int primeId)
             {
                 var prime = Primes.GetPrime(primeId);
                 
-                var resDen = (Integer)prime.EInteger.Pow(power);
+                // [2]
+                var power = 0;
+                while (den % prime == 0)
+                {
+                    power++;
+                    den = den.IntegerDiv(prime);
+                }
                 
-                if (den % resDen != 0)
-                    return NextAction.MoveOver;
+                // [3]
+                if (power is 0)
+                    return null;
 
-                var newDen = den.IntegerDiv(resDen);
+                var resDen = (Integer)prime.EInteger.Pow(power);
+
+                var newDen = den;
                 
                 // den = prime ^ power * newDen = resDen * newDen
                 // num / den = a / resDen + b / newden
                 // num = a * newDen + b * resDen
                 if (Diophantine.Solve(newDen, resDen, num) is not var (b, a))
-                    return NextAction.GiveItAChance;
+                    return null;
 
                 // a is numerator to yield return
                 // b is the new numerator
                 var resNum = a;
                 var newNum = b;
 
-                return (newNum, resNum, prime, resDen, newDen);
+                return (newNum, newDen, resNum, prime, power);
             }
         }
     }

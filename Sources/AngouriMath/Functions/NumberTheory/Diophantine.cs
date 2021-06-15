@@ -38,7 +38,7 @@ namespace AngouriMath.Functions
             Integer y = 0;
             var turnOfY = true;
 
-            foreach (var (_, q, _, r) in Decompose(a, b).Reverse())
+            foreach (var (_, q, _, _) in Decompose(a, b).Reverse())
             {
                 if (turnOfY)
                     y += x * -q;
@@ -53,8 +53,8 @@ namespace AngouriMath.Functions
 
             while (true)
             {
-                var newX = x - b;
-                var newY = y + a;
+                var newX = x - a;
+                var newY = y + b;
                 if (newX.Abs() + newY.Abs() >= x.Abs() + y.Abs() || x < 0)
                     break;
                 x = newX;

@@ -11,10 +11,11 @@ using Antlr4.Runtime;
 // Console.Write(b.GetType().IsValueType);
 
 //var a = Enumerable.Range(0, 1_000_000).Select(c => (Entity.Number.Integer) c).ToArray();
-Entity expr = "1 + 2 + sqrt(2) + x + y";
-Func<double, double, double> someFunc = expr.Compile<double, double, double>("x", "y");
-Console.WriteLine(someFunc(3, 5));
 
+// Console.WriteLine(MathS.Compute.DefiniteIntegral("sin(x)", "x", (0, 0), MathS.DecimalConst.pi / 2));
+Entity expr = "x + sin(2x) + 3";
+Func<double, double> f = expr.Compile<double, double>("x");
+Console.WriteLine(f(4));
 /*
 Console.Write(Unsafe.SizeOf<Entity.Number.Integer>());
 

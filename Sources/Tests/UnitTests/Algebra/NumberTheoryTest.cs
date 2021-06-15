@@ -18,6 +18,15 @@ namespace UnitTests.Algebra
         [InlineData(8633, -8051, 97, 14, 15)]
         [InlineData(-8633, 8051, 97, -14, -15)]
         [InlineData(4, 3, 7, 1, 1)]
+        [InlineData(3, 17, 37, 1, 2)]
+        [InlineData(2, 5, 7, 1, 1)]
+        [InlineData(5, 2, 7, 1, 1)]
+        [InlineData(-2, 5, 7, -1, 1)]
+        [InlineData(2, -5, 7, 1, -1)]
+        [InlineData(-2, -5, 7, -1, -1)]
+        [InlineData(2, 5, -7, -1, -1)]
+        [InlineData(16, 7, 2, 1, -2)]
+        [InlineData(7, 16, 2, -2, 1)]
         public void DiophantineEquationTest(int a, int b, int c, int x, int y)
         {
             Integer A = a; Integer B = b; Integer C = c;
@@ -36,8 +45,8 @@ namespace UnitTests.Algebra
         [InlineData("2/17 + 1/3", 2)]
         [InlineData("5/17 + 1/3", 2)]
         [InlineData("1/(17^2) + 1/3", 2)]
-        [InlineData("1/3 + 1/9 + 1/27 + 1/81", 4)]
-        [InlineData("11/3 + 4/9 + 5/27 + 7/81", 3)]
+        [InlineData("1/3 + 1/9 + 1/27 + 1/81", 1)]
+        [InlineData("11/3 + 4/9 + 5/27 + 7/81", 1)]
         [InlineData("1/17 - 1/3", 2)]
         [InlineData("-2/17 + 1/3", 2)]
         [InlineData("-1/17 - 2/3", 2)]
