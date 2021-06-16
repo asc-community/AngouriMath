@@ -83,10 +83,12 @@ namespace AngouriMath.Functions
 
                 var newDen = den;
                 
+                if (newDen == 1)
+                    return (newNum: 0, newDen: 1, resNum: num, resDenPrime: prime, resDenPower: power); 
                 // den = prime ^ power * newDen = resDen * newDen
                 // num / den = a / resDen + b / newden
                 // num = a * newDen + b * resDen
-                if (Diophantine.Solve(newDen, resDen, num) is not var (b, a))
+                if (Diophantine.Solve(newDen, resDen, num) is not var (a, b))
                     return null;
 
                 // a is numerator to yield return
