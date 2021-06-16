@@ -13,9 +13,14 @@ using Antlr4.Runtime;
 //var a = Enumerable.Range(0, 1_000_000).Select(c => (Entity.Number.Integer) c).ToArray();
 
 // Console.WriteLine(MathS.Compute.DefiniteIntegral("sin(x)", "x", (0, 0), MathS.DecimalConst.pi / 2));
-Entity expr = "x + sin(2x) + 3";
-Func<double, double> f = expr.Compile<double, double>("x");
-Console.WriteLine(f(4));
+
+Entity.Number.Integer a = 3;
+//Console.Write(a is 0);
+
+
+// Entity expr = "x + sin(2x) + 3";
+// Func<double, double> f = expr.Compile<double, double>("x");
+// Console.WriteLine(f(4));
 /*
 Console.Write(Unsafe.SizeOf<Entity.Number.Integer>());
 

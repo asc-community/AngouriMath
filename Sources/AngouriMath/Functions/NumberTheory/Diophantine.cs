@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using HonkSharp.Fluency;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
@@ -20,42 +21,53 @@ namespace AngouriMath.Functions
             }
         }
 
+        // Credit: https://cp-algorithms.com/algebra/linear-diophantine-equation.html
+        private static Integer InnerGcd(Integer a, Integer b, out Integer x, out Integer y)
+        {
+            if (b == 0)
+                return ((x, y) = (1, 0)).ReplaceWith(a);
+            var d = InnerGcd(b, a % b, out var x1, out var y1);
+            x = y1;
+            y = x1 - y1 * a.IntegerDiv(b);
+            return d;
+        }
+        
+        // Credit: https://cp-algorithms.com/algebra/linear-diophantine-equation.html
+        private static (Integer x, Integer y)? FindAny(Integer a, Integer b, Integer c)
+        {
+            var g = InnerGcd(a, b, out var x0, out var y0);
+            if (c % g != 0)
+                return null;
+            x0 *= c.IntegerDiv(g).Alias(out var cg);
+            y0 *= cg;
+            return (x0, y0);
+        }
+        
+        
         // a x + b y = c
-        // a > b
         internal static (Integer x, Integer y)? Solve(Integer a, Integer b, Integer c)
         {
             NormalInfo info;
             (a, b, c, info) = NormalInfo.Normalize(a, b, c);
 
-            // http://zimmer.csufresno.edu/~lburger/Math149_diophantine%20I.pdf
-
-            var gcd = MathS.NumberTheory.GreatestCommonDivisor(a, b);
-
-            if (c % gcd != 0)
+            if (FindAny(a, b, c) is not var (x, y))
                 return null;
             
-            Integer x = 1;
-            Integer y = 0;
-            var turnOfY = true;
-
-            foreach (var (_, q, _, _) in Decompose(a, b).Reverse())
-            {
-                if (turnOfY)
-                    y += x * -q;
-                else
-                    x += y * -q;
-                turnOfY = !turnOfY;
-            }
-
-            var coef = c.IntegerDiv(gcd);
-            x *= coef;
-            y *= coef;
-
             while (true)
             {
-                var newX = x - a;
-                var newY = y + b;
-                if (newX.Abs() + newY.Abs() >= x.Abs() + y.Abs() || x < 0)
+                var newX = x - b;
+                var newY = y + a;
+                if (newX.Abs() + newY.Abs() >= x.Abs() + y.Abs())
+                    break;
+                x = newX;
+                y = newY;
+            }
+            
+            while (true)
+            {
+                var newX = x + b;
+                var newY = y - a;
+                if (newX.Abs() + newY.Abs() >= x.Abs() + y.Abs())
                     break;
                 x = newX;
                 y = newY;
@@ -65,7 +77,7 @@ namespace AngouriMath.Functions
             return info.Compensate(x, y);
         }
 
-        internal struct NormalInfo
+        private struct NormalInfo
         {
             private bool aInverted;
             private bool bInverted;
