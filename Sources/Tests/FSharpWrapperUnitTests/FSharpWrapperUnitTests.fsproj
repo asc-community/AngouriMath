@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <Compile Include="Utils.fs" />
-    <Compile Include="MatrixOperatorsTest.fs" />
+    <Compile Include="MatricesTest.fs" />
     <None Include="coverlet.runsettings" />
     <Compile Include="Functions.Sets.fs" />
     <Compile Include="CoreTest.fs" />

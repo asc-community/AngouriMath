@@ -28,7 +28,7 @@ namespace AngouriMath
         /// consistency's sake, consider the call of this property
         /// as free as the addressing of a field.
         /// </summary>
-        public Entity InnerSimplified => innerSimplified.GetValue(@this => @this.InnerSimplifyWithCheck(), this);
+        public Entity InnerSimplified => innerSimplified.GetValue(static @this => @this.InnerSimplifyWithCheck(), this);
         private FieldCacheA<Entity> innerSimplified;
 
 
@@ -121,7 +121,7 @@ namespace AngouriMath
         /// consistency's sake, consider the call of this property
         /// as free as the addressing of a field.
         /// </summary>
-        public Entity Evaled => evaled.GetValue(@this => @this.InnerEvalWithCheck(), this);
+        public Entity Evaled => evaled.GetValue(static @this => @this.InnerEvalWithCheck(), this);
         private FieldCacheA<Entity> evaled;
 
         /// <summary>

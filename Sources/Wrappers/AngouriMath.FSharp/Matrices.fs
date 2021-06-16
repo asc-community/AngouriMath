@@ -1,4 +1,4 @@
-﻿module AngouriMath.FSharp.MatrixOperators
+﻿module AngouriMath.FSharp.Matrices
 
 open AngouriMath
 open AngouriMath.FSharp.Core
