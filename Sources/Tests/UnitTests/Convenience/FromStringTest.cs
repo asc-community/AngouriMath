@@ -84,6 +84,7 @@ namespace UnitTests.Convenience
         [Fact] public void TestFormula25() => Assert.Equal(Pow(MathS.Factorial(2), Factorial(x + 2)), FromString("2!^(x+2)!"));
         [Fact] public void TestFormula26() => Assert.Equal(-MathS.Factorial(1), FromString("-1!"));
         [Fact] public void TestFormula27() => Assert.Equal(MathS.Factorial("-1"), FromString("(-1)!"));
+        [Fact] public void TestFormula28() => Assert.Equal(2, FromString("1 \r\n + \n 1").EvalNumerical());
         [Fact] public void TestFormulaSys() => Assert.Equal(Sqr(x), FromString("x2"));
         [Fact] public void TestNode28() => Assert.Equal(Derivative("x + 1", x), FromString("derivative(x + 1, x, 1)"));
         [Fact] public void TestNode29() => Assert.Equal(Derivative("x + 1", x, 5), FromString("derivative(x + 1, x, 5)"));
