@@ -401,7 +401,7 @@ atom returns[Entity value]
 
 statement: expression EOF { Result = $expression.value; } ;
 
-NEWLINE: '\r'?'\n' ;
+NEWLINE: ('\r'?'\n')+ -> skip ;
 
 // A fragment will never be counted as a token, it only serves to simplify a grammar.
 fragment EXPONENT: ('e'|'E') ('+'|'-')? ('0'..'9')+ ;
