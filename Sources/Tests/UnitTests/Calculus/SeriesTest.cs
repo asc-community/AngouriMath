@@ -1,5 +1,6 @@
 ﻿using AngouriMath;
 using Xunit;
+using static AngouriMath.Entity;
 
 namespace UnitTests.Calculus
 {
@@ -16,6 +17,22 @@ namespace UnitTests.Calculus
             Entity funcOverT = funcOverTRaw;
             Entity expected = expectedRaw;
             Entity actual = MathS.Series.TaylorExpansion(funcOverT, "t", "x", "0", termCount);
+            Assert.Equal(expected, actual);
+        }
+
+        [Theory]
+        [InlineData("a t3 + b t2 + c t + d", "((d) + ((c) * (x))) + (((((2) * (b)) * ((x) ^ (2))) / ((2)!)) + ((((6) * (a)) * ((x) ^ (3))) / ((3)!)))", 4)]
+        [InlineData("(e^t)ln(1+s)", "y + xy - (y^2)/2", 3)]
+        public void MultivariableTaylorDirect(string funcOverTRaw, string expectedRaw, int termCount)
+        {
+            Entity funcOverT = funcOverTRaw;
+            Entity expected = expectedRaw;
+            var vars = new (Variable exprVariable, Variable polyVariable, Entity value)[]
+            {
+                ("t", "x", "0"),
+                ("s", "y", "0")
+            };
+            Entity actual = MathS.Series.MultivariableTaylorExpansion(funcOverT, vars, termCount);
             Assert.Equal(expected, actual);
         }
 

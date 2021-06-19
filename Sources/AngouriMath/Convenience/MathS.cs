@@ -406,6 +406,46 @@ namespace AngouriMath
             /// </returns>
             public static Entity TaylorExpansion(Entity expr, Variable exprVariable, Variable polyVariable, Entity point, int termCount)
                 => Functions.Series.TaylorExpansion(expr, exprVariable, polyVariable, point, termCount);
+
+            /// <summary>
+            /// Finds the symbolic expression of terms of the Taylor expansion of the given function with multiple variables.
+            /// https://en.wikipedia.org/wiki/Taylor_series#Taylor_series_in_several_variables
+            /// 
+            /// Do NOT call ToArray() or anything like this on the result of this method. It is 
+            /// infinite iterator. To get a finite result as in a sum of finite number of terms,
+            /// call TaylorExpansion
+            /// </summary>
+            /// <param name="expr">
+            /// The function, to find Taylor expansion of
+            /// </param>
+            /// <param name="exprToPolyVars">
+            /// Takes the place of the expression variable, polynomial variable, and the differentiation point for each variable.
+            /// </param>
+            /// <returns>
+            /// An infinite iterator over the terms of Taylor series of the given expression.
+            /// </returns>
+            public static IEnumerable<Entity> MultivariableTaylorExpansionTerms(Entity expr, (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars)
+                => Functions.Series.MultivariableTaylorExpansionTerms(expr, exprToPolyVars);
+
+            /// <summary>
+            /// Finds the symbolic expression of terms of the Taylor expansion of the given function with multiple variables.
+            /// https://en.wikipedia.org/wiki/Taylor_series#Taylor_series_in_several_variables
+            /// </summary>
+            /// <param name="expr">
+            /// The function, to find Taylor expansion of
+            /// </param>
+            /// <param name="exprToPolyVars">
+            /// Takes the place of the expression variable, polynomial variable, and the differentiation point for each variable.
+            /// </param>
+            /// <param name="termCount">
+            /// The number of terms you want to get
+            /// </param>
+            /// <returns>
+            /// An infinite iterator over the terms of Taylor series of the given expression.
+            /// </returns>
+            public static Entity MultivariableTaylorExpansion(Entity expr, (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars, int termCount)
+                => Functions.Series.MultivariableTaylorExpansion(expr, exprToPolyVars, termCount);
+
         }
 
 
