@@ -1,4 +1,5 @@
 ﻿using AngouriMath;
+using System.Collections.Generic;
 using Xunit;
 using static AngouriMath.Entity;
 
@@ -62,13 +63,37 @@ namespace UnitTests.Calculus
         [InlineData(6,  4, "tanh(x)", 6.2)]
         [InlineData(0,  4, "sqrt(x - 1) / e ^ (x - 1) + sin(x)", 0.1)]
         [InlineData(0,  6, "1 + x", 1)]
-        public void CheckTheCorrectness(double point, int termCount, string func, int pointToCheckAt)
+        public void CheckTheCorrectness(double point, int termCount, string func, double pointToCheckAt)
         {
             Entity expr = func;
             var taylor = MathS.Series.TaylorExpansion(expr, "x", "x", point, termCount);
 
             var expected = expr.Substitute("x", pointToCheckAt).EvalNumerical();
             var actual = taylor.Substitute("x", pointToCheckAt).EvalNumerical();
+
+            var error = (expected - actual).Abs();
+
+            Assert.True(error < 0.05, $"Error is: {error}");
+        }
+
+        [Theory]
+        [InlineData(new double[3] { 0, 0, 0 }, 4, "sin(x) + cos(y) + tan(z)", new double[3] { 0.5, -0.5, 0.1 })]
+        [InlineData(new double[3] { 0, 0, 0 }, 4, "sqrt(x - 1) / e ^ (y - 1) + sin(z)", new double[3] { 0.1, 0.1, 0.1 })]
+        [InlineData(new double[3] { 1, 1, 1 }, 6, "(e^x)ln(1 + y)z", new double[3] { 0.5, 0.5, 0.5 })]
+        public void CheckMultivariableCorrectness(double[] point, int termCount, string func, double[] pointToCheckAt)
+        {
+            var vars = new (Variable exprVariable, Variable polyVariable, Entity value)[]
+            {
+                ("x", "x", point[0]),
+                ("y", "y", point[1]),
+                ("z", "z", point[2])
+            };
+
+            Entity expr = func;
+            var taylor = MathS.Series.MultivariableTaylorExpansion(expr, termCount, vars);
+
+            var expected = expr.Substitute("x", pointToCheckAt[0]).Substitute("y", pointToCheckAt[1]).Substitute("z", pointToCheckAt[2]).EvalNumerical();
+            var actual = taylor.Substitute("x", pointToCheckAt[0]).Substitute("y", pointToCheckAt[1]).Substitute("z", pointToCheckAt[2]).EvalNumerical();
 
             var error = (expected - actual).Abs();
 

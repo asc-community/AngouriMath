@@ -119,13 +119,19 @@ namespace AngouriMath.Functions
                         pointCoefficients *= (variable.polyVariable - variable.point).Pow(newTerm.pointCoefficientDegrees[variableIndex]);
                     }
 
-                    fullExpressionTerms.Add( newTerm.partialDerivative * newTerm.coefficient * pointCoefficients );
-                }
-                Entity fullExpr = TreeAnalyzer.MultiHangBinary(fullExpressionTerms, (a, b) => a + b);
+                    // Solve the partial derivative at the given point,
+                    var solvedPartialDerivative = newTerm.partialDerivative;
+                    foreach (var variable in exprToPolyVars)
+                        solvedPartialDerivative = solvedPartialDerivative.Substitute(variable.exprVariable, variable.point);
 
-                // then solve for the given point and simplify,
-                foreach (var variable in exprToPolyVars)
-                    fullExpr = fullExpr.Substitute(variable.exprVariable, variable.point).InnerSimplified;
+                    var fullTerm = solvedPartialDerivative * newTerm.coefficient * pointCoefficients;
+
+                    // tack on the coefficient information,
+                    fullExpressionTerms.Add(fullTerm);
+                }
+
+                Entity fullExpr = TreeAnalyzer.MultiHangBinary(fullExpressionTerms, (a, b) => a + b);
+                fullExpr = fullExpr.InnerSimplified;
 
                 if (fullExpr.Equals(Number.Integer.Zero))
                     yield return Number.Integer.Zero;
