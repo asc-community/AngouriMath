@@ -50,6 +50,7 @@ namespace AngouriMath.Functions
         {
             // This structure is just a deconstruction of the terms that are added together in a multi taylor polynomial.
             // Like n (x - a)^s (y - b)^t f'(x,y), where n is the coefficient, s and t are pointCoefficientDegrees, and then the partialDerivative
+            // See https://en.wikipedia.org/wiki/Taylor_series#Taylor_series_in_several_variables for the formula used here.
             var lastTerms = new List<(int coefficient, int[] pointCoefficientDegrees, Entity partialDerivative)>();
             var order = 0;
             var variables = exprToPolyVars.Length;
@@ -58,11 +59,13 @@ namespace AngouriMath.Functions
             {
                 var newTerms = new List<(int coefficient, int[] pointCoefficientDegrees, Entity partialDerivative)>();
 
-                if (order > 0) {
+                // Take a bunch of partial derivatives
+                if (order == 0) newTerms.Add((1, new int[variables], expr));
+                else {
 
                     foreach (var lastTerm in lastTerms)
                     {
-                        // We must take the partial derivative with respect to each component.
+                        // with respect to each variable 
                         for (int variableIndex = 0; variableIndex < exprToPolyVars.Length; variableIndex++)
                         {
                             var triple = exprToPolyVars[variableIndex];
@@ -84,7 +87,7 @@ namespace AngouriMath.Functions
                                 }
                             }
 
-                            // If the partial derivative has already been computed, we just add to it's coefficient and skip this.
+                            // If the partial derivative has already been computed, we just add to it's coefficient instead of duplicating it.
                             if (!foundRepeatFlag)
                             {
                                 var newPartialDerivative = lastTerm.partialDerivative.Differentiate(triple.exprVariable);
@@ -95,10 +98,10 @@ namespace AngouriMath.Functions
                     }
 
                 }
-                else newTerms.Add((1, new int[variables], expr));
 
                 Entity fullExpr = 0;
 
+                // Put together the full term
                 foreach (var newTerm in newTerms) {
                     
                     Entity pointCoefficients = 1;

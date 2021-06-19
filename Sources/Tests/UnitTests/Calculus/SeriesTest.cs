@@ -22,7 +22,7 @@ namespace UnitTests.Calculus
 
         [Theory]
         [InlineData("a t3 + b t2 + c t + d", "((d) + ((c) * (x))) + (((((2) * (b)) * ((x) ^ (2))) / ((2)!)) + ((((6) * (a)) * ((x) ^ (3))) / ((3)!)))", 4)]
-        [InlineData("(e^t)ln(1+s)", "((0) + (y) + ((((x) * (y)) + -((y) ^ (2))) / ((2)!)))", 3)]
+        [InlineData("(e^t)ln(1+s)", "((0) + ((y) + ((((x) * (y)) + -((y) ^ (2))) / ((2)!))))", 3)]
         public void MultivariableTaylorDirect(string funcOverTRaw, string expectedRaw, int termCount)
         {
             Entity funcOverT = funcOverTRaw;
@@ -33,7 +33,7 @@ namespace UnitTests.Calculus
                 ("s", "y", "0")
             };
             Entity actual = MathS.Series.MultivariableTaylorExpansion(funcOverT, vars, termCount);
-            Assert.Equal(expected, actual);
+            actual.ShouldBe(expected);
         }
 
         [Theory]
