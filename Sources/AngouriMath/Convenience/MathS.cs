@@ -437,14 +437,14 @@ namespace AngouriMath
             /// <param name="exprToPolyVars">
             /// Takes the place of the expression variable, polynomial variable, and the differentiation point for each variable.
             /// </param>
-            /// <param name="termCount">
-            /// The number of terms you want to get
+            /// <param name="degree">
+            /// The degree of the taylor polynomial desired.
             /// </param>
             /// <returns>
             /// An expression in the polynomial form over the poly variables given in <paramref name="exprToPolyVars"/>
             /// </returns>
-            public static Entity MultivariableTaylorExpansion(Entity expr, int termCount, params (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars)
-                => Functions.Series.MultivariableTaylorExpansion(expr, termCount, exprToPolyVars);
+            public static Entity MultivariableTaylorExpansion(Entity expr, int degree, params (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars)
+                => Functions.Series.MultivariableTaylorExpansion(expr, degree, exprToPolyVars);
 
         }
 
