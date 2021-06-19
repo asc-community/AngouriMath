@@ -424,7 +424,7 @@ namespace AngouriMath
             /// <returns>
             /// An infinite iterator over the terms of Taylor series of the given expression.
             /// </returns>
-            public static IEnumerable<Entity> MultivariableTaylorExpansionTerms(Entity expr, (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars)
+            public static IEnumerable<Entity> MultivariableTaylorExpansionTerms(Entity expr, params (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars)
                 => Functions.Series.MultivariableTaylorExpansionTerms(expr, exprToPolyVars);
 
             /// <summary>
@@ -443,8 +443,8 @@ namespace AngouriMath
             /// <returns>
             /// An expression in the polynomial form over the poly variables given in <paramref name="exprToPolyVars"/>
             /// </returns>
-            public static Entity MultivariableTaylorExpansion(Entity expr, (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars, int termCount)
-                => Functions.Series.MultivariableTaylorExpansion(expr, exprToPolyVars, termCount);
+            public static Entity MultivariableTaylorExpansion(Entity expr, int termCount, params (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars)
+                => Functions.Series.MultivariableTaylorExpansion(expr, termCount, exprToPolyVars);
 
         }
 

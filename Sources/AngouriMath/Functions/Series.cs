@@ -46,7 +46,7 @@ namespace AngouriMath.Functions
             throw new AngouriBugException($"We cannot get here, as {nameof(TaylorExpansionTerms)} is supposed to be endless");
         }
 
-        internal static IEnumerable<Entity> MultivariableTaylorExpansionTerms(Entity expr, (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
+        internal static IEnumerable<Entity> MultivariableTaylorExpansionTerms(Entity expr, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
         {
             // This structure is just a deconstruction of the terms that are added together in a multi taylor polynomial.
             // Like n (x - a)^s (y - b)^t f'(x,y), where n is the coefficient, s and t are pointCoefficientDegrees, and then the partialDerivative
@@ -137,7 +137,7 @@ namespace AngouriMath.Functions
             }
         }
 
-        internal static Entity MultivariableTaylorExpansion(Entity expr, (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars, int termCount)
+        internal static Entity MultivariableTaylorExpansion(Entity expr, int termCount, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars )
         {
             if (termCount < 0)
                 throw new InvalidNumberException($"{nameof(termCount)} is supposed to be at least 0");

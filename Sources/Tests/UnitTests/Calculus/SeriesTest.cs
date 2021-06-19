@@ -34,7 +34,7 @@ namespace UnitTests.Calculus
                 ("s", "y", "0"),
                 ("u", "z", "0")
             };
-            Entity actual = MathS.Series.MultivariableTaylorExpansion(funcOverT, vars, termCount);
+            Entity actual = MathS.Series.MultivariableTaylorExpansion(funcOverT, termCount, vars);
             actual.ShouldBe(expected);
         }
 
