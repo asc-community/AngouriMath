@@ -3,21 +3,24 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using AngouriMath;
+using AngouriMath.Extensions;
+using AngouriMath.Functions;
 using Antlr4.Runtime;
+using static AngouriMath.MathS;
 
-// Console.Write(PackedSizeOf(typeof(Entity.Number.Integer)));
-// int a = 3;
-// ref int b = ref a;
-// Console.Write(b.GetType().IsValueType);
+// Console.WriteLine("cbrt(7 + 21sqrt(-3)) + cbrt(7 - 21sqrt(-3))".ToEntity().Evaled);
+// Console.WriteLine("cbrt(7) + cbrt(7)".ToEntity().Evaled);
 
-//var a = Enumerable.Range(0, 1_000_000).Select(c => (Entity.Number.Integer) c).ToArray();
+var twoPiOver7 = MathS.Sqrt(1 - MathS.Pow("1/6" * (-1 + MathS.Cbrt((7 + 21 * Sqrt(-3)) / 2) + MathS.Cbrt((7 - 21 * Sqrt(-3)) / 2)), 2));
 
-// Console.WriteLine(MathS.Compute.DefiniteIntegral("sin(x)", "x", (0, 0), MathS.DecimalConst.pi / 2));
+Console.WriteLine(twoPiOver7.Latexise());
+Console.WriteLine(twoPiOver7.Evaled);
+Console.WriteLine("2pi / 7".ToEntity().Sin().Evaled);
 
-Entity.Number.Integer a = 3;
-//Console.Write(a is 0);
+TrigonometricAngleExpansion.GetSineOfHalvedAngle("2/7", twoPiOver7);
+// Console.WriteLine(TrigonometricAngleExpansion.GetSineOfHalvedAngle("2/7", twoPiOver7));
 
-
+Console.ReadLine();
 // Entity expr = "x + sin(2x) + 3";
 // Func<double, double> f = expr.Compile<double, double>("x");
 // Console.WriteLine(f(4));

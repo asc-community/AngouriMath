@@ -32,7 +32,7 @@ namespace UnitTests.Algebra
             Integer A = a; Integer B = b; Integer C = c;
             Integer X = x; Integer Y = y;
 
-            var sol = MathS.NumberTheory.SolveDiophantineEquation(A, B, C);
+            var sol = MathS.ExperimentalFeatures.SolveDiophantineEquation(A, B, C);
             Assert.Equal((X, Y), sol.ShouldBeNotNull());
         }
 
@@ -53,7 +53,7 @@ namespace UnitTests.Algebra
         public void RationalDecompositionTest(string rationalRaw, int count)
         {
             var input = (Rational)rationalRaw.ToEntity().InnerSimplified;
-            var decomposed = MathS.NumberTheory.DecomposeRational(input).ToArray();
+            var decomposed = MathS.ExperimentalFeatures.DecomposeRational(input).ToArray();
             Assert.True(count == decomposed.Length, $"Expected: {count}\nActual: {decomposed.Length}\nElements: {string.Join(", ", decomposed)}");
             var sum = decomposed.Select(c => c.numerator / c.denPrime.Pow(c.denPower)).Aggregate((a, b) => a + b).InnerSimplified;
             Assert.Equal(input, sum);

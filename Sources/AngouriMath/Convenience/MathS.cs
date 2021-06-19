@@ -58,33 +58,6 @@ namespace AngouriMath
             public static Integer GreatestCommonDivisor(Integer a, Integer b)
                 => a.EInteger.Gcd(b.EInteger);
 
-            /// <summary>
-            /// Solves an equation
-            /// a x + b y = c
-            /// </summary>
-            /// <returns>
-            /// x and y if found, null otherwise
-            /// </returns>
-            public static (Integer x, Integer y)? SolveDiophantineEquation(Integer a, Integer b, Integer c)
-                => Diophantine.Solve(a, b, c);
-
-            /// <summary>
-            /// Decomposes an arbitrary rational
-            /// number into sum of rationals a_i / p_i^k,
-            /// where p_i is a prime number. Evaluates
-            /// lazily.
-            /// </summary>
-            public static IEnumerable<(Integer numerator, Integer denPrime, Integer denPower)> DecomposeRational(Integer num, Integer den)
-                => Fraction.Decompose(num, den);
-
-            /// <summary>
-            /// Decomposes an arbitrary rational
-            /// number into sum of rationals a_i / p_i^k,
-            /// where p_i is a prime number. Evaluates
-            /// lazily.
-            /// </summary>
-            public static IEnumerable<(Integer numerator, Integer denPrime, Integer denPower)> DecomposeRational(Rational rational)
-                => DecomposeRational(rational.Numerator, rational.Denominator);
         }
 
         /// <summary>Use it to solve equations</summary>
