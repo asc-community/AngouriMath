@@ -413,7 +413,7 @@ namespace AngouriMath
             /// 
             /// Do NOT call ToArray() or anything like this on the result of this method. It is 
             /// infinite iterator. To get a finite result as in a sum of finite number of terms,
-            /// call TaylorExpansion
+            /// call MultivariableTaylorExpansion
             /// </summary>
             /// <param name="expr">
             /// The function, to find Taylor expansion of
@@ -441,7 +441,7 @@ namespace AngouriMath
             /// The number of terms you want to get
             /// </param>
             /// <returns>
-            /// An infinite iterator over the terms of Taylor series of the given expression.
+            /// An expression in the polynomial form over the poly variables given in <paramref name="exprToPolyVars"/>
             /// </returns>
             public static Entity MultivariableTaylorExpansion(Entity expr, (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars, int termCount)
                 => Functions.Series.MultivariableTaylorExpansion(expr, exprToPolyVars, termCount);
