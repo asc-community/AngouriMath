@@ -88,6 +88,7 @@ namespace AngouriMath.Functions
                                     // If the match is found, instead of creating a whole new repeat term, we just add
                                     // to the match's coefficient. This ends up making a neat binomial coefficient pattern.
                                     newTerm.coefficient += lastTerm.coefficient;
+                                    newTerms[newTermIndex] = newTerm;
                                     foundRepeatFlag = true;
                                     break;
                                 }
@@ -114,8 +115,8 @@ namespace AngouriMath.Functions
                     Entity pointCoefficients = 1;
                     for (int variableIndex = 0; variableIndex < exprToPolyVars.Length; variableIndex++)
                     {
-                        var triple = exprToPolyVars[variableIndex];
-                        pointCoefficients *= (triple.polyVariable - triple.point).Pow(newTerm.pointCoefficientDegrees[variableIndex]);
+                        var variable = exprToPolyVars[variableIndex];
+                        pointCoefficients *= (variable.polyVariable - variable.point).Pow(newTerm.pointCoefficientDegrees[variableIndex]);
                     }
 
                     fullExpressionTerms.Add( newTerm.partialDerivative * newTerm.coefficient * pointCoefficients );
@@ -126,11 +127,16 @@ namespace AngouriMath.Functions
                 foreach (var variable in exprToPolyVars)
                     fullExpr = fullExpr.Substitute(variable.exprVariable, variable.point).InnerSimplified;
 
-                // and divide that all by the proper factorial.
-                if (order > 1)
-                    fullExpr /= ((Entity)order).Factorial();
+                if (fullExpr.Equals(Number.Integer.Zero))
+                    yield return Number.Integer.Zero;
+                else
+                {
+                    // and divide that all by the proper factorial.
+                    if (order > 1)
+                        fullExpr /= ((Entity)order).Factorial();
 
-                yield return fullExpr;
+                    yield return fullExpr;
+                }
 
                 lastTerms = newTerms;
                 order++;

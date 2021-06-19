@@ -22,8 +22,10 @@ namespace UnitTests.Calculus
 
         [Theory]
         [InlineData("a t3 + b t2 + c t + d", "((d) + ((c) * (x))) + (((((2) * (b)) * ((x) ^ (2))) / ((2)!)) + ((((6) * (a)) * ((x) ^ (3))) / ((3)!)))", 4)]
-        [InlineData("(e^t)ln(1+s)", "((0) + ((y) + ((((x) * (y)) + -((y) ^ (2))) / ((2)!))))", 3)]
+        [InlineData("(e^t)ln(1+s)", "(0) + ((y) + ((((2) * ((x) * (y))) + ((-1) * ((y) ^ (2)))) / ((2)!)))", 3)]
         [InlineData("sin(t)+cos(s)+tan(u)", "((1) + ((x) + (z)))", 2)]
+        [InlineData("cos(t)sin(s)", "((0) + (y)) + ((0) + ((((-3) * (((x) ^ (2)) * (y))) + ((-1) * ((y) ^ (3)))) / ((3)!)))", 4)]
+        [InlineData("sin(t)sin(s)sin(u)sin(v)", "((0) + (0)) + ((0) + ((0) + (((24) * ((((x) * (y)) * (z)) * (w))) / ((4)!))))", 5)]
         public void MultivariableTaylorDirect(string funcOverTRaw, string expectedRaw, int termCount)
         {
             Entity funcOverT = funcOverTRaw;
@@ -32,7 +34,8 @@ namespace UnitTests.Calculus
             {
                 ("t", "x", "0"),
                 ("s", "y", "0"),
-                ("u", "z", "0")
+                ("u", "z", "0"),
+                ("v", "w", "0")
             };
             Entity actual = MathS.Series.MultivariableTaylorExpansion(funcOverT, termCount, vars);
             actual.ShouldBe(expected);
