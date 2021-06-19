@@ -6,6 +6,7 @@
  */
 using AngouriMath.Core.Exceptions;
 using System.Collections.Generic;
+using System.Linq;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions
@@ -47,30 +48,35 @@ namespace AngouriMath.Functions
 
         internal static IEnumerable<Entity> MultivariableTaylorExpansionTerms(Entity expr, (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
         {
-            // pointCoefficient is the sequence of (x-a)(x-b)...
-            var lastTerms = new List<(int coefficient, Entity pointCoefficients, Entity partialDerivative)>();
-            var i = 0;
+            // This structure is just a deconstruction of the terms that are added together in a multi taylor polynomial.
+            // Like n (x - a)^s (y - b)^t f'(x,y), where n is the coefficient, s and t are pointCoefficientDegrees, and then the partialDerivative
+            var lastTerms = new List<(int coefficient, int[] pointCoefficientDegrees, Entity partialDerivative)>();
+            var order = 0;
+            var variables = exprToPolyVars.Length;
 
             while (true)
             {
-                var newTerms = new List<(int coefficient, Entity pointCoefficients, Entity partialDerivative)>();
-                var factorialCoeff = i > 1 ? 1 / ((Entity)i).Factorial() : 1;
+                var newTerms = new List<(int coefficient, int[] pointCoefficientDegrees, Entity partialDerivative)>();
 
-                if (i > 0) {
+                if (order > 0) {
 
                     foreach (var lastTerm in lastTerms)
                     {
-                        // Splits into a version for every variable
-                        foreach (var triple in exprToPolyVars)
+                        // We must take the partial derivative with respect to each component.
+                        for (int variableIndex = 0; variableIndex < exprToPolyVars.Length; variableIndex++)
                         {
-                            var newPointCoeffs = (lastTerm.pointCoefficients * (triple.polyVariable - triple.point)).InnerSimplified;
+                            var triple = exprToPolyVars[variableIndex];
+                            var newPointCoeffs = new int[variables];
+                            lastTerm.pointCoefficientDegrees.CopyTo(newPointCoeffs,0);
+                            newPointCoeffs[variableIndex] += 1;
+
                             bool foundRepeatFlag = false;
 
-                            for (int j = 0; j < newTerms.Count; j++)
+                            for (int newTermIndex = 0; newTermIndex < newTerms.Count; newTermIndex++)
                             {
-                                var newTerm = newTerms[j];
+                                var newTerm = newTerms[newTermIndex];
 
-                                if (newTerm.pointCoefficients.Equals(newPointCoeffs))
+                                if (Enumerable.SequenceEqual(newTerm.pointCoefficientDegrees, newPointCoeffs))
                                 {
                                     newTerm.coefficient += lastTerm.coefficient;
                                     foundRepeatFlag = true;
@@ -89,22 +95,32 @@ namespace AngouriMath.Functions
                     }
 
                 }
-                else newTerms.Add((1, 1, expr));
+                else newTerms.Add((1, new int[variables], expr));
 
                 Entity fullExpr = 0;
 
-                foreach (var newPartialDerivative in newTerms)
-                    fullExpr += newPartialDerivative.coefficient * newPartialDerivative.pointCoefficients * newPartialDerivative.partialDerivative;
+                foreach (var newTerm in newTerms) {
+                    
+                    Entity pointCoefficients = 1;
+                    for (int variableIndex = 0; variableIndex < exprToPolyVars.Length; variableIndex++)
+                    {
+                        var triple = exprToPolyVars[variableIndex];
+                        pointCoefficients *= (triple.polyVariable - triple.point).Pow(newTerm.pointCoefficientDegrees[variableIndex]);
+                    }
 
-                fullExpr *= factorialCoeff;
+                    fullExpr += newTerm.partialDerivative * newTerm.coefficient * pointCoefficients;
+                }
 
-                foreach (var triples in exprToPolyVars)
-                    fullExpr = fullExpr.Substitute(triples.exprVariable, triples.point).InnerSimplified;
+                foreach (var variable in exprToPolyVars)
+                    fullExpr = fullExpr.Substitute(variable.exprVariable, variable.point).InnerSimplified;
 
-                yield return fullExpr.InnerSimplified;
+                if (order > 1)
+                    fullExpr /= ((Entity)order).Factorial();
+
+                yield return fullExpr;
 
                 lastTerms = newTerms;
-                i++;
+                order++;
             }
         }
 
