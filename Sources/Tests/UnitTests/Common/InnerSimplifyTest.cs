@@ -1,6 +1,8 @@
 ﻿using AngouriMath;
 using AngouriMath.Extensions;
+using System.Linq;
 using Xunit;
+using static AngouriMath.Entity.Number;
 
 namespace UnitTests.Common
 {
@@ -212,6 +214,109 @@ namespace UnitTests.Common
         [Fact] public void PiecewiseLimit1NodeInnerSimplified() =>
             "limit(piecewise(sin(a x) / (b x) provided a, sin(b x) / sin(a x)), x, 0)".ToEntity().InnerSimplified
             .ShouldBe("piecewise(a / b provided a, b / a)");
+
+        [Theory]
+        [InlineData("pi", "1")]
+        [InlineData("pi / 2", "1 / 2")]
+        [InlineData("2pi", "2 * 1")]
+        [InlineData("pi * 2", "1 * 2")]
+        [InlineData("pi + pi / 2", "1 + 1 / 2")]
+        [InlineData("pi / 2 + pi / 3", "1 / 2 + 1 / 3")]
+        [InlineData("pi / 2 - 2 pi", "1 / 2 - 2 * 1")]
+        [InlineData("pi / 2 - pi * 2", "1 / 2 - 1 * 2")]
+        [InlineData("1 / (2 / pi)", "1 / (2 / 1)")]
+        [InlineData("1 / (2 / pi) + pi / 2", "1 / (2 / 1) + 1 / 2")]
+        [InlineData("1 / (2 / (3 / (4 / pi)))", "1 / (2 / (3 / (4 / 1)))")]
+        [InlineData("pi * pi", "1 * pi")]
+        public void TestDivideByEntityStrict(string inputRaw, string expectedRaw)
+        {
+            Entity input = inputRaw;
+            var actual = MathS.UnsafeAndInternal.DivideByEntityStrict(input, "pi");
+            actual.ShouldBeNotNull().ShouldBe(expectedRaw);
+        }
+
+        [Theory]
+        [InlineData("1")]
+        [InlineData("1 + pi")]
+        [InlineData("1 / pi")]
+        [InlineData("2 - pi")]
+        [InlineData("pi ^ 2")]
+        [InlineData("sin(pi)")]
+        public void TestDivideByEntityStrictShouldBeNull(string inputRaw)
+        {
+            Entity input = inputRaw;
+            MathS.UnsafeAndInternal.DivideByEntityStrict(input, "pi").ShouldBeNull();
+        }
+
+        [Theory]
+        [InlineData("0", 0)]
+        [InlineData("1/3", 1)]
+        [InlineData("1/6", 1)]
+        [InlineData("2/3", 1)]
+        [InlineData("1/2 + 1/3", 2)]
+        [InlineData("19", 1)]
+        [InlineData("3/2 + 1/3", 2)]
+        [InlineData("3/2 + 1/3 + 4/17", -1 /* current algo cannot take this */)]
+        [InlineData("3/2 + 1/3 + 1/19", -1)]
+        [InlineData("37/17", 2)]
+        public void TestRepresentRational(string ratRaw, int countOfForms)
+        {
+            var rat = (Rational)ratRaw.ToEntity().InnerSimplified;
+
+            var forms = new[] { "1/2", "1/3", "1/6", "1/17" }.Select(c => (Rational)c.ToEntity().InnerSimplified);
+
+            var repr = MathS.UnsafeAndInternal.RepresentRational(rat, forms);
+
+            if (countOfForms is -1)
+                repr.ShouldBeNull();
+            else
+            {
+                Rational res = 0;
+                foreach (var (coef, form) in repr.ShouldBeNotNull().ShouldCountTo(countOfForms))
+                    res += coef * form;
+                res.ShouldBe(rat);
+            }
+        }
+        
+        [Theory]
+        [InlineData("pi / 2")]
+        [InlineData("-pi / 2")]
+        [InlineData("-5pi / 2")]
+        [InlineData("-9pi / 2")]
+        [InlineData("9pi / 2")]
+        [InlineData("5pi / 2")]
+        public void TanShouldBeNaN(string angle)
+            => MathS.Tan(angle).Evaled.ShouldBe(MathS.NaN);
+        
+        [Theory]
+        [InlineData("pi / 2")]
+        [InlineData("-pi / 2")]
+        [InlineData("-5pi / 2")]
+        [InlineData("-9pi / 2")]
+        [InlineData("9pi / 2")]
+        [InlineData("5pi / 2")]
+        public void SecShouldBeNaN(string angle)
+            => MathS.Sec(angle).Evaled.ShouldBe(MathS.NaN);
+        
+        [Theory]
+        [InlineData("pi")]
+        [InlineData("-pi")]
+        [InlineData("-5pi")]
+        [InlineData("-9pi")]
+        [InlineData("9pi")]
+        [InlineData("5pi")]
+        public void CotanShouldBeNaN(string angle)
+            => MathS.Cotan(angle).Evaled.ShouldBe(MathS.NaN);
+        
+        [Theory]
+        [InlineData("pi")]
+        [InlineData("-pi")]
+        [InlineData("-5pi")]
+        [InlineData("-9pi")]
+        [InlineData("9pi")]
+        [InlineData("5pi")]
+        public void CosecShouldBeNaN(string angle)
+            => MathS.Cosec(angle).Evaled.ShouldBe(MathS.NaN);
     }
 }
 

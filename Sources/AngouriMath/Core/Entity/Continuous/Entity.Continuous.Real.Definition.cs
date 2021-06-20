@@ -121,6 +121,7 @@ namespace AngouriMath
                 public static Real operator /(Real a, Real b) => (Real)OpDiv(a, b);
                 public static Real operator +(Real a) => a;
                 public static Real operator -(Real a) => OpMul(Integer.MinusOne, a);
+                public static Real operator %(Real a, Real b) => a.EDecimal.Remainder(b.EDecimal, MathS.Settings.DecimalPrecisionContext);
                 public static implicit operator Real(sbyte value) => Integer.Create(value);
                 public static implicit operator Real(byte value) => Integer.Create(value);
                 public static implicit operator Real(short value) => Integer.Create(value);

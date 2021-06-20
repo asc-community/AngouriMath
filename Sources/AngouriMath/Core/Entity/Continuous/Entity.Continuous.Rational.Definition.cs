@@ -6,7 +6,8 @@
  */
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using FieldCacheNamespace;
+using HonkSharp.Fluency;
+using HonkSharp.Laziness;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -40,13 +41,13 @@ namespace AngouriMath
                 /// A getter for the numerator
                 /// </summary>
                 public Integer Numerator => numerator.GetValue(static @this => @this.ERational.Numerator, this);
-                private FieldCache<Integer> numerator;
+                private FieldCacheA<Integer> numerator;
 
                 /// <summary>
                 /// A getter for the denominator
                 /// </summary>
                 public Integer Denominator => denominator.GetValue(static @this => @this.ERational.Denominator, this);
-                private FieldCache<Integer> denominator;
+                private FieldCacheA<Integer> denominator;
 
 #pragma warning disable CS1591
 
@@ -165,6 +166,16 @@ namespace AngouriMath
                 public static Real operator /(Rational a, Rational b) => (Real)OpDiv(a, b);
                 public static Rational operator +(Rational a) => a;
                 public static Rational operator -(Rational a) => OpMul(Integer.MinusOne, a);
+                
+                // TODO: consider the case for the divisor to be negative
+                public static Rational operator %(Rational a, Rational b)
+                    => a.ERational.Remainder(b.ERational)
+                        .Alias(out var mod)
+                        .IsNegative switch
+                        {
+                            false => mod,
+                            true => mod + b,
+                        };
                 public static implicit operator Rational(sbyte value) => Integer.Create(value);
                 public static implicit operator Rational(byte value) => Integer.Create(value);
                 public static implicit operator Rational(short value) => Integer.Create(value);

@@ -50,6 +50,14 @@ namespace AngouriMath
             /// Factorization of integer
             /// </summary>
             public static IEnumerable<(Integer prime, Integer power)> Factorize(Integer integer) => integer.Factorize();
+
+            /// <summary>
+            /// Finds the greatest common divisor
+            /// of two integers
+            /// </summary>
+            public static Integer GreatestCommonDivisor(Integer a, Integer b)
+                => a.EInteger.Gcd(b.EInteger);
+
         }
 
         /// <summary>Use it to solve equations</summary>

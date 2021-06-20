@@ -7,7 +7,7 @@
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
-using FieldCacheNamespace;
+using HonkSharp.Laziness;
 using System.Linq;
 
 namespace AngouriMath
@@ -42,7 +42,7 @@ namespace AngouriMath
                 /// Conjugate of a complex number. Given this = a + ib, Conjugate = a - ib
                 /// </summary>
                 public Complex Conjugate => conjugate.GetValue(static @this => Create(@this.RealPart, -@this.ImaginaryPart), this);
-                private FieldCache<Complex> conjugate;
+                private FieldCacheA<Complex> conjugate;
 
                 internal override Priority Priority =>
                     (RealPart, ImaginaryPart) switch

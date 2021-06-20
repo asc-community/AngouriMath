@@ -46,7 +46,7 @@ namespace AngouriMath
         /// Piecewise(a provided false, b provided c, c provided false)
         /// Will remain as it is (although unreachable cases will be removed)
         /// </summary>
-        public sealed partial record Piecewise : Entity, IEquatable<Piecewise>
+        public sealed partial record Piecewise : Entity, IEquatable<Piecewise?>
         {
             public IEnumerable<Providedf> Cases => cases;
             private readonly IEnumerable<Providedf> cases = Enumerable.Empty<Providedf>();
@@ -55,18 +55,25 @@ namespace AngouriMath
             /// <inheritdoc/>
             protected override Entity[] InitDirectChildren() => Cases.Select(c => (c.Expression, c.Predicate)).ConcatTuples().ToArray();
 
-            internal Piecewise New(IEnumerable<Providedf> newCases)
+            private Piecewise New(IEnumerable<Providedf> newCases)
                 => (Cases, newCases).SequencesAreEqualReferences() ? this : new Piecewise(newCases);
 
             /// <summary>
             /// Creates an instance of Piecewise
             /// </summary>
             /// <param name="cases">
-            /// This is an ordered sequence of <see cref="Providedf"/>
+            /// This is an ordered sequence of <see cref="Entity.Providedf"/>
             /// </param>
             public Piecewise(IEnumerable<Providedf> cases)
                 => this.cases = cases;
 
+            /// <summary>
+            /// Returns a mapped piecewise, with every
+            /// case replaced by the provided case
+            /// </summary>
+            /// <param name="func">
+            /// Map function from a Providedf to a Providedf
+            /// </param>
             public Piecewise Apply(Func<Providedf, Providedf> func)
                 => New(Cases.Select(func));
 
@@ -80,7 +87,7 @@ namespace AngouriMath
             /// Checks that two Piecewise are equal
             /// If one is not Piecewise, the method returns false
             /// </summary>
-            public bool Equals(Piecewise other)
+            public bool Equals(Piecewise? other)
             {
                 if (other is null)
                     return false;

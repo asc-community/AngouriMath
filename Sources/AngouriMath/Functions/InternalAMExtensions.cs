@@ -97,11 +97,11 @@ namespace AngouriMath
                     yield return s;
         }
 
-        public static System.Numerics.Complex Signum(this System.Numerics.Complex z)
+        public static Complex Signum(this Complex z)
             => z == 0 ? 0 : z / z.Magnitude;
 
-        public static System.Numerics.Complex Abs(this System.Numerics.Complex z)
-            => System.Numerics.Complex.Abs(z);
+        public static Complex Abs(this Complex z)
+            => Complex.Abs(z);
 
         public sealed class ConstantCache
         {
@@ -329,7 +329,7 @@ namespace AngouriMath
                 if (!x.IsNegative && x.LessThanOrEquals(consts.Pi)) return true;
                 if (x.GreaterThanOrEquals(consts.Pi) && x.LessThanOrEquals(consts.TwoPi)) return false;
 
-                throw new Core.Exceptions.AngouriBugException("Should not be reached");
+                throw new AngouriBugException("Should not be reached");
             }
 
             var moduleOfSin = cos.MultiplyAndAdd(-cos, EDecimal.One, context).Sqrt(context);
@@ -514,7 +514,7 @@ namespace AngouriMath
                     (true, false) => consts.Pi,
                     (false, false) => EDecimal.Zero,
                 },
-                _ => throw new Core.Exceptions.AngouriBugException("Unexpected scenario"),
+                _ => throw new AngouriBugException("Unexpected scenario"),
             };
         }
 
