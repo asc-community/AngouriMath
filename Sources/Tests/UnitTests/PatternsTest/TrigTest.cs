@@ -81,6 +81,44 @@ namespace UnitTests.PatternsTest
                 sinx.ShouldBeNull();
         }
         
+        [Theory]
+        [InlineData("pi", true)]
+        [InlineData("pi / 2", true)]
+        [InlineData("pi / 3", true)]
+        [InlineData("pi / 6", true)]
+        [InlineData("2 pi / 3", true)]
+        [InlineData("4 pi / 7", true)]
+        [InlineData("-pi", true)]
+        [InlineData("-pi / 2", true)]
+        [InlineData("-pi / 3", true)]
+        [InlineData("-pi / 6", true)]
+        [InlineData("-2 pi / 3", true)]
+        [InlineData("-4 pi / 7", true)]
+        [InlineData("200pi - pi", true)]
+        [InlineData("200pi - pi / 2", true)]
+        [InlineData("200pi - pi / 3", true)]
+        [InlineData("200pi - pi / 6", true)]
+        [InlineData("200pi - 2 pi / 3", true)]
+        [InlineData("200pi - 4 pi / 7", true)]
+        [InlineData("200pi + pi", true)]
+        [InlineData("200pi + pi / 2", true)]
+        [InlineData("200pi + pi / 3", true)]
+        [InlineData("200pi + pi / 6", true)]
+        [InlineData("200pi + 2 pi / 3", true)]
+        [InlineData("200pi + 4 pi / 7", true)]
+        [InlineData("1 + 2", false)]
+        [InlineData("pi - 2", false)]
+        public void CosineHalvedTest(Entity angle, bool mustBeComputed)
+        {
+            var cos2x = MathS.Cos(angle);
+            var cosx = MathS.ExperimentalFeatures.GetCosineOfHalvedAngle(angle, cos2x);
+            
+            if (mustBeComputed)
+                cosx.ShouldBeNotNull().ShouldApproximatelyEqual(MathS.Cos(angle / 2));
+            else
+                cosx.ShouldBeNull();
+        }
+        
         [Theory, CombinatorialData]
         public Unit SineCosineMultiplerExpansionTest(
             [CombinatorialValues("pi", "pi / 2", "- pi / 3", "pi / 10", "3", "30 pi", "-30 pi")] Entity x, 

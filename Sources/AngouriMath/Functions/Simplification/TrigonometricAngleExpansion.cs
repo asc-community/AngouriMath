@@ -27,6 +27,10 @@ namespace AngouriMath.Functions
         /// <param name="thetaRat">
         /// An angle already divided by pi
         /// </param>
+        /// <param name="sin2x">
+        /// The value of the sine
+        /// of the doubled angle
+        /// </param>
         /// <returns>
         /// The value of sine of half of the
         /// given angle if can (null otherwise)
@@ -118,11 +122,43 @@ namespace AngouriMath.Functions
             var sin2 = (sinSign * MathS.Sqrt(OneHalf + OneHalf * MathS.Sqrt(1 - sin2x.Pow(2)))).InnerSimplified;
 //                                                  ^ that's where we change the sign
 
+            // there must be a better way to determine whether we need sin1 or sin2
             if ((MathS.Sin(x * MathS.pi) - sin1).Abs().EvalNumerical().Downcast<Real>() < 0.01)
                 return sin1;
             if ((MathS.Sin(x * MathS.pi) - sin2).Abs().EvalNumerical().Downcast<Real>() < 0.01)
                 return sin2;
-            throw new AngouriBugException("");
+            
+            throw new AngouriBugException("It should be either of the two sines");
+        }
+        
+        internal static Entity? GetCosineOfHalvedAngle(Entity thetaRat, Entity cos2x)
+        {
+            // TODO:
+            // it's not the best way as it will generate unnecessary roots,
+            // so theoretically it should be done similary to sines, but for
+            // now it will remain simple and irrational.
+            var sin1 = GetSineOfHalvedAngle(thetaRat + 1 / 2, -MathS.Sqrt(1 - cos2x.Pow(2)));
+            var sin2 = GetSineOfHalvedAngle(thetaRat + 1 / 2, +MathS.Sqrt(1 - cos2x.Pow(2)));
+            if (sin1 is null || sin2 is null)
+                return null;
+            var cos1 = -MathS.Sqrt(1 - sin1.Pow(2)); 
+            var cos2 = +MathS.Sqrt(1 - sin2.Pow(2));
+            var cos3 = -MathS.Sqrt(1 + sin1.Pow(2)); 
+            var cos4 = +MathS.Sqrt(1 + sin2.Pow(2));
+            
+            if (IsTheRightOne(cos1, thetaRat))
+                return cos1;
+            if (IsTheRightOne(cos2, thetaRat))
+                return cos2;
+            if (IsTheRightOne(cos3, thetaRat))
+                return cos3;
+            if (IsTheRightOne(cos4, thetaRat))
+                return cos4;
+            
+            throw new AngouriBugException("It should be either of the two cosines");
+            
+            static bool IsTheRightOne(Entity cos, Entity thetaRat)
+                => (MathS.Cos(thetaRat / 2 * MathS.pi) - cos).Abs().EvalNumerical().Downcast<Real>() < 0.01;
         }
         
         [ConstantField] private static readonly Dictionary<Integer, Entity> angles = new() 
@@ -179,11 +215,10 @@ namespace AngouriMath.Functions
                         2 * ExpandSineArgumentMultiplied(sinx, cosx, nEven / 2)
                           * ExpandCosineArgumentMultiplied(sinx, cosx, nEven / 2),
                     
-                    // sin(n x) = sin((n - 1) x) cos((n - 1) x) + sin(x) cos(x)  
+                    // sin(n x) = sin((n - 1) x) cos(x) + sin(x) cos((n - 1) x)  
                     var nOdd => 
-                        ExpandSineArgumentMultiplied(sinx, cosx, nOdd - 1) *
-                        ExpandCosineArgumentMultiplied(sinx, cosx, nOdd - 1)
-                        + sinx * cosx
+                        ExpandSineArgumentMultiplied(sinx, cosx, nOdd - 1) * cosx
+                        +  ExpandCosineArgumentMultiplied(sinx, cosx, nOdd - 1) * sinx
                 };
         
         /// <summary>
@@ -220,7 +255,7 @@ namespace AngouriMath.Functions
                 1 => cosx,
                 
                 // cos(2x) = cos(x)^2 - sin(x)^2
-                2 => cosx * cosx - sinx * sinx,
+                2 => cosx.Pow(2) - sinx.Pow(2),
                 
                 // cos(n x) = cos(n/2 x)^2 - sin(n/2 x)^2 
                 _ when n % 2 is 0

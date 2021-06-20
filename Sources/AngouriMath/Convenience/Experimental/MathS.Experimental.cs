@@ -88,6 +88,29 @@ namespace AngouriMath
                             TrigonometricAngleExpansion.GetSineOfHalvedAngle(thetaRat, sin2x));
             
             /// <summary>
+            /// We are given angle theta and cos(theta)
+            /// This function returns cos(theta / 2).
+            /// </summary>
+            /// <param name="theta">
+            /// An angle, cosine of half of which
+            /// will be computed (that is, if
+            /// you have cos(2x), then pass 2x here).
+            /// </param>
+            /// <param name="cos2x">
+            /// The value of the cosine of
+            /// doubled angle.
+            /// </param>
+            /// <returns>
+            /// The value of cosine of half of the
+            /// given angle if can (null otherwise)
+            /// </returns>
+            public static Entity? GetCosineOfHalvedAngle(Entity theta, Entity cos2x)
+                => UnsafeAndInternal.DivideByEntityStrict(theta, MathS.pi)
+                    ?.Inject(cos2x).Pipe(
+                        static (thetaRat, cos2x) => 
+                            TrigonometricAngleExpansion.GetCosineOfHalvedAngle(thetaRat, cos2x));
+            
+            /// <summary>
             /// Assume you have sin(n x), where
             /// n is an integer number. Then
             /// sin(n x) can be easily represented
