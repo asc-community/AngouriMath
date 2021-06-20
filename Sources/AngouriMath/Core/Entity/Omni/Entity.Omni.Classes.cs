@@ -156,8 +156,8 @@ namespace AngouriMath
 
                 /// <inheritdoc/>
                 public override int GetHashCode()
-                    => hashCode.GetValue(@this =>
-                        Elements.OrderBy(el => el.GetHashCode()).HashCodeOfSequence(HashCodeFunctional.HashCodeShifts.FiniteSet), 
+                    => hashCode.GetValue(static @this =>
+                        @this.Elements.OrderBy(el => el.GetHashCode()).HashCodeOfSequence(HashCodeFunctional.HashCodeShifts.FiniteSet), 
                         this);
                 private FieldCacheA<int> hashCode;
 
@@ -575,12 +575,12 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => isSetFinite.GetValue(@this =>
+                public override bool IsSetFinite => isSetFinite.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2 && finite1.IsSetFinite && finite2.IsSetFinite, this);
                 private FieldCacheA<bool> isSetFinite;
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => isSetEmpty.GetValue(@this =>
+                public override bool IsSetEmpty => isSetEmpty.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2 && finite1.IsSetEmpty && finite2.IsSetEmpty, this);
                 private FieldCacheA<bool> isSetEmpty;
 
@@ -627,13 +627,13 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => isSetFinite.GetValue(@this => 
+                public override bool IsSetFinite => isSetFinite.GetValue(static @this => 
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetFinite || finite2.IsSetFinite), this);
                 private FieldCacheA<bool> isSetFinite;
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => isSetEmpty.GetValue(@this =>
+                public override bool IsSetEmpty => isSetEmpty.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite2.IsSetEmpty), this);
                 private FieldCacheA<bool> isSetEmpty;
@@ -681,12 +681,12 @@ namespace AngouriMath
                 protected override Entity[] InitDirectChildren() => new[] { Left, Right };
 
                 /// <inheritdoc/>
-                public override bool IsSetFinite => isSetFinite.GetValue(@this =>
+                public override bool IsSetFinite => isSetFinite.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet && finite1.IsSetFinite, this);
                 private FieldCacheA<bool> isSetFinite;
 
                 /// <inheritdoc/>
-                public override bool IsSetEmpty => isSetEmpty.GetValue(@this =>
+                public override bool IsSetEmpty => isSetEmpty.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite1 == finite2), this);
                 private FieldCacheA<bool> isSetEmpty;
