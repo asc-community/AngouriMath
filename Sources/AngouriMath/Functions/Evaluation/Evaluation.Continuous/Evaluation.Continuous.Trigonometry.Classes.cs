@@ -5,10 +5,33 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Functions;
+using HonkSharp.Fluency;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {
+    internal static class InnerEvalZeroedSinCosConditions
+    {
+        internal static bool IsSinDefinitelyZero(Entity angle)
+            => 
+               // ignore too big entities
+               angle.Complexity < 100
+               
+               // is it of the form n * pi?
+               && MathS.UnsafeAndInternal.DivideByEntityStrict(angle, MathS.pi)?.Evaled is Integer;
+        
+        internal static bool IsCosDefinitelyZero(Entity angle)
+            => 
+                // ignore too big entities
+                angle.Complexity < 100
+               
+                // is it of the form n / m * pi?
+                && MathS.UnsafeAndInternal.DivideByEntityStrict(angle, MathS.pi)?.Evaled is Rational angleRat
+                
+                // if n / m is integer, it is definitely 0
+                && angleRat % TrigonometricAngleExpansion.OneHalf == 0;
+    }
+    
     partial record Entity
     {
         public partial record Sinf
@@ -66,11 +89,11 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+                ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        Complex n => Number.Secant(n),
-                        _ => null
+                        var arg when InnerEvalZeroedSinCosConditions.IsCosDefinitelyZero(arg) => MathS.NaN,
+                        var n => (n.Evaled as Complex)?.Pipe(Secant)
                     },
                     (@this, a) => ((Secantf)@this).New(a)
                     );
@@ -91,11 +114,11 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+                ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        Complex n => Number.Cosecant(n),
-                        _ => null
+                        var arg when InnerEvalZeroedSinCosConditions.IsSinDefinitelyZero(arg) => MathS.NaN,
+                        var n => (n.Evaled as Complex)?.Pipe(Cosecant)
                     },
                     (@this, a) => ((Cosecantf)@this).New(a)
                     );
@@ -164,11 +187,11 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+                ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        Complex n => Number.Tan(n),
-                        _ => null
+                        var arg when InnerEvalZeroedSinCosConditions.IsCosDefinitelyZero(arg) => MathS.NaN,
+                        var n => (n.Evaled as Complex)?.Pipe(Number.Tan)
                     },
                     (@this, a) => ((Tanf)@this).New(a)
                     );
@@ -188,11 +211,11 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerEval() =>
-                ExpandOnOneArgument(Argument.Evaled,
+                ExpandOnOneArgument(Argument.InnerSimplified,
                     a => a switch
                     {
-                        Complex n => Number.Cotan(n),
-                        _ => null
+                        var arg when InnerEvalZeroedSinCosConditions.IsSinDefinitelyZero(arg) => MathS.NaN,
+                        var n => (n.Evaled as Complex)?.Pipe(Number.Cotan)
                     },
                     (@this, a) => ((Cotanf)@this).New(a)
                     );

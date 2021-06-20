@@ -277,6 +277,46 @@ namespace UnitTests.Common
                 res.ShouldBe(rat);
             }
         }
+        
+        [Theory]
+        [InlineData("pi / 2")]
+        [InlineData("-pi / 2")]
+        [InlineData("-5pi / 2")]
+        [InlineData("-9pi / 2")]
+        [InlineData("9pi / 2")]
+        [InlineData("5pi / 2")]
+        public void TanShouldBeNaN(string angle)
+            => MathS.Tan(angle).Evaled.ShouldBe(MathS.NaN);
+        
+        [Theory]
+        [InlineData("pi / 2")]
+        [InlineData("-pi / 2")]
+        [InlineData("-5pi / 2")]
+        [InlineData("-9pi / 2")]
+        [InlineData("9pi / 2")]
+        [InlineData("5pi / 2")]
+        public void SecShouldBeNaN(string angle)
+            => MathS.Sec(angle).Evaled.ShouldBe(MathS.NaN);
+        
+        [Theory]
+        [InlineData("pi")]
+        [InlineData("-pi")]
+        [InlineData("-5pi")]
+        [InlineData("-9pi")]
+        [InlineData("9pi")]
+        [InlineData("5pi")]
+        public void CotanShouldBeNaN(string angle)
+            => MathS.Cotan(angle).Evaled.ShouldBe(MathS.NaN);
+        
+        [Theory]
+        [InlineData("pi")]
+        [InlineData("-pi")]
+        [InlineData("-5pi")]
+        [InlineData("-9pi")]
+        [InlineData("9pi")]
+        [InlineData("5pi")]
+        public void CosecShouldBeNaN(string angle)
+            => MathS.Cosec(angle).Evaled.ShouldBe(MathS.NaN);
     }
 }
 

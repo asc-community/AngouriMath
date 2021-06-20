@@ -17,7 +17,7 @@ namespace AngouriMath.Functions
 {
     internal static class TrigonometricAngleExpansion
     {
-        [ConstantField] private static readonly Rational OneHalf = 0.5.ToNumber().Downcast<Rational>();
+        [ConstantField] internal static readonly Rational OneHalf = 0.5.ToNumber().Downcast<Rational>();
         
         /// <summary>
         /// We are given angle thetaRat and sin(theta)
