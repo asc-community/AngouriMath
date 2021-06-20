@@ -13,6 +13,7 @@ using AngouriMath;
 using static AngouriMath.Entity.Number;
 using System;
 using System.Linq;
+using HonkSharp.Functional;
 using Xunit;
 
 namespace UnitTests.PatternsTest
@@ -79,5 +80,27 @@ namespace UnitTests.PatternsTest
             else
                 sinx.ShouldBeNull();
         }
+        
+        [Theory, CombinatorialData]
+        public Unit SineCosineMultiplerExpansionTest(
+            [CombinatorialValues("pi", "pi / 2", "- pi / 3", "pi / 10", "3", "30 pi", "-30 pi")] Entity x, 
+            [CombinatorialValues(-3, -2, -1, 0, 1, 2, 3, 4, 5)] int n,
+            [CombinatorialValues(true, false)] bool testSin
+            )
+            => testSin switch
+            {
+                true =>
+                    MathS.ExperimentalFeatures.ExpandSineArgumentMultiplied(
+                    sinx: MathS.Sin(x),
+                    cosx: MathS.Cos(x),
+                    n: n
+                    ).ShouldApproximatelyEqual(MathS.Sin(n * x)),
+                false => 
+                    MathS.ExperimentalFeatures.ExpandCosineArgumentMultiplied(
+                        sinx: MathS.Sin(x),
+                        cosx: MathS.Cos(x),
+                        n: n
+                    ).ShouldApproximatelyEqual(MathS.Cos(n * x))
+            };
     }
 }

@@ -127,12 +127,111 @@ namespace AngouriMath.Functions
         
         [ConstantField] private static readonly Dictionary<Integer, Entity> angles = new() 
         {
+            
             { 2, "1" },
             { 3, "sqrt(3) / 2" },
             { 4, "sqrt(2) / 2" },
             { 5, "sqrt(5/8 - sqrt(5)/8)" },
-            // { 7, GetSineOfHalvedAngle("2/7", MathS.Sqrt(1 - MathS.Pow("1/6" * (-1 + MathS.Cbrt((7 + 21 * Sqrt(-3)) / 2) + MathS.Cbrt((7 - 21 * Sqrt(-3)) / 2)), 2))) ?? throw new AngouriBugException("Oh no!") }
+            
+            // Reproduction code:
+            // Console.WriteLine(MathS.ExperimentalFeatures.GetSineOfHalvedAngle("2pi / 7", MathS.Sqrt(1 - MathS.Pow("1/6" * (-1 + MathS.Cbrt((7 + 21 * Sqrt(-3)) / 2) + MathS.Cbrt((7 - 21 * Sqrt(-3)) / 2)), 2))));
+            { 7, "sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2))" }
         };
+        
+        /// <summary>
+        /// Assume you have sin(n x), where
+        /// n is an integer number. Then
+        /// sin(n x) can be easily represented
+        /// as a combination of arithmetic operations
+        /// of sin(x) and cos(x), which is exactly what
+        /// this function does.
+        /// </summary>
+        /// <param name="sinx">
+        /// The value of sin(x)
+        /// </param>
+        /// <param name="cosx">
+        /// The value of cos(x)
+        /// </param>
+        /// <param name="n">
+        /// The integer multiplier of the
+        /// angle in the original sin(n x)
+        /// </param>
+        /// <returns>
+        /// Expanded sine.
+        /// </returns>
+        internal static Entity ExpandSineArgumentMultiplied(Entity sinx, Entity cosx, int n)
+            => n switch
+                {
+                    // sin(-x) = -sin(x) 
+                    < 0 => -ExpandSineArgumentMultiplied(sinx, cosx, -n),
+                    
+                    // sin(0) = 0
+                    0 => 0,
+                    
+                    // sin(x) = sin(x)
+                    1 => sinx,
+                    
+                    // sin(2x) = 2 sin(x) cos(x)
+                    2 => 2 * sinx * cosx,
+                    
+                    // sin(n x) = 2 sin(n/2 x) cos(n/2 x)
+                    var nEven when nEven % 2 is 0 =>
+                        2 * ExpandSineArgumentMultiplied(sinx, cosx, nEven / 2)
+                          * ExpandCosineArgumentMultiplied(sinx, cosx, nEven / 2),
+                    
+                    // sin(n x) = sin((n - 1) x) cos((n - 1) x) + sin(x) cos(x)  
+                    var nOdd => 
+                        ExpandSineArgumentMultiplied(sinx, cosx, nOdd - 1) *
+                        ExpandCosineArgumentMultiplied(sinx, cosx, nOdd - 1)
+                        + sinx * cosx
+                };
+        
+        /// <summary>
+        /// Assume you have cos(n x), where
+        /// n is an integer number. Then
+        /// cos(n x) can be easily represented
+        /// as a combination of arithmetic operations
+        /// of sin(x) and cos(x), which is exactly what
+        /// this function does.
+        /// </summary>
+        /// <param name="sinx">
+        /// The value of sin(x)
+        /// </param>
+        /// <param name="cosx">
+        /// The value of cos(x)
+        /// </param>
+        /// <param name="n">
+        /// The integer multiplier of the
+        /// angle in the original cos(n x)
+        /// </param>
+        /// <returns>
+        /// Expanded cosine.
+        /// </returns>
+        internal static Entity ExpandCosineArgumentMultiplied(Entity sinx, Entity cosx, int n)
+            => n switch
+            {
+                // cos(-n) = cos(n)
+                < 0 => ExpandCosineArgumentMultiplied(sinx, cosx, -n),
+                
+                // cos(0) = 1
+                0 => 1,
+                
+                // cos(x) = cos(x)
+                1 => cosx,
+                
+                // cos(2x) = cos(x)^2 - sin(x)^2
+                2 => cosx * cosx - sinx * sinx,
+                
+                // cos(n x) = cos(n/2 x)^2 - sin(n/2 x)^2 
+                _ when n % 2 is 0
+                    => ExpandCosineArgumentMultiplied(sinx, cosx, n / 2).Pow(2)
+                    - ExpandSineArgumentMultiplied(sinx, cosx, n / 2).Pow(2),
+                
+                // cos(n x) = cos((n - 1) x) * cos(x) - sin((n - 1) x) * sin(x)
+                _ => ExpandCosineArgumentMultiplied(sinx, cosx, n - 1) * cosx
+                - ExpandSineArgumentMultiplied(sinx, cosx, n - 1) * sinx
+            };
+
         
         internal static Entity? SymbolicFormOfSine(Entity angle)
         {

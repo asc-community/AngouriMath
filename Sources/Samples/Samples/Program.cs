@@ -11,8 +11,9 @@ using static AngouriMath.MathS;
 // Console.WriteLine("cbrt(7 + 21sqrt(-3)) + cbrt(7 - 21sqrt(-3))".ToEntity().Evaled);
 // Console.WriteLine("cbrt(7) + cbrt(7)".ToEntity().Evaled);
 
-var a = Entity.Number.Rational.Create(-10, 3);
-Console.WriteLine(a % 2);
+// var a = Entity.Number.Rational.Create(-10, 3);
+// Console.WriteLine(a % 2);
+Console.WriteLine(MathS.ExperimentalFeatures.GetSineOfHalvedAngle("2pi / 7", MathS.Sqrt(1 - MathS.Pow("1/6" * (-1 + MathS.Cbrt((7 + 21 * Sqrt(-3)) / 2) + MathS.Cbrt((7 - 21 * Sqrt(-3)) / 2)), 2))));
 
 Console.ReadLine();
 // Entity expr = "x + sin(2x) + 3";

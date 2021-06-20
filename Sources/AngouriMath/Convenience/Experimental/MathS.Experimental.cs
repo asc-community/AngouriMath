@@ -86,6 +86,54 @@ namespace AngouriMath
                     ?.Inject(sin2x).Pipe(
                         static (thetaRat, sin2x) => 
                             TrigonometricAngleExpansion.GetSineOfHalvedAngle(thetaRat, sin2x));
+            
+            /// <summary>
+            /// Assume you have sin(n x), where
+            /// n is an integer number. Then
+            /// sin(n x) can be easily represented
+            /// as a combination of arithmetic operations
+            /// of sin(x) and cos(x), which is exactly what
+            /// this function does.
+            /// </summary>
+            /// <param name="sinx">
+            /// The value of sin(x)
+            /// </param>
+            /// <param name="cosx">
+            /// The value of cos(x)
+            /// </param>
+            /// <param name="n">
+            /// The integer multiplier of the
+            /// angle in the original sin(n x)
+            /// </param>
+            /// <returns>
+            /// Expanded sine.
+            /// </returns>
+            public static Entity ExpandSineArgumentMultiplied(Entity sinx, Entity cosx, int n)
+                => TrigonometricAngleExpansion.ExpandSineArgumentMultiplied(sinx, cosx, n);
+                
+            /// <summary>
+            /// Assume you have cos(n x), where
+            /// n is an integer number. Then
+            /// cos(n x) can be easily represented
+            /// as a combination of arithmetic operations
+            /// of sin(x) and cos(x), which is exactly what
+            /// this function does.
+            /// </summary>
+            /// <param name="sinx">
+            /// The value of sin(x)
+            /// </param>
+            /// <param name="cosx">
+            /// The value of cos(x)
+            /// </param>
+            /// <param name="n">
+            /// The integer multiplier of the
+            /// angle in the original cos(n x)
+            /// </param>
+            /// <returns>
+            /// Expanded cosine.
+            /// </returns>
+            public static Entity ExpandCosineArgumentMultiplied(Entity sinx, Entity cosx, int n)
+                => TrigonometricAngleExpansion.ExpandCosineArgumentMultiplied(sinx, cosx, n);
         }
     }
 }
