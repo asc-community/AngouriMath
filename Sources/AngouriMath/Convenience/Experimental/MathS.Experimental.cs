@@ -47,23 +47,7 @@ namespace AngouriMath
             /// </summary>
             public static IEnumerable<(Entity.Number.Integer numerator, Entity.Number.Integer denPrime, Entity.Number.Integer denPower)> DecomposeRational(Entity.Number.Rational rational)
                 => DecomposeRational(rational.Numerator, rational.Denominator);
-            
-            /// <summary>
-            /// Finds the symbolic form of sine, if can
-            /// For example, sin(9/14) is sin(1/2 + 1/7) which
-            /// can be expanded as a sine of sum and hence
-            /// an analytical (symbolic) form.
-            /// </summary>
-            /// <param name="angle">
-            /// The angle in radians
-            /// </param>
-            /// <returns>
-            /// The sine's symbolic form
-            /// or null if cannot find it
-            /// </returns>
-            public static Entity? SymbolicFormOfSine(Entity angle)
-                => TrigonometricAngleExpansion.SymbolicFormOfSine(angle);
-            
+
             /// <summary>
             /// We are given angle theta and sin(theta)
             /// This function returns sin(theta / 2).
@@ -173,6 +157,38 @@ namespace AngouriMath
             /// </summary>
             public static Entity ExpandCosineOfSum(IReadOnlyList<(Entity SinX, Entity CosX)> terms)
                 => TrigonometricAngleExpansion.ExpandCosineOfSum(terms, 0, terms.Count - 1);
+            
+            /// <summary>
+            /// Finds the symbolic form of sine, if can
+            /// For example, sin(9/14) is sin(1/2 + 1/7) which
+            /// can be expanded as a sine of sum and hence
+            /// an analytical (symbolic) form.
+            /// </summary>
+            /// <param name="angle">
+            /// The angle in radians
+            /// </param>
+            /// <returns>
+            /// The sine's symbolic form
+            /// or null if cannot find it
+            /// </returns>
+            public static Entity? SymbolicFormOfSine(Entity angle)
+                => TrigonometricAngleExpansion.SymbolicFormOfSine(angle)?.InnerSimplified;
+            
+            /// <summary>
+            /// Finds the symbolic form of cosine, if can
+            /// For example, cos(9/14) is cos(1/2 + 1/7) which
+            /// can be expanded as a cosine of sum and hence
+            /// an analytical (symbolic) form.
+            /// </summary>
+            /// <param name="angle">
+            /// The angle in radians
+            /// </param>
+            /// <returns>
+            /// The cosine's symbolic form
+            /// or null if cannot find it
+            /// </returns>
+            public static Entity? SymbolicFormOfCosine(Entity angle)
+                => TrigonometricAngleExpansion.SymbolicFormOfCosine(angle)?.InnerSimplified;
         }
     }
 }

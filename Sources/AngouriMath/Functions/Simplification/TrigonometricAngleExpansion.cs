@@ -160,20 +160,7 @@ namespace AngouriMath.Functions
             static bool IsTheRightOne(Entity cos, Entity thetaRat)
                 => (MathS.Cos(thetaRat / 2 * MathS.pi) - cos).Abs().EvalNumerical().Downcast<Real>() < 0.01;
         }
-        
-        [ConstantField] private static readonly Dictionary<Integer, Entity> angles = new() 
-        {
-            
-            { 2, "1" },
-            { 3, "sqrt(3) / 2" },
-            { 4, "sqrt(2) / 2" },
-            { 5, "sqrt(5/8 - sqrt(5)/8)" },
-            
-            // Reproduction code:
-            // Console.WriteLine(MathS.ExperimentalFeatures.GetSineOfHalvedAngle("2pi / 7", MathS.Sqrt(1 - MathS.Pow("1/6" * (-1 + MathS.Cbrt((7 + 21 * Sqrt(-3)) / 2) + MathS.Cbrt((7 - 21 * Sqrt(-3)) / 2)), 2))));
-            { 7, "sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2))" }
-        };
-        
+
         /// <summary>
         /// Assume you have sin(n x), where
         /// n is an integer number. Then
@@ -327,12 +314,61 @@ namespace AngouriMath.Functions
             };
             
         
-        internal static Entity? SymbolicFormOfSine(Entity angle)
+        [ConstantField] private static readonly Dictionary<Integer, Entity> anglesSin = new() 
+        {
+            { 1, "0" },
+            { 2, "1" },
+            { 3, "sqrt(3) / 2" },
+            { 4, "sqrt(2) / 2" },
+            { 5, "sqrt(5/8 - sqrt(5)/8)" },
+            
+            // Reproduction code:
+            // Console.WriteLine(MathS.ExperimentalFeatures.GetSineOfHalvedAngle("2pi / 7", MathS.Sqrt(1 - MathS.Pow("1/6" * (-1 + MathS.Cbrt((7 + 21 * Sqrt(-3)) / 2) + MathS.Cbrt((7 - 21 * Sqrt(-3)) / 2)), 2))));
+            { 7, "sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2))" }
+        };
+            
+        [ConstantField] private static readonly Dictionary<Integer, Entity> anglesCos = new()
+        {
+            { 1, "-1" },
+            { 2, "0" },
+            { 3, "1 / 2" },
+            { 4, "sqrt(2) / 2" },
+            { 5, "1/4 * (sqrt(5) - 1)" },
+            
+            // Reproduction code:
+            // Console.WriteLine(MathS.ExperimentalFeatures.GetCosineOfHalvedAngle("2pi / 7", "1/6" * (-1 + Cbrt((7 + 21 * Sqrt(-3)) / 2) + Cbrt((7 - 21 * Sqrt(-3)) / 2))));
+            { 7, "sqrt(1 - sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2)) ^ 2)" }
+        };
+        
+        private static IReadOnlyList<(Entity SinX, Entity CosX)>? PrepareTerms(Entity angle)
         {
             var piCoef = MathS.UnsafeAndInternal.DivideByEntityStrict(angle, MathS.pi);
-            if (piCoef is not Rational rationalCoef)
+            if (piCoef is not { Evaled: Rational rationalCoef })
                 return null;
-            return null; 
+            
+            rationalCoef %= 2; // 2pi doesn't ever change anything
+            
+            var terms = new List<(Entity SinX, Entity CosX)>();
+            
+            foreach (var (num, prime, power) in Fraction.Decompose(rationalCoef.Numerator, rationalCoef.Denominator))
+            {
+                var elem = (num / prime.Pow(power)).Evaled.Downcast<Rational>();
+                if (!anglesSin.TryGetValue(elem.Denominator, out var sin1x))
+                    return null;
+                if (!anglesCos.TryGetValue(elem.Denominator, out var cos1x))
+                    return null;
+                var sinnx = ExpandSineArgumentMultiplied(sin1x, cos1x, (int)elem.Numerator);
+                var cosnx = ExpandCosineArgumentMultiplied(sin1x, cos1x, (int)elem.Numerator);
+                terms.Add((SinX: sinnx, CosX: cosnx));
+            }
+            
+            return terms;
         }
+        
+        internal static Entity? SymbolicFormOfSine(Entity angle)
+            => PrepareTerms(angle)?.Pipe(terms => ExpandSineOfSum(terms, 0, terms.Count - 1));
+        
+        internal static Entity? SymbolicFormOfCosine(Entity angle)
+            => PrepareTerms(angle)?.Pipe(terms => ExpandCosineOfSum(terms, 0, terms.Count - 1));
     }
 }

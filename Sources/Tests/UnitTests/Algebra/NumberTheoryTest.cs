@@ -50,6 +50,7 @@ namespace UnitTests.Algebra
         [InlineData("1/17 - 1/3", 2)]
         [InlineData("-2/17 + 1/3", 2)]
         [InlineData("-1/17 - 2/3", 2)]
+        [InlineData("1", 1)]
         public void RationalDecompositionTest(string rationalRaw, int count)
         {
             var input = (Rational)rationalRaw.ToEntity().InnerSimplified;

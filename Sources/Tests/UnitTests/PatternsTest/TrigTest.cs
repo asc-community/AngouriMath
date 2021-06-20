@@ -185,6 +185,66 @@ namespace UnitTests.PatternsTest
                         MathS.Cos(angles.Aggregate((a, b) => a + b))
                     )
                 );
+        
+        [Theory]
+        [InlineData("1/3 pi + 1/6 pi")]
+        [InlineData("1/4 pi + 1/7 pi")]
+        [InlineData("1/3 pi + 2/6 pi")]
+        [InlineData("1/4 pi + 2/7 pi")]
+        [InlineData("55/84 pi + 2/3 pi")]
+        [InlineData("142pi - 23pi")]
+        [InlineData("17/7pi")]
+        [InlineData("pi/3 - pi/2")]
+        [InlineData("pi")]
+        [InlineData("pi / 42")]
+        [InlineData("1/2pi")]
+        [InlineData("1/3pi")]
+        [InlineData("-4/3pi")]
+        [InlineData("-4/3pi - 7/4pi")]
+        [InlineData("-4/3pi + 7/4pi")]
+        [InlineData("-4/3pi + 3/4pi")]
+        [InlineData("-4/3pi + 3/7pi")]
+        [InlineData("pi / (3 * 4 * 7)")]
+        [InlineData("100/7pi")]
+        [InlineData("100/7pi + 100/3pi")]
+        public void SymbolicSineFormTest(Entity angle)
+            => angle
+                .Simplify()  // so that we don't lose precision, but at the same time compose it all into a single  argument
+                .Pipe(
+                    angle => MathS.ExperimentalFeatures.SymbolicFormOfSine(angle)
+                        .ShouldBeNotNull()
+                        .ShouldApproximatelyEqual(MathS.Sin(angle))
+                    );
+        
+        [Theory]
+        [InlineData("1/3 pi + 1/6 pi")]
+        [InlineData("1/4 pi + 1/7 pi")]
+        [InlineData("1/3 pi + 2/6 pi")]
+        [InlineData("1/4 pi + 2/7 pi")]
+        [InlineData("55/84 pi + 2/3 pi")]
+        [InlineData("142pi - 23pi")]
+        [InlineData("17/7pi")]
+        [InlineData("pi/3 - pi/2")]
+        [InlineData("pi")]
+        [InlineData("pi / 42")]
+        [InlineData("1/2pi")]
+        [InlineData("1/3pi")]
+        [InlineData("-4/3pi")]
+        [InlineData("-4/3pi - 7/4pi")]
+        [InlineData("-4/3pi + 7/4pi")]
+        [InlineData("-4/3pi + 3/4pi")]
+        [InlineData("-4/3pi + 3/7pi")]
+        [InlineData("pi / (3 * 4 * 7)")]
+        [InlineData("100/7pi")]
+        [InlineData("100/7pi + 100/3pi")]
+        public void SymbolicCosineFormTest(Entity angle)
+            => angle
+                .Simplify()  // so that we don't lose precision, but at the same time compose it all into a single  argument
+                .Pipe(
+                    angle => MathS.ExperimentalFeatures.SymbolicFormOfCosine(angle)
+                        .ShouldBeNotNull()
+                        .ShouldApproximatelyEqual(MathS.Cos(angle))
+                );
     }
 }
 

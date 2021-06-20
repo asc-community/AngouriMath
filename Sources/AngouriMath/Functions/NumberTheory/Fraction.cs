@@ -22,6 +22,12 @@ namespace AngouriMath.Functions
         /// </summary>
         internal static IEnumerable<(Integer numerator, Integer denPrime, Integer denPower)> Decompose(Integer num, Integer den)
         {
+            if (den == 1)
+            {
+                yield return (num, 1, 1);
+                yield break;
+            }
+            
             // Statements are referenced with [i].
             //
             // The algorithm works as follows.

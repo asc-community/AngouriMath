@@ -13,7 +13,10 @@ using static AngouriMath.MathS;
 
 // var a = Entity.Number.Rational.Create(-10, 3);
 // Console.WriteLine(a % 2);
-Console.WriteLine(MathS.ExperimentalFeatures.GetSineOfHalvedAngle("2pi / 7", MathS.Sqrt(1 - MathS.Pow("1/6" * (-1 + MathS.Cbrt((7 + 21 * Sqrt(-3)) / 2) + MathS.Cbrt((7 - 21 * Sqrt(-3)) / 2)), 2))));
+
+Console.WriteLine(MathS.ExperimentalFeatures.SymbolicFormOfSine("pi / 42"));
+
+//Console.WriteLine(MathS.ExperimentalFeatures.GetCosineOfHalvedAngle("2pi / 7", "1/6" * (-1 + Cbrt((7 + 21 * Sqrt(-3)) / 2) + Cbrt((7 - 21 * Sqrt(-3)) / 2))));
 
 Console.ReadLine();
 // Entity expr = "x + sin(2x) + 3";
