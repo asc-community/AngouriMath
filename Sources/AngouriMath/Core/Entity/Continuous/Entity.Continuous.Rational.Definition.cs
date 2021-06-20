@@ -6,6 +6,7 @@
  */
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
+using HonkSharp.Fluency;
 using HonkSharp.Laziness;
 using PeterO.Numbers;
 
@@ -165,7 +166,16 @@ namespace AngouriMath
                 public static Real operator /(Rational a, Rational b) => (Real)OpDiv(a, b);
                 public static Rational operator +(Rational a) => a;
                 public static Rational operator -(Rational a) => OpMul(Integer.MinusOne, a);
-                public static Rational operator %(Rational a, Rational b) => a.ERational.Remainder(b.ERational);
+                
+                // TODO: consider the case for the divisor to be negative
+                public static Rational operator %(Rational a, Rational b)
+                    => a.ERational.Remainder(b.ERational)
+                        .Alias(out var mod)
+                        .IsNegative switch
+                        {
+                            false => mod,
+                            true => mod + b,
+                        };
                 public static implicit operator Rational(sbyte value) => Integer.Create(value);
                 public static implicit operator Rational(byte value) => Integer.Create(value);
                 public static implicit operator Rational(short value) => Integer.Create(value);

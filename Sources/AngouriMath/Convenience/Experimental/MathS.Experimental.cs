@@ -6,6 +6,7 @@
  */
 using System.Collections.Generic;
 using AngouriMath.Functions;
+using HonkSharp.Fluency;
 
 namespace AngouriMath
 {
@@ -62,6 +63,29 @@ namespace AngouriMath
             /// </returns>
             public static Entity? SymbolicFormOfSine(Entity angle)
                 => TrigonometricAngleExpansion.SymbolicFormOfSine(angle);
+            
+            /// <summary>
+            /// We are given angle theta and sin(theta)
+            /// This function returns sin(theta / 2).
+            /// </summary>
+            /// <param name="theta">
+            /// An angle, sine of half of which
+            /// will be computed (that is, if
+            /// you have sin(2x), then pass 2x here).
+            /// </param>
+            /// <param name="sin2x">
+            /// The value of the sine of
+            /// doubled angle.
+            /// </param>
+            /// <returns>
+            /// The value of sine of half of the
+            /// given angle if can (null otherwise)
+            /// </returns>
+            public static Entity? GetSineOfHalvedAngle(Entity theta, Entity sin2x)
+                => UnsafeAndInternal.DivideByEntityStrict(theta, MathS.pi)
+                    ?.Inject(sin2x).Pipe(
+                        static (thetaRat, sin2x) => 
+                            TrigonometricAngleExpansion.GetSineOfHalvedAngle(thetaRat, sin2x));
         }
     }
 }

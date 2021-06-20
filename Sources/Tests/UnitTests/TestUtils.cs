@@ -5,6 +5,9 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using FluentAssertions;
+using HonkSharp.Fluency;
+using HonkSharp.Functional;
 using Xunit;
 
 namespace UnitTests
@@ -38,6 +41,12 @@ namespace UnitTests
             Assert.Equal(target, value.Count());
             return value;
         }
+        
+        public static Unit ShouldApproximatelyEqual(this Entity actual, Entity target)
+            => (actual.EvalNumerical() - target.EvalNumerical())
+                .Abs()
+                .Pipe(error => Assert.True(error < 0.01, $"Error is {error}"))
+                .Discard();
     }
 
     /// <summary>

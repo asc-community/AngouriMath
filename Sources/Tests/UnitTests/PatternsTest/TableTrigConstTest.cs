@@ -41,5 +41,43 @@ namespace UnitTests.PatternsTest
             var actual = Assert.IsAssignableFrom<Real>(toSimplify.InnerSimplified.EvalNumerical());
             AssertEqualWithoutLast3Digits(expected, actual);
         }
+        
+        [Theory]
+        [InlineData("pi", true)]
+        [InlineData("pi / 2", true)]
+        [InlineData("pi / 3", true)]
+        [InlineData("pi / 6", true)]
+        [InlineData("2 pi / 3", true)]
+        [InlineData("4 pi / 7", true)]
+        [InlineData("-pi", true)]
+        [InlineData("-pi / 2", true)]
+        [InlineData("-pi / 3", true)]
+        [InlineData("-pi / 6", true)]
+        [InlineData("-2 pi / 3", true)]
+        [InlineData("-4 pi / 7", true)]
+        [InlineData("200pi - pi", true)]
+        [InlineData("200pi - pi / 2", true)]
+        [InlineData("200pi - pi / 3", true)]
+        [InlineData("200pi - pi / 6", true)]
+        [InlineData("200pi - 2 pi / 3", true)]
+        [InlineData("200pi - 4 pi / 7", true)]
+        [InlineData("200pi + pi", true)]
+        [InlineData("200pi + pi / 2", true)]
+        [InlineData("200pi + pi / 3", true)]
+        [InlineData("200pi + pi / 6", true)]
+        [InlineData("200pi + 2 pi / 3", true)]
+        [InlineData("200pi + 4 pi / 7", true)]
+        [InlineData("1 + 2", false)]
+        [InlineData("pi - 2", false)]
+        public void SineHalvedTest(Entity angle, bool mustBeComputed)
+        {
+            var sin2x = MathS.Sin(angle);
+            var sinx = MathS.ExperimentalFeatures.GetSineOfHalvedAngle(angle, sin2x);
+            
+            if (mustBeComputed)
+                sinx.ShouldBeNotNull().ShouldApproximatelyEqual(MathS.Sin(angle / 2));
+            else
+                sinx.ShouldBeNull();
+        }
     }
 }

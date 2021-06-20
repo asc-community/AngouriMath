@@ -15,7 +15,7 @@ using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {
-    public static class TrigonometricAngleExpansion
+    internal static class TrigonometricAngleExpansion
     {
         [ConstantField] private static readonly Rational OneHalf = 0.5.ToNumber().Downcast<Rational>();
         
@@ -31,7 +31,7 @@ namespace AngouriMath.Functions
         /// The value of sine of half of the
         /// given angle if can (null otherwise)
         /// </returns>
-        public static Entity? GetSineOfHalvedAngle(Entity thetaRat, Entity sin2x)
+        internal static Entity? GetSineOfHalvedAngle(Entity thetaRat, Entity sin2x)
         {
             // sin(2x) = 2sin(x)cos(x)
             // 
@@ -41,11 +41,15 @@ namespace AngouriMath.Functions
             if ((thetaRat / 2).Evaled is not Rational x)
                 return null;
            
-            var mod = x % 1;
+            var mod = x % 2;
             if (mod.IsZero)
                 return 0;
             if (mod == OneHalf)
+                return 1;
+            if (mod == 1)
                 return 0;
+            if (mod == 1.5)
+                return -1;
 
             // cos(x) = cosSign * sqrt(1 - sin(x)2)
             //
@@ -59,7 +63,7 @@ namespace AngouriMath.Functions
             var sinSign = 1;
             
             
-            if (mod > OneHalf)
+            if (mod > 1)
                 sinSign = -1;
              
 //------I.
@@ -104,19 +108,16 @@ namespace AngouriMath.Functions
 
 //------V.
 //                                   //========================================||
-//                                  //   1              /------------------|
-//      sin(x) = sinSign     \\    //   ---  +-        / 1 -   sin(2x) ^ 2
-//                            \\  //     2           \/
+//                                  //   1        1     /------------------|
+//      sin(x) = sinSign     \\    //   ---  +-  ---   / 1 -   sin(2x) ^ 2
+//                            \\  //     2        2  \/
 //                             \\//
 //
 
-            var sin1 = (sinSign * MathS.Sqrt(OneHalf - MathS.Sqrt(1 - sin2x.Pow(2)))).InnerSimplified;
-            var sin2 = (sinSign * MathS.Sqrt(OneHalf + MathS.Sqrt(1 - sin2x.Pow(2)))).InnerSimplified;
+            var sin1 = (sinSign * MathS.Sqrt(OneHalf - OneHalf * MathS.Sqrt(1 - sin2x.Pow(2)))).InnerSimplified;
+            var sin2 = (sinSign * MathS.Sqrt(OneHalf + OneHalf * MathS.Sqrt(1 - sin2x.Pow(2)))).InnerSimplified;
 //                                                  ^ that's where we change the sign
 
-            return sin1;
-
-            // 
             if ((MathS.Sin(x * MathS.pi) - sin1).Abs().EvalNumerical().Downcast<Real>() < 0.01)
                 return sin1;
             if ((MathS.Sin(x * MathS.pi) - sin2).Abs().EvalNumerical().Downcast<Real>() < 0.01)

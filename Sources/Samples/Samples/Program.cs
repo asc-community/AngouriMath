@@ -11,14 +11,8 @@ using static AngouriMath.MathS;
 // Console.WriteLine("cbrt(7 + 21sqrt(-3)) + cbrt(7 - 21sqrt(-3))".ToEntity().Evaled);
 // Console.WriteLine("cbrt(7) + cbrt(7)".ToEntity().Evaled);
 
-var twoPiOver7 = MathS.Sqrt(1 - MathS.Pow("1/6" * (-1 + MathS.Cbrt((7 + 21 * Sqrt(-3)) / 2) + MathS.Cbrt((7 - 21 * Sqrt(-3)) / 2)), 2));
-
-Console.WriteLine(twoPiOver7.Latexise());
-Console.WriteLine(twoPiOver7.Evaled);
-Console.WriteLine("2pi / 7".ToEntity().Sin().Evaled);
-
-TrigonometricAngleExpansion.GetSineOfHalvedAngle("2/7", twoPiOver7);
-// Console.WriteLine(TrigonometricAngleExpansion.GetSineOfHalvedAngle("2/7", twoPiOver7));
+var a = Entity.Number.Rational.Create(-10, 3);
+Console.WriteLine(a % 2);
 
 Console.ReadLine();
 // Entity expr = "x + sin(2x) + 3";
