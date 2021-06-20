@@ -2,7 +2,6 @@
 
 open Core
 open AngouriMath
-open System.Linq
 
 /// Creates a node of power and inner simplifies it
 let ( ** ) a b =
@@ -33,14 +32,6 @@ let substituted x value expr = (parsed expr).Substitute(parsed x, parsed value)
 
 /// Returns a multiline string representation of matrix
 let printedMatrix (x: AngouriMath.Entity.Matrix) = x.ToString(true)
-
-/// Returns a matrix modified according to the modifier
-let modifiedMatrix (x: AngouriMath.Entity.Matrix) m =
-    x.With(new System.Func<int, int, AngouriMath.Entity, AngouriMath.Entity>(m))
-
-/// Gets the transposed form of a matrix or vector
-let transposed (m: AngouriMath.Entity.Matrix) = m.T
-
 
 /// Returns a conjunction node of two nodes
 let conjunction a b = MathS.Conjunction(parsed a, parsed b)
@@ -274,44 +265,3 @@ type Lengths =
     | Any
     | Invalid
     | Fixed of int
-    
-/// Creates a matrix from a list of lists
-/// of objects (which are parsed into Entities)
-let matrix x = 
-    let rec columnCount (x : 'T list list) =
-        match x with
-        | [] -> Any
-        | hd::tl ->
-            match columnCount tl with
-            | Any -> Fixed(hd.Length)
-            | Invalid -> Invalid
-            | Fixed len -> if len = hd.Length then Fixed(len) else Invalid
-    
-    let parseListOfLists li =
-        [ for row in li do yield [ for el in row do yield (parsed el) ] ]
-    
-    match columnCount x with
-    | Any | Invalid -> raise ParseException
-    | Fixed _ -> MathS.Matrix(array2D (parseListOfLists x))
-    
-    
-/// Creates a column vector from a 1-dimensional list
-let vector li =
-    MathS.Vector([ for el in li do yield parsed el ].ToArray())
-   
-/// If the provided entity is a matrix,
-/// it is returned downcasted. Otherwise,
-/// a 1x1 matrix containing the entity is returned.
-let asMatrix a = 
-    match parsed a with
-    | :? Entity.Matrix as m -> m
-    | other -> vector [other]
-
-/// Finds the tensor product of two given matrices
-let ( *** ) a b =
-    Entity.Matrix.TensorProduct(a, b).InnerSimplified |> asMatrix
-
-/// Finds the tensor power of a given matrix. The
-/// power must be positive/
-let ( **** ) (a: Entity.Matrix) b =
-    a.TensorPower(b).InnerSimplified |> asMatrix
