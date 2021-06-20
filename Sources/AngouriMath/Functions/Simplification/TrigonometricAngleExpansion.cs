@@ -267,6 +267,65 @@ namespace AngouriMath.Functions
                 - ExpandSineArgumentMultiplied(sinx, cosx, n - 1) * sinx
             };
 
+        internal static Entity ExpandSineOfSum(IReadOnlyList<(Entity SinX, Entity CosX)> terms, int from, int to)
+            => (to - from)
+            .Let(out var halfDiff, (to - from) / 2 + 1)
+            .Let(out var mod, 1 - (to - from) % 2) switch
+            {
+                // sine of a single term
+                0 => terms[from].SinX,
+                
+                // sin(a + b) = sin(a)cos(b) + sin(b)cos(a)
+                1 => terms[from].SinX * terms[to].CosX + terms[to].SinX * terms[from].CosX,
+                
+                // Consider an example.
+                //
+                // Let
+                // from = 3
+                // to = 8
+                // diff = 5
+                // halfDiff = 3
+                // 
+                // Then we will compute
+                // sin(a) = sine expansion of   from: 3,         to: 8 - 3 = 5     (3 to 5)
+                // cos(b) = cosine expansion of from: 3 + 3 = 6, to: 8             (6 to 8)
+                // sin(b) = sine expansion of   from: 3 + 3 = 6, to: 8             (6 to 8)
+                // cos(a) = cosine expansion of from: 3,         to: 8 - 3 = 5     (3 to 5)
+                //
+                // Now let's consider an example with diff being odd
+                //
+                // Let
+                // from = 4
+                // to = 8
+                // diff = 4
+                // halfDiff = 3
+                // mod = 1
+                //
+                // sin(a) = sine expansion of   from: 4,             to: 8 - 3 = 5     (4 to 5)
+                // cos(b) = cosine expansion of from: 4 + 3 - 1 = 6, to: 8             (6 to 8)
+                // sin(b) = sine expansion of   from: 4 + 3 - 1 = 6, to: 8             (6 to 8)
+                // cos(a) = cosine expansion of from: 4,             to: 8 - 3 = 5     (4 to 5)
+                //                                            ^
+                //                                       this is mod
+                var diff => 
+                    ExpandSineOfSum(terms, from, to - halfDiff) * ExpandCosineOfSum(terms, from + halfDiff - mod, to)
+                    + ExpandSineOfSum(terms, from + halfDiff - mod, to) * ExpandCosineOfSum(terms, from, to - halfDiff)
+            };
+        
+        internal static Entity ExpandCosineOfSum(IReadOnlyList<(Entity SinX, Entity CosX)> terms, int from, int to)
+            // see the explanation for halfDiff and mod magic above (for sine)
+            => (to - from)
+            .Let(out var halfDiff, (to - from) / 2 + 1)
+            .Let(out var mod, 1 - (to - from) % 2)
+            switch
+            {
+                0 => terms[from].CosX,
+                1 => terms[from].CosX * terms[to].CosX - terms[to].SinX * terms[from].SinX,
+                var diff => 
+                    ExpandCosineOfSum(terms, from, to - halfDiff) * ExpandCosineOfSum(terms, from + halfDiff - mod, to)
+                    - ExpandSineOfSum(terms, from + halfDiff - mod, to) * ExpandSineOfSum(terms, from, to - halfDiff)
+            };
+            
         
         internal static Entity? SymbolicFormOfSine(Entity angle)
         {

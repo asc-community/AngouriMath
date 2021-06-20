@@ -157,6 +157,22 @@ namespace AngouriMath
             /// </returns>
             public static Entity ExpandCosineArgumentMultiplied(Entity sinx, Entity cosx, int n)
                 => TrigonometricAngleExpansion.ExpandCosineArgumentMultiplied(sinx, cosx, n);
+            
+            /// <summary>
+            /// Expands a sine over terms
+            /// via binary expansion.
+            /// TODO: more docs
+            /// </summary>
+            public static Entity ExpandSineOfSum(IReadOnlyList<(Entity SinX, Entity CosX)> terms)
+                => TrigonometricAngleExpansion.ExpandSineOfSum(terms, 0, terms.Count - 1);
+            
+            /// <summary>
+            /// Expands a cosine over terms
+            /// via binary expansion.
+            /// TODO: more docs
+            /// </summary>
+            public static Entity ExpandCosineOfSum(IReadOnlyList<(Entity SinX, Entity CosX)> terms)
+                => TrigonometricAngleExpansion.ExpandCosineOfSum(terms, 0, terms.Count - 1);
         }
     }
 }

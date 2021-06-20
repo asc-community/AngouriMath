@@ -13,6 +13,7 @@ using AngouriMath;
 using static AngouriMath.Entity.Number;
 using System;
 using System.Linq;
+using HonkSharp.Fluency;
 using HonkSharp.Functional;
 using Xunit;
 
@@ -140,5 +141,50 @@ namespace UnitTests.PatternsTest
                         n: n
                     ).ShouldApproximatelyEqual(MathS.Cos(n * x))
             };
+        
+        [Theory]
+        [InlineData("pi", 1, 2, 3, "34", "pi / 6")]
+        [InlineData("pi")]
+        [InlineData("pi", 0)]
+        [InlineData("pi", -1)]
+        [InlineData("pi / 6", "pi / 3")]
+        [InlineData(0)]
+        [InlineData("-pi / 6", "pi / 6")]
+        [InlineData("pi / 10", "pi / 9", "pi / 8")]
+        [InlineData("pi / 10", "pi / 9", "pi / 8", 1, 2, 3, 5, 6, 7)]
+        public void ExpandSineOfSumTest(params object[] anglesRaw)
+            => anglesRaw.Select(c => c is int i ? (Entity)i : c.Downcast<string>())
+                .Pipe(angles => MathS.ExperimentalFeatures.ExpandSineOfSum(
+                    angles.Select(
+                            angle => (SinX: MathS.Sin(angle), CosX: MathS.Cos(angle))
+                        ).ToList()
+                )
+                .ShouldApproximatelyEqual(
+                    MathS.Sin(angles.Aggregate((a, b) => a + b))
+                )
+                );
+        
+        [Theory]
+        [InlineData("pi", 1, 2, 3, "34", "pi / 6")]
+        [InlineData("pi")]
+        [InlineData("pi", 0)]
+        [InlineData("pi", -1)]
+        [InlineData("pi / 6", "pi / 3")]
+        [InlineData(0)]
+        [InlineData("-pi / 6", "pi / 6")]
+        [InlineData("pi / 10", "pi / 9", "pi / 8")]
+        [InlineData("pi / 10", "pi / 9", "pi / 8", 1, 2, 3, 5, 6, 7)]
+        public void ExpandCosineOfSumTest(params object[] anglesRaw)
+            => anglesRaw.Select(c => c is int i ? (Entity)i : c.Downcast<string>())
+                .Pipe(angles => MathS.ExperimentalFeatures.ExpandCosineOfSum(
+                        angles.Select(
+                            angle => (SinX: MathS.Sin(angle), CosX: MathS.Cos(angle))
+                        ).ToList()
+                    )
+                    .ShouldApproximatelyEqual(
+                        MathS.Cos(angles.Aggregate((a, b) => a + b))
+                    )
+                );
     }
 }
+
