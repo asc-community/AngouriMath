@@ -1,7 +1,6 @@
 ﻿module MatricesTest
 
 open AngouriMath
-open AngouriMath.FSharp.Functions
 open AngouriMath.FSharp.Matrices
 open Xunit
 
