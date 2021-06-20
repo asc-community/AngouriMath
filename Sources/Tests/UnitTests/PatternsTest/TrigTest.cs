@@ -13,6 +13,7 @@ using AngouriMath;
 using static AngouriMath.Entity.Number;
 using System;
 using System.Linq;
+using AngouriMath.Extensions;
 using HonkSharp.Fluency;
 using HonkSharp.Functional;
 using Xunit;
@@ -71,13 +72,13 @@ namespace UnitTests.PatternsTest
         [InlineData("200pi + 4 pi / 7", true)]
         [InlineData("1 + 2", false)]
         [InlineData("pi - 2", false)]
-        public void SineHalvedTest(Entity angle, bool mustBeComputed)
+        public void SineHalvedTest(string angle, bool mustBeComputed)
         {
             var sin2x = MathS.Sin(angle);
             var sinx = MathS.ExperimentalFeatures.GetSineOfHalvedAngle(angle, sin2x);
             
             if (mustBeComputed)
-                sinx.ShouldBeNotNull().ShouldApproximatelyEqual(MathS.Sin(angle / 2));
+                sinx.ShouldBeNotNull().ShouldApproximatelyEqual(MathS.Sin(angle.ToEntity() / 2));
             else
                 sinx.ShouldBeNull();
         }
@@ -109,24 +110,24 @@ namespace UnitTests.PatternsTest
         [InlineData("200pi + 4 pi / 7", true)]
         [InlineData("1 + 2", false)]
         [InlineData("pi - 2", false)]
-        public void CosineHalvedTest(Entity angle, bool mustBeComputed)
+        public void CosineHalvedTest(string angle, bool mustBeComputed)
         {
             var cos2x = MathS.Cos(angle);
             var cosx = MathS.ExperimentalFeatures.GetCosineOfHalvedAngle(angle, cos2x);
             
             if (mustBeComputed)
-                cosx.ShouldBeNotNull().ShouldApproximatelyEqual(MathS.Cos(angle / 2));
+                cosx.ShouldBeNotNull().ShouldApproximatelyEqual(MathS.Cos(angle.ToEntity() / 2));
             else
                 cosx.ShouldBeNull();
         }
         
         [Theory, CombinatorialData]
         public Unit SineCosineMultiplerExpansionTest(
-            [CombinatorialValues("pi", "pi / 2", "- pi / 3", "pi / 10", "3", "30 pi", "-30 pi")] Entity x, 
+            [CombinatorialValues("pi", "pi / 2", "- pi / 3", "pi / 10", "3", "30 pi", "-30 pi")] string xRaw, 
             [CombinatorialValues(-3, -2, -1, 0, 1, 2, 3, 4, 5)] int n,
             [CombinatorialValues(true, false)] bool testSin
             )
-            => testSin switch
+            => testSin.Let(out var x, xRaw.ToEntity()) switch
             {
                 true =>
                     MathS.ExperimentalFeatures.ExpandSineArgumentMultiplied(
@@ -207,8 +208,9 @@ namespace UnitTests.PatternsTest
         [InlineData("pi / (3 * 4 * 7)")]
         [InlineData("100/7pi")]
         [InlineData("100/7pi + 100/3pi")]
-        public void SymbolicSineFormTest(Entity angle)
+        public void SymbolicSineFormTest(string angle)
             => angle
+                .Pipe(angle => angle.ToEntity())
                 .Simplify()  // so that we don't lose precision, but at the same time compose it all into a single  argument
                 .Pipe(
                     angle => MathS.ExperimentalFeatures.SymbolicFormOfSine(angle)
@@ -237,8 +239,9 @@ namespace UnitTests.PatternsTest
         [InlineData("pi / (3 * 4 * 7)")]
         [InlineData("100/7pi")]
         [InlineData("100/7pi + 100/3pi")]
-        public void SymbolicCosineFormTest(Entity angle)
+        public void SymbolicCosineFormTest(string angle)
             => angle
+                .Pipe(angle => angle.ToEntity())
                 .Simplify()  // so that we don't lose precision, but at the same time compose it all into a single  argument
                 .Pipe(
                     angle => MathS.ExperimentalFeatures.SymbolicFormOfCosine(angle)

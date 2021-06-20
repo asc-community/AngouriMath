@@ -329,22 +329,5 @@ namespace AngouriMath.Functions
                 return res;
             return null;
         }
-        /*
-        internal readonly struct FastRational
-        {
-            public int Numerator { get; }
-            public int Denominator { get; }
-            public FastRational(int numerator, int denominator)
-            {
-                if (denominator < 0)
-                {
-                    denominator *= -1;
-                    numerator *= -1;
-                }
-                //var gcd = 
-                (Numerator, Denominator) = (numerator, denominator);
-            }
-            public static operator 
-        }*/
     }
 }
