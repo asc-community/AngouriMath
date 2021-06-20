@@ -5,37 +5,42 @@ open AngouriMath.FSharp.Core
 open AngouriMath.FSharp.Functions
 open System.Linq
 
+/// Represents the length type of a matrix
+type Lengths =
+    | Any
+    | Invalid
+    | Fixed of int
+
 /// Creates a matrix from a list of lists
 /// of objects (which are parsed into Entities)
 let matrix x = 
- let rec columnCount (x : 'T list list) =
-     match x with
-     | [] -> Any
-     | hd::tl ->
-         match columnCount tl with
-         | Any -> Fixed(hd.Length)
-         | Invalid -> Invalid
-         | Fixed len -> if len = hd.Length then Fixed(len) else Invalid
- 
- let parseListOfLists li =
-     [ for row in li do yield [ for el in row do yield (parsed el) ] ]
- 
- match columnCount x with
- | Any | Invalid -> raise ParseException
- | Fixed _ -> MathS.Matrix(array2D (parseListOfLists x))
- 
- 
+    let rec columnCount (x : 'T list list) =
+        match x with
+        | [] -> Any
+        | hd::tl ->
+            match columnCount tl with
+            | Any -> Fixed(hd.Length)
+            | Invalid -> Invalid
+            | Fixed len -> if len = hd.Length then Fixed(len) else Invalid
+            
+    let parseListOfLists li =
+        [ for row in li do yield [ for el in row do yield (parsed el) ] ]
+
+    match columnCount x with
+    | Any | Invalid -> raise ParseException
+    | Fixed _ -> MathS.Matrix(array2D (parseListOfLists x))
+
 /// Creates a column vector from a 1-dimensional list
 let vector li =
- MathS.Vector([ for el in li do yield parsed el ].ToArray())
+    MathS.Vector([ for el in li do yield parsed el ].ToArray())
 
 /// If the provided entity is a matrix,
 /// it is returned downcasted. Otherwise,
 /// a 1x1 matrix containing the entity is returned.
 let asMatrix a = 
- match parsed a with
- | :? Entity.Matrix as m -> m
- | other -> vector [other]
+    match parsed a with
+    | :? Entity.Matrix as m -> m
+    | other -> vector [other]
 
 /// Creates a square 2x2 matrix, with four elements
 /// in the following order: left-top, right-top,
@@ -80,12 +85,12 @@ let (|/) a b = (parsed a / parsed b).InnerSimplified |> asMatrix
 
 /// Finds the tensor product of two given matrices
 let ( *** ) a b =
- Entity.Matrix.TensorProduct(a, b).InnerSimplified |> asMatrix
+    Entity.Matrix.TensorProduct(a, b).InnerSimplified |> asMatrix
 
 /// Finds the tensor power of a given matrix. The
 /// power must be positive
 let ( **** ) (a: Entity.Matrix) b =
- a.TensorPower(b).InnerSimplified |> asMatrix
+    a.TensorPower(b).InnerSimplified |> asMatrix
 
 /// Returns a matrix modified according to the modifier
 let modifiedMatrix (x: AngouriMath.Entity.Matrix) m =

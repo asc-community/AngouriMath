@@ -211,9 +211,6 @@ let rightExclusive ``to`` =
     MathS.Interval(parsed "-oo", false, parsed ``to``, false)
 
 
-    
-
-
 /// Computes the derivative of the given variable and expression
 let derivative x expr =
     (parsed expr).Differentiate(symbol x)
@@ -260,8 +257,3 @@ let solutions x expr =
     match parsed expr with
     | :? Entity.Statement as statement -> statement.Solve(symbol x)
     | func -> (equality func 0).Solve(symbol x)
-
-type Lengths =
-    | Any
-    | Invalid
-    | Fixed of int
