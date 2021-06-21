@@ -45,3 +45,21 @@ let matrixWith rows cols map = MathS.Matrix(rows, cols, new System.Func<int, int
 /// position (indexed from 0)
 /// to the value via the map function
 let vectorWith count map = matrixWith count 1 (fun r _ -> map r)
+
+/// Gets the determinant of a square matrix, or None on invalid inputs
+let det (m: AngouriMath.Entity.Matrix) = 
+    match m.Determinant with
+    | null -> None
+    | n -> Some(n)
+
+/// Gets the adjugate form of a square matrix, or None on invalid inputs
+let adjugate (m: AngouriMath.Entity.Matrix) = 
+    match m.Adjugate with
+    | null -> None
+    | n -> Some(n)
+
+/// Gets the inverse of a square matrix, or None on invalid inputs or if it does not exist
+let inverse (m: AngouriMath.Entity.Matrix) = 
+    match m.Inverse with
+    | null -> None
+    | n -> Some(n)

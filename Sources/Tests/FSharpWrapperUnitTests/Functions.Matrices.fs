@@ -26,7 +26,20 @@ let ``Tensor power 2`` () = Assert.Equal(parsed "[a2 * a]", (asMatrix "a") **** 
 
 
 open AngouriMath.FSharp.Matrices
-
+[<Fact>]
+let ``Matrix det test 1`` () = Assert.Equal(None, det (matrix [[1; 2]; [2; 3]; [3; 4]]))
+[<Fact>]
+let ``Matrix det test 2`` () = Assert.Equal(Some(parsed "-1"), det (matrix [[1; 2]; [2; 3]]))
+[<Fact>]
+let ``Matrix adjugate test 1`` () = Assert.Equal(None, adjugate (matrix [[1; 2]; [2; 3]; [3; 4]]))
+[<Fact>]
+let ``Matrix adjugate test 2`` () = testEqual (parsed "[[3, -2], [-2, 1]]", (adjugate (matrix [[1; 2]; [2; 3]])).Value )
+[<Fact>]
+let ``Matrix inverse test 1`` () = Assert.Equal(None, inverse (matrix [[1; 2]; [2; 3]; [3; 4]]))
+[<Fact>]
+let ``Matrix inverse test 2`` () = Assert.Equal(None, inverse (matrix [[1; 1]; [0; 0]]) )
+[<Fact>]
+let ``Matrix inverse test 3`` () = testEqual (parsed "[[-3, 2], [2, -1]]", (inverse (matrix [[1; 2]; [2; 3]])).Value)
 [<Fact>]
 let ``matrix 2x2 func`` () = testEqual (parsed "[[a, b], [c, d]]", matrix2x2 "a" "b" "c" "d")
 [<Fact>]
