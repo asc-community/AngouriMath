@@ -10,6 +10,7 @@ let x = symbol "x"
 let ``Test symbol x`` () = Assert.Equal(parsed "x", symbol "x")
 [<Fact>]
 let ``Test symbol y`` () = Assert.Equal(parsed "y", symbol "y")
+
 [<Fact>]
 let ``Sin test`` () = Assert.Equal(parsed "sin(x)", sin x)
 [<Fact>]
@@ -60,3 +61,14 @@ let ``Asech test`` () = Assert.Equal(parsed "asech(x)", asech x)
 let ``Acsch test`` () = Assert.Equal(parsed "acsch(x)", acsch x)
 [<Fact>]
 let ``Pow test`` () = Assert.Equal((parsed 2) ** (parsed 5), parsed 32)
+[<Fact>]
+let ``Sqrt test`` () = Assert.Equal(parsed "sqrt(x)", sqrt x)
+
+[<Fact>]
+let ``Sin test exact`` () = Assert.Equal(parsed "0", sin 0)
+[<Fact>]
+let ``Cos test exact`` () = Assert.Equal(parsed "1", cos 0)
+[<Fact>]
+let ``Tan test exact`` () = Assert.Equal(parsed "0", tan 0)
+[<Fact>]        
+let ``Sqrt test exact`` () = Assert.Equal(parsed "22", sqrt 484)

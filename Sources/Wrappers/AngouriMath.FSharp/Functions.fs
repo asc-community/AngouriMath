@@ -87,103 +87,103 @@ let lessOrEqual a b = MathS.LessOrEqualThan(parsed a, parsed b)
 
 
 /// Returns a logarithm node with the given base (as the first argument)
-let log logBase x = MathS.Log(parsed logBase, parsed x)
+let log logBase x = MathS.Log(parsed logBase, parsed x).InnerSimplified
 
 /// Returns a logarithm node with e as the base
-let ln x = MathS.Ln(parsed x)
+let ln x = MathS.Ln(parsed x).InnerSimplified
 
 /// Returns a power of the expression with exponent equals 2
-let sqr x = MathS.Sqr(parsed x)
+let sqr x = MathS.Sqr(parsed x).InnerSimplified
 
 /// Returns a power of the expression with exponent equals 1 / 2
-let sqrt x = MathS.Sqrt(parsed x)
+let sqrt x = MathS.Sqrt(parsed x).InnerSimplified
 
 /// Returns a power of the expression with exponent equals 1 / 3
-let cbrt x = MathS.Cbrt(parsed x)
+let cbrt x = MathS.Cbrt(parsed x).InnerSimplified
 
 /// Returns a power of the expression with exponent as the second argument
-let pow x power = MathS.Pow(parsed x, parsed power)
+let pow x power = MathS.Pow(parsed x, parsed power).InnerSimplified
 
 /// Returns a factorial node
-let factorial x = MathS.Factorial(parsed x)
+let factorial x = MathS.Factorial(parsed x).InnerSimplified
 
 /// Returns a gamma node
-let gamma x = MathS.Gamma(parsed x)
+let gamma x = MathS.Gamma(parsed x).InnerSimplified
 
 /// Returns a sign node
-let sgn x = MathS.Signum(parsed x)
+let sgn x = MathS.Signum(parsed x).InnerSimplified
 
 /// Returns a sine node
-let sin x = (parsed x).Sin()
+let sin x = (parsed x).Sin().InnerSimplified
 
 /// Returns a cosine node
-let cos x = (parsed x).Cos()
+let cos x = (parsed x).Cos().InnerSimplified
 
 /// Returns a tangent node
-let tan x = (parsed x).Tan()
+let tan x = (parsed x).Tan().InnerSimplified
 
 /// Returns a cotangent node
-let cot x = (parsed x).Cotan()
+let cot x = (parsed x).Cotan().InnerSimplified
 
 /// Returns a secant node
-let sec x = (parsed x).Sec()
+let sec x = (parsed x).Sec().InnerSimplified
 
 /// Returns a cosecant node
-let csc x = (parsed x).Cosec()
+let csc x = (parsed x).Cosec().InnerSimplified
 
 /// Returns a arcsine node
-let asin x = (parsed x).Arcsin()
+let asin x = (parsed x).Arcsin().InnerSimplified
 
 /// Returns a arccosine node
-let acos x = (parsed x).Arccos()
+let acos x = (parsed x).Arccos().InnerSimplified
 
 /// Returns a arctangent node
-let atan x = (parsed x).Arctan()
+let atan x = (parsed x).Arctan().InnerSimplified
 
 /// Returns a arccotangent node
-let acot x = (parsed x).Arccotan()
+let acot x = (parsed x).Arccotan().InnerSimplified
 
 /// Returns a arcsecant node
-let asec x = (parsed x).Arcsec()
+let asec x = (parsed x).Arcsec().InnerSimplified
 
 /// Returns a arccosecant node
-let acsc x = (parsed x).Arccosec()
+let acsc x = (parsed x).Arccosec().InnerSimplified
 
 /// Returns a hyperbolic sine node
-let sinh x = MathS.Hyperbolic.Sinh(parsed x)
+let sinh x = MathS.Hyperbolic.Sinh(parsed x).InnerSimplified
 
 /// Returns a hyperbolic cosine node
-let cosh x = MathS.Hyperbolic.Cosh(parsed x)
+let cosh x = MathS.Hyperbolic.Cosh(parsed x).InnerSimplified
 
 /// Returns a hyperbolic tangent node
-let tanh x = MathS.Hyperbolic.Tanh(parsed x)
+let tanh x = MathS.Hyperbolic.Tanh(parsed x).InnerSimplified
 
 /// Returns a hyperbolic cotangent node
-let coth x = MathS.Hyperbolic.Cotanh(parsed x)
+let coth x = MathS.Hyperbolic.Cotanh(parsed x).InnerSimplified
 
 /// Returns a hyperbolic secant node
-let sech x = MathS.Hyperbolic.Sech(parsed x)
+let sech x = MathS.Hyperbolic.Sech(parsed x).InnerSimplified
 
 /// Returns a hyperbolic cosecant node
-let csch x = MathS.Hyperbolic.Cosech(parsed x)
+let csch x = MathS.Hyperbolic.Cosech(parsed x).InnerSimplified
 
 /// Returns a hyperbolic arsine node
-let asinh x = MathS.Hyperbolic.Arsinh(parsed x)
+let asinh x = MathS.Hyperbolic.Arsinh(parsed x).InnerSimplified
 
 /// Returns a hyperbolic arcosine node
-let acosh x = MathS.Hyperbolic.Arcosh(parsed x)
+let acosh x = MathS.Hyperbolic.Arcosh(parsed x).InnerSimplified
 
 /// Returns a hyperbolic artangent node
-let atanh x = MathS.Hyperbolic.Artanh(parsed x)
+let atanh x = MathS.Hyperbolic.Artanh(parsed x).InnerSimplified
 
 /// Returns a hyperbolic arcotangent node
-let acoth x = MathS.Hyperbolic.Arcotanh(parsed x)
+let acoth x = MathS.Hyperbolic.Arcotanh(parsed x).InnerSimplified
 
 /// Returns a hyperbolic arsecant node
-let asech x = MathS.Hyperbolic.Arsech(parsed x)
+let asech x = MathS.Hyperbolic.Arsech(parsed x).InnerSimplified
 
 /// Returns a hyperbolic arcosecant node
-let acsch x = MathS.Hyperbolic.Arcosech(parsed x)
+let acsch x = MathS.Hyperbolic.Arcosech(parsed x).InnerSimplified
 
 
 
