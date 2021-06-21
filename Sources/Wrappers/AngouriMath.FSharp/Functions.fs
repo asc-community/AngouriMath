@@ -30,9 +30,6 @@ let latex x =
 /// Substitutes the given variable with the given value in the given expression
 let substituted x value expr = (parsed expr).Substitute(parsed x, parsed value)
 
-/// Returns a multiline string representation of matrix
-let printedMatrix (x: AngouriMath.Entity.Matrix) = x.ToString(true)
-
 /// Returns a conjunction node of two nodes
 let conjunction a b = MathS.Conjunction(parsed a, parsed b)
 
@@ -73,9 +70,6 @@ let greaterOrEqual a b = MathS.GreaterOrEqualThan(parsed a, parsed b)
 
 /// Returns a less or equal than node of two nodes (a >= b)
 let lessOrEqual a b = MathS.LessOrEqualThan(parsed a, parsed b)
-
-
-
 
 /// Returns a logarithm node with the given base (as the first argument)
 let log logBase x = MathS.Log(parsed logBase, parsed x)
@@ -175,7 +169,6 @@ let asech x = MathS.Hyperbolic.Arsech(parsed x)
 
 /// Returns a hyperbolic arcosecant node
 let acsch x = MathS.Hyperbolic.Arcosech(parsed x)
-
 
 
 /// Returns a bounded closed interval

@@ -39,4 +39,6 @@ let ``matrixWith func 2`` () = testEqual (parsed "[[a_11, a_12], [a_21, a_22], [
 let ``matrixWith func 3`` () = testEqual (parsed "[66]", matrixWith 1 1 (fun r c -> parsed 66))
 [<Fact>]
 let ``vectorWith func`` () = testEqual (parsed "[1, 2, 3, 4]", vectorWith 4 (fun r -> parsed (r + 1)))
+[<Fact>]
+let ``printedMatrix`` () = Assert.Equal("Matrix[3 x 2]\n1   2   \n2   3   \n3   4   ", printedMatrix (matrix [[1; 2]; [2; 3]; [3; 4]]))
 

@@ -59,7 +59,10 @@ let vector2 a b = vector [a; b]
  
 /// Creates a vector of three elements
 let vector3 a b c = vector [a; b; c]
- 
+
+/// Returns a multiline string representation of matrix
+let printedMatrix (x: AngouriMath.Entity.Matrix) = x.ToString(true)
+
 /// Creates a new matrix with each
 /// cell's coordinates mapped to
 /// an element (first comes the number of
