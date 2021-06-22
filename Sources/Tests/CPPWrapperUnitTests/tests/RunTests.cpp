@@ -171,6 +171,6 @@ TEST(RunTests, ToComplex) {
     auto expr = AngouriMath::Entity("6 + i");
     auto comSim = expr.Simplify();
     auto com = comSim.AsComplex();
-    EXPECT_EQ(6.0, com.first);
-    EXPECT_EQ(1, com.second);
+    EXPECT_EQ(6.0, com.real());
+    EXPECT_EQ(1.0, com.imag());
 }
