@@ -76,7 +76,6 @@ namespace AngouriMath.Convenience
         /// </summary>
         /// <param name="value">New value that will be automatically reverted after action is done</param>
         /// <param name="action">What should be done under this setting</param>
-        [Obsolete("Method `As` is not threadsafe and inconvenient. Use method `Set` instead.")]
         public void As(T value, Action action)
         {
             using var _ = Set(value);
@@ -91,7 +90,6 @@ namespace AngouriMath.Convenience
         /// </summary>
         /// <param name="value">New value that will be automatically reverted after action is done</param>
         /// <param name="action">What should be done under this setting</param>
-        [Obsolete("Method `As` is not threadsafe and inconvenient. Use method `Set` instead.")]
         public TReturnType As<TReturnType>(T value, Func<TReturnType> action)
         {
             using var _ = Set(value);

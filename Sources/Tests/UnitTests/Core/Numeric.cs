@@ -4,6 +4,8 @@ using Xunit;
 using static AngouriMath.Entity.Set;
 using AngouriMath.Extensions;
 using System;
+using FluentAssertions;
+using HonkSharp.Fluency;
 
 namespace UnitTests.Core
 {
@@ -323,5 +325,90 @@ namespace UnitTests.Core
             var right = another.ToEntity();
             Assert.False(MathS.UnsafeAndInternal.AreEqualNumerically(left, right));
         }
+        
+        
+        [Fact] public void TestRealDowncastingDisabledInt()
+            => MathS.Settings.DowncastingEnabled.As(false, 
+                () => 24
+                    .Pipe(a => (Real)a)
+                    .Should().BeOfType<Real>()
+            );
+        
+        [Fact] public void TestRealDowncastingEnabledInt()
+            => MathS.Settings.DowncastingEnabled.As(true, 
+                () => 24
+                    .Pipe(a => (Real)a)
+                    .Should().BeOfType<Integer>()
+            );
+        
+        [Fact] public void TestRealDowncastingDisabledSum()
+            => MathS.Settings.DowncastingEnabled.As(false, 
+                () => ((Real)24, (Real)45)
+                    .Pipe((a, b) => a + b)
+                    .Should().BeOfType<Real>()
+            );
+        
+        [Fact] public void TestRealDowncastingEnabledSum()
+            => MathS.Settings.DowncastingEnabled.As(true, 
+                () => ((Real)24, (Real)45)
+                    .Pipe((a, b) => a + b)
+                    .Should().BeOfType<Integer>()
+            );
+        
+        [Fact] public void TestRealDowncastingDisabledSubtraction()
+            => MathS.Settings.DowncastingEnabled.As(false, 
+                () => ((Real)24, (Real)45)
+                    .Pipe((a, b) => a - b)
+                    .Should().BeOfType<Real>()
+            );
+        
+        [Fact] public void TestRealDowncastingEnabledSubtraction()
+            => MathS.Settings.DowncastingEnabled.As(true, 
+                () => ((Real)24, (Real)45)
+                    .Pipe((a, b) => a - b)
+                    .Should().BeOfType<Integer>()
+            );
+        
+        [Fact] public void TestRealDowncastingDisabledProduct()
+            => MathS.Settings.DowncastingEnabled.As(false, 
+                () => ((Real)24, (Real)45)
+                    .Pipe((a, b) => a * b)
+                    .Should().BeOfType<Real>()
+            );
+        
+        [Fact] public void TestRealDowncastingEnabledProduct()
+            => MathS.Settings.DowncastingEnabled.As(true, 
+                () => ((Real)24, (Real)45)
+                    .Pipe((a, b) => a * b)
+                    .Should().BeOfType<Integer>()
+            );
+        
+        [Fact] public void TestRealDowncastingDisabledDivision()
+            => MathS.Settings.DowncastingEnabled.As(false, 
+                () => ((Real)24, (Real)45)
+                    .Pipe((a, b) => a / b)
+                    .Should().BeOfType<Real>()
+            );
+        
+        [Fact] public void TestRealDowncastingEnabledDivision()
+            => MathS.Settings.DowncastingEnabled.As(true, 
+                () => ((Real)24, (Real)45)
+                    .Pipe((a, b) => a / b)
+                    .Should().BeOfType<Rational>()
+            );
+        
+        [Fact] public void TestRealDowncastingDisabledPower()
+            => MathS.Settings.DowncastingEnabled.As(false, 
+                () => MathS.Sqrt(4)
+                    .Evaled
+                    .Should().BeOfType<Real>()
+            );
+        
+        [Fact] public void TestRealDowncastingEnabledPower()
+            => MathS.Settings.DowncastingEnabled.As(true, 
+                () => MathS.Sqrt(4)
+                    .Evaled
+                    .Should().BeOfType<Integer>()
+            );
     }
 }

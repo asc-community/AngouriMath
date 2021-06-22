@@ -1,40 +1,45 @@
 ﻿using System;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 using AngouriMath;
-using AngouriMath.Extensions;
-using AngouriMath.Functions;
-using Antlr4.Runtime;
-using static AngouriMath.MathS;
+using static AngouriMath.Entity.Number;
 
-// Console.WriteLine("cbrt(7 + 21sqrt(-3)) + cbrt(7 - 21sqrt(-3))".ToEntity().Evaled);
-// Console.WriteLine("cbrt(7) + cbrt(7)".ToEntity().Evaled);
+using var _ = MathS.Settings.DecimalPrecisionContext.Set(new(20, PeterO.Numbers.ERounding.Ceiling, -10, 100, false));
+using var __ = MathS.Settings.DowncastingEnabled.Set(false);
+using var ___ = MathS.Settings.FloatToRationalIterCount.Set(0);
 
-// var a = Entity.Number.Rational.Create(-10, 3);
-// Console.WriteLine(a % 2);
+var a = new Asteroid(1000);
+var b = new Asteroid(1000) { Position = 1000 };
+Real time = 0;
 
-Console.WriteLine(MathS.ExperimentalFeatures.SymbolicFormOfSine("pi / 42"));
 
-//Console.WriteLine(MathS.ExperimentalFeatures.GetCosineOfHalvedAngle("2pi / 7", "1/6" * (-1 + Cbrt((7 + 21 * Sqrt(-3)) / 2) + Cbrt((7 - 21 * Sqrt(-3)) / 2))));
-
-Console.ReadLine();
-// Entity expr = "x + sin(2x) + 3";
-// Func<double, double> f = expr.Compile<double, double>("x");
-// Console.WriteLine(f(4));
-/*
-Console.Write(Unsafe.SizeOf<Entity.Number.Integer>());
-
-static int PackedSizeOf(Type type)
+while (a.Position < 900)
 {
-    var res = 0;
-    foreach (var field in type.GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
-    {
-        if (field.GetType().IsValueType)
-            res += PackedSizeOf(field.GetType());
-        else
-            res += 8;
-    }
-    return type.BaseType is null ? res : res + PackedSizeOf(type.BaseType);
+    var F = Funcs.ComputeGravity(a, b);
+    a.ApplyForce(F, 1);
+    a.Move(1);
+    time += 1;
+    Console.Write($"Time: {time}  Speed: {a.Speed}  Position: {a.Position}\r");
 }
-*/
+
+Console.WriteLine(a.Speed);
+Console.WriteLine(time);
+Console.WriteLine("Done");
+Console.ReadLine();
+
+public static class Funcs
+{
+    static readonly Real G = 3;
+    public static Real ComputeGravity(Asteroid a, Asteroid b)
+        => (Real)(G * a.Mass * b.Mass / (a.Position - b.Position).Pow(2)).EvalNumerical();
+}
+
+public sealed class Asteroid
+{
+    public Real Position { get; set; } = 0;
+    public Real Speed { get; private set; } = 0;
+    public Real Mass { get; }
+    public Asteroid(Real mass) => Mass = mass;
+    public void Move(Real time)
+        => Position += Speed * time;
+    public void ApplyForce(Real force, Real time)
+        => Speed += force / Mass * time;
+}
