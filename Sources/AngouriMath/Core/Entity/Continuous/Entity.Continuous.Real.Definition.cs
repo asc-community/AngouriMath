@@ -131,8 +131,8 @@ namespace AngouriMath
                 public static implicit operator Real(uint value) => (ulong)value;
                 public static implicit operator Real(long value) => MathS.Settings.DowncastingEnabled ? Integer.Create(value) : new Real(value);
                 public static implicit operator Real(ulong value) => MathS.Settings.DowncastingEnabled ? Integer.Create(value) : new Real(value);
-                public static implicit operator Real(EInteger value) => Integer.Create(value);
-                public static implicit operator Real(ERational value) => Create(value.ToEDecimal(MathS.Settings.DecimalPrecisionContext));
+                public static implicit operator Real(EInteger value) => MathS.Settings.DowncastingEnabled ? Integer.Create(value) : new Real(value);
+                public static implicit operator Real(ERational value) => MathS.Settings.DowncastingEnabled ? Rational.Create(value) : Create(value.ToEDecimal(MathS.Settings.DecimalPrecisionContext));
                 public static implicit operator Real(EDecimal value) => Create(value);
                 public static implicit operator Real(float value) => Create(EDecimal.FromSingle(value));
                 public static implicit operator Real(double value) => Create(EDecimal.FromDouble(value));
