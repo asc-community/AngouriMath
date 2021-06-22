@@ -17,7 +17,7 @@ namespace UnitTests.Calculus
         {
             Entity funcOverT = funcOverTRaw;
             Entity expected = expectedRaw;
-            Entity actual = MathS.Series.TaylorExpansion(funcOverT, "t", "x", "0", termCount);
+            Entity actual = MathS.Series.Taylor(funcOverT, termCount, ("t", "x", "0"));
             Assert.Equal(expected, actual);
         }
 
@@ -35,8 +35,7 @@ namespace UnitTests.Calculus
         {
             Entity funcOverT = funcOverTRaw;
             Entity expected = expectedRaw;
-            Entity actual = MathS.Series.MultivariableTaylorExpansion(funcOverT, termCount,
-                ("t", "x", "0"), ("s", "y", "0"), ("u", "z", "0"), ("v", "w", "0"));
+            Entity actual = MathS.Series.Taylor(funcOverT, termCount, ("t", "x", "0"), ("s", "y", "0"), ("u", "z", "0"), ("v", "w", "0"));
             actual.ShouldBe(expected);
         }
 
@@ -64,7 +63,7 @@ namespace UnitTests.Calculus
         public void CheckTheCorrectness(double point, int termCount, string func, double pointToCheckAt)
         {
             Entity expr = func;
-            var taylor = MathS.Series.TaylorExpansion(expr, "x", "x", point, termCount);
+            var taylor = MathS.Series.Taylor(expr, termCount, ("x", point));
 
             var expected = expr.Substitute("x", pointToCheckAt).EvalNumerical();
             var actual = taylor.Substitute("x", pointToCheckAt).EvalNumerical();
@@ -84,8 +83,7 @@ namespace UnitTests.Calculus
         public void CheckMultivariableCorrectness(double[] point, int termCount, string func, double[] pointToCheckAt)
         {
             Entity expr = func;
-            var taylor = MathS.Series.MultivariableTaylorExpansion(expr, termCount,
-                ("x", "x", point[0]), ("y", "y", point[1]), ("z", "z", point[2]) );
+            var taylor = MathS.Series.Taylor(expr, termCount, ("x", point[0]), ("y", point[1]), ("z", point[2]) );
 
             var expected = expr.Substitute("x", pointToCheckAt[0]).Substitute("y", pointToCheckAt[1]).Substitute("z", pointToCheckAt[2]).EvalNumerical();
             var actual = taylor.Substitute("x", pointToCheckAt[0]).Substitute("y", pointToCheckAt[1]).Substitute("z", pointToCheckAt[2]).EvalNumerical();

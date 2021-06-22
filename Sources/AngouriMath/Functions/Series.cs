@@ -13,7 +13,29 @@ namespace AngouriMath.Functions
 {
     internal static class Series
     {
-        internal static IEnumerable<Entity> TaylorExpansionTerms(Entity expr, Variable exprVariable, Variable polyVariable, Entity point)
+        internal static Entity TaylorExpansion(Entity expr, int termCount, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
+        {
+            if (exprToPolyVars.Length == 1)
+                return SingleTaylorExpansion(expr, termCount, exprToPolyVars[0].exprVariable, exprToPolyVars[0].polyVariable, exprToPolyVars[0].point);
+            else
+                return MultivariableTaylorExpansion(expr, termCount, exprToPolyVars);
+        }
+
+        internal static Entity SingleTaylorExpansion(Entity expr, int termCount, Variable exprVariable, Variable polyVariable, Entity point)
+        {
+            if (termCount < 0)
+                throw new InvalidNumberException($"{nameof(termCount)} is supposed to be at least 0");
+            var terms = new List<Entity>();
+            foreach (var term in SingleTaylorExpansionTerms(expr, exprVariable, polyVariable, point))
+            {
+                if (terms.Count >= termCount)
+                    return TreeAnalyzer.MultiHangBinary(terms, (a, b) => a + b);
+                terms.Add(term);
+            }
+            throw new AngouriBugException($"We cannot get here, as {nameof(SingleTaylorExpansionTerms)} is supposed to be endless");
+        }
+
+        internal static IEnumerable<Entity> SingleTaylorExpansionTerms(Entity expr, Variable exprVariable, Variable polyVariable, Entity point)
         {
             var currExpr = expr;
             var i = 0;
@@ -32,18 +54,18 @@ namespace AngouriMath.Functions
             }
         }
 
-        internal static Entity TaylorExpansion(Entity expr, Variable exprVariable, Variable polyVariable, Entity point, int termCount)
+        internal static Entity MultivariableTaylorExpansion(Entity expr, int termCount, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
         {
             if (termCount < 0)
                 throw new InvalidNumberException($"{nameof(termCount)} is supposed to be at least 0");
             var terms = new List<Entity>();
-            foreach (var term in TaylorExpansionTerms(expr, exprVariable, polyVariable, point))
+            foreach (var term in MultivariableTaylorExpansionTerms(expr, exprToPolyVars))
             {
                 if (terms.Count >= termCount)
                     return TreeAnalyzer.MultiHangBinary(terms, (a, b) => a + b);
                 terms.Add(term);
             }
-            throw new AngouriBugException($"We cannot get here, as {nameof(TaylorExpansionTerms)} is supposed to be endless");
+            throw new AngouriBugException($"We cannot get here, as {nameof(MultivariableTaylorExpansionTerms)} is supposed to be endless");
         }
 
         internal static IEnumerable<Entity> MultivariableTaylorExpansionTerms(Entity expr, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
@@ -60,9 +82,9 @@ namespace AngouriMath.Functions
                 var newTerms = new List<(int coefficient, int[] pointCoefficientDegrees, Entity partialDerivative)>();
 
                 // Base case: initial term is just the given expression.
-                if (order == 0) 
+                if (order == 0)
                     newTerms.Add((1, new int[variables], expr));
-                else 
+                else
                 {
                     // Iterative step: take the partial derivative of each of the previous terms with respect to each of the variables.
                     foreach (var lastTerm in lastTerms)
@@ -74,7 +96,7 @@ namespace AngouriMath.Functions
                             var variable = exprToPolyVars[variableIndex];
                             var newPointCoeffs = new int[variables];
                             // The new degree is the same as the parent term's, times an extra (x - a) or whichever variable.
-                            lastTerm.pointCoefficientDegrees.CopyTo(newPointCoeffs,0);
+                            lastTerm.pointCoefficientDegrees.CopyTo(newPointCoeffs, 0);
                             newPointCoeffs[variableIndex] += 1;
 
                             // The term is a repeat if it's coefficients match one previously computed.
@@ -100,7 +122,7 @@ namespace AngouriMath.Functions
                                 var newPartialDerivative = lastTerm.partialDerivative.Differentiate(variable.exprVariable);
                                 newTerms.Add((lastTerm.coefficient, newPointCoeffs, newPartialDerivative));
                             }
-                           
+
                         }
                     }
 
@@ -109,7 +131,7 @@ namespace AngouriMath.Functions
 
                 // From the list of deconstructed terms, we put assemble the term and sum them all up.
                 var fullExpressionTerms = new List<Entity>();
-                foreach (var newTerm in newTerms) 
+                foreach (var newTerm in newTerms)
                 {
                     // pointCoefficients are transformed into their proper (x - a)^t... forms.
                     Entity pointCoefficients = 1;
@@ -147,20 +169,6 @@ namespace AngouriMath.Functions
                 lastTerms = newTerms;
                 order++;
             }
-        }
-
-        internal static Entity MultivariableTaylorExpansion(Entity expr, int termCount, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars )
-        {
-            if (termCount < 0)
-                throw new InvalidNumberException($"{nameof(termCount)} is supposed to be at least 0");
-            var terms = new List<Entity>();
-            foreach (var term in MultivariableTaylorExpansionTerms(expr, exprToPolyVars))
-            {
-                if (terms.Count >= termCount)
-                    return TreeAnalyzer.MultiHangBinary(terms, (a, b) => a + b);
-                terms.Add(term);
-            }
-            throw new AngouriBugException($"We cannot get here, as {nameof(TaylorExpansionTerms)} is supposed to be endless");
         }
     }
 }
