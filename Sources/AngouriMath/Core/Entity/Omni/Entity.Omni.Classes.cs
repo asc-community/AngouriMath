@@ -159,7 +159,7 @@ namespace AngouriMath
                     => hashCode.GetValue(static @this =>
                         @this.Elements.OrderBy(el => el.GetHashCode()).HashCodeOfSequence(HashCodeFunctional.HashCodeShifts.FiniteSet), 
                         this);
-                private FieldCacheA<int> hashCode;
+                private LazyPropertyA<int> hashCode;
 
                 /// <summary>
                 /// Checks that two FiniteSets are equal
@@ -246,9 +246,9 @@ namespace AngouriMath
                 public bool IsNumeric => !LeftReal.IsNaN && !RightReal.IsNaN;
 
                 private Real LeftReal => fLeft.GetValue(static @this => @this.Left.EvaluableNumerical && @this.Left.Evaled is Real re ? re : Real.NaN, this);
-                private FieldCacheA<Real> fLeft;
+                private LazyPropertyA<Real> fLeft;
                 private Real RightReal => fRight.GetValue(static @this => @this.Right.EvaluableNumerical && @this.Right.Evaled is Real re ? re : Real.NaN, this);
-                private FieldCacheA<Real> fRight;
+                private LazyPropertyA<Real> fRight;
 
                 private static bool IsALessThanB(Real A, Real B, bool closed)
                     => A < B || closed && A == B;
@@ -577,12 +577,12 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override bool IsSetFinite => isSetFinite.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2 && finite1.IsSetFinite && finite2.IsSetFinite, this);
-                private FieldCacheA<bool> isSetFinite;
+                private LazyPropertyA<bool> isSetFinite;
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => isSetEmpty.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2 && finite1.IsSetEmpty && finite2.IsSetEmpty, this);
-                private FieldCacheA<bool> isSetEmpty;
+                private LazyPropertyA<bool> isSetEmpty;
 
                 /// <inheritdoc/>
                 public override Set Filter(Entity predicate, Variable over)
@@ -630,13 +630,13 @@ namespace AngouriMath
                 public override bool IsSetFinite => isSetFinite.GetValue(static @this => 
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetFinite || finite2.IsSetFinite), this);
-                private FieldCacheA<bool> isSetFinite;
+                private LazyPropertyA<bool> isSetFinite;
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => isSetEmpty.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite2.IsSetEmpty), this);
-                private FieldCacheA<bool> isSetEmpty;
+                private LazyPropertyA<bool> isSetEmpty;
 
                 /// <inheritdoc/>
                 public override Set Filter(Entity predicate, Variable over)
@@ -683,13 +683,13 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override bool IsSetFinite => isSetFinite.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet && finite1.IsSetFinite, this);
-                private FieldCacheA<bool> isSetFinite;
+                private LazyPropertyA<bool> isSetFinite;
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => isSetEmpty.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite1 == finite2), this);
-                private FieldCacheA<bool> isSetEmpty;
+                private LazyPropertyA<bool> isSetEmpty;
 
                 /// <inheritdoc/>
                 public override Set Filter(Entity predicate, Variable over)

@@ -29,7 +29,7 @@ namespace AngouriMath
         /// as free as the addressing of a field.
         /// </summary>
         public Entity InnerSimplified => innerSimplified.GetValue(static @this => @this.InnerSimplifyWithCheck(), this);
-        private FieldCacheA<Entity> innerSimplified;
+        private LazyPropertyA<Entity> innerSimplified;
 
 
         private Entity InnerActionWithCheck(IEnumerable<Entity> directChildren, Entity innerSimplifiedOrEvaled, bool returnThisIfNaN)
@@ -122,7 +122,7 @@ namespace AngouriMath
         /// as free as the addressing of a field.
         /// </summary>
         public Entity Evaled => evaled.GetValue(static @this => @this.InnerEvalWithCheck(), this);
-        private FieldCacheA<Entity> evaled;
+        private LazyPropertyA<Entity> evaled;
 
         /// <summary>
         /// Determines whether a given element can be unambiguously used as a number or boolean

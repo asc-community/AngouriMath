@@ -27,7 +27,7 @@ namespace UnitTests.Core.Multithreading
 
         private static object someReference = new();
 
-        private static FieldCacheA<bool> makesSenseToPerformTest;
+        private static LazyPropertyA<bool> makesSenseToPerformTest;
 
         [Theory, CombinatorialData]
         public void Test(

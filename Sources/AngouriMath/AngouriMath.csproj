@@ -39,7 +39,7 @@
       <Pack>True</Pack>
       <PackagePath></PackagePath>
     </None>
-    <PackageReference Include="HonkSharp" Version="0.0.0-poc.1" />
+    <PackageReference Include="HonkSharp" Version="1.0.0" />
     
     <!--To allow C# 9 syntax for low targets-->
     <PackageReference Include="IsExternalInit" Version="1.0.0" PrivateAssets="all" />
