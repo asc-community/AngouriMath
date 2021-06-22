@@ -373,11 +373,7 @@ namespace AngouriMath
             /// An expression in the polynomial form over the expression variables given in <paramref name="exprVariables"/>
             /// </returns>
             public static Entity Maclaurin(Entity expr, int degree, params Variable[] exprVariables)
-            {
-                var exprToPolyVars = new (Variable exprVariable, Variable polyVariable, Entity point)[exprVariables.Length];
-                for (int i = 0; i < exprVariables.Length; i++) exprToPolyVars[i] = (exprVariables[i], exprVariables[i], 0);
-                return Functions.Series.TaylorExpansion(expr, degree, exprToPolyVars);
-            }
+                => Functions.Series.TaylorExpansion(expr, degree, exprVariables.Select(v => (v, v, (Entity)0)).ToArray());
 
             /// <summary>
             /// Finds the symbolic expression of terms of the Taylor expansion of the given function,
@@ -398,11 +394,7 @@ namespace AngouriMath
             /// An expression in the polynomial form over the expression variable/s given in <paramref name="exprVariables"/>
             /// </returns>
             public static Entity Taylor(Entity expr, int degree, params (Variable exprVariable, Entity point)[] exprVariables)
-            {
-                var exprToPolyVars = new (Variable exprVariable, Variable polyVariable, Entity point)[exprVariables.Length];
-                for (int i = 0; i < exprVariables.Length; i++) exprToPolyVars[i] = (exprVariables[i].exprVariable, exprVariables[i].exprVariable, exprVariables[i].point);
-                return Functions.Series.TaylorExpansion(expr, degree, exprToPolyVars);
-            }
+                => Functions.Series.TaylorExpansion(expr, degree, exprVariables.Select(v => (v.exprVariable, v.exprVariable, v.point)).ToArray());
 
             /// <summary>
             /// Finds the symbolic expression of terms of the Taylor expansion of the given function,
@@ -424,7 +416,7 @@ namespace AngouriMath
             /// An expression in the polynomial form over the poly variable/s given in <paramref name="exprToPolyVars"/>
             /// </returns>
             public static Entity Taylor(Entity expr, int degree, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
-            => Functions.Series.TaylorExpansion(expr, degree, exprToPolyVars);
+                => Functions.Series.TaylorExpansion(expr, degree, exprToPolyVars);
 
             /// <summary>
             /// Finds the symbolic expression of terms of the Taylor expansion of the given function,
