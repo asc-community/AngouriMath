@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace AngouriMath.CPP.Exporting
 {
@@ -12,6 +9,12 @@ namespace AngouriMath.CPP.Exporting
         public static NErrorCode EntityNodes(ObjRef exprPtr, ref NativeArray res)
             => ExceptionEncode(ref res, exprPtr,
                 exprPtr => NativeArray.Alloc(exprPtr.AsEntity.Nodes)
+            );
+
+        [UnmanagedCallersOnly(EntryPoint = "entity_direct_children")]
+        public static NErrorCode EntityDirectChildren(ObjRef exprPtr, ref NativeArray res)
+            => ExceptionEncode(ref res, exprPtr,
+                exprPtr => NativeArray.Alloc(exprPtr.AsEntity.DirectChildren)
             );
 
         [UnmanagedCallersOnly(EntryPoint = "entity_vars")]

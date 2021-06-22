@@ -41,7 +41,7 @@ namespace AngouriMath
         {
             if (inner != nullptr)
             {
-                (void)free_entity(inner->reference);
+                (void)free_entity(inner->GetReference());
                 delete inner;
             }
         }
@@ -50,7 +50,10 @@ namespace AngouriMath
     Entity::Entity(Internal::EntityRef handle)
         : innerEntityInstance(new Internal::EntityInstance(handle), HandleDeleter())
     {
-        
+        #if defined(_DEBUG) || !defined(NDEBUG)
+        // cache string in debug for easier view of entity
+        (void)innerEntityInstance.get()->CachedString();
+        #endif
     }
 
     Internal::EntityRef ParseString(const char* expr)
@@ -78,17 +81,13 @@ namespace AngouriMath
 
     std::string Entity::ToString() const
     {
-        char* buff = nullptr;
-        HandleErrorCode(entity_to_string(innerEntityInstance.get()->reference, &buff));
-        auto res = buff != nullptr ? std::string(buff) : std::string();
-        free_string(buff);
-        return res;
+        return innerEntityInstance.get()->CachedString();
     }
 
     std::string Entity::Latexise() const
     {
         char* buff = nullptr;
-        HandleErrorCode(entity_latexise(innerEntityInstance.get()->reference, &buff));
+        HandleErrorCode(entity_latexise(innerEntityInstance.get()->GetReference(), &buff));
         auto res = buff != nullptr ? std::string(buff) : std::string();
         free_string(buff);
         return res;
@@ -98,14 +97,28 @@ namespace AngouriMath
     Entity Entity::Differentiate(const Entity& var) const
     {
         Internal::EntityRef result;
-        HandleErrorCode(entity_differentiate(innerEntityInstance.get()->reference, var.innerEntityInstance.get()->reference, &result));
+        HandleErrorCode(entity_differentiate(innerEntityInstance.get()->GetReference(), var.innerEntityInstance.get()->GetReference(), &result));
         return Entity(result);
     }
 
     Entity Entity::Integrate(const Entity& var) const
     {
         Internal::EntityRef result;
-        HandleErrorCode(entity_integrate(innerEntityInstance.get()->reference, var.innerEntityInstance.get()->reference, &result));
+        HandleErrorCode(entity_integrate(innerEntityInstance.get()->GetReference(), var.innerEntityInstance.get()->GetReference(), &result));
+        return Entity(result);
+    }
+
+    Entity Entity::Solve(const Entity& var) const
+    {
+        Internal::EntityRef result;
+        HandleErrorCode(entity_solve(innerEntityInstance.get()->GetReference(), var.innerEntityInstance.get()->GetReference(), &result));
+        return Entity(result);
+    }
+
+    Entity Entity::SolveEquation(const Entity& var) const
+    {
+        Internal::EntityRef result;
+        HandleErrorCode(entity_solve_equation(innerEntityInstance.get()->GetReference(), var.innerEntityInstance.get()->GetReference(), &result));
         return Entity(result);
     }
 
@@ -115,9 +128,9 @@ namespace AngouriMath
         Internal::EntityRef result;
         HandleErrorCode(
             entity_limit(
-                innerEntityInstance.get()->reference,
-                var.innerEntityInstance.get()->reference,
-                dest.innerEntityInstance.get()->reference,
+                innerEntityInstance.get()->GetReference(),
+                var.innerEntityInstance.get()->GetReference(),
+                dest.innerEntityInstance.get()->GetReference(),
                 (Internal::ApproachFrom)from,
                 &result
             )
@@ -133,64 +146,69 @@ namespace AngouriMath
     Entity Entity::Simplify() const
     {
         Internal::EntityRef res;
-        HandleErrorCode(entity_simplify(innerEntityInstance.get()->reference, &res));
+        HandleErrorCode(entity_simplify(innerEntityInstance.get()->GetReference(), &res));
         return Entity(res);
     }
 
     std::vector<Entity> Entity::Alternate() const
     {
         auto lambda = GetLambdaByArrayFactory(entity_alternate);
-        return lambda(innerEntityInstance.get()->reference);
+        return lambda(innerEntityInstance.get()->GetReference());
     }
 
     std::int64_t Entity::AsInteger() const
     {
         std::int64_t res;
-        HandleErrorCode(entity_to_long(innerEntityInstance.get()->reference, &res));
+        HandleErrorCode(entity_to_long(innerEntityInstance.get()->GetReference(), &res));
         return res;
     }
 
     std::pair<std::int64_t, std::int64_t> Entity::AsRational() const
     {
         Internal::LongTuple res;
-        HandleErrorCode(entity_to_rational(innerEntityInstance.get()->reference, &res));
+        HandleErrorCode(entity_to_rational(innerEntityInstance.get()->GetReference(), &res));
         return std::make_pair(res.first, res.second);
     }
 
     double Entity::AsReal() const
     {
         double res;
-        HandleErrorCode(entity_to_double(innerEntityInstance.get()->reference, &res));
+        HandleErrorCode(entity_to_double(innerEntityInstance.get()->GetReference(), &res));
         return res;
     }
 
     std::complex<double> Entity::AsComplex() const
     {
         Internal::DoubleTuple res;
-        HandleErrorCode(entity_to_complex(innerEntityInstance.get()->reference, &res));
+        HandleErrorCode(entity_to_complex(innerEntityInstance.get()->GetReference(), &res));
         return std::complex<double>(res.first, res.second);
     }
 
     Internal::EntityRef GetHandle(const Entity& e)
     {
-        return e.innerEntityInstance.get()->reference;
+        return e.innerEntityInstance.get()->GetReference();
     }
 
     namespace Internal
     {
         const std::vector<Entity>& EntityInstance::CachedNodes()
         {
-            return nodes.GetValue(GetLambdaByArrayFactory(entity_nodes), reference);
+            return nodes.GetValue(GetLambdaByArrayFactory(entity_nodes), GetReference());
         }
 
         const std::vector<Entity>& EntityInstance::CachedVars()
         {
-            return vars.GetValue(GetLambdaByArrayFactory(entity_vars), reference);
+            return vars.GetValue(GetLambdaByArrayFactory(entity_vars), GetReference());
         }
 
         const std::vector<Entity>& EntityInstance::CachedVarsAndConstants()
         {
-            return varsAndConstants.GetValue(GetLambdaByArrayFactory(entity_vars_and_constants), reference);
+            return varsAndConstants.GetValue(GetLambdaByArrayFactory(entity_vars_and_constants), GetReference());
+        }
+
+        const std::vector<Entity>& EntityInstance::CachedDirectChildren()
+        {
+            return directChildren.GetValue(GetLambdaByArrayFactory(entity_direct_children), GetReference());
         }
 
         const Entity& EntityInstance::CachedEvaled()
@@ -201,7 +219,7 @@ namespace AngouriMath
                 HandleErrorCode(entity_evaled(ref, &res));
                 return std::make_shared<Entity>(CreateByHandle(res));
             };
-            return *innerEvaled.GetValue(fact, reference);
+            return *innerEvaled.GetValue(fact, GetReference());
         }
 
         const Entity& EntityInstance::CachedInnerSimplified()
@@ -212,7 +230,20 @@ namespace AngouriMath
                 HandleErrorCode(entity_inner_simplified(ref, &res));
                 return std::make_shared<Entity>(CreateByHandle(res));
             };
-            return *innerSimplified.GetValue(fact, reference);
+            return *innerSimplified.GetValue(fact, GetReference());
+        }
+
+        const std::string& EntityInstance::CachedString()
+        {
+            constexpr auto fact = [](Internal::EntityRef ref)
+            {
+                char* buff = nullptr;
+                HandleErrorCode(entity_to_string(ref, &buff));
+                auto res = buff != nullptr ? std::string(buff) : std::string();
+                (void)free_string(buff);
+                return res;
+            };
+            return string.GetValue(fact, GetReference());
         }
     }
 }
