@@ -176,15 +176,24 @@ namespace AngouriMath
                             false => mod,
                             true => mod + b,
                         };
-                public static implicit operator Rational(sbyte value) => Integer.Create(value);
-                public static implicit operator Rational(byte value) => Integer.Create(value);
-                public static implicit operator Rational(short value) => Integer.Create(value);
-                public static implicit operator Rational(ushort value) => Integer.Create(value);
-                public static implicit operator Rational(int value) => Integer.Create(value);
-                public static implicit operator Rational(uint value) => Integer.Create(value);
-                public static implicit operator Rational(long value) => Integer.Create(value);
-                public static implicit operator Rational(ulong value) => Integer.Create(value);
-                public static implicit operator Rational(EInteger value) => Integer.Create(value);
+                public static implicit operator Rational(sbyte value) => (long)value;
+                public static implicit operator Rational(byte value) => (ulong)value;
+                public static implicit operator Rational(short value) => (long)value;
+                public static implicit operator Rational(ushort value) => (ulong)value;
+                public static implicit operator Rational(int value) => (long)value;
+                public static implicit operator Rational(uint value) => (ulong)value;
+                public static implicit operator Rational(long value)
+                    => MathS.Settings.DowncastingEnabled
+                        ? Integer.Create(value)
+                        : new Rational(value);
+                public static implicit operator Rational(ulong value)
+                    => MathS.Settings.DowncastingEnabled
+                        ? Integer.Create(value)
+                        : new Rational(value);
+                public static implicit operator Rational(EInteger value)
+                    => MathS.Settings.DowncastingEnabled
+                        ? Integer.Create(value)
+                        : new Rational(ERational.FromEInteger(value));
                 public static implicit operator Rational(ERational value) => Create(value);
 #pragma warning restore CS1591
             }

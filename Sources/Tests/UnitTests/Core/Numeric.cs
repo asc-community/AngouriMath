@@ -4,6 +4,8 @@ using Xunit;
 using static AngouriMath.Entity.Set;
 using AngouriMath.Extensions;
 using System;
+using FluentAssertions;
+using HonkSharp.Fluency;
 
 namespace UnitTests.Core
 {
@@ -323,5 +325,8 @@ namespace UnitTests.Core
             var right = another.ToEntity();
             Assert.False(MathS.UnsafeAndInternal.AreEqualNumerically(left, right));
         }
+        
+        
+        
     }
 }
