@@ -2,13 +2,13 @@
 
 #include "TypeAliases.h"
 #include "ErrorCode.h"
+#include "FieldCache.h"
+
 #include <memory>
 #include <string>
 #include <ostream>
 #include <vector>
 #include <complex>
-#include <ratio>
-#include "FieldCache.h"
 
 namespace AngouriMath
 {
