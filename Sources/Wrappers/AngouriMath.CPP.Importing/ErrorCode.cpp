@@ -11,12 +11,12 @@ namespace AngouriMath::Internal
 
     void HandleErrorCode(NativeErrorCode nec)
     {
-        if (nec.Name != nullptr)
+        if (nec.name != nullptr)
         {
             auto ec = ErrorCode(
-                nec.Name != nullptr ? nec.Name : "",
-                nec.Message != nullptr ? nec.Message : "",
-                nec.StackTrace != nullptr ? nec.StackTrace : ""
+                nec.name != nullptr ? nec.name : "",
+                nec.message != nullptr ? nec.message : "",
+                nec.stackTrace != nullptr ? nec.stackTrace : ""
             );
             DeleteNativeErrorCode(nec);
             throw AngouriMathException(ec);
@@ -26,9 +26,9 @@ namespace AngouriMath::Internal
     void HandleErrorCode(NativeErrorCode nec, ErrorCode& ec)
     {
         ec = ErrorCode(
-            nec.Name != nullptr ? nec.Name : "",
-            nec.Message != nullptr ? nec.Message : "",
-            nec.StackTrace != nullptr ? nec.StackTrace : ""
+            nec.name != nullptr ? nec.name : "",
+            nec.message != nullptr ? nec.message : "",
+            nec.stackTrace != nullptr ? nec.stackTrace : ""
         );
         DeleteNativeErrorCode(nec);
     }

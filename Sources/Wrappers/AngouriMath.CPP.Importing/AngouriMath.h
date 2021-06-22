@@ -6,6 +6,8 @@
 #include <string>
 #include <ostream>
 #include <vector>
+#include <complex>
+#include <ratio>
 #include "FieldCache.h"
 
 namespace AngouriMath
@@ -63,10 +65,10 @@ namespace AngouriMath
 
 
         // Casts
-        long AsInteger() const;
-        std::pair<long, long> AsRational() const;
+        std::int64_t AsInteger() const;
+        std::pair<std::int64_t, std::int64_t> AsRational() const;
         double AsReal() const;
-        std::pair<double, double> AsComplex() const;
+        std::complex<double> AsComplex() const;
 
         // Properties
         const std::vector<Entity>& Nodes() const { return innerEntityInstance.get()->CachedNodes(); }

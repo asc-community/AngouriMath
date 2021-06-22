@@ -27,7 +27,7 @@ extern "C"
     DLL_CODE NativeErrorCode entity_simplify(EntityRef, EntityOut);
     DLL_CODE NativeErrorCode entity_evaled(EntityRef, EntityOut);
     DLL_CODE NativeErrorCode entity_inner_simplified(EntityRef, EntityOut);
-    DLL_CODE NativeErrorCode entity_to_long(EntityRef, long*);
+    DLL_CODE NativeErrorCode entity_to_long(EntityRef, int64_t*);
     DLL_CODE NativeErrorCode entity_to_rational(EntityRef, LongTuple*);
     DLL_CODE NativeErrorCode entity_to_double(EntityRef, double*);
     DLL_CODE NativeErrorCode entity_to_complex(EntityRef, DoubleTuple*);
