@@ -187,7 +187,7 @@ namespace AngouriMath
                     return new(newInner);
                 },
             this);
-            private FieldCacheA<Matrix> t;
+            private LazyPropertyA<Matrix> t;
 
             // We do not need to use Gaussian elimination here
             // since we anyway get N! memory use
@@ -203,7 +203,7 @@ namespace AngouriMath
                 },
                 this
                 );
-            private FieldCacheA<Entity?> determinant;
+            private LazyPropertyA<Entity?> determinant;
 
             /// <summary>Returns an inverse matrix if it exists</summary>
             public Matrix? Inverse => inverse.GetValue(static @this =>
@@ -218,7 +218,7 @@ namespace AngouriMath
                 cp.InvertMatrix();
                 return ToMatrix(new Matrix(cp).InnerSimplified);
             }, this);
-            private FieldCacheA<Matrix?> inverse;
+            private LazyPropertyA<Matrix?> inverse;
 
 
             /// <summary>
@@ -346,7 +346,7 @@ namespace AngouriMath
                 @ref.GetValue(static @this =>
                     (Matrix)new Matrix(@this.InnerMatrix.RowEchelonFormSafeDivision()).InnerSimplified,
                     this);
-            private FieldCacheA<Matrix> @ref;
+            private LazyPropertyA<Matrix> @ref;
 
             /// <summary>
             /// Reduced row echelon form via Gaussian elimination.
@@ -355,7 +355,7 @@ namespace AngouriMath
                 rref.GetValue(static @this =>
                     (Matrix)new Matrix(@this.InnerMatrix.ReducedRowEchelonFormSafeDivision()).InnerSimplified,
                     this);
-            private FieldCacheA<Matrix> rref;
+            private LazyPropertyA<Matrix> rref;
 
             /// <summary>
             /// The number of linearly independent rows
@@ -369,7 +369,7 @@ namespace AngouriMath
                     return @this.RowCount;
                 }
                 , this);
-            private FieldCacheA<int> rank;
+            private LazyPropertyA<int> rank;
 
             /// <summary>
             /// Adjugate form of a matrix
@@ -383,7 +383,7 @@ namespace AngouriMath
                         return ToMatrix(innerSimplified);
                     },
                     this);
-            private FieldCacheA<Matrix?> adjugate;
+            private LazyPropertyA<Matrix?> adjugate;
 
             /// <summary>
             /// Returns a vector, where the i-th element
@@ -395,7 +395,7 @@ namespace AngouriMath
                     Enumerable.Range(0, Math.Min(@this.RowCount, @this.ColumnCount))
                         .Select(i => @this[i, i]).ToVector()
                 , this);
-            private FieldCacheA<Matrix> mainDiagonal;
+            private LazyPropertyA<Matrix> mainDiagonal;
 
             /// <summary>
             /// The trace of a matrix. It is a sum of
@@ -404,7 +404,7 @@ namespace AngouriMath
             public Entity Trace => trace.GetValue(static @this =>
                 TreeAnalyzer.MultiHangBinary(@this.MainDiagonal.ToList(), (a, b) => a + b),
                 this);
-            private FieldCacheA<Entity> trace;
+            private LazyPropertyA<Entity> trace;
 
             /// <summary>
             /// Creates a new vector with the specified element being

@@ -90,7 +90,7 @@ namespace AngouriMath
         /// Represents all direct children of a node
         /// </summary>
         public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(static @this => @this.InitDirectChildren(), this);
-        private FieldCacheA<IReadOnlyList<Entity>> directChildren;
+        private LazyPropertyA<IReadOnlyList<Entity>> directChildren;
 
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="AngouriMath.Functions.TreeAnalyzer.GetMinimumSubtree"/></remarks>
@@ -108,7 +108,7 @@ namespace AngouriMath
         /// </code>
         /// </example>
         public IEnumerable<Entity> Nodes => nodes.GetValue(static @this => @this.DirectChildren.SelectMany(c => c.Nodes).Prepend(@this), this);
-        private FieldCacheA<IEnumerable<Entity>> nodes;
+        private LazyPropertyA<IEnumerable<Entity>> nodes;
 
         /// <summary>
         /// Applies the given function to every node starting from the leaves
@@ -165,7 +165,7 @@ namespace AngouriMath
         /// meaning that it could be safely used for calculations
         /// </value>
         public bool IsFinite => isFinite.GetValue(static @this => @this.ThisIsFinite && @this.DirectChildren.All(x => x.IsFinite), this);
-        private FieldCacheA<bool> isFinite;
+        private LazyPropertyA<bool> isFinite;
 
         /// <summary>
         /// Not NaN and not infinity
@@ -174,7 +174,7 @@ namespace AngouriMath
 
         /// <value>Number of nodes in tree</value>
         public int Complexity => complexity.GetValue(static @this => 1 + @this.DirectChildren.Sum(x => x.Complexity), this);
-        private FieldCacheA<int> complexity;
+        private LazyPropertyA<int> complexity;
 
         /// <summary>
         /// Set of unique variables, for example 
@@ -185,7 +185,7 @@ namespace AngouriMath
         /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
         public IEnumerable<Variable> Vars => vars.GetValue(static @this => @this.VarsAndConsts.Where(x => !x.IsConstant), this);
-        private FieldCacheA<IEnumerable<Variable>> vars;
+        private LazyPropertyA<IEnumerable<Variable>> vars;
 
         /// <summary>
         /// Set of unique variables, for example 
@@ -197,7 +197,7 @@ namespace AngouriMath
         /// </returns>
         public IReadOnlyCollection<Variable> VarsAndConsts => varsAndConsts.GetValue(
             static @this => new HashSet<Variable>(@this is Variable v ? new[] { v } : @this.DirectChildren.SelectMany(x => x.VarsAndConsts)), this);
-        private FieldCacheA<IReadOnlyCollection<Variable>> varsAndConsts;
+        private LazyPropertyA<IReadOnlyCollection<Variable>> varsAndConsts;
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>
@@ -217,7 +217,7 @@ namespace AngouriMath
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
         /// </summary>
         public double SimplifiedRate => simplifiedRate.GetValue(MathS.Settings.ComplexityCriteria.Value, this);
-        private FieldCacheA<double> simplifiedRate;
+        private LazyPropertyA<double> simplifiedRate;
 
         /// <summary>Checks whether the given expression contains variable</summary>
         public bool IsSymbolic => Vars.Any();

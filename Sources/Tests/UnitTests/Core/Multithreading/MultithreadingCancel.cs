@@ -31,7 +31,7 @@ namespace UnitTests.Core.Multithreading
                 SomeLongLastingTask
                 , ShouldLastAtLeast), someReference);
         private static object someReference = new();
-        private static FieldCacheA<bool> makesSenseToPerformTest;
+        private static LazyPropertyA<bool> makesSenseToPerformTest;
 
         [Theory]
         [InlineData(false, true)]
