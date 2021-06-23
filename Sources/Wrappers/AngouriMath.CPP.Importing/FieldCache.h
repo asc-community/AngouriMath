@@ -1,7 +1,7 @@
 #pragma once
 
 #include "TypeAliases.h"
-#include <functional>
+#include <optional>
 
 namespace AngouriMath::Internal
 {
@@ -9,20 +9,15 @@ namespace AngouriMath::Internal
     class FieldCache
     {
     private:
-        T value;
-        bool isValid = false;
+        std::optional<T> cached;
     public:
         // TODO: make thread-safe
-        const T& GetValue(std::function<T(EntityRef)> factory, EntityRef ref)
+        template<typename Factory>
+        const T& GetValue(Factory&& factory, EntityRef ref)
         {
-            if (!isValid)
-            {
-                value = factory(ref);
-                isValid = true;
-            }
-            return value;
+            if (!cached.has_value())
+                cached = factory(ref);
+            return this->cached.value();
         }
-
-        FieldCache() { }
     };
 }

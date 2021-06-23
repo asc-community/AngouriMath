@@ -22,12 +22,15 @@ extern "C"
 
     DLL_CODE NativeErrorCode entity_differentiate(EntityRef, EntityRef, EntityOut);
     DLL_CODE NativeErrorCode entity_integrate(EntityRef, EntityRef, EntityOut);
+    DLL_CODE NativeErrorCode entity_solve(EntityRef, EntityRef, EntityOut);
+    DLL_CODE NativeErrorCode entity_solve_equation(EntityRef, EntityRef, EntityOut);
+    DLL_CODE NativeErrorCode entity_integrate(EntityRef, EntityRef, EntityOut);
     DLL_CODE NativeErrorCode entity_limit(EntityRef, EntityRef, EntityRef, ApproachFrom, EntityOut);
     DLL_CODE NativeErrorCode entity_alternate(EntityRef, NativeArray*);
     DLL_CODE NativeErrorCode entity_simplify(EntityRef, EntityOut);
     DLL_CODE NativeErrorCode entity_evaled(EntityRef, EntityOut);
     DLL_CODE NativeErrorCode entity_inner_simplified(EntityRef, EntityOut);
-    DLL_CODE NativeErrorCode entity_to_long(EntityRef, long*);
+    DLL_CODE NativeErrorCode entity_to_long(EntityRef, int64_t*);
     DLL_CODE NativeErrorCode entity_to_rational(EntityRef, LongTuple*);
     DLL_CODE NativeErrorCode entity_to_double(EntityRef, double*);
     DLL_CODE NativeErrorCode entity_to_complex(EntityRef, DoubleTuple*);
@@ -40,4 +43,5 @@ extern "C"
     DLL_CODE NativeErrorCode entity_nodes(EntityRef, NativeArray*);
     DLL_CODE NativeErrorCode entity_vars(EntityRef, NativeArray*);
     DLL_CODE NativeErrorCode entity_vars_and_constants(EntityRef, NativeArray*);
+    DLL_CODE NativeErrorCode entity_direct_children(EntityRef, NativeArray*);
 }

@@ -22,5 +22,16 @@ int main()
     auto expr = AngouriMath::Entity("5 / 30");
     auto sim = expr.Simplify();
     auto rat = sim.AsRational();
+    auto real = sim.AsReal();
+
+    AngouriMath::Entity e("x2 + 3x + 1");
+
+    auto solutions = e.SolveEquation("x");
+
+    for (const auto& child : solutions.DirectChildren())
+    {
+        std::cout << child << '\n';
+    }
+
     return 0;
 }
