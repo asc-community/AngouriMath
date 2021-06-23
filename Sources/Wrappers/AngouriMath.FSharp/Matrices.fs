@@ -24,7 +24,7 @@ let matrix x =
             | Fixed len -> if len = hd.Length then Fixed(len) else Invalid
             
     let parseListOfLists li =
-        [ for row in li do yield [ for el in row do yield (parsed el) ] ]
+        [ for row in li do [ for el in row do parsed el ] ]
 
     match columnCount x with
     | Any | Invalid -> raise ParseException
