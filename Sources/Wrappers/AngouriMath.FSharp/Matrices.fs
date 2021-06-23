@@ -97,7 +97,7 @@ let ( **** ) (a: Entity.Matrix) b =
 
 /// Returns a matrix modified according to the modifier
 let modifiedMatrix (x: AngouriMath.Entity.Matrix) m =
-    x.With(new System.Func<int, int, AngouriMath.Entity, AngouriMath.Entity>(m))
+    x.With(System.Func<int, int, AngouriMath.Entity, AngouriMath.Entity> m)
 
 /// Gets the transposed form of a matrix or vector
 let transposed (m: AngouriMath.Entity.Matrix) = m.T
