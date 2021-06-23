@@ -36,10 +36,10 @@ let printedMatrix (x: AngouriMath.Entity.Matrix) = x.ToString(true)
 
 /// Returns a matrix modified according to the modifier
 let modifiedMatrix (x: AngouriMath.Entity.Matrix) m =
-    x.With(new System.Func<int, int, AngouriMath.Entity, AngouriMath.Entity>(m)).InnerSimplified
+    x.With(new System.Func<int, int, AngouriMath.Entity, AngouriMath.Entity>(m)).InnerSimplified :?> Entity.Matrix
 
 /// Gets the transposed form of a matrix or vector
-let transposed (m: AngouriMath.Entity.Matrix) = m.T.InnerSimplified
+let transposed (m: AngouriMath.Entity.Matrix) = m.T.InnerSimplified :?> Entity.Matrix
 
 
 /// Returns a conjunction node of two nodes
@@ -267,8 +267,8 @@ let limitSidedNode x destination side expr =
 /// provided the statement or equality
 let solutions x expr =
     match parsed expr with
-    | :? Entity.Statement as statement -> statement.Solve(symbol x).InnerSimplified
-    | func -> (equality func 0).Solve(symbol x).InnerSimplified
+    | :? Entity.Statement as statement -> statement.Solve(symbol x).InnerSimplified :?> Entity.Set
+    | func -> (equality func 0).Solve(symbol x).InnerSimplified :?> Entity.Set
 
 type Lengths =
     | Any
