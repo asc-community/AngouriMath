@@ -32,7 +32,7 @@ let matrix x =
 
 /// Creates a column vector from a 1-dimensional list
 let vector li =
-    MathS.Vector([ for el in li do yield parsed el ].ToArray())
+    MathS.Vector [| for el in li do parsed el |]
 
 /// If the provided entity is a matrix,
 /// it is returned downcasted. Otherwise,
