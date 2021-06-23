@@ -39,7 +39,13 @@ let ``Int ** big number is real`` () =
 let ``equals test`` () = Assert.Equal(simplified (parsed "1 = 2"), (1 = 2))
 
 [<Fact>]
-let ``trig test`` () = Assert.Equal(simplified (parsed "tan(cos(sin(100)))"), tan (cos (sin 100)))
+let ``greaterThan test`` () = Assert.Equal(simplified (parsed "1 > 2"), (1 > 2))
 
 [<Fact>]
-let ``sqrt/ln test`` () = Assert.Equal(simplified (parsed "ln(sqrt(100))"), ln (sqrt 100))
+let ``lessThan test`` () = Assert.Equal(simplified (parsed "1 < 2"), (1 < 2))
+
+[<Fact>]
+let ``greaterOrEqual test`` () = Assert.Equal(simplified (parsed "1 >= 2"), (1 >= 2))
+
+[<Fact>]
+let ``lessOrEqual test`` () = Assert.Equal(simplified (parsed "1 <= 2"), (1 <= 2))
