@@ -77,25 +77,25 @@ let matrixWith rows cols map = MathS.Matrix(rows, cols, new System.Func<int, int
 let vectorWith count map = matrixWith count 1 (fun r _ -> map r)
 
 
-let (|*) a b = (parsed a * parsed b).InnerSimplified |> asMatrix
+let ( *. ) a b = (parsed a * parsed b).InnerSimplified |> asMatrix
 
-let (|**) a b = (parsed a ** parsed b).InnerSimplified |> asMatrix
+let ( **. ) a b = (parsed a ** parsed b).InnerSimplified |> asMatrix
 
-let (|+) a b = (parsed a + parsed b).InnerSimplified |> asMatrix
+let (+.) a b = (parsed a + parsed b).InnerSimplified |> asMatrix
 
-let (|-) a b = (parsed a - parsed b).InnerSimplified |> asMatrix
+let (-.) a b = (parsed a - parsed b).InnerSimplified |> asMatrix
 
 /// Matrix by matrix and scalar by matrix are not allowed
 /// (return unsimplified expression)
-let (|/) a b = (parsed a / parsed b).InnerSimplified |> asMatrix
+let (/.) a b = (parsed a / parsed b).InnerSimplified |> asMatrix
 
 /// Finds the tensor product of two given matrices
-let ( *** ) a b =
+let ( ***. ) a b =
     Entity.Matrix.TensorProduct(a, b).InnerSimplified |> asMatrix
 
 /// Finds the tensor power of a given matrix. The
 /// power must be positive
-let ( **** ) (a: Entity.Matrix) b =
+let ( ****. ) (a: Entity.Matrix) b =
     a.TensorPower(b).InnerSimplified |> asMatrix
 
 /// Returns a matrix modified according to the modifier
