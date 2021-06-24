@@ -85,6 +85,8 @@ let (|+) a b = (parsed a + parsed b).InnerSimplified |> asMatrix
 
 let (|-) a b = (parsed a - parsed b).InnerSimplified |> asMatrix
 
+/// Matrix by matrix and scalar by matrix are not allowed
+/// (return unsimplified expression)
 let (|/) a b = (parsed a / parsed b).InnerSimplified |> asMatrix
 
 /// Finds the tensor product of two given matrices

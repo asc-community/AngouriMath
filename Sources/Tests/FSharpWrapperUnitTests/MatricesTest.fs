@@ -63,3 +63,96 @@ let ``M/S`` () =
 [<Fact>]
 let ``M**S`` () =
     Assert.Equal<Entity.Matrix>(matrix [[37; 54]; [81; 118]], matrix [[1; 2]; [3; 4]] |** 3)
+
+(*
+
+Matrix operator priority
+
+*)
+
+open AngouriMath.FSharp.Core
+
+let a = matrixWith 2 2 (fun _ _ -> parsed "a")
+let b = matrixWith 2 2 (fun _ _ -> parsed "b")
+let c = matrixWith 2 2 (fun _ _ -> parsed "c")
+
+(*
+
+Make sure |+ and |- have the same priority
+
+*)
+
+[<Fact>]
+let ``Priority |-|+`` =
+    Assert.Equal<Entity.Matrix>(a |- b |+ c, (a |- b) |+ c) 
+
+[<Fact>]
+let ``Priority |+|-`` =
+    Assert.Equal<Entity.Matrix>(a |+ b |- c, (a |+ b) |- c)
+
+
+(*
+
+Make sure that |* has a higher priority than both |+ and |-
+
+*)
+
+
+[<Fact>]
+let ``Priority |+|*`` =
+    Assert.Equal<Entity.Matrix>(a |+ b |* c, a |+ (b |* c))
+   
+[<Fact>]
+let ``Priority |*|+`` =
+    Assert.Equal<Entity.Matrix>(a |* b |+ c, (a |* b) |+ c)
+   
+[<Fact>]
+let ``Priority |-|*`` =
+    Assert.Equal<Entity.Matrix>(a |- b |* c, a |- (b |* c))
+   
+[<Fact>]
+let ``Priority |*|-`` =
+    Assert.Equal<Entity.Matrix>(a |* b |- c, (a |* b) |- c)
+
+
+(*
+
+Priority tests for mixed | and non |
+
+*)
+   
+
+[<Fact>]
+let ``Priority +|*`` =
+    Assert.Equal<Entity.Matrix>(a + b |* c, a + (b |* c))
+   
+[<Fact>]
+let ``Priority *|+`` =
+    Assert.Equal<Entity.Matrix>(a * b |+ c, (a * b) |+ c)
+   
+[<Fact>]
+let ``Priority -|*`` =
+    Assert.Equal<Entity.Matrix>(a - b |* c, a - (b |* c))
+   
+[<Fact>]
+let ``Priority *|-`` =
+    Assert.Equal<Entity.Matrix>(a * b |- c, (a * b) |- c)
+   
+
+
+
+[<Fact>]
+let ``Priority |+*`` =
+    Assert.Equal<Entity.Matrix>(a |+ b * c, a |+ (b * c))
+   
+[<Fact>]
+let ``Priority |*+`` =
+    Assert.Equal<Entity.Matrix>(a |* b + c, (a |* b) + c)
+   
+[<Fact>]
+let ``Priority |-*`` =
+    Assert.Equal<Entity.Matrix>(a |- b * c, a |- (b * c))
+   
+[<Fact>]
+let ``Priority |*-`` =
+    Assert.Equal<Entity.Matrix>(a |* b - c, (a |* b) - c)
