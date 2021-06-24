@@ -2,7 +2,6 @@
 
 open Core
 open AngouriMath
-open System.Linq
 
 /// Creates a node of power and inner simplifies it
 let ( ** ) a b =
@@ -30,17 +29,6 @@ let latex x =
 
 /// Substitutes the given variable with the given value in the given expression
 let substituted x value expr = (parsed expr).Substitute(parsed x, parsed value).InnerSimplified
-
-/// Returns a multiline string representation of matrix
-let printedMatrix (x: AngouriMath.Entity.Matrix) = x.ToString(true)
-
-/// Returns a matrix modified according to the modifier
-let modifiedMatrix (x: AngouriMath.Entity.Matrix) m =
-    x.With(new System.Func<int, int, AngouriMath.Entity, AngouriMath.Entity>(m)).InnerSimplified :?> Entity.Matrix
-
-/// Gets the transposed form of a matrix or vector
-let transposed (m: AngouriMath.Entity.Matrix) = m.T.InnerSimplified :?> Entity.Matrix
-
 
 /// Returns a conjunction node of two nodes
 let conjunction a b = MathS.Conjunction(parsed a, parsed b).InnerSimplified
@@ -82,9 +70,6 @@ let greaterOrEqual a b = MathS.GreaterOrEqualThan(parsed a, parsed b).InnerSimpl
 
 /// Returns a less or equal than node of two nodes (a >= b)
 let lessOrEqual a b = MathS.LessOrEqualThan(parsed a, parsed b).InnerSimplified
-
-
-
 
 /// Returns a logarithm node with the given base (as the first argument)
 let log logBase x = MathS.Log(parsed logBase, parsed x).InnerSimplified
@@ -186,7 +171,6 @@ let asech x = MathS.Hyperbolic.Arsech(parsed x).InnerSimplified
 let acsch x = MathS.Hyperbolic.Arcosech(parsed x).InnerSimplified
 
 
-
 /// Returns a bounded closed interval
 let closedInterval from ``to`` =
     MathS.Interval(parsed from, parsed ``to``)
@@ -218,9 +202,6 @@ let rightInclusive ``to`` =
 /// Returns a half-bounded with right point excluded
 let rightExclusive ``to`` =
     MathS.Interval(parsed "-oo", false, parsed ``to``, false)
-
-
-    
 
 
 /// Computes the derivative of the given variable and expression
@@ -269,49 +250,3 @@ let solutions x expr =
     match parsed expr with
     | :? Entity.Statement as statement -> statement.Solve(symbol x).InnerSimplified :?> Entity.Set
     | func -> (equality func 0).Solve(symbol x).InnerSimplified :?> Entity.Set
-
-type Lengths =
-    | Any
-    | Invalid
-    | Fixed of int
-    
-/// Creates a matrix from a list of lists
-/// of objects (which are parsed into Entities)
-let matrix x = 
-    let rec columnCount (x : 'T list list) =
-        match x with
-        | [] -> Any
-        | hd::tl ->
-            match columnCount tl with
-            | Any -> Fixed(hd.Length)
-            | Invalid -> Invalid
-            | Fixed len -> if len = hd.Length then Fixed(len) else Invalid
-    
-    let parseListOfLists li =
-        [ for row in li do yield [ for el in row do yield (parsed el) ] ]
-    
-    match columnCount x with
-    | Any | Invalid -> raise ParseException
-    | Fixed _ -> MathS.Matrix(array2D (parseListOfLists x))
-    
-    
-/// Creates a column vector from a 1-dimensional list
-let vector li =
-    MathS.Vector([ for el in li do yield parsed el ].ToArray())
-   
-/// If the provided entity is a matrix,
-/// it is returned downcasted. Otherwise,
-/// a 1x1 matrix containing the entity is returned.
-let asMatrix a = 
-    match parsed a with
-    | :? Entity.Matrix as m -> m
-    | other -> vector [other]
-
-/// Finds the tensor product of two given matrices
-let ( *** ) a b =
-    Entity.Matrix.TensorProduct(a, b).InnerSimplified |> asMatrix
-
-/// Finds the tensor power of a given matrix. The
-/// power must be positive
-let ( **** ) (a: Entity.Matrix) b =
-    a.TensorPower(b).InnerSimplified |> asMatrix
