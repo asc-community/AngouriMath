@@ -34,3 +34,18 @@ let ``Int ** big number is real`` () =
     let num = 3 ** "1000"
     Assert.IsAssignableFrom<AngouriMath.Entity.Number.Integer>(num) |> ignore
     Assert.Equal(simplified (parsed "3 ^ 1000"), num)
+
+[<Fact>]
+let ``equals test`` () = Assert.Equal(simplified (parsed "1 = 2"), (1 = 2))
+
+[<Fact>]
+let ``greaterThan test`` () = Assert.Equal(simplified (parsed "1 > 2"), (1 > 2))
+
+[<Fact>]
+let ``lessThan test`` () = Assert.Equal(simplified (parsed "1 < 2"), (1 < 2))
+
+[<Fact>]
+let ``greaterOrEqual test`` () = Assert.Equal(simplified (parsed "1 >= 2"), (1 >= 2))
+
+[<Fact>]
+let ``lessOrEqual test`` () = Assert.Equal(simplified (parsed "1 <= 2"), (1 <= 2))
