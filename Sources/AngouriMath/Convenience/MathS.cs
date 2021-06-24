@@ -50,6 +50,14 @@ namespace AngouriMath
             /// Factorization of integer
             /// </summary>
             public static IEnumerable<(Integer prime, Integer power)> Factorize(Integer integer) => integer.Factorize();
+
+            /// <summary>
+            /// Finds the greatest common divisor
+            /// of two integers
+            /// </summary>
+            public static Integer GreatestCommonDivisor(Integer a, Integer b)
+                => a.EInteger.Gcd(b.EInteger);
+
         }
 
         /// <summary>Use it to solve equations</summary>
@@ -348,6 +356,69 @@ namespace AngouriMath
         public static class Series
         {
             /// <summary>
+            /// Finds the symbolic expression of terms of the Maclaurin expansion of the given function,
+            /// https://en.wikipedia.org/wiki/Taylor_series
+            /// </summary>
+            /// <param name="expr">
+            /// The function to find the Taylor expansion of
+            /// </param>
+            /// <param name="degree">
+            /// The degree of the resulting taylor polynomial (and the variable in the resulting series)
+            /// </param>
+            /// <param name="exprVariables">
+            /// The variable/s to take the series over (and the variable the series will be over)
+            /// (e. g. if you have expr = Sin("t"), then you may want to use "t" for this argument)
+            /// </param>
+            /// <returns>
+            /// An expression in the polynomial form over the expression variables given in <paramref name="exprVariables"/>
+            /// </returns>
+            public static Entity Maclaurin(Entity expr, int degree, params Variable[] exprVariables)
+                => Functions.Series.TaylorExpansion(expr, degree, exprVariables.Select(v => (v, v, (Entity)0)).ToArray());
+
+            /// <summary>
+            /// Finds the symbolic expression of terms of the Taylor expansion of the given function,
+            /// https://en.wikipedia.org/wiki/Taylor_series
+            /// </summary>
+            /// <param name="expr">
+            /// The function to find the Taylor expansion of
+            /// </param>
+            /// <param name="degree">
+            /// The degree of the resulting taylor polynomial
+            /// </param>
+            /// <param name="exprVariables">
+            /// The variable/s to take the series over (and the variable in the resulting series),
+            /// plus the variable values at which the Taylor polynomial will be found
+            /// (e. g. if you want to find the taylor polynomial of Sin("t") around t=1, then you may want to use ("t","1") for this argument)
+            /// </param>
+            /// <returns>
+            /// An expression in the polynomial form over the expression variable/s given in <paramref name="exprVariables"/>
+            /// </returns>
+            public static Entity Taylor(Entity expr, int degree, params (Variable exprVariable, Entity point)[] exprVariables)
+                => Functions.Series.TaylorExpansion(expr, degree, exprVariables.Select(v => (v.exprVariable, v.exprVariable, v.point)).ToArray());
+
+            /// <summary>
+            /// Finds the symbolic expression of terms of the Taylor expansion of the given function,
+            /// https://en.wikipedia.org/wiki/Taylor_series
+            /// </summary>
+            /// <param name="expr">
+            /// The function to find the Taylor expansion of
+            /// </param>
+            /// <param name="degree">
+            /// The degree of the resulting taylor polynomial
+            /// </param>
+            /// <param name="exprToPolyVars">
+            /// The variable/s to take the series over, the variable the series will be over,
+            /// and the variable values at which the Taylor polynomial will be found
+            /// (e. g. if you want to find the taylor polynomial of Sin("t") around t=1, and want
+            ///  n to take that place in the series, then you may want to use ("t","n","1") for this argument)
+            /// </param>
+            /// <returns>
+            /// An expression in the polynomial form over the poly variable/s given in <paramref name="exprToPolyVars"/>
+            /// </returns>
+            public static Entity Taylor(Entity expr, int degree, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
+                => Functions.Series.TaylorExpansion(expr, degree, exprToPolyVars);
+
+            /// <summary>
             /// Finds the symbolic expression of terms of the Taylor expansion of the given function,
             /// https://en.wikipedia.org/wiki/Taylor_series
             /// 
@@ -356,95 +427,25 @@ namespace AngouriMath
             /// call TaylorExpansion
             /// </summary>
             /// <param name="expr">
-            /// The function, to find Taylor expansion of
+            /// The function to find the Taylor expansion of
             /// </param>
-            /// <param name="exprVariable">
-            /// The variable of this function
-            /// (e. g. if you have expr = Sin("t"), then you may want to use "t" for this argument)
-            /// </param>
-            /// <param name="polyVariable">
-            /// The variable over which you want to see the series
-            /// (e. g. if you want to see the result as f(...) + f(...) * x / ... + f(...) * x^2 / ...,
-            /// then you may want to use "x" for this argument)
-            /// </param>
-            /// <param name="point">
-            /// The point to differentiate the function at. If it equals 0, you will get
-            /// Maclaurin series.
+            /// <param name="exprToPolyVars">
+            /// The variable/s to take the series over, the variable the series will be over,
+            /// and the variable values at which the Taylor polynomial will be found
+            /// (e. g. if you want to find the taylor polynomial of Sin("t") around t=1, and want
+            ///  n to take that place in the series, then you may want to use ("t","n","1") for this argument)
             /// </param>
             /// <returns>
             /// An infinite iterator over the terms of Taylor series of the given expression.
             /// </returns>
-            public static IEnumerable<Entity> TaylorExpansionTerms(Entity expr, Variable exprVariable, Variable polyVariable, Entity point)
-                => Functions.Series.TaylorExpansionTerms(expr, exprVariable, polyVariable, point);
+            public static IEnumerable<Entity> TaylorTerms(Entity expr, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
+            {
+                if (exprToPolyVars.Length == 1)
+                    return Functions.Series.SingleTaylorExpansionTerms(expr, exprToPolyVars[0].exprVariable, exprToPolyVars[0].polyVariable, exprToPolyVars[0].point);
+                else
+                    return Functions.Series.MultivariableTaylorExpansionTerms(expr, exprToPolyVars);
+            }
 
-
-            /// <summary>
-            /// Finds the symbolic expression the Taylor expansion of the given function,
-            /// https://en.wikipedia.org/wiki/Taylor_series
-            /// </summary>
-            /// <param name="expr">
-            /// The function, to find Taylor expansion of
-            /// </param>
-            /// <param name="exprVariable">
-            /// The variable of this function
-            /// (e. g. if you have expr = Sin("t"), then you may want to use "t" for this argument)
-            /// </param>
-            /// <param name="polyVariable">
-            /// The variable over which you want to see the series
-            /// (e. g. if you want to see the result as f(...) + f(...) * x / ... + f(...) * x^2 / ...,
-            /// then you may want to use "x" for this argument)
-            /// </param>
-            /// <param name="point">
-            /// The point to differentiate the function at. If it equals 0, you will get
-            /// Maclaurin series.
-            /// </param>
-            /// <param name="termCount">
-            /// The number of terms you want to get
-            /// </param>
-            /// <returns>
-            /// An expression in the polynomial form over <paramref name="polyVariable"/>
-            /// </returns>
-            public static Entity TaylorExpansion(Entity expr, Variable exprVariable, Variable polyVariable, Entity point, int termCount)
-                => Functions.Series.TaylorExpansion(expr, exprVariable, polyVariable, point, termCount);
-
-            /// <summary>
-            /// Finds the symbolic expression of terms of the Taylor expansion of the given function with multiple variables.
-            /// https://en.wikipedia.org/wiki/Taylor_series#Taylor_series_in_several_variables
-            /// 
-            /// Do NOT call ToArray() or anything like this on the result of this method. It is 
-            /// infinite iterator. To get a finite result as in a sum of finite number of terms,
-            /// call MultivariableTaylorExpansion
-            /// </summary>
-            /// <param name="expr">
-            /// The function, to find Taylor expansion of
-            /// </param>
-            /// <param name="exprToPolyVars">
-            /// Takes the place of the expression variable, polynomial variable, and the differentiation point for each variable.
-            /// </param>
-            /// <returns>
-            /// An infinite iterator over the terms of Taylor series of the given expression.
-            /// </returns>
-            public static IEnumerable<Entity> MultivariableTaylorExpansionTerms(Entity expr, params (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars)
-                => Functions.Series.MultivariableTaylorExpansionTerms(expr, exprToPolyVars);
-
-            /// <summary>
-            /// Finds the symbolic expression of terms of the Taylor expansion of the given function with multiple variables.
-            /// https://en.wikipedia.org/wiki/Taylor_series#Taylor_series_in_several_variables
-            /// </summary>
-            /// <param name="expr">
-            /// The function, to find Taylor expansion of
-            /// </param>
-            /// <param name="exprToPolyVars">
-            /// Takes the place of the expression variable, polynomial variable, and the differentiation point for each variable.
-            /// </param>
-            /// <param name="degree">
-            /// The degree of the taylor polynomial desired.
-            /// </param>
-            /// <returns>
-            /// An expression in the polynomial form over the poly variables given in <paramref name="exprToPolyVars"/>
-            /// </returns>
-            public static Entity MultivariableTaylorExpansion(Entity expr, int degree, params (Variable exprVariable, Variable polyVariable, Entity value)[] exprToPolyVars)
-                => Functions.Series.MultivariableTaylorExpansion(expr, degree, exprToPolyVars);
 
         }
 
@@ -1315,6 +1316,38 @@ namespace AngouriMath
             /// </summary>
             /// If integer x is non-positive, the result will be 0
             public static Integer Phi(Integer integer) => integer.Phi();
+            
+            /// <summary>
+            /// Finds the symbolic form of sine, if can
+            /// For example, sin(9/14) is sin(1/2 + 1/7) which
+            /// can be expanded as a sine of sum and hence
+            /// an analytical (symbolic) form.
+            /// </summary>
+            /// <param name="angle">
+            /// The angle in radians
+            /// </param>
+            /// <returns>
+            /// The sine's symbolic form
+            /// or null if cannot find it
+            /// </returns>
+            public static Entity? SymbolicFormOfSine(Entity angle)
+                => TrigonometricAngleExpansion.SymbolicFormOfSine(angle)?.InnerSimplified;
+            
+            /// <summary>
+            /// Finds the symbolic form of cosine, if can
+            /// For example, cos(9/14) is cos(1/2 + 1/7) which
+            /// can be expanded as a cosine of sum and hence
+            /// an analytical (symbolic) form.
+            /// </summary>
+            /// <param name="angle">
+            /// The angle in radians
+            /// </param>
+            /// <returns>
+            /// The cosine's symbolic form
+            /// or null if cannot find it
+            /// </returns>
+            public static Entity? SymbolicFormOfCosine(Entity angle)
+                => TrigonometricAngleExpansion.SymbolicFormOfCosine(angle)?.InnerSimplified;
         }
 
         /// <summary>

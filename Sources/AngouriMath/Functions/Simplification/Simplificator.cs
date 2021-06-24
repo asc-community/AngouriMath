@@ -237,8 +237,97 @@ namespace AngouriMath.Functions
         }
 
         internal static Entity ConditionallyGreater(Entity left, Entity right)
+            => SimplifyChildren(left - right) > 0;
+
+        /// <summary>
+        /// Divides the given expression by the divisor.
+        /// Requires a given node to exactly match the divisor,
+        /// so no "smart" division can be applied.
+        /// (e. g. pi / 2 divide by pi would work, but
+        /// (2 a) / 2 won't be divided by 4a)
+        /// </summary>
+        /// <returns>The result if valid, null otherwise</returns>
+        internal static Entity? DivideByEntityStrict(Entity expr, Entity divisor)
+            => expr switch
+            {
+                var same when same == divisor => 1,
+                Sumf(var left, var right) => 
+                    DivideByEntityStrict(left, divisor) is { } l && 
+                    DivideByEntityStrict(right, divisor) is { } r
+                    ? l + r
+                    : null,
+                Minusf(var left, var right) => 
+                    DivideByEntityStrict(left, divisor) is { } l && 
+                    DivideByEntityStrict(right, divisor) is { } r
+                    ? l - r
+                    : null,
+                Mulf(var left, var right) =>
+                    DivideByEntityStrict(left, divisor) is { } l
+                    ? l * right 
+                    : DivideByEntityStrict(right, divisor) is { } r
+                        ? left * r
+                        : null,
+                Divf(var left, var right) =>
+                    DivideByEntityStrict(left, divisor) is { } l
+                    ? l / right
+                    : DivideByEntityStrict(right, divisor is Powf(var newDiv, Integer(-1)) ? newDiv : divisor.Pow(-1)) is { } r
+                        ? left / r
+                        : null,
+                _ => null
+            };
+
+        /// <summary>
+        /// If it can, it will find coefficients 
+        /// [a_1, a_2, ..., a_n] such that for
+        /// given rational forms [p_1, p_2, ..., p_n]
+        /// it is true that 
+        /// q = a_1 * p_1 + a_2 * p_2 + ... + a_n * p_n
+        /// </summary>
+        /// <returns>
+        /// The sequence of pairs coef-form or
+        /// null if it cannot find them
+        /// </returns>
+        internal static IEnumerable<(Integer coef, Rational form)>? RepresentRational(Rational q, IEnumerable<Rational> forms)
         {
-            return SimplifyChildren(left - right) > 0;
+            if (q.Denominator > 600)
+                return null;
+            var res = new List<(Integer coef, Rational form)>();
+            foreach (var form in forms.OrderBy(c => -c.AsDouble()))
+            {
+                if (form > q)
+                    continue;
+                //if (q.Denominator % form.Denominator != 0)
+                //    continue;
+                /*
+                 * a/b = k * c/d + e/f
+                 * 
+                 * We need to find such k (the result of "integer" division of rationals)
+                 * and e, f such that e/f is the remainder of that division.
+                 * 
+                 * 1. Get the common denominator:
+                 * (ad, cb) <- (a/b * bd, c/d * bd)
+                 * 
+                 * 2. Perform normal integer division
+                 * We get ad = k * cb + e
+                 * 
+                 * 3. f = e / bd
+                 * 
+                 */
+
+                var bd = q.Denominator * form.Denominator;
+                var (ad, cb) = ((Integer)(q * bd), (Integer)(form * bd));
+                var (k, e) = (ad.IntegerDiv(cb), ad % cb);
+                var newQ = (Rational)(e / bd);
+
+                if (q.Denominator % newQ.Denominator == 0)
+                {
+                    q = newQ;
+                    res.Add((k, form));
+                }
+            }
+            if (q.IsZero)
+                return res;
+            return null;
         }
     }
 }

@@ -7,8 +7,9 @@
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
-using FieldCacheNamespace;
+using HonkSharp.Laziness;
 using System.Linq;
+using HonkSharp.Fluency;
 
 namespace AngouriMath
 {
@@ -42,7 +43,7 @@ namespace AngouriMath
                 /// Conjugate of a complex number. Given this = a + ib, Conjugate = a - ib
                 /// </summary>
                 public Complex Conjugate => conjugate.GetValue(static @this => Create(@this.RealPart, -@this.ImaginaryPart), this);
-                private FieldCache<Complex> conjugate;
+                private LazyPropertyA<Complex> conjugate;
 
                 internal override Priority Priority =>
                     (RealPart, ImaginaryPart) switch
@@ -90,6 +91,8 @@ namespace AngouriMath
                 {
                     if (!MathS.Settings.DowncastingEnabled)
                         return new Complex(real, imaginary);
+                    if (imaginary.IsZero)
+                        return Real.Create(real);
                     if (real.IsNaN() || imaginary.IsNaN())
                         return Real.NaN;
                     if (imaginary.IsFinite && imaginary.Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange))
@@ -109,8 +112,12 @@ namespace AngouriMath
                 /// Returns the absolute value of this complex number, to be precise,
                 /// if this = a + ib, this.Abs() -> sqrt(a^2 + b^2)
                 /// </returns>
-                public new virtual Real Abs() =>
-                    (Real)Sqrt(RealPart.EDecimal * RealPart.EDecimal + ImaginaryPart.EDecimal * ImaginaryPart.EDecimal);
+                public new virtual Real Abs()
+                    => // we need forcing downcasting so that we could
+                       // downcast to a Real
+                        MathS.Settings.DowncastingEnabled.As(true,
+                        () => Sqrt(RealPart.EDecimal * RealPart.EDecimal + ImaginaryPart.EDecimal * ImaginaryPart.EDecimal).Downcast<Real>()
+                        );
 
                 /// <summary>
                 /// The phase of a complex number (aka angle)
@@ -205,26 +212,42 @@ namespace AngouriMath
                 public static Complex operator /(Complex a, Complex b) => OpDiv(a, b);
                 public static Complex operator +(Complex a) => a;
                 public static Complex operator -(Complex a) => OpMul(Integer.MinusOne, a);
-                public static implicit operator Complex(sbyte value) => Integer.Create(value);
-                public static implicit operator Complex(byte value) => Integer.Create(value);
-                public static implicit operator Complex(short value) => Integer.Create(value);
-                public static implicit operator Complex(ushort value) => Integer.Create(value);
-                public static implicit operator Complex(int value) => Integer.Create(value);
-                public static implicit operator Complex(uint value) => Integer.Create(value);
-                public static implicit operator Complex(long value) => Integer.Create(value);
-                public static implicit operator Complex(ulong value) => Integer.Create(value);
-                public static implicit operator Complex(EInteger value) => Integer.Create(value);
-                public static implicit operator Complex(ERational value) => Rational.Create(value);
-                public static implicit operator Complex(EDecimal value) => Real.Create(value);
-                public static implicit operator Complex(float value) => Real.Create(EDecimal.FromSingle(value));
-                public static implicit operator Complex(double value) => Real.Create(EDecimal.FromDouble(value));
-                public static implicit operator Complex(decimal value) => Real.Create(EDecimal.FromDecimal(value));
+                public static implicit operator Complex(sbyte value) => (long)value;
+                public static implicit operator Complex(byte value) => (ulong)value;
+                public static implicit operator Complex(short value) => (long)value;
+                public static implicit operator Complex(ushort value) => (ulong)value;
+                public static implicit operator Complex(int value) => (long)value;
+                public static implicit operator Complex(uint value) => (ulong)value;
+                public static implicit operator Complex(long value)
+                    => MathS.Settings.DowncastingEnabled
+                        ? Integer.Create(value)
+                        : Create(value, 0);
+                public static implicit operator Complex(ulong value)
+                    => MathS.Settings.DowncastingEnabled
+                        ? Integer.Create(value)
+                        : Create(value, 0);
+                public static implicit operator Complex(EInteger value)
+                    => MathS.Settings.DowncastingEnabled
+                        ? Integer.Create(value)
+                        : Create(value, 0);
+                public static implicit operator Complex(ERational value)
+                    => MathS.Settings.DowncastingEnabled
+                        ? Rational.Create(value)
+                        : Create(value, 0);
+                public static implicit operator Complex(EDecimal value)
+                    => Create(value, 0);
+                public static implicit operator Complex(float value)
+                    => Create(EDecimal.FromSingle(value), 0);
+                public static implicit operator Complex(double value)
+                    => Create(EDecimal.FromDouble(value), 0);
+                public static implicit operator Complex(decimal value)
+                    => Create(EDecimal.FromDecimal(value), 0);
                 public static implicit operator Complex(System.Numerics.Complex value) =>
                     Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
-                public static implicit operator Complex((int re, int im) v) => Complex.Create(v.re, v.im);
-                public static implicit operator Complex((float re, float im) v) => Complex.Create(v.re, v.im);
-                public static implicit operator Complex((decimal re, decimal im) v) => Complex.Create(v.re, v.im);
-                public static implicit operator Complex((double re, double im) v) => Complex.Create(v.re, v.im);
+                public static implicit operator Complex((int re, int im) v) => Create(v.re, v.im);
+                public static implicit operator Complex((float re, float im) v) => Create(v.re, v.im);
+                public static implicit operator Complex((decimal re, decimal im) v) => Create(v.re, v.im);
+                public static implicit operator Complex((double re, double im) v) => Create(v.re, v.im);
 
 #pragma warning restore CS1591
 

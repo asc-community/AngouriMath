@@ -6,7 +6,8 @@
  */
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using FieldCacheNamespace;
+using HonkSharp.Fluency;
+using HonkSharp.Laziness;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -40,13 +41,13 @@ namespace AngouriMath
                 /// A getter for the numerator
                 /// </summary>
                 public Integer Numerator => numerator.GetValue(static @this => @this.ERational.Numerator, this);
-                private FieldCache<Integer> numerator;
+                private LazyPropertyA<Integer> numerator;
 
                 /// <summary>
                 /// A getter for the denominator
                 /// </summary>
                 public Integer Denominator => denominator.GetValue(static @this => @this.ERational.Denominator, this);
-                private FieldCache<Integer> denominator;
+                private LazyPropertyA<Integer> denominator;
 
 #pragma warning disable CS1591
 
@@ -165,15 +166,34 @@ namespace AngouriMath
                 public static Real operator /(Rational a, Rational b) => (Real)OpDiv(a, b);
                 public static Rational operator +(Rational a) => a;
                 public static Rational operator -(Rational a) => OpMul(Integer.MinusOne, a);
-                public static implicit operator Rational(sbyte value) => Integer.Create(value);
-                public static implicit operator Rational(byte value) => Integer.Create(value);
-                public static implicit operator Rational(short value) => Integer.Create(value);
-                public static implicit operator Rational(ushort value) => Integer.Create(value);
-                public static implicit operator Rational(int value) => Integer.Create(value);
-                public static implicit operator Rational(uint value) => Integer.Create(value);
-                public static implicit operator Rational(long value) => Integer.Create(value);
-                public static implicit operator Rational(ulong value) => Integer.Create(value);
-                public static implicit operator Rational(EInteger value) => Integer.Create(value);
+                
+                // TODO: consider the case for the divisor to be negative
+                public static Rational operator %(Rational a, Rational b)
+                    => a.ERational.Remainder(b.ERational)
+                        .Alias(out var mod)
+                        .IsNegative switch
+                        {
+                            false => mod,
+                            true => mod + b,
+                        };
+                public static implicit operator Rational(sbyte value) => (long)value;
+                public static implicit operator Rational(byte value) => (ulong)value;
+                public static implicit operator Rational(short value) => (long)value;
+                public static implicit operator Rational(ushort value) => (ulong)value;
+                public static implicit operator Rational(int value) => (long)value;
+                public static implicit operator Rational(uint value) => (ulong)value;
+                public static implicit operator Rational(long value)
+                    => MathS.Settings.DowncastingEnabled
+                        ? Integer.Create(value)
+                        : new Rational(value);
+                public static implicit operator Rational(ulong value)
+                    => MathS.Settings.DowncastingEnabled
+                        ? Integer.Create(value)
+                        : new Rational(value);
+                public static implicit operator Rational(EInteger value)
+                    => MathS.Settings.DowncastingEnabled
+                        ? Integer.Create(value)
+                        : new Rational(ERational.FromEInteger(value));
                 public static implicit operator Rational(ERational value) => Create(value);
 #pragma warning restore CS1591
             }

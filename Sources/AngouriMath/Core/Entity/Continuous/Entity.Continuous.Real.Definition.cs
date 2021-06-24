@@ -5,6 +5,7 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core;
+using HonkSharp.Fluency;
 using PeterO.Numbers;
 
 namespace AngouriMath
@@ -118,19 +119,20 @@ namespace AngouriMath
                 public static Real operator +(Real a, Real b) => OpSum(a, b);
                 public static Real operator -(Real a, Real b) => OpSub(a, b);
                 public static Real operator *(Real a, Real b) => OpMul(a, b);
-                public static Real operator /(Real a, Real b) => (Real)OpDiv(a, b);
+                public static Real operator /(Real a, Real b) => OpDiv(a, b).Downcast<Real>();
                 public static Real operator +(Real a) => a;
                 public static Real operator -(Real a) => OpMul(Integer.MinusOne, a);
-                public static implicit operator Real(sbyte value) => Integer.Create(value);
-                public static implicit operator Real(byte value) => Integer.Create(value);
-                public static implicit operator Real(short value) => Integer.Create(value);
-                public static implicit operator Real(ushort value) => Integer.Create(value);
-                public static implicit operator Real(int value) => Integer.Create(value);
-                public static implicit operator Real(uint value) => Integer.Create(value);
-                public static implicit operator Real(long value) => Integer.Create(value);
-                public static implicit operator Real(ulong value) => Integer.Create(value);
-                public static implicit operator Real(EInteger value) => Integer.Create(value);
-                public static implicit operator Real(ERational value) => Rational.Create(value);
+                public static Real operator %(Real a, Real b) => a.EDecimal.Remainder(b.EDecimal, MathS.Settings.DecimalPrecisionContext);
+                public static implicit operator Real(sbyte value) => (long)value;
+                public static implicit operator Real(byte value) => (ulong)value;
+                public static implicit operator Real(short value) => (long)value;
+                public static implicit operator Real(ushort value) => (ulong)value;
+                public static implicit operator Real(int value) => (long)value;
+                public static implicit operator Real(uint value) => (ulong)value;
+                public static implicit operator Real(long value) => MathS.Settings.DowncastingEnabled ? Integer.Create(value) : new Real(value);
+                public static implicit operator Real(ulong value) => MathS.Settings.DowncastingEnabled ? Integer.Create(value) : new Real(value);
+                public static implicit operator Real(EInteger value) => MathS.Settings.DowncastingEnabled ? Integer.Create(value) : new Real(value);
+                public static implicit operator Real(ERational value) => MathS.Settings.DowncastingEnabled ? Rational.Create(value) : Create(value.ToEDecimal(MathS.Settings.DecimalPrecisionContext));
                 public static implicit operator Real(EDecimal value) => Create(value);
                 public static implicit operator Real(float value) => Create(EDecimal.FromSingle(value));
                 public static implicit operator Real(double value) => Create(EDecimal.FromDouble(value));

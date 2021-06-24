@@ -9,21 +9,21 @@ namespace AngouriMath::Internal
     typedef char** StringOut;
 
     typedef const char* String;
-    typedef int ApproachFrom; // in the outer API, it should be a enum
+    typedef int32_t ApproachFrom; // in the outer API, it should be a enum
 
-    typedef struct { long first; long second; } LongTuple;
+    typedef struct { int64_t first; int64_t second; } LongTuple;
     typedef struct { double first; double second; } DoubleTuple;
 
     struct NativeErrorCode
     {
-        const char* Name;
-        const char* Message;
-        const char* StackTrace;
+        const char* name;
+        const char* message;
+        const char* stackTrace;
     };
 
     struct NativeArray
     {
-        int length;
+        int32_t length;
         const EntityRef* refs;
     };
 }

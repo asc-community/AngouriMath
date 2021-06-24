@@ -117,6 +117,12 @@ namespace AngouriMath
                     }
                 }
 
+                /// <summary>
+                /// Performs integer division of the
+                /// number by the given number
+                /// </summary>
+                public Integer IntegerDiv(Integer a) => EInteger.Divide(a.EInteger);
+
 #pragma warning disable CS1591
                 public static bool operator >(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) > 0;
                 public static bool operator >=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) >= 0;

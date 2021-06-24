@@ -14,7 +14,7 @@ using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sets;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Boolean;
-using FieldCacheNamespace;
+using HonkSharp.Laziness;
 using static AngouriMath.Entity.Number;
 using Complex = AngouriMath.Entity.Number.Complex;
 
@@ -29,7 +29,7 @@ namespace AngouriMath
             /// <summary>
             /// A finite set is a set whose elements can be counted and enumerated
             /// </summary>
-            public sealed partial record FiniteSet : Set, IReadOnlyCollection<Entity>, IEquatable<FiniteSet>
+            public sealed partial record FiniteSet : Set, IReadOnlyCollection<Entity>, IEquatable<FiniteSet?>
             {
                 /// <summary>
                 /// The IEnumerable of elements of a finite set
@@ -72,8 +72,9 @@ namespace AngouriMath
 
                 private static Dictionary<Entity, Entity> BuildDictionaryFromElements(IEnumerable<Entity> elements, bool noCheck)
                 {
-                    Dictionary<Entity, Entity> dict = new(elements.Count());
-                    foreach (var elem in elements)
+                    var enumerable = elements as Entity[] ?? elements.ToArray();
+                    Dictionary<Entity, Entity> dict = new(enumerable.Count());
+                    foreach (var elem in enumerable)
                     {
                         if (elem == MathS.NaN)
                             continue;
@@ -158,13 +159,13 @@ namespace AngouriMath
                     => hashCode.GetValue(static @this =>
                         @this.Elements.OrderBy(el => el.GetHashCode()).HashCodeOfSequence(HashCodeFunctional.HashCodeShifts.FiniteSet), 
                         this);
-                private FieldCache<int> hashCode;
+                private LazyPropertyA<int> hashCode;
 
                 /// <summary>
                 /// Checks that two FiniteSets are equal
                 /// If one is not FiniteSet, the method returns false
                 /// </summary>
-                public bool Equals(FiniteSet other)
+                public bool Equals(FiniteSet? other)
                 {
                     if (other is null)
                         return false;
@@ -237,7 +238,7 @@ namespace AngouriMath
             /// <see cref="Interval.LeftClosed"/> stands for whether <see cref="Interval.Left"/> is included
             /// <see cref="Interval.RightClosed"/> stands for whether <see cref="Interval.Right"/> is included
             /// </summary>
-            public sealed partial record Interval(Entity Left, bool LeftClosed, Entity Right, bool RightClosed) : Set, IEquatable<Interval>
+            public sealed partial record Interval(Entity Left, bool LeftClosed, Entity Right, bool RightClosed) : Set, IEquatable<Interval?>
             {
                 /// <summary>
                 /// Checks whether the interval's ends are both numerical (convenient for some evaluations)
@@ -245,9 +246,9 @@ namespace AngouriMath
                 public bool IsNumeric => !LeftReal.IsNaN && !RightReal.IsNaN;
 
                 private Real LeftReal => fLeft.GetValue(static @this => @this.Left.EvaluableNumerical && @this.Left.Evaled is Real re ? re : Real.NaN, this);
-                private FieldCache<Real> fLeft;
+                private LazyPropertyA<Real> fLeft;
                 private Real RightReal => fRight.GetValue(static @this => @this.Right.EvaluableNumerical && @this.Right.Evaled is Real re ? re : Real.NaN, this);
-                private FieldCache<Real> fRight;
+                private LazyPropertyA<Real> fRight;
 
                 private static bool IsALessThanB(Real A, Real B, bool closed)
                     => A < B || closed && A == B;
@@ -311,7 +312,7 @@ namespace AngouriMath
                 /// Checks that two intervals are equal
                 /// If one is not interval, false is returned
                 /// </summary>
-                public bool Equals(Interval other)
+                public bool Equals(Interval? other)
                     => other is not null && (Left == other.Left
                         && Right == other.Right
                         && LeftClosed == other.LeftClosed
@@ -339,7 +340,7 @@ namespace AngouriMath
             /// a condition F(x) in the following way: for each element x in 
             /// the Universal x belongs to A if and only if F(x).
             /// </summary>
-            public sealed partial record ConditionalSet(Entity Var, Entity Predicate) : Set, IEquatable<ConditionalSet>
+            public sealed partial record ConditionalSet(Entity Var, Entity Predicate) : Set, IEquatable<ConditionalSet?>
             {
                 /// <inheritdoc/>
                 public override Entity Replace(Func<Entity, Entity> func)
@@ -380,7 +381,7 @@ namespace AngouriMath
                 /// Compares two ConditionalSets
                 /// If one is not CSet, false is returned
                 /// </summary>
-                public bool Equals(ConditionalSet other)
+                public bool Equals(ConditionalSet? other)
                 {
                     if (other is null) // invalid cast
                         return false;
@@ -576,12 +577,12 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override bool IsSetFinite => isSetFinite.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2 && finite1.IsSetFinite && finite2.IsSetFinite, this);
-                private FieldCache<bool> isSetFinite;
+                private LazyPropertyA<bool> isSetFinite;
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => isSetEmpty.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2 && finite1.IsSetEmpty && finite2.IsSetEmpty, this);
-                private FieldCache<bool> isSetEmpty;
+                private LazyPropertyA<bool> isSetEmpty;
 
                 /// <inheritdoc/>
                 public override Set Filter(Entity predicate, Variable over)
@@ -629,13 +630,13 @@ namespace AngouriMath
                 public override bool IsSetFinite => isSetFinite.GetValue(static @this => 
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetFinite || finite2.IsSetFinite), this);
-                private FieldCache<bool> isSetFinite;
+                private LazyPropertyA<bool> isSetFinite;
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => isSetEmpty.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite2.IsSetEmpty), this);
-                private FieldCache<bool> isSetEmpty;
+                private LazyPropertyA<bool> isSetEmpty;
 
                 /// <inheritdoc/>
                 public override Set Filter(Entity predicate, Variable over)
@@ -682,13 +683,13 @@ namespace AngouriMath
                 /// <inheritdoc/>
                 public override bool IsSetFinite => isSetFinite.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet && finite1.IsSetFinite, this);
-                private FieldCache<bool> isSetFinite;
+                private LazyPropertyA<bool> isSetFinite;
 
                 /// <inheritdoc/>
                 public override bool IsSetEmpty => isSetEmpty.GetValue(static @this =>
                     @this.Left is FiniteSet finite1 && @this.Right is FiniteSet finite2
                     && (finite1.IsSetEmpty || finite1 == finite2), this);
-                private FieldCache<bool> isSetEmpty;
+                private LazyPropertyA<bool> isSetEmpty;
 
                 /// <inheritdoc/>
                 public override Set Filter(Entity predicate, Variable over)

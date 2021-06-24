@@ -2,7 +2,7 @@
 using Xunit;
 using AngouriMath;
 using AngouriMath.Extensions;
-using FieldCacheNamespace;
+using HonkSharp.Laziness;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Linq;
@@ -31,7 +31,7 @@ namespace UnitTests.Core.Multithreading
                 SomeLongLastingTask
                 , ShouldLastAtLeast), someReference);
         private static object someReference = new();
-        private static FieldCache<bool> makesSenseToPerformTest;
+        private static LazyPropertyA<bool> makesSenseToPerformTest;
 
         [Theory]
         [InlineData(false, true)]

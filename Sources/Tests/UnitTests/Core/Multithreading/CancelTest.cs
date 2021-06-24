@@ -1,4 +1,4 @@
-﻿using FieldCacheNamespace;
+﻿using HonkSharp.Laziness;
 using AngouriMath.Extensions;
 using System;
 using AngouriMath;
@@ -27,7 +27,7 @@ namespace UnitTests.Core.Multithreading
 
         private static object someReference = new();
 
-        private static FieldCache<bool> makesSenseToPerformTest;
+        private static LazyPropertyA<bool> makesSenseToPerformTest;
 
         [Theory, CombinatorialData]
         public void Test(

@@ -76,6 +76,7 @@ let matrixWith rows cols map = MathS.Matrix(rows, cols, new System.Func<int, int
 /// to the value via the map function
 let vectorWith count map = matrixWith count 1 (fun r _ -> map r)
 
+
 let (|*) a b = (parsed a * parsed b).InnerSimplified |> asMatrix
 
 let (|**) a b = (parsed a ** parsed b).InnerSimplified |> asMatrix
@@ -101,3 +102,21 @@ let modifiedMatrix (x: AngouriMath.Entity.Matrix) m =
 
 /// Gets the transposed form of a matrix or vector
 let transposed (m: AngouriMath.Entity.Matrix) = m.T
+
+/// Gets the determinant of a square matrix, or None on invalid inputs
+let det (m: AngouriMath.Entity.Matrix) = 
+    match m.Determinant with
+    | null -> None
+    | n -> Some(n)
+
+/// Gets the adjugate form of a square matrix, or None on invalid inputs
+let adjugate (m: AngouriMath.Entity.Matrix) = 
+    match m.Adjugate with
+    | null -> None
+    | n -> Some(n)
+
+/// Gets the inverse of a square matrix, or None on invalid inputs or if it does not exist
+let inverse (m: AngouriMath.Entity.Matrix) = 
+    match m.Inverse with
+    | null -> None
+    | n -> Some(n)
