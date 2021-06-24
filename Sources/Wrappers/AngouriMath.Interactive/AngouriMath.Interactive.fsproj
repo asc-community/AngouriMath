@@ -16,16 +16,12 @@
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RepositoryType>public</RepositoryType>
     <PackageIcon>icon.png</PackageIcon>
-    <NoWarn>$(NoWarn);NU5100</NoWarn><!-- dll outside of lib/ folder -->
+    <NoWarn>FS0086</NoWarn><!-- dll outside of lib/ folder -->
   </PropertyGroup>
 
   <PropertyGroup>
     <AllowedOutputExtensionsInPackageBuildOutputFolder>$(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <WarningLevel>0</WarningLevel>
   </PropertyGroup>
 
   <ItemGroup>
