@@ -9,31 +9,36 @@ using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {
     internal static class Primes
     {
-        private static readonly List<(Integer actual, int? cache)> primes = new(capacity: 20) { (2, 2), (3, 3), (5, 5), (7, 7), (11, 11) };
+        [ConstantField] private static readonly object addingPrimes = new();
+        [ConcurrentField] private static readonly List<(Integer actual, int? cache)> primes = new(capacity: 20) { (2, 2), (3, 3), (5, 5), (7, 7), (11, 11) };
 
 
         private static void EnsurePrimesExist(int index)
         {
-            if (index < primes.Count)
-                return;
+            lock (addingPrimes)
+            {
+                if (index < primes.Count)
+                    return;
 
-            if (index < 100)
-            // The fast way (operating on ints)
-            {
-                while (primes.Count <= index)
-                    AddPrimeC();
-            }
-            else
-            // The slow way (operating on Integers)
-            {
-                while (primes.Count <= index)
-                    AddPrimeI();
+                if (index < 100)
+                // The fast way (operating on ints)
+                {
+                    while (primes.Count <= index)
+                        AddPrimeC();
+                }
+                else
+                // The slow way (operating on Integers)
+                {
+                    while (primes.Count <= index)
+                        AddPrimeI();
+                }
             }
 
             static bool IsPrimeC(int num)
