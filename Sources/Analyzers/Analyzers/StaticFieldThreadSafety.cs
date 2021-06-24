@@ -15,7 +15,7 @@ namespace Analyzers
             new DiagnosticDescriptor(
                 id: DiagnosticId,
                 title: "AMAnalyzer", 
-                messageFormat: "A static field should have either [ConstantField] attribute or [ThreadStatic] (for cache)",
+                messageFormat: "A static field should have either [ConstantField] attribute or [ThreadStatic] or [ConcurrentField]",
                 category: "Security",
                 DiagnosticSeverity.Warning,
                 isEnabledByDefault: true,
@@ -43,11 +43,14 @@ namespace Analyzers
                 var fieldDecl = (IFieldSymbol)symbolContext.Symbol;
                 var hasConstantFieldAttribute = fieldDecl.GetAttributes().Any(attr => attr.AttributeClass?.Name == "ConstantFieldAttribute");
                 var hasThreadStaticAttribute = fieldDecl.GetAttributes().Any(attr => attr.AttributeClass?.Name == "ThreadStaticAttribute");
+                var hasConcurrentFieldAttribute = fieldDecl.GetAttributes().Any(attr => attr.AttributeClass?.Name == "ConcurrentFieldAttribute");
                 if (fieldDecl.IsStatic && 
                     !fieldDecl.IsConst && 
                     !hasThreadStaticAttribute
                     &&
                     !hasConstantFieldAttribute
+                    &&
+                    !hasConcurrentFieldAttribute
                     &&
                     fieldDecl.Type.Name != "ConditionalWeakTable"
                     )
