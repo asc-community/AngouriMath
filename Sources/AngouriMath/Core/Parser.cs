@@ -13,6 +13,7 @@ Any modifications to other source files will be overwritten when the parser is r
 
 */
 
+using System.Collections.Generic;
 using Antlr4.Runtime;
 using System.IO;
 using System.Text;
@@ -24,62 +25,81 @@ namespace AngouriMath.Core
     using Exceptions;
     using System;
 
-    static class Parser
+    internal static class Parser
     {
         // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
-        internal sealed class AngouriMathTextWriter : TextWriter
+        private sealed class AngouriMathTextWriter : TextWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
             public override void WriteLine(string s) => throw new UnhandledParseException(s);
         }
-        public static Entity Parse(string source)
+        
+        private static int? GetNextToken(IList<IToken> tokens, int currPos)
         {
-            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, new AngouriMathTextWriter());
-            var tokenStream = new CommonTokenStream(lexer);
-            tokenStream.Fill();
-            var tokenList = tokenStream.GetTokens();
-
+            while (tokens[currPos].Channel != 0)
+                if (++currPos >= tokens.Count)
+                    return null;
+            return currPos;
+        }
+        
+        /// <summary>
+        /// This method inserts omitted tokens when no
+        /// explicit-only parsing is enabled. Otherwise,
+        /// it will throw an exception.
+        /// </summary>
+        private static void InsertOmittedTokensOrProvideDiagnostic(IList<IToken> tokenList, AngouriMathLexer lexer)
+        {
             const string NUMBER = nameof(NUMBER);
             const string VARIABLE = nameof(VARIABLE);
             const string PARENTHESIS_OPEN = "'('";
             const string PARENTHESIS_CLOSE = "')'";
             const string FUNCTION_OPEN = "\x1"; // Fake display name for all function tokens e.g. "'sin('"
+         
+            if (GetNextToken(tokenList, 0) is not { } leftId)
+                return;
+            
+            for (var rightId = leftId + 1; rightId < tokenList.Count; leftId = rightId++)
+            {
+                if (GetNextToken(tokenList, rightId) is not { } nextRightId)
+                    return;
+                rightId = nextRightId;
+                if ((GetType(tokenList[leftId]), GetType(tokenList[rightId])) switch
+                    {
+                        // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
+                        // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
+                        // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
+                        (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN)
+                            => lexer.Multiply,
+                        // 3 2 -> 3 ^ 2      x2 -> x ^ 2             )2 -> ) ^ 2
+                        (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) => lexer.Power,
 
+                        _ => null
+                    } is { } insertToken)
+                    {
+                        if (!MathS.Settings.ExplicitParsingOnly)
+                            // Insert at j because we need to keep the first one behind
+                            tokenList.Insert(rightId, insertToken);
+                        else
+                            throw new MissingOperatorParseException($"There should be an operator between {tokenList[leftId]} and {tokenList[rightId]}");
+                    }
+            }
+            
             static string GetType(IToken token) =>
                 AngouriMathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type
                 && type is not PARENTHESIS_OPEN && type.EndsWith("('") ? FUNCTION_OPEN : type;
+        }
+        
+        internal static Entity Parse(string source)
+        {
+            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, new AngouriMathTextWriter());
+            var tokenStream = new CommonTokenStream(lexer);
+            tokenStream.Fill();
+            var tokenList = tokenStream.GetTokens();            
 
-            if (tokenList.Count == 0)
+            if (tokenList.Count is 0)
                 throw new AngouriBugException($"{nameof(ParseException)} should have been thrown");
-            int i = 0;
-            while (tokenList[i].Channel != 0)
-                if (++i >= tokenList.Count)
-                    goto endTokenInsertion;
-            for (int j = i + 1; j < tokenList.Count; i = j++)
-            {
-                while (tokenList[j].Channel != 0)
-                    if (++j >= tokenList.Count)
-                        goto endTokenInsertion;
-                if ((GetType(tokenList[i]), GetType(tokenList[j])) switch
-                {
-
-                    // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
-                    // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
-                    // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
-                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) => lexer.Multiply,
-                    // 3 2 -> 3 ^ 2      x2 -> x ^ 2             )2 -> ) ^ 2
-                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) => MathS.Settings.ExplicitParsingOnly ? throw new InvalidArgumentParseException("Cannot power a number without '^' When  MathS.Settings.ExplicitParsingOnly.Set(true)  has been called" + $"\n" +
-                        "If you want to power a number without '^' Don't call MathS.Settings.ExplicitParsingOnly.Set(true)") : lexer.Power,
-
-                    _ => null
-
-
-                } is { } insertToken)
-                    // Insert at j because we need to keep the first one behind
-                    tokenList.Insert(j, insertToken);
-            }
-        endTokenInsertion:
-
+            
+            InsertOmittedTokensOrProvideDiagnostic(tokenList, lexer);
 
             var parser = new AngouriMathParser(tokenStream, null, new AngouriMathTextWriter());
             parser.Parse();

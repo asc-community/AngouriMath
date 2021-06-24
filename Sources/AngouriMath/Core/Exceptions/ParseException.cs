@@ -17,6 +17,12 @@ namespace AngouriMath.Core.Exceptions
     /// <summary>Thrown when an invalid argument passed to a AM's function</summary>
     public sealed class InvalidArgumentParseException : ParseException { internal InvalidArgumentParseException(string msg) : base(msg) { } }
 
+    /// <summary>
+    /// Is thrown only when the explicit parsing mode is enabled and the input misses
+    /// some operator, for example, 2x should be 2 * x with explicit parsing mode.
+    /// </summary>
+    public sealed class MissingOperatorParseException : ParseException { internal MissingOperatorParseException(string msg) : base(msg) { } }
+    
     /// <summary>Thrown when non-known domain is passed to the domain function</summary>
     public sealed class UnrecognizedDomainException : ParseException
     {

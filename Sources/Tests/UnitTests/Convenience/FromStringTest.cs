@@ -297,6 +297,28 @@ namespace UnitTests.Convenience
             var any = actual.Vars.First();
             Assert.Equal(expectedName, any.Name);
         }
+        
+        [Theory]
+        [InlineData("2x")]
+        [InlineData("2 x")]
+        [InlineData("x2")]
+        [InlineData("x 2")]
+        [InlineData("x + 1 2")]
+        [InlineData("2(x + 2)")]
+        [InlineData("(x + 1)2")]
+        [InlineData("x(x + 1)")]
+        [InlineData("(x + 1)x")]
+        [InlineData("(x + 1)(1 + 2)")]
+        [InlineData("2sin(x)")]
+        [InlineData("sin(x)2")]
+        [InlineData("a sin(x)")]
+        [InlineData("sin(x) a")]
+        public void ThrowsAsExplicitParsingEnabled(string exprRaw)
+        {
+            exprRaw.ToEntity(); // doesn't throw, good
+            using var _ = Settings.ExplicitParsingOnly.Set(true);
+            Assert.Throws<MissingOperatorParseException>(exprRaw.ToEntity);
+        }
     }
 }
 

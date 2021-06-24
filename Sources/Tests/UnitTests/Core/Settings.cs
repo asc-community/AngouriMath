@@ -70,8 +70,7 @@ namespace UnitTests.Core
         {
             using var _ = ExplicitParsingOnly.Set(true);
 
-            Assert.Throws<InvalidArgumentParseException>(() => MathS.FromString(expr));
-
+            Assert.Throws<MissingOperatorParseException>(() => MathS.FromString(expr));
         }
     }
 }
