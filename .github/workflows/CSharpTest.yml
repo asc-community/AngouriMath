@@ -21,6 +21,12 @@ jobs:
       with:
         submodules: 'recursive'
 
+    
+    - name: Setup .NET Core 3
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.202
+
     - name: Setup .NET Core 5
       uses: actions/setup-dotnet@v1
       with:
