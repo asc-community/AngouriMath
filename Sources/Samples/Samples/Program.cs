@@ -9,4 +9,4 @@ var solutions = e.Solve("x");
 foreach(var solution in solutions.DirectChildren)
 {
     Console.WriteLine(solution);
-}    
+}
