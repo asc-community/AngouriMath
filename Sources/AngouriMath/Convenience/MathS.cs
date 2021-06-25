@@ -18,6 +18,8 @@ using AngouriMath.Convenience;
 using AngouriMath.Core.Multithreading;
 using System.Threading;
 using AngouriMath.Core.Exceptions;
+using HonkSharp.Fluency;
+using HonkSharp.Functional;
 
 namespace AngouriMath
 {
@@ -612,21 +614,27 @@ namespace AngouriMath
         /// <returns>The parsed expression</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity FromString(string expr, bool useCache)
-        {
-            if (useCache)
-                return expr switch
-                {
-                    "0" => Integer.Create(0),
-                    "1" => Integer.Create(1),
-                    "-1" => Integer.Create(-1),
-                    "+oo" => Real.PositiveInfinity,
-                    "-oo" => Real.NegativeInfinity,
-                    _ when Settings.ExplicitParsingOnly
-                        => stringToEntityCacheExplicitOnly.GetValue(expr, key => Parser.Parse(key)),
-                    _ => stringToEntityCache.GetValue(expr, key => Parser.Parse(key))
-                };
-            return Parser.Parse(expr);
-        }
+            => expr
+                .LetLazy(out var parsed, Parser.Parse)
+                .ReplaceWith(useCache)
+                    switch
+                    {
+                        false => parsed.Value,
+                        true =>
+                            expr switch
+                            {
+                                "0" => Integer.Create(0),
+                                "1" => Integer.Create(1),
+                                "-1" => Integer.Create(-1),
+                                "+oo" => Real.PositiveInfinity,
+                                "-oo" => Real.NegativeInfinity,
+                                _ => Settings.ExplicitParsingOnly.Value switch
+                                    {
+                                        false => stringToEntityCache.GetValue(expr, _ => parsed.Value),
+                                        true => stringToEntityCacheExplicitOnly.GetValue(expr, _ => parsed.Value)
+                                    } 
+                            }
+                    };
         private static ConditionalWeakTable<string, Entity> stringToEntityCacheExplicitOnly = new();
         private static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
 
@@ -636,6 +644,19 @@ namespace AngouriMath
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity FromString(string expr) => FromString(expr, useCache: true);
         
+        /// <summary>
+        /// Parses an expression silently, that is,
+        /// without throwing an exception. Instead,
+        /// it returns a Failure in case of encountered
+        /// errors during parsing.
+        /// </summary>
+        /// <returns>
+        /// Returns a type union of the successful result and
+        /// failure, which is a type union of multiple reasons
+        /// it may have failed.
+        /// </returns>
+        public static Either<Entity, Failure<Either<ReasonOfFailure.Unknown, ReasonOfFailure.MissingOperator, ReasonOfFailure.InternalError>>> Parse(string source)
+            => Parser.ParseSilent(source);
 
         /// <summary>Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/></summary>
         /// <param name="num">A <see cref="Real"/> in base 10 to be translated into base <paramref name="N"/></param>

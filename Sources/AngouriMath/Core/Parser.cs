@@ -17,21 +17,32 @@ using System.Collections.Generic;
 using Antlr4.Runtime;
 using System.IO;
 using System.Text;
+using HonkSharp.Functional;
 
 [assembly: System.CLSCompliant(false)]
 namespace AngouriMath.Core
 {
     using Antlr;
     using Exceptions;
-    using System;
+    using static ReasonOfFailure;
+    using ReasonWhyParsingFailed = Either<ReasonOfFailure.Unknown, ReasonOfFailure.MissingOperator, ReasonOfFailure.InternalError>;
 
+    public abstract record ReasonOfFailure
+    {
+        public sealed record Unknown(string Reason) : ReasonOfFailure;
+        public sealed record MissingOperator(string Details) : ReasonOfFailure;
+        public sealed record InternalError(string Details) : ReasonOfFailure;
+    }
+    
+    
     internal static class Parser
     {
         // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
         private sealed class AngouriMathTextWriter : TextWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
-            public override void WriteLine(string s) => throw new UnhandledParseException(s);
+            public override void WriteLine(string s) => errors.Add(new Unknown(s));
+            public readonly List<ReasonWhyParsingFailed> errors = new();
         }
         
         private static int? GetNextToken(IList<IToken> tokens, int currPos)
@@ -47,7 +58,7 @@ namespace AngouriMath.Core
         /// explicit-only parsing is enabled. Otherwise,
         /// it will throw an exception.
         /// </summary>
-        private static void InsertOmittedTokensOrProvideDiagnostic(IList<IToken> tokenList, AngouriMathLexer lexer)
+        private static Either<Unit, ReasonWhyParsingFailed> InsertOmittedTokensOrProvideDiagnostic(IList<IToken> tokenList, AngouriMathLexer lexer)
         {
             const string NUMBER = nameof(NUMBER);
             const string VARIABLE = nameof(VARIABLE);
@@ -56,12 +67,12 @@ namespace AngouriMath.Core
             const string FUNCTION_OPEN = "\x1"; // Fake display name for all function tokens e.g. "'sin('"
          
             if (GetNextToken(tokenList, 0) is not { } leftId)
-                return;
+                return new Unit();
             
             for (var rightId = leftId + 1; rightId < tokenList.Count; leftId = rightId++)
             {
                 if (GetNextToken(tokenList, rightId) is not { } nextRightId)
-                    return;
+                    return new Unit();
                 rightId = nextRightId;
                 if ((GetType(tokenList[leftId]), GetType(tokenList[rightId])) switch
                     {
@@ -80,16 +91,18 @@ namespace AngouriMath.Core
                             // Insert at j because we need to keep the first one behind
                             tokenList.Insert(rightId, insertToken);
                         else
-                            throw new MissingOperatorParseException($"There should be an operator between {tokenList[leftId]} and {tokenList[rightId]}");
+                            return new ReasonWhyParsingFailed(new MissingOperator($"There should be an operator between {tokenList[leftId]} and {tokenList[rightId]}"));
                     }
             }
+            
+            return new Unit();
             
             static string GetType(IToken token) =>
                 AngouriMathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type
                 && type is not PARENTHESIS_OPEN && type.EndsWith("('") ? FUNCTION_OPEN : type;
         }
         
-        internal static Entity Parse(string source)
+        internal static Either<Entity, Failure<ReasonWhyParsingFailed>> ParseSilent(string source)
         {
             var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, new AngouriMathTextWriter());
             var tokenStream = new CommonTokenStream(lexer);
@@ -97,14 +110,36 @@ namespace AngouriMath.Core
             var tokenList = tokenStream.GetTokens();            
 
             if (tokenList.Count is 0)
-                throw new AngouriBugException($"{nameof(ParseException)} should have been thrown");
+                return new Failure<ReasonWhyParsingFailed>(
+                    new ReasonWhyParsingFailed(
+                        new InternalError(
+                            $"{nameof(ParseException)} should have been thrown"
+                        )
+                    )
+                );
             
-            InsertOmittedTokensOrProvideDiagnostic(tokenList, lexer);
+            if (InsertOmittedTokensOrProvideDiagnostic(tokenList, lexer).Is<ReasonWhyParsingFailed>(out var whyFailed))
+                return new Failure<ReasonWhyParsingFailed>(whyFailed);
 
-            var parser = new AngouriMathParser(tokenStream, null, new AngouriMathTextWriter());
+            var writer = new AngouriMathTextWriter();
+            var parser = new AngouriMathParser(tokenStream, null, writer);
             parser.Parse();
+            
+            if (writer.errors.Count > 0)
+                return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
+            
             return parser.Result;
         }
 
+        internal static Entity Parse(string source)
+            => ParseSilent(source)
+                .Switch(
+                    valid => valid,
+                    failure => failure.Reason.Switch<Entity>(
+                            unknown => throw new UnhandledParseException(unknown.Reason),
+                            missingOperator => throw new MissingOperatorParseException(missingOperator.Details),
+                            internalError => throw new AngouriBugException(internalError.Details)
+                    )
+                );
     }
 }
