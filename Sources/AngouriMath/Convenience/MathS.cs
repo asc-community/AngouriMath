@@ -655,7 +655,7 @@ namespace AngouriMath
         /// failure, which is a type union of multiple reasons
         /// it may have failed.
         /// </returns>
-        public static Either<Entity, Failure<Either<ReasonOfFailure.Unknown, ReasonOfFailure.MissingOperator, ReasonOfFailure.InternalError>>> Parse(string source)
+        public static ParsingResult Parse(string source)
             => Parser.ParseSilent(source);
 
         /// <summary>Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/></summary>
@@ -663,7 +663,7 @@ namespace AngouriMath
         /// <param name="N">The base to translate the number into</param>
         /// <returns>A <see cref="string"/> with the number in the required base</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToBaseN(Number.Real num, int N) => BaseConversion.ToBaseN(num.EDecimal, N);
+        public static string ToBaseN(Real num, int N) => BaseConversion.ToBaseN(num.EDecimal, N);
 
         /// <summary>Translates a number in base <paramref name="N"/> into base 10</summary>
         /// <param name="num">A <see cref="Real"/> in base <paramref name="N"/> to be translated into base 10</param>

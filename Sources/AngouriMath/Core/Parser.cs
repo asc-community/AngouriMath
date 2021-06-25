@@ -17,21 +17,23 @@ using System.Collections.Generic;
 using Antlr4.Runtime;
 using System.IO;
 using System.Text;
-using HonkSharp.Functional;
 
 [assembly: System.CLSCompliant(false)]
 namespace AngouriMath.Core
 {
     using Antlr;
     using Exceptions;
-    using static ReasonOfFailure;
-    using ReasonWhyParsingFailed = Either<ReasonOfFailure.Unknown, ReasonOfFailure.MissingOperator, ReasonOfFailure.InternalError>;
-
-    public abstract record ReasonOfFailure
+    using static ReasonOfFailureWhileParsing;
+    
+    /// <summary>
+    /// Nesting class for reasons of why parsing could fail. The type union for it
+    /// is 
+    /// </summary>
+    public abstract record ReasonOfFailureWhileParsing
     {
-        public sealed record Unknown(string Reason) : ReasonOfFailure;
-        public sealed record MissingOperator(string Details) : ReasonOfFailure;
-        public sealed record InternalError(string Details) : ReasonOfFailure;
+        public sealed record Unknown(string Reason);
+        public sealed record MissingOperator(string Details);
+        public sealed record InternalError(string Details);
     }
     
     
