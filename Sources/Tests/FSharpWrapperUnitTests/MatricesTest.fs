@@ -116,7 +116,7 @@ let ``Priority -.**.`` () =
     
 [<Fact>]
 let ``Priority **.*.`` () =
-    Assert.Equal<Entity.Matrix>(a **. b +. c, (a **. b) +. c) 
+    Assert.Equal<Entity.Matrix>(a **. b *. c, (a **. b) *. c) 
 
 [<Fact>]
 let ``Priority *.**.`` () =
