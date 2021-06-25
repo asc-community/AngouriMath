@@ -104,7 +104,12 @@ namespace AngouriMath.Core
         
         internal static Either<Entity, Failure<ReasonWhyParsingFailed>> ParseSilent(string source)
         {
-            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, new AngouriMathTextWriter());
+            var writer = new AngouriMathTextWriter();
+
+            if (writer.errors.Count > 0)
+                return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
+
+            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, writer);
             var tokenStream = new CommonTokenStream(lexer);
             tokenStream.Fill();
             var tokenList = tokenStream.GetTokens();            
@@ -121,7 +126,7 @@ namespace AngouriMath.Core
             if (InsertOmittedTokensOrProvideDiagnostic(tokenList, lexer).Is<ReasonWhyParsingFailed>(out var whyFailed))
                 return new Failure<ReasonWhyParsingFailed>(whyFailed);
 
-            var writer = new AngouriMathTextWriter();
+            
             var parser = new AngouriMathParser(tokenStream, null, writer);
             parser.Parse();
             
