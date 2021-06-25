@@ -60,17 +60,5 @@ namespace UnitTests.Core
             }
             Assert.Equal(67, MaxExpansionTermCount.Value);
         }
-        
-        [Theory]
-        [InlineData("x2=16")]
-        [InlineData("x2 + 4x +4 = 0")]
-        [InlineData("(a + 2) 2")]
-        [InlineData("3 2")]
-        public void AssertErrorWhenPoweringNumberAccordingToSetting(string expr)
-        {
-            using var _ = ExplicitParsingOnly.Set(true);
-
-            Assert.Throws<MissingOperatorParseException>(() => MathS.FromString(expr));
-        }
     }
 }

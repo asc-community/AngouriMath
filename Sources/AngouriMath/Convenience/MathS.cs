@@ -621,17 +621,21 @@ namespace AngouriMath
                     "-1" => Integer.Create(-1),
                     "+oo" => Real.PositiveInfinity,
                     "-oo" => Real.NegativeInfinity,
+                    _ when Settings.ExplicitParsingOnly
+                        => stringToEntityCacheExplicitOnly.GetValue(expr, key => Parser.Parse(key)),
                     _ => stringToEntityCache.GetValue(expr, key => Parser.Parse(key))
                 };
             return Parser.Parse(expr);
         }
+        private static ConditionalWeakTable<string, Entity> stringToEntityCacheExplicitOnly = new();
+        private static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
         /// <returns>The parsed expression</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity FromString(string expr) => FromString(expr, useCache: true);
-        internal static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
+        
 
         /// <summary>Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/></summary>
         /// <param name="num">A <see cref="Real"/> in base 10 to be translated into base <paramref name="N"/></param>
