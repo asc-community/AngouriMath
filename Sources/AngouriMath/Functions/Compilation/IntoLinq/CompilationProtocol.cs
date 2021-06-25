@@ -1,10 +1,6 @@
-﻿using AngouriMath.Core.Exceptions;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Numerics;
-using System.Text;
-using static AngouriMath.Entity;
 
 namespace AngouriMath.Core.Compilation.IntoLinq
 {

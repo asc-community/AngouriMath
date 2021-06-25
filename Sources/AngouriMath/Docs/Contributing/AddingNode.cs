@@ -1,10 +1,11 @@
-﻿/* 
+/* 
  * Copyright (c) 2019-2021 Angouri.
  * AngouriMath is licensed under MIT. 
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
 using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using AngouriMath.Functions.Algebra;using AngouriMath.Functions.Algebra.NumericalSolving; using AngouriMath.Functions.Algebra.AnalyticalSolving;using static AngouriMath.Entity;using static AngouriMath.Entity.Number;
+// TODO: the directives above shouldn't get removed when removing unnecessary directives. If they did, their copy is at the bottom of the document
 // TODO: the directives above shouldn't get removed when removing unnecessary directives. If they did, their copy is at the bottom of the document
 // TODO: this guide requires a lot of work
 

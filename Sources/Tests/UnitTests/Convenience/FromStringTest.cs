@@ -9,6 +9,7 @@ using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 using static AngouriMath.MathS;
 using AngouriMath.Extensions;
+using FluentAssertions;
 
 namespace UnitTests.Convenience
 {
@@ -297,6 +298,54 @@ namespace UnitTests.Convenience
             var any = actual.Vars.First();
             Assert.Equal(expectedName, any.Name);
         }
+        
+        [Theory]
+        [InlineData("2x")]
+        [InlineData("2 x")]
+        [InlineData("x2")]
+        [InlineData("x 2")]
+        [InlineData("x + 1 2")]
+        [InlineData("2(x + 2)")]
+        [InlineData("(x + 1)2")]
+        [InlineData("x(x + 1)")]
+        [InlineData("(x + 1)x")]
+        [InlineData("(x + 1)(1 + 2)")]
+        [InlineData("2sin(x)")]
+        [InlineData("sin(x)2")]
+        [InlineData("a sin(x)")]
+        [InlineData("sin(x) a")]
+        public void ThrowsAsExplicitParsingEnabled(string exprRaw)
+        {
+            exprRaw.ToEntity(); // doesn't throw, good
+            using var _ = Settings.ExplicitParsingOnly.Set(true);
+            Assert.Throws<MissingOperatorParseException>(exprRaw.ToEntity);
+        }
+        
+        [Theory]
+        [InlineData("x",     false,  "Success")]
+        [InlineData("x2",    false,  "Success")]
+        [InlineData("x2",    true,   "Missing")]
+        [InlineData("2x",    false,  "Success")]
+        [InlineData("2x",    true,   "Missing")]
+        [InlineData("x a",   false,  "Success")]
+        [InlineData("x a",   true,   "Missing")]
+        [InlineData("1 + x", false,  "Success")]
+        [InlineData("x;",    false,  "Unknown")]
+        [InlineData("x -",   false,  "Unknown")]
+        [InlineData("(x",    false,  "Unknown")]
+        public void ReturnsTheFollowing(string exprRaw, bool explicitOnly, string result)
+            => Settings.ExplicitParsingOnly.As(explicitOnly,
+                    () => Parse(exprRaw)
+                        .Switch(
+                            valid => "Success",
+                            invalid => invalid.Reason.Switch(
+                                unknown => "Unknown",
+                                missing => "Missing",
+                                internalError => "Internal"
+                            )
+                        )
+                        .Should().Be(result)
+                );
     }
 }
 

@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using AngouriMath;
-using static AngouriMath.Entity.Number;
+﻿global using dsd = AngouriMath.Entity;
 
-Entity e = "x^2 + 3 = 0";
-
-var solutions = e.Solve("x");
-foreach(var solution in solutions.DirectChildren)
-{
-    Console.WriteLine(solution);
-}
+var a = "x + 2";
+System.Console.WriteLine(a.GetType());

@@ -5,7 +5,6 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core;
-using HonkSharp.Fluency;
 using PeterO.Numbers;
 
 namespace AngouriMath

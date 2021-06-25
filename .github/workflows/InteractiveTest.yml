@@ -21,15 +21,23 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: Setup .NET Core 3.1
+    - name: Setup .NET Core 5
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 3.1.302
+        dotnet-version: 5.0.202
 
-    - name: Setup .NET 5 # The dotnet CLI above is replaced by this but the runtime is kept
+    - name: Setup .NET 6 for non-linux
+      if: ${{ matrix.os != 'ubuntu-latest' }}
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '5.0.202'
+        dotnet-version: '6.0.x'
+        include-prerelease: true
+
+    - name: Setup .NET 6 for linux
+      if: ${{ matrix.os == 'ubuntu-latest' }}
+      run: |
+        sudo snap install dotnet-sdk --channel=6.0/beta --classic
+        sudo snap alias dotnet-sdk.dotnet dotnet
 
     - name: Build Tests # We need it to be able to retry
       run: |

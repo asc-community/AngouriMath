@@ -23,7 +23,8 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '5.0.202'
+          dotnet-version: '6.0.x'
+          include-prerelease: true
           
       - name: 'Pack AngouriMath'
         run: |
@@ -64,7 +65,8 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '5.0.202'
+          dotnet-version: '6.0.x'
+          include-prerelease: true
           
       - name: 'Pack AngouriMath'
         run: |
@@ -94,7 +96,7 @@ jobs:
         
       - name: 'Create console app'
         run: |
-          dotnet new console --name testconsole --framework net5.0
+          dotnet new console --name testconsole --framework net6.0
           cd testconsole
           "using TestLib; TestType.TestMethod();" | Out-File -FilePath Program.cs
       

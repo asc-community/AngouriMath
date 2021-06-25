@@ -6,7 +6,6 @@
  */
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
-using HonkSharp.Fluency;
 using HonkSharp.Laziness;
 using PeterO.Numbers;
 

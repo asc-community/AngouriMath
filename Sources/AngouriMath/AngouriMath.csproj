@@ -2,6 +2,7 @@
     <PropertyGroup>
         <OutputType>Library</OutputType>
         <TargetFramework>netstandard2.0</TargetFramework>
+        <LangVersion>preview</LangVersion>
         <Authors>WhiteBlackGoose</Authors>
         <Company>Angouri</Company>
         <Copyright>Angouri 2019-2021</Copyright>

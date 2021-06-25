@@ -13,6 +13,7 @@ Any modifications to other source files will be overwritten when the parser is r
 
 */
 
+using System.Collections.Generic;
 using Antlr4.Runtime;
 using System.IO;
 using System.Text;
@@ -22,69 +23,130 @@ namespace AngouriMath.Core
 {
     using Antlr;
     using Exceptions;
-    using System;
-
-    static class Parser
+    using static ReasonOfFailureWhileParsing;
+    
+    /// <summary>
+    /// Nesting class for reasons of why parsing could fail. The type union for it
+    /// is 
+    /// </summary>
+    public abstract record ReasonOfFailureWhileParsing
+    {
+        public sealed record Unknown(string Reason);
+        public sealed record MissingOperator(string Details);
+        public sealed record InternalError(string Details);
+    }
+    
+    
+    internal static class Parser
     {
         // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
-        internal sealed class AngouriMathTextWriter : TextWriter
+        private sealed class AngouriMathTextWriter : TextWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
-            public override void WriteLine(string s) => throw new UnhandledParseException(s);
+            public override void WriteLine(string s) => errors.Add(new Unknown(s));
+            public readonly List<ReasonWhyParsingFailed> errors = new();
         }
-        public static Entity Parse(string source)
+        
+        private static int? GetNextToken(IList<IToken> tokens, int currPos)
         {
-            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, new AngouriMathTextWriter());
-            var tokenStream = new CommonTokenStream(lexer);
-            tokenStream.Fill();
-            var tokenList = tokenStream.GetTokens();
-
+            while (tokens[currPos].Channel != 0)
+                if (++currPos >= tokens.Count)
+                    return null;
+            return currPos;
+        }
+        
+        /// <summary>
+        /// This method inserts omitted tokens when no
+        /// explicit-only parsing is enabled. Otherwise,
+        /// it will throw an exception.
+        /// </summary>
+        private static Either<Unit, ReasonWhyParsingFailed> InsertOmittedTokensOrProvideDiagnostic(IList<IToken> tokenList, AngouriMathLexer lexer)
+        {
             const string NUMBER = nameof(NUMBER);
             const string VARIABLE = nameof(VARIABLE);
             const string PARENTHESIS_OPEN = "'('";
             const string PARENTHESIS_CLOSE = "')'";
             const string FUNCTION_OPEN = "\x1"; // Fake display name for all function tokens e.g. "'sin('"
+         
+            if (GetNextToken(tokenList, 0) is not { } leftId)
+                return new Unit();
+            
+            for (var rightId = leftId + 1; rightId < tokenList.Count; leftId = rightId++)
+            {
+                if (GetNextToken(tokenList, rightId) is not { } nextRightId)
+                    return new Unit();
+                rightId = nextRightId;
+                if ((GetType(tokenList[leftId]), GetType(tokenList[rightId])) switch
+                    {
+                        // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
+                        // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
+                        // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
+                        (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN)
+                            => lexer.Multiply,
+                        // 3 2 -> 3 ^ 2      x2 -> x ^ 2             )2 -> ) ^ 2
+                        (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) => lexer.Power,
 
+                        _ => null
+                    } is { } insertToken)
+                    {
+                        if (!MathS.Settings.ExplicitParsingOnly)
+                            // Insert at j because we need to keep the first one behind
+                            tokenList.Insert(rightId, insertToken);
+                        else
+                            return new ReasonWhyParsingFailed(new MissingOperator($"There should be an operator between {tokenList[leftId]} and {tokenList[rightId]}"));
+                    }
+            }
+            
+            return new Unit();
+            
             static string GetType(IToken token) =>
                 AngouriMathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type
                 && type is not PARENTHESIS_OPEN && type.EndsWith("('") ? FUNCTION_OPEN : type;
+        }
+        
+        internal static Either<Entity, Failure<ReasonWhyParsingFailed>> ParseSilent(string source)
+        {
+            var writer = new AngouriMathTextWriter();
 
-            if (tokenList.Count == 0)
-                throw new AngouriBugException($"{nameof(ParseException)} should have been thrown");
-            int i = 0;
-            while (tokenList[i].Channel != 0)
-                if (++i >= tokenList.Count)
-                    goto endTokenInsertion;
-            for (int j = i + 1; j < tokenList.Count; i = j++)
-            {
-                while (tokenList[j].Channel != 0)
-                    if (++j >= tokenList.Count)
-                        goto endTokenInsertion;
-                if ((GetType(tokenList[i]), GetType(tokenList[j])) switch
-                {
+            if (writer.errors.Count > 0)
+                return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
 
-                    // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
-                    // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
-                    // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
-                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, VARIABLE or FUNCTION_OPEN or PARENTHESIS_OPEN) => lexer.Multiply,
-                    // 3 2 -> 3 ^ 2      x2 -> x ^ 2             )2 -> ) ^ 2
-                    (NUMBER or VARIABLE or PARENTHESIS_CLOSE, NUMBER) => MathS.Settings.ExplicitParsingOnly ? throw new InvalidArgumentParseException("Cannot power a number without '^' When  MathS.Settings.ExplicitParsingOnly.Set(true)  has been called" + $"\n" +
-                        "If you want to power a number without '^' Don't call MathS.Settings.ExplicitParsingOnly.Set(true)") : lexer.Power,
+            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, writer);
+            var tokenStream = new CommonTokenStream(lexer);
+            tokenStream.Fill();
+            var tokenList = tokenStream.GetTokens();            
 
-                    _ => null
+            if (tokenList.Count is 0)
+                return new Failure<ReasonWhyParsingFailed>(
+                    new ReasonWhyParsingFailed(
+                        new InternalError(
+                            $"{nameof(ParseException)} should have been thrown"
+                        )
+                    )
+                );
+            
+            if (InsertOmittedTokensOrProvideDiagnostic(tokenList, lexer).Is<ReasonWhyParsingFailed>(out var whyFailed))
+                return new Failure<ReasonWhyParsingFailed>(whyFailed);
 
-
-                } is { } insertToken)
-                    // Insert at j because we need to keep the first one behind
-                    tokenList.Insert(j, insertToken);
-            }
-        endTokenInsertion:
-
-
-            var parser = new AngouriMathParser(tokenStream, null, new AngouriMathTextWriter());
+            
+            var parser = new AngouriMathParser(tokenStream, null, writer);
             parser.Parse();
+            
+            if (writer.errors.Count > 0)
+                return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
+            
             return parser.Result;
         }
 
+        internal static Entity Parse(string source)
+            => ParseSilent(source)
+                .Switch(
+                    valid => valid,
+                    failure => failure.Reason.Switch<Entity>(
+                            unknown => throw new UnhandledParseException(unknown.Reason),
+                            missingOperator => throw new MissingOperatorParseException(missingOperator.Details),
+                            internalError => throw new AngouriBugException(internalError.Details)
+                    )
+                );
     }
 }

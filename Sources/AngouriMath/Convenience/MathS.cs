@@ -612,33 +612,56 @@ namespace AngouriMath
         /// <returns>The parsed expression</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity FromString(string expr, bool useCache)
-        {
-            if (useCache)
-                return expr switch
-                {
-                    "0" => Integer.Create(0),
-                    "1" => Integer.Create(1),
-                    "-1" => Integer.Create(-1),
-                    "+oo" => Real.PositiveInfinity,
-                    "-oo" => Real.NegativeInfinity,
-                    _ => stringToEntityCache.GetValue(expr, key => Parser.Parse(key))
-                };
-            return Parser.Parse(expr);
-        }
+            => expr
+                .LetLazy(out var parsed, Parser.Parse)
+                .ReplaceWith(useCache)
+                    switch
+                    {
+                        false => parsed.Value,
+                        true =>
+                            expr switch
+                            {
+                                "0" => Integer.Create(0),
+                                "1" => Integer.Create(1),
+                                "-1" => Integer.Create(-1),
+                                "+oo" => Real.PositiveInfinity,
+                                "-oo" => Real.NegativeInfinity,
+                                _ => Settings.ExplicitParsingOnly.Value switch
+                                    {
+                                        false => stringToEntityCache.GetValue(expr, _ => parsed.Value),
+                                        true => stringToEntityCacheExplicitOnly.GetValue(expr, _ => parsed.Value)
+                                    } 
+                            }
+                    };
+        private static ConditionalWeakTable<string, Entity> stringToEntityCacheExplicitOnly = new();
+        private static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
 
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
         /// <returns>The parsed expression</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity FromString(string expr) => FromString(expr, useCache: true);
-        internal static ConditionalWeakTable<string, Entity> stringToEntityCache = new();
+        
+        /// <summary>
+        /// Parses an expression silently, that is,
+        /// without throwing an exception. Instead,
+        /// it returns a Failure in case of encountered
+        /// errors during parsing.
+        /// </summary>
+        /// <returns>
+        /// Returns a type union of the successful result and
+        /// failure, which is a type union of multiple reasons
+        /// it may have failed.
+        /// </returns>
+        public static ParsingResult Parse(string source)
+            => Parser.ParseSilent(source);
 
         /// <summary>Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/></summary>
         /// <param name="num">A <see cref="Real"/> in base 10 to be translated into base <paramref name="N"/></param>
         /// <param name="N">The base to translate the number into</param>
         /// <returns>A <see cref="string"/> with the number in the required base</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static string ToBaseN(Number.Real num, int N) => BaseConversion.ToBaseN(num.EDecimal, N);
+        public static string ToBaseN(Real num, int N) => BaseConversion.ToBaseN(num.EDecimal, N);
 
         /// <summary>Translates a number in base <paramref name="N"/> into base 10</summary>
         /// <param name="num">A <see cref="Real"/> in base <paramref name="N"/> to be translated into base 10</param>

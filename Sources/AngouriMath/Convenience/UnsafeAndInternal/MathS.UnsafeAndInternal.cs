@@ -30,7 +30,7 @@ namespace AngouriMath
             /// instead and set the flag useCache to false)
             /// </summary>
             public static void ClearFromStringCache()
-                => stringToEntityCache = new();
+                => (stringToEntityCache, stringToEntityCacheExplicitOnly)  = (new(), new());
 
             /// <summary>
             /// Checks if two expressions are equivalent if 

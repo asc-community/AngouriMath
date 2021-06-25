@@ -9,7 +9,6 @@ namespace AngouriMath.Functions.Algebra
     using AngouriMath.Core.Exceptions;
     using AngouriMath.Core.Multithreading;
     using Core;
-    using System;
     using static Entity;
     using static Entity.Number;
     internal static partial class LimitFunctional

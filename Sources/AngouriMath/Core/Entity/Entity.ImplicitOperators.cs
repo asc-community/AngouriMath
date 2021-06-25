@@ -6,7 +6,6 @@
  */
 
 using PeterO.Numbers;
-using static AngouriMath.Entity;
 
 namespace AngouriMath
 {
