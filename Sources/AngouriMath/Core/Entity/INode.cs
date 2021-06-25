@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace AngouriMath.Core
+﻿namespace AngouriMath.Core
 {
     /// <summary>
     /// From this interface all single-argument nodes are inherited

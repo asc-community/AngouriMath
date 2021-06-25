@@ -5,7 +5,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Numerics;
 using System.Reflection;
-using System.Text;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
 

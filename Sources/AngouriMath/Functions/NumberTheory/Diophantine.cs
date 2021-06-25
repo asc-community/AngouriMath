@@ -5,11 +5,7 @@
  * Website: https://am.angouri.org.
  */
 
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using HonkSharp.Fluency;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions

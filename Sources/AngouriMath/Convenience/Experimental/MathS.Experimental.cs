@@ -6,7 +6,6 @@
  */
 using System.Collections.Generic;
 using AngouriMath.Functions;
-using HonkSharp.Fluency;
 
 namespace AngouriMath
 {

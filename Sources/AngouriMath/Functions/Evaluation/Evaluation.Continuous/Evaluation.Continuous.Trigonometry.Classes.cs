@@ -5,7 +5,6 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Functions;
-using HonkSharp.Fluency;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath

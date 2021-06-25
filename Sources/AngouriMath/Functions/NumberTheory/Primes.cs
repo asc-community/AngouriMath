@@ -8,7 +8,6 @@ using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 

@@ -5,12 +5,10 @@
  * Website: https://am.angouri.org.
  */
 
-using System;
 using System.Collections.Generic;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Extensions;
-using HonkSharp.Fluency;
 using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions

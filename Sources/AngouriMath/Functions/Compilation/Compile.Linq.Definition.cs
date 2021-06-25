@@ -7,10 +7,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using AngouriMath.Core;
 using AngouriMath.Core.Compilation.IntoLinq;
-using static AngouriMath.Core.FastExpression;
 
 namespace AngouriMath
 {

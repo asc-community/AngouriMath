@@ -18,8 +18,6 @@ using AngouriMath.Convenience;
 using AngouriMath.Core.Multithreading;
 using System.Threading;
 using AngouriMath.Core.Exceptions;
-using HonkSharp.Fluency;
-using HonkSharp.Functional;
 
 namespace AngouriMath
 {

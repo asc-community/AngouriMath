@@ -9,7 +9,6 @@ using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 using HonkSharp.Laziness;
 using System.Linq;
-using HonkSharp.Fluency;
 
 namespace AngouriMath
 {

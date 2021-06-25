@@ -6,8 +6,6 @@
  */
 using AngouriMath.Convenience;
 using System;
-using System.Linq;
-using static AngouriMath.Entity;
 
 namespace AngouriMath
 {
