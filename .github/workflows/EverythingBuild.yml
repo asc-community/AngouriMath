@@ -20,7 +20,8 @@ jobs:
     - name: Setup .NET 6
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.100-preview.5'
+        dotnet-version: '6.0.x'
+        include-prerelease: true
 
     - name: Build AM
       run: dotnet build Sources/AngouriMath/AngouriMath.csproj
