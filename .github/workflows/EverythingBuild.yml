@@ -17,10 +17,10 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: Setup .NET 5
+    - name: Setup .NET 6
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '5.0.202'
+        dotnet-version: '6.0.100-preview.5'
 
     - name: Build AM
       run: dotnet build Sources/AngouriMath/AngouriMath.csproj
