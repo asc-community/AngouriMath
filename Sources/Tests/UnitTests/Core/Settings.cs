@@ -1,6 +1,4 @@
-﻿using AngouriMath;
-using AngouriMath.Core.Exceptions;
-using Xunit;
+﻿using Xunit;
 using static AngouriMath.MathS.Settings;
 
 namespace UnitTests.Core

@@ -5,7 +5,6 @@
  * Website: https://am.angouri.org.
  */
 using static AngouriMath.Entity;
-using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {

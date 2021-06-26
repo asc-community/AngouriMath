@@ -31,12 +31,31 @@ namespace AngouriMath.Core
     /// </summary>
     public abstract record ReasonOfFailureWhileParsing
     {
+        /// <summary>
+        /// The error is an unclassified error returned by the
+        /// ANTLR's parser.
+        /// </summary>
         public sealed record Unknown(string Reason);
+
+
+        /// <summary>
+        /// This error is when the explicit parsing mode is enabled,
+        /// but the input lacks an operator (which is normally inserted
+        /// automatically with explicit parsing mode turned off). For
+        /// example, "2x" would give this error.
+        /// </summary>
         public sealed record MissingOperator(string Details);
+
+        /// <summary>
+        /// This is a bug of AngouriMath. Something that we definitely
+        /// do not expect. More: <see cref="AngouriMath.Core.Exceptions.AngouriBugException"/>.
+        /// Please, report to the main repository.
+        /// </summary>
         public sealed record InternalError(string Details);
     }
     
     
+
     internal static class Parser
     {
         // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions

@@ -9,7 +9,6 @@ using System.Collections.Generic;
 using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Extensions;
-using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {

@@ -7,7 +7,6 @@
 using AngouriMath.Extensions;
 using AngouriMath.Functions.Algebra;
 using PeterO.Numbers;
-using static AngouriMath.Entity.Number;
 
 namespace AngouriMath
 {

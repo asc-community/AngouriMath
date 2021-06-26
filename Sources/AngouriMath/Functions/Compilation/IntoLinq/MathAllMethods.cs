@@ -19,8 +19,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
         /* POWERS */
 
-        public static Complex Log(Complex a, Complex b)
-            => Complex.Log(b) / Complex.Log(a);
+        public static System.Numerics.Complex Log(System.Numerics.Complex a, System.Numerics.Complex b)
+            => System.Numerics.Complex.Log(b) / System.Numerics.Complex.Log(a);
         public static double Log(double a, double b)
             => Math.Log(b, a);
         public static float Log(float a, float b)
@@ -33,8 +33,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)Math.Log((double)b, (double)a);
 
 
-        public static Complex Pow(Complex a, Complex b)
-            => Complex.Pow(a, b);
+        public static System.Numerics.Complex Pow(System.Numerics.Complex a, System.Numerics.Complex b)
+            => System.Numerics.Complex.Pow(a, b);
         public static double Pow(double a, double b)
             => Math.Pow(a, b);
         public static float Pow(float a, float b)
@@ -49,8 +49,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /* BUILT-IN TRIGONOMETRY */
 
 
-        public static Complex Sin(Complex a)
-            => Complex.Sin(a);
+        public static System.Numerics.Complex Sin(System.Numerics.Complex a)
+            => System.Numerics.Complex.Sin(a);
         public static double Sin(double a)
             => Math.Sin(a);
         public static float Sin(float a)
@@ -63,8 +63,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)Math.Sin((double)a);
 
 
-        public static Complex Cos(Complex a)
-            => Complex.Cos(a);
+        public static System.Numerics.Complex Cos(System.Numerics.Complex a)
+            => System.Numerics.Complex.Cos(a);
         public static double Cos(double a)
             => Math.Cos(a);
         public static float Cos(float a)
@@ -77,8 +77,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)Math.Cos((double)a);
 
 
-        public static Complex Tan(Complex a)
-            => Complex.Tan(a);
+        public static System.Numerics.Complex Tan(System.Numerics.Complex a)
+            => System.Numerics.Complex.Tan(a);
         public static double Tan(double a)
             => Math.Tan(a);
         public static float Tan(float a)
@@ -91,8 +91,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)Math.Tan((double)a);
 
 
-        public static Complex Asin(Complex a)
-            => Complex.Asin(a);
+        public static System.Numerics.Complex Asin(System.Numerics.Complex a)
+            => System.Numerics.Complex.Asin(a);
         public static double Asin(double a)
             => Math.Asin(a);
         public static float Asin(float a)
@@ -105,8 +105,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)Math.Asin((double)a);
 
 
-        public static Complex Acos(Complex a)
-            => Complex.Acos(a);
+        public static System.Numerics.Complex Acos(System.Numerics.Complex a)
+            => System.Numerics.Complex.Acos(a);
         public static double Acos(double a)
             => Math.Acos(a);
         public static float Acos(float a)
@@ -119,8 +119,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)Math.Acos((double)a);
 
 
-        public static Complex Atan(Complex a)
-            => Complex.Atan(a);
+        public static System.Numerics.Complex Atan(System.Numerics.Complex a)
+            => System.Numerics.Complex.Atan(a);
         public static double Atan(double a)
             => Math.Atan(a);
         public static float Atan(float a)
@@ -136,8 +136,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /* POST-INVERSE TRIGONOMETRY */
 
 
-        public static Complex Cot(Complex a)
-            => 1 / Complex.Tan(a);
+        public static System.Numerics.Complex Cot(System.Numerics.Complex a)
+            => 1 / System.Numerics.Complex.Tan(a);
         public static double Cot(double a)
             => 1 / Math.Tan(a);
         public static float Cot(float a)
@@ -150,8 +150,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)(1 / Math.Tan((double)a));
 
 
-        public static Complex Sec(Complex a)
-            => 1 / Complex.Cos(a);
+        public static System.Numerics.Complex Sec(System.Numerics.Complex a)
+            => 1 / System.Numerics.Complex.Cos(a);
         public static double Sec(double a)
             => 1 / Math.Cos(a);
         public static float Sec(float a)
@@ -164,8 +164,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)(1 / Math.Cos((double)a));
 
 
-        public static Complex Csc(Complex a)
-            => 1 / Complex.Sin(a);
+        public static System.Numerics.Complex Csc(System.Numerics.Complex a)
+            => 1 / System.Numerics.Complex.Sin(a);
         public static double Csc(double a)
             => 1 / Math.Sin(a);
         public static float Csc(float a)
@@ -181,8 +181,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /* PRE-INVERSE TRIGONOMETRY */
 
 
-        public static Complex Acot(Complex a)
-            => Complex.Atan(1 / a);
+        public static System.Numerics.Complex Acot(System.Numerics.Complex a)
+            => System.Numerics.Complex.Atan(1 / a);
         public static double Acot(double a)
             => Math.Atan(1 / a);
         public static float Acot(float a)
@@ -195,8 +195,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)Math.Atan(1 / (double)a);
 
 
-        public static Complex Asec(Complex a)
-            => Complex.Acos(1 / a);
+        public static System.Numerics.Complex Asec(System.Numerics.Complex a)
+            => System.Numerics.Complex.Acos(1 / a);
         public static double Asec(double a)
             => Math.Acos(1 / a);
         public static float Asec(float a)
@@ -209,8 +209,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)Math.Acos(1 / (double)a);
 
 
-        public static Complex Acsc(Complex a)
-            => Complex.Asin(1 / a);
+        public static System.Numerics.Complex Acsc(System.Numerics.Complex a)
+            => System.Numerics.Complex.Asin(1 / a);
         public static double Acsc(double a)
             => Math.Asin(1 / a);
         public static float Acsc(float a)
@@ -224,14 +224,14 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
         
         /* OTHER */
-        public static Complex Abs(Complex a) => Complex.Abs(a);
+        public static System.Numerics.Complex Abs(System.Numerics.Complex a) => System.Numerics.Complex.Abs(a);
         public static double Abs(double a) => Math.Abs(a);
         public static float Abs(float a) => Math.Abs(a);
         public static long Abs(long a) => Math.Abs(a);
         public static int Abs(int a) => Math.Abs(a);
         public static BigInteger Abs(BigInteger a) => BigInteger.Abs(a);
 
-        public static Complex Sgn(Complex a) => a / Complex.Abs(a);
+        public static System.Numerics.Complex Sgn(System.Numerics.Complex a) => a / System.Numerics.Complex.Abs(a);
         public static double Sgn(double a) => a switch { > 0 or double.PositiveInfinity => 1, 0 => 0, < 0 or double.NegativeInfinity => -1, _ => double.NaN };
         public static float Sgn(float a) => a switch { > 0 or float.PositiveInfinity => 1, 0 => 0, < 0 or float.NegativeInfinity => -1, _ => float.NaN };
         public static long Sgn(long a) => a switch { > 0 => 1, 0 => 0, < 0 => -1 };

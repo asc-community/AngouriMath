@@ -7,7 +7,6 @@
 using AngouriMath.Core.Exceptions;
 using System.Linq;
 using static AngouriMath.Entity;
-using static AngouriMath.Entity.Number;
 using static AngouriMath.Entity.Set;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving

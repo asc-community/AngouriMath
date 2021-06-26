@@ -4,9 +4,6 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
-using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using AngouriMath.Functions.Algebra;using AngouriMath.Functions.Algebra.NumericalSolving; using AngouriMath.Functions.Algebra.AnalyticalSolving;using static AngouriMath.Entity;using static AngouriMath.Entity.Number;
-// TODO: the directives above shouldn't get removed when removing unnecessary directives. If they did, their copy is at the bottom of the document
-// TODO: the directives above shouldn't get removed when removing unnecessary directives. If they did, their copy is at the bottom of the document
 // TODO: this guide requires a lot of work
 
 #pragma warning disable CS1587 // XML comment is not placed on a valid language element
@@ -20,44 +17,41 @@ using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using An
 ///    file you need to add.
 /// 
 /// 1. Numerical evaluation (if appropriate)
-///     a. Implement real number evaluation (<see cref="InternalAMExtensions.Sin"/>)
-///     b. then complex number evaluation (<see cref="Sin"/>)
+///     a. Implement real number evaluation (<see cref="AngouriMath.InternalAMExtensions.Sin"/>)
+///     b. then complex number evaluation (<see cref="AngouriMath.Entity.Number.Sin"/>)
 ///
-/// 2. Next, Add a new node representing the function as a nested type in <see cref="Entity"/>
-///     a. Copy record class (Press F12 -> Longest result of <see cref="Sinf"/> <see cref="Impliesf"/> <see cref="Set.Unionf"/>)
-///     b. Add instance method to Entity (Press F12 -> <see cref="Entity.Sin"/>).
-///     c. Add <see cref="Boolean.Replace"/> to your node
-///     d. Add <see cref="Boolean.Priority"/> to your node
-///     e. Add <see cref="Boolean.InitDirectChildren"/> to your node
+/// 2. Next, Add a new node representing the function as a nested type in <see cref="AngouriMath.Entity"/>
+///     a. Copy record class (Press F12 -> Longest result of <see cref="Sinf"/> <see cref="AngouriMath.Entity.Impliesf"/> <see cref="AngouriMath.Entity.Set.Unionf"/>)
+///     b. Add instance method to Entity (Press F12 -> <see cref="AngouriMath.Entity.Sin"/>).
+///     c. Add <see cref="AngouriMath.Entity.Boolean.Replace"/> to your node
+///     d. Add <see cref="AngouriMath.Entity.Boolean.Priority"/> to your node
+///     e. Add <see cref="AngouriMath.Entity.Boolean.InitDirectChildren"/> to your node
 ///     
 /// 
 /// 3. A few essential methods
-///     a. InnerEval and InnerSimplify (<see cref="Sinf.InnerEval"/> for numerical and <see cref="Andf.InnerEval"/> for boolean)
-///     b. Stringize (<see cref="Sinf.Stringize"/>) (and tests to CircleTest.cs)
-///     c. Latexise (<see cref="Sinf.Latexise"/>) (and tests to LatexTest.cs)
-///     d. Limit computation (<see cref="Sinf.ComputeLimitDivideEtImpera"/>) (and tests to LimitTest.cs)
-///     e. Hash for sorting (<see cref="Sinf.SortHashName"/>)
-///     f. Default domain <see cref="Sinf.Codomain"/>
-///     g. Substitute <see cref="Sinf.Substitute"/> (and tests to SubstituteTest.cs)
+///     a. InnerEval and InnerSimplify (<see cref="AngouriMath.Entity.Sinf.InnerEval"/> for numerical and <see cref="AngouriMath.Entity.Andf.InnerEval"/> for boolean)
+///     b. Stringize (<see cref="AngouriMath.Entity.Sinf.Stringize"/>) (and tests to CircleTest.cs)
+///     c. Latexise (<see cref="AngouriMath.Entity.Sinf.Latexise"/>) (and tests to LatexTest.cs)
+///     d. Limit computation (<see cref="AngouriMath.Entity.Sinf.ComputeLimitDivideEtImpera"/>) (and tests to LimitTest.cs)
+///     e. Hash for sorting (<see cref="AngouriMath.Entity.Sinf.SortHashName"/>)
+///     f. Default domain <see cref="AngouriMath.Entity.Sinf.Codomain"/>
+///     g. Substitute <see cref="AngouriMath.Entity.Sinf.Substitute"/> (and tests to SubstituteTest.cs)
 /// 
-/// 4. Pattern replacer (<see cref="Patterns.CommonRules"/> and <see cref="Simplificator.Alternate"/>)
+/// 4. Pattern replacer (<see cref="AngouriMath.Functions.Patterns.CommonRules"/> and <see cref="AngouriMath.Functions.Simplificator.Alternate"/>)
 /// (and tests to SimplifyTest.cs or PatternTest.cs)
-/// 5. Expose to the user (add it to MathS, like <see cref="MathS.Sin">this</see>)
+/// 5. Expose to the user (add it to MathS, like <see cref="AngouriMath.MathS.Sin">this</see>)
 ///     
 /// Now, you might be required to complete the following steps as well:
 /// 
-/// 6. Derivation (if applicable) (<see cref="Sinf.InnerDifferentiate"/>)
+/// 6. Derivation (if applicable) (<see cref="AngouriMath.Entity.Sinf.InnerDifferentiate"/>)
 /// (and tests to DerivativeTest.cs)
-/// 7. Compilation (if applicable) (<see cref="Sinf.CompileNode"/> and <see cref="FastExpression.Substitute"/>)
+/// 7. Compilation (if applicable) (<see cref="AngouriMath.Entity.Sinf.CompileNode"/> and <see cref="AngouriMath.Core.FastExpression.Substitute"/>)
 /// (and tests to CompilationTest.cs)
 /// 8. Parser (if applicable) (See ImproveParser.md in the same folder as this file)
 /// (and tests to FromStringTest.cs)
-/// 9. Analytical Solver (if applicable) (<see cref="Sinf.InvertNode"/>)
+/// 9. Analytical Solver (if applicable) (<see cref="AngouriMath.Entity.Sinf.InvertNode"/>)
 /// (and tests to SolveOneEquation.cs)
-/// 10. ToSympy (if applicable) (<see cref="Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
+/// 10. ToSympy (if applicable) (<see cref="AngouriMath.Entity.Sinf.ToSymPy"/>) (Tip: Enter 'import sympy' into https://live.sympy.org/ then test)
 /// (and tests to ToSymPyTest.cs)
 
 #pragma warning restore CS1587 // XML comment is not placed on a valid language element
-
-
-// using AngouriMath; using AngouriMath.Core; using AngouriMath.Functions; using AngouriMath.Functions.Algebra;using AngouriMath.Functions.Algebra.NumericalSolving; using AngouriMath.Functions.Algebra.AnalyticalSolving;using static AngouriMath.Entity;using static AngouriMath.Entity.Number;

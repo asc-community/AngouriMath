@@ -6,7 +6,6 @@
  */
 using System;
 using static AngouriMath.Entity;
-using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {

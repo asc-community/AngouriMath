@@ -4,8 +4,6 @@ using Xunit;
 using static AngouriMath.Entity.Set;
 using AngouriMath.Extensions;
 using System;
-using FluentAssertions;
-using HonkSharp.Fluency;
 
 namespace UnitTests.Core
 {

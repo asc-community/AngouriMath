@@ -9,7 +9,6 @@ using PeterO.Numbers;
 using System;
 using System.Collections.Generic;
 using AngouriMath.Core;
-using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {

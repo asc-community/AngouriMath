@@ -97,11 +97,11 @@ namespace AngouriMath
                     yield return s;
         }
 
-        public static Complex Signum(this Complex z)
+        public static System.Numerics.Complex Signum(this System.Numerics.Complex z)
             => z == 0 ? 0 : z / z.Magnitude;
 
-        public static Complex Abs(this Complex z)
-            => Complex.Abs(z);
+        public static System.Numerics.Complex Abs(this System.Numerics.Complex z)
+            => System.Numerics.Complex.Abs(z);
 
         public sealed class ConstantCache
         {

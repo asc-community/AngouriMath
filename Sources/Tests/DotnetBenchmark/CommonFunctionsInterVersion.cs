@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Numerics;
 using AngouriMath;
-using AngouriMath.Core;
 using AngouriMath.Extensions;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Exporters.Csv;
