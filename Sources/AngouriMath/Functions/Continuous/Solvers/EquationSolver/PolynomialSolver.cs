@@ -10,7 +10,6 @@ using AngouriMath.Core;
 using AngouriMath.Core.Multithreading;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
-using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {

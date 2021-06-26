@@ -47,7 +47,7 @@ namespace AngouriMath.Core
             CALL_POW,
             CALL_LOG,
         }
-        internal sealed partial record Instruction(InstructionType Type, int Reference = -1, Complex Value = default)
+        internal sealed partial record Instruction(InstructionType Type, int Reference = -1, System.Numerics.Complex Value = default)
         {
             public override string ToString() =>
                 Type
@@ -55,8 +55,8 @@ namespace AngouriMath.Core
                 + (Type != InstructionType.PUSH_CONST ? "" : Value.ToString());
         }
 
-        private readonly Stack<Complex> stack;
-        private readonly Complex[] cache;
+        private readonly Stack<System.Numerics.Complex> stack;
+        private readonly System.Numerics.Complex[] cache;
         private readonly List<Instruction> instructions;
         private readonly int varCount;
 
@@ -68,21 +68,21 @@ namespace AngouriMath.Core
         {
             this.varCount = varCount;
             this.instructions = instructions;
-            stack = new Stack<Complex>(instructions.Count);
-            cache = new Complex[cacheCount];
+            stack = new Stack<System.Numerics.Complex>(instructions.Count);
+            cache = new System.Numerics.Complex[cacheCount];
         }
 
-        /// <summary>Calls the compiled function (synonym to <see cref="Substitute(Complex[])"/>)</summary>
+        /// <summary>Calls the compiled function (synonym to <see cref="Substitute(System.Numerics.Complex[])"/>)</summary>
         /// <param name="values">List arguments in the same order in which you compiled the function</param>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public Complex Call(params Complex[] values) => Substitute(values);
+        public System.Numerics.Complex Call(params System.Numerics.Complex[] values) => Substitute(values);
 
-        /// <summary>Calls the compiled function (synonym to <see cref="Call(Complex[])"/>)</summary>
+        /// <summary>Calls the compiled function (synonym to <see cref="Call(System.Numerics.Complex[])"/>)</summary>
         /// <param name="values">List arguments in the same order in which you compiled the function</param>
         /// <exception cref="WrongNumberOfArgumentsException">
         /// Thrown when the length of <paramref name="values"/> does not match the number of variables compiled.
         /// </exception>
-        public Complex Substitute(params Complex[] values)
+        public System.Numerics.Complex Substitute(params System.Numerics.Complex[] values)
         {
             if (values.Length != varCount)
                 throw new WrongNumberOfArgumentsException($"Wrong number of parameters: Expected {varCount} but {values.Length} provided");
@@ -114,63 +114,63 @@ namespace AngouriMath.Core
                         stack.Push(stack.Pop() / stack.Pop());
                         break;
                     case InstructionType.CALL_POW:
-                        stack.Push(Complex.Pow(stack.Pop(), stack.Pop()));
+                        stack.Push(System.Numerics.Complex.Pow(stack.Pop(), stack.Pop()));
                         break;
                     case InstructionType.CALL_SIN:
-                        stack.Push(Complex.Sin(stack.Pop()));
+                        stack.Push(System.Numerics.Complex.Sin(stack.Pop()));
                         break;
                     case InstructionType.CALL_COS:
-                        stack.Push(Complex.Cos(stack.Pop()));
+                        stack.Push(System.Numerics.Complex.Cos(stack.Pop()));
                         break;
                     case InstructionType.CALL_SECANT:
-                        stack.Push(1 / Complex.Cos(stack.Pop()));
+                        stack.Push(1 / System.Numerics.Complex.Cos(stack.Pop()));
                         break;
                     case InstructionType.CALL_COSECANT:
-                        stack.Push(1 / Complex.Sin(stack.Pop()));
+                        stack.Push(1 / System.Numerics.Complex.Sin(stack.Pop()));
                         break;
                     case InstructionType.CALL_TAN:
-                        stack.Push(Complex.Tan(stack.Pop()));
+                        stack.Push(System.Numerics.Complex.Tan(stack.Pop()));
                         break;
                     case InstructionType.CALL_COTAN:
-                        stack.Push(1 / Complex.Tan(stack.Pop()));
+                        stack.Push(1 / System.Numerics.Complex.Tan(stack.Pop()));
                         break;
                     case InstructionType.CALL_LOG:
-                        stack.Push(Complex.Log(stack.Pop(), stack.Pop().Real));
+                        stack.Push(System.Numerics.Complex.Log(stack.Pop(), stack.Pop().Real));
                         break;
                     case InstructionType.CALL_ARCSIN:
-                        stack.Push(Complex.Conjugate(Complex.Asin(stack.Pop())));
+                        stack.Push(System.Numerics.Complex.Conjugate(System.Numerics.Complex.Asin(stack.Pop())));
                         break;
                     case InstructionType.CALL_ARCCOS:
-                        stack.Push(Complex.Acos(stack.Pop()));
+                        stack.Push(System.Numerics.Complex.Acos(stack.Pop()));
                         break;
                     case InstructionType.CALL_ARCTAN:
-                        stack.Push(Complex.Atan(stack.Pop()));
+                        stack.Push(System.Numerics.Complex.Atan(stack.Pop()));
                         break;
                     case InstructionType.CALL_ARCCOTAN:
-                        stack.Push(Complex.Atan(1 / stack.Pop()));
+                        stack.Push(System.Numerics.Complex.Atan(1 / stack.Pop()));
                         break;
                     case InstructionType.CALL_ARCSECANT:
-                        stack.Push(Complex.Acos(1 / stack.Pop()));
+                        stack.Push(System.Numerics.Complex.Acos(1 / stack.Pop()));
                         break;
                     case InstructionType.CALL_ARCCOSECANT:
-                        stack.Push(Complex.Asin(1 / stack.Pop()));
+                        stack.Push(System.Numerics.Complex.Asin(1 / stack.Pop()));
                         break;
                     case InstructionType.CALL_FACTORIAL:
                         // https://stackoverflow.com/a/15454784/5429648
                         const int g = 7;
-                        static Complex Gamma(Complex z)
+                        static System.Numerics.Complex Gamma(System.Numerics.Complex z)
                         {
-                            if (z.Real < 0.5) return System.Math.PI / (Complex.Sin(System.Math.PI * z) * Gamma(1 - z));
+                            if (z.Real < 0.5) return System.Math.PI / (System.Numerics.Complex.Sin(System.Math.PI * z) * Gamma(1 - z));
                             else
                             {
                                 z -= 1;
 
-                                Complex x = gammaCoeffs[0];
+                                System.Numerics.Complex x = gammaCoeffs[0];
                                 for (var i = 1; i < g + 2; i++)
                                     x += gammaCoeffs[i] / (z + i);
 
                                 var t = z + g + 0.5;
-                                return System.Math.Sqrt(2 * System.Math.PI) * Complex.Pow(t, z + 0.5) * Complex.Exp(-t) * x;
+                                return System.Math.Sqrt(2 * System.Math.PI) * System.Numerics.Complex.Pow(t, z + 0.5) * System.Numerics.Complex.Exp(-t) * x;
                             }
                         }
                         stack.Push(Gamma(stack.Pop() + 1));

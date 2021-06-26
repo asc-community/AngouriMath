@@ -19,3 +19,5 @@ global using ParsingResult =
             >
         >
     >;
+
+global using static AngouriMath.Entity.Number;

@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using FluentAssertions;
 using HonkSharp.Fluency;
 using HonkSharp.Functional;
 using Xunit;

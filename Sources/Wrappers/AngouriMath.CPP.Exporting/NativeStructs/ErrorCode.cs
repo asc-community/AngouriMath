@@ -1,8 +1,5 @@
-﻿using AngouriMath.Core.Exceptions;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace AngouriMath.CPP.Exporting
 {

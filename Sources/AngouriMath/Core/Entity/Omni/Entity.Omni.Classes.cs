@@ -15,7 +15,6 @@ using AngouriMath.Core.Sets;
 using AngouriMath.Functions;
 using AngouriMath.Functions.Boolean;
 using HonkSharp.Laziness;
-using static AngouriMath.Entity.Number;
 using Complex = AngouriMath.Entity.Number.Complex;
 
 namespace AngouriMath

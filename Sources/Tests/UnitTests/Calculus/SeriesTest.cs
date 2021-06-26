@@ -1,7 +1,5 @@
 ﻿using AngouriMath;
-using System.Collections.Generic;
 using Xunit;
-using static AngouriMath.Entity;
 
 namespace UnitTests.Calculus
 {

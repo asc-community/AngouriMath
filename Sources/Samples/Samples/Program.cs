@@ -1,4 +1,8 @@
-﻿global using dsd = AngouriMath.Entity;
+﻿
 
-var a = "x + 2";
-System.Console.WriteLine(a.GetType());
+using System;
+
+var a = 3;
+
+Console.WriteLine(a);
+

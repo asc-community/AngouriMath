@@ -1,8 +1,5 @@
 ﻿using AngouriMath;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Xunit;
 using static AngouriMath.Entity.Number;
 using AngouriMath.Extensions;

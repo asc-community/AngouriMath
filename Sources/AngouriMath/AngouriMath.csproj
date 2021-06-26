@@ -32,7 +32,11 @@
       <PackageProjectUrl>https://am.angouri.org</PackageProjectUrl>
       <RepositoryType>public</RepositoryType>
     </PropertyGroup>
-
+	
+    <PropertyGroup>
+      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+      <WarningsAsErrors />
+    </PropertyGroup>
 
   <ItemGroup>
     <None Include="../icon.png" Pack="True" PackagePath="" />

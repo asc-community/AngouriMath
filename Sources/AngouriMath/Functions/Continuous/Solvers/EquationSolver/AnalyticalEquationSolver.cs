@@ -5,7 +5,6 @@
  * Website: https://am.angouri.org.
  */
 using static AngouriMath.Entity;
-using static AngouriMath.Entity.Number;
 using System.Linq;
 using AngouriMath.Core;
 using AngouriMath.Functions.Algebra;

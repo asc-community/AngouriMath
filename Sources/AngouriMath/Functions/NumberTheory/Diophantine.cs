@@ -6,7 +6,6 @@
  */
 
 using System.Collections.Generic;
-using static AngouriMath.Entity.Number;
 
 namespace AngouriMath.Functions
 {
