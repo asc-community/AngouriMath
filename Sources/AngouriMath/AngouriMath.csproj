@@ -33,16 +33,10 @@
       <RepositoryType>public</RepositoryType>
     </PropertyGroup>
 	
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <PropertyGroup>
       <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
       <WarningsAsErrors />
     </PropertyGroup>
-	
-    <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-      <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-      <WarningsAsErrors />
-    </PropertyGroup>
-
 
   <ItemGroup>
     <None Include="../icon.png" Pack="True" PackagePath="" />
