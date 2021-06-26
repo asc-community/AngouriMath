@@ -17,6 +17,8 @@
 	<Authors>WhiteBlackGoose</Authors>
 	<Company>Angouri</Company>
 	<RepositoryType>public</RepositoryType>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">

@@ -17,6 +17,8 @@
     <RepositoryType>public</RepositoryType>
     <PackageIcon>icon.png</PackageIcon>
     <NoWarn>$(NoWarn);NU5100;FS0086</NoWarn><!-- dll outside of lib/ folder -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
   </PropertyGroup>
 
   <PropertyGroup>

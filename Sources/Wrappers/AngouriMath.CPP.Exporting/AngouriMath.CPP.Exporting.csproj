@@ -2,13 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
   </PropertyGroup>
 
   <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="
-          mkdir ..\AngouriMath.CPP.Importing\out-x64
-          &#xD;&#xA;
-          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
+    <Exec Command="&#xD;&#xA;          mkdir ..\AngouriMath.CPP.Importing\out-x64&#xD;&#xA;          &#xD;&#xA;&#xD;&#xA;          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
   </Target>
 
   <Target Name="Copy for Linux" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="ComputeFilesToPublish">
