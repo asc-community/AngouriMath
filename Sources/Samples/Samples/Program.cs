@@ -5,9 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections;
 using static AngouriMath.Entity;
+using static AngouriMath.Entity.Number;
 
-
-Console.WriteLine(Draw("213/43 + 3/4"));
+Console.WriteLine(Draw("sqrt(213/43 + 3/4)"));
 
 
 
@@ -22,6 +22,7 @@ static Figure Draw(Entity expr)
         Number n => new BlockFigure(n.ToString()),
         Divf(var a, var b) => new RationalFigure(Draw(a), Draw(b)),
         Sumf(var a, var b) => new BinaryOpFigure(Draw(a), Draw(b), '+'),
+        Powf(var a, Rational(Integer(1), Integer(2))) => new RadicalFigure(Draw(a), null),
         _ => throw new()
     };
 
@@ -97,20 +98,58 @@ public sealed class BinaryOpFigure : Figure
 }
 
 
+public sealed class RadicalFigure : Figure
+{
+    public RadicalFigure(Figure expr, Figure? pow) : base(GenerateTable(expr, pow)) { }
+
+    private static char[,] GenerateTable(Figure expr, Figure? pow)
+    {
+//      
+//           /----|      <-- this is right glyph (the '|' thing)
+//          / HHH
+//      \  /  HHH
+//       \/   HHH
+//      ^
+// this is left glyph
+        const double LeftGlyphShare = 0.3;
+        const double RightGlyphShare = 0.2;
+
+        var leftGlyphSize = (int)(LeftGlyphShare * expr.Height) + 1;
+        var rightGlyphSize = (int)(RightGlyphShare * expr.Height) + 1;
+
+        var resWidth = leftGlyphSize + expr.Height + expr.Width + 1;
+        var resHeight = expr.Height + 1;
+
+        var res = new char[resHeight, resWidth].WithSpaces();
+        expr.table.CopyTo(res, 1, leftGlyphSize + expr.Height);
+
+        foreach (var i in 0..(leftGlyphSize - 1))
+            res[resHeight - i - 1, i] = '\\';
+
+        foreach (var (y, x) in (0..(resHeight - 1)).AsRange().Enumerate())
+            res[resHeight - y - 1, x + 1] = '/';
+            
+        foreach (var i in resHeight..(resWidth - resHeight + 2))
+            res[0, i + 1] = '-';
+
+        foreach (var i in ..(rightGlyphSize - 1))
+            res[i, resWidth - 1] = '|';
+
+        return res;
+    }
+}
+
 
 public static class ArrayExtensions
 {
     public static void CopyWidthAlignedCenterTo(this char[,] src, char[,] dst, int heightOffset)
-    {
-        var widthOffset = (dst.GetLength(1) - src.GetLength(1)) / 2;
-        foreach (var x in 0..(src.GetLength(1) - 1))
-            foreach (var y in 0..(src.GetLength(0) - 1))
-                dst[y + heightOffset, x + widthOffset] = src[y, x];
-    }
+        => src.CopyTo(dst, heightOffset, (dst.GetLength(1) - src.GetLength(1)) / 2);
 
     public static void CopyHeightAlignedCenterTo(this char[,] src, char[,] dst, int widthOffset)
+        => src.CopyTo(dst, (dst.GetLength(0) - src.GetLength(0)) / 2, widthOffset);
+
+    public static void CopyTo(this char[,] src, char[,] dst, int heightOffset, int widthOffset)
     {
-        var heightOffset = (dst.GetLength(0) - src.GetLength(0)) / 2;
         foreach (var x in 0..(src.GetLength(1) - 1))
             foreach (var y in 0..(src.GetLength(0) - 1))
                 dst[y + heightOffset, x + widthOffset] = src[y, x];
