@@ -6,8 +6,9 @@ using System.Collections.Generic;
 using System.Collections;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Number;
+using HonkSharp.Laziness;
 
-Console.WriteLine(Draw("sqrt(213/43 + 3/4)"));
+Console.WriteLine(Draw("sqrt((((1/a + 1)/b + 1)/c + 1)/d)"));
 
 
 
@@ -19,7 +20,7 @@ Console.WriteLine(Draw("sqrt(213/43 + 3/4)"));
 static Figure Draw(Entity expr)
     => expr switch
     {
-        Number n => new BlockFigure(n.ToString()),
+        Number or Variable => new BlockFigure(expr.ToString()),
         Divf(var a, var b) => new RationalFigure(Draw(a), Draw(b)),
         Sumf(var a, var b) => new BinaryOpFigure(Draw(a), Draw(b), '+'),
         Powf(var a, Rational(Integer(1), Integer(2))) => new RadicalFigure(Draw(a), null),
@@ -29,80 +30,70 @@ static Figure Draw(Entity expr)
 
 
 
-public abstract class Figure
+public abstract record Figure
 {
-    // should be protected
-    public readonly char[,] table;
+    public int Width => Table.GetLength(1);
+    public int Height => Table.GetLength(0);
 
-    public int Width => table.GetLength(1);
-    public int Height => table.GetLength(0);
-
-    private protected Figure(char[,] table)
-        => this.table = table;
+    protected abstract char[,] GenerateTable();
+    internal protected char[,] Table => table.GetValue(@this => @this.GenerateTable(), this);
+    private readonly LazyPropertyA<char[,]> table;
 
     public override string ToString()
         => "\n"
             .Join(
                 (..(Height - 1)).Select(h =>
-                    (..(Width - 1)).Select(w => table[h, w]).AsString()
+                    (..(Width - 1)).Select(w => Table[h, w]).AsString()
                 )
             );
 }
 
-public sealed class BlockFigure : Figure
+public sealed record BlockFigure(string Source) : Figure
 {
-    public BlockFigure(string s) : base(GenerateTable(s)) { }
-
-    private static char[,] GenerateTable(string source)
+    protected override char[,] GenerateTable()
     {
-        var res = new char[1, source.Length];
-        foreach (var (index, ch) in source.Enumerate())
+        var res = new char[1, Source.Length];
+        foreach (var (index, ch) in Source.Enumerate())
             res[0, index] = ch;
         return res;
     }
 }
 
-public sealed class RationalFigure : Figure
+public sealed record RationalFigure(Figure Numerator, Figure Denominator) : Figure
 {
-    public RationalFigure(Figure num, Figure den) : base(GenerateTable(num, den)) { }
-
-    private static char[,] GenerateTable(Figure num, Figure den)
+    protected override char[,] GenerateTable()
     {
-        var res = new char[num.Height + 1 + den.Height, Math.Max(num.Width, den.Width) + 2].WithSpaces();
+        var res = new char[Numerator.Height + 1 + Denominator.Height, Math.Max(Numerator.Width, Denominator.Width) + 2].WithSpaces();
 
-        num.table.CopyWidthAlignedCenterTo(res, 0);
-        den.table.CopyWidthAlignedCenterTo(res, num.Height + 1);
+        Numerator.Table.CopyWidthAlignedCenterTo(res, 0);
+        Denominator.Table.CopyWidthAlignedCenterTo(res, Numerator.Height + 1);
 
         foreach (var x in 0..(res.GetLength(1) - 1))
-            res[num.Height, x] = '-';
+            res[Numerator.Height, x] = '-';
 
         return res;
     }
 }
 
-public sealed class BinaryOpFigure : Figure
+public sealed record BinaryOpFigure(Figure Left, Figure Right, char Operator) : Figure
 {
-    public BinaryOpFigure(Figure left, Figure right, char op) : base(GenerateTable(left, right, op)) { }
-
-    private static char[,] GenerateTable(Figure left, Figure right, char op)
+    protected override char[,] GenerateTable()
     {
-        var res = new char[Math.Max(left.Height, right.Height), left.Width + 3 + right.Width].WithSpaces();
+        var res = new char[Math.Max(Left.Height, Right.Height), Left.Width + 3 + Right.Width].WithSpaces();
 
-        left.table.CopyHeightAlignedCenterTo(res, 0);
-        right.table.CopyHeightAlignedCenterTo(res, left.Width + 3);
+        Left.Table.CopyHeightAlignedCenterTo(res, 0);
+        Right.Table.CopyHeightAlignedCenterTo(res, Left.Width + 3);
 
-        res[res.GetLength(0) / 2, left.Width + 1] = op;
+        res[res.GetLength(0) / 2, Left.Width + 1] = Operator;
 
         return res;
     }
 }
 
 
-public sealed class RadicalFigure : Figure
+public sealed record RadicalFigure(Figure Expression, Figure? Power) : Figure
 {
-    public RadicalFigure(Figure expr, Figure? pow) : base(GenerateTable(expr, pow)) { }
-
-    private static char[,] GenerateTable(Figure expr, Figure? pow)
+    protected override char[,] GenerateTable()
     {
 //      
 //           /----|      <-- this is right glyph (the '|' thing)
@@ -114,14 +105,14 @@ public sealed class RadicalFigure : Figure
         const double LeftGlyphShare = 0.3;
         const double RightGlyphShare = 0.2;
 
-        var leftGlyphSize = (int)(LeftGlyphShare * expr.Height) + 1;
-        var rightGlyphSize = (int)(RightGlyphShare * expr.Height) + 1;
+        var leftGlyphSize = (int)(LeftGlyphShare * Expression.Height) + 1;
+        var rightGlyphSize = (int)(RightGlyphShare * Expression.Height) + 1;
 
-        var resWidth = leftGlyphSize + expr.Height + expr.Width + 1;
-        var resHeight = expr.Height + 1;
+        var resWidth = leftGlyphSize + Expression.Height + Expression.Width + 1;
+        var resHeight = Expression.Height + 1;
 
         var res = new char[resHeight, resWidth].WithSpaces();
-        expr.table.CopyTo(res, 1, leftGlyphSize + expr.Height);
+        Expression.Table.CopyTo(res, 1, leftGlyphSize + Expression.Height);
 
         foreach (var i in 0..(leftGlyphSize - 1))
             res[resHeight - i - 1, i] = '\\';
