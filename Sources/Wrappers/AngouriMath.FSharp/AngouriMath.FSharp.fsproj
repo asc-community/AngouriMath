@@ -12,8 +12,8 @@
 	<RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
 	<PackageTags>fsharp, math, calculus, symbolic algebra, computer algebra, latex</PackageTags>
 	<PackageReleaseNotes>https://am.angouri.org/whatsnew</PackageReleaseNotes>
-	<Version>1.3.0-preview.4</Version>
-	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+	<Version>1.3.0-rc.1</Version>
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 	<Authors>WhiteBlackGoose</Authors>
 	<Company>Angouri</Company>
 	<RepositoryType>public</RepositoryType>
@@ -50,7 +50,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath" Version="0.0.0-master-1621602884-e042027" />
+    <PackageReference Include="AngouriMath" Version="1.3.0-rc.1" />
   </ItemGroup>
 
   <ItemGroup>
