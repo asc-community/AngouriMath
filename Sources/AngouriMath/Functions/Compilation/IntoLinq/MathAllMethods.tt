@@ -21,8 +21,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
         /* POWERS */
 
-        public static Complex Log(Complex a, Complex b)
-            => Complex.Log(b) / Complex.Log(a);
+        public static System.Numerics.Complex Log(System.Numerics.Complex a, System.Numerics.Complex b)
+            => System.Numerics.Complex.Log(b) / System.Numerics.Complex.Log(a);
         public static double Log(double a, double b)
             => Math.Log(b, a);
         public static float Log(float a, float b)
@@ -35,8 +35,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             => (BigInteger)Math.Log((double)b, (double)a);
 
 
-        public static Complex Pow(Complex a, Complex b)
-            => Complex.Pow(a, b);
+        public static System.Numerics.Complex Pow(System.Numerics.Complex a, System.Numerics.Complex b)
+            => System.Numerics.Complex.Pow(a, b);
         public static double Pow(double a, double b)
             => Math.Pow(a, b);
         public static float Pow(float a, float b)
@@ -52,8 +52,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
 <# foreach (var name in new[]{ "Sin", "Cos", "Tan", "Asin", "Acos", "Atan" }) { #>
 
-        public static Complex <#= name #>(Complex a)
-            => Complex.<#= name #>(a);
+        public static System.Numerics.Complex <#= name #>(System.Numerics.Complex a)
+            => System.Numerics.Complex.<#= name #>(a);
         public static double <#= name #>(double a)
             => Math.<#= name #>(a);
         public static float <#= name #>(float a)
@@ -71,8 +71,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
 <# foreach (var name in new[]{ ("Cot", "Tan"), ("Sec", "Cos"), ("Csc", "Sin") }) { #>
 
-        public static Complex <#= name.Item1 #>(Complex a)
-            => 1 / Complex.<#= name.Item2 #>(a);
+        public static System.Numerics.Complex <#= name.Item1 #>(System.Numerics.Complex a)
+            => 1 / System.Numerics.Complex.<#= name.Item2 #>(a);
         public static double <#= name.Item1 #>(double a)
             => 1 / Math.<#= name.Item2 #>(a);
         public static float <#= name.Item1 #>(float a)
@@ -90,8 +90,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
 <# foreach (var name in new[]{ ("Acot", "Atan"), ("Asec", "Acos"), ("Acsc", "Asin") }) { #>
 
-        public static Complex <#= name.Item1 #>(Complex a)
-            => Complex.<#= name.Item2 #>(1 / a);
+        public static System.Numerics.Complex <#= name.Item1 #>(System.Numerics.Complex a)
+            => System.Numerics.Complex.<#= name.Item2 #>(1 / a);
         public static double <#= name.Item1 #>(double a)
             => Math.<#= name.Item2 #>(1 / a);
         public static float <#= name.Item1 #>(float a)
@@ -106,14 +106,14 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 <# } #>
         
         /* OTHER */
-        public static Complex Abs(Complex a) => Complex.Abs(a);
+        public static System.Numerics.Complex Abs(System.Numerics.Complex a) => System.Numerics.Complex.Abs(a);
         public static double Abs(double a) => Math.Abs(a);
         public static float Abs(float a) => Math.Abs(a);
         public static long Abs(long a) => Math.Abs(a);
         public static int Abs(int a) => Math.Abs(a);
         public static BigInteger Abs(BigInteger a) => BigInteger.Abs(a);
 
-        public static Complex Sgn(Complex a) => a / Complex.Abs(a);
+        public static System.Numerics.Complex Sgn(System.Numerics.Complex a) => a / System.Numerics.Complex.Abs(a);
         public static double Sgn(double a) => a switch { > 0 or double.PositiveInfinity => 1, 0 => 0, < 0 or double.NegativeInfinity => -1, _ => double.NaN };
         public static float Sgn(float a) => a switch { > 0 or float.PositiveInfinity => 1, 0 => 0, < 0 or float.NegativeInfinity => -1, _ => float.NaN };
         public static long Sgn(long a) => a switch { > 0 => 1, 0 => 0, < 0 => -1 };
