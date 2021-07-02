@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>1.3.0-rc.4</Version>
+    <Version>1.3.0</Version>
     <Authors>WhiteBlackGoose</Authors>
     <Company>Angouri</Company>
     <Product>Wrapper of AngouriMath for Jupyter Interactive</Product>
@@ -16,7 +16,12 @@
     <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
     <RepositoryType>public</RepositoryType>
     <PackageIcon>icon.png</PackageIcon>
-    <NoWarn>$(NoWarn);NU5100;FS0086</NoWarn><!-- dll outside of lib/ folder -->
+    <NoWarn>
+      $(NoWarn);
+      NU5100 <!-- dll outside of lib/ folder --> ;
+      FS0086 <!-- operators overrided --> ;
+      NU5104 <!-- prerelease dependency--> 
+    </NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
   </PropertyGroup>
@@ -40,7 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath.FSharp" Version="1.3.0-rc.4" />
+    <PackageReference Include="AngouriMath.FSharp" Version="1.3.0" />
     <PackageReference Include="Microsoft.DotNet.Interactive" Version="1.0.0-beta.21330.2" />
     <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.21330.2" />
   </ItemGroup>

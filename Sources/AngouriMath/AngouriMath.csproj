@@ -11,7 +11,7 @@
     <FileVersion>0.1.3.0</FileVersion>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageTags>Math, csharp, derivation, latex, calculator, parse, simplification, compute, symbol, compilation, algebra, equation system, equation</PackageTags>
-    <Version>1.3.0-rc.4</Version>
+    <Version>1.3.0</Version>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <Description>Enables to work with formulas built in the code or from a string. Computing, derivating, latex rendering, compilation, solving equations and systems of equations analytycally, simplification, and much more. Read more on https://am.angouri.org.</Description>
     <PackageReleaseNotes>See it on website https://am.angouri.org/whatsnew</PackageReleaseNotes>
@@ -51,11 +51,11 @@
     <PackageReference Include="IsExternalInit" Version="1.0.0" PrivateAssets="all" />
 
     <!--Project dependencies for Framework 4.7.2-->
-    <PackageReference Include="System.Runtime.Numerics" Version="4.3.0" Condition="'$(TargetFramework)' == 'net472'"/>
-    <PackageReference Include="System.ValueTuple" Version="4.5.0" Condition="'$(TargetFramework)' == 'net472'"/>
+    <PackageReference Include="System.Runtime.Numerics" Version="4.3.0" Condition="'$(TargetFramework)' == 'net472'" />
+    <PackageReference Include="System.ValueTuple" Version="4.5.0" Condition="'$(TargetFramework)' == 'net472'" />
 
     <!--Project dependencies for < ns2.1-->
-    <PackageReference Include="System.Memory" Version="4.5.4" Condition="'$(TargetFramework)' != 'netstandard2.1'"/>
+    <PackageReference Include="System.Memory" Version="4.5.4" Condition="'$(TargetFramework)' != 'netstandard2.1'" />
 
     <!--Project dependencies-->
     <PackageReference Include="HonkSharp" Version="1.0.1" />
