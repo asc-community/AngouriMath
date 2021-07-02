@@ -41,8 +41,8 @@
 
   <ItemGroup>
     <PackageReference Include="AngouriMath.FSharp" Version="1.3.0-rc.4" />
-    <PackageReference Include="Microsoft.DotNet.Interactive" Version="1.0.0-beta.21176.4" />
-    <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.21176.4" />
+    <PackageReference Include="Microsoft.DotNet.Interactive" Version="1.0.0-beta.21330.2" />
+    <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.21330.2" />
   </ItemGroup>
 
   <ItemGroup>
