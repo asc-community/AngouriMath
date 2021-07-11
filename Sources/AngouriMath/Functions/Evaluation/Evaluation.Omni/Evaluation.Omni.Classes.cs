@@ -5,9 +5,6 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core.Sets;
-using AngouriMath.Functions;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AngouriMath
 {

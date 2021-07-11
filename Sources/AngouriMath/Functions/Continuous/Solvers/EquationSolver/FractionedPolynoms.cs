@@ -5,8 +5,6 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core.Multithreading;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {
