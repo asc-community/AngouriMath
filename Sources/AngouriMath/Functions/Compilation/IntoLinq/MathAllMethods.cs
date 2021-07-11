@@ -8,6 +8,7 @@
 
 /* THIS FILE IS AUTO-GENERATED */
 
+using System;
 using System.Numerics;
 
 namespace AngouriMath.Core.Compilation.IntoLinq

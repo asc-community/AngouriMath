@@ -6,6 +6,9 @@
  */
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
+using System;
+using System.Collections.Generic;
+using AngouriMath.Core;
 
 namespace AngouriMath.Functions
 {

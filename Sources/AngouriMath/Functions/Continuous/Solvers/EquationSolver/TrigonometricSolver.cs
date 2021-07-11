@@ -6,6 +6,7 @@
  */
 using AngouriMath.Core.Multithreading;
 using AngouriMath.Extensions;
+using System.Linq;
 
 namespace AngouriMath.Functions.Algebra.AnalyticalSolving
 {

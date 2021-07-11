@@ -5,6 +5,8 @@
  * Website: https://am.angouri.org.
  */
 
+using System.Collections.Generic;
+
 namespace AngouriMath.Functions
 {
     internal static class Fraction

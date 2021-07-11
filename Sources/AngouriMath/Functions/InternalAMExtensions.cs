@@ -7,9 +7,13 @@
 
 // Based on https://github.com/raminrahimzada/CSharp-Helper-Classes/blob/ffbb33c1ee90ce12357c72fa65f2510a09834693/Math/DecimalMath/DecimalMath.cs
 
+using System;
+using System.Collections.Generic;
 using System.Numerics;
+using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
+using System.Linq;
 using AngouriMath.Extensions;
 //[assembly:System.Runtime.CompilerServices.InternalsVisibleTo("UnitTests")]
 

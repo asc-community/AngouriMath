@@ -5,6 +5,7 @@
  * Website: https://am.angouri.org.
  */
 using PeterO.Numbers;
+using System;
 
 namespace AngouriMath
 {

@@ -4,10 +4,15 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using AngouriMath.Core;
 using AngouriMath.Core.HashCode;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Sets;
+using AngouriMath.Functions;
 using AngouriMath.Functions.Boolean;
 using HonkSharp.Laziness;
 using Complex = AngouriMath.Entity.Number.Complex;

@@ -5,7 +5,11 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core.Exceptions;
+using System;
+using System.Collections.Generic;
 using PeterO.Numbers;
+using System.Linq;
+using AngouriMath.Core;
 
 namespace AngouriMath.Functions
 {
