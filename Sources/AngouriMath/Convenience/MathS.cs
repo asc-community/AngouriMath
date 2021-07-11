@@ -5,12 +5,8 @@
  * Website: https://am.angouri.org.
  */
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using PeterO.Numbers;
-using AngouriMath.Core;
-using AngouriMath.Functions;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Functions.Boolean;
 using System.Diagnostics.CodeAnalysis;

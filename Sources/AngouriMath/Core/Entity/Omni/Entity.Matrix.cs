@@ -5,14 +5,10 @@
  * Website: https://am.angouri.org.
  */
 using System;
-using System.Linq;
 using GenericTensor.Core;
-using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using HonkSharp.Laziness;
 using AngouriMath.Extensions;
-using AngouriMath.Functions;
-using System.Collections.Generic;
 using System.Collections;
 
 namespace AngouriMath

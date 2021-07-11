@@ -5,14 +5,11 @@
  * Website: https://am.angouri.org.
  */
 using static AngouriMath.Entity;
-using System.Linq;
-using AngouriMath.Core;
 using AngouriMath.Functions.Algebra;
 using AngouriMath.Extensions;
 using static AngouriMath.Entity.Set;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Multithreading;
-using System.Collections.Generic;
 
 namespace AngouriMath
 {
