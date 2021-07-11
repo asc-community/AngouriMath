@@ -5,7 +5,6 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core.Compilation.IntoLinq;
-using System;
 
 namespace AngouriMath.Core.Exceptions
 {

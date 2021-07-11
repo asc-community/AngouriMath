@@ -7,9 +7,7 @@
 
 using static AngouriMath.Entity;
 using AngouriMath.Core.Compilation.IntoLinq;
-using System.Collections.Generic;
 using System.Collections;
-using System;
 
 namespace AngouriMath.Extensions
 {

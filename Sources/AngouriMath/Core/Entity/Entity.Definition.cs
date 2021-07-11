@@ -4,13 +4,8 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using AngouriMath.Core;
 using HonkSharp.Laziness;
 
-//[assembly: InternalsVisibleTo("Playground, PublicKey=")]
 
 namespace AngouriMath.Core
 {

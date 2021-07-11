@@ -5,7 +5,6 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core.Multithreading;
-using System;
 using static AngouriMath.Entity;
 
 namespace AngouriMath.Functions.Algebra

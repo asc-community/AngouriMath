@@ -1,7 +1,14 @@
-﻿global using HonkSharp.Fluency;
-global using HonkSharp.Functional;
+﻿global using System;
 
-global using ReasonWhyParsingFailed = 
+global using System.Collections.Generic;
+global using System.Linq;
+global using HonkSharp.Fluency;
+global using HonkSharp.Functional;
+global using AngouriMath.Core;
+global using AngouriMath.Functions;
+
+
+global using ReasonWhyParsingFailed =
     HonkSharp.Functional.Either<
         AngouriMath.Core.ReasonOfFailureWhileParsing.Unknown,
         AngouriMath.Core.ReasonOfFailureWhileParsing.MissingOperator,

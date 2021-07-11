@@ -13,7 +13,6 @@ Any modifications to other source files will be overwritten when the parser is r
 
 */
 
-using System.Collections.Generic;
 using Antlr4.Runtime;
 using System.IO;
 using System.Text;
@@ -24,7 +23,7 @@ namespace AngouriMath.Core
     using Antlr;
     using Exceptions;
     using static ReasonOfFailureWhileParsing;
-    
+
     /// <summary>
     /// Nesting class for reasons of why parsing could fail. The type union for it
     /// is 

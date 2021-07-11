@@ -5,8 +5,6 @@
  * Website: https://am.angouri.org.
  */
 
-using System.Collections.Generic;
-using AngouriMath.Core;
 using AngouriMath.Core.Exceptions;
 using AngouriMath.Extensions;
 

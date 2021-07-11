@@ -5,10 +5,6 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Convenience;
-using AngouriMath.Core;
-using AngouriMath.Functions;
-using System;
-using System.Collections.Generic;
 
 namespace AngouriMath
 {

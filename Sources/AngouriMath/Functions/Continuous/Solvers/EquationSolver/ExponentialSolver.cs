@@ -6,9 +6,6 @@
  */
 using AngouriMath.Core.Multithreading;
 using AngouriMath.Extensions;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
 
