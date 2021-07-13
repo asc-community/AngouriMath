@@ -23,7 +23,6 @@
   <a href="https://dotnetfiddle.net/u901sI"><img src="https://img.shields.io/static/v1?label=Fiddle&message=Try%21&color=purple&style=flat&logo=.NET&labelColor=646"></a>
   <a href="https://mybinder.org/v2/gh/asc-community/AngouriMathLab/try?filepath=HelloBook.AngouriMath.Interactive.ipynb"><img src="https://img.shields.io/static/v1?label=Jupyter&message=Try%21&color=purple&style=flat&logo=Jupyter&labelColor=646"></a>
   <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://img.shields.io/discord/642350046213439489?color=darkgreen&label=Join+our+chat!&logo=discord&style=flat&labelColor=474&logoColor=white"></a>
-  <a href="https://patreon.com/AngouriMath"><img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3DAngouriMath%26type%3Dpledges&style=flat" alt="Support me on Patreon" /></a>
 </p>
 
 <details><summary><strong>Status board</strong></summary>
@@ -448,13 +447,11 @@ If you want, you can add a badge to your repo:
 
 ## <a name="contrib"></a>Contribution
 
-We appreciate and welcome any contributors to AngouriMath. Current tasks can be tracked
-on <a href="https://github.com/asc-community/AngouriMath/projects">this page</a>.
+<a href="CONTRIBUTING.md"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/asc-community/AngouriMath"></a>
+<a href="https://patreon.com/AngouriMath"><img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Fshieldsio-patreon.vercel.app%2Fapi%3Fusername%3DAngouriMath%26type%3Dpledges&style=flat" alt="Support me on Patreon" /></a>
 
-Use pull requests to contribute to it. We also appreciate early pull requests so that we know what you are improving and
-can help you with something.
-
-Documentation for contributors and developers is <a href="./Sources/AngouriMath/Docs/Contributing/README.md">here</a>.
+AngouriMath is a free open-source project, there is no big company backing us. That is why we warmly welcome any contributors
+to the project. Aside from volunteer donations, you can help developing the project: check the [guide for developers](./CONTRIBUTING.md).
 
 ## <a name="license"></a>License
 
