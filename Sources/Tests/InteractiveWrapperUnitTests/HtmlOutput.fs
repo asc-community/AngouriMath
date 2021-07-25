@@ -9,15 +9,11 @@ open Microsoft.DotNet.Interactive.Events
 open Microsoft.DotNet.Interactive
 open System.Linq
 open System.IO
+open AngouriMath
+open AngouriMath.FSharp.Functions
 
 [<Fact>]
-let ``No latex without magic`` () =
-    let entity = parsed "x / 2"
-    let html = entity.ToDisplayString("text/html")
-    Assert.Contains("<table>", html)
-
-[<Fact>]
-let ``Latex with magic`` () =
+let ``Latex with magic ILatexiseable`` () =
     AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
     let entity = parsed "x / 2"
     let html = entity.ToDisplayString("text/html")
@@ -25,6 +21,42 @@ let ``Latex with magic`` () =
 <script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
 <script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
 \[\frac{x}{2}\]", html)
+
+
+[<Fact>]
+let ``Latex with magic ERational`` () =
+    AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
+    let entity = (("2 / 3" |> asNumber) :?> Entity.Number.Rational).ERational
+    let html = entity.ToDisplayString("text/html")
+    Assert.Equal(@"
+<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
+<script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
+\[\frac{2}{3}\]", html)
+
+
+[<Fact>]
+let ``Latex with magic ERational multi-char`` () =
+    AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
+    let entity = (("23 / 36" |> asNumber) :?> Entity.Number.Rational).ERational
+    let html = entity.ToDisplayString("text/html")
+    Assert.Equal(@"
+<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
+<script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
+\[\frac{23}{36}\]", html)
+
+[<Fact>]
+let ``Latex with magic EDecimal`` () =
+    AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
+    let entity = (("1 / 2" |> asNumber) :?> Entity.Number.Real).EDecimal
+    let output = entity.ToDisplayString("text/plain")
+    Assert.Equal("0.5", output)
+
+[<Fact>]
+let ``Latex with magic EInteger`` () =
+    AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
+    let entity = (("2" |> asNumber) :?> Entity.Number.Integer).EInteger
+    let output = entity.ToDisplayString("text/plain")
+    Assert.Equal("2", output)
 
 
 [<Fact(Skip = "Not working in the embedded kernel")>]
