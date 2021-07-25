@@ -32,7 +32,7 @@ let ``Latex with magic ILatexiseable`` () =
 [<Fact>]
 let ``Latex with magic ERational`` () =
     AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
-    let entity = (("2 / 3" |> asNumber) :?> Entity.Number.Integer).ERational
+    let entity = (("2 / 3" |> asNumber) :?> Entity.Number.Rational).ERational
     let html = entity.ToDisplayString("text/html")
     Assert.Equal(@"
 <script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
