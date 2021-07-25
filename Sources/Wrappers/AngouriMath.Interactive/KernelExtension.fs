@@ -20,7 +20,10 @@ type KernelExtension() =
         Formatter.SetPreferredMimeTypeFor(typeof<ILatexiseable>, "text/html")
 
         Formatter.SetPreferredMimeTypeFor(typeof<EDecimal>, "text/plain")
+        Formatter.Register<EDecimal>(new Func<EDecimal, string>(fun o -> o.ToString()), "text/plain")
+
         Formatter.SetPreferredMimeTypeFor(typeof<EInteger>, "text/plain")
+        Formatter.Register<EInteger>(new Func<EInteger, string>(fun o -> o.ToString()), "text/plain")
 
         Formatter.SetPreferredMimeTypeFor(typeof<ERational>, "text/html")
         Formatter.Register<ERational>(
