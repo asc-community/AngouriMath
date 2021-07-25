@@ -13,12 +13,6 @@ open AngouriMath
 open AngouriMath.FSharp.Functions
 
 [<Fact>]
-let ``No latex without magic`` () =
-    let entity = parsed "x / 2"
-    let html = entity.ToDisplayString("text/html")
-    Assert.Contains("<table>", html)
-
-[<Fact>]
 let ``Latex with magic ILatexiseable`` () =
     AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
     let entity = parsed "x / 2"
@@ -43,12 +37,12 @@ let ``Latex with magic ERational`` () =
 [<Fact>]
 let ``Latex with magic ERational multi-char`` () =
     AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
-    let entity = (("23 / abc" |> asNumber) :?> Entity.Number.Rational).ERational
+    let entity = (("23 / 36" |> asNumber) :?> Entity.Number.Rational).ERational
     let html = entity.ToDisplayString("text/html")
     Assert.Equal(@"
 <script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
 <script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
-\[\frac{23}{abc}\]", html)
+\[\frac{23}{36}\]", html)
 
 [<Fact>]
 let ``Latex with magic EDecimal`` () =
