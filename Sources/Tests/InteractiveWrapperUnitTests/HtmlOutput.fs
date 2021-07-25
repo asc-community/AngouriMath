@@ -41,6 +41,16 @@ let ``Latex with magic ERational`` () =
 
 
 [<Fact>]
+let ``Latex with magic ERational multi-char`` () =
+    AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
+    let entity = (("23 / abc" |> asNumber) :?> Entity.Number.Rational).ERational
+    let html = entity.ToDisplayString("text/html")
+    Assert.Equal(@"
+<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
+<script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
+\[\frac{23}{abc}\]", html)
+
+[<Fact>]
 let ``Latex with magic EDecimal`` () =
     AngouriMath.InteractiveExtension.KernelExtension.applyMagic()
     let entity = (("1 / 2" |> asNumber) :?> Entity.Number.Real).EDecimal

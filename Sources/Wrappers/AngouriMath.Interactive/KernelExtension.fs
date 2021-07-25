@@ -27,7 +27,7 @@ type KernelExtension() =
 
         Formatter.SetPreferredMimeTypeFor(typeof<ERational>, "text/html")
         Formatter.Register<ERational>(
-            new Func<ERational, string>(fun o -> latexWrap $@"\frac{o.Numerator}{o.Denominator}"), "text/html")
+            new Func<ERational, string>(fun o -> latexWrap $@"\frac{{{o.Numerator}}}{{{o.Denominator}}}"), "text/html")
 
 
 
