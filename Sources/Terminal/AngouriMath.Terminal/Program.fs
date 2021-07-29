@@ -1,13 +1,15 @@
-﻿// Learn more about F# at http://docs.microsoft.com/dotnet/fsharp
+﻿open System
 
-open System
+$@"
+══════════════════════════════════════════════════════════════════════
+                Welcome to AngouriMath.Terminal.
 
-// Define a function to construct a message to print
-let from whom =
-    sprintf "from %s" whom
+It is an interface to AngouriMath, open source symbolic algebra
+library. The terminal uses F# Interactive inside, so that you can
+run any command you could in normal F#. AngouriMath.FSharp is
+being installed every start, so you are guaranteed to be on the
+latest version of it. Type 'preRunCode' to see, what code
+was pre-ran before you were able to type.
+══════════════════════════════════════════════════════════════════════
+".Trim() |> printfn
 
-[<EntryPoint>]
-let main argv =
-    let message = from "F#" // Call the function
-    printfn "Hello world %s" message
-    0 // return an integer exit code

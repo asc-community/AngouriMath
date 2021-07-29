@@ -26,7 +26,7 @@ let options = JsonSerializerOptions ()
 JsonFSharpConverter () |> options.Converters.Add
 
 
-let objectEncode (o : obj) =
+let private objectEncode (o : obj) =
     match o with
     | :? ILatexiseable as latexiseable -> 
         let toSerialize = LatexSuccess (latexiseable.Latexise (), o.ToString ())
@@ -36,7 +36,7 @@ let objectEncode (o : obj) =
         EncodingPlainPrefix + JsonSerializer.Serialize(toSerialize, options)
 
 
-let objectDecode (s : string) =
+let private objectDecode (s : string) =
     match s with
     | null -> VoidSuccess
     | plain when plain.StartsWith EncodingPlainPrefix ->
@@ -69,12 +69,12 @@ let execute (kernel : FSharpKernel) code =
     | Some res -> res
 
 
-let loadAssembly kernel (path : string) =
+let private loadAssembly kernel (path : string) =
     path.Replace("\\", "\\\\")
     |> (fun loc -> execute kernel $"#r \"{loc}\"")
 
 
-let aggressiveOperatorsModule =
+let private aggressiveOperatorsModule =
     match Type.GetType("AngouriMath.Interactive.AggressiveOperators") with
     | null -> raise (Exception("Not found"))
     | existing -> existing
