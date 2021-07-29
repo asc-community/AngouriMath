@@ -8,7 +8,10 @@ open Microsoft.DotNet.Interactive
 open Microsoft.DotNet.Interactive.Events
 open Microsoft.DotNet.Interactive.FSharp
 open Microsoft.DotNet.Interactive.Commands
+open Microsoft.DotNet.Interactive.Formatting
 open System
+open AngouriMath
+open System.Reflection
 
 type ExecutionResult =
     | SuccessPackageAdded
@@ -32,6 +35,7 @@ let objectEncode (o : obj) =
         let toSerialize = PlainTextSuccess (o.ToString ())
         EncodingPlainPrefix + JsonSerializer.Serialize(toSerialize, options)
 
+
 let objectDecode (s : string) =
     match s with
     | null -> VoidSuccess
@@ -40,6 +44,7 @@ let objectDecode (s : string) =
     | latex when latex.StartsWith EncodingLatexPrefix ->
         JsonSerializer.Deserialize<ExecutionResult> (latex.[EncodingLatexPrefix.Length..], options)
     | _ -> VoidSuccess
+
 
 let execute (kernel : FSharpKernel) code =
     let submitCode = SubmitCode code
@@ -63,4 +68,32 @@ let execute (kernel : FSharpKernel) code =
     | None -> EndOfFile
     | Some res -> res
 
-let loadAssembly
+
+let loadAssembly kernel (path : string) =
+    path.Replace("\\", "\\\\")
+    |> (fun loc -> execute kernel $"#r \"{loc}\"")
+
+
+let aggressiveOperatorsModule =
+    match Type.GetType("AngouriMath.Interactive.AggressiveOperators") with
+    | null -> raise (Exception("Not found"))
+    | existing -> existing
+    
+
+let createKernel () =
+    let kernel = new FSharpKernel ()
+    let load (typeInfo : Type) = loadAssembly kernel typeInfo.Assembly.Location
+
+    
+
+    match load (typeof<MathS>) with
+    | Error error -> Result.Error error
+    | _ ->
+        match load typeof<AngouriMath.FSharp.Core.ParseException> with
+        | Error error -> Result.Error error
+        | _ -> match load aggressiveOperatorsModule with
+               | Error error -> Result.Error error
+               | _ ->
+                      Formatter.SetPreferredMimeTypeFor(typeof<obj>, "text/plain");
+                      Formatter.Register<obj> objectEncode;
+                      Result.Ok kernel
