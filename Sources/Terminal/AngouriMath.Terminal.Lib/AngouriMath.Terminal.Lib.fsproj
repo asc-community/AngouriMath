@@ -8,6 +8,7 @@
   <ItemGroup>
     <Compile Include="Consts.fs" />
     <Compile Include="FSharpInteractive.fs" />
+    <Compile Include="PreRunCode.fs" />
   </ItemGroup>
 
   <ItemGroup>

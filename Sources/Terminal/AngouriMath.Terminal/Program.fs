@@ -1,6 +1,6 @@
 ﻿open System
 open AngouriMath.Terminal.Lib.FSharpInteractive
-open AngouriMath.Terminal.Lib.Consts
+open AngouriMath.Terminal.Lib.PreRunCode
 open UserInterface
 
 let rec readAndRespond kernel =
@@ -41,9 +41,6 @@ match createKernel () with
 | Result.Error error -> handleError error
 | Result.Ok kernel ->
     execute kernel "1 + 1" |> ignore  // warm up
-    let innerCode = OpensAndOperators.Replace("\"", "\\\"")
-    let preRunCode = OpensAndOperators + $"let preRunCode = \"{innerCode}\""
-    match execute kernel preRunCode with
+    match enableAngouriMath kernel with
     | Error msg -> handleError msg
-    | _ ->
-        readAndRespond kernel
+    | _ -> readAndRespond kernel

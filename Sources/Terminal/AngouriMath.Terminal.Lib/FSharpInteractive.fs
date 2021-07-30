@@ -75,17 +75,17 @@ let private loadAssembly kernel (path : string) =
 
 let createKernel () =
     let kernel = new FSharpKernel ()
-    let load (typeInfo : Type) = loadAssembly kernel typeInfo.Assembly.Location
-    
-
-    match load (typeof<MathS>) with
-    | Error error -> Result.Error error
-    | _ ->
-        match load typeof<AngouriMath.FSharp.Core.ParseException> with
+    let load (typeInfo : Type) =    
+        match loadAssembly kernel typeInfo.Assembly.Location with
         | Error error -> Result.Error error
-        | _ -> match load typeof<AngouriMath.InteractiveExtension.KernelExtension> with
-               | Error error -> Result.Error error
-               | _ ->
-                      Formatter.SetPreferredMimeTypeFor(typeof<obj>, "text/plain");
-                      Formatter.Register<obj> objectEncode;
-                      Result.Ok kernel
+        | _ -> Result.Ok ()
+
+
+
+    load typeof<MathS>
+    |> Result.bind (fun _ -> load typeof<AngouriMath.FSharp.Core.ParseException>)
+    |> Result.bind (fun _ -> load typeof<AngouriMath.InteractiveExtension.KernelExtension>)
+    |> Result.bind (fun _ ->
+        Formatter.SetPreferredMimeTypeFor(typeof<obj>, "text/plain")
+        Formatter.Register<obj> objectEncode
+        Result.Ok kernel)
