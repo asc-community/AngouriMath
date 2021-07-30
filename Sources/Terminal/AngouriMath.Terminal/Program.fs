@@ -1,5 +1,5 @@
 ﻿open System
-open AngouriMath.Terminal.Lib.Say
+open AngouriMath.Terminal.Lib.FSharpInteractive
 open AngouriMath.Terminal.Lib.Consts
 open UserInterface
 
@@ -33,7 +33,9 @@ was pre-ran before you were able to type.
 ══════════════════════════════════════════════════════════════════════
 ".Trim() |> printfn "%s"
 
+
 printfn "Starting the kernel..."
+
 
 match createKernel () with
 | Result.Error error -> handleError error

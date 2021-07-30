@@ -1,4 +1,4 @@
-﻿module AngouriMath.Terminal.Lib.Say
+﻿module AngouriMath.Terminal.Lib.FSharpInteractive
 
 open AngouriMath.Core
 open Consts
