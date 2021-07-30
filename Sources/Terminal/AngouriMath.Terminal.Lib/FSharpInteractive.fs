@@ -52,7 +52,7 @@ let execute (kernel : FSharpKernel) code =
     let mutable nonVoidResponse : string Option = None
     let mutable res : ExecutionResult Option = None
 
-    use _ = computed.KernelEvents.Subscribe (new Action<KernelEvent>(fun e ->
+    computed.KernelEvents.Subscribe (new Action<KernelEvent>(fun e ->
                 match e with
                 | :? CommandSucceeded ->
                     res <- objectDecode nonVoidResponse |> Some
@@ -62,6 +62,7 @@ let execute (kernel : FSharpKernel) code =
                     nonVoidResponse <- (Seq.head display.FormattedValues).Value |> Some
                 | _ -> ()
         ))
+    |> (fun observer -> observer.Dispose())
 
     match res with
     | None -> EndOfFile
