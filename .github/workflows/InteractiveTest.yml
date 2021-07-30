@@ -41,8 +41,13 @@ jobs:
 
     - name: Build Tests # We need it to be able to retry
       run: |
-        dotnet add "Sources/Tests/InteractiveWrapperUnitTests" package GitHubActionsTestLogger
-        dotnet build Sources/Tests/InteractiveWrapperUnitTests
-    - name: Test
+        dotnet build Sources/Tests/InteractiveWrapperUnitTests -c Release
+        dotnet build Sources/Tests/TerminalUnitTests -c Release
+        
+    - name: Test Interactive Wrapper
       run: |
-        dotnet test "Sources/Tests/InteractiveWrapperUnitTests" -c Release -l GitHubActions
+        dotnet test "Sources/Tests/InteractiveWrapperUnitTests" -c Release
+        
+    - name: Test Terminal Lib
+      run: |
+        dotnet test "Sources/Tests/TerminalUnitTests" -c Release
