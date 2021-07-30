@@ -35,12 +35,12 @@ let private objectEncode (o : obj) =
         EncodingPlainPrefix + JsonSerializer.Serialize(toSerialize, options)
 
 
-let private objectDecode (s : string) =
+let private objectDecode (s : string Option) =
     match s with
-    | null -> VoidSuccess
-    | plain when plain.StartsWith EncodingPlainPrefix ->
+    | None -> VoidSuccess
+    | Some plain when plain.StartsWith EncodingPlainPrefix ->
         JsonSerializer.Deserialize<ExecutionResult> (plain.[EncodingPlainPrefix.Length..], options)
-    | latex when latex.StartsWith EncodingLatexPrefix ->
+    | Some latex when latex.StartsWith EncodingLatexPrefix ->
         JsonSerializer.Deserialize<ExecutionResult> (latex.[EncodingLatexPrefix.Length..], options)
     | _ -> VoidSuccess
 
@@ -55,7 +55,7 @@ let execute (kernel : FSharpKernel) code =
     use _ = computed.KernelEvents.Subscribe (new Action<KernelEvent>(fun e ->
                 match e with
                 | :? CommandSucceeded ->
-                    res <- objectDecode nonVoidResponse.Value |> Some
+                    res <- objectDecode nonVoidResponse |> Some
                 | :? CommandFailed as failed ->
                     res <- Error failed.Message |> Some
                 | :? DisplayEvent as display ->
@@ -73,16 +73,9 @@ let private loadAssembly kernel (path : string) =
     |> (fun loc -> execute kernel $"#r \"{loc}\"")
 
 
-let private aggressiveOperatorsModule =
-    match Type.GetType("AngouriMath.Interactive.AggressiveOperators") with
-    | null -> raise (Exception("Not found"))
-    | existing -> existing
-    
-
 let createKernel () =
     let kernel = new FSharpKernel ()
     let load (typeInfo : Type) = loadAssembly kernel typeInfo.Assembly.Location
-
     
 
     match load (typeof<MathS>) with
@@ -90,7 +83,7 @@ let createKernel () =
     | _ ->
         match load typeof<AngouriMath.FSharp.Core.ParseException> with
         | Error error -> Result.Error error
-        | _ -> match load aggressiveOperatorsModule with
+        | _ -> match load typeof<AngouriMath.InteractiveExtension.KernelExtension> with
                | Error error -> Result.Error error
                | _ ->
                       Formatter.SetPreferredMimeTypeFor(typeof<obj>, "text/plain");

@@ -15,6 +15,10 @@ let rec readAndRespond kernel =
 
     readAndRespond kernel
 
+let handleError error =
+    printfn $"Error: {error}"
+    printfn $"Report about it to the official repo. The terminal will be closed."
+    Console.ReadLine() |> ignore
 
 $@"
 ══════════════════════════════════════════════════════════════════════
