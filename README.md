@@ -445,6 +445,25 @@ If you want, you can add a badge to your repo:
 ```
 [![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
 
+## <a name="terminal"></a>Terminal
+
+As both a demonstration sample and a convenient tool, this repository includes
+tool called AngouriMath.Terminal. It is a CLI-based program to interact with
+AngouriMath (as opposed to API-based interaction, that is, consuming it as a lib).
+
+If you only need this program, here is the instructions how to build and run it:
+```
+git clone https://github.com/asc-community/AngouriMath
+cd AngouriMath/Sources/Terminal/AngouriMath.Terminal
+dotnet run -c release
+```
+
+[![gif](./.github/additional/readme/terminal.gif)](./Sources/Terminal)
+
+See its [source folder](./Sources/Terminal).
+
+
+
 ## <a name="contrib"></a>Contribution
 
 <a href="CONTRIBUTING.md"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/asc-community/AngouriMath"></a>
