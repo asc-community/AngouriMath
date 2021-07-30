@@ -2,15 +2,19 @@
 open AngouriMath.Terminal.Lib.FSharpInteractive
 open AngouriMath.Terminal.Lib.PreRunCode
 open UserInterface
+open Spectre.Console
+
+let lineEditor = getLineEditor AnsiConsole.Console
 
 let rec readAndRespond kernel =
-    match readLine () |> execute kernel with
+    printf "\n"
+    match readLine lineEditor |> execute kernel with
     | PlainTextSuccess text ->
-        writeLine text
+        writeLine AnsiConsole.Console text
     | LatexSuccess (_, text) ->
-        writeLine text
+        writeLine AnsiConsole.Console text
     | Error message ->
-        writeLineError message
+        writeLineError AnsiConsole.Console message
     | _ -> ()
 
     readAndRespond kernel
@@ -20,21 +24,25 @@ let handleError error =
     printfn $"Report about it to the official repo. The terminal will be closed."
     Console.ReadLine() |> ignore
 
-$@"
-══════════════════════════════════════════════════════════════════════
-                Welcome to AngouriMath.Terminal.
 
+FigletText "AngouriMath"
+|> AlignableExtensions.Centered
+|> (fun p -> FigletTextExtensions.Color(p, Color.Pink1))
+|> AnsiConsole.Console.Write
+
+$@"
 It is an interface to AngouriMath, open source symbolic algebra
 library. The terminal uses F# Interactive inside, so that you can
-run any command you could in normal F#. AngouriMath.FSharp is
-being installed every start, so you are guaranteed to be on the
-latest version of it. Type 'preRunCode' to see, what code
-was pre-ran before you were able to type.
-══════════════════════════════════════════════════════════════════════
-".Trim() |> printfn "%s"
+run any command you could in normal F#. Type 'preRunCode' to see, 
+what code was pre-ran before you were able to type.
+" |> Markup
+  |> AlignableExtensions.Centered
+  |> AnsiConsole.Console.Write
 
 
-printfn "Starting the kernel..."
+
+
+printf "Starting the kernel..."
 
 
 match createKernel () with
@@ -43,4 +51,6 @@ match createKernel () with
     execute kernel "1 + 1" |> ignore  // warm up
     match enableAngouriMath kernel with
     | Error msg -> handleError msg
-    | _ -> readAndRespond kernel
+    | _ -> 
+        printfn " loaded."
+        readAndRespond kernel
