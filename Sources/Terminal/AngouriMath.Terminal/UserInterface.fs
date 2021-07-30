@@ -54,14 +54,21 @@ let private getWordHighlighter () =
 
     let highlighter = WordHighlighter ()
 
-    let keywords = ["let"; "int"; "bool"; "for"; "mutable"; "null"; "match"; "with"; "fun"]
-    let operators = ["("; ")"; "|>"; ":"; "["; "]"]
-    let digits = ["0"; "1"; "2"; "3"; "4"; "5"; "6"; "7"; "8"; "9"; "."; "-"]
+    let keywords = ["let"; "int"; "bool"; "for"; "mutable"; "null"; 
+                    "match"; "with"; "fun"; "if"; "then"; "else";
+                    "and"; "or"; "function"; "inline"; "of"; "open";
+                    "true"; "false"; "type"; "upcast"; "downcast";
+                    "rec"]
+
+    let operators = ["("; ")"; "["; "]"]
+
+    // digits cannot be added, because if there are more than one digit, 
+    // it won't be counted as many words and hence highlighted
+    
     let amFunctions = getWordsFromAngouriMathFSharp ()
 
     addWord keywords (Style Color.LightSlateBlue) highlighter
     addWord operators (Style Color.Pink1) highlighter
-    addWord digits (Style Color.Pink3) highlighter
     addWord amFunctions (Style Color.Gold3_1) highlighter
 
     highlighter
