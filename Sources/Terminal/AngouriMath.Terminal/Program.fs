@@ -1,4 +1,20 @@
 ﻿open System
+open AngouriMath.Terminal.Lib.Say
+open AngouriMath.Terminal.Lib.Consts
+open UserInterface
+
+let rec readAndRespond kernel =
+    match readLine () |> execute kernel with
+    | PlainTextSuccess text ->
+        writeLine text
+    | LatexSuccess (_, text) ->
+        writeLine text
+    | Error message ->
+        writeLineError message
+    | _ -> ()
+
+    readAndRespond kernel
+
 
 $@"
 ══════════════════════════════════════════════════════════════════════
@@ -11,5 +27,17 @@ being installed every start, so you are guaranteed to be on the
 latest version of it. Type 'preRunCode' to see, what code
 was pre-ran before you were able to type.
 ══════════════════════════════════════════════════════════════════════
-".Trim() |> printfn
+".Trim() |> printfn "%s"
 
+printfn "Starting the kernel..."
+
+match createKernel () with
+| Result.Error error -> handleError error
+| Result.Ok kernel ->
+    execute kernel "1 + 1" |> ignore  // warm up
+    let innerCode = OpensAndOperators.Replace("\"", "\\\"")
+    let preRunCode = OpensAndOperators + $"let preRunCode = \"{innerCode}\""
+    match execute kernel preRunCode with
+    | Error msg -> handleError msg
+    | _ ->
+        readAndRespond kernel

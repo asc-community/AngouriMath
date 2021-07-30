@@ -11,7 +11,6 @@ open Microsoft.DotNet.Interactive.Commands
 open Microsoft.DotNet.Interactive.Formatting
 open System
 open AngouriMath
-open System.Reflection
 
 type ExecutionResult =
     | SuccessPackageAdded

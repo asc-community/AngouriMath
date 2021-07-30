@@ -10,4 +10,8 @@
     <Compile Include="Program.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AngouriMath.Terminal.Lib\AngouriMath.Terminal.Lib.fsproj" />
+  </ItemGroup>
+
 </Project>
