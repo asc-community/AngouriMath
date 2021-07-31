@@ -5,6 +5,7 @@ open UserInterface
 open Spectre.Console
 
 Console.WindowHeight <- 50
+Console.WindowWidth <- 150
 
 let lineEditor = getLineEditor AnsiConsole.Console
 
@@ -26,6 +27,7 @@ let handleError error =
     printfn $"Report about it to the official repo. The terminal will be closed."
     Console.ReadLine() |> ignore
 
+"\n\n" |> Console.Write
 
 FigletText "AngouriMath"
 |> AlignableExtensions.Centered
