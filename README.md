@@ -447,6 +447,8 @@ If you want, you can add a badge to your repo:
 
 ## <a name="terminal"></a>Terminal
 
+[![gif](./Sources/Terminal/terminal.gif)](./Sources/Terminal)
+
 As both a demonstration sample and a convenient tool, this repository includes
 tool called AngouriMath.Terminal. It is a CLI-based program to interact with
 AngouriMath (as opposed to API-based interaction, that is, consuming it as a lib).
@@ -461,8 +463,6 @@ dotnet run -c release
 See the online [Jupyter notebook](https://mybinder.org/v2/gh/asc-community/AngouriMathLab/try?filepath=HelloBook.AngouriMath.Interactive.ipynb) on
 how to use the F# API of AngouriMath. Note, that the C# API is still available
 via `open AngouriMath` command, then you can call the main library's methods.
-
-[![gif](./.github/additional/readme/terminal.gif)](./Sources/Terminal)
 
 See its [source folder](./Sources/Terminal).
 

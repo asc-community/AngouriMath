@@ -6,9 +6,9 @@ let OpensAndOperators = @"
 open AngouriMath
 open AngouriMath.FSharp.Core
 open AngouriMath.FSharp.Functions
+open AngouriMath.FSharp.Matrices
 open AngouriMath.FSharp.Shortcuts
 open AngouriMath.FSharp.Constants
-
 
 let eval (x : obj) = 
     match (parsed x).InnerSimplified with

@@ -76,11 +76,11 @@ let private loadAssembly kernel (path : string) =
 
 let createKernel () =
     let kernel = new FSharpKernel ()
+
     let load (typeInfo : Type) =    
         match loadAssembly kernel typeInfo.Assembly.Location with
         | Error error -> Result.Error error
         | _ -> Result.Ok ()
-
 
 
     load typeof<MathS>
@@ -89,4 +89,5 @@ let createKernel () =
     |> Result.bind (fun _ ->
         Formatter.SetPreferredMimeTypeFor(typeof<obj>, "text/plain")
         Formatter.Register<obj> objectEncode
+        Formatter.Register<Entity.Matrix> (Func<Entity.Matrix, string> (fun m -> m.ToString(true) |> objectEncode), "text/plain")
         Result.Ok kernel)
