@@ -18,7 +18,10 @@ let readLine (lineEditor : LineEditor) =
 
 let writeLine (ansiConsole : IAnsiConsole) (input : string) =
     printf "\n"
-    Panel input
+    input
+    |> Markup.Escape
+    |> Panel 
+    |> (fun p -> PanelExtensions.Header(p, "Ok"))
     |> ExpandableExtensions.Expand
     |> HasBoxBorderExtensions.RoundedBorder
     |> (fun p -> HasBorderExtensions.BorderColor(p, Color.Green))
@@ -27,7 +30,9 @@ let writeLine (ansiConsole : IAnsiConsole) (input : string) =
 
 let writeLineError (ansiConsole : IAnsiConsole) (input : string) =
     printf "\n"
-    Panel input
+    input
+    |> Markup.Escape
+    |> Panel 
     |> (fun p -> PanelExtensions.Header(p, "Error"))
     |> ExpandableExtensions.Expand
     |> HasBoxBorderExtensions.RoundedBorder

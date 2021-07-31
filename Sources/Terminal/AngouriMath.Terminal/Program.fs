@@ -4,6 +4,8 @@ open AngouriMath.Terminal.Lib.PreRunCode
 open UserInterface
 open Spectre.Console
 
+Console.WindowHeight <- 50
+
 let lineEditor = getLineEditor AnsiConsole.Console
 
 let rec readAndRespond kernel =
