@@ -77,10 +77,14 @@ let private loadAssembly kernel (path : string) =
 let createKernel () =
     let kernel = new FSharpKernel ()
 
-    let load (typeInfo : Type) =    
-        match loadAssembly kernel typeInfo.Assembly.Location with
-        | Error error -> Result.Error error
-        | _ -> Result.Ok ()
+    let load (typeInfo : Type) =
+        let assemblyLocation = typeInfo.Assembly.Location
+        if System.IO.File.Exists assemblyLocation then
+            match loadAssembly kernel assemblyLocation with
+            | Error error -> Result.Error error
+            | _ -> Result.Ok ()
+        else
+            Result.Error $"Assembly {assemblyLocation} does not exist"
 
 
     load typeof<MathS>
