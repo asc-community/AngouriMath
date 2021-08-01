@@ -24,6 +24,14 @@ let x = symbol ""x""
 let y = symbol ""y""
 let a = symbol ""a""
 let b = symbol ""b""
+
+let help () =
+    let url = ""https://github.com/asc-community/AngouriMath/wiki/Terminal""
+    let psi = System.Diagnostics.ProcessStartInfo ()
+    psi.FileName <- url
+    psi.UseShellExecute <- true
+    System.Diagnostics.Process.Start psi
+    $""Sending you to {url}""
 "
 
 let enableAngouriMath kernel =
