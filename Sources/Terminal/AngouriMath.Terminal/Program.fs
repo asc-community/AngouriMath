@@ -35,10 +35,7 @@ FigletText "AngouriMath"
 |> AnsiConsole.Console.Write
 
 $@"
-It is an interface to AngouriMath, open source symbolic algebra
-library. The terminal uses F# Interactive inside, so that you can
-run any command you could in normal F#. Type 'preRunCode' to see, 
-what code was pre-ran before you were able to type.
+Hi! Type `help ()` to get more info.
 " |> Markup
   |> AlignableExtensions.Centered
   |> AnsiConsole.Console.Write

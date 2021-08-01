@@ -5,7 +5,7 @@ open Spectre.Console
 open RadLine
 
 let init () = 
-    Console.Title <- "AngouriMath Terminal."
+    Console.Title <- "AngouriMath Terminal"
 
 let private getPrefix prefix =
     let time = DateTime.Now.ToString("HH:mm:ss")
@@ -20,11 +20,11 @@ let writeLine (ansiConsole : IAnsiConsole) (input : string) =
     printf "\n"
     input
     |> Markup.Escape
-    |> Panel 
+    |> Panel
     |> (fun p -> PanelExtensions.Header(p, "Ok"))
     |> ExpandableExtensions.Expand
     |> HasBoxBorderExtensions.RoundedBorder
-    |> (fun p -> HasBorderExtensions.BorderColor(p, Color.Green))
+    |> (fun p -> HasBorderExtensions.BorderColor(p, Color(byte 0, byte 128, byte 0)))
     |> ansiConsole.Write
 
 
@@ -36,7 +36,7 @@ let writeLineError (ansiConsole : IAnsiConsole) (input : string) =
     |> (fun p -> PanelExtensions.Header(p, "Error"))
     |> ExpandableExtensions.Expand
     |> HasBoxBorderExtensions.RoundedBorder
-    |> (fun p -> HasBorderExtensions.BorderColor(p, Color.Red))
+    |> (fun p -> HasBorderExtensions.BorderColor(p, Color(byte 196, byte 0, byte 0)))
     |> ansiConsole.Write
 
     
@@ -63,7 +63,7 @@ let private getWordHighlighter () =
                     "match"; "with"; "fun"; "if"; "then"; "else";
                     "and"; "or"; "function"; "inline"; "of"; "open";
                     "true"; "false"; "type"; "upcast"; "downcast";
-                    "rec"]
+                    "rec"; ";"; "="; ">"; "<"; "|"]
 
     let operators = ["("; ")"; "["; "]"]
 
@@ -83,7 +83,7 @@ type TimePrefixEditorPromt() =
     interface ILineEditorPrompt with
         member this.GetPrompt(state : ILineEditorState, line : int) = 
             let escaped = getPrefix "In" |> Markup.Escape |> (fun c -> c.Trim())
-            let markup = Markup (escaped, Style Color.White)
+            let markup = Markup (escaped, Style Color.Grey)
             markup, 1
     
 
