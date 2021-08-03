@@ -6,6 +6,8 @@ open AngouriMath.Core
 open System.Threading.Tasks
 open PeterO.Numbers
 open System
+open Plotly.NET
+open Plotly.NET.GenericChart
 
 type KernelExtension() = 
     static member public applyMagic () =
@@ -29,6 +31,8 @@ type KernelExtension() =
         Formatter.Register<ERational>(
             new Func<ERational, string>(fun o -> latexWrap $@"\frac{{{o.Numerator}}}{{{o.Denominator}}}"), "text/html")
 
+        Formatter.SetPreferredMimeTypeFor(typeof<GenericChart>, "text/html")
+        Formatter.Register<GenericChart> (toChartHTML, "text/html")
 
 
 
