@@ -6,13 +6,13 @@ open AngouriMath.FSharp.Core
 
 exception InvalidInput
 
-let displayFunc range (func : obj) =
+let displayFunc (range : 'T seq) (func : obj) =
     let entity = parsed func
     let vars = entity.Vars |> List.ofSeq
     match vars with
     | theOnlyVar::[] ->
-        let compiled = compiled1In<double, double> theOnlyVar func
-        let xData : double List = range
-        let yData : double List  = List.map compiled xData
+        let compiled = compiled1In<'T, double> theOnlyVar func
+        let xData = List.ofSeq range
+        let yData = List.map compiled xData
         Chart.Point (xData, yData)
     | _ -> raise InvalidInput
