@@ -32,7 +32,6 @@ jobs:
         dotnet publish -c Release -r ${{ matrix.osflag }} -o ${{ matrix.osflag }}-publish
       
     - name: 'Upload terminal artifact for ${{ matrix.osflag }}'
-      if: ${{ matrix.os == 'windows-latest' }}
       uses: actions/upload-artifact@v2
       with:
         name: AngouriMath.Terminal.${{ matrix.osflag }}
