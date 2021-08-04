@@ -12,7 +12,7 @@ jobs:
   TerminalBuild:
     strategy:
       matrix:
-        osflag: [win-x64, linux-x64, osx-64]
+        osflag: [win-x64, linux-x64, osx-x64]
   
     runs-on: ubuntu-latest
     
