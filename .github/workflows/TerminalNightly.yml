@@ -12,7 +12,7 @@ jobs:
   TerminalBuild:
     strategy:
       matrix:
-        osflag: [win-x64, linux-x64, osx-x64]
+        osflag: [windows-latest, ubuntu-latest, macos-latest]
   
     runs-on: ubuntu-latest
     
@@ -26,10 +26,10 @@ jobs:
       with:
         dotnet-version: 5.0.302
       
-    - name: Publish terminal for ${{ matrix.osflag }}
+    - name: Build terminal for ${{ matrix.osflag }}
       run: |
         cd Sources/Terminal/AngouriMath.Terminal
-        dotnet publish -c Release -r ${{ matrix.osflag }} -o ${{ matrix.osflag }}-publish
+        dotnet build -c Release -o ${{ matrix.osflag }}-publish
       
     - name: 'Upload terminal artifact for ${{ matrix.osflag }}'
       uses: actions/upload-artifact@v2
