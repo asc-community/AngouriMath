@@ -7,15 +7,19 @@ open AngouriMath.FSharp.Core
 exception InvalidInput of string
 
 
+let private getVarList (expr : AngouriMath.Entity) =
+    expr.Vars |> List.ofSeq |> List.sortBy (fun v -> v.Name)
+
+
 let private getSingleVariable (func : AngouriMath.Entity) =
-    let vars = func.Vars |> List.ofSeq
+    let vars = getVarList func
     match vars with
     | [ theOnlyVar ] -> theOnlyVar
     | _ -> raise (InvalidInput $"There should be exactly one variable, found: {vars}")
 
 
 let private getOnlyTwoVariables (func : AngouriMath.Entity) =
-    let vars = func.Vars |> List.ofSeq
+    let vars = getVarList func
     match vars with
     | [ firstVar; secondVar ] -> firstVar, secondVar
     | _ -> raise (InvalidInput $"There should be exactly one variable, found: {vars}")

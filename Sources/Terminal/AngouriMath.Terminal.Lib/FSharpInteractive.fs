@@ -97,7 +97,9 @@ let createKernel () =
         Formatter.Register<Entity.Matrix> (Func<Entity.Matrix, string> (fun m -> m.ToString(true) |> objectEncode), "text/plain")
 
         (fun c ->
-            c |> Chart.Show
+            c 
+            |> Chart.withSize (1200., 900.)
+            |> Chart.Show
             "Showing in the browser")
         |> (fun f -> Func<GenericChart.GenericChart, string> f)
         |> (fun f -> 
