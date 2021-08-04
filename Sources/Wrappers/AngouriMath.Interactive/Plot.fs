@@ -10,17 +10,14 @@ exception InvalidInput of string
 let private getSingleVariable (func : AngouriMath.Entity) =
     let vars = func.Vars |> List.ofSeq
     match vars with
-    | theOnlyVar::[] -> theOnlyVar
+    | [ theOnlyVar ] -> theOnlyVar
     | _ -> raise (InvalidInput $"There should be exactly one variable, found: {vars}")
 
 
 let private getOnlyTwoVariables (func : AngouriMath.Entity) =
     let vars = func.Vars |> List.ofSeq
     match vars with
-    | firstVar::tail ->
-        match tail with
-        | secondVar::[] -> (firstVar, secondVar)
-        | _ -> raise (InvalidInput $"There should be exactly one variable, found: {vars}")
+    | [ firstVar; secondVar ] -> firstVar, secondVar
     | _ -> raise (InvalidInput $"There should be exactly one variable, found: {vars}")
 
 
