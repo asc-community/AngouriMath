@@ -71,7 +71,17 @@ https://www.myget.org/F/angourimath/api/v3/index.json
 | Website | Stars | License |
 |---------|-------|---------|
 | <a href="https://am.angouri.org"><img alt="Website" src="https://img.shields.io/website?down_message=Down&label=Website&up_message=Up&url=https%3A%2F%2Fam.angouri.org&style=flat-square"></a> | <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/asc-community/AngouriMath?label=Stars&style=flat-square"> | <img alt="GitHub" src="https://img.shields.io/github/license/asc-community/AngouriMath?color=dark-green&label=License&style=flat-square"> |
+
+<a href="CONTRIBUTING.md"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/asc-community/AngouriMath"></a>
+
+If you want, you can add a badge to your repo:
+```
+[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
+```
+[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
+
 </details>
+
 
 ## What is it about?
 
@@ -94,7 +104,7 @@ The two areas of use:
 
 <hr>
 
-<details><summary>🧪<b> Research / Data Science</b> (click)</summary>
+<details><summary>🧪<b> Research / Data Science</b> <sub>[click 🖱️]</sub></summary>
   
 ## <a name="research"></a>AngouriMath for research
 
@@ -143,7 +153,7 @@ Read more about using AngouriMath for research on [the website](https://am.angou
 
 <hr>
 
-<details><summary>💻<b> Software Development</b> (click)</summary>
+<details><summary>💻<b> Software Development</b> <sub>[click 🖱️]</sub></summary>
   
 It is installed from [nuget](https://am.angouri.org/quickstart/#dotnet) for both C# and F# and can be used by Web/Desktop/Mobile development.
 
@@ -483,8 +493,6 @@ catch (OperationCanceledException)
 
 ## <a name="contrib"></a>Contribution
 
-<a href="CONTRIBUTING.md"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/asc-community/AngouriMath"></a>
-
 AngouriMath is a free open-source project, there is no big company backing us. That is why we warmly welcome any contributors
 to the project. Aside from volunteer donations, you can help developing the project: check the [guide for developers](./CONTRIBUTING.md).
 
@@ -494,10 +502,3 @@ to the project. Aside from volunteer donations, you can help developing the proj
 
 The project is open source, but can be used in closed commercial projects. There is no restriction on it
 with the only requirement to keep the MIT license with all distributives of AngouriMath.
-
-
-If you want, you can add a badge to your repo:
-```
-[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
-```
-[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
