@@ -89,6 +89,7 @@ convert an expression to LaTeX, and <a href="https://am.angouri.org/wiki/">many 
 
 <a href="#jupyter"><img src="./.github/additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
 
+
 The two areas of use:
 
 <hr>
