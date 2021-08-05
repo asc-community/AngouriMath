@@ -75,8 +75,6 @@ https://www.myget.org/F/angourimath/api/v3/index.json
 
 ## What is it about?
 
-<a href="#jupyter"><img src="./.github/additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
-
 <a href="https://am.angouri.org">AngouriMath</a> is an open source symbolic algebra library.
 That is, via AngouriMath, you can
 automatically <a href="https://am.angouri.org/wiki/07.-Solvers.html">solve</a> 
@@ -89,17 +87,17 @@ convert an expression to LaTeX, and <a href="https://am.angouri.org/wiki/">many 
 
 ## Where can be used?
 
+<a href="#jupyter"><img src="./.github/additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
+
 The two areas of use:
 
 <hr>
 
-<details><summary><b>✓ Research/data science</b> (click)</summary>
-  
-It is easily used from Jupyter and Visual Studio Code notebooks via F#, great functional-first language. There is also AngouriMath.Terminal for CLI experience.
+<details><summary>🧪<b> Research / Data Science</b> (click)</summary>
   
 ## <a name="research"></a>AngouriMath for research
 
-As F# skyrocketing in the area of data analysis and interactive research, AngouriMath
+As F#, great first-functional language, skyrocketing in the area of data analysis and interactive research, AngouriMath
 offers a few ways to conveniently work with symbolic expressions.
 
 ### Notebooks
@@ -138,13 +136,13 @@ See its [source folder](./Sources/Terminal).
 
 ### More
 
-Read more about usign AngouriMath for research on [the website](https://am.angouri.org/research).
+Read more about using AngouriMath for research on [the website](https://am.angouri.org/research).
   
 </details>
 
 <hr>
 
-<details><summary><b>✓ Software development</b> (click)</summary>
+<details><summary>💻<b> Software Development</b> (click)</summary>
   
 It is installed from [nuget](https://am.angouri.org/quickstart/#dotnet) for both C# and F# and can be used by Web/Desktop/Mobile development.
 
@@ -482,19 +480,6 @@ catch (OperationCanceledException)
 
 <hr>
 
-It is free to use even in commercial projects. We work on it a lot, so your requests on 
-<a href="https://github.com/asc-community/AngouriMath/issues">issues</a> are likely to
-be considered within a few hours.
-
-
-If you want, you can add a badge to your repo:
-```
-[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
-```
-[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
-
-
-
 ## <a name="contrib"></a>Contribution
 
 <a href="CONTRIBUTING.md"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/asc-community/AngouriMath"></a>
@@ -508,3 +493,10 @@ to the project. Aside from volunteer donations, you can help developing the proj
 
 The project is open source, but can be used in closed commercial projects. There is no restriction on it
 with the only requirement to keep the MIT license with all distributives of AngouriMath.
+
+
+If you want, you can add a badge to your repo:
+```
+[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
+```
+[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
