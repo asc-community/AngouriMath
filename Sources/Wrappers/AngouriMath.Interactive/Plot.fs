@@ -57,32 +57,26 @@ let private prepareQuadraticData (xRange : 'T1 seq) (yRange : 'T2 seq) (func : o
     (zData, xData, yData)
         
 
-let private withTitle (func : obj) chart =
-    let entity = parsed func
+let private withTransparency chart =
     chart
-    |> Chart.withTitle $"${entity.Latexise()}$"
-    |> Chart.WithMathTex true
-
+    |> Chart.withTemplate ChartTemplates.transparent
 
 let linear (range : 'T seq) (func : obj) =
     let (xData, yData) = prepareLinearData range func
     Chart.Line (xData, yData)
-    |> withTitle func
-
+    |> withTransparency
 
 let scatter2D (range : 'T seq) (func : obj) =
     let (xData, yData) = prepareLinearData range func
     Chart.Point (xData, yData)
-    |> withTitle func
-    
+    |> withTransparency
 
 let surface (xRange : 'T1 seq) (yRange : 'T2 seq) (func : obj) =
     let (zData, xData, yData) = prepareSurface3DData xRange yRange func
     Chart.Surface (zData, xData, yData)
-    |> withTitle func
-
+    |> withTransparency
 
 let scatter3D (xRange : 'T1 seq) (yRange : 'T2 seq) (func : obj) =
     let (zData, xData, yData) = prepareQuadraticData xRange yRange func
     Chart.Scatter3d (xData, yData, zData, StyleParam.Mode.Lines)
-    |> withTitle func
+    |> withTransparency
