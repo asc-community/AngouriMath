@@ -91,6 +91,7 @@ let createKernel () =
     load typeof<MathS>
     |> Result.bind (fun _ -> load typeof<AngouriMath.FSharp.Core.ParseException>)
     |> Result.bind (fun _ -> load typeof<AngouriMath.InteractiveExtension.KernelExtension>)
+    |> Result.bind (fun _ -> load typeof<Plotly.NET.Chart>)
     |> Result.bind (fun _ ->
         Formatter.SetPreferredMimeTypeFor(typeof<obj>, "text/plain")
         Formatter.Register<obj> objectEncode
