@@ -450,7 +450,25 @@ If you want, you can add a badge to your repo:
 ```
 [![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
 
-## <a name="terminal"></a>Terminal
+## <a name="research"></a>AngouriMath for research
+
+As F# skyrocketing in the area of data analysis and interactive research, AngouriMath
+offers a few ways to conveniently work with symbolic expressions.
+
+### Notebooks
+
+![gif](./.github/additional/readme/vscnotebook.gif)
+
+Notebooks provide amazing experience working with function visualization, for functions
+over one and two variables. With [dotnet/interactive](https://github.com/dotnet/interactive),
+it can be used in Visual Studio Code notebooks as well as Jupyter notebooks. To install
+the package, simply run this in the notebook:
+
+```
+#r "nuget:AngouriMath.Interactive,*-*"
+```
+
+### Terminal
 
 [![gif](./Sources/Terminal/terminal.gif)](./Sources/Terminal)
 
@@ -471,7 +489,9 @@ via `open AngouriMath` command, then you can call the main library's methods.
 
 See its [source folder](./Sources/Terminal).
 
+### More
 
+Read more about usign AngouriMath for research on [the website](https://am.angouri.org/research).
 
 ## <a name="contrib"></a>Contribution
 
