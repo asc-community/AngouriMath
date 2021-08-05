@@ -409,6 +409,39 @@ False
 ```
 
 </details>
+  
+<details><summary><strong>Multithreading</strong></summary>
+
+You are guaranteed that all functions in AM run in one thread. It is also guaranteed that you can safely run multiple 
+functions from AM in different threads, that is, all static variables and lazy properties are thread-safe.
+
+There is also support of cancellation a task. However, to avoid injecting the cancellation token argument into all methods,
+we use `AsyncLocal<T>` instead. That is why instead of passing your token to all methods what you need is to pass it once
+to the `MathS.Multithreading.SetLocalCancellationToken(CancellationToken)` method.
+
+There is a sample code demonstrating cancellation:
+
+```cs
+var cancellationTokenSource = new CancellationTokenSource();
+
+// That goes instead of passing your token to methods
+MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);
+
+// Then you normally run your task
+var currTask = Task.Run(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
+
+try
+{
+    await currTask;
+    LabelState.Text = currTask.Result.ToString();
+}
+catch (OperationCanceledException)
+{
+    LabelState.Text = "Operation canceled";
+}
+```
+
+</details>
 
 <details><summary><strong>F#</strong></summary>
 
@@ -448,39 +481,6 @@ int main()
 {
     AngouriMath::Entity expr = "x y + 2";
     std::cout << expr.Differentiate("x");
-}
-```
-
-</details>
-
-<details><summary><strong>Multithreading</strong></summary>
-
-You are guaranteed that all functions in AM run in one thread. It is also guaranteed that you can safely run multiple 
-functions from AM in different threads, that is, all static variables and lazy properties are thread-safe.
-
-There is also support of cancellation a task. However, to avoid injecting the cancellation token argument into all methods,
-we use `AsyncLocal<T>` instead. That is why instead of passing your token to all methods what you need is to pass it once
-to the `MathS.Multithreading.SetLocalCancellationToken(CancellationToken)` method.
-
-There is a sample code demonstrating cancellation:
-
-```cs
-var cancellationTokenSource = new CancellationTokenSource();
-
-// That goes instead of passing your token to methods
-MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);
-
-// Then you normally run your task
-var currTask = Task.Run(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
-
-try
-{
-    await currTask;
-    LabelState.Text = currTask.Result.ToString();
-}
-catch (OperationCanceledException)
-{
-    LabelState.Text = "Operation canceled";
 }
 ```
 
