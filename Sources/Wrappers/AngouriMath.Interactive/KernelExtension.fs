@@ -12,10 +12,23 @@ open AngouriMath.FSharp.Functions
 
 type KernelExtension() = 
     static member public applyMagic () =
-        (fun l -> $"$${latex l}$$")
-        |> (fun f -> new Func<ILatexiseable, string>(f))
-        |> (fun f -> Formatter.Register<ILatexiseable>(f, "text/latex"))
-        Formatter.SetPreferredMimeTypeFor(typeof<ILatexiseable>, "text/latex")
+        let registerLatexRendering (latexiser : 'a -> string) =
+            // register text/latex
+            (fun o -> $"$${latexiser o}$$")
+            |> (fun f -> new Func<'a, string>(f))
+            |> (fun f -> Formatter.Register<'a>(f, "text/latex"))
+
+            // register text/html
+            (fun o -> $@"
+<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
+<script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
+\[{latexiser o}\]")
+            |> (fun f -> new Func<'a, string>(f))
+            |> (fun f -> Formatter.Register<'a>(f, "text/html"))
+
+            // if possible, use text/latex
+            Formatter.SetPreferredMimeTypeFor(typeof<'a>, "text/latex")
+
 
         Formatter.SetPreferredMimeTypeFor(typeof<EDecimal>, "text/plain")
         Formatter.Register<EDecimal>(new Func<EDecimal, string>(fun o -> o.ToString()), "text/plain")
@@ -23,9 +36,9 @@ type KernelExtension() =
         Formatter.SetPreferredMimeTypeFor(typeof<EInteger>, "text/plain")
         Formatter.Register<EInteger>(new Func<EInteger, string>(fun o -> o.ToString()), "text/plain")
 
-        Formatter.SetPreferredMimeTypeFor(typeof<ERational>, "text/html")
-        Formatter.Register<ERational>(
-            new Func<ERational, string>(fun o -> $@"$$\frac{{{o.Numerator}}}{{{o.Denominator}}}$$"), "text/latex")
+        registerLatexRendering (fun (o : ILatexiseable) -> latex o)
+
+        registerLatexRendering (fun (o : ERational) -> $@"\frac{{{o.Numerator}}}{{{o.Denominator}}}")
 
         Formatter.SetPreferredMimeTypeFor(typeof<GenericChart>, "text/html")
         Formatter.Register<GenericChart> (toChartHTML, "text/html")
