@@ -91,15 +91,64 @@ convert an expression to LaTeX, and <a href="https://am.angouri.org/wiki/">many 
 
 The two areas of use:
 
-**✓ Software development**. It is installed from [nuget](https://am.angouri.org/quickstart/#dotnet) for both C# and F# and can be used by Web/Desktop/Mobile development.
+<hr>
 
-**✓ Research/data science**. It is easily used from Jupyter and Visual Studio Code notebooks via F#, great functional-first language. There is also AngouriMath.Terminal for CLI experience. [**[ Read more ->]**](#research)
+<details><summary><b>✓ Research/data science</b> (click)</summary>
+  
+It is easily used from Jupyter and Visual Studio Code notebooks via F#, great functional-first language. There is also AngouriMath.Terminal for CLI experience.
+  
+## <a name="research"></a>AngouriMath for research
 
-It is free to use even in commercial projects. We work on it a lot, so your requests on 
-<a href="https://github.com/asc-community/AngouriMath/issues">issues</a> are likely to
-be considered within a few hours.
+As F# skyrocketing in the area of data analysis and interactive research, AngouriMath
+offers a few ways to conveniently work with symbolic expressions.
 
-## Installing the lib
+### Notebooks
+
+![gif](./.github/additional/readme/vscnotebook.gif)
+
+Notebooks provide amazing experience working with function visualization, for functions
+over one and two variables. With [dotnet/interactive](https://github.com/dotnet/interactive),
+it can be used in Visual Studio Code notebooks as well as Jupyter notebooks. To install
+the package, simply run this in the notebook:
+
+```
+#r "nuget:AngouriMath.Interactive,*-*"
+```
+
+### Terminal
+
+[![gif](./Sources/Terminal/terminal.gif)](./Sources/Terminal)
+
+As both a demonstration sample and a convenient tool, this repository includes
+tool called AngouriMath.Terminal. It is a CLI-based program to interact with
+AngouriMath (as opposed to API-based interaction, that is, consuming it as a lib).
+
+If you only need this program, here is the instructions how to build and run it:
+```
+git clone https://github.com/asc-community/AngouriMath
+cd AngouriMath/Sources/Terminal/AngouriMath.Terminal
+dotnet run -c release
+```
+
+See the online [Jupyter notebook](https://mybinder.org/v2/gh/asc-community/AngouriMathLab/try?filepath=HelloBook.AngouriMath.Interactive.ipynb) on
+how to use the F# API of AngouriMath. Note, that the C# API is still available
+via `open AngouriMath` command, then you can call the main library's methods.
+
+See its [source folder](./Sources/Terminal).
+
+### More
+
+Read more about usign AngouriMath for research on [the website](https://am.angouri.org/research).
+  
+</details>
+
+<hr>
+
+<details><summary><b>✓ Software development</b> (click)</summary>
+  
+It is installed from [nuget](https://am.angouri.org/quickstart/#dotnet) for both C# and F# and can be used by Web/Desktop/Mobile development.
+
+## Installing the library
 1. Install AngouriMath from [NuGet](https://www.nuget.org/packages/AngouriMath).
 2. Write the following code:
 ```cs
@@ -395,25 +444,6 @@ int main()
 
 </details>
 
-<details><summary><strong>Jupyter</strong></summary>
-
-If you already installed <a href="https://jupyter.org/install">Jupyter</a> and 
-<a href="https://github.com/dotnet/interactive">Interactive</a> for it, install
-<a href="https://www.nuget.org/packages/AngouriMath.Interactive">package</a> by copying this to your first cell:
-
-```cs
-#r "nuget:AngouriMath.Interactive, *-*"
-```
-
-Now any `ILatexiseable` will be displayed as LaTeX. Try example
-<a href="https://mybinder.org/v2/gh/asc-community/Try/main?filepath=HelloBook.AngouriMath.Interactive.ipynb">here</a>, or 
-<a href="https://nbviewer.jupyter.org/github/asc-community/Try/blob/main/notebooks/HelloBook.AngouriMath.Interactive.ipynb">view</a> it
-
-Check the <a href="Sources/Samples/Interactive.Sample.ipynb">F#</a> and 
-<a href="Sources/Samples/CSharp.Interactive.Sample.ipynb">C#</a> samples.
-
-</details>
-
 <details><summary><strong>Multithreading</strong></summary>
 
 You are guaranteed that all functions in AM run in one thread. It is also guaranteed that you can safely run multiple 
@@ -447,54 +477,23 @@ catch (OperationCanceledException)
 
 </details>
 
+  
+</details>
+
+<hr>
+
+It is free to use even in commercial projects. We work on it a lot, so your requests on 
+<a href="https://github.com/asc-community/AngouriMath/issues">issues</a> are likely to
+be considered within a few hours.
+
+
 If you want, you can add a badge to your repo:
 ```
 [![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
 ```
 [![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
 
-## <a name="research"></a>AngouriMath for research
 
-As F# skyrocketing in the area of data analysis and interactive research, AngouriMath
-offers a few ways to conveniently work with symbolic expressions.
-
-### Notebooks
-
-![gif](./.github/additional/readme/vscnotebook.gif)
-
-Notebooks provide amazing experience working with function visualization, for functions
-over one and two variables. With [dotnet/interactive](https://github.com/dotnet/interactive),
-it can be used in Visual Studio Code notebooks as well as Jupyter notebooks. To install
-the package, simply run this in the notebook:
-
-```
-#r "nuget:AngouriMath.Interactive,*-*"
-```
-
-### Terminal
-
-[![gif](./Sources/Terminal/terminal.gif)](./Sources/Terminal)
-
-As both a demonstration sample and a convenient tool, this repository includes
-tool called AngouriMath.Terminal. It is a CLI-based program to interact with
-AngouriMath (as opposed to API-based interaction, that is, consuming it as a lib).
-
-If you only need this program, here is the instructions how to build and run it:
-```
-git clone https://github.com/asc-community/AngouriMath
-cd AngouriMath/Sources/Terminal/AngouriMath.Terminal
-dotnet run -c release
-```
-
-See the online [Jupyter notebook](https://mybinder.org/v2/gh/asc-community/AngouriMathLab/try?filepath=HelloBook.AngouriMath.Interactive.ipynb) on
-how to use the F# API of AngouriMath. Note, that the C# API is still available
-via `open AngouriMath` command, then you can call the main library's methods.
-
-See its [source folder](./Sources/Terminal).
-
-### More
-
-Read more about usign AngouriMath for research on [the website](https://am.angouri.org/research).
 
 ## <a name="contrib"></a>Contribution
 
