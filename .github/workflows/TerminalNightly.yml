@@ -35,7 +35,7 @@ jobs:
     - name: Build terminal for ${{ matrix.osflag }}
       run: |
         cd Sources/Terminal/AngouriMath.Terminal
-        dotnet build -c Release -o ${{ matrix.osflag }}-publish
+        dotnet build -c Release -r ${{ matrix.rid }} -o ${{ matrix.osflag }}-publish
       
     - name: 'Upload terminal artifact for ${{ matrix.rid }}'
       uses: actions/upload-artifact@v2
