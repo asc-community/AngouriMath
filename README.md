@@ -80,23 +80,26 @@ https://www.myget.org/F/angourimath/api/v3/index.json
 <a href="https://am.angouri.org">AngouriMath</a> is an open source symbolic algebra library.
 That is, via AngouriMath, you can
 automatically <a href="https://am.angouri.org/wiki/07.-Solvers.html">solve</a> 
-equations, systems of equations, work with sets,
+equations, systems of equations,
 <a href="https://am.angouri.org/wiki/05.-Differentiation.html">differentiate</a>,
 <a href="https://am.angouri.org/wiki/01.-Expressions.html">parse</a> from string,
 <a href="https://am.angouri.org/wiki/09.-Compilation.html">compile expressions</a>, work
 with <a href="https://am.angouri.org/wiki/10.-Matrices.html">matrices</a>, find limits,
 convert an expression to LaTeX, and <a href="https://am.angouri.org/wiki/">many other things</a>.
 
-It is not a CAS, so you can use it in any your project by installing it from 
-<a href="https://www.nuget.org/packages/AngouriMath">NuGet</a>. AngouriMath
-can be used in calculators, algebra systems, educational/quiz apps, graphics,
-TeX rendering applications, etc.
+## Where can be used?
+
+The two areas of use:
+
+**✓ Software development**. It is installed from [nuget](https://am.angouri.org/quickstart/#dotnet) for both C# and F# and can be used by Web/Desktop/Mobile development.
+
+**✓ Research/data science**. It is easily used from Jupyter and Visual Studio Code notebooks via F#, great functional-first language. There is also AngouriMath.Terminal for CLI experience. [**[ Read more ->]**](#research)
 
 It is free to use even in commercial projects. We work on it a lot, so your requests on 
 <a href="https://github.com/asc-community/AngouriMath/issues">issues</a> are likely to
 be considered within a few hours.
 
-## Quick start
+## Installing the lib
 1. Install AngouriMath from [NuGet](https://www.nuget.org/packages/AngouriMath).
 2. Write the following code:
 ```cs
