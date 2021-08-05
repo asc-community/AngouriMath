@@ -12,9 +12,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="AngouriMath.Interactive" Version="1.3.0" />
     <PackageReference Include="FSharp.SystemTextJson" Version="0.17.4" />
     <PackageReference Include="Microsoft.DotNet.Interactive.FSharp" Version="1.0.0-beta.21357.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Wrappers\AngouriMath.Interactive\AngouriMath.Interactive.fsproj" />
   </ItemGroup>
 
 </Project>

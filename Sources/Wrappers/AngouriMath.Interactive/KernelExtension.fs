@@ -6,18 +6,29 @@ open AngouriMath.Core
 open System.Threading.Tasks
 open PeterO.Numbers
 open System
+open Plotly.NET
+open Plotly.NET.GenericChart
+open AngouriMath.FSharp.Functions
 
 type KernelExtension() = 
     static member public applyMagic () =
-        let latexWrap latex = $@"
+        let registerLatexRendering (latexiser : 'a -> string) =
+            // register text/latex
+            (fun o -> $"$${latexiser o}$$")
+            |> (fun f -> new Func<'a, string>(f))
+            |> (fun f -> Formatter.Register<'a>(f, "text/latex"))
+
+            // register text/html
+            (fun o -> $@"
 <script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
 <script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
-\[{latex}\]"
+\[{latexiser o}\]")
+            |> (fun f -> new Func<'a, string>(f))
+            |> (fun f -> Formatter.Register<'a>(f, "text/html"))
 
-        let register (value : ILatexiseable) = value.Latexise() |> latexWrap
-        
-        Formatter.Register<ILatexiseable>(register, "text/html")
-        Formatter.SetPreferredMimeTypeFor(typeof<ILatexiseable>, "text/html")
+            // if possible, use text/latex
+            Formatter.SetPreferredMimeTypeFor(typeof<'a>, "text/latex")
+
 
         Formatter.SetPreferredMimeTypeFor(typeof<EDecimal>, "text/plain")
         Formatter.Register<EDecimal>(new Func<EDecimal, string>(fun o -> o.ToString()), "text/plain")
@@ -25,10 +36,12 @@ type KernelExtension() =
         Formatter.SetPreferredMimeTypeFor(typeof<EInteger>, "text/plain")
         Formatter.Register<EInteger>(new Func<EInteger, string>(fun o -> o.ToString()), "text/plain")
 
-        Formatter.SetPreferredMimeTypeFor(typeof<ERational>, "text/html")
-        Formatter.Register<ERational>(
-            new Func<ERational, string>(fun o -> latexWrap $@"\frac{{{o.Numerator}}}{{{o.Denominator}}}"), "text/html")
+        registerLatexRendering (fun (o : ILatexiseable) -> latex o)
 
+        registerLatexRendering (fun (o : ERational) -> $@"\frac{{{o.Numerator}}}{{{o.Denominator}}}")
+
+        Formatter.SetPreferredMimeTypeFor(typeof<GenericChart>, "text/html")
+        Formatter.Register<GenericChart> (toChartHTML, "text/html")
 
 
 

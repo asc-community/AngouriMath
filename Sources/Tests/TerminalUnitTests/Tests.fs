@@ -44,7 +44,11 @@ let ``Test no-terminal 5`` () =
 
 let executeNewWithAm code =
     let kernel = ``Create kernel or fail`` ()
-    enableAngouriMath kernel |> (fun res -> match res with | Error _ -> false | _ -> true) |> Assert.True
+    enableAngouriMath kernel |> (fun res -> 
+        match res with
+        | Error error -> false, error
+        | _ -> true, "")
+        |> Assert.True
     execute kernel code
 
 

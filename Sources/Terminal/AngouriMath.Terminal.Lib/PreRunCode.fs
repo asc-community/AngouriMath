@@ -9,6 +9,7 @@ open AngouriMath.FSharp.Functions
 open AngouriMath.FSharp.Matrices
 open AngouriMath.FSharp.Shortcuts
 open AngouriMath.FSharp.Constants
+open AngouriMath.Interactive
 
 let eval (x : obj) = 
     match (parsed x).InnerSimplified with
