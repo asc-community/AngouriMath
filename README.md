@@ -71,32 +71,94 @@ https://www.myget.org/F/angourimath/api/v3/index.json
 | Website | Stars | License |
 |---------|-------|---------|
 | <a href="https://am.angouri.org"><img alt="Website" src="https://img.shields.io/website?down_message=Down&label=Website&up_message=Up&url=https%3A%2F%2Fam.angouri.org&style=flat-square"></a> | <img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/asc-community/AngouriMath?label=Stars&style=flat-square"> | <img alt="GitHub" src="https://img.shields.io/github/license/asc-community/AngouriMath?color=dark-green&label=License&style=flat-square"> |
+
+<a href="CONTRIBUTING.md"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/asc-community/AngouriMath"></a>
+
+If you want, you can add a badge to your repo:
+```
+[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
+```
+[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
+
 </details>
 
-## What is it about?
 
-<a href="#jupyter"><img src="./.github/additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
+## What is it about?
 
 <a href="https://am.angouri.org">AngouriMath</a> is an open source symbolic algebra library.
 That is, via AngouriMath, you can
 automatically <a href="https://am.angouri.org/wiki/07.-Solvers.html">solve</a> 
-equations, systems of equations, work with sets,
+equations, systems of equations,
 <a href="https://am.angouri.org/wiki/05.-Differentiation.html">differentiate</a>,
 <a href="https://am.angouri.org/wiki/01.-Expressions.html">parse</a> from string,
 <a href="https://am.angouri.org/wiki/09.-Compilation.html">compile expressions</a>, work
 with <a href="https://am.angouri.org/wiki/10.-Matrices.html">matrices</a>, find limits,
 convert an expression to LaTeX, and <a href="https://am.angouri.org/wiki/">many other things</a>.
 
-It is not a CAS, so you can use it in any your project by installing it from 
-<a href="https://www.nuget.org/packages/AngouriMath">NuGet</a>. AngouriMath
-can be used in calculators, algebra systems, educational/quiz apps, graphics,
-TeX rendering applications, etc.
+## Where can be used?
 
-It is free to use even in commercial projects. We work on it a lot, so your requests on 
-<a href="https://github.com/asc-community/AngouriMath/issues">issues</a> are likely to
-be considered within a few hours.
+<a href="#jupyter"><img src="./.github/additional/readme/side.PNG" align="right" width="25%" alt="AngouriMath now supports Jupyter integration"/></a>
 
-## Quick start
+
+The two areas of use:
+
+<hr>
+
+<details><summary>🧪<b> Research / Data Science</b> <sub>[click 🖱️]</sub></summary>
+  
+## <a name="research"></a>AngouriMath for research
+
+As F#, great first-functional language, skyrocketing in the area of data analysis and interactive research, AngouriMath
+offers a few ways to conveniently work with symbolic expressions.
+
+### Notebooks
+
+![gif](./.github/additional/readme/vscnotebook.gif)
+
+Notebooks provide amazing experience working with function visualization, for functions
+over one and two variables. With [dotnet/interactive](https://github.com/dotnet/interactive),
+it can be used in Visual Studio Code notebooks as well as Jupyter notebooks. To install
+the package, simply run this in the notebook:
+
+```
+#r "nuget:AngouriMath.Interactive,*-*"
+```
+
+### Terminal
+
+[![gif](./Sources/Terminal/terminal.gif)](./Sources/Terminal)
+
+As both a demonstration sample and a convenient tool, this repository includes
+tool called AngouriMath.Terminal. It is a CLI-based program to interact with
+AngouriMath (as opposed to API-based interaction, that is, consuming it as a lib).
+
+If you only need this program, here is the instructions how to build and run it:
+```
+git clone https://github.com/asc-community/AngouriMath
+cd AngouriMath/Sources/Terminal/AngouriMath.Terminal
+dotnet run -c release
+```
+
+See the online [Jupyter notebook](https://mybinder.org/v2/gh/asc-community/AngouriMathLab/try?filepath=HelloBook.AngouriMath.Interactive.ipynb) on
+how to use the F# API of AngouriMath. Note, that the C# API is still available
+via `open AngouriMath` command, then you can call the main library's methods.
+
+See its [source folder](./Sources/Terminal).
+
+### More
+
+Read more about using AngouriMath for research on [the website](https://am.angouri.org/research).
+  
+</details>
+
+<hr>
+
+<details><summary>💻<b> Software Development</b> <sub>[click 🖱️]</sub></summary>
+<br>
+  
+It is installed from [nuget](https://am.angouri.org/quickstart/#dotnet) for both C# and F# and can be used by Web/Desktop/Mobile development.
+
+## Installing the library
 1. Install AngouriMath from [NuGet](https://www.nuget.org/packages/AngouriMath).
 2. Write the following code:
 ```cs
@@ -348,6 +410,39 @@ False
 ```
 
 </details>
+  
+<details><summary><strong>Multithreading</strong></summary>
+
+You are guaranteed that all functions in AM run in one thread. It is also guaranteed that you can safely run multiple 
+functions from AM in different threads, that is, all static variables and lazy properties are thread-safe.
+
+There is also support of cancellation a task. However, to avoid injecting the cancellation token argument into all methods,
+we use `AsyncLocal<T>` instead. That is why instead of passing your token to all methods what you need is to pass it once
+to the `MathS.Multithreading.SetLocalCancellationToken(CancellationToken)` method.
+
+There is a sample code demonstrating cancellation:
+
+```cs
+var cancellationTokenSource = new CancellationTokenSource();
+
+// That goes instead of passing your token to methods
+MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);
+
+// Then you normally run your task
+var currTask = Task.Run(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
+
+try
+{
+    await currTask;
+    LabelState.Text = currTask.Result.ToString();
+}
+catch (OperationCanceledException)
+{
+    LabelState.Text = "Operation canceled";
+}
+```
+
+</details>
 
 <details><summary><strong>F#</strong></summary>
 
@@ -392,90 +487,12 @@ int main()
 
 </details>
 
-<details><summary><strong>Jupyter</strong></summary>
-
-If you already installed <a href="https://jupyter.org/install">Jupyter</a> and 
-<a href="https://github.com/dotnet/interactive">Interactive</a> for it, install
-<a href="https://www.nuget.org/packages/AngouriMath.Interactive">package</a> by copying this to your first cell:
-
-```cs
-#r "nuget:AngouriMath.Interactive, *-*"
-```
-
-Now any `ILatexiseable` will be displayed as LaTeX. Try example
-<a href="https://mybinder.org/v2/gh/asc-community/Try/main?filepath=HelloBook.AngouriMath.Interactive.ipynb">here</a>, or 
-<a href="https://nbviewer.jupyter.org/github/asc-community/Try/blob/main/notebooks/HelloBook.AngouriMath.Interactive.ipynb">view</a> it
-
-Check the <a href="Sources/Samples/Interactive.Sample.ipynb">F#</a> and 
-<a href="Sources/Samples/CSharp.Interactive.Sample.ipynb">C#</a> samples.
-
+  
 </details>
 
-<details><summary><strong>Multithreading</strong></summary>
-
-You are guaranteed that all functions in AM run in one thread. It is also guaranteed that you can safely run multiple 
-functions from AM in different threads, that is, all static variables and lazy properties are thread-safe.
-
-There is also support of cancellation a task. However, to avoid injecting the cancellation token argument into all methods,
-we use `AsyncLocal<T>` instead. That is why instead of passing your token to all methods what you need is to pass it once
-to the `MathS.Multithreading.SetLocalCancellationToken(CancellationToken)` method.
-
-There is a sample code demonstrating cancellation:
-
-```cs
-var cancellationTokenSource = new CancellationTokenSource();
-
-// That goes instead of passing your token to methods
-MathS.Multithreading.SetLocalCancellationToken(cancellationTokenSource.Token);
-
-// Then you normally run your task
-var currTask = Task.Run(() => InputText.Text.Solve("x"), cancellationTokenSource.Token);
-
-try
-{
-    await currTask;
-    LabelState.Text = currTask.Result.ToString();
-}
-catch (OperationCanceledException)
-{
-    LabelState.Text = "Operation canceled";
-}
-```
-
-</details>
-
-If you want, you can add a badge to your repo:
-```
-[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
-```
-[![Powered by AngouriMath](https://img.shields.io/badge/Powered%20by-AngouriMath-purple?style=flat-square&labelColor=646)](https://am.angouri.org)
-
-## <a name="terminal"></a>Terminal
-
-[![gif](./Sources/Terminal/terminal.gif)](./Sources/Terminal)
-
-As both a demonstration sample and a convenient tool, this repository includes
-tool called AngouriMath.Terminal. It is a CLI-based program to interact with
-AngouriMath (as opposed to API-based interaction, that is, consuming it as a lib).
-
-If you only need this program, here is the instructions how to build and run it:
-```
-git clone https://github.com/asc-community/AngouriMath
-cd AngouriMath/Sources/Terminal/AngouriMath.Terminal
-dotnet run -c release
-```
-
-See the online [Jupyter notebook](https://mybinder.org/v2/gh/asc-community/AngouriMathLab/try?filepath=HelloBook.AngouriMath.Interactive.ipynb) on
-how to use the F# API of AngouriMath. Note, that the C# API is still available
-via `open AngouriMath` command, then you can call the main library's methods.
-
-See its [source folder](./Sources/Terminal).
-
-
+<hr>
 
 ## <a name="contrib"></a>Contribution
-
-<a href="CONTRIBUTING.md"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/asc-community/AngouriMath"></a>
 
 AngouriMath is a free open-source project, there is no big company backing us. That is why we warmly welcome any contributors
 to the project. Aside from volunteer donations, you can help developing the project: check the [guide for developers](./CONTRIBUTING.md).
