@@ -154,6 +154,7 @@ Read more about using AngouriMath for research on [the website](https://am.angou
 <hr>
 
 <details><summary>💻<b> Software Development</b> <sub>[click 🖱️]</sub></summary>
+<br>
   
 It is installed from [nuget](https://am.angouri.org/quickstart/#dotnet) for both C# and F# and can be used by Web/Desktop/Mobile development.
 
