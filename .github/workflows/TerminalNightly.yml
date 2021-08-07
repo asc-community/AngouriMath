@@ -44,3 +44,16 @@ jobs:
         name: AngouriMath.Terminal.${{ matrix.rid }}
         path: ./Sources/Terminal/AngouriMath.Terminal/${{ matrix.osflag }}-publish
         retention-days: 14
+    
+    - name: 'Pack and release'
+      run: |
+        zip -r binaries-${{ matrix.rid }}.zip ./Sources/Terminal/AngouriMath.Terminal/${{ matrix.osflag }}-publish
+        
+        commithash=$(git rev-parse --short HEAD)
+        currtime=$(date +%s)
+        echo "commit hash is $commithash"
+        echo "time is $currtime"
+        name=1.0.0-terminal-master-$currtime-$commithash
+        echo "name is $name"
+        
+        gh release create v1.0.0-$name 'binaries-${{ matrix.rid }}.zip#binaries-${{ matrix.rid }}' -p
