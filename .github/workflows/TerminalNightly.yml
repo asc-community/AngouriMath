@@ -27,10 +27,11 @@ jobs:
       with:
         submodules: 'recursive'
         
-    - name: Setup .NET 5
+    - name: Setup .NET 6
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: 5.0.302
+        dotnet-version: '6.0.x'
+        include-prerelease: true
       
     - name: Build terminal for ${{ matrix.osflag }}
       run: |
