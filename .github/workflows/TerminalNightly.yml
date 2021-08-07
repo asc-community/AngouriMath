@@ -38,12 +38,12 @@ jobs:
         cd Sources/Terminal/AngouriMath.Terminal
         dotnet publish -c Release -r ${{ matrix.rid }} -o ${{ matrix.osflag }}-publish
       
-    - name: 'Upload terminal artifact for ${{ matrix.rid }}'
-      uses: actions/upload-artifact@v2
-      with:
-        name: AngouriMath.Terminal.${{ matrix.rid }}
-        path: ./Sources/Terminal/AngouriMath.Terminal/${{ matrix.osflag }}-publish
-        retention-days: 14
+    # - name: 'Upload terminal artifact for ${{ matrix.rid }}'
+      # uses: actions/upload-artifact@v2
+      # with:
+        # name: AngouriMath.Terminal.${{ matrix.rid }}
+        # path: ./Sources/Terminal/AngouriMath.Terminal/${{ matrix.osflag }}-publish
+        # retention-days: 14
     
     - name: 'Pack and release'
       run: |
@@ -56,4 +56,6 @@ jobs:
         name=1.0.0-terminal-master-$currtime-$commithash
         echo "name is $name"
         
-        gh release create v1.0.0-$name 'binaries-${{ matrix.rid }}.zip#binaries-${{ matrix.rid }}' -p
+        # gh auth login --with-token ${{ GITHUB_TOKEN }}
+        gh auth login
+        gh release create v1.0.0-$name 'binaries-${{ matrix.rid }}.zip#binaries-${{ matrix.rid }}' -p -r asc-community/AngouriMathLab
