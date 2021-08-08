@@ -132,6 +132,8 @@ As both a demonstration sample and a convenient tool, this repository includes
 tool called AngouriMath.Terminal. It is a CLI-based program to interact with
 AngouriMath (as opposed to API-based interaction, that is, consuming it as a lib).
 
+[**[ Get nightly build ]**](https://github.com/asc-community/AngouriMathLab/releases)
+  
 If you only need this program, here is the instructions how to build and run it:
 ```
 git clone https://github.com/asc-community/AngouriMath
