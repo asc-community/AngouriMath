@@ -36,13 +36,9 @@ jobs:
         zip -r terminal-linux-x64.zip ./Sources/Terminal/AngouriMath.Terminal/linux-x64-publish
         zip -r terminal-osx-x64.zip ./Sources/Terminal/AngouriMath.Terminal/osx-x64-publish
         
-    - uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          terminal-win-x64.zip
-          terminal-linux-x64.zip
-          terminal-osx-x64.zip
-        token: ${{ secrets.LAB_ACCESS_TOKEN }}
-        tag_name: 'v1.0.0'
-      env:
-        GITHUB_REPOSITORY: asc-community/AngouriMathLab
+    - name: 'Release'
+      run: |
+        echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
+        gh auth login --with-token < token.txt
+        gh release create v1.0.0-$name 'terminal-win-x64.zip' 'terminal-linux-x64.zip' 'terminal-osx-x64.zip' -p -R asc-community/AngouriMathLab
+    
