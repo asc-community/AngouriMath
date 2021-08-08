@@ -10,17 +10,7 @@ on:
  
 jobs:
   TerminalBuild:
-    strategy:
-      matrix:
-        include:
-        - osflag: windows-latest
-          rid: win-x64
-        - osflag: ubuntu-latest
-          rid: linux-x64
-        - osflag: macos-latest
-          rid: osx-x64
-  
-    runs-on: ${{ matrix.osflag }}
+    runs-on: ubuntu-latest
     
     steps:
     - uses: actions/checkout@v2
@@ -36,26 +26,22 @@ jobs:
     - name: Build terminal for ${{ matrix.osflag }}
       run: |
         cd Sources/Terminal/AngouriMath.Terminal
-        dotnet publish -c Release -r ${{ matrix.rid }} -o ${{ matrix.osflag }}-publish
-      
-    # - name: 'Upload terminal artifact for ${{ matrix.rid }}'
-      # uses: actions/upload-artifact@v2
-      # with:
-        # name: AngouriMath.Terminal.${{ matrix.rid }}
-        # path: ./Sources/Terminal/AngouriMath.Terminal/${{ matrix.osflag }}-publish
-        # retention-days: 14
+        dotnet publish -c Release -r win-x64 -o win-x64-publish
+        dotnet publish -c Release -r linux-x64 -o linux-x64-publish
+        dotnet publish -c Release -r osx-x64 -o osx-x64-publish
     
-    - name: 'Pack and release'
+    - name: 'Pack'
       run: |
-        zip -r binaries-${{ matrix.rid }}.zip ./Sources/Terminal/AngouriMath.Terminal/${{ matrix.osflag }}-publish
+        zip -r terminal-win-x64.zip ./Sources/Terminal/AngouriMath.Terminal/win-x64-publish
+        zip -r terminal-linux-x64.zip ./Sources/Terminal/AngouriMath.Terminal/linux-x64-publish
+        zip -r terminal-osx-x64.zip ./Sources/Terminal/AngouriMath.Terminal/osx-x64-publish
         
-        commithash=$(git rev-parse --short HEAD)
-        currtime=$(date +%s)
-        echo "commit hash is $commithash"
-        echo "time is $currtime"
-        name=1.0.0-terminal-master-$currtime-$commithash
-        echo "name is $name"
-        
-        echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
-        gh auth login --with-token < token.txt
-        gh release create v1.0.0-$name 'binaries-${{ matrix.rid }}.zip#binaries-${{ matrix.rid }}' -p -R asc-community/AngouriMathLab
+    - uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          terminal-win-x64.zip
+          terminal-linux-x64.zip
+          terminal-osx-x64.zip
+        token: ${{ secrets.LAB_ACCESS_TOKEN }}
+      env:
+        GITHUB_REPOSITORY: asc-community/AngouriMathLab
