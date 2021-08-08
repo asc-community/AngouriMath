@@ -38,6 +38,13 @@ jobs:
         
     - name: 'Release'
       run: |
+        commithash=$(git rev-parse --short HEAD)
+        currtime=$(date +%s)
+        echo "commit hash is $commithash"
+        echo "time is $currtime"
+        name=1.0.0-terminal-master-$currtime-$commithash
+        echo "name is $name"
+      
         echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
         gh auth login --with-token < token.txt
         gh release create v1.0.0-$name 'terminal-win-x64.zip' 'terminal-linux-x64.zip' 'terminal-osx-x64.zip' -p -R asc-community/AngouriMathLab
