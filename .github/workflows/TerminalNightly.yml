@@ -58,4 +58,4 @@ jobs:
         
         echo ${{ secrets.GITHUB_TOKEN }} > token.txt
         gh auth login --with-token < token.txt
-        gh release create v1.0.0-$name 'binaries-${{ matrix.rid }}.zip#binaries-${{ matrix.rid }}' -p -r asc-community/AngouriMathLab
+        gh release create v1.0.0-$name 'binaries-${{ matrix.rid }}.zip#binaries-${{ matrix.rid }}' -p -R asc-community/AngouriMathLab
