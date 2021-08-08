@@ -1,0 +1,48 @@
+name: 'Terminal nightly builds'
+
+on:
+  push:
+    branches:
+      - master
+ 
+jobs:
+  TerminalBuild:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+        
+    - name: Setup .NET 6
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+        include-prerelease: true
+      
+    - name: Build terminal for ${{ matrix.osflag }}
+      run: |
+        cd Sources/Terminal/AngouriMath.Terminal
+        dotnet publish -c Release -r win-x64 -o win-x64-publish
+        dotnet publish -c Release -r linux-x64 -o linux-x64-publish
+        dotnet publish -c Release -r osx-x64 -o osx-x64-publish
+    
+    - name: 'Pack'
+      run: |
+        zip -r terminal-win-x64.zip ./Sources/Terminal/AngouriMath.Terminal/win-x64-publish
+        zip -r terminal-linux-x64.zip ./Sources/Terminal/AngouriMath.Terminal/linux-x64-publish
+        zip -r terminal-osx-x64.zip ./Sources/Terminal/AngouriMath.Terminal/osx-x64-publish
+        
+    - name: 'Release'
+      run: |
+        commithash=$(git rev-parse --short HEAD)
+        currtime=$(date +%s)
+        echo "commit hash is $commithash"
+        echo "time is $currtime"
+        name=1.0.0-terminal-master-$currtime-$commithash
+        echo "name is $name"
+      
+        echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
+        gh auth login --with-token < token.txt
+        gh release create v$name 'terminal-win-x64.zip' 'terminal-linux-x64.zip' 'terminal-osx-x64.zip' -p -R asc-community/AngouriMathLab -t 'AngouriMath.Terminal auto-release'
+    
