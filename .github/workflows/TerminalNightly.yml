@@ -43,5 +43,6 @@ jobs:
           terminal-linux-x64.zip
           terminal-osx-x64.zip
         token: ${{ secrets.LAB_ACCESS_TOKEN }}
+        tag_name: 'v1.0.0'
       env:
         GITHUB_REPOSITORY: asc-community/AngouriMathLab
