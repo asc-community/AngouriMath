@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - master
+  pull_request:
+    branches:
+      - '*'
  
 jobs:
   TerminalBuild:
@@ -20,12 +23,18 @@ jobs:
         dotnet-version: '6.0.x'
         include-prerelease: true
       
-    - name: Build terminal for ${{ matrix.osflag }}
+    - name: 'Build terminal for three OS'
       run: |
         cd Sources/Terminal/AngouriMath.Terminal
         dotnet publish -c Release -r win-x64 -o win-x64-publish
         dotnet publish -c Release -r linux-x64 -o linux-x64-publish
         dotnet publish -c Release -r osx-x64 -o osx-x64-publish
+    
+    - name: 'Create start script'
+      run: |
+        echo "dotnet AngouriMath.Terminal.dll" > ./Sources/Terminal/AngouriMath.Terminal/win-x64-publish/start.bat
+        echo "dotnet AngouriMath.Terminal.dll" > ./Sources/Terminal/AngouriMath.Terminal/linux-x64-publish/start.sh
+        echo "dotnet AngouriMath.Terminal.dll" > ./Sources/Terminal/AngouriMath.Terminal/osx-x64-publish/start.sh
     
     - name: 'Pack'
       run: |
