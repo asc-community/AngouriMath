@@ -47,5 +47,5 @@ jobs:
       
         echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
         gh auth login --with-token < token.txt
-        gh release create v1.0.0-$name 'terminal-win-x64.zip' 'terminal-linux-x64.zip' 'terminal-osx-x64.zip' -p -R asc-community/AngouriMathLab -t 'Terminal $name'
+        gh release create v$name 'terminal-win-x64.zip' 'terminal-linux-x64.zip' 'terminal-osx-x64.zip' -p -R asc-community/AngouriMathLab -t 'AngouriMath.Terminal auto-release'
     
