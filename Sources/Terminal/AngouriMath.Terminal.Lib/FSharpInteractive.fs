@@ -12,14 +12,10 @@ open Microsoft.DotNet.Interactive.Formatting
 open System
 open AngouriMath
 open Plotly.NET
-
-type ExecutionResult =
-    | SuccessPackageAdded
-    | Error of string
-    | VoidSuccess
-    | PlainTextSuccess of string
-    | LatexSuccess of Latex : string * Source : string
-    | EndOfFile
+open AngouriMath.Terminal.Lib.Consts
+open AssemblyLoadBuilder
+open AngouriMath.FSharp.Core
+open AngouriMath.InteractiveExtension
 
 
 let options = JsonSerializerOptions ()
@@ -70,29 +66,20 @@ let execute (kernel : FSharpKernel) code =
     | Some res -> res
 
 
-let private loadAssembly kernel (path : string) =
-    path.Replace("\\", "\\\\")
-    |> (fun loc -> execute kernel $"#r \"{loc}\"")
+
 
 
 let createKernel () =
     let kernel = new FSharpKernel ()
 
-    let load (typeInfo : Type) =
-        let assemblyLocation = typeInfo.Assembly.Location
-        if System.IO.File.Exists assemblyLocation then
-            match loadAssembly kernel assemblyLocation with
-            | Error error -> Result.Error error
-            | _ -> Result.Ok ()
-        else
-            Result.Error $"Assembly {assemblyLocation} does not exist"
+    let assemblyLoad = AssemblyLoadBuilder (execute, kernel)
 
+    assemblyLoad {
+        yield! typeof<AngouriMath.MathS>
+        yield! typeof<AngouriMath.FSharp.Core.ParseException>
+        yield! typeof<AngouriMath.InteractiveExtension.KernelExtension>
+        yield! typeof<Plotly.NET.Chart>
 
-    load typeof<MathS>
-    |> Result.bind (fun _ -> load typeof<AngouriMath.FSharp.Core.ParseException>)
-    |> Result.bind (fun _ -> load typeof<AngouriMath.InteractiveExtension.KernelExtension>)
-    |> Result.bind (fun _ -> load typeof<Plotly.NET.Chart>)
-    |> Result.bind (fun _ ->
         Formatter.SetPreferredMimeTypeFor(typeof<obj>, "text/plain")
         Formatter.Register<obj> objectEncode
         Formatter.Register<Entity.Matrix> (Func<Entity.Matrix, string> (fun m -> m.ToString(true) |> objectEncode), "text/plain")
@@ -105,4 +92,6 @@ let createKernel () =
         |> (fun f -> Func<GenericChart.GenericChart, string> f)
         |> (fun f -> 
             Formatter.Register<GenericChart.GenericChart> (f, "text/plain"))
-        Result.Ok kernel)
+
+        return! ()
+    }

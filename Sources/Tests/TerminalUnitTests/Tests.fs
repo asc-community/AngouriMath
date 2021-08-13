@@ -4,13 +4,15 @@ open System
 open Xunit
 open AngouriMath.Terminal.Lib.FSharpInteractive
 open AngouriMath.Terminal.Lib.PreRunCode
+open AngouriMath.Terminal.Lib.Consts
+open AngouriMath.Terminal.Lib.AssemblyLoadBuilder
 
 let ``Create kernel or fail`` () =
     match createKernel () with
-    | Result.Error error ->
+    | Failure reasons ->
         Assert.False(true, "Kernel failed to load")
         raise (Exception())
-    | Result.Ok k -> k
+    | Success k -> k
 
 let executeNew = ``Create kernel or fail`` () |> execute 
 
