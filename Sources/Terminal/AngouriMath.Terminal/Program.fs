@@ -50,8 +50,8 @@ printf "Starting the kernel..."
 
 
 match createKernel () with
-| Failure reasons -> handleErrors reasons
-| Success kernel ->
+| Result.Error reasons -> handleErrors reasons
+| Result.Ok kernel ->
     execute kernel "1 + 1" |> ignore  // warm up
     match enableAngouriMath kernel with
     | Error msg -> handleErrors [ msg ]

@@ -8,24 +8,20 @@ type AssemblyLoadResult =
     | AssemblyLoadSuccess
     | AssemblyLoadFailure of string
 
-type AssembliesLoadResult =
-    | Success of FSharpKernel
-    | Failure of string list
-
 type AssemblyLoadBuilder (execute : FSharpKernel -> string -> ExecutionResult, kernel) =
     member this.YieldFrom x = this.load x
-    member this.ReturnFrom x = Success kernel
+    member this.ReturnFrom x = Result.Ok kernel
 
-    member this.Combine (a : AssemblyLoadResult, b : AssembliesLoadResult) =
+    member this.Combine (a : AssemblyLoadResult, b) =
         match (a, b) with
-        | AssemblyLoadSuccess, Success kernel -> Success kernel
-        | AssemblyLoadFailure reason, Success _ -> Failure [ reason ]
-        | AssemblyLoadSuccess, Failure reasons -> Failure reasons
-        | AssemblyLoadFailure reason, Failure reasons -> Failure (reason::reasons)
+        | AssemblyLoadSuccess, Result.Ok kernel -> Result.Ok kernel
+        | AssemblyLoadFailure reason, Result.Ok _ -> Result.Error [ reason ]
+        | AssemblyLoadSuccess, Result.Error reasons -> Result.Error reasons
+        | AssemblyLoadFailure reason, Result.Error reasons -> Result.Error (reason::reasons)
 
     member this.Delay(f) = f()
 
-    member this.Zero () = Success
+    member this.Zero () = Result.Ok ()
 
     member private this.loadAssembly kernel (path : string) =
         path.Replace("\\", "\\\\")

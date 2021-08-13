@@ -9,10 +9,10 @@ open AngouriMath.Terminal.Lib.AssemblyLoadBuilder
 
 let ``Create kernel or fail`` () =
     match createKernel () with
-    | Failure reasons ->
+    | Result.Error reasons ->
         Assert.False(true, "Kernel failed to load")
         raise (Exception())
-    | Success k -> k
+    | Result.Ok k -> k
 
 let executeNew = ``Create kernel or fail`` () |> execute 
 
