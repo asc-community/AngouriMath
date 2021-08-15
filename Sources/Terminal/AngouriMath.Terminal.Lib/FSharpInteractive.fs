@@ -92,6 +92,4 @@ let createKernel () =
         |> (fun f -> Func<GenericChart.GenericChart, string> f)
         |> (fun f -> 
             Formatter.Register<GenericChart.GenericChart> (f, "text/plain"))
-
-        return! ()
     }

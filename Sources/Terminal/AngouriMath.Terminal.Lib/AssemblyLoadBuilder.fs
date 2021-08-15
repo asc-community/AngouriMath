@@ -10,7 +10,7 @@ type AssemblyLoadResult =
 
 type AssemblyLoadBuilder (execute : FSharpKernel -> string -> ExecutionResult, kernel) =
     member this.Yield x = this.load x
-    member this.ReturnFrom x = Result.Ok kernel
+    member _.Run _ = Result.Ok kernel
 
     member this.Combine (a : AssemblyLoadResult, b) =
         match (a, b) with
