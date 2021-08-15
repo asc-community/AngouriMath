@@ -75,10 +75,10 @@ let createKernel () =
     let assemblyLoad = AssemblyLoadBuilder (execute, kernel)
 
     assemblyLoad {
-        yield! typeof<AngouriMath.MathS>
-        yield! typeof<AngouriMath.FSharp.Core.ParseException>
-        yield! typeof<AngouriMath.InteractiveExtension.KernelExtension>
-        yield! typeof<Plotly.NET.Chart>
+        typeof<AngouriMath.MathS>
+        typeof<AngouriMath.FSharp.Core.ParseException>
+        typeof<AngouriMath.InteractiveExtension.KernelExtension>
+        typeof<Plotly.NET.Chart>
 
         Formatter.SetPreferredMimeTypeFor(typeof<obj>, "text/plain")
         Formatter.Register<obj> objectEncode

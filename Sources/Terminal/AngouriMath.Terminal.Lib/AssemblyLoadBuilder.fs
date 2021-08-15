@@ -9,7 +9,7 @@ type AssemblyLoadResult =
     | AssemblyLoadFailure of string
 
 type AssemblyLoadBuilder (execute : FSharpKernel -> string -> ExecutionResult, kernel) =
-    member this.YieldFrom x = this.load x
+    member this.Yield x = this.load x
     member this.ReturnFrom x = Result.Ok kernel
 
     member this.Combine (a : AssemblyLoadResult, b) =
