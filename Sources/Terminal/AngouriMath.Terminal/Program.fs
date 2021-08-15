@@ -1,8 +1,10 @@
 ﻿open System
 open AngouriMath.Terminal.Lib.FSharpInteractive
 open AngouriMath.Terminal.Lib.PreRunCode
+open AngouriMath.Terminal.Lib.Consts
 open UserInterface
 open Spectre.Console
+open AngouriMath.Terminal.Lib.AssemblyLoadBuilder
 
 Console.WindowHeight <- 50
 Console.WindowWidth <- 150
@@ -22,8 +24,9 @@ let rec readAndRespond kernel =
 
     readAndRespond kernel
 
-let handleError error =
-    printfn $"Error: {error}"
+let handleErrors errors =
+    let concat = String.concat "\n"
+    printfn $"Errors: {concat errors}"
     printfn $"Report about it to the official repo. The terminal will be closed."
     Console.ReadLine() |> ignore
 
@@ -47,11 +50,11 @@ printf "Starting the kernel..."
 
 
 match createKernel () with
-| Result.Error error -> handleError error
+| Result.Error reasons -> handleErrors reasons
 | Result.Ok kernel ->
     execute kernel "1 + 1" |> ignore  // warm up
     match enableAngouriMath kernel with
-    | Error msg -> handleError msg
+    | Error msg -> handleErrors [ msg ]
     | _ -> 
         printfn " loaded."
         readAndRespond kernel
