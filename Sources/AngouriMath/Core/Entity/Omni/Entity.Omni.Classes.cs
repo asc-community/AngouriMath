@@ -12,10 +12,10 @@ using AngouriMath.Core.Sets;
 using AngouriMath.Functions.Boolean;
 using HonkSharp.Laziness;
 using Complex = AngouriMath.Entity.Number.Complex;
+using System.Linq.Expressions;
 
 namespace AngouriMath
 {
-
     partial record Entity
     {        
         public partial record Set : Entity
@@ -696,5 +696,47 @@ namespace AngouriMath
             #endregion
         }
 #pragma warning restore CS1591 // TODO: it's only for records' parameters! Remove it once you can document records parameters
+
+        /// <summary>
+        /// Application of arguments to the given expression
+        /// </summary>
+        public sealed partial record Application(Entity Expression, LList<Entity> Arguments) : Entity
+        {
+            private Application New(Entity expr, LList<Entity> arguments)
+                    => ReferenceEquals(Expression, expr)
+                    && arguments.Count() == Arguments.Count()
+                    && ((arguments, Arguments).SequencesAreEqualReferences())
+                    ? this 
+                    : new Application(expr, arguments);
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func)
+                    => func(New(Expression.Replace(func), Arguments.Map(a => a.Replace(func))));
+
+            internal override Priority Priority => Priority.Func;
+
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => (Expression + Arguments).ToArray();
+        }
+
+        /// <summary>
+        /// A lambda with the only parameter and its body
+        /// </summary>
+        public sealed partial record Lambda(Variable Parameter, Entity Body) : Entity
+        {
+            private Lambda New(Variable parameter, Entity body)
+                => ReferenceEquals(Parameter, parameter) && ReferenceEquals(Body, body)
+                    ? this
+                    : new Lambda(parameter, body);
+
+            /// <inheritdoc/>
+            public override Entity Replace(Func<Entity, Entity> func)
+                => func(New(Parameter, Body.Replace(func)));
+
+            internal override Priority Priority => Priority.Lambda;
+
+            /// <inheritdoc/>
+            protected override Entity[] InitDirectChildren() => new [] { Parameter, Body };
+        }
     }
 }

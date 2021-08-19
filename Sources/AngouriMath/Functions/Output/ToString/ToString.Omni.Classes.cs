@@ -155,5 +155,26 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
+
+        partial record Application
+        {
+            /// <inheritdoc/>
+            public override string Stringize()
+                => Expression.Stringize(Expression.Priority < Priority) + " " +
+                    " ".Join(Arguments.Select(arg => arg.Stringize(arg.Priority <= Priority)));
+
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
+
+        partial record Lambda
+        {
+            /// <inheritdoc/>
+            public override string Stringize()
+                => Parameter.Stringize() + " -> " + Body.Stringize(Body.Priority < Priority);
+
+            /// <inheritdoc/>
+            public override string ToString() => Stringize();
+        }
     }
 }

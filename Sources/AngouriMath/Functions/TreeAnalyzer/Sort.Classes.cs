@@ -352,5 +352,15 @@ namespace AngouriMath
         {
             private protected override string SortHashName(SortLevel level) => "__";
         }
+
+        partial record Application
+        {
+            private protected override string SortHashName(SortLevel level) => "___";
+        }
+
+        partial record Lambda
+        {
+            private protected override string SortHashName(SortLevel level) => "___";
+        }
     }
 }

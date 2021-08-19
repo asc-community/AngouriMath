@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Terminal\AngouriMath.Terminal.Lib\AngouriMath.Terminal.Lib.fsproj" />
+    <PackageReference Include="FSharp.Core" Version="5.0.2-beta.21310.3" />
   </ItemGroup>
 
 </Project>

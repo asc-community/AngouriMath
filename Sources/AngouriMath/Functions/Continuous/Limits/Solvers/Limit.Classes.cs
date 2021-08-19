@@ -317,5 +317,17 @@ namespace AngouriMath
                     throw new AngouriBugException("It's been checked before")));
             }
         }
+
+        partial record Application
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+                => null;
+        }
+
+        partial record Lambda
+        {
+            internal override Entity? ComputeLimitDivideEtImpera(Variable x, Entity dist, ApproachFrom side)
+                => null;
+        }
     }
 }

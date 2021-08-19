@@ -19,6 +19,7 @@
     <PackageReference Include="Spectre.Console" Version="0.41.0" />
     <PackageReference Include="radline" Version="0.5.0" />
     <PackageReference Include="Spectre.Console.ImageSharp" Version="0.41.0" />
+    <PackageReference Include="FSharp.Core" Version="5.0.2-beta.21310.3" />
   </ItemGroup>
 
 </Project>

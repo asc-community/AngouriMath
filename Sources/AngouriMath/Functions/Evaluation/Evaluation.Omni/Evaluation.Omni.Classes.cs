@@ -5,6 +5,7 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core.Sets;
+using System;
 
 namespace AngouriMath
 {
@@ -246,6 +247,50 @@ namespace AngouriMath
             protected override Entity InnerSimplify()
                 => IsScalar ? AsScalar().InnerSimplified :
                 Elementwise(e => e.InnerSimplified);
+        }
+
+        partial record Application
+        {
+            private static Entity ApplyOthersIfNeeded(Entity outer, LList<Entity> arguments)
+                => arguments switch
+                {
+                    LEmpty<Entity> => outer,
+                    var nonEmpty => outer.Apply(nonEmpty)
+                };
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify()
+                => ((Expression.InnerSimplified, Arguments.Map(arg => arg.InnerSimplified)) switch
+                {
+                    (var identifier, LEmpty<Entity>) => identifier,
+                    (Variable("sin"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Sin(), otherArgs),
+                    (Variable("cos"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Cos(), otherArgs),
+
+                    (Variable("derivative") v, (var expr, LEmpty<Entity>) args) => New(v, args),
+                    (Variable("derivative"), (var expr, (var x, var otherArgs))) => ApplyOthersIfNeeded(MathS.Derivative(expr, x), otherArgs),
+
+                    (Lambda(var x, var body), (var arg, var otherArgs)) => ApplyOthersIfNeeded(body.Substitute(x, arg), otherArgs),
+
+                    _ => this
+                }) switch
+                {
+                    var thisAgain when ReferenceEquals(thisAgain, this) => this,
+                    var newOne => newOne.InnerSimplified
+                };
+
+            /// <inheritdoc/>
+            protected override Entity InnerEval()
+                => InnerSimplify();
+        }
+
+        partial record Lambda
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify()
+                => New(Parameter, Body.InnerSimplified);
+            /// <inheritdoc/>
+            protected override Entity InnerEval()
+                => New(Parameter, Body.Evaled);
         }
     }
 }

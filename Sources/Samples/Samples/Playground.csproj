@@ -19,7 +19,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj" />
-    <PackageReference Include="HonkSharp" version="1.0.2" />
   </ItemGroup>
 
 </Project>
