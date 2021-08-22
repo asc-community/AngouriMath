@@ -437,7 +437,7 @@ namespace AngouriMath
                         : (
                             value.Vars.Contains(Parameter)
                             ? Unit.Flow
-                                .Let(out var newVar, Variable.CreateUnique(value, "alpha"))
+                                .Let(out var newVar, Variable.CreateUniqueAlphabetFirst(this + value))
                                 .ReplaceWith(new Lambda(newVar, Body.Substitute(Parameter, newVar).Substitute(x, value)))
                             : New(Parameter, Body.Substitute(x, value))
                         )

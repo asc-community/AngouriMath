@@ -85,6 +85,28 @@ namespace AngouriMath
                     i++;
                 return new Variable(prefix + "_" + i);
             }
+
+            [ConstantField]
+            private static readonly Variable[] letterVars = 
+                "xyzabcdefghijklmnopqrstuvw"
+                .Select(c => new Variable(c.ToString()))
+                .Where(c => c.IsConstant is false)
+                .ToArray();
+
+            /// <summary>
+            /// First, tries to find a good single-character variable
+            /// in the alphabet list. Then, if all used, returns
+            /// a unique with incrementable prefix
+            /// </summary>
+            internal static Variable CreateUniqueAlphabetFirst(Entity expr, string prefix = "a")
+            {
+                // TODO: Vars to be a set
+                foreach (var v in letterVars)
+                    if (expr.Vars.Contains(v) is false)
+                        return v;
+                return CreateUnique(expr, prefix);
+            }
+
             /// <summary>Creates a temporary variable like %1, %2 and %3 that is not in <paramref name="existingVars"/></summary>
             /// <remarks>
             /// This is intended for variables not visible to the user.
