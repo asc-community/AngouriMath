@@ -97,6 +97,10 @@ namespace UnitTests.PatternsTest
         [Fact] public void Divide3() => AssertSimplifyToString("(x2 + 2 x y + y2 + 1) / (x + y)", "x + 1 / (x + y) + y");
         [Fact] public void Xor1() => AssertSimplify(new Entity.Xorf(x, 0), x);
         [Fact] public void Xor2() => AssertSimplify(new Entity.Xorf(0, x), x);
+        [Fact] public void Xor3() => AssertSimplify(new Entity.Xorf(false, x), x);
+        [Fact] public void Xor4() => AssertSimplify(new Entity.Xorf(x, false), x);
+        [Fact] public void Xor5() => AssertSimplify(new Entity.Xorf(x, true), new Entity.Notf(x));
+        [Fact] public void Xor6() => AssertSimplify(new Entity.Xorf(true, x), new Entity.Notf(x));
 
         [Fact] public void BigSimple1() => AssertSimplifyToString(
             "1+2x*-1+2x*2+x^2+2x+2x*-4+2x*4+2x*2x*-1+2x*2x*2+2x*x^2+x^2+x^2*-4+x^2*4+x^2*2*x*-1+x^2*2x*2+x^2*x^2",
