@@ -95,6 +95,8 @@ namespace UnitTests.PatternsTest
         // TODO: Smart factorizer
         [Fact] public void Divide2() => AssertSimplifyToString("(x3 + 3 x 2 y + 3 x y 2 + y3) / (x + y)", "x ^ 2 + 2 * x * y + y ^ 2");
         [Fact] public void Divide3() => AssertSimplifyToString("(x2 + 2 x y + y2 + 1) / (x + y)", "x + 1 / (x + y) + y");
+        [Fact] public void Xor1() => AssertSimplify(new Entity.Xorf(x, 0), x);
+        [Fact] public void Xor2() => AssertSimplify(new Entity.Xorf(0, x), x);
 
         [Fact] public void BigSimple1() => AssertSimplifyToString(
             "1+2x*-1+2x*2+x^2+2x+2x*-4+2x*4+2x*2x*-1+2x*2x*2+2x*x^2+x^2+x^2*-4+x^2*4+x^2*2*x*-1+x^2*2x*2+x^2*x^2",

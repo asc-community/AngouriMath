@@ -227,6 +227,10 @@ namespace AngouriMath.Functions
             Mulf(Rational(var mOne, var den), var any1) when mOne == -1 && den != 1 => -(any1 / den),
             Mulf(var any1, Rational(var mOne, var den)) when mOne == -1 && den != 1 => -(any1 / den),
 
+            // a xor 0 = a
+            Xorf(var any1, Integer(0)) => any1,
+            Xorf(Integer(0), var any1) => any1,
+
             _ => x
         };
     }
