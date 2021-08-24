@@ -8,11 +8,24 @@ using System.Threading.Tasks;
 using HonkSharp.Fluency;
 using HonkSharp.Functional;
 using Xunit;
+using AngouriMath.Core.Exceptions;
 
 namespace UnitTests
 {
     public static class TestExtensions
     {
+        public static (T, T) Into2<T>(this IEnumerable<T> seq)
+        {
+            using var enumerator = seq.GetEnumerator();
+            (T, T) res;
+            if (!enumerator.MoveNext()) throw new Exception("Sequence should contain two elements");
+            res.Item1 = enumerator.Current;
+            if (!enumerator.MoveNext()) throw new Exception("Sequence should contain two elements");
+            res.Item2 = enumerator.Current;
+            if (enumerator.MoveNext()) throw new Exception("Sequence should contain two elements");
+            return res;
+        }
+
         public static void ShouldBe(this Entity @this, Entity other)
         {
             using var _ = MathS.Diagnostic.OutputExplicit.Set(true);

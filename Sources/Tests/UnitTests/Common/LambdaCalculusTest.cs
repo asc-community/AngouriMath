@@ -2,6 +2,7 @@
 using AngouriMath.Extensions;
 using FluentAssertions;
 using HonkSharp.Fluency;
+using System;
 using System.Linq;
 using Xunit;
 using static AngouriMath.Entity;
@@ -103,5 +104,15 @@ namespace UnitTests.Common
             => x.Apply(y.LambdaOver(y).Apply(3))
                 .InnerSimplified
                 .ShouldBe(x.Apply(3));
+
+        [Fact] public void SuccWorks1()
+        {
+            var (f, x, n) = (MathS.Var("f"), MathS.Var("x"), MathS.Var("n"));
+            var number3 = f.Apply(f.Apply(f.Apply(x))).LambdaOver(x).LambdaOver(f);
+            var succ = f.Apply(n.Apply(f).Apply(x)).LambdaOver(x).LambdaOver(f).LambdaOver(n);
+            var expected = y.Apply(y.Apply(y.Apply(y.Apply(z)))).LambdaOver(z).LambdaOver(y);
+            var actual = succ.Apply(number3).InnerSimplified;
+            Assert.Equal(expected, actual);
+        }
     }
 }

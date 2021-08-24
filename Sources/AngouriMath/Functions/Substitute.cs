@@ -429,19 +429,16 @@ namespace AngouriMath
         {
             /// <inheritdocs/>
             public override Entity Substitute(Entity x, Entity value)
-                => this == x
-                    ? value 
-                    : (
-                        x == Parameter
-                        ? this
-                        : (
-                            value.Vars.Contains(Parameter)
-                            ? Unit.Flow
-                                .Let(out var newVar, Variable.CreateUniqueAlphabetFirst(this + value))
-                                .ReplaceWith(new Lambda(newVar, Body.Substitute(Parameter, newVar).Substitute(x, value)))
-                            : New(Parameter, Body.Substitute(x, value))
-                        )
-                    );
+                => Unit.Flow switch
+                { 
+                    _ when this == x => value,
+                    _ when x == Parameter => this,
+                    _ when value.Vars.Contains(Parameter) =>
+                        Unit.Flow
+                            .Let(out var newVar, Variable.CreateUniqueAlphabetFirst(this + value))
+                            .ReplaceWith(new Lambda(newVar, Body.Substitute(Parameter, newVar).Substitute(x, value))),
+                    _ => New(Parameter, Body.Substitute(x, value))
+                };
         }
 
         #endregion

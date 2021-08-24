@@ -4,6 +4,7 @@ using HonkSharp.Fluency;
 using System;
 using static AngouriMath.Entity;
 using AngouriMath.Extensions;
+using static AngouriMath.Entity.Number;
 
 /*
 var (f, x, n) = (MathS.Var("f"), MathS.Var("x"), MathS.Var("n"));
@@ -16,6 +17,25 @@ Console.WriteLine(applied.Differentiate(x).LambdaOver(f).Apply("sin").InnerSimpl
 
 return;
 */
+/*
+Entity expr = "5 xor (1 - 1)";
+Console.WriteLine(expr.Simplify());
+Console.WriteLine(Postprocess(expr.Simplify()));
+
+Entity Postprocess(Entity entity)
+    => entity.Replace(entity => entity switch
+    {
+        Xorf(Integer(0), var any1) => any1,
+        Xorf(var any1, Integer(0)) => any1,
+        var other => other
+    });
+    */
+// Console.WriteLine(ReplaceIntsWithBooleans("5 xor 0").Evaled);
+// 
+// Entity ReplaceIntsWithBooleans(Entity expr) => expr.Substitute(0, false).Substitute(1, true);
+// 
+// 
+// Entity ReplaceBooleansWithInts(Entity expr) => expr.Substitute(false, 0).Substitute(true, 1);
 
 
 var (f, x, n) = (MathS.Var("f"), MathS.Var("x"), MathS.Var("n"));
