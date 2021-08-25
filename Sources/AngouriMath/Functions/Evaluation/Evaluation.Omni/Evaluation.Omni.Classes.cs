@@ -5,6 +5,7 @@
  * Website: https://am.angouri.org.
  */
 using AngouriMath.Core.Sets;
+using System;
 
 namespace AngouriMath
 {
@@ -246,6 +247,99 @@ namespace AngouriMath
             protected override Entity InnerSimplify()
                 => IsScalar ? AsScalar().InnerSimplified :
                 Elementwise(e => e.InnerSimplified);
+        }
+
+        partial record Application
+        {
+            private static Entity ApplyOthersIfNeeded(Entity outer, LList<Entity> arguments)
+                => arguments switch
+                {
+                    LEmpty<Entity> => outer,
+                    var nonEmpty => outer.Apply(nonEmpty)
+                };
+
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify()
+                => ((Expression.InnerSimplified, Arguments.Map(arg => arg.InnerSimplified)) switch
+                {
+                    (var identifier, LEmpty<Entity>) => identifier,
+                    (Application(var any, var argsInner), var argsOuter) => any.Apply(argsInner.Concat(argsOuter).ToLList()),
+
+                    (Variable("sin"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Sin(), otherArgs),
+                    (Variable("cos"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Cos(), otherArgs),
+                    (Variable("tan"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Tan(), otherArgs),
+                    (Variable("cotan" or "cot"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Cotan(), otherArgs),
+                    (Variable("sec"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Sec(), otherArgs),
+                    (Variable("cosec" or "csc"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Cosec(), otherArgs),
+                    (Variable("arcsin" or "asin"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Arcsin(), otherArgs),
+                    (Variable("arccos" or "acos"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Arccos(), otherArgs),
+                    (Variable("arctan" or "atan"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Arctan(), otherArgs),
+                    (Variable("arccotan" or "acotan" or "acot" or "arccot"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Arccotan(), otherArgs),
+                    (Variable("arcsec" or "asec"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Arcsec(), otherArgs),
+                    (Variable("arccosec" or "arccsc" or "acsc" or "acosec"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Arccosec(), otherArgs),
+
+                    (Variable("sinh" or "sh"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Sinh(x), otherArgs),
+                    (Variable("cosh" or "ch"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Cosh(x), otherArgs),
+                    (Variable("tanh" or "th"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Tanh(x), otherArgs),
+                    (Variable("cotanh" or "coth" or "cth"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Cotanh(x), otherArgs),
+                    (Variable("sech" or "sch"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Sech(x), otherArgs),
+                    (Variable("cosech" or "csch"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Cosech(x), otherArgs),
+                    (Variable("asinh" or "arsinh" or "arsh"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Arsinh(x), otherArgs),
+                    (Variable("acosh" or "arcosh" or "arch"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Arcosh(x), otherArgs),
+                    (Variable("atanh" or "artanh" or "arth"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Artanh(x), otherArgs),
+                    (Variable("acoth" or "arcoth" or "acotanh" or "arcotanh" or "arcth"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Arcotanh(x), otherArgs),
+                    (Variable("asech" or "arsech" or "arsch"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Arsech(x), otherArgs),
+                    (Variable("acosech" or "arcosech" or "arcsch" or "acsch"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Hyperbolic.Arcosech(x), otherArgs),
+
+                    (Variable("gamma"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Gamma(x), otherArgs),
+                    (Variable("phi"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.PhiFunction(), otherArgs),
+                    (Variable("abs"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Abs(), otherArgs),
+                    (Variable("sqrt"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Sqrt(x), otherArgs),
+                    (Variable("cbrt"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Cbrt(x), otherArgs),
+                    (Variable("sqr"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Sqr(x), otherArgs),
+                    (Variable("signum" or "sign" or "sgn"), (var x, var otherArgs)) => ApplyOthersIfNeeded(x.Signum(), otherArgs),
+
+                    (Variable("ln"), (var x, var otherArgs)) => ApplyOthersIfNeeded(MathS.Ln(x), otherArgs),
+                    (Variable("log") v, (var x, LEmpty<Entity>) args) => New(v, args),
+                    (Variable("log"), (var p, (var x, var otherArgs))) => ApplyOthersIfNeeded(MathS.Log(p, x), otherArgs),
+
+                    (Variable("derivative") v, (var expr, LEmpty<Entity>) args) => New(v, args),
+                    (Variable("derivative"), (var expr, (var x, var otherArgs))) => ApplyOthersIfNeeded(MathS.Derivative(expr, x), otherArgs),
+
+                    (Variable("integral") v, (_, LEmpty<Entity>) args) => New(v, args),
+                    (Variable("integral"), (var expr, (var x, var otherArgs))) => ApplyOthersIfNeeded(MathS.Integral(expr, x), otherArgs),
+
+                    (Variable("limit") v,  ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => New(v, args),
+                    (Variable("limit") v, (var expr, (var x, (var to, var otherArgs)))) => ApplyOthersIfNeeded(MathS.Limit(expr, x, to), otherArgs),
+
+                    (Variable("limitleft") v, ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => New(v, args),
+                    (Variable("limitleft") v, (var expr, (var x, (var to, var otherArgs)))) => ApplyOthersIfNeeded(MathS.Limit(expr, x, to, ApproachFrom.Left), otherArgs),
+
+                    (Variable("limitright") v, ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => New(v, args),
+                    (Variable("limitright") v, (var expr, (var x, (var to, var otherArgs)))) => ApplyOthersIfNeeded(MathS.Limit(expr, x, to, ApproachFrom.Right), otherArgs),
+
+                    (Lambda(var x, var body), (var arg, var otherArgs)) => ApplyOthersIfNeeded(body.Substitute(x, arg), otherArgs),
+
+                    (var exprSimplified, var argsSimplified) => New(exprSimplified, argsSimplified),
+                }) switch
+                {
+                    var thisAgain when ReferenceEquals(thisAgain, this) => this,
+                    var newOne => newOne.InnerSimplified
+                };
+
+            /// <inheritdoc/>
+            protected override Entity InnerEval()
+                => InnerSimplify();
+        }
+
+        partial record Lambda
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerSimplify()
+                => New(Parameter, Body.InnerSimplified);
+            /// <inheritdoc/>
+            protected override Entity InnerEval()
+                => New(Parameter, Body.Evaled);
         }
     }
 }

@@ -85,16 +85,16 @@ namespace AngouriMath.Functions
                 else
                 {
                     // Iterative step: take the partial derivative of each of the previous terms with respect to each of the variables.
-                    foreach (var lastTerm in lastTerms)
+                    foreach (var (coefficient, pointCoefficientDegrees, partialDerivative) in lastTerms)
                     {
                         for (int variableIndex = 0; variableIndex < exprToPolyVars.Length; variableIndex++)
                         {
                             // Compute first what our point coefficient degrees will be, so that we don't repeat the computation of
                             // any partial derivatives, like f_xy vs f_yx.
-                            var variable = exprToPolyVars[variableIndex];
+                            var (exprVariable, polyVariable, point) = exprToPolyVars[variableIndex];
                             var newPointCoeffs = new int[variables];
                             // The new degree is the same as the parent term's, times an extra (x - a) or whichever variable.
-                            lastTerm.pointCoefficientDegrees.CopyTo(newPointCoeffs, 0);
+                            pointCoefficientDegrees.CopyTo(newPointCoeffs, 0);
                             newPointCoeffs[variableIndex] += 1;
 
                             // The term is a repeat if it's coefficients match one previously computed.
@@ -107,7 +107,7 @@ namespace AngouriMath.Functions
                                 {
                                     // If the match is found, instead of creating a whole new repeat term, we just add
                                     // to the match's coefficient. This ends up making a neat binomial coefficient pattern.
-                                    newTerm.coefficient += lastTerm.coefficient;
+                                    newTerm.coefficient += coefficient;
                                     newTerms[newTermIndex] = newTerm;
                                     foundRepeatFlag = true;
                                     break;
@@ -117,8 +117,8 @@ namespace AngouriMath.Functions
                             // If no match is found, we add it to the new term list.
                             if (!foundRepeatFlag)
                             {
-                                var newPartialDerivative = lastTerm.partialDerivative.Differentiate(variable.exprVariable);
-                                newTerms.Add((lastTerm.coefficient, newPointCoeffs, newPartialDerivative));
+                                var newPartialDerivative = partialDerivative.Differentiate(exprVariable);
+                                newTerms.Add((coefficient, newPointCoeffs, newPartialDerivative));
                             }
 
                         }
@@ -129,22 +129,22 @@ namespace AngouriMath.Functions
 
                 // From the list of deconstructed terms, we put assemble the term and sum them all up.
                 var fullExpressionTerms = new List<Entity>();
-                foreach (var newTerm in newTerms)
+                foreach (var (coefficient, pointCoefficientDegrees, partialDerivative) in newTerms)
                 {
                     // pointCoefficients are transformed into their proper (x - a)^t... forms.
                     Entity pointCoefficients = 1;
                     for (int variableIndex = 0; variableIndex < exprToPolyVars.Length; variableIndex++)
                     {
-                        var variable = exprToPolyVars[variableIndex];
-                        pointCoefficients *= (variable.polyVariable - variable.point).Pow(newTerm.pointCoefficientDegrees[variableIndex]);
+                        var (exprVariable, polyVariable, point) = exprToPolyVars[variableIndex];
+                        pointCoefficients *= (polyVariable - point).Pow(pointCoefficientDegrees[variableIndex]);
                     }
 
                     // Solve the partial derivative at the given point,
-                    var solvedPartialDerivative = newTerm.partialDerivative;
-                    foreach (var variable in exprToPolyVars)
-                        solvedPartialDerivative = solvedPartialDerivative.Substitute(variable.exprVariable, variable.point);
+                    var solvedPartialDerivative = partialDerivative;
+                    foreach (var (exprVariable, polyVariable, point) in exprToPolyVars)
+                        solvedPartialDerivative = solvedPartialDerivative.Substitute(exprVariable, point);
 
-                    var fullTerm = solvedPartialDerivative * newTerm.coefficient * pointCoefficients;
+                    var fullTerm = solvedPartialDerivative * coefficient * pointCoefficients;
 
                     // tack on the coefficient information,
                     fullExpressionTerms.Add(fullTerm);

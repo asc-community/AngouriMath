@@ -110,5 +110,19 @@ namespace AngouriMath
                         }) +
                    "])";
         }
+
+        partial record Application
+        {
+            internal override string ToSymPy()
+                => Expression is Lambda
+                    ? $"({Expression.ToSymPy()})({", ".Join(Arguments.Select(arg => arg.ToSymPy()))})"
+                    : throw new NotSufficientlySupportedException("Sympy might not have application of undeclared lambda");
+        }
+
+        partial record Lambda
+        {
+            internal override string ToSymPy()
+                => $"sympy.Lambda({Parameter.ToSymPy()}, )";
+        }
     }
 }

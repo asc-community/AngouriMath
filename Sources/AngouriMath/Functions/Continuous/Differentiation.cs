@@ -299,5 +299,31 @@ namespace AngouriMath
             protected override Entity InnerDifferentiate(Variable variable)
                 => New(Cases.Select(c => c.New(c.Expression.InnerDifferentiate(variable), c.Predicate)));
         }
+
+        partial record Application
+        {
+            /// <inheritdoc/>
+            protected override Entity InnerDifferentiate(Variable variable)
+                => (Expression, Arguments) switch
+                {
+                    (Variable v, var args) when args.All(arg => arg.Nodes.Contains(variable) is false)
+                        => 0,
+
+                    // d/dx_i f(g_1(x_1, x_2, ..., x_n), g_2(x_1, x_2, ..., x_n), ..., g_n(x_1, x_2, ..., x_n))
+                    // becomes
+                    // df/d[g_1] * d[g_1] / dx_i + df/d[g_2] * d[g_2] / dx_i + ...
+                    // where
+                    // f is a short name for f(g_1(...), ...)
+                    // g_1 is a short name for g_1(x_1, ...)
+                    // etc.
+                    //
+                    (Variable v, var args) when args.Any(arg => arg.Nodes.Contains(variable))
+                        => args.Select(
+                            arg =>
+                                MathS.Derivative(this, arg) * arg.Differentiate(variable)
+                            ).Aggregate((Entity)0, (a, b) => a + b),
+                    _ => MathS.Derivative(this, variable)
+                };
+        }
     }
 }

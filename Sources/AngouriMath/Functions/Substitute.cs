@@ -316,6 +316,13 @@ namespace AngouriMath
 
         #endregion
 
+        partial record Application
+        {
+            /// <inheritdoc/>
+            public override Entity Substitute(Entity x, Entity value)
+                => x == this ? value : New(Expression.Substitute(x, value), Arguments.Map(arg => arg.Substitute(x, value)));
+        }
+
         #region Local variable preserved
         partial record Set
         {
@@ -416,6 +423,22 @@ namespace AngouriMath
 
                 return New(postSubs, Var, dst, ApproachFrom);
             }
+        }
+
+        partial record Lambda
+        {
+            /// <inheritdocs/>
+            public override Entity Substitute(Entity x, Entity value)
+                => Unit.Flow switch
+                { 
+                    _ when this == x => value,
+                    _ when x == Parameter => this,
+                    _ when value.Vars.Contains(Parameter) =>
+                        Unit.Flow
+                            .Let(out var newVar, Variable.CreateUniqueAlphabetFirst(this + value))
+                            .ReplaceWith(new Lambda(newVar, Body.Substitute(Parameter, newVar).Substitute(x, value))),
+                    _ => New(Parameter, Body.Substitute(x, value))
+                };
         }
 
         #endregion

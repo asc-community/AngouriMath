@@ -21,7 +21,7 @@
 ///     b. then complex number evaluation (<see cref="AngouriMath.Entity.Number.Sin"/>)
 ///
 /// 2. Next, Add a new node representing the function as a nested type in <see cref="AngouriMath.Entity"/>
-///     a. Copy record class (Press F12 -> Longest result of <see cref="Sinf"/> <see cref="AngouriMath.Entity.Impliesf"/> <see cref="AngouriMath.Entity.Set.Unionf"/>)
+///     a. Copy record class (Press F12 -> Longest result of <see cref="AngouriMath.Entity.Sinf"/> <see cref="AngouriMath.Entity.Impliesf"/> <see cref="AngouriMath.Entity.Set.Unionf"/>)
 ///     b. Add instance method to Entity (Press F12 -> <see cref="AngouriMath.Entity.Sin"/>).
 ///     c. Add <see cref="AngouriMath.Entity.Boolean.Replace"/> to your node
 ///     d. Add <see cref="AngouriMath.Entity.Boolean.Priority"/> to your node

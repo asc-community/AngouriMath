@@ -128,5 +128,20 @@ namespace AngouriMath
                 }
             }
         }
+
+        partial record Application
+        {
+            /// <inheritdoc/>
+            public override string Latexise()
+                => Expression.Latexise(Expression.Priority < Priority) + " " +
+                    " ".Join(Arguments.Select(arg => arg.Latexise(arg.Priority <= Priority)));
+        }
+
+        partial record Lambda
+        {
+            /// <inheritdoc/>
+            public override string Latexise()
+                => Parameter.Latexise() + @" \rightarrow " + Body.Latexise(Body.Priority < Priority);
+        }
     }
 }

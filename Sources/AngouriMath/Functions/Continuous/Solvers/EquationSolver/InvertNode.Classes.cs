@@ -512,5 +512,19 @@ namespace AngouriMath
                 return res;
             }
         }
+
+        partial record Application
+        {
+            // TODO
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Enumerable.Empty<Entity>();
+        }
+
+        partial record Lambda
+        {
+            // TODO
+            private protected override IEnumerable<Entity> InvertNode(Entity value, Entity x)
+                => Enumerable.Empty<Entity>();
+        }
     }
 }

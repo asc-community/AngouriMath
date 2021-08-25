@@ -29,6 +29,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Wrappers\AngouriMath.Interactive\AngouriMath.Interactive.fsproj" />
+    <PackageReference Include="FSharp.Core" Version="5.0.2-beta.21310.3" />
   </ItemGroup>
 
 </Project>

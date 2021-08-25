@@ -84,6 +84,9 @@ namespace AngouriMath
         /// <returns>A node</returns>
         public static Entity operator <=(Entity a, Entity b) => HangOperator(a, b, (a, b) => new LessOrEqualf(a, b));
 
+        /// <returns>A node</returns>
+        public Entity PhiFunction() => new Phif(this);
+
         internal static Entity HangOperator(Entity a, Entity b, Func<Entity, Entity, Entity> ctor)
            => a switch
            {

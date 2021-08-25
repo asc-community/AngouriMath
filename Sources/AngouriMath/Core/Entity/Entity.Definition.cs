@@ -16,7 +16,8 @@ namespace AngouriMath.Core
     { 
         KeywordOperation = 0x0000,
 
-        Provided = 10 | KeywordOperation,
+        Lambda   = 10 | KeywordOperation,
+        Provided = 20 | KeywordOperation,
 
         BooleanOperation = 0x1000,
 
@@ -46,7 +47,6 @@ namespace AngouriMath.Core
         Sum = 20       | NumericalOperation,
         Minus = 20     | NumericalOperation,
         Mul = 40       | NumericalOperation,
-
         Div = 40       | NumericalOperation,
         Pow = 60       | NumericalOperation,
         Factorial = 70 | NumericalOperation,
