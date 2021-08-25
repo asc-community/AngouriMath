@@ -37,7 +37,7 @@ Entity Postprocess(Entity entity)
 // 
 // Entity ReplaceBooleansWithInts(Entity expr) => expr.Substitute(false, 0).Substitute(true, 1);
 
-
+/*
 var (f, x, n) = (MathS.Var("f"), MathS.Var("x"), MathS.Var("n"));
 var number3 = f.Apply(f.Apply(f.Apply(x))).LambdaOver(x).LambdaOver(f);
 var succ = f.Apply(n.Apply(f).Apply(x)).LambdaOver(x).LambdaOver(f).LambdaOver(n);
@@ -45,4 +45,19 @@ Console.WriteLine(number3);
 Console.WriteLine(succ);
 Console.WriteLine(succ.Apply(number3));
 using var _ = MathS.Diagnostic.OutputExplicit.Set(true);
-Console.WriteLine(succ.Apply(number3).InnerSimplified);
+Console.WriteLine(succ.Apply(number3).InnerSimplified);*/
+
+Entity expr =
+@"
+apply(
+    lambda(let, 
+        apply(let, 3.14, lambda(myPi,
+        apply(let, 56, lambda(volume,
+        apply(let, 30, lambda(length,
+            volume / length - myPi
+        ))))))
+    ),
+    lambda(f, x, apply(x, f))
+)
+";
+Console.WriteLine(expr.InnerSimplified);

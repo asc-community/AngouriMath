@@ -50,7 +50,7 @@ namespace AngouriMath.Core.Exceptions
     /// </summary>
     public sealed class FunctionArgumentCountException : ParseException
     {
-        private FunctionArgumentCountException(string msg) : base(msg) { }
+        internal FunctionArgumentCountException(string msg) : base(msg) { }
         private static string CountArguments(int count, bool isAre) =>
             $"{count} argument{(count == 1 ? "" : "s")}{(isAre ? count == 1 ? " is" : " are" : "")}";
         internal static void Assert(string function, int expected, int actual)
