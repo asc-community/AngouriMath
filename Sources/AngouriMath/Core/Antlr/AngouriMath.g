@@ -399,7 +399,7 @@ atom returns[Entity value]
         }
     | 'apply(' args = function_arguments ')'
         {
-            if ($args.list.Count < 1)
+            if ($args.list.Count < 2)
                 throw new FunctionArgumentCountException("Should be at least one argument in apply function");
             $value = $args.list[0].Apply($args.list.Skip(1).ToLList());
         }

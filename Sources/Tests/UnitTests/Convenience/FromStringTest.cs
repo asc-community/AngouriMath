@@ -225,6 +225,22 @@ namespace UnitTests.Convenience
         [Fact] public void TestMatrix3x3() => Assert.Equal(I_3, FromString("[ [ 1, 0, 0 ], [ 0, 1, 0 ], [ 0, 0, 1 ] ]"));
         [Fact] public void TestMatrix4Vector1() => Assert.Equal(Vector(1, 2, 3), FromString("[ 1 , 2 , 3 ]"));
         [Fact] public void TestMatrix4Vector2() => Assert.Equal(Vector(1, 2, 3).T, FromString("[ 1 , 2 , 3 ]T"));
+        [Fact] public void TestLambda1() => Assert.Equal(x.LambdaOver(x), FromString("lambda(x, x)"));
+        [Fact] public void TestLambda2() => Assert.Equal((x + y).LambdaOver(x), FromString("lambda(x, x + y)"));
+        [Fact] public void TestLambda3() => Assert.Equal((x + y).LambdaOver(x).LambdaOver(y), FromString("lambda(y, x, x + y)"));
+        [Fact] public void TestLambda4() => Assert.Equal((x + y).LambdaOver(x).LambdaOver(y).LambdaOver(z), FromString("lambda(z, y, x, x + y)"));
+        [Fact] public void TestLambda5() => Assert.Throws<InvalidArgumentParseException>(() => FromString("lambda(x + y, x + y)"));
+        [Fact] public void TestLambda6() => Assert.Throws<InvalidArgumentParseException>(() => FromString("lambda(x + y, x, x + y)"));
+        [Fact] public void TestLambda7() => Assert.Throws<InvalidArgumentParseException>(() => FromString("lambda(x, 1, x + y)"));
+        [Fact] public void TestLambda8() => Assert.Throws<FunctionArgumentCountException>(() => FromString("lambda(x + y)"));
+        [Fact] public void TestLambda9() => Assert.Throws<FunctionArgumentCountException>(() => FromString("lambda(x)"));
+        [Fact] public void TestApply1() => Assert.Equal(x.Apply(x), FromString("apply(x, x)"));
+        [Fact] public void TestApply2() => Assert.Equal(x.Apply(y), FromString("apply(x, y)"));
+        [Fact] public void TestApply3() => Assert.Equal(x.Apply(y, z), FromString("apply(x, y, z)"));
+        [Fact] public void TestApply4() => Assert.Equal((x + 1).Apply(y, z), FromString("apply(x + 1, y, z)"));
+        [Fact] public void TestApply5() => Assert.Equal((x + 1).Apply(y, z), FromString("apply(x + 1, y, z)"));
+        [Fact] public void TestApply6() => Assert.Throws<FunctionArgumentCountException>(() => FromString("apply(x)"));
+
 
         private (Entity xy, Entity xyz, Entity yz, string str) Extract(string signLeft, string signRight)
         {

@@ -2711,7 +2711,7 @@ internal partial class AngouriMathParser : Parser {
 				State = 788; _localctx.args = function_arguments();
 				State = 789; Match(T__39);
 
-				            if (_localctx.args.list.Count < 1)
+				            if (_localctx.args.list.Count < 2)
 				                throw new FunctionArgumentCountException("Should be at least one argument in apply function");
 				            _localctx.value =  _localctx.args.list[0].Apply(_localctx.args.list.Skip(1).ToLList());
 				        
