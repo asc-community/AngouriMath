@@ -397,6 +397,24 @@ atom returns[Entity value]
                     cases.Add(new Providedf(arg, true));
             $value = new Piecewise(cases);
         }
+    | 'apply(' args = function_arguments ')'
+        {
+            if ($args.list.Count < 2)
+                throw new FunctionArgumentCountException("Should be at least one argument in apply function");
+            $value = $args.list[0].Apply($args.list.Skip(1).ToLList());
+        }
+    | 'lambda(' args = function_arguments ')'
+        {
+            if ($args.list.Count < 2)
+                throw new FunctionArgumentCountException("Should be at least two arguments in lambda function");
+            var body = $args.list.Last();
+            foreach (var x in ((IEnumerable<Entity>)$args.list).Reverse().Skip(1))
+            {
+                if (x is not Variable v) throw new InvalidArgumentParseException($"Lambda is expected to have valid parameters, {x} encountered instead");
+                body = body.LambdaOver(v);
+            }
+            $value = body;
+        }
     ;
 
 statement: expression EOF { Result = $expression.value; } ;

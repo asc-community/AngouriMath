@@ -1,2 +1,2 @@
-dotnet run -p Utils ExtensionGenerator
+dotnet run --project Utils ExtensionGenerator -c release
 pause

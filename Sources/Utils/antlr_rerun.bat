@@ -6,7 +6,7 @@ java -jar ./antlr-4.8-complete.jar -package AngouriMath.Core.Antlr ./AngouriMath
 cd ../../../Utils
 
 :;# Antlr's generated classes should be internal, not public
-dotnet run -p Utils AntlrPostProcessorReplacePublicWithInternal
+dotnet run --project Utils -c release AntlrPostProcessorReplacePublicWithInternal
 
 :; echo Press Enter to continue...; read dummy; exit $? # Line for Unix Bash
 pause REM Line for Windows Command Prompt

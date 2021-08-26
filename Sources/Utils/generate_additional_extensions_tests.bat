@@ -1,2 +1,2 @@
-dotnet run -p Utils AdditionalExtensionsTestGenerator
+dotnet run --project Utils AdditionalExtensionsTestGenerator -c release
 pause

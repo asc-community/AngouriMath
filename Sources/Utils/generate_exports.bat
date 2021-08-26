@@ -1,2 +1,2 @@
-dotnet run -p Utils ExportsGenerator
+dotnet run --project Utils ExportsGenerator -c release
 pause
