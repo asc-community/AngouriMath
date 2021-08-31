@@ -10,6 +10,7 @@ namespace DotnetBenchmark
     // DO NOT FORGET TO SWITCH TO RELEASE!
     [ArtifactsPath(@"./benchmark_results.csv")]
     [CsvExporter(CsvSeparator.Semicolon)]
+    [MemoryDiagnoser]
     public class CommonFunctionsInterVersion
     {
         // Testing parsing
