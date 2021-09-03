@@ -44,9 +44,19 @@ namespace AngouriMath
         /// <param name="checkIfExactEvaled">
         /// Check if the number is exact and, if so, return it.
         /// </param>
-        private Entity ExpandOnTwoArguments(Entity left, Entity right, Func<Entity, Entity, Entity?> operation, Func<Entity, Entity, Entity, Entity> defaultCtor, bool checkIfExactEvaled = false)
+        /// <param name="allowNaNAsExact">
+        /// If check exact is enabled, then NaN will be exact if this
+        /// param is true ; it won't otherwise
+        /// </param>
+        private Entity ExpandOnTwoArguments(
+            Entity left,
+            Entity right, 
+            Func<Entity, Entity, Entity?> operation, 
+            Func<Entity, Entity, Entity, Entity> defaultCtor, 
+            bool checkIfExactEvaled = false,
+            bool allowNaNAsExact = true)
         {
-            if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n)
+            if (checkIfExactEvaled && this.Evaled is Number { IsExact: true } n && (allowNaNAsExact || n != MathS.NaN) )
                 return n;
 
             if (operation(left, right) is { } preRes)

@@ -140,7 +140,8 @@ namespace AngouriMath
                     _ => null
                 },
                 (@this, a, b) => ((Divf)@this).New(a, b),
-                true);
+                true,
+                allowNaNAsExact: false);
         }
         public partial record Powf
         {
