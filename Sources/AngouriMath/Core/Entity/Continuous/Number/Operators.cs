@@ -171,7 +171,7 @@ namespace AngouriMath
                     (a, b) => a.EInteger.Equals(b.EInteger),
                     (a, b) => a.ERational.Equals(b.ERational),
                     (a, b) => a.IsFinite && b.IsFinite
-                                && CtxSubtract(a.EDecimal, b.EDecimal).Abs().LessThan(MathS.Settings.PrecisionErrorZeroRange)
+                                && CtxSubtract(a.EDecimal, b.EDecimal).Abs().LessThan(MathS.Settings.PrecisionErrorCommon)
                                 || !a.IsFinite && !b.IsFinite && a.EDecimal.Equals(b.EDecimal),
                     (a, b) => AreEqual<Real>(a.RealPart, b.RealPart) && AreEqual<Real>(a.ImaginaryPart, b.ImaginaryPart)
                     );

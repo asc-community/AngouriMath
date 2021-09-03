@@ -18,9 +18,16 @@ namespace AngouriMath
             /// that its imaginary part equals 0
             /// </summary>
 #pragma warning disable SealedOrAbstract // The only few exceptions: Complex, Real, Rational
-            public partial record Real : Complex, System.IComparable<Real>
+            public partial record Real : Complex, System.IComparable<Real>, System.IEquatable<Real>
 #pragma warning restore SealedOrAbstract // AMAnalyzer
             {
+                /// <inheritdoc/>
+                public virtual bool Equals(Real r)
+                    => Number.AreEqual(this, r) || Number.CtxSubtract(this.EDecimal, r.EDecimal).Abs().LessThan(MathS.Settings.PrecisionErrorCommon);
+
+                /// <inheritdoc/>
+                public override int GetHashCode() => (GetType(), EDecimal).GetHashCode();
+
                 /// <summary>
                 /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
                 /// </summary>

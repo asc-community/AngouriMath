@@ -6,58 +6,45 @@ using static AngouriMath.Entity;
 using AngouriMath.Extensions;
 using static AngouriMath.Entity.Number;
 
-/*
-var (f, x, n) = (MathS.Var("f"), MathS.Var("x"), MathS.Var("n"));
+using AngouriMath;
+using AngouriMath.Extensions;
+using static AngouriMath.MathS;
+using static AngouriMath.Entity;
+using System;
+using static System.Console;
+using PeterO.Numbers;
 
-var applied = f.Apply(x.Pow(2));
-Console.WriteLine(applied);
-Console.WriteLine(applied.Differentiate(x));
-Console.WriteLine(applied.Differentiate(x).LambdaOver(f).Apply("sin").InnerSimplified);
-
-
-return;
-*/
-/*
-Entity expr = "5 xor (1 - 1)";
-Console.WriteLine(expr.Simplify());
-Console.WriteLine(Postprocess(expr.Simplify()));
-
-Entity Postprocess(Entity entity)
-    => entity.Replace(entity => entity switch
-    {
-        Xorf(Integer(0), var any1) => any1,
-        Xorf(var any1, Integer(0)) => any1,
-        var other => other
-    });
-    */
-// Console.WriteLine(ReplaceIntsWithBooleans("5 xor 0").Evaled);
-// 
-// Entity ReplaceIntsWithBooleans(Entity expr) => expr.Substitute(0, false).Substitute(1, true);
-// 
-// 
-// Entity ReplaceBooleansWithInts(Entity expr) => expr.Substitute(false, 0).Substitute(true, 1);
-
-/*
-var (f, x, n) = (MathS.Var("f"), MathS.Var("x"), MathS.Var("n"));
-var number3 = f.Apply(f.Apply(f.Apply(x))).LambdaOver(x).LambdaOver(f);
-var succ = f.Apply(n.Apply(f).Apply(x)).LambdaOver(x).LambdaOver(f).LambdaOver(n);
-Console.WriteLine(number3);
-Console.WriteLine(succ);
-Console.WriteLine(succ.Apply(number3));
+Entity.Matrix matrix = @"
+[
+    [1.000000000000000547458310833800074927650525249394612805610000, 0, 0, -9.55753574799863785565952768061466479249665075036612773690000E-15],
+    [0, 1.000000000000000547458310833800074927650525249394612805610000, 0, 2.24075209004037969624007863746621061783995000E-15], 
+    [0, 0, 1, 0],
+    [0, 0, 0, 1]
+]";
+var identity = MathS.IdentityMatrix(4);
+// using var _ = MathS.Settings.PrecisionErrorCommon.Set(0.1m);
 using var _ = MathS.Diagnostic.OutputExplicit.Set(true);
-Console.WriteLine(succ.Apply(number3).InnerSimplified);*/
 
-Entity expr =
-@"
-apply(
-    lambda(let, 
-        apply(let, 3.14, lambda(myPi,
-        apply(let, 56, lambda(volume,
-        apply(let, 30, lambda(length,
-            volume / length - myPi
-        ))))))
-    ),
-    lambda(f, x, apply(x, f))
-)
-";
-Console.WriteLine(expr.InnerSimplified);
+WriteLine(matrix.ToString(true));
+WriteLine(matrix == identity);
+Entity a = "a + 0.001";
+Entity b = "a + 0.002";
+WriteLine(a == b);
+
+Entity.Matrix a1 = @"[
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, 0, 1, 0],
+    [0, 0, 0, 1]
+]";
+Entity b1 = @"[
+    [1.000000000000000547458310833800074927650525249394612805610000, 0, 0, -9.55753574799863785565952768061466479249665075036612773690000E-15], 
+    [0, 1.000000000000000547458310833800074927650525249394612805610000, 0, 2.24075209004037969624007863746621061783995000E-15],
+    [0, 0, 1, 0],
+    [0, 0, 0, 1]
+]";
+WriteLine(a1 == identity);
+using var __ = MathS.Settings.PrecisionErrorZeroRange.Set(0.1m);
+WriteLine(a1 == b1);
+// WriteLine(b1 == identity);
+// WriteLine(matrix == b1);
