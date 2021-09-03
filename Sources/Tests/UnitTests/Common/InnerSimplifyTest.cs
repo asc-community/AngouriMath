@@ -317,6 +317,30 @@ namespace UnitTests.Common
         [InlineData("5pi")]
         public void CosecShouldBeNaN(string angle)
             => MathS.Cosec(angle).Evaled.ShouldBe(MathS.NaN);
+
+        [Theory]
+        [InlineData("1 / 0 > 0")]
+        [InlineData("1 / 0 < 0")]
+        [InlineData("1 / 0 >= 0")]
+        [InlineData("1 / 0 <= 0")]
+        [InlineData("0 < 1 / 0")]
+        [InlineData("0 > 1 / 0")]
+        [InlineData("0 <= 1 / 0")]
+        [InlineData("0 >= 1 / 0")]
+        public void InequalityShouldBeNaN(string expr)
+            => expr.ToEntity().Evaled.ShouldBe(MathS.NaN);
+
+        [Theory]
+        [InlineData("1 / 0 > 0")]
+        [InlineData("1 / 0 < 0")]
+        [InlineData("1 / 0 >= 0")]
+        [InlineData("1 / 0 <= 0")]
+        [InlineData("0 < 1 / 0")]
+        [InlineData("0 > 1 / 0")]
+        [InlineData("0 <= 1 / 0")]
+        [InlineData("0 >= 1 / 0")]
+        public void InequalityShouldBeKeptInnerSimplify(string expr)
+            => expr.ToEntity().InnerSimplified.ShouldBe(expr);
     }
 }
 

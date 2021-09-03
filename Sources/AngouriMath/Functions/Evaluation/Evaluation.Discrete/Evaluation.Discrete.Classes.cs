@@ -254,7 +254,6 @@ namespace AngouriMath
             protected override Entity InnerEval()
                 => (Left.Evaled, Right.Evaled) switch
                 {
-                    
                     (var left, var right) when left == right => true,
                     (var left, var right) when left.IsConstant && right.IsConstant => left == right,
                     (var left, var right) => MathS.Equality(left, right)
@@ -271,6 +270,8 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
                     (a, b) => (a, b) switch
                     {
+                        (Real nan, _) when nan == MathS.NaN => MathS.NaN,
+                        (_, Real nan) when nan == MathS.NaN => MathS.NaN,
                         (Real reLeft, Real reRight) => reLeft > reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
@@ -297,6 +298,8 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
                     (a, b) => (a, b) switch
                     {
+                        (Real nan, _) when nan == MathS.NaN => MathS.NaN,
+                        (_, Real nan) when nan == MathS.NaN => MathS.NaN,
                         (Real reLeft, Real reRight) => reLeft >= reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
@@ -323,6 +326,8 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
                     (a, b) => (a, b) switch
                     {
+                        (Real nan, _) when nan == MathS.NaN => MathS.NaN,
+                        (_, Real nan) when nan == MathS.NaN => MathS.NaN,
                         (Real reLeft, Real reRight) => reLeft < reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
@@ -349,6 +354,8 @@ namespace AngouriMath
                 => ExpandOnTwoArguments(Left.Evaled, Right.Evaled,
                     (a, b) => (a, b) switch
                     {
+                        (Real nan, _) when nan == MathS.NaN => MathS.NaN,
+                        (_, Real nan) when nan == MathS.NaN => MathS.NaN,
                         (Real reLeft, Real reRight) => reLeft <= reRight,
                         (Number numLeft, Number numRight) => MathS.NaN,
                         _ => null
