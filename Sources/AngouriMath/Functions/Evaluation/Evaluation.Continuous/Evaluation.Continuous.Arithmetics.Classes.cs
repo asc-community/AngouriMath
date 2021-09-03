@@ -136,7 +136,6 @@ namespace AngouriMath
                 (a, b) => (a, b) switch
                 {
                     (Integer(0), _) => 0,
-                    (_, Integer(0)) => Real.NaN,
                     (var n1, Integer(1)) => n1,
                     _ => null
                 },

@@ -327,6 +327,10 @@ namespace UnitTests.Common
         [InlineData("0 > 1 / 0")]
         [InlineData("0 <= 1 / 0")]
         [InlineData("0 >= 1 / 0")]
+        [InlineData("i > i")]
+        [InlineData("i < i")]
+        [InlineData("i >= (i + 1)")]
+        [InlineData("i <= (i + 1)")]
         public void InequalityShouldBeNaN(string expr)
             => expr.ToEntity().Evaled.ShouldBe(MathS.NaN);
 
@@ -339,6 +343,10 @@ namespace UnitTests.Common
         [InlineData("0 > 1 / 0")]
         [InlineData("0 <= 1 / 0")]
         [InlineData("0 >= 1 / 0")]
+        [InlineData("i > i")]
+        [InlineData("i < i")]
+        [InlineData("i >= -i")]
+        [InlineData("i <= -i")]
         public void InequalityShouldBeKeptInnerSimplify(string expr)
             => expr.ToEntity().InnerSimplified.ShouldBe(expr);
     }

@@ -41,7 +41,7 @@ namespace AngouriMath
                 internal override Priority Priority => EDecimal.IsNegative ? Priority.Sum : Priority.Leaf;
 
                 /// <inheritdoc/>
-                public override bool IsExact => !EDecimal.IsFinite;
+                public override bool IsExact => !EDecimal.IsFinite && !EDecimal.IsNaN();
 
                 /// <summary>Strictly less than 0</summary>
                 public bool IsNegative => EDecimal.IsNegative;
