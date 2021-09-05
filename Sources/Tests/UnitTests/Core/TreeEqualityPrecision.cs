@@ -11,13 +11,21 @@ namespace UnitTests.Core
     public class TreeEqualityPrecision
     {
         [Theory]
-        [InlineData("0.00127398573298572395", "0.002238949234823")]
-        public void ShouldBeEqual(string a, string b)
+        [InlineData("0.00127398573298572395", "0.002238949234823", 0.1, true)]
+        [InlineData("0.0", "1.0", 0.5, false)]
+        [InlineData("0.0", "1.0", 1.5, true)]
+        [InlineData("-0.5", "0.5", 0.5, false)]
+        [InlineData("-0.5", "0.5", 1.5, true)]
+        [InlineData("1", "1.73618368124124124", 1d, true)]
+        [InlineData("100", "110", 11d, true)]
+        public void ShouldBeEqual(string a, string b, double error, bool shouldBeEqual)
         {
             Entity e1 = a;
             Entity e2 = b;
-            using var _ = MathS.Settings.PrecisionErrorCommon.Set(0.1m);
-            Assert.True(e1.EqualsImprecisely(e2));
+            if (shouldBeEqual)
+                Assert.True(e1.EqualsImprecisely(e2, error));
+            else
+                Assert.False(e1.EqualsImprecisely(e2, error));
             Assert.Equal(e1, e2);
         }
     }
