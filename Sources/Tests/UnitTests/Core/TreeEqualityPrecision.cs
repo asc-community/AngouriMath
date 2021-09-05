@@ -26,7 +26,6 @@ namespace UnitTests.Core
                 Assert.True(e1.EqualsImprecisely(e2, error));
             else
                 Assert.False(e1.EqualsImprecisely(e2, error));
-            Assert.Equal(e1, e2);
         }
     }
 }
