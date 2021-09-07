@@ -21,6 +21,16 @@ namespace AngouriMath
             public partial record Real : Complex, System.IComparable<Real>
 #pragma warning restore SealedOrAbstract // AMAnalyzer
             {
+
+                private protected override bool EqualsImpreciselyInner(Entity other, EDecimal error)
+                    => 
+                        other is Real realOther
+                        &&  (
+                            EDecimal == realOther.EDecimal
+                            || EDecimal.Subtract(realOther.EDecimal).Abs().LessThan(error)
+                            )
+                    ;
+
                 /// <summary>
                 /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.
                 /// </summary>
