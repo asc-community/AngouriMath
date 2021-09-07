@@ -18,6 +18,7 @@ namespace UnitTests.Core
         [InlineData("-0.5", "0.5", 1.5, true)]
         [InlineData("1", "1.73618368124124124", 1d, true)]
         [InlineData("100", "110", 11d, true)]
+        [InlineData("a + 0.1", "a + 0.2", 0.3, true)]
         public void ShouldBeEqual(string a, string b, double error, bool shouldBeEqual)
         {
             Entity e1 = a;
