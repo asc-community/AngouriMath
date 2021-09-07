@@ -47,6 +47,13 @@ Console.WriteLine(succ.Apply(number3));
 using var _ = MathS.Diagnostic.OutputExplicit.Set(true);
 Console.WriteLine(succ.Apply(number3).InnerSimplified);*/
 
+static T Add<T>(T left, T right)
+    where T : INumber<T>
+{
+    return left + right;
+}
+
+
 Entity expr =
 @"
 apply(
