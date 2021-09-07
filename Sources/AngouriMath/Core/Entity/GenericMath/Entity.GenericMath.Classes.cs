@@ -53,6 +53,28 @@ partial record Entity
             /// <inheritdoc/>
             public static new Rational MultiplicativeIdentity { get; } = 1;
         }
+
+        partial record Integer :
+            IScalarClosedArithmetics<Integer>,
+            IDivisionOperators<Integer, Integer, Real>,
+            IHasAbsoluteValue<Integer, Integer>,
+            IHasNeutralValues<Rational>
+        {
+            /// <inheritdoc/>
+            public static Integer Abs(Integer self) => self.Abs().Downcast<Integer>();
+        }
+    }
+
+    partial record Matrix :
+        IClosedArithmetics<Matrix>
+    {
+        /// <inheritdoc/>
+        public static Matrix operator -(Matrix value)
+            => value.With((_, _, x) => -x);
+
+        /// <inheritdoc/>
+        public static Matrix operator +(Matrix value)
+            => value;
     }
 }
 
