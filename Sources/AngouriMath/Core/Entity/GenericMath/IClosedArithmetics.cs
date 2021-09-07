@@ -17,7 +17,7 @@ public interface IClosedArithmetics<T> :
 
     IAdditionOperators<T, T, T>,
     ISubtractionOperators<T, T, T>,
-    IMultiplyOperators<T, T, T>,
+    IMultiplyOperators<T, T, T>
     
     where T : IClosedArithmetics<T>
 {
