@@ -8,11 +8,6 @@
         netstandard2.1
     </TargetFrameworks>
     <EnablePreviewFeatures>True</EnablePreviewFeatures>
-
-    <GenerateRequiredPreviewFeaturesAttribute Condition="'$(TargetFramework)' != 'net6.0'">
-      False
-    </GenerateRequiredPreviewFeaturesAttribute>
-    
     <LangVersion>preview</LangVersion>
     <Authors>WhiteBlackGoose</Authors>
     <Company>Angouri</Company>
@@ -66,7 +61,7 @@
     <PackageReference Include="System.ValueTuple" Version="4.5.0" Condition="'$(TargetFramework)' == 'net472'" />
     
     <!--Project dependencies for < ns2.1-->
-    <PackageReference Include="System.Memory" Version="4.5.4" Condition="'$(TargetFramework)' != 'netstandard2.1'" />
+    <PackageReference Include="System.Memory" Version="4.5.4" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('netstandard2.1', $(TargetFramework)))" />
 
     <!--Project dependencies-->
     <PackageReference Include="HonkSharp" Version="1.0.3" />
@@ -76,8 +71,9 @@
     <PackageReference Include="Nullable" Version="1.3.0" PrivateAssets="all" />
 
     <!--.NET 6 generic math-->
-    <PackageReference Include="System.Runtime.Experimental" Version="6.0.0-preview.7.21377.19" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <Compile Remove="Core/Entity/GenericMath/**" Condition="'$(TargetFramework)' != 'net6.0'" />
+    <PackageReference Include="System.Runtime.Experimental" Version="6.0.0-preview.7.21377.19" Condition="$([MSBuild]::IsTargetFrameworkCompatible('net6.0', $(TargetFramework)))" />
+    <Compile Remove="Core/Entity/GenericMath/**" Condition="!$([MSBuild]::IsTargetFrameworkCompatible('net6.0', $(TargetFramework)))" />
+    <Compile Remove="RequiresPreviewFeaturesAttribute.cs" Condition="$([MSBuild]::IsTargetFrameworkCompatible('net6.0', $(TargetFramework)))" />
 
     <!--Analyzers-->
 	  <ProjectReference Include="../Analyzers/Analyzers/Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
