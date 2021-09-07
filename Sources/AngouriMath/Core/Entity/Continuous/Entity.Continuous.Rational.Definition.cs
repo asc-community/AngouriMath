@@ -157,7 +157,7 @@ namespace AngouriMath
                 public static bool operator >=(Rational a, Rational b) => a.ERational.CompareTo(b.ERational) >= 0;
                 public static bool operator <(Rational a, Rational b) => a.ERational.CompareTo(b.ERational) < 0;
                 public static bool operator <=(Rational a, Rational b) => a.ERational.CompareTo(b.ERational) <= 0;
-                public int CompareTo(Rational other) => ERational.CompareTo(other.ERational);
+                public int CompareTo(Rational? other) => other is null ? throw new System.ArgumentNullException() : ERational.CompareTo(other.ERational);
                 public static Rational operator +(Rational a, Rational b) => OpSum(a, b);
                 public static Rational operator -(Rational a, Rational b) => OpSub(a, b);
                 public static Rational operator *(Rational a, Rational b) => OpMul(a, b);
