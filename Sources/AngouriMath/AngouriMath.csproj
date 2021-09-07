@@ -9,7 +9,7 @@
     </TargetFrameworks>
     <EnablePreviewFeatures>True</EnablePreviewFeatures>
 
-    <GenerateRequiredPreviewFeaturesAttribute Condition="'$(TargetFramework)' == 'net6.0'">
+    <GenerateRequiredPreviewFeaturesAttribute Condition="'$(TargetFramework)' != 'net6.0'">
       False
     </GenerateRequiredPreviewFeaturesAttribute>
     
