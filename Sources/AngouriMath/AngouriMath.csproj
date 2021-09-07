@@ -40,6 +40,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <NoWarn>NU5104</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
   </PropertyGroup>
