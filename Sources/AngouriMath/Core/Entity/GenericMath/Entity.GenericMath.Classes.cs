@@ -1,135 +1,58 @@
 ﻿using System;
-using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 
-namespace AngouriMath
+namespace AngouriMath;
+    
+partial record Entity
 {
-    #if NET6_0
-    partial record Entity
+    partial record Number
     {
-        partial record Number
+        partial record Complex :
+            IClosedArithmetics<Complex>,
+            IDivisionOperators<Complex, Complex, Complex>,
+            IHasAbsoluteValue<Complex, Real>,
+            IHasNeutralValues<Complex>
         {
-            partial record Real : INumber<Real>
-            {
-                public static Real Abs(Real value) => value.Abs();
+            /// <inheritdoc/>
+            public static new Complex AdditiveIdentity { get; } = 0;
 
-                public static Real Clamp(Real value, Real min, Real max)
-                    => value > max ? max : (value < min ? min : value);
+            /// <inheritdoc/>
+            public static new Complex MultiplicativeIdentity { get; } = 1;
+        }
 
-                public static Real Create<TOther>(TOther value) where TOther : INumber<TOther>
-                {
-                    throw new NotImplementedException();
-                }
+        partial record Real :
+            IScalarClosedArithmetics<Real>,
+            IDivisionOperators<Real, Real, Real>,
+            IHasAbsoluteValue<Real, Real>,
+            IHasNeutralValues<Real>
+        {
+            /// <inheritdoc/>
+            public static new Real AdditiveIdentity { get; } = 0;
 
-                public static Real CreateSaturating<TOther>(TOther value) where TOther : INumber<TOther>
-                {
-                    throw new NotImplementedException();
-                }
+            /// <inheritdoc/>
+            public static new Real MultiplicativeIdentity { get; } = 1;
 
-                public static Real CreateTruncating<TOther>(TOther value) where TOther : INumber<TOther>
-                {
-                    throw new NotImplementedException();
-                }
+            /// <inheritdoc/>
+            public int CompareTo(object? obj) => this.CompareTo(obj as Real);
 
-                public static (Real Quotient, Real Remainder) DivRem(Real left, Real right)
-                {
-                    throw new NotImplementedException();
-                }
+            /// <inheritdoc/>
+            public static Real Abs(Real self) => self.Abs();
+        }
 
-                public static Real Max(Real x, Real y)
-                {
-                    throw new NotImplementedException();
-                }
+        partial record Rational :
+            IScalarClosedArithmetics<Rational>,
+            IDivisionOperators<Rational, Rational, Real>,
+            IHasAbsoluteValue<Rational, Rational>,
+            IHasNeutralValues<Rational>
+        {
+            /// <inheritdoc/>
+            public static Rational Abs(Rational self) => self.Abs().Downcast<Rational>();
 
-                public static Real Min(Real x, Real y)
-                {
-                    throw new NotImplementedException();
-                }
+            /// <inheritdoc/>
+            public static new Rational AdditiveIdentity { get; } = 0;
 
-                public static Real Parse(string s, NumberStyles style, IFormatProvider? provider)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static Real Parse(ReadOnlySpan<char> s, NumberStyles style, IFormatProvider? provider)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static Real Sign(Real value)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static bool TryCreate<TOther>(TOther value, out Real result) where TOther : INumber<TOther>
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static bool TryParse([NotNullWhen(true)] string? s, NumberStyles style, IFormatProvider? provider, out Real result)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static bool TryParse(ReadOnlySpan<char> s, NumberStyles style, IFormatProvider? provider, out Real result)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static Real One => throw new NotImplementedException();
-
-                public static Real Zero => throw new NotImplementedException();
-
-                Real IAdditiveIdentity<Real, Real>.AdditiveIdentity => throw new NotImplementedException();
-
-                public int CompareTo(object? obj)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static Real operator --(Real value)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static Real operator ++(Real value)
-                {
-                    throw new NotImplementedException();
-                }
-
-                Real IMultiplicativeIdentity<Real, Real>.MultiplicativeIdentity => throw new NotImplementedException();
-
-                public bool TryFormat(Span<char> destination, out int charsWritten, ReadOnlySpan<char> format, IFormatProvider? provider)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public string ToString(string? format, IFormatProvider? formatProvider)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static Real Parse(ReadOnlySpan<char> s, IFormatProvider? provider)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static bool TryParse(ReadOnlySpan<char> s, IFormatProvider? provider, out Real result)
-                {
-                    throw new NotImplementedException();
-                }
-
-                static Real IParseable<Real>.Parse(string s, IFormatProvider? provider)
-                {
-                    throw new NotImplementedException();
-                }
-
-                public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, out Real result)
-                {
-                    throw new NotImplementedException();
-                }
-            }
+            /// <inheritdoc/>
+            public static new Rational MultiplicativeIdentity { get; } = 1;
         }
     }
-    #endif
 }
+

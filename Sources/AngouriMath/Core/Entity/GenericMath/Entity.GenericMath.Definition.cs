@@ -1,58 +1,36 @@
 ﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
-namespace AngouriMath
+namespace AngouriMath;
+
+partial record Entity :
+    IParseable<Entity>,
+
+    IEqualityOperators<Entity, Entity>,
+
+    IHasNeutralValues<Entity>,
+
+    IClosedArithmetics<Entity>,
+    IDivisionOperators<Entity, Entity, Entity>
 {
-    #if NET6_0
-    partial record Entity :
-        IParseable<Entity>,
+    /// <summary>
+    /// Parses the string into expression.
+    /// Ignores the provided format provider.
+    /// </summary>
+    public static Entity Parse(string s, IFormatProvider? _)
+        => s;
 
-        IEqualityOperators<Entity, Entity>,
+    /// <summary>
+    /// Tries to parse the string into expression.
+    /// Ignores the provided format provider.
+    /// </summary>
+    public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? _, out Entity result)
+        => MathS.Parse(s ?? throw new ArgumentNullException()).Is(out result);
 
-        IUnaryNegationOperators<Entity, Entity>,
-        IUnaryPlusOperators<Entity, Entity>,
+    /// <inheritdoc/>
+    public static Entity AdditiveIdentity => 0;
 
-        IAdditionOperators<Entity, Entity, Entity>,
-        ISubtractionOperators<Entity, Entity, Entity>,
-        IMultiplyOperators<Entity, Entity, Entity>,
-        IDivisionOperators<Entity, Entity, Entity>,
+    /// <inheritdoc/>
+    public static Entity MultiplicativeIdentity => 1;
 
-        IAdditiveIdentity<Entity, Entity>,
-        IMultiplicativeIdentity<Entity, Entity>,
-
-        IIncrementOperators<Entity>,
-        IDecrementOperators<Entity>
-    {
-        /// <summary>
-        /// Parses the string into expression.
-        /// Ignores the provided format provider.
-        /// </summary>
-        public static Entity Parse(string s, IFormatProvider? _)
-            => s;
-
-        /// <summary>
-        /// Tries to parse the string into expression.
-        /// Ignores the provided format provider.
-        /// </summary>
-        public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? _, out Entity result)
-            => MathS.Parse(s ?? throw new ArgumentNullException()).Is(out result);
-
-        /// <inheritdoc/>
-        public static Entity AdditiveIdentity => 0;
-
-        /// <inheritdoc/>
-        public static Entity MultiplicativeIdentity => 1;
-
-        public static Entity operator ++(Entity value)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static Entity operator --(Entity value)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    #endif
 }
