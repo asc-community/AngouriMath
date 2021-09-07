@@ -23,17 +23,5 @@ jobs:
         dotnet-version: '6.0.x'
         include-prerelease: true
 
-    - name: Build AM
-      run: dotnet build Sources/AngouriMath/AngouriMath.csproj
-
-    - name: Build FSharp
-      run: dotnet build Sources/Wrappers/AngouriMath.FSharp/AngouriMath.FSharp.fsproj
-
-    - name: Build Interactive
-      run: dotnet build Sources/Wrappers/AngouriMath.Interactive/AngouriMath.Interactive.fsproj
-
-    - name: Build Analyzers
-      run: dotnet build Sources/Analyzers/Analyzers/Analyzers.csproj
-
-    - name: Build Utils
-      run: dotnet build Sources/Utils/Utils/Utils.csproj
+    - name: Build AHHHH
+      run: dotnet build Sources/Samples/Samples/Playground.csproj
