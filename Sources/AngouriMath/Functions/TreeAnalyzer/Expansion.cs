@@ -146,7 +146,7 @@ namespace AngouriMath.Functions
                                 term *= linBaseChildren[i];
                             else if (powerListForTerm[i] > 1)
                                 term *= MathS.Pow(linBaseChildren[i], Integer.Create(powerListForTerm[i]));
-                        newChildren.AddRange(SmartExpandOver(term, conditionForUniqueTerms));
+                        newChildren.AddRange(SmartExpandOver(term, conditionForUniqueTerms) ?? throw new AngouriBugException("Null unexpected"));
                     }
                     return newChildren;
             }

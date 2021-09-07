@@ -1,13 +1,9 @@
-﻿#if DEBUG
-// #define NET60
-#endif
-
-using System;
+﻿using System;
 using System.Diagnostics.CodeAnalysis;
 
 namespace AngouriMath
 {
-    #if NET_60
+    #if NET6_0
     partial record Entity :
         IParseable<Entity>,
 

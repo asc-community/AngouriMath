@@ -111,7 +111,7 @@ namespace AngouriMath.Convenience
         /// Overriden ToString so that one could see the value of the setting
         /// (if overriden)
         /// </summary>
-        public override string ToString() => Value.ToString();
+        public override string? ToString() => Value.ToString();
 
         private readonly KeyStack<Guid, T> values = new();
 

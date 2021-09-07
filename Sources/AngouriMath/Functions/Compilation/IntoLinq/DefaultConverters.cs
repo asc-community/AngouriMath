@@ -43,7 +43,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         }
 
         private static MethodInfo GetDef(string name, int argCount, Type type)
-            => typeof(MathAllMethods).GetMethod(name, GenerateArrayOfType(argCount, type));
+            => typeof(MathAllMethods).GetMethod(name, GenerateArrayOfType(argCount, type)) ?? throw new AngouriBugException("No null expected");
 
 
         [ConstantField] private static readonly Dictionary<Type, int> typeLevelInHierarchy = new()

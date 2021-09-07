@@ -4,6 +4,7 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
+using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Multithreading;
 using PeterO.Numbers;
 
@@ -60,7 +61,7 @@ namespace AngouriMath.Functions.Algebra
             if (ParseAsPolynomial(expr, x) is { } mono)
             {
                 MultithreadingFunctional.ExitIfCancelled();
-                var maxPower = mono.Keys.Max();
+                var maxPower = mono.Keys.Max() ?? throw new AngouriBugException("No null expected");
                 return
                     maxPower.IsZero
                     ? mono[maxPower]
@@ -82,8 +83,8 @@ namespace AngouriMath.Functions.Algebra
 
                 if (monoP is { } && monoQ is { })
                 {
-                    var maxPowerP = monoP.Keys.Max();
-                    var maxPowerQ = monoQ.Keys.Max();
+                    var maxPowerP = monoP.Keys.Max() ?? throw new AngouriBugException("No null expected");
+                    var maxPowerQ = monoQ.Keys.Max() ?? throw new AngouriBugException("No null expected");
                     MultithreadingFunctional.ExitIfCancelled();
                     var maxTermP = monoP[maxPowerP];
                     var maxTermQ = monoQ[maxPowerQ];
