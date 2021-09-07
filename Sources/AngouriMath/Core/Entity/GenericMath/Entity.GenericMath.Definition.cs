@@ -18,7 +18,10 @@ namespace AngouriMath
         IDivisionOperators<Entity, Entity, Entity>,
 
         IAdditiveIdentity<Entity, Entity>,
-        IMultiplicativeIdentity<Entity, Entity>
+        IMultiplicativeIdentity<Entity, Entity>,
+
+        IIncrementOperators<Entity>,
+        IDecrementOperators<Entity>
     {
         /// <summary>
         /// Parses the string into expression.
@@ -39,6 +42,16 @@ namespace AngouriMath
 
         /// <inheritdoc/>
         public static Entity MultiplicativeIdentity => 1;
+
+        public static Entity operator ++(Entity value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static Entity operator --(Entity value)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     #endif
