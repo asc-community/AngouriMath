@@ -10,7 +10,7 @@ on:
 
 jobs:
   Everything:
-    runs-on: windows-latest  # Window application cannot be run on other OS
+    runs-on: ubuntu-latest  # Window application cannot be run on other OS
 
     steps:
     - uses: actions/checkout@v2
