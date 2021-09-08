@@ -63,7 +63,7 @@ namespace UnitTests.Core
             Assert.Equal("a + b", Quack<Entity>("a", "b"));
             Assert.Equal(15, Quack<Integer>(10, 5));
             Assert.Equal(Rational.Create(3, 5), Quack(Rational.Create(2, 5), Rational.Create(1, 5)));
-            Assert.Equal(0.3, Quack<Real>(0.1, 0.2));
+            Assert.Equal(0.3m, Quack<Real>(0.1m, 0.2m));
             Assert.Equal(Complex.Create(8, 7), Quack<Complex>(Complex.Create(4, 6), Complex.Create(4, 1)));
 
             static T Quack<T>(T a, T b) where T : IAdditionOperators<T, T, T>
@@ -91,7 +91,7 @@ namespace UnitTests.Core
             Assert.Equal("a * b", Quack<Entity>("a", "b"));
             Assert.Equal(50, Quack<Integer>(10, 5));
             Assert.Equal(Rational.Create(2, 25), Quack(Rational.Create(2, 5), Rational.Create(1, 5)));
-            Assert.Equal(0.02, Quack<Real>(0.1, 0.2));
+            Assert.Equal(0.02m, Quack<Real>(0.1m, 0.2m));
             Assert.Equal(Complex.Create(16, 24), Quack<Complex>(Complex.Create(4, 6), Complex.Create(4, 0)));
 
             static T Quack<T>(T a, T b) where T : IMultiplyOperators<T, T, T>
