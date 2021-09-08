@@ -65,6 +65,8 @@ namespace UnitTests.Core
             Assert.Equal(Rational.Create(3, 5), Quack(Rational.Create(2, 5), Rational.Create(1, 5)));
             Assert.Equal(0.3m, Quack<Real>(0.1m, 0.2m));
             Assert.Equal(Complex.Create(8, 7), Quack<Complex>(Complex.Create(4, 6), Complex.Create(4, 1)));
+            Assert.Equal(MathS.Matrix(new Entity[,] { { 1, 2 }, { 3, 4 } }), 
+                Quack(MathS.Matrix(new Entity[,] { { 0, 1 }, { 2, 3 } }), MathS.Matrix(new Entity[,] { { 1, 1 }, { 1, 1 } })));
 
             static T Quack<T>(T a, T b) where T : IAdditionOperators<T, T, T>
                 => a + b;
@@ -79,6 +81,8 @@ namespace UnitTests.Core
             Assert.Equal(Rational.Create(1, 5), Quack(Rational.Create(2, 5), Rational.Create(1, 5)));
             Assert.Equal(-0.1, Quack<Real>(0.1, 0.2));
             Assert.Equal(Complex.Create(0, 5), Quack<Complex>(Complex.Create(4, 6), Complex.Create(4, 1)));
+            Assert.Equal(MathS.Matrix(new Entity[,] { { -1, 0 }, { 1, 2 } }),
+                Quack(MathS.Matrix(new Entity[,] { { 0, 1 }, { 2, 3 } }), MathS.Matrix(new Entity[,] { { 1, 1 }, { 1, 1 } })));
 
             static T Quack<T>(T a, T b) where T : ISubtractionOperators<T, T, T>
                 => a - b;
@@ -93,6 +97,8 @@ namespace UnitTests.Core
             Assert.Equal(Rational.Create(2, 25), Quack(Rational.Create(2, 5), Rational.Create(1, 5)));
             Assert.Equal(0.02m, Quack<Real>(0.1m, 0.2m));
             Assert.Equal(Complex.Create(16, 24), Quack<Complex>(Complex.Create(4, 6), Complex.Create(4, 0)));
+            Assert.Equal(MathS.Matrix(new Entity[,] { { 1, 1 }, { 5, 5 } }),
+                Quack(MathS.Matrix(new Entity[,] { { 0, 1 }, { 2, 3 } }), MathS.Matrix(new Entity[,] { { 1, 1 }, { 1, 1 } })));
 
             static T Quack<T>(T a, T b) where T : IMultiplyOperators<T, T, T>
                 => a * b;
