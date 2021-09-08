@@ -4,6 +4,7 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
+using AngouriMath.Core.Exceptions;
 using PeterO.Numbers;
 
 namespace AngouriMath.Functions
@@ -80,8 +81,8 @@ namespace AngouriMath.Functions
             var polyvar = monoinfoP.Keys.FirstOrDefault(monoinfoQ.ContainsKey);
             // cannot divide, return unchanged
             if (polyvar is null) return null;
-            var maxpowP = monoinfoP[polyvar].Keys.Max();
-            var maxpowQ = monoinfoQ[polyvar].Keys.Max();
+            var maxpowP = monoinfoP[polyvar].Keys.Max() ?? throw new AngouriBugException("No null expected");
+            var maxpowQ = monoinfoQ[polyvar].Keys.Max() ?? throw new AngouriBugException("No null expected");
             var maxvalP = monoinfoP[polyvar][maxpowP];
             var maxvalQ = monoinfoQ[polyvar][maxpowQ];
 
@@ -111,7 +112,7 @@ namespace AngouriMath.Functions
                 if (monoinfoP[polyvar].Count == 0)
                     break;
 
-                maxpowP = monoinfoP[polyvar].Keys.Max();
+                maxpowP = monoinfoP[polyvar].Keys.Max() ?? throw new AngouriBugException("No null expected");
                 maxvalP = monoinfoP[polyvar][maxpowP];
             }
 

@@ -123,7 +123,7 @@ namespace AngouriMath
                 public static bool operator >=(Real a, Real b) => a.EDecimal.GreaterThanOrEquals(b.EDecimal);
                 public static bool operator <(Real a, Real b) => a.EDecimal.LessThan(b.EDecimal);
                 public static bool operator <=(Real a, Real b) => a.EDecimal.LessThanOrEquals(b.EDecimal);
-                public int CompareTo(Real other) => EDecimal.CompareTo(other.EDecimal);
+                public int CompareTo(Real? other) => other is null ? throw new System.ArgumentNullException() : EDecimal.CompareTo(other.EDecimal);
                 public static Real operator +(Real a, Real b) => OpSum(a, b);
                 public static Real operator -(Real a, Real b) => OpSub(a, b);
                 public static Real operator *(Real a, Real b) => OpMul(a, b);

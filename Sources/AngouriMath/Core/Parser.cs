@@ -61,7 +61,7 @@ namespace AngouriMath.Core
         private sealed class AngouriMathTextWriter : TextWriter
         {
             public override Encoding Encoding => Encoding.UTF8;
-            public override void WriteLine(string s) => errors.Add(new Unknown(s));
+            public override void WriteLine(string? s) => errors.Add(new Unknown(s ?? throw new System.ArgumentNullException()));
             public readonly List<ReasonWhyParsingFailed> errors = new();
         }
         

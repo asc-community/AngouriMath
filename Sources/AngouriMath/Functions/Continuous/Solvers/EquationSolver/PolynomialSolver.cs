@@ -4,6 +4,7 @@
  * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
  * Website: https://am.angouri.org.
  */
+using AngouriMath.Core.Exceptions;
 using AngouriMath.Core.Multithreading;
 using PeterO.Numbers;
 using static AngouriMath.Entity;
@@ -157,7 +158,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// </returns>
         internal static bool ReduceCommonPower(ref Dictionary<EInteger, Entity> monomials)
         {
-            var commonPower = monomials.Keys.Min();
+            var commonPower = monomials.Keys.Min() ?? throw new AngouriBugException("No null expected");
             if (commonPower.IsZero)
                 return false;
             var newDict = new Dictionary<EInteger, Entity>();
@@ -244,6 +245,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <returns><see langword="null"/> if polynomial is bad</returns>
         internal static Dictionary<T, Entity>? GatherMonomialInformation<T, TPrimitive>(IEnumerable<Entity> terms, Variable subtree)
             where TPrimitive : TreeAnalyzer.IPrimitive<T>, new()
+            where T : notnull
         {
             var monomialsByPower = new Dictionary<T, Entity>();
             // here we fill the dictionary with information about monomials' coefficiants
@@ -257,6 +259,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
         /// <summary>Finds all terms of a polynomial</summary>
         internal static (Dictionary<T, Entity> poly, Entity rem) GatherMonomialInformationAllowingBad<T, TPrimitive>(IEnumerable<Entity> terms, Variable subtree)
             where TPrimitive : TreeAnalyzer.IPrimitive<T>, new()
+            where T : notnull
         {
             var monomialsByPower = new Dictionary<T, Entity>();
             Entity rem = 0;

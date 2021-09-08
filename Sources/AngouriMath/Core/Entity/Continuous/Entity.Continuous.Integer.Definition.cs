@@ -125,7 +125,7 @@ namespace AngouriMath
                 public static bool operator >=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) >= 0;
                 public static bool operator <(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) < 0;
                 public static bool operator <=(Integer a, Integer b) => a.EInteger.CompareTo(b.EInteger) <= 0;
-                public int CompareTo(Integer other) => EInteger.CompareTo(other.EInteger);
+                public int CompareTo(Integer? other) => other is null ? throw new System.ArgumentNullException() : EInteger.CompareTo(other.EInteger);
                 public static Integer operator +(Integer a, Integer b) => OpSum(a, b);
                 public static Integer operator -(Integer a, Integer b) => OpSub(a, b);
                 public static Integer operator *(Integer a, Integer b) => OpMul(a, b);
