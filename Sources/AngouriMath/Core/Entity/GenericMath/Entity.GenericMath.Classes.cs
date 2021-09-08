@@ -58,10 +58,18 @@ partial record Entity
             IScalarClosedArithmetics<Integer>,
             IDivisionOperators<Integer, Integer, Real>,
             IHasAbsoluteValue<Integer, Integer>,
-            IHasNeutralValues<Rational>
+            IHasNeutralValues<Integer>
         {
             /// <inheritdoc/>
             public static Integer Abs(Integer self) => self.Abs().Downcast<Integer>();
+
+            /// <inheritdoc/>
+            public static new Integer AdditiveIdentity { get; } = 0;
+
+            /// <inheritdoc/>
+            public static new Integer MultiplicativeIdentity { get; } = 1;
+
+            
         }
     }
 

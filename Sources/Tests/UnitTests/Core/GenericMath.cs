@@ -2,6 +2,7 @@
 using AngouriMath.Extensions;
 using System;
 using Xunit;
+using static AngouriMath.Entity.Number;
 
 namespace UnitTests.Core
 {
@@ -32,6 +33,10 @@ namespace UnitTests.Core
         {
             Assert.Equal(55, Quack(-55));
             Assert.Equal("-x".ToEntity(), Quack("x".ToEntity()));
+            Assert.Equal(-10, Quack<Integer>(10));
+            Assert.Equal(Rational.Create(-2, 5), Quack(Rational.Create(2, 5)));
+            Assert.Equal(-0.1318392429, Quack<Real>(0.1318392429));
+            Assert.Equal(Complex.Create(-4, -6), Quack<Complex>(Complex.Create(4, 6)));
 
             static T Quack<T>(T a) where T : IUnaryNegationOperators<T, T>
                 => -a;
@@ -42,6 +47,10 @@ namespace UnitTests.Core
         {
             Assert.Equal(55, Quack(55));
             Assert.Equal("x".ToEntity(), Quack("x".ToEntity()));
+            Assert.Equal(10, Quack<Integer>(10));
+            Assert.Equal(Rational.Create(2, 5), Quack(Rational.Create(2, 5)));
+            Assert.Equal(0.1318392429, Quack<Real>(0.1318392429));
+            Assert.Equal(Complex.Create(4, 6), Quack<Complex>(Complex.Create(4, 6)));
 
             static T Quack<T>(T a) where T : IUnaryPlusOperators<T, T>
                 => +a;
@@ -52,6 +61,10 @@ namespace UnitTests.Core
         {
             Assert.Equal(60, Quack(55, 5));
             Assert.Equal("a + b", Quack<Entity>("a", "b"));
+            Assert.Equal(15, Quack<Integer>(10, 5));
+            Assert.Equal(Rational.Create(3, 5), Quack(Rational.Create(2, 5), Rational.Create(1, 5)));
+            Assert.Equal(0.3, Quack<Real>(0.1, 0.2));
+            Assert.Equal(Complex.Create(8, 7), Quack<Complex>(Complex.Create(4, 6), Complex.Create(4, 1)));
 
             static T Quack<T>(T a, T b) where T : IAdditionOperators<T, T, T>
                 => a + b;
@@ -62,6 +75,10 @@ namespace UnitTests.Core
         {
             Assert.Equal(50, Quack(55, 5));
             Assert.Equal("a - b", Quack<Entity>("a", "b"));
+            Assert.Equal(5, Quack<Integer>(10, 5));
+            Assert.Equal(Rational.Create(1, 5), Quack(Rational.Create(2, 5), Rational.Create(1, 5)));
+            Assert.Equal(-0.1, Quack<Real>(0.1, 0.2));
+            Assert.Equal(Complex.Create(0, 5), Quack<Complex>(Complex.Create(4, 6), Complex.Create(4, 1)));
 
             static T Quack<T>(T a, T b) where T : ISubtractionOperators<T, T, T>
                 => a - b;
@@ -72,6 +89,10 @@ namespace UnitTests.Core
         {
             Assert.Equal(160, Quack(32, 5));
             Assert.Equal("a * b", Quack<Entity>("a", "b"));
+            Assert.Equal(50, Quack<Integer>(10, 5));
+            Assert.Equal(Rational.Create(2, 25), Quack(Rational.Create(2, 5), Rational.Create(1, 5)));
+            Assert.Equal(0.02, Quack<Real>(0.1, 0.2));
+            Assert.Equal(Complex.Create(16, 24), Quack<Complex>(Complex.Create(4, 6), Complex.Create(4, 0)));
 
             static T Quack<T>(T a, T b) where T : IMultiplyOperators<T, T, T>
                 => a * b;
@@ -82,8 +103,14 @@ namespace UnitTests.Core
         {
             Assert.Equal(11, Quack(55, 5));
             Assert.Equal("a / b", Quack<Entity>("a", "b"));
+            Assert.Equal(2, OhNo<Integer, Real>(10, 5));
+            Assert.Equal(2, OhNo<Rational, Real>(Rational.Create(2, 5), Rational.Create(1, 5)));
+            Assert.Equal(0.5, Quack<Real>(0.1, 0.2));
+            Assert.Equal(Complex.Create(1, 1.5), Quack<Complex>(Complex.Create(4, 6), Complex.Create(4, 0)));
 
             static T Quack<T>(T a, T b) where T : IDivisionOperators<T, T, T>
+                => a / b;
+            static TOut OhNo<T, TOut>(T a, T b) where T : IDivisionOperators<T, T, TOut>
                 => a / b;
         }
 
@@ -92,6 +119,10 @@ namespace UnitTests.Core
         {
             Assert.Equal(55, Quack(55));
             Assert.Equal("0 + a", Quack<Entity>("a"));
+            Assert.Equal(10, Quack<Integer>(10));
+            Assert.Equal(Rational.Create(2, 5), Quack(Rational.Create(2, 5)));
+            Assert.Equal(0.1318392429, Quack<Real>(0.1318392429));
+            Assert.Equal(Complex.Create(4, 6), Quack<Complex>(Complex.Create(4, 6)));
 
             static T Quack<T>(T a) where T : IAdditiveIdentity<T, T>, IAdditionOperators<T, T, T>
                 => T.AdditiveIdentity + a;
@@ -102,6 +133,10 @@ namespace UnitTests.Core
         {
             Assert.Equal(55, Quack(55));
             Assert.Equal("1 * a", Quack<Entity>("a"));
+            Assert.Equal(10, Quack<Integer>(10));
+            Assert.Equal(Rational.Create(2, 5), Quack(Rational.Create(2, 5)));
+            Assert.Equal(0.1318392429, Quack<Real>(0.1318392429));
+            Assert.Equal(Complex.Create(4, 6), Quack<Complex>(Complex.Create(4, 6)));
 
             static T Quack<T>(T a) where T : IMultiplicativeIdentity<T, T>, IMultiplyOperators<T, T, T>
                 => T.MultiplicativeIdentity * a;
