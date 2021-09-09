@@ -6,11 +6,7 @@ using static AngouriMath.Entity;
 using AngouriMath.Extensions;
 using static AngouriMath.Entity.Number;
 
-using AngouriMath;
-using AngouriMath.Extensions;
 using static AngouriMath.MathS;
-using static AngouriMath.Entity;
-using System;
 using static System.Console;
 using PeterO.Numbers;
 
