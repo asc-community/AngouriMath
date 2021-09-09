@@ -1,5 +1,9 @@
-﻿
-// Based on https://github.com/raminrahimzada/CSharp-Helper-Classes/blob/ffbb33c1ee90ce12357c72fa65f2510a09834693/Math/DecimalMath/DecimalMath.cs
+﻿//
+// Copyright (c) 2019-2021 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
 
 using System;
 using System.Numerics;

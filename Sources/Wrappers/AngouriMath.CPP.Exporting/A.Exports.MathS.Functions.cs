@@ -1,5 +1,9 @@
-
-// This file is auto-generated. Use generate_exports.bat to re-generate it, do not edit the file itself.
+//
+// Copyright (c) 2019-2021 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
 
 using System.Runtime.InteropServices;
 

@@ -1,4 +1,9 @@
-// TODO: this guide requires a lot of work
+//
+// Copyright (c) 2019-2021 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
 
 #pragma warning disable CS1587 // XML comment is not placed on a valid language element
 /// To add a new node (function, operator) follow this guide. It covers all the methods you can
