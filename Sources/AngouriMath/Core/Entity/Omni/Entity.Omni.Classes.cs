@@ -69,7 +69,7 @@ namespace AngouriMath
                 private static Dictionary<Entity, Entity> BuildDictionaryFromElements(IEnumerable<Entity> elements, bool noCheck)
                 {
                     var enumerable = elements as Entity[] ?? elements.ToArray();
-                    Dictionary<Entity, Entity> dict = new(enumerable.Count());
+                    Dictionary<Entity, Entity> dict = new(enumerable.Length);
                     foreach (var elem in enumerable)
                     {
                         if (elem == MathS.NaN)
