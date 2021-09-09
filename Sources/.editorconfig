@@ -8,3 +8,14 @@ dotnet_diagnostic.RS0016.severity = error
 
 # RS0017: some method mentioned as public API is not public
 dotnet_diagnostic.RS0017.severity = error
+
+# Missing header warning
+dotnet_diagnostic.IDE0073.severity = warning
+
+# new can't be simplified ffs
+dotnet_diagnostic.IDE0090.severity = none
+
+# Requires preview features bla-bla
+# dotnet_diagnostic.CA2252.severity = none
+
+file_header_template=\nCopyright (c) 2019-2021 Angouri.\nAngouriMath is licensed under MIT.\nDetails: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.\nWebsite: https://am.angouri.org.\n

@@ -1,9 +1,10 @@
-/* 
- * Copyright (c) 2019-2021 Angouri.
- * AngouriMath is licensed under MIT. 
- * Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
- * Website: https://am.angouri.org.
- */
+//
+// Copyright (c) 2019-2021 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+
 using NumericsComplex = System.Numerics.Complex;
 using PeterO.Numbers;
 using AngouriMath.Core.Exceptions;
