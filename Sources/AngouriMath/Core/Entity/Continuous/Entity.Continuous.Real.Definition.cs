@@ -23,18 +23,19 @@ namespace AngouriMath
             {
                 /// <inheritdoc/>
                 public virtual bool Equals(Real? other)
-                    => InnerEquals(other);
-
-                /// <inheritdoc/>
-                private protected bool InnerEquals(Real? other)
                 {
                     if (other is null)
                         return false;
                     if (MathS.Settings.ImpreciseEqualityEnabled)
-                        return EDecimal == other.EDecimal
-                            || EDecimal.Subtract(other.EDecimal).Abs().LessThan(MathS.Settings.PrecisionErrorCommon);
-                    return other.GetType() == typeof(Real) && EDecimal == other.EDecimal;
+                        return InnerEquals(other);
+                    return EDecimal == other.EDecimal;
                 }
+
+                /// <inheritdoc/>
+                private protected bool InnerEquals(Real other)
+                    =>
+                        EDecimal == other.EDecimal
+                        || EDecimal.Subtract(other.EDecimal).Abs().LessThan(MathS.Settings.PrecisionErrorCommon);
 
                 /// <inheritdoc/>
                 public override int GetHashCode() => EDecimal.GetHashCode();
