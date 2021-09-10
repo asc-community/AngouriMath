@@ -1058,6 +1058,15 @@ namespace AngouriMath
             [ThreadStatic] private static Setting<EDecimal>? precisionErrorZeroRange;
 
             /// <summary>
+            /// Enables the imprecise equality mode. With it,
+            /// equality sign (==) or method .Equals will use
+            /// <see cref="PrecisionErrorCommon" /> when comparing
+            /// two <see cref="Real" /> numbers.
+            /// </summary>
+            public static Setting<bool> ImpreciseEqualityEnabled => impreciseEqualityEnabled ??= false;
+            [ThreadStatic] private static Setting<bool>? impreciseEqualityEnabled;
+
+            /// <summary>
             /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
             /// </summary>
             public static Setting<bool> AllowNewton => allowNewton ??= true;

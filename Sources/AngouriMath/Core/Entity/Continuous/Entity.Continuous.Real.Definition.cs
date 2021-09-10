@@ -21,15 +21,23 @@ namespace AngouriMath
             public partial record Real : Complex, System.IComparable<Real>
 #pragma warning restore SealedOrAbstract // AMAnalyzer
             {
+                /// <inheritdoc/>
+                public virtual bool Equals(Real? other)
+                    => InnerEquals(other);
 
-                private protected override bool EqualsImpreciselyInner(Entity other, EDecimal error)
-                    => 
-                        other is Real realOther
-                        &&  (
-                            EDecimal == realOther.EDecimal
-                            || EDecimal.Subtract(realOther.EDecimal).Abs().LessThan(error)
-                            )
-                    ;
+                /// <inheritdoc/>
+                private protected bool InnerEquals(Real? other)
+                {
+                    if (other is null)
+                        return false;
+                    if (MathS.Settings.ImpreciseEqualityEnabled)
+                        return EDecimal == other.EDecimal
+                            || EDecimal.Subtract(other.EDecimal).Abs().LessThan(MathS.Settings.PrecisionErrorCommon);
+                    return other.GetType() == typeof(Real) && EDecimal == other.EDecimal;
+                }
+
+                /// <inheritdoc/>
+                public override int GetHashCode() => EDecimal.GetHashCode();
 
                 /// <summary>
                 /// Constructor does not downcast automatically. Use <see cref="Create(EDecimal)"/> for automatic downcasting.

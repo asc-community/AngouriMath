@@ -16,6 +16,19 @@ namespace AngouriMath
             /// <see cref="Rational"/>, <see cref="Real"/> and <see cref="Complex"/>.</summary>
             public sealed partial record Integer : Rational, System.IComparable<Integer>
             {
+                /// <inheritdoc/>
+                public bool Equals(Integer? other)
+                {
+                    if (other is null)
+                        return false;
+                    if (MathS.Settings.ImpreciseEqualityEnabled)
+                        return InnerEquals(other);
+                    return EInteger == other.EInteger;
+                }
+
+                /// <inheritdoc/>
+                public override int GetHashCode() => (EInteger, 2).GetHashCode();
+
                 private Integer(EInteger value) : base(value) => EInteger = value;
 
                 internal override Priority Priority => IsNegative ? Priority.Sum : Priority.Leaf;

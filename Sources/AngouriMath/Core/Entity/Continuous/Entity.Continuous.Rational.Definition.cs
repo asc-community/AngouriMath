@@ -21,6 +21,19 @@ namespace AngouriMath
             public partial record Rational : Real, System.IComparable<Rational>
 #pragma warning restore SealedOrAbstract // AMAnalyzer
             {
+                /// <inheritdoc/>
+                public virtual bool Equals(Rational? other)
+                {
+                    if (other is null)
+                        return false;
+                    if (MathS.Settings.ImpreciseEqualityEnabled)
+                        return InnerEquals(other);
+                    return Numerator == other.Numerator && Denominator == other.Denominator;
+                }
+
+                /// <inheritdoc/>
+                public override int GetHashCode() => (Numerator, Denominator, 1).GetHashCode();
+
                 /// <summary>
                 /// Constructor does not downcast automatically.
                 /// Use <see cref="Create(EInteger, EInteger)"/> or <see cref="Create(ERational)"/> for automatic downcasting.

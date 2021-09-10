@@ -232,7 +232,7 @@ namespace AngouriMath
         /// The acceptable error is <see cref="MathS.Settings.PrecisionErrorCommon" />
         /// </summary>
         public bool EqualsImprecisely(Entity other)
-            => EqualsImpreciselyInner(other, MathS.Settings.PrecisionErrorCommon);
+            => MathS.Settings.ImpreciseEqualityEnabled.As(true, () => other == this);
 
         /// <summary>
         /// Checks if two expressions are equal up
@@ -240,9 +240,9 @@ namespace AngouriMath
         /// equality for all other nodes of the expression).
         /// </summary>
         public bool EqualsImprecisely(Entity other, Real error)
-            => EqualsImpreciselyInner(other, error.EDecimal);
-
-        private protected virtual bool EqualsImpreciselyInner(Entity other, PeterO.Numbers.EDecimal error)
-            => this == other;
+            => MathS.Settings.ImpreciseEqualityEnabled.As(true, () => 
+               MathS.Settings.PrecisionErrorCommon.As(error.EDecimal, () => 
+                    other == this
+               ));
     }
 }

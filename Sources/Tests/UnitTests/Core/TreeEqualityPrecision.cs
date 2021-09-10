@@ -17,8 +17,18 @@ namespace UnitTests.Core
         [InlineData("-0.5", "0.5", 0.5, false)]
         [InlineData("-0.5", "0.5", 1.5, true)]
         [InlineData("1", "1.73618368124124124", 1d, true)]
+        [InlineData("1.73618368124124124", "1", 1d, true)]
         [InlineData("100", "110", 11d, true)]
         [InlineData("a + 0.1", "a + 0.2", 0.3, true)]
+        [InlineData("3 + a", "3.1 + a", 0.2, true)]
+        [InlineData("3.1 + a", "3 + a", 0.2, true)]
+        [InlineData("3.1 + a", "3 + a", 0.01, false)]
+        [InlineData("3", "3.1", 0.2, true)]
+        [InlineData("3.1", "3", 0.2, true)]
+        [InlineData("3.132239408234", "3", 0.2, true)]
+        [InlineData("3", "3.132239408234", 0.2, true)]
+        [InlineData("3.132239408234", "3", 0.1, false)]
+        [InlineData("3", "3.132239408234", 0.1, false)]
         public void ShouldBeEqual(string a, string b, double error, bool shouldBeEqual)
         {
             Entity e1 = a;
