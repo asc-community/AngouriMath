@@ -28,13 +28,13 @@ namespace AngouriMath
                         return false;
                     if (MathS.Settings.ImpreciseEqualityEnabled)
                         return InnerEquals(other);
-                    return EDecimal == other.EDecimal;
+                    return EDecimal.Equals(other.EDecimal);
                 }
 
                 /// <inheritdoc/>
                 private protected bool InnerEquals(Real other)
                     =>
-                        EDecimal == other.EDecimal
+                        EDecimal.Equals(other.EDecimal)
                         || EDecimal.Subtract(other.EDecimal).Abs().LessThan(MathS.Settings.PrecisionErrorCommon);
 
                 /// <inheritdoc/>

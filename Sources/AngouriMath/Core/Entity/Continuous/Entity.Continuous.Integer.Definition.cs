@@ -23,7 +23,7 @@ namespace AngouriMath
                         return false;
                     if (MathS.Settings.ImpreciseEqualityEnabled)
                         return InnerEquals(other);
-                    return EInteger == other.EInteger;
+                    return EInteger.Equals(other.EInteger);
                 }
 
                 /// <inheritdoc/>
