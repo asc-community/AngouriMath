@@ -3,7 +3,7 @@ name: 'Upload last-master versions to MyGet'
 on:
   push:
     branches:
-      - master
+      - *
 
 jobs:
   main:
