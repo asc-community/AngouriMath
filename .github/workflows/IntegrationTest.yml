@@ -29,9 +29,9 @@ jobs:
       - name: 'Pack AngouriMath'
         run: |
           cd Sources/AngouriMath
-          dotnet restore
-          dotnet build -c release
-          dotnet pack -c release -p:PackageVersion=${{ env.package_version }}
+          dotnet restore AngouriMath.csproj
+          dotnet build AngouriMath.csproj -c release
+          dotnet pack AngouriMath.csproj -c release -p:PackageVersion=${{ env.package_version }}
         
       - name: 'Create hello world'
         run: |
