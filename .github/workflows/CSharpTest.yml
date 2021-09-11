@@ -42,11 +42,14 @@ jobs:
       run: |
         dotnet add "Sources/Tests/UnitTests" package GitHubActionsTestLogger
         dotnet build Sources/Tests/UnitTests
+        
+        dotnet build Sources/Tests/UnitTests.Experimental
 
     - name: Test if not to send
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
         dotnet test "Sources/Tests/UnitTests" -c Release -l GitHubActions /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+        dotnet test "Sources/Tests/UnitTests.Experimental" -c Release
 
     - name: Test if to send
       if: ${{ matrix.os == 'windows-latest' }}
