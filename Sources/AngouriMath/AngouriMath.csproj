@@ -1,5 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <PackageId>AngouriMath</PackageId>
+    <Product>AngouriMath</Product>
+  </PropertyGroup>
+  
   <ItemGroup>
     <!--We don't need generic math in AngouriMath at all-->
     <Compile Remove="Core/Entity/GenericMath/**" />

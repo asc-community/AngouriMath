@@ -1,6 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <PackageId>AngouriMath.Experimental</PackageId>
+    <Product>AngouriMath.Experimental</Product>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <EnablePreviewFeatures>True</EnablePreviewFeatures>
   </PropertyGroup>
 
