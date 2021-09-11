@@ -70,7 +70,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionConfigs", "Solution
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		AngouriMath.sln.licenseheader = AngouriMath.sln.licenseheader
-		Directory.Build.props = Directory.Build.props
 		NuGet.Config = NuGet.Config
 	EndProjectSection
 EndProject
@@ -133,11 +132,21 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Terminal", "Terminal", "{D2
 		Terminal\readme.md = Terminal\readme.md
 	EndProjectSection
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AngouriMath.Terminal.Lib", "Terminal\AngouriMath.Terminal.Lib\AngouriMath.Terminal.Lib.fsproj", "{42B57911-4494-4165-97C6-46B8C3328614}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "AngouriMath.Terminal.Lib", "Terminal\AngouriMath.Terminal.Lib\AngouriMath.Terminal.Lib.fsproj", "{42B57911-4494-4165-97C6-46B8C3328614}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AngouriMath.Terminal", "Terminal\AngouriMath.Terminal\AngouriMath.Terminal.fsproj", "{057FA941-9176-4126-A3F1-7F32D3D100AC}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "AngouriMath.Terminal", "Terminal\AngouriMath.Terminal\AngouriMath.Terminal.fsproj", "{057FA941-9176-4126-A3F1-7F32D3D100AC}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TerminalUnitTests", "Tests\TerminalUnitTests\TerminalUnitTests.fsproj", "{07C6DD7C-A351-4D6B-8B7E-E8837BBDA163}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "TerminalUnitTests", "Tests\TerminalUnitTests\TerminalUnitTests.fsproj", "{07C6DD7C-A351-4D6B-8B7E-E8837BBDA163}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AngouriMath.Library", "AngouriMath.Library", "{86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}"
+	ProjectSection(SolutionItems) = preProject
+		AngouriMath\Directory.Build.props = AngouriMath\Directory.Build.props
+		AngouriMath\Directory.Build.targets = AngouriMath\Directory.Build.targets
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath.Experimental", "AngouriMath\AngouriMath.Experimental.csproj", "{905029A2-0552-4934-985C-B953E9C36329}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests.Experimental", "Tests\UnitTests.Experimental\UnitTests.Experimental.csproj", "{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -315,11 +324,28 @@ Global
 		{07C6DD7C-A351-4D6B-8B7E-E8837BBDA163}.Release|Any CPU.Build.0 = Release|Any CPU
 		{07C6DD7C-A351-4D6B-8B7E-E8837BBDA163}.Release|x64.ActiveCfg = Release|Any CPU
 		{07C6DD7C-A351-4D6B-8B7E-E8837BBDA163}.Release|x64.Build.0 = Release|Any CPU
+		{905029A2-0552-4934-985C-B953E9C36329}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{905029A2-0552-4934-985C-B953E9C36329}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{905029A2-0552-4934-985C-B953E9C36329}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{905029A2-0552-4934-985C-B953E9C36329}.Debug|x64.Build.0 = Debug|Any CPU
+		{905029A2-0552-4934-985C-B953E9C36329}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{905029A2-0552-4934-985C-B953E9C36329}.Release|Any CPU.Build.0 = Release|Any CPU
+		{905029A2-0552-4934-985C-B953E9C36329}.Release|x64.ActiveCfg = Release|Any CPU
+		{905029A2-0552-4934-985C-B953E9C36329}.Release|x64.Build.0 = Release|Any CPU
+		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Debug|x64.Build.0 = Debug|Any CPU
+		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Release|x64.ActiveCfg = Release|Any CPU
+		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{66EA979F-7E3F-4C30-839E-F2E34E4D024B} = {86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}
 		{E01C001E-5CC0-42A8-99B6-43C7A409AB34} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
 		{3F82FF3F-13E3-4106-9FE6-E986549528F2} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
 		{A37A22C6-40C6-4B11-BCF4-65A61CBD4AD5} = {7B0F7A1A-7C84-4B17-85D0-24BBCAA18826}
@@ -347,6 +373,8 @@ Global
 		{42B57911-4494-4165-97C6-46B8C3328614} = {D28135EA-D5B5-4BE5-9AEE-95B28968495A}
 		{057FA941-9176-4126-A3F1-7F32D3D100AC} = {D28135EA-D5B5-4BE5-9AEE-95B28968495A}
 		{07C6DD7C-A351-4D6B-8B7E-E8837BBDA163} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
+		{905029A2-0552-4934-985C-B953E9C36329} = {86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}
+		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1CD9B3-4EAB-4B8C-BDC1-03280EB31298}
