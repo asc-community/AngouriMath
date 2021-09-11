@@ -53,8 +53,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Ymls", "Ymls", "{AB2B0D73-3
 		..\.github\workflows\EverythingBuild.yml = ..\.github\workflows\EverythingBuild.yml
 		..\.github\workflows\FSharpBuild.yml = ..\.github\workflows\FSharpBuild.yml
 		..\.github\workflows\FSharpTest.yml = ..\.github\workflows\FSharpTest.yml
+		..\.github\workflows\IntegrationTest.yml = ..\.github\workflows\IntegrationTest.yml
 		..\.github\workflows\InteractiveBuild.yml = ..\.github\workflows\InteractiveBuild.yml
 		..\.github\workflows\InteractiveTest.yml = ..\.github\workflows\InteractiveTest.yml
+		..\.github\workflows\Nuget.yml = ..\.github\workflows\Nuget.yml
+		..\.github\workflows\TerminalNightly.yml = ..\.github\workflows\TerminalNightly.yml
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pictures", "Pictures", "{8996D472-25ED-498F-8ED2-999B9DFA11C5}"
@@ -69,7 +72,6 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionConfigs", "SolutionConfigs", "{BA33D22B-1BAB-4EE1-BF66-8805A390A495}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		AngouriMath.sln.licenseheader = AngouriMath.sln.licenseheader
 		NuGet.Config = NuGet.Config
 	EndProjectSection
 EndProject
@@ -141,12 +143,11 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AngouriMath.Library", "AngouriMath.Library", "{86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}"
 	ProjectSection(SolutionItems) = preProject
 		AngouriMath\Directory.Build.props = AngouriMath\Directory.Build.props
-		AngouriMath\Directory.Build.targets = AngouriMath\Directory.Build.targets
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath.Experimental", "AngouriMath\AngouriMath.Experimental.csproj", "{905029A2-0552-4934-985C-B953E9C36329}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests.Experimental", "Tests\UnitTests.Experimental\UnitTests.Experimental.csproj", "{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests.Experimental", "Tests\UnitTests.Experimental\UnitTests.Experimental.csproj", "{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -1,5 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <PropertyGroup>
+    <EnablePreviewFeatures>True</EnablePreviewFeatures>
+  </PropertyGroup>
+
   <ItemGroup>
     <!--.NET 6 generic math-->
     <PackageReference Include="System.Runtime.Experimental" Version="6.0.0-preview.7.21377.19" Condition="$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'net6.0'))" />
