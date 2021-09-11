@@ -5,7 +5,6 @@
 
     <IsPackable>false</IsPackable>
     <Platforms>AnyCPU;x64</Platforms>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>
