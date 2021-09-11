@@ -32,12 +32,7 @@
     <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\$(AssemblyName).xml</DocumentationFile>
-    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-    <PackageProjectUrl>https://am.angouri.org</PackageProjectUrl>
-    <RepositoryType>public</RepositoryType>
-  </PropertyGroup>
+  
 
   <PropertyGroup>
     <Nullable>enable</Nullable>
