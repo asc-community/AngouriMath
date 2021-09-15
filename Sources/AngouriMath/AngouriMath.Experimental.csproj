@@ -1,9 +1,17 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFrameworks>
+      net6.0
+    </TargetFrameworks>
+
     <PackageId>AngouriMath.Experimental</PackageId>
     <Product>AngouriMath.Experimental</Product>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="amexplogo.png" Pack="True" PackagePath="" />
+  </ItemGroup>
 
   <PropertyGroup>
     <EnablePreviewFeatures>True</EnablePreviewFeatures>

@@ -2,12 +2,7 @@
 <Project>
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFrameworks>
-      net6.0;
-      net472;
-      netstandard2.0;
-      netstandard2.1
-    </TargetFrameworks>
+    
     <LangVersion>preview</LangVersion>
     <Authors>WhiteBlackGoose</Authors>
     <Company>Angouri</Company>
@@ -41,7 +36,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="../icon.png" Pack="True" PackagePath="" />
     <None Include="..\..\LICENSE.md">
       <Pack>True</Pack>
       <PackagePath></PackagePath>
