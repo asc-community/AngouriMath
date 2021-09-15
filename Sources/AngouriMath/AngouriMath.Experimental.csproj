@@ -1,9 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFrameworks>
+      net6.0
+    </TargetFrameworks>
+
     <PackageId>AngouriMath.Experimental</PackageId>
     <Product>AngouriMath.Experimental</Product>
+    <PackageIcon>amexplogo.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="amexplogo.png" Pack="True" PackagePath="" />
+  </ItemGroup>
 
   <PropertyGroup>
     <EnablePreviewFeatures>True</EnablePreviewFeatures>
@@ -11,9 +20,7 @@
 
   <ItemGroup>
     <!--.NET 6 generic math-->
-    <PackageReference Include="System.Runtime.Experimental" Version="6.0.0-preview.7.21377.19" Condition="$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'net6.0'))" />
-    <Compile Remove="Core/Entity/GenericMath/**" Condition="!$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'net6.0'))" />
-    <Compile Remove="RequiresPreviewFeaturesAttribute.cs" Condition="$([MSBuild]::IsTargetFrameworkCompatible($(TargetFramework), 'net6.0'))" />
+    <PackageReference Include="System.Runtime.Experimental" Version="6.0.0-preview.7.21377.19" />
   </ItemGroup>
 
 </Project>

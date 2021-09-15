@@ -1,9 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
+    <TargetFrameworks>
+      net472;
+      netstandard2.0;
+      netstandard2.1
+    </TargetFrameworks>
+
     <PackageId>AngouriMath</PackageId>
     <Product>AngouriMath</Product>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../icon.png" Pack="True" PackagePath="" />
+  </ItemGroup>
   
   <ItemGroup>
     <!--We don't need generic math in AngouriMath at all-->

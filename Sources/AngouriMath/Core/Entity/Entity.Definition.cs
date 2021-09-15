@@ -244,6 +244,6 @@ namespace AngouriMath
             => EqualsImpreciselyInner(other, error.EDecimal);
 
         private protected virtual bool EqualsImpreciselyInner(Entity other, PeterO.Numbers.EDecimal error)
-            => this == other;
+            => throw AngouriMath.Core.Exceptions.FutureReleaseException.Raised("Imprecise inequality");
     }
 }
