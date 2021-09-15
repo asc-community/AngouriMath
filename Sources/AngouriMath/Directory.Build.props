@@ -18,7 +18,6 @@
     <PackageReleaseNotes>See it on website https://am.angouri.org/whatsnew</PackageReleaseNotes>
     <ApplicationIcon />
     <StartupObject />
-    <PackageIcon>icon.png</PackageIcon>
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <SignAssembly>true</SignAssembly>

@@ -7,6 +7,7 @@
 
     <PackageId>AngouriMath.Experimental</PackageId>
     <Product>AngouriMath.Experimental</Product>
+    <PackageIcon>amexplogo.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>

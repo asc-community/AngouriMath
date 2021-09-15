@@ -9,6 +9,7 @@
 
     <PackageId>AngouriMath</PackageId>
     <Product>AngouriMath</Product>
+    <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
