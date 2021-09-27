@@ -2,24 +2,24 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-	<SignAssembly>true</SignAssembly>
-	<AssemblyOriginatorKeyFile>fsharp.key</AssemblyOriginatorKeyFile>
-	<Description>F# wrapper for some functions from AngouriMath. https://am.angouri.org/quickstart/index.html</Description>
-	<Copyright>Angouri 2019-2021</Copyright>
-	<PackageLicenseFile>LICENSE.md</PackageLicenseFile>
-	<PackageProjectUrl>https://am.angouri.org</PackageProjectUrl>
-	<PackageIcon>icon.png</PackageIcon>
-	<RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
-	<PackageTags>fsharp, math, calculus, symbolic algebra, computer algebra, latex</PackageTags>
-	<PackageReleaseNotes>https://am.angouri.org/whatsnew</PackageReleaseNotes>
-	<Version>1.4.0-preview.2</Version>
-	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-	<Authors>WhiteBlackGoose</Authors>
-	<Company>Angouri</Company>
-	<RepositoryType>public</RepositoryType>
-  <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-  <WarningsAsErrors />
-  <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+	  <SignAssembly>true</SignAssembly>
+	  <AssemblyOriginatorKeyFile>fsharp.key</AssemblyOriginatorKeyFile>
+	  <Description>F# wrapper for some functions from AngouriMath. https://am.angouri.org/quickstart/index.html</Description>
+	  <Copyright>Angouri 2019-2021</Copyright>
+	  <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+	  <PackageProjectUrl>https://am.angouri.org</PackageProjectUrl>
+	  <PackageIcon>icon.png</PackageIcon>
+	  <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
+	  <PackageTags>fsharp, math, calculus, symbolic algebra, computer algebra, latex</PackageTags>
+	  <PackageReleaseNotes>https://am.angouri.org/whatsnew</PackageReleaseNotes>
+	  <Version>1.4.0-preview.2</Version>
+	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	  <Authors>WhiteBlackGoose</Authors>
+	  <Company>Angouri</Company>
+	  <RepositoryType>public</RepositoryType>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsAsErrors />
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
