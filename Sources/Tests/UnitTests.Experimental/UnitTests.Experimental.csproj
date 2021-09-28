@@ -26,7 +26,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\AngouriMath\AngouriMath.Experimental.csproj" />
+    <ProjectReference Include="..\..\AngouriMath\AngouriMath.Experimental\AngouriMath.Experimental.csproj" />
   </ItemGroup>
-  
+
 </Project>

@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31521.260
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath", "AngouriMath\AngouriMath.csproj", "{66EA979F-7E3F-4C30-839E-F2E34E4D024B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests", "Tests\UnitTests\UnitTests.csproj", "{E01C001E-5CC0-42A8-99B6-43C7A409AB34}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{D15528F2-AB50-46E2-9DB1-821B278C4931}"
@@ -74,6 +72,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SolutionConfigs", "Solution
 		.editorconfig = .editorconfig
 		Directory.Build.props = Directory.Build.props
 		NuGet.Config = NuGet.Config
+		Package.Build.props = Package.Build.props
 	EndProjectSection
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "FSharpPlayground", "Samples\FSharpPlayground\FSharpPlayground.fsproj", "{907F9F40-AAD7-4BD3-95CB-4DD46B8C2D09}"
@@ -144,11 +143,14 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AngouriMath.Library", "AngouriMath.Library", "{86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}"
 	ProjectSection(SolutionItems) = preProject
 		AngouriMath\Directory.Build.props = AngouriMath\Directory.Build.props
+		AngouriMath\Directory.Build.targets = AngouriMath\Directory.Build.targets
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath.Experimental", "AngouriMath\AngouriMath.Experimental.csproj", "{905029A2-0552-4934-985C-B953E9C36329}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UnitTests.Experimental", "Tests\UnitTests.Experimental\UnitTests.Experimental.csproj", "{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath", "AngouriMath\AngouriMath\AngouriMath.csproj", "{86F092F7-2D16-4860-AAB7-A0A1D58091F4}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath.Experimental", "AngouriMath\AngouriMath.Experimental\AngouriMath.Experimental.csproj", "{687555EC-CAA2-49CA-935E-14A20FDCA5B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -158,14 +160,6 @@ Global
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{66EA979F-7E3F-4C30-839E-F2E34E4D024B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{66EA979F-7E3F-4C30-839E-F2E34E4D024B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{66EA979F-7E3F-4C30-839E-F2E34E4D024B}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{66EA979F-7E3F-4C30-839E-F2E34E4D024B}.Debug|x64.Build.0 = Debug|Any CPU
-		{66EA979F-7E3F-4C30-839E-F2E34E4D024B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{66EA979F-7E3F-4C30-839E-F2E34E4D024B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{66EA979F-7E3F-4C30-839E-F2E34E4D024B}.Release|x64.ActiveCfg = Release|Any CPU
-		{66EA979F-7E3F-4C30-839E-F2E34E4D024B}.Release|x64.Build.0 = Release|Any CPU
 		{E01C001E-5CC0-42A8-99B6-43C7A409AB34}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E01C001E-5CC0-42A8-99B6-43C7A409AB34}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E01C001E-5CC0-42A8-99B6-43C7A409AB34}.Debug|x64.ActiveCfg = Debug|x64
@@ -326,14 +320,6 @@ Global
 		{07C6DD7C-A351-4D6B-8B7E-E8837BBDA163}.Release|Any CPU.Build.0 = Release|Any CPU
 		{07C6DD7C-A351-4D6B-8B7E-E8837BBDA163}.Release|x64.ActiveCfg = Release|Any CPU
 		{07C6DD7C-A351-4D6B-8B7E-E8837BBDA163}.Release|x64.Build.0 = Release|Any CPU
-		{905029A2-0552-4934-985C-B953E9C36329}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{905029A2-0552-4934-985C-B953E9C36329}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{905029A2-0552-4934-985C-B953E9C36329}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{905029A2-0552-4934-985C-B953E9C36329}.Debug|x64.Build.0 = Debug|Any CPU
-		{905029A2-0552-4934-985C-B953E9C36329}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{905029A2-0552-4934-985C-B953E9C36329}.Release|Any CPU.Build.0 = Release|Any CPU
-		{905029A2-0552-4934-985C-B953E9C36329}.Release|x64.ActiveCfg = Release|Any CPU
-		{905029A2-0552-4934-985C-B953E9C36329}.Release|x64.Build.0 = Release|Any CPU
 		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -342,12 +328,27 @@ Global
 		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Release|x64.ActiveCfg = Release|Any CPU
 		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0}.Release|x64.Build.0 = Release|Any CPU
+		{86F092F7-2D16-4860-AAB7-A0A1D58091F4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{86F092F7-2D16-4860-AAB7-A0A1D58091F4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{86F092F7-2D16-4860-AAB7-A0A1D58091F4}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{86F092F7-2D16-4860-AAB7-A0A1D58091F4}.Debug|x64.Build.0 = Debug|Any CPU
+		{86F092F7-2D16-4860-AAB7-A0A1D58091F4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{86F092F7-2D16-4860-AAB7-A0A1D58091F4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{86F092F7-2D16-4860-AAB7-A0A1D58091F4}.Release|x64.ActiveCfg = Release|Any CPU
+		{86F092F7-2D16-4860-AAB7-A0A1D58091F4}.Release|x64.Build.0 = Release|Any CPU
+		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Debug|x64.Build.0 = Debug|Any CPU
+		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Release|x64.ActiveCfg = Release|Any CPU
+		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{66EA979F-7E3F-4C30-839E-F2E34E4D024B} = {86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}
 		{E01C001E-5CC0-42A8-99B6-43C7A409AB34} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
 		{3F82FF3F-13E3-4106-9FE6-E986549528F2} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
 		{A37A22C6-40C6-4B11-BCF4-65A61CBD4AD5} = {7B0F7A1A-7C84-4B17-85D0-24BBCAA18826}
@@ -375,8 +376,9 @@ Global
 		{42B57911-4494-4165-97C6-46B8C3328614} = {D28135EA-D5B5-4BE5-9AEE-95B28968495A}
 		{057FA941-9176-4126-A3F1-7F32D3D100AC} = {D28135EA-D5B5-4BE5-9AEE-95B28968495A}
 		{07C6DD7C-A351-4D6B-8B7E-E8837BBDA163} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
-		{905029A2-0552-4934-985C-B953E9C36329} = {86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}
 		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
+		{86F092F7-2D16-4860-AAB7-A0A1D58091F4} = {86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}
+		{687555EC-CAA2-49CA-935E-14A20FDCA5B0} = {86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1CD9B3-4EAB-4B8C-BDC1-03280EB31298}

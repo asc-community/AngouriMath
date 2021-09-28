@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  
+  <!--
+  
+  Here we store the info about packages produced in AngouriMath.
+  This contains general info which is the same for all packages.
+  
+  This should not store anything specific to any package, including
+  the output type, target frameworks.
+  
+  -->
+  
+  <PropertyGroup>
+    <Authors>WhiteBlackGoose</Authors>
+    <Company>Angouri</Company>
+    <Copyright>Angouri 2019-2021</Copyright>
+    <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
+    <Version>1.4.0-preview.2</Version>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReleaseNotes>See it on website https://am.angouri.org/whatsnew</PackageReleaseNotes>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="icon.png" Pack="True" PackagePath="" />
+  </ItemGroup>
+</Project>

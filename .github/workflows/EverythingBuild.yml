@@ -24,7 +24,7 @@ jobs:
         include-prerelease: true
 
     - name: Build AM
-      run: dotnet build Sources/AngouriMath/AngouriMath.csproj
+      run: dotnet build Sources/AngouriMath/AngouriMath/AngouriMath.csproj
 
     - name: Build FSharp
       run: dotnet build Sources/Wrappers/AngouriMath.FSharp/AngouriMath.FSharp.fsproj
