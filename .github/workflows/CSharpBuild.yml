@@ -26,6 +26,6 @@ jobs:
         
     - name: Build
       run: |
-        cd Sources/AngouriMath
+        cd Sources/AngouriMath/AngouriMath
         dotnet build AngouriMath.csproj
         dotnet build AngouriMath.Experimental.csproj
