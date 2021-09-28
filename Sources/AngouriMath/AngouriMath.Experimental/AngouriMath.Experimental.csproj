@@ -7,11 +7,18 @@
 
     <PackageId>AngouriMath.Experimental</PackageId>
     <Product>AngouriMath.Experimental</Product>
-    <PackageIcon>amexplogo.png</PackageIcon>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="amexplogo.png" Pack="True" PackagePath="" />
+    <Compile Include="../AngouriMath/**/*.cs" />
+    
+    <Compile          Remove="../AngouriMath/obj/**" />
+    <EmbeddedResource Remove="../AngouriMath/obj/**" />
+    <None             Remove="../AngouriMath/obj/**" />
+    
+    <Compile          Remove="../AngouriMath/bin/**" />
+    <EmbeddedResource Remove="../AngouriMath/bin/**" />
+    <None             Remove="../AngouriMath/bin/**" />
   </ItemGroup>
 
   <PropertyGroup>

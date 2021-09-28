@@ -1,5 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="$(MSBuildThisFileDirectory)/../../Package.Build.props" />
+    
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
@@ -7,22 +9,11 @@
 
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>amcli</ToolCommandName>
-    <PackageOutputPath>./nupkg</PackageOutputPath>
-
-    <Version>1.4.0-preview.2</Version>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    
     <PackageIcon>icon.png</PackageIcon>
-
     <Description>F#-based command line interface for symbolic algebra library AngouriMath</Description>
-    <Authors>WhiteBlackGoose</Authors>
-    <Company>Angouri</Company>
-    <RepositoryType>public</RepositoryType>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Include="icon.png" Pack="True" PackagePath=""/>
-  </ItemGroup>
-  
   <ItemGroup>
     <Compile Include="UserInterface.fs" />
     <Compile Include="Program.fs" />
