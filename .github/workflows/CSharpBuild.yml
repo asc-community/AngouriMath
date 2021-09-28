@@ -24,8 +24,11 @@ jobs:
         dotnet-version: '6.0.x'
         include-prerelease: true
         
-    - name: Build
+    - name: Build AngouriMath
       run: |
         cd Sources/AngouriMath/AngouriMath
-        dotnet build AngouriMath.csproj
-        dotnet build AngouriMath.Experimental.csproj
+        dotnet build
+      
+    - name: Build AngouriMath Experimental
+        cd Sources/AngouriMath/AngouriMath.Experimental
+        dotnet build
