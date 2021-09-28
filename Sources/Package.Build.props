@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  
+  <!--
+  
+  Here we store the info about packages produced in AngouriMath.
+  This contains general info which is the same for all packages.
+  
+  This should not store anything specific to any package, including
+  the output type, target frameworks.
+  
+  -->
+  
+  <PropertyGroup>
+    <Version>1.4.0-preview.2</Version>
+
+    <Authors>WhiteBlackGoose and contributors</Authors>
+    <Company>Angouri</Company>
+    <Copyright>© Angouri 2019-2021</Copyright>
+
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>See it on the website https://am.angouri.org/whatsnew</PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
+    <PackageTags>math, symbolics, latex, evaluate, dotnet, parse, simplify, derivation, equation, calculus, symbolic algebra</PackageTags>
+
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <PackageIcon>icon.png</PackageIcon>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="icon.png" Pack="True" PackagePath="" />
+  </ItemGroup>
+</Project>

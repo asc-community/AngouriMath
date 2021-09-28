@@ -1,9 +1,21 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
+  <Import Project="$(MSBuildThisFileDirectory)/../../Package.Build.props" />
+    
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net5.0</TargetFramework>
     <ApplicationIcon>icon.ico</ApplicationIcon>
+
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>amcli</ToolCommandName>
+    
+    <PackageIcon>icon.png</PackageIcon>
+    <Description>F#-based command line interface for symbolic algebra library AngouriMath</Description>
+
+    <Version>1.4.0-preview.2-2</Version>
+
+    <PackageTags>$(PackageTags), cli, terminal</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>

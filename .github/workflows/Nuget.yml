@@ -30,22 +30,22 @@ jobs:
           echo "name is $name"
           
           # AngouriMath
-          cd AngouriMath
+          cd AngouriMath/AngouriMath
           dotnet restore AngouriMath.csproj
           dotnet build AngouriMath.csproj -c release
           dotnet pack AngouriMath.csproj -c release -p:PackageVersion=$name
           cd bin/release
           dotnet nuget push AngouriMath.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
-          cd ../../..
+          cd ../../../..
           
           # AngouriMath.Experimental
-          cd AngouriMath
+          cd AngouriMath/AngouriMath.Experimental
           dotnet restore AngouriMath.Experimental.csproj
           dotnet build AngouriMath.Experimental.csproj -c release
           dotnet pack AngouriMath.Experimental.csproj -c release -p:PackageVersion=$name
           cd bin/release
           dotnet nuget push AngouriMath.Experimental.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
-          cd ../../..
+          cd ../../../..
           
           # AngouriMath.FSharp
           cd Wrappers/AngouriMath.FSharp

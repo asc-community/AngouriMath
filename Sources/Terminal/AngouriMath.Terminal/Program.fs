@@ -6,8 +6,12 @@ open UserInterface
 open Spectre.Console
 open AngouriMath.Terminal.Lib.AssemblyLoadBuilder
 
-Console.WindowHeight <- 50
-Console.WindowWidth <- 150
+
+// All other platforms do not support setting custom window width
+if System.OperatingSystem.IsWindows() then
+    Console.WindowHeight <- Math.Min(50, Console.LargestWindowHeight)
+    Console.WindowWidth <- Math.Min(150, Console.LargestWindowWidth)
+
 
 let lineEditor = getLineEditor AnsiConsole.Console
 
