@@ -8,7 +8,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Product>Wrapper of AngouriMath for Jupyter Interactive</Product>
     <Description>Wrapper of AngouriMath for Jupyter Interactive. https://am.angouri.org/</Description>
-    <PackageTags>interactive, fsharp, math</PackageTags>
+    <PackageTags>$(PackageTags), interactive, fsharp</PackageTags>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <NoWarn>
       $(NoWarn);

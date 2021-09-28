@@ -12,15 +12,21 @@
   -->
   
   <PropertyGroup>
-    <Authors>WhiteBlackGoose</Authors>
-    <Company>Angouri</Company>
-    <Copyright>Angouri 2019-2021</Copyright>
-    <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
     <Version>1.4.0-preview.2</Version>
+
+    <Authors>WhiteBlackGoose and contributors</Authors>
+    <Company>Angouri</Company>
+    <Copyright>© Angouri 2019-2021</Copyright>
+
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageReleaseNotes>See it on website https://am.angouri.org/whatsnew</PackageReleaseNotes>
-    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+
+    <RepositoryType>git</RepositoryType>
+    <PackageReleaseNotes>See it on the website https://am.angouri.org/whatsnew</PackageReleaseNotes>
+    <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
+    <PackageTags>math, symbolics, latex, evaluate, dotnet, parse, simplify, derivation, equation, calculus, symbolic algebra</PackageTags>
+
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
 

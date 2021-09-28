@@ -7,7 +7,7 @@
 	  <SignAssembly>true</SignAssembly>
 	  <AssemblyOriginatorKeyFile>fsharp.key</AssemblyOriginatorKeyFile>
 	  <Description>F# wrapper for some functions from AngouriMath. https://am.angouri.org/quickstart/index.html</Description>
-	  <PackageTags>fsharp, math, calculus, symbolic algebra, computer algebra, latex</PackageTags>
+	  <PackageTags>$(PackageTags), fsharp</PackageTags>
 	  <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
