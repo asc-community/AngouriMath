@@ -23,9 +23,10 @@
 
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>See it on the website https://am.angouri.org/whatsnew</PackageReleaseNotes>
+    <PackageProjectUrl>https://am.angouri.org</PackageProjectUrl>
     <RepositoryUrl>https://github.com/asc-community/AngouriMath</RepositoryUrl>
-    <PackageTags>math, symbolics, latex, evaluate, dotnet, parse, simplify, derivation, equation, calculus, symbolic algebra</PackageTags>
-
+    <PackageTags>math, symbolics, latex, evaluate, evaluation, dotnet, parse, simplify, derivation, equation, calculus, symbolic algebra</PackageTags>
+    
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <PackageIcon>icon.png</PackageIcon>
   </PropertyGroup>
