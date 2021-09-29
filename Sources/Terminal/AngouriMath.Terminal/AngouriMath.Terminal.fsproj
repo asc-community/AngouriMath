@@ -13,7 +13,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <Description>F#-based command line interface for symbolic algebra library AngouriMath</Description>
 
-    <Version>1.4.0-preview.2-2</Version>
+    <Version>1.4.0-preview.2-3</Version>
 
     <PackageTags>$(PackageTags), cli, terminal</PackageTags>
   </PropertyGroup>
