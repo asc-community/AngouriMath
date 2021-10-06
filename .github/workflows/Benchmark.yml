@@ -31,5 +31,5 @@ jobs:
         dotnet build Tests/DotnetBenchmark || dotnet build Tests/DotnetBenchmark || dotnet build Tests/DotnetBenchmark
     - name: Benchmark
       run: |
-        cd Sources
-        dotnet run -p Tests/DotnetBenchmark -c Release
+        cd Sources/Tests/DotnetBenchmark
+        dotnet run -c Release CommonFunctionsInterVersion
