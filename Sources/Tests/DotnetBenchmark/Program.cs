@@ -13,6 +13,10 @@ using AngouriMath;
 using AngouriMath.Core;
 using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Running;
+using HonkSharp.Fluency;
+using GenericTensor.Core;
+using BenchmarkDotNet.Reports;
+using System.Linq;
 
 namespace DotnetBenchmark
 {
@@ -49,10 +53,10 @@ namespace DotnetBenchmark
         
         [Benchmark] public void DowncastComplexSuccessfully() => Entity.Number.Complex.Create(3.4m, 6.4m);
         [Benchmark] public void DowncastComplexNotSucc() => Entity.Number.Complex.Create(3.487449272953435m, 6.401380141304m);
-
+        
         [Benchmark] public void DowncastRealSuccessfully() => Entity.Number.Real.Create(3.4m);
         [Benchmark] public void DowncastRealNotSucc() => Entity.Number.Real.Create(3.42748273484m);
-
+        
         [Benchmark] public void FindRationalSuccess() => Entity.Number.Rational.FindRational(3.4m);
         [Benchmark] public void FindRationalNotSuccess() => Entity.Number.Rational.FindRational(3.48426482675284m);
 
@@ -62,12 +66,121 @@ namespace DotnetBenchmark
 
     public class Program
     {
-        public static void Main(string[] _)
+        public static void Main(string[] args)
         {
-            // BenchmarkRunner.Run<CommonFunctionsInterVersion>();
-            BenchmarkRunner.Run<RAMUsageTest>();
+            var benchmarkName = args.Length > 0 ? args[0] : "";
+
+            var reports =
+                args
+                .Select(arg =>
+                    arg switch
+                    {
+                        "RAMUsageTest" => GetReportByBenchmark(typeof(RAMUsageTest), "Gen 0", "Gen 1", "Gen 2", "Allocated"),
+                        "CommonFunctionsInterVersion" => GetReportByBenchmark(typeof(CommonFunctionsInterVersion), "Mean", "Error", "StdDev"),
+                        "CompiledFuncTest" => GetReportByBenchmark(typeof(CompiledFuncTest), "Mean", "Error", "StdDev"),
+                        "NumbersBenchmark" => GetReportByBenchmark(typeof(NumbersBenchmark), "Mean", "Error", "StdDev"),
+                        _ => throw new($"Unexpected benchmark {arg}")
+                    }).ToArray(); // active action
+            Console.WriteLine();
+            Console.WriteLine();
+            foreach (var (id, report) in reports.Enumerate())
+            {
+                Console.WriteLine($"Report # {id}");
+                Console.WriteLine();
+                Console.WriteLine(report);
+                Console.WriteLine();
+                Console.WriteLine();
+                Console.WriteLine("----------------------------------------------------------------");
+                Console.WriteLine();
+                Console.WriteLine();
+            }
             // BenchmarkRunner.Run<BenchLinqCompilation>();
             Console.ReadLine(); Console.ReadLine(); Console.ReadLine();
+        }
+
+        public static string GetReportByBenchmark(Type report, params string[] columns)
+            => TableToString(BenchmarkRunner.Run(report).Table, columns);
+
+        public static string TableToString(SummaryTable table, params string[] columns)
+        {
+            var colsToSelectFrom = table.Columns
+                .Where(col => columns.Contains(col.Header))
+                .Prepend(table.Columns.Single(c => c.Header == "Method"))
+                .ToArray();
+            var tensor = GenTensor<string, StringWrapper>.CreateMatrix(
+                table.Columns.First().Content.Length + 1,
+                colsToSelectFrom.Length,
+                (x, y) => x is 0 ? colsToSelectFrom[y].Header : colsToSelectFrom[y].Content[x - 1]
+                );
+            return tensor.ToString();
+        }
+
+        private struct StringWrapper : IOperations<string>
+        {
+            public string Add(string a, string b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public string Subtract(string a, string b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public string Multiply(string a, string b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public string Negate(string a)
+            {
+                throw new NotImplementedException();
+            }
+
+            public string Divide(string a, string b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public string CreateOne()
+            {
+                throw new NotImplementedException();
+            }
+
+            public string CreateZero()
+            {
+                throw new NotImplementedException();
+            }
+
+            public string Copy(string a)
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool AreEqual(string a, string b)
+            {
+                throw new NotImplementedException();
+            }
+
+            public bool IsZero(string a)
+            {
+                throw new NotImplementedException();
+            }
+
+            public string ToString(string a)
+            {
+                return a;
+            }
+
+            public byte[] Serialize(string a)
+            {
+                throw new NotImplementedException();
+            }
+
+            public string Deserialize(byte[] data)
+            {
+                throw new NotImplementedException();
+            }
         }
     }
 }
