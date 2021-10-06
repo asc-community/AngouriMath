@@ -10,26 +10,23 @@ on:
 
 jobs:
   Benchmark:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-        submodules: 'recursive'
-    - name: Setup .NET Core 3.1
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 3.1.302
+    
     - name: Setup .NET 6
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '6.0.x'
         include-prerelease: true
         
-    - name: Build benchmark
+    - name: 'Inter version CPU benchmark'
       run: |
-        cd Sources
-        dotnet build Tests/DotnetBenchmark || dotnet build Tests/DotnetBenchmark || dotnet build Tests/DotnetBenchmark
-    - name: Benchmark
+        cd Sources/Tests/DotnetBenchmark
+        dotnet run -c Release CommonFunctionsInterVersion
+    
+    - name: 'Inter version RAM benchmark'
       run: |
-        cd Sources
-        dotnet run -p Tests/DotnetBenchmark -c Release
+        cd Sources/Tests/DotnetBenchmark
+        dotnet run -c Release RAMUsageTest
+        
