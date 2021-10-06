@@ -64,7 +64,8 @@ namespace DotnetBenchmark
     {
         public static void Main(string[] _)
         {
-            BenchmarkRunner.Run<CommonFunctionsInterVersion>();
+            // BenchmarkRunner.Run<CommonFunctionsInterVersion>();
+            BenchmarkRunner.Run<RAMUsageTest>();
             // BenchmarkRunner.Run<BenchLinqCompilation>();
             Console.ReadLine(); Console.ReadLine(); Console.ReadLine();
         }
