@@ -83,7 +83,7 @@ namespace AngouriMath
                 this.list2 = list2;
                 list1Length = list1.Count;
                 list2Length = list2.Count;
-                curr = 0;
+                curr = -1;
             }
 
             public (T1, T2) Current
