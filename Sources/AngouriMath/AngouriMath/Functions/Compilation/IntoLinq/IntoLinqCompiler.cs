@@ -61,9 +61,9 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                     => protocol.BinaryNodeConverter(
                         BuildTree(twoArg.NodeFirstChild, cachedSubexpressions, variableAssignments, newLocalVars, protocol), 
                         BuildTree(twoArg.NodeSecondChild, cachedSubexpressions, variableAssignments, newLocalVars, protocol), 
-                        expr),
+                        expr, protocol.NaNConverter),
 
-                var other => protocol.AnyArgumentConverter(other.DirectChildren.Select(c => BuildTree(c, cachedSubexpressions, variableAssignments, newLocalVars, protocol)), expr)
+                var other => protocol.AnyArgumentConverter(other.DirectChildren.Select(c => BuildTree(c, cachedSubexpressions, variableAssignments, newLocalVars, protocol)), expr, protocol.NaNConverter)
             };
 
             var newVar = Expression.Variable(subTree.Type);

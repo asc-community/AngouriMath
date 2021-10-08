@@ -23,7 +23,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// Change this if you want to override compilation node for binary nodes
         /// </summary>
-        public Func<Expression, Expression, Entity, Expression> BinaryNodeConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.TwoArgumentEntity;
+        public Func<Expression, Expression, Entity, Func<Type, Expression>, Expression> BinaryNodeConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.TwoArgumentEntity;
 
         /// <summary>
         /// Change this if you want to override compilation node for unary nodes
@@ -33,6 +33,12 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// Change this if you want to override compilation node for non-unary and non-binary nodes
         /// </summary>
-        public Func<IEnumerable<Expression>, Entity, Expression> AnyArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.AnyArgumentEntity;
+        public Func<IEnumerable<Expression>, Entity, Func<Type, Expression>, Expression> AnyArgumentConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.AnyArgumentEntity;
+        
+        
+        /// <summary>
+        /// Change this if you want a custom conversion of NaN into an appropriate type
+        /// </summary>
+        public Func<Type, Expression> NaNConverter { get; init; } = CompilationProtocolBuiltinConstantConverters.NaNByType;
     }
 }

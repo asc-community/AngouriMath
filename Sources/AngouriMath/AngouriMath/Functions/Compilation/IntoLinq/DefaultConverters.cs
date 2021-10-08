@@ -40,6 +40,18 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Entity.Boolean b => Expression.Constant((bool)b),
                 _ => throw new AngouriBugException("Undefined constant type")
             };
+            
+        /// <summary>
+        /// This converts NaN into an appropriate representation
+        /// </summary>
+        public static Expression NaNByType(Type type)
+        {
+            if (type == typeof(double))
+                return Expression.Constant(double.NaN);
+            if (type == typeof(float))
+                return Expression.Constant(float.NaN);
+            throw new InvalidProtocolProvided($"NaN conversion not implemented for {type}");
+        }
 
         private static Type[] GenerateArrayOfType(int argCount, Type type)
         {
@@ -76,17 +88,26 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 throw new AngouriBugException("Ambiguous upcast class");
             return res.First().Key;
         }
-
-        /// <summary>
-        /// This is a default converter for binary nodes (for those inherited from <see cref="IBinaryNode"/>)
-        /// </summary>
-        public static Expression TwoArgumentEntity(Expression left, Expression right, Entity typeHolder)
+        private static (Expression left, Expression right) EqualizeTypesIfAble(Expression left, Expression right)
         {
+            if (!typeLevelInHierarchy.ContainsKey(left.Type) || !typeLevelInHierarchy.ContainsKey(right.Type))
+                return (left, right);
+            
             var typeToCastTo = MaxType(left.Type, right.Type);
             if (left.Type != typeToCastTo)
                 left = Expression.Convert(left, typeToCastTo);
             if (right.Type != typeToCastTo)
                 right = Expression.Convert(right, typeToCastTo);
+                
+            return (left, right);
+        }
+
+        /// <summary>
+        /// This is a default converter for binary nodes (for those inherited from <see cref="IBinaryNode"/>)
+        /// </summary>
+        public static Expression TwoArgumentEntity(Expression left, Expression right, Entity typeHolder, Func<Type, Expression> nanConverter)
+        {
+            (left, right) = EqualizeTypesIfAble(left, right);
             return typeHolder switch
             {
                 Sumf => Expression.Add(left, right),
@@ -106,8 +127,10 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Greaterf => Expression.GreaterThan(left, right),
                 GreaterOrEqualf => Expression.GreaterThanOrEqual(left, right),
                 Equalsf => Expression.Equal(left, right),
+                
+                Providedf => Expression.Condition(right, left, nanConverter(left.Type)),
 
-                _ => throw new AngouriBugException("A node seems to be not added")
+                _ => throw new AngouriBugException("A binary node seems to be not added")
             };
         }
 
@@ -136,18 +159,44 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
                 Notf =>         Expression.Not(e),
 
-                _ => throw new AngouriBugException("A node seems to be not added")
+                _ => throw new AngouriBugException("An unary node seems to be not added")
             };
 
         /// <summary>
         /// This is a default converter for other (non-unary and non-binary) nodes
         /// </summary>
-        public static Expression AnyArgumentEntity(IEnumerable<Expression> en, Entity typeHolder)
+        public static Expression AnyArgumentEntity(IEnumerable<Expression> en, Entity typeHolder, Func<Type, Expression> nanConverter)
             => typeHolder switch
             {
+                Piecewise => HandlePiecewise(en, nanConverter),
                 // TODO: finite set -> hash set
                 _ => throw new AngouriBugException("A node seems to be not added")
                 //FiniteSet => Expression.
             };
+            
+        private static Expression HandlePiecewise(IEnumerable<Expression> en, Func<Type, Expression> nanConverter)
+        {
+            Expression[] children = en.ToArray();
+            
+            // 0 cases
+            if (children.Length == 0)
+                throw new UncompilableNodeException("Zero arg piecewise compilation is not supported");
+            
+            // last case
+            var expression = children[children.Length - 2];
+            var predicate = children[children.Length - 1];
+                        
+            Expression piecewiseExpr = Expression.Condition(predicate, expression, nanConverter(expression.Type)); // can be ConstantExpression in certain cases if values of children could be known
+            
+            // additional cases
+            for (int i = children.Length - 3; i >= 1; i -= 2)
+            {
+                expression = children[i - 1];
+                predicate = children[i];
+                piecewiseExpr = Expression.Condition(predicate, expression, piecewiseExpr);
+            }
+            
+            return piecewiseExpr;
+        }
     }
 }
