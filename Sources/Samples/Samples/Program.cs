@@ -26,14 +26,12 @@ Entity.Matrix matrix = @"
     [0, 0, 0, 1]
 ]";
 var identity = MathS.IdentityMatrix(4);
-// using var _ = MathS.Settings.PrecisionErrorCommon.Set(0.1m);
-using var _ = MathS.Diagnostic.OutputExplicit.Set(true);
 
 WriteLine(matrix.ToString(true));
-WriteLine(matrix == identity);
+WriteLine(matrix.EqualsImprecisely(identity));
 Entity a = "a + 0.001";
 Entity b = "a + 0.002";
-WriteLine(a == b);
+WriteLine(a.EqualsImprecisely(b));
 
 Entity.Matrix a1 = @"[
     [1, 0, 0, 0],
@@ -47,8 +45,4 @@ Entity b1 = @"[
     [0, 0, 1, 0],
     [0, 0, 0, 1]
 ]";
-WriteLine(a1 == identity);
-using var __ = MathS.Settings.PrecisionErrorZeroRange.Set(0.1m);
-WriteLine(a1 == b1);
-// WriteLine(b1 == identity);
-// WriteLine(matrix == b1);
+WriteLine(a1.EqualsImprecisely(b1, 0.1));

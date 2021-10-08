@@ -16,11 +16,21 @@ partial record Entity
     /// real numbers less than <paramref name="error"/>
     /// to be negligible.
     /// </summary>
-    /// <param name="other"></param>
-    /// <param name="error"></param>
-    /// <returns></returns>
     public bool EqualsImprecisely(Entity other, Real error)
         => EqualsImpreciselyInner(other, error);
+
+    
+    [ConstantField] private static readonly Real defaultError = 0.01;
+
+    /// <summary>
+    /// Returns if an expression
+    /// is identical to another expression
+    /// assuming the difference between
+    /// real numbers less than some small error
+    /// to be negligible.
+    /// </summary>
+    public bool EqualsImprecisely(Entity other)
+        => EqualsImpreciselyInner(other, defaultError);
 
     private protected virtual bool EqualsImpreciselyInner(Entity other, Real error)
     {
