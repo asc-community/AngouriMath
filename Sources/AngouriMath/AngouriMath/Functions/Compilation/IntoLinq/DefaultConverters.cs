@@ -182,17 +182,30 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             if (children.Length == 0)
                 throw new UncompilableNodeException("Zero arg piecewise compilation is not supported");
             
+            Type maxType = typeof(int);
+            for (int i = 0; i < children.Length; i += 2)
+            {
+                maxType = MaxType(maxType, children[i].Type);
+            }
+            
             // last case
             var expression = children[children.Length - 2];
             var predicate = children[children.Length - 1];
-                        
-            Expression piecewiseExpr = Expression.Condition(predicate, expression, nanConverter(expression.Type)); // can be ConstantExpression in certain cases if values of children could be known
+            
+            if (expression.Type != maxType)
+                expression = Expression.Convert(expression, maxType);
+            
+            Expression piecewiseExpr = Expression.Condition(predicate, expression, nanConverter(maxType)); // can be ConstantExpression in certain cases if values of children could be known
             
             // additional cases
             for (int i = children.Length - 3; i >= 1; i -= 2)
             {
                 expression = children[i - 1];
                 predicate = children[i];
+                
+                if (expression.Type != piecewiseExpr.Type)
+                    expression = Expression.Convert(expression, piecewiseExpr.Type);
+                
                 piecewiseExpr = Expression.Condition(predicate, expression, piecewiseExpr);
             }
             
