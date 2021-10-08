@@ -59,6 +59,52 @@ namespace AngouriMath
             return true;
         }
 
+        internal record struct Zipped<T1, T2, TList1, TList2>(TList1 First, TList2 Second)
+            where TList1 : IReadOnlyList<T1>
+            where TList2 : IReadOnlyList<T2>
+        {
+            public ZippedEnumerator<T1, T2, TList1, TList2> GetEnumerator()
+                => new(First, Second);
+        }
+
+        internal struct ZippedEnumerator<T1, T2, TList1, TList2>
+            where TList1 : IReadOnlyList<T1>
+            where TList2 : IReadOnlyList<T2>
+        {
+            private readonly TList1 list1;
+            private readonly TList2 list2;
+            private readonly int list1Length;
+            private readonly int list2Length;
+            private int curr;
+
+            public ZippedEnumerator(TList1 list1, TList2 list2)
+            {
+                this.list1 = list1;
+                this.list2 = list2;
+                list1Length = list1.Count;
+                list2Length = list2.Count;
+                curr = 0;
+            }
+
+            public (T1, T2) Current
+                => (list1[curr], list2[curr]);
+
+            public bool MoveNext()
+            {
+                curr++;
+                if (curr == list1Length && curr == list2Length)
+                    return false;
+                if (curr < list1Length && curr < list2Length)
+                    return true;
+                throw new AngouriBugException("Collections should have the same size");
+            }
+        }
+
+        public static Zipped<T1, T2, TList1, TList2> ZipLists<T1, T2, TList1, TList2>(this (TList1, TList2) seqs)
+            where TList1 : IReadOnlyList<T1>
+            where TList2 : IReadOnlyList<T2>
+            => new(seqs.Item1, seqs.Item2);
+
         public static IEnumerable<(T1 left, T2 right)> Zip<T1, T2>(this (IEnumerable<T1>, IEnumerable<T2>) seqs)
         {
             var iterLeft = seqs.Item1.GetEnumerator();

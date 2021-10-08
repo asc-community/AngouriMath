@@ -17,6 +17,8 @@ using static AngouriMath.MathS;
 using static System.Console;
 using PeterO.Numbers;
 
+System.Collections.Generic.IList<int> a = new int[3];
+
 Entity.Matrix matrix = @"
 [
     [1.000000000000000547458310833800074927650525249394612805610000, 0, 0, -9.55753574799863785565952768061466479249665075036612773690000E-15],

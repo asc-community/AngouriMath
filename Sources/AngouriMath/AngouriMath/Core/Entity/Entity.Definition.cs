@@ -224,26 +224,5 @@ namespace AngouriMath
         /// Checks whether the given expression is a finite constant leaf
         /// </summary>
         public bool IsConstantLeaf => this is Boolean or Number or Set.SpecialSet;
-
-        /// <summary>
-        /// Checks if two expressions are equal up
-        /// to an error for real numbers (and exact
-        /// equality for all other nodes of the expression).
-        /// 
-        /// The acceptable error is <see cref="MathS.Settings.PrecisionErrorCommon" />
-        /// </summary>
-        public bool EqualsImprecisely(Entity other)
-            => EqualsImpreciselyInner(other, MathS.Settings.PrecisionErrorCommon);
-
-        /// <summary>
-        /// Checks if two expressions are equal up
-        /// to an error for real numbers (and exact
-        /// equality for all other nodes of the expression).
-        /// </summary>
-        public bool EqualsImprecisely(Entity other, Real error)
-            => EqualsImpreciselyInner(other, error.EDecimal);
-
-        private protected virtual bool EqualsImpreciselyInner(Entity other, PeterO.Numbers.EDecimal error)
-            => throw AngouriMath.Core.Exceptions.FutureReleaseException.Raised("Imprecise inequality");
     }
 }
