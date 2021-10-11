@@ -99,7 +99,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             if (left.Type == right.Type)
                 return (left, right);
             
-            Type underlyingType = Nullable.GetUnderlyingType(left.Type);
+            Type? underlyingType = Nullable.GetUnderlyingType(left.Type);
             bool leftNullable = (underlyingType != null);
             Type leftType = underlyingType ?? left.Type;
 
