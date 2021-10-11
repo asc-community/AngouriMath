@@ -46,10 +46,16 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// </summary>
         public static Expression NaNByType(Type type)
         {
+            type = Nullable.GetUnderlyingType(type) ?? type;
+            
             if (type == typeof(double))
                 return Expression.Constant(double.NaN);
             if (type == typeof(float))
                 return Expression.Constant(float.NaN);
+            if (type == typeof(long))
+                return Expression.Constant(null, typeof(long?));
+            if (type == typeof(int))
+                return Expression.Constant(null, typeof(int?));
             throw new InvalidProtocolProvided($"NaN conversion not implemented for {type}");
         }
 
@@ -88,17 +94,56 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 throw new AngouriBugException("Ambiguous upcast class");
             return res.First().Key;
         }
-        private static (Expression left, Expression right) EqualizeTypesIfAble(Expression left, Expression right)
+        private static (Expression left, Expression right) EqualizeTypesIfAble(Expression left, Expression right, Func<Type, Expression> nanConverter)
         {
-            if (!typeLevelInHierarchy.ContainsKey(left.Type) || !typeLevelInHierarchy.ContainsKey(right.Type))
+            if (left.Type == right.Type)
                 return (left, right);
             
-            var typeToCastTo = MaxType(left.Type, right.Type);
-            if (left.Type != typeToCastTo)
-                left = Expression.Convert(left, typeToCastTo);
-            if (right.Type != typeToCastTo)
-                right = Expression.Convert(right, typeToCastTo);
+            Type underlyingType = Nullable.GetUnderlyingType(left.Type);
+            bool leftNullable = (underlyingType != null);
+            Type leftType = underlyingType ?? left.Type;
+
+            underlyingType = Nullable.GetUnderlyingType(right.Type);
+            bool rightNullable = (underlyingType != null);
+            Type rightType = underlyingType ?? right.Type;
+
+            if (!typeLevelInHierarchy.ContainsKey(leftType) || !typeLevelInHierarchy.ContainsKey(rightType))
+                return (left, right);
+
+            var typeToCastTo = MaxType(leftType, rightType);
+            if (leftType != typeToCastTo)
+                leftType = typeToCastTo;
+            if (rightType != typeToCastTo)
+                rightType = typeToCastTo;
                 
+            Expression Convert(Expression expr, Type type, bool nullable)
+            {
+                if (leftNullable || rightNullable)
+                {
+                    if (((ConstantExpression)(nanConverter(type))).Value == null)
+                    {
+                        type = typeof(Nullable<>).MakeGenericType(type);
+                        expr = Expression.Convert(expr, type);
+                    }
+                    else
+                    {
+                        expr = nullable ? Expression.Condition(Expression.Equal(expr, nanConverter(expr.Type)), 
+                                                               nanConverter(type), 
+                                                               Expression.Convert(expr, type))
+                                        : Expression.Convert(expr, type);
+                    }
+                }
+                else
+                {
+                    expr = Expression.Convert(expr, type);
+                }
+                
+                return expr;
+            }
+            
+            left = Convert(left, leftType, leftNullable);
+            right = Convert(right, rightType, rightNullable);
+            
             return (left, right);
         }
 
@@ -107,7 +152,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// </summary>
         public static Expression TwoArgumentEntity(Expression left, Expression right, Entity typeHolder, Func<Type, Expression> nanConverter)
         {
-            (left, right) = EqualizeTypesIfAble(left, right);
+            (left, right) = EqualizeTypesIfAble(left, right, nanConverter);
             return typeHolder switch
             {
                 Sumf => Expression.Add(left, right),
@@ -191,11 +236,11 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             // last case
             var expression = children[children.Length - 2];
             var predicate = children[children.Length - 1];
+            var nan = nanConverter(maxType);
             
-            if (expression.Type != maxType)
-                expression = Expression.Convert(expression, maxType);
+            (expression, nan) = EqualizeTypesIfAble(expression, nan, nanConverter);
             
-            Expression piecewiseExpr = Expression.Condition(predicate, expression, nanConverter(maxType)); // can be ConstantExpression in certain cases if values of children could be known
+            Expression piecewiseExpr = Expression.Condition(predicate, expression, nan); // can be ConstantExpression in certain cases if values of children could be known
             
             // additional cases
             for (int i = children.Length - 3; i >= 1; i -= 2)
@@ -203,8 +248,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 expression = children[i - 1];
                 predicate = children[i];
                 
-                if (expression.Type != piecewiseExpr.Type)
-                    expression = Expression.Convert(expression, piecewiseExpr.Type);
+                (expression, piecewiseExpr) = EqualizeTypesIfAble(expression, piecewiseExpr, nanConverter);
                 
                 piecewiseExpr = Expression.Condition(predicate, expression, piecewiseExpr);
             }
