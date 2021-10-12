@@ -182,10 +182,17 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 GreaterOrEqualf => Expression.GreaterThanOrEqual(left, right),
                 Equalsf => Expression.Equal(left, right),
                 
-                Providedf => Expression.Condition(right, left, nanConverter(left.Type)),
+                Providedf => HandleProvidedf(left, right),
 
                 _ => throw new AngouriBugException("A binary node seems to be not added")
             };
+            
+            Expression HandleProvidedf(Expression expr, Expression cond)
+            {
+                var nan = nanConverter(expr.Type);
+                (expr, nan) = EqualizeTypesIfAble(expr, nan, nanConverter);
+                return Expression.Condition(cond, expr, nan);
+            }
         }
 
         /// <summary>
