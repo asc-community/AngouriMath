@@ -27,7 +27,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
             var tree = BuildTree(expr, subexpressionsCache, variableAssignments, localVars, protocol);
             var treeWithLocals = Expression.Block(localVars, variableAssignments.Append(tree));
-            Expression entireExpresion = returnType is not null ? Expression.Convert(treeWithLocals, returnType) : treeWithLocals;
+            Expression entireExpresion = returnType is not null ? CompilationProtocolBuiltinConstantConverters.Convert(treeWithLocals, returnType, protocol.NaNConverter) : treeWithLocals;
             var finalLambda = Expression.Lambda<TDelegate>(entireExpresion, functionArguments);
 
             return finalLambda.Compile();

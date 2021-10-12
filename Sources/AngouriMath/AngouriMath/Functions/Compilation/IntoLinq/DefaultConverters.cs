@@ -94,55 +94,41 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 throw new AngouriBugException("Ambiguous upcast class");
             return res.First().Key;
         }
+        internal static Expression Convert(Expression expr, Type type, Func<Type, Expression> nanConverter)
+        {
+            if (expr.Type == type)
+                return expr;
+            
+            if ((Nullable.GetUnderlyingType(expr.Type) != null) && ((ConstantExpression)nanConverter(type) != null))
+            {
+                return Expression.Condition(Expression.Equal(expr, Expression.Constant(null, expr.Type)),
+                                                             nanConverter(type),
+                                                             Expression.Convert(expr, type));
+            }
+
+            return Expression.Convert(expr, type);
+        }
         private static (Expression left, Expression right) EqualizeTypesIfAble(Expression left, Expression right, Func<Type, Expression> nanConverter)
         {
             if (left.Type == right.Type)
                 return (left, right);
             
             Type? underlyingType = Nullable.GetUnderlyingType(left.Type);
-            bool leftNullable = (underlyingType != null);
+            bool nullable = (underlyingType != null);
             Type leftType = underlyingType ?? left.Type;
 
             underlyingType = Nullable.GetUnderlyingType(right.Type);
-            bool rightNullable = (underlyingType != null);
+            nullable = nullable || (underlyingType != null);
             Type rightType = underlyingType ?? right.Type;
 
             if (!typeLevelInHierarchy.ContainsKey(leftType) || !typeLevelInHierarchy.ContainsKey(rightType))
                 return (left, right);
 
             var typeToCastTo = MaxType(leftType, rightType);
-            if (leftType != typeToCastTo)
-                leftType = typeToCastTo;
-            if (rightType != typeToCastTo)
-                rightType = typeToCastTo;
-                
-            Expression Convert(Expression expr, Type type, bool nullable)
-            {
-                if (leftNullable || rightNullable)
-                {
-                    if (((ConstantExpression)(nanConverter(type))).Value == null)
-                    {
-                        type = typeof(Nullable<>).MakeGenericType(type);
-                        expr = Expression.Convert(expr, type);
-                    }
-                    else
-                    {
-                        expr = nullable ? Expression.Condition(Expression.Equal(expr, nanConverter(expr.Type)), 
-                                                               nanConverter(type), 
-                                                               Expression.Convert(expr, type))
-                                        : Expression.Convert(expr, type);
-                    }
-                }
-                else
-                {
-                    expr = Expression.Convert(expr, type);
-                }
-                
-                return expr;
-            }
+            typeToCastTo = nullable ? typeof(Nullable<>).MakeGenericType(typeToCastTo) : typeToCastTo;
             
-            left = Convert(left, leftType, leftNullable);
-            right = Convert(right, rightType, rightNullable);
+            left = Convert(left, typeToCastTo, nanConverter);
+            right = Convert(right, typeToCastTo, nanConverter);
             
             return (left, right);
         }
