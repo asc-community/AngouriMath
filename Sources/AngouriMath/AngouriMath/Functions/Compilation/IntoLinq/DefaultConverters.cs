@@ -98,12 +98,28 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         {
             if (expr.Type == type)
                 return expr;
+                
+            bool exprNullable = (Nullable.GetUnderlyingType(expr.Type) != null);
+            bool typeNullable = (Nullable.GetUnderlyingType(type) != null);
+            bool exprNaNisNaN = (((ConstantExpression)nanConverter(expr.Type)).Value != null);
+            bool typeNaNisNaN = (((ConstantExpression)nanConverter(type)).Value != null);
             
-            if ((Nullable.GetUnderlyingType(expr.Type) != null) && ((ConstantExpression)nanConverter(type) != null))
+            // ex. long? -> double
+            if (exprNullable && typeNaNisNaN)
             {
                 return Expression.Condition(Expression.Equal(expr, Expression.Constant(null, expr.Type)),
                                                              nanConverter(type),
                                                              Expression.Convert(expr, type));
+            }
+            
+            // ex. double -> long?
+            if (!exprNullable && exprNaNisNaN && typeNullable && !typeNaNisNaN)
+            {
+                MethodInfo isNaN = expr.Type.GetMethod("IsNaN") ?? throw new AngouriBugException($"IsNaN method expected for type {expr.Type}");
+                
+                return Expression.Condition(Expression.Call(isNaN, expr),
+                                            Expression.Constant(null, type),
+                                            Expression.Convert(expr, type));
             }
 
             return Expression.Convert(expr, type);
@@ -125,7 +141,10 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 return (left, right);
 
             var typeToCastTo = MaxType(leftType, rightType);
-            typeToCastTo = nullable ? typeof(Nullable<>).MakeGenericType(typeToCastTo) : typeToCastTo;
+            if (nullable && ((ConstantExpression)nanConverter(typeToCastTo)).Value == null)
+            {
+                typeToCastTo = typeof(Nullable<>).MakeGenericType(typeToCastTo);
+            }
             
             left = Convert(left, typeToCastTo, nanConverter);
             right = Convert(right, typeToCastTo, nanConverter);
