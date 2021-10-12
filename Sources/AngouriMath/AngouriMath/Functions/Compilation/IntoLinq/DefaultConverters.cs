@@ -48,12 +48,16 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         {
             type = Nullable.GetUnderlyingType(type) ?? type;
             
+            if (type == typeof(System.Numerics.Complex))
+                return Expression.Constant(new System.Numerics.Complex(double.NaN, double.NaN));
             if (type == typeof(double))
                 return Expression.Constant(double.NaN);
             if (type == typeof(float))
                 return Expression.Constant(float.NaN);
             if (type == typeof(long))
                 return Expression.Constant(null, typeof(long?));
+            if (type == typeof(BigInteger))
+                return Expression.Constant(null, typeof(BigInteger?));
             if (type == typeof(int))
                 return Expression.Constant(null, typeof(int?));
             throw new InvalidProtocolProvided($"NaN conversion not implemented for {type}");
