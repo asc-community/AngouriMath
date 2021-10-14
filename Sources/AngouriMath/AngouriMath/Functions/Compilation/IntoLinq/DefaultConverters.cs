@@ -49,7 +49,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             type = Nullable.GetUnderlyingType(type) ?? type;
             
             if (type == typeof(System.Numerics.Complex))
-                return Expression.Constant(new System.Numerics.Complex(double.NaN, double.NaN));
+                return Expression.Constant(new System.Numerics.Complex(double.NaN, 0));
             if (type == typeof(double))
                 return Expression.Constant(double.NaN);
             if (type == typeof(float))
