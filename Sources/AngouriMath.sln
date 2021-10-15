@@ -51,6 +51,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Ymls", "Ymls", "{AB2B0D73-3
 		..\.github\workflows\EverythingBuild.yml = ..\.github\workflows\EverythingBuild.yml
 		..\.github\workflows\FSharpBuild.yml = ..\.github\workflows\FSharpBuild.yml
 		..\.github\workflows\FSharpTest.yml = ..\.github\workflows\FSharpTest.yml
+		..\.github\FUNDING.yml = ..\.github\FUNDING.yml
 		..\.github\workflows\IntegrationTest.yml = ..\.github\workflows\IntegrationTest.yml
 		..\.github\workflows\InteractiveBuild.yml = ..\.github\workflows\InteractiveBuild.yml
 		..\.github\workflows\InteractiveTest.yml = ..\.github\workflows\InteractiveTest.yml
