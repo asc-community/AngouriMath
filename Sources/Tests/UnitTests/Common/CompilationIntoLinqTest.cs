@@ -99,7 +99,7 @@ namespace UnitTests.Common
         [InlineData("x provided false", "5")]
         [InlineData("x provided false", "2 + 5i")]
         
-        [InlineData("piecewise()", "1", Skip = "Zero arg piecewise compilation needed")]
+        [InlineData("piecewise()", "1")]
         [InlineData("piecewise(x)", "2")]
         [InlineData("piecewise(3 - 4i provided x = 5 + 2i)", "5 + 2i")]
         [InlineData("piecewise(3 - 4i provided x = 5 + 2i)", "6")]
@@ -120,6 +120,10 @@ namespace UnitTests.Common
             if (Complex.IsNaN(expected))
             {
                 Assert.True(Complex.IsNaN(actual), $"Expected: {expected}\nActual: {actual}");
+            }
+            else if (expected == null)
+            {
+                Assert.True(actual == expected, $"Expected: {expected}\nActual: {actual}");
             }
             else
             {
@@ -164,6 +168,10 @@ namespace UnitTests.Common
             if (Complex.IsNaN(expected))
             {
                 Assert.True(Complex.IsNaN(actual), $"Expected: {expected}\nActual: {actual}");
+            }
+            else if (expected == null)
+            {
+                Assert.True(actual == expected, $"Expected: {expected}\nActual: {actual}");
             }
             else
             {
@@ -242,7 +250,7 @@ namespace UnitTests.Common
         [InlineData("x provided true", "3")]
         [InlineData("x provided false", "5")]
         
-        [InlineData("piecewise()", "1", Skip = "Zero arg piecewise compilation needed")]
+        [InlineData("piecewise()", "1")]
         [InlineData("piecewise(x)", "2")]
         [InlineData("piecewise(3 provided x = 5)", "5")]
         [InlineData("piecewise(3 provided x = 5)", "6")]

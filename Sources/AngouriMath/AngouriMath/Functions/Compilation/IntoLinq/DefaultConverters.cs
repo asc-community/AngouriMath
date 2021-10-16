@@ -60,6 +60,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 return Expression.Constant(null, typeof(BigInteger?));
             if (type == typeof(int))
                 return Expression.Constant(null, typeof(int?));
+            if (type == typeof(object))
+                return Expression.Constant(null, typeof(object));
             throw new InvalidProtocolProvided($"NaN conversion not implemented for {type}");
         }
 
@@ -82,7 +84,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 { typeof(float), 8 },
                 { typeof(long), 8 },
                 { typeof(BigInteger), 8 },
-                { typeof(int), 7 }
+                { typeof(int), 7 },
+                { typeof(object), 6}
             };
         private static Type MaxType(Type a, Type b)
         {
@@ -103,8 +106,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             if (expr.Type == type)
                 return expr;
                 
-            bool exprNullable = (Nullable.GetUnderlyingType(expr.Type) != null);
-            bool typeNullable = (Nullable.GetUnderlyingType(type) != null);
+            bool exprNullable = (Nullable.GetUnderlyingType(expr.Type) != null) || (expr.Type == typeof(object));
+            bool typeNullable = (Nullable.GetUnderlyingType(type) != null) || (type == typeof(object));
             bool exprNaNisNaN = (((ConstantExpression)nanConverter(expr.Type)).Value != null);
             bool typeNaNisNaN = (((ConstantExpression)nanConverter(type)).Value != null);
             
@@ -241,7 +244,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             
             // 0 cases
             if (children.Length == 0)
-                throw new UncompilableNodeException("Zero arg piecewise compilation is not supported");
+                return Expression.Constant(null, typeof(object));
             
             Type maxType = typeof(int);
             for (int i = 0; i < children.Length; i += 2)
