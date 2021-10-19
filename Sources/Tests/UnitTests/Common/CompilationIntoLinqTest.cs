@@ -88,6 +88,21 @@ namespace UnitTests.Common
         [InlineData("sgn(x)", "3")]
         [InlineData("sgn(x)", "-3")]
         [InlineData("sgn(x)", "3 + 4i")]
+        
+        // Piecewise
+        [InlineData("5 provided x = 3", "3")]
+        [InlineData("5 provided x = 3", "5")]
+        [InlineData("-1 provided x = 2", "3")]
+        [InlineData("-1 provided x = 2", "2 + 5i")]
+        [InlineData("x provided true", "3")]
+        [InlineData("x provided true", "2 + 5i")]
+        [InlineData("x provided false", "5")]
+        [InlineData("x provided false", "2 + 5i")]
+        
+        [InlineData("piecewise()", "1")]
+        [InlineData("piecewise(x)", "2")]
+        [InlineData("piecewise(3 - 4i provided x = 5 + 2i)", "5 + 2i")]
+        [InlineData("piecewise(3 - 4i provided x = 5 + 2i)", "6")]
         public void TestComplexOneArgBasis(string exprRaw, string toSubRaw)
         {
             Entity expr = exprRaw;
@@ -102,10 +117,16 @@ namespace UnitTests.Common
             var func = expr.Compile<Complex, Complex>("x");
             var actual = func(toSubComplex);
 
-
-            var diff = expected - actual;
-            var error = Complex.Abs(diff);
-            Assert.True(error < 0.1, $"Error: {error}\nExpected: {expected}\nActual: {actual}");
+            if (Complex.IsNaN(expected))
+            {
+                Assert.True(Complex.IsNaN(actual), $"Expected: {expected}\nActual: {actual}");
+            }
+            else
+            {
+                var diff = expected - actual;
+                var error = Complex.Abs(diff);
+                Assert.True(error < 0.1, $"Error: {error}\nExpected: {expected}\nActual: {actual}");
+            }
         }
 
         [Theory]
@@ -122,6 +143,10 @@ namespace UnitTests.Common
         [InlineData("y + 2x", "1")]
         [InlineData("y^x", "2")]
         [InlineData("sin(x + y) + sin(2x + y) + cos(y x - x)", "2")]
+        [InlineData("5 provided x = y", "1")]
+        [InlineData("5 provided x + 1 = y", "1")]
+        [InlineData("x provided x = y", "2")]
+        [InlineData("y provided x + 1 = y", "2")]
         public void TestComplexTwoArgs(string exprRaw, string toSubRaw)
         {
             Entity expr = exprRaw;
@@ -136,10 +161,16 @@ namespace UnitTests.Common
             var func = expr.Compile<Complex, Complex, Complex>("x", "y");
             var actual = func(toSubComplex, toSubComplex + 1);
 
-
-            var diff = expected - actual;
-            var error = Complex.Abs(diff);
-            Assert.True(error < 0.1, $"Error: {error}\nExpected: {expected}\nActual: {actual}");
+            if (Complex.IsNaN(expected))
+            {
+                Assert.True(Complex.IsNaN(actual), $"Expected: {expected}\nActual: {actual}");
+            }
+            else
+            {
+                var diff = expected - actual;
+                var error = Complex.Abs(diff);
+                Assert.True(error < 0.1, $"Error: {error}\nExpected: {expected}\nActual: {actual}");
+            }
         }
 
         
@@ -203,6 +234,20 @@ namespace UnitTests.Common
 
         [InlineData("sgn(x)", "3")]
         [InlineData("sgn(x)", "-3")]
+        
+        // Piecewise
+        [InlineData("5 provided x = 3", "3")]
+        [InlineData("5 provided x = 3", "5")]
+        [InlineData("-1 provided x = 2", "3")]
+        [InlineData("x provided true", "3")]
+        [InlineData("x provided false", "5")]
+        
+        [InlineData("piecewise()", "1")]
+        [InlineData("piecewise(x)", "2")]
+        [InlineData("piecewise(3 provided x = 5)", "5")]
+        [InlineData("piecewise(3 provided x = 5)", "6")]
+        [InlineData("piecewise(0 provided x = 1, 2 provided x < 3, 4 provided x > 5, 6)", "2.2")]
+        [InlineData("piecewise(0 provided x = 1, 2 provided x < 3, 4 provided x > 5, 6)", "-2.9")]
         public void TestDoubleOneArg(string exprRaw, string toSubRaw)
         {
             Entity expr = exprRaw;
@@ -218,9 +263,16 @@ namespace UnitTests.Common
             var actual = func(toSubComplex);
 
 
-            var diff = expected - actual;
-            var error = Math.Abs(diff);
-            Assert.True(error < 0.1, $"Error: {error}\nExpected: {expected}\nActual: {actual}");
+            if (Complex.IsNaN(expected))
+            {
+                Assert.True(Complex.IsNaN(actual), $"Expected: {expected}\nActual: {actual}");
+            }
+            else
+            {
+                var diff = expected - actual;
+                var error = Complex.Abs(diff);
+                Assert.True(error < 0.1, $"Error: {error}\nExpected: {expected}\nActual: {actual}");
+            }
         }
 
         [Theory]
@@ -324,6 +376,10 @@ namespace UnitTests.Common
         [Fact]
         public void TestUpcast3()
             => Assert.Equal((double)(int)Math.Sin(4), "sin(a)".Compile<int, double>("a")(4));
+            
+        [Fact]
+        public void TestUpcast4()
+            => Assert.Equal(double.NaN, "piecewise(1 provided x = 2)".Compile<int, double>("x")(0));
 
         [Fact]
         public void TestUpcastDowncast4()
@@ -336,5 +392,9 @@ namespace UnitTests.Common
         [Fact]
         public void TestUpcastDowncast6()   //    |   |   |   |   |
             => Assert.Equal(BigInteger.Parse("100000000000000000000"), "a ^ b".Compile<int, BigInteger, BigInteger>("a", "b")(10, 20));
+    
+        [Fact]
+        public void TestUpcastDowncast7()
+            => Assert.Null("2.2 + piecewise(123.456 provided x < 0)".Compile<int, int?>("x")(789));
     }
 }

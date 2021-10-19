@@ -17,8 +17,11 @@ namespace AngouriMath
         /// <summary>
         /// That is a node which equals Expression if Predicate is true, otherwise <see cref="MathS.NaN"/>
         /// </summary>
-        public sealed partial record Providedf(Entity Expression, Entity Predicate) : Entity
+        public sealed partial record Providedf(Entity Expression, Entity Predicate) : Entity, IBinaryNode
         {
+            public Entity NodeFirstChild => Expression;
+            public Entity NodeSecondChild => Predicate;
+            
             internal Providedf New(Entity expression, Entity predicate)
                 => ReferenceEquals(expression, Expression) && ReferenceEquals(predicate, Predicate) ? this :
                 new Providedf(expression, predicate);

@@ -27,16 +27,16 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
             var tree = BuildTree(expr, subexpressionsCache, variableAssignments, localVars, protocol);
             var treeWithLocals = Expression.Block(localVars, variableAssignments.Append(tree));
-            Expression entireExpresion = returnType is not null ? Expression.Convert(treeWithLocals, returnType) : treeWithLocals;
-            var finalLambda = Expression.Lambda<TDelegate>(entireExpresion, functionArguments);
+            Expression entireExpression = returnType is not null ? protocol.ConvertType(treeWithLocals, returnType) : treeWithLocals;
+            var finalLambda = Expression.Lambda<TDelegate>(entireExpression, functionArguments);
 
             return finalLambda.Compile();
         }
 
         internal static Expression BuildTree(
-            Entity expr, 
-            Dictionary<Entity, ParameterExpression> cachedSubexpressions, 
-            List<Expression> variableAssignments, 
+            Entity expr,
+            Dictionary<Entity, ParameterExpression> cachedSubexpressions,
+            List<Expression> variableAssignments,
             List<ParameterExpression> newLocalVars,
             CompilationProtocol protocol)
         {
@@ -50,20 +50,20 @@ namespace AngouriMath.Core.Compilation.IntoLinq
 
                 Variable x => cachedSubexpressions[x],
 
-                Entity.Boolean or Number => protocol.ConstantConverter(expr),
+                Entity.Boolean or Number => protocol.ConvertConstant(expr),
 
                 IUnaryNode oneArg
-                    => protocol.UnaryNodeConverter(
+                    => protocol.ConvertUnaryNode(
                         BuildTree(oneArg.NodeChild, cachedSubexpressions, variableAssignments, newLocalVars, protocol),
                         expr),
 
                 IBinaryNode twoArg
-                    => protocol.BinaryNodeConverter(
+                    => protocol.ConvertBinaryNode(
                         BuildTree(twoArg.NodeFirstChild, cachedSubexpressions, variableAssignments, newLocalVars, protocol), 
                         BuildTree(twoArg.NodeSecondChild, cachedSubexpressions, variableAssignments, newLocalVars, protocol), 
                         expr),
 
-                var other => protocol.AnyArgumentConverter(other.DirectChildren.Select(c => BuildTree(c, cachedSubexpressions, variableAssignments, newLocalVars, protocol)), expr)
+                var other => protocol.ConvertOtherNode(other.DirectChildren.Select(c => BuildTree(c, cachedSubexpressions, variableAssignments, newLocalVars, protocol)), expr)
             };
 
             var newVar = Expression.Variable(subTree.Type);
