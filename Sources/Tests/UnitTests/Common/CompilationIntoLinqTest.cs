@@ -121,10 +121,6 @@ namespace UnitTests.Common
             {
                 Assert.True(Complex.IsNaN(actual), $"Expected: {expected}\nActual: {actual}");
             }
-            else if (expected == null)
-            {
-                Assert.True(actual == expected, $"Expected: {expected}\nActual: {actual}");
-            }
             else
             {
                 var diff = expected - actual;
@@ -168,10 +164,6 @@ namespace UnitTests.Common
             if (Complex.IsNaN(expected))
             {
                 Assert.True(Complex.IsNaN(actual), $"Expected: {expected}\nActual: {actual}");
-            }
-            else if (expected == null)
-            {
-                Assert.True(actual == expected, $"Expected: {expected}\nActual: {actual}");
             }
             else
             {
@@ -403,6 +395,6 @@ namespace UnitTests.Common
     
         [Fact]
         public void TestUpcastDowncast7()
-            => Assert.Equal(null, "2.2 + piecewise(123.456 provided x < 0)".Compile<int, int?>("x")(789));
+            => Assert.Null("2.2 + piecewise(123.456 provided x < 0)".Compile<int, int?>("x")(789));
     }
 }
