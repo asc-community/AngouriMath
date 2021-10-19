@@ -24,41 +24,40 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         /// <summary>
         /// Change this method if you want a custom converter from number and boolean into the necessary type
         /// </summary>
+        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
         public Func<Entity, Expression>? ConstantConverter { get; init; }
 
         /// <summary>
         /// Change this if you want a custom conversion of NaN into an appropriate type
         /// </summary>
+        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
         public Func<Type, Expression>? NaNConverter { get; init; }
         
         /// <summary>
         /// Change this if you want a custom conversion between types
         /// </summary>
+        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
         public Func<Expression, Type, Expression>? TypeConverter { get; init; }
         
         /// <summary>
         /// Change this if you want to override compilation node for unary nodes
         /// </summary>
+        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
         public Func<Expression, Entity, Expression>? UnaryNodeConverter { get; init; }
         
         /// <summary>
         /// Change this if you want to override compilation node for binary nodes
         /// </summary>
+        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
         public Func<Expression, Expression, Entity, Expression>? BinaryNodeConverter { get; init; }
 
         /// <summary>
         /// Change this if you want to override compilation node for non-unary and non-binary nodes
         /// </summary>
+        [Obsolete("Inherit from CompilationProtocol and override the necessary methods instead")]
         public Func<IEnumerable<Expression>, Entity, Expression>? AnyArgumentConverter { get; init; }
-        
-        
-        
-        
-        
-        
-        
-        
 
+#pragma warning disable CS0618 // remove when converters above are removed
         /// <summary>
         /// This treats any number as <see cref="Complex"/> and any boolean as <see cref="bool"/>
         /// </summary>
@@ -113,10 +112,10 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             if (expr.Type == type)
                 return expr;
                 
-            bool exprNullable = (Nullable.GetUnderlyingType(expr.Type) != null) || (expr.Type == typeof(object));
-            bool typeNullable = (Nullable.GetUnderlyingType(type) != null) || (type == typeof(object));
-            bool exprNaNisNaN = (((ConstantExpression)ConvertNaN(expr.Type)).Value != null);
-            bool typeNaNisNaN = (((ConstantExpression)ConvertNaN(type)).Value != null);
+            bool exprNullable = (Nullable.GetUnderlyingType(expr.Type) is not null) || (expr.Type == typeof(object));
+            bool typeNullable = (Nullable.GetUnderlyingType(type) is not null) || (type == typeof(object));
+            bool exprNaNisNaN = (((ConstantExpression)ConvertNaN(expr.Type)).Value is not null);
+            bool typeNaNisNaN = (((ConstantExpression)ConvertNaN(type)).Value is not null);
             
             // ex. long? -> double
             if (exprNullable && typeNaNisNaN)
@@ -267,13 +266,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             
             return piecewiseExpr;
         }
-        
-        
-        
-        
-        
-        
-        
+#pragma warning restore CS0618
         
         private static object DownCast(Number num)
         {
@@ -330,11 +323,11 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 return (left, right);
             
             Type? underlyingType = Nullable.GetUnderlyingType(left.Type);
-            bool nullable = (underlyingType != null);
+            bool nullable = (underlyingType is not null);
             Type leftType = underlyingType ?? left.Type;
 
             underlyingType = Nullable.GetUnderlyingType(right.Type);
-            nullable = nullable || (underlyingType != null);
+            nullable = nullable || (underlyingType is not null);
             Type rightType = underlyingType ?? right.Type;
 
             if (!typeLevelInHierarchy.ContainsKey(leftType) || !typeLevelInHierarchy.ContainsKey(rightType))
