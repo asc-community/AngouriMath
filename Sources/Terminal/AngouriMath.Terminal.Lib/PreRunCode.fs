@@ -23,8 +23,14 @@ open AngouriMath.Interactive.AggressiveOperators
 
 let x = symbol ""x""
 let y = symbol ""y""
+let z = symbol ""z""
+let w = symbol ""w""
 let a = symbol ""a""
 let b = symbol ""b""
+let c = symbol ""c""
+let d = symbol ""d""
+let n = symbol ""n""
+let m = symbol ""m""
 
 let help () =
     let url = ""https://github.com/asc-community/AngouriMath/wiki/Terminal""
