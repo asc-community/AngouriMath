@@ -148,19 +148,19 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             
             return typeHolder switch
             {
-                Sinf =>         Expression.Call(GetDef("Sin", 1, e.Type), e),
-                Cosf =>         Expression.Call(GetDef("Cos", 1, e.Type), e),
-                Tanf =>         Expression.Call(GetDef("Tan", 1, e.Type), e),
-                Cotanf =>       Expression.Call(GetDef("Cot", 1, e.Type), e),
-                Secantf =>      Expression.Call(GetDef("Sec", 1, e.Type), e),
-                Cosecantf =>    Expression.Call(GetDef("Csc", 1, e.Type), e),
+                Sinf      when ShouldBeAtLeastDouble(e) is var newE  => Expression.Call(GetDef("Sin", 1, newE.Type), newE),
+                Cosf      when ShouldBeAtLeastDouble(e) is var newE  => Expression.Call(GetDef("Cos", 1, newE.Type), newE),
+                Tanf      when ShouldBeAtLeastDouble(e) is var newE  => Expression.Call(GetDef("Tan", 1, newE.Type), newE),
+                Cotanf    when ShouldBeAtLeastDouble(e) is var newE  => Expression.Call(GetDef("Cot", 1, newE.Type), newE),
+                Secantf   when ShouldBeAtLeastDouble(e) is var newE  => Expression.Call(GetDef("Sec", 1, newE.Type), newE),
+                Cosecantf when ShouldBeAtLeastDouble(e) is var newE  => Expression.Call(GetDef("Csc", 1, newE.Type), newE),
                 
-                Arcsinf =>      Expression.Call(GetDef("Asin", 1, e.Type), e),
-                Arccosf =>      Expression.Call(GetDef("Acos", 1, e.Type), e),
-                Arctanf =>      Expression.Call(GetDef("Atan", 1, e.Type), e),
-                Arccotanf =>    Expression.Call(GetDef("Acot", 1, e.Type), e),
-                Arcsecantf =>   Expression.Call(GetDef("Asec", 1, e.Type), e),
-                Arccosecantf => Expression.Call(GetDef("Acsc", 1, e.Type), e),
+                Arcsinf      when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Asin", 1, newE.Type), newE),
+                Arccosf      when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Acos", 1, newE.Type), newE),
+                Arctanf      when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Atan", 1, newE.Type), newE),
+                Arccotanf    when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Acot", 1, newE.Type), newE),
+                Arcsecantf   when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Asec", 1, newE.Type), newE),
+                Arccosecantf when ShouldBeAtLeastDouble(e) is var newE => Expression.Call(GetDef("Acsc", 1, newE.Type), newE),
                 
                 Absf =>         Expression.Call(GetDef("Abs", 1, e.Type), e),
                 Signumf =>      Expression.Call(GetDef("Sgn", 1, e.Type), e),
@@ -169,6 +169,13 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 
                 _ => throw new AngouriBugException("An unary node seems to be not added")
             };
+        }
+
+        private Expression ShouldBeAtLeastDouble(Expression expr)
+        {
+            if (typeLevelInHierarchy[expr.Type] < typeLevelInHierarchy[typeof(double)])
+                return ConvertType(expr, typeof(double));
+            return expr;
         }
 
         /// <summary>
@@ -185,9 +192,15 @@ namespace AngouriMath.Core.Compilation.IntoLinq
                 Sumf => Expression.Add(left, right),
                 Minusf => Expression.Subtract(left, right),
                 Mulf => Expression.Multiply(left, right),
-                Divf => Expression.Divide(left, right),
-                Powf => Expression.Call(GetDef("Pow", 2, left.Type), left, right),
-                Logf => Expression.Call(GetDef("Log", 2, right.Type), left, right),
+                Divf => Expression.Divide(ShouldBeAtLeastDouble(left), ShouldBeAtLeastDouble(right)),
+                Powf when 
+                    ShouldBeAtLeastDouble(left) is var newLeft 
+                    && ShouldBeAtLeastDouble(right) is var newRight
+                    => Expression.Call(GetDef("Pow", 2, newLeft.Type), newLeft, newRight),
+                Logf when
+                    ShouldBeAtLeastDouble(left) is var newLeft
+                    && ShouldBeAtLeastDouble(right) is var newRight
+                    => Expression.Call(GetDef("Log", 2, newRight.Type), newLeft, newRight),
 
                 Andf => Expression.And(left, right),
                 Orf => Expression.Or(left, right),

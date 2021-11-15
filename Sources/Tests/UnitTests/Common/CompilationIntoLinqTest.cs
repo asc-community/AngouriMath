@@ -377,7 +377,7 @@ namespace UnitTests.Common
 
         [Fact]
         public void TestUpcast3()
-            => Assert.Equal((double)(int)Math.Sin(4), "sin(a)".Compile<int, double>("a")(4));
+            => Assert.Equal((double)Math.Sin(4), "sin(a)".Compile<int, double>("a")(4));
             
         [Fact]
         public void TestUpcast4()
@@ -420,5 +420,17 @@ namespace UnitTests.Common
                 .Compile<int, int>("x")(0)
                 .Should()
                 .Be(1);
+        [Fact]
+        public void TestInts4()
+            => "3^(1/2)"
+                .Compile<double, double>("x")(0)
+                .Should()
+                .BeInRange(1.7, 1.8);
+        [Fact]
+        public void TestInts5()
+            => "log(10, 555)"
+                .Compile<double, double>("x")(0)
+                .Should()
+                .BeInRange(2.1, 2.9);
     }
 }
