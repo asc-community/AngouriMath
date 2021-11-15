@@ -10,6 +10,8 @@ using AngouriMath.Extensions;
 using System;
 using System.Numerics;
 using Xunit;
+using FluentAssertions;
+using HonkSharp.Fluency;
 
 namespace UnitTests.Common
 {
@@ -396,5 +398,27 @@ namespace UnitTests.Common
         [Fact]
         public void TestUpcastDowncast7()
             => Assert.Null("2.2 + piecewise(123.456 provided x < 0)".Compile<int, int?>("x")(789));
+
+
+        [Fact]
+        public void TestInts1()
+            => "1/9"
+                .Compile<double, double>("x")(0)
+                .Should()
+                .BeInRange(0.1, 0.12);
+
+        [Fact]
+        public void TestInts2()
+            => "13/2"
+                .Compile<double, double>("x")(0)
+                .Should()
+                .BeInRange(6.2, 6.8);
+
+        [Fact]
+        public void TestInts3()
+            => "1/3 + 2/3"
+                .Compile<int, int>("x")(0)
+                .Should()
+                .Be(1);
     }
 }

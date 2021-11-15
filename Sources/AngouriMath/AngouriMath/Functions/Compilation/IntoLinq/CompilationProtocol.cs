@@ -144,7 +144,7 @@ namespace AngouriMath.Core.Compilation.IntoLinq
         public virtual Expression ConvertUnaryNode(Expression e, Entity typeHolder)
         {
             if (UnaryNodeConverter is not null)
-            return UnaryNodeConverter(e, typeHolder);
+                return UnaryNodeConverter(e, typeHolder);
             
             return typeHolder switch
             {
