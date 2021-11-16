@@ -10,6 +10,8 @@ using AngouriMath.Extensions;
 using System;
 using System.Numerics;
 using Xunit;
+using FluentAssertions;
+using HonkSharp.Fluency;
 
 namespace UnitTests.Common
 {
@@ -375,7 +377,7 @@ namespace UnitTests.Common
 
         [Fact]
         public void TestUpcast3()
-            => Assert.Equal((double)(int)Math.Sin(4), "sin(a)".Compile<int, double>("a")(4));
+            => Assert.Equal((double)Math.Sin(4), "sin(a)".Compile<int, double>("a")(4));
             
         [Fact]
         public void TestUpcast4()
@@ -396,5 +398,39 @@ namespace UnitTests.Common
         [Fact]
         public void TestUpcastDowncast7()
             => Assert.Null("2.2 + piecewise(123.456 provided x < 0)".Compile<int, int?>("x")(789));
+
+
+        [Fact]
+        public void TestInts1()
+            => "1/9"
+                .Compile<double, double>("x")(0)
+                .Should()
+                .BeInRange(0.1, 0.12);
+
+        [Fact]
+        public void TestInts2()
+            => "13/2"
+                .Compile<double, double>("x")(0)
+                .Should()
+                .BeInRange(6.2, 6.8);
+
+        [Fact]
+        public void TestInts3()
+            => "1/3 + 2/3"
+                .Compile<int, int>("x")(0)
+                .Should()
+                .Be(1);
+        [Fact]
+        public void TestInts4()
+            => "3^(1/2)"
+                .Compile<double, double>("x")(0)
+                .Should()
+                .BeInRange(1.7, 1.8);
+        [Fact]
+        public void TestInts5()
+            => "log(10, 555)"
+                .Compile<double, double>("x")(0)
+                .Should()
+                .BeInRange(2.1, 2.9);
     }
 }

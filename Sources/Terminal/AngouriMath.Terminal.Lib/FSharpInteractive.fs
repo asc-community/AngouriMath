@@ -79,6 +79,8 @@ let createKernel () =
         typeof<AngouriMath.FSharp.Core.ParseException>
         typeof<AngouriMath.InteractiveExtension.KernelExtension>
         typeof<Plotly.NET.Chart>
+        typeof<PeterO.Numbers.EDecimal>
+        typeof<GenericTensor.Core.TensorShape>
 
         Formatter.SetPreferredMimeTypeFor(typeof<obj>, "text/plain")
         Formatter.Register<obj> objectEncode
