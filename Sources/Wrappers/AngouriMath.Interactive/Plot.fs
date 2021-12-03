@@ -33,6 +33,18 @@ let private prepareLinearData (range : 'T seq) (func : obj) =
     let yData = List.map compiled xData
     (xData, yData)
 
+let private preparePolarData (range: 'T seq) (func : obj) =
+    let (phiData, rData) = prepareLinearData range func
+    let polar = List.zip phiData rData
+    let getX = parsed "r * cos(phi)"
+    let (phix, rx) = getOnlyTwoVariables getX
+    let compiledX = compiled2In<double, 'T, double> rx phix getX
+    let getY = parsed "r * sin(phi)"
+    let (phiy, ry) = getOnlyTwoVariables getY
+    let compiledY = compiled2In<double, 'T, double> ry phiy getY
+    let xData = List.map (fun (phi, r) -> compiledX r phi) polar
+    let yData = List.map (fun (phi, r) -> compiledY r phi) polar
+    (xData, yData)
 
 let private prepareSurface3DData (xRange : 'T1 seq) (yRange : 'T2 seq) (func : obj) =
     let entity = parsed func
@@ -65,6 +77,12 @@ let linear (range : 'T seq) (func : obj) =
     let (xData, yData) = prepareLinearData range func
     Chart.Line (xData, yData)
     |> withTransparency
+
+let polar (range : 'T seq) (func : obj) =
+    let (xData, yData) = preparePolarData range func
+    Chart.Line (xData, yData)
+    |> withTransparency
+    
 
 let scatter2D (range : 'T seq) (func : obj) =
     let (xData, yData) = prepareLinearData range func
