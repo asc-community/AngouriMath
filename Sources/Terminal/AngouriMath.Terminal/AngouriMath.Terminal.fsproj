@@ -4,7 +4,7 @@
     
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <ApplicationIcon>icon.ico</ApplicationIcon>
 
     <PackAsTool>true</PackAsTool>
@@ -13,7 +13,7 @@
     <PackageIcon>icon.png</PackageIcon>
     <Description>F#-based command line interface for symbolic algebra library AngouriMath</Description>
 
-    <Version>1.4.0-preview.2-2</Version>
+    <Version>1.4.0-preview.3-2</Version>
 
     <PackageTags>$(PackageTags), cli, terminal</PackageTags>
   </PropertyGroup>

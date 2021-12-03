@@ -12,7 +12,7 @@
   -->
   
   <PropertyGroup>
-    <Version>1.4.0-preview.2</Version>
+    <Version>1.4.0-preview.3</Version>
 
     <Authors>WhiteBlackGoose and contributors</Authors>
     <Company>Angouri</Company>
@@ -29,9 +29,13 @@
     
     <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <PackageIcon>icon.png</PackageIcon>
+
+    <PackageReadmeFile>PackageReadme.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
     <None Include="icon.png" Pack="True" PackagePath="" />
+
+    <None Include="PackageReadme.md" Pack="True" PackagePath="" />
   </ItemGroup>
 </Project>
