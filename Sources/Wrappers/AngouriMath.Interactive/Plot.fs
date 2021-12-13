@@ -81,7 +81,14 @@ let polarLinear (range : 'T seq) (func : obj) =
     let (xData, yData) = preparePolarData range func
     Chart.Line (xData, yData)
     |> withTransparency
+   
+let polarScatter2D (range : 'T seq) (func : obj) =
+    let (xData, yData) = preparePolarData range func
+    Chart.Point (xData, yData)
+    |> withTransparency
     
+let polar3DFromAngles (xRange : 'T1 seq) (yRange : 'T2 seq) (func : obj) =
+    let 
 
 let scatter2D (range : 'T seq) (func : obj) =
     let (xData, yData) = prepareLinearData range func
