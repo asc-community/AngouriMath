@@ -89,7 +89,7 @@ let createKernel () =
         (fun c ->
             c 
             |> Chart.withSize (1200., 900.)
-            |> Chart.Show
+            |> Chart.show
             "Showing in the browser")
         |> (fun f -> Func<GenericChart.GenericChart, string> f)
         |> (fun f -> 
