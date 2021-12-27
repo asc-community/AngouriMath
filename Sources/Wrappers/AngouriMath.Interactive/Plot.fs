@@ -8,6 +8,34 @@ open Plotly.NET.TraceObjects
 
 exception InvalidInput of string
 
+(*
+    For example assume I have n x m rectangle, then for diagonal d it'll be
+    start: (0, d) provided d <= m, (n + m - d, n) otherwise
+    end: (d, 0) provided d <= n, (m, n + m - d) otherwise 
+*)
+let span start finish =
+    seq {
+        let mutable x, y = start
+        let endX, endY = finish
+        while x <= endX && y >= endY do
+            yield x, y
+            x <- x + 1
+            y <- y - 1
+    } |> List.ofSeq
+
+
+let diagnonalTraverse (seq1 : list<'T1>) (seq2 : list<'T2>) =
+    let arr1 = Array.ofSeq seq1
+    let arr2 = Array.ofSeq seq2
+    let n = arr1.Length
+    let m = arr2.Length
+    seq {
+        for d in 1 .. n + m - 1 do
+            let start = if d <= m then 0, (d - 1) else (d - m, m - 1)
+            let finish = if d <= n then (d - 1), 0 else (n - 1, d - n)
+            for (x, y) in span start finish do
+                yield arr1[x], arr2[y]
+    } |> List.ofSeq
 
 let private getVarList (expr : AngouriMath.Entity) =
     expr.Vars |> List.ofSeq |> List.sortBy (fun v -> v.Name)
@@ -64,13 +92,13 @@ let private getPolarToRegular3D<'T> () =
     compiled3In<'T, 'T, double, double> "phi_1" "phi_2" "r" "r * cos(phi_1) * cos(phi_2)"
 
 
-let private prepareQuadraticData (xRange : 'T1 seq) (yRange : 'T2 seq) (func : obj) =
+let private prepareQuadraticData (xRange : 'T1 seq) (yRange : 'T2 seq) (func : obj) traverse =
     let entity = parsed func
     let (firstVar, secondVar) = getOnlyTwoVariables entity
     let compiled = compiled2In<'T1, 'T2, double> firstVar secondVar func
     let xDataRaw = List.ofSeq xRange
     let yDataRaw = List.ofSeq yRange
-    let xy = List.allPairs xDataRaw yDataRaw
+    let xy = traverse xDataRaw yDataRaw
     let xData = List.map fst xy
     let yData = List.map snd xy
     let zData = List.map (fun (x, y) -> compiled x y) xy
@@ -78,7 +106,7 @@ let private prepareQuadraticData (xRange : 'T1 seq) (yRange : 'T2 seq) (func : o
 
 
 let private preparePolarSurfaceDataFromAngles (phi1Range : 'T seq) (phi2Range : 'T seq) (func : obj) =
-    let (rData, phi1Data, phi2Data) = prepareQuadraticData phi1Range phi2Range func
+    let (rData, phi1Data, phi2Data) = prepareQuadraticData phi1Range phi2Range func List.allPairs
     let (xOfPoint, yOfPoint, zOfPoint) = getPolarToRegular3D<'T> ()
 
     let data =
@@ -97,10 +125,9 @@ let private preparePolarSurfaceDataFromAngles (phi1Range : 'T seq) (phi2Range : 
 
     // let z = List.map (fun (r, p1, p2) -> List.map (fun (r, p1, p2) -> zOfPoint p1 p2 r) data) data
     (z, x, y)
-
         
 let private preparePolarScatter3DFromAngles (phi1Range : 'T seq) (phi2Range : 'T seq) (func : obj) =
-    let (rData, phi1Data, phi2Data) = prepareQuadraticData phi1Range phi2Range func
+    let (rData, phi1Data, phi2Data) = prepareQuadraticData phi1Range phi2Range func diagnonalTraverse
 
     let (xOfPoint, yOfPoint, zOfPoint) = getPolarToRegular3D<'T> ()
 
@@ -183,7 +210,7 @@ let surface (xRange : 'T1 seq) (yRange : 'T2 seq) (func : obj) =
     |> withTransparency
 
 let scatter3D (xRange : 'T1 seq) (yRange : 'T2 seq) (func : obj) =
-    prepareQuadraticData xRange yRange func
+    prepareQuadraticData xRange yRange func List.allPairs
     |||> List.zip3
     |> Chart.Point3D
     |> withTransparency
