@@ -5,6 +5,7 @@ open Plotly.NET
 open AngouriMath.FSharp.Core
 open Plotly.NET
 open Plotly.NET.TraceObjects
+open Plotly.NET.LayoutObjects
 
 exception InvalidInput of string
 
@@ -144,10 +145,57 @@ let private withTransparency chart =
     chart
     |> Chart.withTemplate ChartTemplates.transparent
 
+let private getSlider (range : seq<float>) =
+    let sliderSteps =
+        range |> 
+        Seq.indexed |>
+        Seq.map
+            (fun (i, step) ->
+                // Create a visibility and a title parameters
+                // The visibility parameter includes an array where every parameter
+                // is mapped onto the trace visibility
+                let visible =
+                    // Set true only for the current step
+                    (fun index -> index=i)
+                    |> Array.init (Seq.length range)
+                    |> box
+                let title =
+                    sprintf "Slider switched to step: %f" step
+                    |> box
+                SliderStep.init(
+                        Args = ["visible", visible; "title", title],
+                        Method = StyleParam.Method.Update,
+                        Label="v = " + string(step)
+                    )
+            )
+    Slider.init(
+        CurrentValue=SliderCurrentValue.init(Prefix="Frequency: "),
+        Padding=Padding.init(T=50),
+        Steps=sliderSteps
+    )
+
 let linear (range : 'T seq) (func : obj) =
     let (xData, yData) = prepareLinearData range func
     Chart.Line (xData, yData)
     |> withTransparency
+
+let linearWithSlider (range : float seq) (func : obj) (a : obj) (sliderRange : float seq) =
+    let (v1, v2) = getOnlyTwoVariables (parsed func)
+    let x = if v1 = symbol a then v2 else v1
+    let compiled = compiled2In<float, float, float> x a func
+
+    let charts = 
+        sliderRange
+        |> Seq.map (fun step ->
+            let (xData, yData) = range |> Seq.map (fun x -> x, compiled x step) |> Seq.unzip
+            Chart.Line (xData, yData)
+            |> Chart.withTraceName(Visible= if step = Seq.head sliderRange then StyleParam.Visible.True else StyleParam.Visible.False)
+        )
+        |> GenericChart.combine
+    let slider = getSlider sliderRange
+    charts
+    |> Chart.withSlider slider
+
 
 let polarLinear (range : 'T seq) (func : obj) =
     let (xData, yData) = preparePolarData range func
