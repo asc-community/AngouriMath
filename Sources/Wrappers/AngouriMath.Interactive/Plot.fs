@@ -151,25 +151,18 @@ let private getSlider (range : seq<float>) =
         Seq.indexed |>
         Seq.map
             (fun (i, step) ->
-                // Create a visibility and a title parameters
-                // The visibility parameter includes an array where every parameter
-                // is mapped onto the trace visibility
                 let visible =
-                    // Set true only for the current step
                     (fun index -> index=i)
                     |> Array.init (Seq.length range)
                     |> box
-                let title =
-                    sprintf "Slider switched to step: %f" step
-                    |> box
                 SliderStep.init(
-                        Args = ["visible", visible; "title", title],
+                        Args = [ "visible", visible ],
                         Method = StyleParam.Method.Update,
-                        Label="v = " + string(step)
+                        Label = $"v = {step:F3}"
                     )
             )
     Slider.init(
-        CurrentValue=SliderCurrentValue.init(Prefix="Frequency: "),
+        CurrentValue=SliderCurrentValue.init(Prefix="Parameter value: "),
         Padding=Padding.init(T=50),
         Steps=sliderSteps
     )
