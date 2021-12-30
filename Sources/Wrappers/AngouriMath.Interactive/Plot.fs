@@ -217,6 +217,7 @@ let private withSliderND<'a, 'b> n (chartPlotter : 'a -> obj -> GenericChart.Gen
 
     charts
     |> Chart.withSlider slider
+    |> withTransparency
 
 let withSlider2D (chartPlotter : double seq -> obj -> GenericChart.GenericChart) (range : double seq) (paramRange : double seq) (param : obj) (func : obj) =
     withSliderND<double seq, double> 1 chartPlotter range paramRange param func
@@ -241,7 +242,7 @@ let polarScatter2D (range : double seq) (func : obj) =
     |> withTransparency
 
 
-let blend c (r1: int, g1: int, b1: int) (r2: int, g2: int, b2: int) =
+let private blend c (r1: int, g1: int, b1: int) (r2: int, g2: int, b2: int) =
     let blendChannel (coef : double) (channel1 : int) (channel2 : int) =
         (1. - coef) * float channel1 + coef * float channel2
         |> int
@@ -249,7 +250,7 @@ let blend c (r1: int, g1: int, b1: int) (r2: int, g2: int, b2: int) =
     blendChannel c g1 g2,
     blendChannel c b1 b2
 
-let colorPoints3D points colorA colorB =
+let private colorPoints3D points colorA colorB =
     let distances =
         points
         |> List.map (fun (x, y, z) -> x * x + y * y + z * z |> sqrt)
@@ -273,12 +274,14 @@ let sphericalScatter3D (phi1Range : double seq) (phi2Range : double seq) (func :
     |> (fun l -> Chart.Point3D(l, MarkerColor = Color.fromColors colors) )
     |> withTransparency
 
+(*
 let sphericalSurface (phi1Range : double seq) (phi2Range : double seq) (func : obj) =
     // preparePolarSurfaceDataFromAngles phi1Range phi2Range func
     // |> (fun (z, x, y) -> Chart.Surface(z, x, y))
     preparePolarScatter3DFromAngles phi1Range phi2Range (compile2 func)
     |> (fun (x, y, z) -> Chart.Mesh3D(x, y, z))
     |> withTransparency
+*)
 
 let scatter2D (range : double seq) (func : obj) =
     let (xData, yData) = prepareLinearData range (compile1 func)
