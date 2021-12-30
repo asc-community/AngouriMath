@@ -1,0 +1,30 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Playground",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Build Debug Playground",
+            "program": "${workspaceFolder}/Samples/Samples/bin/Debug/net5.0/Playground.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Samples/Samples",
+            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Interactive playground",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Build Debug InteractivePlayground",
+            // If you have changed target frameworks, make sure to update the program path.
+            "program": "${workspaceFolder}/Samples/InteractivePlayground/bin/Debug/net5.0/InteractivePlayground.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Samples/InteractivePlayground",
+            // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
+            "console": "internalConsole",
+            "stopAtEntry": false
+        }
+    ]
+}

@@ -62,3 +62,4 @@ TestResults
 /Sources/.idea/*
 **.user
 /Sources/Tests/DotnetBenchmark/Properties/launchSettings.json
+Sources/.ionide/symbolCache.db

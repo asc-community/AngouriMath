@@ -2,8 +2,9 @@
 open Plotly.NET.LayoutObjects
 open Plotly.NET.TraceObjects
 open AngouriMath.Interactive
+open Plot
 
-Plot.linearWithSlider [ 0.1..0.1..4.0 ] "x^sin(a)" "a" [ 0.0..0.1..1.5 ]
+withSlider1D polarLinear [ 0.1..0.1..4.0 ] [ 0.0..0.1..1.5 ] "a" "phi + sin(phi) * a" 
 |> Chart.show
 
 (*
