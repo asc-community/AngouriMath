@@ -35,7 +35,7 @@ jobs:
     - name: Setup .NET 6 # The dotnet CLI above is replaced by this but the runtime is kept
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.x'
+        dotnet-version: '6.0.100'
         include-prerelease: true
 
     - name: Build Tests # We need it to be able to retry
