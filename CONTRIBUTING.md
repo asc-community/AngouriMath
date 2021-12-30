@@ -74,3 +74,13 @@ Issues marked with `Proposal` are those suggesting ideas. If the idea is a good 
 
 You might have some questions about the way you should write your code, or how you could call a function, etc. It is recommended to check the [documentation](./Sources/AngouriMath/Docs/Contributing).
 
+## Architecture of the project
+
+There are a few projects the repository contains:
+```
+              +-> AngouriMath.Experimental
+              |
+AngouriMath --+-> AngouriMath.FSharp --> AngouriMath.Interactive --> AngouriMath.Terminal
+              |
+              +-> AngouriMath.CPP
+```

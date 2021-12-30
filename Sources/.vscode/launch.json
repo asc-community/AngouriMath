@@ -1,0 +1,27 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Playground",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Build Debug Playground",
+            "program": "${workspaceFolder}/Samples/Samples/bin/Debug/net5.0/Playground.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Samples/Samples",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": "Interactive playground",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "Build Debug InteractivePlayground",
+            "program": "${workspaceFolder}/Samples/InteractivePlayground/bin/Debug/net5.0/InteractivePlayground.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/Samples/InteractivePlayground",
+            "console": "internalConsole",
+            "stopAtEntry": false
+        }
+    ]
+}

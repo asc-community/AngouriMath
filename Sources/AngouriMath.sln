@@ -153,6 +153,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath", "AngouriMath\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AngouriMath.Experimental", "AngouriMath\AngouriMath.Experimental\AngouriMath.Experimental.csproj", "{687555EC-CAA2-49CA-935E-14A20FDCA5B0}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "InteractivePlayground", "Samples\InteractivePlayground\InteractivePlayground.fsproj", "{B0BF9E70-B3D3-4003-8473-DB4ADE6EFADF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -345,6 +347,14 @@ Global
 		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Release|Any CPU.Build.0 = Release|Any CPU
 		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Release|x64.ActiveCfg = Release|Any CPU
 		{687555EC-CAA2-49CA-935E-14A20FDCA5B0}.Release|x64.Build.0 = Release|Any CPU
+		{B0BF9E70-B3D3-4003-8473-DB4ADE6EFADF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0BF9E70-B3D3-4003-8473-DB4ADE6EFADF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0BF9E70-B3D3-4003-8473-DB4ADE6EFADF}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{B0BF9E70-B3D3-4003-8473-DB4ADE6EFADF}.Debug|x64.Build.0 = Debug|Any CPU
+		{B0BF9E70-B3D3-4003-8473-DB4ADE6EFADF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0BF9E70-B3D3-4003-8473-DB4ADE6EFADF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B0BF9E70-B3D3-4003-8473-DB4ADE6EFADF}.Release|x64.ActiveCfg = Release|Any CPU
+		{B0BF9E70-B3D3-4003-8473-DB4ADE6EFADF}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -380,6 +390,7 @@ Global
 		{FDB0DAA1-D721-49AA-94B5-D940FC3B39F0} = {50DD3C1E-42AD-498E-9BE7-1604058CF1D8}
 		{86F092F7-2D16-4860-AAB7-A0A1D58091F4} = {86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}
 		{687555EC-CAA2-49CA-935E-14A20FDCA5B0} = {86DC8F2C-B654-46A9-A5F3-9A6A97A471D3}
+		{B0BF9E70-B3D3-4003-8473-DB4ADE6EFADF} = {D15528F2-AB50-46E2-9DB1-821B278C4931}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6E1CD9B3-4EAB-4B8C-BDC1-03280EB31298}

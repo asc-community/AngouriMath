@@ -62,3 +62,5 @@ TestResults
 /Sources/.idea/*
 **.user
 /Sources/Tests/DotnetBenchmark/Properties/launchSettings.json
+**/.ionide/**
+Sources/msbuild.binlog
