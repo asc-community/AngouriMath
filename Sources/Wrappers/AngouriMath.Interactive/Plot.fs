@@ -35,7 +35,7 @@ let diagnonalTraverse (seq1 : list<double>) (seq2 : list<double>) =
             let start = if d <= m then 0, (d - 1) else (d - m, m - 1)
             let finish = if d <= n then (d - 1), 0 else (n - 1, d - n)
             for (x, y) in span start finish do
-                yield arr1[x], arr2[y]
+                yield arr1.[x], arr2.[y]
     } |> List.ofSeq
 
 let private getVarList (expr : AngouriMath.Entity) =
