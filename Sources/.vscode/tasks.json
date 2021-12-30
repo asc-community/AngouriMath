@@ -23,7 +23,8 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/Samples/InteractivePlayground/InteractivePlayground.fsproj"
+                "${workspaceFolder}/Samples/InteractivePlayground/InteractivePlayground.fsproj",
+                "-bl"
             ],
             "problemMatcher": "$msCompile",
             "group": {

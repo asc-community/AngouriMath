@@ -9,7 +9,12 @@ open Plot
 
 let r = [ -1.57..0.1..1.57 ]
 
-withSlider3D sphericalScatter3D r r r "a" "sin((|phi_1|) ^ a) * phi_2"
+let d = [ -2.0..0.02..2.0 ]
+
+// withSlider3D sphericalScatter3D r r [ 1.0..0.1..15.0 ] "a" "phi_1 * (phi_2 + a)"
+// |> Chart.show
+
+withSlider3D surface d d [ 2.0..0.1..4.0 ] "a" "(|x2 + y2 - a|)"
 |> Chart.show
 
 (*

@@ -99,9 +99,6 @@ let private preparePolarData (range: double seq) (func : double -> double) =
     (xData, yData)
 
 let private prepareSurface3DData (xRange : double seq) (yRange : double seq) (func : (double * double) -> double) =
-    let entity = parsed func
-    let (firstVar, secondVar) = getOnlyTwoVariables entity
-    
     let xData = List.ofSeq xRange
     let yData = List.ofSeq yRange
     let zData = List.map (fun x -> List.map (fun y -> func(x, y)) yData) xData
@@ -114,20 +111,18 @@ let private getPolarToRegular3D () =
     compiled3In<double, double, double, double> "phi_1" "phi_2" "r" "r * cos(phi_1) * cos(phi_2)"
 
 
-let private prepareQuadraticData (xRange : double seq) (yRange : double seq) (func : obj) traverse =
-    let entity = parsed func
-    let (firstVar, secondVar) = getOnlyTwoVariables entity
-    let compiled = compiled2In<double, double, double> firstVar secondVar func
+let private prepareQuadraticData (xRange : double seq) (yRange : double seq) (func : (double * double) -> double) traverse =
+    let compiled = compile2 func
     let xDataRaw = List.ofSeq xRange
     let yDataRaw = List.ofSeq yRange
     let xy = traverse xDataRaw yDataRaw
     let xData = List.map fst xy
     let yData = List.map snd xy
-    let zData = List.map (fun (x, y) -> compiled x y) xy
+    let zData = List.map compiled xy
     (zData, xData, yData)
 
 
-let private preparePolarSurfaceDataFromAngles (phi1Range : double seq) (phi2Range : double seq) (func : obj) =
+let private preparePolarSurfaceDataFromAngles (phi1Range : double seq) (phi2Range : double seq) (func : (double * double) -> double) =
     let (rData, phi1Data, phi2Data) = prepareQuadraticData phi1Range phi2Range func List.allPairs
     let (xOfPoint, yOfPoint, zOfPoint) = getPolarToRegular3D ()
 
@@ -148,7 +143,7 @@ let private preparePolarSurfaceDataFromAngles (phi1Range : double seq) (phi2Rang
     // let z = List.map (fun (r, p1, p2) -> List.map (fun (r, p1, p2) -> zOfPoint p1 p2 r) data) data
     (z, x, y)
         
-let private preparePolarScatter3DFromAngles (phi1Range : double seq) (phi2Range : double seq) (func : obj) =
+let private preparePolarScatter3DFromAngles (phi1Range : double seq) (phi2Range : double seq) (func : double * double -> double) =
     let (rData, phi1Data, phi2Data) = prepareQuadraticData phi1Range phi2Range func diagnonalTraverse
 
     let (xOfPoint, yOfPoint, zOfPoint) = getPolarToRegular3D ()
@@ -208,7 +203,7 @@ let private withSliderND<'a, 'b> n (chartPlotter : 'a -> obj -> GenericChart.Gen
                 else if var = v2 then (v1, v3)
                 else (v1, v2)
             let f = compiled3In<double, double, double, double> var x y func
-            castAs<_, double -> 'b -> double> f
+            castAs<_, double -> 'b -> double> (fun p (x, y) -> f p x y)
         | _ -> raise (System.Exception $"Can't have {n}-dimensional slider")
     let charts = 
         paramRange
@@ -271,7 +266,7 @@ let colorPoints3D points colorA colorB =
 
     
 let sphericalScatter3D (phi1Range : double seq) (phi2Range : double seq) (func : obj) =
-    let points = preparePolarScatter3DFromAngles phi1Range phi2Range func
+    let points = preparePolarScatter3DFromAngles phi1Range phi2Range (compile2 func)
     let zipped = points |||> List.zip3
     let colors = colorPoints3D zipped (255, 75, 75) (75, 75, 255)
     zipped
@@ -281,7 +276,7 @@ let sphericalScatter3D (phi1Range : double seq) (phi2Range : double seq) (func :
 let sphericalSurface (phi1Range : double seq) (phi2Range : double seq) (func : obj) =
     // preparePolarSurfaceDataFromAngles phi1Range phi2Range func
     // |> (fun (z, x, y) -> Chart.Surface(z, x, y))
-    preparePolarScatter3DFromAngles phi1Range phi2Range func
+    preparePolarScatter3DFromAngles phi1Range phi2Range (compile2 func)
     |> (fun (x, y, z) -> Chart.Mesh3D(x, y, z))
     |> withTransparency
 
@@ -296,7 +291,7 @@ let surface (xRange : double seq) (yRange : double seq) (func : obj) =
     |> withTransparency
 
 let scatter3D (xRange : double seq) (yRange : double seq) (func : obj) =
-    prepareQuadraticData xRange yRange func List.allPairs
+    prepareQuadraticData xRange yRange (compile2 func) List.allPairs
     |||> List.zip3
     |> Chart.Point3D
     |> withTransparency
