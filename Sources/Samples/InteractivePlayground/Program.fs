@@ -4,7 +4,12 @@ open Plotly.NET.TraceObjects
 open AngouriMath.Interactive
 open Plot
 
-withSlider1D polarLinear [ 0.1..0.1..4.0 ] [ 0.0..0.1..1.5 ] "a" "phi + sin(phi) * a" 
+// withSlider1D polarLinear [ 0.1..0.1..4.0 ] [ 0.0..0.1..1.5 ] "a" "phi + sin(phi) * a" 
+// |> Chart.show
+
+let r = [ -1.57..0.1..1.57 ]
+
+withSlider3D sphericalScatter3D r r r "a" "sin((|phi_1|) ^ a) * phi_2"
 |> Chart.show
 
 (*

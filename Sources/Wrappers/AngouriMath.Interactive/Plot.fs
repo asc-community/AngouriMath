@@ -192,7 +192,7 @@ let private castAs<'a, 'b> (a : 'a) : 'b =
     let up : obj = a :> obj
     up :?> 'b
 
-let private withSliderND n (chartPlotter : 'a -> obj -> GenericChart.GenericChart) (ranges : 'a) (paramRange : double seq) (param : obj) (func : obj) =
+let private withSliderND<'a, 'b> n (chartPlotter : 'a -> obj -> GenericChart.GenericChart) (ranges : 'a) (paramRange : double seq) (param : obj) (func : obj) =
     let var = symbol param
     let compiled =
         match n with
@@ -200,7 +200,7 @@ let private withSliderND n (chartPlotter : 'a -> obj -> GenericChart.GenericChar
             let (v1, v2) = getOnlyTwoVariables (parsed func)
             let x = if v1 = var then v2 else v1
             let f = compiled2In<double, double, double> var x func
-            castAs<_, double -> 'a -> double> f
+            castAs<_, double -> 'b -> double> f
         | 2 ->
             let (v1, v2, v3) = getOnlyThreeVariables (parsed func)
             let (x, y) =
@@ -208,7 +208,7 @@ let private withSliderND n (chartPlotter : 'a -> obj -> GenericChart.GenericChar
                 else if var = v2 then (v1, v3)
                 else (v1, v2)
             let f = compiled3In<double, double, double, double> var x y func
-            castAs<_, double -> 'a -> double> f
+            castAs<_, double -> 'b -> double> f
         | _ -> raise (System.Exception $"Can't have {n}-dimensional slider")
     let charts = 
         paramRange
@@ -223,23 +223,11 @@ let private withSliderND n (chartPlotter : 'a -> obj -> GenericChart.GenericChar
     charts
     |> Chart.withSlider slider
 
-let withSlider1D (chartPlotter : double seq -> obj -> GenericChart.GenericChart) (range : double seq) (paramRange : double seq) (param : obj) (func : obj) =
-    let var = symbol param
-    let (v1, v2) = getOnlyTwoVariables (parsed func)
-    let x = if v1 = var then v2 else v1
-    let compiled = compiled2In<double, double, double> var x func
-    let charts = 
-        paramRange
-        |> Seq.map (fun step ->
-            let newFunc = compiled step
-            chartPlotter range newFunc
-            |> Chart.withTraceName(Visible = if step = Seq.head paramRange then StyleParam.Visible.True else StyleParam.Visible.False)
-        )
-        |> GenericChart.combine
-    let slider = getSlider paramRange
-    charts
-    |> Chart.withSlider slider
+let withSlider2D (chartPlotter : double seq -> obj -> GenericChart.GenericChart) (range : double seq) (paramRange : double seq) (param : obj) (func : obj) =
+    withSliderND<double seq, double> 1 chartPlotter range paramRange param func
 
+let withSlider3D (chartPlotter : double seq -> double seq -> obj -> GenericChart.GenericChart) (range1 : double seq) (range2 : double seq) (paramRange : double seq) (param : obj) (func : obj) =
+    withSliderND<double seq * double seq, (double * double)> 2 (fun (r1, r2) f -> chartPlotter r1 r2 f) (range1, range2) paramRange param func
 
 let linear (range : double seq) (func : obj) =
     let (xData, yData) = prepareLinearData range (compile1 func)
