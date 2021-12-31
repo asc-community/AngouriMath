@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
     <GenerateProgramFile>false</GenerateProgramFile>
@@ -27,7 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Terminal\AngouriMath.Terminal.Lib\AngouriMath.Terminal.Lib.fsproj" />
-    <PackageReference Include="FSharp.Core" Version="5.0.2-beta.21310.3" />
+    <PackageReference Include="FSharp.Core" Version="6.0.1" />
   </ItemGroup>
 
 </Project>
