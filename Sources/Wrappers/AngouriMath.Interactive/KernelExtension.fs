@@ -27,20 +27,20 @@ type KernelExtension() =
             |> (fun f -> Formatter.Register<'a>(f, "text/html"))
 
             // if possible, use text/latex
-            Formatter.SetPreferredMimeTypeFor(typeof<'a>, "text/latex")
+            Formatter.SetPreferredMimeTypesFor(typeof<'a>, "text/latex")
 
 
-        Formatter.SetPreferredMimeTypeFor(typeof<EDecimal>, "text/plain")
+        Formatter.SetPreferredMimeTypesFor(typeof<EDecimal>, "text/plain")
         Formatter.Register<EDecimal>(new Func<EDecimal, string>(fun o -> o.ToString()), "text/plain")
 
-        Formatter.SetPreferredMimeTypeFor(typeof<EInteger>, "text/plain")
+        Formatter.SetPreferredMimeTypesFor(typeof<EInteger>, "text/plain")
         Formatter.Register<EInteger>(new Func<EInteger, string>(fun o -> o.ToString()), "text/plain")
 
         registerLatexRendering (fun (o : ILatexiseable) -> latex o)
 
         registerLatexRendering (fun (o : ERational) -> $@"\frac{{{o.Numerator}}}{{{o.Denominator}}}")
 
-        Formatter.SetPreferredMimeTypeFor(typeof<GenericChart>, "text/html")
+        Formatter.SetPreferredMimeTypesFor(typeof<GenericChart>, "text/html")
         Formatter.Register<GenericChart> (toChartHTML, "text/html")
 
 
@@ -48,6 +48,7 @@ type KernelExtension() =
     interface IKernelExtension with
         member _.OnLoadAsync _ =
             KernelExtension.applyMagic()
-            let message = "LaTeX renderer binded. Enjoy!"
-            KernelInvocationContext.Current.Display(message, "text/markdown") |> ignore
+            // let message = "LaTeX renderer binded. Enjoy!"
+            // KernelInvocationContext.Current.Display(message, "text/html") |> ignore
+            printfn $"LaTeX renderer binded. Enjoy!"
             Task.CompletedTask

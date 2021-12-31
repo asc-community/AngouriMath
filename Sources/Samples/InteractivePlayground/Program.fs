@@ -15,7 +15,9 @@ let r = [ -1.57..0.1..1.57 ]
 
 let d = [ -2.0..0.02..2.0 ]
 withSlider3D surface d d [ 2.0..0.1..4.0 ] "a" "(|x2 + y2 - a|)"
-|> Chart.show
+// |> Chart.show
+|> GenericChart.toChartHTML
+|> printfn "%s"
 
 (*
 /// Similar to numpy.arrange
