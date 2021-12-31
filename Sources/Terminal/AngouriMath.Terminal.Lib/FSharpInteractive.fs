@@ -82,7 +82,7 @@ let createKernel () =
         typeof<PeterO.Numbers.EDecimal>
         typeof<GenericTensor.Core.TensorShape>
 
-        Formatter.SetPreferredMimeTypeFor(typeof<obj>, "text/plain")
+        Formatter.SetPreferredMimeTypesFor(typeof<obj>, "text/plain")
         Formatter.Register<obj> objectEncode
         Formatter.Register<Entity.Matrix> (Func<Entity.Matrix, string> (fun m -> m.ToString(true) |> objectEncode), "text/plain")
 
