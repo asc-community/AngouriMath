@@ -85,7 +85,7 @@ namespace AngouriMath.Functions.Algebra
             for (int i = 0; i < equations.Count; i++)
                 if (equations[i].ContainsNode(var))
                 {
-                    var solutionsOverVar = equations[i].SolveEquation(var);
+                    var solutionsOverVar = equations[i].SolveEquation(var).InnerSimplified;
                     equations.RemoveAt(i);
                     vars = vars.Slice(0, vars.Length - 1);
 
