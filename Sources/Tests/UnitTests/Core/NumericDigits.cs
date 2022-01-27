@@ -9,7 +9,7 @@ using AngouriMath;
 using static AngouriMath.Entity.Number;
 using Xunit;
 
-namespace UnitTests.Core
+namespace AngouriMath.Tests.Core
 {
     public sealed class NumericDigits
     {

@@ -1,4 +1,4 @@
-﻿module AngouriMath.FSharp.Utils
+﻿module AngouriMath.FSharp.Tests.Utils
 
 open AngouriMath
 open Xunit

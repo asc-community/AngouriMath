@@ -10,7 +10,7 @@ using static AngouriMath.Entity.Number;
 using Xunit;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public sealed class CircleTest
     {

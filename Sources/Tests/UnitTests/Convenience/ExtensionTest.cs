@@ -10,7 +10,7 @@ using Xunit;
 using AngouriMath.Extensions;
 using static AngouriMath.Entity.Number;
 
-namespace UnitTests.Convenience
+namespace AngouriMath.Tests.Convenience
 {
     public class ExtensionTest
     {

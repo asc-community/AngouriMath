@@ -9,7 +9,7 @@ using Xunit;
 using static AngouriMath.Entity;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Core.Sets
+namespace AngouriMath.Tests.Core.Sets
 {
     public sealed class Contains
     {

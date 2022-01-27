@@ -1,4 +1,4 @@
-﻿module AngouriMath.FSharp.MatricesTest
+﻿module AngouriMath.FSharp.Tests.Matrices
 
 open AngouriMath
 open AngouriMath.FSharp.Matrices

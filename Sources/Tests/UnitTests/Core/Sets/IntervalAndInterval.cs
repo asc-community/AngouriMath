@@ -11,7 +11,7 @@ using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
 using static AngouriMath.MathS.Sets;
 
-namespace UnitTests.Core.Sets
+namespace AngouriMath.Tests.Core.Sets
 {
     public sealed class IntervalAndInterval
     {

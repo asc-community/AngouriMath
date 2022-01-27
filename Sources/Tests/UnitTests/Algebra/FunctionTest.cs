@@ -10,7 +10,7 @@ using Xunit;
 using AngouriMath.Extensions;
 using System.Globalization;
 
-namespace UnitTests.Algebra
+namespace AngouriMath.Tests.Algebra
 {
     public sealed class FunctionTest
     {

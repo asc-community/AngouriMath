@@ -1,4 +1,4 @@
-module Terminal.Tests
+module AngouriMath.Terminal.Tests
 
 open System
 open Xunit

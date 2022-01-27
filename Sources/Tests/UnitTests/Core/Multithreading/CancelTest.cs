@@ -13,7 +13,7 @@ using System.Threading;
 using Xunit;
 using System.Threading.Tasks;
 
-namespace UnitTests.Core.Multithreading
+namespace AngouriMath.Tests.Core.Multithreading
 {
     public sealed class CancelTest
     {

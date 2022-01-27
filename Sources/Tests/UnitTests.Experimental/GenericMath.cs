@@ -11,7 +11,7 @@ using System;
 using Xunit;
 using static AngouriMath.Entity.Number;
 
-namespace UnitTests.Experimental;
+namespace AngouriMath.Experimental.Tests;
 
 public class GenericMath
 {

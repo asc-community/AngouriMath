@@ -8,7 +8,7 @@
 using AngouriMath;
 using Xunit;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public sealed class ExpandFactorizeTest
     {

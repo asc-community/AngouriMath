@@ -12,7 +12,7 @@ using System.Reflection;
 using Xunit;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Convenience
+namespace AngouriMath.Tests.Convenience
 {
     public sealed class SynonymFunctionTest
     {

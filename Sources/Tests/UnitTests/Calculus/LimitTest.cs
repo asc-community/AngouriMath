@@ -11,7 +11,7 @@ using AngouriMath.Core;
 using static AngouriMath.Entity.Number;
 using Xunit;
 
-namespace UnitTests.Calculus
+namespace AngouriMath.Tests.Calculus
 {
     public sealed class Limits
     {

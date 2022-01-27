@@ -11,7 +11,7 @@ using HonkSharp.Fluency;
 using Xunit;
 using static AngouriMath.Entity;
 
-namespace UnitTests.Calculus
+namespace AngouriMath.Tests.Calculus
 {
     public sealed class DerivativeTest
     {

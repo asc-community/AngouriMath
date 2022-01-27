@@ -1,4 +1,4 @@
-﻿module AngouriMath.FSharp.ReturnValues.Discrete
+﻿module AngouriMath.FSharp.Tests.Discrete
 
 open AngouriMath.FSharp.Core
 open AngouriMath.FSharp.Functions

@@ -8,7 +8,7 @@
 using AngouriMath;
 using Xunit;
 
-namespace UnitTests.PatternsTest
+namespace AngouriMath.Tests.PatternsTest
 {
     public sealed class FractionSimplify
     {

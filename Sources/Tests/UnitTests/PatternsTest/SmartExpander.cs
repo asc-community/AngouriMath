@@ -10,7 +10,7 @@ using static AngouriMath.Entity.Number;
 using Xunit;
 using PeterO.Numbers;
 
-namespace UnitTests.PatternsTest
+namespace AngouriMath.Tests.PatternsTest
 {
     public sealed class SmartExpander
     {

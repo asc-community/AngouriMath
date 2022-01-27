@@ -1,4 +1,4 @@
-﻿module AngouriMath.FSharp.ReturnValues.CompilationTest
+﻿module AngouriMath.FSharp.Tests.Compilation
 
 open AngouriMath.FSharp.Compilation
 open Xunit

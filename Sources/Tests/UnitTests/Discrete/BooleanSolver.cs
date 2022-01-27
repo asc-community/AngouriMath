@@ -10,7 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Xunit;
 
-namespace UnitTests.Discrete
+namespace AngouriMath.Tests.Discrete
 {
     using static AngouriMath.Entity;
     public sealed class BooleanSolver

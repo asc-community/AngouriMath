@@ -13,7 +13,7 @@ using Xunit;
 using FluentAssertions;
 using HonkSharp.Fluency;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public sealed class CompilationIntoLinqTest
     {

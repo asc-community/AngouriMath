@@ -8,7 +8,7 @@
 using AngouriMath.Extensions;
 using Xunit;
 
-namespace UnitTests.PatternsTest
+namespace AngouriMath.Tests.PatternsTest
 {
     public sealed class SortSimplifyTest
     {

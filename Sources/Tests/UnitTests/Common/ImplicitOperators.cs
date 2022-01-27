@@ -10,7 +10,7 @@ using PeterO.Numbers;
 using System;
 using Xunit;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public sealed class ImplicitOperators
     {

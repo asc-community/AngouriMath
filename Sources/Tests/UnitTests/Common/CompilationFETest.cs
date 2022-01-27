@@ -10,7 +10,7 @@ using System.Numerics;
 using Xunit;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public sealed class CompilationFETest
     {

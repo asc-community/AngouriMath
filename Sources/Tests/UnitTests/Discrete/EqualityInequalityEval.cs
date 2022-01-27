@@ -9,7 +9,7 @@ using AngouriMath;
 using AngouriMath.Extensions;
 using Xunit;
 
-namespace UnitTests.Discrete
+namespace AngouriMath.Tests.Discrete
 {
     public sealed class EqualityInequalityEval
     {

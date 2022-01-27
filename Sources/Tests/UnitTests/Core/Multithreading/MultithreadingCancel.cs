@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using System.Threading;
 using System.Linq;
 
-namespace UnitTests.Core.Multithreading
+namespace AngouriMath.Tests.Core.Multithreading
 {
     public sealed class MultithreadingCancel
     {

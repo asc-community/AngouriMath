@@ -9,7 +9,7 @@ using Xunit;
 using AngouriMath.Extensions;
 using AngouriMath;
 
-namespace UnitTests.Discrete
+namespace AngouriMath.Tests.Discrete
 {
     public sealed class InSet
     {

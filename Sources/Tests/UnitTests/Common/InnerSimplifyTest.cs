@@ -11,7 +11,7 @@ using System.Linq;
 using Xunit;
 using static AngouriMath.Entity.Number;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public class InnerSimplifyTest
     {

@@ -11,7 +11,7 @@ using Xunit;
 using static AngouriMath.Entity.Number;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Algebra
+namespace AngouriMath.Tests.Algebra
 {
     public sealed class NumberTheoryTest
     {

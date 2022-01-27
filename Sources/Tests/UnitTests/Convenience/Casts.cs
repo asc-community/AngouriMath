@@ -10,7 +10,7 @@ using AngouriMath.Extensions;
 using System.Numerics;
 using AngouriMath.Core.Exceptions;
 
-namespace UnitTests.Convenience
+namespace AngouriMath.Tests.Convenience
 {
     public sealed class Casts
     {

@@ -8,7 +8,7 @@
 using AngouriMath;
 using Xunit;
 
-namespace UnitTests.Algebra.SolveTest
+namespace AngouriMath.Tests.Algebra.SolveTest
 {
     public sealed class SolveStatement
     {

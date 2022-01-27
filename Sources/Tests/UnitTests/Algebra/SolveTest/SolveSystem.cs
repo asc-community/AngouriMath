@@ -10,7 +10,7 @@ using Xunit;
 using AngouriMath;
 using static AngouriMath.Entity.Number;
 
-namespace UnitTests.Algebra
+namespace AngouriMath.Tests.Algebra
 {
     public sealed class SolveSystem
     {
