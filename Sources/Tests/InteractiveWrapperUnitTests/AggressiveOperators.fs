@@ -1,4 +1,4 @@
-﻿module Tests.AggressiveOperators
+﻿module AngouriMath.Interactive.Tests.AggressiveOperators
 
 open Xunit
 open AngouriMath.FSharp.Functions

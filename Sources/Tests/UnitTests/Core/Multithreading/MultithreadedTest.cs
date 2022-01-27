@@ -11,7 +11,7 @@ using AngouriMath.Extensions;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace UnitTests.Core.Multithreading
+namespace AngouriMath.Tests.Core.Multithreading
 {
     public sealed class MultithreadedTest
     {

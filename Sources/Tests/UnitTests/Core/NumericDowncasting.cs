@@ -12,7 +12,7 @@ using FluentAssertions;
 using PeterO.Numbers;
 using static AngouriMath.Entity.Number;
 
-namespace UnitTests.Core
+namespace AngouriMath.Tests.Core
 {
     public sealed class NumericDowncastingTest
     {

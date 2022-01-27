@@ -10,7 +10,7 @@ using static AngouriMath.Entity;
 using Xunit;
 using static AngouriMath.Entity.Set;
 
-namespace UnitTests.Core
+namespace AngouriMath.Tests.Core
 {
     public sealed class SetsTest
     {

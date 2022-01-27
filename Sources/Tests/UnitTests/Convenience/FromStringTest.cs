@@ -18,7 +18,7 @@ using static AngouriMath.MathS;
 using AngouriMath.Extensions;
 using FluentAssertions;
 
-namespace UnitTests.Convenience
+namespace AngouriMath.Tests.Convenience
 {
     public sealed class FromStringTest
     {

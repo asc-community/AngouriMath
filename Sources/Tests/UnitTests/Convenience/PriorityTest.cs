@@ -8,7 +8,7 @@
 using Xunit;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public class PriorityTest
     {

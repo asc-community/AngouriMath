@@ -8,7 +8,7 @@
 using Xunit;
 using AngouriMath.Extensions;
 
-namespace UnitTests.PatternsTest
+namespace AngouriMath.Tests.PatternsTest
 {
     public sealed class PatternTest
     {

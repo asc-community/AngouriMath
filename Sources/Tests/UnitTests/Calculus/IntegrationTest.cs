@@ -9,7 +9,7 @@ using AngouriMath;
 using Xunit;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Calculus
+namespace AngouriMath.Tests.Calculus
 {
     public sealed class IntegrationTest
     {

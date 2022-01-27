@@ -17,4 +17,8 @@ using static AngouriMath.MathS;
 using static System.Console;
 using PeterO.Numbers;
 
-System.Console.WriteLine(45);
+var system = Equations(
+"(x2 + y) / 2",
+"y - x - 3"
+);
+Console.WriteLine(system.Solve("x", "y"));

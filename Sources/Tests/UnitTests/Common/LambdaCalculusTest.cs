@@ -14,7 +14,7 @@ using System.Linq;
 using Xunit;
 using static AngouriMath.Entity;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public class LambdaCalculusTest
     {

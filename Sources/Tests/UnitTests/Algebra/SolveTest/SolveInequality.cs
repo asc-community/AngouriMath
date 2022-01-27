@@ -11,7 +11,7 @@ using Xunit;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
 
-namespace UnitTests.Algebra
+namespace AngouriMath.Tests.Algebra
 {
     public sealed class SolveInequality
     {

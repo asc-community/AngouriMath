@@ -9,7 +9,7 @@ using Xunit;
 using AngouriMath;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public static class HierarchyTestExtensions
     {

@@ -8,7 +8,7 @@
 using AngouriMath.Extensions;
 using Xunit;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public sealed class SubstituteTest
     {

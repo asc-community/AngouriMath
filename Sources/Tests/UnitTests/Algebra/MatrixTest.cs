@@ -10,7 +10,7 @@ using Xunit;
 using static AngouriMath.Entity;
 using AngouriMath.Extensions;
 
-namespace UnitTests.Algebra
+namespace AngouriMath.Tests.Algebra
 {
     public sealed class MatrixTest
     {

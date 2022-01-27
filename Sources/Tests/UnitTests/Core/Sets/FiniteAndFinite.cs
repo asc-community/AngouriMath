@@ -10,7 +10,7 @@ using Xunit;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
 
-namespace UnitTests.Core.Sets
+namespace AngouriMath.Tests.Core.Sets
 {
     public sealed class FiniteAndFinite
     {

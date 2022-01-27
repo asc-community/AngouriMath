@@ -13,7 +13,7 @@ using Xunit;
 using System.Numerics;
 using static AngouriMath.Entity;
 
-namespace UnitTests.Core
+namespace AngouriMath.Tests.Core
 {
     public sealed class UserInvalidExceptions
     {

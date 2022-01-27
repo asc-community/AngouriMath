@@ -8,7 +8,7 @@
 using AngouriMath;
 using Xunit;
 
-namespace UnitTests.Convenience
+namespace AngouriMath.Tests.Convenience
 {
     public class ToSymPyTest
     {

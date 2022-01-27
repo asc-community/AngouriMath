@@ -9,7 +9,7 @@ using AngouriMath;
 using AngouriMath.Extensions;
 using Xunit;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public class BuiltinFunctionsAppliedTest
     {

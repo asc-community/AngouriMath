@@ -8,7 +8,7 @@
 using AngouriMath;
 using Xunit;
 
-namespace UnitTests.Algebra.PolynomialSolverTests
+namespace AngouriMath.Tests.Algebra.PolynomialSolverTests
 {
     using static AngouriMath.Entity;
     using static AngouriMath.Entity.Set;

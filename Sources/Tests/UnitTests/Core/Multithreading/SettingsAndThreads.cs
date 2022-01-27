@@ -11,7 +11,7 @@ using AngouriMath.Extensions;
 using Xunit;
 using static AngouriMath.Entity;
 
-namespace UnitTests.Core.Multithreading
+namespace AngouriMath.Tests.Core.Multithreading
 {
     public sealed class SettingsAndThreads
     {

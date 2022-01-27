@@ -9,7 +9,7 @@ using AngouriMath;
 using static AngouriMath.Entity.Number;
 using Xunit;
 
-namespace UnitTests.Common
+namespace AngouriMath.Tests.Common
 {
     public sealed class OperatorTest
     {

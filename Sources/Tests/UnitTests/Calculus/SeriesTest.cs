@@ -8,7 +8,7 @@
 using AngouriMath;
 using Xunit;
 
-namespace UnitTests.Calculus
+namespace AngouriMath.Tests.Calculus
 {
     public sealed class SeriesTest
     {

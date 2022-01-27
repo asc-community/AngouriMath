@@ -8,7 +8,7 @@
 using Xunit;
 using static AngouriMath.MathS.Settings;
 
-namespace UnitTests.Core
+namespace AngouriMath.Tests.Core
 {
     public sealed class Settings
     {

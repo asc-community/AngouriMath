@@ -8,7 +8,7 @@
 using AngouriMath;
 using Xunit;
 
-namespace UnitTests.Core
+namespace AngouriMath.Tests.Core
 {
     public class PolyParser
     {

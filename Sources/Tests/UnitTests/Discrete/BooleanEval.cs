@@ -8,7 +8,7 @@
 using AngouriMath;
 using Xunit;
 
-namespace UnitTests.Discrete
+namespace AngouriMath.Tests.Discrete
 {
     using static Entity.Boolean;
 

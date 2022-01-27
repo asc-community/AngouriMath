@@ -17,7 +17,7 @@ using HonkSharp.Functional;
 using Xunit;
 using AngouriMath.Core.Exceptions;
 
-namespace UnitTests
+namespace AngouriMath.Tests
 {
     public static class TestExtensions
     {

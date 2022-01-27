@@ -9,7 +9,7 @@ using AngouriMath;
 using AngouriMath.Extensions;
 using Xunit;
 
-namespace UnitTests.Core
+namespace AngouriMath.Tests.Core
 {
     public sealed class Domains
     {

@@ -25,7 +25,7 @@ using HonkSharp.Fluency;
 using HonkSharp.Functional;
 using Xunit;
 
-namespace UnitTests.PatternsTest
+namespace AngouriMath.Tests.PatternsTest
 {
     public sealed class TestTrigTableConsts
     {

@@ -11,7 +11,7 @@ using static AngouriMath.Entity.Number;
 using Xunit;
 using static AngouriMath.Entity.Set;
 
-namespace UnitTests.Convenience
+namespace AngouriMath.Tests.Convenience
 {
     public sealed class LatexTests
     {

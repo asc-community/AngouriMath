@@ -1,4 +1,4 @@
-module Tests.HtmlOutput
+module AngouriMath.Interactive.Tests.HtmlOutput
 
 open Xunit
 open Microsoft.DotNet.Interactive.Formatting

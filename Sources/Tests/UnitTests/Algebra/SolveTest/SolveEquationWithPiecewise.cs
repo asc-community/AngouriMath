@@ -9,7 +9,7 @@ using AngouriMath.Extensions;
 using Xunit;
 using static AngouriMath.Entity.Set;
 
-namespace UnitTests.Algebra
+namespace AngouriMath.Tests.Algebra
 {
     public sealed class SolveEquationWithPiecewise
     {

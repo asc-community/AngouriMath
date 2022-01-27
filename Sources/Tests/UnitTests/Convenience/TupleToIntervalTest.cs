@@ -25,7 +25,7 @@ using Xunit;
 using AngouriMath;
 using AngouriMath.Extensions;
 
-namespace UnitTest.Extensions
+namespace AngouriMath.Tests.Extensions
 {
     public class IntervalExtensionTest
     {

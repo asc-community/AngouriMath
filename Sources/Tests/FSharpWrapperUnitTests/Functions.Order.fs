@@ -1,4 +1,4 @@
-﻿module ReturnValues.Order
+﻿module AngouriMath.FSharp.Tests.Order
 
 open AngouriMath.FSharp.Core
 open AngouriMath.FSharp.Functions

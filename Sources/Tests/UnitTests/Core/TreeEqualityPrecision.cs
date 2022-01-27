@@ -13,7 +13,7 @@ using AngouriMath.Extensions;
 using System;
 
 
-namespace UnitTests.Core
+namespace AngouriMath.Tests.Core
 {
     public class TreeEqualityPrecision
     {

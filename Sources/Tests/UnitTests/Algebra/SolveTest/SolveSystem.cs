@@ -10,7 +10,7 @@ using Xunit;
 using AngouriMath;
 using static AngouriMath.Entity.Number;
 
-namespace UnitTests.Algebra
+namespace AngouriMath.Tests.Algebra
 {
     public sealed class SolveSystem
     {
@@ -96,5 +96,11 @@ namespace UnitTests.Algebra
             "x3 - 9 x2 y - f",
             "y3 + x y2 - a"
         }, new Entity.Variable[] { "x", "y" }, 9);
+
+        [Fact]
+        public void EquationWithDivisionIsSolved() => AssertSystemSolvable(new Entity[] {
+            "x2 + y",
+            "y - x - 3"
+        }, new Entity.Variable[] { "x", "y" }, 2);
     }
 }
