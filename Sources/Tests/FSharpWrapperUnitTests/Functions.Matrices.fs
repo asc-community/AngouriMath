@@ -1,8 +1,8 @@
-﻿module ReturnValues.FunctionsMatricesTest
+﻿module AngouriMath.FSharp.ReturnValues.FunctionsMatricesTest
 
 open AngouriMath.FSharp.Core
 open AngouriMath.FSharp.Matrices
-open Utils
+open AngouriMath.FSharp.Utils
 open Xunit
 
 [<Fact>]

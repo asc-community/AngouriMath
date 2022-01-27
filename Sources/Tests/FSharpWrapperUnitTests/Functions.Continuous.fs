@@ -1,4 +1,4 @@
-module ReturnValues.Continuous
+module AngouriMath.FSharp.ReturnValues.Continuous
 
 open AngouriMath.FSharp.Core
 open AngouriMath.FSharp.Functions

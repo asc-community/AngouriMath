@@ -1,4 +1,4 @@
-﻿module Utils
+﻿module AngouriMath.FSharp.Utils
 
 open AngouriMath
 open Xunit

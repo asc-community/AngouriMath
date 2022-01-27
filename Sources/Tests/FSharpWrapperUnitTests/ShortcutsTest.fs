@@ -1,4 +1,4 @@
-﻿module ReturnValues.ShortcutsTest
+﻿module AngouriMath.FSharp.ReturnValues.ShortcutsTest
 
 open Xunit
 open AngouriMath.FSharp.Shortcuts

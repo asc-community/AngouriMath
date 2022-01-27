@@ -1,4 +1,4 @@
-module Tests
+module Terminal.Tests
 
 open System
 open Xunit
@@ -17,25 +17,25 @@ let ``Create kernel or fail`` () =
 let executeNew = ``Create kernel or fail`` () |> execute 
 
 [<Fact>]
-let ``Test no-terminal 1`` () =
+let ``Test no terminal 1`` () =
     executeNew "1 + 1"
     |> (fun actual -> PlainTextSuccess "2", actual)
     |> Assert.Equal
 
 [<Fact>]
-let ``Test no-terminal 2`` () =
+let ``Test no terminal 2`` () =
     executeNew "8 / 6"
     |> (fun actual -> PlainTextSuccess "1", actual)
     |> Assert.Equal
 
 [<Fact>]
-let ``Test no-terminal 4`` () =
+let ``Test no terminal 4`` () =
     executeNew "let x = 4"
     |> (fun actual -> VoidSuccess, actual)
     |> Assert.Equal
 
 [<Fact>]
-let ``Test no-terminal 5`` () =
+let ``Test no terminal 5`` () =
     executeNew "let x ="
     |> (fun actual -> 
         match actual with
