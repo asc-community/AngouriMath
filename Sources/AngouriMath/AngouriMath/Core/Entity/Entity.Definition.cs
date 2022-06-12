@@ -182,8 +182,10 @@ namespace AngouriMath
         /// Set of unique variables excluding mathematical constants
         /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
-        public IEnumerable<Variable> Vars => vars.GetValue(static @this => @this.VarsAndConsts.Where(x => !x.IsConstant), this);
-        private LazyPropertyA<IEnumerable<Variable>> vars;
+        public IReadOnlyList<Variable> Vars
+            => vars.GetValue(static @this
+                => @this.VarsAndConsts.Where(x => !x.IsConstant).ToList() /* needed to actually compute it and cache */, this);
+        private LazyPropertyA<IReadOnlyList<Variable>> vars;
 
         /// <summary>
         /// Set of unique variables, for example 
@@ -196,6 +198,23 @@ namespace AngouriMath
         public IReadOnlyCollection<Variable> VarsAndConsts => varsAndConsts.GetValue(
             static @this => new HashSet<Variable>(@this is Variable v ? new[] { v } : @this.DirectChildren.SelectMany(x => x.VarsAndConsts)), this);
         private LazyPropertyA<IReadOnlyCollection<Variable>> varsAndConsts;
+
+
+        /// <summary>
+        /// Returns a set of free variables.
+        /// We call a bound variable a variable which is a parameter of some
+        /// outer lambda. Then, all other variables are free.
+        /// </summary>
+        public IReadOnlyList<Variable> FreeVariables =>
+            freeVariables.GetValue(
+                static @this =>
+                    @this is Lambda(var par, var body)
+                    ? body.FreeVariables.Where(v => v != par).ToList()
+                    : @this.DirectChildren.SelectMany(c => c.FreeVariables).ToList()
+                ,
+                this
+            );
+        private LazyPropertyA<IReadOnlyList<Variable>> freeVariables;
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>

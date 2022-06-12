@@ -124,26 +124,24 @@ namespace AngouriMath.Tests.Common
 
         [Fact] public void EtaReduction1()
             => Assert.Equal(
-                "z".ToEntity(),
-                "apply(lambda(x, y, apply(x, y)), y)".ToEntity()
+                "y".ToEntity(),
+                "apply(lambda(x, y, apply(x, y)), y)".Simplify()
             );
         
         [Fact] public void EtaReduction2()
             => Assert.Equal(
                 "y".ToEntity(),
-                "lambda(x, apply(y, x))".ToEntity()
+                "lambda(x, apply(y, x))".Simplify()
             );
         
         [Fact] public void EtaReduction3()
             => Assert.Equal(
-                @"apply(
-                    lambda(x, apply(x, x),
-                    lambda(y, apply(y, y)
-                    )".ToEntity(),
-                @"apply(
-                    lambda(x, apply(x, x),
-                    lambda(y, apply(y, y)
-                    )".ToEntity()
+                @"lambda(x,
+                    apply(x, x)
+                )".ToEntity(),
+                @"lambda(x,
+                    apply(x, x)
+                )".Simplify()
             );
         
         [Fact] public void EtaReduction4()
@@ -157,7 +155,7 @@ namespace AngouriMath.Tests.Common
                             c
                         )
                     )
-                    )".ToEntity(),
+                )".ToEntity(),
                 @"lambda(
                     x,
                     apply(
@@ -172,7 +170,37 @@ namespace AngouriMath.Tests.Common
                             )
                         ),
                         x
-                    )".ToEntity()
+                    )
+                )".Simplify()
+            );
+        
+        [Fact] public void EtaReduction6()
+            => Assert.Equal(
+                @"lambda(x,
+                    apply(
+                        a * (sin(x) + 34),
+                        x
+                    )
+                )
+                ".ToEntity(),
+                @"lambda(x,
+                    apply(
+                        a * (sin(x) + 34),
+                        x
+                    )
+                )
+                ".Simplify()
+            );
+        [Fact] public void EtaReduction7()
+            => Assert.Equal(
+                @"a * (sin(y) + 34)".ToEntity(),
+                @"lambda(x,
+                    apply(
+                        a * (sin(y) + 34),
+                        x
+                    )
+                )
+                ".Simplify()
             );
     }
 }

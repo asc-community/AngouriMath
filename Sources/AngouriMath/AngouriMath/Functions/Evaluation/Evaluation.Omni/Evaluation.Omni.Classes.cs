@@ -337,7 +337,15 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => New(Parameter, Body.InnerSimplified);
+                => (Parameter, Body.InnerSimplified) switch
+                {
+                    
+                    (var x1, Application(var expr, (var x2, _)))
+                        when x1 == x2 && !expr.FreeVariables.Contains(x1) => expr,
+                    (var x, var body) when body != Body => new Lambda(x, body).InnerSimplified,
+                    _ => this
+                    // (var p, var b) => New(p, b)
+                };
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => New(Parameter, Body.Evaled);
