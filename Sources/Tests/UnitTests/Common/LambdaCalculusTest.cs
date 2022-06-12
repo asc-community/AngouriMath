@@ -178,7 +178,7 @@ namespace AngouriMath.Tests.Common
             => Assert.Equal(
                 @"lambda(x,
                     apply(
-                        a * (sin(x) + 34),
+                        (34 + sin(x)) * a,
                         x
                     )
                 )
@@ -193,7 +193,7 @@ namespace AngouriMath.Tests.Common
             );
         [Fact] public void EtaReduction7()
             => Assert.Equal(
-                @"a * (sin(y) + 34)".ToEntity(),
+                @"(34 + sin(y)) * a".ToEntity(),
                 @"lambda(x,
                     apply(
                         a * (sin(y) + 34),
@@ -201,6 +201,26 @@ namespace AngouriMath.Tests.Common
                     )
                 )
                 ".Simplify()
+            );
+            
+        [Fact] public void EtaReduction8()
+            => Assert.Equal(
+                @"apply(
+                    e,
+                    b,
+                    a,
+                    c
+                )".ToEntity(),
+                @"lambda(
+                    x,
+                    apply(
+                        e,
+                        b,
+                        a,
+                        c,
+                        x
+                    )
+                )".Simplify()
             );
     }
 }

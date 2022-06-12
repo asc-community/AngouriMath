@@ -205,16 +205,20 @@ namespace AngouriMath
         /// We call a bound variable a variable which is a parameter of some
         /// outer lambda. Then, all other variables are free.
         /// </summary>
-        public IReadOnlyList<Variable> FreeVariables =>
+        public IReadOnlyCollection<Variable> FreeVariables =>
             freeVariables.GetValue(
                 static @this =>
-                    @this is Lambda(var par, var body)
-                    ? body.FreeVariables.Where(v => v != par).ToList()
-                    : @this.DirectChildren.SelectMany(c => c.FreeVariables).ToList()
+                    @this switch
+                    {
+                        Lambda(var par, var body)
+                            => body.FreeVariables.Where(v => v != par).ToList(),
+                        Variable v => new []{ v },
+                        _ => new HashSet<Variable>(@this.DirectChildren.SelectMany(c => c.FreeVariables))
+                    }
                 ,
                 this
             );
-        private LazyPropertyA<IReadOnlyList<Variable>> freeVariables;
+        private LazyPropertyA<IReadOnlyCollection<Variable>> freeVariables;
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>
