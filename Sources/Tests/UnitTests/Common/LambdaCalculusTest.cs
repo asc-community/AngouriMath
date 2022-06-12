@@ -121,5 +121,58 @@ namespace AngouriMath.Tests.Common
             var actual = succ.Apply(number3).InnerSimplified;
             Assert.Equal(expected, actual);
         }
+
+        [Fact] public void EtaReduction1()
+            => Assert.Equal(
+                "z".ToEntity(),
+                "apply(lambda(x, y, apply(x, y)), y)".ToEntity()
+            );
+        
+        [Fact] public void EtaReduction2()
+            => Assert.Equal(
+                "y".ToEntity(),
+                "lambda(x, apply(y, x))".ToEntity()
+            );
+        
+        [Fact] public void EtaReduction3()
+            => Assert.Equal(
+                @"apply(
+                    lambda(x, apply(x, x),
+                    lambda(y, apply(y, y)
+                    )".ToEntity(),
+                @"apply(
+                    lambda(x, apply(x, x),
+                    lambda(y, apply(y, y)
+                    )".ToEntity()
+            );
+        
+        [Fact] public void EtaReduction4()
+            => Assert.Equal(
+                @"apply(
+                    e,
+                    apply(
+                        b,
+                        apply(
+                            a,
+                            c
+                        )
+                    )
+                    )".ToEntity(),
+                @"lambda(
+                    x,
+                    apply(
+                        apply(
+                            e,
+                            apply(
+                                b,
+                                apply(
+                                    a,
+                                    c
+                                )
+                            )
+                        ),
+                        x
+                    )".ToEntity()
+            );
     }
 }
