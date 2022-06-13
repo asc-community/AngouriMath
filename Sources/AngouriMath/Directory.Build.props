@@ -20,7 +20,7 @@
 
   <PropertyGroup>
     <Nullable>enable</Nullable>
-    <NoWarn>NU5104;CA2252</NoWarn>
+    <NoWarn>NU5104;CA2252;CS1591</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>

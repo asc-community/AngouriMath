@@ -16,6 +16,7 @@ Any modifications to other source files will be overwritten when the parser is r
 using Antlr4.Runtime;
 using System.IO;
 using System.Text;
+using AngouriMath.Core.NovaSyntax;
 
 [assembly: System.CLSCompliant(false)]
 namespace AngouriMath.Core
@@ -124,6 +125,10 @@ namespace AngouriMath.Core
         
         internal static Either<Entity, Failure<ReasonWhyParsingFailed>> ParseSilent(string source)
         {
+            if (new NovaParser(new NovaLexer(source)).TryParseStatement(out var res))
+                return res;
+            return new Failure<ReasonWhyParsingFailed>(new Unknown(""));
+            /*
             var writer = new AngouriMathTextWriter();
 
             if (writer.errors.Count > 0)
@@ -153,7 +158,7 @@ namespace AngouriMath.Core
             if (writer.errors.Count > 0)
                 return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
             
-            return parser.Result;
+            return parser.Result;*/
         }
 
         internal static Entity Parse(string source)
