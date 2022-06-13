@@ -86,7 +86,7 @@ namespace Utils
                 "generate_exports.bat",
                 "using System.Runtime.InteropServices;",
                 "AngouriMath.CPP.Exporting",
-                "partial class Exports", 
+                "unsafe partial class Exports", 
                 sb.ToString());
         }
 

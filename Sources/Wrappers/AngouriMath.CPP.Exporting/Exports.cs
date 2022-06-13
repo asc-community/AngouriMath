@@ -15,13 +15,15 @@ using System;
 
 namespace AngouriMath.CPP.Exporting
 {
-    internal static partial class Exports
+    internal static unsafe partial class Exports
     {
-        internal static NErrorCode ExceptionEncode<TIn, TOut>(ref TOut destination, TIn input, Func<TIn, TOut> func)
+        internal static NErrorCode ExceptionEncode<TIn, TOut>(TOut* destination, TIn input, Func<TIn, TOut> func)
+            where TIn : unmanaged
+            where TOut : unmanaged
         {
             try
             {
-                destination = func(input);
+                *destination = func(input);
                 return NErrorCode.Ok;
             }
             catch (Exception e)
