@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Yoakke.SynKit.Lexer;
+using Yoakke.SynKit.Lexer.Attributes;
 
 namespace AngouriMath.Core.Syntax
 {
