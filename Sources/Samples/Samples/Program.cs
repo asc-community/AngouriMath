@@ -26,16 +26,29 @@ using PeterO.Numbers;
 // Console.WriteLine(system.Solve("x", "y"));
 
 var expr = @"
-x + b
+x + b a c
 ";
 
 var lexer = new NovaLexer(expr);
-var parser = new NovaParser(lexer);
-Console.WriteLine(parser.ParseExpression().Ok.Value);
+while (true)
+{
+    var token = lexer.Next();
+    if (token.Kind == AngouriMathTokenType.End) break;
+    Console.WriteLine(token);
+}
 
+using var _ = MathS.Diagnostic.OutputExplicit.Set(true);
+
+WriteLine(((Sumf)expr).Addend.GetType());
+
+// lexer.Next()
+// var parser = new NovaParser(lexer);
+// Console.WriteLine(parser.ParseExpression().Ok.Value);
+/*
 
 Console.WriteLine(@"
 apply(
     lambda(x, y, apply(x, y)),
     y)
 ".Simplify());
+*/

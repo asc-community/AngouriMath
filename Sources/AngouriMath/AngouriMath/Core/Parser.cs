@@ -13,58 +13,22 @@ Any modifications to other source files will be overwritten when the parser is r
 
 */
 
-using Antlr4.Runtime;
 using System.IO;
 using System.Text;
 using AngouriMath.Core.NovaSyntax;
+using Yoakke.SynKit.Lexer;
+using Yoakke.SynKit.Text;
+using IToken = Antlr4.Runtime.IToken;
+using Nova = AngouriMath.Core.NovaSyntax.AngouriMathTokenType;
 
 [assembly: System.CLSCompliant(false)]
 namespace AngouriMath.Core
 {
     using Antlr;
     using Exceptions;
-    using static ReasonOfFailureWhileParsing;
-
-    /// <summary>
-    /// Nesting class for reasons of why parsing could fail. The type union for it
-    /// is 
-    /// </summary>
-    public abstract record ReasonOfFailureWhileParsing
-    {
-        /// <summary>
-        /// The error is an unclassified error returned by the
-        /// ANTLR's parser.
-        /// </summary>
-        public sealed record Unknown(string Reason);
-
-
-        /// <summary>
-        /// This error is when the explicit parsing mode is enabled,
-        /// but the input lacks an operator (which is normally inserted
-        /// automatically with explicit parsing mode turned off). For
-        /// example, "2x" would give this error.
-        /// </summary>
-        public sealed record MissingOperator(string Details);
-
-        /// <summary>
-        /// This is a bug of AngouriMath. Something that we definitely
-        /// do not expect. More: <see cref="AngouriMath.Core.Exceptions.AngouriBugException"/>.
-        /// Please, report to the main repository.
-        /// </summary>
-        public sealed record InternalError(string Details);
-    }
-    
-    
 
     internal static class Parser
     {
-        // Antlr parser spams errors into TextWriter provided, we inherit from it to handle lexer/parser errors as ParseExceptions
-        private sealed class AngouriMathTextWriter : TextWriter
-        {
-            public override Encoding Encoding => Encoding.UTF8;
-            public override void WriteLine(string? s) => errors.Add(new Unknown(s ?? throw new System.ArgumentNullException()));
-            public readonly List<ReasonWhyParsingFailed> errors = new();
-        }
         
         private static int? GetNextToken(IList<IToken> tokens, int currPos)
         {
@@ -79,7 +43,8 @@ namespace AngouriMath.Core
         /// explicit-only parsing is enabled. Otherwise,
         /// it will throw an exception.
         /// </summary>
-        private static Either<Unit, ReasonWhyParsingFailed> InsertOmittedTokensOrProvideDiagnostic(IList<IToken> tokenList, AngouriMathLexer lexer)
+        /*
+        private static Either<Unit, string> InsertOmittedTokensOrProvideDiagnostic(IList<IToken> tokenList, AngouriMathLexer lexer)
         {
             const string NUMBER = nameof(NUMBER);
             const string VARIABLE = nameof(VARIABLE);
@@ -121,55 +86,73 @@ namespace AngouriMath.Core
             static string GetType(IToken token) =>
                 AngouriMathLexer.DefaultVocabulary.GetDisplayName(token.Type) is var type
                 && type is not PARENTHESIS_OPEN && type.EndsWith("('") ? FUNCTION_OPEN : type;
+        }*/
+        
+        // TODO: how to sync it with the lexer?
+        [ConstantField]
+        private static readonly HashSet<string> keywords = new (new []
+        {
+            "apply","lambda","integral","derivative","gamma","limit","limitleft","limitright","signum","sgn","sign","abs","phi","domain","piecewise","log","sqrt","cbrt","sqr","ln","sin","cos","tan","cot","cotan","sec","cosec","csc","arcsin","arccos","arctan","arccotan","arcsec","arccosec","arccsc","acsc","asin","acos","atan","acotan","asec","acosec","acot","arccot","sinh","sh","cosh","ch","tanh","th","cotanh","coth","cth","sech","sch","cosech","csch","asinh","arsinh","arsh","acosh","arcosh","arch","atanh","artanh","arth","acoth","arcoth","acotanh","arcotanh","arcth","asech","arsech","arsch","acosech","arcosech","arcsch","acsch"
+        });
+
+        private static List<Token<AngouriMathTokenType>> InsertOmittedOperators(IReadOnlyList<Token<AngouriMathTokenType>> tokens)
+        {
+            var list = new List<Token<AngouriMathTokenType>>();
+            for (int i = 0; i < tokens.Count - 1; i++)
+            {
+                var (left, right) = (tokens[i], tokens[i + 1]);
+                list.Add(left);
+                Token<AngouriMathTokenType>? toInsert = (left, right) switch
+                {
+                    // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
+                    // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
+                    ( { Kind: Nova.Number } or { Kind: Nova.Punctuation, Text: ")" }, { Kind: Nova.Identifier } or { Kind: Nova.Punctuation, Text: "(" } )
+                        => new(default, "*", Nova.Operator),
+                    
+                    // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
+                    ( { Kind: Nova.Identifier, Text: var varName }, { Kind: Nova.Identifier } or { Kind: Nova.Punctuation, Text: "(" } )
+                        when !keywords.Contains(varName) => new(default, "*", Nova.Operator),
+                    
+                    // 3 2 -> 3 ^ 2      )2 -> ) ^ 2
+                    ( { Kind: Nova.Number } or { Kind: Nova.Punctuation, Text: ")" }, { Kind: Nova.Number } )
+                        => new(default, "^", Nova.Operator),
+                    
+                    // x2 -> x ^ 2
+                    ( { Kind: Nova.Identifier, Text: var varName }, { Kind: Nova.Number } )
+                        when !keywords.Contains(varName) => new(default, "^", Nova.Operator),
+                    
+                    _ => null
+                };
+                if (toInsert is { } actualToken)
+                    list.Add(actualToken);
+            }
+            list.Add(tokens[^1]);
+            return list;
         }
         
-        internal static Either<Entity, Failure<ReasonWhyParsingFailed>> ParseSilent(string source)
+        internal static Either<Entity, Failure<string>> ParseSilent(string source)
         {
-            if (new NovaParser(new NovaLexer(source)).TryParseStatement(out var res))
-                return res;
-            return new Failure<ReasonWhyParsingFailed>(new Unknown(""));
-            /*
-            var writer = new AngouriMathTextWriter();
+            var lexer = new NovaLexer(source);
+            var tokens = lexer.LexAll().ToList();            
 
-            if (writer.errors.Count > 0)
-                return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
+            if (!tokens.Any())
+                return new Failure<string>("Empty expression");
+            
+            if (MathS.Settings.ExplicitParsingOnly)
+                tokens = InsertOmittedOperators(tokens);
 
-            var lexer = new AngouriMathLexer(new AntlrInputStream(source), null, writer);
-            var tokenStream = new CommonTokenStream(lexer);
-            tokenStream.Fill();
-            var tokenList = tokenStream.GetTokens();            
-
-            if (tokenList.Count is 0)
-                return new Failure<ReasonWhyParsingFailed>(
-                    new ReasonWhyParsingFailed(
-                        new InternalError(
-                            $"{nameof(ParseException)} should have been thrown"
-                        )
-                    )
-                );
+            var result = new NovaParser(tokens).ParseStatement();
             
-            if (InsertOmittedTokensOrProvideDiagnostic(tokenList, lexer).Is<ReasonWhyParsingFailed>(out var whyFailed))
-                return new Failure<ReasonWhyParsingFailed>(whyFailed);
-
-            
-            var parser = new AngouriMathParser(tokenStream, null, writer);
-            parser.Parse();
-            
-            if (writer.errors.Count > 0)
-                return new Failure<ReasonWhyParsingFailed>(writer.errors[0]);
-            
-            return parser.Result;*/
+            if (result.IsError)
+                return new Failure<string>(string.Join("\n", result.Error.Elements.Select((a, b) => $"{a}: {b}")));
+            return result.Ok.Value;
         }
 
         internal static Entity Parse(string source)
             => ParseSilent(source)
                 .Switch(
                     valid => valid,
-                    failure => failure.Reason.Switch<Entity>(
-                            unknown => throw new UnhandledParseException(unknown.Reason),
-                            missingOperator => throw new MissingOperatorParseException(missingOperator.Details),
-                            internalError => throw new AngouriBugException(internalError.Details)
-                    )
-                );
+                    failure => throw new UnhandledParseException(failure.Reason)
+                    );
     }
 }

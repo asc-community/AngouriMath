@@ -97,7 +97,7 @@ namespace AngouriMath.Core.NovaSyntax
 
      ************************************************************/
 
-    [Parser(typeof(AngouriMathTokenType))]
+    [Yoakke.SynKit.Parser.Attributes.Parser(typeof(AngouriMathTokenType))]
 #pragma warning disable SealedOrAbstract // AMAnalyzer
     public partial class NovaParser
 #pragma warning restore SealedOrAbstract // AMAnalyzer
@@ -207,9 +207,10 @@ namespace AngouriMath.Core.NovaSyntax
         private static Entity Abs(Token open, Entity expr, Token close) => expr.Abs();
 
         [Rule("atom : '[' expression_list ']' 'T'?")]
-        private static Entity Matrix(Token open, IReadOnlyList<Entity> exprs, Token close, Token? transpose) => transpose is null
-            ? TryBuildingMatrix(exprs)
-            : TryBuildingMatrix(exprs).T;
+        private static Entity Matrix(Token open, IReadOnlyList<Entity> exprs, Token close, Token? transpose)
+            => transpose is null
+                ? TryBuildingMatrix(exprs)
+                : TryBuildingMatrix(exprs).T;
 
         [Rule("atom : ('(' | '[') expression ';' expression (')' | ']')")]
         private static Entity Interval(Token open, Entity from, Token semicol, Entity to, Token close) =>
@@ -473,7 +474,8 @@ namespace AngouriMath.Core.NovaSyntax
         }
 
         [Rule("call_expression : call_expression '(' expression_list ')'")]
-        private static Entity Call(Entity f, Token open, IReadOnlyList<Entity> args, Token close) => f.Apply(args.ToArray());
+        private static Entity Call(Entity f, Token open, IReadOnlyList<Entity> args, Token close)
+            => f.Apply(args.ToArray());
 
         [Rule("statement : expression End")]
         private static Entity Statement(Entity expr, Token end) => expr;
