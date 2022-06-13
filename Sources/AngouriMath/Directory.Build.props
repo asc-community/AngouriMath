@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <!--To allow C# 9 syntax for low targets-->
-    <PackageReference Include="IsExternalInit" Version="1.0.0" PrivateAssets="all" />
+    <PackageReference Include="IsExternalInit" Version="1.0.1" PrivateAssets="all" />
 
     <!--Project dependencies for Framework 4.7.2-->
     <PackageReference Include="System.Runtime.Numerics" Version="4.3.0" Condition="'$(TargetFramework)' == 'net472'" />
@@ -46,6 +46,12 @@
 
     <!--Analyzers-->
     <ProjectReference Include="../../Analyzers/Analyzers/Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+
+    <!--NovaParsing-->
+    <PackageReference Include="Yoakke.Synkit.Lexer" Version="2022.3.16-2.43.28-nightly" />
+    <PackageReference Include="Yoakke.Synkit.Lexer.Generator" Version="2022.3.16-2.43.28-nightly" />
+    <PackageReference Include="Yoakke.Synkit.Parser" Version="2022.3.16-2.43.28-nightly" />
+    <PackageReference Include="Yoakke.Synkit.Parser.Generator" Version="2022.3.16-2.43.28-nightly" />
   </ItemGroup>
 
   <ItemGroup>

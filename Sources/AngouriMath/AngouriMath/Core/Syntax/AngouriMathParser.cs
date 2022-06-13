@@ -1,14 +1,21 @@
-﻿using AngouriMath.Core.Exceptions;
+﻿//
+// Copyright (c) 2019-2022 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+
+using AngouriMath.Core.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Yoakke.Parser;
-using Yoakke.Parser.Attributes;
+using Yoakke.SynKit.Parser;
+using Yoakke.SynKit.Parser.Attributes;
 using static AngouriMath.Entity;
 using static AngouriMath.Entity.Set;
-using Token = Yoakke.Lexer.IToken<AngouriMath.Core.Syntax.AngouriMathTokenType>;
+using Token = Yoakke.SynKit.Lexer.IToken<AngouriMath.Core.Syntax.AngouriMathTokenType>;
 
 namespace AngouriMath.Core.Syntax
 {
