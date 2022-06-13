@@ -17,8 +17,15 @@ using static AngouriMath.MathS;
 using static System.Console;
 using PeterO.Numbers;
 
-var system = Equations(
-"(x2 + y) / 2",
-"y - x - 3"
-);
-Console.WriteLine(system.Solve("x", "y"));
+
+// var system = Equations(
+// "(x2 + y) / 2",
+// "y - x - 3"
+// );
+// Console.WriteLine(system.Solve("x", "y"));
+
+Console.WriteLine(@"
+apply(
+    lambda(x, y, apply(x, y)),
+    y)
+".Simplify());

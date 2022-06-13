@@ -335,9 +335,34 @@ namespace AngouriMath
 
         partial record Lambda
         {
+            private static LList<Entity>? ReduceArgList(LList<Entity> args, Variable toReduce)
+                => args switch
+                {
+                    LEmpty<Entity> => null,
+                    (var curr, LEmpty<Entity>) when curr == toReduce => LList<Entity>.Empty,
+                    (_, LEmpty<Entity>) => null,
+                    (var curr, var rest) when curr.FreeVariables.Contains(toReduce) => null,
+                    (var curr, var rest) =>
+                        (ReduceArgList(rest, toReduce) is { } list)
+                        ? curr + list
+                        : null
+                };
+            
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => New(Parameter, Body.InnerSimplified);
+                => (Parameter, Body.InnerSimplified) switch
+                {
+                    (var x1, Application(var expr, var args))
+                        when !expr.FreeVariables.Contains(x1)
+                        && ReduceArgList(args, x1) is { } newArgList
+                            => newArgList switch
+                            {
+                                LEmpty<Entity> => expr,
+                                var rest => new Application(expr, rest)
+                            },
+                    (var x, var body) when body != Body => new Lambda(x, body).InnerSimplified,
+                    _ => this
+                };
             /// <inheritdoc/>
             protected override Entity InnerEval()
                 => New(Parameter, Body.Evaled);

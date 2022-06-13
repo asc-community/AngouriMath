@@ -12,19 +12,19 @@ using static AngouriMath.Entity;
 
 namespace AngouriMath.CPP.Exporting
 {
-    partial class Exports
+    unsafe partial class Exports
     {
         #region String as output
 
         [UnmanagedCallersOnly(EntryPoint = "entity_to_string")]
-        public static NErrorCode EntityToString(ObjRef exprPtr, ref IntPtr res)
-            => ExceptionEncode(ref res, exprPtr,
+        public static NErrorCode EntityToString(ObjRef exprPtr, IntPtr* res)
+            => ExceptionEncode(res, exprPtr,
                 exprPtr => Marshal.StringToHGlobalAnsi(exprPtr.AsEntity.ToString())
             );
 
         [UnmanagedCallersOnly(EntryPoint = "entity_latexise")]
-        public static NErrorCode EntityToLatex(ObjRef exprPtr, ref IntPtr res)
-            => ExceptionEncode(ref res, exprPtr,
+        public static NErrorCode EntityToLatex(ObjRef exprPtr, IntPtr* res)
+            => ExceptionEncode(res, exprPtr,
                 exprPtr => Marshal.StringToHGlobalAnsi(exprPtr.AsEntity.Latexise())
             );
 
@@ -32,8 +32,8 @@ namespace AngouriMath.CPP.Exporting
 
         #region Calculus
         [UnmanagedCallersOnly(EntryPoint = "entity_differentiate")]
-        public static NErrorCode Differentiate(ObjRef exprPtr, ObjRef varPtr, ref ObjRef res)
-            => ExceptionEncode(ref res, (exprPtr, varPtr), static e =>
+        public static NErrorCode Differentiate(ObjRef exprPtr, ObjRef varPtr, ObjRef* res)
+            => ExceptionEncode(res, (exprPtr, varPtr), static e =>
                 {
                     var expr = e.exprPtr.AsEntity;
                     var var = (Variable)e.varPtr.AsEntity;
@@ -41,8 +41,8 @@ namespace AngouriMath.CPP.Exporting
                 });
 
         [UnmanagedCallersOnly(EntryPoint = "entity_integrate")]
-        public static NErrorCode Integrate(ObjRef exprPtr, ObjRef varPtr, ref ObjRef res)
-            => ExceptionEncode(ref res, (exprPtr, varPtr), static e =>
+        public static NErrorCode Integrate(ObjRef exprPtr, ObjRef varPtr, ObjRef* res)
+            => ExceptionEncode(res, (exprPtr, varPtr), static e =>
             {
                 var expr = e.exprPtr.AsEntity;
                 var var = (Variable)e.varPtr.AsEntity;
@@ -50,8 +50,8 @@ namespace AngouriMath.CPP.Exporting
             });
 
         [UnmanagedCallersOnly(EntryPoint = "entity_limit")]
-        public static NErrorCode Limit(ObjRef exprPtr, ObjRef varPtr, ObjRef dest, ApproachFrom from, ref ObjRef res)
-            => ExceptionEncode(ref res, (exprPtr, varPtr, dest, from), static e =>
+        public static NErrorCode Limit(ObjRef exprPtr, ObjRef varPtr, ObjRef dest, ApproachFrom from, ObjRef* res)
+            => ExceptionEncode(res, (exprPtr, varPtr, dest, from), static e =>
             {
                 var expr = e.exprPtr.AsEntity;
                 var var = (Variable)e.varPtr.AsEntity;
@@ -62,8 +62,8 @@ namespace AngouriMath.CPP.Exporting
 
         #region Solvers
         [UnmanagedCallersOnly(EntryPoint = "entity_solve")]
-        public static NErrorCode Solve(ObjRef exprPtr, ObjRef varPtr, ref ObjRef res)
-            => ExceptionEncode(ref res, (exprPtr, varPtr), static e =>
+        public static NErrorCode Solve(ObjRef exprPtr, ObjRef varPtr, ObjRef* res)
+            => ExceptionEncode(res, (exprPtr, varPtr), static e =>
             {
                 var expr = ObjStorage<Entity>.Get(e.exprPtr);
                 var var = (Variable)ObjStorage<Entity>.Get(e.varPtr);
@@ -71,8 +71,8 @@ namespace AngouriMath.CPP.Exporting
             });
 
         [UnmanagedCallersOnly(EntryPoint = "entity_solve_equation")]
-        public static NErrorCode SolveEquation(ObjRef exprPtr, ObjRef varPtr, ref ObjRef res)
-            => ExceptionEncode(ref res, (exprPtr, varPtr), static e =>
+        public static NErrorCode SolveEquation(ObjRef exprPtr, ObjRef varPtr, ObjRef* res)
+            => ExceptionEncode(res, (exprPtr, varPtr), static e =>
             {
                 var expr = ObjStorage<Entity>.Get(e.exprPtr);
                 var var = (Variable)ObjStorage<Entity>.Get(e.varPtr);
@@ -83,26 +83,26 @@ namespace AngouriMath.CPP.Exporting
         #region Casts
 
         [UnmanagedCallersOnly(EntryPoint = "entity_to_long")]
-        public static NErrorCode ToLong(ObjRef expr, ref long res)
-            => ExceptionEncode(ref res, expr, static e => (long)(Number)e.AsEntity);
+        public static NErrorCode ToLong(ObjRef expr, long* res)
+            => ExceptionEncode(res, expr, static e => (long)(Number)e.AsEntity);
 
 
         [UnmanagedCallersOnly(EntryPoint = "entity_to_rational")]
-        public static NErrorCode ToRational(ObjRef expr, ref (long, long) res)
-            => ExceptionEncode(ref res, expr, static e =>
+        public static NErrorCode ToRational(ObjRef expr, (long, long)* res)
+            => ExceptionEncode(res, expr, static e =>
             {
                 var rat = (Number.Rational)e.AsEntity;
                 return ((long)rat.Numerator, (long)rat.Denominator);
             });
 
         [UnmanagedCallersOnly(EntryPoint = "entity_to_double")]
-        public static NErrorCode ToDouble(ObjRef expr, ref double res)
-            => ExceptionEncode(ref res, expr, static e => (double)(Number)e.AsEntity);
+        public static NErrorCode ToDouble(ObjRef expr, double* res)
+            => ExceptionEncode(res, expr, static e => (double)(Number)e.AsEntity);
 
 
         [UnmanagedCallersOnly(EntryPoint = "entity_to_complex")]
-        public static NErrorCode ToComplex(ObjRef expr, ref (double, double) res)
-            => ExceptionEncode(ref res, expr, static e =>
+        public static NErrorCode ToComplex(ObjRef expr, (double, double)* res)
+            => ExceptionEncode(res, expr, static e =>
             {
                 var rat = (Number.Complex)e.AsEntity;
                 return ((double)rat.RealPart, (double)rat.ImaginaryPart);
@@ -113,14 +113,14 @@ namespace AngouriMath.CPP.Exporting
         #region Simplification
 
         [UnmanagedCallersOnly(EntryPoint = "entity_alternate")]
-        public static NErrorCode EntityAlternate(ObjRef exprPtr, ref NativeArray res)
-            => ExceptionEncode(ref res, exprPtr,
+        public static NErrorCode EntityAlternate(ObjRef exprPtr, NativeArray* res)
+            => ExceptionEncode(res, exprPtr,
                 exprPtr => NativeArray.Alloc(exprPtr.AsEntity.Alternate(4))
             );
 
         [UnmanagedCallersOnly(EntryPoint = "entity_simplify")]
-        public static NErrorCode EntitySimplify(ObjRef exprPtr, ref ObjRef res)
-            => ExceptionEncode(ref res, exprPtr,
+        public static NErrorCode EntitySimplify(ObjRef exprPtr, ObjRef* res)
+            => ExceptionEncode(res, exprPtr,
                 exprPtr => exprPtr.AsEntity.Simplify()
             );
         #endregion
