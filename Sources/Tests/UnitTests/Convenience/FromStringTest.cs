@@ -306,12 +306,12 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("1 + αb_3", "αb_3")]
         [InlineData("αβγδεζηθικλμνξοπρσςτυφχψω", "αβγδεζηθικλμνξοπρσςτυφχψω")]
         [InlineData("sin(αβγδεζηθικλμ)", "αβγδεζηθικλμ")]
-        [InlineData("ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ")]
-        [InlineData("1 + ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ + 1", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ")]
+        [InlineData("ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ")]
+        [InlineData("1 + ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ + 1", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ")]
         [InlineData("йцукенгшщзхъфывапролджэячсмитьбю", "йцукенгшщзхъфывапролджэячсмитьбю")]
         [InlineData("ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ", "ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ")]
         [InlineData("cos(АнгуриMath)", "АнгуриMath")]
-        [InlineData("ΑγγούριMath + 11", "ΑγγούριMath")]
+        [InlineData("ΑγγουριMath + 11", "ΑγγουριMath")]
         [InlineData("БЕZHΘГIM_64 ^ 2", "БЕZHΘГIM_64")]
         [InlineData("ВсЕмПрИвЕтВэТоМчАтИкЕ < 3", "ВсЕмПрИвЕтВэТоМчАтИкЕ")]
         [InlineData("йА кΨеВеТкΩ", "йА")]
@@ -323,23 +323,30 @@ namespace AngouriMath.Tests.Convenience
         }
         
         [Theory]
-        [InlineData("2x")]
-        [InlineData("2 x")]
         [InlineData("x2")]
         [InlineData("x 2")]
-        [InlineData("2(x + 2)")]
         [InlineData("(x + 1)2")]
         [InlineData("x(x + 1)")]
         [InlineData("(x + 1)x")]
         [InlineData("(x + 1)(1 + 2)")]
-        [InlineData("2sin(x)")]
         [InlineData("sin(x)2")]
         [InlineData("a sin(x)")]
         [InlineData("sin(x) a")]
-        public void ThrowsAsExplicitParsingEnabled(string exprRaw)
+        public void ApplicationParse(string exprRaw)
         {
             using var _ = Settings.ExplicitParsingOnly.Set(true);
             Assert.IsType<Application>(exprRaw.ToEntity());
+        }
+        
+        [Theory]
+        [InlineData("2x")]
+        [InlineData("2 x")]
+        [InlineData("2(x + 2)")]
+        [InlineData("2sin(x)")]
+        public void CannotApply(string expr)
+        {
+            using var _ = Settings.ExplicitParsingOnly.Set(true);
+            Assert.Throws<UnhandledParseException>(() => FromString(expr));
         }
     }
 }

@@ -112,7 +112,8 @@ namespace AngouriMath.Core.NovaSyntax
         private static Entity UnaryPlus(Token plus, Entity unary) => unary;
 
         [Rule("unary_expression : '-' unary_expression")]
-        private static Entity UnaryMinus(Token minus, Entity unary) => unary is Number n ? -n : -unary;
+        private static Entity UnaryMinus(Token minus, Entity unary)
+            => unary is Real { IsNegative: false } n ? -n : -unary;
 
         [Rule("mult_expression : mult_expression ('*' | '/') unary_expression")]
         [Rule("sum_expression : sum_expression ('+' | '-') mult_expression")]
@@ -412,7 +413,12 @@ namespace AngouriMath.Core.NovaSyntax
         private static Entity Integral(Token integral, Token open, IReadOnlyList<Entity> args, Token close)
         {
             if (args.Count == 2) return MathS.Integral(args[0], args[1]);
-            if (args.Count == 3) return MathS.Integral(args[0], args[1], (int)(Number)args[2]);
+            if (args.Count == 3)
+            {
+                if (args[2] is not Integer power)
+                    throw new InvalidArgumentParseException("Expected an integer as third argument of integral");
+                return MathS.Integral(args[0], args[1], (int)power);
+            }
             throw new FunctionArgumentCountException("integral requires 2 or 3 args");
         }
 
@@ -420,7 +426,12 @@ namespace AngouriMath.Core.NovaSyntax
         private static Entity Derivative(Token derivative, Token open, IReadOnlyList<Entity> args, Token close)
         {
             if (args.Count == 2) return MathS.Derivative(args[0], args[1]);
-            if (args.Count == 3) return MathS.Derivative(args[0], args[1], (int)(Number)args[2]);
+            if (args.Count == 3)
+            {
+                if (args[2] is not Integer power)
+                    throw new InvalidArgumentParseException("Expected an integer as third argument of derivative");
+                return MathS.Derivative(args[0], args[1], (int)power);
+            }
             throw new FunctionArgumentCountException("derivative requires 2 or 3 args");
         }
 

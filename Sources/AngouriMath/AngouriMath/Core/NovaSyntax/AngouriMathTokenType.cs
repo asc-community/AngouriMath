@@ -77,6 +77,6 @@ namespace AngouriMath.Core.NovaSyntax
          Token("asech"), Token("arsech"), Token("arsch"), Token("acosech"), Token("arcosech"),
          Token("arcsch"), Token("acsch")] Keyword,
         
-        [Regex(@"([A-Za-zΑ-ω])+(_([0-9A-Za-zΑ-ω])+)?")] Identifier,
+        [Regex(@"([A-Za-zΑ-ωА-я])+(_([0-9A-Za-zΑ-ωА-я])+)?")] Identifier,
     }
 }
