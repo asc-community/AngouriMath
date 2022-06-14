@@ -229,7 +229,7 @@ namespace AngouriMath.Core.NovaSyntax
 
         [Rule("call_expression : call_expression atom+")]
         private static Entity Call(Entity f, IReadOnlyList<Entity> args)
-            => f.Apply(args.ToArray());
+            => f is Number ? throw new CannotApplyException($"{f} cannot take arguments") : f.Apply(args.ToArray());
 
         [Rule("call_expression : 'log' '(' expression_list ')'")]
         private static Entity Log(Token log, Token open, IReadOnlyList<Entity> args, Token close)

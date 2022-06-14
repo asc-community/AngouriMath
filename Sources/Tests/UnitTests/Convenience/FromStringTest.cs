@@ -331,6 +331,9 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("(x + 1)(1 + 2)")]
         [InlineData("sin(x)2")]
         [InlineData("a sin(x)")]
+        [InlineData("a b")]
+        [InlineData("sin a")]
+        [InlineData("b sin")]
         [InlineData("sin(x) a")]
         public void ApplicationParse(string exprRaw)
         {
@@ -346,7 +349,7 @@ namespace AngouriMath.Tests.Convenience
         public void CannotApply(string expr)
         {
             using var _ = Settings.ExplicitParsingOnly.Set(true);
-            Assert.Throws<UnhandledParseException>(() => FromString(expr));
+            Assert.Throws<CannotApplyException>(() => FromString(expr));
         }
     }
 }
