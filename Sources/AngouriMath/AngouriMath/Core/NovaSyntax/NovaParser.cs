@@ -19,7 +19,7 @@ using Token = Yoakke.SynKit.Lexer.IToken<AngouriMath.Core.NovaSyntax.AngouriMath
 
 namespace AngouriMath.Core.NovaSyntax
 {
-    /************************************************************
+    /*
                          REFERENCE GRAMMAR
 
      call_expression             : call_expression atom+
@@ -95,7 +95,7 @@ namespace AngouriMath.Core.NovaSyntax
 
      statement                   : expression End
 
-     ************************************************************/
+     */
 
     [Yoakke.SynKit.Parser.Attributes.Parser(typeof(AngouriMathTokenType))]
 #pragma warning disable SealedOrAbstract // AMAnalyzer
@@ -228,10 +228,7 @@ namespace AngouriMath.Core.NovaSyntax
 
         [Rule("call_expression : call_expression atom+")]
         private static Entity Call(Entity f, IReadOnlyList<Entity> args)
-        {
-            if (f is Number && args.Count == 1) return f * args[0];
-            return f.Apply(args.ToArray());
-        }
+            => f.Apply(args.ToArray());
 
         [Rule("call_expression : 'log' '(' expression_list ')'")]
         private static Entity Log(Token log, Token open, IReadOnlyList<Entity> args, Token close)
@@ -259,7 +256,7 @@ namespace AngouriMath.Core.NovaSyntax
 
         [Rule("call_expression : 'sin' '(' expression_list ')'")]
         private static Entity Sin(Token sin, Token open, IReadOnlyList<Entity> args, Token close) =>
-    AssertArgc(1, args, () => MathS.Sin(args[0]));
+            AssertArgc(1, args, () => MathS.Sin(args[0]));
 
         [Rule("call_expression : 'cos' '(' expression_list ')'")]
         private static Entity Cos(Token cos, Token open, IReadOnlyList<Entity> args, Token close) =>
@@ -482,7 +479,7 @@ namespace AngouriMath.Core.NovaSyntax
 
         private static Entity AssertArgc(int argc, IReadOnlyList<Entity> args, Func<Entity> makeFunc)
         {
-            if (args.Count != argc) throw new FunctionArgumentCountException("todo");
+            if (args.Count != argc) throw new FunctionArgumentCountException($"Expected {argc} arguments, but {args.Count} were provided");
             return makeFunc();
         }
 

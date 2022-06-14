@@ -20,9 +20,12 @@ using PeterO.Numbers;
 using Yoakke.Streams;
 using Yoakke.SynKit.Lexer;
 
+foreach (var c in "([A-Za-zΑ-ω])+(_([0-9A-Za-zΑ-ω])+)?")
+    WriteLine($"{c}: {(int)c}");
+
 var e = "x";
 
-
+/*
 var allTokens = new NovaLexer(e).LexAll();
 var stream1 = new NovaLexer(e).ToStream().ToBuffered();
 var stream2 = new EnumerableStream<IToken<AngouriMathTokenType>>(allTokens).ToBuffered();
@@ -33,7 +36,7 @@ WriteLine();
 WriteLine(stream1.Peek());
 WriteLine(stream2.Peek());
 
-return;
+return;*/
 
 
 // var system = Equations(

@@ -134,14 +134,13 @@ namespace AngouriMath.Core
         internal static Either<Entity, Failure<string>> ParseSilent(string source)
         {
             var lexer = new NovaLexer(source);
-            var tokens = lexer.LexAll().ToList();
-            var b = new NovaLexer(source).ToStream().ToBuffered();            
+            var tokens = lexer.LexAll().ToList();            
 
             if (!tokens.Any())
                 return new Failure<string>("Empty expression");
             
-            // if (MathS.Settings.ExplicitParsingOnly)
-            //    tokens = InsertOmittedOperators(tokens);
+            if (!MathS.Settings.ExplicitParsingOnly)
+                tokens = InsertOmittedOperators(tokens);
 
             var result = new NovaParser(tokens).ParseStatement();
             

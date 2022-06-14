@@ -48,10 +48,10 @@
     <ProjectReference Include="../../Analyzers/Analyzers/Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
 
     <!--NovaParsing-->
-    <PackageReference Include="Yoakke.Synkit.Lexer"            Version="2022.6.13-11.5.59-nightly" />
-    <PackageReference Include="Yoakke.Synkit.Lexer.Generator"  Version="2022.6.13-11.5.59-nightly" />
-    <PackageReference Include="Yoakke.Synkit.Parser"           Version="2022.6.13-11.5.59-nightly" />
-    <PackageReference Include="Yoakke.Synkit.Parser.Generator" Version="2022.6.13-11.5.59-nightly" />
+    <PackageReference Include="Yoakke.Synkit.Lexer"            Version="2022.6.14-8.42.51-nightly" />
+    <PackageReference Include="Yoakke.Synkit.Lexer.Generator"  Version="2022.6.14-8.42.51-nightly" />
+    <PackageReference Include="Yoakke.Synkit.Parser"           Version="2022.6.14-8.42.51-nightly" />
+    <PackageReference Include="Yoakke.Synkit.Parser.Generator" Version="2022.6.14-8.42.51-nightly" />
   </ItemGroup>
 
   <ItemGroup>
