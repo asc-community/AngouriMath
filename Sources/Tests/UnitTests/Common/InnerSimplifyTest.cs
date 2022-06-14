@@ -352,8 +352,8 @@ namespace AngouriMath.Tests.Common
         [InlineData("0 >= 1 / 0")]
         [InlineData("i > i")]
         [InlineData("i < i")]
-        [InlineData("i >= -i")]
-        [InlineData("i <= -i")]
+        [InlineData("i >= i")]
+        [InlineData("i <= i")]
         public void InequalityShouldBeKeptInnerSimplify(string expr)
             => expr.ToEntity().InnerSimplified.ShouldBe(expr);
     }

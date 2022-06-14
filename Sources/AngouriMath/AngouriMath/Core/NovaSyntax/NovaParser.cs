@@ -245,9 +245,6 @@ namespace AngouriMath.Core.NovaSyntax
                     _ => currArgs
                 };
 
-            if (args.Count is 0)
-                throw new FunctionArgumentCountException("When using (), one is required to provide at least one argument");
-            
             if (kw.Text == "apply")
                 return Apply(kw, open, args, close);
             if (kw.Text == "lambda")
@@ -255,7 +252,10 @@ namespace AngouriMath.Core.NovaSyntax
             if (kw.Text == "piecewise")
                 return Piecewise(kw, open, args, close);
 
-            var tryApplied = Application.KeywordToApplied(kw.Text, SupplyOptionalArgs(args, kw.Text).ToLList(), out var badArgument);
+            if (args.Count is 0)
+                throw new FunctionArgumentCountException("When using (), one is required to provide at least one argument");
+
+            var tryApplied = Application.KeywordToApplied(kw.Text, SupplyOptionalArgs(args, kw.Text).ToLList(), out var badArgument, out _);
             
             if (badArgument)
                 throw new InvalidArgumentParseException($"Bad arguments {args} for function {kw.Text}");

@@ -255,12 +255,12 @@ namespace AngouriMath
             private static Entity ApplyOthersIfNeeded(Entity outer, LList<Entity> arguments)
                 => arguments switch
                 {
-                    LEmpty<Entity> => outer,
+                    LEmpty<Entity> or null => outer,
                     var nonEmpty => outer.Apply(nonEmpty)
                 };
 
-            internal static (Entity Applied, LList<Entity> RemainingArgs)? KeywordToApplied(string kw, LList<Entity> arguments, out bool badArgument)
-                => (kw, arguments).Let(out badArgument, false) switch
+            internal static (Entity Applied, LList<Entity> RemainingArgs)? KeywordToApplied(string kw, LList<Entity> arguments, out bool badArgument, out bool applied)
+                => (kw, arguments).Let(out badArgument, false).Let(out applied, true) switch
                 {
                     (("sin"), (var x, var otherArgs)) => (x.Sin(), otherArgs),
                     (("cos"), (var x, var otherArgs)) => (x.Cos(), otherArgs),
@@ -297,60 +297,71 @@ namespace AngouriMath
                     (("signum" or "sign" or "sgn"), (var x, var otherArgs)) => (x.Signum(), otherArgs),
 
                     (("ln"), (var x, var otherArgs)) => (MathS.Ln(x), otherArgs),
-                    (("log"), (var x, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("log"), args), LList<Entity>.Empty),
+                    (("log"), (var x, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("log"), args), LList<Entity>.Empty).Let(out applied, false),
                     (("log"), (var p, (var x, var otherArgs))) => (MathS.Log(p, x), otherArgs),
 
-                    (("derivative"), (var expr, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("derivative"), args), LList<Entity>.Empty),
+                    (("derivative"), (var expr, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("derivative"), args), LList<Entity>.Empty).Let(out applied, false),
                     (("derivative"), (var expr, (var x, (Integer power, var otherArgs)))) => (MathS.Derivative(expr, x, (int)power), otherArgs),
                     (("derivative"), (var expr, (var x, (_, var otherArgs)))) => (MathS.Derivative(expr, x), otherArgs).Let(out badArgument, true),
                     (("derivative"), (var expr, (var x, var otherArgs))) => (MathS.Derivative(expr, x), otherArgs),
 
-                    (("integral"), (_, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("integral"), args), LList<Entity>.Empty),
+                    (("integral"), (_, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("integral"), args), LList<Entity>.Empty).Let(out applied, false),
                     (("integral"), (var expr, (var x, (Integer power, var otherArgs)))) => (MathS.Integral(expr, x, (int)power), otherArgs),
                     (("integral"), (var expr, (var x, (_, var otherArgs)))) => (MathS.Integral(expr, x), otherArgs).Let(out badArgument, true),
                     (("integral"), (var expr, (var x, var otherArgs))) => (MathS.Integral(expr, x), otherArgs),
 
-                    (("limit"),  ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => (new Application(Variable.CreateVariableUnchecked("limit"), args), LList<Entity>.Empty),
+                    (("limit"),  ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => (new Application(Variable.CreateVariableUnchecked("limit"), args), LList<Entity>.Empty).Let(out applied, false),
                     (("limit"), (var expr, (var x, (var to, var otherArgs)))) => (MathS.Limit(expr, x, to), otherArgs),
 
-                    (("limitleft"), ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => (new Application(Variable.CreateVariableUnchecked("limitleft"), args), LList<Entity>.Empty),
+                    (("limitleft"), ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => (new Application(Variable.CreateVariableUnchecked("limitleft"), args), LList<Entity>.Empty).Let(out applied, false),
                     (("limitleft"), (var expr, (var x, (var to, var otherArgs)))) => (MathS.Limit(expr, x, to, ApproachFrom.Left), otherArgs),
 
-                    ("limitright", ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => (new Application(Variable.CreateVariableUnchecked("limitright"), args), LList<Entity>.Empty),
+                    ("limitright", ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => (new Application(Variable.CreateVariableUnchecked("limitright"), args), LList<Entity>.Empty).Let(out applied, false),
                     ("limitright", (var expr, (var x, (var to, var otherArgs)))) => (MathS.Limit(expr, x, to, ApproachFrom.Right), otherArgs),
                     
-                    ("domain", (var x, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("domain"), args), LList<Entity>.Empty),
+                    ("domain", (var x, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("domain"), args), LList<Entity>.Empty).Let(out applied, false),
                     ("domain", (var expr, (Set.SpecialSet ss, var otherArgs))) => (expr.WithCodomain(ss.ToDomain()), otherArgs),
-                    ("domain", (var x, var _) args) => (new Application(Variable.CreateVariableUnchecked("domain"), args), LList<Entity>.Empty).Let(out badArgument, true),
+                    ("domain", (var x, var _) args) => (new Application(Variable.CreateVariableUnchecked("domain"), args), LList<Entity>.Empty).Let(out badArgument, true).Let(out applied, false),
                     
                     _ => null
                 };
 
-            private Entity? InnerProcess(Entity expr, LList<Entity> allArgs)
-                => ((expr, allArgs) switch
+            private (Entity Result, bool RerunAgain) InnerProcess(Entity expr, LList<Entity> allArgs)
+                => (expr, allArgs) switch
                     {
-                        (var identifier, LEmpty<Entity>) => identifier,
-                        (Application(var any, var argsInner), var argsOuter) => any.Apply(argsInner.Concat(argsOuter).ToLList()),
+                        (var identifier, LEmpty<Entity>)
+                            => (identifier, false),
+                            
+                        (Application(var any, var argsInner), var argsOuter)
+                            => (any.Apply(argsInner.Concat(argsOuter).ToLList()), true),
 
-                        (Variable(var name), var arguments) when KeywordToApplied(name, arguments, out _) is var (applied, args)
-                            => ApplyOthersIfNeeded(applied, args),
+                        (Variable(var name), var arguments) when KeywordToApplied(name, arguments, out _, out var isApplied) is var (applied, args)
+                            => (ApplyOthersIfNeeded(applied, args), isApplied),
 
-                        (Lambda(var x, var body), (var arg, var otherArgs)) => ApplyOthersIfNeeded(body.Substitute(x, arg), otherArgs),
+                        (Lambda(var x, var body), (var arg, var otherArgs))
+                            => (ApplyOthersIfNeeded(body.Substitute(x, arg), otherArgs), true),
 
-                        (var exprSimplified, var argsSimplified) => New(exprSimplified, argsSimplified),
-                    }) switch
-                    {
-                        var thisAgain when ReferenceEquals(thisAgain, this) => null,
-                        var newOne => newOne
+                        (var exprSimplified, var argsSimplified)
+                            => (New(exprSimplified, argsSimplified), false)
                     };
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify()
-                => InnerProcess(Expression.InnerSimplified, Arguments.Map(arg => arg.InnerSimplified))?.InnerSimplified ?? this;
+            {
+                var (expr, toRunOuter) = InnerProcess(Expression.InnerSimplified, Arguments.Map(arg => arg.InnerSimplified));
+                if (toRunOuter)
+                    return expr.InnerSimplified;
+                return expr;
+            }
 
             /// <inheritdoc/>
             protected override Entity InnerEval()
-                => InnerProcess(Expression.Evaled, Arguments.Map(arg => arg.Evaled))?.Evaled ?? this;
+            {
+                var (expr, toRunOuter) = InnerProcess(Expression.Evaled, Arguments.Map(arg => arg.Evaled));
+                if (toRunOuter)
+                    return expr.Evaled;
+                return expr;
+            }
         }
 
         partial record Lambda
