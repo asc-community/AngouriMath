@@ -26,8 +26,8 @@ namespace AngouriMath.Core.NovaSyntax
             while (true)
             {
                 var token = Next();
-                if (token.Kind == AngouriMathTokenType.End) break;
                 list.Add(token);
+                if (token.Kind == AngouriMathTokenType.End) break;
             }
             return list;
         }

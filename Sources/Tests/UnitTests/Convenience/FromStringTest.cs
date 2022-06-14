@@ -343,32 +343,6 @@ namespace AngouriMath.Tests.Convenience
             using var _ = Settings.ExplicitParsingOnly.Set(true);
             Assert.Throws<MissingOperatorParseException>(exprRaw.ToEntity);
         }
-        
-        [Theory]
-        [InlineData("x",     false,  "Success")]
-        [InlineData("x2",    false,  "Success")]
-        [InlineData("x2",    true,   "Missing")]
-        [InlineData("2x",    false,  "Success")]
-        [InlineData("2x",    true,   "Missing")]
-        [InlineData("x a",   false,  "Success")]
-        [InlineData("x a",   true,   "Missing")]
-        [InlineData("1 + x", false,  "Success")]
-        [InlineData("x;",    false,  "Unknown")]
-        [InlineData("x -",   false,  "Unknown")]
-        [InlineData("(x",    false,  "Unknown")]
-        public void ReturnsTheFollowing(string exprRaw, bool explicitOnly, string result)
-            => Settings.ExplicitParsingOnly.As(explicitOnly,
-                    () => Parse(exprRaw)
-                        .Switch(
-                            valid => "Success",
-                            invalid => invalid.Reason.Switch(
-                                unknown => "Unknown",
-                                missing => "Missing",
-                                internalError => "Internal"
-                            )
-                        )
-                        .Should().Be(result)
-                );
     }
 }
 

@@ -17,6 +17,23 @@ using static AngouriMath.Entity.Number;
 using static AngouriMath.MathS;
 using static System.Console;
 using PeterO.Numbers;
+using Yoakke.Streams;
+using Yoakke.SynKit.Lexer;
+
+var e = "x";
+
+
+var allTokens = new NovaLexer(e).LexAll();
+var stream1 = new NovaLexer(e).ToStream().ToBuffered();
+var stream2 = new EnumerableStream<IToken<AngouriMathTokenType>>(allTokens).ToBuffered();
+
+
+WriteLine(string.Join(", ", allTokens));
+WriteLine();
+WriteLine(stream1.Peek());
+WriteLine(stream2.Peek());
+
+return;
 
 
 // var system = Equations(

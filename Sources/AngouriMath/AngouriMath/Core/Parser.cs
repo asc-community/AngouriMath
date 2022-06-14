@@ -16,6 +16,7 @@ Any modifications to other source files will be overwritten when the parser is r
 using System.IO;
 using System.Text;
 using AngouriMath.Core.NovaSyntax;
+using Yoakke.Streams;
 using Yoakke.SynKit.Lexer;
 using Yoakke.SynKit.Text;
 using IToken = Antlr4.Runtime.IToken;
@@ -133,13 +134,14 @@ namespace AngouriMath.Core
         internal static Either<Entity, Failure<string>> ParseSilent(string source)
         {
             var lexer = new NovaLexer(source);
-            var tokens = lexer.LexAll().ToList();            
+            var tokens = lexer.LexAll().ToList();
+            var b = new NovaLexer(source).ToStream().ToBuffered();            
 
             if (!tokens.Any())
                 return new Failure<string>("Empty expression");
             
-            if (MathS.Settings.ExplicitParsingOnly)
-                tokens = InsertOmittedOperators(tokens);
+            // if (MathS.Settings.ExplicitParsingOnly)
+            //    tokens = InsertOmittedOperators(tokens);
 
             var result = new NovaParser(tokens).ParseStatement();
             
