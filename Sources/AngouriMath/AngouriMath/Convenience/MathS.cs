@@ -662,7 +662,7 @@ namespace AngouriMath
         /// failure, which is a type union of multiple reasons
         /// it may have failed.
         /// </returns>
-        public static Either<Entity, Failure<string>> Parse(string source)
+        public static Either<Entity, Failure<string>, ParseException> Parse(string source)
             => Parser.ParseSilent(source);
 
         /// <summary>Translates a <see cref="Number"/> in base 10 into base <paramref name="N"/></summary>

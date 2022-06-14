@@ -352,6 +352,15 @@ namespace AngouriMath.Tests.Convenience
             using var _ = Settings.ExplicitParsingOnly.Set(true);
             Assert.Throws<CannotApplyException>(() => FromString(expr));
         }
+        
+        [Fact] public void ApplicationParse1()
+            => Settings.ExplicitParsingOnly.As(true, () => Assert.Equal("x".ToEntity().Apply("a", "b", "c"), "x a b c".ToEntity()));
+        
+        [Fact] public void ApplicationParse2()
+            => Settings.ExplicitParsingOnly.As(true, () => Assert.Equal("x".ToEntity().Apply("a".ToEntity().Apply("b", "c")), "x (a b c)".ToEntity()));
+        
+        [Fact] public void ApplicationParse3()
+            => Settings.ExplicitParsingOnly.As(true, () => Assert.Equal("sin a", "sin".ToEntity().Apply("a")));
     }
 }
 

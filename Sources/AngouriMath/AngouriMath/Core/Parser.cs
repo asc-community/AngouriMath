@@ -131,7 +131,7 @@ namespace AngouriMath.Core
             return list;
         }
         
-        internal static Either<Entity, Failure<string>> ParseSilent(string source)
+        internal static Either<Entity, Failure<string>, ParseException> ParseSilent(string source)
         {
             var lexer = new NovaLexer(source);
             var tokens = lexer.LexAll().ToList();            
@@ -141,33 +141,40 @@ namespace AngouriMath.Core
             
             if (!MathS.Settings.ExplicitParsingOnly)
                 tokens = InsertOmittedOperators(tokens);
-
-            var result = new NovaParser(tokens).ParseStatement();
             
-            if (result.IsError)
+            try
             {
-                var err = result.Error;
-                var sb = new StringBuilder();
-                foreach (var element in err.Elements.Values)
+                var result = new NovaParser(tokens).ParseStatement();
+
+                if (result.IsError)
                 {
-                    sb
-                        .Append($"Expected ")
-                        .Append(string.Join(" or ", (IEnumerable<object>)element.Expected))
-                        .Append(" while parsing ")
-                        .Append(element.Context)
-                        .Append("\n");
+                    var err = result.Error;
+                    var sb = new StringBuilder();
+                    foreach (var element in err.Elements.Values)
+                    {
+                        sb
+                            .Append($"Expected ")
+                            .Append(string.Join(" or ", (IEnumerable<object>)element.Expected))
+                            .Append(" while parsing ")
+                            .Append(element.Context)
+                            .Append("\n");
+                    }
+                    sb.Append($"But got {(err.Got == null ? "end of input" : err.Got)}");
+                    return new Failure<string>(sb.ToString());
                 }
-                sb.Append($"But got {(err.Got == null ? "end of input" : err.Got)}");
-                return new Failure<string>(sb.ToString());
+                return result.Ok.Value;
+            } catch (ParseException pe)
+            {
+                return pe;
             }
-            return result.Ok.Value;
         }
 
         internal static Entity Parse(string source)
             => ParseSilent(source)
                 .Switch(
                     valid => valid,
-                    failure => throw new UnhandledParseException(failure.Reason)
+                    failure => throw new UnhandledParseException(failure.Reason),
+                    exception => throw exception
                     );
     }
 }
