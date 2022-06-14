@@ -259,8 +259,8 @@ namespace AngouriMath
                     var nonEmpty => outer.Apply(nonEmpty)
                 };
 
-            internal static (Entity Applied, LList<Entity> RemainingArgs)? KeywordToApplied(string kw, LList<Entity> arguments)
-                => (kw, arguments) switch
+            internal static (Entity Applied, LList<Entity> RemainingArgs)? KeywordToApplied(string kw, LList<Entity> arguments, out bool badArgument)
+                => (kw, arguments).Let(out badArgument, false) switch
                 {
                     (("sin"), (var x, var otherArgs)) => (x.Sin(), otherArgs),
                     (("cos"), (var x, var otherArgs)) => (x.Cos(), otherArgs),
@@ -302,10 +302,12 @@ namespace AngouriMath
 
                     (("derivative"), (var expr, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("derivative"), args), LList<Entity>.Empty),
                     (("derivative"), (var expr, (var x, (Integer power, var otherArgs)))) => (MathS.Derivative(expr, x, (int)power), otherArgs),
+                    (("derivative"), (var expr, (var x, (_, var otherArgs)))) => (MathS.Derivative(expr, x), otherArgs).Let(out badArgument, true),
                     (("derivative"), (var expr, (var x, var otherArgs))) => (MathS.Derivative(expr, x), otherArgs),
 
                     (("integral"), (_, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("integral"), args), LList<Entity>.Empty),
                     (("integral"), (var expr, (var x, (Integer power, var otherArgs)))) => (MathS.Integral(expr, x, (int)power), otherArgs),
+                    (("integral"), (var expr, (var x, (_, var otherArgs)))) => (MathS.Integral(expr, x), otherArgs).Let(out badArgument, true),
                     (("integral"), (var expr, (var x, var otherArgs))) => (MathS.Integral(expr, x), otherArgs),
 
                     (("limit"),  ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => (new Application(Variable.CreateVariableUnchecked("limit"), args), LList<Entity>.Empty),
@@ -319,6 +321,7 @@ namespace AngouriMath
                     
                     ("domain", (var x, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("domain"), args), LList<Entity>.Empty),
                     ("domain", (var expr, (Set.SpecialSet ss, var otherArgs))) => (expr.WithCodomain(ss.ToDomain()), otherArgs),
+                    ("domain", (var x, var _) args) => (new Application(Variable.CreateVariableUnchecked("domain"), args), LList<Entity>.Empty).Let(out badArgument, true),
                     
                     _ => null
                 };
@@ -329,7 +332,7 @@ namespace AngouriMath
                         (var identifier, LEmpty<Entity>) => identifier,
                         (Application(var any, var argsInner), var argsOuter) => any.Apply(argsInner.Concat(argsOuter).ToLList()),
 
-                        (Variable(var name), var arguments) when KeywordToApplied(name, arguments) is var (applied, args)
+                        (Variable(var name), var arguments) when KeywordToApplied(name, arguments, out _) is var (applied, args)
                             => ApplyOthersIfNeeded(applied, args),
 
                         (Lambda(var x, var body), (var arg, var otherArgs)) => ApplyOthersIfNeeded(body.Substitute(x, arg), otherArgs),

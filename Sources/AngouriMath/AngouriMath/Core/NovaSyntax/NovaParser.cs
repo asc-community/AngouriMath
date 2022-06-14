@@ -252,8 +252,10 @@ namespace AngouriMath.Core.NovaSyntax
             if (kw.Text == "piecewise")
                 return Piecewise(kw, open, args, close);
 
-            var tryApplied = Application.KeywordToApplied(kw.Text, SupplyOptionalArgs(args, kw.Text).ToLList());
+            var tryApplied = Application.KeywordToApplied(kw.Text, SupplyOptionalArgs(args, kw.Text).ToLList(), out var badArgument);
             
+            if (badArgument)
+                throw new InvalidArgumentParseException($"Bad arguments {args} for function {kw.Text}");
             if (tryApplied is not var (applied, otherArgs))
                 throw new AngouriBugException($"Unrecognized function {kw.Text}");
             if (otherArgs is not LEmpty<Entity>)
