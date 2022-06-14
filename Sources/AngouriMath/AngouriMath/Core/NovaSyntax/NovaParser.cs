@@ -203,6 +203,9 @@ namespace AngouriMath.Core.NovaSyntax
 
         [Rule("atom : Identifier")]
         private static Entity Variable(Token name) => Entity.Variable.CreateVariableUnchecked(name.Text);
+        
+        [Rule("atom : Keyword")]
+        private static Entity Keyword(Token name) => Entity.Variable.CreateVariableUnchecked(name.Text);
 
         [Rule("atom : '(|' expression '|)'")]
         private static Entity Abs(Token open, Entity expr, Token close) => expr.Abs();

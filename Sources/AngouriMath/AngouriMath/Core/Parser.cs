@@ -107,11 +107,11 @@ namespace AngouriMath.Core
                 {
                     // 2x -> 2 * x       2sqrt -> 2 * sqrt       2( -> 2 * (
                     // )x -> ) * x       )sqrt -> ) * sqrt       )( -> ) * (
-                    ( { Kind: Nova.Number } or { Kind: Nova.Punctuation, Text: ")" }, { Kind: Nova.Identifier } or { Kind: Nova.Punctuation, Text: "(" } )
+                    ( { Kind: Nova.Number } or { Kind: Nova.Punctuation, Text: ")" }, { Kind: Nova.Identifier or Nova.Keyword } or { Kind: Nova.Punctuation, Text: "(" } )
                         => new(default, "*", Nova.Operator),
                     
                     // x y -> x * y      x sqrt -> x * sqrt      x( -> x * (
-                    ( { Kind: Nova.Identifier, Text: var varName }, { Kind: Nova.Identifier } or { Kind: Nova.Punctuation, Text: "(" } )
+                    ( { Kind: Nova.Identifier, Text: var varName }, { Kind: Nova.Identifier or Nova.Keyword } or { Kind: Nova.Punctuation, Text: "(" } )
                         when !keywords.Contains(varName) => new(default, "*", Nova.Operator),
                     
                     // 3 2 -> 3 ^ 2      )2 -> ) ^ 2
