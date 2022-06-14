@@ -145,7 +145,21 @@ namespace AngouriMath.Core
             var result = new NovaParser(tokens).ParseStatement();
             
             if (result.IsError)
-                return new Failure<string>(string.Join("\n", result.Error.Elements.Select((a, b) => $"{a}: {b}")));
+            {
+                var err = result.Error;
+                var sb = new StringBuilder();
+                foreach (var element in err.Elements.Values)
+                {
+                    sb
+                        .Append($"Expected ")
+                        .Append(string.Join(" or ", (IEnumerable<object>)element.Expected))
+                        .Append(" while parsing ")
+                        .Append(element.Context)
+                        .Append("\n");
+                }
+                sb.Append($"But got {(err.Got == null ? "end of input" : err.Got)}");
+                return new Failure<string>(sb.ToString());
+            }
             return result.Ok.Value;
         }
 
