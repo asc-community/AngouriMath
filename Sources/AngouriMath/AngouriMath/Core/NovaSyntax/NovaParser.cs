@@ -234,11 +234,32 @@ namespace AngouriMath.Core.NovaSyntax
         [Rule("call_expression : Keyword '(' expression_list ')'")]
         private static Entity CallToKeyword(Token kw, Token open, IReadOnlyList<Entity> args, Token close)
         {
-            var tryApplied = Application.KeywordToApplied(kw.Text, args.ToLList());
+            static IEnumerable<Entity> SupplyOptionalArgs(IReadOnlyList<Entity> currArgs, string funcName)
+                => (funcName, currArgs.Count) switch
+                {
+                    ("log", 1) => currArgs.Prepend(10),
+                    ("derivative" or "integral", 2) => currArgs.Append(1),
+                    _ => currArgs
+                };
+
+            if (args.Count is 0)
+                throw new FunctionArgumentCountException("When using (), one is required to provide at least one argument");
+            
+            if (kw.Text == "apply")
+                return Apply(kw, open, args, close);
+            if (kw.Text == "lambda")
+                return Lambda(kw, open, args, close);
+            if (kw.Text == "piecewise")
+                return Piecewise(kw, open, args, close);
+
+            var tryApplied = Application.KeywordToApplied(kw.Text, SupplyOptionalArgs(args, kw.Text).ToLList());
+            
             if (tryApplied is not var (applied, otherArgs))
                 throw new AngouriBugException($"Unrecognized function {kw.Text}");
             if (otherArgs is not LEmpty<Entity>)
-                throw new FunctionArgumentCountException($"Too many ({args.Count}) args for function {kw.Text}")
+                throw new FunctionArgumentCountException($"Too many ({args.Count}) args for function {kw.Text}");
+            if (applied is Application or Entity.Variable)
+                throw new FunctionArgumentCountException($"Not enough ({args.Count}) arguments for function {kw.Text}");
             return applied;
         }
 
@@ -260,66 +281,6 @@ namespace AngouriMath.Core.NovaSyntax
                 result = result.LambdaOver(arg);
             }
             return result;
-        }
-
-        [Rule("call_expression : 'integral' '(' expression_list ')'")]
-        private static Entity Integral(Token integral, Token open, IReadOnlyList<Entity> args, Token close)
-        {
-            if (args.Count == 2) return MathS.Integral(args[0], args[1]);
-            if (args.Count == 3)
-            {
-                if (args[2] is not Integer power)
-                    throw new InvalidArgumentParseException("Expected an integer as third argument of integral");
-                return MathS.Integral(args[0], args[1], (int)power);
-            }
-            throw new FunctionArgumentCountException("integral requires 2 or 3 args");
-        }
-
-        [Rule("call_expression : 'derivative' '(' expression_list ')'")]
-        private static Entity Derivative(Token derivative, Token open, IReadOnlyList<Entity> args, Token close)
-        {
-            if (args.Count == 2) return MathS.Derivative(args[0], args[1]);
-            if (args.Count == 3)
-            {
-                if (args[2] is not Integer power)
-                    throw new InvalidArgumentParseException("Expected an integer as third argument of derivative");
-                return MathS.Derivative(args[0], args[1], (int)power);
-            }
-            throw new FunctionArgumentCountException("derivative requires 2 or 3 args");
-        }
-
-        [Rule("call_expression : 'limit' '(' expression_list ')'")]
-        private static Entity Limit(Token limit, Token open, IReadOnlyList<Entity> args, Token close) =>
-            AssertArgc(3, args, () => MathS.Limit(args[0], args[1], args[2]));
-
-        [Rule("call_expression : 'limitleft' '(' expression_list ')'")]
-        private static Entity LimitLeft(Token limit, Token open, IReadOnlyList<Entity> args, Token close) =>
-            AssertArgc(3, args, () => MathS.Limit(args[0], args[1], args[2], ApproachFrom.Left));
-
-        [Rule("call_expression : 'limitright' '(' expression_list ')'")]
-        private static Entity LimitRight(Token limit, Token open, IReadOnlyList<Entity> args, Token close) =>
-            AssertArgc(3, args, () => MathS.Limit(args[0], args[1], args[2], ApproachFrom.Right));
-
-        [Rule("call_expression : 'signum' '(' expression_list ')'")]
-        [Rule("call_expression : 'sign' '(' expression_list ')'")]
-        [Rule("call_expression : 'sgn' '(' expression_list ')'")]
-        private static Entity Sign(Token sign, Token open, IReadOnlyList<Entity> args, Token close) =>
-            AssertArgc(1, args, () => MathS.Signum(args[0]));
-
-        [Rule("call_expression : 'abs' '(' expression_list ')'")]
-        private static Entity Abs(Token abs, Token open, IReadOnlyList<Entity> args, Token close) =>
-            AssertArgc(1, args, () => MathS.Abs(args[0]));
-
-        [Rule("call_expression : 'phi' '(' expression_list ')'")]
-        private static Entity Phi(Token abs, Token open, IReadOnlyList<Entity> args, Token close) =>
-            AssertArgc(1, args, () => MathS.NumberTheory.Phi(args[0]));
-
-        [Rule("call_expression : 'domain' '(' expression_list ')'")]
-        private static Entity Domain(Token domain, Token open, IReadOnlyList<Entity> args, Token close)
-        {
-            if (args.Count != 2) throw new FunctionArgumentCountException("domain requires 2 args");
-            if (args[1] is not SpecialSet ss) throw new InvalidArgumentParseException($"Unrecognized special set {args[1].Stringize()}");
-            return args[0].WithCodomain(ss.ToDomain());
         }
 
         [Rule("call_expression : 'piecewise' '(' expression_list ')'")]

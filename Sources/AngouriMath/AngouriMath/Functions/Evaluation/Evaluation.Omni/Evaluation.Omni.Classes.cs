@@ -301,9 +301,11 @@ namespace AngouriMath
                     (("log"), (var p, (var x, var otherArgs))) => (MathS.Log(p, x), otherArgs),
 
                     (("derivative"), (var expr, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("derivative"), args), LList<Entity>.Empty),
+                    (("derivative"), (var expr, (var x, (Integer power, var otherArgs)))) => (MathS.Derivative(expr, x, (int)power), otherArgs),
                     (("derivative"), (var expr, (var x, var otherArgs))) => (MathS.Derivative(expr, x), otherArgs),
 
                     (("integral"), (_, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("integral"), args), LList<Entity>.Empty),
+                    (("integral"), (var expr, (var x, (Integer power, var otherArgs)))) => (MathS.Integral(expr, x, (int)power), otherArgs),
                     (("integral"), (var expr, (var x, var otherArgs))) => (MathS.Integral(expr, x), otherArgs),
 
                     (("limit"),  ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => (new Application(Variable.CreateVariableUnchecked("limit"), args), LList<Entity>.Empty),
@@ -314,6 +316,9 @@ namespace AngouriMath
 
                     ("limitright", ((_, LEmpty<Entity>) or (_, (_, LEmpty<Entity>))) and var args) => (new Application(Variable.CreateVariableUnchecked("limitright"), args), LList<Entity>.Empty),
                     ("limitright", (var expr, (var x, (var to, var otherArgs)))) => (MathS.Limit(expr, x, to, ApproachFrom.Right), otherArgs),
+                    
+                    ("domain", (var x, LEmpty<Entity>) args) => (new Application(Variable.CreateVariableUnchecked("domain"), args), LList<Entity>.Empty),
+                    ("domain", (var expr, (Set.SpecialSet ss, var otherArgs))) => (expr.WithCodomain(ss.ToDomain()), otherArgs),
                     
                     _ => null
                 };

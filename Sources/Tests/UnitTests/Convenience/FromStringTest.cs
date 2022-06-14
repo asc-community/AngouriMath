@@ -44,15 +44,16 @@ namespace AngouriMath.Tests.Convenience
             => Assert.Throws<UnhandledParseException>(() => (Entity)input);
 
         [Theory]
-        [InlineData("limitleft()", "Expected 3 arguments, but 0 were provided")]
-        [InlineData("derivative(3)", "derivative requires 2 or 3 args")]
-        [InlineData("integral(3)", "integral requires 2 or 3 args")]
-        [InlineData("ln(3, 5)", "Expected 1 arguments, but 2 were provided")]
-        [InlineData("sin(3, 5, 8)", "Expected 1 arguments, but 3 were provided")]
-        [InlineData("log()", "log requires 1 or 2 args")]
-        [InlineData("log(1, 1, 1)", "log requires 1 or 2 args")]
+        [InlineData("limitleft()", "at least one")]
+        [InlineData("derivative(3)", "not enough")]
+        [InlineData("integral(3)", "not enough")]
+        [InlineData("ln(3, 5)", "too many")]
+        [InlineData("sin(3, 5, 8)", "too many")]
+        [InlineData("log()", "at least one")]
+        [InlineData("log(1, 1, 1)", "too many")]
         public void WrongNumbersOfArgs(string input, string message) =>
-            Assert.StartsWith(message, Assert.Throws<FunctionArgumentCountException>(() => (Entity)input).Message);
+            Assert.Contains(message, Assert.Throws<FunctionArgumentCountException>(() => (Entity)input).Message.ToLower());
+
         [Theory]
         [InlineData("x+1")]
         [InlineData("sin(x)")]
