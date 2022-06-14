@@ -19,7 +19,6 @@ using AngouriMath.Core.NovaSyntax;
 using Yoakke.Streams;
 using Yoakke.SynKit.Lexer;
 using Yoakke.SynKit.Text;
-using IToken = Antlr4.Runtime.IToken;
 using Nova = AngouriMath.Core.NovaSyntax.AngouriMathTokenType;
 
 [assembly: System.CLSCompliant(false)]
