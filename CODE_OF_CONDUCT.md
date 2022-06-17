@@ -1,5 +1,3 @@
 ## Code of Conduct for members and contributors of AngouriMath
 
-We value the cozy and free atmosphere within which we keep working on our great idea. We disapprove any non-civil discussions. Although not forced, it is highly recommended to keep all discussions in English so that other members of our community are let to understand and take part in a conversation.
-
-More content coming soon...
+Maintainers, contributors, and anyone participating in the project are supposed to abide by the [**Code of Conduct**](https://github.com/asc-community/.github/blob/main/CODE_OF_CONDUCT.md). Instances of unacceptable behaviour can be reported to wbg@angouri.org.
