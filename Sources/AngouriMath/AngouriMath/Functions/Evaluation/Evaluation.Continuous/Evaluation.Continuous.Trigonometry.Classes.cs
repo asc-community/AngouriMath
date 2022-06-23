@@ -25,8 +25,13 @@ namespace AngouriMath
                 // is it of the form n / m * pi?
                 && MathS.UnsafeAndInternal.DivideByEntityStrict(angle, MathS.pi)?.Evaled is Rational angleRat
                 
-                // if n / m is integer, it is definitely 0
-                && angleRat % TrigonometricAngleExpansion.OneHalf == 0;
+                // if n / m is integer + 1/2
+                
+                // if it's divided by 1/2
+                && angleRat % TrigonometricAngleExpansion.OneHalf == 0
+                
+                // but is not integer
+                && angleRat is not Integer;
     }
     
     partial record Entity
