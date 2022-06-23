@@ -255,6 +255,12 @@ namespace AngouriMath.Tests.PatternsTest
                         .ShouldBeNotNull()
                         .ShouldApproximatelyEqual(MathS.Cos(angle))
                 );
+
+        [Fact]
+        public void TestTan1() => "tan(pi)".ToEntity().InnerSimplified.ShouldBe(0);
+        
+        [Fact]
+        public void TestTan2() => "tan(pi / 1)".ToEntity().InnerSimplified.ShouldBe(0);
     }
 }
 
