@@ -151,6 +151,8 @@ See its [source folder](./Sources/Terminal).
 ### More
 
 Read more about using AngouriMath for research on [the website](https://am.angouri.org/research).
+
+
   
 </details>
 
@@ -500,9 +502,10 @@ int main()
 AngouriMath is a free open-source project, there is no big company backing us. That is why we warmly welcome any contributors
 to the project. Aside from volunteer donations, you can help developing the project: check the [guide for developers](./CONTRIBUTING.md).
 
-## <a name="license"></a>License
+## <a name="license"></a>License & citation
 
-<a href="./LICENSE.md"><img alt="GitHub" src="https://img.shields.io/github/license/asc-community/AngouriMath?color=purple&label=License&style=flat-square"></a>
+<a href="./LICENSE.md"><img alt="GitHub" src="https://img.shields.io/github/license/asc-community/AngouriMath?color=purple&label=License&style=flat-square"></a> [![DOI](https://zenodo.org/badge/224485143.svg)](https://zenodo.org/badge/latestdoi/224485143)
 
 The project is open source, but can be used in closed commercial projects. There is no restriction on it
 with the only requirement to keep the MIT license with all distributives of AngouriMath.
+
