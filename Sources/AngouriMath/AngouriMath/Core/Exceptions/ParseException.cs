@@ -12,8 +12,11 @@ namespace AngouriMath.Core.Exceptions
     /// <summary>Thrown when trying to parse an invalid string</summary>
     public abstract class ParseException : MathSException { internal ParseException(string msg) : base(msg) { } }
 
-    /// <summary>Can only occur in the ANTLR parser when it is unclear what exactly happened</summary>
+    /// <summary>Can only occur in the parser when it is unclear what exactly happened</summary>
     public sealed class UnhandledParseException : ParseException { internal UnhandledParseException(string msg) : base(msg) { } }
+    
+    /// <summary>Occurs trying to apply an expression to a number</summary>
+    public sealed class CannotApplyException : ParseException { internal CannotApplyException(string msg) : base(msg) { } }
 
     /// <summary>Thrown when an invalid argument passed to a AM's function</summary>
     public sealed class InvalidArgumentParseException : ParseException { internal InvalidArgumentParseException(string msg) : base(msg) { } }

@@ -8,7 +8,7 @@
 using AngouriMath.Core.Exceptions;
 using static AngouriMath.Entity;
 
-namespace AngouriMath.Core.Antlr
+namespace AngouriMath.Core.NovaSyntax
 {
     internal static class ParsingHelpers
     {

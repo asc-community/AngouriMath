@@ -27,32 +27,33 @@ namespace AngouriMath.Tests.Convenience
         public static readonly Entity.Variable z = Var(nameof(z));
 
         [Theory]
-        [InlineData("", "line 1:0")]
-        [InlineData(" ", "line 1:1")]
-        [InlineData("\t", "line 1:1")]
-        [InlineData("  ", "line 1:2")]
-        [InlineData("//", "line 1:0")]
-        [InlineData("//\n", "line 2:0")]
-        [InlineData("/**/", "line 1:4")]
-        [InlineData("a+", "line 1:2")]
-        [InlineData("*a", "line 1:0")]
-        [InlineData("a*a_", "line 1:3")]
-        [InlineData("+!", "line 1:1")]
-        [InlineData("_", "line 1:0")]
-        [InlineData("()", "line 1:1")]
-        public void Error(string input, string errorPrefix) =>
-            Assert.StartsWith(errorPrefix,
-                Assert.Throws<UnhandledParseException>(() => (Entity)input).Message);
+        [InlineData("")]
+        [InlineData(" ")]
+        [InlineData("\t")]
+        [InlineData("  ")]
+        [InlineData("//")]
+        [InlineData("//\n")]
+        [InlineData("/**/")]
+        [InlineData("a+")]
+        [InlineData("*a")]
+        [InlineData("a*a_")]
+        [InlineData("+!")]
+        [InlineData("_")]
+        [InlineData("()")]
+        public void Error(string input)
+            => Assert.Throws<UnhandledParseException>(() => (Entity)input);
+
         [Theory]
-        [InlineData("limitleft()", "limitleft should have exactly 3 arguments but 0 arguments are provided")]
-        [InlineData("derivative(3)", "derivative should have exactly 3 arguments or 2 arguments but 1 argument is provided")]
-        [InlineData("integral(3)", "integral should have exactly 3 arguments or 2 arguments but 1 argument is provided")]
-        [InlineData("ln(3, 5)", "ln should have exactly 1 argument but 2 arguments are provided")]
-        [InlineData("sin(3, 5, 8)", "sin should have exactly 1 argument but 3 arguments are provided")]
-        [InlineData("log()", "log should have exactly 1 argument or 2 arguments but 0 arguments are provided")]
-        [InlineData("log(1, 1, 1)", "log should have exactly 1 argument or 2 arguments but 3 arguments are provided")]
+        [InlineData("limitleft()", "at least one")]
+        [InlineData("derivative(3)", "not enough")]
+        [InlineData("integral(3)", "not enough")]
+        [InlineData("ln(3, 5)", "too many")]
+        [InlineData("sin(3, 5, 8)", "too many")]
+        [InlineData("log()", "at least one")]
+        [InlineData("log(1, 1, 1)", "too many")]
         public void WrongNumbersOfArgs(string input, string message) =>
-            Assert.Equal(message, Assert.Throws<FunctionArgumentCountException>(() => (Entity)input).Message);
+            Assert.Contains(message, Assert.Throws<FunctionArgumentCountException>(() => (Entity)input).Message.ToLower());
+
         [Theory]
         [InlineData("x+1")]
         [InlineData("sin(x)")]
@@ -212,12 +213,12 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void TestInvalidArg1() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x)"));
         [Fact] public void TestInvalidArg2() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(24)"));
         [Fact] public void TestInvalidArg3() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x, x, 4, x)"));
-        [Fact] public void TestInvalidArg4() => Assert.Throws<FunctionArgumentCountException>(() => FromString("integral(x, x, x, x)"));
+        [Fact] public void TestInvalidArg4() => Assert.Throws<InvalidArgumentParseException>(() => FromString("integral(x, x, x, x)"));
         [Fact] public void TestInvalidArg5() => Assert.Throws<InvalidArgumentParseException>(() => FromString("integral(x, x, a)"));
         [Fact] public void TestInvalidArg6() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(x)"));
         [Fact] public void TestInvalidArg7() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(24)"));
         [Fact] public void TestInvalidArg8() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(x, x, 4, x)"));
-        [Fact] public void TestInvalidArg9() => Assert.Throws<FunctionArgumentCountException>(() => FromString("derivative(x, x, x, x)"));
+        [Fact] public void TestInvalidArg9() => Assert.Throws<InvalidArgumentParseException>(() => FromString("derivative(x, x, x, x)"));
         [Fact] public void TestInvalidArg10() => Assert.Throws<InvalidArgumentParseException>(() => FromString("derivative(x, x, a)"));
         [Fact] public void TestPowerUnary1() => Assert.Equal(Pow(x, "-5"), FromString("x^-5"));
         [Fact] public void TestPowerUnary2() => Assert.Equal(Pow(x, -x), FromString("x^-x"));
@@ -306,12 +307,12 @@ namespace AngouriMath.Tests.Convenience
         [InlineData("1 + αb_3", "αb_3")]
         [InlineData("αβγδεζηθικλμνξοπρσςτυφχψω", "αβγδεζηθικλμνξοπρσςτυφχψω")]
         [InlineData("sin(αβγδεζηθικλμ)", "αβγδεζηθικλμ")]
-        [InlineData("ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ")]
-        [InlineData("1 + ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ + 1", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣϹΤΥΦΧΨΩ")]
+        [InlineData("ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ")]
+        [InlineData("1 + ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ + 1", "ΑΒΓΔΕΖΗΘΙΚΛΜΝΞΟΠΡΣΤΥΦΧΨΩ")]
         [InlineData("йцукенгшщзхъфывапролджэячсмитьбю", "йцукенгшщзхъфывапролджэячсмитьбю")]
         [InlineData("ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ", "ЙЦУКЕНГШЩЗХЪФЫВАПРОЛДЖЭЯЧСМИТЬБЮ")]
         [InlineData("cos(АнгуриMath)", "АнгуриMath")]
-        [InlineData("ΑγγούριMath + 11", "ΑγγούριMath")]
+        [InlineData("ΑγγουριMath + 11", "ΑγγουριMath")]
         [InlineData("БЕZHΘГIM_64 ^ 2", "БЕZHΘГIM_64")]
         [InlineData("ВсЕмПрИвЕтВэТоМчАтИкЕ < 3", "ВсЕмПрИвЕтВэТоМчАтИкЕ")]
         [InlineData("йА кΨеВеТкΩ", "йА")]
@@ -323,52 +324,43 @@ namespace AngouriMath.Tests.Convenience
         }
         
         [Theory]
-        [InlineData("2x")]
-        [InlineData("2 x")]
         [InlineData("x2")]
         [InlineData("x 2")]
-        [InlineData("x + 1 2")]
-        [InlineData("2(x + 2)")]
         [InlineData("(x + 1)2")]
         [InlineData("x(x + 1)")]
         [InlineData("(x + 1)x")]
         [InlineData("(x + 1)(1 + 2)")]
-        [InlineData("2sin(x)")]
         [InlineData("sin(x)2")]
         [InlineData("a sin(x)")]
+        [InlineData("a b")]
+        [InlineData("sin a")]
+        [InlineData("b sin")]
         [InlineData("sin(x) a")]
-        public void ThrowsAsExplicitParsingEnabled(string exprRaw)
+        public void ApplicationParse(string exprRaw)
         {
-            exprRaw.ToEntity(); // doesn't throw, good
             using var _ = Settings.ExplicitParsingOnly.Set(true);
-            Assert.Throws<MissingOperatorParseException>(exprRaw.ToEntity);
+            Assert.IsType<Application>(exprRaw.ToEntity());
         }
         
         [Theory]
-        [InlineData("x",     false,  "Success")]
-        [InlineData("x2",    false,  "Success")]
-        [InlineData("x2",    true,   "Missing")]
-        [InlineData("2x",    false,  "Success")]
-        [InlineData("2x",    true,   "Missing")]
-        [InlineData("x a",   false,  "Success")]
-        [InlineData("x a",   true,   "Missing")]
-        [InlineData("1 + x", false,  "Success")]
-        [InlineData("x;",    false,  "Unknown")]
-        [InlineData("x -",   false,  "Unknown")]
-        [InlineData("(x",    false,  "Unknown")]
-        public void ReturnsTheFollowing(string exprRaw, bool explicitOnly, string result)
-            => Settings.ExplicitParsingOnly.As(explicitOnly,
-                    () => Parse(exprRaw)
-                        .Switch(
-                            valid => "Success",
-                            invalid => invalid.Reason.Switch(
-                                unknown => "Unknown",
-                                missing => "Missing",
-                                internalError => "Internal"
-                            )
-                        )
-                        .Should().Be(result)
-                );
+        [InlineData("2x")]
+        [InlineData("2 x")]
+        [InlineData("2(x + 2)")]
+        [InlineData("2sin(x)")]
+        public void CannotApply(string expr)
+        {
+            using var _ = Settings.ExplicitParsingOnly.Set(true);
+            Assert.Throws<CannotApplyException>(() => FromString(expr));
+        }
+        
+        [Fact] public void ApplicationParse1()
+            => Settings.ExplicitParsingOnly.As(true, () => Assert.Equal("x".ToEntity().Apply("a", "b", "c"), "x a b c".ToEntity()));
+        
+        [Fact] public void ApplicationParse2()
+            => Settings.ExplicitParsingOnly.As(true, () => Assert.Equal("x".ToEntity().Apply("a".ToEntity().Apply("b", "c")), "x (a b c)".ToEntity()));
+        
+        [Fact] public void ApplicationParse3()
+            => Settings.ExplicitParsingOnly.As(true, () => Assert.Equal("sin a", "sin".ToEntity().Apply("a")));
     }
 }
 
