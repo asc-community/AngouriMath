@@ -41,6 +41,8 @@ namespace AngouriMath.Functions
                 SortAndGroup(Unionf.LinearChildren(x), level, (a, b) => a.Unite(b)),
             Intersectionf =>
                 SortAndGroup(Intersectionf.LinearChildren(x), level, (a, b) => a.Intersect(b)),
+            Xorf => 
+                SortAndGroup(Xorf.LinearChildren(x), level, (a, b) => a ^ b),
             _ => x,
         };
         internal static Entity PolynomialLongDivision(Entity x) =>
