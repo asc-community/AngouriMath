@@ -26,7 +26,7 @@ jobs:
           currtime=$(date +%s)
           echo "commit hash is $commithash"
           echo "time is $currtime"
-          name=0.0.0-master-$currtime-$commithash
+          name=10.0.0-master-$currtime-$commithash
           echo "name is $name"
           
           # AngouriMath
