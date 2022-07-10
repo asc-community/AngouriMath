@@ -58,6 +58,12 @@ namespace AngouriMath.Functions
             Orf(Andf(var any1a, Notf(var any2)), var any1) when any1 == any1a && IsLogic(any1) => any1 | any2,
             Andf(Orf(var any1a, Notf(var any2)), var any1) when any1 == any1a && IsLogic(any1) => any1 & any2,
 
+            //xor
+            Orf(Andf(var any1a, Notf(var any1b)), Andf(var any2b, Notf(var any2a))) when any1a == any2a && any1b == any2b && IsLogic(any1a, any1b) => any1a ^ any1b,
+            Orf(Andf(Notf(var any1b), var any1a), Andf(var any2b, Notf(var any2a))) when any1a == any2a && any1b == any2b && IsLogic(any1a, any1b) => any1a ^ any1b,
+            Orf(Andf(var any1a, Notf(var any1b)), Andf(Notf(var any2a) ,var any2b)) when any1a == any2a && any1b == any2b && IsLogic(any1a, any1b) => any1a ^ any1b,
+            Orf(Andf(Notf(var any1b), var any1a), Andf(Notf(var any2a) ,var any2b)) when any1a == any2a && any1b == any2b && IsLogic(any1a, any1b) => any1a ^ any1b,
+
             Impliesf(Notf(var any1), Notf(var any2)) when IsLogic(any1, any2) => any2.Implies(any1),
 
             _ => x

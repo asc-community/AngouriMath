@@ -40,6 +40,14 @@ namespace AngouriMath
                 => LinearChildren<Andf, AndfBranchGetter>(expr);
         }
 
+        partial record Xorf
+        {
+            private struct XorfBranchGetter : IBranchGetter<Xorf> { public Entity Left(Xorf node) => node.Left; public Entity Right(Xorf node) => node.Right; }
+            internal static IEnumerable<Entity> LinearChildren(Entity expr)
+                => LinearChildren<Xorf, XorfBranchGetter>(expr);
+
+        }
+
         partial record Set
         {
             partial record Unionf

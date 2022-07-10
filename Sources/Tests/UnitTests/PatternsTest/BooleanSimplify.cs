@@ -44,6 +44,11 @@ namespace AngouriMath.Tests.PatternsTest
         [InlineData("a and b and a", "a and b")]
         [InlineData("a and b and b", "a and b")]
         [InlineData("a and b and c and f and a", "a and b and c and f")]
+        [InlineData("a and not b or b and not a", "a xor b")]
+        [InlineData("not a and b or a and not b", "a xor b")]
+        [InlineData("not a and b or not b and a", "a xor b")]
+        [InlineData("a and not b or not a and b", "a xor b")]
+        [InlineData("b xor a xor c xor d", "a xor b xor c xor d")]
         public void Test(string expr, string expected)
         {
             var exp = expected.ToEntity();
