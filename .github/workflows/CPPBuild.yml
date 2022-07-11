@@ -39,6 +39,7 @@ jobs:
         
     - name: 'Run env vars for Windows'
       if: ${{ matrix.os == 'windows-latest' }}
+      shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         
