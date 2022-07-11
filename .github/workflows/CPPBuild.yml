@@ -36,13 +36,7 @@ jobs:
       with:
         dotnet-version: '6.0.100'
         include-prerelease: true
-        
-    - name: 'Run env vars for Windows'
-      if: ${{ matrix.os == 'windows-latest' }}
-      shell: cmd
-      run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        
+
     - name: 'Generating exports'
       run: |
         cd Sources/Utils
@@ -54,17 +48,20 @@ jobs:
         sudo apt-get install zlib1g-dev
         sudo apt-get install libkrb5-dev
 
-    - name: 'Building the library into native'
+    - name: 'Building the library into native for Windows'
+      if: ${{ matrix.os == 'windows-latest' }}
+      shell: cmd
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/out-x64
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
         
-        $envBat = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        if ( [System.IO.File]::Exists($envBat) )
-        {
-            Start-Process $envBat
-        }
-        
+    - name: 'Building the library into native for Linux & MacOS'
+      if: ${{ matrix.os != 'windows-latest' }}
+      run: |
+        cd Sources/Wrappers/AngouriMath.CPP.Exporting
+        mkdir ../AngouriMath.CPP.Importing/out-x64
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
         
         
