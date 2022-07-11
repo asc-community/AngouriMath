@@ -32,7 +32,7 @@ jobs:
     - name: Setup .NET 6
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.x'
+        dotnet-version: '6.0.100'
         include-prerelease: true
         
     - name: 'Install some libs for Linux'
@@ -41,7 +41,17 @@ jobs:
         sudo apt-get install zlib1g-dev
         sudo apt-get install libkrb5-dev
         
-    - name: 'Building the library into native'
+    - name: 'Building the library into native for Windows'
+      if: ${{ matrix.os == 'windows-latest' }}
+      shell: cmd
+      run: |
+        cd Sources/Wrappers/AngouriMath.CPP.Exporting
+        mkdir ../AngouriMath.CPP.Importing/out-x64
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
+         
+    - name: 'Building the library into native for Linux & MacOS'
+      if: ${{ matrix.os != 'windows-latest' }}
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/out-x64
