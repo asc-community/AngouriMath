@@ -34,7 +34,7 @@ jobs:
     - name: Setup .NET 6
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.x'
+        dotnet-version: '6.0.100'
         include-prerelease: true
         
     - name: 'Generating exports'
