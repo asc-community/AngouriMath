@@ -1,6 +1,7 @@
 #!csharp
 
 using AngouriMath;
+using AngouriMath.Extensions;
 using Microsoft.DotNet.Interactive;
 using Microsoft.DotNet.Interactive.Formatting;
 
