@@ -1,0 +1,35 @@
+#!csharp
+
+using AngouriMath;
+using Microsoft.DotNet.Interactive;
+using Microsoft.DotNet.Interactive.Formatting;
+
+static void RegisterLatex<T>(Func<T, string> latexer)
+{
+    Formatter.Register<T>(
+        t => $"$${latexer(t)}$$", 
+        "text/latex");
+
+    Formatter.Register<T>(
+        t => $@"
+<script src='https://polyfill.io/v3/polyfill.min.js?features=es6'></script>
+<script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script>
+\[{latexer(t)}\]",
+        "text/html"
+    );
+
+    Formatter.SetPreferredMimeTypesFor(typeof(T), "text/latex");
+}
+
+Formatter.SetPreferredMimeTypesFor(typeof(PeterO.Numbers.EDecimal), "text/plain");
+Formatter.Register<PeterO.Numbers.EDecimal>(o => o.ToString(), "text/plain");
+
+Formatter.SetPreferredMimeTypesFor(typeof(PeterO.Numbers.EInteger), "text/plain");
+Formatter.Register<PeterO.Numbers.EInteger>(o => o.ToString(), "text/plain");
+
+RegisterLatex<AngouriMath.Core.ILatexiseable>(o => o.Latexise());
+
+RegisterLatex<PeterO.Numbers.ERational>(o => $@"\frac{{{o.Numerator}}}{{{o.Denominator}}}");
+
+"Extensions for LaTeX loaded!"
+
