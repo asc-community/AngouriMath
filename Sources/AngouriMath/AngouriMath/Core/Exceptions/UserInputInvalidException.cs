@@ -64,4 +64,13 @@ namespace AngouriMath.Core.Exceptions
     {
         internal InvalidProtocolProvided(string msg) : base(msg) { }
     }
+
+    /// <summary>
+    /// Happens when matrices don't have a correct shape, e. g.
+    /// trying to concat when they have different sizes by one side.
+    /// </summary>
+    public sealed class BadMatrixShapeException : MathSException
+    {
+        internal BadMatrixShapeException(string msg) : base(msg) { }
+    }
 }

@@ -23,6 +23,24 @@ namespace AngouriMath.Extensions
     public static partial class AngouriMathExtensions
     {
         /// <summary>
+        /// Concatenates the argument matrix to the right of the current.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static Matrix ConcatToTheRight(this Matrix a, Matrix b)
+            => MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal, a, b);
+        
+        /// <summary>
+        /// Concatenates the argument matrix to the bottom of the current.
+        /// </summary>
+        /// <param name="a"></param>
+        /// <param name="b"></param>
+        /// <returns></returns>
+        public static Matrix ConcatToTheBottom(this Matrix a, Matrix b)
+            => MathS.Matrices.Concat(MathS.Matrices.Direction.Vertical, a, b);
+    
+        /// <summary>
         /// Converts a given sequence of elements into a vector,
         /// which is a one-column matrix
         /// </summary>

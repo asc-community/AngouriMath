@@ -10,6 +10,7 @@ using HonkSharp.Fluency;
 using System;
 using static AngouriMath.Entity;
 using AngouriMath.Extensions;
+using GenericTensor.Core;
 using static AngouriMath.Entity.Number;
 using static AngouriMath.MathS;
 using static System.Console;

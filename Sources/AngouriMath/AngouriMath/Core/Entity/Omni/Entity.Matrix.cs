@@ -28,7 +28,7 @@ namespace AngouriMath
             public GenTensor InnerMatrix { internal get; init; }
 
             /// <summary>
-            /// Creates a <see cref="Matrix"/> from an instance of <see cref="GenTensor"/>.
+            /// Creates a <see cref="Entity.Matrix"/> from an instance of <see cref="GenTensor"/>.
             /// Since only 2-dimensional matrices are supported, it will throw an exception if the number
             /// of dimensions is too high or too low.
             /// </summary>
