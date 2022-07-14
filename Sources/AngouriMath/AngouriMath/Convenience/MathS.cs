@@ -897,6 +897,26 @@ namespace AngouriMath
         public static class Matrices
         {
             /// <summary>
+            /// Direction of matrix concatenation
+            /// </summary>
+            public enum Direction
+            {
+#pragma warning disable CS1591
+                Horizontal,
+                Vertical
+#pragma warning restore CS1591
+            }
+
+            /// <summary>
+            /// Concatenates two matrices by the given direction.
+            /// </summary>
+            /// <param name="dir"></param>
+            /// <param name="matrices"></param>
+            /// <returns></returns>
+            public static Matrix Concat(Direction dir, params Matrix[] matrices)
+                => MatrixOperations.Concat(dir, matrices);
+        
+            /// <summary>
             /// Performs a pointwise multiplication operation,
             /// or throws exception if shapes mismatch
             /// </summary>

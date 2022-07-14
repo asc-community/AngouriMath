@@ -6,6 +6,7 @@
 //
 
 using AngouriMath;
+using AngouriMath.Core.Exceptions;
 using Xunit;
 using static AngouriMath.Entity;
 using AngouriMath.Extensions;
@@ -658,5 +659,163 @@ namespace AngouriMath.Tests.Algebra
 
         [Fact] public void TestMatrixMapped4()
             => Assert.Equal("[[1, 2], [3, 4], [5, 6]]", MathS.Matrix(3, 2, (a, b) => 1 + a * 2 + b));
+
+        [Fact] public void Concat1()
+            => Assert.Equal(
+                @"
+                    [[1, 2],
+                    [3, 4]]
+                ",
+                MathS.Matrices.Concat(MathS.Matrices.Direction.Vertical,
+                    "[[1, 2]]",
+                    "[[3, 4]]"
+                )
+            );
+        
+        [Fact] public void Concat2()
+            => Assert.Equal(
+                @"
+                    [[1, 2],
+                    [3, 4],
+                    [5, 6],
+                    [7, 8],
+                    [9, 10]]
+                ",
+                MathS.Matrices.Concat(MathS.Matrices.Direction.Vertical,
+                    "[[1, 2]]",
+                    "[[3, 4]]",
+                    @"
+                     [[5, 6],
+                      [7, 8],
+                      [9, 10]]
+                    "
+                )
+            );
+        
+        [Fact] public void Concat3()
+            => Assert.Equal(
+                @"
+                    [[1, 2],
+                    [3, 4],
+                    [5, 6],
+                    [7, 8],
+                    [9, 10]]
+                ",
+                MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
+                    "[1, 3, 5, 7, 9]",
+                    "[2, 4, 6, 8, 10]"
+                )
+            );
+        [Fact] public void Concat4()
+            => Assert.Equal(
+                @"
+                    [[1, 2, 11],
+                    [3, 4, 12],
+                    [5, 6, 13],
+                    [7, 8, 14],
+                    [9, 10, 15]]
+                ",
+                MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
+                    "[1, 3, 5, 7, 9]",
+                    @"
+                     [[2, 11],
+                      [4, 12],
+                      [6, 13],
+                      [8, 14],
+                      [10, 15]]
+                    "
+                )
+            );
+        
+        [Fact] public void Concat5()
+            => Assert.Equal(
+                @"
+                    [1, 2, 3, 4, 5, 6, 7]
+                ",
+                MathS.Matrices.Concat(MathS.Matrices.Direction.Vertical,
+                    "[1, 2, 3]",
+                    "[4, 5, 6, 7]"
+                )
+            );
+        
+        [Fact] public void Concat6()
+            => Assert.Throws<BadMatrixShapeException>(
+                () =>
+                    MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
+                        "[1, 2, 3]",
+                        "[4, 5, 6, 7]"
+                    )
+            );
+        
+        [Fact] public void Concat7()
+            => Assert.Throws<BadMatrixShapeException>(
+                () =>
+                    MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
+                        "[1, 2, 3]",
+                        "[4, 5, 6, 7]"
+                    )
+            );
+        
+        [Fact] public void Concat8()
+            => Assert.Throws<BadMatrixShapeException>(
+                () =>
+                    MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
+                        @"[[1, 2], 
+                           [3, 4]]",
+                        "[1, 2, 3]"
+                    )
+            );
+        
+        [Fact] public void Concat9()
+            => Assert.Throws<BadMatrixShapeException>(
+                () =>
+                    MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
+                        @"[[1, 2], 
+                           [3, 4],
+                           [5, 6]]",
+                        "[[4, 5]]",
+                        "[[1]]"
+                    )
+            );
+            
+        [Fact] public void Concat10()
+            => Assert.Equal(
+                @"
+                    [[1, 2],
+                     [3, 4],
+                     [5, 6],
+                     [7, 8],
+                     [9, 10],
+                     [11, 12]]
+                ",
+                MathS.Matrices.Concat(MathS.Matrices.Direction.Vertical,
+                    @"[[1, 2],
+                       [3, 4],
+                       [5, 6]]",
+                       
+                    @"[[7, 8],
+                       [9, 10]]",
+                       
+                    @"[[11, 12]]"
+                )
+            );
+        
+        [Fact] public void Concat11()
+            => Assert.Equal(
+                @"
+                    [[1, 2, 3, 4,  5,  6],
+                     [7, 8, 9, 10, 11, 12]]
+                ",
+                MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
+                    @"[[1, 2, 3],
+                       [7, 8, 9]]",
+                       
+                    @"[[4],
+                       [10]]",
+                       
+                    @"[[5,  6],
+                       [11, 12]]"
+                )
+            );
     }
 }
