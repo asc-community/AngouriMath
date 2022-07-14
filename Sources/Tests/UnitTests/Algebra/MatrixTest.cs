@@ -660,7 +660,7 @@ namespace AngouriMath.Tests.Algebra
         [Fact] public void TestMatrixMapped4()
             => Assert.Equal("[[1, 2], [3, 4], [5, 6]]", MathS.Matrix(3, 2, (a, b) => 1 + a * 2 + b));
 
-        [Fact] public void Concat1()
+        [Fact] public void Concat01()
             => Assert.Equal(
                 @"
                     [[1, 2],
@@ -672,7 +672,7 @@ namespace AngouriMath.Tests.Algebra
                 )
             );
         
-        [Fact] public void Concat2()
+        [Fact] public void Concat02()
             => Assert.Equal(
                 @"
                     [[1, 2],
@@ -692,7 +692,7 @@ namespace AngouriMath.Tests.Algebra
                 )
             );
         
-        [Fact] public void Concat3()
+        [Fact] public void Concat03()
             => Assert.Equal(
                 @"
                     [[1, 2],
@@ -706,7 +706,7 @@ namespace AngouriMath.Tests.Algebra
                     "[2, 4, 6, 8, 10]"
                 )
             );
-        [Fact] public void Concat4()
+        [Fact] public void Concat04()
             => Assert.Equal(
                 @"
                     [[1, 2, 11],
@@ -727,7 +727,7 @@ namespace AngouriMath.Tests.Algebra
                 )
             );
         
-        [Fact] public void Concat5()
+        [Fact] public void Concat05()
             => Assert.Equal(
                 @"
                     [1, 2, 3, 4, 5, 6, 7]
@@ -738,7 +738,7 @@ namespace AngouriMath.Tests.Algebra
                 )
             );
         
-        [Fact] public void Concat6()
+        [Fact] public void Concat06()
             => Assert.Throws<BadMatrixShapeException>(
                 () =>
                     MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
@@ -747,7 +747,7 @@ namespace AngouriMath.Tests.Algebra
                     )
             );
         
-        [Fact] public void Concat7()
+        [Fact] public void Concat07()
             => Assert.Throws<BadMatrixShapeException>(
                 () =>
                     MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
@@ -756,7 +756,7 @@ namespace AngouriMath.Tests.Algebra
                     )
             );
         
-        [Fact] public void Concat8()
+        [Fact] public void Concat08()
             => Assert.Throws<BadMatrixShapeException>(
                 () =>
                     MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
@@ -766,7 +766,7 @@ namespace AngouriMath.Tests.Algebra
                     )
             );
         
-        [Fact] public void Concat9()
+        [Fact] public void Concat09()
             => Assert.Throws<BadMatrixShapeException>(
                 () =>
                     MathS.Matrices.Concat(MathS.Matrices.Direction.Horizontal,
@@ -815,6 +815,59 @@ namespace AngouriMath.Tests.Algebra
                        
                     @"[[5,  6],
                        [11, 12]]"
+                )
+            );
+        
+        [Fact] public void Concat12()
+            => Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                    {
+                        { 1, 2, 3 },
+                        { 4, 5, 6 },
+                        { 7, 8, 9 }
+                    }
+                ),
+                MathS.Matrix(new Entity[,]
+                    {
+                        { 1, 2, 3 },
+                        { 4, 5, 6 },
+                    }
+                ).ConcatToTheBottom(
+                    MathS.Matrix(new Entity[,]
+                        {
+                            { 7, 8, 9 }
+                        }
+                    )
+                )
+            );
+        
+        [Fact] public void Concat13()
+            => Assert.Equal(
+                MathS.Matrix(new Entity[,]
+                    {
+                        { 1, 2, 3 },
+                        { 4, 5, 6 },
+                        { 7, 8, 9 }
+                    }
+                ),
+                MathS.Matrix(new Entity[,]
+                    {
+                        { 1, 2 },
+                        { 4, 5 },
+                    }
+                ).ConcatToTheRight(
+                    MathS.Matrix(new Entity[,]
+                        {
+                            { 3 },
+                            { 6 }
+                        }
+                    )
+                ).ConcatToTheBottom(
+                    MathS.Matrix(new Entity[,]
+                        {
+                            { 7, 8, 9 }
+                        }
+                    )
                 )
             );
     }

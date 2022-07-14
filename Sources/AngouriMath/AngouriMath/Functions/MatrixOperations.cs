@@ -21,8 +21,8 @@ internal static class MatrixOperations
             return matrices[0];
         var (axis1, axis2) = dir switch
         {
-            MathS.Matrices.Direction.Vertical => (0, 1),
-            MathS.Matrices.Direction.Horizontal => (1, 0),
+            MathS.Matrices.Direction.Vertical => (1, 0),
+            MathS.Matrices.Direction.Horizontal => (0, 1),
             _ => throw new AngouriBugException("Unhandled case")
         };
 
@@ -37,8 +37,8 @@ internal static class MatrixOperations
         }
 
         var result = GenTensor<Entity, Matrix.EntityTensorWrapperOperations>.CreateMatrix(
-            expectedSize * axis1 + totalSize2 * axis2,
-            expectedSize * axis2 + totalSize2 * axis1
+            expectedSize * axis2 + totalSize2 * axis1,
+            expectedSize * axis1 + totalSize2 * axis2
         );
 
         return dir switch
@@ -79,7 +79,7 @@ internal static class MatrixOperations
 #else
                 res.SetValueNoCheck(matrix[x, y], x + xOffset, y);
 #endif
-            xOffset += matrix.ColumnCount;
+            xOffset += matrix.RowCount;
         }
 
         return new Matrix(res);
