@@ -10,10 +10,21 @@ using AngouriMath;
 using System;
 using static AngouriMath.MathS.Hyperbolic;
 
-Console.WriteLine(Tanh("x"));
-Console.WriteLine(Tanh("x").Substitute("x", 1.5).Evaled);
-Console.WriteLine(Tanh("x").Substitute("x", 0.01).Evaled);
-
-Console.WriteLine(Cotanh("x"));
-Console.WriteLine(Cotanh("x").Substitute("x", 1.5).Evaled);
-Console.WriteLine(Cotanh("x").Substitute("x", 0.01).Evaled);
+Console.WriteLine(Arsinh("x"));
+Console.WriteLine(Arsinh(Sinh("x")).Substitute("x", 10).Evaled);
+Console.WriteLine("----------------------");
+Console.WriteLine(Arcosh("x"));
+Console.WriteLine(Arcosh(Cosh("x")).Substitute("x", 10).Evaled);
+Console.WriteLine("----------------------");
+Console.WriteLine(Artanh("x"));
+Console.WriteLine(Artanh(Tanh("x")).Substitute("x", 10).Evaled);
+Console.WriteLine("----------------------");
+Console.WriteLine(Arcotanh("x"));
+Console.WriteLine(Arcotanh(Cotanh("x")).Substitute("x", 10).Evaled);
+Console.WriteLine("----------------------");
+Console.WriteLine(Arsech("x"));
+Console.WriteLine(Arsech(Sech("x")).Substitute("x", 10).Evaled);
+Console.WriteLine("----------------------");
+Console.WriteLine(Arcosech("x"));
+Console.WriteLine(Arcosech(Cosech("x")).Substitute("x", 10).Evaled);
+Console.WriteLine("----------------------");

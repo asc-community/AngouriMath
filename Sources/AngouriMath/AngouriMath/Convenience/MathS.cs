@@ -1394,11 +1394,11 @@ namespace AngouriMath
             /// Prints
             /// <code>
             /// (e ^ (2 * x) - 1) / (e ^ (2 * x) + 1)
-            /// 0.9051482536448664382423036964564955972276411351587817985642239824511025769945795322284326910178799219
-            /// 0.0099996666799994605474749215320447712347925046573720304399744319393450473865432596083049427599358362
+            /// 0.905148253644
+            /// 0.009999666679
             /// (e ^ (2 * x) + 1) / (e ^ (2 * x) - 1)
-            /// 1.1047913929825119039439987891995101104078049976096597420355546845786894484597146476520274243990921394
-            /// 100.0033333111113206676075869630457731583010775731889603299752706978453463171344824839514673621545200118
+            /// 1.104791392982
+            /// 100.0033333111
             /// </code>
             /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
@@ -1417,7 +1417,7 @@ namespace AngouriMath
             /// Console.WriteLine(Tanh("x"));
             /// Console.WriteLine(Tanh("x").Substitute("x", 1.5).Evaled);
             /// Console.WriteLine(Tanh("x").Substitute("x", 0.01).Evaled);
-            /// 
+            /// Console.WriteLine("-----------------------------");
             /// Console.WriteLine(Cotanh("x"));
             /// Console.WriteLine(Cotanh("x").Substitute("x", 1.5).Evaled);
             /// Console.WriteLine(Cotanh("x").Substitute("x", 0.01).Evaled);
@@ -1425,11 +1425,12 @@ namespace AngouriMath
             /// Prints
             /// <code>
             /// (e ^ (2 * x) - 1) / (e ^ (2 * x) + 1)
-            /// 0.9051482536448664382423036964564955972276411351587817985642239824511025769945795322284326910178799219
-            /// 0.0099996666799994605474749215320447712347925046573720304399744319393450473865432596083049427599358362
+            /// 0.905148253644
+            /// 0.009999666679
+            /// -----------------------------
             /// (e ^ (2 * x) + 1) / (e ^ (2 * x) - 1)
-            /// 1.1047913929825119039439987891995101104078049976096597420355546845786894484597146476520274243990921394
-            /// 100.0033333111113206676075869630457731583010775731889603299752706978453463171344824839514673621545200118
+            /// 1.104791392982
+            /// 100.0033333111
             /// </code>
             /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
@@ -1440,6 +1441,27 @@ namespace AngouriMath
             /// <code>1 / cosh x</code>
             /// <a href="https://en.wikipedia.org/wiki/Hyperbolic_functions">Wikipedia</a>
             /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(Sech("x"));
+            /// Console.WriteLine(Sech("x").Substitute("x", 1.5).Evaled);
+            /// Console.WriteLine(Sech("x").Substitute("x", 0.01).Evaled);
+            /// Console.WriteLine("-----------------------------");
+            /// Console.WriteLine(Cosech("x"));
+            /// Console.WriteLine(Cosech("x").Substitute("x", 1.5).Evaled);
+            /// Console.WriteLine(Cosech("x").Substitute("x", 0.01).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 1 / ((e ^ x + e ^ (-x)) / 2)
+            /// 0.42509
+            /// 0.99995
+            /// -----------------------------
+            /// 1 / ((e ^ x - e ^ (-x)) / 2)
+            /// 0.46964
+            /// 99.9983
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Sech(Entity x) => 1 / Cosh(x);
 
@@ -1448,6 +1470,27 @@ namespace AngouriMath
             /// <code>1 / sinh x</code>
             /// <a href="https://en.wikipedia.org/wiki/Hyperbolic_functions">Wikipedia</a>
             /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(Sech("x"));
+            /// Console.WriteLine(Sech("x").Substitute("x", 1.5).Evaled);
+            /// Console.WriteLine(Sech("x").Substitute("x", 0.01).Evaled);
+            /// Console.WriteLine("-----------------------------");
+            /// Console.WriteLine(Cosech("x"));
+            /// Console.WriteLine(Cosech("x").Substitute("x", 1.5).Evaled);
+            /// Console.WriteLine(Cosech("x").Substitute("x", 0.01).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 1 / ((e ^ x + e ^ (-x)) / 2)
+            /// 0.42509
+            /// 0.99995
+            /// -----------------------------
+            /// 1 / ((e ^ x - e ^ (-x)) / 2)
+            /// 0.46964
+            /// 99.9983
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Cosech(Entity x) => 1 / Sinh(x);
 
@@ -1456,6 +1499,50 @@ namespace AngouriMath
             /// <code>ln(x + sqrt(x ^ 2 + 1))</code>
             /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Hyperbolic;
+            /// 
+            /// Console.WriteLine(Arsinh("x"));
+            /// Console.WriteLine(Arsinh(Sinh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosh("x"));
+            /// Console.WriteLine(Arcosh(Cosh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Artanh("x"));
+            /// Console.WriteLine(Artanh(Tanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcotanh("x"));
+            /// Console.WriteLine(Arcotanh(Cotanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arsech("x"));
+            /// Console.WriteLine(Arsech(Sech("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosech("x"));
+            /// Console.WriteLine(Arcosech(Cosech("x")).Substitute("x", 10).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// ln(x + sqrt(x ^ 2 + 1))
+            /// 10
+            /// ----------------------
+            /// ln(x + sqrt(x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((1 + x) / (1 - x))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((x - 1) / (x + 1))
+            /// -10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 + 1))
+            /// 10
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arsinh(Entity x) => Ln(x + Sqrt(x.Pow(2) + 1));
 
@@ -1464,6 +1551,50 @@ namespace AngouriMath
             /// <code>ln(x + sqrt(x ^ 2 - 1))</code>
             /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Hyperbolic;
+            /// 
+            /// Console.WriteLine(Arsinh("x"));
+            /// Console.WriteLine(Arsinh(Sinh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosh("x"));
+            /// Console.WriteLine(Arcosh(Cosh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Artanh("x"));
+            /// Console.WriteLine(Artanh(Tanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcotanh("x"));
+            /// Console.WriteLine(Arcotanh(Cotanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arsech("x"));
+            /// Console.WriteLine(Arsech(Sech("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosech("x"));
+            /// Console.WriteLine(Arcosech(Cosech("x")).Substitute("x", 10).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// ln(x + sqrt(x ^ 2 + 1))
+            /// 10
+            /// ----------------------
+            /// ln(x + sqrt(x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((1 + x) / (1 - x))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((x - 1) / (x + 1))
+            /// -10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 + 1))
+            /// 10
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arcosh(Entity x) => Ln(x + Sqrt(x.Pow(2) - 1));
 
@@ -1472,6 +1603,50 @@ namespace AngouriMath
             /// <code>1/2 * ln((1 + x) / (1 - x))</code>
             /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Hyperbolic;
+            /// 
+            /// Console.WriteLine(Arsinh("x"));
+            /// Console.WriteLine(Arsinh(Sinh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosh("x"));
+            /// Console.WriteLine(Arcosh(Cosh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Artanh("x"));
+            /// Console.WriteLine(Artanh(Tanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcotanh("x"));
+            /// Console.WriteLine(Arcotanh(Cotanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arsech("x"));
+            /// Console.WriteLine(Arsech(Sech("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosech("x"));
+            /// Console.WriteLine(Arcosech(Cosech("x")).Substitute("x", 10).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// ln(x + sqrt(x ^ 2 + 1))
+            /// 10
+            /// ----------------------
+            /// ln(x + sqrt(x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((1 + x) / (1 - x))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((x - 1) / (x + 1))
+            /// -10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 + 1))
+            /// 10
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Artanh(Entity x) => 0.5 * Ln((1 + x) / (1 - x));
 
@@ -1480,14 +1655,102 @@ namespace AngouriMath
             /// <code>1/2 * ln((1 - x) / (1 + x))</code>
             /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Hyperbolic;
+            /// 
+            /// Console.WriteLine(Arsinh("x"));
+            /// Console.WriteLine(Arsinh(Sinh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosh("x"));
+            /// Console.WriteLine(Arcosh(Cosh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Artanh("x"));
+            /// Console.WriteLine(Artanh(Tanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcotanh("x"));
+            /// Console.WriteLine(Arcotanh(Cotanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arsech("x"));
+            /// Console.WriteLine(Arsech(Sech("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosech("x"));
+            /// Console.WriteLine(Arcosech(Cosech("x")).Substitute("x", 10).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// ln(x + sqrt(x ^ 2 + 1))
+            /// 10
+            /// ----------------------
+            /// ln(x + sqrt(x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((1 + x) / (1 - x))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((x - 1) / (x + 1))
+            /// -10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 + 1))
+            /// 10
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
-            public static Entity Arcotanh(Entity x) => 0.5 * Ln((1 - x) / (1 + x));
+            public static Entity Arcotanh(Entity x) => 0.5 * Ln((x - 1) / (x + 1));
 
             /// <summary>
             /// Inverse hyperbolic secant:
             /// <code>ln(1 / x + sqrt(1 / sqr(x) - 1))</code>
             /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Hyperbolic;
+            /// 
+            /// Console.WriteLine(Arsinh("x"));
+            /// Console.WriteLine(Arsinh(Sinh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosh("x"));
+            /// Console.WriteLine(Arcosh(Cosh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Artanh("x"));
+            /// Console.WriteLine(Artanh(Tanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcotanh("x"));
+            /// Console.WriteLine(Arcotanh(Cotanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arsech("x"));
+            /// Console.WriteLine(Arsech(Sech("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosech("x"));
+            /// Console.WriteLine(Arcosech(Cosech("x")).Substitute("x", 10).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// ln(x + sqrt(x ^ 2 + 1))
+            /// 10
+            /// ----------------------
+            /// ln(x + sqrt(x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((1 + x) / (1 - x))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((x - 1) / (x + 1))
+            /// -10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 + 1))
+            /// 10
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arsech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) - 1));
 
@@ -1496,6 +1759,50 @@ namespace AngouriMath
             /// <code>ln(1 / x + sqrt(1 / sqr(x) + 1))</code>
             /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Hyperbolic;
+            /// 
+            /// Console.WriteLine(Arsinh("x"));
+            /// Console.WriteLine(Arsinh(Sinh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosh("x"));
+            /// Console.WriteLine(Arcosh(Cosh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Artanh("x"));
+            /// Console.WriteLine(Artanh(Tanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcotanh("x"));
+            /// Console.WriteLine(Arcotanh(Cotanh("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arsech("x"));
+            /// Console.WriteLine(Arsech(Sech("x")).Substitute("x", 10).Evaled);
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Arcosech("x"));
+            /// Console.WriteLine(Arcosech(Cosech("x")).Substitute("x", 10).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// ln(x + sqrt(x ^ 2 + 1))
+            /// 10
+            /// ----------------------
+            /// ln(x + sqrt(x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((1 + x) / (1 - x))
+            /// 10
+            /// ----------------------
+            /// 1/2 * ln((x - 1) / (x + 1))
+            /// -10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 - 1))
+            /// 10
+            /// ----------------------
+            /// ln(1 / x + sqrt(1 / x ^ 2 + 1))
+            /// 10
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arcosech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) + 1));
         }
