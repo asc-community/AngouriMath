@@ -1814,13 +1814,13 @@ namespace AngouriMath
         {
             /// <summary>
             /// Finds the symbolic expression of terms of the Maclaurin expansion of the given function,
-            /// https://en.wikipedia.org/wiki/Taylor_series
+            /// <a href="https://en.wikipedia.org/wiki/Taylor_series">Wikipedia</a>
             /// </summary>
             /// <param name="expr">
-            /// The function to find the Taylor expansion of
+            /// The function to find the Maclaurin expansion of
             /// </param>
             /// <param name="degree">
-            /// The degree of the resulting taylor polynomial (and the variable in the resulting series)
+            /// The degree of the resulting Maclaurin polynomial (and the variable in the resulting series)
             /// </param>
             /// <param name="exprVariables">
             /// The variable/s to take the series over (and the variable the series will be over)
@@ -1829,12 +1829,79 @@ namespace AngouriMath
             /// <returns>
             /// An expression in the polynomial form over the expression variables given in <paramref name="exprVariables"/>
             /// </returns>
+            /// <example>
+            /// <code>
+            /// using AngouriMath;
+            /// using System;
+            /// using System.Linq;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.MathS.Series;
+            /// 
+            /// var (x, y) = MathS.Var("x", "y");
+            /// Console.WriteLine(Sin(x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 1, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 2, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 3, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 4, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 10, x).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// var expr = Sin(x) + Cos(y);
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Maclaurin(expr, 6, x, y).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, 1)));
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, 1), (y, 5)));
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, "z_1", 1), (y, "z_2", 5)));
+            /// Console.WriteLine("----------------------");
+            /// var first3Terms = 
+            ///     TaylorTerms(expr, (x, x, 0), (y, y, 1))
+            ///     .Take(3);
+            /// var first6Terms =
+            ///     TaylorTerms(expr, (x, x, 0), (y, y, 1))
+            ///     .Take(6);
+            /// foreach (var term in first6Terms)
+            ///     Console.WriteLine($"Received {term}");
+            /// </code>
+            /// Prints
+            /// <code>
+            /// sin(x)
+            /// 0
+            /// 0 + x
+            /// 0 + x + 0
+            /// 0 + x + 0 + -x ^ 3 / 3!
+            /// x ^ 9 / 362880 - x ^ 7 / 5040 + x ^ 5 / 120 - x ^ 3 / 6 + x
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// 1 + (6 * x ^ 5 - 120 * x ^ 3) / 720 + x + (2 * y ^ 4 - 24 * y ^ 2) / 48
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(y) + cos(1) * (x - 1) + -sin(1) * (x - 1) ^ 2 / 2! + cos(1) * (-1) * (x - 1) ^ 3 / 3! + -sin(1) * (-1) * (x - 1) ^ 4 / 4! + cos(1) * (-1) * (-1) * (x - 1) ^ 5 / 5!
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(5) + cos(1) * (x - 1) + -sin(5) * (y - 5) + (-sin(1) * (x - 1) ^ 2 + cos(5) * (-1) * (y - 5) ^ 2) / 2! + (cos(1) * (-1) * (x - 1) ^ 3 + -sin(5) * (-1) * (y - 5) ^ 3) / 3! + (-sin(1) * (-1) * (x - 1) ^ 4 + cos(5) * (-1) * (-1) * (y - 5) ^ 4) / 4! + (cos(1) * (-1) * (-1) * (x - 1) ^ 5 + -sin(5) * (-1) * (-1) * (y - 5) ^ 5) / 5!
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(5) + cos(1) * (z_1 - 1) + -sin(5) * (z_2 - 5) + (-sin(1) * (z_1 - 1) ^ 2 + cos(5) * (-1) * (z_2 - 5) ^ 2) / 2! + (cos(1) * (-1) * (z_1 - 1) ^ 3 + -sin(5) * (-1) * (z_2 - 5) ^ 3) / 3! + (-sin(1) * (-1) * (z_1 - 1) ^ 4 + cos(5) * (-1) * (-1) * (z_2 - 5) ^ 4) / 4! + (cos(1) * (-1) * (-1) * (z_1 - 1) ^ 5 + -sin(5) * (-1) * (-1) * (z_2 - 5) ^ 5) / 5!
+            /// ----------------------
+            /// Received cos(1)
+            /// Received x + -sin(1) * (y - 1)
+            /// Received cos(1) * (-1) * (y - 1) ^ 2 / 2!
+            /// Received (-x ^ 3 + -sin(1) * (-1) * (y - 1) ^ 3) / 3!
+            /// Received cos(1) * (-1) * (-1) * (y - 1) ^ 4 / 4!
+            /// Received (x ^ 5 + -sin(1) * (-1) * (-1) * (y - 1) ^ 5) / 5!
+            /// </code>
+            /// </example>
             public static Entity Maclaurin(Entity expr, int degree, params Variable[] exprVariables)
                 => Functions.Series.TaylorExpansion(expr, degree, exprVariables.Select(v => (v, v, (Entity)0)).ToArray());
 
             /// <summary>
             /// Finds the symbolic expression of terms of the Taylor expansion of the given function,
-            /// https://en.wikipedia.org/wiki/Taylor_series
+            /// <a href="https://en.wikipedia.org/wiki/Taylor_series">Wikipedia</a>
             /// </summary>
             /// <param name="expr">
             /// The function to find the Taylor expansion of
@@ -1850,6 +1917,73 @@ namespace AngouriMath
             /// <returns>
             /// An expression in the polynomial form over the expression variable/s given in <paramref name="exprVariables"/>
             /// </returns>
+            /// <example>
+            /// <code>
+            /// using AngouriMath;
+            /// using System;
+            /// using System.Linq;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.MathS.Series;
+            /// 
+            /// var (x, y) = MathS.Var("x", "y");
+            /// Console.WriteLine(Sin(x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 1, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 2, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 3, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 4, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 10, x).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// var expr = Sin(x) + Cos(y);
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Maclaurin(expr, 6, x, y).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, 1)));
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, 1), (y, 5)));
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, "z_1", 1), (y, "z_2", 5)));
+            /// Console.WriteLine("----------------------");
+            /// var first3Terms = 
+            ///     TaylorTerms(expr, (x, x, 0), (y, y, 1))
+            ///     .Take(3);
+            /// var first6Terms =
+            ///     TaylorTerms(expr, (x, x, 0), (y, y, 1))
+            ///     .Take(6);
+            /// foreach (var term in first6Terms)
+            ///     Console.WriteLine($"Received {term}");
+            /// </code>
+            /// Prints
+            /// <code>
+            /// sin(x)
+            /// 0
+            /// 0 + x
+            /// 0 + x + 0
+            /// 0 + x + 0 + -x ^ 3 / 3!
+            /// x ^ 9 / 362880 - x ^ 7 / 5040 + x ^ 5 / 120 - x ^ 3 / 6 + x
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// 1 + (6 * x ^ 5 - 120 * x ^ 3) / 720 + x + (2 * y ^ 4 - 24 * y ^ 2) / 48
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(y) + cos(1) * (x - 1) + -sin(1) * (x - 1) ^ 2 / 2! + cos(1) * (-1) * (x - 1) ^ 3 / 3! + -sin(1) * (-1) * (x - 1) ^ 4 / 4! + cos(1) * (-1) * (-1) * (x - 1) ^ 5 / 5!
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(5) + cos(1) * (x - 1) + -sin(5) * (y - 5) + (-sin(1) * (x - 1) ^ 2 + cos(5) * (-1) * (y - 5) ^ 2) / 2! + (cos(1) * (-1) * (x - 1) ^ 3 + -sin(5) * (-1) * (y - 5) ^ 3) / 3! + (-sin(1) * (-1) * (x - 1) ^ 4 + cos(5) * (-1) * (-1) * (y - 5) ^ 4) / 4! + (cos(1) * (-1) * (-1) * (x - 1) ^ 5 + -sin(5) * (-1) * (-1) * (y - 5) ^ 5) / 5!
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(5) + cos(1) * (z_1 - 1) + -sin(5) * (z_2 - 5) + (-sin(1) * (z_1 - 1) ^ 2 + cos(5) * (-1) * (z_2 - 5) ^ 2) / 2! + (cos(1) * (-1) * (z_1 - 1) ^ 3 + -sin(5) * (-1) * (z_2 - 5) ^ 3) / 3! + (-sin(1) * (-1) * (z_1 - 1) ^ 4 + cos(5) * (-1) * (-1) * (z_2 - 5) ^ 4) / 4! + (cos(1) * (-1) * (-1) * (z_1 - 1) ^ 5 + -sin(5) * (-1) * (-1) * (z_2 - 5) ^ 5) / 5!
+            /// ----------------------
+            /// Received cos(1)
+            /// Received x + -sin(1) * (y - 1)
+            /// Received cos(1) * (-1) * (y - 1) ^ 2 / 2!
+            /// Received (-x ^ 3 + -sin(1) * (-1) * (y - 1) ^ 3) / 3!
+            /// Received cos(1) * (-1) * (-1) * (y - 1) ^ 4 / 4!
+            /// Received (x ^ 5 + -sin(1) * (-1) * (-1) * (y - 1) ^ 5) / 5!
+            /// </code>
+            /// </example>
             public static Entity Taylor(Entity expr, int degree, params (Variable exprVariable, Entity point)[] exprVariables)
                 => Functions.Series.TaylorExpansion(expr, degree, exprVariables.Select(v => (v.exprVariable, v.exprVariable, v.point)).ToArray());
 
@@ -1872,6 +2006,73 @@ namespace AngouriMath
             /// <returns>
             /// An expression in the polynomial form over the poly variable/s given in <paramref name="exprToPolyVars"/>
             /// </returns>
+            /// <example>
+            /// <code>
+            /// using AngouriMath;
+            /// using System;
+            /// using System.Linq;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.MathS.Series;
+            /// 
+            /// var (x, y) = MathS.Var("x", "y");
+            /// Console.WriteLine(Sin(x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 1, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 2, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 3, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 4, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 10, x).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// var expr = Sin(x) + Cos(y);
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Maclaurin(expr, 6, x, y).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, 1)));
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, 1), (y, 5)));
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, "z_1", 1), (y, "z_2", 5)));
+            /// Console.WriteLine("----------------------");
+            /// var first3Terms = 
+            ///     TaylorTerms(expr, (x, x, 0), (y, y, 1))
+            ///     .Take(3);
+            /// var first6Terms =
+            ///     TaylorTerms(expr, (x, x, 0), (y, y, 1))
+            ///     .Take(6);
+            /// foreach (var term in first6Terms)
+            ///     Console.WriteLine($"Received {term}");
+            /// </code>
+            /// Prints
+            /// <code>
+            /// sin(x)
+            /// 0
+            /// 0 + x
+            /// 0 + x + 0
+            /// 0 + x + 0 + -x ^ 3 / 3!
+            /// x ^ 9 / 362880 - x ^ 7 / 5040 + x ^ 5 / 120 - x ^ 3 / 6 + x
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// 1 + (6 * x ^ 5 - 120 * x ^ 3) / 720 + x + (2 * y ^ 4 - 24 * y ^ 2) / 48
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(y) + cos(1) * (x - 1) + -sin(1) * (x - 1) ^ 2 / 2! + cos(1) * (-1) * (x - 1) ^ 3 / 3! + -sin(1) * (-1) * (x - 1) ^ 4 / 4! + cos(1) * (-1) * (-1) * (x - 1) ^ 5 / 5!
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(5) + cos(1) * (x - 1) + -sin(5) * (y - 5) + (-sin(1) * (x - 1) ^ 2 + cos(5) * (-1) * (y - 5) ^ 2) / 2! + (cos(1) * (-1) * (x - 1) ^ 3 + -sin(5) * (-1) * (y - 5) ^ 3) / 3! + (-sin(1) * (-1) * (x - 1) ^ 4 + cos(5) * (-1) * (-1) * (y - 5) ^ 4) / 4! + (cos(1) * (-1) * (-1) * (x - 1) ^ 5 + -sin(5) * (-1) * (-1) * (y - 5) ^ 5) / 5!
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(5) + cos(1) * (z_1 - 1) + -sin(5) * (z_2 - 5) + (-sin(1) * (z_1 - 1) ^ 2 + cos(5) * (-1) * (z_2 - 5) ^ 2) / 2! + (cos(1) * (-1) * (z_1 - 1) ^ 3 + -sin(5) * (-1) * (z_2 - 5) ^ 3) / 3! + (-sin(1) * (-1) * (z_1 - 1) ^ 4 + cos(5) * (-1) * (-1) * (z_2 - 5) ^ 4) / 4! + (cos(1) * (-1) * (-1) * (z_1 - 1) ^ 5 + -sin(5) * (-1) * (-1) * (z_2 - 5) ^ 5) / 5!
+            /// ----------------------
+            /// Received cos(1)
+            /// Received x + -sin(1) * (y - 1)
+            /// Received cos(1) * (-1) * (y - 1) ^ 2 / 2!
+            /// Received (-x ^ 3 + -sin(1) * (-1) * (y - 1) ^ 3) / 3!
+            /// Received cos(1) * (-1) * (-1) * (y - 1) ^ 4 / 4!
+            /// Received (x ^ 5 + -sin(1) * (-1) * (-1) * (y - 1) ^ 5) / 5!
+            /// </code>
+            /// </example>
             public static Entity Taylor(Entity expr, int degree, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
                 => Functions.Series.TaylorExpansion(expr, degree, exprToPolyVars);
 
@@ -1895,6 +2096,73 @@ namespace AngouriMath
             /// <returns>
             /// An infinite iterator over the terms of Taylor series of the given expression.
             /// </returns>
+            /// <example>
+            /// <code>
+            /// using AngouriMath;
+            /// using System;
+            /// using System.Linq;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.MathS.Series;
+            /// 
+            /// var (x, y) = MathS.Var("x", "y");
+            /// Console.WriteLine(Sin(x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 1, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 2, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 3, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 4, x));
+            /// Console.WriteLine(Maclaurin(Sin(x), 10, x).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// var expr = Sin(x) + Cos(y);
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Maclaurin(expr, 6, x, y).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, 1)));
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, 1), (y, 5)));
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(expr);
+            /// Console.WriteLine(Taylor(expr, 6, (x, "z_1", 1), (y, "z_2", 5)));
+            /// Console.WriteLine("----------------------");
+            /// var first3Terms = 
+            ///     TaylorTerms(expr, (x, x, 0), (y, y, 1))
+            ///     .Take(3);
+            /// var first6Terms =
+            ///     TaylorTerms(expr, (x, x, 0), (y, y, 1))
+            ///     .Take(6);
+            /// foreach (var term in first6Terms)
+            ///     Console.WriteLine($"Received {term}");
+            /// </code>
+            /// Prints
+            /// <code>
+            /// sin(x)
+            /// 0
+            /// 0 + x
+            /// 0 + x + 0
+            /// 0 + x + 0 + -x ^ 3 / 3!
+            /// x ^ 9 / 362880 - x ^ 7 / 5040 + x ^ 5 / 120 - x ^ 3 / 6 + x
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// 1 + (6 * x ^ 5 - 120 * x ^ 3) / 720 + x + (2 * y ^ 4 - 24 * y ^ 2) / 48
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(y) + cos(1) * (x - 1) + -sin(1) * (x - 1) ^ 2 / 2! + cos(1) * (-1) * (x - 1) ^ 3 / 3! + -sin(1) * (-1) * (x - 1) ^ 4 / 4! + cos(1) * (-1) * (-1) * (x - 1) ^ 5 / 5!
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(5) + cos(1) * (x - 1) + -sin(5) * (y - 5) + (-sin(1) * (x - 1) ^ 2 + cos(5) * (-1) * (y - 5) ^ 2) / 2! + (cos(1) * (-1) * (x - 1) ^ 3 + -sin(5) * (-1) * (y - 5) ^ 3) / 3! + (-sin(1) * (-1) * (x - 1) ^ 4 + cos(5) * (-1) * (-1) * (y - 5) ^ 4) / 4! + (cos(1) * (-1) * (-1) * (x - 1) ^ 5 + -sin(5) * (-1) * (-1) * (y - 5) ^ 5) / 5!
+            /// ----------------------
+            /// sin(x) + cos(y)
+            /// sin(1) + cos(5) + cos(1) * (z_1 - 1) + -sin(5) * (z_2 - 5) + (-sin(1) * (z_1 - 1) ^ 2 + cos(5) * (-1) * (z_2 - 5) ^ 2) / 2! + (cos(1) * (-1) * (z_1 - 1) ^ 3 + -sin(5) * (-1) * (z_2 - 5) ^ 3) / 3! + (-sin(1) * (-1) * (z_1 - 1) ^ 4 + cos(5) * (-1) * (-1) * (z_2 - 5) ^ 4) / 4! + (cos(1) * (-1) * (-1) * (z_1 - 1) ^ 5 + -sin(5) * (-1) * (-1) * (z_2 - 5) ^ 5) / 5!
+            /// ----------------------
+            /// Received cos(1)
+            /// Received x + -sin(1) * (y - 1)
+            /// Received cos(1) * (-1) * (y - 1) ^ 2 / 2!
+            /// Received (-x ^ 3 + -sin(1) * (-1) * (y - 1) ^ 3) / 3!
+            /// Received cos(1) * (-1) * (-1) * (y - 1) ^ 4 / 4!
+            /// Received (x ^ 5 + -sin(1) * (-1) * (-1) * (y - 1) ^ 5) / 5!
+            /// </code>
+            /// </example>
             public static IEnumerable<Entity> TaylorTerms(Entity expr, params (Variable exprVariable, Variable polyVariable, Entity point)[] exprToPolyVars)
             {
                 if (exprToPolyVars.Length == 1)
@@ -1903,7 +2171,6 @@ namespace AngouriMath
                     return Functions.Series.MultivariableTaylorExpansionTerms(expr, exprToPolyVars);
             }
 
-
         }
 
 
@@ -1911,6 +2178,39 @@ namespace AngouriMath
         /// <param name="a">The left argument node of which Disjunction function will be taken</param>
         /// <param name="b">The right argument node of which Disjunction function will be taken</param>
         /// <returns>Or node</returns>
+        /// <example>
+        /// <code>
+        /// using AngouriMath;
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var myXor = Disjunction(Conjunction(x, Negation(y)), Conjunction(y, Negation(x)));
+        /// Console.WriteLine(myXor);
+        /// Console.WriteLine(MathS.Boolean.BuildTruthTable(myXor, x, y).ToString(multilineFormat: true));
+        /// Console.WriteLine("------------------");
+        /// var expr = ExclusiveDisjunction(Implication(x, y), Implication(y, x));
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine("------------------");
+        /// var expr2 = Conjunction(x, Conjunction(x, y));
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x and not y or y and not x
+        /// Matrix[4 x 3]
+        /// False   False   False   
+        /// False   True    True    
+        /// True    False   True    
+        /// True    True    False   
+        /// ------------------
+        /// (x implies y) xor (y implies x)
+        /// ------------------
+        /// x and x and y
+        /// x and y
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Disjunction(Entity a, Entity b) => a | b;
 
@@ -1918,6 +2218,39 @@ namespace AngouriMath
         /// <param name="a">Left argument node of which Conjunction function will be taken</param>
         /// <param name="b">Right argument node of which Conjunction disjunction function will be taken</param>
         /// <returns>And node</returns>
+        /// <example>
+        /// <code>
+        /// using AngouriMath;
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var myXor = Disjunction(Conjunction(x, Negation(y)), Conjunction(y, Negation(x)));
+        /// Console.WriteLine(myXor);
+        /// Console.WriteLine(MathS.Boolean.BuildTruthTable(myXor, x, y).ToString(multilineFormat: true));
+        /// Console.WriteLine("------------------");
+        /// var expr = ExclusiveDisjunction(Implication(x, y), Implication(y, x));
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine("------------------");
+        /// var expr2 = Conjunction(x, Conjunction(x, y));
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x and not y or y and not x
+        /// Matrix[4 x 3]
+        /// False   False   False   
+        /// False   True    True    
+        /// True    False   True    
+        /// True    True    False   
+        /// ------------------
+        /// (x implies y) xor (y implies x)
+        /// ------------------
+        /// x and x and y
+        /// x and y
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Conjunction(Entity a, Entity b) => a & b;
 
@@ -1925,6 +2258,39 @@ namespace AngouriMath
         /// <param name="assumption">The assumption node</param>
         /// <param name="conclusion">The conclusion node</param>
         /// <returns>Implies node</returns>
+        /// <example>
+        /// <code>
+        /// using AngouriMath;
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var myXor = Disjunction(Conjunction(x, Negation(y)), Conjunction(y, Negation(x)));
+        /// Console.WriteLine(myXor);
+        /// Console.WriteLine(MathS.Boolean.BuildTruthTable(myXor, x, y).ToString(multilineFormat: true));
+        /// Console.WriteLine("------------------");
+        /// var expr = ExclusiveDisjunction(Implication(x, y), Implication(y, x));
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine("------------------");
+        /// var expr2 = Conjunction(x, Conjunction(x, y));
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x and not y or y and not x
+        /// Matrix[4 x 3]
+        /// False   False   False   
+        /// False   True    True    
+        /// True    False   True    
+        /// True    True    False   
+        /// ------------------
+        /// (x implies y) xor (y implies x)
+        /// ------------------
+        /// x and x and y
+        /// x and y
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Implication(Entity assumption, Entity conclusion) => assumption.Implies(conclusion);
 
@@ -1932,6 +2298,39 @@ namespace AngouriMath
         /// <param name="a">Left argument node of which Exclusive disjunction function will be taken</param>
         /// <param name="b">Right argument node of which Exclusive disjunction function will be taken</param>
         /// <returns>Xor node</returns>
+        /// <example>
+        /// <code>
+        /// using AngouriMath;
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var myXor = Disjunction(Conjunction(x, Negation(y)), Conjunction(y, Negation(x)));
+        /// Console.WriteLine(myXor);
+        /// Console.WriteLine(MathS.Boolean.BuildTruthTable(myXor, x, y).ToString(multilineFormat: true));
+        /// Console.WriteLine("------------------");
+        /// var expr = ExclusiveDisjunction(Implication(x, y), Implication(y, x));
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine("------------------");
+        /// var expr2 = Conjunction(x, Conjunction(x, y));
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x and not y or y and not x
+        /// Matrix[4 x 3]
+        /// False   False   False   
+        /// False   True    True    
+        /// True    False   True    
+        /// True    True    False   
+        /// ------------------
+        /// (x implies y) xor (y implies x)
+        /// ------------------
+        /// x and x and y
+        /// x and y
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity ExclusiveDisjunction(Entity a, Entity b) => a ^ b;
 
@@ -1941,26 +2340,350 @@ namespace AngouriMath
         /// <param name="a">Left argument node of which Equality function will be taken</param>
         /// <param name="b">Right argument node of which Equality disjunction function will be taken</param>
         /// <returns>An Equals node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var equation = Equality(Sqrt(x), 4 * x - 3);
+        /// Console.WriteLine(equation);
+        /// Console.WriteLine(equation.Solve(x));
+        /// Console.WriteLine("----------------------");
+        /// var statement1 = Equality(5, 10);
+        /// Console.WriteLine(statement1);
+        /// Console.WriteLine((bool)statement1.EvalBoolean());
+        /// Console.WriteLine("----------------------");
+        /// var statement2 = Equality(5, 5);
+        /// Console.WriteLine(statement2);
+        /// Console.WriteLine((bool)statement2.EvalBoolean());
+        /// Console.WriteLine("----------------------");
+        /// var statement3 = Equality(x, y);
+        /// Console.WriteLine(statement3);
+        /// Console.WriteLine(statement3.Simplify());
+        /// // throws here!
+        /// Console.WriteLine((bool)statement3.EvalBoolean());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sqrt(x) = 4 * x - 3
+        /// { 9/16, 1 }
+        /// ----------------------
+        /// 5 = 10
+        /// False
+        /// ----------------------
+        /// 5 = 5
+        /// True
+        /// ----------------------
+        /// x = y
+        /// x = y
+        /// Unhandled exception. AngouriMath.Core.Exceptions.CannotEvalException
+        /// </code>
+        /// </example>
         public static Entity Equality(Entity a, Entity b) => a.Equalizes(b);
 
         /// <param name="a">Left argument node of which the greater than node will be taken</param>
         /// <param name="b">Right argument node of which the greater than node function will be taken</param>
         /// <returns>A node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// 
+        /// Console.WriteLine(GreaterThan(x, y));
+        /// Console.WriteLine(GreaterThan(6, 5));
+        /// Console.WriteLine(GreaterThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(GreaterThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(LessThan(x, y));
+        /// Console.WriteLine(LessThan(6, 5));
+        /// Console.WriteLine(LessThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(LessThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(GreaterOrEqualThan(x, y));
+        /// Console.WriteLine(GreaterOrEqualThan(6, 5));
+        /// Console.WriteLine(GreaterOrEqualThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(GreaterOrEqualThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(LessOrEqualThan(x, y));
+        /// Console.WriteLine(LessOrEqualThan(6, 5));
+        /// Console.WriteLine(LessOrEqualThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(LessOrEqualThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// var statement1 = GreaterThan(Sqr(x), 5);
+        /// Console.WriteLine(statement1);
+        /// Console.WriteLine(statement1.Solve("x"));
+        /// Console.WriteLine("----------------------------------");
+        /// var statement2 = GreaterThan(Sqr(x), 16) &amp; LessThan(x, y);
+        /// Console.WriteLine(statement2);
+        /// Console.WriteLine(statement2.Solve("x"));
+        /// Console.WriteLine("----------------------------------");
+        /// var statement3 = LessThan(Sqr(x), 16) &amp; GreaterThan(x, 2);
+        /// Console.WriteLine(statement3);
+        /// Console.WriteLine(statement3.Solve("x"));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x &gt; y
+        /// 6 &gt; 5
+        /// True
+        /// False
+        /// ----------------------------------
+        /// x &lt; y
+        /// 6 &lt; 5
+        /// False
+        /// False
+        /// ----------------------------------
+        /// x &gt;= y
+        /// 6 &gt;= 5
+        /// True
+        /// True
+        /// ----------------------------------
+        /// x &lt;= y
+        /// 6 &lt;= 5
+        /// False
+        /// True
+        /// ----------------------------------
+        /// x ^ 2 &gt; 5
+        /// (-oo; -sqrt(20) / 2) \/ (sqrt(20) / 2; +oo)
+        /// ----------------------------------
+        /// x ^ 2 &gt; 16 and x &lt; y
+        /// ((-oo; -4) \/ (4; +oo)) /\ (-oo; -y / (-1))
+        /// ----------------------------------
+        /// x ^ 2 &lt; 16 and x &gt; 2
+        /// (2; 4)
+        /// </code>
+        /// </example>
         public static Entity GreaterThan(Entity a, Entity b) => a > b;
 
         /// <param name="a">Left argument node of which the less than node will be taken</param>
         /// <param name="b">Right argument node of which the less than node function will be taken</param>
         /// <returns>A node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// 
+        /// Console.WriteLine(GreaterThan(x, y));
+        /// Console.WriteLine(GreaterThan(6, 5));
+        /// Console.WriteLine(GreaterThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(GreaterThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(LessThan(x, y));
+        /// Console.WriteLine(LessThan(6, 5));
+        /// Console.WriteLine(LessThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(LessThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(GreaterOrEqualThan(x, y));
+        /// Console.WriteLine(GreaterOrEqualThan(6, 5));
+        /// Console.WriteLine(GreaterOrEqualThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(GreaterOrEqualThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(LessOrEqualThan(x, y));
+        /// Console.WriteLine(LessOrEqualThan(6, 5));
+        /// Console.WriteLine(LessOrEqualThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(LessOrEqualThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// var statement1 = GreaterThan(Sqr(x), 5);
+        /// Console.WriteLine(statement1);
+        /// Console.WriteLine(statement1.Solve("x"));
+        /// Console.WriteLine("----------------------------------");
+        /// var statement2 = GreaterThan(Sqr(x), 16) &amp; LessThan(x, y);
+        /// Console.WriteLine(statement2);
+        /// Console.WriteLine(statement2.Solve("x"));
+        /// Console.WriteLine("----------------------------------");
+        /// var statement3 = LessThan(Sqr(x), 16) &amp; GreaterThan(x, 2);
+        /// Console.WriteLine(statement3);
+        /// Console.WriteLine(statement3.Solve("x"));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x &gt; y
+        /// 6 &gt; 5
+        /// True
+        /// False
+        /// ----------------------------------
+        /// x &lt; y
+        /// 6 &lt; 5
+        /// False
+        /// False
+        /// ----------------------------------
+        /// x &gt;= y
+        /// 6 &gt;= 5
+        /// True
+        /// True
+        /// ----------------------------------
+        /// x &lt;= y
+        /// 6 &lt;= 5
+        /// False
+        /// True
+        /// ----------------------------------
+        /// x ^ 2 &gt; 5
+        /// (-oo; -sqrt(20) / 2) \/ (sqrt(20) / 2; +oo)
+        /// ----------------------------------
+        /// x ^ 2 &gt; 16 and x &lt; y
+        /// ((-oo; -4) \/ (4; +oo)) /\ (-oo; -y / (-1))
+        /// ----------------------------------
+        /// x ^ 2 &lt; 16 and x &gt; 2
+        /// (2; 4)
+        /// </code>
+        /// </example>
         public static Entity LessThan(Entity a, Entity b) => a < b;
 
         /// <param name="a">Left argument node of which the greter than or equal node will be taken</param>
         /// <param name="b">Right argument node of which the greater than or equal node function will be taken</param>
         /// <returns>A node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// 
+        /// Console.WriteLine(GreaterThan(x, y));
+        /// Console.WriteLine(GreaterThan(6, 5));
+        /// Console.WriteLine(GreaterThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(GreaterThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(LessThan(x, y));
+        /// Console.WriteLine(LessThan(6, 5));
+        /// Console.WriteLine(LessThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(LessThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(GreaterOrEqualThan(x, y));
+        /// Console.WriteLine(GreaterOrEqualThan(6, 5));
+        /// Console.WriteLine(GreaterOrEqualThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(GreaterOrEqualThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(LessOrEqualThan(x, y));
+        /// Console.WriteLine(LessOrEqualThan(6, 5));
+        /// Console.WriteLine(LessOrEqualThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(LessOrEqualThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// var statement1 = GreaterThan(Sqr(x), 5);
+        /// Console.WriteLine(statement1);
+        /// Console.WriteLine(statement1.Solve("x"));
+        /// Console.WriteLine("----------------------------------");
+        /// var statement2 = GreaterThan(Sqr(x), 16) &amp; LessThan(x, y);
+        /// Console.WriteLine(statement2);
+        /// Console.WriteLine(statement2.Solve("x"));
+        /// Console.WriteLine("----------------------------------");
+        /// var statement3 = LessThan(Sqr(x), 16) &amp; GreaterThan(x, 2);
+        /// Console.WriteLine(statement3);
+        /// Console.WriteLine(statement3.Solve("x"));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x &gt; y
+        /// 6 &gt; 5
+        /// True
+        /// False
+        /// ----------------------------------
+        /// x &lt; y
+        /// 6 &lt; 5
+        /// False
+        /// False
+        /// ----------------------------------
+        /// x &gt;= y
+        /// 6 &gt;= 5
+        /// True
+        /// True
+        /// ----------------------------------
+        /// x &lt;= y
+        /// 6 &lt;= 5
+        /// False
+        /// True
+        /// ----------------------------------
+        /// x ^ 2 &gt; 5
+        /// (-oo; -sqrt(20) / 2) \/ (sqrt(20) / 2; +oo)
+        /// ----------------------------------
+        /// x ^ 2 &gt; 16 and x &lt; y
+        /// ((-oo; -4) \/ (4; +oo)) /\ (-oo; -y / (-1))
+        /// ----------------------------------
+        /// x ^ 2 &lt; 16 and x &gt; 2
+        /// (2; 4)
+        /// </code>
+        /// </example>
         public static Entity GreaterOrEqualThan(Entity a, Entity b) => a >= b;
 
         /// <param name="a">Left argument node of which the less than or equal node will be taken</param>
         /// <param name="b">Right argument node of which the less than or equal node function will be taken</param>
         /// <returns>A node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// 
+        /// Console.WriteLine(GreaterThan(x, y));
+        /// Console.WriteLine(GreaterThan(6, 5));
+        /// Console.WriteLine(GreaterThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(GreaterThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(LessThan(x, y));
+        /// Console.WriteLine(LessThan(6, 5));
+        /// Console.WriteLine(LessThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(LessThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(GreaterOrEqualThan(x, y));
+        /// Console.WriteLine(GreaterOrEqualThan(6, 5));
+        /// Console.WriteLine(GreaterOrEqualThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(GreaterOrEqualThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// Console.WriteLine(LessOrEqualThan(x, y));
+        /// Console.WriteLine(LessOrEqualThan(6, 5));
+        /// Console.WriteLine(LessOrEqualThan(6, 5).EvalBoolean());
+        /// Console.WriteLine(LessOrEqualThan(6, 6).EvalBoolean());
+        /// Console.WriteLine("----------------------------------");
+        /// var statement1 = GreaterThan(Sqr(x), 5);
+        /// Console.WriteLine(statement1);
+        /// Console.WriteLine(statement1.Solve("x"));
+        /// Console.WriteLine("----------------------------------");
+        /// var statement2 = GreaterThan(Sqr(x), 16) &amp; LessThan(x, y);
+        /// Console.WriteLine(statement2);
+        /// Console.WriteLine(statement2.Solve("x"));
+        /// Console.WriteLine("----------------------------------");
+        /// var statement3 = LessThan(Sqr(x), 16) &amp; GreaterThan(x, 2);
+        /// Console.WriteLine(statement3);
+        /// Console.WriteLine(statement3.Solve("x"));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x &gt; y
+        /// 6 &gt; 5
+        /// True
+        /// False
+        /// ----------------------------------
+        /// x &lt; y
+        /// 6 &lt; 5
+        /// False
+        /// False
+        /// ----------------------------------
+        /// x &gt;= y
+        /// 6 &gt;= 5
+        /// True
+        /// True
+        /// ----------------------------------
+        /// x &lt;= y
+        /// 6 &lt;= 5
+        /// False
+        /// True
+        /// ----------------------------------
+        /// x ^ 2 &gt; 5
+        /// (-oo; -sqrt(20) / 2) \/ (sqrt(20) / 2; +oo)
+        /// ----------------------------------
+        /// x ^ 2 &gt; 16 and x &lt; y
+        /// ((-oo; -4) \/ (4; +oo)) /\ (-oo; -y / (-1))
+        /// ----------------------------------
+        /// x ^ 2 &lt; 16 and x &gt; 2
+        /// (2; 4)
+        /// </code>
+        /// </example>
         public static Entity LessOrEqualThan(Entity a, Entity b) => a <= b;
 
         /// <param name="a">Left argument node of which the union set node will be taken</param>
@@ -1988,6 +2711,14 @@ namespace AngouriMath
         /// <param name="name">The name of the <see cref="Variable"/> which equality is based on.</param>
         /// <returns>Variable node</returns>
         public static Variable Var(string name) => name;
+        
+        /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
+        /// <returns>Variable node</returns>
+        public static (Variable, Variable) Var(string name1, string name2) => (Var(name1), Var(name2));
+        
+        /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
+        /// <returns>Variable node</returns>
+        public static (Variable, Variable, Variable) Var(string name1, string name2, string name3) => (Var(name1), Var(name2), Var(name3));
 
         // List of public constants
         // ReSharper disable once InconsistentNaming
