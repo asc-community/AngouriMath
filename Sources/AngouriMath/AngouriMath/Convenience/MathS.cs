@@ -3004,36 +3004,255 @@ namespace AngouriMath
         /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
         /// <param name="name">The name of the <see cref="Variable"/> which equality is based on.</param>
         /// <returns>Variable node</returns>
+        /// <example>
+        /// Here are multiple ways to create variables:
+        /// <code>
+        /// Entity.Variable x = "x";
+        /// var y = Var("y");
+        /// var (a, b) = Var("x", "y");
+        /// var (c, d, e) = Var("a", "b", "c");
+        /// var f = Var("f_1");
+        /// var alpha = Var("alpha");
+        /// var alphaPhi = Var("alpha_phi");
+        /// var alpha1 = Var("alpha_1");
+        /// var inGreek = Var("βγδεζη_кΨеВеТкΩ");
+        /// var inCyrillic = Var("Абаваола");
+        /// </code>
+        /// Underscore "_" allows indexing. Greek letter names (e. g.
+        /// "alpha") will be latexised as Greek letter (but other than that,
+        /// will appear as "alpha" in other places).
+        /// </example>
         public static Variable Var(string name) => name;
         
-        /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
-        /// <returns>Variable node</returns>
+        /// <summary>Creates two instances of <see cref="Variable"/>.</summary>
+        /// <returns>A tuple of 2 corresponding variable nodes</returns>
+        /// <example>
+        /// Here are multiple ways to create variables:
+        /// <code>
+        /// Entity.Variable x = "x";
+        /// var y = Var("y");
+        /// var (a, b) = Var("x", "y");
+        /// var (c, d, e) = Var("a", "b", "c");
+        /// var f = Var("f_1");
+        /// var alpha = Var("alpha");
+        /// var alphaPhi = Var("alpha_phi");
+        /// var alpha1 = Var("alpha_1");
+        /// var inGreek = Var("βγδεζη_кΨеВеТкΩ");
+        /// var inCyrillic = Var("Абаваола");
+        /// </code>
+        /// Underscore "_" allows indexing. Greek letter names (e. g.
+        /// "alpha") will be latexised as Greek letter (but other than that,
+        /// will appear as "alpha" in other places).
+        /// </example>
         public static (Variable, Variable) Var(string name1, string name2) => (Var(name1), Var(name2));
         
-        /// <summary>Creates an instance of <see cref="Variable"/>.</summary>
-        /// <returns>Variable node</returns>
+        /// <summary>Creates three instances of <see cref="Variable"/>.</summary>
+        /// <returns>A tuple of 3 corresponding variable nodes</returns>
+        /// <example>
+        /// Here are multiple ways to create variables:
+        /// <code>
+        /// Entity.Variable x = "x";
+        /// var y = Var("y");
+        /// var (a, b) = Var("x", "y");
+        /// var (c, d, e) = Var("a", "b", "c");
+        /// var f = Var("f_1");
+        /// var alpha = Var("alpha");
+        /// var alphaPhi = Var("alpha_phi");
+        /// var alpha1 = Var("alpha_1");
+        /// var inGreek = Var("βγδεζη_кΨеВеТкΩ");
+        /// var inCyrillic = Var("Абаваола");
+        /// </code>
+        /// Underscore "_" allows indexing. Greek letter names (e. g.
+        /// "alpha") will be latexised as Greek letter (but other than that,
+        /// will appear as "alpha" in other places).
+        /// </example>
         public static (Variable, Variable, Variable) Var(string name1, string name2, string name3) => (Var(name1), Var(name2), Var(name3));
 
-        // List of public constants
-        // ReSharper disable once InconsistentNaming
+        /// <summary>
+        /// Infinity. Recommended to use with a plus or minus trailing.
+        /// </summary>
+        /// <example>
+        /// There are multiple constants available. Examples:
+        /// <code>
+        /// var x = Var("x");
+        /// Console.WriteLine(e);
+        /// Console.WriteLine(e.Evaled);
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo));
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify());
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify() == e);
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(pi);
+        /// Console.WriteLine(pi.Evaled);
+        /// Console.WriteLine(Sin(pi / 3).Simplify());
+        /// Console.WriteLine(Cos(pi / 3).Simplify());
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(i);
+        /// Console.WriteLine(4 + 3 * i);
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(e.Pow(i * pi));
+        /// Console.WriteLine(e.Pow(i * pi).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// e
+        /// 2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427
+        /// limit((1 + 1 / x) ^ x, x, +oo)
+        /// e
+        /// True
+        /// -----------------------
+        /// pi
+        /// 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068
+        /// sqrt(3) / 2
+        /// 1/2
+        /// -----------------------
+        /// i
+        /// 4 + 3i
+        /// -----------------------
+        /// e ^ (i * pi)
+        /// -1
+        /// </code>
+        /// </example>
+        [ConstantField] public static readonly Real oo = (Real)(Entity)"+oo";
+
         /// <summary>
         /// The e constant
         /// <a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/>
         /// </summary>
+        /// <example>
+        /// There are multiple constants available. Examples:
+        /// <code>
+        /// var x = Var("x");
+        /// Console.WriteLine(e);
+        /// Console.WriteLine(e.Evaled);
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo));
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify());
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify() == e);
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(pi);
+        /// Console.WriteLine(pi.Evaled);
+        /// Console.WriteLine(Sin(pi / 3).Simplify());
+        /// Console.WriteLine(Cos(pi / 3).Simplify());
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(i);
+        /// Console.WriteLine(4 + 3 * i);
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(e.Pow(i * pi));
+        /// Console.WriteLine(e.Pow(i * pi).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// e
+        /// 2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427
+        /// limit((1 + 1 / x) ^ x, x, +oo)
+        /// e
+        /// True
+        /// -----------------------
+        /// pi
+        /// 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068
+        /// sqrt(3) / 2
+        /// 1/2
+        /// -----------------------
+        /// i
+        /// 4 + 3i
+        /// -----------------------
+        /// e ^ (i * pi)
+        /// -1
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Variable e = Variable.e;
-        // ReSharper disable once InconsistentNaming
 
         /// <summary>
         /// The imaginary one
         /// <a href="https://en.wikipedia.org/wiki/Imaginary_unit"/>
         /// </summary>
+        /// <example>
+        /// There are multiple constants available. Examples:
+        /// <code>
+        /// var x = Var("x");
+        /// Console.WriteLine(e);
+        /// Console.WriteLine(e.Evaled);
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo));
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify());
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify() == e);
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(pi);
+        /// Console.WriteLine(pi.Evaled);
+        /// Console.WriteLine(Sin(pi / 3).Simplify());
+        /// Console.WriteLine(Cos(pi / 3).Simplify());
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(i);
+        /// Console.WriteLine(4 + 3 * i);
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(e.Pow(i * pi));
+        /// Console.WriteLine(e.Pow(i * pi).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// e
+        /// 2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427
+        /// limit((1 + 1 / x) ^ x, x, +oo)
+        /// e
+        /// True
+        /// -----------------------
+        /// pi
+        /// 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068
+        /// sqrt(3) / 2
+        /// 1/2
+        /// -----------------------
+        /// i
+        /// 4 + 3i
+        /// -----------------------
+        /// e ^ (i * pi)
+        /// -1
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Complex i = Complex.ImaginaryOne;
 
-        // ReSharper disable once InconsistentNaming
         /// <summary>
         /// The pi constant
         /// <a href="https://en.wikipedia.org/wiki/Pi"/>
         /// </summary>
+        /// <example>
+        /// There are multiple constants available. Examples:
+        /// <code>
+        /// var x = Var("x");
+        /// Console.WriteLine(e);
+        /// Console.WriteLine(e.Evaled);
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo));
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify());
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify() == e);
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(pi);
+        /// Console.WriteLine(pi.Evaled);
+        /// Console.WriteLine(Sin(pi / 3).Simplify());
+        /// Console.WriteLine(Cos(pi / 3).Simplify());
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(i);
+        /// Console.WriteLine(4 + 3 * i);
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(e.Pow(i * pi));
+        /// Console.WriteLine(e.Pow(i * pi).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// e
+        /// 2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427
+        /// limit((1 + 1 / x) ^ x, x, +oo)
+        /// e
+        /// True
+        /// -----------------------
+        /// pi
+        /// 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068
+        /// sqrt(3) / 2
+        /// 1/2
+        /// -----------------------
+        /// i
+        /// 4 + 3i
+        /// -----------------------
+        /// e ^ (i * pi)
+        /// -1
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Variable pi = Variable.pi;
 
         // Undefined
@@ -3041,46 +3260,299 @@ namespace AngouriMath
         /// That is both undefined and indeterminite
         /// Any operation on NaN returns NaN
         /// </summary>
+        /// <example>
+        /// There are multiple constants available. Examples:
+        /// <code>
+        /// var x = Var("x");
+        /// Console.WriteLine(e);
+        /// Console.WriteLine(e.Evaled);
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo));
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify());
+        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify() == e);
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(pi);
+        /// Console.WriteLine(pi.Evaled);
+        /// Console.WriteLine(Sin(pi / 3).Simplify());
+        /// Console.WriteLine(Cos(pi / 3).Simplify());
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(i);
+        /// Console.WriteLine(4 + 3 * i);
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(e.Pow(i * pi));
+        /// Console.WriteLine(e.Pow(i * pi).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// e
+        /// 2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427
+        /// limit((1 + 1 / x) ^ x, x, +oo)
+        /// e
+        /// True
+        /// -----------------------
+        /// pi
+        /// 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068
+        /// sqrt(3) / 2
+        /// 1/2
+        /// -----------------------
+        /// i
+        /// 4 + 3i
+        /// -----------------------
+        /// e ^ (i * pi)
+        /// -1
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Entity NaN = Real.NaN;
 
         /// <summary>
         /// The square identity matrix of size 1
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Console.WriteLine(I_1.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_2.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_3.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_4.ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[1 x 1]
+        /// 1   
+        /// Matrix[2 x 2]
+        /// 1   0   
+        /// 0   1   
+        /// Matrix[3 x 3]
+        /// 1   0   0   
+        /// 0   1   0   
+        /// 0   0   1   
+        /// Matrix[4 x 4]
+        /// 1   0   0   0   
+        /// 0   1   0   0   
+        /// 0   0   1   0   
+        /// 0   0   0   1
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Matrix I_1 = IdentityMatrix(1);
 
         /// <summary>
         /// The square identity matrix of size 2
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Console.WriteLine(I_1.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_2.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_3.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_4.ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[1 x 1]
+        /// 1   
+        /// Matrix[2 x 2]
+        /// 1   0   
+        /// 0   1   
+        /// Matrix[3 x 3]
+        /// 1   0   0   
+        /// 0   1   0   
+        /// 0   0   1   
+        /// Matrix[4 x 4]
+        /// 1   0   0   0   
+        /// 0   1   0   0   
+        /// 0   0   1   0   
+        /// 0   0   0   1
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Matrix I_2 = IdentityMatrix(2);
 
         /// <summary>
         /// The square identity matrix of size 3
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Console.WriteLine(I_1.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_2.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_3.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_4.ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[1 x 1]
+        /// 1   
+        /// Matrix[2 x 2]
+        /// 1   0   
+        /// 0   1   
+        /// Matrix[3 x 3]
+        /// 1   0   0   
+        /// 0   1   0   
+        /// 0   0   1   
+        /// Matrix[4 x 4]
+        /// 1   0   0   0   
+        /// 0   1   0   0   
+        /// 0   0   1   0   
+        /// 0   0   0   1
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Matrix I_3 = IdentityMatrix(3);
 
         /// <summary>
         /// The square identity matrix of size 4
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Console.WriteLine(I_1.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_2.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_3.ToString(multilineFormat: true));
+        /// Console.WriteLine(I_4.ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[1 x 1]
+        /// 1   
+        /// Matrix[2 x 2]
+        /// 1   0   
+        /// 0   1   
+        /// Matrix[3 x 3]
+        /// 1   0   0   
+        /// 0   1   0   
+        /// 0   0   1   
+        /// Matrix[4 x 4]
+        /// 1   0   0   0   
+        /// 0   1   0   0   
+        /// 0   0   1   0   
+        /// 0   0   0   1
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Matrix I_4 = IdentityMatrix(4);
 
         /// <summary>
         /// The square zero matrix of size 1
         /// </summary>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine(O_1.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_2.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_3.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_4.ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[1 x 1]
+        /// 0   
+        /// Matrix[2 x 2]
+        /// 0   0   
+        /// 0   0   
+        /// Matrix[3 x 3]
+        /// 0   0   0   
+        /// 0   0   0   
+        /// 0   0   0   
+        /// Matrix[4 x 4]
+        /// 0   0   0   0   
+        /// 0   0   0   0   
+        /// 0   0   0   0   
+        /// 0   0   0   0
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Matrix O_1 = ZeroMatrix(1);
 
         /// <summary>
         /// The square zero matrix of size 2
         /// </summary>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine(O_1.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_2.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_3.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_4.ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[1 x 1]
+        /// 0   
+        /// Matrix[2 x 2]
+        /// 0   0   
+        /// 0   0   
+        /// Matrix[3 x 3]
+        /// 0   0   0   
+        /// 0   0   0   
+        /// 0   0   0   
+        /// Matrix[4 x 4]
+        /// 0   0   0   0   
+        /// 0   0   0   0   
+        /// 0   0   0   0   
+        /// 0   0   0   0
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Matrix O_2 = ZeroMatrix(2);
 
         /// <summary>
         /// The square zero matrix of size 3
         /// </summary>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine(O_1.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_2.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_3.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_4.ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[1 x 1]
+        /// 0   
+        /// Matrix[2 x 2]
+        /// 0   0   
+        /// 0   0   
+        /// Matrix[3 x 3]
+        /// 0   0   0   
+        /// 0   0   0   
+        /// 0   0   0   
+        /// Matrix[4 x 4]
+        /// 0   0   0   0   
+        /// 0   0   0   0   
+        /// 0   0   0   0   
+        /// 0   0   0   0
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Matrix O_3 = ZeroMatrix(3);
 
         /// <summary>
         /// The square zero matrix of size 4
         /// </summary>
+        /// <example>
+        /// <code>
+        /// Console.WriteLine(O_1.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_2.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_3.ToString(multilineFormat: true));
+        /// Console.WriteLine(O_4.ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[1 x 1]
+        /// 0   
+        /// Matrix[2 x 2]
+        /// 0   0   
+        /// 0   0   
+        /// Matrix[3 x 3]
+        /// 0   0   0   
+        /// 0   0   0   
+        /// 0   0   0   
+        /// Matrix[4 x 4]
+        /// 0   0   0   0   
+        /// 0   0   0   0   
+        /// 0   0   0   0   
+        /// 0   0   0   0
+        /// </code>
+        /// </example>
         [ConstantField] public static readonly Matrix O_4 = ZeroMatrix(4);
 
 
@@ -3092,6 +3564,23 @@ namespace AngouriMath
         /// First occurance will be parsed, others will be replaced with the cached entity
         /// </param>
         /// <returns>The parsed expression</returns>
+        /// <example>
+        /// Multiple ways to parse an expression.
+        /// <code>
+        /// Entity expr1 = "a + b";
+        /// var expr2 = FromString("a + b");
+        /// var expr3 = FromString("a + b", useCache: false);
+        /// var expr4 = (Entity)"a + b";
+        /// var expr5 = Parse("a + b").Switch(
+        ///     res => res,
+        ///     failure => failure.Reason.Switch&lt;object&gt;(
+        ///         unknown => throw new("Unknown reason"),
+        ///         missingOp => throw new("Missing operator"),
+        ///         internalError => throw new("Internal error") 
+        ///     )
+        /// );
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity FromString(string expr, bool useCache)
             => expr
@@ -3121,6 +3610,23 @@ namespace AngouriMath
         /// <summary>Converts a <see cref="string"/> to an expression</summary>
         /// <param name="expr"><see cref="string"/> expression, for example, <code>"2 * x + 3 + sqrt(x)"</code></param>
         /// <returns>The parsed expression</returns>
+        /// <example>
+        /// Multiple ways to parse an expression.
+        /// <code>
+        /// Entity expr1 = "a + b";
+        /// var expr2 = FromString("a + b");
+        /// var expr3 = FromString("a + b", useCache: false);
+        /// var expr4 = (Entity)"a + b";
+        /// var expr5 = Parse("a + b").Switch(
+        ///     res => res,
+        ///     failure => failure.Reason.Switch&lt;object&gt;(
+        ///         unknown => throw new("Unknown reason"),
+        ///         missingOp => throw new("Missing operator"),
+        ///         internalError => throw new("Internal error") 
+        ///     )
+        /// );
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity FromString(string expr) => FromString(expr, useCache: true);
         
@@ -3135,6 +3641,23 @@ namespace AngouriMath
         /// failure, which is a type union of multiple reasons
         /// it may have failed.
         /// </returns>
+        /// <example>
+        /// Multiple ways to parse an expression.
+        /// <code>
+        /// Entity expr1 = "a + b";
+        /// var expr2 = FromString("a + b");
+        /// var expr3 = FromString("a + b", useCache: false);
+        /// var expr4 = (Entity)"a + b";
+        /// var expr5 = Parse("a + b").Switch(
+        ///     res => res,
+        ///     failure => failure.Reason.Switch&lt;object&gt;(
+        ///         unknown => throw new("Unknown reason"),
+        ///         missingOp => throw new("Missing operator"),
+        ///         internalError => throw new("Internal error") 
+        ///     )
+        /// );
+        /// </code>
+        /// </example>
         public static ParsingResult Parse(string source)
             => Parser.ParseSilent(source);
 
@@ -3142,6 +3665,45 @@ namespace AngouriMath
         /// <param name="num">A <see cref="Real"/> in base 10 to be translated into base <paramref name="N"/></param>
         /// <param name="N">The base to translate the number into</param>
         /// <returns>A <see cref="string"/> with the number in the required base</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// using var _ = Settings.DowncastingEnabled.Set(false);
+        /// 
+        /// Console.WriteLine(ToBaseN(1.5m, 2));
+        /// Console.WriteLine(ToBaseN(3.75m, 2));
+        /// Console.WriteLine(ToBaseN(13.125m, 2));
+        /// Console.WriteLine(ToBaseN(13.125m, 10));
+        /// 
+        /// // uncomment when https://github.com/asc-community/AngouriMath/issues/584
+        /// // is fixed
+        /// // Console.WriteLine(ToBaseN(13.125m, 5));
+        /// 
+        /// Console.WriteLine(ToBaseN(13.125m, 8));
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(FromBaseN("FF", 16));
+        /// Console.WriteLine(FromBaseN("77", 8));
+        /// Console.WriteLine(FromBaseN("1.1", 2));
+        /// Console.WriteLine(FromBaseN("1.01", 2));
+        /// Console.WriteLine(FromBaseN("1.05", 6));        
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 1.1
+        /// 11.11
+        /// 1101.001
+        /// 13.125
+        /// 15.1
+        /// -----------------------
+        /// 255
+        /// 63
+        /// 1.500000000
+        /// 1.250000000
+        /// 1.138888888
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static string ToBaseN(Real num, int N) => BaseConversion.ToBaseN(num.EDecimal, N);
 
@@ -3149,6 +3711,45 @@ namespace AngouriMath
         /// <param name="num">A <see cref="Real"/> in base <paramref name="N"/> to be translated into base 10</param>
         /// <param name="N">The base to translate the number from</param>
         /// <returns>The <see cref="Real"/> in base 10</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// using var _ = Settings.DowncastingEnabled.Set(false);
+        /// 
+        /// Console.WriteLine(ToBaseN(1.5m, 2));
+        /// Console.WriteLine(ToBaseN(3.75m, 2));
+        /// Console.WriteLine(ToBaseN(13.125m, 2));
+        /// Console.WriteLine(ToBaseN(13.125m, 10));
+        /// 
+        /// // uncomment when https://github.com/asc-community/AngouriMath/issues/584
+        /// // is fixed
+        /// // Console.WriteLine(ToBaseN(13.125m, 5));
+        /// 
+        /// Console.WriteLine(ToBaseN(13.125m, 8));
+        /// Console.WriteLine("-----------------------");
+        /// Console.WriteLine(FromBaseN("FF", 16));
+        /// Console.WriteLine(FromBaseN("77", 8));
+        /// Console.WriteLine(FromBaseN("1.1", 2));
+        /// Console.WriteLine(FromBaseN("1.01", 2));
+        /// Console.WriteLine(FromBaseN("1.05", 6));        
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 1.1
+        /// 11.11
+        /// 1101.001
+        /// 13.125
+        /// 15.1
+        /// -----------------------
+        /// 255
+        /// 63
+        /// 1.500000000
+        /// 1.250000000
+        /// 1.138888888
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Number.Real FromBaseN(string num, int N) => BaseConversion.FromBaseN(num, N);
 
@@ -3158,6 +3759,27 @@ namespace AngouriMath
         /// <param name="latexiseable">
         /// Any element (<see cref="Entity"/>, <see cref="Set"/>, etc.) that can be represented in LaTeX
         /// </param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Entity expr = "sqrt(a) + integral(sin(x), x)";
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(Latex(expr));
+        /// Entity expr2 = "a / b ^ limit(sin(x) - cosh(y), x, +oo)";
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(Latex(expr2));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sqrt(a) + integral(sin(x), x)
+        /// \sqrt{a}+\int \left[\sin\left(x\right)\right] dx
+        /// a / b ^ limit(sin(x) - (e ^ y + e ^ (-y)) / 2, x, +oo)
+        /// \frac{a}{{b}^{\lim_{x\to \infty } \left[\sin\left(x\right)-\frac{{e}^{y}+{e}^{-y}}{2}\right]}}
+        /// </code>
+        /// </example>
         public static string Latex(ILatexiseable latexiseable) => latexiseable.Latexise();
 
         /// <summary>
@@ -3173,27 +3795,237 @@ namespace AngouriMath
         /// </code>
         /// and the result will be a <see cref="Real"/>.
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using System.Numerics;
+        /// using AngouriMath;
+        /// using PeterO.Numbers;
+        /// using static AngouriMath.MathS.Numbers;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Entity a1 = 5;
+        /// Entity a2 = "5";
+        /// Entity a3 = new Complex(5.5, 6.5);
+        /// Entity a4 = 6.5m;
+        /// Entity a5 = 6.5;
+        /// Entity a6 = 6.5f;
+        /// Entity a7 = 5.6 + 3 * i;
+        /// Entity a8 = EInteger.One;
+        /// Entity a9 = ERational.One;
+        /// Entity a10 = pi;
+        /// Console.WriteLine("---------------");
+        /// var n0 = Create(0);
+        /// var n1 = Create(0L);
+        /// var n2 = Create(new Complex(5.5, 4.75));
+        /// var n3 = Create(EInteger.One);
+        /// var n4 = CreateRational(4, 5);
+        /// var n5 = Create(ERational.One);
+        /// var n6 = Create(5.5m);
+        /// var n7 = Create(5.5);
+        /// var n8 = Create(5.5m, 6.5m);
+        /// Console.WriteLine("---------------");
+        /// float i0 = (float)FromString("1 + 5").EvalNumerical();
+        /// double i1 = (double)FromString("1 + 5").EvalNumerical();
+        /// int i2 = (int)FromString("1 + 5").EvalNumerical();
+        /// long i3 = (long)FromString("1 + 5").EvalNumerical();
+        /// short i4 = (short)FromString("1 + 5").EvalNumerical();
+        /// BigInteger i5 = (BigInteger)FromString("1 + 5").EvalNumerical();
+        /// Complex i6 = (Complex)FromString("1 + 5").EvalNumerical();
+        /// EInteger i7 = ((Entity.Number.Integer)FromString("1 + 5").EvalNumerical()).EInteger;
+        /// ERational i8 = ((Entity.Number.Rational)FromString("1 + 5").EvalNumerical()).ERational;
+        /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
+        /// </code>
+        /// </example>
         public static class Numbers
         {
             /// <summary>Creates an instance of <see cref="Complex"/> from a <see cref="NumericsComplex"/></summary>
             /// <param name="value">A value of type <see cref="NumericsComplex"/></param>
             /// <returns>The resulting <see cref="Complex"/></returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using System.Numerics;
+            /// using AngouriMath;
+            /// using PeterO.Numbers;
+            /// using static AngouriMath.MathS.Numbers;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity a1 = 5;
+            /// Entity a2 = "5";
+            /// Entity a3 = new Complex(5.5, 6.5);
+            /// Entity a4 = 6.5m;
+            /// Entity a5 = 6.5;
+            /// Entity a6 = 6.5f;
+            /// Entity a7 = 5.6 + 3 * i;
+            /// Entity a8 = EInteger.One;
+            /// Entity a9 = ERational.One;
+            /// Entity a10 = pi;
+            /// Console.WriteLine("---------------");
+            /// var n0 = Create(0);
+            /// var n1 = Create(0L);
+            /// var n2 = Create(new Complex(5.5, 4.75));
+            /// var n3 = Create(EInteger.One);
+            /// var n4 = CreateRational(4, 5);
+            /// var n5 = Create(ERational.One);
+            /// var n6 = Create(5.5m);
+            /// var n7 = Create(5.5);
+            /// var n8 = Create(5.5m, 6.5m);
+            /// Console.WriteLine("---------------");
+            /// float i0 = (float)FromString("1 + 5").EvalNumerical();
+            /// double i1 = (double)FromString("1 + 5").EvalNumerical();
+            /// int i2 = (int)FromString("1 + 5").EvalNumerical();
+            /// long i3 = (long)FromString("1 + 5").EvalNumerical();
+            /// short i4 = (short)FromString("1 + 5").EvalNumerical();
+            /// BigInteger i5 = (BigInteger)FromString("1 + 5").EvalNumerical();
+            /// Complex i6 = (Complex)FromString("1 + 5").EvalNumerical();
+            /// EInteger i7 = ((Entity.Number.Integer)FromString("1 + 5").EvalNumerical()).EInteger;
+            /// ERational i8 = ((Entity.Number.Rational)FromString("1 + 5").EvalNumerical()).ERational;
+            /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
+            /// </code>
+            /// </example>
             public static Complex Create(NumericsComplex value) =>
                 Create(EDecimal.FromDouble(value.Real), EDecimal.FromDouble(value.Imaginary));
 
             /// <summary>Creates an instance of <see cref="Integer"/> from a <see cref="long"/></summary>
             /// <param name="value">A value of type <see cref="long"/> (signed 64-bit integer)</param>
             /// <returns>The resulting <see cref="Integer"/></returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using System.Numerics;
+            /// using AngouriMath;
+            /// using PeterO.Numbers;
+            /// using static AngouriMath.MathS.Numbers;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity a1 = 5;
+            /// Entity a2 = "5";
+            /// Entity a3 = new Complex(5.5, 6.5);
+            /// Entity a4 = 6.5m;
+            /// Entity a5 = 6.5;
+            /// Entity a6 = 6.5f;
+            /// Entity a7 = 5.6 + 3 * i;
+            /// Entity a8 = EInteger.One;
+            /// Entity a9 = ERational.One;
+            /// Entity a10 = pi;
+            /// Console.WriteLine("---------------");
+            /// var n0 = Create(0);
+            /// var n1 = Create(0L);
+            /// var n2 = Create(new Complex(5.5, 4.75));
+            /// var n3 = Create(EInteger.One);
+            /// var n4 = CreateRational(4, 5);
+            /// var n5 = Create(ERational.One);
+            /// var n6 = Create(5.5m);
+            /// var n7 = Create(5.5);
+            /// var n8 = Create(5.5m, 6.5m);
+            /// Console.WriteLine("---------------");
+            /// float i0 = (float)FromString("1 + 5").EvalNumerical();
+            /// double i1 = (double)FromString("1 + 5").EvalNumerical();
+            /// int i2 = (int)FromString("1 + 5").EvalNumerical();
+            /// long i3 = (long)FromString("1 + 5").EvalNumerical();
+            /// short i4 = (short)FromString("1 + 5").EvalNumerical();
+            /// BigInteger i5 = (BigInteger)FromString("1 + 5").EvalNumerical();
+            /// Complex i6 = (Complex)FromString("1 + 5").EvalNumerical();
+            /// EInteger i7 = ((Entity.Number.Integer)FromString("1 + 5").EvalNumerical()).EInteger;
+            /// ERational i8 = ((Entity.Number.Rational)FromString("1 + 5").EvalNumerical()).ERational;
+            /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
+            /// </code>
+            /// </example>
             public static Integer Create(long value) => Integer.Create(value);
 
             /// <summary>Creates an instance of <see cref="Integer"/> from an <see cref="EInteger"/></summary>
             /// <param name="value">A value of type <see cref="EInteger"/></param>
             /// <returns>The resulting <see cref="Integer"/></returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using System.Numerics;
+            /// using AngouriMath;
+            /// using PeterO.Numbers;
+            /// using static AngouriMath.MathS.Numbers;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity a1 = 5;
+            /// Entity a2 = "5";
+            /// Entity a3 = new Complex(5.5, 6.5);
+            /// Entity a4 = 6.5m;
+            /// Entity a5 = 6.5;
+            /// Entity a6 = 6.5f;
+            /// Entity a7 = 5.6 + 3 * i;
+            /// Entity a8 = EInteger.One;
+            /// Entity a9 = ERational.One;
+            /// Entity a10 = pi;
+            /// Console.WriteLine("---------------");
+            /// var n0 = Create(0);
+            /// var n1 = Create(0L);
+            /// var n2 = Create(new Complex(5.5, 4.75));
+            /// var n3 = Create(EInteger.One);
+            /// var n4 = CreateRational(4, 5);
+            /// var n5 = Create(ERational.One);
+            /// var n6 = Create(5.5m);
+            /// var n7 = Create(5.5);
+            /// var n8 = Create(5.5m, 6.5m);
+            /// Console.WriteLine("---------------");
+            /// float i0 = (float)FromString("1 + 5").EvalNumerical();
+            /// double i1 = (double)FromString("1 + 5").EvalNumerical();
+            /// int i2 = (int)FromString("1 + 5").EvalNumerical();
+            /// long i3 = (long)FromString("1 + 5").EvalNumerical();
+            /// short i4 = (short)FromString("1 + 5").EvalNumerical();
+            /// BigInteger i5 = (BigInteger)FromString("1 + 5").EvalNumerical();
+            /// Complex i6 = (Complex)FromString("1 + 5").EvalNumerical();
+            /// EInteger i7 = ((Entity.Number.Integer)FromString("1 + 5").EvalNumerical()).EInteger;
+            /// ERational i8 = ((Entity.Number.Rational)FromString("1 + 5").EvalNumerical()).ERational;
+            /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
+            /// </code>
+            /// </example>
             public static Integer Create(EInteger value) => Integer.Create(value);
 
             /// <summary>Creates an instance of <see cref="Integer"/> from an <see cref="int"/></summary>
             /// <param name="value">A value of type <see cref="int"/> (signed 32-bit integer)</param>
             /// <returns>The resulting <see cref="Integer"/></returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using System.Numerics;
+            /// using AngouriMath;
+            /// using PeterO.Numbers;
+            /// using static AngouriMath.MathS.Numbers;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity a1 = 5;
+            /// Entity a2 = "5";
+            /// Entity a3 = new Complex(5.5, 6.5);
+            /// Entity a4 = 6.5m;
+            /// Entity a5 = 6.5;
+            /// Entity a6 = 6.5f;
+            /// Entity a7 = 5.6 + 3 * i;
+            /// Entity a8 = EInteger.One;
+            /// Entity a9 = ERational.One;
+            /// Entity a10 = pi;
+            /// Console.WriteLine("---------------");
+            /// var n0 = Create(0);
+            /// var n1 = Create(0L);
+            /// var n2 = Create(new Complex(5.5, 4.75));
+            /// var n3 = Create(EInteger.One);
+            /// var n4 = CreateRational(4, 5);
+            /// var n5 = Create(ERational.One);
+            /// var n6 = Create(5.5m);
+            /// var n7 = Create(5.5);
+            /// var n8 = Create(5.5m, 6.5m);
+            /// Console.WriteLine("---------------");
+            /// float i0 = (float)FromString("1 + 5").EvalNumerical();
+            /// double i1 = (double)FromString("1 + 5").EvalNumerical();
+            /// int i2 = (int)FromString("1 + 5").EvalNumerical();
+            /// long i3 = (long)FromString("1 + 5").EvalNumerical();
+            /// short i4 = (short)FromString("1 + 5").EvalNumerical();
+            /// BigInteger i5 = (BigInteger)FromString("1 + 5").EvalNumerical();
+            /// Complex i6 = (Complex)FromString("1 + 5").EvalNumerical();
+            /// EInteger i7 = ((Entity.Number.Integer)FromString("1 + 5").EvalNumerical()).EInteger;
+            /// ERational i8 = ((Entity.Number.Rational)FromString("1 + 5").EvalNumerical()).ERational;
+            /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
+            /// </code>
+            /// </example>
             public static Integer Create(int value) => Integer.Create(value);
 
             /// <summary>Creates an instance of <see cref="Rational"/> from two <see cref="EInteger"/>s</summary>
@@ -3202,22 +4034,190 @@ namespace AngouriMath
             /// <returns>
             /// The resulting <see cref="Rational"/>
             /// </returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using System.Numerics;
+            /// using AngouriMath;
+            /// using PeterO.Numbers;
+            /// using static AngouriMath.MathS.Numbers;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity a1 = 5;
+            /// Entity a2 = "5";
+            /// Entity a3 = new Complex(5.5, 6.5);
+            /// Entity a4 = 6.5m;
+            /// Entity a5 = 6.5;
+            /// Entity a6 = 6.5f;
+            /// Entity a7 = 5.6 + 3 * i;
+            /// Entity a8 = EInteger.One;
+            /// Entity a9 = ERational.One;
+            /// Entity a10 = pi;
+            /// Console.WriteLine("---------------");
+            /// var n0 = Create(0);
+            /// var n1 = Create(0L);
+            /// var n2 = Create(new Complex(5.5, 4.75));
+            /// var n3 = Create(EInteger.One);
+            /// var n4 = CreateRational(4, 5);
+            /// var n5 = Create(ERational.One);
+            /// var n6 = Create(5.5m);
+            /// var n7 = Create(5.5);
+            /// var n8 = Create(5.5m, 6.5m);
+            /// Console.WriteLine("---------------");
+            /// float i0 = (float)FromString("1 + 5").EvalNumerical();
+            /// double i1 = (double)FromString("1 + 5").EvalNumerical();
+            /// int i2 = (int)FromString("1 + 5").EvalNumerical();
+            /// long i3 = (long)FromString("1 + 5").EvalNumerical();
+            /// short i4 = (short)FromString("1 + 5").EvalNumerical();
+            /// BigInteger i5 = (BigInteger)FromString("1 + 5").EvalNumerical();
+            /// Complex i6 = (Complex)FromString("1 + 5").EvalNumerical();
+            /// EInteger i7 = ((Entity.Number.Integer)FromString("1 + 5").EvalNumerical()).EInteger;
+            /// ERational i8 = ((Entity.Number.Rational)FromString("1 + 5").EvalNumerical()).ERational;
+            /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
+            /// </code>
+            /// </example>
             public static Rational CreateRational(EInteger numerator, EInteger denominator)
                 => Rational.Create(numerator, denominator);
 
             /// <summary>Creates an instance of <see cref="Rational"/> from an <see cref="ERational"/></summary>
             /// <param name="rational">A value of type <see cref="ERational"/></param>
             /// <returns>The resulting <see cref="Rational"/></returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using System.Numerics;
+            /// using AngouriMath;
+            /// using PeterO.Numbers;
+            /// using static AngouriMath.MathS.Numbers;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity a1 = 5;
+            /// Entity a2 = "5";
+            /// Entity a3 = new Complex(5.5, 6.5);
+            /// Entity a4 = 6.5m;
+            /// Entity a5 = 6.5;
+            /// Entity a6 = 6.5f;
+            /// Entity a7 = 5.6 + 3 * i;
+            /// Entity a8 = EInteger.One;
+            /// Entity a9 = ERational.One;
+            /// Entity a10 = pi;
+            /// Console.WriteLine("---------------");
+            /// var n0 = Create(0);
+            /// var n1 = Create(0L);
+            /// var n2 = Create(new Complex(5.5, 4.75));
+            /// var n3 = Create(EInteger.One);
+            /// var n4 = CreateRational(4, 5);
+            /// var n5 = Create(ERational.One);
+            /// var n6 = Create(5.5m);
+            /// var n7 = Create(5.5);
+            /// var n8 = Create(5.5m, 6.5m);
+            /// Console.WriteLine("---------------");
+            /// float i0 = (float)FromString("1 + 5").EvalNumerical();
+            /// double i1 = (double)FromString("1 + 5").EvalNumerical();
+            /// int i2 = (int)FromString("1 + 5").EvalNumerical();
+            /// long i3 = (long)FromString("1 + 5").EvalNumerical();
+            /// short i4 = (short)FromString("1 + 5").EvalNumerical();
+            /// BigInteger i5 = (BigInteger)FromString("1 + 5").EvalNumerical();
+            /// Complex i6 = (Complex)FromString("1 + 5").EvalNumerical();
+            /// EInteger i7 = ((Entity.Number.Integer)FromString("1 + 5").EvalNumerical()).EInteger;
+            /// ERational i8 = ((Entity.Number.Rational)FromString("1 + 5").EvalNumerical()).ERational;
+            /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
+            /// </code>
+            /// </example>
             public static Rational Create(ERational rational) => Rational.Create(rational);
 
             /// <summary>Creates an instance of <see cref="Real"/> from an <see cref="EDecimal"/></summary>
             /// <param name="value">A value of type <see cref="EDecimal"/></param>
             /// <returns>The resulting <see cref="Real"/></returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using System.Numerics;
+            /// using AngouriMath;
+            /// using PeterO.Numbers;
+            /// using static AngouriMath.MathS.Numbers;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity a1 = 5;
+            /// Entity a2 = "5";
+            /// Entity a3 = new Complex(5.5, 6.5);
+            /// Entity a4 = 6.5m;
+            /// Entity a5 = 6.5;
+            /// Entity a6 = 6.5f;
+            /// Entity a7 = 5.6 + 3 * i;
+            /// Entity a8 = EInteger.One;
+            /// Entity a9 = ERational.One;
+            /// Entity a10 = pi;
+            /// Console.WriteLine("---------------");
+            /// var n0 = Create(0);
+            /// var n1 = Create(0L);
+            /// var n2 = Create(new Complex(5.5, 4.75));
+            /// var n3 = Create(EInteger.One);
+            /// var n4 = CreateRational(4, 5);
+            /// var n5 = Create(ERational.One);
+            /// var n6 = Create(5.5m);
+            /// var n7 = Create(5.5);
+            /// var n8 = Create(5.5m, 6.5m);
+            /// Console.WriteLine("---------------");
+            /// float i0 = (float)FromString("1 + 5").EvalNumerical();
+            /// double i1 = (double)FromString("1 + 5").EvalNumerical();
+            /// int i2 = (int)FromString("1 + 5").EvalNumerical();
+            /// long i3 = (long)FromString("1 + 5").EvalNumerical();
+            /// short i4 = (short)FromString("1 + 5").EvalNumerical();
+            /// BigInteger i5 = (BigInteger)FromString("1 + 5").EvalNumerical();
+            /// Complex i6 = (Complex)FromString("1 + 5").EvalNumerical();
+            /// EInteger i7 = ((Entity.Number.Integer)FromString("1 + 5").EvalNumerical()).EInteger;
+            /// ERational i8 = ((Entity.Number.Rational)FromString("1 + 5").EvalNumerical()).ERational;
+            /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
+            /// </code>
+            /// </example>
             public static Real Create(EDecimal value) => Real.Create(value);
 
             /// <summary>Creates an instance of <see cref="Real"/> from a <see cref="double"/></summary>
             /// <param name="value">A value of type <see cref="double"/> (64-bit floating-point number)</param>
             /// <returns>The resulting <see cref="Real"/></returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using System.Numerics;
+            /// using AngouriMath;
+            /// using PeterO.Numbers;
+            /// using static AngouriMath.MathS.Numbers;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity a1 = 5;
+            /// Entity a2 = "5";
+            /// Entity a3 = new Complex(5.5, 6.5);
+            /// Entity a4 = 6.5m;
+            /// Entity a5 = 6.5;
+            /// Entity a6 = 6.5f;
+            /// Entity a7 = 5.6 + 3 * i;
+            /// Entity a8 = EInteger.One;
+            /// Entity a9 = ERational.One;
+            /// Entity a10 = pi;
+            /// Console.WriteLine("---------------");
+            /// var n0 = Create(0);
+            /// var n1 = Create(0L);
+            /// var n2 = Create(new Complex(5.5, 4.75));
+            /// var n3 = Create(EInteger.One);
+            /// var n4 = CreateRational(4, 5);
+            /// var n5 = Create(ERational.One);
+            /// var n6 = Create(5.5m);
+            /// var n7 = Create(5.5);
+            /// var n8 = Create(5.5m, 6.5m);
+            /// Console.WriteLine("---------------");
+            /// float i0 = (float)FromString("1 + 5").EvalNumerical();
+            /// double i1 = (double)FromString("1 + 5").EvalNumerical();
+            /// int i2 = (int)FromString("1 + 5").EvalNumerical();
+            /// long i3 = (long)FromString("1 + 5").EvalNumerical();
+            /// short i4 = (short)FromString("1 + 5").EvalNumerical();
+            /// BigInteger i5 = (BigInteger)FromString("1 + 5").EvalNumerical();
+            /// Complex i6 = (Complex)FromString("1 + 5").EvalNumerical();
+            /// EInteger i7 = ((Entity.Number.Integer)FromString("1 + 5").EvalNumerical()).EInteger;
+            /// ERational i8 = ((Entity.Number.Rational)FromString("1 + 5").EvalNumerical()).ERational;
+            /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
+            /// </code>
+            /// </example>
             public static Real Create(double value) => Real.Create(EDecimal.FromDouble(value));
 
             /// <summary>
@@ -3230,6 +4230,48 @@ namespace AngouriMath
             /// Imaginary part of the desired <see cref="Complex"/> of type <see cref="EDecimal"/>
             /// </param>
             /// <returns>The resulting <see cref="Complex"/></returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using System.Numerics;
+            /// using AngouriMath;
+            /// using PeterO.Numbers;
+            /// using static AngouriMath.MathS.Numbers;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity a1 = 5;
+            /// Entity a2 = "5";
+            /// Entity a3 = new Complex(5.5, 6.5);
+            /// Entity a4 = 6.5m;
+            /// Entity a5 = 6.5;
+            /// Entity a6 = 6.5f;
+            /// Entity a7 = 5.6 + 3 * i;
+            /// Entity a8 = EInteger.One;
+            /// Entity a9 = ERational.One;
+            /// Entity a10 = pi;
+            /// Console.WriteLine("---------------");
+            /// var n0 = Create(0);
+            /// var n1 = Create(0L);
+            /// var n2 = Create(new Complex(5.5, 4.75));
+            /// var n3 = Create(EInteger.One);
+            /// var n4 = CreateRational(4, 5);
+            /// var n5 = Create(ERational.One);
+            /// var n6 = Create(5.5m);
+            /// var n7 = Create(5.5);
+            /// var n8 = Create(5.5m, 6.5m);
+            /// Console.WriteLine("---------------");
+            /// float i0 = (float)FromString("1 + 5").EvalNumerical();
+            /// double i1 = (double)FromString("1 + 5").EvalNumerical();
+            /// int i2 = (int)FromString("1 + 5").EvalNumerical();
+            /// long i3 = (long)FromString("1 + 5").EvalNumerical();
+            /// short i4 = (short)FromString("1 + 5").EvalNumerical();
+            /// BigInteger i5 = (BigInteger)FromString("1 + 5").EvalNumerical();
+            /// Complex i6 = (Complex)FromString("1 + 5").EvalNumerical();
+            /// EInteger i7 = ((Entity.Number.Integer)FromString("1 + 5").EvalNumerical()).EInteger;
+            /// ERational i8 = ((Entity.Number.Rational)FromString("1 + 5").EvalNumerical()).ERational;
+            /// EDecimal i9 = ((Entity.Number.Real)FromString("1 + 5").EvalNumerical()).EDecimal;
+            /// </code>
+            /// </example>
             public static Complex Create(EDecimal re, EDecimal im) => Complex.Create(re, im);
         }
 
@@ -3237,6 +4279,38 @@ namespace AngouriMath
         /// Finds the determinant of the given matrix. If
         /// the matrix is non-square, returns null
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.Entity;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Matrix A = @"
+        /// [[1, 2],
+        ///  [3, 4]]
+        /// ";
+        /// Console.WriteLine(Det(A));
+        /// 
+        /// Matrix B = @"
+        /// [[1, 2],
+        ///  [3, 6]]
+        /// ";
+        /// Console.WriteLine(Det(B));
+        /// 
+        /// Matrix C = @"
+        /// [[1, 2],
+        ///  [3, 6],
+        ///  [7, 8]]
+        /// ";
+        /// Console.WriteLine(Det(C) is null);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// -2
+        /// 0
+        /// True
+        /// </code>
+        /// </example>
         public static Entity? Det(Matrix m)
             => m.Determinant;
 
@@ -3246,6 +4320,55 @@ namespace AngouriMath
         /// The first dimension is the row count, the second one is for columns.
         /// </param>
         /// <returns>A two-dimensional <see cref="Entity.Matrix"/> which is a matrix</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.Entity;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var A = Matrix(new Entity[,]
+        ///     {
+        ///         { 1, 2, 3 },
+        ///         { 4, 5, 6 }
+        ///     }
+        /// );
+        /// Console.WriteLine(A.ToString(multilineFormat: true));
+        /// 
+        /// var B = Vector(1, 2, 3, 4);
+        /// Console.WriteLine(B.ToString(multilineFormat: true));
+        /// 
+        /// Matrix C = @"
+        /// [[1, 2],
+        ///  [3, 4],
+        ///  [5, 6]]
+        ///  ";
+        /// Console.WriteLine(C.ToString(multilineFormat: true));
+        /// 
+        /// Matrix D = "[1, 2, 3, 4]";
+        /// Console.WriteLine(D.ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[2 x 3]
+        /// 1   2   3   
+        /// 4   5   6   
+        /// Matrix[4 x 1]
+        /// 1   
+        /// 2   
+        /// 3   
+        /// 4   
+        /// Matrix[3 x 2]
+        /// 1   2   
+        /// 3   4   
+        /// 5   6   
+        /// Matrix[4 x 1]
+        /// 1   
+        /// 2   
+        /// 3   
+        /// 4
+        /// </code>
+        /// </example>
         public static Matrix Matrix(Entity[,] values) => new(GenTensor.CreateMatrix(values));
 
         /// <summary>
@@ -3269,6 +4392,34 @@ namespace AngouriMath
         /// <returns>
         /// A newly created matrix of the given size.
         /// </returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath.Extensions;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var expr = "sin(x) + cos(y)";
+        /// var vars = new[] { Var("x"), Var("y") };
+        /// var A = Matrix(2, 2, (i1, i2) => expr
+        ///     .Differentiate(vars[i1])
+        ///     .Differentiate(vars[i2])
+        ///     .Simplify());
+        /// Console.WriteLine(A.ToString(multilineFormat: true));
+        /// 
+        /// Console.WriteLine(ZeroMatrix(3));
+        /// Console.WriteLine(ZeroMatrix(3, 4));
+        /// Console.WriteLine(ZeroVector(3));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[2 x 2]
+        /// -sin(x)   0         
+        /// 0         -cos(y)   
+        /// [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        /// [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        /// [0, 0, 0]
+        /// </code>
+        /// </example>
         public static Matrix Matrix(int rowCount, int colCount, Func<int, int, Entity> map)
             => new(GenTensor.CreateMatrix(rowCount, colCount, map));
 
@@ -3276,24 +4427,157 @@ namespace AngouriMath
         /// <summary>Creates an instance of <see cref="Entity.Matrix"/> that has one column.</summary>
         /// <param name="values">The cells of the <see cref="Entity.Matrix"/></param>
         /// <returns>A one-dimensional <see cref="Entity.Matrix"/> which is a vector</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.Entity;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var A = Matrix(new Entity[,]
+        ///     {
+        ///         { 1, 2, 3 },
+        ///         { 4, 5, 6 }
+        ///     }
+        /// );
+        /// Console.WriteLine(A.ToString(multilineFormat: true));
+        /// 
+        /// var B = Vector(1, 2, 3, 4);
+        /// Console.WriteLine(B.ToString(multilineFormat: true));
+        /// 
+        /// Matrix C = @"
+        /// [[1, 2],
+        ///  [3, 4],
+        ///  [5, 6]]
+        ///  ";
+        /// Console.WriteLine(C.ToString(multilineFormat: true));
+        /// 
+        /// Matrix D = "[1, 2, 3, 4]";
+        /// Console.WriteLine(D.ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[2 x 3]
+        /// 1   2   3   
+        /// 4   5   6   
+        /// Matrix[4 x 1]
+        /// 1   
+        /// 2   
+        /// 3   
+        /// 4   
+        /// Matrix[3 x 2]
+        /// 1   2   
+        /// 3   4   
+        /// 5   6   
+        /// Matrix[4 x 1]
+        /// 1   
+        /// 2   
+        /// 3   
+        /// 4
+        /// </code>
+        /// </example>
         public static Matrix Vector(params Entity[] values)
             => new Matrix(GenTensor.CreateTensor(new(values.Length, 1), arr => values[arr[0]]));
 
         /// <summary>
         /// Creates a zero square matrix
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath.Extensions;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var expr = "sin(x) + cos(y)";
+        /// var vars = new[] { Var("x"), Var("y") };
+        /// var A = Matrix(2, 2, (i1, i2) => expr
+        ///     .Differentiate(vars[i1])
+        ///     .Differentiate(vars[i2])
+        ///     .Simplify());
+        /// Console.WriteLine(A.ToString(multilineFormat: true));
+        /// 
+        /// Console.WriteLine(ZeroMatrix(3));
+        /// Console.WriteLine(ZeroMatrix(3, 4));
+        /// Console.WriteLine(ZeroVector(3));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[2 x 2]
+        /// -sin(x)   0         
+        /// 0         -cos(y)   
+        /// [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        /// [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        /// [0, 0, 0]
+        /// </code>
+        /// </example>
         public static Matrix ZeroMatrix(int size)
             => ZeroMatrix(size, size);
 
         /// <summary>
         /// Creates a zero square matrix
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath.Extensions;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var expr = "sin(x) + cos(y)";
+        /// var vars = new[] { Var("x"), Var("y") };
+        /// var A = Matrix(2, 2, (i1, i2) => expr
+        ///     .Differentiate(vars[i1])
+        ///     .Differentiate(vars[i2])
+        ///     .Simplify());
+        /// Console.WriteLine(A.ToString(multilineFormat: true));
+        /// 
+        /// Console.WriteLine(ZeroMatrix(3));
+        /// Console.WriteLine(ZeroMatrix(3, 4));
+        /// Console.WriteLine(ZeroVector(3));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[2 x 2]
+        /// -sin(x)   0         
+        /// 0         -cos(y)   
+        /// [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        /// [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        /// [0, 0, 0]
+        /// </code>
+        /// </example>
         public static Matrix ZeroMatrix(int rowCount, int columnCount)
             => new Matrix(GenTensor.CreateTensor(new(rowCount, columnCount), arr => 0));
 
         /// <summary>
         /// Creates a zero vector
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath.Extensions;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var expr = "sin(x) + cos(y)";
+        /// var vars = new[] { Var("x"), Var("y") };
+        /// var A = Matrix(2, 2, (i1, i2) => expr
+        ///     .Differentiate(vars[i1])
+        ///     .Differentiate(vars[i2])
+        ///     .Simplify());
+        /// Console.WriteLine(A.ToString(multilineFormat: true));
+        /// 
+        /// Console.WriteLine(ZeroMatrix(3));
+        /// Console.WriteLine(ZeroMatrix(3, 4));
+        /// Console.WriteLine(ZeroVector(3));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[2 x 2]
+        /// -sin(x)   0         
+        /// 0         -cos(y)   
+        /// [[0, 0, 0], [0, 0, 0], [0, 0, 0]]
+        /// [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
+        /// [0, 0, 0]
+        /// </code>
+        /// </example>
         public static Matrix ZeroVector(int size)
             => new Matrix(GenTensor.CreateTensor(new(size, 1), arr => 0));
 
@@ -3304,6 +4588,26 @@ namespace AngouriMath
         /// <returns>
         /// A 1x1 matrix, which is also a 1-long vector, or just a scalar.
         /// </returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Console.WriteLine(Scalar(56));
+        /// Console.WriteLine(MatrixFromIEnum2x2(new Entity[][]
+        ///     {
+        ///         new Entity[]{ 1, 2, 3 },
+        ///         new Entity[]{ 4, 5, 6 }
+        ///     }
+        /// ));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// [56]
+        /// [[1, 2, 3], [4, 5, 6]]
+        /// </code>
+        /// </example>
         public static Matrix Scalar(Entity value)
             => Vector(value);
 
@@ -3333,6 +4637,26 @@ namespace AngouriMath
         /// All rows must have the same number
         /// of columns
         /// </param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Console.WriteLine(Scalar(56));
+        /// Console.WriteLine(MatrixFromIEnum2x2(new Entity[][]
+        ///     {
+        ///         new Entity[]{ 1, 2, 3 },
+        ///         new Entity[]{ 4, 5, 6 }
+        ///     }
+        /// ));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// [56]
+        /// [[1, 2, 3], [4, 5, 6]]
+        /// </code>
+        /// </example>
         public static Matrix MatrixFromIEnum2x2(IEnumerable<IEnumerable<Entity>> elements)
         {
             if (!elements.Any())
@@ -3552,6 +4876,28 @@ namespace AngouriMath
         /// <summary>
         /// Creates a square identity matrix
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Console.WriteLine(IdentityMatrix(4).ToString(multilineFormat: true));
+        /// Console.WriteLine(IdentityMatrix(4, 3).ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[4 x 4]
+        /// 1   0   0   0   
+        /// 0   1   0   0   
+        /// 0   0   1   0   
+        /// 0   0   0   1   
+        /// Matrix[4 x 3]
+        /// 1   0   0   
+        /// 0   1   0   
+        /// 0   0   1   
+        /// 0   0   0   
+        /// </code>
+        /// </example>
         public static Matrix IdentityMatrix(int size)
             => Entity.Matrix.I(size);
 
@@ -3559,6 +4905,28 @@ namespace AngouriMath
         /// Creates a rectangular identity matrix
         /// with the given size
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Console.WriteLine(IdentityMatrix(4).ToString(multilineFormat: true));
+        /// Console.WriteLine(IdentityMatrix(4, 3).ToString(multilineFormat: true));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[4 x 4]
+        /// 1   0   0   0   
+        /// 0   1   0   0   
+        /// 0   0   1   0   
+        /// 0   0   0   1   
+        /// Matrix[4 x 3]
+        /// 1   0   0   
+        /// 0   1   0   
+        /// 0   0   1   
+        /// 0   0   0   
+        /// </code>
+        /// </example>
         public static Matrix IdentityMatrix(int rowCount, int columnCount)
             => Entity.Matrix.I(rowCount, columnCount);
 
@@ -3582,6 +4950,61 @@ namespace AngouriMath
             /// <param name="dir"></param>
             /// <param name="matrices"></param>
             /// <returns></returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.Entity;
+            /// 
+            /// Matrix A = @"
+            /// [[1, 2, 3]]
+            /// ";
+            /// Matrix B = @"
+            /// [[1, 2, 3],
+            ///  [4, 5, 6]]";
+            /// Matrix C = @"
+            /// [[2, 4, 1],
+            ///  [4, 1, 2],
+            ///  [a, x, y]]
+            /// ";
+            /// Console.WriteLine(
+            ///     Matrices.Concat(Matrices.Direction.Vertical, A, B, C)
+            ///     .ToString(multilineFormat: true)
+            ///  );
+            /// Console.WriteLine("----------------------------");
+            /// Matrix D = "[1, 2, 3]";
+            /// Matrix E = "[4, 5, 6]";
+            /// Console.WriteLine(D.ToString(multilineFormat: true));
+            /// Console.WriteLine(E.ToString(multilineFormat: true));
+            /// Console.WriteLine(
+            ///     Matrices.Concat(Matrices.Direction.Horizontal, D, E)
+            ///     .ToString(multilineFormat: true)
+            /// );
+            /// </code>
+            /// Prints
+            /// <code>
+            /// Matrix[6 x 3]
+            /// 1   2   3   
+            /// 1   2   3   
+            /// 4   5   6   
+            /// 2   4   1   
+            /// 4   1   2   
+            /// a   x   y   
+            /// ----------------------------
+            /// Matrix[3 x 1]
+            /// 1   
+            /// 2   
+            /// 3   
+            /// Matrix[3 x 1]
+            /// 4   
+            /// 5   
+            /// 6   
+            /// Matrix[3 x 2]
+            /// 1   4   
+            /// 2   5   
+            /// 3   6
+            /// </code>
+            /// </example>
             public static Matrix Concat(Direction dir, params Matrix[] matrices)
                 => MatrixOperations.Concat(dir, matrices);
         
@@ -3589,6 +5012,43 @@ namespace AngouriMath
             /// Performs a pointwise multiplication operation,
             /// or throws exception if shapes mismatch
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.Entity;
+            /// 
+            /// Matrix A = @"
+            /// [[a, b],
+            ///  [c, d]]
+            /// ";
+            /// Matrix B = @"
+            /// [[f, g],
+            ///  [k, l]]
+            /// ";
+            /// Console.WriteLine((A * B).ToString(multilineFormat: true));
+            /// Console.WriteLine(Matrices.PointwiseMultiplication(A, B).ToString(multilineFormat: true));
+            /// Console.WriteLine("-------------------");
+            /// var v1 = Vector(1, 2, 3);
+            /// var v2 = Vector(10, 20, 30);
+            /// Console.WriteLine(v1);
+            /// Console.WriteLine(v2);
+            /// Console.WriteLine((v1.T * v2).AsScalar());
+            /// </code>
+            /// Prints
+            /// <code>
+            /// Matrix[2 x 2]
+            /// a * f + b * k   a * g + b * l   
+            /// c * f + d * k   c * g + d * l   
+            /// Matrix[2 x 2]
+            /// a * f   b * g   
+            /// c * k   d * l   
+            /// -------------------
+            /// [1, 2, 3]
+            /// [10, 20, 30]
+            /// 140
+            /// </code>
+            /// </example>
             public static Matrix PointwiseMultiplication(Matrix m1, Matrix m2)
                 => (Matrix)new Matrix(GenTensor.PiecewiseMultiply(m1.InnerMatrix, m2.InnerMatrix)).InnerSimplified;
 
@@ -3653,6 +5113,43 @@ namespace AngouriMath
             /// <param name="a">First vector (order does not matter)</param>
             /// <param name="b">Second vector</param>
             /// <returns>The resulting scalar which is an <see cref="Entity"/> and not a <see cref="Entity.Matrix"/></returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.Entity;
+            /// 
+            /// Matrix A = @"
+            /// [[a, b],
+            ///  [c, d]]
+            /// ";
+            /// Matrix B = @"
+            /// [[f, g],
+            ///  [k, l]]
+            /// ";
+            /// Console.WriteLine((A * B).ToString(multilineFormat: true));
+            /// Console.WriteLine(Matrices.PointwiseMultiplication(A, B).ToString(multilineFormat: true));
+            /// Console.WriteLine("-------------------");
+            /// var v1 = Vector(1, 2, 3);
+            /// var v2 = Vector(10, 20, 30);
+            /// Console.WriteLine(v1);
+            /// Console.WriteLine(v2);
+            /// Console.WriteLine((v1.T * v2).AsScalar());
+            /// </code>
+            /// Prints
+            /// <code>
+            /// Matrix[2 x 2]
+            /// a * f + b * k   a * g + b * l   
+            /// c * f + d * k   c * g + d * l   
+            /// Matrix[2 x 2]
+            /// a * f   b * g   
+            /// c * k   d * l   
+            /// -------------------
+            /// [1, 2, 3]
+            /// [10, 20, 30]
+            /// 140
+            /// </code>
+            /// </example>
             [Obsolete("Use a.T * b for the same purpose")]
             public static Entity ScalarProduct(Matrix a, Matrix b) => GenTensor.VectorDotProduct(a.InnerMatrix, b.InnerMatrix);
 
@@ -3679,12 +5176,39 @@ namespace AngouriMath
         /// </summary>
         public static partial class Settings
         {
-
             /// <summary>
             /// Determine if it should only parse if it is explicit
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using AngouriMath;
+            /// using AngouriMath.Core.Exceptions;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity expr = "a2 + 2x + a b + 2(g + e)3";
+            /// Console.WriteLine(expr);
+            /// var _ = Settings.ExplicitParsingOnly.Set(true);
+            /// try
+            /// {
+            ///     Entity expr2 = "a2 + 2x + a b + 2(g + e)3";
+            ///     Console.WriteLine(expr2);
+            /// }
+            /// catch (MissingOperatorParseException)
+            /// {
+            ///     Entity expr3 = "a^2 + 2*x + a * b + 2*(g + e)^3";
+            ///     Console.WriteLine($"Exception, but we still can parse {expr3}");
+            /// }
+            /// </code>
+            /// Prints
+            /// <code>
+            /// a ^ 2 + 2 * x + a * b + 2 * (g + e) ^ 3
+            /// Exception, but we still can parse a ^ 2 + 2 * x + a * b + 2 * (g + e) ^ 3
+            /// </code>
+            /// </example>
             public static Setting<bool> ExplicitParsingOnly => explicitParsingOnly ??= false;
             [ThreadStatic] private static Setting<bool>? explicitParsingOnly;
+            
             /// <summary>
             /// That is how we perform newton solving when no analytical solution was found
             /// in <see cref="Entity.Solve(Variable)"/> and <see cref="Entity.SolveEquation(Variable)"/>
@@ -3715,6 +5239,26 @@ namespace AngouriMath
             /// <summary>
             /// Enables downcasting. Not recommended to turn off, disabling might be only useful for some calculations
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using AngouriMath;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Entity expr = (Entity.Number.Real)5.5m;
+            /// Console.WriteLine(expr.GetType());
+            /// 
+            /// var _ = Settings.DowncastingEnabled.Set(false);
+            /// 
+            /// Entity expr2 = (Entity.Number.Real)5.5m;
+            /// Console.WriteLine(expr2.GetType());
+            /// </code>
+            /// Prints
+            /// <code>
+            /// AngouriMath.Entity+Number+Rational
+            /// AngouriMath.Entity+Number+Real
+            /// </code>
+            /// </example>
             public static Setting<bool> DowncastingEnabled => downcastingEnabled ??= true;
             [ThreadStatic] private static Setting<bool>? downcastingEnabled;
 
@@ -3722,6 +5266,47 @@ namespace AngouriMath
             /// Amount of iterations allowed for attempting to cast to a rational
             /// The more iterations, the larger fraction could be calculated
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using AngouriMath;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// void Method()
+            /// {
+            ///     Console.WriteLine("---------------------");
+            ///     Entity a = 5.5m;
+            ///     Console.WriteLine(a);
+            ///     Entity b = 5.462m;
+            ///     Console.WriteLine(b);
+            ///     Entity c = 5.0m / 7.0m;
+            ///     Console.WriteLine(c);
+            /// }
+            /// 
+            /// Settings.FloatToRationalIterCount.As(1, Method);
+            /// Settings.FloatToRationalIterCount.As(3, Method);
+            /// Settings.FloatToRationalIterCount.As(5, Method);
+            /// Settings.FloatToRationalIterCount.As(10, Method);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 5.5
+            /// 5.462
+            /// 0.7142857142857142857142857143
+            /// ---------------------
+            /// 11/2
+            /// 5.462
+            /// 0.7142857142857142857142857143
+            /// ---------------------
+            /// 11/2
+            /// 5.462
+            /// 5/7
+            /// ---------------------
+            /// 11/2
+            /// 2731/500
+            /// 5/7
+            /// </code>
+            /// </example>
             public static Setting<int> FloatToRationalIterCount => floatToRationalIterCount ??= 15;
             [ThreadStatic] private static Setting<int>? floatToRationalIterCount;
 
