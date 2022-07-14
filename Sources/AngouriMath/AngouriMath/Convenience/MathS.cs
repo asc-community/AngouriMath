@@ -33,43 +33,143 @@ namespace AngouriMath
         {
             /// <summary>
             /// Returns entity standing for Euler phi function
-            /// <a href="https://en.wikipedia.org/wiki/Euler%27s_totient_function"/>
-            /// </summary>
+            /// <a href="https://en.wikipedia.org/wiki/Euler%27s_totient_function" >Wikipedia</a>
             /// If integer x is non-positive, the result will be 0
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.NumberTheory.Phi(12));
+            /// Console.WriteLine(MathS.NumberTheory.Phi(12).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// phi(12)
+            /// 4
+            /// </code>
+            /// </example>
             public static Entity Phi(Entity integer) => new Phif(integer);
 
             /// <summary>
-            /// Count of all divisors of an integer
+            /// Count of all divisors of an integer, including 1 or itself.
             /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.NumberTheory.CountDivisors(12));
+            /// Console.WriteLine(MathS.NumberTheory.CountDivisors(13));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 6
+            /// 2
+            /// </code>
+            /// </example>
             public static Integer CountDivisors(Integer integer) => integer.CountDivisors();
 
             /// <summary>
-            /// Factorization of integer
+            /// Factorization of integer. Returns a sequence of unique primes
+            /// and their corresponding power. Sorted by value of prime (starting
+            /// from the smallest).
             /// </summary>
+            /// <example>
+            /// <code>
+            /// var factors = MathS.NumberTheory.Factorize(1872);
+            /// foreach (var (prime, power) in factors)
+            ///     Console.WriteLine($"{prime} ^ {power}");
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 2 ^ 4
+            /// 3 ^ 2
+            /// 13 ^ 1
+            /// </code>
+            /// </example>
             public static IEnumerable<(Integer prime, Integer power)> Factorize(Integer integer) => integer.Factorize();
 
             /// <summary>
             /// Finds the greatest common divisor
             /// of two integers
             /// </summary>
+            /// <example>
+            /// <code>
+            /// Console.WriteLine(MathS.NumberTheory.GreatestCommonDivisor(1872, 169));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 13
+            /// </code>
+            /// </example>
             public static Integer GreatestCommonDivisor(Integer a, Integer b)
                 => a.EInteger.Gcd(b.EInteger);
 
         }
 
-        /// <summary>Use it to solve equations</summary>
+        /// <summary>Use it to solve systems of equations</summary>
         /// <param name="equations">
         /// An array of <see cref="Entity"/> (or <see cref="string"/>s)
         /// the system consists of
         /// </param>
+        /// <example>
+        /// <code>
+        /// var system = MathS.Equations(
+        ///     "a + b",
+        ///     "a^2 - b + c"
+        /// );
+        /// var solutions = system.Solve("a", "b");
+        /// Console.WriteLine(solutions.ToString(multilineFormat: true));
+        /// <br/>
+        /// Console.WriteLine();
+        /// <br/>
+        /// for (int i = 0; i &lt; solutions.RowCount; i++)
+        /// {
+        ///     var (a, b) = (solutions[i, 0], solutions[i, 1]);
+        ///     Console.WriteLine($"Solution #{i}: a = {a}, b = {b}");
+        /// }
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[2 x 2]
+        /// (-1 - sqrt(1 - 4 * c)) / 2    -(-1 - sqrt(1 - 4 * c)) / 2   
+        /// (-1 + sqrt(1 - 4 * c)) / 2    -(-1 + sqrt(1 - 4 * c)) / 2   
+        /// <br/>
+        /// Solution #0: a = (-1 - sqrt(1 - 4 * c)) / 2, b = -(-1 - sqrt(1 - 4 * c)) / 2
+        /// Solution #1: a = (-1 + sqrt(1 - 4 * c)) / 2, b = -(-1 + sqrt(1 - 4 * c)) / 2
+        /// </code>
+        /// </example>
         /// <returns>An <see cref="EquationSystem"/> which can then be solved</returns>
         public static EquationSystem Equations(params Entity[] equations) => new EquationSystem(equations);
 
-        /// <summary>Use it to solve equations</summary>
+        /// <summary>Use it to solve systems of equations</summary>
         /// <param name="equations">
-        /// An array of <see cref="Entity"/> (or <see cref="string"/>s)
-        /// the system consists of
+        /// A sequence of <see cref="Entity"/> the system consists of
         /// </param>
+        /// <example>
+        /// <code>
+        /// var equations = LList.Of&lt;Entity&gt;(
+        ///     "a + b",
+        ///     "a^2 - b + c"
+        /// );
+        /// var system = MathS.Equations(equations);
+        /// var solutions = system.Solve("a", "b");
+        /// Console.WriteLine(solutions.ToString(multilineFormat: true));
+        /// <br/>
+        /// Console.WriteLine();
+        /// <br/>
+        /// for (int i = 0; i &lt; solutions.RowCount; i++)
+        /// {
+        ///     var (a, b) = (solutions[i, 0], solutions[i, 1]);
+        ///     Console.WriteLine($"Solution #{i}: a = {a}, b = {b}");
+        /// }
+        /// </code>
+        /// Prints
+        /// <code>
+        /// Matrix[2 x 2]
+        /// (-1 - sqrt(1 - 4 * c)) / 2    -(-1 - sqrt(1 - 4 * c)) / 2   
+        /// (-1 + sqrt(1 - 4 * c)) / 2    -(-1 + sqrt(1 - 4 * c)) / 2   
+        /// <br/>
+        /// Solution #0: a = (-1 - sqrt(1 - 4 * c)) / 2, b = -(-1 - sqrt(1 - 4 * c)) / 2
+        /// Solution #1: a = (-1 + sqrt(1 - 4 * c)) / 2, b = -(-1 + sqrt(1 - 4 * c)) / 2
+        /// </code>
+        /// </example>
         /// <returns>An <see cref="EquationSystem"/> which can then be solved</returns>
         public static EquationSystem Equations(IEnumerable<Entity> equations) => new EquationSystem(equations);
 
@@ -77,6 +177,18 @@ namespace AngouriMath
         /// <param name="equation">An equation that is assumed to equal 0</param>
         /// <param name="var">Variable whose values we are looking for</param>
         /// <returns>A <see cref="Set"/> of possible values or intervals of values</returns>
+        /// <example>
+        /// <code>
+        /// Entity eq1 = "x^2 - 1";
+        /// Console.WriteLine(MathS.SolveEquation(eq1, "x"));
+        /// 
+        /// Entity eq2 = "sin(a u) - cos(a u)";
+        /// Console.WriteLine(MathS.SolveEquation(eq2, "u"));
+        /// </code>
+        /// Prints
+        /// { 1, -1 }
+        /// { ln(-sqrt(-2) / (-1 - i)) / i / a, ln(sqrt(-2) / (-1 - i)) / i / a }
+        /// </example>
         public static Set SolveEquation(Entity equation, Variable var) => EquationSolver.Solve(equation, var);
 
         /// <summary>
@@ -85,6 +197,27 @@ namespace AngouriMath
         /// Uses a simple table of truth
         /// Use <see cref="Entity.SolveBoolean(Variable)"/> for smart solving
         /// </summary>
+        /// <example>
+        /// <code>
+        /// Entity expr = "(a xor b or c) implies (a or c)";
+        /// var sols = MathS.SolveBooleanTable(expr, "a", "b", "c");
+        /// 
+        /// if (sols is null)
+        ///     Console.WriteLine("No solution found");
+        /// else
+        /// {
+        ///     Console.WriteLine(sols.ToString(multilineFormat: true));
+        ///     Console.WriteLine();
+        ///     for (int i = 0; i &lt; sols.RowCount; i++)
+        ///     {
+        ///         var a = (bool)sols[i, 0].EvalBoolean();
+        ///         var b = (bool)sols[i, 1].EvalBoolean();
+        ///         var c = (bool)sols[i, 2].EvalBoolean();
+        ///         Console.WriteLine($"Solution #{i}: {a}, {b}, {c}");
+        ///     }
+        /// }
+        /// </code>
+        /// </example>
         public static Matrix? SolveBooleanTable(Entity expression, params Variable[] variables)
             => BooleanSolver.SolveTable(expression, variables);
 
@@ -92,24 +225,84 @@ namespace AngouriMath
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of sine</param>
         /// <returns>Sine node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var expr = Sin("x").Pow(2) + Cos("x").Pow(2);
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin(x) ^ 2 + cos(x) ^ 2
+        /// 1
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Sin(Entity a) => new Sinf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of cosine</param>
         /// <returns>Cosine node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var expr = Sin("x").Pow(2) + Cos("x").Pow(2);
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin(x) ^ 2 + cos(x) ^ 2
+        /// 1
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Cos(Entity a) => new Cosf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of secant</param>
-        /// <returns>Cosine node</returns>
+        /// <returns>Secant node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var expr = Sec("x") / Cosec("x");
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sec(x) / csc(x)
+        /// tan(x)
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Sec(Entity a) => new Secantf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of cosecant</param>
-        /// <returns>Cosine node</returns>
+        /// <returns>Cosecant node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var expr = Sec("x") / Cosec("x");
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sec(x) / csc(x)
+        /// tan(x)
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Cosec(Entity a) => new Cosecantf(a);
 
@@ -117,12 +310,72 @@ namespace AngouriMath
         /// <param name="base">Base node of logarithm</param>
         /// <param name="x">Argument node of logarithm</param>
         /// <returns>Logarithm node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Log(2, 16));
+        /// Console.WriteLine(Log(2, 16).Evaled);
+        /// Console.WriteLine(Log(3, 81));
+        /// Console.WriteLine(Log(3, 81).Evaled);
+        /// Console.WriteLine(Log(10, 1000));
+        /// Console.WriteLine(Log(10, 1000).Evaled);
+        /// Console.WriteLine(Log(1000));
+        /// Console.WriteLine(Log(1000).Evaled);
+        /// Console.WriteLine(Ln(e.Pow(16)));
+        /// Console.WriteLine(Ln(e.Pow(16)).Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// log(2, 16)
+        /// 4
+        /// log(3, 81)
+        /// 4
+        /// log(10, 1000)
+        /// 3
+        /// log(10, 1000)
+        /// 3
+        /// ln(e ^ 16)
+        /// 16
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Log(Entity @base, Entity x) => new Logf(@base, x);
 
-        /// <summary><a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
+        /// <summary>
+        /// This is 10-based logarithm.
+        /// <a href="https://en.wikipedia.org/wiki/Logarithm"/></summary>
         /// <param name="x">Argument node of logarithm</param>
         /// <returns>Logarithm node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Log(2, 16));
+        /// Console.WriteLine(Log(2, 16).Evaled);
+        /// Console.WriteLine(Log(3, 81));
+        /// Console.WriteLine(Log(3, 81).Evaled);
+        /// Console.WriteLine(Log(10, 1000));
+        /// Console.WriteLine(Log(10, 1000).Evaled);
+        /// Console.WriteLine(Log(1000));
+        /// Console.WriteLine(Log(1000).Evaled);
+        /// Console.WriteLine(Ln(e.Pow(16)));
+        /// Console.WriteLine(Ln(e.Pow(16)).Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// log(2, 16)
+        /// 4
+        /// log(3, 81)
+        /// 4
+        /// log(10, 1000)
+        /// 3
+        /// log(10, 1000)
+        /// 3
+        /// ln(e ^ 16)
+        /// 16
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Entity Log(Entity x) => new Logf(10, x);
 
@@ -130,72 +383,422 @@ namespace AngouriMath
         /// <param name="base">Base node of power</param>
         /// <param name="power">Argument node of power</param>
         /// <returns>Power node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Pow(2, 5));
+        /// Console.WriteLine(Pow(2, 5).Simplify());
+        /// Console.WriteLine(Pow(e, 2));
+        /// Console.WriteLine(Pow(e, 2).Simplify());
+        /// Console.WriteLine(Pow(e, 2).Evaled);
+        /// Console.WriteLine(Sqrt(Sqr("x")));
+        /// Console.WriteLine(Sqrt(Sqr("x")).Simplify());
+        /// Console.WriteLine(Pow(Cbrt("a"), 3));
+        /// Console.WriteLine(Pow(Cbrt("a"), 3).Simplify());
+        /// Console.WriteLine(Pow(Cbrt("a"), 6));
+        /// Console.WriteLine(Pow(Cbrt("a"), 6).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 2 ^ 5
+        /// 32
+        /// e ^ 2
+        /// e ^ 2
+        /// 7.389056098930650227230427460575007813180315570551847324087127822522573796079057763384312485079121792
+        /// sqrt(x ^ 2)
+        /// x
+        /// a ^ (1/3) ^ 3
+        /// a
+        /// a ^ (1/3) ^ 6
+        /// a ^ 2
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Pow(Entity @base, Entity power) => new Powf(@base, power);
 
         /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
         /// <param name="a">The argument of which square root will be taken</param>
         /// <returns>Power node with (1/2) as the power</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Pow(2, 5));
+        /// Console.WriteLine(Pow(2, 5).Simplify());
+        /// Console.WriteLine(Pow(e, 2));
+        /// Console.WriteLine(Pow(e, 2).Simplify());
+        /// Console.WriteLine(Pow(e, 2).Evaled);
+        /// Console.WriteLine(Sqrt(Sqr("x")));
+        /// Console.WriteLine(Sqrt(Sqr("x")).Simplify());
+        /// Console.WriteLine(Pow(Cbrt("a"), 3));
+        /// Console.WriteLine(Pow(Cbrt("a"), 3).Simplify());
+        /// Console.WriteLine(Pow(Cbrt("a"), 6));
+        /// Console.WriteLine(Pow(Cbrt("a"), 6).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 2 ^ 5
+        /// 32
+        /// e ^ 2
+        /// e ^ 2
+        /// 7.389056098930650227230427460575007813180315570551847324087127822522573796079057763384312485079121792
+        /// sqrt(x ^ 2)
+        /// x
+        /// a ^ (1/3) ^ 3
+        /// a
+        /// a ^ (1/3) ^ 6
+        /// a ^ 2
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Sqrt(Entity a) => new Powf(a, Number.Rational.Create(1, 2));
 
         /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
         /// <param name="a">The argument of which cube root will be taken</param>
         /// <returns>Power node with (1/3) as the power</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Pow(2, 5));
+        /// Console.WriteLine(Pow(2, 5).Simplify());
+        /// Console.WriteLine(Pow(e, 2));
+        /// Console.WriteLine(Pow(e, 2).Simplify());
+        /// Console.WriteLine(Pow(e, 2).Evaled);
+        /// Console.WriteLine(Sqrt(Sqr("x")));
+        /// Console.WriteLine(Sqrt(Sqr("x")).Simplify());
+        /// Console.WriteLine(Pow(Cbrt("a"), 3));
+        /// Console.WriteLine(Pow(Cbrt("a"), 3).Simplify());
+        /// Console.WriteLine(Pow(Cbrt("a"), 6));
+        /// Console.WriteLine(Pow(Cbrt("a"), 6).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 2 ^ 5
+        /// 32
+        /// e ^ 2
+        /// e ^ 2
+        /// 7.389056098930650227230427460575007813180315570551847324087127822522573796079057763384312485079121792
+        /// sqrt(x ^ 2)
+        /// x
+        /// a ^ (1/3) ^ 3
+        /// a
+        /// a ^ (1/3) ^ 6
+        /// a ^ 2
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Cbrt(Entity a) => new Powf(a, Number.Rational.Create(1, 3));
 
         /// <summary>Special case of <a href="https://en.wikipedia.org/wiki/Power_function"/></summary>
         /// <param name="a">Argument to be squared</param>
         /// <returns>Power node with 2 as the power</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Pow(2, 5));
+        /// Console.WriteLine(Pow(2, 5).Simplify());
+        /// Console.WriteLine(Pow(e, 2));
+        /// Console.WriteLine(Pow(e, 2).Simplify());
+        /// Console.WriteLine(Pow(e, 2).Evaled);
+        /// Console.WriteLine(Sqrt(Sqr("x")));
+        /// Console.WriteLine(Sqrt(Sqr("x")).Simplify());
+        /// Console.WriteLine(Pow(Cbrt("a"), 3));
+        /// Console.WriteLine(Pow(Cbrt("a"), 3).Simplify());
+        /// Console.WriteLine(Pow(Cbrt("a"), 6));
+        /// Console.WriteLine(Pow(Cbrt("a"), 6).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 2 ^ 5
+        /// 32
+        /// e ^ 2
+        /// e ^ 2
+        /// 7.389056098930650227230427460575007813180315570551847324087127822522573796079057763384312485079121792
+        /// sqrt(x ^ 2)
+        /// x
+        /// a ^ (1/3) ^ 3
+        /// a
+        /// a ^ (1/3) ^ 6
+        /// a ^ 2
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Sqr(Entity a) => new Powf(a, 2);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which tangent will be taken</param>
         /// <returns>Tangent node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// var expr = Tan("x") * Cotan("x");
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Simplify());
+        /// var expr2 = Tan("x") * Cos("x");
+        /// Console.WriteLine(expr2.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// tan(x) * cotan(x)
+        /// 1
+        /// sin(x)
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Tan(Entity a) => new Tanf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which cotangent will be taken</param>
         /// <returns>Cotangent node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// var expr = Tan("x") * Cotan("x");
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Simplify());
+        /// var expr2 = Tan("x") * Cos("x");
+        /// Console.WriteLine(expr2.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// tan(x) * cotan(x)
+        /// 1
+        /// sin(x)
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Cotan(Entity a) => new Cotanf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arcsine will be taken</param>
         /// <returns>Arcsine node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// var expr = Arcsin("x") + Arccos("x");
+        /// Console.WriteLine(expr);
+        /// var expr2 = Arcsin(Sin("x")) + Arccos(Cos("y"));
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// var expr3 = Arctan(Sin("a") / Cos("a"));
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Simplify());
+        /// var expr4 = Arccotan(Cos("a") / Sin("a"));
+        /// Console.WriteLine(expr4);
+        /// Console.WriteLine(expr4.Simplify());
+        /// var expr5 = Arcsec(Sec("aa")) + Arccosec(Cosec("bb"));
+        /// Console.WriteLine(expr5);
+        /// Console.WriteLine(expr5.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// arcsin(x) + arccos(x)
+        /// arcsin(sin(x)) + arccos(cos(y))
+        /// x + y
+        /// arctan(sin(a) / cos(a))
+        /// a
+        /// arccotan(cos(a) / sin(a))
+        /// a
+        /// arcsec(sec(aa)) + arccsc(csc(bb))
+        /// aa + bb
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arcsin(Entity a) => new Arcsinf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arccosine will be taken</param>
         /// <returns>Arccosine node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// var expr = Arcsin("x") + Arccos("x");
+        /// Console.WriteLine(expr);
+        /// var expr2 = Arcsin(Sin("x")) + Arccos(Cos("y"));
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// var expr3 = Arctan(Sin("a") / Cos("a"));
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Simplify());
+        /// var expr4 = Arccotan(Cos("a") / Sin("a"));
+        /// Console.WriteLine(expr4);
+        /// Console.WriteLine(expr4.Simplify());
+        /// var expr5 = Arcsec(Sec("aa")) + Arccosec(Cosec("bb"));
+        /// Console.WriteLine(expr5);
+        /// Console.WriteLine(expr5.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// arcsin(x) + arccos(x)
+        /// arcsin(sin(x)) + arccos(cos(y))
+        /// x + y
+        /// arctan(sin(a) / cos(a))
+        /// a
+        /// arccotan(cos(a) / sin(a))
+        /// a
+        /// arcsec(sec(aa)) + arccsc(csc(bb))
+        /// aa + bb
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arccos(Entity a) => new Arccosf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arctangent will be taken</param>
         /// <returns>Arctangent node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// var expr = Arcsin("x") + Arccos("x");
+        /// Console.WriteLine(expr);
+        /// var expr2 = Arcsin(Sin("x")) + Arccos(Cos("y"));
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// var expr3 = Arctan(Sin("a") / Cos("a"));
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Simplify());
+        /// var expr4 = Arccotan(Cos("a") / Sin("a"));
+        /// Console.WriteLine(expr4);
+        /// Console.WriteLine(expr4.Simplify());
+        /// var expr5 = Arcsec(Sec("aa")) + Arccosec(Cosec("bb"));
+        /// Console.WriteLine(expr5);
+        /// Console.WriteLine(expr5.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// arcsin(x) + arccos(x)
+        /// arcsin(sin(x)) + arccos(cos(y))
+        /// x + y
+        /// arctan(sin(a) / cos(a))
+        /// a
+        /// arccotan(cos(a) / sin(a))
+        /// a
+        /// arcsec(sec(aa)) + arccsc(csc(bb))
+        /// aa + bb
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arctan(Entity a) => new Arctanf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arccotangent will be taken</param>
         /// <returns>Arccotangent node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// var expr = Arcsin("x") + Arccos("x");
+        /// Console.WriteLine(expr);
+        /// var expr2 = Arcsin(Sin("x")) + Arccos(Cos("y"));
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// var expr3 = Arctan(Sin("a") / Cos("a"));
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Simplify());
+        /// var expr4 = Arccotan(Cos("a") / Sin("a"));
+        /// Console.WriteLine(expr4);
+        /// Console.WriteLine(expr4.Simplify());
+        /// var expr5 = Arcsec(Sec("aa")) + Arccosec(Cosec("bb"));
+        /// Console.WriteLine(expr5);
+        /// Console.WriteLine(expr5.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// arcsin(x) + arccos(x)
+        /// arcsin(sin(x)) + arccos(cos(y))
+        /// x + y
+        /// arctan(sin(a) / cos(a))
+        /// a
+        /// arccotan(cos(a) / sin(a))
+        /// a
+        /// arcsec(sec(aa)) + arccsc(csc(bb))
+        /// aa + bb
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arccotan(Entity a) => new Arccotanf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arcsecant will be taken</param>
         /// <returns>Arccosine node with the reciprocal of the argument</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// var expr = Arcsin("x") + Arccos("x");
+        /// Console.WriteLine(expr);
+        /// var expr2 = Arcsin(Sin("x")) + Arccos(Cos("y"));
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// var expr3 = Arctan(Sin("a") / Cos("a"));
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Simplify());
+        /// var expr4 = Arccotan(Cos("a") / Sin("a"));
+        /// Console.WriteLine(expr4);
+        /// Console.WriteLine(expr4.Simplify());
+        /// var expr5 = Arcsec(Sec("aa")) + Arccosec(Cosec("bb"));
+        /// Console.WriteLine(expr5);
+        /// Console.WriteLine(expr5.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// arcsin(x) + arccos(x)
+        /// arcsin(sin(x)) + arccos(cos(y))
+        /// x + y
+        /// arctan(sin(a) / cos(a))
+        /// a
+        /// arccotan(cos(a) / sin(a))
+        /// a
+        /// arcsec(sec(aa)) + arccsc(csc(bb))
+        /// aa + bb
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arcsec(Entity a) => new Arcsecantf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Inverse_trigonometric_functions"/></summary>
         /// <param name="a">Argument node of which arccosecant will be taken</param>
         /// <returns>Arcsine node with the reciprocal of the argument</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// var expr = Arcsin("x") + Arccos("x");
+        /// Console.WriteLine(expr);
+        /// var expr2 = Arcsin(Sin("x")) + Arccos(Cos("y"));
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// var expr3 = Arctan(Sin("a") / Cos("a"));
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Simplify());
+        /// var expr4 = Arccotan(Cos("a") / Sin("a"));
+        /// Console.WriteLine(expr4);
+        /// Console.WriteLine(expr4.Simplify());
+        /// var expr5 = Arcsec(Sec("aa")) + Arccosec(Cosec("bb"));
+        /// Console.WriteLine(expr5);
+        /// Console.WriteLine(expr5.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// arcsin(x) + arccos(x)
+        /// arcsin(sin(x)) + arccos(cos(y))
+        /// x + y
+        /// arctan(sin(a) / cos(a))
+        /// a
+        /// arccotan(cos(a) / sin(a))
+        /// a
+        /// arcsec(sec(aa)) + arccsc(csc(bb))
+        /// aa + bb
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Arccosec(Entity a) => new Arccosecantf(a);
 
@@ -206,18 +809,85 @@ namespace AngouriMath
         /// </summary>
         /// <param name="a">Argument node of which natural logarithm will be taken</param>
         /// <returns>Logarithm node with base equal to e</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Log(2, 16));
+        /// Console.WriteLine(Log(2, 16).Evaled);
+        /// Console.WriteLine(Log(3, 81));
+        /// Console.WriteLine(Log(3, 81).Evaled);
+        /// Console.WriteLine(Log(10, 1000));
+        /// Console.WriteLine(Log(10, 1000).Evaled);
+        /// Console.WriteLine(Log(1000));
+        /// Console.WriteLine(Log(1000).Evaled);
+        /// Console.WriteLine(Ln(e.Pow(16)));
+        /// Console.WriteLine(Ln(e.Pow(16)).Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// log(2, 16)
+        /// 4
+        /// log(3, 81)
+        /// 4
+        /// log(10, 1000)
+        /// 3
+        /// log(10, 1000)
+        /// 3
+        /// ln(e ^ 16)
+        /// 16
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Ln(Entity a) => new Logf(e, a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Factorial"/></summary>
         /// <param name="a">Argument node of which factorial will be taken</param>
         /// <returns>Factorial node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// var expr = Factorial(5);
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Evaled);
+        /// var expr2 = Gamma(4);
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 5!
+        /// 120
+        /// (4 + 1)!
+        /// 120
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Factorial(Entity a) => new Factorialf(a);
 
         /// <summary><a href="https://en.wikipedia.org/wiki/Gamma_function"/></summary>
         /// <param name="a">Argument node of which gamma function will be taken</param>
         /// <returns>Factorial node with one added to the argument</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// var expr = Factorial(5);
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Evaled);
+        /// var expr2 = Gamma(4);
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 5!
+        /// 120
+        /// (4 + 1)!
+        /// 120
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Gamma(Entity a) => new Factorialf(a + 1);
 
