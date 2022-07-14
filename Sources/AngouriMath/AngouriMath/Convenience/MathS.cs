@@ -894,18 +894,84 @@ namespace AngouriMath
         /// <summary>https://en.wikipedia.org/wiki/Sign_function</summary>
         /// <param name="a">Argument node of which Signum function will be taken</param>
         /// <returns>Signum node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Signum(-5));
+        /// Console.WriteLine(Signum(-5).Evaled);
+        /// Console.WriteLine(Signum(0));
+        /// Console.WriteLine(Signum(0).Evaled);
+        /// Console.WriteLine(Signum(5));
+        /// Console.WriteLine(Signum(5).Evaled);
+        /// Console.WriteLine(Signum(4 + 3 * i));
+        /// Console.WriteLine(Signum(4 + 3 * i).Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sgn(-5)
+        /// -1
+        /// sgn(0)
+        /// 0
+        /// sgn(5)
+        /// 1
+        /// sgn(4 + 3i)
+        /// 4/5 + (3/5)i
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Signum(Entity a) => new Signumf(a);
 
         /// <summary>https://en.wikipedia.org/wiki/Absolute_value</summary>
         /// <param name="a">Argument node of which Abs function will be taken</param>
         /// <returns>Abs node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Abs(-5));
+        /// Console.WriteLine(Abs(-5).Evaled);
+        /// Console.WriteLine(Abs(0));
+        /// Console.WriteLine(Abs(0).Evaled);
+        /// Console.WriteLine(Abs(5));
+        /// Console.WriteLine(Abs(5).Evaled);
+        /// Console.WriteLine(Abs(4 + 3 * i));
+        /// Console.WriteLine(Abs(4 + 3 * i).Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// abs(-5)
+        /// 5
+        /// abs(0)
+        /// 0
+        /// abs(5)
+        /// 5
+        /// abs(4 + 3i)
+        /// 5
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Abs(Entity a) => new Absf(a);
 
-        /// <summary>https://en.wikipedia.org/wiki/Negation</summary>
+        /// <summary>Boolean negation
+        /// <a href="https://en.wikipedia.org/wiki/Negation">Wikipedia</a></summary>
         /// <param name="a">Argument node of which Negation function will be taken</param>
         /// <returns>The Not node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Negation("x"));
+        /// Console.WriteLine(Negation(Negation("x")));
+        /// Console.WriteLine(Negation(Negation("x")).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// not x
+        /// not not x
+        /// x
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Negation(Entity a) => !a;
 
@@ -916,6 +982,42 @@ namespace AngouriMath
         /// <param name="expression">The expression is extracted if the predicate is true</param>
         /// <param name="condition">Condition when the expression is defined</param>
         /// <returns>The Provided node</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// Console.WriteLine(Provided("a = b", "pi = 4"));
+        /// Console.WriteLine(Provided("a = b", "pi = 4").Simplify());
+        /// Console.WriteLine();
+        /// 
+        /// var expr = Provided("1000", "a = b")
+        ///         .Substitute("a", 5)
+        ///         .Substitute("b", 130)
+        ///     ;
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Evaled);
+        /// 
+        /// Console.WriteLine();
+        /// 
+        /// var expr1 = Provided("1000", "a = b")
+        ///         .Substitute("a", 5)
+        ///         .Substitute("b", 5)
+        ///     ;
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine(expr1.Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// a = b provided pi = 4
+        /// NaN
+        /// 
+        /// 1000 provided 5 = 130
+        /// NaN
+        /// 
+        /// 1000 provided 5 = 5
+        /// 1000
+        /// </code>
+        /// </example>
         [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
         public static Entity Provided(Entity expression, Entity condition)
             => expression.Provided(condition);
@@ -940,6 +1042,61 @@ namespace AngouriMath
         /// <param name="otherwise">
         /// An otherwise case. Will be intepreted as otherwise.Provided(true). Optional.
         /// </param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var expr = Piecewise(
+        ///     ("-1", "x &lt; 0"),
+        ///     ("0", "x = 0"),
+        ///     ("1", true)
+        /// );
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Substitute("x", 10).Evaled);
+        /// Console.WriteLine(expr.Substitute("x", 0).Evaled);
+        /// Console.WriteLine(expr.Substitute("x", -14).Evaled);
+        /// 
+        /// Console.WriteLine();
+        /// 
+        /// var weirdSqrt = Piecewise(
+        ///     ("sqrt(x)", "x &gt;= 0"),
+        ///     ("-sqrt(-x)", true)
+        /// );
+        /// Console.WriteLine(weirdSqrt);
+        /// Console.WriteLine(weirdSqrt.Substitute("x", 16).Evaled);
+        /// Console.WriteLine(weirdSqrt.Substitute("x", -16).Evaled);
+        /// 
+        /// Console.WriteLine();
+        /// 
+        /// var thousandVisualizer = Piecewise(
+        ///     ("a / 1000000 million", "a &gt; 1000000"),
+        ///     ("a / 1000 thousand", "a &gt; 1000"),
+        ///     ("a", "a >= 0")
+        /// );
+        /// 
+        /// Console.WriteLine(thousandVisualizer.Substitute("a", 19301).Evaled);
+        /// Console.WriteLine(thousandVisualizer.Substitute("a", 19301123).Evaled);
+        /// Console.WriteLine(thousandVisualizer.Substitute("a", 32).Evaled);
+        /// Console.WriteLine(thousandVisualizer.Substitute("a", -24).Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// (-1 if x &lt; 0, 0 if x = 0, 1 if True)
+        /// 1
+        /// 0
+        /// -1
+        /// 
+        /// (sqrt(x) if x &gt;= 0, -sqrt(-x) if True)
+        /// 4
+        /// -4
+        /// 
+        /// 19301/1000 * thousand
+        /// 19301123/1000000 * million
+        /// 32
+        /// NaN
+        /// </code>
+        /// </example>
         public static Entity Piecewise(IEnumerable<Providedf> cases, Entity? otherwise = null)
             => new Piecewise(otherwise is null ? cases : cases.Append(new Providedf(otherwise, true)));
 
@@ -960,18 +1117,190 @@ namespace AngouriMath
         /// <param name="cases">
         /// Tuples of two expressions: an expression and a predicate
         /// </param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var expr = Piecewise(
+        ///     ("-1", "x &lt; 0"),
+        ///     ("0", "x = 0"),
+        ///     ("1", true)
+        /// );
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Substitute("x", 10).Evaled);
+        /// Console.WriteLine(expr.Substitute("x", 0).Evaled);
+        /// Console.WriteLine(expr.Substitute("x", -14).Evaled);
+        /// 
+        /// Console.WriteLine();
+        /// 
+        /// var weirdSqrt = Piecewise(
+        ///     ("sqrt(x)", "x &gt;= 0"),
+        ///     ("-sqrt(-x)", true)
+        /// );
+        /// Console.WriteLine(weirdSqrt);
+        /// Console.WriteLine(weirdSqrt.Substitute("x", 16).Evaled);
+        /// Console.WriteLine(weirdSqrt.Substitute("x", -16).Evaled);
+        /// 
+        /// Console.WriteLine();
+        /// 
+        /// var thousandVisualizer = Piecewise(
+        ///     ("a / 1000000 million", "a &gt; 1000000"),
+        ///     ("a / 1000 thousand", "a &gt; 1000"),
+        ///     ("a", "a >= 0")
+        /// );
+        /// 
+        /// Console.WriteLine(thousandVisualizer.Substitute("a", 19301).Evaled);
+        /// Console.WriteLine(thousandVisualizer.Substitute("a", 19301123).Evaled);
+        /// Console.WriteLine(thousandVisualizer.Substitute("a", 32).Evaled);
+        /// Console.WriteLine(thousandVisualizer.Substitute("a", -24).Evaled);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// (-1 if x &lt; 0, 0 if x = 0, 1 if True)
+        /// 1
+        /// 0
+        /// -1
+        /// 
+        /// (sqrt(x) if x &gt;= 0, -sqrt(-x) if True)
+        /// 4
+        /// -4
+        /// 
+        /// 19301/1000 * thousand
+        /// 19301123/1000000 * million
+        /// 32
+        /// NaN
+        /// </code>
+        /// </example>
         public static Entity Piecewise(params (Entity expression, Entity predicate)[] cases)
             => new Piecewise(cases.Select(c => new Providedf(c.expression, c.predicate)));
 
         /// <summary>
         /// Applies the list of arguments to the given expression
         /// </summary>
+        /// <returns><see cref="Entity.Application"/></returns>
+        /// <example>
+        /// <code>
+        /// Entity expr = "sin";
+        /// Console.WriteLine(expr);
+        /// var applied = expr.Apply(pi / 3);
+        /// Console.WriteLine(applied);
+        /// Console.WriteLine(applied.Simplify());
+        /// Console.WriteLine(applied.Evaled);
+        /// Console.WriteLine("------------------------------");
+        /// var lambda = Lambda("x", "x ^ 3 + x");
+        /// Console.WriteLine(lambda);
+        /// Console.WriteLine(lambda.Apply("3"));
+        /// Console.WriteLine(lambda.Apply("3").Evaled);
+        /// Console.WriteLine("------------------------------");
+        /// var lambda2 = Lambda("y", "y".ToEntity().Apply(pi / 3));
+        /// Console.WriteLine(lambda2);
+        /// Console.WriteLine(lambda2.Apply("sin").Simplify());
+        /// Console.WriteLine(lambda2.Apply("cos").Simplify());
+        /// Console.WriteLine(lambda2.Apply("tan").Simplify());
+        /// Console.WriteLine("------------------------------");
+        /// var lambda3 = Lambda("x", Lambda("y", Lambda("z", "x + y / z")));
+        /// Console.WriteLine(lambda3);
+        /// Console.WriteLine(lambda3.Apply(5));
+        /// Console.WriteLine(lambda3.Apply(5).Simplify());
+        /// Console.WriteLine(lambda3.Apply(5).Apply(10));
+        /// Console.WriteLine(lambda3.Apply(5).Apply(10).Simplify());
+        /// Console.WriteLine(lambda3.Apply(5, 10));
+        /// Console.WriteLine(lambda3.Apply(5, 10).Simplify());
+        /// Console.WriteLine(lambda3.Apply(5, 10, 7));
+        /// Console.WriteLine(lambda3.Apply(5, 10, 7).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin
+        /// sin (pi / 3)
+        /// sqrt(3) / 2
+        /// 1/2 * sqrt(3)
+        /// ------------------------------
+        /// x -> x ^ 3 + x
+        /// (x -> x ^ 3 + x) 3
+        /// 30
+        /// ------------------------------
+        /// y -> y (pi / 3)
+        /// sqrt(3) / 2
+        /// 1/2
+        /// sqrt(3)
+        /// ------------------------------
+        /// x -> y -> z -> x + y / z
+        /// (x -> y -> z -> x + y / z) 5
+        /// y -> z -> 5 + y / z
+        /// (x -> y -> z -> x + y / z) 5 10
+        /// z -> 5 + 10 / z
+        /// (x -> y -> z -> x + y / z) 5 10
+        /// z -> 5 + 10 / z
+        /// (x -> y -> z -> x + y / z) 5 10 7
+        /// 45/7
+        /// </code>
+        /// </example>
         public static Entity Apply(Entity expr, params Entity[] arguments)
             => expr.Apply(arguments);
 
         /// <summary>
         /// Returns a lambda with the given parameter and body
         /// </summary>
+        /// <example>
+        /// <code>
+        /// Entity expr = "sin";
+        /// Console.WriteLine(expr);
+        /// var applied = expr.Apply(pi / 3);
+        /// Console.WriteLine(applied);
+        /// Console.WriteLine(applied.Simplify());
+        /// Console.WriteLine(applied.Evaled);
+        /// Console.WriteLine("------------------------------");
+        /// var lambda = Lambda("x", "x ^ 3 + x");
+        /// Console.WriteLine(lambda);
+        /// Console.WriteLine(lambda.Apply("3"));
+        /// Console.WriteLine(lambda.Apply("3").Evaled);
+        /// Console.WriteLine("------------------------------");
+        /// var lambda2 = Lambda("y", "y".ToEntity().Apply(pi / 3));
+        /// Console.WriteLine(lambda2);
+        /// Console.WriteLine(lambda2.Apply("sin").Simplify());
+        /// Console.WriteLine(lambda2.Apply("cos").Simplify());
+        /// Console.WriteLine(lambda2.Apply("tan").Simplify());
+        /// Console.WriteLine("------------------------------");
+        /// var lambda3 = Lambda("x", Lambda("y", Lambda("z", "x + y / z")));
+        /// Console.WriteLine(lambda3);
+        /// Console.WriteLine(lambda3.Apply(5));
+        /// Console.WriteLine(lambda3.Apply(5).Simplify());
+        /// Console.WriteLine(lambda3.Apply(5).Apply(10));
+        /// Console.WriteLine(lambda3.Apply(5).Apply(10).Simplify());
+        /// Console.WriteLine(lambda3.Apply(5, 10));
+        /// Console.WriteLine(lambda3.Apply(5, 10).Simplify());
+        /// Console.WriteLine(lambda3.Apply(5, 10, 7));
+        /// Console.WriteLine(lambda3.Apply(5, 10, 7).Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin
+        /// sin (pi / 3)
+        /// sqrt(3) / 2
+        /// 1/2 * sqrt(3)
+        /// ------------------------------
+        /// x -> x ^ 3 + x
+        /// (x -> x ^ 3 + x) 3
+        /// 30
+        /// ------------------------------
+        /// y -> y (pi / 3)
+        /// sqrt(3) / 2
+        /// 1/2
+        /// sqrt(3)
+        /// ------------------------------
+        /// x -> y -> z -> x + y / z
+        /// (x -> y -> z -> x + y / z) 5
+        /// y -> z -> 5 + y / z
+        /// (x -> y -> z -> x + y / z) 5 10
+        /// z -> 5 + 10 / z
+        /// (x -> y -> z -> x + y / z) 5 10
+        /// z -> 5 + 10 / z
+        /// (x -> y -> z -> x + y / z) 5 10 7
+        /// 45/7
+        /// </code>
+        /// </example>
         public static Entity Lambda(Variable param, Entity body)
             => new Lambda(param, body);
 
