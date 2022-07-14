@@ -8,34 +8,12 @@
 using AngouriMath;
 
 using System;
-using AngouriMath.Extensions;
-using static AngouriMath.MathS;
+using static AngouriMath.MathS.Hyperbolic;
 
-Entity expr = "sin";
-Console.WriteLine(expr);
-var applied = expr.Apply(pi / 3);
-Console.WriteLine(applied);
-Console.WriteLine(applied.Simplify());
-Console.WriteLine(applied.Evaled);
-Console.WriteLine("------------------------------");
-var lambda = Lambda("x", "x ^ 3 + x");
-Console.WriteLine(lambda);
-Console.WriteLine(lambda.Apply("3"));
-Console.WriteLine(lambda.Apply("3").Evaled);
-Console.WriteLine("------------------------------");
-var lambda2 = Lambda("y", "y".ToEntity().Apply(pi / 3));
-Console.WriteLine(lambda2);
-Console.WriteLine(lambda2.Apply("sin").Simplify());
-Console.WriteLine(lambda2.Apply("cos").Simplify());
-Console.WriteLine(lambda2.Apply("tan").Simplify());
-Console.WriteLine("------------------------------");
-var lambda3 = Lambda("x", Lambda("y", Lambda("z", "x + y / z")));
-Console.WriteLine(lambda3);
-Console.WriteLine(lambda3.Apply(5));
-Console.WriteLine(lambda3.Apply(5).Simplify());
-Console.WriteLine(lambda3.Apply(5).Apply(10));
-Console.WriteLine(lambda3.Apply(5).Apply(10).Simplify());
-Console.WriteLine(lambda3.Apply(5, 10));
-Console.WriteLine(lambda3.Apply(5, 10).Simplify());
-Console.WriteLine(lambda3.Apply(5, 10, 7));
-Console.WriteLine(lambda3.Apply(5, 10, 7).Simplify());
+Console.WriteLine(Tanh("x"));
+Console.WriteLine(Tanh("x").Substitute("x", 1.5).Evaled);
+Console.WriteLine(Tanh("x").Substitute("x", 0.01).Evaled);
+
+Console.WriteLine(Cotanh("x"));
+Console.WriteLine(Cotanh("x").Substitute("x", 1.5).Evaled);
+Console.WriteLine(Cotanh("x").Substitute("x", 0.01).Evaled);

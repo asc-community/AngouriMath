@@ -1309,51 +1309,193 @@ namespace AngouriMath
         /// </summary>
         public static class Hyperbolic
         {
-            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            /// <summary>
+            /// Hyperbolic sine:
+            /// <code>(e^x - e^(-x)) / 2</code>
+            /// <a href="https://en.wikipedia.org/wiki/Hyperbolic_functions">Wikipedia</a>
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Hyperbolic;
+            /// 
+            /// Console.WriteLine(Sinh("x"));
+            /// Console.WriteLine(Sinh("x").Differentiate("x").Simplify());
+            /// Console.WriteLine(Sinh("x").Differentiate("x").Simplify() == Cosh("x"));
+            /// Console.WriteLine("--------------------------");
+            /// Console.WriteLine(Cosh("x"));
+            /// Console.WriteLine(Cosh("x").Differentiate("x").Simplify());
+            /// Console.WriteLine(Cosh("x").Differentiate("x").Simplify() == Sinh("x"));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// (e ^ x - e ^ (-x)) / 2
+            /// (e ^ x + e ^ (-x)) / 2
+            /// True
+            /// --------------------------
+            /// (e ^ x + e ^ (-x)) / 2
+            /// (e ^ x - e ^ (-x)) / 2
+            /// True
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Sinh(Entity x) => (e.Pow(x) - e.Pow(-x)) / 2;
 
-            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            /// <summary>
+            /// Hyperbolic cosine:
+            /// <code>(e^x + e^(-x)) / 2</code>
+            /// <a href="https://en.wikipedia.org/wiki/Hyperbolic_functions">Wikipedia</a>
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Hyperbolic;
+            /// 
+            /// Console.WriteLine(Sinh("x"));
+            /// Console.WriteLine(Sinh("x").Differentiate("x").Simplify());
+            /// Console.WriteLine(Sinh("x").Differentiate("x").Simplify() == Cosh("x"));
+            /// Console.WriteLine("--------------------------");
+            /// Console.WriteLine(Cosh("x"));
+            /// Console.WriteLine(Cosh("x").Differentiate("x").Simplify());
+            /// Console.WriteLine(Cosh("x").Differentiate("x").Simplify() == Sinh("x"));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// (e ^ x - e ^ (-x)) / 2
+            /// (e ^ x + e ^ (-x)) / 2
+            /// True
+            /// --------------------------
+            /// (e ^ x + e ^ (-x)) / 2
+            /// (e ^ x - e ^ (-x)) / 2
+            /// True
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Cosh(Entity x) => (e.Pow(x) + e.Pow(-x)) / 2;
 
-            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            /// <summary>
+            /// Hyperbolic tangent:
+            /// <code>(e ^ (2x) - 1) / (e ^ (2x) + 1)</code>
+            /// <a href="https://en.wikipedia.org/wiki/Hyperbolic_functions">Wikipedia</a>
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Hyperbolic;
+            /// 
+            /// Console.WriteLine(Tanh("x"));
+            /// Console.WriteLine(Tanh("x").Substitute("x", 1.5).Evaled);
+            /// Console.WriteLine(Tanh("x").Substitute("x", 0.01).Evaled);
+            /// 
+            /// Console.WriteLine(Cotanh("x"));
+            /// Console.WriteLine(Cotanh("x").Substitute("x", 1.5).Evaled);
+            /// Console.WriteLine(Cotanh("x").Substitute("x", 0.01).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// (e ^ (2 * x) - 1) / (e ^ (2 * x) + 1)
+            /// 0.9051482536448664382423036964564955972276411351587817985642239824511025769945795322284326910178799219
+            /// 0.0099996666799994605474749215320447712347925046573720304399744319393450473865432596083049427599358362
+            /// (e ^ (2 * x) + 1) / (e ^ (2 * x) - 1)
+            /// 1.1047913929825119039439987891995101104078049976096597420355546845786894484597146476520274243990921394
+            /// 100.0033333111113206676075869630457731583010775731889603299752706978453463171344824839514673621545200118
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Tanh(Entity x) => (e.Pow(2 * x) - 1) / (e.Pow(2 * x) + 1);
 
-            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            /// <summary>
+            /// Hyperbolic cotangent:
+            /// <code>(e ^ (2x) + 1) / (e ^ (2x) - 1)</code>
+            /// <a href="https://en.wikipedia.org/wiki/Hyperbolic_functions">Wikipedia</a>
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Hyperbolic;
+            /// 
+            /// Console.WriteLine(Tanh("x"));
+            /// Console.WriteLine(Tanh("x").Substitute("x", 1.5).Evaled);
+            /// Console.WriteLine(Tanh("x").Substitute("x", 0.01).Evaled);
+            /// 
+            /// Console.WriteLine(Cotanh("x"));
+            /// Console.WriteLine(Cotanh("x").Substitute("x", 1.5).Evaled);
+            /// Console.WriteLine(Cotanh("x").Substitute("x", 0.01).Evaled);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// (e ^ (2 * x) - 1) / (e ^ (2 * x) + 1)
+            /// 0.9051482536448664382423036964564955972276411351587817985642239824511025769945795322284326910178799219
+            /// 0.0099996666799994605474749215320447712347925046573720304399744319393450473865432596083049427599358362
+            /// (e ^ (2 * x) + 1) / (e ^ (2 * x) - 1)
+            /// 1.1047913929825119039439987891995101104078049976096597420355546845786894484597146476520274243990921394
+            /// 100.0033333111113206676075869630457731583010775731889603299752706978453463171344824839514673621545200118
+            /// </code>
+            /// </example>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Cotanh(Entity x) => (e.Pow(2 * x) + 1) / (e.Pow(2 * x) - 1);
 
-            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            /// <summary>
+            /// Hyperbolic secant:
+            /// <code>1 / cosh x</code>
+            /// <a href="https://en.wikipedia.org/wiki/Hyperbolic_functions">Wikipedia</a>
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Sech(Entity x) => 1 / Cosh(x);
 
-            /// <summary>https://en.wikipedia.org/wiki/Hyperbolic_functions</summary>
+            /// <summary>
+            /// Hyperbolic cosecant:
+            /// <code>1 / sinh x</code>
+            /// <a href="https://en.wikipedia.org/wiki/Hyperbolic_functions">Wikipedia</a>
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Cosech(Entity x) => 1 / Sinh(x);
 
-            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            /// <summary>
+            /// Inverse hyperbolic sine:
+            /// <code>ln(x + sqrt(x ^ 2 + 1))</code>
+            /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arsinh(Entity x) => Ln(x + Sqrt(x.Pow(2) + 1));
 
-            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            /// <summary>
+            /// Inverse hyperbolic cosine:
+            /// <code>ln(x + sqrt(x ^ 2 - 1))</code>
+            /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arcosh(Entity x) => Ln(x + Sqrt(x.Pow(2) - 1));
 
-            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            /// <summary>
+            /// Inverse hyperbolic tangent:
+            /// <code>1/2 * ln((1 + x) / (1 - x))</code>
+            /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Artanh(Entity x) => 0.5 * Ln((1 + x) / (1 - x));
 
-            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            /// <summary>
+            /// Inverse hyperbolic cotangent:
+            /// <code>1/2 * ln((1 - x) / (1 + x))</code>
+            /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arcotanh(Entity x) => 0.5 * Ln((1 - x) / (1 + x));
 
-            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            /// <summary>
+            /// Inverse hyperbolic secant:
+            /// <code>ln(1 / x + sqrt(1 / sqr(x) - 1))</code>
+            /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arsech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) - 1));
 
-            /// <summary>https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions</summary>
+            /// <summary>
+            /// Inverse hyperbolic cosecant:
+            /// <code>ln(1 / x + sqrt(1 / sqr(x) + 1))</code>
+            /// <a href="https://en.wikipedia.org/wiki/Inverse_hyperbolic_functions">Wikipedia</a>
+            /// </summary>
             [MethodImpl(MethodImplOptions.AggressiveInlining), NativeExport]
             public static Entity Arcosech(Entity x) => Ln(1 / x + Sqrt(1 / Sqr(x) + 1));
         }
