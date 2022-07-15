@@ -5585,12 +5585,60 @@ namespace AngouriMath
         /// <see langword="true"/> if success,
         /// <see langword="false"/> otherwise (<paramref name="dst"/> will be <see langword="null"/>)
         /// </returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Entity expr = "a x + b (x + 3) + (x + 2) * (x + 3)";
+        /// if (TryPolynomial(expr, "x", out var res))
+        ///     Console.WriteLine(res);
+        /// else
+        ///     Console.WriteLine("Cannot get polynomial :((");
+        /// 
+        /// Entity expr2 = "sin(x) + cos(x)";
+        /// if (TryPolynomial(expr2, "x", out var res2))
+        ///     Console.WriteLine(res2);
+        /// else
+        ///     Console.WriteLine("Cannot get polynomial :((");
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x ^ 2 + (a + b + 3 + 2) * x + b * 3 + 6
+        /// Cannot get polynomial :((
+        /// </code>
+        /// </example>
         public static bool TryPolynomial(Entity expr, Variable variable,
             [NotNullWhen(true)]
             out Entity? dst) => Simplificator.TryPolynomial(expr, variable, out dst);
 
         /// <returns>sympy interpretable format</returns>
         /// <param name="expr">An <see cref="Entity"/> representing an expression</param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y, a) = Var("x", "y", "a");
+        /// var expr = Limit(Integral(Sin(x) / (Cos(x) + Tan(y)), x) / a, y, +oo);
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine("----------------------------");
+        /// Console.WriteLine(ToSympyCode(expr));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// limit(integral(sin(x) / (cos(x) + tan(y)), x) / a, y, +oo)
+        /// ----------------------------
+        /// import sympy
+        /// 
+        /// x = sympy.Symbol('x')
+        /// y = sympy.Symbol('y')
+        /// a = sympy.Symbol('a')
+        /// 
+        /// expr = sympy.limit(sympy.integrate(sympy.sin(x) / (sympy.cos(x) + sympy.tan(y)), x, 1) / a, y, +oo)
+        /// </code>
+        /// </example>
         public static string ToSympyCode(Entity expr)
         {
             var sb = new System.Text.StringBuilder();
@@ -5732,25 +5780,418 @@ namespace AngouriMath
             public static FiniteSet Finite(params Entity[] entities) => new FiniteSet(entities);
 
             /// <summary>
-            /// Creates a <see cref="FiniteSet"/> with given elements
+            /// Creates a <see cref="FiniteSet"/> with given elements. See
+            /// <see cref="MathS.Sets.Finite(Entity[])"/>.
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using AngouriMath;
+            /// using System;
+            /// using static AngouriMath.Entity.Set;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.MathS.Sets;
+            /// 
+            /// var set1 = Finite(1, 2, 3);
+            /// var set2 = Finite(2, 3, 4);
+            /// var set3 = MathS.Interval(-6, 2);
+            /// var set4 = new ConditionalSet("x", "100 &gt; x2 &gt; 81");
+            /// Console.WriteLine(Union(set1, set2));
+            /// Console.WriteLine(Union(set1, set2).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Union(set1, set3));
+            /// Console.WriteLine(Union(set1, set3).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Union(set1, set4));
+            /// Console.WriteLine(ElementInSet(3, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(3, Union(set1, set4)).Simplify());
+            /// Console.WriteLine(ElementInSet(4, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(4, Union(set1, set4)).Simplify());
+            /// Console.WriteLine(ElementInSet(9.5, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(9.5, Union(set1, set4)).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(set1, set2));
+            /// Console.WriteLine(Intersection(set1, set2).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(set2, set3));
+            /// Console.WriteLine(Intersection(set2, set3).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// var set5 = MathS.Interval(-3, 11);
+            /// Console.WriteLine(Intersection(set3, set5));
+            /// Console.WriteLine(Intersection(set3, set5).Simplify());
+            /// Console.WriteLine(Union(set3, set5));
+            /// Console.WriteLine(Union(set3, set5).Simplify());
+            /// Console.WriteLine(SetSubtraction(set3, set5));
+            /// Console.WriteLine(SetSubtraction(set3, set5).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Entity syntax1 = @"{ 1, 2, 3 } /\ { 2, 3, 4 }";
+            /// Console.WriteLine(syntax1);
+            /// Console.WriteLine(syntax1.Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Entity syntax2 = @"5 in ([1; +oo) \/ { x : x &lt; -4 })";
+            /// Console.WriteLine(syntax2);
+            /// Console.WriteLine(syntax2.Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), Q));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), Q).Simplify());
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), R));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), R).Simplify());
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), C));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), C).Simplify());
+            /// </code>
+            /// Prints
+            /// <code>
+            /// { 1, 2, 3 } \/ { 2, 3, 4 }
+            /// { 1, 2, 3, 4 }
+            /// ----------------------
+            /// { 1, 2, 3 } \/ [-6; 2]
+            /// { 3 } \/ [-6; 2]
+            /// ----------------------
+            /// { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// 3 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// True
+            /// 4 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// False
+            /// 19/2 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// True
+            /// ----------------------
+            /// { 1, 2, 3 } /\ { 2, 3, 4 }
+            /// { 2, 3 }
+            /// ----------------------
+            /// { 2, 3, 4 } /\ [-6; 2]
+            /// { 2 }
+            /// ----------------------
+            /// [-6; 2] /\ [-3; 11]
+            /// [-3; 2]
+            /// [-6; 2] \/ [-3; 11]
+            /// [-6; 11]
+            /// [-6; 2] \ [-3; 11]
+            /// [-6; -3)
+            /// ----------------------
+            /// { 1, 2, 3 } /\ { 2, 3, 4 }
+            /// { 2, 3 }
+            /// ----------------------
+            /// 5 in [1; +oo) \/ { x : x &lt; -4 }
+            /// True
+            /// ----------------------
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ QQ
+            /// { 6, 11/2 }
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ RR
+            /// { pi, e, 6, 11/2 }
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ CC
+            /// { pi, e, 6, 11/2, 1 + 3i }
+            /// </code>
+            /// </example>
             public static FiniteSet Finite(List<Entity> entities) => new FiniteSet((IEnumerable<Entity>)entities);
 
             /// <summary>
             /// Creates a closed interval
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using AngouriMath;
+            /// using System;
+            /// using static AngouriMath.Entity.Set;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.MathS.Sets;
+            /// 
+            /// var set1 = Finite(1, 2, 3);
+            /// var set2 = Finite(2, 3, 4);
+            /// var set3 = MathS.Interval(-6, 2);
+            /// var set4 = new ConditionalSet("x", "100 &gt; x2 &gt; 81");
+            /// Console.WriteLine(Union(set1, set2));
+            /// Console.WriteLine(Union(set1, set2).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Union(set1, set3));
+            /// Console.WriteLine(Union(set1, set3).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Union(set1, set4));
+            /// Console.WriteLine(ElementInSet(3, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(3, Union(set1, set4)).Simplify());
+            /// Console.WriteLine(ElementInSet(4, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(4, Union(set1, set4)).Simplify());
+            /// Console.WriteLine(ElementInSet(9.5, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(9.5, Union(set1, set4)).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(set1, set2));
+            /// Console.WriteLine(Intersection(set1, set2).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(set2, set3));
+            /// Console.WriteLine(Intersection(set2, set3).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// var set5 = MathS.Interval(-3, 11);
+            /// Console.WriteLine(Intersection(set3, set5));
+            /// Console.WriteLine(Intersection(set3, set5).Simplify());
+            /// Console.WriteLine(Union(set3, set5));
+            /// Console.WriteLine(Union(set3, set5).Simplify());
+            /// Console.WriteLine(SetSubtraction(set3, set5));
+            /// Console.WriteLine(SetSubtraction(set3, set5).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Entity syntax1 = @"{ 1, 2, 3 } /\ { 2, 3, 4 }";
+            /// Console.WriteLine(syntax1);
+            /// Console.WriteLine(syntax1.Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Entity syntax2 = @"5 in ([1; +oo) \/ { x : x &lt; -4 })";
+            /// Console.WriteLine(syntax2);
+            /// Console.WriteLine(syntax2.Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), Q));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), Q).Simplify());
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), R));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), R).Simplify());
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), C));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), C).Simplify());
+            /// </code>
+            /// Prints
+            /// <code>
+            /// { 1, 2, 3 } \/ { 2, 3, 4 }
+            /// { 1, 2, 3, 4 }
+            /// ----------------------
+            /// { 1, 2, 3 } \/ [-6; 2]
+            /// { 3 } \/ [-6; 2]
+            /// ----------------------
+            /// { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// 3 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// True
+            /// 4 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// False
+            /// 19/2 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// True
+            /// ----------------------
+            /// { 1, 2, 3 } /\ { 2, 3, 4 }
+            /// { 2, 3 }
+            /// ----------------------
+            /// { 2, 3, 4 } /\ [-6; 2]
+            /// { 2 }
+            /// ----------------------
+            /// [-6; 2] /\ [-3; 11]
+            /// [-3; 2]
+            /// [-6; 2] \/ [-3; 11]
+            /// [-6; 11]
+            /// [-6; 2] \ [-3; 11]
+            /// [-6; -3)
+            /// ----------------------
+            /// { 1, 2, 3 } /\ { 2, 3, 4 }
+            /// { 2, 3 }
+            /// ----------------------
+            /// 5 in [1; +oo) \/ { x : x &lt; -4 }
+            /// True
+            /// ----------------------
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ QQ
+            /// { 6, 11/2 }
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ RR
+            /// { pi, e, 6, 11/2 }
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ CC
+            /// { pi, e, 6, 11/2, 1 + 3i }
+            /// </code>
+            /// </example>
             public static Interval Interval(Entity from, Entity to) => new(from, true, to, true);
 
             /// <summary>
             /// Creates an interval where <paramref name="leftClosed"/> shows whether <paramref name="from"/> is included,
             /// <paramref name="rightClosed"/> shows whether <paramref name="to"/> included.
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using AngouriMath;
+            /// using System;
+            /// using static AngouriMath.Entity.Set;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.MathS.Sets;
+            /// 
+            /// var set1 = Finite(1, 2, 3);
+            /// var set2 = Finite(2, 3, 4);
+            /// var set3 = MathS.Interval(-6, 2);
+            /// var set4 = new ConditionalSet("x", "100 &gt; x2 &gt; 81");
+            /// Console.WriteLine(Union(set1, set2));
+            /// Console.WriteLine(Union(set1, set2).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Union(set1, set3));
+            /// Console.WriteLine(Union(set1, set3).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Union(set1, set4));
+            /// Console.WriteLine(ElementInSet(3, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(3, Union(set1, set4)).Simplify());
+            /// Console.WriteLine(ElementInSet(4, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(4, Union(set1, set4)).Simplify());
+            /// Console.WriteLine(ElementInSet(9.5, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(9.5, Union(set1, set4)).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(set1, set2));
+            /// Console.WriteLine(Intersection(set1, set2).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(set2, set3));
+            /// Console.WriteLine(Intersection(set2, set3).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// var set5 = MathS.Interval(-3, 11);
+            /// Console.WriteLine(Intersection(set3, set5));
+            /// Console.WriteLine(Intersection(set3, set5).Simplify());
+            /// Console.WriteLine(Union(set3, set5));
+            /// Console.WriteLine(Union(set3, set5).Simplify());
+            /// Console.WriteLine(SetSubtraction(set3, set5));
+            /// Console.WriteLine(SetSubtraction(set3, set5).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Entity syntax1 = @"{ 1, 2, 3 } /\ { 2, 3, 4 }";
+            /// Console.WriteLine(syntax1);
+            /// Console.WriteLine(syntax1.Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Entity syntax2 = @"5 in ([1; +oo) \/ { x : x &lt; -4 })";
+            /// Console.WriteLine(syntax2);
+            /// Console.WriteLine(syntax2.Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), Q));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), Q).Simplify());
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), R));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), R).Simplify());
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), C));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), C).Simplify());
+            /// </code>
+            /// Prints
+            /// <code>
+            /// { 1, 2, 3 } \/ { 2, 3, 4 }
+            /// { 1, 2, 3, 4 }
+            /// ----------------------
+            /// { 1, 2, 3 } \/ [-6; 2]
+            /// { 3 } \/ [-6; 2]
+            /// ----------------------
+            /// { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// 3 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// True
+            /// 4 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// False
+            /// 19/2 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// True
+            /// ----------------------
+            /// { 1, 2, 3 } /\ { 2, 3, 4 }
+            /// { 2, 3 }
+            /// ----------------------
+            /// { 2, 3, 4 } /\ [-6; 2]
+            /// { 2 }
+            /// ----------------------
+            /// [-6; 2] /\ [-3; 11]
+            /// [-3; 2]
+            /// [-6; 2] \/ [-3; 11]
+            /// [-6; 11]
+            /// [-6; 2] \ [-3; 11]
+            /// [-6; -3)
+            /// ----------------------
+            /// { 1, 2, 3 } /\ { 2, 3, 4 }
+            /// { 2, 3 }
+            /// ----------------------
+            /// 5 in [1; +oo) \/ { x : x &lt; -4 }
+            /// True
+            /// ----------------------
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ QQ
+            /// { 6, 11/2 }
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ RR
+            /// { pi, e, 6, 11/2 }
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ CC
+            /// { pi, e, 6, 11/2, 1 + 3i }
+            /// </code>
+            /// </example>
             public static Interval Interval(Entity from, bool leftClosed, Entity to, bool rightClosed) => new(from, leftClosed, to, rightClosed);
 
             /// <summary>
             /// Creates a node of whether the given element belongs to the given set
             /// </summary>
             /// <returns>A node</returns>
+            /// <example>
+            /// <code>
+            /// using AngouriMath;
+            /// using System;
+            /// using static AngouriMath.Entity.Set;
+            /// using static AngouriMath.MathS;
+            /// using static AngouriMath.MathS.Sets;
+            /// 
+            /// var set1 = Finite(1, 2, 3);
+            /// var set2 = Finite(2, 3, 4);
+            /// var set3 = MathS.Interval(-6, 2);
+            /// var set4 = new ConditionalSet("x", "100 &gt; x2 &gt; 81");
+            /// Console.WriteLine(Union(set1, set2));
+            /// Console.WriteLine(Union(set1, set2).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Union(set1, set3));
+            /// Console.WriteLine(Union(set1, set3).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Union(set1, set4));
+            /// Console.WriteLine(ElementInSet(3, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(3, Union(set1, set4)).Simplify());
+            /// Console.WriteLine(ElementInSet(4, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(4, Union(set1, set4)).Simplify());
+            /// Console.WriteLine(ElementInSet(9.5, Union(set1, set4)));
+            /// Console.WriteLine(ElementInSet(9.5, Union(set1, set4)).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(set1, set2));
+            /// Console.WriteLine(Intersection(set1, set2).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(set2, set3));
+            /// Console.WriteLine(Intersection(set2, set3).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// var set5 = MathS.Interval(-3, 11);
+            /// Console.WriteLine(Intersection(set3, set5));
+            /// Console.WriteLine(Intersection(set3, set5).Simplify());
+            /// Console.WriteLine(Union(set3, set5));
+            /// Console.WriteLine(Union(set3, set5).Simplify());
+            /// Console.WriteLine(SetSubtraction(set3, set5));
+            /// Console.WriteLine(SetSubtraction(set3, set5).Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Entity syntax1 = @"{ 1, 2, 3 } /\ { 2, 3, 4 }";
+            /// Console.WriteLine(syntax1);
+            /// Console.WriteLine(syntax1.Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Entity syntax2 = @"5 in ([1; +oo) \/ { x : x &lt; -4 })";
+            /// Console.WriteLine(syntax2);
+            /// Console.WriteLine(syntax2.Simplify());
+            /// Console.WriteLine("----------------------");
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), Q));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), Q).Simplify());
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), R));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), R).Simplify());
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), C));
+            /// Console.WriteLine(Intersection(Finite(pi, e, 6, 5.5m, 1 + 3 * i), C).Simplify());
+            /// </code>
+            /// Prints
+            /// <code>
+            /// { 1, 2, 3 } \/ { 2, 3, 4 }
+            /// { 1, 2, 3, 4 }
+            /// ----------------------
+            /// { 1, 2, 3 } \/ [-6; 2]
+            /// { 3 } \/ [-6; 2]
+            /// ----------------------
+            /// { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// 3 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// True
+            /// 4 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// False
+            /// 19/2 in { 1, 2, 3 } \/ { x : 100 &gt; x ^ 2 and x ^ 2 &gt; 81 }
+            /// True
+            /// ----------------------
+            /// { 1, 2, 3 } /\ { 2, 3, 4 }
+            /// { 2, 3 }
+            /// ----------------------
+            /// { 2, 3, 4 } /\ [-6; 2]
+            /// { 2 }
+            /// ----------------------
+            /// [-6; 2] /\ [-3; 11]
+            /// [-3; 2]
+            /// [-6; 2] \/ [-3; 11]
+            /// [-6; 11]
+            /// [-6; 2] \ [-3; 11]
+            /// [-6; -3)
+            /// ----------------------
+            /// { 1, 2, 3 } /\ { 2, 3, 4 }
+            /// { 2, 3 }
+            /// ----------------------
+            /// 5 in [1; +oo) \/ { x : x &lt; -4 }
+            /// True
+            /// ----------------------
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ QQ
+            /// { 6, 11/2 }
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ RR
+            /// { pi, e, 6, 11/2 }
+            /// { pi, e, 6, 11/2, 1 + 3i } /\ CC
+            /// { pi, e, 6, 11/2, 1 + 3i }
+            /// </code>
+            /// </example>
             public static Entity ElementInSet(Entity element, Entity set)
                 => element.In(set);
         }
@@ -5853,8 +6294,22 @@ namespace AngouriMath
             /// <summary>
             /// Computes Euler phi function
             /// <a href="https://en.wikipedia.org/wiki/Euler%27s_totient_function"/>
-            /// </summary>
             /// If integer x is non-positive, the result will be 0
+            /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Compute;
+            /// 
+            /// Console.WriteLine(Phi(12));
+            /// Console.WriteLine(Phi(13));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 4
+            /// 12
+            /// </code>
+            /// </example>
             public static Integer Phi(Integer integer) => integer.Phi();
             
             /// <summary>
@@ -5870,6 +6325,31 @@ namespace AngouriMath
             /// The sine's symbolic form
             /// or null if cannot find it
             /// </returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Compute;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Console.WriteLine(SymbolicFormOfSine(pi / 3));
+            /// Console.WriteLine(SymbolicFormOfSine(pi / 7));
+            /// Console.WriteLine(SymbolicFormOfSine(9 * pi / 14));
+            /// Console.WriteLine("------------------------------");
+            /// Console.WriteLine(SymbolicFormOfCosine(pi / 3));
+            /// Console.WriteLine(SymbolicFormOfCosine(pi / 7));
+            /// Console.WriteLine(SymbolicFormOfCosine(9 * pi / 14));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// sqrt(3) / 2
+            /// sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2))
+            /// sqrt(1 - sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2)) ^ 2)
+            /// ------------------------------
+            /// 1/2
+            /// sqrt(1 - sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2)) ^ 2)
+            /// -sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2))
+            /// </code>
+            /// </example>
             public static Entity? SymbolicFormOfSine(Entity angle)
                 => TrigonometricAngleExpansion.SymbolicFormOfSine(angle)?.InnerSimplified;
             
@@ -5886,6 +6366,31 @@ namespace AngouriMath
             /// The cosine's symbolic form
             /// or null if cannot find it
             /// </returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.Compute;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Console.WriteLine(SymbolicFormOfSine(pi / 3));
+            /// Console.WriteLine(SymbolicFormOfSine(pi / 7));
+            /// Console.WriteLine(SymbolicFormOfSine(9 * pi / 14));
+            /// Console.WriteLine("------------------------------");
+            /// Console.WriteLine(SymbolicFormOfCosine(pi / 3));
+            /// Console.WriteLine(SymbolicFormOfCosine(pi / 7));
+            /// Console.WriteLine(SymbolicFormOfCosine(9 * pi / 14));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// sqrt(3) / 2
+            /// sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2))
+            /// sqrt(1 - sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2)) ^ 2)
+            /// ------------------------------
+            /// 1/2
+            /// sqrt(1 - sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2)) ^ 2)
+            /// -sqrt(1/2 - 1/2 * sqrt(1 - sqrt(1 - (1/6 * (-1 + ((7 + 21 * sqrt(-3)) / 2) ^ (1/3) + ((7 - 21 * sqrt(-3)) / 2) ^ (1/3))) ^ 2) ^ 2))
+            /// </code>
+            /// </example>
             public static Entity? SymbolicFormOfCosine(Entity angle)
                 => TrigonometricAngleExpansion.SymbolicFormOfCosine(angle)?.InnerSimplified;
         }
@@ -5896,6 +6401,51 @@ namespace AngouriMath
         /// </summary>
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which derivative is taken</param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, a) = Var("x", "a");
+        /// 
+        /// var e1 = Derivative(Sin(Cos(x)), x);
+        /// Console.WriteLine(e1);
+        /// Console.WriteLine(e1.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e2 = Derivative(Sin(Cos(x)), x, 2);
+        /// Console.WriteLine(e2);
+        /// Console.WriteLine(e2.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e3 = Integral(Sin(a * x), x);
+        /// Console.WriteLine(e3);
+        /// Console.WriteLine(e3.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e4 = Integral(Sin(a * x), x, 2);
+        /// Console.WriteLine(e4);
+        /// Console.WriteLine(e4.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e5 = Limit(Sin(a * x) / x, x, 0);
+        /// Console.WriteLine(e5);
+        /// Console.WriteLine(e5.InnerSimplified);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// derivative(sin(cos(x)), x)
+        /// cos(cos(x)) * -sin(x)
+        /// -----------------------
+        /// derivative(sin(cos(x)), x, 2)
+        /// -sin(cos(x)) * -sin(x) * -sin(x) + cos(x) * (-1) * cos(cos(x))
+        /// -----------------------
+        /// integral(sin(a * x), x)
+        /// -cos(a * x) / a
+        /// -----------------------
+        /// integral(sin(a * x), x, 2)
+        /// -sin(a * x) / a / a
+        /// -----------------------
+        /// limit(sin(a * x) / x, x, 0)
+        /// a
+        /// </code>
+        /// </example>
         public static Entity Derivative(Entity expr, Entity var) => new Derivativef(expr, var, 1);
 
         /// <summary>
@@ -5905,6 +6455,51 @@ namespace AngouriMath
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which derivative is taken</param>
         /// <param name="power">Number of times derivative is taken. Only integers will be simplified or evaluated.</param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, a) = Var("x", "a");
+        /// 
+        /// var e1 = Derivative(Sin(Cos(x)), x);
+        /// Console.WriteLine(e1);
+        /// Console.WriteLine(e1.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e2 = Derivative(Sin(Cos(x)), x, 2);
+        /// Console.WriteLine(e2);
+        /// Console.WriteLine(e2.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e3 = Integral(Sin(a * x), x);
+        /// Console.WriteLine(e3);
+        /// Console.WriteLine(e3.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e4 = Integral(Sin(a * x), x, 2);
+        /// Console.WriteLine(e4);
+        /// Console.WriteLine(e4.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e5 = Limit(Sin(a * x) / x, x, 0);
+        /// Console.WriteLine(e5);
+        /// Console.WriteLine(e5.InnerSimplified);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// derivative(sin(cos(x)), x)
+        /// cos(cos(x)) * -sin(x)
+        /// -----------------------
+        /// derivative(sin(cos(x)), x, 2)
+        /// -sin(cos(x)) * -sin(x) * -sin(x) + cos(x) * (-1) * cos(cos(x))
+        /// -----------------------
+        /// integral(sin(a * x), x)
+        /// -cos(a * x) / a
+        /// -----------------------
+        /// integral(sin(a * x), x, 2)
+        /// -sin(a * x) / a / a
+        /// -----------------------
+        /// limit(sin(a * x) / x, x, 0)
+        /// a
+        /// </code>
+        /// </example>
         public static Entity Derivative(Entity expr, Entity var, int power) => new Derivativef(expr, var, power);
 
         /// <summary>
@@ -5913,6 +6508,51 @@ namespace AngouriMath
         /// </summary>
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which integral is taken</param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, a) = Var("x", "a");
+        /// 
+        /// var e1 = Derivative(Sin(Cos(x)), x);
+        /// Console.WriteLine(e1);
+        /// Console.WriteLine(e1.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e2 = Derivative(Sin(Cos(x)), x, 2);
+        /// Console.WriteLine(e2);
+        /// Console.WriteLine(e2.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e3 = Integral(Sin(a * x), x);
+        /// Console.WriteLine(e3);
+        /// Console.WriteLine(e3.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e4 = Integral(Sin(a * x), x, 2);
+        /// Console.WriteLine(e4);
+        /// Console.WriteLine(e4.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e5 = Limit(Sin(a * x) / x, x, 0);
+        /// Console.WriteLine(e5);
+        /// Console.WriteLine(e5.InnerSimplified);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// derivative(sin(cos(x)), x)
+        /// cos(cos(x)) * -sin(x)
+        /// -----------------------
+        /// derivative(sin(cos(x)), x, 2)
+        /// -sin(cos(x)) * -sin(x) * -sin(x) + cos(x) * (-1) * cos(cos(x))
+        /// -----------------------
+        /// integral(sin(a * x), x)
+        /// -cos(a * x) / a
+        /// -----------------------
+        /// integral(sin(a * x), x, 2)
+        /// -sin(a * x) / a / a
+        /// -----------------------
+        /// limit(sin(a * x) / x, x, 0)
+        /// a
+        /// </code>
+        /// </example>
         public static Entity Integral(Entity expr, Entity var) => new Integralf(expr, var, 1);
 
         /// <summary>
@@ -5922,6 +6562,51 @@ namespace AngouriMath
         /// <param name="expr">Expression to be hung</param>
         /// <param name="var">Variable over which integral is taken</param>
         /// <param name="power">Number of times integral is taken. Only integers will be simplified or evaluated.</param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, a) = Var("x", "a");
+        /// 
+        /// var e1 = Derivative(Sin(Cos(x)), x);
+        /// Console.WriteLine(e1);
+        /// Console.WriteLine(e1.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e2 = Derivative(Sin(Cos(x)), x, 2);
+        /// Console.WriteLine(e2);
+        /// Console.WriteLine(e2.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e3 = Integral(Sin(a * x), x);
+        /// Console.WriteLine(e3);
+        /// Console.WriteLine(e3.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e4 = Integral(Sin(a * x), x, 2);
+        /// Console.WriteLine(e4);
+        /// Console.WriteLine(e4.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e5 = Limit(Sin(a * x) / x, x, 0);
+        /// Console.WriteLine(e5);
+        /// Console.WriteLine(e5.InnerSimplified);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// derivative(sin(cos(x)), x)
+        /// cos(cos(x)) * -sin(x)
+        /// -----------------------
+        /// derivative(sin(cos(x)), x, 2)
+        /// -sin(cos(x)) * -sin(x) * -sin(x) + cos(x) * (-1) * cos(cos(x))
+        /// -----------------------
+        /// integral(sin(a * x), x)
+        /// -cos(a * x) / a
+        /// -----------------------
+        /// integral(sin(a * x), x, 2)
+        /// -sin(a * x) / a / a
+        /// -----------------------
+        /// limit(sin(a * x) / x, x, 0)
+        /// a
+        /// </code>
+        /// </example>
         public static Entity Integral(Entity expr, Entity var, int power) => new Integralf(expr, var, power);
 
         /// <summary>
@@ -5932,6 +6617,51 @@ namespace AngouriMath
         /// <param name="var">Variable over which limit is taken</param>
         /// <param name="dest">Where <paramref name="var"/> approaches (could be finite or infinite)</param>
         /// <param name="approach">From where it approaches</param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, a) = Var("x", "a");
+        /// 
+        /// var e1 = Derivative(Sin(Cos(x)), x);
+        /// Console.WriteLine(e1);
+        /// Console.WriteLine(e1.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e2 = Derivative(Sin(Cos(x)), x, 2);
+        /// Console.WriteLine(e2);
+        /// Console.WriteLine(e2.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e3 = Integral(Sin(a * x), x);
+        /// Console.WriteLine(e3);
+        /// Console.WriteLine(e3.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e4 = Integral(Sin(a * x), x, 2);
+        /// Console.WriteLine(e4);
+        /// Console.WriteLine(e4.InnerSimplified);
+        /// Console.WriteLine("-----------------------");
+        /// var e5 = Limit(Sin(a * x) / x, x, 0);
+        /// Console.WriteLine(e5);
+        /// Console.WriteLine(e5.InnerSimplified);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// derivative(sin(cos(x)), x)
+        /// cos(cos(x)) * -sin(x)
+        /// -----------------------
+        /// derivative(sin(cos(x)), x, 2)
+        /// -sin(cos(x)) * -sin(x) * -sin(x) + cos(x) * (-1) * cos(cos(x))
+        /// -----------------------
+        /// integral(sin(a * x), x)
+        /// -cos(a * x) / a
+        /// -----------------------
+        /// integral(sin(a * x), x, 2)
+        /// -sin(a * x) / a / a
+        /// -----------------------
+        /// limit(sin(a * x) / x, x, 0)
+        /// a
+        /// </code>
+        /// </example>
         public static Entity Limit(Entity expr, Entity var, Entity dest, ApproachFrom approach = ApproachFrom.BothSides)
             => new Limitf(expr, var, dest, approach);
 
@@ -5941,10 +6671,38 @@ namespace AngouriMath
         public static class DecimalConst
         {
             /// <summary><a href="https://en.wikipedia.org/wiki/Pi"/></summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.DecimalConst;
+            /// 
+            /// Console.WriteLine(pi);
+            /// Console.WriteLine(e);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 3.1415926535897932384
+            /// 2.7182818284590452353
+            /// </code>
+            /// </example>
             public static EDecimal pi =>
                 InternalAMExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).Pi;
 
             /// <summary><a href="https://en.wikipedia.org/wiki/E_(mathematical_constant)"/></summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using static AngouriMath.MathS.DecimalConst;
+            /// 
+            /// Console.WriteLine(pi);
+            /// Console.WriteLine(e);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 3.1415926535897932384
+            /// 2.7182818284590452353
+            /// </code>
+            /// </example>
             public static EDecimal e =>
                 InternalAMExtensions.ConstantCache.Lookup(Settings.DecimalPrecisionContext).E;
         }
@@ -5959,6 +6717,27 @@ namespace AngouriMath
             /// Combines all possible values of <paramref name="variables"/>
             /// and has the last column as the result of the function
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using AngouriMath;
+            /// using System;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// var (x, y) = Var("x", "y");
+            /// var myXor = Disjunction(Conjunction(x, Negation(y)), Conjunction(y, Negation(x)));
+            /// Console.WriteLine(myXor);
+            /// Console.WriteLine(MathS.Boolean.BuildTruthTable(myXor, x, y).ToString(multilineFormat: true));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// x and not y or y and not x
+            /// Matrix[4 x 3]
+            /// False   False   False   
+            /// False   True    True    
+            /// True    False   True    
+            /// True    True    False   
+            /// </code>
+            /// </example>
             public static Matrix? BuildTruthTable(Entity expression, params Variable[] variables)
                 => BooleanSolver.BuildTruthTable(expression, variables);
 
@@ -5981,6 +6760,49 @@ namespace AngouriMath
             /// Sets the thread-local cancellation token
             /// </summary>
             /// <param name="token"></param>
+            /// <example>
+            /// <code>
+            /// Entity eq = "a e sin(x ^ 14 + 3)3 + a b c d sin(x ^ 14 + 2)4 - k d sin(x ^ 14 + 3)2 + sin(x ^ 14 + 3) + e = 0";
+            /// 
+            /// using var tokenSource = new CancellationTokenSource();
+            /// tokenSource.CancelAfter(millisecondsDelay: 1000);
+            /// Multithreading.SetLocalCancellationToken(tokenSource.Token);
+            /// 
+            /// var task = Task.Run(() =&gt; eq.Solve("x"));
+            /// 
+            /// try
+            /// {
+            ///     while (!task.IsCompleted)
+            ///     {
+            ///         Thread.Sleep(100);
+            ///         Console.WriteLine("Not completed yet. Waiting 100 ms...");    
+            ///     }
+            ///     Console.WriteLine(task.Result);
+            /// }
+            /// catch (AggregateException e)
+            /// {
+            ///     if (e.InnerExceptions.AsEnumerable().Any(c => c is OperationCanceledException))
+            ///         Console.WriteLine("Operation cancelled");
+            ///     else
+            ///         throw;
+            /// }
+            /// </code>
+            /// Prints
+            /// <code>
+            /// Not completed yet. Waiting 100 ms...
+            /// Not completed yet. Waiting 100 ms...
+            /// Not completed yet. Waiting 100 ms...
+            /// Not completed yet. Waiting 100 ms...
+            /// Not completed yet. Waiting 100 ms...
+            /// Not completed yet. Waiting 100 ms...
+            /// Not completed yet. Waiting 100 ms...
+            /// Not completed yet. Waiting 100 ms...
+            /// Not completed yet. Waiting 100 ms...
+            /// Not completed yet. Waiting 100 ms...
+            /// Not completed yet. Waiting 100 ms...
+            /// Operation cancelled
+            /// </code>
+            /// </example>
             public static void SetLocalCancellationToken(CancellationToken token) => MultithreadingFunctional.SetLocalCancellationToken(token);
         }
 
@@ -5993,6 +6815,20 @@ namespace AngouriMath
             /// <summary>
             /// Performs the expansion operation over the given variable
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using AngouriMath;
+            /// using static AngouriMath.MathS.Utils;
+            /// 
+            /// Entity expr = "(x + 2)(a + b + 2x) + x + sin(x)";
+            /// Console.WriteLine(SmartExpandOver(expr, "x"));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// x * 2 * x + x * (a + b) + 2 * 2 * x + 2 * (a + b) + x + sin(x)
+            /// </code>
+            /// </example>
             public static Entity SmartExpandOver(Entity expr, Variable x)
             {
                 var linChildren = Sumf.LinearChildren(expr);
@@ -6020,6 +6856,46 @@ namespace AngouriMath
             /// are powers, and values - coefficients
             /// </param>
             /// <returns>Whether the input expression is a valid polynomial</returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using AngouriMath;
+            /// using static AngouriMath.MathS.Utils;
+            /// 
+            /// Entity expr = "(x^2 + 2)(a + b + 2x) + x + sin(h)";
+            /// if (TryGetPolynomial(expr, "x", out var dict))
+            ///     foreach (var (pow, coef) in dict)
+            ///         Console.WriteLine($"Pow: {pow}. Coef: {coef}");
+            /// Console.WriteLine("------------------------");
+            /// Entity expr1 = "sin(x) + a";
+            /// if (TryGetPolynomial(expr1, "x", out var dict1))
+            ///     foreach (var (pow, coef) in dict1)
+            ///         Console.WriteLine($"Pow: {pow}. Coef: {coef}");
+            /// else
+            ///     Console.WriteLine("Failed to interpret as polynomial");
+            /// Console.WriteLine("------------------------");
+            /// Entity expr2 = "(x + a)(b + x) + a + 2 + x";
+            /// if (TryGetPolyQuadratic(expr2, "x", out var a, out var b, out var c))
+            ///     Console.WriteLine($"The expr is ({a}) * x^2 + ({b}) * x + ({c})");
+            /// Console.WriteLine("------------------------");
+            /// Entity expr3 = "(b + x) + a + 2 + x";
+            /// if (TryGetPolyLinear(expr3, "x", out var a1, out var b1))
+            ///     Console.WriteLine($"The expr is ({a1}) * x + ({b1})");
+            /// </code>
+            /// Prints
+            /// <code>
+            /// Pow: 2. Coef: 1 * 1 ^ 2 * a + 1 * 1 ^ 2 * b
+            /// Pow: 3. Coef: 1 * 1 ^ 2 * 2
+            /// Pow: 0. Coef: 2 * a + 2 * b + sin(h)
+            /// Pow: 1. Coef: 1 * 2 * 2 + 1
+            /// ------------------------
+            /// Failed to interpret as polynomial
+            /// ------------------------
+            /// The expr is (1 * 1 ^ 2) * x^2 + (1 * b + 1 * a + 1) * x + (a * b + a + 2)
+            /// ------------------------
+            /// The expr is (1 + 1) * x + (b + a + 2)
+            /// </code>
+            /// </example>
             public static bool TryGetPolynomial(Entity expr, Variable variable,
             [NotNullWhen(true)] out Dictionary<EInteger, Entity>? dst)
                 => TreeAnalyzer.TryGetPolynomial(expr, variable, out dst);
@@ -6033,6 +6909,46 @@ namespace AngouriMath
             /// <param name="a">The linear coefficient</param>
             /// <param name="b">The bias</param>
             /// <returns>Whether the extract was successful</returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using AngouriMath;
+            /// using static AngouriMath.MathS.Utils;
+            /// 
+            /// Entity expr = "(x^2 + 2)(a + b + 2x) + x + sin(h)";
+            /// if (TryGetPolynomial(expr, "x", out var dict))
+            ///     foreach (var (pow, coef) in dict)
+            ///         Console.WriteLine($"Pow: {pow}. Coef: {coef}");
+            /// Console.WriteLine("------------------------");
+            /// Entity expr1 = "sin(x) + a";
+            /// if (TryGetPolynomial(expr1, "x", out var dict1))
+            ///     foreach (var (pow, coef) in dict1)
+            ///         Console.WriteLine($"Pow: {pow}. Coef: {coef}");
+            /// else
+            ///     Console.WriteLine("Failed to interpret as polynomial");
+            /// Console.WriteLine("------------------------");
+            /// Entity expr2 = "(x + a)(b + x) + a + 2 + x";
+            /// if (TryGetPolyQuadratic(expr2, "x", out var a, out var b, out var c))
+            ///     Console.WriteLine($"The expr is ({a}) * x^2 + ({b}) * x + ({c})");
+            /// Console.WriteLine("------------------------");
+            /// Entity expr3 = "(b + x) + a + 2 + x";
+            /// if (TryGetPolyLinear(expr3, "x", out var a1, out var b1))
+            ///     Console.WriteLine($"The expr is ({a1}) * x + ({b1})");
+            /// </code>
+            /// Prints
+            /// <code>
+            /// Pow: 2. Coef: 1 * 1 ^ 2 * a + 1 * 1 ^ 2 * b
+            /// Pow: 3. Coef: 1 * 1 ^ 2 * 2
+            /// Pow: 0. Coef: 2 * a + 2 * b + sin(h)
+            /// Pow: 1. Coef: 1 * 2 * 2 + 1
+            /// ------------------------
+            /// Failed to interpret as polynomial
+            /// ------------------------
+            /// The expr is (1 * 1 ^ 2) * x^2 + (1 * b + 1 * a + 1) * x + (a * b + a + 2)
+            /// ------------------------
+            /// The expr is (1 + 1) * x + (b + a + 2)
+            /// </code>
+            /// </example>
             public static bool TryGetPolyLinear(Entity expr, Variable variable,
             [NotNullWhen(true)] out Entity? a,
             [NotNullWhen(true)] out Entity? b)
@@ -6048,6 +6964,46 @@ namespace AngouriMath
             /// <param name="b">The linear coefficient</param>
             /// <param name="c">The bias</param>
             /// <returns>Whether the extract was successful</returns>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using AngouriMath;
+            /// using static AngouriMath.MathS.Utils;
+            /// 
+            /// Entity expr = "(x^2 + 2)(a + b + 2x) + x + sin(h)";
+            /// if (TryGetPolynomial(expr, "x", out var dict))
+            ///     foreach (var (pow, coef) in dict)
+            ///         Console.WriteLine($"Pow: {pow}. Coef: {coef}");
+            /// Console.WriteLine("------------------------");
+            /// Entity expr1 = "sin(x) + a";
+            /// if (TryGetPolynomial(expr1, "x", out var dict1))
+            ///     foreach (var (pow, coef) in dict1)
+            ///         Console.WriteLine($"Pow: {pow}. Coef: {coef}");
+            /// else
+            ///     Console.WriteLine("Failed to interpret as polynomial");
+            /// Console.WriteLine("------------------------");
+            /// Entity expr2 = "(x + a)(b + x) + a + 2 + x";
+            /// if (TryGetPolyQuadratic(expr2, "x", out var a, out var b, out var c))
+            ///     Console.WriteLine($"The expr is ({a}) * x^2 + ({b}) * x + ({c})");
+            /// Console.WriteLine("------------------------");
+            /// Entity expr3 = "(b + x) + a + 2 + x";
+            /// if (TryGetPolyLinear(expr3, "x", out var a1, out var b1))
+            ///     Console.WriteLine($"The expr is ({a1}) * x + ({b1})");
+            /// </code>
+            /// Prints
+            /// <code>
+            /// Pow: 2. Coef: 1 * 1 ^ 2 * a + 1 * 1 ^ 2 * b
+            /// Pow: 3. Coef: 1 * 1 ^ 2 * 2
+            /// Pow: 0. Coef: 2 * a + 2 * b + sin(h)
+            /// Pow: 1. Coef: 1 * 2 * 2 + 1
+            /// ------------------------
+            /// Failed to interpret as polynomial
+            /// ------------------------
+            /// The expr is (1 * 1 ^ 2) * x^2 + (1 * b + 1 * a + 1) * x + (a * b + a + 2)
+            /// ------------------------
+            /// The expr is (1 + 1) * x + (b + a + 2)
+            /// </code>
+            /// </example>
             public static bool TryGetPolyQuadratic(Entity expr, Variable variable,
             [NotNullWhen(true)] out Entity? a,
             [NotNullWhen(true)] out Entity? b,

@@ -6,18 +6,25 @@
 //
 
 using System;
-using System.Linq;
 using AngouriMath;
-using AngouriMath.Extensions;
-using static AngouriMath.MathS;
+using static AngouriMath.MathS.Utils;
 
-Console.WriteLine("a / b + b / c".ToEntity().SimplifiedRate);
-Console.WriteLine("a / b + b / c".ToEntity().Simplify().SimplifiedRate);
-
-
-using var _ = Settings.ComplexityCriteria.Set(
-    expr => expr.Nodes.Count(node => node is Entity.Divf)
-);
-
-Console.WriteLine(FromString("a / b + b / c", useCache: false).SimplifiedRate);
-Console.WriteLine(FromString("a / b + b / c", useCache: false).Simplify().SimplifiedRate);
+Entity expr = "(x^2 + 2)(a + b + 2x) + x + sin(h)";
+if (TryGetPolynomial(expr, "x", out var dict))
+    foreach (var (pow, coef) in dict)
+        Console.WriteLine($"Pow: {pow}. Coef: {coef}");
+Console.WriteLine("------------------------");
+Entity expr1 = "sin(x) + a";
+if (TryGetPolynomial(expr1, "x", out var dict1))
+    foreach (var (pow, coef) in dict1)
+        Console.WriteLine($"Pow: {pow}. Coef: {coef}");
+else
+    Console.WriteLine("Failed to interpret as polynomial");
+Console.WriteLine("------------------------");
+Entity expr2 = "(x + a)(b + x) + a + 2 + x";
+if (TryGetPolyQuadratic(expr2, "x", out var a, out var b, out var c))
+    Console.WriteLine($"The expr is ({a}) * x^2 + ({b}) * x + ({c})");
+Console.WriteLine("------------------------");
+Entity expr3 = "(b + x) + a + 2 + x";
+if (TryGetPolyLinear(expr3, "x", out var a1, out var b1))
+    Console.WriteLine($"The expr is ({a1}) * x + ({b1})");
