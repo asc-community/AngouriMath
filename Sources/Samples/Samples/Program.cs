@@ -6,21 +6,18 @@
 //
 
 using System;
+using System.Linq;
 using AngouriMath;
+using AngouriMath.Extensions;
 using static AngouriMath.MathS;
 
-void Method()
-{
-    Console.WriteLine("---------------------");
-    Entity a = 5.5m;
-    Console.WriteLine(a);
-    Entity b = 5.462m;
-    Console.WriteLine(b);
-    Entity c = 5.0m / 7.0m;
-    Console.WriteLine(c);
-}
+Console.WriteLine("a / b + b / c".ToEntity().SimplifiedRate);
+Console.WriteLine("a / b + b / c".ToEntity().Simplify().SimplifiedRate);
 
-Settings.FloatToRationalIterCount.As(1, Method);
-Settings.FloatToRationalIterCount.As(3, Method);
-Settings.FloatToRationalIterCount.As(5, Method);
-Settings.FloatToRationalIterCount.As(10, Method);
+
+using var _ = Settings.ComplexityCriteria.Set(
+    expr => expr.Nodes.Count(node => node is Entity.Divf)
+);
+
+Console.WriteLine(FromString("a / b + b / c", useCache: false).SimplifiedRate);
+Console.WriteLine(FromString("a / b + b / c", useCache: false).Simplify().SimplifiedRate);

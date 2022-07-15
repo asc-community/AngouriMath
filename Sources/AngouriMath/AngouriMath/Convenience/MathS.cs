@@ -5188,7 +5188,7 @@ namespace AngouriMath
             /// 
             /// Entity expr = "a2 + 2x + a b + 2(g + e)3";
             /// Console.WriteLine(expr);
-            /// var _ = Settings.ExplicitParsingOnly.Set(true);
+            /// using var _ = Settings.ExplicitParsingOnly.Set(true);
             /// try
             /// {
             ///     Entity expr2 = "a2 + 2x + a b + 2(g + e)3";
@@ -5248,7 +5248,7 @@ namespace AngouriMath
             /// Entity expr = (Entity.Number.Real)5.5m;
             /// Console.WriteLine(expr.GetType());
             /// 
-            /// var _ = Settings.DowncastingEnabled.Set(false);
+            /// using var _ = Settings.DowncastingEnabled.Set(false);
             /// 
             /// Entity expr2 = (Entity.Number.Real)5.5m;
             /// Console.WriteLine(expr2.GetType());
@@ -5313,6 +5313,55 @@ namespace AngouriMath
             /// <summary>
             /// If a numerator or denominator is too large, it's suspended to better keep the real number instead of casting
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using AngouriMath;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// void Method()
+            /// {
+            ///     Console.WriteLine("---------------------");
+            ///     Console.WriteLine((Entity)(100m / 169));
+            ///     Console.WriteLine((Entity)(100m / 1691));
+            ///     Console.WriteLine((Entity)(100m / 16913));
+            ///     Console.WriteLine((Entity)(100m / 169137));
+            /// }
+            /// 
+            /// Settings.MaxAbsNumeratorOrDenominatorValue.As(100, Method);
+            /// Settings.MaxAbsNumeratorOrDenominatorValue.As(1000, Method);
+            /// Settings.MaxAbsNumeratorOrDenominatorValue.As(10000, Method);
+            /// Settings.MaxAbsNumeratorOrDenominatorValue.As(100000, Method);
+            /// Settings.MaxAbsNumeratorOrDenominatorValue.As(1000000, Method);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 0.5917159763313609467455621302
+            /// 0.0591366055588409225310467179
+            /// 0.0059126116005439602672500443
+            /// 0.000591236689784021237221897
+            /// ---------------------
+            /// 100/169
+            /// 0.0591366055588409225310467179
+            /// 0.0059126116005439602672500443
+            /// 0.000591236689784021237221897
+            /// ---------------------
+            /// 100/169
+            /// 100/1691
+            /// 0.0059126116005439602672500443
+            /// 0.000591236689784021237221897
+            /// ---------------------
+            /// 100/169
+            /// 100/1691
+            /// 100/16913
+            /// 0.000591236689784021237221897
+            /// ---------------------
+            /// 100/169
+            /// 100/1691
+            /// 100/16913
+            /// 100/169137
+            /// </code>
+            /// </example>
             public static Setting<EInteger> MaxAbsNumeratorOrDenominatorValue =>
                 maxAbsNumeratorOrDenominatorValue ??= EInteger.FromInt32(100000000);
             [ThreadStatic] private static Setting<EInteger>? maxAbsNumeratorOrDenominatorValue;
@@ -5335,12 +5384,99 @@ namespace AngouriMath
             /// <summary>
             /// If you only need analytical solutions and an empty set if no analytical solutions were found, disable Newton's method
             /// </summary>
+            /// <example>
+            /// <code>
+            /// using System;
+            /// using AngouriMath.Extensions;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Console.WriteLine("x5 + 3x + 1 = 0".ToEntity().Solve("x"));
+            /// 
+            /// using var _ = Settings.AllowNewton.Set(false);
+            /// 
+            /// Console.WriteLine("x5 + 3x + 1 = 0".ToEntity().Solve("x"));
+            /// </code>
+            /// Prints
+            /// <code>
+            /// { 1.0050669478588620808778841819730587303638458251953125 + 0.93725915669289194820379407246946357190608978271484375i,
+            /// ... omitting here most of the output, because it's huge
+            /// }
+            /// {  } // nothing was found for 5-degree polynomial without numeric solution
+            /// </code>
+            /// </example>
             public static Setting<bool> AllowNewton => allowNewton ??= true;
             [ThreadStatic] private static Setting<bool>? allowNewton;
 
             /// <summary>
-            /// Criteria for simplifier so you could control which expressions are considered easier by you
+            /// Criteria for simplifier so you could control which expressions are considered easier by you.
+            /// The higher the value - the more complicated an expression is.
             /// </summary>
+            /// <example>
+            /// Consider a situation, when we simplify this simple expression:
+            /// <code>
+            /// using System;
+            /// using AngouriMath.Extensions;
+            /// 
+            /// Console.WriteLine("a / b + b / c".ToEntity().Simplify());
+            /// </code>
+            /// The output is
+            /// <code>
+            /// a / b + b / c
+            /// </code>
+            /// Assume we now hate division operators. For simplicity, our new complexity criteria
+            /// equals to how many division operators are there. Basically, the more of them there are in
+            /// expression, the more complicated it is. Now we add it:
+            /// <code>
+            /// using System;
+            /// using System.Linq;
+            /// using AngouriMath;
+            /// using AngouriMath.Extensions;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Console.WriteLine("a / b + b / c".ToEntity().Simplify());
+            /// 
+            ///     using var _ = Settings.ComplexityCriteria.Set(
+            ///     expr => expr.Nodes.Count(node => node is Entity.Divf)
+            /// );
+            /// 
+            /// Console.WriteLine("a / b + b / c".ToEntity().Simplify());
+            /// </code>
+            /// The output:
+            /// <code>
+            /// a / b + b / c
+            /// (a * c + b ^ 2) / (b * c)
+            /// </code>
+            /// Note that in the second case, this expression is simpler, because our complexity
+            /// criteria gets lower when there's fewer division operators. Let's check the
+            /// property <see cref="Entity.SimplifiedRate"/>:
+            /// <code>
+            /// using System;
+            /// using System.Linq;
+            /// using AngouriMath;
+            /// using AngouriMath.Extensions;
+            /// using static AngouriMath.MathS;
+            /// 
+            /// Console.WriteLine("a / b + b / c".ToEntity().SimplifiedRate);
+            /// Console.WriteLine("a / b + b / c".ToEntity().Simplify().SimplifiedRate);
+            /// 
+            /// 
+            /// using var _ = Settings.ComplexityCriteria.Set(
+            ///     expr => expr.Nodes.Count(node => node is Entity.Divf)
+            /// );
+            /// 
+            /// Console.WriteLine(FromString("a / b + b / c", useCache: false).SimplifiedRate);
+            /// Console.WriteLine(FromString("a / b + b / c", useCache: false).Simplify().SimplifiedRate);
+            /// </code>
+            /// Prints
+            /// <code>
+            /// 24
+            /// 24
+            /// 2
+            /// 1
+            /// </code>
+            /// By default criteria it cannot simplify it further, however, the custom one
+            /// it simplified from 2 to 1. 
+            /// </example>
             public static Setting<Func<Entity, double>> ComplexityCriteria =>
                 complexityCriteria ??= new Func<Entity, double>(expr =>
                 {
