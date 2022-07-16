@@ -61,6 +61,27 @@ namespace AngouriMath.Core
     /// <summary>
     /// Any class that supports converting to LaTeX format should implement this interface
     /// </summary>
+    /// <example>
+    /// <code>
+    /// using System;
+    /// using AngouriMath;
+    /// using static AngouriMath.MathS;
+    /// 
+    /// Entity expr = "sqrt(a) + integral(sin(x), x)";
+    /// Console.WriteLine(expr);
+    /// Console.WriteLine(expr.Latexise());
+    /// Entity expr2 = "a / b ^ limit(sin(x) - cosh(y), x, +oo)";
+    /// Console.WriteLine(expr2);
+    /// Console.WriteLine(expr2.Latexise());
+    /// </code>
+    /// Prints
+    /// <code>
+    /// sqrt(a) + integral(sin(x), x)
+    /// \sqrt{a}+\int \left[\sin\left(x\right)\right] dx
+    /// a / b ^ limit(sin(x) - (e ^ y + e ^ (-y)) / 2, x, +oo)
+    /// \frac{a}{{b}^{\lim_{x\to \infty } \left[\sin\left(x\right)-\frac{{e}^{y}+{e}^{-y}}{2}\right]}}
+    /// </code>
+    /// </example>
     public interface ILatexiseable
     { 
         /// <summary>
@@ -81,12 +102,32 @@ namespace AngouriMath
     /// </summary>
     public abstract partial record Entity : ILatexiseable
     {
-        /// <inheritdoc/>
+        /// <summary>
+        /// Returns the array of the direct children. Will be
+        /// only called once, so no need to cache anything.
+        /// </summary>
         protected abstract Entity[] InitDirectChildren();
         
         /// <summary>
         /// Represents all direct children of a node
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// 
+        /// Entity frac = "log(sqrt(x), a + b)";
+        /// Console.WriteLine(frac);
+        /// foreach (var child in frac.DirectChildren)
+        ///     Console.WriteLine(child);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// log(sqrt(x), a + b)
+        /// sqrt(x)
+        /// a + b
+        /// </code>
+        /// </example>
         public IReadOnlyList<Entity> DirectChildren => directChildren.GetValue(static @this => @this.InitDirectChildren(), this);
         private LazyPropertyA<IReadOnlyList<Entity>> directChildren;
 
@@ -116,10 +157,84 @@ namespace AngouriMath
         /// with the result of the delegate
         /// </param>
         /// <returns>Processed expression</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        /// using static AngouriMath.Entity;
+        /// using static AngouriMath.Entity.Number;
+        /// 
+        /// static Entity MySimplify(Entity expr) => expr switch
+        /// {
+        ///     Sumf(Powf(Sinf(var e1), Integer(2)), Powf(Cosf(var e2), Integer(2))) when e1 == e2 => 1,
+        ///     Sinf(Integer(0)) => 0,
+        ///     var other => other
+        /// };
+        /// 
+        /// var x = Var("x");
+        /// Entity expr = (Sqr(Sin(x / 3)) + Sqr(Cos(x / 3))) + Sin(0);
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Replace(MySimplify));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin(x / 3) ^ 2 + cos(x / 3) ^ 2 + 0
+        /// 1 + 0
+        /// </code>
+        /// </example>
         public abstract Entity Replace(Func<Entity, Entity> func);
 
 
         /// <summary>Replaces all <param name="x"/> with <param name="value"/></summary>
+        /// <returns>A new expression</returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y, z) = Var("x", "y", "z");
+        /// Entity expr = Sin(x);
+        /// var substituted = expr.Substitute(x, pi / 3);
+        /// 
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(substituted);
+        /// Console.WriteLine(substituted.Simplify());
+        /// 
+        /// Console.WriteLine("-------------------------------");
+        /// 
+        /// var expr2 = Sin(x) + Cos(y + x) + Factorial(z);
+        /// 
+        /// var substituted2 =
+        ///     expr2
+        ///         .Substitute(x, 1)
+        ///         .Substitute(y, 2)
+        ///         .Substitute(z, 3);
+        /// 
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(substituted2);
+        /// 
+        /// Console.WriteLine("-------------------------------");
+        /// 
+        /// var expr3 = Sin(x + y) + 1 / Sin(x + y);
+        /// var substituted3 = expr3.Substitute(Sin(x + y), Cos(x + y));
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(substituted3);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin(x)
+        /// sin(pi / 3)
+        /// sqrt(3) / 2
+        /// -------------------------------
+        /// sin(x) + cos(y + x) + z!
+        /// sin(1) + cos(2 + 1) + 3!
+        /// -------------------------------
+        /// sin(x + y) + 1 / sin(x + y)
+        /// cos(x + y) + 1 / cos(x + y)
+        /// </code>
+        /// </example>
         public virtual Entity Substitute(Entity x, Entity value)
             => this == x ? value : this;
 

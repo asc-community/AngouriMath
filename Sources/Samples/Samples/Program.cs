@@ -7,24 +7,32 @@
 
 using System;
 using AngouriMath;
-using static AngouriMath.MathS.Utils;
+using static AngouriMath.MathS;
 
-Entity expr = "(x^2 + 2)(a + b + 2x) + x + sin(h)";
-if (TryGetPolynomial(expr, "x", out var dict))
-    foreach (var (pow, coef) in dict)
-        Console.WriteLine($"Pow: {pow}. Coef: {coef}");
-Console.WriteLine("------------------------");
-Entity expr1 = "sin(x) + a";
-if (TryGetPolynomial(expr1, "x", out var dict1))
-    foreach (var (pow, coef) in dict1)
-        Console.WriteLine($"Pow: {pow}. Coef: {coef}");
-else
-    Console.WriteLine("Failed to interpret as polynomial");
-Console.WriteLine("------------------------");
-Entity expr2 = "(x + a)(b + x) + a + 2 + x";
-if (TryGetPolyQuadratic(expr2, "x", out var a, out var b, out var c))
-    Console.WriteLine($"The expr is ({a}) * x^2 + ({b}) * x + ({c})");
-Console.WriteLine("------------------------");
-Entity expr3 = "(b + x) + a + 2 + x";
-if (TryGetPolyLinear(expr3, "x", out var a1, out var b1))
-    Console.WriteLine($"The expr is ({a1}) * x + ({b1})");
+var (x, y, z) = Var("x", "y", "z");
+Entity expr = Sin(x);
+var substituted = expr.Substitute(x, pi / 3);
+
+Console.WriteLine(expr);
+Console.WriteLine(substituted);
+Console.WriteLine(substituted.Simplify());
+
+Console.WriteLine("-------------------------------");
+
+var expr2 = Sin(x) + Cos(y + x) + Factorial(z);
+
+var substituted2 =
+    expr2
+        .Substitute(x, 1)
+        .Substitute(y, 2)
+        .Substitute(z, 3);
+
+Console.WriteLine(expr2);
+Console.WriteLine(substituted2);
+
+Console.WriteLine("-------------------------------");
+
+var expr3 = Sin(x + y) + 1 / Sin(x + y);
+var substituted3 = expr3.Substitute(Sin(x + y), Cos(x + y));
+Console.WriteLine(expr3);
+Console.WriteLine(substituted3);
