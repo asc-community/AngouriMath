@@ -5573,7 +5573,7 @@ namespace AngouriMath
             /// Settings for <see cref="EDecimal"/> precisions of <a href="https://github.com/peteroupc/Numbers">PeterO.Numbers</a>
             /// </summary>
             public static Setting<EContext> DecimalPrecisionContext =>
-                decimalPrecisionContext ??= new EContext(100, ERounding.HalfUp, -100, 1000, false);
+                decimalPrecisionContext ??= new EContext(15, ERounding.HalfUp, -15, 30, false);
             [ThreadStatic] private static Setting<EContext>? decimalPrecisionContext;           
         }
 
