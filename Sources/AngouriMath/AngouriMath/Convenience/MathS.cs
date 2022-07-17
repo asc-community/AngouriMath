@@ -3066,51 +3066,118 @@ namespace AngouriMath
         /// "alpha") will be latexised as Greek letter (but other than that,
         /// will appear as "alpha" in other places).
         /// </example>
-        public static (Variable, Variable, Variable) Var(string name1, string name2, string name3) => (Var(name1), Var(name2), Var(name3));
+        public static (Variable, Variable, Variable) Var(string name1, string name2, string name3)
+            => (Var(name1), Var(name2), Var(name3));
+        
+        /// <summary>Creates three instances of <see cref="Variable"/>.</summary>
+        /// <returns>A tuple of 3 corresponding variable nodes</returns>
+        /// <example>
+        /// Here are multiple ways to create variables:
+        /// <code>
+        /// Entity.Variable x = "x";
+        /// var y = Var("y");
+        /// var (a, b) = Var("x", "y");
+        /// var (c, d, e) = Var("a", "b", "c");
+        /// var (c1, d1, e1, f1) = Var("c_1", "d_1", "e_1", "f_1");
+        /// var (c1, d1, e1, f1, g1) = Var("c_1", "d_1", "e_1", "f_1", "g_1");
+        /// var f = Var("f_1");
+        /// var alpha = Var("alpha");
+        /// var alphaPhi = Var("alpha_phi");
+        /// var alpha1 = Var("alpha_1");
+        /// var inGreek = Var("βγδεζη_кΨеВеТкΩ");
+        /// var inCyrillic = Var("Абаваола");
+        /// </code>
+        /// Underscore "_" allows indexing. Greek letter names (e. g.
+        /// "alpha") will be latexised as Greek letter (but other than that,
+        /// will appear as "alpha" in other places).
+        /// </example>
+        public static (Variable, Variable, Variable, Variable) Var(string name1, string name2, string name3, string name4)
+            => (Var(name1), Var(name2), Var(name3), Var(name4));
+        
+        /// <summary>Creates three instances of <see cref="Variable"/>.</summary>
+        /// <returns>A tuple of 3 corresponding variable nodes</returns>
+        /// <example>
+        /// Here are multiple ways to create variables:
+        /// <code>
+        /// Entity.Variable x = "x";
+        /// var y = Var("y");
+        /// var (a, b) = Var("x", "y");
+        /// var (c, d, e) = Var("a", "b", "c");
+        /// var (c1, d1, e1, f1) = Var("c_1", "d_1", "e_1", "f_1");
+        /// var (c1, d1, e1, f1, g1) = Var("c_1", "d_1", "e_1", "f_1", "g_1");
+        /// var f = Var("f_1");
+        /// var alpha = Var("alpha");
+        /// var alphaPhi = Var("alpha_phi");
+        /// var alpha1 = Var("alpha_1");
+        /// var inGreek = Var("βγδεζη_кΨеВеТкΩ");
+        /// var inCyrillic = Var("Абаваола");
+        /// </code>
+        /// Underscore "_" allows indexing. Greek letter names (e. g.
+        /// "alpha") will be latexised as Greek letter (but other than that,
+        /// will appear as "alpha" in other places).
+        /// </example>
+        public static (Variable, Variable, Variable, Variable, Variable) Var(string name1, string name2, string name3, string name4, string name5)
+            => (Var(name1), Var(name2), Var(name3), Var(name4), Var(name5));
 
         /// <summary>
         /// Infinity. Recommended to use with a plus or minus trailing.
         /// </summary>
         /// <example>
-        /// There are multiple constants available. Examples:
+        /// Let's consider <see cref="MathS.oo"/> and <see cref="MathS.NaN"/>.
         /// <code>
-        /// var x = Var("x");
-        /// Console.WriteLine(e);
-        /// Console.WriteLine(e.Evaled);
-        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo));
-        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify());
-        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify() == e);
-        /// Console.WriteLine("-----------------------");
-        /// Console.WriteLine(pi);
-        /// Console.WriteLine(pi.Evaled);
-        /// Console.WriteLine(Sin(pi / 3).Simplify());
-        /// Console.WriteLine(Cos(pi / 3).Simplify());
-        /// Console.WriteLine("-----------------------");
-        /// Console.WriteLine(i);
-        /// Console.WriteLine(4 + 3 * i);
-        /// Console.WriteLine("-----------------------");
-        /// Console.WriteLine(e.Pow(i * pi));
-        /// Console.WriteLine(e.Pow(i * pi).Simplify());
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var expr1 = Sin(x) / y;
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine(expr1.Substitute(y, 0));
+        /// Console.WriteLine(expr1.Substitute(y, 0).Evaled);
+        /// Console.WriteLine(expr1.Substitute(y, 0).Evaled == NaN);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr2 = 5 + NaN;
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Evaled);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr3 = Sin(NaN) / Cos(x) + y;
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Evaled);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr4 = 10 * +oo;
+        /// Console.WriteLine(expr4);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr5 = -oo * +oo;
+        /// Console.WriteLine(expr5);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr6 = -oo / +oo;
+        /// Console.WriteLine(expr6);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr7 = 50 / -oo;
+        /// Console.WriteLine(expr7);
         /// </code>
         /// Prints
         /// <code>
-        /// e
-        /// 2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427
-        /// limit((1 + 1 / x) ^ x, x, +oo)
-        /// e
+        /// sin(x) / y
+        /// sin(x) / 0
+        /// NaN
         /// True
-        /// -----------------------
-        /// pi
-        /// 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068
-        /// sqrt(3) / 2
-        /// 1/2
-        /// -----------------------
-        /// i
-        /// 4 + 3i
-        /// -----------------------
-        /// e ^ (i * pi)
-        /// -1
+        /// --------------------------------
+        /// 5 + NaN
+        /// NaN
+        /// --------------------------------
+        /// sin(NaN) / cos(x) + y
+        /// NaN
+        /// --------------------------------
+        /// +oo
+        /// --------------------------------
+        /// -oo
+        /// --------------------------------
+        /// NaN
+        /// --------------------------------
+        /// 0
         /// </code>
+        /// See <see cref="Entity.IsFinite"/> for determining
+        /// if there are NaNs or infinities inside an expression.
         /// </example>
         [ConstantField] public static readonly Real oo = (Real)(Entity)"+oo";
 
@@ -3261,45 +3328,61 @@ namespace AngouriMath
         /// Any operation on NaN returns NaN
         /// </summary>
         /// <example>
-        /// There are multiple constants available. Examples:
+        /// Let's consider <see cref="MathS.oo"/> and <see cref="MathS.NaN"/>.
         /// <code>
-        /// var x = Var("x");
-        /// Console.WriteLine(e);
-        /// Console.WriteLine(e.Evaled);
-        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo));
-        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify());
-        /// Console.WriteLine(Limit((1 + 1 / x).Pow(x), x, +oo).Simplify() == e);
-        /// Console.WriteLine("-----------------------");
-        /// Console.WriteLine(pi);
-        /// Console.WriteLine(pi.Evaled);
-        /// Console.WriteLine(Sin(pi / 3).Simplify());
-        /// Console.WriteLine(Cos(pi / 3).Simplify());
-        /// Console.WriteLine("-----------------------");
-        /// Console.WriteLine(i);
-        /// Console.WriteLine(4 + 3 * i);
-        /// Console.WriteLine("-----------------------");
-        /// Console.WriteLine(e.Pow(i * pi));
-        /// Console.WriteLine(e.Pow(i * pi).Simplify());
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var expr1 = Sin(x) / y;
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine(expr1.Substitute(y, 0));
+        /// Console.WriteLine(expr1.Substitute(y, 0).Evaled);
+        /// Console.WriteLine(expr1.Substitute(y, 0).Evaled == NaN);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr2 = 5 + NaN;
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Evaled);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr3 = Sin(NaN) / Cos(x) + y;
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Evaled);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr4 = 10 * +oo;
+        /// Console.WriteLine(expr4);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr5 = -oo * +oo;
+        /// Console.WriteLine(expr5);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr6 = -oo / +oo;
+        /// Console.WriteLine(expr6);
+        /// Console.WriteLine("--------------------------------");
+        /// var expr7 = 50 / -oo;
+        /// Console.WriteLine(expr7);
         /// </code>
         /// Prints
         /// <code>
-        /// e
-        /// 2.718281828459045235360287471352662497757247093699959574966967627724076630353547594571382178525166427
-        /// limit((1 + 1 / x) ^ x, x, +oo)
-        /// e
+        /// sin(x) / y
+        /// sin(x) / 0
+        /// NaN
         /// True
-        /// -----------------------
-        /// pi
-        /// 3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068
-        /// sqrt(3) / 2
-        /// 1/2
-        /// -----------------------
-        /// i
-        /// 4 + 3i
-        /// -----------------------
-        /// e ^ (i * pi)
-        /// -1
+        /// --------------------------------
+        /// 5 + NaN
+        /// NaN
+        /// --------------------------------
+        /// sin(NaN) / cos(x) + y
+        /// NaN
+        /// --------------------------------
+        /// +oo
+        /// --------------------------------
+        /// -oo
+        /// --------------------------------
+        /// NaN
+        /// --------------------------------
+        /// 0
         /// </code>
+        /// See <see cref="Entity.IsFinite"/> for determining
+        /// if there are NaNs or infinities inside an expression.
         /// </example>
         [ConstantField] public static readonly Entity NaN = Real.NaN;
 

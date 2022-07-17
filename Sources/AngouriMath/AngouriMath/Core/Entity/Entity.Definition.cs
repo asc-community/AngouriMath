@@ -242,6 +242,21 @@ namespace AngouriMath
         /// Replaces x.x1 with value.v1 and
         /// x.x2 with value.v2
         /// </summary>
+        /// <example>
+        /// See how <see cref="Substitute(AngouriMath.Entity,AngouriMath.Entity)"/> works.
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// 
+        /// var expr = Sin(x + y) + 1 / Sin(x + y);
+        /// 
+        /// var sub = expr
+        ///     .Substitute((x, y), (5, 11));
+        /// Console.WriteLine(sub);
+        /// </code>
+        /// </example>
         public Entity Substitute((Entity x1, Entity x2) x, (Entity v1, Entity v2) value)
             => Substitute(x.x1, value.v1).Substitute(x.x2, value.v2);
 
@@ -250,6 +265,25 @@ namespace AngouriMath
         /// x.x2 with value.v2 and
         /// x.x3 with value.v3
         /// </summary>
+        /// <example>
+        /// See how <see cref="Substitute(AngouriMath.Entity,AngouriMath.Entity)"/> works.
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y, z) = Var("x", "y", "z");
+        /// 
+        /// var expr = Sin(x + y) + 1 / Sin(x + y) + z;
+        /// 
+        /// var sub = expr
+        ///     .Substitute((x, y, z), (5, 11, 115));
+        /// Console.WriteLine(sub);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin(5 + 11) + 1 / sin(5 + 11) + 115
+        /// </code>
+        /// </example>
         public Entity Substitute((Entity x1, Entity x2, Entity x3) x, (Entity v1, Entity v2, Entity v3) value)
             => Substitute(x.x1, value.v1).Substitute(x.x2, value.v2).Substitute(x.x3, value.v3);
 
@@ -259,10 +293,67 @@ namespace AngouriMath
         /// x.x3 with value.v3 and
         /// x.x4 with value.v4
         /// </summary>
+        /// <example>
+        /// See how <see cref="Substitute(AngouriMath.Entity,AngouriMath.Entity)"/> works.
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y, z, w) = Var("x", "y", "z", "w");
+        /// 
+        /// var expr = Sin(x + y) + 1 / Sin(x + y) + z / w;
+        /// 
+        /// var sub = expr
+        ///     .Substitute((x, y, z, w), (5, 11, 115, Sqr(w)));
+        /// Console.WriteLine(sub);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y, z, w) = Var("x", "y", "z", "w");
+        /// 
+        /// var expr = Sin(x + y) + 1 / Sin(x + y) + z / w;
+        /// 
+        /// var sub = expr
+        ///     .Substitute((x, y, z, w), (5, 11, 115, Sqr(w)));
+        /// Console.WriteLine(sub);
+        /// </code>
+        /// </example>
         public Entity Substitute((Entity x1, Entity x2, Entity x3, Entity x4) x, (Entity v1, Entity v2, Entity v3, Entity v4) value)
             => Substitute(x.x1, value.v1).Substitute(x.x2, value.v2).Substitute(x.x3, value.v3).Substitute(x.x4, value.v4);
 
         /// <summary>Replaces all <param name="replacements"/></summary>
+        /// <example>
+        /// See how <see cref="Substitute(AngouriMath.Entity,AngouriMath.Entity)"/> works.
+        /// <code>
+        /// using System;
+        /// using System.Collections.Generic;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y, z, w) = Var("x", "y", "z", "w");
+        /// 
+        /// var expr = Sin(x + y) + 1 / Sin(x + y) + z / w;
+        /// 
+        /// var subs = new Dictionary&lt;Entity, Entity&gt;()
+        /// {
+        ///     { x, 1 },
+        ///     { y, 2 },
+        ///     { z, z + Sin(y) }
+        /// };
+        /// 
+        /// 
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Substitute(subs));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin(x + y) + 1 / sin(x + y) + z / w
+        /// sin(1 + 2) + 1 / sin(1 + 2) + (z + sin(y)) / w
+        /// </code>
+        /// </example>
         public Entity Substitute<TFrom, TTo>(IReadOnlyDictionary<TFrom, TTo> replacements) where TFrom : Entity where TTo : Entity
         {
             var res = this;
@@ -275,8 +366,51 @@ namespace AngouriMath
 
         /// <value>
         /// Whether both parts of the complex number are finite
-        /// meaning that it could be safely used for calculations
+        /// meaning that it could be safely used for calculations.
+        /// By finite we mean that it is not a <see cref="MathS.NaN"/>
+        /// and it is not positive or negative infinity.
         /// </value>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var x = Var("x");
+        /// var expr1 = Sin(x);
+        /// Console.WriteLine($"{expr1}, IsFinite: {expr1.IsFinite}");
+        /// var expr2 = Sin(x + 5) + 5;
+        /// Console.WriteLine($"{expr2}, IsFinite: {expr2.IsFinite}");
+        /// var expr3 = Sin(x + 3) / 0;
+        /// Console.WriteLine($"{expr3}, IsFinite: {expr3.IsFinite}");
+        /// var expr4 = expr3.Evaled;
+        /// Console.WriteLine($"{expr4}, IsFinite: {expr4.IsFinite}");
+        /// var expr5 = Sin(x / 0);
+        /// Console.WriteLine($"{expr5}, IsFinite: {expr5.IsFinite}");
+        /// var expr6 = x + +oo;
+        /// Console.WriteLine($"{expr6}, IsFinite: {expr6.IsFinite}");
+        /// var expr7 = x + +oo * i;
+        /// Console.WriteLine($"{expr7}, IsFinite: {expr7.IsFinite}");
+        /// var expr8 = -oo + 6 * i;
+        /// Console.WriteLine($"{expr8}, IsFinite: {expr8.IsFinite}");
+        /// var expr9 = Sin(+oo) - Cos(pi / 3);
+        /// Console.WriteLine($"{expr9}, IsFinite: {expr9.IsFinite}");
+        /// var expr10 = Hyperbolic.Tanh(NaN + 3);
+        /// Console.WriteLine($"{expr10}, IsFinite: {expr10.IsFinite}");
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin(x), IsFinite: True
+        /// sin(x + 5) + 5, IsFinite: True
+        /// sin(x + 3) / 0, IsFinite: True
+        /// NaN, IsFinite: False
+        /// sin(x / 0), IsFinite: True
+        /// x + +oo, IsFinite: False
+        /// x + +ooi, IsFinite: False
+        /// -oo + 6i, IsFinite: False
+        /// sin(+oo) - cos(pi / 3), IsFinite: False
+        /// (e ^ (2 * (NaN + 3)) - 1) / (e ^ (2 * (NaN + 3)) + 1), IsFinite: False
+        /// </code>
+        /// </example>
         public bool IsFinite => isFinite.GetValue(static @this => @this.ThisIsFinite && @this.DirectChildren.All(x => x.IsFinite), this);
         private LazyPropertyA<bool> isFinite;
 
@@ -286,6 +420,29 @@ namespace AngouriMath
         protected virtual bool ThisIsFinite => true;       
 
         /// <value>Number of nodes in tree</value>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var expr1 = x;
+        /// Console.WriteLine($"{expr1}: {expr1.Complexity}");
+        /// var expr2 = x * 2;
+        /// Console.WriteLine($"{expr2}: {expr2.Complexity}");
+        /// var expr3 = Sin(x);
+        /// Console.WriteLine($"{expr3}: {expr3.Complexity}");
+        /// var expr4 = Sin(x) + Cos(x + 2);
+        /// Console.WriteLine($"{expr4}: {expr4.Complexity}");
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x: 1
+        /// x * 2: 3
+        /// sin(x): 2
+        /// sin(x) + cos(x + 2): 7
+        /// </code>
+        /// </example>
         public int Complexity => complexity.GetValue(static @this => 1 + @this.DirectChildren.Sum(x => x.Complexity), this);
         private LazyPropertyA<int> complexity;
 
@@ -297,6 +454,39 @@ namespace AngouriMath
         /// Set of unique variables excluding mathematical constants
         /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var expr1 = Lambda(x, x * 2 + Sin(y * pi));
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine("Variables:");
+        /// foreach (var var in expr1.Vars)
+        ///     Console.WriteLine($"  {var}");
+        /// Console.WriteLine("Variables and constants:");
+        /// foreach (var var in expr1.VarsAndConsts)
+        ///     Console.WriteLine($"  {var}");
+        /// Console.WriteLine("Only free variables:");
+        /// foreach (var var in expr1.FreeVariables)
+        ///     Console.WriteLine($"  {var}");
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x -> x * 2 + sin(y * pi)
+        /// Variables:
+        ///   x
+        ///   y
+        /// Variables and constants:
+        ///   x
+        ///   y
+        ///   pi
+        /// Only free variables:
+        ///   y
+        ///   pi
+        /// </code>
+        /// </example>
         public IReadOnlyList<Variable> Vars
             => vars.GetValue(static @this
                 => @this.VarsAndConsts.Where(x => !x.IsConstant).ToList() /* needed to actually compute it and cache */, this);
@@ -310,6 +500,39 @@ namespace AngouriMath
         /// Set of unique variables and mathematical constants
         /// such as <see cref="MathS.pi"/> and <see cref="MathS.e"/>
         /// </returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var expr1 = Lambda(x, x * 2 + Sin(y * pi));
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine("Variables:");
+        /// foreach (var var in expr1.Vars)
+        ///     Console.WriteLine($"  {var}");
+        /// Console.WriteLine("Variables and constants:");
+        /// foreach (var var in expr1.VarsAndConsts)
+        ///     Console.WriteLine($"  {var}");
+        /// Console.WriteLine("Only free variables:");
+        /// foreach (var var in expr1.FreeVariables)
+        ///     Console.WriteLine($"  {var}");
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x -> x * 2 + sin(y * pi)
+        /// Variables:
+        ///   x
+        ///   y
+        /// Variables and constants:
+        ///   x
+        ///   y
+        ///   pi
+        /// Only free variables:
+        ///   y
+        ///   pi
+        /// </code>
+        /// </example>
         public IReadOnlyCollection<Variable> VarsAndConsts => varsAndConsts.GetValue(
             static @this => new HashSet<Variable>(@this is Variable v ? new[] { v } : @this.DirectChildren.SelectMany(x => x.VarsAndConsts)), this);
         private LazyPropertyA<IReadOnlyCollection<Variable>> varsAndConsts;
@@ -320,6 +543,39 @@ namespace AngouriMath
         /// We call a bound variable a variable which is a parameter of some
         /// outer lambda. Then, all other variables are free.
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var expr1 = Lambda(x, x * 2 + Sin(y * pi));
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine("Variables:");
+        /// foreach (var var in expr1.Vars)
+        ///     Console.WriteLine($"  {var}");
+        /// Console.WriteLine("Variables and constants:");
+        /// foreach (var var in expr1.VarsAndConsts)
+        ///     Console.WriteLine($"  {var}");
+        /// Console.WriteLine("Only free variables:");
+        /// foreach (var var in expr1.FreeVariables)
+        ///     Console.WriteLine($"  {var}");
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x -> x * 2 + sin(y * pi)
+        /// Variables:
+        ///   x
+        ///   y
+        /// Variables and constants:
+        ///   x
+        ///   y
+        ///   pi
+        /// Only free variables:
+        ///   y
+        ///   pi
+        /// </code>
+        /// </example>
         public IReadOnlyCollection<Variable> FreeVariables =>
             freeVariables.GetValue(
                 static @this =>
@@ -337,10 +593,29 @@ namespace AngouriMath
 
         /// <summary>Checks if <paramref name="x"/> is a subnode inside this <see cref="Entity"/> tree.
         /// Optimized for <see cref="Variable"/>.</summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var expr1 = Sin(x + y) - Sqr(x);
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine(expr1.ContainsNode(y + x));
+        /// Console.WriteLine(expr1.ContainsNode(x + y));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin(x + y) - x ^ 2
+        /// False
+        /// True
+        /// </code>
+        /// </example>
         public bool ContainsNode(Entity x) => x is Variable v ? VarsAndConsts.Contains(v) : Nodes.Contains(x);
 
         /// <summary>
-        /// Implicit conversation from string to Entity
+        /// Implicit conversation from string to Entity. See <see cref="MathS.FromString(string,bool)"/>
+        /// for how to parse an <see cref="Entity"/> from expression.
         /// </summary>
         /// <param name="expr">The source from which to parse</param>
         public static implicit operator Entity(string expr) => MathS.FromString(expr);
@@ -351,16 +626,72 @@ namespace AngouriMath
         /// <see cref="Complexity"/>, which shows the number of nodes, <see cref="SimplifiedRate"/> 
         /// shows how convenient it is to view the expression. This depends on 
         /// <see cref="MathS.Settings.ComplexityCriteria"/> which can be changed by user.
+        /// See <see cref="MathS.Settings.ComplexityCriteria"/> for more details.
         /// </summary>
         public double SimplifiedRate => simplifiedRate.GetValue(MathS.Settings.ComplexityCriteria.Value, this);
         private LazyPropertyA<double> simplifiedRate;
 
         /// <summary>Checks whether the given expression contains variable</summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var expr1 = Sin(x + y) - Sqr(x);
+        /// Console.WriteLine(expr1.IsSymbolic);
+        /// var expr2 = Sin(5) - 22;
+        /// Console.WriteLine(expr2.IsSymbolic);
+        /// var expr3 = Sin(5) - 22 / x;
+        /// Console.WriteLine(expr3.IsSymbolic);
+        /// </code>
+        /// Prints
+        /// <code>
+        /// True
+        /// False
+        /// True
+        /// </code>
+        /// </example>
         public bool IsSymbolic => Vars.Any();
 
         /// <summary>
         /// Checks whether the given expression is a finite constant leaf
         /// </summary>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Entity expr1 = 5;
+        /// Console.WriteLine($"{expr1}, IsConstantLeaf: {expr1.IsConstantLeaf}");
+        /// Entity expr2 = Sin(5);
+        /// Console.WriteLine($"{expr2}, IsConstantLeaf: {expr2.IsConstantLeaf}");
+        /// Entity expr3 = pi;
+        /// Console.WriteLine($"{expr3}, IsConstantLeaf: {expr3.IsConstantLeaf}");
+        /// Entity expr4 = 3 + 4 * i;
+        /// Console.WriteLine($"{expr4}, IsConstantLeaf: {expr4.IsConstantLeaf}");
+        /// Entity expr5 = (Entity)3 + 4 * i;
+        /// Console.WriteLine($"{expr5}, IsConstantLeaf: {expr5.IsConstantLeaf}");
+        /// var expr6 = expr5.InnerSimplified;
+        /// Console.WriteLine($"{expr6}, IsConstantLeaf: {expr6.IsConstantLeaf}");
+        /// var expr7 = GreaterThan(pi, e);
+        /// Console.WriteLine($"{expr7}, IsConstantLeaf: {expr7.IsConstantLeaf}");
+        /// var expr8 = expr7.Evaled;
+        /// Console.WriteLine($"{expr8}, IsConstantLeaf: {expr8.IsConstantLeaf}");
+        /// </code>
+        /// Prints
+        /// <code>
+        /// 5, IsConstantLeaf: True
+        /// sin(5), IsConstantLeaf: False
+        /// pi, IsConstantLeaf: False
+        /// 3 + 4i, IsConstantLeaf: True
+        /// 3 + 4i, IsConstantLeaf: False
+        /// 3 + 4i, IsConstantLeaf: True
+        /// pi > e, IsConstantLeaf: False
+        /// True, IsConstantLeaf: True
+        /// </code>
+        /// </example>
         public bool IsConstantLeaf => this is Boolean or Number or Set.SpecialSet;
     }
 }

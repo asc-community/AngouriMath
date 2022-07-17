@@ -9,30 +9,19 @@ using System;
 using AngouriMath;
 using static AngouriMath.MathS;
 
-var (x, y, z) = Var("x", "y", "z");
-Entity expr = Sin(x);
-var substituted = expr.Substitute(x, pi / 3);
-
-Console.WriteLine(expr);
-Console.WriteLine(substituted);
-Console.WriteLine(substituted.Simplify());
-
-Console.WriteLine("-------------------------------");
-
-var expr2 = Sin(x) + Cos(y + x) + Factorial(z);
-
-var substituted2 =
-    expr2
-        .Substitute(x, 1)
-        .Substitute(y, 2)
-        .Substitute(z, 3);
-
-Console.WriteLine(expr2);
-Console.WriteLine(substituted2);
-
-Console.WriteLine("-------------------------------");
-
-var expr3 = Sin(x + y) + 1 / Sin(x + y);
-var substituted3 = expr3.Substitute(Sin(x + y), Cos(x + y));
-Console.WriteLine(expr3);
-Console.WriteLine(substituted3);
+Entity expr1 = 5;
+Console.WriteLine($"{expr1}, IsConstantLeaf: {expr1.IsConstantLeaf}");
+Entity expr2 = Sin(5);
+Console.WriteLine($"{expr2}, IsConstantLeaf: {expr2.IsConstantLeaf}");
+Entity expr3 = pi;
+Console.WriteLine($"{expr3}, IsConstantLeaf: {expr3.IsConstantLeaf}");
+Entity expr4 = 3 + 4 * i;
+Console.WriteLine($"{expr4}, IsConstantLeaf: {expr4.IsConstantLeaf}");
+Entity expr5 = (Entity)3 + 4 * i;
+Console.WriteLine($"{expr5}, IsConstantLeaf: {expr5.IsConstantLeaf}");
+var expr6 = expr5.InnerSimplified;
+Console.WriteLine($"{expr6}, IsConstantLeaf: {expr6.IsConstantLeaf}");
+var expr7 = GreaterThan(pi, e);
+Console.WriteLine($"{expr7}, IsConstantLeaf: {expr7.IsConstantLeaf}");
+var expr8 = expr7.Evaled;
+Console.WriteLine($"{expr8}, IsConstantLeaf: {expr8.IsConstantLeaf}");
