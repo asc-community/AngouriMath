@@ -15,6 +15,34 @@ namespace AngouriMath.Core
     /// recreating an instance multiple times. It builds an instance of <see cref="Matrix"/>.
     /// It enables to build a tensor row-by-row.
     /// </summary>
+    /// <example>
+    /// <code>
+    /// using System;
+    /// using AngouriMath;
+    /// using AngouriMath.Core;
+    /// 
+    /// var mb = new MatrixBuilder(3);
+    /// Console.WriteLine(mb.ToMatrix() is null);
+    /// Console.WriteLine("-------------------------");
+    /// 
+    /// mb.Add(new Entity[] { 1, 2, 3 } );
+    /// mb.Add(new Entity[] { "x", "sqrt(y)", 5 } );
+    /// Console.WriteLine(mb.ToMatrix().ToString(multilineFormat: true));
+    /// Console.WriteLine("-------------------------");
+    /// 
+    /// mb.Add(new Entity[] { 1 } ); // throws
+    /// </code>
+    /// Prints
+    /// <code>
+    /// True
+    /// -------------------------
+    /// Matrix[2 x 3]
+    /// 1         2         3         
+    /// x         sqrt(y)   5         
+    /// -------------------------
+    /// Unhandled exception. AngouriMath.Core.Exceptions.InvalidMatrixOperationException: Incorrect usage of MatrixBuilder
+    /// </code>
+    /// </example>
     public sealed class MatrixBuilder
     {
         private readonly List<List<Entity>> raw = new();

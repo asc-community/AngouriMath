@@ -22,6 +22,26 @@ namespace AngouriMath
         /// The derived expression which might contain <see cref="Derivativef"/> nodes,
         /// or the initial one
         /// </returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y) = Var("x", "y");
+        /// var expr1 = Sqr(x) + Sin(y * x);
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine(expr1.Differentiate(x));
+        /// Console.WriteLine(expr1.Differentiate(y));
+        /// Console.WriteLine(expr1.Differentiate(y).Differentiate(x));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// x ^ 2 + sin(y * x)
+        /// 2 * x + cos(y * x) * y
+        /// cos(y * x) * x
+        /// -sin(y * x) * y * x + cos(y * x) 
+        /// </code>
+        /// </example>
         public Entity Differentiate(Variable variable)
             => InnerDifferentiate(variable).InnerSimplified;
 
