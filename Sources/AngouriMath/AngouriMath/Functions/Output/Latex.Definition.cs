@@ -23,6 +23,27 @@ namespace AngouriMath
         /// \frac{a}{b}+\sqrt{c}
         /// </code>
         /// </example>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using AngouriMath;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// Entity expr = "sqrt(a) + integral(sin(x), x)";
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Latexise());
+        /// Entity expr2 = "a / b ^ limit(sin(x) - cosh(y), x, +oo)";
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Latexise());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sqrt(a) + integral(sin(x), x)
+        /// \sqrt{a}+\int \left[\sin\left(x\right)\right] dx
+        /// a / b ^ limit(sin(x) - (e ^ y + e ^ (-y)) / 2, x, +oo)
+        /// \frac{a}{{b}^{\lim_{x\to \infty } \left[\sin\left(x\right)-\frac{{e}^{y}+{e}^{-y}}{2}\right]}}
+        /// </code>
+        /// </example>
         public abstract string Latexise();
 
         /// <summary>Returns the expression in LaTeX (for example, a / b -> \frac{a}{b})</summary>

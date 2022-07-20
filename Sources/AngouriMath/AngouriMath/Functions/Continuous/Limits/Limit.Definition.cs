@@ -80,6 +80,43 @@ namespace AngouriMath
         /// A result or the <see cref="Limitf"/> node if the limit
         /// cannot be determined
         /// </returns>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, a) = Var("x", "a");
+        /// var expr = (1 + a / x).Pow(x);
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Limit(x, +oo));
+        /// Console.WriteLine("----------------------");
+        /// var expr1 = Sin(x * a) / x;
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine(expr1.Limit(x, +oo));
+        /// Console.WriteLine("----------------------");
+        /// var expr2 = (a * Sqr(x) + x + Sqr(a)) / (3 * x + 5 * Sqr(x) + 9);
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Limit(x, 0));
+        /// Console.WriteLine("----------------------");
+        /// var expr3 = (a * Sqr(x) + x + Sqr(a)) / (3 * x + 5 * Sqr(x) + 9);
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Limit(x, +oo));
+        /// </code>
+        /// Prints
+        /// <code>
+        /// (1 + a / x) ^ x
+        /// e ^ a
+        /// ----------------------
+        /// sin(x * a) / x
+        /// limit(sin(x * a) / x, x, +oo)
+        /// ----------------------
+        /// (a * x ^ 2 + x + a ^ 2) / (3 * x + 5 * x ^ 2 + 9)
+        /// a ^ 2 / 9
+        /// ----------------------
+        /// (a * x ^ 2 + x + a ^ 2) / (3 * x + 5 * x ^ 2 + 9)
+        /// a / 5
+        /// </code>
+        /// </example>
         public Entity Limit(Variable x, Entity destination)
         {
             var res = ComputeLimit(this, x, destination, ApproachFrom.BothSides);

@@ -6,19 +6,15 @@
 //
 
 using System;
+using AngouriMath.Core;
 using static AngouriMath.MathS;
 
-var (x, y) = Var("x", "y");
-var expr1 = x + y;
-Console.WriteLine(expr1.IsConstant);
-Console.WriteLine(expr1.Evaled.IsConstant);
-Console.WriteLine("-----------------------------");
-var expr2 = 5 + x * i;
-Console.WriteLine(expr2.IsConstant);
-Console.WriteLine(expr2.Substitute(x, 3).IsConstant);
-Console.WriteLine("-----------------------------");
-var expr3 = GreaterThan(5, 3);
-Console.WriteLine(expr3.IsConstant);
-Console.WriteLine("-----------------------------");
-var expr4 = pi + 0 * e;
-Console.WriteLine(expr4.IsConstant);
+var expr = Sqrt(-1);
+Console.WriteLine(expr);
+Console.WriteLine(expr.Codomain);
+Console.WriteLine(expr.Evaled);
+Console.WriteLine("------------------------------------");
+var newExpr = expr.WithCodomain(Domain.Real);
+Console.WriteLine(newExpr);
+Console.WriteLine(newExpr.Codomain);
+Console.WriteLine(newExpr.Evaled);
