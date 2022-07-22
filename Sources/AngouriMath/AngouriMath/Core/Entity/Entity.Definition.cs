@@ -134,16 +134,28 @@ namespace AngouriMath
         /// <remarks>A depth-first enumeration is required by
         /// <see cref="AngouriMath.Functions.TreeAnalyzer.GetMinimumSubtree"/></remarks>
         /// <summary>
-        /// The list of all nodes of the given expression
+        /// The list of all subnodes of the given expression, including its own. Traverses
+        /// the tree the following order:
+        /// <ol>
+        /// <li>The node itself</li>
+        /// <li>All nodes from all children</li>
+        /// </ol>
         /// </summary>
         /// <example>
         /// <code>
         /// Entity expr = "a + b / 2 ^ 3";
-        /// Console.WriteLine(string.Join(", ", expr.Nodes));
+        /// for (var node in expr.Nodes)
+        ///     Console.WriteLine(node);
         /// </code>
         /// Output:
         /// <code>
-        /// a + b / 2 ^ 3, a, b / 2 ^ 3, b, 2 ^ 3, 2, 3
+        /// a + b / 2 ^ 3
+        /// a
+        /// b / 2 ^ 3
+        /// b
+        /// 2 ^ 3
+        /// 2
+        /// 3
         /// </code>
         /// </example>
         public IEnumerable<Entity> Nodes => nodes.GetValue(static @this => @this.DirectChildren.SelectMany(c => c.Nodes).Prepend(@this), this);
