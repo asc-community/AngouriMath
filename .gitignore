@@ -64,3 +64,7 @@ TestResults
 /Sources/Tests/DotnetBenchmark/Properties/launchSettings.json
 **/.ionide/**
 Sources/msbuild.binlog
+
+**/native-out/**
+**/deb-output/**
+*.deb
