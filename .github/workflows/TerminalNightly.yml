@@ -34,7 +34,7 @@ jobs:
       run: |
         zip -r terminal-win-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/win-x64
         zip -r terminal-linux-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/linux-x64
-        zip -r terminal-osx-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/osx-64
+        zip -r terminal-osx-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/osx-x64
         
     - name: 'Release'
       run: |
