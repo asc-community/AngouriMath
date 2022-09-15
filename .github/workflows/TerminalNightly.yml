@@ -55,7 +55,7 @@ jobs:
         'angourimath-terminal-amd64.deb' \
         'angourimath-terminal-arm.deb' \
         'angourimath-terminal-arm64.deb' \
-        -p -R asc-community/AngouriMathLab \
+        -R asc-community/AngouriMathLab \
         -t 'AngouriMath.Terminal' \
         -n "Expand 'assets' and choose the one for your OS"
     
