@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - master
- 
+    paths:
+      - 'Sources/Terminal/VERSION/**'
+
 jobs:
   TerminalBuild:
     runs-on: ubuntu-latest
@@ -23,32 +25,26 @@ jobs:
     - name: 'Build terminal for three OS'
       run: |
         cd Sources/Terminal/AngouriMath.Terminal
-        dotnet publish -c Release -r win-x64 -o win-x64-publish
-        dotnet publish -c Release -r linux-x64 -o linux-x64-publish
-        dotnet publish -c Release -r osx-x64 -o osx-x64-publish
-    
-    - name: 'Create start script'
-      run: |
-        echo "dotnet AngouriMath.Terminal.dll" > ./Sources/Terminal/AngouriMath.Terminal/win-x64-publish/start.bat
-        echo "dotnet AngouriMath.Terminal.dll" > ./Sources/Terminal/AngouriMath.Terminal/linux-x64-publish/start.sh
-        echo "dotnet AngouriMath.Terminal.dll" > ./Sources/Terminal/AngouriMath.Terminal/osx-x64-publish/start.sh
-    
+        ./publish-osx-x64.sh
+        ./publish-win-x64.sh
+        ./publish-linux-x64.sh
+        ./pack-deb-linux-x64.sh
+
     - name: 'Pack'
       run: |
-        zip -r terminal-win-x64.zip ./Sources/Terminal/AngouriMath.Terminal/win-x64-publish
-        zip -r terminal-linux-x64.zip ./Sources/Terminal/AngouriMath.Terminal/linux-x64-publish
-        zip -r terminal-osx-x64.zip ./Sources/Terminal/AngouriMath.Terminal/osx-x64-publish
+        zip -r terminal-win-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/win-x64
+        zip -r terminal-linux-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/linux-x64
+        zip -r terminal-osx-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/osx-x64
         
     - name: 'Release'
       run: |
-        commithash=$(git rev-parse --short HEAD)
-        currtime=$(date +%s)
-        echo "commit hash is $commithash"
-        echo "time is $currtime"
-        name=1.0.0-terminal-master-$currtime-$commithash
-        echo "name is $name"
-      
+        name=$(cat ./Sources/Terminal/VERSION/VERSION)
+        echo "Version: $name"
+     
+        cp ./Sources/Terminal/AngouriMath.Terminal/publish-output/angourimath*.deb .
+        deb=$(ls | grep angourimath*.deb)
+
         echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
         gh auth login --with-token < token.txt
-        gh release create v$name 'terminal-win-x64.zip' 'terminal-linux-x64.zip' 'terminal-osx-x64.zip' -p -R asc-community/AngouriMathLab -t 'AngouriMath.Terminal auto-release'
+        gh release create v$name 'terminal-win-x64.zip' 'terminal-linux-x64.zip' 'terminal-osx-x64.zip' $deb -p -R asc-community/AngouriMathLab -t 'AngouriMath.Terminal' -n "Expand 'assets' and choose the one for your OS"
     
