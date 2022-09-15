@@ -15,7 +15,7 @@ do
     fi
 
     version=$(cat ../../VERSION/VERSION)
-    filename="angourimath-terminal_${version}_{arch}"
+    filename="angourimath-terminal_${version}_${arch}"
     
     rm -r $filename
     mkdir $filename
@@ -51,6 +51,6 @@ do
     
     cd ..
     dpkg-deb --build --root-owner-group $filename
-    mv "angourimath-terminal_${version}-${arch}.deb" "angourimath-terminal-${arch}.deb"
+    mv "angourimath-terminal_${version}_${arch}.deb" "angourimath-terminal-${arch}.deb"
 
 done
