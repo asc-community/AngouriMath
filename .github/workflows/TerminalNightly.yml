@@ -3,7 +3,7 @@ name: 'Terminal nightly builds'
 on:
   push:
     branches:
-      - *
+      - '*'
     paths:
       - 'VERSION/**'
 
