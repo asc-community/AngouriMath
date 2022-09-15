@@ -5,7 +5,7 @@ on:
     branches:
       - '*'
     paths:
-      - 'VERSION/**'
+      - './Sources/Terminal/VERSION/**'
 
 jobs:
   TerminalBuild:
