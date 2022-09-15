@@ -38,3 +38,4 @@ cp ../../icon.png ./usr/local/bin/angourimath-terminal-data/
 
 cd ..
 dpkg-deb --build --root-owner-group $filename
+mv angourimath*.deb angourimath-terminal.deb

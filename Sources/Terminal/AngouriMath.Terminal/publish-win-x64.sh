@@ -2,5 +2,5 @@
 dotnet publish \
 -r win-x64 \
 -c release \
--o ./publish-output/win-x64 \
+-o ./publish-output/win-amd64 \
 --self-contained
