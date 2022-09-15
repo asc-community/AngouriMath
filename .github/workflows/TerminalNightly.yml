@@ -22,29 +22,40 @@ jobs:
         dotnet-version: '6.0.x'
         include-prerelease: true
       
-    - name: 'Build terminal for three OS'
+    - name: 'Build terminal'
       run: |
         cd Sources/Terminal/AngouriMath.Terminal
-        ./publish-osx-x64.sh
-        ./publish-win-x64.sh
-        ./publish-linux-x64.sh
-        ./pack-deb-linux-x64.sh
+        ./publish.sh
+        ./pack-deb-linux.sh
 
     - name: 'Pack'
       run: |
-        zip -r terminal-win-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/win-x64
-        zip -r terminal-linux-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/linux-x64
-        zip -r terminal-osx-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/osx-x64
+        for arch in linux-x64 linux-arm linux-arm64 win-x64 win-x86 osx-x64 osx.12-arm64
+        do
+            zip -r "angourimath-terminal-${arch}.zip" ./Sources/Terminal/AngouriMath.Terminal/publish-output/$arch
+        done
         
     - name: 'Release'
       run: |
         name=$(cat ./Sources/Terminal/VERSION/VERSION)
         echo "Version: $name"
      
-        cp ./Sources/Terminal/AngouriMath.Terminal/publish-output/angourimath*.deb .
-        deb=$(ls | grep angourimath*.deb)
+        cp ./Sources/Terminal/AngouriMath.Terminal/publish-output/angourimath-terminal-*.deb .
 
         echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
         gh auth login --with-token < token.txt
-        gh release create v$name 'terminal-win-x64.zip' 'terminal-linux-x64.zip' 'terminal-osx-x64.zip' $deb -p -R asc-community/AngouriMathLab -t 'AngouriMath.Terminal' -n "Expand 'assets' and choose the one for your OS"
+        gh release create v$name \
+        'angourimath-terminal-linux-x64.zip' \
+        'angourimath-terminal-linux-arm.zip' \
+        'angourimath-terminal-linux-arm64.zip' \
+        'angourimath-terminal-win-x64.zip' \
+        'angourimath-terminal-win-x86.zip' \
+        'angourimath-terminal-osx-x64.zip' \
+        'angourimath-terminal-osx.12-arm64.zip' \
+        'angourimath-terminal-amd64.deb' \
+        'angourimath-terminal-arm.deb' \
+        'angourimath-terminal-arm64.deb' \
+        -p -R asc-community/AngouriMathLab \
+        -t 'AngouriMath.Terminal' \
+        -n "Expand 'assets' and choose the one for your OS"
     
