@@ -3,7 +3,7 @@ name: 'Terminal nightly builds'
 on:
   push:
     branches:
-      - master
+      - '*'
     paths:
       - 'Sources/Terminal/VERSION/**'
 
@@ -32,18 +32,32 @@ jobs:
 
     - name: 'Pack'
       run: |
-        zip -r angourimath-terminal-win-amd64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/win-amd64
-        zip -r angourimath-terminal-linux-amd64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/linux-amd64
-        zip -r angourimath-terminal-osx-amd64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/osx-amd64
+        for arch in linux-x64 linux-arm linux-arm64 win-x64 win-x86 osx-x64 osx.12-arm64
+        do
+            zip -r "angourimath-terminal-${arch}.zip" ./Sources/Terminal/AngouriMath.Terminal/publish-output/$arch
+        done
         
     - name: 'Release'
       run: |
         name=$(cat ./Sources/Terminal/VERSION/VERSION)
         echo "Version: $name"
      
-        cp ./Sources/Terminal/AngouriMath.Terminal/publish-output/angourimath-terminal-amd64.deb .
+        cp ./Sources/Terminal/AngouriMath.Terminal/publish-output/angourimath-terminal-*.deb .
 
         echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
         gh auth login --with-token < token.txt
-        gh release create v$name 'angourimath-terminal-win-amd64.zip' 'angourimath-terminal-linux-amd64.zip' 'angourimath-terminal-osx-amd64.zip' 'angourimath-terminal-amd64.deb' -p -R asc-community/AngouriMathLab -t 'AngouriMath.Terminal' -n "Expand 'assets' and choose the one for your OS"
+        gh release create v$name \
+        'angourimath-terminal-linux-x64.zip' \
+        'angourimath-terminal-linux-arm.zip' \
+        'angourimath-terminal-linux-arm64.zip' \
+        'angourimath-terminal-win-x64.zip' \
+        'angourimath-terminal-win-x86.zip' \
+        'angourimath-terminal-osx-x64.zip' \
+        'angourimath-terminal-osx.12-arm64.zip' \
+        'angourimath-terminal-amd64.deb' \
+        'angourimath-terminal-arm.deb' \
+        'angourimath-terminal-arm64.deb' \
+        -p -R asc-community/AngouriMathLab \
+        -t 'AngouriMath.Terminal' \
+        -n "Expand 'assets' and choose the one for your OS"
     
