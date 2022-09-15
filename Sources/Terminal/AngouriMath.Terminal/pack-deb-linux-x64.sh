@@ -27,6 +27,7 @@ printf "Comment=Perform symbolic manipulations with expressions using AngouriMat
 printf "Exec=/usr/local/bin/angourimath-terminal\n" >> ./usr/share/applications/angourimath-terminal.desktop
 printf "Icon=/usr/local/bin/angourimath-terminal-data/icon.png\n" >> ./usr/share/applications/angourimath-terminal.desktop
 printf "Type=Application\n" >> ./usr/share/applications/angourimath-terminal.desktop
+printf "Terminal=true\n" >> ./usr/share/applications/angourimath-terminal.desktop
 
 cp ../../icon.png ./usr/local/bin/angourimath-terminal-data/
 
