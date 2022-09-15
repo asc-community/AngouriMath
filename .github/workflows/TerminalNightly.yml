@@ -32,19 +32,18 @@ jobs:
 
     - name: 'Pack'
       run: |
-        zip -r terminal-win-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/win-x64
-        zip -r terminal-linux-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/linux-x64
-        zip -r terminal-osx-x64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/osx-x64
+        zip -r angourimath-terminal-win-amd64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/win-amd64
+        zip -r angourimath-terminal-linux-amd64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/linux-amd64
+        zip -r angourimath-terminal-osx-amd64.zip ./Sources/Terminal/AngouriMath.Terminal/publish-output/osx-amd64
         
     - name: 'Release'
       run: |
         name=$(cat ./Sources/Terminal/VERSION/VERSION)
         echo "Version: $name"
      
-        cp ./Sources/Terminal/AngouriMath.Terminal/publish-output/angourimath*.deb .
-        deb=$(ls | grep angourimath*.deb)
+        cp ./Sources/Terminal/AngouriMath.Terminal/publish-output/angourimath-terminal-amd64.deb .
 
         echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
         gh auth login --with-token < token.txt
-        gh release create v$name 'terminal-win-x64.zip' 'terminal-linux-x64.zip' 'terminal-osx-x64.zip' $deb -p -R asc-community/AngouriMathLab -t 'AngouriMath.Terminal' -n "Expand 'assets' and choose the one for your OS"
+        gh release create v$name 'angourimath-terminal-win-amd64.zip' 'angourimath-terminal-linux-amd64.zip' 'angourimath-terminal-osx-amd64.zip' 'angourimath-terminal-amd64.deb' -p -R asc-community/AngouriMathLab -t 'AngouriMath.Terminal' -n "Expand 'assets' and choose the one for your OS"
     
