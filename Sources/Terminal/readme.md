@@ -10,7 +10,13 @@ an interactive graphical notebook to working with AngouriMath.
 
 ![gif](https://raw.githubusercontent.com/asc-community/AngouriMath/terminal-as-global-tool/Sources/Terminal/terminal.gif)
 
-### Installation
+## Installation
+
+### For your desktop
+
+Refer for instructions [**here**](https://am.angouri.org/quickstart/#terminal)
+
+### As a .NET tool
 
 It is available on [NuGet](https://www.nuget.org/packages/AngouriMath.Terminal), install it via
 ```
@@ -20,6 +26,4 @@ To uninstall it, run
 ```
 dotnet tool uninstall --global AngouriMath.Terminal
 ```
-You need to have at least .NET 5 SDK.
 
-Nightly builds are [here](https://github.com/asc-community/AngouriMathLab/releases).
