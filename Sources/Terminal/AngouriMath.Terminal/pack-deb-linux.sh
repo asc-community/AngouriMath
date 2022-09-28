@@ -4,10 +4,10 @@ cd publish-output
 for arch in amd64 arm arm64
 do
 
-    if [ arch == 'amd64' ]
+    if [ "$arch" = 'amd64' ]
     then
         dotnet_arch='linux-x64'
-    elif [ arch == 'arm' ]
+    elif [ "$arch" = 'arm' ]
     then
         dotnet_arch='linux-arm'
     else
