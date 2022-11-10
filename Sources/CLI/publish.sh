@@ -1,7 +1,12 @@
 #!/bin/bash
 if [[ -z $1 ]]; then
     printf "Provide rid\n"
+    exit
 fi
+
+rm -r bin
+rm -r obj
+
 dotnet publish \
 -r $1 \
 -c release \
@@ -9,9 +14,10 @@ dotnet publish \
 -p:SelfContained=true \
 -p:PublishAot=true \
 -p:PublishTrimmed=true \
--p:TrimMode=full
+-p:TrimMode=full \
+-p:IlcInvariantGlobalization=true \
+-p:IlcOptimizationPreference=Speed \
+-p:StripSymbols=true \
+-p:Version=$(cat ./VERSION)
 
-# -p:PublishReadyToRun=true \
-# -p:PublishSingleFile=true \
-#
 mv ./publish-output/CLI ./publish-output/amcli
