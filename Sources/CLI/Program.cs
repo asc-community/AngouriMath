@@ -55,10 +55,21 @@ latexCommand.SetHandler(expr => {
     Console.WriteLine(GetExpr(expr).ToEntity().Latexise());
 }, exprArgument);
 
+var diffCommand = new Command("diff", "Differentiate the function");
+diffCommand.AddArgument(exprArgument);
+diffCommand.AddOption(varOption);
+diffCommand.SetHandler((expr, v) => {
+    expr = GetExpr(expr);
+    var ent = expr.ToEntity();
+    var vari = GetVar(v, ent);
+    Console.WriteLine(ent.Differentiate(vari));
+}, exprArgument, varOption);
+
 rootCommand.AddCommand(evalCommand);
 rootCommand.AddCommand(simplifyCommand);
 rootCommand.AddCommand(solveCommand);
 rootCommand.AddCommand(latexCommand);
+rootCommand.AddCommand(diffCommand);
 
 rootCommand.Invoke(System.Environment.GetCommandLineArgs());
 
