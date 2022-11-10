@@ -1,8 +1,11 @@
 #!/bin/bash
 
-VERSION=$(cat ../../VERSION/VERSION)
+VERSION=$(cat ../../VERSION)
 NAME='amcli'
-folder="${NAME}_$(echo $VERSION | sed "s/-.*//g")"
+folder="${NAME}_$(sed "s/-.*//g" $VERSION)"
+printf $folder
+exit
+# folder="${NAME}_0.0.1"
 
 # 1. TARBALL
 echo "------------- I. Tarball"

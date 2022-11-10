@@ -18,6 +18,6 @@ rm -r obj
 -p:IlcInvariantGlobalization=true \
 -p:IlcOptimizationPreference=Speed \
 -p:StripSymbols=true \
--p:Version=$(cat ./VERSION)
+-p:Version=$(cat ./VERSION/VERSION)
 
 mv ./publish-output/CLI ./publish-output/amcli

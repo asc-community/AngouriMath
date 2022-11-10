@@ -1,0 +1,72 @@
+name: 'Terminal nightly builds'
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'Sources/CLI/VERSION/**'
+
+jobs:
+  TerminalBuild:
+    strategy:
+        matrix:
+          include:
+          - os: windows-latest
+            flag: win-x64
+          - os: ubuntu-latest
+            flag: linux-x64
+          - os: macos-latest
+            flag: osx-x64
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+        
+    - name: Setup .NET 7
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '7.0.x'
+        include-prerelease: true
+      
+    - name: 'Build CLI'
+      run: |
+        cd Sources/CLI
+        ./build.sh ${{ matrix.flag }}
+
+    - name: 'Pack it for Linux'
+      if: ${{ matrix.flag == 'linux-x64' }}
+      run: |
+        cd ./Sources/CLI/publishing/debian
+        ./pack-deb.sh
+
+    - name: 'Pack'
+      run: |
+        arch=${{ matrix.flag }}
+        zip -r "amcli-$arch.zip" ./Sources/CLI/publish-output/amcli
+        
+    - name: 'Release'
+      run: |
+        name=$(cat ./Sources/CLI/VERSION/VERSION)
+        echo "Version: $name"
+     
+        cp ./Sources/CLI/publishing/debian/output/amcli-*.deb .
+
+        echo ${{ secrets.LAB_ACCESS_TOKEN }} > token.txt
+        gh auth login --with-token < token.txt
+        arch=${{ matrix.flag }}
+        gh release create v$name \
+        "amcli-${arch}.zip" \
+        'angourimath-terminal-linux-arm.zip' \
+        'angourimath-terminal-linux-arm64.zip' \
+        'angourimath-terminal-win-x64.zip' \
+        'angourimath-terminal-win-x86.zip' \
+        'angourimath-terminal-osx-x64.zip' \
+        'angourimath-terminal-osx.12-arm64.zip' \
+        'angourimath-terminal-amd64.deb' \
+        'angourimath-terminal-arm.deb' \
+        'angourimath-terminal-arm64.deb' \
+        -R asc-community/AngouriMathLab \
+        -t 'AngouriMath.Terminal' \
+        -n "Expand 'assets' and choose the one for your OS"
+    
