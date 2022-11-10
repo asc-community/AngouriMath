@@ -65,3 +65,5 @@ TestResults
 **/.ionide/**
 Sources/msbuild.binlog
 **/publish-output/**
+**/output/**
+**/deb-output/**
