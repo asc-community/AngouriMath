@@ -1,92 +1,135 @@
 ﻿using AngouriMath;
 using AngouriMath.Extensions;
-using System.CommandLine;
 
-var rootCommand = new RootCommand("Sample app for System.CommandLine");
+var cliArgs = System.Environment.GetCommandLineArgs();
+var reader = new ArgReader(cliArgs);
 
-var exprArgument = new Argument<string?>(
-    name: "expr",
-    description: "Expression to evaluate, or none to read from standard input",
-    getDefaultValue: () => null
-);
+Entity expr;
+Entity.Variable v;
+string res;
 
-var varOption = new Option<string?>(
-    name: "--var",
-    description: "Variable to use in the command",
-    getDefaultValue: () => null
-);
-
-var evalCommand = new Command("eval", "Evaluate to a single number, boolean, or two numbers in case of complex");
-evalCommand.AddArgument(exprArgument);
-evalCommand.SetHandler(expr => {
-    var ent = GetExpr(expr).ToEntity().Evaled;
-    var res = ent.ToString();
-    if (ent is Entity.Number.Rational rat)
-        res = rat.RealPart.EDecimal.ToString();
-    Console.WriteLine(res);
-}, exprArgument);
-
-var simplifyCommand = new Command("simplify", "Simplify an expression");
-simplifyCommand.AddArgument(exprArgument);
-simplifyCommand.SetHandler(expr => {
-    Console.WriteLine(GetExpr(expr).ToEntity().Simplify());
-}, exprArgument);
-
-var solveCommand = new Command("solve", "Solve an equation or inequality");
-solveCommand.AddArgument(exprArgument);
-solveCommand.AddOption(varOption);
-solveCommand.SetHandler((expr, v) => {
-    expr = GetExpr(expr);
-    var ent = expr.ToEntity();
-    var vari = GetVar(v, ent);
-    var sols = ent.Solve(vari);
-    if (sols is Entity.Set.FiniteSet fs)
-        foreach (var sol in fs)
-        {
-            Console.WriteLine(sol);
-        }
-    else
-        Console.WriteLine(sols);
-}, exprArgument, varOption);
-
-var latexCommand = new Command("latex", "Convert an expression to LaTeX");
-latexCommand.AddArgument(exprArgument);
-latexCommand.SetHandler(expr => {
-    Console.WriteLine(GetExpr(expr).ToEntity().Latexise());
-}, exprArgument);
-
-var diffCommand = new Command("diff", "Differentiate the function");
-diffCommand.AddArgument(exprArgument);
-diffCommand.AddOption(varOption);
-diffCommand.SetHandler((expr, v) => {
-    expr = GetExpr(expr);
-    var ent = expr.ToEntity();
-    var vari = GetVar(v, ent);
-    Console.WriteLine(ent.Differentiate(vari));
-}, exprArgument, varOption);
-
-rootCommand.AddCommand(evalCommand);
-rootCommand.AddCommand(simplifyCommand);
-rootCommand.AddCommand(solveCommand);
-rootCommand.AddCommand(latexCommand);
-rootCommand.AddCommand(diffCommand);
-
-rootCommand.Invoke(System.Environment.GetCommandLineArgs());
-
-static string GetExpr(string? opt)
+var cmd = reader.Next();
+switch (cmd)
 {
-    if (opt is null)
-        return Console.ReadLine()!;
-    return opt;
+    case "help":
+        Console.WriteLine("""
+        amcli (c) 2019-2022 Angouri
+        This is free software. You're free to use,
+        modify and redistribute it. MIT (Expat) license.
+        
+        Any argument can be received either as a CLI
+        argument or through standard input. For example,
+
+            amcli eval "1 + 1"
+        
+        is equivalent to
+
+            echo "1 + 1" | amcli eval
+
+
+        Possible options:
+
+        amcli eval - to evaluate into a single number,
+        boolean, or a+bi format for complex numbers.
+        Expects one argument.
+
+        Example:
+            $ amcli "1 / 2"
+            0.5
+            $ amcli "e ^ pi > pi ^ e"
+            true
+
+        amcli diff - to differentiate the expression
+        over the given variable (the first argument).
+        Expects two arguments.
+
+        Example:
+            $ amcli diff "x" "sin(x)"
+            cos(x)
+            $ amcli diff "x" "1 + x^2"
+            2 * x
+            $ echo "1 + x^2" | amcli diff "x"
+            2 * x
+
+        amcli simplify - to simplify the expression.
+        Expects one argument.
+
+        Example:
+            $ amcli simplify "sin(x)^2 + cos(x)^2"
+            1
+
+        amcli solve - to solve a *statement* over the
+        given variable. A *statement* is an expression,
+        otherwise evaluable to true or false (e. g. 
+        "x > 3" is a statement, but "x ^ 2" is not).
+
+        When the solution set is a finite solution, all
+        solutions are written line-by-line. Otherwise,
+        it's written as one line.
+
+        Example:
+            $ amcli solve "x" "x2 - 1 = 0"
+            -1
+            1
+
+        """);
+        break;
+
+    case "eval":
+        expr = reader.Next().ToEntity().Evaled;
+        res = expr.ToString();
+        if (expr is Entity.Number.Rational rat)
+            res = rat.RealPart.EDecimal.ToString();
+        Console.WriteLine(res);
+        break;
+
+    case "diff":
+        v = (Entity.Variable)reader.Next();
+        expr = reader.Next().ToEntity();
+        Console.WriteLine(expr.Differentiate(v));
+        break;
+
+    case "solve":
+        v = (Entity.Variable)reader.Next();
+        expr = reader.Next().ToEntity();
+        var sols = expr.Solve(v);
+        if (sols is Entity.Set.FiniteSet fs)
+            foreach (var sol in fs)
+                Console.WriteLine(sol);
+        else
+            Console.WriteLine(sols);
+        break;
+
+    case "latex":
+        expr = reader.Next().ToEntity();
+        Console.WriteLine(expr.Latexise());
+        break;
+
+    case "simplify":
+        expr = reader.Next().ToEntity();
+        Console.WriteLine(expr.Simplify());
+        break;
+
+    default:
+        Console.WriteLine($"Unrecognized command `{cmd}`");
+        break;
 }
 
-static Entity.Variable GetVar(string? v, Entity expr)
+
+public sealed class ArgReader
 {
-    if (v is null)
+    private readonly string[] args;
+    private int curr = 1;
+    public ArgReader(string[] args)
+        => this.args = args;
+    public string Next()
     {
-        if (expr.Vars.Count() is 1) 
-            return expr.Vars.First();
-        throw new Exception("Cannot detect a variable, please, specify one");
+        if (curr < args.Length)
+        {
+            var res = args[curr];
+            curr++;
+            return res;
+        }
+        return Console.ReadLine()!;
     }
-    return v;
 }

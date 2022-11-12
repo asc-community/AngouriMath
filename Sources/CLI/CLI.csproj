@@ -9,7 +9,8 @@
 
   <ItemGroup>
     <PackageReference Include="AngouriMath" Version="10.0.0-master-1664389750-0b77b8d" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <Compile Remove="**/publishing/**" />
+    <!--<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />-->
   </ItemGroup>
 
 </Project>

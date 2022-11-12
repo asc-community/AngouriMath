@@ -17,7 +17,9 @@ rm -r obj
 -p:TrimMode=full \
 -p:IlcInvariantGlobalization=true \
 -p:IlcOptimizationPreference=Speed \
+-p:IlcDisableReflection=false \
 -p:StripSymbols=true \
 -p:Version=$(cat ./VERSION/VERSION)
 
+# -p:IlcScanReflection=false \
 mv ./publish-output/CLI ./publish-output/amcli
