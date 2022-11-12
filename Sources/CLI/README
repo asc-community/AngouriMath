@@ -7,7 +7,14 @@ YP   YP YP  YP  YP  `Y88P' Y88888P Y888888P
                                     
 amcli (c) 2019-2022 Angouri
 This is free software. You're free to use, modify and redistribute it.
-MIT (Expat) license.
+MIT (Expat) license. Made with AngouriMath (MIT) and .NET (MIT).
+
+Why use it?
+- Free
+- CLI interface for script automations
+- Piping to work with complex operations
+- Fast and small
+- Cross-platform
 
 PIPING
 

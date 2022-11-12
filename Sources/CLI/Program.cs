@@ -17,7 +17,7 @@ string res;
 var cmd = reader.Next();
 switch (cmd)
 {
-    case "help":
+    case "help" or "-h" or "--help":
         Console.WriteLine("""
          .d8b.  .88b  d88.  .o88b. db      d888888b 
         d8' `8b 88'YbdP`88 d8P  Y8 88        `88'   
@@ -28,7 +28,14 @@ switch (cmd)
                                             
         amcli (c) 2019-2022 Angouri
         This is free software. You're free to use, modify and redistribute it.
-        MIT (Expat) license.
+        MIT (Expat) license. Made with AngouriMath (MIT) and .NET (MIT).
+
+        Why use it?
+        - Free
+        - CLI interface for script automations
+        - Piping to work with complex operations
+        - Fast and small
+        - Cross-platform
         
         PIPING
         
