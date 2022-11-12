@@ -1,0 +1,80 @@
+amcli (c) 2019-2022 Angouri
+This is free software. You're free to use,
+modify and redistribute it. MIT (Expat) license.
+
+Any argument can be received either as a CLI
+argument or through standard input. For example,
+
+    amcli eval "1 + 1"
+
+is equivalent to
+
+    echo "1 + 1" | amcli eval
+
+
+Possible options:
+
+EVAL
+
+amcli eval - to evaluate into a single number,
+boolean, or a+bi format for complex numbers.
+Expects one argument.
+
+Example:
+    $ amcli "1 / 2"
+    0.5
+    $ amcli "e ^ pi > pi ^ e"
+    true
+
+DIFF
+
+amcli diff - to differentiate the expression
+over the given variable (the first argument).
+Expects two arguments.
+
+Example:
+    $ amcli diff "x" "sin(x)"
+    cos(x)
+    $ amcli diff "x" "1 + x^2"
+    2 * x
+    $ echo "1 + x^2" | amcli diff "x"
+    2 * x
+
+SIMPLIFY
+
+amcli simplify - to simplify the expression.
+Expects one argument.
+
+Example:
+    $ amcli simplify "sin(x)^2 + cos(x)^2"
+    1
+
+SOLVE
+
+amcli solve - to solve a *statement* over the
+given variable. A *statement* is an expression,
+otherwise evaluable to true or false (e. g. 
+"x > 3" is a statement, but "x ^ 2" is not).
+
+When the solution set is a finite solution, all
+solutions are written line-by-line. Otherwise,
+it's written as one line.
+
+Example:
+    $ amcli solve "x" "x2 - 1 = 0"
+    1
+    -1
+    $ amcli solve x "x2 > 1"
+    (-oo; -1) \/ (1; +oo)
+
+LATEX
+
+amcli latex - to convert an expression into LaTeX
+format. Expects one argument.
+
+Example:
+    $ amcli latex "1/2"
+    \frac{1}{2}
+    $ amcli latex "(sqrt(3) + x) / limit(sin(x) / x, x, 0)"
+    \frac{\sqrt{3}+x}{\lim_{x\to 0} \left[\frac{\sin\left(x\right)}{x}\right]}
+

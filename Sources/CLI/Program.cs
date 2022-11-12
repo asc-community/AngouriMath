@@ -1,4 +1,10 @@
-﻿using AngouriMath;
+﻿//
+// Copyright (c) 2019-2022 Angouri.
+// AngouriMath is licensed under MIT.
+// Details: https://github.com/asc-community/AngouriMath/blob/master/LICENSE.md.
+// Website: https://am.angouri.org.
+//
+using AngouriMath;
 using AngouriMath.Extensions;
 
 var cliArgs = System.Environment.GetCommandLineArgs();
@@ -29,6 +35,8 @@ switch (cmd)
 
         Possible options:
 
+        EVAL
+
         amcli eval - to evaluate into a single number,
         boolean, or a+bi format for complex numbers.
         Expects one argument.
@@ -38,6 +46,8 @@ switch (cmd)
             0.5
             $ amcli "e ^ pi > pi ^ e"
             true
+
+        DIFF
 
         amcli diff - to differentiate the expression
         over the given variable (the first argument).
@@ -51,12 +61,16 @@ switch (cmd)
             $ echo "1 + x^2" | amcli diff "x"
             2 * x
 
+        SIMPLIFY
+
         amcli simplify - to simplify the expression.
         Expects one argument.
 
         Example:
             $ amcli simplify "sin(x)^2 + cos(x)^2"
             1
+
+        SOLVE
 
         amcli solve - to solve a *statement* over the
         given variable. A *statement* is an expression,
@@ -69,8 +83,21 @@ switch (cmd)
 
         Example:
             $ amcli solve "x" "x2 - 1 = 0"
-            -1
             1
+            -1
+            $ amcli solve x "x2 > 1"
+            (-oo; -1) \/ (1; +oo)
+
+        LATEX
+
+        amcli latex - to convert an expression into LaTeX
+        format. Expects one argument.
+
+        Example:
+            $ amcli latex "1/2"
+            \frac{1}{2}
+            $ amcli latex "(sqrt(3) + x) / limit(sin(x) / x, x, 0)"
+            \frac{\sqrt{3}+x}{\lim_{x\to 0} \left[\frac{\sin\left(x\right)}{x}\right]}
 
         """);
         break;
