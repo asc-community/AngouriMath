@@ -9,74 +9,100 @@ amcli (c) 2019-2022 Angouri
 This is free software. You're free to use, modify and redistribute it.
 MIT (Expat) license.
 
-Any argument can be received either as a CLI argument or through
-standard input. For example,
+PIPING
 
-    amcli eval "1 + 1"
+    Any argument can be received either as a CLI argument or through
+    standard input. For example,
 
-is equivalent to
+        amcli eval "1 + 1"
+    
+    is equivalent to
 
-    echo "1 + 1" | amcli eval
+        echo "1 + 1" | amcli eval
 
+    This allows to pipe complex evaluations:
 
-Possible options:
+        echo "sin(x) * cos(y)" \     # 0. initial expression
+        | amcli diff x \             # 1. differentiate over x
+        | amcli sub x y \            # 2. substitute y instead of x
+        | amcli diff y \             # 3. differentiate over y
+        | amcli sub y "pi/3" \       # 4. substitute pi/3 instead of y
+        | amcli simplify             # 5. simplify
 
-EVAL
+    Prints
 
-amcli eval - to evaluate into a single number, boolean, or a+bi format 
-for complex numbers. Expects one argument.
+        -1/2 * sqrt(3)
 
-Example:
-    $ amcli "1 / 2"
-    0.5
-    $ amcli "e ^ pi > pi ^ e"
-    true
+COMMANDS
 
-DIFF
+    EVAL
 
-amcli diff - to differentiate the expression over the given variable
-(the first argument). Expects two arguments.
+    amcli eval - to evaluate into a single number, boolean, or a+bi format 
+    for complex numbers. Expects one argument.
 
-Example:
-    $ amcli diff "x" "sin(x)"
-    cos(x)
-    $ amcli diff "x" "1 + x^2"
-    2 * x
-    $ echo "1 + x^2" | amcli diff "x"
-    2 * x
+    Example:
+        $ amcli "1 / 2"
+        0.5
+        $ amcli "e ^ pi > pi ^ e"
+        true
 
-SIMPLIFY
+    DIFF
 
-amcli simplify - to simplify the expression. Expects one argument.
+    amcli diff - to differentiate the expression over the given variable
+    (the first argument). Expects two arguments.
 
-Example:
-    $ amcli simplify "sin(x)^2 + cos(x)^2"
-    1
+    Example:
+        $ amcli diff "x" "sin(x)"
+        cos(x)
+        $ amcli diff "x" "1 + x^2"
+        2 * x
+        $ echo "1 + x^2" | amcli diff "x"
+        2 * x
 
-SOLVE
+    SIMPLIFY
 
-amcli solve - to solve a *statement* over the given variable. A 
-*statement* is an expression, otherwise evaluable to true or false
-(e. g. "x > 3" is a statement, but "x ^ 2" is not).
+    amcli simplify - to simplify the expression. Expects one argument.
 
-When the solution set is a finite solution, all solutions are written 
-line-by-line. Otherwise, it's written as one line.
+    Example:
+        $ amcli simplify "sin(x)^2 + cos(x)^2"
+        1
 
-Example:
-    $ amcli solve "x" "x2 - 1 = 0"
-    1
-    -1
-    $ amcli solve x "x2 > 1"
-    (-oo; -1) \/ (1; +oo)
+    SOLVE
 
-LATEX
+    amcli solve - to solve a *statement* over the given variable. A 
+    *statement* is an expression, otherwise evaluable to true or false
+    (e. g. "x > 3" is a statement, but "x ^ 2" is not).
 
-amcli latex - to convert an expression into LaTeX format. Expects one
-argument.
+    When the solution set is a finite solution, all solutions are written 
+    line-by-line. Otherwise, it's written as one line.
 
-Example:
-    $ amcli latex "1/2"
-    \frac{1}{2}
-    $ amcli latex "(sqrt(3) + x) / limit(sin(x) / x, x, 0)"
-    \frac{\sqrt{3}+x}{\lim_{x\to 0} \left[\frac{\sin\left(x\right)}{x}\right]}
+    Example:
+        $ amcli solve "x" "x2 - 1 = 0"
+        1
+        -1
+        $ amcli solve x "x2 > 1"
+        (-oo; -1) \/ (1; +oo)
+
+    LATEX
+
+    amcli latex - to convert an expression into LaTeX format. Expects one
+    argument.
+
+    Example:
+        $ amcli latex "1/2"
+        \frac{1}{2}
+        $ amcli latex "(sqrt(3) + x) / limit(sin(x) / x, x, 0)"
+        \frac{\sqrt{3}+x}{\lim_{x\to 0} \left[\frac{\sin\left(x\right)}{x}\right]}
+
+    SUB
+
+    amcli sub - to substitute an expression instead of a variable. Expects
+    three arguments (variable to substitute, expression to be substituted
+    instead of the variable, expression).
+
+    Example:
+        $ amcli sub x pi "sin(x / 3)"
+        sin(pi / 3)
+        $ amcli sub x "pi / 3" "sin(x)"
+        sin(pi / 3)
 

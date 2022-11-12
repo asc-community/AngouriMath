@@ -30,76 +30,102 @@ switch (cmd)
         This is free software. You're free to use, modify and redistribute it.
         MIT (Expat) license.
         
-        Any argument can be received either as a CLI argument or through
-        standard input. For example,
-
-            amcli eval "1 + 1"
+        PIPING
         
-        is equivalent to
+            Any argument can be received either as a CLI argument or through
+            standard input. For example,
 
-            echo "1 + 1" | amcli eval
+                amcli eval "1 + 1"
+            
+            is equivalent to
 
+                echo "1 + 1" | amcli eval
 
-        Possible options:
+            This allows to pipe complex evaluations:
 
-        EVAL
+                echo "sin(x) * cos(y)" \     # 0. initial expression
+                | amcli diff x \             # 1. differentiate over x
+                | amcli sub x y \            # 2. substitute y instead of x
+                | amcli diff y \             # 3. differentiate over y
+                | amcli sub y "pi/3" \       # 4. substitute pi/3 instead of y
+                | amcli simplify             # 5. simplify
 
-        amcli eval - to evaluate into a single number, boolean, or a+bi format 
-        for complex numbers. Expects one argument.
+            Prints
 
-        Example:
-            $ amcli "1 / 2"
-            0.5
-            $ amcli "e ^ pi > pi ^ e"
-            true
+                -1/2 * sqrt(3)
 
-        DIFF
+        COMMANDS
 
-        amcli diff - to differentiate the expression over the given variable
-        (the first argument). Expects two arguments.
+            EVAL
 
-        Example:
-            $ amcli diff "x" "sin(x)"
-            cos(x)
-            $ amcli diff "x" "1 + x^2"
-            2 * x
-            $ echo "1 + x^2" | amcli diff "x"
-            2 * x
+            amcli eval - to evaluate into a single number, boolean, or a+bi format 
+            for complex numbers. Expects one argument.
 
-        SIMPLIFY
+            Example:
+                $ amcli "1 / 2"
+                0.5
+                $ amcli "e ^ pi > pi ^ e"
+                true
 
-        amcli simplify - to simplify the expression. Expects one argument.
+            DIFF
 
-        Example:
-            $ amcli simplify "sin(x)^2 + cos(x)^2"
-            1
+            amcli diff - to differentiate the expression over the given variable
+            (the first argument). Expects two arguments.
 
-        SOLVE
+            Example:
+                $ amcli diff "x" "sin(x)"
+                cos(x)
+                $ amcli diff "x" "1 + x^2"
+                2 * x
+                $ echo "1 + x^2" | amcli diff "x"
+                2 * x
 
-        amcli solve - to solve a *statement* over the given variable. A 
-        *statement* is an expression, otherwise evaluable to true or false
-        (e. g. "x > 3" is a statement, but "x ^ 2" is not).
+            SIMPLIFY
 
-        When the solution set is a finite solution, all solutions are written 
-        line-by-line. Otherwise, it's written as one line.
+            amcli simplify - to simplify the expression. Expects one argument.
 
-        Example:
-            $ amcli solve "x" "x2 - 1 = 0"
-            1
-            -1
-            $ amcli solve x "x2 > 1"
-            (-oo; -1) \/ (1; +oo)
+            Example:
+                $ amcli simplify "sin(x)^2 + cos(x)^2"
+                1
 
-        LATEX
+            SOLVE
 
-        amcli latex - to convert an expression into LaTeX format. Expects one
-        argument.
+            amcli solve - to solve a *statement* over the given variable. A 
+            *statement* is an expression, otherwise evaluable to true or false
+            (e. g. "x > 3" is a statement, but "x ^ 2" is not).
 
-        Example:
-            $ amcli latex "1/2"
-            \frac{1}{2}
-            $ amcli latex "(sqrt(3) + x) / limit(sin(x) / x, x, 0)"
-            \frac{\sqrt{3}+x}{\lim_{x\to 0} \left[\frac{\sin\left(x\right)}{x}\right]}
+            When the solution set is a finite solution, all solutions are written 
+            line-by-line. Otherwise, it's written as one line.
+
+            Example:
+                $ amcli solve "x" "x2 - 1 = 0"
+                1
+                -1
+                $ amcli solve x "x2 > 1"
+                (-oo; -1) \/ (1; +oo)
+
+            LATEX
+
+            amcli latex - to convert an expression into LaTeX format. Expects one
+            argument.
+
+            Example:
+                $ amcli latex "1/2"
+                \frac{1}{2}
+                $ amcli latex "(sqrt(3) + x) / limit(sin(x) / x, x, 0)"
+                \frac{\sqrt{3}+x}{\lim_{x\to 0} \left[\frac{\sin\left(x\right)}{x}\right]}
+
+            SUB
+
+            amcli sub - to substitute an expression instead of a variable. Expects
+            three arguments (variable to substitute, expression to be substituted
+            instead of the variable, expression).
+
+            Example:
+                $ amcli sub x pi "sin(x / 3)"
+                sin(pi / 3)
+                $ amcli sub x "pi / 3" "sin(x)"
+                sin(pi / 3)
 
         """);
         break;
@@ -137,6 +163,13 @@ switch (cmd)
     case "simplify":
         expr = reader.Next().ToEntity();
         Console.WriteLine(expr.Simplify());
+        break;
+
+    case "sub":
+        v = (Entity.Variable)reader.Next();
+        var withWhat = reader.Next().ToEntity();
+        expr = reader.Next();
+        Console.WriteLine(expr.Substitute(v, withWhat));
         break;
 
     default:
