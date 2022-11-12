@@ -19,23 +19,22 @@ switch (cmd)
 {
     case "help" or "-h" or "--help":
         Console.WriteLine("""
-         .d8b.    .88b  d88.    .o88b.   db        d888888b 
-        d8' `8b   88'YbdP`88   d8P  Y8   88          `88'   
-        88ooo88   88  88  88   8P        88           88    
-        88~~~88   88  88  88   8b        88           88    
-        88   88   88  88  88   Y8b  d8   88booo.     .88.   
-        YP   YP   YP  YP  YP    `Y88P'   Y88888P   Y888888P 
+                .d8b.    .88b  d88.    .o88b.   db        d888888b 
+               d8' `8b   88'YbdP`88   d8P  Y8   88          `88'   
+               88ooo88   88  88  88   8P        88           88    
+               88~~~88   88  88  88   8b        88           88    
+               88   88   88  88  88   Y8b  d8   88booo.     .88.   
+               YP   YP   YP  YP  YP    `Y88P'   Y88888P   Y888888P 
                                             
         amcli (c) 2019-2022 Angouri
         This is free software. You're free to use, modify and redistribute it.
         MIT (Expat) license. Made with AngouriMath (MIT) and .NET (MIT).
 
         Why use it?
-        - Free
+        - Free and cross-platform
         - CLI interface for script automations
-        - Piping to work with complex operations
+        - Piping for complex operations
         - Fast and small
-        - Cross-platform
         
         PIPING
         
@@ -146,6 +145,14 @@ switch (cmd)
                 $ amcli sub x "pi / 3" "sin(x)"
                 sin(pi / 3)
 
+        OTHER
+            
+            You can bind amcli to @ using aliases. On Unix-like operating systems,
+            add
+                
+                alias @=amcli
+
+            (or specify the full path)
         """);
         break;
 
