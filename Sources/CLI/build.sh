@@ -7,7 +7,7 @@ fi
 rm -r bin
 rm -r obj
 
-/home/goose/programs/dotnet-folder/dotnet publish \
+dotnet publish \
 -r $1 \
 -c release \
 -o ./publish-output \
@@ -21,5 +21,4 @@ rm -r obj
 -p:StripSymbols=true \
 -p:Version=$(cat ./VERSION/VERSION)
 
-# -p:IlcScanReflection=false \
 mv ./publish-output/CLI ./publish-output/amcli
