@@ -1,9 +1,16 @@
+ .d8b.  .88b  d88.  .o88b. db      d888888b 
+d8' `8b 88'YbdP`88 d8P  Y8 88        `88'   
+88ooo88 88  88  88 8P      88         88    
+88~~~88 88  88  88 8b      88         88    
+88   88 88  88  88 Y8b  d8 88booo.   .88.   
+YP   YP YP  YP  YP  `Y88P' Y88888P Y888888P 
+                                    
 amcli (c) 2019-2022 Angouri
-This is free software. You're free to use,
-modify and redistribute it. MIT (Expat) license.
+This is free software. You're free to use, modify and redistribute it.
+MIT (Expat) license.
 
-Any argument can be received either as a CLI
-argument or through standard input. For example,
+Any argument can be received either as a CLI argument or through
+standard input. For example,
 
     amcli eval "1 + 1"
 
@@ -16,9 +23,8 @@ Possible options:
 
 EVAL
 
-amcli eval - to evaluate into a single number,
-boolean, or a+bi format for complex numbers.
-Expects one argument.
+amcli eval - to evaluate into a single number, boolean, or a+bi format 
+for complex numbers. Expects one argument.
 
 Example:
     $ amcli "1 / 2"
@@ -28,9 +34,8 @@ Example:
 
 DIFF
 
-amcli diff - to differentiate the expression
-over the given variable (the first argument).
-Expects two arguments.
+amcli diff - to differentiate the expression over the given variable
+(the first argument). Expects two arguments.
 
 Example:
     $ amcli diff "x" "sin(x)"
@@ -42,8 +47,7 @@ Example:
 
 SIMPLIFY
 
-amcli simplify - to simplify the expression.
-Expects one argument.
+amcli simplify - to simplify the expression. Expects one argument.
 
 Example:
     $ amcli simplify "sin(x)^2 + cos(x)^2"
@@ -51,14 +55,12 @@ Example:
 
 SOLVE
 
-amcli solve - to solve a *statement* over the
-given variable. A *statement* is an expression,
-otherwise evaluable to true or false (e. g. 
-"x > 3" is a statement, but "x ^ 2" is not).
+amcli solve - to solve a *statement* over the given variable. A 
+*statement* is an expression, otherwise evaluable to true or false
+(e. g. "x > 3" is a statement, but "x ^ 2" is not).
 
-When the solution set is a finite solution, all
-solutions are written line-by-line. Otherwise,
-it's written as one line.
+When the solution set is a finite solution, all solutions are written 
+line-by-line. Otherwise, it's written as one line.
 
 Example:
     $ amcli solve "x" "x2 - 1 = 0"
@@ -69,8 +71,8 @@ Example:
 
 LATEX
 
-amcli latex - to convert an expression into LaTeX
-format. Expects one argument.
+amcli latex - to convert an expression into LaTeX format. Expects one
+argument.
 
 Example:
     $ amcli latex "1/2"
