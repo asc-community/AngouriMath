@@ -19,12 +19,12 @@ switch (cmd)
 {
     case "help" or "-h" or "--help":
         Console.WriteLine("""
-         .d8b.  .88b  d88.  .o88b. db      d888888b 
-        d8' `8b 88'YbdP`88 d8P  Y8 88        `88'   
-        88ooo88 88  88  88 8P      88         88    
-        88~~~88 88  88  88 8b      88         88    
-        88   88 88  88  88 Y8b  d8 88booo.   .88.   
-        YP   YP YP  YP  YP  `Y88P' Y88888P Y888888P 
+         .d8b.    .88b  d88.    .o88b.   db        d888888b 
+        d8' `8b   88'YbdP`88   d8P  Y8   88          `88'   
+        88ooo88   88  88  88   8P        88           88    
+        88~~~88   88  88  88   8b        88           88    
+        88   88   88  88  88   Y8b  d8   88booo.     .88.   
+        YP   YP   YP  YP  YP    `Y88P'   Y88888P   Y888888P 
                                             
         amcli (c) 2019-2022 Angouri
         This is free software. You're free to use, modify and redistribute it.
