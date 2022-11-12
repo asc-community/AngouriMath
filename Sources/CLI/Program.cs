@@ -61,6 +61,18 @@ switch (cmd)
 
                 -1/2 * sqrt(3)
 
+            Special symbol "_" (underscore) can be used to use stdinput instead
+            of an argument. For instance, if you want to substitute the result of
+            an operation into another expression:
+            
+                echo "e^x" \
+                | amcli sub u _ "u / (1 + u)" \
+                | amcli sub x 10 \
+                | amcli eval
+
+            Here the result of `echo` is substituted instead of the second argument
+            of `amcli sub`, not the last one.
+
         COMMANDS
 
             EVAL
@@ -196,6 +208,8 @@ public sealed class ArgReader
         if (curr < args.Length)
         {
             var res = args[curr];
+            if (res is "_")
+                res = Console.ReadLine()!;
             curr++;
             return res;
         }
