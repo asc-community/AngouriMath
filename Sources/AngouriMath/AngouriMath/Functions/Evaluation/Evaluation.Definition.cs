@@ -212,6 +212,63 @@ namespace AngouriMath
         /// </example>
         public Entity Simplify(int level = 2) => Simplificator.Simplify(this, level);
 
+        /// <summary>
+        /// Simplifies an equation ( e.g. (x - y) * (x + y) -> x^2 - y^2, but 3 * x + y * x = (3 + y) * x )
+        /// with a time constraint.
+        /// </summary>
+        /// <param name="level">
+        /// Increase this argument if you think the equation should be simplified better
+        /// </param>
+        /// <param name="msLimit">
+        /// Specifies the budget time. If simplication takes longer, it will automatically
+        /// stop and return null.
+        /// </param>
+        /// <example>
+        /// <code>
+        /// using System;
+        /// using static AngouriMath.MathS;
+        /// 
+        /// var (x, y, a) = Var("x", "y", "a");
+        /// var expr = Sin(x) + y + a;
+        /// Console.WriteLine(expr);
+        /// Console.WriteLine(expr.Simplify());
+        /// Console.WriteLine("---------------------");
+        /// var expr1 = Sin(x - 3) / Tan(x - 3) + Sec(Sqrt(y)) * Cosec(Sqrt(y));
+        /// Console.WriteLine(expr1);
+        /// Console.WriteLine(expr1.Simplify());
+        /// Console.WriteLine("---------------------");
+        /// var expr2 = Sin(pi / 3) * 2;
+        /// Console.WriteLine(expr2);
+        /// Console.WriteLine(expr2.Simplify());
+        /// Console.WriteLine("---------------------");
+        /// var expr3 = (Pow(x, 3) + 3 * Sqr(x) * y + 3 * x * Sqr(y) + Pow(y, 3)) / (x + y);
+        /// Console.WriteLine(expr3);
+        /// Console.WriteLine(expr3.Simplify());
+        /// Console.WriteLine("---------------------");
+        /// var expr4 = Derivative(Sin(Sqr(x * y) + y * x), x);
+        /// Console.WriteLine(expr4);
+        /// Console.WriteLine(expr4.Simplify());
+        /// </code>
+        /// Prints
+        /// <code>
+        /// sin(x) + y + a
+        /// sin(x) + a + y
+        /// ---------------------
+        /// sin(x - 3) / tan(x - 3) + sec(sqrt(y)) * csc(sqrt(y))
+        /// 2 * csc(2 * sqrt(y)) + cos(x - 3)
+        /// ---------------------
+        /// sin(pi / 3) * 2
+        /// sqrt(3)
+        /// ---------------------
+        /// (x ^ 3 + 3 * x ^ 2 * y + 3 * x * y ^ 2 + y ^ 3) / (x + y)
+        /// x ^ 2 + 2 * x * y + y ^ 2
+        /// ---------------------
+        /// derivative(sin((x * y) ^ 2 + y * x), x)
+        /// cos((x * y) ^ 2 + x * y) * (2 * x * y ^ 2 + y)
+        /// </code>
+        /// </example>
+        public Entity? SimplifyTimeConstrained(int msLimit = 1000, int level = 2) => Simplificator.SimplifyTimeConstrained(this, level, msLimit);
+
         /// <summary>Finds all alternative forms of an expression sorted by their complexity</summary>
         /// <example>
         /// <code>
