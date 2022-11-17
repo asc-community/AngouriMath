@@ -31,7 +31,9 @@ namespace AngouriMath.Functions
                 cancellationTokenSource.Token);
             try
             {
-                return Simplify(expr, level);
+                var res = Simplify(expr, level);
+                MathS.Multithreading.SetLocalCancellationToken(CancellationToken.None);
+                return res;
             }
             catch (OperationCanceledException)
             {
