@@ -4,17 +4,12 @@
     <TargetFrameworks>
       net472;
       netstandard2.0;
-      netstandard2.1
+      netstandard2.1;
+      net7.0
     </TargetFrameworks>
 
     <PackageId>AngouriMath</PackageId>
     <Product>AngouriMath</Product>
   </PropertyGroup>
   
-  <ItemGroup>
-    <!--We don't need generic math in AngouriMath at all-->
-    <Compile Remove="Core/Entity/GenericMath/**" />
-    <Compile Remove="RequiresPreviewFeaturesAttribute.cs" />
-  </ItemGroup>
-
 </Project>

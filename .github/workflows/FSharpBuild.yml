@@ -26,10 +26,10 @@ jobs:
       with:
         dotnet-version: 3.1.302
 
-    - name: Setup .NET 6 # The dotnet CLI above is replaced by this but the runtime is kept
+    - name: Setup .NET 7 # The dotnet CLI above is replaced by this but the runtime is kept
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.x'
+        dotnet-version: '7.0.x'
         include-prerelease: true
 
     - name: Build
