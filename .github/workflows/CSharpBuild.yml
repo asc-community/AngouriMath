@@ -28,8 +28,3 @@ jobs:
       run: |
         cd Sources/AngouriMath/AngouriMath
         dotnet build
-      
-    - name: Build AngouriMath Experimental
-      run: |
-        cd Sources/AngouriMath/AngouriMath.Experimental
-        dotnet build
