@@ -12,4 +12,7 @@
     <Product>AngouriMath</Product>
   </PropertyGroup>
   
+  <ItemGroup>
+    <Compile Remove="Core/Entity/GenericMath/**" Condition="'$(TargetFramework)' != 'net7.0'" />
+  </ItemGroup>
 </Project>

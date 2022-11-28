@@ -5,11 +5,7 @@
 // Website: https://am.angouri.org.
 //
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Numerics;
 
 namespace AngouriMath.Core;
 
@@ -19,7 +15,7 @@ namespace AngouriMath.Core;
 /// </summary>
 public interface IScalarClosedArithmetics<T> :
     IClosedArithmetics<T>,
-    IComparisonOperators<T, T>
+    IComparisonOperators<T, T, bool>
 
     where T : IScalarClosedArithmetics<T>
 {

@@ -7,13 +7,14 @@
 
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace AngouriMath;
 
 partial record Entity :
-    IParseable<Entity>,
+    IParsable<Entity>,
 
-    IEqualityOperators<Entity, Entity>,
+    IEqualityOperators<Entity, Entity, bool>,
 
     IHasNeutralValues<Entity>,
 
