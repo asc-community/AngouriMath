@@ -18,18 +18,13 @@ jobs:
     - uses: actions/checkout@v2
       with:
         submodules: 'recursive'
-    - name: Setup .NET 6
+    - name: Setup .NET 7
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.100'
+        dotnet-version: '7.0.100'
         include-prerelease: true
         
     - name: Build AngouriMath
       run: |
         cd Sources/AngouriMath/AngouriMath
-        dotnet build
-      
-    - name: Build AngouriMath Experimental
-      run: |
-        cd Sources/AngouriMath/AngouriMath.Experimental
         dotnet build

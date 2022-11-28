@@ -9,10 +9,10 @@ jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - name: Setup .NET 6
+      - name: Setup .NET 7
         uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '6.0.100'
+          dotnet-version: '7.0.100'
           include-prerelease: true
           
       - uses: actions/checkout@v2
@@ -36,15 +36,6 @@ jobs:
           dotnet pack AngouriMath.csproj -c release -p:PackageVersion=$name
           cd bin/release
           dotnet nuget push AngouriMath.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
-          cd ../../../..
-          
-          # AngouriMath.Experimental
-          cd AngouriMath/AngouriMath.Experimental
-          dotnet restore AngouriMath.Experimental.csproj
-          dotnet build AngouriMath.Experimental.csproj -c release
-          dotnet pack AngouriMath.Experimental.csproj -c release -p:PackageVersion=$name
-          cd bin/release
-          dotnet nuget push AngouriMath.Experimental.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
           cd ../../../..
           
           # AngouriMath.FSharp

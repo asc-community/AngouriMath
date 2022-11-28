@@ -32,24 +32,21 @@ jobs:
       with:
         dotnet-version: 5.0.202
 
-    - name: Setup .NET 6 # The dotnet CLI above is replaced by this but the runtime is kept
+    - name: Setup .NET 7 # The dotnet CLI above is replaced by this but the runtime is kept
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.100'
+        dotnet-version: '7.0.100'
         include-prerelease: true
 
     - name: Build Tests # We need it to be able to retry
       run: |
         dotnet add "Sources/Tests/UnitTests" package GitHubActionsTestLogger
         dotnet build Sources/Tests/UnitTests
-        
-        dotnet build Sources/Tests/UnitTests.Experimental
 
     - name: Test if not to send
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
         dotnet test "Sources/Tests/UnitTests" -c Release -l GitHubActions /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
-        dotnet test "Sources/Tests/UnitTests.Experimental" -c Release
 
     - name: Test if to send
       if: ${{ matrix.os == 'windows-latest' }}

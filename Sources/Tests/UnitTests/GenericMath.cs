@@ -8,10 +8,12 @@
 using AngouriMath;
 using AngouriMath.Extensions;
 using System;
+using System.Numerics;
 using Xunit;
 using static AngouriMath.Entity.Number;
+using Complex = AngouriMath.Entity.Number.Complex;
 
-namespace AngouriMath.Experimental.Tests;
+namespace AngouriMath.Tests;
 
 public class GenericMath
 {
@@ -21,7 +23,7 @@ public class GenericMath
         Assert.Equal(55, Quack<int>("55"));
         Assert.Equal("x + a".ToEntity(), Quack<Entity>("x + a"));
 
-        static T Quack<T>(string a) where T : IParseable<T>
+        static T Quack<T>(string a) where T : IParsable<T>
             => T.Parse(a, null);
     }
 
@@ -31,7 +33,7 @@ public class GenericMath
         Assert.True(Quack(55, 55));
         Assert.True(Quack("x + a".ToEntity(), "x + a".ToEntity()));
 
-        static bool Quack<T>(T a, T b) where T : IEqualityOperators<T, T>
+        static bool Quack<T>(T a, T b) where T : IEqualityOperators<T, T, bool>
             => a == b;
     }
 

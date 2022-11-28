@@ -31,10 +31,10 @@ jobs:
       with:
         dotnet-version: '5.0.x'
     
-    - name: Setup .NET 6
+    - name: Setup .NET 7
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.100'
+        dotnet-version: '7.0.100'
         include-prerelease: true
 
     - name: 'Generating exports'
