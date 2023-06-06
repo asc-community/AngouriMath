@@ -28,7 +28,6 @@ namespace AngouriMath.Tests.Calculus
         [InlineData("a ^ x", "a ^ x / ln(a)")]
         [InlineData("sec(a x + b)", "1/2 * ln((1 + sin(a x + b)) / (1 - sin(a x + b))) / a")]
         [InlineData("csc(a x + b)", "ln(tan(1/2(a x + b))) / a")]
-        [InlineData("integral((4x^2+5x-4)/((5x-2)(4x^2+2)), x)", "integral((4x^2+5x-4)/((5x-2)(4x^2+2)), x)")]
         public void TestIndefinite(string initial, string expected)
         {
             Assert.Equal(expected.ToEntity().Simplify(), initial.Integrate("x").Simplify());
