@@ -19,6 +19,7 @@ namespace AngouriMath.Tests.Common
         [InlineData("3 ^ 100")]
         [InlineData("(-3) ^ 100")]
         [InlineData("0.01 ^ 100")]
+        [InlineData("integral((4x^2+5x-4)/((5x-2)(4x^2+2)), x)")]
         public void ShouldNotChangeTest(string expr)
         {
             var expected = expr.ToEntity();
