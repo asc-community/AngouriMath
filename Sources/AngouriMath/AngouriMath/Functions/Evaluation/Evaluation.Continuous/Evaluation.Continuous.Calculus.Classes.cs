@@ -80,6 +80,7 @@ namespace AngouriMath
                         // TODO: consider Derivative for negative cases
                         (var expr, Variable var, int asInt)
                             when SequentialIntegrating(expr, var, asInt) is var res and not Integralf
+                            && !res.Nodes.Any(n => n is Integralf)
                             => res.Evaled,
                         _ => null
                     },
@@ -96,6 +97,7 @@ namespace AngouriMath
                         // TODO: should we apply InnerSimplified?
                         (var expr, Variable var, int asInt)
                             when SequentialIntegrating(expr, var, asInt) is var res and not Integralf
+                            && !res.Nodes.Any(n => n is Integralf)
                             => res.InnerSimplified,
                         _ => null
                     },
