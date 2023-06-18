@@ -22,7 +22,7 @@
   <br>
   <a href="https://dotnetfiddle.net/u901sI"><img src="https://img.shields.io/static/v1?label=Fiddle&message=Try%21&color=purple&style=flat&logo=.NET&labelColor=646"></a>
   <a href="https://mybinder.org/v2/gh/asc-community/AngouriMathLab/try"><img src="https://img.shields.io/static/v1?label=Jupyter&message=Try%21&color=purple&style=flat&logo=Jupyter&labelColor=646"></a>
-  <a href="https://discord.gg/YWJEX7a"><img alt="Discord" src="https://badgen.net/discord/members/YWJEX7a?icon=discord&color=252&labelColor=474&label=Join+our+Discord!"></a> 
+  <a href="https://matrix.to/#/#angourimath:matrix.org"><img alt="Join Matrix Chat" src="https://img.shields.io/badge/chat%20with%20us-7eb7e2?logo=matrix&style=flat-square&labelColor=474&logoColor=white&color=252"></a> 
   <a href="https://github.com/quozd/awesome-dotnet"><img src="https://awesome.re/mentioned-badge.svg"></a>
   
 </p>
