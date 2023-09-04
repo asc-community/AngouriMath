@@ -46,7 +46,7 @@ namespace AngouriMath.Functions.Boolean
         /// <exception cref="WrongNumberOfArgumentsException"/>
         internal static Matrix? SolveTable(Entity expr, Variable[] variables)
         {
-            var count = expr.Vars.Count();
+            var count = expr.Vars.Count;
             // TODO: we probably also should verify the uniqueness of the given variables
             if (count != variables.Length)
                 throw new WrongNumberOfArgumentsException("Number of variables must equal number of variables in the expression");
@@ -67,7 +67,7 @@ namespace AngouriMath.Functions.Boolean
 
         internal static Matrix? BuildTruthTable(Entity expr, Variable[] variables)
         {
-            var count = expr.Vars.Count();
+            var count = expr.Vars.Count;
             // TODO: we probably also should verify the uniqueness of the given variables
             if (count != variables.Length)
                 throw new WrongNumberOfArgumentsException("Number of variables must equal number of variables in the expression");

@@ -158,7 +158,7 @@ namespace AngouriMath.Convenience
     {
         private readonly List<(TKey key, TValue value)> list = new();
 
-        internal TValue Peek() => list[list.Count - 1].value;
+        internal TValue Peek() => list[^1].value;
 
         internal bool Remove(TKey key)
         {

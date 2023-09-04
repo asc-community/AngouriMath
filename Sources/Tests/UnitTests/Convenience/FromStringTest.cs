@@ -318,7 +318,7 @@ namespace AngouriMath.Tests.Convenience
         public void TestUnicodeVariablesParser(string exprRaw, string expectedName)
         {
             Entity actual = exprRaw;
-            var any = actual.Vars.First();
+            var any = actual.Vars[0];
             Assert.Equal(expectedName, any.Name);
         }
         

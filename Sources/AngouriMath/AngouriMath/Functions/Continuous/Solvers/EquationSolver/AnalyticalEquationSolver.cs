@@ -209,7 +209,7 @@ namespace AngouriMath.Functions.Algebra.AnalyticalSolving
             // https://mathoverflow.net/a/28977
 
             // if nothing has been found so far
-            if (MathS.Settings.AllowNewton && expr.Vars.Count() == 1)
+            if (MathS.Settings.AllowNewton && expr.Vars.Count == 1)
                 return expr.SolveNt(x).Select(ent => TryDowncast(expr, x, ent)).ToSet();
 
             return Enumerable.Empty<Entity>().ToSet();

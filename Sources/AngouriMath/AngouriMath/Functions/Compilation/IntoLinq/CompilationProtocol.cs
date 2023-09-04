@@ -258,8 +258,8 @@ namespace AngouriMath.Core.Compilation.IntoLinq
             }
             
             // last case
-            var expression = children[children.Length - 2];
-            var predicate = children[children.Length - 1];
+            var expression = children[^2];
+            var predicate = children[^1];
             var nan = ConvertNaN(maxType);
             
             (expression, nan) = EqualizeTypesIfAble(expression, nan);
