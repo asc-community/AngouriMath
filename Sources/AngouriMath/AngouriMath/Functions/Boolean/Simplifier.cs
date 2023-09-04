@@ -28,21 +28,21 @@ namespace AngouriMath
 
         partial record Orf
         {
-            private struct OrfBranchGetter : IBranchGetter<Orf> { public Entity Left(Orf node) => node.Left; public Entity Right(Orf node) => node.Right; }
+            private struct OrfBranchGetter : IBranchGetter<Orf> { public readonly Entity Left(Orf node) => node.Left; public readonly Entity Right(Orf node) => node.Right; }
             internal static IEnumerable<Entity> LinearChildren(Entity expr)
                 => LinearChildren<Orf, OrfBranchGetter>(expr);
         }
 
         partial record Andf
         {
-            private struct AndfBranchGetter : IBranchGetter<Andf> { public Entity Left(Andf node) => node.Left; public Entity Right(Andf node) => node.Right; }
+            private struct AndfBranchGetter : IBranchGetter<Andf> { public readonly Entity Left(Andf node) => node.Left; public readonly Entity Right(Andf node) => node.Right; }
             internal static IEnumerable<Entity> LinearChildren(Entity expr)
                 => LinearChildren<Andf, AndfBranchGetter>(expr);
         }
 
         partial record Xorf
         {
-            private struct XorfBranchGetter : IBranchGetter<Xorf> { public Entity Left(Xorf node) => node.Left; public Entity Right(Xorf node) => node.Right; }
+            private struct XorfBranchGetter : IBranchGetter<Xorf> { public readonly Entity Left(Xorf node) => node.Left; public readonly Entity Right(Xorf node) => node.Right; }
             internal static IEnumerable<Entity> LinearChildren(Entity expr)
                 => LinearChildren<Xorf, XorfBranchGetter>(expr);
 
@@ -52,14 +52,14 @@ namespace AngouriMath
         {
             partial record Unionf
             {
-                private struct UnionfBranchGetter : IBranchGetter<Unionf> { public Entity Left(Unionf node) => node.Left; public Entity Right(Unionf node) => node.Right; }
+                private struct UnionfBranchGetter : IBranchGetter<Unionf> { public readonly Entity Left(Unionf node) => node.Left; public readonly Entity Right(Unionf node) => node.Right; }
                 internal static IEnumerable<Entity> LinearChildren(Entity expr)
                     => LinearChildren<Unionf, UnionfBranchGetter>(expr);
             }
 
             partial record Intersectionf
             {
-                private struct IntersectionfBranchGetter : IBranchGetter<Intersectionf> { public Entity Left(Intersectionf node) => node.Left; public Entity Right(Intersectionf node) => node.Right; }
+                private struct IntersectionfBranchGetter : IBranchGetter<Intersectionf> { public readonly Entity Left(Intersectionf node) => node.Left; public readonly Entity Right(Intersectionf node) => node.Right; }
                 internal static IEnumerable<Entity> LinearChildren(Entity expr)
                     => LinearChildren<Intersectionf, IntersectionfBranchGetter>(expr);
             }
