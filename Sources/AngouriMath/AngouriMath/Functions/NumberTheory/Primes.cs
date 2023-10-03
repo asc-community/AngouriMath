@@ -58,7 +58,7 @@ namespace AngouriMath.Functions
 
             static void AddPrimeC()
             {
-                var n = (primes[primes.Count - 1].cache + 2) ?? throw new AngouriBugException("It was supposed to be not null");
+                var n = (primes[^1].cache + 2) ?? throw new AngouriBugException("It was supposed to be not null");
                 while (!IsPrimeC(n))
                     n += 2;
                 primes.Add((n, n));
@@ -66,7 +66,7 @@ namespace AngouriMath.Functions
 
             static void AddPrimeI()
             {
-                var n = (primes[primes.Count - 1].actual + 2) ?? throw new AngouriBugException("It was supposed to be not null");
+                var n = (primes[^1].actual + 2) ?? throw new AngouriBugException("It was supposed to be not null");
                 while (!IsPrimeI(n))
                     n += 2;
                 primes.Add((n, null));

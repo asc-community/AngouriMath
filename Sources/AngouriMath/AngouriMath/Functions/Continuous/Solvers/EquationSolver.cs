@@ -26,7 +26,7 @@ namespace AngouriMath.Functions.Algebra
 
             static Entity simplifier(Entity entity) => entity.InnerSimplified;
             static Entity evaluator(Entity entity) => entity.Evaled;
-            var factorizer = equation.Vars.Count() == 1 ? (Func<Entity, Entity>)evaluator : simplifier;
+            var factorizer = equation.Vars.Count == 1 ? (Func<Entity, Entity>)evaluator : simplifier;
 
 
             if (solutions is FiniteSet finiteSet)
@@ -75,7 +75,7 @@ namespace AngouriMath.Functions.Algebra
         /// </param>
         internal static List<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars)
         {
-            var var = vars[vars.Length - 1];
+            var var = vars[^1];
             if (equations.Count == 1)
                 return equations[0].InnerSimplified.SolveEquation(var) is FiniteSet els 
                        ? els.Select(sol => new List<Entity> { sol }).ToList()
