@@ -82,7 +82,12 @@ namespace AngouriMath.Functions.Algebra
                        : new();
             var result = new List<List<Entity>>();
             var replacements = new Dictionary<Variable, Entity>();
+            equations = 
+                equations
+                .Select(eq => eq.SimplifyTimeConstrained(msLimit: 500) ?? eq.InnerSimplified)
+                .ToList();
             for (int i = 0; i < equations.Count; i++)
+            {
                 if (equations[i].ContainsNode(var))
                 {
                     var solutionsOverVar = equations[i].SolveEquation(var).InnerSimplified;
@@ -101,6 +106,7 @@ namespace AngouriMath.Functions.Algebra
                         }
                     break;
                 }
+            }
             return result;
         }
     }

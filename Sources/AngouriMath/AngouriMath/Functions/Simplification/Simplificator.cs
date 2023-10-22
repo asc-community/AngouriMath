@@ -8,6 +8,7 @@
 using System;
 using AngouriMath.Core.Multithreading;
 using PeterO.Numbers;
+using System.Threading;
 
 namespace AngouriMath.Functions
 {
@@ -21,6 +22,24 @@ namespace AngouriMath.Functions
 
         /// <summary>See more details in <see cref="Entity.Simplify(int)"/></summary>
         internal static Entity Simplify(Entity expr, int level) => Alternate(expr, level).First().InnerSimplified;
+
+        internal static Entity? SimplifyTimeConstrained(Entity expr, int level, int msCount)
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+            cancellationTokenSource.CancelAfter(msCount);
+            MathS.Multithreading.SetLocalCancellationToken(
+                cancellationTokenSource.Token);
+            try
+            {
+                var res = Simplify(expr, level);
+                MathS.Multithreading.SetLocalCancellationToken(CancellationToken.None);
+                return res;
+            }
+            catch (OperationCanceledException)
+            {
+                return null;
+            }
+        }
 
         internal static Entity SimplifyChildren(Entity expr)
         {
