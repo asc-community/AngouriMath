@@ -23,7 +23,6 @@ namespace AngouriMath.Functions.Algebra
             using var __ = MathS.Settings.FloatToRationalIterCount.Set(0);
             using var ___ = MathS.Settings.MaxExpansionTermCount.Set(50);
             var solutions = AnalyticalEquationSolver.Solve(equation, x);
-
             static Entity simplifier(Entity entity) => entity.InnerSimplified;
             static Entity evaluator(Entity entity) => entity.Evaled;
             var factorizer = equation.Vars.Count == 1 ? (Func<Entity, Entity>)evaluator : simplifier;
@@ -76,10 +75,12 @@ namespace AngouriMath.Functions.Algebra
         internal static List<List<Entity>> InSolveSystem(List<Entity> equations, ReadOnlySpan<Variable> vars)
         {
             var var = vars[^1];
+            
             if (equations.Count == 1)
-                return equations[0].InnerSimplified.SolveEquation(var) is FiniteSet els 
+                return equations[0].InnerSimplified.SolveEquation(var).InnerSimplified is FiniteSet els 
                        ? els.Select(sol => new List<Entity> { sol }).ToList()
                        : new();
+
             var result = new List<List<Entity>>();
             var replacements = new Dictionary<Variable, Entity>();
             for (int i = 0; i < equations.Count; i++)
