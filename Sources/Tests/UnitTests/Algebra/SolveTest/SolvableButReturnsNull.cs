@@ -33,5 +33,20 @@ namespace UnitTests.Algebra.SolveTest
             output.WriteLine(result.Stringize());
             Assert.NotNull(result);
         }
+
+        [Theory]
+        [InlineData("x - y - 1000", "y")]
+        [InlineData("x - y- 1000", "y - 0")]
+        [InlineData("x - y- 1000", "y -1 + 1")]
+        [InlineData("x - y- 1000", "y - 50")]
+        public void ShouldResolveAllFlippedVariables(string expr1, string expr2)
+        {
+            output.WriteLine(expr1);
+            output.WriteLine(expr2);
+            var system = MathS.Equations(expr1, expr2);
+            var result = system.Solve("y", "x");
+            output.WriteLine(result.Stringize());
+            Assert.NotNull(result);
+        }
     }
 }
