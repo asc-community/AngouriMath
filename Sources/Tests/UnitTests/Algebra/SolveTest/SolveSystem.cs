@@ -102,5 +102,24 @@ namespace AngouriMath.Tests.Algebra
             "x2 + y",
             "y - x - 3"
         }, new Entity.Variable[] { "x", "y" }, 2);
+
+
+        [Fact]
+        public void SystemWithZero() => AssertSystemSolvable(new Entity[] {
+            "x - y - 1000",
+            "y - 0"
+        }, new Entity.Variable[] { "x", "y" }, 1);
+
+        [Fact]
+        public void SystemWithZero2() => AssertSystemSolvable(new Entity[] {
+            "y - 0",
+            "x - y - 1000"            
+        }, new Entity.Variable[] { "x", "y" }, 1);
+
+        [Fact]
+        public void SystemWithZero3() => AssertSystemSolvable(new Entity[] {
+            "y - 0",
+            "x - y"
+        }, new Entity.Variable[] { "x", "y" }, 1);
     }
 }
