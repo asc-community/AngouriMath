@@ -28,9 +28,7 @@
 
   <ItemGroup>
     <Compile Include="Plot.fs" />
-    <None Include="Repack.ps1" />
-    
-    <Compile Include="KernelExtension.fs" />
+    <None Include="DevRepack.ps1" />
     <Compile Include="AggressiveOperators.fs" />
   </ItemGroup>
 
@@ -42,20 +40,18 @@
 
   <ItemGroup>
     <PackageReference Include="AngouriMath.FSharp" Version="1.4.0-preview.3" />
-    <PackageReference Include="Microsoft.DotNet.Interactive" Version="1.0.0-beta.21606.1" />
-    <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.21606.1" />
-    <PackageReference Include="Plotly.NET" Version="2.0.0-preview.16" />
+    <PackageReference Include="Microsoft.DotNet.Interactive" Version="1.0.0-beta.22314.1" />
+    <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.22314.1" />
+    <PackageReference Include="Plotly.NET" Version="2.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="$(OutputPath)/AngouriMath.Interactive.dll">
-      <Pack>True</Pack>
-      <PackagePath>interactive-extensions/dotnet</PackagePath>
-    </None>
+    <None Include="extension.dib" Pack="true" PackagePath="interactive-extensions/dotnet" />
+    <Content Include="README.md" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="5.0.0" />
+    <PackageReference Update="FSharp.Core" Version="6.0.2" />
   </ItemGroup>
 
 </Project>
