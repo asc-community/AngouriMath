@@ -210,7 +210,7 @@ let private withSliderND<'a, 'b> n (chartPlotter : 'a -> obj -> GenericChart.Gen
         |> Seq.map (fun step ->
             let newFunc = compiled step
             chartPlotter ranges newFunc
-            |> Chart.withTraceName(Visible = if step = Seq.head paramRange then StyleParam.Visible.True else StyleParam.Visible.False)
+            |> Chart.withTraceInfo(Visible = if step = Seq.head paramRange then StyleParam.Visible.True else StyleParam.Visible.False)
         )
         |> GenericChart.combine
     let slider = getSlider paramRange
