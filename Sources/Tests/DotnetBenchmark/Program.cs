@@ -17,6 +17,8 @@ using HonkSharp.Fluency;
 using GenericTensor.Core;
 using BenchmarkDotNet.Reports;
 using System.Linq;
+using BenchmarkDotNet.Columns;
+using System.Diagnostics;
 
 namespace DotnetBenchmark
 {
@@ -62,6 +64,71 @@ namespace DotnetBenchmark
 
         private EDecimal dec = 3;
         private readonly EDecimal coef = EDecimal.FromDecimal(0.2m);
+    }
+
+    public class TagColumn : IColumn
+    {
+        private readonly Func<string, string> getTag;
+        private string? commitId = null;
+        
+        public string Id { get; }
+
+        public string ColumnName { get; }
+
+        public TagColumn(string columnName, Func<string, string> getTag)
+        {
+            this.getTag = getTag;
+            ColumnName = columnName;
+            Id = nameof(TagColumn) + "_" + ColumnName;
+        }
+
+        public bool AlwaysShow => true;
+
+        public ColumnCategory Category => ColumnCategory.Custom;
+
+        public int PriorityInCategory => 0;
+
+        public bool IsNumeric => false;
+
+        public UnitType UnitType => UnitType.Dimensionless;
+
+        public string Legend => $"Custom {ColumnName} tag column";
+
+        public string GetValue(Summary summary, BenchmarkCase benchmarkCase) => getTag(GetGitCommitId());
+
+        private string GetGitCommitId()
+        {
+            if (commitId != null)
+                return commitId;
+            try
+            {
+                Process cmdGit = new Process();
+                cmdGit.StartInfo.FileName = "C:\\Program Files\\Git\\cmd\\git.exe";
+                cmdGit.StartInfo.RedirectStandardInput = true;
+                cmdGit.StartInfo.RedirectStandardOutput = true;
+                cmdGit.StartInfo.CreateNoWindow = true;
+                cmdGit.StartInfo.UseShellExecute = false;
+                cmdGit.StartInfo.Arguments = "rev-parse HEAD --short";
+                cmdGit.Start();
+                cmdGit.WaitForExit(1000);
+                commitId = cmdGit.StandardOutput.ReadToEnd();
+                // this commitId can be used for direct navigation to the commit as below:
+                // https://github.com/asc-community/AngouriMath/commit/{commitId}
+            }
+            catch
+            {
+                Console.Error.WriteLine("Couldn't fetch git commit id");
+                commitId = string.Empty;
+
+            }
+            return commitId;
+        }
+
+        public string GetValue(Summary summary, BenchmarkCase benchmarkCase, SummaryStyle style) => GetValue(summary, benchmarkCase);
+
+        public bool IsAvailable(Summary summary) => true;
+
+        public bool IsDefault(Summary summary, BenchmarkCase benchmarkCase) => false;
     }
 
     public class Program

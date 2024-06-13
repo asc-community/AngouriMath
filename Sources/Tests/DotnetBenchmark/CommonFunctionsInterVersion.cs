@@ -10,7 +10,9 @@ using System.Numerics;
 using AngouriMath;
 using AngouriMath.Extensions;
 using BenchmarkDotNet.Attributes;
+using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Exporters.Csv;
+using BenchmarkDotNet.Jobs;
 
 namespace DotnetBenchmark
 {
@@ -18,8 +20,17 @@ namespace DotnetBenchmark
     [ArtifactsPath(@"./benchmark_results.csv")]
     [CsvExporter(CsvSeparator.Semicolon)]
     [MemoryDiagnoser]
+    [Config(typeof(Config))]
     public class CommonFunctionsInterVersion
     {
+        private class Config : ManualConfig
+        {
+            public Config()
+            {
+                AddColumn(new TagColumn("CommitId", name => name));
+            }
+        }
+
         // Testing parsing
         [Benchmark] public void ParseEasy() => MathS.FromString("1 + 2 / x + 2 / (y + x)", useCache: false);
         [Benchmark] public void ParseHard() => MathS.FromString("x ^ (x + y ^ 2 ^ sin(3 / z + i)) - log(-i, 3) ^ (x + x * y) - sqrt(y) / (i + sqrt(-1))", useCache: false);
