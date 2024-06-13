@@ -4,9 +4,13 @@ on:
   push:
     branches:
       - master
+    paths:
+      - "./Sources/AngouriMath/AngouriMath"
   pull_request:
     branches:
       - '*'
+    paths:
+      - "./Sources/AngouriMath/AngouriMath"
 
 jobs:
   Benchmark:
