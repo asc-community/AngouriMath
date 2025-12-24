@@ -271,6 +271,7 @@ namespace AngouriMath.Tests.Convenience
             => Test(@"\begin{cases}a \: \text{for} \: b\\c \: \text{for} \: e\\g \: \text{otherwise}\end{cases}", MathS.Piecewise(("a", "b"), ("c", "e"), ("g", true)));
         [Fact] public void M1InTheMiddle()
             => Test(@"x \cdot \left(-1\right) \cdot x", (x * (-1)) * x);
+        [Fact] public void MultiplyNumberWithPower() => Test(@"2 \cdot {3}^{4}", 2 * ((Entity)3).Pow(4));
     }
 }
 
