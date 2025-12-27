@@ -141,8 +141,10 @@ namespace AngouriMath
         partial record Lambda
         {
             /// <inheritdoc/>
+            // NOTE: \mapsto (↦) links the function variable with its output while
+            // \rightarrow (→) links the function domain with its codomain. See https://math.stackexchange.com/a/651240, https://math.stackexchange.com/a/936591
             public override string Latexise()
-                => Parameter.Latexise() + @" \rightarrow " + Body.Latexise(Body.Priority < Priority);
+                => Parameter.Latexise() + @" \mapsto " + Body.Latexise(Body.Priority < Priority);
         }
     }
 }

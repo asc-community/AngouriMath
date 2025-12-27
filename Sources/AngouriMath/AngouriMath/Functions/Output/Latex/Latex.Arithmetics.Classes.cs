@@ -40,7 +40,8 @@ namespace AngouriMath
                         {
                             (Integer(-1), Complex n) => (-n).Latexise(parenthesesRequired: false),
                             (Integer(-1), var other) => $"-{other.Latexise(other.Priority < Priority)}",
-                            (Number a, (Number or Powf(Number, _)) and var b) => $@"{a.Latexise(a.Priority < Priority)} \cdot {b.Latexise(b.Priority < Priority)}",
+                            // 2 * 3 instead of 2 3 (= 23), 2 * 3^4 instead of 2 3^4 (= 23^4), 2 * (3/4) instead of 2 (3/4) which is a mixed number (= 2 + 3/4)
+                            (Number a, (Number or Powf(Number, _) or Divf _) and var b) => $@"{a.Latexise(a.Priority < Priority)} \cdot {b.Latexise(b.Priority < Priority)}",
                             (var mp, var md) when mp.Priority >= md.Priority => $@"{mp.Latexise(mp.Priority < Priority)} {md.Latexise(md.Priority < Priority)}",
                             (var mp, var md) => $@"{mp.Latexise(mp.Priority < Priority)} \cdot {md.Latexise(md.Priority < Priority)}"
                         },

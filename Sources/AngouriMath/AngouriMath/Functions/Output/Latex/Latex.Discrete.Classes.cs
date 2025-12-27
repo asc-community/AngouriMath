@@ -9,10 +9,11 @@ namespace AngouriMath
 {
     partial record Entity
     {
+        // Standardize on the first notation in https://en.wikipedia.org/wiki/Truth_function#Table_of_binary_truth_functions
         partial record Boolean
         {
             /// <inheritdoc/>
-            public override string Latexise() => $@"\operatorname{{{(bool)this}}}";
+            public override string Latexise() => (bool)this ? @"\top " : @"\bot ";
         }
 
         partial record Notf
@@ -39,15 +40,19 @@ namespace AngouriMath
         partial record Xorf
         {
             /// <inheritdoc/>
+            // NOTE: \veebar (⊻) can disambiguate better than \oplus (⊕) which can mean the direct sum in algebra.
             public override string Latexise()
-                => $@"{Left.Latexise(Left.Priority < Priority)} \oplus {Right.Latexise(Right.Priority < Priority)}";
+                => $@"{Left.Latexise(Left.Priority < Priority)} \veebar {Right.Latexise(Right.Priority < Priority)}";
         }
 
         partial record Impliesf
         {
             /// <inheritdoc/>
+            // NOTE:
+            // \to (→) is an object-language symbol within the formal system being studied. It's the implication operator used in logical expressions.
+            // \implies (⇒) is a metalanguage symbol indicating a logical consequence or entailment. It's used to express that one statement logically follows from another.
             public override string Latexise()
-                => $@"{Assumption.Latexise(Assumption.Priority < Priority)} \implies {Conclusion.Latexise(Conclusion.Priority < Priority)}";
+                => $@"{Assumption.Latexise(Assumption.Priority < Priority)} \to {Conclusion.Latexise(Conclusion.Priority < Priority)}";
         }
 
         partial record Equalsf
