@@ -17,7 +17,7 @@ namespace AngouriMath
         {
             // TODO: When target-typed conditional expression lands, remove the explicit conversion
             /// <inheritdoc/>
-            protected override Entity InnerEval() => ConstantList.TryGetValue(this, out var value) ? (Entity)value : this;
+            protected override Entity InnerEval() => ConstantList.TryGetValue(Name, out var value) ? (Entity)value : this;
 
             /// <inheritdoc/>
             protected override Entity InnerSimplify() => this;

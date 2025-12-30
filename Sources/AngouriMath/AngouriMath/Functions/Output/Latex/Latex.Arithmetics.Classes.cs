@@ -35,29 +35,32 @@ namespace AngouriMath
             {
                 return GatherProducts(this).ToArray() switch
                 {
-                    var onlyTwoElements when onlyTwoElements.Length == 2 =>
-                        (onlyTwoElements[0], onlyTwoElements[1]) switch
-                        {
-                            (Integer(-1), Complex n) => (-n).Latexise(parenthesesRequired: false),
-                            (Integer(-1), var other) => $"-{other.Latexise(other.Priority < Priority)}",
-                            // 2 * 3 instead of 2 3 (= 23), 2 * 3^4 instead of 2 3^4 (= 23^4), 2 * (3/4) instead of 2 (3/4) which is a mixed number (= 2 + 3/4)
-                            (Number a, (Number or Powf(Number, _) or Divf _) and var b) => $@"{a.Latexise(a.Priority < Priority)} \cdot {b.Latexise(b.Priority < Priority)}",
-                            (var mp, var md) when mp.Priority >= md.Priority => $@"{mp.Latexise(mp.Priority < Priority)} {md.Latexise(md.Priority < Priority)}",
-                            (var mp, var md) => $@"{mp.Latexise(mp.Priority < Priority)} \cdot {md.Latexise(md.Priority < Priority)}"
-                        },
-                    var longArray => 
+                    [Integer(-1), Complex n] => (-n).Latexise(parenthesesRequired: false),
+                    [Integer(-1), var other] => $"-{other.Latexise(other.Priority < Priority)}",
+                    var longArray =>
                         longArray.AggregateIndexed("",
                             (prevOut, index, currIn) => 
                             {
                                 if (index == 0)
                                     return currIn.Latexise(currIn.Priority < Priority);
                                 var currOut = currIn.Latexise(currIn.Priority < Priority);
-                                return (longArray[index - 1], currIn) switch
+                                return (longArray[index - 1], currIn) switch // whether we use juxtaposition and omit \cdot
                                 {
-                                    (var a, var b) when a.Priority == b.Priority => $@"{prevOut} {currOut}",
-                                    (Variable, Variable) => $@"{prevOut} {currOut}",
-                                    _ => $@"{prevOut} \cdot {currOut}"
-                                };
+                                    // NOTE: upright text are to be interpreted as a whole while italic text are to be interpreted as individual characters.
+                                    // Therefore, constants formatted as upright text, and multi-character variables are not considered for juxtaposition.
+
+                                    // Don't juxtapose upright variables with numbers like displaying "var2" for "var*2" since "var2" may be interpreted as one variable.
+                                    // Also, don't produce upright "ei" (one variable with two chars) for e*i, or "ei^2" for e*i^2.
+                                    // but "e (2+i)" and "e (2+i)^2" are fine with the parentheses - so we have the priority check.
+                                    (Variable { IsLatexUprightFormatted: true }
+                                     or Complex { ImaginaryPart.IsZero: false, Priority: Priority.Leaf } /* don't combine upright "i" with an upright variable*/,
+                                     Variable { IsLatexUprightFormatted: true } or Number { Priority: Priority.Leaf } or Powf(Number { Priority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true }, _)) => false,
+                                    // 2 * 3 instead of 2 3 (= 23), 2 * 3^4 instead of 2 3^4 (= 23^4), 2 * (3/4) instead of 2 (3/4) which is a mixed number (= 2 + 3/4)
+                                    // but "(2+i) 2", "2 (2+i)" and "2 (2+i)^2" are fine with the parentheses - so we have the priority check.
+                                    (Number { Priority: Priority.Leaf }, Number { Priority: >= Priority.Div } or Powf(Number { Priority: Priority.Leaf }, _) or Divf) => false,
+                                    (var left, var right) => left.Priority >= right.Priority &&
+                                        !(left.Priority == Priority.Div && right.Priority == Priority.Div) // Without \cdot, the fraction lines may appear too closely together.
+                                } ? $@"{prevOut} {currOut}" : $@"{prevOut} \cdot {currOut}";
                             })
                 };
 
@@ -65,7 +68,7 @@ namespace AngouriMath
                     => expr switch
                     {
                         Mulf(var a, var b) => GatherProducts(a).Concat(GatherProducts(b)),
-                        var other => new[]{ other }
+                        var other => [other]
                     };
             }
         }
@@ -137,7 +140,8 @@ namespace AngouriMath
         partial record Phif
         {
             /// <inheritdoc/>
-            public override string Latexise() => $@"\varphi({Argument.Latexise()})";
+            // NOTE: \operatorname is used here to distinguish the phi function from variables, consistent with sgn and other functions.
+            public override string Latexise() => $@"\operatorname{{\varphi}}\left({Argument.Latexise()}\right)";
         }
     }
 }

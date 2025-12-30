@@ -41,14 +41,14 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Latexise() =>
-                @"\arcsec\left(" + Argument.Latexise() + @"\right)";
+                @"\operatorname{arcsec}\left(" + Argument.Latexise() + @"\right)";
         }
 
         public partial record Arccosecantf
         {
             /// <inheritdoc/>
             public override string Latexise() =>
-                @"\arccsc\left(" + Argument.Latexise() + @"\right)";
+                @"\operatorname{arccsc}\left(" + Argument.Latexise() + @"\right)";
         }
 
         public partial record Tanf
@@ -90,7 +90,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Latexise() =>
-                @"\arccot\left(" + Argument.Latexise() + @"\right)";
+                @"\operatorname{arccot}\left(" + Argument.Latexise() + @"\right)";
         }
     }
 }

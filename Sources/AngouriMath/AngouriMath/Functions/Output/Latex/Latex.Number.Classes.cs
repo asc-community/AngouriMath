@@ -30,10 +30,10 @@ namespace AngouriMath
                     if (ImaginaryPart is Integer(0))
                         return RealPart.Latexise();
                     else if (RealPart is Integer(0))
-                        return RenderNum(ImaginaryPart) + "i";
+                        return RenderNum(ImaginaryPart) + @"\mathrm{i}"; // Display i upright per ISO 80000-2.
                     var (im, sign) = ImaginaryPart > 0 ? (ImaginaryPart, "+") : (-ImaginaryPart, "-");
                     return RealPart.Latexise() + " " + sign + " " +
-                        (im == 1 ? "" : im.Latexise(ImaginaryPart is Rational and not Integer)) + "i";
+                        (im == 1 ? "" : im.Latexise(ImaginaryPart is Rational and not Integer)) + @"\mathrm{i}";
                 }
             }
 
@@ -62,11 +62,5 @@ namespace AngouriMath
                 public override string Latexise() => EInteger.ToString();
             }
         }
-
-        
-
-        
-
-        
     }
 }

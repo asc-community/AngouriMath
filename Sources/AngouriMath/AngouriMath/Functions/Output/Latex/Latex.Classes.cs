@@ -12,33 +12,46 @@ namespace AngouriMath
         public partial record Variable
         {
             /// <summary>
-            /// List of constants LaTeX will correctly display
+            /// List of letters LaTeX will correctly display
             /// Yet to be extended
-            /// Case does matter, not all letters have both displays in LaTeX
+            /// Case does matter, for example \Alpha does not exist because the latin A is used instead
             /// </summary>
-            [ConstantField]
-            private static readonly HashSet<string> LatexisableConstants = new HashSet<string>
-            {
+            [ConstantField] private static readonly HashSet<string> LatexisableConstants =
+            [
                 "alpha", "beta", "gamma", "delta", "epsilon", "varepsilon", "zeta", "eta", "theta", "vartheta",
                 "iota", "kappa", "varkappa", "lambda", "mu", "nu", "xi", "omicron", "pi", "varpi", "rho",
                 "varrho", "sigma", "varsigma", "tau", "upsilon", "phi", "varphi", "chi", "psi", "omega",
 
                 "Gamma", "Delta", "Theta", "Lambda", "Xi", "Pi", "Sigma", "Upsilon", "Phi", "Psi", "Omega",
-            };
-
-            private static string LatexiseIfCan(string symbol)
-                => LatexisableConstants.Contains(symbol) ? $@"\{symbol}" : symbol;
-
+            ];
+            internal bool IsLatexUprightFormatted => IsNameLatexUprightFormatted(Name);
+            internal static bool IsNameLatexUprightFormatted(string varName) =>
+                // NOTE: Mathematical constants like "pi" and "e" are rendered upright following ISO 80000-2.
+                // This applies everywhere: as main variables or as subscripts.
+                ConstantList.ContainsKey(varName) ||
+                // NOTE: Multi-character identifiers are rendered upright.
+                // This distinguishes multi-character variable names (e.g., "velocity", "temp", "mass")
+                // from products of single-letter variables (e.g., v·e·l·o·c·i·t·y).
+                // Single-letter variables remain italic as per standard mathematical typography.
+                varName.Length > 1 && !LatexisableConstants.Contains(varName);
             /// <summary>
             /// Returns latexised const if it is possible to latexise it,
             /// or its original name otherwise
             /// </summary>
-            public override string Latexise() =>
-                SplitIndex() is var (prefix, index)
-                ?
-                $"{LatexiseIfCan(prefix)}_{{{LatexiseIfCan(index)}}}"
-                :
-                LatexiseIfCan(Name);
+            public override string Latexise()
+            {
+                static string LatexisePart(string symbol)
+                {
+                    var inner = LatexisableConstants.Contains(symbol) ? $@"\{symbol}" : symbol;
+                    return IsNameLatexUprightFormatted(symbol) ? $@"\mathrm{{{inner}}}" : inner;
+                }
+                // For variables with subscripts (e.g., "pi_2", "x_e", "e_pi")
+                // Both the main part and subscript are processed through LatexisePart,
+                // which handles upright formatting for "pi" and "e" consistently
+                return SplitIndex() is var (prefix, index)
+                    ? $"{LatexisePart(prefix)}_{{{LatexisePart(index)}}}"
+                    : LatexisePart(Name);
+            }
         }
     }
 }
