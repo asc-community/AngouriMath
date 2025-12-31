@@ -61,6 +61,12 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void SubscriptDuoPlus() => TestSimplify(@"6+\Delta_{\mathrm{a2}}", "Delta_a2+6");
         [Fact] public void Square() => Test(@"{x}^{2}", MathS.Sqr(x));
         [Fact] public void TwoXSquare() => Test(@"2 {x}^{2}", 2 * MathS.Sqr(x));
+        [Fact] public void MTwoXSquare() => Test(@"-2 \cdot {x}^{2}", -2 * MathS.Sqr(x));
+        [Fact] public void MTwoPTwoIXSquare() => Test(@"\left(-2 - \mathrm{i}\right) \cdot {x}^{2}", Complex.Create(-2, -1) * MathS.Sqr(x));
+        [Fact] public void XTwo() => Test(@"x \cdot 2", x * 2);
+        [Fact] public void XMTwo() => Test(@"x \left(-2\right)", x * -2);
+        [Fact] public void XSquareTwo() => Test(@"{x}^{2} \cdot 2", MathS.Sqr(x) * 2);
+        [Fact] public void XSquareMTwo() => Test(@"{x}^{2} \left(-2\right)", MathS.Sqr(x) * -2);
         [Fact] public void TwoAXSquare() => Test(@"2 a {x}^{2}", 2 * (Entity)"a" * MathS.Sqr(x));
         [Fact] public void TwoXSquareA() => Test(@"2 {x}^{2} \cdot a", 2 * MathS.Sqr(x) * "a");
         [Fact] public void TwoSinXXSquare() => Test(@"2 \sin\left(x\right) {x}^{2}", 2 * MathS.Sin(x) * MathS.Sqr(x));
