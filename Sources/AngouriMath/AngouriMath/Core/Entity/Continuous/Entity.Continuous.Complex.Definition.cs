@@ -46,7 +46,7 @@ namespace AngouriMath
                 internal override Priority Priority =>
                     (RealPart, ImaginaryPart) switch
                     {
-                        ({ IsZero: false }, { IsZero: false }) => Priority.Sum,
+                        ({ IsZero: false }, { IsZero: false }) or ({ IsZero: true }, { IsNegative: true }) => Priority.Sum,
                         ({ IsZero: true }, Integer(1)) => Priority.Leaf,
                         _ => Priority.Mul
                     };

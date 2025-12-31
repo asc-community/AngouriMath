@@ -99,7 +99,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void M1Entity() => Test("-1", m1);
         [Fact] public void M1Add() => Test(@"-1-1", m1 + m1);
         [Fact] public void M1Subtract() => Test(@"-1-\left(-1\right)", m1 - m1);
-        [Fact] public void M1Multiply() => Test(@"1", m1 * m1);
+        [Fact] public void M1Multiply() => Test(@"-\left(-1\right)", m1 * m1);
         [Fact] public void M1Divide() => Test(@"\frac{-1}{-1}", m1 / m1);
         [Fact] public void PowM1() => Test(@"{x}^{-1}", MathS.Pow(x, m1));
         [Fact] public void M1Pow() => Test(@"{\left(-1\right)}^{x}", MathS.Pow(m1, x));
@@ -114,7 +114,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void PowNumPi() => Test(@"{x}^{3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068}", MathS.Pow(x, numPi));
         [Fact] public void MNumPiAdd() => Test(@"-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068", mNumPi + mNumPi);
         [Fact] public void MNumPiSubtract() => Test(@"-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068-\left(-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068\right)", mNumPi - mNumPi);
-        [Fact] public void MNumPiMultiply() => Test(@"\left(-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068\right) \left(-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068\right)", mNumPi * mNumPi);
+        [Fact] public void MNumPiMultiply() => Test(@"-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068 \left(-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068\right)", mNumPi * mNumPi);
         [Fact] public void MNumPiDivide() => Test(@"\frac{-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068}{-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068}", mNumPi / mNumPi);
         [Fact] public void MNumPiPow() => Test(@"{\left(-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068\right)}^{x}", MathS.Pow(mNumPi, x));
         [Fact] public void PowMNumPi() => Test(@"{x}^{-3.141592653589793238462643383279502884197169399375105820974944592307816406286208998628034825342117068}", MathS.Pow(x, mNumPi));
@@ -140,14 +140,8 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Frac34Pow() => Test(@"{\left(\frac{3}{4}\right)}^{x}", MathS.Pow(frac34, x));
         [Fact] public void PowFrac34() => Test(@"\sqrt[4]{2}^{3}", MathS.Pow(2, frac34));
         [Fact] public void M2IAdd() => Test(@"-2\mathrm{i}-2\mathrm{i}", m2i + m2i);
-
-        // Which is better,
-        // -2i-\left(-2i\right)
-        // or
-        // -2i--2i
-        // ? TODO
-        [Fact] public void M2ISubtract() => Test(@"-2\mathrm{i}--2\mathrm{i}", m2i - m2i);
-        [Fact] public void M2IMultiply() => Test(@"-2\mathrm{i} \cdot -2\mathrm{i}", m2i * m2i);
+        [Fact] public void M2ISubtract() => Test(@"-2\mathrm{i}-\left(-2\mathrm{i}\right)", m2i - m2i);
+        [Fact] public void M2IMultiply() => Test(@"-2\mathrm{i} \left(-2\mathrm{i}\right)", m2i * m2i);
         [Fact] public void M2IDivide() => Test(@"\frac{-2\mathrm{i}}{-2\mathrm{i}}", m2i / m2i);
         [Fact] public void M2ISquare() => Test(@"{\left(-2\mathrm{i}\right)}^{2}", MathS.Sqr(m2i));
         [Fact] public void M2ISquareRoot() => Test(@"\sqrt{-2\mathrm{i}}", MathS.Sqrt(m2i));
@@ -187,6 +181,7 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void FactorialSinX() => Test(@"\sin\left(x\right)!", MathS.Factorial(MathS.Sin(x)));
         // x!! is the double factorial, (x!)! is factorial applied twice which is different
         [Fact] public void FactorialFactorialX() => Test(@"\left(x!\right)!", MathS.Factorial(MathS.Factorial(x)));
+        [Fact] public void FactorialXSquared() => Test(@"\left({x}^{2}\right)!", MathS.Factorial(MathS.Sqr(x)));
         [Fact] public void OO() => Test(@"\infty ", Real.PositiveInfinity);
         [Fact] public void MOO() => Test(@"-\infty ", Real.NegativeInfinity);
         [Fact] public void MOOAlternate() => Test(@"-\infty ", -Real.PositiveInfinity);
@@ -289,11 +284,11 @@ namespace AngouriMath.Tests.Convenience
         // Juxtaposition tests
         [Fact] public void M1InTheMiddle() => Test(@"x \left(-1\right) \cdot x", (x * (-1)) * x);
         [Fact] public void MultiplyNumberWithPower() => Test(@"2 \cdot {3}^{4}", 2 * ((Entity)3).Pow(4));
-        [Fact] public void Pie1() => Test(@"p \mathrm{i}", (Entity)"p*i");
+        [Fact] public void Pie1() => Test(@"p \cdot \mathrm{i}", (Entity)"p*i");
         [Fact] public void Pie2() => Test(@"\mathrm{i} p", (Entity)"i*p");
         [Fact] public void Pie3() => Test(@"\mathrm{e} \cdot \mathrm{i}", (Entity)"e*i");
         [Fact] public void Pie4() => Test(@"\mathrm{i} \cdot \mathrm{e}", (Entity)"i*e");
-        [Fact] public void Pie5() => Test(@"p \mathrm{i} \cdot \mathrm{e}", (Entity)"p*i*e");
+        [Fact] public void Pie5() => Test(@"p \cdot \mathrm{i} \cdot \mathrm{e}", (Entity)"p*i*e");
         [Fact] public void Pie6() => Test(@"p \mathrm{ie}", (Entity)"p*ie");
         [Fact] public void Pie7() => Test(@"\mathrm{\pi} \cdot \mathrm{e}", (Entity)"pi*e");
         [Fact] public void Pie8() => Test(@"\mathrm{pie}", (Entity)"pie");
@@ -338,6 +333,36 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void Juxtaposition9Rev() => Test(@"{\mathrm{owo}}^{2} \cdot \mathrm{i}", ((Entity)"owo").Pow(2) * "i");
         [Fact] public void Juxtaposition9Alt() => Test(@"\mathrm{i} \cdot {\mathrm{owo}}^{2}", Complex.Create(0, 1) * ((Entity)"owo").Pow(2));
         [Fact] public void Juxtaposition9RevAlt() => Test(@"{\mathrm{owo}}^{2} \cdot \mathrm{i}", ((Entity)"owo").Pow(2) * Complex.Create(0, 1));
+        [Fact] public void Juxtaposition10() => Test(@"\mathrm{e} \cdot \mathrm{i}!", (Entity)"e" * ((Entity)"i").Factorial());
+        [Fact] public void Juxtaposition10Alt() => Test(@"\mathrm{e} \cdot \mathrm{i}!", (Entity)"e" * Complex.Create(0, 1).Factorial());
+        [Fact] public void Juxtaposition10Rev() => Test(@"\mathrm{i}! \cdot \mathrm{e}", ((Entity)"i").Factorial() * "e");
+        [Fact] public void Juxtaposition10RevAlt() => Test(@"\mathrm{i}! \cdot \mathrm{e}", Complex.Create(0, 1).Factorial() * "e");
+        [Fact] public void Juxtaposition11() => Test(@"\mathrm{e} \left({\mathrm{i}}^{2}\right)!", (Entity)"e" * ((Entity)"i^2").Factorial());
+        [Fact] public void Juxtaposition11Alt() => Test(@"\mathrm{e} \left({\mathrm{i}}^{2}\right)!", (Entity)"e" * Complex.Create(0, 1).Pow(2).Factorial());
+        [Fact] public void Juxtaposition11Rev() => Test(@"\left({\mathrm{i}}^{2}\right)! \cdot \mathrm{e}", ((Entity)"i^2").Factorial() * "e");
+        [Fact] public void Juxtaposition11RevAlt() => Test(@"\left({\mathrm{i}}^{2}\right)! \cdot \mathrm{e}", Complex.Create(0, 1).Pow(2).Factorial() * "e");
+        [Fact] public void Juxtaposition12() => Test(@"\mathrm{e} \cdot \mathrm{owo}!", (Entity)"e" * ((Entity)"owo").Factorial());
+        [Fact] public void Juxtaposition12Rev() => Test(@"\mathrm{owo}! \cdot \mathrm{e}", ((Entity)"owo").Factorial() * "e");
+        [Fact] public void Juxtaposition13() => Test(@"\mathrm{i} \left({\mathrm{owo}}^{2}\right)!", (Entity)"i" * ((Entity)"owo^2").Factorial());
+        [Fact] public void Juxtaposition13Rev() => Test(@"\left({\mathrm{owo}}^{2}\right)! \cdot \mathrm{i}", ((Entity)"owo^2").Factorial() * "i");
+        [Fact] public void Juxtaposition13Alt() => Test(@"\mathrm{i} \left({\mathrm{owo}}^{2}\right)!", Complex.Create(0, 1) * ((Entity)"owo^2").Factorial());
+        [Fact] public void Juxtaposition13RevAlt() => Test(@"\left({\mathrm{owo}}^{2}\right)! \cdot \mathrm{i}", ((Entity)"owo^2").Factorial() * Complex.Create(0, 1));
+        [Fact] public void Juxtaposition14() => Test(@"\mathrm{i} \cdot {\mathrm{owo}!}^{2}", (Entity)"i" * (Entity)"owo!^2");
+        [Fact] public void Juxtaposition14Rev() => Test(@"{\mathrm{owo}!}^{2} \cdot \mathrm{i}", (Entity)"owo!^2" * "i");
+        [Fact] public void Juxtaposition14Alt() => Test(@"\mathrm{i} \cdot {\mathrm{owo}!}^{2}", Complex.Create(0, 1) * (Entity)"owo!^2");
+        [Fact] public void Juxtaposition14RevAlt() => Test(@"{\mathrm{owo}!}^{2} \cdot \mathrm{i}", (Entity)"owo!^2" * Complex.Create(0, 1));
+        [Fact] public void Juxtaposition15() => Test(@"\mathrm{i} \cdot {\mathrm{i}!}^{2}", (Entity)"i" * (Entity)"i!^2");
+        [Fact] public void Juxtaposition15Rev() => Test(@"{\mathrm{i}!}^{2} \cdot \mathrm{i}", (Entity)"i!^2" * "i");
+        [Fact] public void Juxtaposition15Alt() => Test(@"\mathrm{i} \cdot {\mathrm{i}!}^{2}", Complex.Create(0, 1) * (Entity)"i!^2");
+        [Fact] public void Juxtaposition15RevAlt() => Test(@"{\mathrm{i}!}^{2} \cdot \mathrm{i}", (Entity)"i!^2" * Complex.Create(0, 1));
+        [Fact] public void Juxtaposition15AltAlt() => Test(@"\mathrm{i} \cdot {\mathrm{i}!}^{2}", Complex.Create(0, 1) * Complex.Create(0, 1).Factorial().Pow(2));
+        [Fact] public void Juxtaposition15AltRevAlt() => Test(@"{\mathrm{i}!}^{2} \cdot \mathrm{i}", Complex.Create(0, 1).Factorial().Pow(2) * Complex.Create(0, 1));
+        [Fact] public void Juxtaposition16() => Test(@"-\mathrm{i} \cdot {\mathrm{i}!}^{2}", (Entity)"-i" * (Entity)"i!^2");
+        [Fact] public void Juxtaposition16Rev() => Test(@"{\mathrm{i}!}^{2} \left(-\mathrm{i}\right)", (Entity)"i!^2" * "-i");
+        [Fact] public void Juxtaposition16Alt() => Test(@"-\mathrm{i} \cdot {\mathrm{i}!}^{2}", Complex.Create(0, -1) * (Entity)"i!^2");
+        [Fact] public void Juxtaposition16RevAlt() => Test(@"{\mathrm{i}!}^{2} \left(-\mathrm{i}\right)", (Entity)"i!^2" * Complex.Create(0, -1));
+        [Fact] public void Juxtaposition16AltAlt() => Test(@"-\mathrm{i} \cdot {\left(-\mathrm{i}\right)!}^{2}", Complex.Create(0, -1) * Complex.Create(0, -1).Factorial().Pow(2));
+        [Fact] public void Juxtaposition16AltRevAlt() => Test(@"{\left(-\mathrm{i}\right)!}^{2} \left(-\mathrm{i}\right)", Complex.Create(0, -1).Factorial().Pow(2) * Complex.Create(0, -1));
         [Fact] public void MixedNumber() => Test(@"2 \cdot \frac{3}{4}", (Entity)"2" * "3/4");
         [Fact] public void MixedNumberAlt() => Test(@"2 \cdot \frac{3}{4}", (Entity)"2" * Rational.Create(3, 4));
         [Fact] public void MixedNumberRev() => Test(@"\frac{3}{4} \cdot 2", (Entity)"3/4" * "2");
@@ -346,6 +371,64 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void LongFraction2() => Test(@"\frac{3}{4} \cdot \frac{3}{4}", Rational.Create(3, 4) * "3/4");
         [Fact] public void LongFraction3() => Test(@"\frac{3}{4} \cdot \frac{3}{4}", "3/4" * Rational.Create(3, 4));
         [Fact] public void LongFraction4() => Test(@"\frac{3}{4} \cdot \frac{3}{4}", (Entity)Rational.Create(3, 4) * Rational.Create(3, 4));
+        [Theory]
+        [InlineData(@"2 \cdot 2", "2*2")]
+        [InlineData(@"2\mathrm{i} \cdot 2", "2i*2")]
+        [InlineData(@"2 \cdot 2\mathrm{i}", "2*2i")]
+        [InlineData(@"2\mathrm{i} \cdot 2\mathrm{i}", "2i*2i")]
+        [InlineData(@"-2 \cdot 2", "-2*2")]
+        [InlineData(@"-2\mathrm{i} \cdot 2", "-2i*2")]
+        [InlineData(@"-2 \cdot 2\mathrm{i}", "-2*2i")]
+        [InlineData(@"-2\mathrm{i} \cdot 2\mathrm{i}", "-2i*2i")]
+        [InlineData(@"2 \left(-2\right)", "2*-2")]
+        [InlineData(@"2\mathrm{i} \left(-2\right)", "2i*-2")]
+        [InlineData(@"2 \left(-2\mathrm{i}\right)", "2*-2i")]
+        [InlineData(@"2\mathrm{i} \left(-2\mathrm{i}\right)", "2i*-2i")]
+        [InlineData(@"-2 \left(-2\right)", "-2*-2")]
+        [InlineData(@"-2\mathrm{i} \left(-2\right)", "-2i*-2")]
+        [InlineData(@"-2 \left(-2\mathrm{i}\right)", "-2*-2i")]
+        [InlineData(@"-2\mathrm{i} \left(-2\mathrm{i}\right)", "-2i*-2i")]
+        [InlineData(@"1 \cdot 2", "1*2")]
+        [InlineData(@"\mathrm{i} \cdot 2", "1i*2")]
+        [InlineData(@"1 \cdot 2\mathrm{i}", "1*2i")]
+        [InlineData(@"\mathrm{i} \cdot 2\mathrm{i}", "1i*2i")]
+        [InlineData(@"-2", "-1*2")]
+        [InlineData(@"-\mathrm{i} \cdot 2", "-1i*2")]
+        [InlineData(@"-2\mathrm{i}", "-1*2i")]
+        [InlineData(@"-\mathrm{i} \cdot 2\mathrm{i}", "-1i*2i")]
+        [InlineData(@"1 \left(-2\right)", "1*-2")]
+        [InlineData(@"\mathrm{i} \left(-2\right)", "i*-2")]
+        [InlineData(@"1 \left(-2\mathrm{i}\right)", "1*-2i")]
+        [InlineData(@"-\mathrm{i} \left(-2\mathrm{i}\right)", "-i*-2i")]
+        [InlineData(@"-\mathrm{i} \cdot 2", "-i*2")]
+        [InlineData(@"-\left(-2\right)", "-1*-2")]
+        [InlineData(@"-\left(-2\mathrm{i}\right)", "-1*-2i")]
+        [InlineData(@"-\mathrm{i} \left(-2\mathrm{i}\right)", "-1i*-2i")]
+        [InlineData(@"1 \cdot 2!", "1*2!")]
+        [InlineData(@"0 \cdot 2!", "0*2!")]
+        [InlineData(@"-2!", "-1*2!")]
+        [InlineData(@"-2 \cdot 2!", "-2*2!")]
+        [InlineData(@"1 \left(-2\right)!", "1*(-2)!")]
+        [InlineData(@"0 \left(-2\right)!", "0*(-2)!")]
+        [InlineData(@"-\left(-2\right)!", "-1*(-2)!")]
+        [InlineData(@"-2 \cdot \left(-2\right)!", "-2*(-2)!")]
+        [InlineData(@"-\mathrm{i} \cdot 2!", "-1i*2!")]
+        [InlineData(@"-2\mathrm{i} \cdot 2!", "-2i*2!")]
+        public void JuxtapositionWithNumbers(string latex, string entity) {
+            Test(latex, (Entity)entity);
+            // Adding items after shouldn't affect LaTeX before
+            Test(latex + (latex.EndsWith("2") ? "" : @" \cdot") + " x", (Entity)(entity + "*x"));
+            Test(latex + @" \cdot 3", (Entity)(entity + "*3"));
+            Test(latex + @" \cdot {3}^{2}", (Entity)(entity + "*3^2"));
+            Test(latex + @" \cdot 3!", (Entity)(entity + "*3!"));
+            Test(latex + @" \left(-1\right)", (Entity)(entity + "*-1"));
+            Test(latex + @" \left(-1\right) \cdot 1!", (Entity)(entity + "*-1!"));
+            Test(latex + @" \left(-\mathrm{i}\right)", (Entity)(entity + "*-i"));
+            Test(latex + @" \left(-1\right) \cdot \mathrm{i}!", (Entity)(entity + "*-i!"));
+            Test(latex + @" \cdot {3!}^{4}", (Entity)(entity + "*3!^4"));
+            // TODO: Check this case again later
+            Test(latex + (latex.EndsWith(")") || latex.EndsWith("}") ? @" \cdot" : "") + @" \left({2}^{3}\right)!", (Entity)(entity + "*(2^3)!"));
+        }
 
         // Tests for intervals with commas (ISO 80000-2)
         [Fact] public void IntervalWithVariables() => Test(@"\left[x, y\right]", MathS.Sets.Interval(x, true, x + 1, true).Substitute(x + 1, MathS.Var("y")));

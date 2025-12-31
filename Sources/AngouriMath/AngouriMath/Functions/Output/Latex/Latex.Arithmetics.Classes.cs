@@ -33,36 +33,50 @@ namespace AngouriMath
             /// <inheritdoc/>
             public override string Latexise()
             {
-                return GatherProducts(this).ToArray() switch
-                {
-                    [Integer(-1), Complex n] => (-n).Latexise(parenthesesRequired: false),
-                    [Integer(-1), var other] => $"-{other.Latexise(other.Priority < Priority)}",
-                    var longArray =>
-                        longArray.AggregateIndexed("",
-                            (prevOut, index, currIn) => 
-                            {
-                                if (index == 0)
-                                    return currIn.Latexise(currIn.Priority < Priority);
-                                var currOut = currIn.Latexise(currIn.Priority < Priority);
-                                return (longArray[index - 1], currIn) switch // whether we use juxtaposition and omit \cdot
+                var longArray = GatherProducts(this).ToArray();
+                return longArray.AggregateIndexed("",
+                    (prevOut, index, currIn) =>
+                    {
+                        switch (index)
+                        {
+                            case 0:
+                                return currIn switch
                                 {
-                                    // NOTE: upright text are to be interpreted as a whole while italic text are to be interpreted as individual characters.
-                                    // Therefore, constants formatted as upright text, and multi-character variables are not considered for juxtaposition.
+                                    // -1, -2, 2i, i, -i, -2i etc. in the front and not (1+i) etc.
+                                    Number { Priority: Priority.Sum } and not Complex { RealPart.IsZero: false, ImaginaryPart.IsZero: false } =>
+                                        currIn.Latexise(false),
+                                    _ => currIn.Latexise(currIn.Priority < Priority)
+                                };
+                            case 1:
+                                if (longArray[index - 1] is Integer(-1))
+                                    return $"-{currIn.Latexise(currIn.Priority < Priority)}"; // display "-1 * x * y" as "-x \cdot y", only for the first -1
+                                break;
+                        }
+                        var currOut = currIn.Latexise(currIn.Priority < Priority);
 
-                                    // Don't juxtapose upright variables with numbers like displaying "var2" for "var*2" since "var2" may be interpreted as one variable.
-                                    // Also, don't produce upright "ei" (one variable with two chars) for e*i, or "ei^2" for e*i^2.
-                                    // but "e (2+i)" and "e (2+i)^2" are fine with the parentheses - so we have the priority check.
-                                    (Variable { IsLatexUprightFormatted: true }
-                                     or Complex { ImaginaryPart.IsZero: false, Priority: Priority.Leaf } /* don't combine upright "i" with an upright variable*/,
-                                     Variable { IsLatexUprightFormatted: true } or Number { Priority: Priority.Leaf } or Powf(Number { Priority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true }, _)) => false,
-                                    // 2 * 3 instead of 2 3 (= 23), 2 * 3^4 instead of 2 3^4 (= 23^4), 2 * (3/4) instead of 2 (3/4) which is a mixed number (= 2 + 3/4)
-                                    // but "(2+i) 2", "2 (2+i)" and "2 (2+i)^2" are fine with the parentheses - so we have the priority check.
-                                    (Number { Priority: Priority.Leaf }, Number { Priority: >= Priority.Div } or Powf(Number { Priority: Priority.Leaf }, _) or Divf) => false,
-                                    (var left, var right) => left.Priority >= right.Priority &&
-                                        !(left.Priority == Priority.Div && right.Priority == Priority.Div) // Without \cdot, the fraction lines may appear too closely together.
-                                } ? $@"{prevOut} {currOut}" : $@"{prevOut} \cdot {currOut}";
-                            })
-                };
+                        return (longArray[index - 1], currIn) switch // whether we use juxtaposition and omit \cdot
+                        {
+                            // NOTE: upright text are to be interpreted as a whole while italic text are to be interpreted as individual characters.
+                            // Therefore, constants formatted as upright text, and multi-character variables are not considered for juxtaposition.
+
+                            // Don't juxtapose upright variables with numbers like displaying "var2" for "var*2" since "var2" may be interpreted as one variable.
+                            // Also, don't produce upright "ei" (one variable with two chars) for e*i, or "ei^2" for e*i^2.
+                            // but "e (2+i)" and "e (2+i)^2" are fine with the parentheses - so we have the priority check.
+                            (Variable { IsLatexUprightFormatted: true }
+                                or Complex { ImaginaryPart.IsZero: false, Priority: >= Priority.Mul } /* don't combine upright "i" with an upright variable*/,
+                             Variable { IsLatexUprightFormatted: true } or Number { Priority: >= Priority.Mul }
+                                or Factorialf(Number { Priority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true })
+                                or Powf(Number { Priority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true }
+                                        or Factorialf(Number { Priority: Priority.Leaf } or Variable { IsLatexUprightFormatted: true }), _)) => false,
+                            // 2 * (3/4) instead of 2 (3/4) which is a mixed number (= 2 + 3/4)
+                            (Number { Priority: Priority.Leaf }, { Priority: Priority.Div }) => false,
+                            // 2 * 3 instead of 2 3 (= 23), 2 * 3^4 instead of 2 3^4 (= 23^4), but "(2+i) 2", "2 (2+i)" and "2 (2+i)^2" are fine with the parentheses - so we have the priority check.
+                            (_, Number { Priority: >= Priority.Mul } or Factorialf(Number { Priority: Priority.Leaf })
+                                or Powf(Number { Priority: Priority.Leaf } or Factorialf(Number { Priority: Priority.Leaf }), _)) => false, // Keep the \cdot in "f(x) \cdot -2" "f(x) \cdot 2i" "f(x) \cdot -2i"
+                            (var left, var right) => left.Priority >= right.Priority &&
+                                !(left.Priority == Priority.Div && right.Priority == Priority.Div) // Without \cdot, the fraction lines may appear too closely together.
+                        } ? $@"{prevOut} {currOut}" : $@"{prevOut} \cdot {currOut}";
+                    });
 
                 static IEnumerable<Entity> GatherProducts(Entity expr)
                     => expr switch
