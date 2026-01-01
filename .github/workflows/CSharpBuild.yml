@@ -15,11 +15,11 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
     steps:
-    - uses: actions/checkout
+    - uses: actions/checkout@latest
       with:
         submodules: 'recursive'
     - name: Setup .NET 10
-      uses: actions/setup-dotnet
+      uses: actions/setup-dotnet@latest
       with:
         dotnet-version: '10.x'
         include-prerelease: true

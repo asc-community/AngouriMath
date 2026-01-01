@@ -19,8 +19,8 @@ jobs:
   ConsoleApp:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout
-      - uses: actions/setup-dotnet
+      - uses: actions/checkout@latest
+      - uses: actions/setup-dotnet@latest
         with:
           dotnet-version: '10.x'
           include-prerelease: true
@@ -61,8 +61,8 @@ jobs:
   ClassLibConsoleApp:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout
-      - uses: actions/setup-dotnet
+      - uses: actions/checkout@latest
+      - uses: actions/setup-dotnet@latest
         with:
           dotnet-version: '10.x'
           include-prerelease: true

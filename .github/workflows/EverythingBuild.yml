@@ -13,12 +13,12 @@ jobs:
     runs-on: windows-latest  # Window application cannot be run on other OS
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@latest
       with:
         submodules: 'recursive'
 
     - name: Setup .NET 10
-      uses: actions/setup-dotnet
+      uses: actions/setup-dotnet@latest
       with:
         dotnet-version: '10.x'
         include-prerelease: true
