@@ -79,9 +79,6 @@ jobs:
       run: |
         cd ${{ env.tests_path }}
         cp -r "../../../Wrappers/AngouriMath.CPP.Importing/out-x64/AngouriMath.CPP.Exporting.dylib" "build/Debug/libAngouriMath.CPP.Exporting.dylib"
-        cd build/Debug
-        path=$(pwd)
-        install_name_tool -id "$path/libAngouriMath.CPP.Exporting.dylib" libAngouriMath.CPP.Exporting.dylib
 
     - name: 'Building and running tests'
       run: |
