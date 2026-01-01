@@ -24,18 +24,12 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout
     
-    - name: Setup .NET 5
-      uses: actions/setup-dotnet@v1
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet
       with:
-        dotnet-version: '5.0.x'
-    
-    - name: Setup .NET 7
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '7.0.100'
-        include-prerelease: true
+        dotnet-version: '10.x'
 
     - name: 'Generating exports'
       run: |
@@ -54,7 +48,7 @@ jobs:
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/out-x64
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
         
     - name: 'Building the library into native for Linux & MacOS'
@@ -63,8 +57,7 @@ jobs:
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/out-x64
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
-        
-        
+
     - name: 'Renaming the library for Linux'
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
@@ -77,10 +70,9 @@ jobs:
         cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
         mv AngouriMath.CPP.Exporting.dylib libAngouriMath.CPP.Exporting.dylib
         install_name_tool -id "@rpath/libAngouriMath.CPP.Exporting.dylib" libAngouriMath.CPP.Exporting.dylib
-        
 
     - name: 'Uploading artifacts'
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact
       with:
         name: AngouriMath.CPP-${{ matrix.os }}-x64
         path: ./Sources/Wrappers/AngouriMath.CPP.Importing

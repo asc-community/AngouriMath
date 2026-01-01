@@ -12,11 +12,11 @@
   -->
   
   <PropertyGroup>
-    <Version>1.4.0-preview.3</Version>
+    <Version>1.4.0-preview.4</Version>
 
     <Authors>WhiteBlackGoose and contributors</Authors>
     <Company>Angouri</Company>
-    <Copyright>© Angouri 2019-2022</Copyright>
+    <Copyright>© Angouri 2019-2026</Copyright>
 
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
