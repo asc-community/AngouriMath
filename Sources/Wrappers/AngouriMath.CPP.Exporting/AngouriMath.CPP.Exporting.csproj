@@ -13,7 +13,7 @@
   </Target>
 
   <Target Name="Copy for Linux" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="Publish">
-    <Exec Command="cp -a $(PublishDir). ../AngouriMath.CPP.Importing/out-x64/" />
+    <Exec Command="cp -a $(PublishDir)/. ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
   <Target Name="Copy for OS X" Condition="$([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="Publish">
