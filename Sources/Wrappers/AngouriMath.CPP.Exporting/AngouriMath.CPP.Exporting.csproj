@@ -1,23 +1,23 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="&#xD;&#xA;          mkdir ..\AngouriMath.CPP.Importing\out-x64&#xD;&#xA;          &#xD;&#xA;&#xD;&#xA;          xcopy $(OutDir)publish ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
+  <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="Publish">
+    <Exec Command="&#xD;&#xA;          mkdir ..\AngouriMath.CPP.Importing\out-x64&#xD;&#xA;          &#xD;&#xA;&#xD;&#xA;          xcopy $(PublishDir) ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
   </Target>
 
-  <Target Name="Copy for Linux" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="cp -a $(OutDir)publish/. ../AngouriMath.CPP.Importing/out-x64/" />
+  <Target Name="Copy for Linux" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="Publish">
+    <Exec Command="cp -R $(PublishDir) ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
-  <Target Name="Copy for OS X" Condition="$([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="cp -r $(OutDir)publish/* ../AngouriMath.CPP.Importing/out-x64/" />
+  <Target Name="Copy for OS X" Condition="$([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="Publish">
+    <Exec Command="cp -r $(PublishDir) ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
   <ItemGroup>
