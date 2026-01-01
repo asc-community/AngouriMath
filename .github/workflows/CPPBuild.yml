@@ -62,21 +62,16 @@ jobs:
       if: ${{ matrix.os == 'ubuntu-latest' }}
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
-        if [ -f "AngouriMath.CPP.Exporting.so" ]; then
-          mv AngouriMath.CPP.Exporting.so libAngouriMath.CPP.Exporting.so
-        fi
+        ls -la
+        mv AngouriMath.CPP.Exporting.so libAngouriMath.CPP.Exporting.so
         
     - name: 'Renaming the library for OS X'
       if: ${{ matrix.os == 'macos-latest' }}
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
         ls -la
-        if [ -f "AngouriMath.CPP.Exporting.dylib" ]; then
-          mv AngouriMath.CPP.Exporting.dylib libAngouriMath.CPP.Exporting.dylib
-        fi
-        if [ -f "libAngouriMath.CPP.Exporting.dylib" ]; then
-          install_name_tool -id "@rpath/libAngouriMath.CPP.Exporting.dylib" libAngouriMath.CPP.Exporting.dylib
-        fi
+        mv AngouriMath.CPP.Exporting.dylib libAngouriMath.CPP.Exporting.dylib
+        install_name_tool -id "@rpath/libAngouriMath.CPP.Exporting.dylib" libAngouriMath.CPP.Exporting.dylib
 
     - name: 'Uploading artifacts'
       uses: actions/upload-artifact@v6
