@@ -12,10 +12,6 @@
 
   <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
     <IlcArgs>$(IlcArgs) -Wl,-headerpad_max_install_names</IlcArgs>
-  </PropertyGroup>
-
-  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
-    <IlcArgs>$(IlcArgs) -Wl,-headerpad_max_install_names</IlcArgs>
     <!-- Avoids CI error in "Copying the library for OS X" in C++ Test. -->
   </PropertyGroup>
 
