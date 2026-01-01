@@ -8,11 +8,16 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <IlcArgs>$(IlcArgs) -Wl,-headerpad_max_install_names</IlcArgs>
+    <!-- Avoids CI error in "Copying the library for OS X" in C++ Test. -->
+  </PropertyGroup>
+
   <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="Publish">
     <Exec Command="mkdir ..\AngouriMath.CPP.Importing\out-x64 &amp; xcopy $(PublishDir) ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
   </Target>
 
-  <Target Name="Copy for Unux" Condition="$([MSBuild]::IsOSPlatform('Linux')) Or $([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="Publish">
+  <Target Name="Copy for Unix" Condition="$([MSBuild]::IsOSPlatform('Linux')) Or $([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="Publish">
     <Exec Command="cp $(PublishDir)/* ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
