@@ -9,15 +9,11 @@
   </PropertyGroup>
 
   <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="Publish">
-    <Exec Command="&#xD;&#xA;          mkdir ..\AngouriMath.CPP.Importing\out-x64&#xD;&#xA;          &#xD;&#xA;&#xD;&#xA;          xcopy $(PublishDir) ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
+    <Exec Command="mkdir ..\AngouriMath.CPP.Importing\out-x64 &amp; xcopy $(PublishDir) ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
   </Target>
 
-  <Target Name="Copy for Linux" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="Publish">
-    <Exec Command="cp -R $(PublishDir) ../AngouriMath.CPP.Importing/out-x64/" />
-  </Target>
-
-  <Target Name="Copy for OS X" Condition="$([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="Publish">
-    <Exec Command="cp -r $(PublishDir) ../AngouriMath.CPP.Importing/out-x64/" />
+  <Target Name="Copy for Unux" Condition="$([MSBuild]::IsOSPlatform('Linux') Or $([MSBuild]::IsOSPlatform('OSX')))" AfterTargets="Publish">
+    <Exec Command="cp $(PublishDir)/* ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
   <ItemGroup>
