@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.DotNet.Interactive.FSharp" Version="1.0.0-beta.25323.1" />
+    <PackageReference Update="FSharp.Compiler.Service" Version="43.10.101" /> <!-- For Microsoft.DotNet.Interactive.FSharp to use FSharp.Core 10.0.101 -->
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.0.1" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
