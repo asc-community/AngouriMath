@@ -49,14 +49,14 @@ jobs:
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/out-x64
         call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
+        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -p:PublishAot=true -r ${{ matrix.flag }} -c release
         
     - name: 'Building the library into native for Linux & MacOS'
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/out-x64
-        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
+        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -p:PublishAot=true -r ${{ matrix.flag }} -c release
 
     - name: 'Renaming the library for Linux'
       if: ${{ matrix.os == 'ubuntu-latest' }}
