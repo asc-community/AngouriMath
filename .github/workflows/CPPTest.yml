@@ -26,10 +26,10 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@latest
+    - uses: actions/checkout@v6
     
     - name: Setup .NET 10
-      uses: actions/setup-dotnet@latest
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.x'
         include-prerelease: true
@@ -92,7 +92,7 @@ jobs:
       
     - name: 'Upload logs'
       if: failure()
-      uses: actions/upload-artifact@latest
+      uses: actions/upload-artifact@v6
       with:
         name: Logs
         path: ./Sources/Tests/CPPWrapperUnitTests/tests/build/Testing/Temporary
