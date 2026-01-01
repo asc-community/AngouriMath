@@ -8,16 +8,16 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="&#xD;&#xA;          mkdir ..\AngouriMath.CPP.Importing\out-x64&#xD;&#xA;          &#xD;&#xA;&#xD;&#xA;          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
+  <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="Publish">
+    <Exec Command="&#xD;&#xA;          mkdir ..\AngouriMath.CPP.Importing\out-x64&#xD;&#xA;          &#xD;&#xA;&#xD;&#xA;          xcopy $(PublishDir) ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
   </Target>
 
-  <Target Name="Copy for Linux" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="cp -a $(OutDir)native/. ../AngouriMath.CPP.Importing/out-x64/" />
+  <Target Name="Copy for Linux" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="Publish">
+    <Exec Command="cp -a $(PublishDir). ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
-  <Target Name="Copy for OS X" Condition="$([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="cp -r $(OutDir)native/* ../AngouriMath.CPP.Importing/out-x64/" />
+  <Target Name="Copy for OS X" Condition="$([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="Publish">
+    <Exec Command="cp -r $(PublishDir)* ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
   <ItemGroup>
