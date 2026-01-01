@@ -17,25 +17,14 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout
       with:
         submodules: 'recursive'
 
-    
-    - name: Setup .NET Core 3
-      uses: actions/setup-dotnet@v1
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet
       with:
-        dotnet-version: 3.1.202
-
-    - name: Setup .NET Core 5
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 5.0.202
-
-    - name: Setup .NET 7 # The dotnet CLI above is replaced by this but the runtime is kept
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: '7.0.100'
+        dotnet-version: '10.x'
         include-prerelease: true
 
     - name: Build Tests # We need it to be able to retry
@@ -62,7 +51,7 @@ jobs:
       
     - name: 'Upload report as artifact'
       if: ${{ matrix.os == 'windows-latest' }}
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact
       with:
         name: Report
         path: ./Sources/Tests/UnitTests/coverage.opencover.xml
@@ -70,6 +59,6 @@ jobs:
 
     - name: 'Send to codecov'
       if: ${{ matrix.os == 'windows-latest' }}
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action
       with:
         file: ./Sources/Tests/UnitTests/coverage.opencover.xml

@@ -35,8 +35,4 @@
     <PackageReference Include="AngouriMath" Version="1.4.0-preview.3" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="5.0.0" />
-  </ItemGroup>
-
 </Project>

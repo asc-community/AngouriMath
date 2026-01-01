@@ -1,9 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  
   <Import Project="$(MSBuildThisFileDirectory)/../../Package.Build.props" />
   
-
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
     <Product>Wrapper of AngouriMath for Jupyter Interactive</Product>
@@ -52,10 +50,6 @@
       <Pack>True</Pack>
       <PackagePath>interactive-extensions/dotnet</PackagePath>
     </None>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="5.0.0" />
   </ItemGroup>
 
 </Project>

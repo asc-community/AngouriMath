@@ -23,11 +23,13 @@ namespace AngouriMath
             partial record Interval
             {
                 /// <inheritdoc/>
+                // NOTE: Comma is used as the separator following standard mathematical notation (ISO 80000-2).
+                // Some regional variants use semicolon, but comma is more universally recognized.
                 public override string Latexise()
                 {
                     var left = LeftClosed ? "[" : "(";
                     var right = RightClosed ? "]" : ")";
-                    return @"\left" + left + Left.Latexise() + "; " + Right.Latexise() + @"\right" + right;
+                    return @"\left" + left + Left.Latexise() + ", " + Right.Latexise() + @"\right" + right;
                 }
             }
 
@@ -77,7 +79,7 @@ namespace AngouriMath
         partial record Providedf
         {
             /// <inheritdoc/>
-            public override string Latexise() => $@"\left\({Expression.Latexise()} \: \text{{for}} \: {Predicate.Latexise()}\right\)";
+            public override string Latexise() => $@"\left({Expression.Latexise()} \quad \text{{for}} \quad {Predicate.Latexise()}\right)";
         }
 
         partial record Piecewise
@@ -88,8 +90,8 @@ namespace AngouriMath
                 Cases.Select(c =>
                 {
                     if (c.Predicate == Boolean.True)
-                        return $@"{c.Expression.Latexise()} \: \text{{otherwise}}";
-                    return $@"{c.Expression.Latexise()} \: \text{{for}} \: {c.Predicate.Latexise()}";
+                        return $@"{c.Expression.Latexise()} & \text{{otherwise}}";
+                    return $@"{c.Expression.Latexise()} & \text{{if }} {c.Predicate.Latexise()}";
                 }
                 ))
                 +
@@ -133,16 +135,26 @@ namespace AngouriMath
         partial record Application
         {
             /// <inheritdoc/>
+            // NOTE: Application represents curried function application. Multiple arguments
+            // are rendered as separate applications: f(x)(y) rather than f(x, y)
             public override string Latexise()
-                => Expression.Latexise(Expression.Priority < Priority) + " " +
-                    " ".Join(Arguments.Select(arg => arg.Latexise(arg.Priority <= Priority)));
+            {
+                var result = new StringBuilder(Expression.Latexise(Expression.Priority < Priority));
+                foreach (var arg in Arguments)
+                {
+                    result.Append(@"\left(").Append(arg.Latexise()).Append(@"\right)");
+                }
+                return result.ToString();
+            }
         }
 
         partial record Lambda
         {
             /// <inheritdoc/>
+            // NOTE: \mapsto (↦) links the function variable with its output while
+            // \rightarrow (→) links the function domain with its codomain. See https://math.stackexchange.com/a/651240, https://math.stackexchange.com/a/936591
             public override string Latexise()
-                => Parameter.Latexise() + @" \rightarrow " + Body.Latexise(Body.Priority < Priority);
+                => Parameter.Latexise() + @" \mapsto " + Body.Latexise(Body.Priority < Priority);
         }
     }
 }

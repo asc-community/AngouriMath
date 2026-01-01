@@ -44,11 +44,11 @@ namespace AngouriMath
 
             [ConstantField] internal static readonly Variable pi = new Variable(nameof(pi));
             [ConstantField] internal static readonly Variable e = new Variable(nameof(e));
-            [ConstantField] internal static readonly IReadOnlyDictionary<Variable, Number.Complex> ConstantList =
-                new Dictionary<Variable, Number.Complex>
+            [ConstantField] internal static readonly IReadOnlyDictionary<string, Complex> ConstantList =
+                new Dictionary<string, Complex>
                 {
-                    { pi, MathS.DecimalConst.pi },
-                    { e, MathS.DecimalConst.e }
+                    { nameof(pi), MathS.DecimalConst.pi },
+                    { nameof(e), MathS.DecimalConst.e }
                 };
 
             /// <summary>

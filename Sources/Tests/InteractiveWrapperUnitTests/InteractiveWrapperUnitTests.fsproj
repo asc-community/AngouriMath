@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
 
     <IsPackable>false</IsPackable>
     <GenerateProgramFile>false</GenerateProgramFile>
@@ -29,7 +29,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Wrappers\AngouriMath.Interactive\AngouriMath.Interactive.fsproj" />
-    <PackageReference Include="FSharp.Core" Version="6.0.1" />
   </ItemGroup>
 
 </Project>

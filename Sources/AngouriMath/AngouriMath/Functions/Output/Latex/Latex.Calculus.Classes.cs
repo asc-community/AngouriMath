@@ -23,10 +23,10 @@ namespace AngouriMath
                     ? name
                     : @"\left[" + Var.Latexise(false) + @"\right]";
 
-                // TODO: Should we display the d upright using \mathrm?
-                // Differentiation is an operation, just like sin, cos, etc.
-                return @"\frac{d" + powerIfNeeded +
-                @"\left[" + Expression.Latexise(false) + @"\right]}{d" + varOverDeriv + powerIfNeeded + "}";
+                // NOTE: \mathrm{d} is used for upright 'd' following ISO 80000-2 standard.
+                // The differential operator should be upright (roman) to distinguish it from variables, similar to sin, cos, log, etc.
+                return @"\frac{\mathrm{d}" + powerIfNeeded +
+                @"\left[" + Expression.Latexise(false) + @"\right]}{\mathrm{d}" + varOverDeriv + powerIfNeeded + "}";
             }
         }
 
@@ -51,11 +51,19 @@ namespace AngouriMath
                 sb.Append(Expression.Latexise(false));
                 sb.Append(@"\right]");
 
-                // TODO: can we write d^2 x or (dx)^2 instead of dx dx?
-                // I don't think I have ever seen the same variable being integrated more than one time. -- Happypig375
+                // NOTE: \mathrm{d} is used for upright 'd' following ISO 80000-2 standard.
+                // The differential operator should be upright (roman) to distinguish it from variables.
+                // Multiple integrals use repeated differentials (\mathrm{d}x \mathrm{d}x) rather than power notation (\mathrm{d}^2 x).
+                // While derivatives use \mathrm{d}^n / \mathrm{d}x^n, power notation for integrals (\mathrm{d}^2 x) would be confusing
+                // as the number of \mathrm{d} is usually expected to match the number of \int.
+                // Thin spaces (\,) are added between differentials following standard practice.
                 for (int i = 0; i < Iterations; i++)
                 {
-                    sb.Append(" d");
+                    if (i > 0)
+                        sb.Append(@"\,");  // Add thin space between repeated differentials
+                    else
+                        sb.Append(' ');    // Leading space before first differential
+                    sb.Append(@"\mathrm{d}");
                     if (Var is Variable { Name: { Length: 1 } name })
                         sb.Append(name);
                     else
