@@ -18,7 +18,7 @@
     <Exec Command="mkdir ..\AngouriMath.CPP.Importing\out-x64 &amp; xcopy $(PublishDir) ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
   </Target>
 
-  <Target Name="Copy for Unux" Condition="$([MSBuild]::IsOSPlatform('Linux')) Or $([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="Publish">
+  <Target Name="Copy for Unix" Condition="$([MSBuild]::IsOSPlatform('Linux')) Or $([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="Publish">
     <Exec Command="cp $(PublishDir)/* ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
