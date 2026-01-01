@@ -183,7 +183,7 @@ let private getSlider (range : seq<float>) =
         Steps=sliderSteps
     )
 
-let private castAs<'a, 'b> (a : 'a) : 'b =
+let private castAs<'a, 'b when 'a : not null> (a : 'a) : 'b =
     let up : obj = a :> obj
     up :?> 'b
 
