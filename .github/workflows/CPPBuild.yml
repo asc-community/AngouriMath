@@ -57,6 +57,17 @@ jobs:
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
         dir
+        cd ..\..\AngouriMath.CPP.Exporting\bin\Release\net10.0\win-x64
+        echo.
+        echo Listing bin directory:
+        dir *.lib
+        
+    - name: 'Copy .lib file for Windows'
+      if: ${{ matrix.os == 'windows-latest' }}
+      shell: cmd
+      run: |
+        cd Sources/Wrappers/AngouriMath.CPP.Exporting
+        copy bin\Release\net10.0\win-x64\*.lib ..\AngouriMath.CPP.Importing\out-x64\
         
     - name: 'Building the library into native for Linux & MacOS'
       if: ${{ matrix.os != 'windows-latest' }}
