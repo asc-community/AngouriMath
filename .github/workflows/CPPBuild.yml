@@ -4,9 +4,14 @@ on:
   push:
     branches:
       - master
+    paths:
+      - "./Sources/Wrappers/AngouriMath.CPP.*/**"
   pull_request:
     branches:
       - '*'
+    paths:
+      - "./Sources/Wrappers/AngouriMath.CPP.*/**"
+  workflow_dispatch:
 
 jobs:
   AngouriMathCpp:
