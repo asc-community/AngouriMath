@@ -21,7 +21,7 @@ jobs:
       uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.x'
-        include-prerelease: true
+        dotnet-quality: 'preview'
 
     - name: Build AM
       run: dotnet build Sources/AngouriMath/AngouriMath/AngouriMath.csproj
