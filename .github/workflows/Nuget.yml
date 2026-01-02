@@ -28,7 +28,7 @@ jobs:
           echo "Package version is $version"
           
           # Validate version format (basic check for semantic versioning)
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
             echo "Error: Invalid version format '$version'. Expected semantic version (e.g., 1.0.0, 1.0.0-beta.1)"
             exit 1
           fi
