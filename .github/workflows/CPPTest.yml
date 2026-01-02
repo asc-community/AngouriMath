@@ -67,6 +67,7 @@ jobs:
       run: |
         cd ${{ env.tests_path }}
         copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\out-x64\AngouriMath.CPP.Exporting.dll" "build\Debug\AngouriMath.CPP.Exporting.dll"
+        copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\out-x64\AngouriMath.CPP.Exporting.lib" "build\Debug\AngouriMath.CPP.Exporting.lib"
 
     - name: 'Copying the library for Linux'
       if: ${{ matrix.os == 'ubuntu-latest' }}
