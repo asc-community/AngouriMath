@@ -51,6 +51,13 @@ jobs:
         call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         dotnet publish -p:NativeLib=Shared -p:SelfContained=true -p:PublishAot=true -r ${{ matrix.flag }} -c release
         
+    - name: 'Debug: List files in out-x64 for Windows'
+      if: ${{ matrix.os == 'windows-latest' }}
+      shell: cmd
+      run: |
+        cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
+        dir
+        
     - name: 'Building the library into native for Linux & MacOS'
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
