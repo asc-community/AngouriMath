@@ -1,11 +1,15 @@
-name: 'Publish to NuGet on Release'
+name: 'Upload to MyGet and NuGet'
 
 on:
+  push:
+    branches:
+      - master
   release:
     types: [published]
 
 jobs:
-  main:
+  myget:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
       - name: Setup .NET 10
@@ -16,7 +20,58 @@ jobs:
           
       - uses: actions/checkout@v6
         
-      - name: 'Pack AngouriMath'
+      - name: 'Pack AngouriMath for MyGet'
+        run: |
+          cd Sources
+ 
+          # versioning
+          commithash=$(git rev-parse --short HEAD)
+          currtime=$(date +%s)
+          echo "commit hash is $commithash"
+          echo "time is $currtime"
+          name=10.0.0-master-$currtime-$commithash
+          echo "name is $name"
+          
+          # AngouriMath
+          cd AngouriMath
+          dotnet restore AngouriMath.csproj
+          dotnet build AngouriMath.csproj -c release
+          dotnet pack AngouriMath.csproj -c release -p:PackageVersion=$name
+          cd bin/release
+          dotnet nuget push AngouriMath.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
+          cd ../../..
+          
+          # AngouriMath.FSharp
+          cd Wrappers/AngouriMath.FSharp
+          dotnet restore
+          dotnet build -c Release
+          dotnet pack -c Release -p:PackageVersion=$name
+          cd bin/Release
+          dotnet nuget push AngouriMath.FSharp.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
+          cd ../../../..
+          
+          # AngouriMath.Interactive
+          cd Wrappers/AngouriMath.Interactive
+          dotnet restore
+          dotnet build -c Release
+          dotnet pack -c Release -p:PackageVersion=$name
+          cd bin/Release
+          dotnet nuget push AngouriMath.Interactive.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
+          cd ../../../..
+
+  nuget:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.x'
+          dotnet-quality: 'preview'
+          
+      - uses: actions/checkout@v6
+        
+      - name: 'Pack AngouriMath for NuGet'
         run: |
           cd Sources
  
