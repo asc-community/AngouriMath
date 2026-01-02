@@ -7,7 +7,7 @@ open System.Threading.Tasks
 open PeterO.Numbers
 open System
 open Plotly.NET
-open Plotly.NET.GenericChart
+open type Plotly.NET.GenericChart
 open AngouriMath.FSharp.Functions
 
 type KernelExtension() = 
@@ -42,8 +42,6 @@ type KernelExtension() =
 
         Formatter.SetPreferredMimeTypesFor(typeof<GenericChart>, "text/html")
         Formatter.Register<GenericChart> (toChartHTML, "text/html")
-
-
 
     interface IKernelExtension with
         member _.OnLoadAsync _ =

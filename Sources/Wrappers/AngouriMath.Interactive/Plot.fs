@@ -187,7 +187,7 @@ let private castAs<'a, 'b when 'a : not null> (a : 'a) : 'b =
     let up : obj = a :> obj
     up :?> 'b
 
-let private withSliderND<'a, 'b> n (chartPlotter : 'a -> obj -> GenericChart.GenericChart) (ranges : 'a) (paramRange : double seq) (param : obj) (func : obj) =
+let private withSliderND<'a, 'b> n (chartPlotter : 'a -> obj -> GenericChart) (ranges : 'a) (paramRange : double seq) (param : obj) (func : obj) =
     let var = symbol param
     let compiled =
         match n with
@@ -210,7 +210,7 @@ let private withSliderND<'a, 'b> n (chartPlotter : 'a -> obj -> GenericChart.Gen
         |> Seq.map (fun step ->
             let newFunc = compiled step
             chartPlotter ranges newFunc
-            |> Chart.withTraceName(Visible = if step = Seq.head paramRange then StyleParam.Visible.True else StyleParam.Visible.False)
+            |> Chart.withTraceInfo(Visible = if step = Seq.head paramRange then StyleParam.Visible.True else StyleParam.Visible.False)
         )
         |> GenericChart.combine
     let slider = getSlider paramRange
@@ -219,10 +219,10 @@ let private withSliderND<'a, 'b> n (chartPlotter : 'a -> obj -> GenericChart.Gen
     |> Chart.withSlider slider
     |> withTransparency
 
-let withSlider2D (chartPlotter : double seq -> obj -> GenericChart.GenericChart) (range : double seq) (paramRange : double seq) (param : obj) (func : obj) =
+let withSlider2D (chartPlotter : double seq -> obj -> GenericChart) (range : double seq) (paramRange : double seq) (param : obj) (func : obj) =
     withSliderND<double seq, double> 1 chartPlotter range paramRange param func
 
-let withSlider3D (chartPlotter : double seq -> double seq -> obj -> GenericChart.GenericChart) (range1 : double seq) (range2 : double seq) (paramRange : double seq) (param : obj) (func : obj) =
+let withSlider3D (chartPlotter : double seq -> double seq -> obj -> GenericChart) (range1 : double seq) (range2 : double seq) (paramRange : double seq) (param : obj) (func : obj) =
     withSliderND<double seq * double seq, (double * double)> 2 (fun (r1, r2) f -> chartPlotter r1 r2 f) (range1, range2) paramRange param func
 
 let linear (range : double seq) (func : obj) =
