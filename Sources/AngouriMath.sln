@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.1.11312.151 d18.0
+VisualStudioVersion = 18.1.11312.151
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AngouriMath", "AngouriMath", "{F604DFEB-8939-4B4F-8E37-1FDC06E26D5A}"
 EndProject
@@ -50,6 +50,12 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "AngouriMath.Terminal.Lib", "Terminal\AngouriMath.Terminal.Lib\AngouriMath.Terminal.Lib.fsproj", "{405E214B-17A6-83E0-90A1-4F8B7213954F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Utils", "Utils", "{DC3A3E46-854E-403D-8FA5-561DF66277D4}"
+	ProjectSection(SolutionItems) = preProject
+		Utils\antlr_rerun.bat = Utils\antlr_rerun.bat
+		Utils\generate_additional_extensions.bat = Utils\generate_additional_extensions.bat
+		Utils\generate_additional_extensions_tests.bat = Utils\generate_additional_extensions_tests.bat
+		Utils\generate_exports.bat = Utils\generate_exports.bat
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils\Utils.csproj", "{9E733914-18F8-CD3A-EDB8-F32FFEF4A3DA}"
 EndProject

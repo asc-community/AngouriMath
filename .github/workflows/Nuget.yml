@@ -30,7 +30,7 @@ jobs:
           echo "name is $name"
           
           # AngouriMath
-          cd AngouriMath/AngouriMath
+          cd AngouriMath
           dotnet restore AngouriMath.csproj
           dotnet build AngouriMath.csproj -c release
           dotnet pack AngouriMath.csproj -c release -p:PackageVersion=$name
