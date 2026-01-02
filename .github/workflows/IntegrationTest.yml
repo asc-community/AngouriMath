@@ -10,7 +10,7 @@ on:
 
 env:
   package_version: 99.99.99
-  packed_path: D:\a\AngouriMath\AngouriMath\Sources\AngouriMath\AngouriMath\bin\release
+  packed_path: D:\a\AngouriMath\AngouriMath\Sources\AngouriMath\bin\release
   
   library_version: 33.33.33
   library_packed_path: D:\a\AngouriMath\AngouriMath\testlib\bin\release
@@ -27,7 +27,7 @@ jobs:
           
       - name: 'Pack AngouriMath'
         run: |
-          cd Sources/AngouriMath/AngouriMath
+          cd Sources/AngouriMath
           dotnet restore AngouriMath.csproj
           dotnet build AngouriMath.csproj -c release
           dotnet pack AngouriMath.csproj -c release -p:PackageVersion=${{ env.package_version }}
@@ -69,7 +69,7 @@ jobs:
           
       - name: 'Pack AngouriMath'
         run: |
-          cd Sources/AngouriMath/AngouriMath
+          cd Sources/AngouriMath
           dotnet restore AngouriMath.csproj
           dotnet build AngouriMath.csproj -c release
           dotnet pack AngouriMath.csproj -c release -p:PackageVersion=${{ env.package_version }}
