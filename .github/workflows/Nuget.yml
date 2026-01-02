@@ -11,6 +11,8 @@ jobs:
   myget:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v5
@@ -62,6 +64,8 @@ jobs:
   nuget:
     if: github.event_name == 'release'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v5
