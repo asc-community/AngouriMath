@@ -39,7 +39,7 @@ namespace GraphicExample
             var niceFunc2 = expr2.Compile(B);
             plotter.Clear();
             plotter.PlotIterativeComplex(niceFunc2, 0, t);
-            plotter.Render();
+            plotter.Refresh();
             t += 0.0005m;
         }
 

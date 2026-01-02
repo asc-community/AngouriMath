@@ -1,6 +1,11 @@
-<?xml version="1.0" encoding="utf-8"?>
-<Project>
-  <Import Project="$(MSBuildThisFileDirectory)/../Package.Build.props" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <TargetFrameworks>net7.0;netstandard2.0</TargetFrameworks>
+    <PackageId>AngouriMath</PackageId>
+    <Product>AngouriMath</Product>
+  </PropertyGroup>
+  <Import Project="../Package.Build.props" />
   
   <PropertyGroup>
     <OutputType>Library</OutputType>
@@ -14,7 +19,7 @@
     <StartupObject />
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <SignAssembly>true</SignAssembly>
-    <AssemblyOriginatorKeyFile>../key.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>key.snk</AssemblyOriginatorKeyFile>
     <DocumentationFile>bin/$(Configuration)/$(TargetFramework)/$(MSBuildProjectName).xml</DocumentationFile>
   </PropertyGroup>
 
@@ -45,7 +50,7 @@
     <PackageReference Include="Nullable" Version="1.3.0" PrivateAssets="all" />
 
     <!--Analyzers-->
-    <ProjectReference Include="../../Analyzers/Analyzers/Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="../Analyzers/Analyzers/Analyzers.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
 
   <ItemGroup>
@@ -68,9 +73,7 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>MathAllMethods.tt</DependentUpon>
     </Compile>
-  </ItemGroup>
 
-  <ItemGroup>
     <None Update="Convenience\CompilationExtensions.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>CompilationExtensions.cs</LastGenOutput>
@@ -83,10 +86,8 @@
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>MathAllMethods.cs</LastGenOutput>
     </None>
+  
+    <None Include="extension.dib" Pack="true" PackagePath="interactive-extensions/dotnet" />
+    <Compile Remove="Core/Entity/GenericMath/**" Condition="'$(TargetFramework)' != 'net7.0'" />
   </ItemGroup>
-
-  <ItemGroup>
-      <None Include="../extension.dib" Pack="true" PackagePath="interactive-extensions/dotnet" />
-  </ItemGroup>
-
 </Project>

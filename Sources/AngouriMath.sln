@@ -5,7 +5,7 @@ VisualStudioVersion = 18.1.11312.151 d18.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AngouriMath", "AngouriMath", "{F604DFEB-8939-4B4F-8E37-1FDC06E26D5A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AngouriMath", "AngouriMath\AngouriMath\AngouriMath.csproj", "{2D495EED-3C58-4E07-9152-9FE8C3CD522F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AngouriMath", "AngouriMath\AngouriMath.csproj", "{2D495EED-3C58-4E07-9152-9FE8C3CD522F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Analyzers", "Analyzers", "{358BFC2B-1A5B-4740-8BA1-0E53EFC7EDAC}"
 EndProject

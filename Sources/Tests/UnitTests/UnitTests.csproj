@@ -33,7 +33,7 @@
   </ItemGroup>
   
   <ItemGroup>
-    <ProjectReference Include="..\..\AngouriMath\AngouriMath\AngouriMath.csproj">
+    <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj">
       <SetTargetFramework>TargetFramework=net7.0</SetTargetFramework>
     </ProjectReference>
   </ItemGroup>

@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.Chart = new ScottPlot.FormsPlot();
+            this.Chart = new ScottPlot.WinForms.FormsPlot();
             this.timer1 = new System.Windows.Forms.Timer(this.components);
             this.button1 = new System.Windows.Forms.Button();
             this.InputText = new System.Windows.Forms.TextBox();
@@ -135,7 +135,7 @@
 
         #endregion
 
-        private ScottPlot.FormsPlot Chart;
+        private ScottPlot.WinForms.FormsPlot Chart;
         private System.Windows.Forms.Timer timer1;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label LabelTitle;

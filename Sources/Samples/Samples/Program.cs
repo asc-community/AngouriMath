@@ -6,10 +6,11 @@
 //
 
 using System;
+using AngouriMath;
 using AngouriMath.Core;
 using static AngouriMath.MathS;
 
-var expr = Sqrt(-1);
+var expr = ((Entity)"x^2+2x+1").Factorize();
 Console.WriteLine(expr);
 Console.WriteLine(expr.Codomain);
 Console.WriteLine(expr.Evaled);

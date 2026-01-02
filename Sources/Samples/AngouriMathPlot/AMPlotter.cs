@@ -10,6 +10,7 @@ using System.Numerics;
 using AngouriMath;
 using AngouriMath.Core;
 using ScottPlot;
+using ScottPlot.WinForms;
 
 namespace AngouriMathPlot
 {
@@ -52,11 +53,9 @@ namespace AngouriMathPlot
         public void PlotScatter(FastExpression func, Entity.Number.Complex from, Entity.Number.Complex to)
         {
             double inner(int it) => ((to - from) / (pointCount - 1) * it).RealPart.EDecimal.ToDouble();
-            Clear();
             BuildData(inner,
                         it => func.Call(new Complex((double)inner(it), 0)).Real);
-            destination.plt.PlotScatter(dataX, dataY);
-            destination.Render();
+            destination.Plot.Add.Scatter(dataX, dataY);
         }
 
         /// <summary>Intepreting real values of func as X, imaginary as Y we iterate on range [from; to]</summary>
@@ -65,14 +64,14 @@ namespace AngouriMathPlot
             double X(int it) => func.Call(((from + to) / (pointCount - 1) * it).ToNumerics()).Real;
             double Y(int it) => func.Call(((from + to) / (pointCount - 1) * it).ToNumerics()).Imaginary;
             BuildData(X, Y);
-            destination.plt.PlotScatter(dataX, dataY);
+            destination.Plot.Add.Scatter(dataX, dataY);
         }
 
         /// <summary>Cleans the graph</summary>
-        public void Clear() => destination.plt.Clear();
+        public void Clear() => destination.Plot.Clear();
 
-        /// <summary>Renders onto the destination ScottPlot form</summary>
-        public void Render() =>destination.Render();
+        /// <summary>Refreshes the destination ScottPlot form</summary>
+        public void Refresh() => destination.Refresh();
         private void BuildData(Func<int, double> X, Func<int, double> Y)
         {
             for(int i = 0; i < pointCount; i++)
