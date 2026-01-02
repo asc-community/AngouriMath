@@ -36,7 +36,7 @@ jobs:
           dotnet pack AngouriMath.csproj -c release -p:PackageVersion=$name
           cd bin/release
           dotnet nuget push AngouriMath.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
-          cd ../../../..
+          cd ../../..
           
           # AngouriMath.FSharp
           cd Wrappers/AngouriMath.FSharp
