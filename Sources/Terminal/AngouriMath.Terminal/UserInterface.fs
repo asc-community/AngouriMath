@@ -88,7 +88,4 @@ type TimePrefixEditorPromt() =
     
 
 let getLineEditor (ansiConsole : IAnsiConsole) =
-    let lineEditor = LineEditor (ansiConsole, null)
-    lineEditor.Highlighter <- getWordHighlighter ()
-    lineEditor.Prompt <- TimePrefixEditorPromt ()
-    lineEditor
+    LineEditor (ansiConsole, null, Highlighter = getWordHighlighter (), Prompt = TimePrefixEditorPromt ())

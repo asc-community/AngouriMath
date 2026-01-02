@@ -15,16 +15,15 @@ env:
   library_version: 33.33.33
   library_packed_path: D:\a\AngouriMath\AngouriMath\testlib\bin\release
 
-
 jobs:
   ConsoleApp:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-dotnet@v1
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '7.0.x'
-          include-prerelease: true
+          dotnet-version: '10.x'
+          dotnet-quality: 'preview'
           
       - name: 'Pack AngouriMath'
         run: |
@@ -62,11 +61,11 @@ jobs:
   ClassLibConsoleApp:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-dotnet@v1
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '7.0.x'
-          include-prerelease: true
+          dotnet-version: '10.x'
+          dotnet-quality: 'preview'
           
       - name: 'Pack AngouriMath'
         run: |
@@ -96,7 +95,7 @@ jobs:
         
       - name: 'Create console app'
         run: |
-          dotnet new console --name testconsole --framework net7.0
+          dotnet new console --name testconsole --framework net10.0
           cd testconsole
           "using TestLib; TestType.TestMethod();" | Out-File -FilePath Program.cs
       

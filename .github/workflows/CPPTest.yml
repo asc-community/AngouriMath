@@ -8,7 +8,6 @@ on:
     branches:
       - '*'
 
-
 env:
   tests_path: Sources/Tests/CPPWrapperUnitTests/tests
 
@@ -22,18 +21,18 @@ jobs:
           - os: ubuntu-latest
             flag: linux-x64
           - os: macos-latest
-            flag: osx-x64
+            flag: osx-arm64
 
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     
-    - name: Setup .NET 7
-      uses: actions/setup-dotnet@v1
+    - name: Setup .NET 10
+      uses: actions/setup-dotnet@v5
       with:
-        dotnet-version: '7.0.100'
-        include-prerelease: true
+        dotnet-version: '10.x'
+        dotnet-quality: 'preview'
         
     - name: 'Install some libs for Linux'
       if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -48,14 +47,14 @@ jobs:
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/out-x64
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release
+        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -p:PublishAot=true -r ${{ matrix.flag }} -c release
          
     - name: 'Building the library into native for Linux & MacOS'
       if: ${{ matrix.os != 'windows-latest' }}
       run: |
         cd Sources/Wrappers/AngouriMath.CPP.Exporting
         mkdir ../AngouriMath.CPP.Importing/out-x64
-        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -r ${{ matrix.flag }} -c release        
+        dotnet publish -p:NativeLib=Shared -p:SelfContained=true -p:PublishAot=true -r ${{ matrix.flag }} -c release        
 
     - name: 'Preparing tests'
       run: |
@@ -67,7 +66,8 @@ jobs:
       if: ${{ matrix.os == 'windows-latest' }}
       run: |
         cd ${{ env.tests_path }}
-        copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\out-x64\AngouriMath.CPP.Exporting.dll" "build\Debug\AngouriMath.CPP.Exporting.dll"
+        copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\out-x64\AngouriMath.CPP.Exporting.dll" "build\Debug\AngouriMath.CPP.Exporting.dll" # needed for run time
+        copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\out-x64\AngouriMath.CPP.Exporting.lib" "build\Debug\AngouriMath.CPP.Exporting.lib" # needed for link time
 
     - name: 'Copying the library for Linux'
       if: ${{ matrix.os == 'ubuntu-latest' }}
@@ -80,9 +80,6 @@ jobs:
       run: |
         cd ${{ env.tests_path }}
         cp -r "../../../Wrappers/AngouriMath.CPP.Importing/out-x64/AngouriMath.CPP.Exporting.dylib" "build/Debug/libAngouriMath.CPP.Exporting.dylib"
-        cd build/Debug
-        path=$(pwd)
-        install_name_tool -id "$path/libAngouriMath.CPP.Exporting.dylib" libAngouriMath.CPP.Exporting.dylib
 
     - name: 'Building and running tests'
       run: |
@@ -93,7 +90,7 @@ jobs:
       
     - name: 'Upload logs'
       if: failure()
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v6
       with:
         name: Logs
         path: ./Sources/Tests/CPPWrapperUnitTests/tests/build/Testing/Temporary

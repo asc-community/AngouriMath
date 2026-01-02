@@ -77,7 +77,7 @@ namespace AngouriMath.Functions.Algebra
         {
             var var = vars[^1];
             if (equations.Count == 1)
-                return equations[0].InnerSimplified.SolveEquation(var) is FiniteSet els 
+                return equations[0].InnerSimplified.SolveEquation(var).InnerSimplified is FiniteSet els 
                        ? els.Select(sol => new List<Entity> { sol }).ToList()
                        : new();
             var result = new List<List<Entity>>();

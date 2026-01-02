@@ -1,30 +1,25 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>net10.0</TargetFramework>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
-  <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="&#xD;&#xA;          mkdir ..\AngouriMath.CPP.Importing\out-x64&#xD;&#xA;          &#xD;&#xA;&#xD;&#xA;          xcopy $(OutDir)native ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
+  <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="Publish">
+    <Exec Command="mkdir ..\AngouriMath.CPP.Importing\out-x64 &amp; xcopy $(OutDir)\native ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
+    <!-- For some reason, AngouriMath.CPP.Exporting.lib exists in $(OutDir)\native and not $(OutDir)\publish (which is $(PublishDir))... -->
   </Target>
 
-  <Target Name="Copy for Linux" Condition="$([MSBuild]::IsOSPlatform('Linux'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="cp -a $(OutDir)native/. ../AngouriMath.CPP.Importing/out-x64/" />
-  </Target>
-
-  <Target Name="Copy for OS X" Condition="$([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="ComputeFilesToPublish">
-    <Exec Command="cp -r $(OutDir)native/* ../AngouriMath.CPP.Importing/out-x64/" />
+  <Target Name="Copy for Unix" Condition="$([MSBuild]::IsOSPlatform('Linux')) Or $([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="Publish">
+    <Exec Command="cp $(PublishDir)/* ../AngouriMath.CPP.Importing/out-x64/" />
   </Target>
 
   <ItemGroup>
     <PackageReference Include="IsExternalInit" Version="1.0.0" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="6.0.0-preview.5.21227.7" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="10.0.1" />
     <PackageReference Include="AngouriMath" Version="1.4.0-preview.2" />
   </ItemGroup>
-
-
 </Project>

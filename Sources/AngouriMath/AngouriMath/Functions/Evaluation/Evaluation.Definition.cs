@@ -323,6 +323,6 @@ namespace AngouriMath
         /// True
         /// </code>
         /// </example>
-        public bool IsConstant => Evaled is Number.Complex or Boolean || Evaled is Variable v && Variable.ConstantList.ContainsKey(v);
+        public bool IsConstant => Evaled is Number.Complex or Boolean || Evaled is Variable v && Variable.ConstantList.ContainsKey(v.Name);
     }
 }
