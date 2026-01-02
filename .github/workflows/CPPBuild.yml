@@ -69,7 +69,11 @@ jobs:
       run: |
         call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
-        lib /def /out:AngouriMath.CPP.Exporting.lib /machine:x64 AngouriMath.CPP.Exporting.dll
+        dumpbin /exports AngouriMath.CPP.Exporting.dll > exports.txt
+        echo LIBRARY AngouriMath.CPP.Exporting > AngouriMath.CPP.Exporting.def
+        echo EXPORTS >> AngouriMath.CPP.Exporting.def
+        for /f "skip=19 tokens=4" %%A in (exports.txt) do if not "%%A"=="" echo %%A >> AngouriMath.CPP.Exporting.def
+        lib /def:AngouriMath.CPP.Exporting.def /out:AngouriMath.CPP.Exporting.lib /machine:x64
         
     - name: 'Building the library into native for Linux & MacOS'
       if: ${{ matrix.os != 'windows-latest' }}
