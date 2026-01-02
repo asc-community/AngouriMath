@@ -42,7 +42,7 @@
     <PackageReference Include="AngouriMath.FSharp" Version="1.4.0-preview.3" />
     <PackageReference Include="Microsoft.DotNet.Interactive" Version="1.0.0-beta.23611.1" />
     <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.23611.1" />
-    <PackageReference Include="Plotly.NET" Version="3.0.0" />
+    <PackageReference Include="Plotly.NET" Version="6.0.0-preview.1" />
   </ItemGroup>
 
   <ItemGroup>
