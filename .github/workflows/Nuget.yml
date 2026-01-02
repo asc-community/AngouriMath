@@ -1,9 +1,8 @@
-name: 'Upload last-master versions to MyGet'
+name: 'Publish to NuGet on Release'
 
 on:
-  push:
-    branches:
-      - master
+  release:
+    types: [published]
 
 jobs:
   main:
@@ -21,37 +20,36 @@ jobs:
         run: |
           cd Sources
  
-          # versioning
-          commithash=$(git rev-parse --short HEAD)
-          currtime=$(date +%s)
-          echo "commit hash is $commithash"
-          echo "time is $currtime"
-          name=10.0.0-master-$currtime-$commithash
-          echo "name is $name"
+          # Get version from release tag
+          tagname="${{ github.event.release.tag_name }}"
+          # Remove 'v' prefix if present (e.g., v1.0.0 -> 1.0.0)
+          version="${tagname#v}"
+          echo "Release tag is $tagname"
+          echo "Package version is $version"
           
           # AngouriMath
           cd AngouriMath
           dotnet restore AngouriMath.csproj
           dotnet build AngouriMath.csproj -c release
-          dotnet pack AngouriMath.csproj -c release -p:PackageVersion=$name
+          dotnet pack AngouriMath.csproj -c release -p:PackageVersion=$version
           cd bin/release
-          dotnet nuget push AngouriMath.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
+          dotnet nuget push AngouriMath.$version.nupkg --api-key ${{ secrets.NUGET_KEY }} --source "nuget.org"
           cd ../../..
           
           # AngouriMath.FSharp
           cd Wrappers/AngouriMath.FSharp
           dotnet restore
           dotnet build -c Release
-          dotnet pack -c Release -p:PackageVersion=$name
+          dotnet pack -c Release -p:PackageVersion=$version
           cd bin/Release
-          dotnet nuget push AngouriMath.FSharp.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
+          dotnet nuget push AngouriMath.FSharp.$version.nupkg --api-key ${{ secrets.NUGET_KEY }} --source "nuget.org"
           cd ../../../..
           
           # AngouriMath.Interactive
           cd Wrappers/AngouriMath.Interactive
           dotnet restore
           dotnet build -c Release
-          dotnet pack -c Release -p:PackageVersion=$name
+          dotnet pack -c Release -p:PackageVersion=$version
           cd bin/Release
-          dotnet nuget push AngouriMath.Interactive.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
+          dotnet nuget push AngouriMath.Interactive.$version.nupkg --api-key ${{ secrets.NUGET_KEY }} --source "nuget.org"
           cd ../../../..
