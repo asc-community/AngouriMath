@@ -22,6 +22,13 @@ jobs:
  
           # Get version from release tag
           tagname="${{ github.event.release.tag_name }}"
+          
+          # Validate tag name exists
+          if [[ -z "$tagname" ]]; then
+            echo "Error: Release tag name is empty"
+            exit 1
+          fi
+          
           # Remove 'v' prefix if present (e.g., v1.0.0 -> 1.0.0)
           version="${tagname#v}"
           echo "Release tag is $tagname"
