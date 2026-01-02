@@ -61,13 +61,15 @@ jobs:
         echo.
         echo Listing bin directory:
         dir *.lib
+        dir *.dll
         
-    - name: 'Copy .lib file for Windows'
+    - name: 'Generate .lib file for Windows'
       if: ${{ matrix.os == 'windows-latest' }}
       shell: cmd
       run: |
-        cd Sources/Wrappers/AngouriMath.CPP.Exporting
-        copy bin\Release\net10.0\win-x64\*.lib ..\AngouriMath.CPP.Importing\out-x64\
+        call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
+        lib /def /out:AngouriMath.CPP.Exporting.lib /machine:x64 AngouriMath.CPP.Exporting.dll
         
     - name: 'Building the library into native for Linux & MacOS'
       if: ${{ matrix.os != 'windows-latest' }}
