@@ -21,7 +21,7 @@ jobs:
           - os: ubuntu-latest
             flag: linux-x64
           - os: macos-latest
-            flag: osx-x64
+            flag: osx-arm64
 
     runs-on: ${{ matrix.os }}
 
