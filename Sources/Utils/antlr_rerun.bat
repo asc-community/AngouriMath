@@ -3,7 +3,7 @@ cd ../AngouriMath/Core/Antlr
 :;# AngouriMath.Core.Antlr is the namespace of the generated lexer and parser source files
 java -jar ./antlr-4.13.1-complete.jar -package AngouriMath.Core.Antlr ./AngouriMath.g
 
-cd ../../../../Utils
+cd ../../../Utils
 
 :;# Antlr's generated classes should be internal, not public
 dotnet run --project Utils -c release AntlrPostProcessorReplacePublicWithInternal
