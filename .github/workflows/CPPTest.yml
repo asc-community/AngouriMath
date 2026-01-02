@@ -66,8 +66,8 @@ jobs:
       if: ${{ matrix.os == 'windows-latest' }}
       run: |
         cd ${{ env.tests_path }}
-        copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\out-x64\AngouriMath.CPP.Exporting.dll" "build\Debug\AngouriMath.CPP.Exporting.dll" & REM needed for run time
-        copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\out-x64\AngouriMath.CPP.Exporting.lib" "build\Debug\AngouriMath.CPP.Exporting.lib" & REM needed for link time
+        copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\out-x64\AngouriMath.CPP.Exporting.dll" "build\Debug\AngouriMath.CPP.Exporting.dll" & :: needed for run time
+        copy "..\..\..\Wrappers\AngouriMath.CPP.Importing\out-x64\AngouriMath.CPP.Exporting.lib" "build\Debug\AngouriMath.CPP.Exporting.lib" & :: needed for link time
 
     - name: 'Copying the library for Linux'
       if: ${{ matrix.os == 'ubuntu-latest' }}
