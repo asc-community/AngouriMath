@@ -17,15 +17,15 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout
+    - uses: actions/checkout@v6
       with:
         submodules: 'recursive'
 
     - name: Setup .NET 10
-      uses: actions/setup-dotnet
+      uses: actions/setup-dotnet@v5
       with:
         dotnet-version: '10.x'
-        include-prerelease: true
+        dotnet-quality: 'preview'
 
     - name: Build Tests # We need it to be able to retry
       run: |
@@ -51,7 +51,7 @@ jobs:
       
     - name: 'Upload report as artifact'
       if: ${{ matrix.os == 'windows-latest' }}
-      uses: actions/upload-artifact
+      uses: actions/upload-artifact@v6
       with:
         name: Report
         path: ./Sources/Tests/UnitTests/coverage.opencover.xml
@@ -59,6 +59,6 @@ jobs:
 
     - name: 'Send to codecov'
       if: ${{ matrix.os == 'windows-latest' }}
-      uses: codecov/codecov-action
+      uses: codecov/codecov-action@v5
       with:
         file: ./Sources/Tests/UnitTests/coverage.opencover.xml

@@ -82,7 +82,6 @@ let ``Latex with magic EInteger`` () =
     let output = entity.ToDisplayString("text/plain")
     Assert.Equal("2", output)
 
-
 [<Fact(Skip = "Not working in the embedded kernel")>]
 let ``Latex formatter automatically applied in Interactive``  () =
 
@@ -95,28 +94,24 @@ let ``Latex formatter automatically applied in Interactive``  () =
     let r = "#r \"nuget:AngouriMath.Interactive, *-*\""
     let code = "open Core\nparsed \"x / 2\""
     
-    using ((new FSharpKernel())
-                       .UseNugetDirective()
-                       .UseKernelHelpers().UseDefaultNamespaces()) (fun kernel ->
-        async {
-            // Execute #i magic command and see for no errors
-            let! after_i = kernel.SendAsync(SubmitCode(i), System.Threading.CancellationToken.None) |> Async.AwaitTask
-            after_i.KernelEvents.Subscribe(fun ev -> Assert.False(ev :? CommandFailed, "After i: " + ev.ToDisplayString())) |> ignore
+    task {
+        use kernel = (new FSharpKernel()).UseKernelHelpers()
+        // Execute #i magic command and look for no errors
+        let! after_i = kernel.SendAsync(SubmitCode(i), System.Threading.CancellationToken.None)
+        Assert.All(after_i.Events, fun ev -> Assert.False(ev :? CommandFailed, "After i: " + ev.ToDisplayString())) |> ignore
 
-            // Execute #r magic command and see for no errors
-            let! after_r = kernel.SendAsync(SubmitCode(r), System.Threading.CancellationToken.None) |> Async.AwaitTask
-            after_r.KernelEvents.Subscribe(fun ev -> Assert.False(ev :? CommandFailed, "After r: " + ev.ToDisplayString())) |> ignore
+        // Execute #r magic command and look for no errors
+        let! after_r = kernel.SendAsync(SubmitCode(r), System.Threading.CancellationToken.None)
+        Assert.All(after_r.Events, fun ev -> Assert.False(ev :? CommandFailed, "After r: " + ev.ToDisplayString())) |> ignore
 
-            // Execute our code and find the right LaTeX code
-            let! res = kernel.SendAsync(SubmitCode(code), System.Threading.CancellationToken.None) |> Async.AwaitTask
-            let mutable displayValueReceived = false
-            res.KernelEvents.Subscribe(fun ev ->
-                match ev with
-                | :? DisplayEvent as dp -> 
-                    Assert.Contains("<script id='MathJax-script'", dp.FormattedValues.First().ToDisplayString())
-                    displayValueReceived <- true
-                | _ -> ()
-            ) |> ignore
-            Assert.True(displayValueReceived, "No display value was received")
-        }
-    )
+        // Execute our code and find the right LaTeX code
+        let! res = kernel.SendAsync(SubmitCode(code), System.Threading.CancellationToken.None)
+        let mutable displayValueReceived = false
+        Assert.All(res.Events, fun ev -> 
+            match ev with
+            | :? DisplayEvent as dp -> 
+                Assert.Contains("<script id='MathJax-script'", dp.FormattedValues.First().ToDisplayString())
+                displayValueReceived <- true
+            | _ -> ()) |> ignore
+        Assert.True(displayValueReceived, "No display value was received")
+    }

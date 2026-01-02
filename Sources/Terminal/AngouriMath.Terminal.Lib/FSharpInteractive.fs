@@ -17,10 +17,8 @@ open AssemblyLoadBuilder
 open AngouriMath.FSharp.Core
 open AngouriMath.InteractiveExtension
 
-
 let options = JsonSerializerOptions ()
 JsonFSharpConverter () |> options.Converters.Add
-
 
 let private objectEncode (o : obj) =
     match o with
@@ -41,7 +39,6 @@ let private objectDecode (s : string Option) =
         JsonSerializer.Deserialize<ExecutionResult> (latex.[EncodingLatexPrefix.Length..], options)
     | _ -> VoidSuccess
 
-
 let execute (kernel : FSharpKernel) code =
     let submitCode = SubmitCode code
     let computed = (kernel.SendAsync submitCode).Result    // Yes. It's Result.
@@ -49,25 +46,19 @@ let execute (kernel : FSharpKernel) code =
     let mutable nonVoidResponse : string Option = None
     let mutable res : ExecutionResult Option = None
 
-    computed.KernelEvents.Subscribe (new Action<KernelEvent>(fun e ->
-                match e with
-                | :? CommandSucceeded ->
-                    res <- objectDecode nonVoidResponse |> Some
-                | :? CommandFailed as failed ->
-                    res <- Error failed.Message |> Some
-                | :? DisplayEvent as display ->
-                    nonVoidResponse <- (Seq.head display.FormattedValues).Value |> Some
-                | _ -> ()
-        ))
-    |> (fun observer -> observer.Dispose())
+    for e in computed.Events do
+        match e with
+        | :? CommandSucceeded ->
+            res <- objectDecode nonVoidResponse |> Some
+        | :? CommandFailed as failed ->
+            res <- Error failed.Message |> Some
+        | :? DisplayEvent as display ->
+            nonVoidResponse <- (Seq.head display.FormattedValues).Value |> Some
+        | _ -> ()
 
     match res with
     | None -> EndOfFile
     | Some res -> res
-
-
-
-
 
 let createKernel () =
     let kernel = new FSharpKernel ()

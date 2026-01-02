@@ -17,6 +17,7 @@ namespace AngouriMath.CPP.Exporting
             => ExceptionEncode(res, strPtr, static strPtr =>
             {
                 var str = Marshal.PtrToStringAnsi(strPtr);
+                if (str is null) throw new ArgumentNullException(nameof(strPtr), "Can't parse a null string.");
                 return ObjStorage<Entity>.Alloc(str);
             });
 

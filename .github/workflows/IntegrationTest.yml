@@ -19,11 +19,11 @@ jobs:
   ConsoleApp:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout
-      - uses: actions/setup-dotnet
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
-          include-prerelease: true
+          dotnet-quality: 'preview'
           
       - name: 'Pack AngouriMath'
         run: |
@@ -61,11 +61,11 @@ jobs:
   ClassLibConsoleApp:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout
-      - uses: actions/setup-dotnet
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
-          include-prerelease: true
+          dotnet-quality: 'preview'
           
       - name: 'Pack AngouriMath'
         run: |

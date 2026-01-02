@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup .NET 10
-        uses: actions/setup-dotnet
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
-          include-prerelease: true
+          dotnet-quality: 'preview'
           
-      - uses: actions/checkout
+      - uses: actions/checkout@v6
         
       - name: 'Pack AngouriMath'
         run: |
