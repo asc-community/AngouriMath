@@ -27,6 +27,12 @@ jobs:
           echo "Release tag is $tagname"
           echo "Package version is $version"
           
+          # Validate version format (basic check)
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "Error: Invalid version format '$version'. Expected semantic version (e.g., 1.0.0)"
+            exit 1
+          fi
+          
           # AngouriMath
           cd AngouriMath
           dotnet restore AngouriMath.csproj
