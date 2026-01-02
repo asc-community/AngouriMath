@@ -9,7 +9,8 @@
   </PropertyGroup>
 
   <Target Name="Copy for Windows" Condition="$([MSBuild]::IsOSPlatform('Windows'))" AfterTargets="Publish">
-    <Exec Command="mkdir ..\AngouriMath.CPP.Importing\out-x64 &amp; xcopy $(PublishDir) ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
+    <Exec Command="mkdir ..\AngouriMath.CPP.Importing\out-x64 &amp; xcopy $(OutDir)\native ..\AngouriMath.CPP.Importing\out-x64 /H /Y" />
+    <!-- For some reason, AngouriMath.CPP.Exporting.lib exists in $(OutDir)\native and not $(OutDir)\publish (which is $(PublishDir))... -->
   </Target>
 
   <Target Name="Copy for Unix" Condition="$([MSBuild]::IsOSPlatform('Linux')) Or $([MSBuild]::IsOSPlatform('OSX'))" AfterTargets="Publish">
