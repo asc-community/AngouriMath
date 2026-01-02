@@ -68,7 +68,14 @@ jobs:
       shell: cmd
       run: |
         call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        if errorlevel 1 (
+          echo ERROR: Failed to initialize MSVC environment
+          exit /b 1
+        )
         cd Sources/Wrappers/AngouriMath.CPP.Importing/out-x64
+        echo Checking for dumpbin and lib...
+        where dumpbin
+        where lib
         dumpbin /exports AngouriMath.CPP.Exporting.dll > exports.txt
         echo LIBRARY AngouriMath.CPP.Exporting > AngouriMath.CPP.Exporting.def
         echo EXPORTS >> AngouriMath.CPP.Exporting.def
