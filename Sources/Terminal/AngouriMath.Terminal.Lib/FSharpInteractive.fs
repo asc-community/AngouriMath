@@ -23,10 +23,10 @@ JsonFSharpConverter () |> options.Converters.Add
 let private objectEncode (o : obj) =
     match o with
     | :? ILatexiseable as latexiseable -> 
-        let toSerialize = LatexSuccess (latexiseable.Latexise (), o.ToString ())
+        let toSerialize = LatexSuccess (latexiseable.Latexise (), string o)
         EncodingLatexPrefix + JsonSerializer.Serialize(toSerialize, options)
     | _ ->
-        let toSerialize = PlainTextSuccess (o.ToString ())
+        let toSerialize = PlainTextSuccess (string o)
         EncodingPlainPrefix + JsonSerializer.Serialize(toSerialize, options)
 
 
@@ -34,9 +34,9 @@ let private objectDecode (s : string Option) =
     match s with
     | None -> VoidSuccess
     | Some plain when plain.StartsWith EncodingPlainPrefix ->
-        JsonSerializer.Deserialize<ExecutionResult> (plain.[EncodingPlainPrefix.Length..], options)
+        JsonSerializer.Deserialize<ExecutionResult> (plain.[EncodingPlainPrefix.Length..], options) |> nonNull
     | Some latex when latex.StartsWith EncodingLatexPrefix ->
-        JsonSerializer.Deserialize<ExecutionResult> (latex.[EncodingLatexPrefix.Length..], options)
+        JsonSerializer.Deserialize<ExecutionResult> (latex.[EncodingLatexPrefix.Length..], options) |> nonNull
     | _ -> VoidSuccess
 
 let execute (kernel : FSharpKernel) code =
@@ -82,7 +82,7 @@ let createKernel () =
             |> Chart.withSize (1200., 900.)
             |> Chart.show
             "Showing in the browser")
-        |> (fun f -> Func<GenericChart.GenericChart, string> f)
+        |> (fun f -> Func<GenericChart, string> f)
         |> (fun f -> 
-            Formatter.Register<GenericChart.GenericChart> (f, "text/plain"))
+            Formatter.Register<GenericChart> (f, "text/plain"))
     }
