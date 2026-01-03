@@ -32,8 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Using $(Version) from Package.Build.props. This won't affect CI builds as they use ProjectReference. -->
-    <PackageReference Include="AngouriMath" Version="$(Version)" />
+    <ProjectReference Include="..\..\AngouriMath\AngouriMath.csproj" />
   </ItemGroup>
 
 </Project>

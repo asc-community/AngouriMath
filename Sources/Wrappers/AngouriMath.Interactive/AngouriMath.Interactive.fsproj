@@ -39,8 +39,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Using $(Version) from Package.Build.props. This won't affect CI builds as they use ProjectReference. -->
-    <PackageReference Include="AngouriMath.FSharp" Version="$(Version)" />
+    <ProjectReference Include="..\AngouriMath.FSharp\AngouriMath.FSharp.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.DotNet.Interactive" Version="1.0.0-beta.23611.1" />
     <PackageReference Include="Microsoft.DotNet.Interactive.Formatting" Version="1.0.0-beta.23611.1" />
     <PackageReference Include="Plotly.NET" Version="6.0.0-preview.1" />
