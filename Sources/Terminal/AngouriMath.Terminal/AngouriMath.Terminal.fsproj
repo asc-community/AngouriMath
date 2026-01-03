@@ -13,8 +13,6 @@
     <PackageIcon>icon.png</PackageIcon>
     <Description>F#-based command line interface for symbolic algebra library AngouriMath</Description>
 
-    <Version>1.4.0-preview.3-2</Version>
-
     <PackageTags>$(PackageTags), cli, terminal</PackageTags>
   </PropertyGroup>
 
@@ -28,9 +26,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Spectre.Console" Version="0.41.0" />
-    <PackageReference Include="radline" Version="0.5.0" />
-    <PackageReference Include="Spectre.Console.ImageSharp" Version="0.41.0" />
+    <PackageReference Include="Spectre.Console" Version="0.54.0" />
+    <PackageReference Include="RadLine" Version="0.9.0" />
+    <PackageReference Include="Spectre.Console.ImageSharp" Version="0.54.0" />
   </ItemGroup>
 
 </Project>
