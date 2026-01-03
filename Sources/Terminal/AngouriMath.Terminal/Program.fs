@@ -17,7 +17,7 @@ let lineEditor = getLineEditor AnsiConsole.Console
 
 let rec readAndRespond kernel =
     printf "\n"
-    match readLine lineEditor |> execute kernel with
+    match readLine lineEditor |> nonNull |> execute kernel with
     | PlainTextSuccess text ->
         writeLine AnsiConsole.Console text
     | LatexSuccess (_, text) ->
@@ -36,22 +36,15 @@ let handleErrors errors =
 
 "\n\n" |> Console.Write
 
-FigletText "AngouriMath"
-|> AlignableExtensions.Centered
-|> (fun p -> FigletTextExtensions.Color(p, Color.Pink1))
+FigletText("AngouriMath", Justification = Justify.Center, Color = Color.Pink1)
 |> AnsiConsole.Console.Write
 
-$@"
+Markup($@"
 Hi! Type `help ()` to get more info.
-" |> Markup
-  |> AlignableExtensions.Centered
-  |> AnsiConsole.Console.Write
-
-
-
+", Justification = Justify.Center)
+|> AnsiConsole.Console.Write
 
 printf "Starting the kernel..."
-
 
 match createKernel () with
 | Result.Error reasons -> handleErrors reasons
