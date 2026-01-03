@@ -92,3 +92,12 @@ jobs:
           dotnet pack -c Release -p:PackageVersion=${{ steps.version.outputs.version }}
           cd bin/Release
           dotnet nuget push AngouriMath.Interactive.${{ steps.version.outputs.version }}.nupkg --api-key ${{ steps.version.outputs.apikey }} --source "${{ steps.version.outputs.source }}"
+          
+      - name: 'Pack and publish AngouriMath.Terminal'
+        run: |
+          cd Sources/Terminal/AngouriMath.Terminal
+          dotnet restore
+          dotnet build -c Release
+          dotnet pack -c Release -p:PackageVersion=${{ steps.version.outputs.version }}
+          cd bin/Release
+          dotnet nuget push AngouriMath.Terminal.${{ steps.version.outputs.version }}.nupkg --api-key ${{ steps.version.outputs.apikey }} --source "${{ steps.version.outputs.source }}"
