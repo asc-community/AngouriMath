@@ -1,13 +1,19 @@
-name: 'Upload last-master versions to MyGet'
+name: 'Upload to MyGet and NuGet'
+
+run-name: ${{ github.event_name == 'push' && 'Upload to MyGet' || 'Upload to NuGet' }}
 
 on:
   push:
     branches:
       - master
+  release:
+    types: [published]
 
 jobs:
-  main:
+  publish:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v5
@@ -17,41 +23,72 @@ jobs:
           
       - uses: actions/checkout@v6
         
-      - name: 'Pack AngouriMath'
+      - name: 'Determine version and target'
+        id: version
         run: |
-          cd Sources
- 
-          # versioning
-          commithash=$(git rev-parse --short HEAD)
-          currtime=$(date +%s)
-          echo "commit hash is $commithash"
-          echo "time is $currtime"
-          name=10.0.0-master-$currtime-$commithash
-          echo "name is $name"
-          
-          # AngouriMath
-          cd AngouriMath
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            # MyGet versioning
+            commithash=$(git rev-parse --short HEAD)
+            currtime=$(date +%s)
+            echo "commit hash is $commithash"
+            echo "time is $currtime"
+            version=10.0.0-master-$currtime-$commithash
+            echo "version is $version"
+            echo "version=$version" >> $GITHUB_OUTPUT
+            echo "apikey=${{ secrets.MYGET_KEY }}" >> $GITHUB_OUTPUT
+            echo "source=myget" >> $GITHUB_OUTPUT
+            echo "target=MyGet" >> $GITHUB_OUTPUT
+          else
+            # NuGet versioning from release tag
+            tagname="${{ github.event.release.tag_name }}"
+            
+            # Validate tag name exists
+            if [[ -z "$tagname" ]]; then
+              echo "Error: Release tag name is empty"
+              exit 1
+            fi
+            
+            # Remove 'v' prefix if present (e.g., v1.0.0 -> 1.0.0)
+            version="${tagname#v}"
+            echo "Release tag is $tagname"
+            echo "Package version is $version"
+            
+            # Validate version format (SemVer 2.0.0: X.Y.Z[-prerelease][+build])
+            if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?$ ]]; then
+              echo "Error: Invalid version format '$version'."
+              echo "Expected semantic version (e.g., 1.0.0, 1.0.0-beta.1, 1.0.0+build.123)"
+              exit 1
+            fi
+            
+            echo "version=$version" >> $GITHUB_OUTPUT
+            echo "apikey=${{ secrets.NUGET_KEY }}" >> $GITHUB_OUTPUT
+            echo "source=nuget.org" >> $GITHUB_OUTPUT
+            echo "target=NuGet" >> $GITHUB_OUTPUT
+          fi
+        
+      - name: 'Pack and publish AngouriMath'
+        run: |
+          cd Sources/AngouriMath
           dotnet restore AngouriMath.csproj
           dotnet build AngouriMath.csproj -c release
-          dotnet pack AngouriMath.csproj -c release -p:PackageVersion=$name
+          dotnet pack AngouriMath.csproj -c release -p:PackageVersion=${{ steps.version.outputs.version }}
           cd bin/release
-          dotnet nuget push AngouriMath.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
-          cd ../../..
+          dotnet nuget push AngouriMath.${{ steps.version.outputs.version }}.nupkg --api-key ${{ steps.version.outputs.apikey }} --source "${{ steps.version.outputs.source }}"
           
-          # AngouriMath.FSharp
-          cd Wrappers/AngouriMath.FSharp
+      - name: 'Pack and publish AngouriMath.FSharp'
+        run: |
+          cd Sources/Wrappers/AngouriMath.FSharp
           dotnet restore
           dotnet build -c Release
-          dotnet pack -c Release -p:PackageVersion=$name
+          dotnet pack -c Release -p:PackageVersion=${{ steps.version.outputs.version }}
           cd bin/Release
-          dotnet nuget push AngouriMath.FSharp.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
-          cd ../../../..
+          dotnet nuget push AngouriMath.FSharp.${{ steps.version.outputs.version }}.nupkg --api-key ${{ steps.version.outputs.apikey }} --source "${{ steps.version.outputs.source }}"
           
-          # AngouriMath.Interactive
-          cd Wrappers/AngouriMath.Interactive
+      - name: 'Pack and publish AngouriMath.Interactive'
+        run: |
+          cd Sources/Wrappers/AngouriMath.Interactive
           dotnet restore
           dotnet build -c Release
-          dotnet pack -c Release -p:PackageVersion=$name
+          dotnet pack -c Release -p:PackageVersion=${{ steps.version.outputs.version }}
           cd bin/Release
-          dotnet nuget push AngouriMath.Interactive.$name.nupkg --api-key ${{ secrets.MYGET_KEY }} --source "myget"
-          cd ../../../..
+          dotnet nuget push AngouriMath.Interactive.${{ steps.version.outputs.version }}.nupkg --api-key ${{ steps.version.outputs.apikey }} --source "${{ steps.version.outputs.source }}"
