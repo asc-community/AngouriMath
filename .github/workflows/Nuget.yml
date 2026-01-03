@@ -1,5 +1,7 @@
 name: 'Upload to MyGet and NuGet'
 
+run-name: ${{ github.event_name == 'push' && 'Upload to MyGet' || 'Upload to NuGet' }}
+
 on:
   push:
     branches:
