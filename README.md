@@ -1,5 +1,5 @@
 > [!WARNING]
-> AngouriMath is deprecated. You can still use it, but it's unlikely it will go forward. Full story at [wbg.gg](https://wbg.gg/blog/angourimath-deprecation)
+> AngouriMath is no longer actively maintained. You can still use it, but it's unlikely it will go forward. Full story at [wbg.gg](https://wbg.gg/blog/angourimath-deprecation)
 
 <p align="center">
   <a href="https://github.com/asc-community/AngouriMath">
@@ -10,7 +10,7 @@
 <h2 align="center">AngouriMath</h2>
 
 <p align="center">
-  <i>New open-source cross-platform symbolic algebra library for </i><b>C# · F# · Jupyter · C++ (WIP)</b>
+  <i>Open-source cross-platform symbolic algebra library for </i><b>C# · F# · Jupyter · C++ (WIP)</b>
   <br>
   <a href="https://am.angouri.org/quickstart/"><b>Get started</b></a>
   <b>·</b>
