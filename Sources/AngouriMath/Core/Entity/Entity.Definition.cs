@@ -30,11 +30,11 @@ namespace AngouriMath.Core
 
         EqualitySignsOperation = 0x2000,
 
-        Equal          = 10 | EqualitySignsOperation,
-        LessThan       = 20 | EqualitySignsOperation,
-        GreaterThan    = 20 | EqualitySignsOperation,
-        LessOrEqual    = 20 | EqualitySignsOperation,
-        GreaterOrEqual = 20 | EqualitySignsOperation,
+        Equal          = EqualitySignsOperation,
+        LessThan       = EqualitySignsOperation,
+        GreaterThan    = EqualitySignsOperation,
+        LessOrEqual    = EqualitySignsOperation,
+        GreaterOrEqual = EqualitySignsOperation,
 
         SetOperation = 0x3000,
 

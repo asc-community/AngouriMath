@@ -103,21 +103,21 @@ namespace AngouriMath
             // ISO 80000-2 puts ⇒ first for implies, but → is also accepted and is more common in logic contexts.
             // ⇒ can be used in steps for proofs if we were to add it later.
             public override string Latexise()
-                => $@"{Assumption.Latexise(Assumption.Priority < Priority)} \to {Conclusion.Latexise(Conclusion.Priority < Priority)}";
+                => $@"{Assumption.Latexise(Assumption.Priority <= Priority)} \to {Conclusion.Latexise(Conclusion.Priority < Priority)}";
         }
 
         partial record Equalsf
         {
             /// <inheritdoc/>
             public override string Latexise()
-                => $@"{Left.Latexise(Left.Priority < Priority)} = {Right.Latexise(Right.Priority < Priority)}";
+                => $@"{Left.Latexise(Left.Priority <= Priority)} = {Right.Latexise(Right.Priority <= Priority)}";
         }
 
         partial record Greaterf
         {
             /// <inheritdoc/>
             public override string Latexise()
-                => $@"{Left.Latexise(Left.Priority < Priority)} > {Right.Latexise(Right.Priority < Priority)}";
+                => $@"{Left.Latexise(Left.Priority <= Priority)} > {Right.Latexise(Right.Priority <= Priority)}";
         }
 
         partial record GreaterOrEqualf
@@ -126,14 +126,14 @@ namespace AngouriMath
             // NOTE: While \geqslant (⩾) is more used in e.g. Russian texts, \geq (≥) is more universally used in English texts.
             // Since the output language of LaTeX is English (referencing Piecewise and Providedf), \geq is more appropriate.
             public override string Latexise()
-                => $@"{Left.Latexise(Left.Priority < Priority)} \geq {Right.Latexise(Right.Priority < Priority)}";
+                => $@"{Left.Latexise(Left.Priority <= Priority)} \geq {Right.Latexise(Right.Priority <= Priority)}";
         }
 
         partial record Lessf
         {
             /// <inheritdoc/>
             public override string Latexise()
-                => $@"{Left.Latexise(Left.Priority < Priority)} < {Right.Latexise(Right.Priority < Priority)}";
+                => $@"{Left.Latexise(Left.Priority <= Priority)} < {Right.Latexise(Right.Priority <= Priority)}";
         }
 
         partial record LessOrEqualf
@@ -142,7 +142,7 @@ namespace AngouriMath
             // NOTE: While \leqslant (⩽) is more used in e.g. Russian texts, \leq (≤) is more universally used in English texts.
             // Since the output language of LaTeX is English (referencing Piecewise and Providedf), \leq is more appropriate.
             public override string Latexise()
-                => $@"{Left.Latexise(Left.Priority < Priority)} \leq {Right.Latexise(Right.Priority < Priority)}";
+                => $@"{Left.Latexise(Left.Priority <= Priority)} \leq {Right.Latexise(Right.Priority <= Priority)}";
         }
     }
 }
