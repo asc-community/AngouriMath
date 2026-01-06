@@ -591,12 +591,31 @@ namespace AngouriMath.Tests.Convenience
         [Fact] public void InequalityChain()
             => Test(@"x < y < z < w", 
                 (x < MathS.Var("y")) & (MathS.Var("y") < MathS.Var("z")) & (MathS.Var("z") < MathS.Var("w")));
+        [Fact] public void InequalityChainAlt() => Test(@"x < y < z < w", x < "y" < "z" < "w");
+        [Fact] public void InequalityChainString() => Test(@"x < y < z < w", (Entity)"x<y<z<w");
+        [Fact] public void InequalityChainParenthesized()
+            => Test(@"\left(x < y\right) < \left(z < w\right)", new Entity.Lessf(x < "y", (Entity)"z" < "w"));
         [Fact] public void EqualityChain()
             => Test(@"x = y = z = w",
                 x.Equalizes(MathS.Var("y")) & (MathS.Var("y").Equalizes(MathS.Var("z"))) & MathS.Var("z").Equalizes(MathS.Var("w")));
+        [Fact] public void EqualityChainAlt()
+            => Test(@"x = y = z = w", x.Equalizes("y").Equalizes("z").Equalizes("w"));
+        [Fact] public void EqualityChainString() => Test(@"x = y = z = w", (Entity)"x=y=z=w");
+        [Fact] public void EqualityChainParenthesized()
+            => Test(@"\left(x = y\right) = \left(z = w\right)", new Entity.Equalsf(x.Equalizes("y"), ((Entity)"z").Equalizes("w")));
         [Fact] public void EqualityInequalityChain()
             => Test(@"x \geq y = z < w",
                 (x >= MathS.Var("y")) & (MathS.Var("y").Equalizes(MathS.Var("z"))) & (MathS.Var("z") < MathS.Var("w")));
+        [Fact] public void EqualityInequalityChainAlt() => Test(@"x \geq y = z < w", (x >= "y").Equalizes("z") < "w");
+        [Fact] public void EqualityInequalityChainString() => Test(@"x \geq y = z < w", (Entity)"x>=y=z<w");
+        [Fact] public void EqualityInequalityChainParenthesized() => Test(@"x \geq \left(y = \left(z < w\right)\right)", new Entity.GreaterOrEqualf(x, new Entity.Equalsf("y", (Entity)"z" < "w")));
+        [Fact] public void ParenthesizedComparisons()
+            => Test(@"\left(x < x\right) \geq \left(x > \left(\left(x = x\right) \leq x\right)\right)",
+#pragma warning disable 1718 // Disable self-comparison warning
+                new Entity.GreaterOrEqualf(x < x, (x > new Entity.LessOrEqualf(new Entity.Equalsf(x, x), x))));
+#pragma warning restore 1718
+        [Fact] public void ImpliesChain()
+            => Test(@"\left(\left(x \to y\right) \to z\right) \to x \to y \to z", x.Implies("y").Implies("z").Implies(x.Implies(MathS.Var("y").Implies("z"))));
     }
 }
 

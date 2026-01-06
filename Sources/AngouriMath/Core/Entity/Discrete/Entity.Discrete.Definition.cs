@@ -71,7 +71,7 @@ namespace AngouriMath
         public Entity Implies(Entity conclusion) => new Impliesf(this, conclusion);
 
         /// <returns>A node</returns>
-        public Entity Equalizes(Entity another) => HangOperator(this, another, (a, b) => new Equalsf(this, another));
+        public Entity Equalizes(Entity another) => HangOperator(this, another, (a, b) => new Equalsf(a, b));
 
         /// <returns>A node</returns>
         public static Entity operator >(Entity a, Entity b) => HangOperator(a, b, (a, b) => new Greaterf(a, b));
@@ -91,10 +91,16 @@ namespace AngouriMath
         internal static Entity HangOperator(Entity a, Entity b, Func<Entity, Entity, Entity> ctor)
            => a switch
            {
-               Greaterf(var left, var right) => new Greaterf(left, right) & ctor(right, b),
-               GreaterOrEqualf(var left, var right) => new GreaterOrEqualf(left, right) & ctor(right, b),
-               Lessf(var left, var right) => new Lessf(left, right) & ctor(right, b),
-               LessOrEqualf(var left, var right) => new LessOrEqualf(left, right) & ctor(right, b),
+               Equalsf(_, var right) => a & ctor(right, b),
+               Greaterf(_, var right) => a & ctor(right, b),
+               GreaterOrEqualf(_, var right) => a & ctor(right, b),
+               Lessf(_, var right) => a & ctor(right, b),
+               LessOrEqualf(_, var right) => a & ctor(right, b),
+               Andf(_, Equalsf(_, var right)) => a & ctor(right, b),
+               Andf(_, Greaterf(_, var right)) => a & ctor(right, b),
+               Andf(_, GreaterOrEqualf(_, var right)) => a & ctor(right, b),
+               Andf(_, Lessf(_, var right)) => a & ctor(right, b),
+               Andf(_, LessOrEqualf(_, var right)) => a & ctor(right, b),
 
                _ => ctor(a, b)
            };

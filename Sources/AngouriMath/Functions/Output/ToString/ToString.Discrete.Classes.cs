@@ -56,7 +56,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Stringize()
-                => $"{Assumption.Stringize(Assumption.Priority < Priority)} implies {Conclusion.Stringize(Conclusion.Priority < Priority)}";
+                => $"{Assumption.Stringize(Assumption.Priority <= Priority)} implies {Conclusion.Stringize(Conclusion.Priority < Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -65,7 +65,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Stringize()
-                => $"{Left.Stringize(Left.Priority < Priority)} = {Right.Stringize(Right.Priority < Priority)}";
+                => $"{Left.Stringize(Left.Priority <= Priority)} = {Right.Stringize(Right.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -74,7 +74,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Stringize()
-                => $"{Left.Stringize(Left.Priority < Priority)} > {Right.Stringize(Right.Priority < Priority)}";
+                => $"{Left.Stringize(Left.Priority <= Priority)} > {Right.Stringize(Right.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -83,7 +83,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Stringize()
-                => $"{Left.Stringize(Left.Priority < Priority)} >= {Right.Stringize(Right.Priority < Priority)}";
+                => $"{Left.Stringize(Left.Priority <= Priority)} >= {Right.Stringize(Right.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -92,7 +92,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Stringize()
-                => $"{Left.Stringize(Left.Priority < Priority)} < {Right.Stringize(Right.Priority < Priority)}";
+                => $"{Left.Stringize(Left.Priority <= Priority)} < {Right.Stringize(Right.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
@@ -101,7 +101,7 @@ namespace AngouriMath
         {
             /// <inheritdoc/>
             public override string Stringize()
-                => $"{Left.Stringize(Left.Priority < Priority)} <= {Right.Stringize(Right.Priority < Priority)}";
+                => $"{Left.Stringize(Left.Priority <= Priority)} <= {Right.Stringize(Right.Priority <= Priority)}";
             /// <inheritdoc/>
             public override string ToString() => Stringize();
         }
